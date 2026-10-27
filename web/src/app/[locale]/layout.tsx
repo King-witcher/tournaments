@@ -7,7 +7,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Suspense } from "react";
 
-import { UserMenu } from "@/components/user-menu";
+import { UserMenu } from "@/features/auth/components/user-menu";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import "../globals.css";

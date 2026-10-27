@@ -116,6 +116,16 @@ Motivos e cuidados:
 - GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês).
 - Banco de dev: cluster Postgres local (sqlx confere queries na compilação; `sqlx::test` cria um banco por teste). Usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos bancos de teste.
 
+## Organização do código
+
+Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code carrega sozinho ao abrir arquivos dessas pastas. Uma skill dependeria de ser acionada e um doc importado na raiz custaria contexto em toda sessão.
+
+- **Por domínio dos dois lados**, com os mesmos nomes (auth, tenants, members, invites, depois tournaments, matches...), e `shared/` para o genérico. A rota diz o domínio. Uma pasta `components/` com tudo junto ficaria difícil de navegar com o crescimento.
+- **API: SQL só em `<domínio>/db.rs`**; `handlers.rs` faz HTTP, `types.rs` tem os DTOs. Achar uma query é abrir um arquivo, e handler com transação (criar torneio, reportar resultado) não fica longo.
+- **Testes de rota num binário só** (`tests/api/`), um arquivo por domínio: no Windows cada binário de teste demora para linkar.
+- **Front sem shadcn por enquanto**: primitivos próprios em `src/shared/ui` (Button, Input, Field, Alert, Avatar, Page), com os nomes de variante do shadcn, para ele entrar no mesmo lugar depois sem mudar quem usa.
+- Componente ou arquivo que cresce demais ou acumula funções é quebrado; os sinais estão nos dois `CLAUDE.md`.
+
 ## Em aberto
 
 - Apelido único dentro do tenant? Hoje pode repetir; decidir junto com a inscrição em torneios.

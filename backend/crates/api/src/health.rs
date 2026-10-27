@@ -1,8 +1,13 @@
 use axum::{Json, extract::State, http::StatusCode};
 use serde::Serialize;
 use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
+
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new().routes(routes!(health))
+}
 
 #[derive(Serialize, ToSchema)]
 pub struct Health {

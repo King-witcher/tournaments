@@ -1,7 +1,11 @@
 use anyhow::Context;
 use std::sync::Arc;
 
-use api::{AppState, MIGRATOR, auth::AuthSettings, config::Config, discord::HttpDiscord};
+use api::{
+    AppState, MIGRATOR,
+    auth::{AuthSettings, HttpDiscord},
+    config::Config,
+};
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
 

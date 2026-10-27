@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome check --write",
-    "gen:api": "openapi-typescript http://localhost:8080/openapi.json -o src/lib/api/schema.d.ts"
+    "gen:api": "openapi-typescript http://localhost:8080/openapi.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
     "next": "16.4.3",

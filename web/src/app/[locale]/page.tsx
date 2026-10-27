@@ -1,15 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { ApiStatus } from "@/components/api-status";
-import { AuthError } from "@/components/auth-error";
-import { MyTenants } from "@/components/my-tenants";
+import { AuthError } from "@/features/auth/components/auth-error";
+import { ApiStatus } from "@/features/health/components/api-status";
+import { MyTenants } from "@/features/tenants/components/my-tenants";
+import { Page } from "@/shared/ui/page";
 
 export default async function Home({ searchParams }: PageProps<"/[locale]">) {
   const t = await getTranslations("Home");
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-16">
+    <Page>
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
@@ -21,6 +22,6 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
       <Suspense fallback={null}>
         <MyTenants />
       </Suspense>
-    </main>
+    </Page>
   );
 }

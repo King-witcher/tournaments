@@ -1,0 +1,163 @@
+//! Helpers dos testes: app de teste, usuários com sessão, requisições e os
+//! passos que vários domínios repetem (criar tenant, convidar, entrar).
+
+use std::sync::Arc;
+
+use api::{
+    AppState,
+    auth::{AuthSettings, DiscordApi, HttpDiscord},
+    shared::token::hash_token,
+};
+use axum::{
+    Router,
+    body::Body,
+    http::{HeaderValue, Method, Request, StatusCode, header},
+};
+use http_body_util::BodyExt;
+use serde_json::{Value, json};
+use sqlx::PgPool;
+use tower::ServiceExt;
+
+pub const WEB: &str = "http://localhost:3000";
+
+/// App com login do Discord desligado (os testes criam sessões direto no banco).
+pub fn app(db: PgPool) -> Router {
+    app_with(
+        db,
+        Arc::new(HttpDiscord::new(String::new(), String::new())),
+        AuthSettings {
+            discord_client_id: None,
+            redirect_uri: String::new(),
+            web_origin: WEB.into(),
+            cookie_domain: None,
+            cookie_secure: false,
+        },
+    )
+}
+
+pub fn app_with(db: PgPool, discord: Arc<dyn DiscordApi>, auth: AuthSettings) -> Router {
+    api::app(
+        AppState {
+            db,
+            discord,
+            auth: Arc::new(auth),
+        },
+        HeaderValue::from_static(WEB),
+    )
+}
+
+pub struct User {
+    pub id: i64,
+    pub cookie: String,
+}
+
+/// Cria um usuário com sessão válida direto no banco, sem passar pelo Discord.
+pub async fn user(db: &PgPool, display_name: &str) -> User {
+    let id = sqlx::query_scalar!(
+        "insert into users (display_name) values ($1) returning id",
+        display_name
+    )
+    .fetch_one(db)
+    .await
+    .unwrap();
+    let token = format!("token-{id}");
+    sqlx::query!(
+        "insert into sessions (id, user_id, expires_at) values ($1, $2, now() + interval '1 day')",
+        &hash_token(&token)[..],
+        id
+    )
+    .execute(db)
+    .await
+    .unwrap();
+    User {
+        id,
+        cookie: format!("session={token}"),
+    }
+}
+
+/// Faz a requisição e devolve status + corpo JSON (`Null` se vazio).
+pub async fn call(
+    app: &Router,
+    method: Method,
+    uri: &str,
+    user: Option<&User>,
+    body: Option<Value>,
+) -> (StatusCode, Value) {
+    let mut req = Request::builder().method(method).uri(uri);
+    if let Some(u) = user {
+        req = req.header(header::COOKIE, &u.cookie);
+    }
+    let req = match body {
+        Some(json) => req
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(json.to_string())),
+        None => req.body(Body::empty()),
+    }
+    .unwrap();
+
+    let res = app.clone().oneshot(req).await.unwrap();
+    let status = res.status();
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let json = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes)
+            .unwrap_or_else(|_| panic!("corpo não é JSON: {}", String::from_utf8_lossy(&bytes)))
+    };
+    (status, json)
+}
+
+pub async fn get(app: &Router, uri: &str, user: &User) -> (StatusCode, Value) {
+    call(app, Method::GET, uri, Some(user), None).await
+}
+
+pub async fn post(app: &Router, uri: &str, user: &User, body: Value) -> (StatusCode, Value) {
+    call(app, Method::POST, uri, Some(user), Some(body)).await
+}
+
+pub async fn post_empty(app: &Router, uri: &str, user: &User) -> (StatusCode, Value) {
+    call(app, Method::POST, uri, Some(user), None).await
+}
+
+pub async fn put(app: &Router, uri: &str, user: &User, body: Value) -> (StatusCode, Value) {
+    call(app, Method::PUT, uri, Some(user), Some(body)).await
+}
+
+pub async fn patch(app: &Router, uri: &str, user: &User, body: Value) -> (StatusCode, Value) {
+    call(app, Method::PATCH, uri, Some(user), Some(body)).await
+}
+
+pub async fn delete(app: &Router, uri: &str, user: &User) -> (StatusCode, Value) {
+    call(app, Method::DELETE, uri, Some(user), None).await
+}
+
+/// Corpo de erro da API.
+pub fn err(code: &str) -> Value {
+    json!({ "error": code })
+}
+
+/// Cria o tenant `slug` (nome "Tenant {slug}") com `owner` como owner.
+pub async fn create(app: &Router, owner: &User, slug: &str) -> Value {
+    let (status, body) = post(
+        app,
+        "/tenants",
+        owner,
+        json!({ "name": format!("Tenant {slug}"), "slug": slug }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    body
+}
+
+/// Gera um convite em `slug` e devolve o token.
+pub async fn invite(app: &Router, by: &User, slug: &str) -> String {
+    let (status, body) = post_empty(app, &format!("/tenants/{slug}/invites"), by).await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    body["token"].as_str().unwrap().to_owned()
+}
+
+pub async fn join(app: &Router, who: &User, token: &str) -> Value {
+    let (status, body) = post_empty(app, &format!("/invites/{token}/accept"), who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}

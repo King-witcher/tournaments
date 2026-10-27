@@ -5,14 +5,20 @@ Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA po
 ## Estrutura
 
 ```
-backend/                cargo workspace
+backend/                cargo workspace (organização: backend/CLAUDE.md)
   crates/engine/        formatos, pontuação, regras de campeões, rating (puro, sem I/O)
-  crates/api/           Axum: rotas, WebSocket, auth, acesso ao banco
+  crates/api/src/       Axum: um módulo por domínio (auth/, tenants/, members/, invites/) + shared/
+  crates/api/tests/api/ testes de rota, um arquivo por domínio, num binário só
   crates/migrate/       binário que só aplica as migrations (sem macros de query)
   migrations/           SQL do sqlx
-web/                    Next.js, só apresentação (next-intl: pt, es)
+web/                    Next.js, só apresentação (organização: web/CLAUDE.md)
+  src/app/              rotas, só compõem
+  src/features/         um domínio por pasta, os mesmos da API
+  src/shared/           ui/, hooks/, api/, lib/ genéricos
 docs/decisions.md
 ```
+
+O código é organizado por domínio dos dois lados, com `shared/` para o que é genérico. Antes de criar arquivo, módulo ou componente, siga `backend/CLAUDE.md` ou `web/CLAUDE.md` (o Claude Code carrega cada um ao abrir arquivos da pasta): onde cada coisa vai, nomes e quando quebrar um arquivo que cresceu.
 
 ## Comandos
 
@@ -28,7 +34,7 @@ Backend (em `backend/`):
 Frontend (em `web/`), sempre com Bun (nada de npm/pnpm):
 - `bun run dev`, `bun run build`
 - `bun run lint` (Biome) e `bun run format` (Biome com --write). Ainda não há testes de frontend.
-- `bun run gen:api`: regenera `src/lib/api/schema.d.ts` a partir do OpenAPI (com a API rodando)
+- `bun run gen:api`: regenera `src/shared/api/schema.d.ts` a partir do OpenAPI (com a API rodando)
 
 Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.example`. Setup completo do banco local no `README.md`.
 
@@ -37,8 +43,8 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - `engine` não depende de axum, sqlx, tokio nem do relógio. Aleatoriedade entra por seed/RNG passado como parâmetro.
 - Sem ORM: SQL escrito à mão com `sqlx::query!`/`query_as!`. Migrations em `backend/migrations/`.
 - Todo acesso a dados de tenant recebe um `TenantId` tipado. Nunca filtre tenant com string solta.
-- Rota que exige login recebe o extractor `CurrentUser` (`crates/api/src/current_user.rs`). Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenant_member.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
-- Erros saem por `ApiError` (`error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
+- Rota que exige login recebe o extractor `CurrentUser` (`crates/api/src/auth/current_user.rs`). Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenants/access.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
+- Erros saem por `ApiError` (`shared/error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`shared/extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
 - Ids: chave interna `bigint` identity; identificador público é slug; segredo é token aleatório com só o hash no banco (ver "Ids" em `docs/decisions.md`).
 - Estado de formato no `engine` é reconstruído por `replay` (config + participantes + histórico); nunca desserializado direto.
 - A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`.
@@ -60,7 +66,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - O usuário costuma deixar a API (8080) e o `bun run dev` (3000) rodando. Nunca encerre processos que você não iniciou; confira o dono com `Get-NetTCPConnection -LocalPort <porta>` e o horário de início.
 - Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 3001`.
 - Parar uma tarefa em segundo plano pode deixar o processo filho (`api.exe`, `node`) vivo. Depois de parar, confira as portas e encerre só o que for seu.
-- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:8081` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:8081/openapi.json -o src/lib/api/schema.d.ts`.
+- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:8081` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:8081/openapi.json -o src/shared/api/schema.d.ts`.
 
 ## Subagentes (`.claude/agents/`)
 
