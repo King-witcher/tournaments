@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select champion_rules from tournaments",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "champion_rules",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "champion_rules"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7629c2be4fdd41ac4d30e572363fadc2c53e714f4a453d47b2ec367df0906336"
+}

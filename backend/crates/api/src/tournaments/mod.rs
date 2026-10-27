@@ -1,0 +1,36 @@
+//! Torneios de um tenant: criar (rascunho), listar, ver, editar, publicar,
+//! excluir rascunho e traduzir os textos. Formato e regra de campeões passam
+//! pela checagem do `engine` ao criar, ao mudar e ao publicar.
+
+mod db;
+mod edit;
+mod format;
+mod handlers;
+mod setup;
+mod slug;
+mod status;
+mod texts;
+mod translations;
+mod types;
+
+use utoipa_axum::{router::OpenApiRouter, routes};
+
+use crate::AppState;
+
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(
+            handlers::create_tournament,
+            handlers::list_tournaments
+        ))
+        .routes(routes!(
+            handlers::get_tournament,
+            handlers::update_tournament,
+            handlers::delete_tournament
+        ))
+        .routes(routes!(handlers::publish_tournament))
+        .routes(routes!(
+            translations::put_translation,
+            translations::delete_translation
+        ))
+}

@@ -17,17 +17,22 @@ crates/api/src/
   config.rs       variáveis de ambiente
   health.rs       domínio pequeno: um arquivo só
   shared/         o que todo domínio usa; não conhece nenhum domínio
-    error.rs        ApiError, ErrorBody
+    error.rs        ApiError (código + params numéricos), ErrorBody
+    engine.rs       From<EngineError> for ApiError: um código por variante do engine
     extract.rs      JsonBody, PathParams
     token.rs        random_token, random_secret, hash_token, constant_time_eq
-    text.rs         clean_text
+    text.rs         clean_text (uma linha), clean_long_text (Markdown)
+    slug.rs         formato de slug; reservados e códigos ficam em cada domínio
+    locale.rs       Locale (pt, es)
   auth/           login com Discord, sessão em cookie, CurrentUser
   tenants/        tenants, e a base de todo dado de tenant: TenantId, Role, TenantMember, apelido
   members/        /tenants/{slug}/me e /tenants/{slug}/members
   invites/        /tenants/{slug}/invites e /invites/{token}
+  tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
+                  status, setup (vagas, campeões, fases → checagem do engine), edit (PATCH)
 ```
 
-Domínios previstos pelo roadmap: `tournaments` (torneio, traduções, fases), `participants` (inscrição, check-in, seeding), `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`.
+Domínios previstos pelo roadmap: `participants` (inscrição, check-in, seeding), `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`.
 
 ### O que é um domínio
 
@@ -78,10 +83,14 @@ crates/engine/src/
   core.rs         tipos de mais de um formato: ParticipantId, MatchId, Match, Outcome, EngineError
   series.rs       melhor de N
   seeding.rs      tamanho e ordem da chave
-  champions.rs    orçamento da regra de não repetição
+  champions.rs    ChampionRules e o orçamento da regra de não repetição
+  tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
   formats/
+    mod.rs        StageFormat (o JSON gravado em tournament_stages.config)
     elimination/  mod.rs (config, estado, replay), build.rs (topologia), resolve.rs (estados), tests/
 ```
+
+- O JSON de `StageFormat` e `ChampionRules` fica gravado no banco: mudar o serde deles exige migration dos dados. Os testes em `formats/tests.rs` fixam o formato.
 
 - Um formato por pasta em `formats/` (`round_robin/`, `swiss/`, `ffa/`): `mod.rs` com a API pública (config, estado, `replay`) e um arquivo por etapa.
 - O que não é formato fica no topo, como `scoring/` (pontos e desempate de FFA), `veto/` e `rating/`. Um arquivo até ~300 linhas, depois pasta.

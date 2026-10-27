@@ -33,6 +33,15 @@ pub struct NoRepeatRule {
     pub scope: NoRepeatScope,
 }
 
+/// Regras de campeões de um torneio (guardadas em JSON no torneio).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ChampionRules {
+    /// Bans que o adversário aplica contra um lado, por mapa.
+    pub bans_per_game: u32,
+    /// `None`: sem regra de não repetição.
+    pub no_repeat: Option<NoRepeatRule>,
+}
+
 /// Dados para checar se o pool de campeões aguenta a regra no pior caso.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ChampionBudget {

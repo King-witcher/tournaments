@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use axum::{
     Json,
     http::StatusCode,
@@ -11,17 +13,33 @@ use utoipa::ToSchema;
 pub struct ErrorBody {
     #[schema(example = "auth.unauthenticated")]
     pub error: &'static str,
+    /// Números que a mensagem traduzida mostra, quando o código tem
+    /// (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[schema(value_type = Option<HashMap<String, i64>>)]
+    pub params: BTreeMap<&'static str, i64>,
 }
 
 #[derive(Debug)]
 pub struct ApiError {
     pub status: StatusCode,
     pub code: &'static str,
+    pub params: Vec<(&'static str, i64)>,
 }
 
 impl ApiError {
     pub const fn new(status: StatusCode, code: &'static str) -> Self {
-        Self { status, code }
+        Self {
+            status,
+            code,
+            params: Vec::new(),
+        }
+    }
+
+    /// Acrescenta números à resposta, para o front interpolar na tradução.
+    pub fn with_params<const N: usize>(mut self, params: [(&'static str, i64); N]) -> Self {
+        self.params.extend(params);
+        self
     }
 
     pub const fn unauthenticated() -> Self {
@@ -57,7 +75,11 @@ impl ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        (self.status, Json(ErrorBody { error: self.code })).into_response()
+        let body = ErrorBody {
+            error: self.code,
+            params: self.params.into_iter().collect(),
+        };
+        (self.status, Json(body)).into_response()
     }
 }
 

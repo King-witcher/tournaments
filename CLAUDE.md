@@ -7,7 +7,7 @@ Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA po
 ```
 backend/                cargo workspace (organização: backend/CLAUDE.md)
   crates/engine/        formatos, pontuação, regras de campeões, rating (puro, sem I/O)
-  crates/api/src/       Axum: um módulo por domínio (auth/, tenants/, members/, invites/) + shared/
+  crates/api/src/       Axum: um módulo por domínio (auth/, tenants/, members/, invites/, tournaments/) + shared/
   crates/api/tests/api/ testes de rota, um arquivo por domínio, num binário só
   crates/migrate/       binário que só aplica as migrations (sem macros de query)
   migrations/           SQL do sqlx

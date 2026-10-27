@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"count!\" from champions where active",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "587bcebbb5327f51971d9f456d27f9e1ef74efd37f3008da560c83b0328644a5"
+}

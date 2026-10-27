@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from tournaments where id = $1 and status = 'draft'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "639972559adf0f9b0ae2cec11188b7c8fabc45b0e677b5aee22ad45e9e49ddc2"
+}

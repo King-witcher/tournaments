@@ -23,7 +23,7 @@ export function useApiAction() {
         setError(undefined);
         onSuccess(outcome.data);
       } else {
-        setError(errorMessage(outcome.code));
+        setError(errorMessage(outcome.code, outcome.params));
       }
     });
   }

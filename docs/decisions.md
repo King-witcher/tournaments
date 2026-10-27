@@ -66,6 +66,21 @@ Motivos e cuidados:
 - **Segredos** (sessão, convite): aleatórios, e só o SHA-256 vai para o banco. O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
 - Se um dia houver ids gerados fora do banco ou bancos que se fundem: `uuidv7()`, nativo no PG18 (a ideia do ULID, com tipo nativo).
 
+## Torneios
+
+- Endereço `/{locale}/{tenant}/{torneio}`. O slug segue as regras do tenant (sugerido a partir do nome, ajustável na criação, a-z, 0-9 e hífen, de 3 a 32), é único dentro do tenant e **não muda**. Há palavras reservadas para as rotas do tenant (`new`, `members`, `settings`...).
+- **Só membros** veem torneios. Quem é de fora recebe 404 `tournament.not_found`. Rascunho só aparece para organizer e owner; para player também é 404.
+- Organizer e owner criam e editam. Criar gera um rascunho; publicar abre a inscrição; só rascunho pode ser excluído.
+- **Vagas obrigatórias** (2 a 1024). A checagem de campeões na criação usa o pior caso para esse número (o pior caso não diminui com mais participantes; há teste disso no `engine`) e roda de novo ao gerar a chave com os inscritos reais. As vagas também fecham a inscrição quando lotam.
+- **Pool de campeões**: tabela global `champions` com os 17 atuais, e o pool do torneio é o conjunto ativo. Excluir campeões por torneio fica para depois.
+- Bans de campeão por mapa: de 0 a 3, padrão 1.
+- Não repetição na checagem: escopo partida usa o maior melhor de N; fase, o pior caso da fase mais longa; torneio, a soma dos piores casos das fases. Sem a regra, basta sobrar um campeão depois dos bans.
+- Formato padrão no formulário de duelo: eliminação dupla com reset, md3 nas partidas e md5 na grande final.
+- Edição: nome, descrição, regras e traduções até o torneio encerrar. Formato, vagas e regra de campeões até ele começar; a checagem roda de novo a cada mudança e ao publicar. Quando houver inscrição, vagas abaixo do número de inscritos serão recusadas.
+- O idioma original não muda depois da criação. Tradução: uma por idioma diferente do original, com nome obrigatório; descrição ou regras vazias mostram as do original. A API devolve o original e as traduções, e o front escolhe pelo idioma de quem vê.
+- Descrição e regras em **Markdown**, sem HTML cru (`react-markdown` no front).
+- Erro com números sai como `{"error": "champions.pool_exhausted", "params": {"required": 32, "available": 17}}`, e o front interpola os números na tradução.
+
 ## Rating
 
 - **Derivado, nunca editado direto**: reprocessar as partidas do tenant + ajustes manuais do organizador (com motivo e autor). Corrigir um resultado antigo → recalcular.
@@ -129,7 +144,7 @@ Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code car
 ## Em aberto
 
 - Apelido único dentro do tenant? Hoje pode repetir; decidir junto com a inscrição em torneios.
-- Duelo: tipo de chave padrão (simples/dupla), melhor de N por fase, sequência do veto (ex.: ban-ban-pick-pick-decider), tempo do cronômetro.
+- Duelo: sequência do veto (ex.: ban-ban-pick-pick-decider) e tempo do cronômetro.
 - Janela de contestação padrão (X minutos) e duração da janela de check-in.
 - Critérios de desempate (FFA por pontos e grupos).
 - Rating para FFA e times (Elo par a par? média do time?).

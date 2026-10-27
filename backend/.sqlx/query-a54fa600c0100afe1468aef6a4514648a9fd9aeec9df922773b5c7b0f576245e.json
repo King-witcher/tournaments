@@ -1,0 +1,149 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, slug, locale, name, description, rules, mode, status, max_participants,\n                  champion_rules as \"champion_rules: Json<ec::ChampionRules>\", created_at\n           from tournaments\n           where tenant_id = $1 and slug = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "locale",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "locale"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "rules",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "rules"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "mode",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "mode"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "max_participants",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "max_participants"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "champion_rules: Json<ec::ChampionRules>",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "champion_rules"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a54fa600c0100afe1468aef6a4514648a9fd9aeec9df922773b5c7b0f576245e"
+}

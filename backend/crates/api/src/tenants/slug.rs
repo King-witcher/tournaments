@@ -1,6 +1,4 @@
-use crate::shared::ApiError;
-
-const SLUG_LEN: std::ops::RangeInclusive<usize> = 3..=32;
+use crate::shared::{ApiError, slug::is_well_formed};
 
 /// Slugs que colidem com rotas do front em `/{locale}/...` (hoje `new` e
 /// `invite`) ou que ficam guardados para rotas futuras.
@@ -32,15 +30,7 @@ const RESERVED_SLUGS: &[&str] = &[
 ];
 
 pub fn validate_slug(slug: &str) -> Result<(), ApiError> {
-    // Mesmo formato do check da tabela: ^[a-z0-9]+(-[a-z0-9]+)*$
-    let well_formed = SLUG_LEN.contains(&slug.len())
-        && slug.split('-').all(|part| {
-            !part.is_empty()
-                && part
-                    .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
-        });
-    if !well_formed {
+    if !is_well_formed(slug) {
         return Err(ApiError::invalid("tenant.slug_invalid"));
     }
     if RESERVED_SLUGS.contains(&slug) {
@@ -54,27 +44,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn slug_format() {
-        for ok in ["abc", "quake-br", "qc2v2", "a-b-c", &"a".repeat(32)] {
-            assert!(validate_slug(ok).is_ok(), "{ok}");
-        }
-        for bad in [
-            "ab",
-            &"a".repeat(33),
-            "Quake",
-            "quake_br",
-            "-abc",
-            "abc-",
-            "a--b",
-            "ação",
-            "a b c",
-        ] {
-            assert_eq!(
-                validate_slug(bad).unwrap_err().code,
-                "tenant.slug_invalid",
-                "{bad}"
-            );
-        }
+    fn slug_codes() {
+        assert!(validate_slug("quake-br").is_ok());
+        assert_eq!(
+            validate_slug("Quake").unwrap_err().code,
+            "tenant.slug_invalid"
+        );
         assert_eq!(
             validate_slug("invite").unwrap_err().code,
             "tenant.slug_reserved"

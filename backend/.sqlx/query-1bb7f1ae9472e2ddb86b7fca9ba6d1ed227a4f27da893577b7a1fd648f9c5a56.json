@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set status = 'in_progress'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "1bb7f1ae9472e2ddb86b7fca9ba6d1ed227a4f27da893577b7a1fd648f9c5a56"
+}

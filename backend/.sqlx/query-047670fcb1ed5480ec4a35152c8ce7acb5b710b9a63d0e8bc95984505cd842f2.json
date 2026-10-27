@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from tournament_translations where tournament_id = $1 and locale = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "047670fcb1ed5480ec4a35152c8ce7acb5b710b9a63d0e8bc95984505cd842f2"
+}

@@ -8,6 +8,7 @@ mod invites;
 mod members;
 pub mod shared;
 mod tenants;
+mod tournaments;
 
 use std::sync::Arc;
 
@@ -42,6 +43,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(tenants::router())
         .merge(members::router())
         .merge(invites::router())
+        .merge(tournaments::router())
         .with_state(state)
         .split_for_parts();
 

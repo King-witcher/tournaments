@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select config as \"config: Json<ef::StageFormat>\"\n           from tournament_stages\n           where tournament_id = $1\n           order by position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "config: Json<ef::StageFormat>",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "config"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4b75d6fbaf3a96603be29655fa2ada79de828aad5624a086b2c4b156359a246c"
+}

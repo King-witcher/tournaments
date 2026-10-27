@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"count!\" from tournament_stages",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "26cd85f062de3b7b0245d14f2a8265e13939dac09d10b1d57bfd75dff837c8f4"
+}

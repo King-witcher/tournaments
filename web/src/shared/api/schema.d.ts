@@ -228,6 +228,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_tournaments"];
+        put?: never;
+        post: operations["create_tournament"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_tournament"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_tournament"];
+        options?: never;
+        head?: never;
+        patch: operations["update_tournament"];
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publish_tournament"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/translations/{locale}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["put_translation"];
+        post?: never;
+        delete: operations["delete_translation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -237,6 +301,17 @@ export interface components {
          * @enum {string}
          */
         AssignableRole: "organizer" | "player";
+        /** @enum {string} */
+        Bracket: "single" | "double";
+        ChampionRules: {
+            /**
+             * Format: int32
+             * @description Bans de campeão que cada lado sofre por mapa, de 0 a 3.
+             * @example 1
+             */
+            bans_per_game: number;
+            no_repeat?: components["schemas"]["NoRepeatRule"] | null;
+        };
         CreateTenant: {
             /**
              * @description Nome exibido, 1 a 64 caracteres.
@@ -248,6 +323,34 @@ export interface components {
              * @example quake-br
              */
             slug: string;
+        };
+        CreateTournament: {
+            champion_rules: components["schemas"]["ChampionRules"];
+            /** @description Markdown, até 2000 caracteres. */
+            description?: string;
+            /** @description Idioma original dos textos. Não muda depois. */
+            locale: components["schemas"]["Locale"];
+            /**
+             * Format: int32
+             * @description Vagas, de 2 a 1024. A checagem de campeões usa o pior caso com esse número.
+             * @example 16
+             */
+            max_participants: number;
+            mode: components["schemas"]["TournamentMode"];
+            /**
+             * @description 1 a 80 caracteres.
+             * @example Copa de Outubro
+             */
+            name: string;
+            /** @description Markdown, até 20000 caracteres. */
+            rules?: string;
+            /**
+             * @description a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Não muda depois.
+             * @example copa-de-outubro
+             */
+            slug: string;
+            /** @description Fases, na ordem. Por enquanto, exatamente uma. */
+            stages: components["schemas"]["StageFormat"][];
         };
         CreatedInvite: {
             /** Format: date-time */
@@ -275,6 +378,13 @@ export interface components {
         ErrorBody: {
             /** @example auth.unauthenticated */
             error: string;
+            /**
+             * @description Números que a mensagem traduzida mostra, quando o código tem
+             *     (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+             */
+            params?: {
+                [key: string]: number;
+            } | null;
         };
         Health: {
             database: components["schemas"]["ServiceStatus"];
@@ -301,6 +411,8 @@ export interface components {
             expires_at: string;
             tenant_name: string;
         };
+        /** @enum {string} */
+        Locale: "pt" | "es";
         Member: {
             avatar_url?: string | null;
             /** @description Nome global do usuário (do Discord). */
@@ -320,6 +432,32 @@ export interface components {
             role: components["schemas"]["Role"];
             slug: string;
         };
+        NameTranslation: {
+            locale: components["schemas"]["Locale"];
+            name: string;
+        };
+        NoRepeatRule: {
+            scope: components["schemas"]["NoRepeatScope"];
+            who: components["schemas"]["NoRepeatWho"];
+        };
+        /**
+         * @description Até onde a regra vale.
+         * @enum {string}
+         */
+        NoRepeatScope: "match" | "stage" | "tournament";
+        /**
+         * @description Quem não pode repetir campeão. No duelo os dois dão no mesmo.
+         * @enum {string}
+         */
+        NoRepeatWho: "player" | "team";
+        PutTranslation: {
+            /** @description Markdown, até 2000 caracteres; vazio usa o original. */
+            description?: string;
+            /** @description 1 a 80 caracteres. */
+            name: string;
+            /** @description Markdown, até 20000 caracteres; vazio usa o original. */
+            rules?: string;
+        };
         /**
          * @description Papel no tenant. A ordem das variantes é a hierarquia (`Player < Owner`).
          * @enum {string}
@@ -330,9 +468,93 @@ export interface components {
         SetRole: {
             role: components["schemas"]["AssignableRole"];
         };
+        /** @description Formato de uma fase. */
+        StageFormat: {
+            /**
+             * Format: int32
+             * @description Melhor de N das partidas comuns (ímpar).
+             * @example 3
+             */
+            best_of: number;
+            bracket: components["schemas"]["Bracket"];
+            /**
+             * Format: int32
+             * @description Melhor de N da final (simples) ou da grande final e do reset (dupla).
+             * @example 5
+             */
+            finals_best_of: number;
+            /** @enum {string} */
+            format: "elimination";
+            /**
+             * @description Só na dupla: se o campeão da chave de baixo vence a grande final,
+             *     há uma segunda série. Ignorado na simples.
+             */
+            grand_final_reset?: boolean;
+        };
+        /**
+         * @description Torneio completo, com os textos no idioma original e as traduções; o
+         *     front escolhe pelo idioma de quem vê.
+         */
+        Tournament: {
+            champion_rules: components["schemas"]["ChampionRules"];
+            /** Format: date-time */
+            created_at: string;
+            description: string;
+            locale: components["schemas"]["Locale"];
+            /** Format: int32 */
+            max_participants: number;
+            mode: components["schemas"]["TournamentMode"];
+            name: string;
+            rules: string;
+            slug: string;
+            stages: components["schemas"]["StageFormat"][];
+            status: components["schemas"]["TournamentStatus"];
+            translations: components["schemas"]["TournamentTranslation"][];
+        };
+        /** @enum {string} */
+        TournamentMode: "duel";
+        /**
+         * @description rascunho → inscrição → check-in → em andamento → encerrado.
+         * @enum {string}
+         */
+        TournamentStatus: "draft" | "registration" | "check_in" | "in_progress" | "finished";
+        /** @description Item da lista de torneios do tenant. */
+        TournamentSummary: {
+            /** Format: date-time */
+            created_at: string;
+            locale: components["schemas"]["Locale"];
+            /** Format: int32 */
+            max_participants: number;
+            mode: components["schemas"]["TournamentMode"];
+            name: string;
+            slug: string;
+            status: components["schemas"]["TournamentStatus"];
+            /** @description Nome nas traduções que existem. */
+            translations: components["schemas"]["NameTranslation"][];
+        };
+        /** @description Tradução de um torneio. Descrição ou regras vazias: o front mostra as do original. */
+        TournamentTranslation: {
+            description: string;
+            locale: components["schemas"]["Locale"];
+            name: string;
+            rules: string;
+        };
         UpdateMyMembership: {
             /** @description 1 a 32 caracteres; espaços nas pontas são removidos. */
             nickname: string;
+        };
+        /**
+         * @description Campos ausentes não mudam. Textos podem mudar até o torneio encerrar;
+         *     vagas, regra de campeões e fases, até ele começar.
+         */
+        UpdateTournament: {
+            champion_rules?: components["schemas"]["ChampionRules"] | null;
+            description?: string | null;
+            /** Format: int32 */
+            max_participants?: number | null;
+            name?: string | null;
+            rules?: string | null;
+            stages?: components["schemas"]["StageFormat"][] | null;
         };
     };
     responses: never;
@@ -1011,6 +1233,520 @@ export interface operations {
             };
             /** @description request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_tournaments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Torneios do tenant, do mais novo ao mais antigo; rascunhos só para organizer e owner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentSummary"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTournament"];
+            };
+        };
+        responses: {
+            /** @description Torneio criado como rascunho */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.slug_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O torneio, com fases e traduções */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found (inexistente, ou rascunho para player) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rascunho excluído */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_draft (só rascunho pode ser excluído) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTournament"];
+            };
+        };
+        responses: {
+            /** @description Torneio atualizado; a checagem de campeões roda de novo se a configuração mudou */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.finished (textos), tournament.setup_locked (vagas, campeões ou fases depois de começar) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Os mesmos da criação, menos slug */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    publish_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_draft */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_translation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Idioma da tradução */
+                locale: components["schemas"]["Locale"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutTranslation"];
+            };
+        };
+        responses: {
+            /** @description Tradução criada ou substituída */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentTranslation"];
+                };
+            };
+            /** @description request.invalid_path (idioma desconhecido) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.finished */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_translation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Idioma da tradução */
+                locale: components["schemas"]["Locale"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tradução removida; o idioma volta a mostrar o original */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, tournament.translation_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.finished */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

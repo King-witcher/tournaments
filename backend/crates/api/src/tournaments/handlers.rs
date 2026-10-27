@@ -1,0 +1,239 @@
+use axum::{Json, extract::State, http::StatusCode};
+
+use super::{
+    db::{self, NewTournament, StoredTournament},
+    edit,
+    setup::Setup,
+    slug::validate_slug,
+    status::TournamentStatus,
+    texts::Texts,
+    types::{CreateTournament, Tournament, TournamentPath, TournamentSummary, UpdateTournament},
+};
+use crate::{
+    AppState,
+    shared::{ApiError, ErrorBody, JsonBody, PathParams},
+    tenants::{Organizer, Role, TenantMember},
+};
+
+const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
+
+#[utoipa::path(
+    post,
+    path = "/tenants/{slug}/tournaments",
+    tag = "tournaments",
+    params(("slug" = String, Path, description = "Slug do tenant")),
+    request_body = CreateTournament,
+    responses(
+        (status = CREATED, body = Tournament, description = "Torneio criado como rascunho"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+    )
+)]
+pub async fn create_tournament(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    JsonBody(body): JsonBody<CreateTournament>,
+) -> Result<(StatusCode, Json<Tournament>), ApiError> {
+    validate_slug(&body.slug)?;
+    let texts = Texts::clean(&body.name, &body.description, &body.rules)?;
+    let setup = Setup::from_dto(body.max_participants, body.champion_rules, body.stages);
+    setup.check(body.mode, db::champion_pool(&state.db).await?)?;
+
+    let new = NewTournament {
+        slug: &body.slug,
+        locale: body.locale,
+        texts: &texts,
+        mode: body.mode,
+        setup: &setup,
+    };
+    db::create(&state.db, member.tenant, new).await?;
+    let created = db::find(&mut *state.db.acquire().await?, member.tenant, &body.slug)
+        .await?
+        .ok_or_else(ApiError::internal)?;
+    Ok((StatusCode::CREATED, Json(view(created))))
+}
+
+#[utoipa::path(
+    get,
+    path = "/tenants/{slug}/tournaments",
+    tag = "tournaments",
+    params(("slug" = String, Path, description = "Slug do tenant")),
+    responses(
+        (status = OK, body = Vec<TournamentSummary>, description = "Torneios do tenant, do mais novo ao mais antigo; rascunhos só para organizer e owner"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
+    )
+)]
+pub async fn list_tournaments(
+    State(state): State<AppState>,
+    member: TenantMember,
+) -> Result<Json<Vec<TournamentSummary>>, ApiError> {
+    db::list(&state.db, member.tenant, member.role >= Role::Organizer)
+        .await
+        .map(Json)
+}
+
+#[utoipa::path(
+    get,
+    path = "/tenants/{slug}/tournaments/{tournament}",
+    tag = "tournaments",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    responses(
+        (status = OK, body = Tournament, description = "O torneio, com fases e traduções"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found (inexistente, ou rascunho para player)"),
+    )
+)]
+pub async fn get_tournament(
+    State(state): State<AppState>,
+    member: TenantMember,
+    PathParams(path): PathParams<TournamentPath>,
+) -> Result<Json<Tournament>, ApiError> {
+    let found = db::find(
+        &mut *state.db.acquire().await?,
+        member.tenant,
+        &path.tournament,
+    )
+    .await?
+    .filter(|t| t.status != TournamentStatus::Draft || member.role >= Role::Organizer)
+    .ok_or(NOT_FOUND)?;
+    Ok(Json(view(found)))
+}
+
+#[utoipa::path(
+    patch,
+    path = "/tenants/{slug}/tournaments/{tournament}",
+    tag = "tournaments",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    request_body = UpdateTournament,
+    responses(
+        (status = OK, body = Tournament, description = "Torneio atualizado; a checagem de campeões roda de novo se a configuração mudou"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos), tournament.setup_locked (vagas, campeões ou fases depois de começar)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
+    )
+)]
+pub async fn update_tournament(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+    JsonBody(body): JsonBody<UpdateTournament>,
+) -> Result<Json<Tournament>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let current = db::find_for_update(&mut tx, member.tenant, &path.tournament)
+        .await?
+        .ok_or(NOT_FOUND)?;
+    let edit = edit::apply(current.status, &current.texts, &current.setup, body)?;
+    if let Some(setup) = &edit.setup {
+        setup.check(current.mode, db::champion_pool(&mut *tx).await?)?;
+    }
+    db::update(&mut tx, current.id, &edit.texts, edit.setup.as_ref()).await?;
+    let updated = db::find(&mut tx, member.tenant, &path.tournament)
+        .await?
+        .ok_or_else(ApiError::internal)?;
+    tx.commit().await?;
+    Ok(Json(view(updated)))
+}
+
+#[utoipa::path(
+    post,
+    path = "/tenants/{slug}/tournaments/{tournament}/publish",
+    tag = "tournaments",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    responses(
+        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
+    )
+)]
+pub async fn publish_tournament(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+) -> Result<Json<Tournament>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let current = db::find_for_update(&mut tx, member.tenant, &path.tournament)
+        .await?
+        .ok_or(NOT_FOUND)?;
+    if current.status != TournamentStatus::Draft {
+        return Err(ApiError::conflict("tournament.not_draft"));
+    }
+    current
+        .setup
+        .check(current.mode, db::champion_pool(&mut *tx).await?)?;
+    db::publish(&mut tx, current.id).await?;
+    tx.commit().await?;
+    Ok(Json(view(StoredTournament {
+        status: TournamentStatus::Registration,
+        ..current
+    })))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/tenants/{slug}/tournaments/{tournament}",
+    tag = "tournaments",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    responses(
+        (status = NO_CONTENT, description = "Rascunho excluído"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft (só rascunho pode ser excluído)"),
+    )
+)]
+pub async fn delete_tournament(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+) -> Result<StatusCode, ApiError> {
+    let found = db::find(
+        &mut *state.db.acquire().await?,
+        member.tenant,
+        &path.tournament,
+    )
+    .await?
+    .ok_or(NOT_FOUND)?;
+    if !db::delete_draft(&state.db, found.id).await? {
+        return Err(ApiError::conflict("tournament.not_draft"));
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Torneio gravado → resposta da API.
+fn view(t: StoredTournament) -> Tournament {
+    Tournament {
+        slug: t.slug,
+        locale: t.locale,
+        name: t.texts.name,
+        description: t.texts.description,
+        rules: t.texts.rules,
+        mode: t.mode,
+        status: t.status,
+        max_participants: t.setup.max_participants,
+        champion_rules: t.setup.champion_rules.into(),
+        stages: t.setup.stages.into_iter().map(Into::into).collect(),
+        translations: t.translations,
+        created_at: t.created_at,
+    }
+}

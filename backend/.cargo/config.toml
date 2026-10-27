@@ -1,3 +1,6 @@
 # Banco local sem senha, usado pelas macros sqlx::query! na compilação.
 [env]
 DATABASE_URL = "postgres://tournaments@localhost:5432/tournaments"
+# Cada teste sqlx::test cria um banco. Com uma thread por núcleo, a criação em
+# paralelo no Postgres local estoura o tempo de conexão (PoolTimedOut).
+RUST_TEST_THREADS = "4"

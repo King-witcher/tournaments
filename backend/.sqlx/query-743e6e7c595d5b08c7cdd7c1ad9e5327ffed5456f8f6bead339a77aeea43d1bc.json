@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set status = 'finished'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "743e6e7c595d5b08c7cdd7c1ad9e5327ffed5456f8f6bead339a77aeea43d1bc"
+}

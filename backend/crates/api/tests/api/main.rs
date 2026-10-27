@@ -8,3 +8,4 @@ mod health;
 mod invites;
 mod members;
 mod tenants;
+mod tournaments;

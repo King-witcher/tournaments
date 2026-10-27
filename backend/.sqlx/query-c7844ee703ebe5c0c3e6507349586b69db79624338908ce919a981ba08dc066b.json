@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select locale, name, description, rules\n           from tournament_translations\n           where tournament_id = $1\n           order by locale",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "locale",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_translations",
+            "name": "locale"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_translations",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_translations",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "rules",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_translations",
+            "name": "rules"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c7844ee703ebe5c0c3e6507349586b69db79624338908ce919a981ba08dc066b"
+}

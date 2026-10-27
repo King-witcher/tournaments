@@ -7,11 +7,11 @@ import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { slugify } from "@/shared/lib/slugify";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
-import { slugify } from "../lib/slugify";
 
 /** Nome + slug. O slug acompanha o nome até a pessoa editá-lo. */
 export function CreateTenantForm() {

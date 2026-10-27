@@ -138,4 +138,6 @@ pub enum EngineError {
     InvalidScore { best_of: u8, score: SeriesScore },
     #[error("no pior caso são necessários {required} campeões; o pool tem {available}")]
     ChampionPoolExhausted { required: u32, available: u32 },
+    #[error("o torneio precisa de pelo menos uma fase")]
+    NoStages,
 }

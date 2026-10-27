@@ -4,14 +4,15 @@ import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { InviteSection } from "@/features/invites/components/invite-section";
 import { MemberList } from "@/features/members/components/member-list";
 import { NicknameForm } from "@/features/members/components/nickname-form";
+import { TournamentList } from "@/features/tournaments/components/tournament-list";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { Alert } from "@/shared/ui/alert";
 
 /**
- * Página do tenant, só para membros: apelido, membros e (organizer ou owner)
- * convites. Cada seção busca o próprio dado. Lê a sessão, então fica em
- * `<Suspense>`.
+ * Página do tenant, só para membros: torneios, apelido, membros e (organizer
+ * ou owner) convites. Cada seção busca o próprio dado. Lê a sessão, então
+ * fica em `<Suspense>`.
  */
 export async function TenantView({ slug }: { slug: string }) {
   const api = await serverApi();
@@ -41,6 +42,7 @@ export async function TenantView({ slug }: { slug: string }) {
           {t("yourRole", { role: tRoles(me.role) })}
         </p>
       </header>
+      <TournamentList slug={slug} viewerRole={me.role} />
       <NicknameForm slug={slug} nickname={me.nickname} />
       <MemberList slug={slug} viewerRole={me.role} />
       {me.role !== "player" && <InviteSection slug={slug} />}

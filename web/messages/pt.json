@@ -73,6 +73,108 @@
     "loginRequired": "Entre com o Discord para aceitar o convite.",
     "accept": "Entrar na comunidade"
   },
+  "Locales": {
+    "pt": "Português",
+    "es": "Espanhol"
+  },
+  "TournamentStatus": {
+    "draft": "Rascunho",
+    "registration": "Inscrições abertas",
+    "check_in": "Check-in",
+    "in_progress": "Em andamento",
+    "finished": "Encerrado"
+  },
+  "Tournaments": {
+    "title": "Torneios",
+    "create": "Criar torneio",
+    "empty": "Nenhum torneio ainda.",
+    "slots": "{count, plural, one {# vaga} other {# vagas}}"
+  },
+  "NewTournament": {
+    "title": "Criar torneio",
+    "loginRequired": "Entre para criar um torneio."
+  },
+  "TournamentForm": {
+    "name": "Nome",
+    "slug": "Endereço",
+    "slugHint": "Letras minúsculas, números e hífen, de 3 a 32. Não dá para mudar depois.",
+    "locale": "Idioma dos textos",
+    "localeHint": "Traduções para os outros idiomas são opcionais e ficam na edição. O idioma original não muda depois.",
+    "description": "Descrição",
+    "rules": "Regras",
+    "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
+    "setup": "Formato",
+    "maxParticipants": "Vagas",
+    "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
+    "bracket": "Chave",
+    "brackets": {
+      "single": "Eliminação simples",
+      "double": "Eliminação dupla"
+    },
+    "grandFinalReset": "Grande final com reset: se quem vem da chave de baixo vencer, joga-se mais uma série",
+    "bestOf": "Partidas",
+    "finalsBestOf": {
+      "single": "Final",
+      "double": "Grande final"
+    },
+    "bestOfOption": "Melhor de {count}",
+    "bansPerGame": "Bans de campeão por mapa",
+    "bansOption": "{count, plural, =0 {Sem bans} one {# ban} other {# bans}}",
+    "noRepeat": "Não repetir campeão",
+    "noRepeatOptions": {
+      "off": "Pode repetir",
+      "match": "Dentro de cada partida",
+      "stage": "Em toda a fase",
+      "tournament": "No torneio inteiro"
+    },
+    "noRepeatHint": "A regra é conferida no pior caso de mapas para o número de vagas. Se faltar campeão, o torneio não é salvo.",
+    "setupLocked": "O torneio já começou: formato, vagas e campeões não mudam mais.",
+    "create": "Criar rascunho",
+    "save": "Salvar"
+  },
+  "Tournament": {
+    "loading": "Carregando o torneio…",
+    "loginRequired": "Entre para ver este torneio.",
+    "draftHint": "Rascunho: só organizadores veem. Publique para abrir as inscrições.",
+    "edit": "Editar",
+    "editTitle": "Editar torneio",
+    "publish": "Publicar e abrir inscrições",
+    "delete": "Excluir rascunho",
+    "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
+    "rules": "Regras",
+    "setup": {
+      "title": "Formato",
+      "labels": {
+        "bracket": "Chave",
+        "series": "Séries",
+        "slots": "Vagas",
+        "champions": "Campeões"
+      },
+      "bracket": {
+        "single": "Eliminação simples",
+        "double": "Eliminação dupla",
+        "doubleReset": "Eliminação dupla, grande final com reset"
+      },
+      "series": {
+        "single": "Melhor de {bestOf}; final melhor de {finals}",
+        "double": "Melhor de {bestOf}; grande final melhor de {finals}"
+      },
+      "bans": "{count, plural, =0 {sem bans} one {# ban por mapa} other {# bans por mapa}}",
+      "noRepeat": {
+        "off": "pode repetir campeão",
+        "match": "sem repetir campeão na mesma partida",
+        "stage": "sem repetir campeão na fase",
+        "tournament": "sem repetir campeão no torneio"
+      }
+    },
+    "translation": {
+      "title": "Tradução: {language}",
+      "hint": "Opcional. Descrição ou regras em branco mostram as do idioma original.",
+      "save": "Salvar tradução",
+      "saved": "Tradução salva.",
+      "remove": "Remover tradução"
+    }
+  },
   "ApiErrors": {
     "internal": "Algo deu errado. Tente de novo.",
     "request": {
@@ -104,6 +206,33 @@
       "not_found": "Membro não encontrado.",
       "is_owner": "O papel do dono não pode ser alterado.",
       "nickname_invalid": "O apelido precisa ter de 1 a 32 caracteres."
+    },
+    "tournament": {
+      "not_found": "Torneio não encontrado.",
+      "slug_taken": "Já existe um torneio com esse endereço nesta comunidade.",
+      "slug_invalid": "Use de 3 a 32 letras minúsculas, números ou hífens, sem hífen no começo, no fim ou repetido.",
+      "slug_reserved": "Esse endereço é reservado. Escolha outro.",
+      "name_invalid": "O nome precisa ter de 1 a 80 caracteres.",
+      "description_invalid": "A descrição pode ter até {max} caracteres.",
+      "rules_invalid": "As regras podem ter até {max} caracteres.",
+      "max_participants_invalid": "As vagas precisam ficar entre {min} e {max}.",
+      "bans_invalid": "São no máximo {max} bans por mapa.",
+      "stage_count_invalid": "Por enquanto um torneio tem uma fase só.",
+      "not_draft": "Isso só vale para rascunhos.",
+      "setup_locked": "O torneio já começou: formato, vagas e campeões não mudam mais.",
+      "finished": "O torneio já foi encerrado e não pode mais ser alterado.",
+      "translation_same_locale": "Esse já é o idioma original do torneio.",
+      "translation_not_found": "Não há tradução nesse idioma."
+    },
+    "format": {
+      "invalid_best_of": "Melhor de {best_of} não vale: use um número ímpar (1, 3, 5...).",
+      "not_enough_participants": "São necessários pelo menos {min} participantes.",
+      "too_many_participants": "O máximo é {max} participantes.",
+      "duplicate_participant": "Participante repetido.",
+      "no_stages": "O torneio precisa de pelo menos uma fase."
+    },
+    "champions": {
+      "pool_exhausted": "No pior caso são necessários {required} campeões, mas o pool tem {available}. Diminua as vagas, as séries ou os bans, ou afrouxe a regra de não repetição."
     }
   }
 }

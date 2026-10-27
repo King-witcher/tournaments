@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, max_participants, champion_rules)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9087879fdacb96596993b216a94482df252fd62633dc26a1ff30465c0d685c1a"
+}

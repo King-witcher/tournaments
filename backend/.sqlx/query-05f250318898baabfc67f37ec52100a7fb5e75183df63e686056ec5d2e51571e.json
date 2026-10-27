@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournament_translations (tournament_id, locale, name, description, rules)\n           values ($1, $2, $3, $4, $5)\n           on conflict (tournament_id, locale) do update\n           set name = excluded.name, description = excluded.description, rules = excluded.rules",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "05f250318898baabfc67f37ec52100a7fb5e75183df63e686056ec5d2e51571e"
+}

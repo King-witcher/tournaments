@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournament_stages (tournament_id, position, config) values ($1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d66ecc3835d76105e3b5f69bf127f9c2ce5e406a9369ad19b38cbb3afedfa68a"
+}
