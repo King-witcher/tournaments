@@ -1,4 +1,6 @@
-use api::AppState;
+use std::sync::Arc;
+
+use api::{AppState, auth::AuthSettings, discord::HttpDiscord};
 use axum::{
     body::Body,
     http::{HeaderValue, Request, StatusCode},
@@ -10,7 +12,17 @@ use tower::ServiceExt;
 #[sqlx::test(migrations = "../../migrations")]
 async fn health_reports_database_ok(db: PgPool) {
     let app = api::app(
-        AppState { db },
+        AppState {
+            db,
+            discord: Arc::new(HttpDiscord::new(String::new(), String::new())),
+            auth: Arc::new(AuthSettings {
+                discord_client_id: None,
+                redirect_uri: String::new(),
+                web_origin: "http://localhost:3000".into(),
+                cookie_domain: None,
+                cookie_secure: false,
+            }),
+        },
         HeaderValue::from_static("http://localhost:3000"),
     );
 

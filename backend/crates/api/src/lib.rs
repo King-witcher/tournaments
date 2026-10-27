@@ -1,5 +1,11 @@
+pub mod auth;
 pub mod config;
+pub mod current_user;
+pub mod discord;
+pub mod error;
 mod health;
+
+use std::sync::Arc;
 
 use axum::{
     Router,
@@ -20,12 +26,18 @@ struct ApiDoc;
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
+    pub discord: Arc<dyn discord::DiscordApi>,
+    pub auth: Arc<auth::AuthSettings>,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` e Swagger UI em `/docs`.
 pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
     let (router, openapi) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .routes(routes!(health::health))
+        .routes(routes!(auth::discord_login))
+        .routes(routes!(auth::discord_callback))
+        .routes(routes!(auth::me))
+        .routes(routes!(auth::logout))
         .with_state(state)
         .split_for_parts();
 

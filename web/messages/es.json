@@ -12,5 +12,19 @@
       "unavailable": "La API respondió, pero la base de datos no está disponible.",
       "offline": "No se pudo conectar con la API."
     }
+  },
+  "Auth": {
+    "login": "Entrar con Discord",
+    "logout": "Salir"
+  },
+  "ApiErrors": {
+    "internal": "Algo salió mal. Inténtalo de nuevo.",
+    "auth": {
+      "unauthenticated": "Tienes que iniciar sesión para continuar.",
+      "discord_not_configured": "El inicio de sesión con Discord todavía no está configurado.",
+      "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
+      "discord_denied": "Inicio de sesión cancelado en Discord.",
+      "discord_failed": "No se pudo iniciar sesión con Discord. Inténtalo de nuevo."
+    }
   }
 }

@@ -8,16 +8,18 @@ model: sonnet
 Você implementa os motores de torneio de Quake Champions, em Rust, na crate `backend/crates/engine`.
 
 Antes de começar, leia SOMENTE:
-- os tipos centrais em `crates/engine/src/core/` (Tournament, Stage, Participant, Match, Result)
-- a trait `FormatEngine` em `crates/engine/src/formats/mod.rs`
-- o módulo alvo (formato, `scoring/`, `champions/` ou `rating/`) e os testes dele
+- os tipos compartilhados e erros em `crates/engine/src/core.rs`
+- `seeding.rs`, `series.rs` e `champions.rs` se o módulo alvo usar
+- o módulo alvo (em `crates/engine/src/formats/`, ou outro indicado) e os testes dele
+
+As assinaturas públicas já escritas no módulo alvo são o contrato: implemente sem mudá-las. Não altere `core.rs`, `seeding.rs`, `series.rs` nem `champions.rs`; se faltar algo neles, descreva na resposta final.
 
 Só abra outros arquivos se algo acima importar diretamente deles. Não leia `crates/api/` nem `web/`.
 
 Regras:
 - A crate é pura: sem axum, sqlx, tokio, I/O nem relógio. Aleatoriedade entra por seed/RNG passado como parâmetro.
 - Duelo, 2v2 e 3v3 usam o mesmo motor com `team_size` diferente. Não duplique lógica.
-- Pontuação (melhor de N, pontos por colocação, soma de frags, desempates) fica em `scoring/`, não dentro do formato.
+- Melhor de N fica em `series.rs`; pontuação de FFA e desempates, quando existirem, em módulo próprio, não dentro do formato.
 - Erros são enums com códigos estáveis (ex.: `ChampionPoolExhausted { required, available }`), nunca strings para o usuário.
 - Sempre cubra: número ímpar de participantes (bye), W.O./desistência, empates e critérios de desempate.
 - Formatos com não repetição de campeões precisam expor o pior caso de jogos por participante, para a validação na criação.

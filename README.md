@@ -43,6 +43,8 @@ cp web/.env.example web/.env.local
 cd web && bun install
 ```
 
+Para o login, crie uma aplicação em https://discord.com/developers/applications, adicione o redirect `http://localhost:8080/auth/discord/callback` em **OAuth2 → Redirects** e coloque `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` no `backend/.env`. Sem eles, tudo funciona menos o login.
+
 Depois, em um terminal, a API (aplica as migrations ao subir):
 
 ```sh
@@ -69,7 +71,7 @@ bun run dev
 | Testes do engine (rápidos, sem banco) | `backend/` | `cargo test -p engine` |
 | Todos os testes do backend | `backend/` | `cargo test` |
 | Lint do backend | `backend/` | `cargo clippy --all-targets -- -D warnings` |
-| Nova migration | `backend/migrations/` | criar `AAAAMMDDHHMMSS_nome.sql` (aplicada ao subir a API) |
+| Nova migration | `backend/` | criar `migrations/AAAAMMDDHHMMSS_nome.sql` e rodar `cargo run -p migrate` |
 | Regenerar tipos da API no front (API rodando) | `web/` | `bun run gen:api` |
 | Lint / formatar o front (Biome) | `web/` | `bun run lint` / `bun run format` |
 | Build do front | `web/` | `bun run build` |

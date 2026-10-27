@@ -5,6 +5,9 @@ import { locale as rootLocale } from "next/root-params";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { Suspense } from "react";
+
+import { UserMenu } from "@/components/user-menu";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -39,7 +42,14 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <header className="flex items-center justify-end gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
+            <Suspense fallback={null}>
+              <UserMenu />
+            </Suspense>
+          </header>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

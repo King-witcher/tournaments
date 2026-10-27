@@ -1,5 +1,7 @@
 use anyhow::Context;
-use api::{AppState, MIGRATOR, config::Config};
+use std::sync::Arc;
+
+use api::{AppState, MIGRATOR, auth::AuthSettings, config::Config, discord::HttpDiscord};
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
 
@@ -26,7 +28,25 @@ async fn main() -> anyhow::Result<()> {
         .context("falha ao aplicar migrations")?;
 
     let web_origin = config.web_origin.parse().context("WEB_ORIGIN inválido")?;
-    let app = api::app(AppState { db }, web_origin);
+    let configured = config.discord_client_id.is_some() && config.discord_client_secret.is_some();
+    if !configured {
+        tracing::warn!("DISCORD_CLIENT_ID/SECRET ausentes: login com Discord desligado");
+    }
+    let state = AppState {
+        db,
+        discord: Arc::new(HttpDiscord::new(
+            config.discord_client_id.clone().unwrap_or_default(),
+            config.discord_client_secret.clone().unwrap_or_default(),
+        )),
+        auth: Arc::new(AuthSettings {
+            discord_client_id: config.discord_client_id.clone().filter(|_| configured),
+            redirect_uri: config.discord_redirect_uri.clone(),
+            web_origin: config.web_origin.trim_end_matches('/').to_owned(),
+            cookie_domain: config.cookie_domain.clone(),
+            cookie_secure: config.cookie_secure,
+        }),
+    };
+    let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
     tracing::info!(

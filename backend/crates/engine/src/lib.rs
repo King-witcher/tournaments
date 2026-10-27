@@ -3,3 +3,13 @@
 //!
 //! Esta crate é pura: sem I/O, sem banco, sem relógio. Aleatoriedade entra
 //! por seed/RNG passado como parâmetro.
+//!
+//! O estado de um formato é sempre reconstruível a partir da configuração,
+//! dos participantes e do histórico de resultados (`replay`). Corrigir um
+//! resultado é refazer o estado com o histórico corrigido.
+
+pub mod champions;
+pub mod core;
+pub mod formats;
+pub mod seeding;
+pub mod series;

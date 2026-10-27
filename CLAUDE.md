@@ -8,6 +8,7 @@ Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA po
 backend/                cargo workspace
   crates/engine/        formatos, pontuação, regras de campeões, rating (puro, sem I/O)
   crates/api/           Axum: rotas, WebSocket, auth, acesso ao banco
+  crates/migrate/       binário que só aplica as migrations (sem macros de query)
   migrations/           SQL do sqlx
 web/                    Next.js, só apresentação (next-intl: pt, es)
 docs/decisions.md
@@ -20,7 +21,8 @@ Backend (em `backend/`):
 - `cargo test -p engine`: testes dos motores (rápidos, sem banco)
 - `cargo test`: tudo, inclusive testes de API com `sqlx::test` (precisa do Postgres local)
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
-- Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão (não há sqlx-cli instalado; não instale globalmente)
+- Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão e rodar `cargo run -p migrate` **antes** de compilar código com `query!` que use a tabela nova (as macros conferem o SQL contra o banco local na compilação). Não há sqlx-cli; não instale globalmente.
+- `.cargo/config.toml` define o `DATABASE_URL` do banco local para as macros.
 
 Frontend (em `web/`), sempre com Bun (nada de npm/pnpm):
 - `bun run dev`, `bun run build`
@@ -34,6 +36,8 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - `engine` não depende de axum, sqlx, tokio nem do relógio. Aleatoriedade entra por seed/RNG passado como parâmetro.
 - Sem ORM: SQL escrito à mão com `sqlx::query!`/`query_as!`. Migrations em `backend/migrations/`.
 - Todo acesso a dados de tenant recebe um `TenantId` tipado. Nunca filtre tenant com string solta.
+- Rota que exige login recebe o extractor `CurrentUser` (`crates/api/src/current_user.rs`). Erros saem por `ApiError` (`error.rs`) como `{"error": "<código>"}`.
+- Estado de formato no `engine` é reconstruído por `replay` (config + participantes + histórico); nunca desserializado direto.
 - A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`.
 - Datas em UTC no banco.
 - O Next nunca acessa o banco; só chama a API Rust.
