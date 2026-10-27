@@ -45,6 +45,19 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - Storage pela API S3 genérica, provedor por variável de ambiente.
 - Nenhum segredo no repositório (ele vai ficar público).
 
+## Como trabalhar aqui
+
+- Ordem do trabalho e próximo passo: `docs/roadmap.md`. Atualize a seção "Feito" ao terminar um incremento.
+- Decisões de produto em aberto: pergunte ao usuário (ele prefere rodadas de perguntas com opções) em vez de decidir sozinho; registre a resposta em `docs/decisions.md`.
+- Use os subagentes abaixo para trabalho no `engine` e para rodar testes; passe a especificação completa no prompt, porque eles não veem esta conversa.
+
+## Armadilhas (Windows)
+
+- Enquanto a API roda, `target\debug\api.exe` fica travado e `cargo build`/`cargo test` falham com "Access denied". Peça para o usuário parar a API, ou compile com `CARGO_TARGET_DIR` temporário.
+- O usuário costuma deixar a API (8080) e o `bun run dev` (3000) rodando. Nunca encerre processos que você não iniciou; confira o dono com `Get-NetTCPConnection -LocalPort <porta>` e o horário de início.
+- Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 3001`.
+- Parar uma tarefa em segundo plano pode deixar o processo filho (`api.exe`, `node`) vivo. Depois de parar, confira as portas e encerre só o que for seu.
+
 ## Subagentes (`.claude/agents/`)
 
 - `test-runner`: roda testes e devolve só as falhas.
