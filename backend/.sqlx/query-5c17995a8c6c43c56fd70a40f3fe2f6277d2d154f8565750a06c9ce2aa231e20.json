@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select role from tenant_members where tenant_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "role"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5c17995a8c6c43c56fd70a40f3fe2f6277d2d154f8565750a06c9ce2aa231e20"
+}

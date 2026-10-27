@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tenant_members (tenant_id, user_id, role, nickname, invite_id)\n           values ($1, $2, 'player', $3, $4)\n           on conflict (tenant_id, user_id) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d717b5945965de6e3cc135dec01a20b435b4239b5c827ded243dcb5296aebdca"
+}

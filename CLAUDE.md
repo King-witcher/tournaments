@@ -29,6 +29,7 @@ Backend (em `backend/`):
 - `cargo test`: tudo, inclusive testes de API com `sqlx::test` (precisa do Postgres local)
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
 - Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão e rodar `cargo run -p migrate` **antes** de compilar código com `query!` que use a tabela nova (as macros conferem o SQL contra o banco local na compilação). Não há sqlx-cli; não instale globalmente.
+- `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/`, os dados das queries para compilar sem banco (`SQLX_OFFLINE=true`, como no Render). Rode e faça commit do `.sqlx/` sempre que criar ou mudar um `query!`, senão o deploy falha.
 - `.cargo/config.toml` define o `DATABASE_URL` do banco local para as macros.
 
 Frontend (em `web/`), sempre com Bun (nada de npm/pnpm):

@@ -1,0 +1,66 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select i.id,\n                  coalesce(m.nickname, u.display_name) as \"created_by!\",\n                  i.created_at,\n                  i.expires_at,\n                  (select count(*) from tenant_members j\n                   where j.tenant_id = i.tenant_id and j.invite_id = i.id) as \"uses!\"\n           from tenant_invites i\n           join users u on u.id = i.created_by\n           left join tenant_members m on m.tenant_id = i.tenant_id and m.user_id = i.created_by\n           where i.tenant_id = $1 and i.revoked_at is null and i.expires_at > now()\n           order by i.created_at desc, i.id desc",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "created_by!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "uses!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "a861e66de19859149c792b657a1fcc14a9dcc10a911c6015844c74ad20a5f5c3"
+}

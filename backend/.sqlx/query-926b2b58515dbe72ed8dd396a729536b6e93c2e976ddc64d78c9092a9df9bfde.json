@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select token_hash from tenant_invites",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "token_hash",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "token_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "926b2b58515dbe72ed8dd396a729536b6e93c2e976ddc64d78c9092a9df9bfde"
+}

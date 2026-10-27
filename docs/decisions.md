@@ -27,7 +27,7 @@ Motivos e cuidados:
 
 - **Rust**: interesse em aprender; o Swagger UI permite acompanhar os endpoints.
 - **Bun só como gerenciador de pacotes e executor de scripts.** A Vercel detecta o `bun.lock` e instala com `bun install`. As funções continuam no runtime Node (o runtime Bun na Vercel ainda é beta), e localmente o `next` também roda em Node.
-- **Nada de ferramenta global além de Rust e Bun.** Sem pnpm e sem sqlx-cli: as migrations são arquivos criados à mão, aplicados pelo binário `cargo run -p migrate` (que não usa macros de query, então compila mesmo antes da tabela existir) e também pela API ao subir. Quando o build sem banco precisar do `cargo sqlx prepare` (modo offline, no deploy), ele roda na CI ou instalado localmente no projeto.
+- **Nada de ferramenta global além de Rust e Bun.** Sem pnpm e sem sqlx-cli: as migrations são arquivos criados à mão, aplicados pelo binário `cargo run -p migrate` (que não usa macros de query, então compila mesmo antes da tabela existir) e também pela API ao subir. O build sem banco (Render) usa o modo offline do sqlx: `bun scripts/sqlx-prepare.ts` faz o papel do `cargo sqlx prepare` sem o sqlx-cli (com `SQLX_OFFLINE_DIR` definido, as próprias macros gravam o `.sqlx/`), o `.sqlx/` vai para o repositório e o Render compila com `SQLX_OFFLINE=true`.
 - **Next só apresentação**: renderiza no servidor as páginas públicas (preview do link no Discord) e cuida das rotas por idioma. Nunca acessa o banco.
 - **Supabase é só host de Postgres**, via connection string. Nada de Supabase Auth, Realtime, Storage ou supabase-js, para evitar lock-in.
 - **Render free**: 750 h/mês por workspace, o que cabe em **um** serviço sempre ligado.

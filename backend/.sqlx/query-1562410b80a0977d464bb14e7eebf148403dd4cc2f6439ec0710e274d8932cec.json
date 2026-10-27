@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.slug, t.name, m.role, m.nickname\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.tenant_id = $1 and m.user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "role"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1562410b80a0977d464bb14e7eebf148403dd4cc2f6439ec0710e274d8932cec"
+}

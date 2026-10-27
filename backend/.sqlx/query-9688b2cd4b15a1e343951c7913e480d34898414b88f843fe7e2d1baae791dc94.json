@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at\n           from tenant_members m\n           join users u on u.id = m.user_id\n           where m.tenant_id = $1 and ($2::bigint is null or m.user_id = $2)\n           order by case m.role when 'owner' then 0 when 'organizer' then 1 else 2 end,\n                    lower(m.nickname), m.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "display_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "display_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "avatar_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_url"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "role"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "joined_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "joined_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "9688b2cd4b15a1e343951c7913e480d34898414b88f843fe7e2d1baae791dc94"
+}

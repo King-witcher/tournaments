@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tenant_members (tenant_id, user_id, role, nickname) values ($1, $2, 'owner', $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4c667ea44ce57d7d39379e551c0054daefc9196e3394388dcb047618837a1777"
+}

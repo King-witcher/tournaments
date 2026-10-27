@@ -45,4 +45,4 @@ Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::tes
 - Prints do placar (S3 genérico, URL assinada, WebP, apagar 30 dias após o fim).
 - Rating (Elo, configurável por tenant).
 - Outros formatos: FFA por pontos/frags, 2v2/3v3 com formação de times, round robin, suíço.
-- Deploy: Render (API), Vercel (web), Supabase (Postgres), CI no GitHub Actions com `cargo sqlx prepare` para build offline.
+- Deploy: Render (API), Vercel (web), Supabase (Postgres), CI no GitHub Actions conferindo que o `.sqlx/` está em dia (`SQLX_OFFLINE=true cargo check`).

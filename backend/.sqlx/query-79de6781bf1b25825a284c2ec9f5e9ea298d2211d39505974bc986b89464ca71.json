@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into users (display_name) values ($1) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "79de6781bf1b25825a284c2ec9f5e9ea298d2211d39505974bc986b89464ca71"
+}

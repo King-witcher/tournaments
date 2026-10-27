@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into user_identities (user_id, provider, provider_user_id) values ($1, 'discord', $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8c680d15d820dcc7e20c9c71045c2bb55348ed8b38450a01d4c1b71dc1b388fe"
+}

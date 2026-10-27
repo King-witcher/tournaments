@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_invites set revoked_at = coalesce(revoked_at, now()) where tenant_id = $1 and id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "03d0e383570e8e5d08d79ae2d16bdf5dea954cc74ae30224aafd17186707a187"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_invites set expires_at = now() - interval '1 second' where token_hash = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b28a53f746cd49cdb5425dbecb36a29e4a20275c0a20b8cef0b6b5e11f3b5bf"
+}

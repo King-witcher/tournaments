@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_members set nickname = $3 where tenant_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fe712078f1cf3deef5a152563981262852059362207d7cf1b76362e8f894d83d"
+}

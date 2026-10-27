@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select i.id, i.tenant_id, t.name as tenant_name, i.expires_at,\n                  i.revoked_at is not null as \"revoked!\",\n                  i.expires_at <= now() as \"expired!\"\n           from tenant_invites i\n           join tenants t on t.id = i.tenant_id\n           where i.token_hash = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "tenant_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tenant_invites",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "revoked!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "expired!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "fd9a9ac54797a1e90bbf2667fa6f8bc1dd838d354c775fd157cc4ff6642bd70d"
+}
