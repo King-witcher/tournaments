@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/auth/discord": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unlink_discord"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/discord/callback": {
         parameters: {
             query?: never;
@@ -12,6 +28,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["discord_callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/discord/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["discord_link"];
         put?: never;
         post?: never;
         delete?: never;
@@ -36,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -46,6 +110,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_password"];
+        delete: operations["remove_password"];
+        options?: never;
+        head?: never;
+        patch: operations["change_password"];
+        trace?: never;
+    };
+    "/auth/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["signup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -389,6 +485,13 @@ export interface components {
             bans_per_game: number;
             no_repeat?: components["schemas"]["NoRepeatRule"] | null;
         };
+        /** @description Campos ausentes não mudam. */
+        ChangePassword: {
+            current_password: string;
+            /** @description Trocar a senha encerra as outras sessões da conta. */
+            password?: string | null;
+            username?: string | null;
+        };
         CreateTenant: {
             /**
              * @description Nome exibido, 1 a 64 caracteres.
@@ -454,6 +557,19 @@ export interface components {
              * @example 7Fq2xKpR9mWbTnVc3hJdYe
              */
             token: string;
+        };
+        Credentials: {
+            /** @description 8 a 128 caracteres. */
+            password: string;
+            /**
+             * @description 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
+             *     removidos. Único sem diferenciar maiúsculas.
+             * @example Rapha
+             */
+            username: string;
+        };
+        CurrentPassword: {
+            current_password: string;
         };
         /**
          * @description Usuário logado. Use como parâmetro de handler para exigir login:
@@ -524,9 +640,15 @@ export interface components {
         };
         /** @enum {string} */
         Locale: "pt" | "es";
+        /** @description Formas de login da conta. Sempre sobra pelo menos uma. */
+        LoginMethods: {
+            discord: boolean;
+            /** @description Username do login com senha, se a conta tem senha. */
+            username?: string | null;
+        };
         Member: {
             avatar_url?: string | null;
-            /** @description Nome global do usuário (do Discord). */
+            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
             display_name: string;
             /** Format: date-time */
             joined_at: string;
@@ -720,6 +842,75 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    unlink_discord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurrentPassword"];
+            };
+        };
+        responses: {
+            /** @description Discord desligado; o avatar, que vinha dele, sai junto */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.last_login (a conta não tem senha), auth.discord_not_linked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     discord_callback: {
         parameters: {
             query?: {
@@ -733,12 +924,60 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Cria a sessão e redireciona para o front; em erro, para /?auth_error=<código> */
+            /** @description Entra (cria a sessão) ou liga o Discord e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
             303: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    discord_link: {
+        parameters: {
+            query?: {
+                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
+                return_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redireciona para o Discord; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>) */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_already_linked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
         };
     };
@@ -772,6 +1011,86 @@ export interface operations {
             };
         };
     };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Credentials"];
+            };
+        };
+        responses: {
+            /** @description Sessão criada no cookie */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description auth.invalid_credentials (username ou senha errados) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    logins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Formas de login da conta logada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     logout: {
         parameters: {
             query?: never;
@@ -787,6 +1106,237 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    create_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Credentials"];
+            };
+        };
+        responses: {
+            /** @description Username e senha criados para a conta logada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.password_exists, auth.username_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurrentPassword"];
+            };
+        };
+        responses: {
+            /** @description Username e senha removidos; a conta fica só com o Discord */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.no_password, auth.last_login (a conta não tem Discord) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    change_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePassword"];
+            };
+        };
+        responses: {
+            /** @description Username e/ou senha trocados. Trocar a senha encerra as outras sessões */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.no_password, auth.username_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    signup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Credentials"];
+            };
+        };
+        responses: {
+            /** @description Conta criada, já com a sessão no cookie. O nome exibido é o username */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description auth.username_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
         };
     };

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into password_failures (username) values ($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fba1e08d29b75970e5ed1d59c2d3d5c6809cae8d3984c8e6e7959dfbd3f73345"
+}

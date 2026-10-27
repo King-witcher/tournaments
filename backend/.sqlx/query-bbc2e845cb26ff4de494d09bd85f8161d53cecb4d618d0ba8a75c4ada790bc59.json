@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into user_identities (user_id, provider, provider_user_id, password_hash)\n           values ($1, 'password', $2, $3)\n           on conflict do nothing\n           returning user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "user_identities",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bbc2e845cb26ff4de494d09bd85f8161d53cecb4d618d0ba8a75c4ada790bc59"
+}

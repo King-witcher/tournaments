@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from user_identities where user_id = $1 and provider <> $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f8f2a68e88ec325ad901da1977122926757f275e7ea103ed90c52624ae8b9811"
+}

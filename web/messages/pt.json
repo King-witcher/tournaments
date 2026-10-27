@@ -22,8 +22,57 @@
     }
   },
   "Auth": {
-    "login": "Entrar com Discord",
-    "logout": "Sair"
+    "login": "Entrar",
+    "logout": "Sair",
+    "submit": "Entrar",
+    "discord": "Entrar com Discord",
+    "or": "ou",
+    "username": "Nome de usuário",
+    "usernameHint": "De 3 a 20 letras, números, _ . ou -, sem espaços nem acentos. Maiúsculas não importam para entrar.",
+    "password": "Senha",
+    "passwordHint": "De 8 a 128 caracteres.",
+    "confirmPassword": "Repita a senha",
+    "passwordsDiffer": "As senhas não são iguais."
+  },
+  "Login": {
+    "title": "Entrar",
+    "noAccount": "Não tem conta?",
+    "signup": "Criar conta"
+  },
+  "Signup": {
+    "title": "Criar conta",
+    "noRecovery": "Não há recuperação de senha por email. Depois de criar a conta, vincule o Discord a ela para não perder o acesso se esquecer a senha.",
+    "submit": "Criar conta",
+    "hasAccount": "Já tem conta?",
+    "login": "Entrar"
+  },
+  "Account": {
+    "title": "Sua conta",
+    "loading": "Carregando a conta…",
+    "loginRequired": "Entre para ver sua conta.",
+    "currentPassword": "Senha atual",
+    "discord": {
+      "title": "Discord",
+      "notLinked": "Vincule o Discord para entrar com ele. Sem ele, quem esquece a senha perde a conta: não há recuperação por email.",
+      "link": "Vincular Discord",
+      "linked": "Vinculado: você pode entrar com o Discord.",
+      "unlinkHint": "Para desvincular, confirme sua senha. O avatar do Discord sai junto.",
+      "unlink": "Desvincular",
+      "needsPassword": "Para desvincular o Discord, crie antes um nome de usuário e senha: a conta precisa de pelo menos um jeito de entrar."
+    },
+    "password": {
+      "title": "Nome de usuário e senha",
+      "none": "Crie um nome de usuário e senha para entrar sem o Discord.",
+      "create": "Criar nome de usuário e senha",
+      "current": "Seu nome de usuário: {username}",
+      "newPassword": "Nova senha",
+      "newPasswordHint": "Deixe em branco para manter a atual. Trocar a senha encerra suas outras sessões.",
+      "save": "Salvar",
+      "saved": "Salvo.",
+      "remove": "Remover nome de usuário e senha",
+      "removeHint": "Você continua entrando com o Discord.",
+      "needsDiscord": "Para remover a senha, vincule antes o Discord: a conta precisa de pelo menos um jeito de entrar."
+    }
   },
   "Roles": {
     "owner": "Dono",
@@ -70,7 +119,7 @@
     "loading": "Carregando o convite…",
     "title": "Convite para entrar em {name}",
     "expires": "O convite expira {expires}.",
-    "loginRequired": "Entre com o Discord para aceitar o convite.",
+    "loginRequired": "Entre para aceitar o convite.",
     "accept": "Entrar na comunidade",
     "tournamentTitle": "Inscrição em {name}",
     "tournamentHint": "Aceitar também faz você entrar na comunidade {tenant} como jogador.",
@@ -222,8 +271,20 @@
       "unauthenticated": "Você precisa entrar para continuar.",
       "discord_not_configured": "O login com Discord ainda não está configurado.",
       "state_mismatch": "O login expirou ou foi interrompido. Tente de novo.",
-      "discord_denied": "Login cancelado no Discord.",
-      "discord_failed": "Não foi possível entrar com o Discord. Tente de novo."
+      "discord_denied": "Autorização cancelada no Discord.",
+      "discord_failed": "Não foi possível falar com o Discord. Tente de novo.",
+      "discord_taken": "Esse Discord já é usado por outra conta. Entre nela e desvincule-o antes.",
+      "discord_already_linked": "Sua conta já tem um Discord vinculado.",
+      "discord_not_linked": "Sua conta não tem Discord vinculado.",
+      "invalid_credentials": "Nome de usuário ou senha incorretos.",
+      "too_many_attempts": "Muitas tentativas com senha errada. Tente de novo em {minutes, plural, one {# minuto} other {# minutos}}.",
+      "username_invalid": "O nome de usuário precisa ter de 3 a 20 letras, números, _ . ou -, sem espaços nem acentos.",
+      "username_taken": "Esse nome de usuário já está em uso.",
+      "password_invalid": "A senha precisa ter de 8 a 128 caracteres.",
+      "password_exists": "Sua conta já tem nome de usuário e senha.",
+      "no_password": "Sua conta não tem senha.",
+      "wrong_password": "Senha atual incorreta.",
+      "last_login": "Esse é o único jeito de entrar na sua conta. Adicione outro antes de remover este."
     },
     "tenant": {
       "not_found": "Comunidade não encontrada, ou você não faz parte dela.",

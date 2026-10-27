@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists (select 1 from user_identities where user_id = $1 and provider = $2) as \"exists!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "62f6e727f23ed4c6b106ac320336c1a4aefd1c9a1456db6ea807b7630632709b"
+}

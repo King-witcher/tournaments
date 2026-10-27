@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select min(failed_at) + make_interval(mins => $2) as \"until!\"\n           from (select failed_at from password_failures\n                 where username = $1 and failed_at > now() - make_interval(mins => $2)\n                 order by failed_at desc\n                 limit $3) recent\n           having count(*) >= $3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "until!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "7cc98360c7939b1081ef5355aee62a2ba73ada8ad72ca84e5954db596e05f8fb"
+}

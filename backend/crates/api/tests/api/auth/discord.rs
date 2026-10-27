@@ -1,126 +1,14 @@
-use std::sync::Arc;
+//! Entrar com Discord, `/me` e sair.
 
-use api::{
-    auth::{AuthSettings, DiscordApi, DiscordUser},
-    shared::token::hash_token,
-};
-use async_trait::async_trait;
+use api::shared::token::hash_token;
 use axum::{
-    Router,
     body::Body,
-    http::{Request, Response, StatusCode, header},
+    http::{Request, StatusCode, header},
 };
-use http_body_util::BodyExt;
 use sqlx::PgPool;
-use tower::ServiceExt;
 
-use crate::common::{WEB, app_with};
-
-const REDIRECT: &str = "http://localhost:8080/auth/discord/callback";
-
-struct FakeDiscord {
-    user: Option<DiscordUser>,
-}
-
-#[async_trait]
-impl DiscordApi for FakeDiscord {
-    async fn exchange_code(&self, code: &str, redirect_uri: &str) -> anyhow::Result<String> {
-        assert_eq!(redirect_uri, REDIRECT);
-        anyhow::ensure!(self.user.is_some(), "falha simulada");
-        Ok(format!("token-{code}"))
-    }
-
-    async fn fetch_user(&self, _access_token: &str) -> anyhow::Result<DiscordUser> {
-        self.user.clone().ok_or_else(|| anyhow::anyhow!("falha"))
-    }
-}
-
-fn discord_user(avatar: Option<&str>) -> DiscordUser {
-    DiscordUser {
-        id: "123".into(),
-        username: "quaker".into(),
-        global_name: Some("Quaker Global".into()),
-        avatar: avatar.map(Into::into),
-    }
-}
-
-fn app(db: PgPool, user: Option<DiscordUser>, configured: bool) -> Router {
-    app_with(
-        db,
-        Arc::new(FakeDiscord { user }),
-        AuthSettings {
-            discord_client_id: configured.then(|| "client-1".to_owned()),
-            redirect_uri: REDIRECT.into(),
-            web_origin: WEB.into(),
-            cookie_domain: None,
-            cookie_secure: false,
-        },
-    )
-}
-
-async fn send(app: &Router, req: Request<Body>) -> Response<Body> {
-    app.clone().oneshot(req).await.unwrap()
-}
-
-fn get(uri: &str, cookie: Option<&str>) -> Request<Body> {
-    let mut b = Request::get(uri);
-    if let Some(c) = cookie {
-        b = b.header(header::COOKIE, c);
-    }
-    b.body(Body::empty()).unwrap()
-}
-
-fn location(res: &Response<Body>) -> String {
-    res.headers()[header::LOCATION].to_str().unwrap().to_owned()
-}
-
-/// Set-Cookie completo (com atributos) do cookie de nome `name`.
-fn set_cookie(res: &Response<Body>, name: &str) -> Option<String> {
-    res.headers()
-        .get_all(header::SET_COOKIE)
-        .iter()
-        .map(|v| v.to_str().unwrap().to_owned())
-        .find(|c| c.starts_with(&format!("{name}=")))
-}
-
-/// Só `nome=valor` de um Set-Cookie.
-fn pair(set_cookie: &str) -> String {
-    set_cookie.split(';').next().unwrap().to_owned()
-}
-
-async fn body_text(res: Response<Body>) -> String {
-    String::from_utf8(res.into_body().collect().await.unwrap().to_bytes().to_vec()).unwrap()
-}
-
-/// Faz login → callback e devolve (cookie `session=..`, resposta do callback).
-async fn do_login(app: &Router, return_to: &str) -> (String, Response<Body>) {
-    let res = send(
-        app,
-        get(&format!("/auth/discord/login?return_to={return_to}"), None),
-    )
-    .await;
-    let state_cookie = pair(&set_cookie(&res, "oauth_state").unwrap());
-    let loc = location(&res);
-    let state = loc
-        .split("state=")
-        .nth(1)
-        .unwrap()
-        .split('&')
-        .next()
-        .unwrap();
-    let res = send(
-        app,
-        get(
-            &format!("/auth/discord/callback?code=abc&state={state}"),
-            Some(&state_cookie),
-        ),
-    )
-    .await;
-    let session = set_cookie(&res, "session")
-        .map(|c| pair(&c))
-        .unwrap_or_default();
-    (session, res)
-}
+use super::{app, body_text, discord_user, do_login, get, location, pair, send, set_cookie};
+use crate::common::WEB;
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn login_without_config_is_503(db: PgPool) {

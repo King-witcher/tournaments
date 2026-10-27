@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from password_failures where failed_at <= now() - make_interval(mins => $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "73b8b3777872f1da0f6a8b96e75a451a227194782c90c20d40b78ccc161962de"
+}
