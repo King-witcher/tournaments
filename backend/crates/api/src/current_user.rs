@@ -2,7 +2,6 @@ use axum::{extract::FromRequestParts, http::request::Parts};
 use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
-use uuid::Uuid;
 
 use crate::{AppState, auth::SESSION_COOKIE, auth::hash_token, error::ApiError};
 
@@ -10,7 +9,7 @@ use crate::{AppState, auth::SESSION_COOKIE, auth::hash_token, error::ApiError};
 /// sem sessão válida a rota responde 401 `auth.unauthenticated`.
 #[derive(Serialize, ToSchema, Debug, Clone)]
 pub struct CurrentUser {
-    pub id: Uuid,
+    pub id: i64,
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub locale: String,

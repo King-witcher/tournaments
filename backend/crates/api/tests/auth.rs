@@ -312,7 +312,7 @@ async fn me_requires_valid_session(db: PgPool) {
     assert_eq!(json["display_name"], "Quaker Global");
     assert_eq!(json["locale"], "pt");
     assert!(json["avatar_url"].is_null());
-    assert!(json["id"].is_string());
+    assert!(json["id"].is_i64());
 
     sqlx::query!("update sessions set expires_at = now() - interval '1 second'")
         .execute(&db)

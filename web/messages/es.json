@@ -3,6 +3,9 @@
     "title": "Torneos de Quake Champions",
     "description": "Organiza torneos de Quake Champions: duelo, FFA, 2v2 y 3v3."
   },
+  "Nav": {
+    "home": "Inicio"
+  },
   "Home": {
     "title": "Torneos de Quake Champions",
     "subtitle": "Duelo, FFA, 2v2 y 3v3. Muy pronto.",
@@ -11,20 +14,96 @@
       "ok": "API y base de datos funcionando.",
       "unavailable": "La API respondió, pero la base de datos no está disponible.",
       "offline": "No se pudo conectar con la API."
+    },
+    "tenants": {
+      "title": "Mis comunidades",
+      "empty": "Todavía no participas en ninguna comunidad. Crea una o pide un enlace de invitación.",
+      "create": "Crear comunidad"
     }
   },
   "Auth": {
     "login": "Entrar con Discord",
     "logout": "Salir"
   },
+  "Roles": {
+    "owner": "Dueño",
+    "organizer": "Organizador",
+    "player": "Jugador"
+  },
+  "NewTenant": {
+    "title": "Crear comunidad",
+    "loginRequired": "Inicia sesión para crear una comunidad.",
+    "name": "Nombre",
+    "slug": "Dirección",
+    "slugHint": "Minúsculas, números y guion, de 3 a 32. No se puede cambiar después.",
+    "limit": "Cada persona puede ser dueña de hasta 3 comunidades.",
+    "submit": "Crear comunidad"
+  },
+  "Tenant": {
+    "loading": "Cargando la comunidad…",
+    "loginRequired": "Inicia sesión para ver esta comunidad.",
+    "yourRole": "Tu rol: {role}",
+    "nickname": {
+      "label": "Tu apodo en esta comunidad",
+      "save": "Guardar",
+      "saved": "Apodo guardado."
+    },
+    "members": {
+      "title": "Miembros ({count})",
+      "makeOrganizer": "Hacer organizador",
+      "makePlayer": "Hacer jugador"
+    },
+    "invites": {
+      "title": "Invitaciones",
+      "description": "Quien entra por el enlace queda como jugador. Cada enlace vale 7 días y sirve para varias personas.",
+      "create": "Generar enlace de invitación",
+      "createdHint": "Cópialo ahora: este enlace no vuelve a aparecer.",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "empty": "No hay invitaciones activas.",
+      "item": "Creada por {name}, vence {expires}",
+      "uses": "{count, plural, =0 {nadie entró todavía} one {# persona entró} other {# personas entraron}}",
+      "revoke": "Revocar"
+    }
+  },
+  "Invite": {
+    "loading": "Cargando la invitación…",
+    "title": "Invitación para unirte a {name}",
+    "expires": "La invitación vence {expires}.",
+    "loginRequired": "Inicia sesión con Discord para aceptar la invitación.",
+    "accept": "Unirme a la comunidad"
+  },
   "ApiErrors": {
     "internal": "Algo salió mal. Inténtalo de nuevo.",
+    "request": {
+      "invalid_body": "Datos inválidos.",
+      "invalid_path": "Dirección inválida."
+    },
     "auth": {
       "unauthenticated": "Tienes que iniciar sesión para continuar.",
       "discord_not_configured": "El inicio de sesión con Discord todavía no está configurado.",
       "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
       "discord_denied": "Inicio de sesión cancelado en Discord.",
       "discord_failed": "No se pudo iniciar sesión con Discord. Inténtalo de nuevo."
+    },
+    "tenant": {
+      "not_found": "Comunidad no encontrada, o no formas parte de ella.",
+      "forbidden": "No tienes permiso para hacer esto en esta comunidad.",
+      "limit_reached": "Ya eres dueño del máximo de 3 comunidades.",
+      "slug_taken": "Esa dirección ya está en uso.",
+      "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
+      "slug_reserved": "Esa dirección está reservada. Elige otra.",
+      "name_invalid": "El nombre debe tener de 1 a 64 caracteres."
+    },
+    "invite": {
+      "not_found": "Invitación no encontrada. Revisa el enlace.",
+      "expired": "Esta invitación venció. Pide un enlace nuevo.",
+      "revoked": "Esta invitación fue revocada. Pide un enlace nuevo."
+    },
+    "member": {
+      "not_found": "Miembro no encontrado.",
+      "is_owner": "El rol del dueño no se puede cambiar.",
+      "nickname_invalid": "El apodo debe tener de 1 a 32 caracteres."
     }
   }
 }

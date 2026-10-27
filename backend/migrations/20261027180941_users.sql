@@ -1,6 +1,7 @@
--- Usuários são globais; o perfil em cada tenant vem depois (tenant_players).
+-- Usuários são globais; o perfil em cada tenant fica em tenant_members.
+-- O id não é segredo (ver "Ids" em docs/decisions.md): bigint sequencial.
 create table users (
-    id           uuid primary key default gen_random_uuid(),
+    id           bigint generated always as identity primary key,
     display_name text not null,
     avatar_url   text,
     locale       text not null default 'pt' check (locale in ('pt', 'es')),
@@ -10,12 +11,11 @@ create table users (
 -- Cada forma de login é uma linha. Novos provedores (senha, Steam) entram
 -- ampliando o check, sem mudar a estrutura.
 create table user_identities (
-    id               uuid primary key default gen_random_uuid(),
-    user_id          uuid not null references users (id) on delete cascade,
     provider         text not null check (provider in ('discord')),
     provider_user_id text not null,
+    user_id          bigint not null references users (id) on delete cascade,
     created_at       timestamptz not null default now(),
-    unique (provider, provider_user_id)
+    primary key (provider, provider_user_id)
 );
 
 create index user_identities_user_id_idx on user_identities (user_id);

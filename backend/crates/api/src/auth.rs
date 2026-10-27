@@ -227,7 +227,7 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
-async fn upsert_user(db: &sqlx::PgPool, du: &DiscordUser) -> Result<uuid::Uuid, sqlx::Error> {
+async fn upsert_user(db: &sqlx::PgPool, du: &DiscordUser) -> Result<i64, sqlx::Error> {
     let avatar_url = du
         .avatar
         .as_ref()
@@ -276,7 +276,7 @@ async fn upsert_user(db: &sqlx::PgPool, du: &DiscordUser) -> Result<uuid::Uuid, 
 }
 
 /// Cria a sessão e devolve o token (só o hash vai para o banco).
-async fn create_session(db: &sqlx::PgPool, user_id: uuid::Uuid) -> anyhow::Result<String> {
+async fn create_session(db: &sqlx::PgPool, user_id: i64) -> anyhow::Result<String> {
     let token = random_token();
     let hash = hash_token(&token);
     let expires_at = chrono::Utc::now() + chrono::Duration::days(SESSION_DAYS);

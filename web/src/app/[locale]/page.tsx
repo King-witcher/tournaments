@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { ApiStatus } from "@/components/api-status";
 import { AuthError } from "@/components/auth-error";
+import { MyTenants } from "@/components/my-tenants";
 
 export default async function Home({ searchParams }: PageProps<"/[locale]">) {
   const t = await getTranslations("Home");
@@ -16,6 +17,9 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
       <p>{t("subtitle")}</p>
       <Suspense fallback={<p>{t("status.checking")}</p>}>
         <ApiStatus />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MyTenants />
       </Suspense>
     </main>
   );

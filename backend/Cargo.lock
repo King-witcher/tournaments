@@ -59,7 +59,6 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
- "uuid",
 ]
 
 [[package]]
@@ -335,6 +334,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -2040,7 +2040,6 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
- "uuid",
  "webpki-roots",
 ]
 
@@ -2108,7 +2107,6 @@ dependencies = [
  "sqlx-core",
  "thiserror",
  "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -2144,7 +2142,6 @@ dependencies = [
  "stringprep",
  "thiserror",
  "tracing",
- "uuid",
  "whoami",
 ]
 
@@ -2171,7 +2168,6 @@ dependencies = [
  "thiserror",
  "tracing",
  "url",
- "uuid",
 ]
 
 [[package]]
@@ -2647,7 +2643,6 @@ dependencies = [
  "quote",
  "regex",
  "syn 3.0.9",
- "uuid",
 ]
 
 [[package]]

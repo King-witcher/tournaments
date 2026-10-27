@@ -2,7 +2,7 @@
 -- nunca é guardado.
 create table sessions (
     id         bytea primary key,
-    user_id    uuid not null references users (id) on delete cascade,
+    user_id    bigint not null references users (id) on delete cascade,
     created_at timestamptz not null default now(),
     expires_at timestamptz not null
 );

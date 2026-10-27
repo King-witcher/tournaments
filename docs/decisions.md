@@ -46,7 +46,25 @@ Motivos e cuidados:
 - Toda função de acesso a dados de tenant recebe um `TenantId` tipado (extractor do Axum). Esquecer o filtro vira erro de compilação. RLS pode entrar depois como segunda camada.
 - Tenant na URL por caminho: `/{locale}/{tenant}/...`.
 - Papéis em `tenant_members`: owner, organizer, player.
+- Na interface, tenant se chama **comunidade** (es: comunidad).
+- Limite: cada usuário é owner de no máximo **3** tenants, fixo no código (`MAX_OWNED_TENANTS`). Ser organizer ou player em outros não conta.
+- Slug: o front sugere a partir do nome, o usuário ajusta na criação e depois ele **não muda** (links de convite e de torneio nunca quebram). Formato a-z, 0-9 e hífen simples, de 3 a 32 caracteres, com uma lista de palavras reservadas para rotas do front (`new`, `invite`...).
+- Um owner por tenant: quem criou. Transferir a posse fica para depois.
+- Convite: link **multiuso**, vale 7 dias, revogável. Owner e organizer geram; quem entra vira **player**. Só o hash do token fica no banco, então o link aparece uma vez, na criação. O link vai sem idioma (`/invite/{token}`) e o proxy do next-intl manda cada pessoa para o seu.
+- Aceitar um convite sendo já membro não muda papel nem apelido.
+- Gestão de membros: o owner alterna player ↔ organizer. Remover membro e sair do tenant ficam para depois.
+- Página do tenant **só para membros**. Para quem é de fora, a API responde 404 `tenant.not_found`, o mesmo de um tenant inexistente, para não revelar que ele existe. A prévia do convite (`GET /invites/{token}`) é pública: ter o token já é o convite.
+- Perfil por tenant: por enquanto só o **apelido** (`tenant_members.nickname`). Começa com o nome do Discord e o próprio membro edita. Não é único dentro do tenant.
 - Configurações do tenant: ranking ligado/desligado, sistema (Elo no MVP, Glicko-2 depois), parâmetros (K, rating inicial), rating único ou por modalidade.
+
+## Ids
+
+- **Chave interna**: `bigint generated always as identity` (users, tenants, convites e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não trazem vantagem. São 8 bytes contra 16, sequenciais (índice compacto, sem a fragmentação do UUID aleatório) e cabem no `number` do JS. `tenant_id` também é bigint: num índice composto com outro bigint, um `int4` não economiza nada por causa do alinhamento.
+- **Não escondemos esses ids.** Toda rota que recebe um id confere a participação no tenant, então enumerar não dá acesso a nada; no máximo revela a ordem e o total aproximado de cadastros.
+- **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`.
+- **Identificador público e legível**: slug (tenant; torneio por tenant depois). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
+- **Segredos** (sessão, convite): aleatórios, e só o SHA-256 vai para o banco. O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
+- Se um dia houver ids gerados fora do banco ou bancos que se fundem: `uuidv7()`, nativo no PG18 (a ideia do ULID, com tipo nativo).
 
 ## Rating
 
@@ -100,7 +118,7 @@ Motivos e cuidados:
 
 ## Em aberto
 
-- Limite de tenants por usuário (N).
+- Apelido único dentro do tenant? Hoje pode repetir; decidir junto com a inscrição em torneios.
 - Duelo: tipo de chave padrão (simples/dupla), melhor de N por fase, sequência do veto (ex.: ban-ban-pick-pick-decider), tempo do cronômetro.
 - Janela de contestação padrão (X minutos) e duração da janela de check-in.
 - Critérios de desempate (FFA por pontos e grupos).

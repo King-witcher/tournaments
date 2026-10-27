@@ -3,7 +3,12 @@ pub mod config;
 pub mod current_user;
 pub mod discord;
 pub mod error;
+mod extract;
 mod health;
+mod ids;
+mod invites;
+pub mod tenant_member;
+mod tenants;
 
 use std::sync::Arc;
 
@@ -38,6 +43,15 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .routes(routes!(auth::discord_callback))
         .routes(routes!(auth::me))
         .routes(routes!(auth::logout))
+        .routes(routes!(tenants::create_tenant, tenants::list_my_tenants))
+        .routes(routes!(tenants::get_tenant))
+        .routes(routes!(tenants::update_my_membership))
+        .routes(routes!(tenants::list_members))
+        .routes(routes!(tenants::set_member_role))
+        .routes(routes!(invites::create_invite, invites::list_invites))
+        .routes(routes!(invites::revoke_invite))
+        .routes(routes!(invites::preview_invite))
+        .routes(routes!(invites::accept_invite))
         .with_state(state)
         .split_for_parts();
 

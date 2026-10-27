@@ -8,6 +8,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/components/user-menu";
+import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -35,6 +36,7 @@ export default async function LocaleLayout({
 }: LayoutProps<"/[locale]">) {
   const locale = await rootLocale();
   if (!hasLocale(routing.locales, locale)) notFound();
+  const t = await getTranslations("Nav");
 
   return (
     <html
@@ -43,7 +45,10 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>
-          <header className="flex items-center justify-end gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
+          <header className="flex items-center justify-between gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
+            <Link href="/" className="text-sm font-medium hover:underline">
+              {t("home")}
+            </Link>
             <Suspense fallback={null}>
               <UserMenu />
             </Suspense>

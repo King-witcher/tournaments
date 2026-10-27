@@ -28,6 +28,28 @@ impl ApiError {
         Self::new(StatusCode::UNAUTHORIZED, "auth.unauthenticated")
     }
 
+    pub const fn forbidden(code: &'static str) -> Self {
+        Self::new(StatusCode::FORBIDDEN, code)
+    }
+
+    pub const fn not_found(code: &'static str) -> Self {
+        Self::new(StatusCode::NOT_FOUND, code)
+    }
+
+    pub const fn conflict(code: &'static str) -> Self {
+        Self::new(StatusCode::CONFLICT, code)
+    }
+
+    /// Recurso que existiu mas não vale mais (convite expirado ou revogado).
+    pub const fn gone(code: &'static str) -> Self {
+        Self::new(StatusCode::GONE, code)
+    }
+
+    /// Entrada que chegou bem formada mas não passa na validação.
+    pub const fn invalid(code: &'static str) -> Self {
+        Self::new(StatusCode::UNPROCESSABLE_ENTITY, code)
+    }
+
     pub const fn internal() -> Self {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal")
     }

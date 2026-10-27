@@ -45,12 +45,14 @@ cd web && bun install
 
 Para o login, crie uma aplicação em https://discord.com/developers/applications, adicione o redirect `http://localhost:8080/auth/discord/callback` em **OAuth2 → Redirects** e coloque `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` no `backend/.env`. Sem eles, tudo funciona menos o login.
 
-Depois, em um terminal, a API (aplica as migrations ao subir):
+Depois, em um terminal, a API com recarga automática: a cada `.rs`, `.sql`, `Cargo.toml` ou `.env` salvo, ela para, aplica as migrations, recompila e sobe de novo. Se a compilação falhar, espera a próxima mudança.
 
 ```sh
 cd backend
-cargo run -p api
+bun scripts/dev.ts
 ```
+
+Sem recarga, `cargo run -p api` sobe uma vez (e também aplica as migrations).
 
 - API: http://localhost:8080
 - Swagger UI: http://localhost:8080/docs
@@ -68,6 +70,7 @@ bun run dev
 
 | O quê | Onde | Comando |
 |---|---|---|
+| API com recarga automática | `backend/` | `bun scripts/dev.ts` |
 | Testes do engine (rápidos, sem banco) | `backend/` | `cargo test -p engine` |
 | Todos os testes do backend | `backend/` | `cargo test` |
 | Lint do backend | `backend/` | `cargo clippy --all-targets -- -D warnings` |

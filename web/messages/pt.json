@@ -3,6 +3,9 @@
     "title": "Torneios de Quake Champions",
     "description": "Organize torneios de Quake Champions: duelo, FFA, 2v2 e 3v3."
   },
+  "Nav": {
+    "home": "Início"
+  },
   "Home": {
     "title": "Torneios de Quake Champions",
     "subtitle": "Duelo, FFA, 2v2 e 3v3. Em breve.",
@@ -11,20 +14,96 @@
       "ok": "API e banco funcionando.",
       "unavailable": "A API respondeu, mas o banco está indisponível.",
       "offline": "Não foi possível falar com a API."
+    },
+    "tenants": {
+      "title": "Minhas comunidades",
+      "empty": "Você ainda não participa de nenhuma comunidade. Crie uma ou peça um link de convite.",
+      "create": "Criar comunidade"
     }
   },
   "Auth": {
     "login": "Entrar com Discord",
     "logout": "Sair"
   },
+  "Roles": {
+    "owner": "Dono",
+    "organizer": "Organizador",
+    "player": "Jogador"
+  },
+  "NewTenant": {
+    "title": "Criar comunidade",
+    "loginRequired": "Entre para criar uma comunidade.",
+    "name": "Nome",
+    "slug": "Endereço",
+    "slugHint": "Letras minúsculas, números e hífen, de 3 a 32. Não dá para mudar depois.",
+    "limit": "Cada pessoa pode ser dona de até 3 comunidades.",
+    "submit": "Criar comunidade"
+  },
+  "Tenant": {
+    "loading": "Carregando a comunidade…",
+    "loginRequired": "Entre para ver esta comunidade.",
+    "yourRole": "Seu papel: {role}",
+    "nickname": {
+      "label": "Seu apelido nesta comunidade",
+      "save": "Salvar",
+      "saved": "Apelido salvo."
+    },
+    "members": {
+      "title": "Membros ({count})",
+      "makeOrganizer": "Tornar organizador",
+      "makePlayer": "Tornar jogador"
+    },
+    "invites": {
+      "title": "Convites",
+      "description": "Quem entra pelo link vira jogador. Cada link vale por 7 dias e serve para várias pessoas.",
+      "create": "Gerar link de convite",
+      "createdHint": "Copie agora: este link não aparece de novo.",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "empty": "Nenhum convite ativo.",
+      "item": "Criado por {name}, expira {expires}",
+      "uses": "{count, plural, =0 {ninguém entrou ainda} one {# pessoa entrou} other {# pessoas entraram}}",
+      "revoke": "Revogar"
+    }
+  },
+  "Invite": {
+    "loading": "Carregando o convite…",
+    "title": "Convite para entrar em {name}",
+    "expires": "O convite expira {expires}.",
+    "loginRequired": "Entre com o Discord para aceitar o convite.",
+    "accept": "Entrar na comunidade"
+  },
   "ApiErrors": {
     "internal": "Algo deu errado. Tente de novo.",
+    "request": {
+      "invalid_body": "Dados inválidos.",
+      "invalid_path": "Endereço inválido."
+    },
     "auth": {
       "unauthenticated": "Você precisa entrar para continuar.",
       "discord_not_configured": "O login com Discord ainda não está configurado.",
       "state_mismatch": "O login expirou ou foi interrompido. Tente de novo.",
       "discord_denied": "Login cancelado no Discord.",
       "discord_failed": "Não foi possível entrar com o Discord. Tente de novo."
+    },
+    "tenant": {
+      "not_found": "Comunidade não encontrada, ou você não faz parte dela.",
+      "forbidden": "Você não tem permissão para isso nesta comunidade.",
+      "limit_reached": "Você já é dono do máximo de 3 comunidades.",
+      "slug_taken": "Esse endereço já está em uso.",
+      "slug_invalid": "Use de 3 a 32 letras minúsculas, números ou hífens, sem hífen no começo, no fim ou repetido.",
+      "slug_reserved": "Esse endereço é reservado. Escolha outro.",
+      "name_invalid": "O nome precisa ter de 1 a 64 caracteres."
+    },
+    "invite": {
+      "not_found": "Convite não encontrado. Confira o link.",
+      "expired": "Este convite expirou. Peça um link novo.",
+      "revoked": "Este convite foi revogado. Peça um link novo."
+    },
+    "member": {
+      "not_found": "Membro não encontrado.",
+      "is_owner": "O papel do dono não pode ser alterado.",
+      "nickname_invalid": "O apelido precisa ter de 1 a 32 caracteres."
     }
   }
 }
