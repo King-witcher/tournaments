@@ -27,12 +27,16 @@ crates/api/src/
   auth/           login com Discord, sessão em cookie, CurrentUser
   tenants/        tenants, e a base de todo dado de tenant: TenantId, Role, TenantMember, apelido
   members/        /tenants/{slug}/me e /tenants/{slug}/members
-  invites/        /tenants/{slug}/invites e /invites/{token}
+  invites/        /tenants/{slug}/invites, /invites/{token} e os links de inscrição
+                  (/tenants/{slug}/tournaments/{t}/invites, em tournament.rs)
   tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
-                  status, setup (vagas, campeões, fases → checagem do engine), edit (PATCH)
+                  status, setup (vagas, campeões, fases → checagem do engine), edit (PATCH),
+                  visibility (quem vê: can_see, find_visible)
+  participants/   /tenants/{slug}/tournaments/{t}/participants e .../registration;
+                  registration.rs (os três caminhos de inscrição; o convite usa register)
 ```
 
-Domínios previstos pelo roadmap: `participants` (inscrição, check-in, seeding), `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`.
+Domínios previstos pelo roadmap: `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`. Check-in e seeding entram em `participants`.
 
 ### O que é um domínio
 

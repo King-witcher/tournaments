@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{setup::TournamentMode, status::TournamentStatus};
+use super::{setup::TournamentMode, status::TournamentStatus, visibility::Visibility};
 use crate::shared::Locale;
 
 /// Formato de uma fase.
@@ -80,6 +80,9 @@ pub struct CreateTournament {
     #[serde(default)]
     pub rules: String,
     pub mode: TournamentMode,
+    /// Padrão `public`. Muda depois, até o torneio encerrar.
+    #[serde(default)]
+    pub visibility: Visibility,
     /// Vagas, de 2 a 1024. A checagem de campeões usa o pior caso com esse número.
     #[schema(example = 16)]
     pub max_participants: i32,
@@ -88,13 +91,15 @@ pub struct CreateTournament {
     pub stages: Vec<StageFormat>,
 }
 
-/// Campos ausentes não mudam. Textos podem mudar até o torneio encerrar;
-/// vagas, regra de campeões e fases, até ele começar.
+/// Campos ausentes não mudam. Textos e visibilidade podem mudar até o
+/// torneio encerrar; vagas, regra de campeões e fases, até ele começar (e as
+/// vagas nunca abaixo do número de inscritos).
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTournament {
     pub name: Option<String>,
     pub description: Option<String>,
     pub rules: Option<String>,
+    pub visibility: Option<Visibility>,
     pub max_participants: Option<i32>,
     pub champion_rules: Option<ChampionRules>,
     pub stages: Option<Vec<StageFormat>>,
@@ -111,7 +116,12 @@ pub struct Tournament {
     pub rules: String,
     pub mode: TournamentMode,
     pub status: TournamentStatus,
+    pub visibility: Visibility,
     pub max_participants: i32,
+    /// Inscritos agora.
+    pub participants: i64,
+    /// Se quem vê está inscrito.
+    pub registered: bool,
     pub champion_rules: ChampionRules,
     pub stages: Vec<StageFormat>,
     pub translations: Vec<TournamentTranslation>,
@@ -126,7 +136,12 @@ pub struct TournamentSummary {
     pub name: String,
     pub mode: TournamentMode,
     pub status: TournamentStatus,
+    pub visibility: Visibility,
     pub max_participants: i32,
+    /// Inscritos agora.
+    pub participants: i64,
+    /// Se quem vê está inscrito.
+    pub registered: bool,
     /// Nome nas traduções que existem.
     pub translations: Vec<NameTranslation>,
     pub created_at: DateTime<Utc>,

@@ -2,6 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::{
+    shared::Locale,
+    tenants::MyTenant,
+    tournaments::{NameTranslation, TournamentStatus},
+};
+
 #[derive(Serialize, ToSchema)]
 pub struct CreatedInvite {
     pub id: i64,
@@ -23,6 +29,27 @@ pub struct Invite {
     pub uses: i64,
 }
 
+/// Link de inscrição recém-criado. Sem validade: vale enquanto a inscrição
+/// do torneio estiver aberta.
+#[derive(Serialize, ToSchema)]
+pub struct CreatedTournamentInvite {
+    pub id: i64,
+    /// Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
+    #[schema(example = "7Fq2xKpR9mWbTnVc3hJdYe")]
+    pub token: String,
+}
+
+/// Link de inscrição não revogado de um torneio.
+#[derive(Serialize, ToSchema)]
+pub struct TournamentInvite {
+    pub id: i64,
+    /// Apelido, neste tenant, de quem criou.
+    pub created_by: String,
+    pub created_at: DateTime<Utc>,
+    /// Quantas pessoas se inscreveram por este link.
+    pub uses: i64,
+}
+
 /// `{invite_id}` de `/tenants/{slug}/invites/{invite_id}` (o slug fica com `TenantMember`).
 #[derive(Deserialize)]
 pub struct InvitePath {
@@ -33,5 +60,29 @@ pub struct InvitePath {
 #[derive(Serialize, ToSchema)]
 pub struct InvitePreview {
     pub tenant_name: String,
-    pub expires_at: DateTime<Utc>,
+    /// Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
+    pub expires_at: Option<DateTime<Utc>>,
+    /// Link de inscrição: aceitar também inscreve neste torneio.
+    pub tournament: Option<InvitedTournament>,
+}
+
+/// O torneio de um link de inscrição. O link deixa de valer quando a
+/// inscrição não está aberta (`status`) ou lota.
+#[derive(Serialize, ToSchema)]
+pub struct InvitedTournament {
+    pub slug: String,
+    pub locale: Locale,
+    pub name: String,
+    pub translations: Vec<NameTranslation>,
+    pub status: TournamentStatus,
+    pub max_participants: i32,
+    pub participants: i64,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct AcceptedInvite {
+    /// O tenant em que a pessoa está (quem já era membro mantém papel e apelido).
+    pub tenant: MyTenant,
+    /// Slug do torneio em que ficou inscrita, no link de inscrição.
+    pub tournament: Option<String>,
 }

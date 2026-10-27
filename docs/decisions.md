@@ -50,7 +50,7 @@ Motivos e cuidados:
 - Limite: cada usuário é owner de no máximo **3** tenants, fixo no código (`MAX_OWNED_TENANTS`). Ser organizer ou player em outros não conta.
 - Slug: o front sugere a partir do nome, o usuário ajusta na criação e depois ele **não muda** (links de convite e de torneio nunca quebram). Formato a-z, 0-9 e hífen simples, de 3 a 32 caracteres, com uma lista de palavras reservadas para rotas do front (`new`, `invite`...).
 - Um owner por tenant: quem criou. Transferir a posse fica para depois.
-- Convite: link **multiuso**, vale 7 dias, revogável. Owner e organizer geram; quem entra vira **player**. Só o hash do token fica no banco, então o link aparece uma vez, na criação. O link vai sem idioma (`/invite/{token}`) e o proxy do next-intl manda cada pessoa para o seu.
+- Convite: link **multiuso**, vale 7 dias, revogável. Owner e organizer geram; quem entra vira **player**. Só o hash do token fica no banco, então o link aparece uma vez, na criação. O link vai sem idioma (`/invite/{token}`) e o proxy do next-intl manda cada pessoa para o seu. O link de inscrição de um torneio (ver "Torneios") também faz entrar no tenant.
 - Aceitar um convite sendo já membro não muda papel nem apelido.
 - Gestão de membros: o owner alterna player ↔ organizer. Remover membro e sair do tenant ficam para depois.
 - Página do tenant **só para membros**. Para quem é de fora, a API responde 404 `tenant.not_found`, o mesmo de um tenant inexistente, para não revelar que ele existe. A prévia do convite (`GET /invites/{token}`) é pública: ter o token já é o convite.
@@ -61,7 +61,7 @@ Motivos e cuidados:
 
 - **Chave interna**: `bigint generated always as identity` (users, tenants, convites e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não trazem vantagem. São 8 bytes contra 16, sequenciais (índice compacto, sem a fragmentação do UUID aleatório) e cabem no `number` do JS. `tenant_id` também é bigint: num índice composto com outro bigint, um `int4` não economiza nada por causa do alinhamento.
 - **Não escondemos esses ids.** Toda rota que recebe um id confere a participação no tenant, então enumerar não dá acesso a nada; no máximo revela a ordem e o total aproximado de cadastros.
-- **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`.
+- **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`. Exceção: `participants` tem id próprio (bigint) além do `unique (tournament_id, user_id)`, porque ele vira o `ParticipantId` da chave; nas rotas, o inscrito é identificado pelo `user_id`.
 - **Identificador público e legível**: slug (tenant; torneio por tenant depois). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
 - **Segredos** (sessão, convite): aleatórios, e só o SHA-256 vai para o banco. O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
 - Se um dia houver ids gerados fora do banco ou bancos que se fundem: `uuidv7()`, nativo no PG18 (a ideia do ULID, com tipo nativo).
@@ -69,14 +69,21 @@ Motivos e cuidados:
 ## Torneios
 
 - Endereço `/{locale}/{tenant}/{torneio}`. O slug segue as regras do tenant (sugerido a partir do nome, ajustável na criação, a-z, 0-9 e hífen, de 3 a 32), é único dentro do tenant e **não muda**. Há palavras reservadas para as rotas do tenant (`new`, `members`, `settings`...).
-- **Só membros** veem torneios. Quem é de fora recebe 404 `tournament.not_found`. Rascunho só aparece para organizer e owner; para player também é 404.
+- **Só membros** veem torneios. Quem é de fora recebe 404 `tenant.not_found`. Rascunho só aparece para organizer e owner; para player é 404 `tournament.not_found`.
+- **Visibilidade**: público (padrão) ou privado. O público aparece para todos os membros; o privado, só para os inscritos, organizers e owner, e para os outros membros some da lista e responde 404 `tournament.not_found`, como se não existisse. Muda até o torneio encerrar.
 - Organizer e owner criam e editam. Criar gera um rascunho; publicar abre a inscrição; só rascunho pode ser excluído.
 - **Vagas obrigatórias** (2 a 1024). A checagem de campeões na criação usa o pior caso para esse número (o pior caso não diminui com mais participantes; há teste disso no `engine`) e roda de novo ao gerar a chave com os inscritos reais. As vagas também fecham a inscrição quando lotam.
 - **Pool de campeões**: tabela global `champions` com os 17 atuais, e o pool do torneio é o conjunto ativo. Excluir campeões por torneio fica para depois.
 - Bans de campeão por mapa: de 0 a 3, padrão 1.
 - Não repetição na checagem: escopo partida usa o maior melhor de N; fase, o pior caso da fase mais longa; torneio, a soma dos piores casos das fases. Sem a regra, basta sobrar um campeão depois dos bans.
 - Formato padrão no formulário de duelo: eliminação dupla com reset, md3 nas partidas e md5 na grande final.
-- Edição: nome, descrição, regras e traduções até o torneio encerrar. Formato, vagas e regra de campeões até ele começar; a checagem roda de novo a cada mudança e ao publicar. Quando houver inscrição, vagas abaixo do número de inscritos serão recusadas.
+- Edição: nome, descrição, regras, traduções e visibilidade até o torneio encerrar. Formato, vagas e regra de campeões até ele começar; a checagem roda de novo a cada mudança e ao publicar. Vagas abaixo do número de inscritos são recusadas (`tournament.max_participants_below_registered`).
+- **Inscrição**, por três caminhos, sempre de membros do tenant:
+  - **botão**: o próprio membro, só em torneio **público** e com a inscrição aberta;
+  - **organizador**: organizer ou owner inscreve qualquer membro, em público ou privado, do rascunho até o torneio começar;
+  - **link de inscrição**: o que um torneio privado usa para trazer gente, e também serve no público.
+- Lotou, fecha (`tournament.full`). O inscrito sai sozinho enquanto a inscrição está aberta; depois disso, só o organizador tira, até o torneio começar. Inscrever de novo quem já está inscrito não dá erro.
+- **Link de inscrição**: é um convite do tenant que também inscreve. Mesma tabela (`tenant_invites.tournament_id`), mesmo endereço (`/invite/{token}`), multiuso, revogável pela mesma rota. Não tem data: vale enquanto a inscrição estiver aberta e pode ser gerado já no rascunho, para mandar antes de publicar. Aceitar entra no tenant como player (quem já é membro mantém papel e apelido) e inscreve **numa transação só**: sem vaga ou fora da inscrição, não entra em nada.
 - O idioma original não muda depois da criação. Tradução: uma por idioma diferente do original, com nome obrigatório; descrição ou regras vazias mostram as do original. A API devolve o original e as traduções, e o front escolhe pelo idioma de quem vê.
 - Descrição e regras em **Markdown**, sem HTML cru (`react-markdown` no front).
 - Erro com números sai como `{"error": "champions.pool_exhausted", "params": {"required": 32, "available": 17}}`, e o front interpola os números na tradução.

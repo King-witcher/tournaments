@@ -1,4 +1,7 @@
-use axum::http::{Method, StatusCode};
+use axum::{
+    Router,
+    http::{Method, StatusCode},
+};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
@@ -31,13 +34,16 @@ async fn invite_link_adds_a_player(db: PgPool) {
     assert_eq!(preview["tenant_name"], "Tenant quake-br");
     assert_eq!(preview["expires_at"], created["expires_at"]);
 
-    let joined = json!({ "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia" });
+    let joined = json!({
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia" },
+        "tournament": null
+    });
     assert_eq!(join(&app, &bia, token).await, joined);
     // Multiuso, e aceitar de novo não muda nada.
     join(&app, &caio, token).await;
     assert_eq!(join(&app, &bia, token).await, joined);
     // O owner aceitando o próprio link continua owner.
-    assert_eq!(join(&app, &ana, token).await["role"], "owner");
+    assert_eq!(join(&app, &ana, token).await["tenant"]["role"], "owner");
 
     let (_, members) = get(&app, "/tenants/quake-br/members", &bia).await;
     let names: Vec<_> = members
@@ -178,4 +184,153 @@ async fn invite_ids_do_not_cross_tenants(db: PgPool) {
     );
     let (status, _) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
     assert_eq!(status, StatusCode::OK);
+}
+
+const COPA: &str = "/tenants/quake-br/tournaments/copa";
+
+/// Gera um link de inscrição no torneio `copa` de `quake-br` e devolve o token.
+async fn copa_invite(app: &Router, by: &User) -> String {
+    let (status, body) = post_empty(app, &format!("{COPA}/invites"), by).await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    body["token"].as_str().unwrap().to_owned()
+}
+
+async fn preview(app: &Router, token: &str) -> (StatusCode, Value) {
+    call(app, Method::GET, &format!("/invites/{token}"), None, None).await
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn tournament_link_joins_the_tenant_and_registers(db: PgPool) {
+    let (app, ana, _) = quake_br(&db).await;
+    let caio = user(&db, "Caio").await;
+    let private = with(duel("copa"), json!({ "visibility": "private" }));
+    create_tournament(&app, &ana, private).await;
+
+    // Já no rascunho, para mandar antes de publicar.
+    let token = copa_invite(&app, &ana).await;
+    assert_eq!(
+        preview(&app, &token).await,
+        (
+            StatusCode::OK,
+            json!({
+                "tenant_name": "Tenant quake-br",
+                "expires_at": null,
+                "tournament": {
+                    "slug": "copa", "locale": "pt", "name": "Copa de Outubro", "translations": [],
+                    "status": "draft", "max_participants": 16, "participants": 0
+                }
+            })
+        )
+    );
+    // Sem a inscrição aberta, aceitar não entra nem no tenant.
+    let accept = format!("/invites/{token}/accept");
+    assert_eq!(
+        post_empty(&app, &accept, &caio).await,
+        (StatusCode::CONFLICT, err("tournament.registration_closed"))
+    );
+    assert_eq!(get(&app, "/tenants", &caio).await.1, json!([]));
+
+    publish(&app, &ana, "copa").await;
+    let accepted = json!({
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Caio" },
+        "tournament": "copa"
+    });
+    assert_eq!(join(&app, &caio, &token).await, accepted);
+    assert_eq!(join(&app, &caio, &token).await, accepted);
+    let (status, seen) = get(&app, COPA, &caio).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(seen["registered"], true);
+
+    // O link fica no torneio, não na lista do tenant, e conta os inscritos por ele.
+    let (status, links) = get(&app, &format!("{COPA}/invites"), &ana).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(links.as_array().unwrap().len(), 1);
+    assert_eq!(links[0]["created_by"], "Ana");
+    assert_eq!(links[0]["uses"], 1);
+    assert!(links[0].get("token").is_none());
+    let (_, tenant_invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
+    let ids: Vec<_> = tenant_invites
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| &i["id"])
+        .collect();
+    assert!(!ids.contains(&&links[0]["id"]), "{tenant_invites}");
+
+    // Revoga pela rota de sempre.
+    let revoke = format!("/tenants/quake-br/invites/{}", links[0]["id"]);
+    assert_eq!(delete(&app, &revoke, &ana).await.0, StatusCode::NO_CONTENT);
+    assert_eq!(
+        preview(&app, &token).await,
+        (StatusCode::GONE, err("invite.revoked"))
+    );
+    assert_eq!(
+        get(&app, &format!("{COPA}/invites"), &ana).await.1,
+        json!([])
+    );
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn tournament_link_needs_a_free_slot(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = user(&db, "Caio").await;
+    create_tournament(
+        &app,
+        &ana,
+        with(duel("copa"), json!({ "max_participants": 2 })),
+    )
+    .await;
+    publish(&app, &ana, "copa").await;
+    let token = copa_invite(&app, &ana).await;
+
+    // Quem já é membro só se inscreve; o owner continua owner.
+    assert_eq!(join(&app, &bia, &token).await["tournament"], "copa");
+    assert_eq!(join(&app, &ana, &token).await["tenant"]["role"], "owner");
+    assert_eq!(
+        post_empty(&app, &format!("/invites/{token}/accept"), &caio).await,
+        (
+            StatusCode::CONFLICT,
+            json!({ "error": "tournament.full", "params": { "max": 2 } })
+        )
+    );
+    assert_eq!(get(&app, "/tenants", &caio).await.1, json!([]));
+    assert_eq!(
+        preview(&app, &token).await.1["tournament"]["participants"],
+        2
+    );
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn tournament_links_only_before_the_start(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let links = format!("{COPA}/invites");
+    let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
+    assert_eq!(post_empty(&app, &links, &bia).await, forbidden);
+    assert_eq!(get(&app, &links, &bia).await, forbidden);
+    assert_eq!(
+        post_empty(&app, "/tenants/quake-br/tournaments/outra/invites", &ana).await,
+        (StatusCode::NOT_FOUND, err("tournament.not_found"))
+    );
+
+    publish(&app, &ana, "copa").await;
+    let token = copa_invite(&app, &ana).await;
+    set_status(&db, "copa", "in_progress").await;
+    let closed = (StatusCode::CONFLICT, err("tournament.registration_closed"));
+    assert_eq!(post_empty(&app, &links, &ana).await, closed);
+    let caio = user(&db, "Caio").await;
+    assert_eq!(
+        post_empty(&app, &format!("/invites/{token}/accept"), &caio).await,
+        closed
+    );
+
+    // Excluir o rascunho apaga os links dele.
+    create_tournament(&app, &ana, duel("rascunho")).await;
+    let draft = "/tenants/quake-br/tournaments/rascunho";
+    let (_, created) = post_empty(&app, &format!("{draft}/invites"), &ana).await;
+    assert_eq!(delete(&app, draft, &ana).await.0, StatusCode::NO_CONTENT);
+    assert_eq!(
+        preview(&app, created["token"].as_str().unwrap()).await,
+        (StatusCode::NOT_FOUND, err("invite.not_found"))
+    );
 }

@@ -38,9 +38,25 @@ impl TournamentStatus {
         matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
     }
 
-    /// Textos e traduções mudam até o torneio encerrar.
+    /// Textos, traduções e visibilidade mudam até o torneio encerrar.
     pub const fn texts_editable(self) -> bool {
         !matches!(self, Self::Finished)
+    }
+
+    /// O próprio membro se inscreve, sai ou entra por convite só aqui.
+    pub const fn registration_open(self) -> bool {
+        matches!(self, Self::Registration)
+    }
+
+    /// O organizador inscreve e tira participantes até o torneio começar.
+    pub const fn participants_editable(self) -> bool {
+        matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
+    }
+
+    /// Gerar link de inscrição: já no rascunho (para mandar antes de
+    /// publicar) e com a inscrição aberta.
+    pub const fn invites_allowed(self) -> bool {
+        matches!(self, Self::Draft | Self::Registration)
     }
 }
 
@@ -52,9 +68,26 @@ mod tests {
     fn what_each_status_allows() {
         use TournamentStatus::*;
         let all = [Draft, Registration, CheckIn, InProgress, Finished];
-        let setup: Vec<_> = all.iter().map(|s| s.setup_editable()).collect();
-        let texts: Vec<_> = all.iter().map(|s| s.texts_editable()).collect();
-        assert_eq!(setup, [true, true, true, false, false]);
-        assert_eq!(texts, [true, true, true, true, false]);
+        let allows = |rule: fn(TournamentStatus) -> bool| all.map(rule);
+        assert_eq!(
+            allows(TournamentStatus::setup_editable),
+            [true, true, true, false, false]
+        );
+        assert_eq!(
+            allows(TournamentStatus::texts_editable),
+            [true, true, true, true, false]
+        );
+        assert_eq!(
+            allows(TournamentStatus::registration_open),
+            [false, true, false, false, false]
+        );
+        assert_eq!(
+            allows(TournamentStatus::participants_editable),
+            [true, true, true, false, false]
+        );
+        assert_eq!(
+            allows(TournamentStatus::invites_allowed),
+            [true, true, false, false, false]
+        );
     }
 }

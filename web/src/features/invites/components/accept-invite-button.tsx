@@ -8,8 +8,14 @@ import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 
-/** Aceita o convite e leva para a página da comunidade. */
-export function AcceptInviteButton({ token }: { token: string }) {
+type Props = {
+  token: string;
+  /** Link de inscrição: aceitar também inscreve no torneio. */
+  tournament: boolean;
+};
+
+/** Aceita o convite e leva para a página da comunidade ou do torneio. */
+export function AcceptInviteButton({ token, tournament }: Props) {
   const t = useTranslations("Invite");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -24,11 +30,16 @@ export function AcceptInviteButton({ token }: { token: string }) {
               api.POST("/invites/{token}/accept", {
                 params: { path: { token } },
               }),
-            (tenant) => router.push(`/${tenant.slug}`),
+            (accepted) =>
+              router.push(
+                accepted.tournament
+                  ? `/${accepted.tenant.slug}/${accepted.tournament}`
+                  : `/${accepted.tenant.slug}`,
+              ),
           )
         }
       >
-        {t("accept")}
+        {tournament ? t("acceptTournament") : t("accept")}
       </Button>
       {error && <ErrorText>{error}</ErrorText>}
     </div>

@@ -11,6 +11,7 @@ export type TournamentValues = {
   locale: Schemas["Locale"];
   description: string;
   rules: string;
+  visibility: Schemas["Visibility"];
   maxParticipants: number;
   bracket: Schemas["Bracket"];
   grandFinalReset: boolean;
@@ -20,7 +21,7 @@ export type TournamentValues = {
   noRepeat: NoRepeatChoice;
 };
 
-/** Padrão do duelo: dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban. */
+/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban. */
 export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
   return {
     name: "",
@@ -28,6 +29,7 @@ export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
     locale,
     description: "",
     rules: "",
+    visibility: "public",
     maxParticipants: 16,
     bracket: "double",
     grandFinalReset: true,
@@ -50,6 +52,7 @@ export function valuesFrom(
     locale: tournament.locale,
     description: tournament.description,
     rules: tournament.rules,
+    visibility: tournament.visibility,
     maxParticipants: tournament.max_participants,
     bracket: stage.bracket,
     grandFinalReset: stage.grand_final_reset ?? false,

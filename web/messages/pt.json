@@ -71,7 +71,10 @@
     "title": "Convite para entrar em {name}",
     "expires": "O convite expira {expires}.",
     "loginRequired": "Entre com o Discord para aceitar o convite.",
-    "accept": "Entrar na comunidade"
+    "accept": "Entrar na comunidade",
+    "tournamentTitle": "Inscrição em {name}",
+    "tournamentHint": "Aceitar também faz você entrar na comunidade {tenant} como jogador.",
+    "acceptTournament": "Entrar e se inscrever"
   },
   "Locales": {
     "pt": "Português",
@@ -84,11 +87,16 @@
     "in_progress": "Em andamento",
     "finished": "Encerrado"
   },
+  "Visibility": {
+    "public": "Público",
+    "private": "Privado"
+  },
   "Tournaments": {
     "title": "Torneios",
     "create": "Criar torneio",
     "empty": "Nenhum torneio ainda.",
-    "slots": "{count, plural, one {# vaga} other {# vagas}}"
+    "participants": "{count}/{max} inscritos",
+    "registered": "você está inscrito"
   },
   "NewTournament": {
     "title": "Criar torneio",
@@ -103,6 +111,12 @@
     "description": "Descrição",
     "rules": "Regras",
     "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
+    "visibility": "Visibilidade",
+    "visibilityOptions": {
+      "public": "Pública: todos da comunidade veem e se inscrevem",
+      "private": "Privada: só inscritos e organizadores veem"
+    },
+    "visibilityHint": "No privado, entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
     "setup": "Formato",
     "maxParticipants": "Vagas",
     "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
@@ -173,6 +187,29 @@
       "save": "Salvar tradução",
       "saved": "Tradução salva.",
       "remove": "Remover tradução"
+    },
+    "invites": {
+      "title": "Links de inscrição",
+      "description": "Quem entra pelo link vira jogador da comunidade e já fica inscrito. O link serve para várias pessoas e vale enquanto a inscrição estiver aberta.",
+      "create": "Gerar link de inscrição",
+      "empty": "Nenhum link de inscrição.",
+      "item": "Criado por {name} {created}",
+      "uses": "{count, plural, =0 {ninguém se inscreveu ainda} one {# inscrição} other {# inscrições}}"
+    }
+  },
+  "Participants": {
+    "title": "Inscritos ({count}/{max})",
+    "empty": "Ninguém inscrito ainda.",
+    "member": "Membro",
+    "choose": "Escolha um membro…",
+    "add": "Inscrever",
+    "remove": "Tirar",
+    "registration": {
+      "register": "Inscrever-se",
+      "withdraw": "Cancelar inscrição",
+      "registered": "Você está inscrito.",
+      "full": "As vagas acabaram.",
+      "privateHint": "Torneio privado: só entra quem um organizador inscrever ou quem usar um link de inscrição."
     }
   },
   "ApiErrors": {
@@ -222,7 +259,16 @@
       "setup_locked": "O torneio já começou: formato, vagas e campeões não mudam mais.",
       "finished": "O torneio já foi encerrado e não pode mais ser alterado.",
       "translation_same_locale": "Esse já é o idioma original do torneio.",
-      "translation_not_found": "Não há tradução nesse idioma."
+      "translation_not_found": "Não há tradução nesse idioma.",
+      "private": "Este torneio é privado: a inscrição é por link de inscrição ou por um organizador.",
+      "registration_closed": "As inscrições deste torneio não estão abertas.",
+      "participants_locked": "O torneio já começou: os inscritos não mudam mais.",
+      "full": "As {max} vagas já foram preenchidas.",
+      "max_participants_below_registered": "Já há {registered} inscritos: as vagas não podem ficar abaixo disso."
+    },
+    "participant": {
+      "already_registered": "Esse membro já está inscrito.",
+      "not_found": "Esse membro não está inscrito."
     },
     "format": {
       "invalid_best_of": "Melhor de {best_of} não vale: use um número ímpar (1, 3, 5...).",

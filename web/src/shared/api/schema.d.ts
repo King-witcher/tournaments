@@ -260,6 +260,54 @@ export interface paths {
         patch: operations["update_tournament"];
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_tournament_invites"];
+        put?: never;
+        post: operations["create_tournament_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_participants"];
+        put?: never;
+        post: operations["add_participant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_participant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/publish": {
         parameters: {
             query?: never;
@@ -271,6 +319,22 @@ export interface paths {
         put?: never;
         post: operations["publish_tournament"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete: operations["withdraw"];
         options?: never;
         head?: never;
         patch?: never;
@@ -296,6 +360,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptedInvite: {
+            /** @description O tenant em que a pessoa está (quem já era membro mantém papel e apelido). */
+            tenant: components["schemas"]["MyTenant"];
+            /** @description Slug do torneio em que ficou inscrita, no link de inscrição. */
+            tournament?: string | null;
+        };
+        AddParticipant: {
+            /**
+             * Format: int64
+             * @description Membro do tenant a inscrever.
+             */
+            user_id: number;
+        };
         /**
          * @description Papéis que o owner pode dar. A posse do tenant não muda por aqui.
          * @enum {string}
@@ -351,10 +428,25 @@ export interface components {
             slug: string;
             /** @description Fases, na ordem. Por enquanto, exatamente uma. */
             stages: components["schemas"]["StageFormat"][];
+            /** @description Padrão `public`. Muda depois, até o torneio encerrar. */
+            visibility?: components["schemas"]["Visibility"];
         };
         CreatedInvite: {
             /** Format: date-time */
             expires_at: string;
+            /** Format: int64 */
+            id: number;
+            /**
+             * @description Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
+             * @example 7Fq2xKpR9mWbTnVc3hJdYe
+             */
+            token: string;
+        };
+        /**
+         * @description Link de inscrição recém-criado. Sem validade: vale enquanto a inscrição
+         *     do torneio estiver aberta.
+         */
+        CreatedTournamentInvite: {
             /** Format: int64 */
             id: number;
             /**
@@ -407,9 +499,28 @@ export interface components {
         };
         /** @description O que quem recebeu o link vê antes de aceitar. */
         InvitePreview: {
-            /** Format: date-time */
-            expires_at: string;
+            /**
+             * Format: date-time
+             * @description Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
+             */
+            expires_at?: string | null;
             tenant_name: string;
+            tournament?: components["schemas"]["InvitedTournament"] | null;
+        };
+        /**
+         * @description O torneio de um link de inscrição. O link deixa de valer quando a
+         *     inscrição não está aberta (`status`) ou lota.
+         */
+        InvitedTournament: {
+            locale: components["schemas"]["Locale"];
+            /** Format: int32 */
+            max_participants: number;
+            name: string;
+            /** Format: int64 */
+            participants: number;
+            slug: string;
+            status: components["schemas"]["TournamentStatus"];
+            translations: components["schemas"]["NameTranslation"][];
         };
         /** @enum {string} */
         Locale: "pt" | "es";
@@ -450,6 +561,16 @@ export interface components {
          * @enum {string}
          */
         NoRepeatWho: "player" | "team";
+        /** @description Inscrito num torneio. */
+        Participant: {
+            avatar_url?: string | null;
+            /** @description Apelido no tenant. */
+            nickname: string;
+            /** Format: date-time */
+            registered_at: string;
+            /** Format: int64 */
+            user_id: number;
+        };
         PutTranslation: {
             /** @description Markdown, até 2000 caracteres; vazio usa o original. */
             description?: string;
@@ -505,11 +626,33 @@ export interface components {
             max_participants: number;
             mode: components["schemas"]["TournamentMode"];
             name: string;
+            /**
+             * Format: int64
+             * @description Inscritos agora.
+             */
+            participants: number;
+            /** @description Se quem vê está inscrito. */
+            registered: boolean;
             rules: string;
             slug: string;
             stages: components["schemas"]["StageFormat"][];
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["TournamentTranslation"][];
+            visibility: components["schemas"]["Visibility"];
+        };
+        /** @description Link de inscrição não revogado de um torneio. */
+        TournamentInvite: {
+            /** Format: date-time */
+            created_at: string;
+            /** @description Apelido, neste tenant, de quem criou. */
+            created_by: string;
+            /** Format: int64 */
+            id: number;
+            /**
+             * Format: int64
+             * @description Quantas pessoas se inscreveram por este link.
+             */
+            uses: number;
         };
         /** @enum {string} */
         TournamentMode: "duel";
@@ -527,10 +670,18 @@ export interface components {
             max_participants: number;
             mode: components["schemas"]["TournamentMode"];
             name: string;
+            /**
+             * Format: int64
+             * @description Inscritos agora.
+             */
+            participants: number;
+            /** @description Se quem vê está inscrito. */
+            registered: boolean;
             slug: string;
             status: components["schemas"]["TournamentStatus"];
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
+            visibility: components["schemas"]["Visibility"];
         };
         /** @description Tradução de um torneio. Descrição ou regras vazias: o front mostra as do original. */
         TournamentTranslation: {
@@ -544,8 +695,9 @@ export interface components {
             nickname: string;
         };
         /**
-         * @description Campos ausentes não mudam. Textos podem mudar até o torneio encerrar;
-         *     vagas, regra de campeões e fases, até ele começar.
+         * @description Campos ausentes não mudam. Textos e visibilidade podem mudar até o
+         *     torneio encerrar; vagas, regra de campeões e fases, até ele começar (e as
+         *     vagas nunca abaixo do número de inscritos).
          */
         UpdateTournament: {
             champion_rules?: components["schemas"]["ChampionRules"] | null;
@@ -555,7 +707,10 @@ export interface components {
             name?: string | null;
             rules?: string | null;
             stages?: components["schemas"]["StageFormat"][] | null;
+            visibility?: components["schemas"]["Visibility"] | null;
         };
+        /** @enum {string} */
+        Visibility: "public" | "private";
     };
     responses: never;
     parameters: never;
@@ -676,7 +831,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Convite válido (não exige login) */
+            /** @description Convite válido (não exige login). No link de inscrição, o torneio vem com status e vagas: só dá para aceitar com a inscrição aberta e vaga sobrando */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -717,13 +872,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Entrou como player; quem já era membro mantém papel e apelido */
+            /** @description Entrou como player (quem já era membro mantém papel e apelido) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyTenant"];
+                    "application/json": components["schemas"]["AcceptedInvite"];
                 };
             };
             /** @description auth.unauthenticated */
@@ -737,6 +892,15 @@ export interface operations {
             };
             /** @description invite.not_found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.registration_closed, tournament.full {max} */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -917,7 +1081,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Convites ativos, do mais novo ao mais antigo */
+            /** @description Convites ativos do tenant (os links de inscrição ficam em cada torneio), do mais novo ao mais antigo */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1012,7 +1176,7 @@ export interface operations {
             path: {
                 /** @description Slug do tenant */
                 slug: string;
-                /** @description Id do convite */
+                /** @description Id do convite (do tenant ou link de inscrição de um torneio) */
                 invite_id: number;
             };
             cookie?: never;
@@ -1254,7 +1418,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Torneios do tenant, do mais novo ao mais antigo; rascunhos só para organizer e owner */
+            /** @description Torneios do tenant, do mais novo ao mais antigo. Rascunhos e privados só para organizer e owner; privados também para os inscritos */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1387,7 +1551,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, tournament.not_found (inexistente, ou rascunho para player) */
+            /** @description tenant.not_found, tournament.not_found (inexistente; para player, também rascunho ou privado sem inscrição) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1412,7 +1576,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho excluído */
+            /** @description Rascunho excluído, com os inscritos e os links de inscrição dele */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -1511,7 +1675,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos), tournament.setup_locked (vagas, campeões ou fases depois de começar) */
+            /** @description tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1522,6 +1686,306 @@ export interface operations {
             };
             /** @description Os mesmos da criação, menos slug */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_tournament_invites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Links de inscrição não revogados, do mais novo ao mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentInvite"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_tournament_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link multiuso de inscrição, público ou privado: quem aceita entra no tenant como player e fica inscrito. Vale enquanto a inscrição estiver aberta */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedTournamentInvite"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.registration_closed (só no rascunho ou com a inscrição aberta) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_participants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inscritos, na ordem de inscrição (para quem vê o torneio) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Participant"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    add_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddParticipant"];
+            };
+        };
+        responses: {
+            /** @description Membro inscrito pelo organizador, em torneio público ou privado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Participant"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, member.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description participant.already_registered, tournament.participants_locked (já começou), tournament.full {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do usuário inscrito */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inscrição removida pelo organizador */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.participants_locked (já começou) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1545,7 +2009,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio */
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1592,6 +2056,106 @@ export interface operations {
             };
             /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inscrito (também se já estava) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.private (só por convite ou pelo organizador), tournament.registration_closed, tournament.full {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inscrição cancelada (também se não havia) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.registration_closed (depois disso, só o organizador tira) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

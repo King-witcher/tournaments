@@ -68,15 +68,27 @@ impl Setup {
         }
     }
 
-    /// Limites do site (vagas, bans, número de fases) e depois a checagem do
-    /// `engine`: formato válido e pool de campeões suficiente no pior caso.
-    pub fn check(&self, mode: TournamentMode, champion_pool: u32) -> Result<(), ApiError> {
+    /// Limites do site (vagas, bans, número de fases), vagas que caibam os
+    /// `registered` já inscritos e depois a checagem do `engine`: formato
+    /// válido e pool de campeões suficiente no pior caso.
+    pub fn check(
+        &self,
+        mode: TournamentMode,
+        champion_pool: u32,
+        registered: i64,
+    ) -> Result<(), ApiError> {
         if !PARTICIPANTS.contains(&self.max_participants) {
             return Err(
                 ApiError::invalid("tournament.max_participants_invalid").with_params([
                     ("min", i64::from(*PARTICIPANTS.start())),
                     ("max", i64::from(*PARTICIPANTS.end())),
                 ]),
+            );
+        }
+        if i64::from(self.max_participants) < registered {
+            return Err(
+                ApiError::conflict("tournament.max_participants_below_registered")
+                    .with_params([("registered", registered)]),
             );
         }
         if self.champion_rules.bans_per_game > MAX_BANS_PER_GAME {
@@ -132,8 +144,22 @@ mod tests {
     type Params = Vec<(&'static str, i64)>;
 
     fn check(s: Setup) -> Result<(), (&'static str, Params)> {
-        s.check(TournamentMode::Duel, 17)
+        s.check(TournamentMode::Duel, 17, 0)
             .map_err(|e| (e.code, e.params))
+    }
+
+    #[test]
+    fn slots_fit_who_is_registered() {
+        let s = || setup(8, 1, None, vec![double(3)]);
+        assert!(s().check(TournamentMode::Duel, 17, 8).is_ok());
+        let err = s().check(TournamentMode::Duel, 17, 9).unwrap_err();
+        assert_eq!(
+            (err.code, err.params),
+            (
+                "tournament.max_participants_below_registered",
+                vec![("registered", 9)]
+            )
+        );
     }
 
     #[test]

@@ -43,6 +43,7 @@ pub async fn put_translation(
         &mut *state.db.acquire().await?,
         member.tenant,
         &path.tournament,
+        None,
     )
     .await?
     .ok_or(ApiError::not_found("tournament.not_found"))?;
@@ -89,6 +90,7 @@ pub async fn delete_translation(
         &mut *state.db.acquire().await?,
         member.tenant,
         &path.tournament,
+        None,
     )
     .await?
     .ok_or(ApiError::not_found("tournament.not_found"))?;

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, max_participants, champion_rules)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
+  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, visibility,\n                max_participants, champion_rules)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
   "describe": {
     "columns": [
       {
@@ -24,6 +24,7 @@
         "Text",
         "Text",
         "Text",
+        "Text",
         "Int4",
         "Jsonb"
       ]
@@ -32,5 +33,5 @@
       false
     ]
   },
-  "hash": "9087879fdacb96596993b216a94482df252fd62633dc26a1ff30465c0d685c1a"
+  "hash": "6b5e573a5f8c752605401d0e9b9510ed812bc08923bb209cbaca8d3561b8b013"
 }

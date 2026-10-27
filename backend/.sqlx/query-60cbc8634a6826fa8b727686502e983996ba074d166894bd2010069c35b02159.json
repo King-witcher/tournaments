@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, slug, locale, name, description, rules, mode, status, max_participants,\n                  champion_rules as \"champion_rules: Json<ec::ChampionRules>\", created_at\n           from tournaments\n           where tenant_id = $1 and slug = $2",
+  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.visibility, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\", t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
   "describe": {
     "columns": [
       {
@@ -93,6 +93,17 @@
       },
       {
         "ordinal": 8,
+        "name": "visibility",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "visibility"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "max_participants",
         "type_info": "Int4",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "champion_rules: Json<ec::ChampionRules>",
         "type_info": "Jsonb",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -123,12 +134,25 @@
             "name": "created_at"
           }
         }
+      },
+      {
+        "ordinal": 12,
+        "name": "participants!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 13,
+        "name": "registered!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
-        "Text"
+        "Text",
+        "Int8"
       ]
     },
     "nullable": [
@@ -142,8 +166,11 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      null,
+      null
     ]
   },
-  "hash": "a54fa600c0100afe1468aef6a4514648a9fd9aeec9df922773b5c7b0f576245e"
+  "hash": "60cbc8634a6826fa8b727686502e983996ba074d166894bd2010069c35b02159"
 }

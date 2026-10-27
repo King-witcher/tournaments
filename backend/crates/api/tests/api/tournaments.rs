@@ -1,54 +1,8 @@
-use axum::{Router, http::StatusCode};
+use axum::http::StatusCode;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use crate::common::*;
-
-/// Duelo em dupla com reset, md3/md5, 16 vagas, 1 ban, sem não repetição.
-fn duel(slug: &str) -> Value {
-    json!({
-        "slug": slug,
-        "locale": "pt",
-        "name": "Copa de Outubro",
-        "description": "Duelo **aberto**.",
-        "rules": "- md3\n- md5 na grande final",
-        "mode": "duel",
-        "max_participants": 16,
-        "champion_rules": { "bans_per_game": 1, "no_repeat": null },
-        "stages": [{
-            "format": "elimination",
-            "bracket": "double",
-            "grand_final_reset": true,
-            "best_of": 3,
-            "finals_best_of": 5
-        }]
-    })
-}
-
-/// `body` com os campos de `changes` trocados.
-fn with(mut body: Value, changes: Value) -> Value {
-    for (key, value) in changes.as_object().unwrap() {
-        body[key] = value.clone();
-    }
-    body
-}
-
-/// Tenant `quake-br` com Ana (owner) e Bia (player).
-async fn setup(db: &PgPool) -> (Router, User, User) {
-    let app = app(db.clone());
-    let ana = user(db, "Ana").await;
-    let bia = user(db, "Bia").await;
-    create(&app, &ana, "quake-br").await;
-    let token = invite(&app, &ana, "quake-br").await;
-    join(&app, &bia, &token).await;
-    (app, ana, bia)
-}
-
-async fn create_tournament(app: &Router, by: &User, body: Value) -> Value {
-    let (status, created) = post(app, "/tenants/quake-br/tournaments", by, body).await;
-    assert_eq!(status, StatusCode::CREATED, "{created}");
-    created
-}
 
 fn slugs(list: &Value) -> Vec<&str> {
     list.as_array()
@@ -60,7 +14,7 @@ fn slugs(list: &Value) -> Vec<&str> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn draft_is_only_for_organizers_until_published(db: PgPool) {
-    let (app, ana, bia) = setup(&db).await;
+    let (app, ana, bia) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(created["status"], "draft");
     assert_eq!(created["name"], "Copa de Outubro");
@@ -103,7 +57,7 @@ async fn draft_is_only_for_organizers_until_published(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn stage_and_champion_rules_are_stored_as_engine_json(db: PgPool) {
-    let (app, ana, _) = setup(&db).await;
+    let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
         json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": "match" } } }),
@@ -134,7 +88,7 @@ async fn stage_and_champion_rules_are_stored_as_engine_json(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn champion_pool_check_blocks_with_numbers(db: PgPool) {
-    let (app, ana, _) = setup(&db).await;
+    let (app, ana, _) = quake_br(&db).await;
     let no_repeat = |scope: &str| json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": scope } } });
 
     // Dupla de 16, md3/md5: 7 * 3 + 2 * 5 = 31 mapas no pior caso, + 1 ban.
@@ -193,7 +147,7 @@ async fn champion_pool_check_blocks_with_numbers(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn create_validates_the_input(db: PgPool) {
-    let (app, ana, bia) = setup(&db).await;
+    let (app, ana, bia) = quake_br(&db).await;
     let invalid = |code: &str| (StatusCode::UNPROCESSABLE_ENTITY, err(code));
     let with_params = |code: &str, params: Value| {
         (
@@ -269,7 +223,7 @@ async fn create_validates_the_input(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn what_can_change_depends_on_the_status(db: PgPool) {
-    let (app, ana, bia) = setup(&db).await;
+    let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
 
@@ -336,7 +290,7 @@ async fn what_can_change_depends_on_the_status(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn only_drafts_are_deleted(db: PgPool) {
-    let (app, ana, bia) = setup(&db).await;
+    let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
     assert_eq!(
@@ -360,7 +314,7 @@ async fn only_drafts_are_deleted(db: PgPool) {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn translations(db: PgPool) {
-    let (app, ana, bia) = setup(&db).await;
+    let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
     let es = format!("{uri}/translations/es");
@@ -428,4 +382,86 @@ async fn translations(db: PgPool) {
             err("tournament.translation_not_found")
         )
     );
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn private_is_only_for_participants_and_organizers(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    let private = with(duel("copa"), json!({ "visibility": "private" }));
+    let created = create_tournament(&app, &ana, private).await;
+    assert_eq!(created["visibility"], "private");
+    assert_eq!(created["participants"], 0);
+    assert_eq!(created["registered"], false);
+    create_tournament(&app, &ana, duel("aberta")).await;
+    publish(&app, &ana, "copa").await;
+    publish(&app, &ana, "aberta").await;
+    let uri = "/tenants/quake-br/tournaments/copa";
+
+    // Bia é membro, mas não está inscrita: para ela o privado não existe.
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
+    assert_eq!(slugs(&list), ["aberta"]);
+    assert_eq!(
+        get(&app, uri, &bia).await,
+        (StatusCode::NOT_FOUND, err("tournament.not_found"))
+    );
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &ana).await;
+    assert_eq!(slugs(&list), ["aberta", "copa"]);
+
+    // Inscrita pelo organizador, passa a ver.
+    let (status, _) = post(
+        &app,
+        &format!("{uri}/participants"),
+        &ana,
+        json!({ "user_id": bia.id }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
+    assert_eq!(slugs(&list), ["aberta", "copa"]);
+    assert_eq!(list[1]["registered"], true);
+    assert_eq!(list[1]["participants"], 1);
+    let (status, seen) = get(&app, uri, &bia).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(seen["registered"], true);
+
+    // Público, todos os membros veem. A visibilidade muda até encerrar.
+    let caio = user(&db, "Caio").await;
+    join(&app, &caio, &invite(&app, &ana, "quake-br").await).await;
+    assert_eq!(get(&app, uri, &caio).await.0, StatusCode::NOT_FOUND);
+    let (status, updated) = patch(&app, uri, &ana, json!({ "visibility": "public" })).await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert_eq!(updated["visibility"], "public");
+    let (status, seen) = get(&app, uri, &caio).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(seen["registered"], false);
+    set_status(&db, "copa", "finished").await;
+    assert_eq!(
+        patch(&app, uri, &ana, json!({ "visibility": "private" })).await,
+        (StatusCode::CONFLICT, err("tournament.finished"))
+    );
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn slots_never_drop_below_the_registered(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = user(&db, "Caio").await;
+    join(&app, &caio, &invite(&app, &ana, "quake-br").await).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let uri = "/tenants/quake-br/tournaments/copa";
+    for who in [&ana, &bia, &caio] {
+        let (status, _) = post_empty(&app, &format!("{uri}/registration"), who).await;
+        assert_eq!(status, StatusCode::NO_CONTENT);
+    }
+
+    assert_eq!(
+        patch(&app, uri, &ana, json!({ "max_participants": 2 })).await,
+        (
+            StatusCode::CONFLICT,
+            json!({ "error": "tournament.max_participants_below_registered", "params": { "registered": 3 } })
+        )
+    );
+    let (status, updated) = patch(&app, uri, &ana, json!({ "max_participants": 3 })).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(updated["participants"], 3);
 }

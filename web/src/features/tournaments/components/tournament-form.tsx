@@ -16,9 +16,10 @@ import {
   type TournamentValues,
   valuesFrom,
 } from "../lib/form-values";
-import { setupEditable } from "../lib/status";
+import { setupEditable, textsEditable } from "../lib/status";
 import { TournamentSetupFields } from "./tournament-setup-fields";
 import { TournamentTextFields } from "./tournament-text-fields";
+import { TournamentVisibilityField } from "./tournament-visibility-field";
 
 type Props = {
   tenant: string;
@@ -41,12 +42,14 @@ export function TournamentForm({ tenant, tournament }: Props) {
   const onChange = (patch: Partial<TournamentValues>) =>
     setValues((current) => ({ ...current, ...patch }));
   const setupLocked = tournament ? !setupEditable(tournament.status) : false;
+  const finished = tournament ? !textsEditable(tournament.status) : false;
 
   const [error, submit, pending] = useActionState(async () => {
     const texts = {
       name: values.name,
       description: values.description,
       rules: values.rules,
+      visibility: values.visibility,
     };
     const result = tournament
       ? await callApi(
@@ -79,6 +82,11 @@ export function TournamentForm({ tenant, tournament }: Props) {
         values={values}
         onChange={onChange}
         isNew={!tournament}
+      />
+      <TournamentVisibilityField
+        value={values.visibility}
+        onChange={(visibility) => onChange({ visibility })}
+        disabled={finished}
       />
       <TournamentSetupFields
         values={values}

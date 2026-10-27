@@ -86,7 +86,7 @@ async fn member_edits_own_nickname(db: PgPool) {
     );
     // O apelido é por tenant.
     let token = invite(&app, &bia, "da-bia").await;
-    assert_eq!(join(&app, &ana, &token).await["nickname"], "Ana");
+    assert_eq!(join(&app, &ana, &token).await["tenant"]["nickname"], "Ana");
 
     for bad in [
         json!(""),

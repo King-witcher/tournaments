@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgExecutor, PgPool};
 
-use super::types::Invite;
-use crate::tenants::TenantId;
+use super::types::{Invite, TournamentInvite};
+use crate::{tenants::TenantId, tournaments::TournamentId};
 
-/// Grava o convite (só o hash do token) e devolve id e validade.
+/// Grava o convite do tenant (só o hash do token) e devolve id e validade.
 pub async fn create(
     db: &PgPool,
     tenant: TenantId,
@@ -15,7 +15,7 @@ pub async fn create(
     let row = sqlx::query!(
         r#"insert into tenant_invites (tenant_id, token_hash, created_by, expires_at)
            values ($1, $2, $3, now() + make_interval(days => $4))
-           returning id, expires_at"#,
+           returning id, expires_at as "expires_at!""#,
         tenant.get(),
         &token_hash[..],
         created_by,
@@ -26,22 +26,71 @@ pub async fn create(
     Ok((row.id, row.expires_at))
 }
 
-/// Convites nem revogados nem expirados, do mais novo ao mais antigo.
+/// Grava o link de inscrição do torneio, sem validade (vale enquanto a
+/// inscrição estiver aberta), e devolve o id.
+pub async fn create_for_tournament(
+    db: &PgPool,
+    tenant: TenantId,
+    tournament: TournamentId,
+    token_hash: &[u8; 32],
+    created_by: i64,
+) -> Result<i64, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"insert into tenant_invites (tenant_id, tournament_id, token_hash, created_by)
+           values ($1, $2, $3, $4)
+           returning id"#,
+        tenant.get(),
+        tournament.get(),
+        &token_hash[..],
+        created_by
+    )
+    .fetch_one(db)
+    .await
+}
+
+/// Convites do tenant (não os de torneio) nem revogados nem expirados, do
+/// mais novo ao mais antigo.
 pub async fn list_active(db: &PgPool, tenant: TenantId) -> Result<Vec<Invite>, sqlx::Error> {
     sqlx::query_as!(
         Invite,
         r#"select i.id,
                   coalesce(m.nickname, u.display_name) as "created_by!",
                   i.created_at,
-                  i.expires_at,
+                  i.expires_at as "expires_at!",
                   (select count(*) from tenant_members j
                    where j.tenant_id = i.tenant_id and j.invite_id = i.id) as "uses!"
            from tenant_invites i
            join users u on u.id = i.created_by
            left join tenant_members m on m.tenant_id = i.tenant_id and m.user_id = i.created_by
-           where i.tenant_id = $1 and i.revoked_at is null and i.expires_at > now()
+           where i.tenant_id = $1 and i.tournament_id is null
+             and i.revoked_at is null and i.expires_at > now()
            order by i.created_at desc, i.id desc"#,
         tenant.get()
+    )
+    .fetch_all(db)
+    .await
+}
+
+/// Links de inscrição não revogados do torneio, do mais novo ao mais antigo.
+pub async fn list_for_tournament(
+    db: &PgPool,
+    tenant: TenantId,
+    tournament: TournamentId,
+) -> Result<Vec<TournamentInvite>, sqlx::Error> {
+    sqlx::query_as!(
+        TournamentInvite,
+        r#"select i.id,
+                  coalesce(m.nickname, u.display_name) as "created_by!",
+                  i.created_at,
+                  (select count(*) from participants p
+                   where p.tenant_id = i.tenant_id and p.invite_id = i.id) as "uses!"
+           from tenant_invites i
+           join users u on u.id = i.created_by
+           left join tenant_members m on m.tenant_id = i.tenant_id and m.user_id = i.created_by
+           where i.tenant_id = $1 and i.tournament_id = $2 and i.revoked_at is null
+           order by i.created_at desc, i.id desc"#,
+        tenant.get(),
+        tournament.get()
     )
     .fetch_all(db)
     .await
@@ -64,21 +113,26 @@ pub struct StoredInvite {
     /// O token é a autorização para entrar neste tenant.
     pub tenant: TenantId,
     pub tenant_name: String,
-    pub expires_at: DateTime<Utc>,
+    /// Slug do torneio, no link de inscrição.
+    pub tournament: Option<String>,
+    /// Nulo no link de inscrição.
+    pub expires_at: Option<DateTime<Utc>>,
     pub revoked: bool,
     pub expired: bool,
 }
 
 pub async fn find_by_token_hash(
-    db: &PgPool,
+    db: impl PgExecutor<'_>,
     token_hash: &[u8; 32],
 ) -> Result<Option<StoredInvite>, sqlx::Error> {
     let row = sqlx::query!(
-        r#"select i.id, i.tenant_id, t.name as tenant_name, i.expires_at,
+        r#"select i.id, i.tenant_id, t.name as tenant_name, tr.slug as "tournament_slug?",
+                  i.expires_at,
                   i.revoked_at is not null as "revoked!",
-                  i.expires_at <= now() as "expired!"
+                  coalesce(i.expires_at <= now(), false) as "expired!"
            from tenant_invites i
            join tenants t on t.id = i.tenant_id
+           left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id
            where i.token_hash = $1"#,
         &token_hash[..]
     )
@@ -89,6 +143,7 @@ pub async fn find_by_token_hash(
         id: r.id,
         tenant: TenantId::new(r.tenant_id),
         tenant_name: r.tenant_name,
+        tournament: r.tournament_slug,
         expires_at: r.expires_at,
         revoked: r.revoked,
         expired: r.expired,
@@ -97,7 +152,7 @@ pub async fn find_by_token_hash(
 
 /// Entra no tenant como player; quem já é membro mantém papel e apelido.
 pub async fn join_as_player(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     user_id: i64,
     nickname: &str,
@@ -112,7 +167,7 @@ pub async fn join_as_player(
         nickname,
         invite_id
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(())
 }

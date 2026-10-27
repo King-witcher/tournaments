@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set status = $2 where slug = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f17b73026bb9d7b2ae44d42dbc8e3c1a337abd9b1a6a7988067efbfe96795123"
+}

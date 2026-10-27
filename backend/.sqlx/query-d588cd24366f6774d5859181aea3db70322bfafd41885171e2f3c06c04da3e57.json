@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists(select 1 from participants where tournament_id = $1 and user_id = $2)\n           as \"registered!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "registered!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d588cd24366f6774d5859181aea3db70322bfafd41885171e2f3c06c04da3e57"
+}

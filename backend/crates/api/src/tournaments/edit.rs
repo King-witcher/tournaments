@@ -7,28 +7,33 @@ use super::{
     status::TournamentStatus,
     texts::{self, Texts},
     types::UpdateTournament,
+    visibility::Visibility,
 };
 use crate::shared::ApiError;
 
 #[derive(Debug)]
 pub struct Edit {
     pub texts: Texts,
+    /// `Some` quando veio no PATCH.
+    pub visibility: Option<Visibility>,
     /// `Some` só quando vagas, regra de campeões ou fases mudam de fato.
     pub setup: Option<Setup>,
 }
 
-/// Erros: 409 `tournament.finished` (texto depois de encerrar), 409
-/// `tournament.setup_locked` (configuração depois de começar) e os de
-/// validação dos textos. Mandar a configuração igual à atual não conta como
-/// mudança, então o front pode reenviar o formulário inteiro.
+/// Erros: 409 `tournament.finished` (texto ou visibilidade depois de
+/// encerrar), 409 `tournament.setup_locked` (configuração depois de começar)
+/// e os de validação dos textos. Mandar a configuração igual à atual não
+/// conta como mudança, então o front pode reenviar o formulário inteiro.
 pub fn apply(
     status: TournamentStatus,
     current_texts: &Texts,
     current_setup: &Setup,
     patch: UpdateTournament,
 ) -> Result<Edit, ApiError> {
-    let touches_texts =
-        patch.name.is_some() || patch.description.is_some() || patch.rules.is_some();
+    let touches_texts = patch.name.is_some()
+        || patch.description.is_some()
+        || patch.rules.is_some()
+        || patch.visibility.is_some();
     if touches_texts && !status.texts_editable() {
         return Err(ApiError::conflict("tournament.finished"));
     }
@@ -63,7 +68,11 @@ pub fn apply(
     if setup.is_some() && !status.setup_editable() {
         return Err(ApiError::conflict("tournament.setup_locked"));
     }
-    Ok(Edit { texts, setup })
+    Ok(Edit {
+        texts,
+        visibility: patch.visibility,
+        setup,
+    })
 }
 
 #[cfg(test)]
@@ -104,6 +113,7 @@ mod tests {
             name: None,
             description: None,
             rules: None,
+            visibility: None,
             max_participants: None,
             champion_rules: None,
             stages: None,
@@ -137,6 +147,18 @@ mod tests {
             ..patch()
         };
         let err = apply(TournamentStatus::Finished, &texts(), &setup(), p).unwrap_err();
+        assert_eq!(err.code, "tournament.finished");
+    }
+
+    #[test]
+    fn visibility_changes_until_finished() {
+        let p = || UpdateTournament {
+            visibility: Some(Visibility::Private),
+            ..patch()
+        };
+        let edit = apply(TournamentStatus::InProgress, &texts(), &setup(), p()).unwrap();
+        assert_eq!(edit.visibility, Some(Visibility::Private));
+        let err = apply(TournamentStatus::Finished, &texts(), &setup(), p()).unwrap_err();
         assert_eq!(err.code, "tournament.finished");
     }
 

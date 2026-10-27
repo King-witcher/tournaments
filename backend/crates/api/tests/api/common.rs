@@ -1,5 +1,6 @@
 //! Helpers dos testes: app de teste, usuários com sessão, requisições e os
-//! passos que vários domínios repetem (criar tenant, convidar, entrar).
+//! passos que vários domínios repetem (criar tenant, convidar, entrar, criar
+//! e publicar torneio).
 
 use std::sync::Arc;
 
@@ -160,4 +161,71 @@ pub async fn join(app: &Router, who: &User, token: &str) -> Value {
     let (status, body) = post_empty(app, &format!("/invites/{token}/accept"), who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     body
+}
+
+/// Tenant `quake-br` com Ana (owner) e Bia (player).
+pub async fn quake_br(db: &PgPool) -> (Router, User, User) {
+    let app = app(db.clone());
+    let ana = user(db, "Ana").await;
+    let bia = user(db, "Bia").await;
+    create(&app, &ana, "quake-br").await;
+    let token = invite(&app, &ana, "quake-br").await;
+    join(&app, &bia, &token).await;
+    (app, ana, bia)
+}
+
+/// Duelo público em dupla com reset, md3/md5, 16 vagas, 1 ban, sem não repetição.
+pub fn duel(slug: &str) -> Value {
+    json!({
+        "slug": slug,
+        "locale": "pt",
+        "name": "Copa de Outubro",
+        "description": "Duelo **aberto**.",
+        "rules": "- md3\n- md5 na grande final",
+        "mode": "duel",
+        "max_participants": 16,
+        "champion_rules": { "bans_per_game": 1, "no_repeat": null },
+        "stages": [{
+            "format": "elimination",
+            "bracket": "double",
+            "grand_final_reset": true,
+            "best_of": 3,
+            "finals_best_of": 5
+        }]
+    })
+}
+
+/// `body` com os campos de `changes` trocados.
+pub fn with(mut body: Value, changes: Value) -> Value {
+    for (key, value) in changes.as_object().unwrap() {
+        body[key] = value.clone();
+    }
+    body
+}
+
+/// Cria o torneio (rascunho) em `quake-br`.
+pub async fn create_tournament(app: &Router, by: &User, body: Value) -> Value {
+    let (status, created) = post(app, "/tenants/quake-br/tournaments", by, body).await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    created
+}
+
+/// Publica o torneio `slug` de `quake-br`: a inscrição abre.
+pub async fn publish(app: &Router, by: &User, slug: &str) {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/publish");
+    let (status, body) = post_empty(app, &uri, by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+}
+
+/// Põe o torneio direto num status (as transições depois da inscrição ainda
+/// não têm rota).
+pub async fn set_status(db: &PgPool, slug: &str, status: &str) {
+    sqlx::query!(
+        "update tournaments set status = $2 where slug = $1",
+        slug,
+        status
+    )
+    .execute(db)
+    .await
+    .unwrap();
 }

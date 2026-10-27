@@ -7,6 +7,7 @@ use super::{
     status::TournamentStatus,
     texts::Texts,
     types::{NameTranslation, TournamentSummary, TournamentTranslation},
+    visibility::Visibility,
 };
 use crate::{
     shared::{ApiError, Locale},
@@ -18,6 +19,12 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TournamentId(i64);
 
+impl TournamentId {
+    pub const fn get(self) -> i64 {
+        self.0
+    }
+}
+
 pub struct StoredTournament {
     pub id: TournamentId,
     pub slug: String,
@@ -25,8 +32,13 @@ pub struct StoredTournament {
     pub texts: Texts,
     pub mode: TournamentMode,
     pub status: TournamentStatus,
+    pub visibility: Visibility,
     pub setup: Setup,
     pub translations: Vec<TournamentTranslation>,
+    /// Inscritos agora.
+    pub participants: i64,
+    /// Se o `viewer` passado a `find` está inscrito.
+    pub registered: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -35,6 +47,7 @@ pub struct NewTournament<'a> {
     pub locale: Locale,
     pub texts: &'a Texts,
     pub mode: TournamentMode,
+    pub visibility: Visibility,
     pub setup: &'a Setup,
 }
 
@@ -51,8 +64,9 @@ pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Re
     let mut tx = db.begin().await?;
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
-               (tenant_id, slug, locale, name, description, rules, mode, max_participants, champion_rules)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+               (tenant_id, slug, locale, name, description, rules, mode, visibility,
+                max_participants, champion_rules)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -62,6 +76,7 @@ pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Re
         new.texts.description,
         new.texts.rules,
         new.mode.as_str(),
+        new.visibility.as_str(),
         new.setup.max_participants,
         Json(new.setup.champion_rules) as _
     )
@@ -91,25 +106,37 @@ async fn insert_stages(
     Ok(())
 }
 
-/// Torneios do tenant, do mais novo ao mais antigo. Rascunhos só com `include_drafts`.
+/// Torneios do tenant que `viewer` vê, do mais novo ao mais antigo. Com
+/// `see_all` (organizer e owner), todos; sem, nem rascunhos nem privados em
+/// que ele não está inscrito (`visibility::can_see`).
 pub async fn list(
     db: &PgPool,
     tenant: TenantId,
-    include_drafts: bool,
+    viewer: i64,
+    see_all: bool,
 ) -> Result<Vec<TournamentSummary>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.slug, t.locale, t.name, t.mode, t.status, t.max_participants, t.created_at,
+        r#"select t.slug, t.locale, t.name, t.mode, t.status, t.visibility, t.max_participants,
+                  t.created_at,
+                  (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
+                  exists(select 1 from participants p
+                         where p.tournament_id = t.id and p.user_id = $2) as "registered!",
                   coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),
                            '{}') as "translation_locales!",
                   coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),
                            '{}') as "translation_names!"
            from tournaments t
            left join tournament_translations tr on tr.tournament_id = t.id
-           where t.tenant_id = $1 and (t.status <> 'draft' or $2)
+           where t.tenant_id = $1
+             and ($3 or (t.status <> 'draft'
+                         and (t.visibility = 'public'
+                              or exists(select 1 from participants p
+                                        where p.tournament_id = t.id and p.user_id = $2))))
            group by t.id
            order by t.created_at desc, t.id desc"#,
         tenant.get(),
-        include_drafts
+        viewer,
+        see_all
     )
     .fetch_all(db)
     .await?;
@@ -133,7 +160,10 @@ pub async fn list(
                 name: r.name,
                 mode: TournamentMode::from_db(&r.mode)?,
                 status: TournamentStatus::from_db(&r.status)?,
+                visibility: Visibility::from_db(&r.visibility)?,
                 max_participants: r.max_participants,
+                participants: r.participants,
+                registered: r.registered,
                 translations,
                 created_at: r.created_at,
             })
@@ -141,19 +171,27 @@ pub async fn list(
         .collect()
 }
 
-/// O torneio `slug` do tenant, com fases e traduções.
+/// O torneio `slug` do tenant, com fases, traduções e o número de inscritos.
+/// `viewer` é quem vê (`None` sem login), para `StoredTournament::registered`.
+/// Não confere a visibilidade: ver `visibility::find_visible`.
 pub async fn find(
     conn: &mut PgConnection,
     tenant: TenantId,
     slug: &str,
+    viewer: Option<i64>,
 ) -> Result<Option<StoredTournament>, ApiError> {
     let Some(row) = sqlx::query!(
-        r#"select id, slug, locale, name, description, rules, mode, status, max_participants,
-                  champion_rules as "champion_rules: Json<ec::ChampionRules>", created_at
-           from tournaments
-           where tenant_id = $1 and slug = $2"#,
+        r#"select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,
+                  t.visibility, t.max_participants,
+                  t.champion_rules as "champion_rules: Json<ec::ChampionRules>", t.created_at,
+                  (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
+                  exists(select 1 from participants p
+                         where p.tournament_id = t.id and p.user_id = $3) as "registered!"
+           from tournaments t
+           where t.tenant_id = $1 and t.slug = $2"#,
         tenant.get(),
-        slug
+        slug,
+        viewer
     )
     .fetch_optional(&mut *conn)
     .await?
@@ -201,22 +239,27 @@ pub async fn find(
         },
         mode: TournamentMode::from_db(&row.mode)?,
         status: TournamentStatus::from_db(&row.status)?,
+        visibility: Visibility::from_db(&row.visibility)?,
         setup: Setup {
             max_participants: row.max_participants,
             champion_rules: row.champion_rules.0,
             stages: stages.into_iter().map(|s| s.0).collect(),
         },
         translations,
+        participants: row.participants,
+        registered: row.registered,
         created_at: row.created_at,
     }))
 }
 
-/// Como `find`, travando a linha do torneio até o fim da transação: status
-/// e configuração não mudam entre a checagem e a gravação.
+/// Como `find`, travando a linha do torneio até o fim da transação: status,
+/// configuração e inscritos não mudam entre a checagem e a gravação (toda
+/// inscrição trava o torneio antes).
 pub async fn find_for_update(
     conn: &mut PgConnection,
     tenant: TenantId,
     slug: &str,
+    viewer: Option<i64>,
 ) -> Result<Option<StoredTournament>, ApiError> {
     let found = sqlx::query_scalar!(
         "select id from tournaments where tenant_id = $1 and slug = $2 for update",
@@ -228,22 +271,28 @@ pub async fn find_for_update(
     if found.is_none() {
         return Ok(None);
     }
-    find(conn, tenant, slug).await
+    find(conn, tenant, slug, viewer).await
 }
 
-/// Grava os textos e, se veio, a nova configuração (vagas, campeões e fases).
+/// Grava os textos, a visibilidade (se veio) e a nova configuração (se veio:
+/// vagas, campeões e fases).
 pub async fn update(
     conn: &mut PgConnection,
     id: TournamentId,
     texts: &Texts,
+    visibility: Option<Visibility>,
     setup: Option<&Setup>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
-        "update tournaments set name = $2, description = $3, rules = $4, updated_at = now() where id = $1",
+        r#"update tournaments
+           set name = $2, description = $3, rules = $4, visibility = coalesce($5, visibility),
+               updated_at = now()
+           where id = $1"#,
         id.0,
         texts.name,
         texts.description,
-        texts.rules
+        texts.rules,
+        visibility.map(Visibility::as_str)
     )
     .execute(&mut *conn)
     .await?;

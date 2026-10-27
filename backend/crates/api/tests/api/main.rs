@@ -7,5 +7,6 @@ mod common;
 mod health;
 mod invites;
 mod members;
+mod participants;
 mod tenants;
 mod tournaments;
