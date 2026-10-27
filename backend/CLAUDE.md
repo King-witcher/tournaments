@@ -24,7 +24,8 @@ crates/api/src/
     text.rs         clean_text (uma linha), clean_long_text (Markdown)
     slug.rs         formato de slug; reservados e códigos ficam em cada domínio
     locale.rs       Locale (pt, es)
-  auth/           login com Discord, sessão em cookie, CurrentUser
+  auth/           login com Discord e com username e senha (argon2, limite de tentativas),
+                  ligar e desligar cada um, sessão em cookie, CurrentUser
   tenants/        tenants, e a base de todo dado de tenant: TenantId, Role, TenantMember, apelido
   members/        /tenants/{slug}/me e /tenants/{slug}/members
   invites/        /tenants/{slug}/invites e /invites/{token}

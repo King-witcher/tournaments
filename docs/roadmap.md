@@ -18,6 +18,11 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - API (`tournaments/`): criar rascunho, listar (rascunho só para organizer/owner), ver, editar (textos até encerrar; formato até começar), publicar, excluir rascunho, criar e remover tradução. A checagem de campeões roda ao criar, ao mudar a configuração e ao publicar. `ApiError` ganhou `params` (`{"error", "params": {"required", "available"}}`) e os erros do `engine` viram códigos em `shared/engine.rs`. `TournamentId` tipado só sai de consulta filtrada por tenant.
   - Front: seção de torneios na página do tenant, `/[tenant]/new`, `/[tenant]/[torneio]` (Markdown com `react-markdown`, formato, publicar e excluir) e `/[tenant]/[torneio]/edit` (formulário e tradução). Erros com números interpolados na tradução. `slugify` foi para `shared/lib`.
   - `RUST_TEST_THREADS=4` no `.cargo/config.toml`: com uma thread por núcleo, a criação dos bancos do `sqlx::test` dava `PoolTimedOut`.
+- **Login com username e senha** (decisões em "Autenticação" no `decisions.md`):
+  - Migration: provedor `password` em `user_identities` (com `password_hash`), username único sem diferenciar maiúsculas, um login por provedor por usuário e `password_failures` para o limite de tentativas.
+  - API (`auth/`): `POST /auth/signup`, `POST /auth/login`, `GET /auth/logins`, `POST`/`PATCH`/`DELETE /auth/password`, `GET /auth/discord/link` (o callback do Discord agora também vincula) e `DELETE /auth/discord`. argon2id fora das threads do tokio (`password.rs`), limite de 5 erros em 15 min por username (`attempts.rs`), SQL dividido em `db/` (sessões, logins, tentativas). O `argon2` compila otimizado no perfil dev (sem isso, segundos por hash nos testes).
+  - Testes de rota de `auth` viraram pasta (`tests/api/auth/`: Discord, senha, vínculo).
+  - Front: `/[locale]/login` (Discord ou senha), `/[locale]/signup` e `/[locale]/account` (vincular e desvincular o Discord, criar, trocar e remover a senha). O nome no cabeçalho leva à conta. `account` e `signup` entraram nos slugs reservados.
 
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
@@ -32,6 +37,7 @@ Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::tes
 
 1. **Inscrição, check-in e seeding**
    - `participants` (torneio, jogador do tenant, seed, check-in). Janela de check-in; quem não fizer sai antes da chave.
+   - Qualquer papel se inscreve (`TenantMember<Player>`), inclusive organizer e owner.
    - Inscrição fecha quando lotar as vagas (`tournaments.max_participants`). O PATCH do torneio passa a recusar vagas abaixo do número de inscritos.
    - Data de início do torneio entra aqui, junto com a janela de check-in, e com ela as transições inscrição → check-in → em andamento.
    - Seeding manual, aleatório (seed salva para reproduzir) ou por rating (quando existir).

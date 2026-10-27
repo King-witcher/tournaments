@@ -8,7 +8,7 @@ use crate::tenants::Role;
 pub struct Member {
     pub user_id: i64,
     pub nickname: String,
-    /// Nome global do usuário (do Discord).
+    /// Nome exibido do usuário: o do Discord ou o username do cadastro.
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub role: Role,

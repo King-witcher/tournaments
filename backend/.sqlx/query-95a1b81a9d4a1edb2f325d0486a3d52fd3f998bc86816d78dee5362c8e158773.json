@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select provider, provider_user_id, password_hash from user_identities",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_identities",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider_user_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_identities",
+            "name": "provider_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "password_hash",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_identities",
+            "name": "password_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "95a1b81a9d4a1edb2f325d0486a3d52fd3f998bc86816d78dee5362c8e158773"
+}

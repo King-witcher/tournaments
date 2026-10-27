@@ -1,10 +1,18 @@
-//! Login com Discord (OAuth2), sessão em cookie e o extractor `CurrentUser`.
+//! Login com Discord (OAuth2) e com username e senha, sessão em cookie e o
+//! extractor `CurrentUser`. A conta pode ter os dois logins, ligar e desligar
+//! cada um, mas nunca fica sem nenhum.
 
+mod attempts;
+mod credentials;
 mod current_user;
 mod db;
 mod discord;
 mod handlers;
+mod oauth;
+mod password;
 mod session;
+mod types;
+mod username;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -16,8 +24,18 @@ pub use session::AuthSettings;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
-        .routes(routes!(handlers::discord_login))
-        .routes(routes!(handlers::discord_callback))
+        .routes(routes!(oauth::discord_login))
+        .routes(routes!(oauth::discord_link))
+        .routes(routes!(oauth::discord_callback))
+        .routes(routes!(oauth::unlink_discord))
+        .routes(routes!(credentials::signup))
+        .routes(routes!(credentials::login))
+        .routes(routes!(
+            credentials::create_password,
+            credentials::change_password,
+            credentials::remove_password
+        ))
         .routes(routes!(handlers::me))
+        .routes(routes!(handlers::logins))
         .routes(routes!(handlers::logout))
 }

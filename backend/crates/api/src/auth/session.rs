@@ -2,6 +2,7 @@
 
 use axum::response::Redirect;
 use axum_extra::extract::cookie::{Cookie, SameSite};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
 pub const SESSION_COOKIE: &str = "session";
 pub const STATE_COOKIE: &str = "oauth_state";
@@ -60,6 +61,60 @@ impl AuthSettings {
     }
 }
 
+/// Para que o OAuth do Discord foi aberto.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OAuthIntent {
+    /// Entrar (ou criar a conta) com o Discord.
+    Login,
+    /// Ligar o Discord à conta logada.
+    Link,
+}
+
+/// O que o cookie `oauth_state` guarda entre o redirect e o callback.
+#[derive(Debug, PartialEq, Eq)]
+pub struct OAuthFlow {
+    pub state: String,
+    pub intent: OAuthIntent,
+    pub return_to: String,
+}
+
+impl OAuthFlow {
+    /// `{state}.{login|link}.{return_to em base64url}`. Nem o state nem o
+    /// base64url têm '.', então ele separa os campos.
+    pub fn encode(&self) -> String {
+        let intent = match self.intent {
+            OAuthIntent::Login => "login",
+            OAuthIntent::Link => "link",
+        };
+        let return_to = URL_SAFE_NO_PAD.encode(&self.return_to);
+        format!("{}.{intent}.{return_to}", self.state)
+    }
+
+    /// Lê o cookie; `return_to` passa de novo por [`sanitize_return_to`].
+    pub fn decode(value: &str) -> Option<Self> {
+        let mut parts = value.split('.');
+        let (Some(state), Some(intent), Some(return_to), None) =
+            (parts.next(), parts.next(), parts.next(), parts.next())
+        else {
+            return None;
+        };
+        let intent = match intent {
+            "login" => OAuthIntent::Login,
+            "link" => OAuthIntent::Link,
+            _ => return None,
+        };
+        let return_to = URL_SAFE_NO_PAD
+            .decode(return_to)
+            .ok()
+            .and_then(|b| String::from_utf8(b).ok());
+        Some(Self {
+            state: state.to_owned(),
+            intent,
+            return_to: sanitize_return_to(return_to.as_deref()),
+        })
+    }
+}
+
 /// Só caminhos internos; qualquer outra coisa vira `/` (evita open redirect).
 pub fn sanitize_return_to(raw: Option<&str>) -> String {
     match raw {
@@ -72,5 +127,50 @@ pub fn sanitize_return_to(raw: Option<&str>) -> String {
             p.to_owned()
         }
         _ => "/".to_owned(),
+    }
+}
+
+/// `path` com `auth_error=<código>` na query, para o front mostrar o erro.
+pub fn with_auth_error(path: &str, code: &str) -> String {
+    let separator = if path.contains('?') { '&' } else { '?' };
+    format!("{path}{separator}auth_error={code}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oauth_flow_round_trips() {
+        for intent in [OAuthIntent::Login, OAuthIntent::Link] {
+            let flow = OAuthFlow {
+                state: "abc_-123".into(),
+                intent,
+                return_to: "/pt/account?x=1.2".into(),
+            };
+            assert_eq!(OAuthFlow::decode(&flow.encode()), Some(flow));
+        }
+    }
+
+    #[test]
+    fn oauth_flow_rejects_bad_cookies() {
+        let return_to = URL_SAFE_NO_PAD.encode("/pt");
+        for bad in [
+            String::new(),
+            "abc".into(),
+            format!("abc.{return_to}"),
+            format!("abc.other.{return_to}"),
+            format!("abc.login.{return_to}.extra"),
+        ] {
+            assert_eq!(OAuthFlow::decode(&bad), None, "{bad}");
+        }
+        let evil = format!("abc.link.{}", URL_SAFE_NO_PAD.encode("//evil.com"));
+        assert_eq!(OAuthFlow::decode(&evil).unwrap().return_to, "/");
+    }
+
+    #[test]
+    fn auth_error_goes_in_the_query() {
+        assert_eq!(with_auth_error("/", "x.y"), "/?auth_error=x.y");
+        assert_eq!(with_auth_error("/pt?a=1", "x.y"), "/pt?a=1&auth_error=x.y");
     }
 }

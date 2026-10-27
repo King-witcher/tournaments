@@ -35,9 +35,13 @@ Motivos e cuidados:
 
 ## Autenticação
 
-- Própria, em Rust. MVP: login com Discord (OAuth2).
-- `users` + `user_identities (provider, provider_user_id, UNIQUE(provider, provider_user_id))`: cada usuário pode ter N formas de login. Senha e Steam no futuro são só novas linhas.
-- Login com senha, quando vier, exige argon2, limite de tentativas e recuperação de conta.
+- Própria, em Rust. Dois logins: Discord (OAuth2) e nome de usuário + senha.
+- `users` + `user_identities (provider, provider_user_id, UNIQUE(provider, provider_user_id))`: cada forma de login é uma linha (`discord`, `password`; Steam no futuro é só mais uma). No máximo um login de cada provedor por usuário (`UNIQUE(user_id, provider)`).
+- **Username e senha**: o username fica em `provider_user_id` como digitado e o hash argon2id em `password_hash` (só nas linhas `password`). Formato: 3 a 20 letras ou números ASCII, `_`, `.` e `-` (só ASCII para não haver nomes que parecem iguais). Único sem diferenciar maiúsculas (índice em `lower(provider_user_id)`), e o login também não diferencia. No cadastro o username vira o nome exibido; trocar o username depois não muda o nome. Senha de 8 a 128 caracteres, sem regra de composição (NIST 800-63B).
+- **Limite de tentativas por username, no banco** (`password_failures`): 5 senhas erradas em 15 minutos bloqueiam aquele username até o erro mais antigo sair da janela (429 `auth.too_many_attempts` com os minutos). Vale também para username inexistente, que confere contra um hash fixo para não revelar pelo tempo quem existe. Não usa IP (não depende do `X-Forwarded-For` do Render); o custo é que alguém pode travar o login por senha de outra pessoa por 15 minutos, e o Discord continua entrando.
+- **Sem recuperação de conta por enquanto**: não há email. O Discord é o backup, e a tela de conta e o cadastro avisam isso. Recuperação por email fica para quando houver provedor de email.
+- **Vincular e desvincular**: quem entrou pelo Discord pode criar username e senha, e quem tem senha pode vincular o Discord (pelo mesmo OAuth, com a intenção "link" no cookie do state). A conta nunca fica sem login: remover a senha exige Discord vinculado, e desvincular o Discord exige senha. Trocar ou remover a senha e desvincular o Discord pedem a senha atual (com o mesmo limite de tentativas); trocar a senha encerra as outras sessões. Desvincular o Discord tira o avatar, que vinha dele.
+- Vincular um Discord que já é login de outra conta é recusado (`auth.discord_taken`); não há mesclagem de contas.
 - Sessão em cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, com as sessões numa tabela no Postgres.
 
 ## Multi-tenant
@@ -54,7 +58,7 @@ Motivos e cuidados:
 - Aceitar um convite sendo já membro não muda papel nem apelido.
 - Gestão de membros: o owner alterna player ↔ organizer. Remover membro e sair do tenant ficam para depois.
 - Página do tenant **só para membros**. Para quem é de fora, a API responde 404 `tenant.not_found`, o mesmo de um tenant inexistente, para não revelar que ele existe. A prévia do convite (`GET /invites/{token}`) é pública: ter o token já é o convite.
-- Perfil por tenant: por enquanto só o **apelido** (`tenant_members.nickname`). Começa com o nome do Discord e o próprio membro edita. Não é único dentro do tenant.
+- Perfil por tenant: por enquanto só o **apelido** (`tenant_members.nickname`). Começa com o nome exibido do usuário (o do Discord ou o username do cadastro) e o próprio membro edita. Não é único dentro do tenant.
 - Configurações do tenant: ranking ligado/desligado, sistema (Elo no MVP, Glicko-2 depois), parâmetros (K, rating inicial), rating único ou por modalidade.
 
 ## Ids
@@ -101,6 +105,7 @@ Motivos e cuidados:
 - Duelo, 2v2 e 3v3 são o mesmo motor com `team_size` diferente.
 - O torneio tem **fases** (`stages`) no modelo desde o início; a interface pode começar com uma.
 - Fluxo: inscrição individual → check-in (janela antes de começar; quem não fizer sai) → formação de times → seeding → chave.
+- Qualquer membro do tenant se inscreve, inclusive organizer e owner: os papéis são cumulativos (organizer também é jogador), então a rota usa `TenantMember<Player>`.
 - Times são por torneio, montados pelo organizador: sorteio aleatório, sorteio balanceado por rating (zigue-zague) ou manual (arrastar). O capitão é definido pelo organizador ou pelo sorteio.
 - Seeding: manual, aleatório ou por rating.
 - Toda aleatoriedade (sorteios, timeouts) recebe uma seed ou RNG por parâmetro e a seed é salva, para que o resultado seja reproduzível e auditável.
@@ -144,6 +149,7 @@ Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code car
 ## Em aberto
 
 - Apelido único dentro do tenant? Hoje pode repetir; decidir junto com a inscrição em torneios.
+- Organizer inscrito no próprio torneio: pode resolver contestação ou corrigir resultado de partida em que joga? Decidir junto com chave e resultados.
 - Duelo: sequência do veto (ex.: ban-ban-pick-pick-decider) e tempo do cronômetro.
 - Janela de contestação padrão (X minutos) e duração da janela de check-in.
 - Critérios de desempate (FFA por pontos e grupos).

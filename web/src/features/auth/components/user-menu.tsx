@@ -1,9 +1,10 @@
+import { Link } from "@/i18n/navigation";
 import { Avatar } from "@/shared/ui/avatar";
 import { getCurrentUser } from "../server";
 import { LoginButton } from "./login-button";
 import { LogoutButton } from "./logout-button";
 
-/** Usuário logado (avatar, nome, sair) ou botão de entrar. Fica em `<Suspense>`. */
+/** Usuário logado (avatar, nome que leva à conta, sair) ou botão de entrar. Fica em `<Suspense>`. */
 export async function UserMenu() {
   const user = await getCurrentUser();
   if (!user) return <LoginButton />;
@@ -11,7 +12,9 @@ export async function UserMenu() {
   return (
     <div className="flex items-center gap-3">
       {user.avatar_url && <Avatar src={user.avatar_url} />}
-      <span className="text-sm font-medium">{user.display_name}</span>
+      <Link href="/account" className="text-sm font-medium hover:underline">
+        {user.display_name}
+      </Link>
       <LogoutButton />
     </div>
   );

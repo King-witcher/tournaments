@@ -22,8 +22,57 @@
     }
   },
   "Auth": {
-    "login": "Entrar con Discord",
-    "logout": "Salir"
+    "login": "Entrar",
+    "logout": "Salir",
+    "submit": "Entrar",
+    "discord": "Entrar con Discord",
+    "or": "o",
+    "username": "Nombre de usuario",
+    "usernameHint": "De 3 a 20 letras, números, _ . o -, sin espacios ni tildes. Las mayúsculas no importan para entrar.",
+    "password": "Contraseña",
+    "passwordHint": "De 8 a 128 caracteres.",
+    "confirmPassword": "Repite la contraseña",
+    "passwordsDiffer": "Las contraseñas no coinciden."
+  },
+  "Login": {
+    "title": "Entrar",
+    "noAccount": "¿No tienes cuenta?",
+    "signup": "Crear cuenta"
+  },
+  "Signup": {
+    "title": "Crear cuenta",
+    "noRecovery": "No hay recuperación de contraseña por email. Después de crear la cuenta, vincula tu Discord a ella para no perder el acceso si olvidas la contraseña.",
+    "submit": "Crear cuenta",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "login": "Entrar"
+  },
+  "Account": {
+    "title": "Tu cuenta",
+    "loading": "Cargando la cuenta…",
+    "loginRequired": "Inicia sesión para ver tu cuenta.",
+    "currentPassword": "Contraseña actual",
+    "discord": {
+      "title": "Discord",
+      "notLinked": "Vincula tu Discord para entrar con él. Sin él, quien olvida la contraseña pierde la cuenta: no hay recuperación por email.",
+      "link": "Vincular Discord",
+      "linked": "Vinculado: puedes entrar con Discord.",
+      "unlinkHint": "Para desvincularlo, confirma tu contraseña. El avatar de Discord se va con él.",
+      "unlink": "Desvincular",
+      "needsPassword": "Para desvincular Discord, crea antes un nombre de usuario y contraseña: la cuenta necesita al menos una forma de entrar."
+    },
+    "password": {
+      "title": "Nombre de usuario y contraseña",
+      "none": "Crea un nombre de usuario y contraseña para entrar sin Discord.",
+      "create": "Crear nombre de usuario y contraseña",
+      "current": "Tu nombre de usuario: {username}",
+      "newPassword": "Nueva contraseña",
+      "newPasswordHint": "Déjala en blanco para mantener la actual. Cambiar la contraseña cierra tus otras sesiones.",
+      "save": "Guardar",
+      "saved": "Guardado.",
+      "remove": "Quitar nombre de usuario y contraseña",
+      "removeHint": "Sigues entrando con Discord.",
+      "needsDiscord": "Para quitar la contraseña, vincula antes tu Discord: la cuenta necesita al menos una forma de entrar."
+    }
   },
   "Roles": {
     "owner": "Dueño",
@@ -70,7 +119,7 @@
     "loading": "Cargando la invitación…",
     "title": "Invitación para unirte a {name}",
     "expires": "La invitación vence {expires}.",
-    "loginRequired": "Inicia sesión con Discord para aceptar la invitación.",
+    "loginRequired": "Inicia sesión para aceptar la invitación.",
     "accept": "Unirme a la comunidad"
   },
   "Locales": {
@@ -185,8 +234,20 @@
       "unauthenticated": "Tienes que iniciar sesión para continuar.",
       "discord_not_configured": "El inicio de sesión con Discord todavía no está configurado.",
       "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
-      "discord_denied": "Inicio de sesión cancelado en Discord.",
-      "discord_failed": "No se pudo iniciar sesión con Discord. Inténtalo de nuevo."
+      "discord_denied": "Autorización cancelada en Discord.",
+      "discord_failed": "No se pudo hablar con Discord. Inténtalo de nuevo.",
+      "discord_taken": "Ese Discord ya lo usa otra cuenta. Entra en ella y desvincúlalo antes.",
+      "discord_already_linked": "Tu cuenta ya tiene un Discord vinculado.",
+      "discord_not_linked": "Tu cuenta no tiene Discord vinculado.",
+      "invalid_credentials": "Nombre de usuario o contraseña incorrectos.",
+      "too_many_attempts": "Demasiados intentos con contraseña incorrecta. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
+      "username_invalid": "El nombre de usuario debe tener de 3 a 20 letras, números, _ . o -, sin espacios ni tildes.",
+      "username_taken": "Ese nombre de usuario ya está en uso.",
+      "password_invalid": "La contraseña debe tener de 8 a 128 caracteres.",
+      "password_exists": "Tu cuenta ya tiene nombre de usuario y contraseña.",
+      "no_password": "Tu cuenta no tiene contraseña.",
+      "wrong_password": "Contraseña actual incorrecta.",
+      "last_login": "Es la única forma de entrar en tu cuenta. Agrega otra antes de quitar esta."
     },
     "tenant": {
       "not_found": "Comunidad no encontrada, o no formas parte de ella.",

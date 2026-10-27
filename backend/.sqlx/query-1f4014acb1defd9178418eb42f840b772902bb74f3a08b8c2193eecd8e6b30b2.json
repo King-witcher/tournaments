@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update password_failures set failed_at = failed_at - interval '15 minutes'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "1f4014acb1defd9178418eb42f840b772902bb74f3a08b8c2193eecd8e6b30b2"
+}
