@@ -1,0 +1,23 @@
+# Rust
+backend/target/
+
+# Node / Next
+node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+*.tsbuildinfo
+
+# Segredos: só os .env.example vão para o repositório
+.env
+.env.*
+!.env.example
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code: configurações locais da máquina
+.claude/settings.local.json

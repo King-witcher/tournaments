@@ -1,0 +1,16 @@
+{
+  "Metadata": {
+    "title": "Torneos de Quake Champions",
+    "description": "Organiza torneos de Quake Champions: duelo, FFA, 2v2 y 3v3."
+  },
+  "Home": {
+    "title": "Torneos de Quake Champions",
+    "subtitle": "Duelo, FFA, 2v2 y 3v3. Muy pronto.",
+    "status": {
+      "checking": "Verificando la API…",
+      "ok": "API y base de datos funcionando.",
+      "unavailable": "La API respondió, pero la base de datos no está disponible.",
+      "offline": "No se pudo conectar con la API."
+    }
+  }
+}

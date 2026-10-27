@@ -1,0 +1,108 @@
+# Decisões do projeto
+
+Registro das decisões tomadas antes do início do código, com o motivo de cada uma. Atualize quando algo mudar.
+
+## Produto
+
+- Site web para organizar torneios de Quake Champions: duelo, FFA, FFA por pontos/frags, 2v2, 3v3.
+- Idiomas: português e espanhol (a comunidade joga muito com argentinos). Tudo localizável.
+- Multi-tenant: qualquer usuário logado cria tenants, com limite por usuário. Torneios pertencem a um tenant.
+- Jogadores entram num tenant só por link de convite e têm um perfil por tenant.
+- Primeiro formato de ponta a ponta: **duelo**. Exercita chave, veto, pick/ban, não repetição, resultado e rating; os outros reaproveitam.
+
+## Stack
+
+| Camada | Escolha |
+|---|---|
+| Backend | Rust + Axum + sqlx (SQL puro, sem ORM) + utoipa (OpenAPI, Swagger UI em `/docs`) |
+| Frontend | Next.js (App Router), **só apresentação**, next-intl, Bun (pacotes e scripts), Biome (lint e formatação) |
+| Tipos no front | gerados do OpenAPI com openapi-typescript |
+| Banco | Postgres. Dev: cluster local. Prod: database com usuário próprio no projeto Supabase us-east-1 existente |
+| Tempo real | WebSocket no Axum, `tokio::broadcast` em memória (uma instância). `LISTEN/NOTIFY` se um dia houver mais de uma |
+| Storage | API S3 genérica, provedor por variável de ambiente (Cloudflare R2 sugerido) |
+| Observabilidade | Sentry no Rust e no Next |
+| Hospedagem | API no Render (Virgínia, free + uptime monitor). Front na Vercel (funções em `iad1`, perto da API). Domínio próprio |
+
+Motivos e cuidados:
+
+- **Rust**: interesse em aprender; o Swagger UI permite acompanhar os endpoints.
+- **Bun só como gerenciador de pacotes e executor de scripts.** A Vercel detecta o `bun.lock` e instala com `bun install`. As funções continuam no runtime Node (o runtime Bun na Vercel ainda é beta), e localmente o `next` também roda em Node.
+- **Nada de ferramenta global além de Rust e Bun.** Sem pnpm e sem sqlx-cli: as migrations são arquivos criados à mão e aplicados pela API ao subir. Quando o build sem banco precisar do `cargo sqlx prepare` (modo offline), ele roda na CI ou instalado localmente no projeto.
+- **Next só apresentação**: renderiza no servidor as páginas públicas (preview do link no Discord) e cuida das rotas por idioma. Nunca acessa o banco.
+- **Supabase é só host de Postgres**, via connection string. Nada de Supabase Auth, Realtime, Storage ou supabase-js, para evitar lock-in.
+- **Render free**: 750 h/mês por workspace, o que cabe em **um** serviço sempre ligado.
+- **Conexão Render → Supabase**: a conexão direta é só IPv6 e costuma falhar no Render; use o pooler em **modo sessão**. Teste cedo com o usuário próprio (formato `usuario.<project-ref>`). Se o pooler não aceitar outro database, use um schema dedicado dentro do database `postgres`.
+
+## Autenticação
+
+- Própria, em Rust. MVP: login com Discord (OAuth2).
+- `users` + `user_identities (provider, provider_user_id, UNIQUE(provider, provider_user_id))`: cada usuário pode ter N formas de login. Senha e Steam no futuro são só novas linhas.
+- Login com senha, quando vier, exige argon2, limite de tentativas e recuperação de conta.
+- Sessão em cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, com as sessões numa tabela no Postgres.
+
+## Multi-tenant
+
+- Um banco só, com coluna `tenant_id` em tudo o que pertence a um tenant.
+- Toda função de acesso a dados de tenant recebe um `TenantId` tipado (extractor do Axum). Esquecer o filtro vira erro de compilação. RLS pode entrar depois como segunda camada.
+- Tenant na URL por caminho: `/{locale}/{tenant}/...`.
+- Papéis em `tenant_members`: owner, organizer, player.
+- Configurações do tenant: ranking ligado/desligado, sistema (Elo no MVP, Glicko-2 depois), parâmetros (K, rating inicial), rating único ou por modalidade.
+
+## Rating
+
+- **Derivado, nunca editado direto**: reprocessar as partidas do tenant + ajustes manuais do organizador (com motivo e autor). Corrigir um resultado antigo → recalcular.
+- Trait `RatingSystem` na crate `engine`. Elo primeiro.
+- Rating único ou por modalidade (duelo, FFA, times), conforme a configuração do tenant.
+
+## i18n
+
+- A API devolve **códigos** (`match.already_reported`), nunca texto. Status, formatos e fases são enums no código, traduzidos no front.
+- Datas em UTC no banco, exibidas no fuso de quem vê.
+- Conteúdo do organizador: idioma original + traduções **opcionais** em `tournament_translations (tournament_id, locale, ...)`. Sem tradução, mostra o original.
+
+## Formatos
+
+- Dois eixos independentes:
+  - **chaveamento**: eliminação simples, dupla, round robin, suíço, lobbies FFA, série de pontos;
+  - **partida**: melhor de N mapas; no FFA, pontos por colocação **ou** soma de frags (configurável).
+- Duelo, 2v2 e 3v3 são o mesmo motor com `team_size` diferente.
+- O torneio tem **fases** (`stages`) no modelo desde o início; a interface pode começar com uma.
+- Fluxo: inscrição individual → check-in (janela antes de começar; quem não fizer sai) → formação de times → seeding → chave.
+- Times são por torneio, montados pelo organizador: sorteio aleatório, sorteio balanceado por rating (zigue-zague) ou manual (arrastar). O capitão é definido pelo organizador ou pelo sorteio.
+- Seeding: manual, aleatório ou por rating.
+- Toda aleatoriedade (sorteios, timeouts) recebe uma seed ou RNG por parâmetro e a seed é salva, para que o resultado seja reproduzível e auditável.
+
+## Veto e campeões
+
+- Veto de mapas ao vivo, em turnos, com cronômetro. O capitão faz o veto.
+- Ban de campeão pelo capitão; pick de campeão por cada jogador.
+- Timeout: ban ou pick aleatório; o organizador pode desfazer.
+- Pools de mapas e campeões são tabelas, não constantes. Campeão novo no jogo = linha nova.
+- Regra de não repetição **opcional**, configurável em dois eixos: quem (jogador | time) × escopo (partida | fase | torneio).
+- Validação na criação: pior caso de jogos por participante comparado com o pool menos os bans. Se faltar campeão, bloqueia com mensagem com números ("no pior caso são necessários 24 campeões; o pool tem 17").
+
+## Resultados
+
+- Um lado envia o placar; os demais têm X minutos para contestar. Sem contestação, confirma. Contestação vai para o organizador. Vale para duelo, times e FFA.
+- Print do placar: o torneio decide se é obrigatório.
+- Upload direto do navegador para o bucket, com URL assinada gerada pela API. O front converte para WebP antes.
+- Prints apagados 30 dias após o fim do torneio (rotina diária).
+
+## Notificações
+
+- MVP: só no site, em tempo real pelo WebSocket. Webhook e DM do Discord ficam para depois.
+
+## Repositório
+
+- Privado agora, público depois: nenhum segredo no código (`.env.example` versionado), histórico limpo desde o primeiro commit.
+- GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês).
+- Banco de dev: cluster Postgres local (sqlx confere queries na compilação; `sqlx::test` cria um banco por teste). Usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos bancos de teste.
+
+## Em aberto
+
+- Limite de tenants por usuário (N).
+- Duelo: tipo de chave padrão (simples/dupla), melhor de N por fase, sequência do veto (ex.: ban-ban-pick-pick-decider), tempo do cronômetro.
+- Janela de contestação padrão (X minutos) e duração da janela de check-in.
+- Critérios de desempate (FFA por pontos e grupos).
+- Rating para FFA e times (Elo par a par? média do time?).
+- Substitutos em times.
