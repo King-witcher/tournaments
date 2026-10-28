@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/shared/ui/button";
+import { RowLink } from "@/shared/ui/row-link";
 import { getMyTenants } from "../server";
 
 /** Comunidades do usuário logado; sem login não mostra nada. Fica em `<Suspense>`. */
@@ -25,20 +26,14 @@ export async function MyTenants() {
         </Link>
       </div>
       {tenants.length === 0 ? (
-        <p className="text-sm opacity-70">{t("empty")}</p>
+        <p className="text-sm text-muted">{t("empty")}</p>
       ) : (
         <ul className="divide-y divide-black/10 dark:divide-white/10">
           {tenants.map((tenant) => (
             <li key={tenant.slug}>
-              <Link
-                href={`/${tenant.slug}`}
-                className="flex items-center justify-between gap-4 py-2 hover:underline"
-              >
-                <span className="font-medium">{tenant.name}</span>
-                <span className="text-sm opacity-70">
-                  {tRoles(tenant.role)}
-                </span>
-              </Link>
+              <RowLink href={`/${tenant.slug}`} title={tenant.name}>
+                {tRoles(tenant.role)}
+              </RowLink>
             </li>
           ))}
         </ul>

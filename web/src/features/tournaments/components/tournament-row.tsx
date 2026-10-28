@@ -1,8 +1,8 @@
 import { useLocale, useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { RowLink } from "@/shared/ui/row-link";
 import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 
@@ -28,27 +28,24 @@ export function TournamentRow({ tenant, tournament }: Props) {
 
   return (
     <li>
-      <Link
+      <RowLink
         href={`/${tenant}/${tournament.slug}`}
-        className="flex flex-col gap-0.5 py-2 hover:underline sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+        title={localizedName(tournament, locale)}
       >
-        <span className="font-medium">{localizedName(tournament, locale)}</span>
-        <span className="text-sm opacity-70 sm:text-right">
-          {tournament.starts_at && (
-            <>
-              <LocalDateTime value={tournament.starts_at} />
-              {" · "}
-            </>
-          )}
-          {details.join(" · ")}
-          {checkInPending(tournament) && (
-            <span className="font-medium text-red-700 dark:text-red-400">
-              {" · "}
-              {t("checkInPending")}
-            </span>
-          )}
-        </span>
-      </Link>
+        {tournament.starts_at && (
+          <>
+            <LocalDateTime value={tournament.starts_at} />
+            {" · "}
+          </>
+        )}
+        {details.join(" · ")}
+        {checkInPending(tournament) && (
+          <span className="font-medium text-red-700 dark:text-red-400">
+            {" · "}
+            {t("checkInPending")}
+          </span>
+        )}
+      </RowLink>
     </li>
   );
 }

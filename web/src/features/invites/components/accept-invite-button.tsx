@@ -23,7 +23,7 @@ export function AcceptInviteButton({ token, tournament }: Props) {
   return (
     <div className="flex flex-col items-start gap-2">
       <Button
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

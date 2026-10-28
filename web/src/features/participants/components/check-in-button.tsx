@@ -28,7 +28,7 @@ export function CheckInButton({ tenant, slug, checkedIn }: Props) {
       <Button
         variant={checkedIn ? "outline" : "default"}
         size={checkedIn ? "sm" : "default"}
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

@@ -25,7 +25,7 @@ export function InviteLink({ link }: { link: string }) {
           {copied ? t("copied") : t("copy")}
         </Button>
       </span>
-      <span className="text-xs opacity-70">{t("createdHint")}</span>
+      <span className="text-xs text-muted">{t("createdHint")}</span>
     </div>
   );
 }

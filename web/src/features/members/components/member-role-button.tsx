@@ -26,7 +26,7 @@ export function MemberRoleButton({ slug, userId, role }: Props) {
     <div className="flex flex-col items-end">
       <Button
         variant="link"
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

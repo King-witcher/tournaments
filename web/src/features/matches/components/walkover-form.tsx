@@ -7,7 +7,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { Field } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
 import { type MatchTarget, matchParams } from "../lib/match-target";
@@ -22,7 +22,6 @@ export function WalkoverForm({ target, names }: Props) {
   const [comment, setComment] = useState("");
 
   const give = (winner: "a" | "b") => {
-    if (!window.confirm(t("walkoverConfirm", { name: names[winner] }))) return;
     run(
       () =>
         api.PUT(
@@ -50,15 +49,17 @@ export function WalkoverForm({ target, names }: Props) {
       </Field>
       <div className="flex flex-wrap gap-2">
         {(["a", "b"] as const).map((side) => (
-          <Button
+          <ConfirmButton
             key={side}
             size="sm"
             variant="outline"
-            disabled={pending}
-            onClick={() => give(side)}
+            pending={pending}
+            danger={false}
+            question={t("walkoverConfirm", { name: names[side] })}
+            onConfirm={() => give(side)}
           >
             {t("walkover", { name: names[side] })}
-          </Button>
+          </ConfirmButton>
         ))}
       </div>
       {error && <ErrorText>{error}</ErrorText>}

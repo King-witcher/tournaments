@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 /** Sai da comunidade (pede confirmação) e volta para a home. */
 export function LeaveTenantButton({ slug }: { slug: string }) {
@@ -16,13 +16,13 @@ export function LeaveTenantButton({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <Button
+      <ConfirmButton
         variant="outline"
         size="sm"
-        disabled={pending}
+        pending={pending}
         className="text-red-600 dark:text-red-400"
-        onClick={() => {
-          if (!window.confirm(t("confirm"))) return;
+        question={t("confirm")}
+        onConfirm={() => {
           run(
             () =>
               api.DELETE("/tenants/{slug}/me", {
@@ -36,7 +36,7 @@ export function LeaveTenantButton({ slug }: { slug: string }) {
         }}
       >
         {t("submit")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
   );

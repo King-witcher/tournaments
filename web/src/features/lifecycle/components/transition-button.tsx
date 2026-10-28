@@ -5,6 +5,7 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 /** Desfazer o início tem botão próprio, com confirmação forte (`UndoStartButton`). */
 export type Transition = "open_check_in" | "reopen_registration" | "start";
@@ -50,23 +51,30 @@ export function TransitionButton({
 }: Props) {
   const router = useRouter();
   const { run, pending, error } = useApiAction();
+  const start = () =>
+    run(
+      () => call(transition, tenant, slug),
+      () => router.refresh(),
+    );
 
   return (
     <div className="flex flex-col gap-1">
-      <Button
-        size="sm"
-        variant={variant}
-        disabled={pending}
-        onClick={() => {
-          if (confirm && !window.confirm(confirm)) return;
-          run(
-            () => call(transition, tenant, slug),
-            () => router.refresh(),
-          );
-        }}
-      >
-        {label}
-      </Button>
+      {confirm ? (
+        <ConfirmButton
+          size="sm"
+          variant={variant}
+          pending={pending}
+          danger={false}
+          question={confirm}
+          onConfirm={start}
+        >
+          {label}
+        </ConfirmButton>
+      ) : (
+        <Button size="sm" variant={variant} pending={pending} onClick={start}>
+          {label}
+        </Button>
+      )}
       {error && <ErrorText>{error}</ErrorText>}
     </div>
   );

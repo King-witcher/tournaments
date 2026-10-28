@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 /**
  * Rascunho → inscrição, com confirmação: publicado, o torneio não volta a
@@ -28,11 +28,13 @@ export function PublishTournamentButton({
 
   return (
     <div className="flex flex-col gap-1">
-      <Button
+      <ConfirmButton
+        danger={false}
         size="sm"
-        disabled={pending || disabled}
-        onClick={() => {
-          if (!window.confirm(t("publishConfirm"))) return;
+        pending={pending}
+        disabled={disabled}
+        question={t("publishConfirm")}
+        onConfirm={() => {
           run(
             () =>
               api.POST("/tenants/{slug}/tournaments/{tournament}/publish", {
@@ -43,7 +45,7 @@ export function PublishTournamentButton({
         }}
       >
         {t("publish")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
   );

@@ -49,7 +49,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         />
       </Field>
       {error && <Alert>{error}</Alert>}
-      <Button type="submit" disabled={pending} className="self-start">
+      <Button type="submit" pending={pending} className="self-start">
         {t("submit")}
       </Button>
     </form>

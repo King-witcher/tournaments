@@ -45,7 +45,7 @@ export function MatchCard({ match: m, single, entrants, href }: Props) {
   if (m.state === "bye" || m.state === "not_needed") {
     const who = entrants.get(m.a.user_id ?? m.b.user_id ?? -1);
     return (
-      <div className="rounded-md border border-dashed border-black/15 px-3 py-2 text-xs opacity-50 dark:border-white/20">
+      <div className="rounded-md border border-dashed border-black/15 px-3 py-2 text-xs text-muted dark:border-white/20">
         {m.state === "not_needed"
           ? `${code(m.key)} · ${t("notNeeded")}`
           : who
@@ -69,7 +69,7 @@ export function MatchCard({ match: m, single, entrants, href }: Props) {
         actionable && "ring-2 ring-blue-500/40",
       )}
     >
-      <div className="flex justify-between px-3 pt-1.5 text-xs opacity-60">
+      <div className="flex justify-between px-3 pt-1.5 text-xs text-muted">
         <span>{code(m.key)}</span>
         <span>{t("bestOf", { count: m.best_of })}</span>
       </div>

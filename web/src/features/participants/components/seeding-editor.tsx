@@ -9,6 +9,7 @@ import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { SeedingRow } from "./seeding-row";
 
 type Participant = components["schemas"]["Participant"];
@@ -41,6 +42,15 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
     });
   }
 
+  const shuffle = () =>
+    run(
+      () =>
+        api.POST("/tenants/{slug}/tournaments/{tournament}/seeding/shuffle", {
+          params,
+        }),
+      () => router.refresh(),
+    );
+
   return (
     <div className="flex flex-col gap-3">
       {noneSeeded && <p className="text-sm">{t("noneSeeded")}</p>}
@@ -61,7 +71,8 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
       <div className="flex flex-wrap gap-3">
         <Button
           size="sm"
-          disabled={pending || !unsaved}
+          pending={pending}
+          disabled={!unsaved}
           onClick={() =>
             run(
               () =>
@@ -75,24 +86,25 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
         >
           {t("save")}
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          onClick={() => {
-            if (changed && !window.confirm(t("shuffleConfirm"))) return;
-            run(
-              () =>
-                api.POST(
-                  "/tenants/{slug}/tournaments/{tournament}/seeding/shuffle",
-                  { params },
-                ),
-              () => router.refresh(),
-            );
-          }}
-        >
-          {t("shuffle")}
-        </Button>
+        {changed ? (
+          <ConfirmButton
+            pending={pending}
+            danger={false}
+            question={t("shuffleConfirm")}
+            onConfirm={shuffle}
+          >
+            {t("shuffle")}
+          </ConfirmButton>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            pending={pending}
+            onClick={shuffle}
+          >
+            {t("shuffle")}
+          </Button>
+        )}
       </div>
       {error && <ErrorText>{error}</ErrorText>}
     </div>

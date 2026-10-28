@@ -315,6 +315,7 @@
     "choose": "Escolha um membro…",
     "add": "Inscrever",
     "remove": "Tirar do torneio",
+    "removeConfirm": "Tirar {name} do torneio? A inscrição é apagada e a vaga fica livre; {name} pode se inscrever de novo enquanto as inscrições estiverem abertas.",
     "left": "saiu",
     "withdrawn": "desistiu",
     "withdrawParticipant": "Marcar desistência",
@@ -339,7 +340,8 @@
       "checkedIn": "check-in feito",
       "notCheckedIn": "sem check-in",
       "mark": "Marcar check-in",
-      "unmark": "Desmarcar check-in"
+      "unmark": "Desmarcar check-in",
+      "unmarkConfirm": "Desmarcar o check-in de {name}? Sem check-in, {name} fica fora da chave se o torneio começar assim."
     },
     "seeding": {
       "title": "Seeding: {count} de {total} inscritos entram na chave",
@@ -677,5 +679,9 @@
       "correctHint": "A chave é refeita. Se a série mudar e isso contradiz uma partida decidida depois desta, a correção é recusada; mapas que passem a vir depois da decisão são anulados.",
       "cancel": "Cancelar"
     }
+  },
+  "Common": {
+    "loading": "Carregando…",
+    "cancel": "Cancelar"
   }
 }

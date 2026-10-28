@@ -9,6 +9,7 @@ import { ParticipantSection } from "@/features/participants/components/participa
 import { RegistrationPanel } from "@/features/participants/components/registration-panel";
 import { SeedingPanel } from "@/features/participants/components/seeding-panel";
 import { Markdown } from "@/shared/ui/markdown";
+import { LoadingSection } from "@/shared/ui/skeleton";
 import { localizedTexts } from "../lib/localize";
 import { invitesAllowed } from "../lib/status";
 import { loadTournament } from "../server";
@@ -59,7 +60,9 @@ export async function TournamentView({ tenant, slug }: Props) {
       )}
       <RegistrationPanel tenant={tenant} tournament={tournament} />
       <CheckInPanel tenant={tenant} tournament={tournament} now={now} />
-      <Suspense fallback={<p className="text-sm">{tBracket("loading")}</p>}>
+      <Suspense
+        fallback={<LoadingSection label={tBracket("loading")} rows={4} />}
+      >
         <BracketSection tenant={tenant} tournament={tournament} />
       </Suspense>
       {texts.description && <Markdown>{texts.description}</Markdown>}

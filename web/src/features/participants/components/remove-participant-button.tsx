@@ -6,22 +6,33 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
-type Props = { tenant: string; tournament: string; userId: number };
+type Props = {
+  tenant: string;
+  tournament: string;
+  userId: number;
+  nickname: string;
+};
 
-/** Para organizer e owner: tira o inscrito do torneio. */
-export function RemoveParticipantButton({ tenant, tournament, userId }: Props) {
+/** Para organizer e owner: tira o inscrito do torneio, depois de confirmar. */
+export function RemoveParticipantButton({
+  tenant,
+  tournament,
+  userId,
+  nickname,
+}: Props) {
   const t = useTranslations("Participants");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
 
   return (
     <div className="flex flex-col items-end">
-      <Button
+      <ConfirmButton
         variant="link"
-        disabled={pending}
-        onClick={() =>
+        pending={pending}
+        question={t("removeConfirm", { name: nickname })}
+        onConfirm={() =>
           run(
             () =>
               api.DELETE(
@@ -38,7 +49,7 @@ export function RemoveParticipantButton({ tenant, tournament, userId }: Props) {
         className="text-red-600 dark:text-red-400"
       >
         {t("remove")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText size="xs">{error}</ErrorText>}
     </div>
   );

@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 type Props = { slug: string; userId: number; nickname: string };
 
@@ -21,12 +21,12 @@ export function RemoveMemberButton({ slug, userId, nickname }: Props) {
 
   return (
     <div className="flex flex-col items-end">
-      <Button
+      <ConfirmButton
         variant="link"
-        disabled={pending}
+        pending={pending}
         className="text-red-600 dark:text-red-400"
-        onClick={() => {
-          if (!window.confirm(t("removeConfirm", { name: nickname }))) return;
+        question={t("removeConfirm", { name: nickname })}
+        onConfirm={() => {
           run(
             () =>
               api.DELETE("/tenants/{slug}/members/{user_id}", {
@@ -37,7 +37,7 @@ export function RemoveMemberButton({ slug, userId, nickname }: Props) {
         }}
       >
         {t("remove")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText size="xs">{error}</ErrorText>}
     </div>
   );

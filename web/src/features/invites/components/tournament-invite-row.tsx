@@ -23,7 +23,7 @@ export function TournamentInviteRow({ tenant, invite, now }: Props) {
             created: format.relativeTime(new Date(invite.created_at), now),
           })}
         </span>
-        <span className="text-xs opacity-60">
+        <span className="text-xs text-muted">
           {t("uses", { count: invite.uses })}
         </span>
       </span>

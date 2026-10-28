@@ -32,7 +32,7 @@ export async function NewTournamentView({ tenant }: { tenant: string }) {
       <header className="flex flex-col gap-1">
         <Link
           href={`/${tenant}`}
-          className="text-sm opacity-70 hover:underline"
+          className="text-sm text-muted underline underline-offset-4 hover:decoration-2"
         >
           {me.name}
         </Link>

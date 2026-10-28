@@ -54,7 +54,8 @@ export function TransferOwnershipForm({ slug, candidates }: Props) {
       <div>
         <Button
           size="sm"
-          disabled={!ready || pending}
+          pending={pending}
+          disabled={!ready}
           onClick={() =>
             run(
               () =>

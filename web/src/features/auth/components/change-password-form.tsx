@@ -102,11 +102,11 @@ export function ChangePasswordForm({ username }: { username: string }) {
       </Field>
       {state.error && <Alert>{state.error}</Alert>}
       <div className="flex items-center gap-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {tAccount("password.save")}
         </Button>
         {state.saved && !pending && (
-          <span className="text-sm opacity-70">
+          <span className="text-sm text-muted">
             {tAccount("password.saved")}
           </span>
         )}

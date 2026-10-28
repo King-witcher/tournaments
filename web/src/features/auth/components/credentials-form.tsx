@@ -80,7 +80,7 @@ export function CredentialsForm(props: Props) {
         />
       </Field>
       {error && <Alert>{error}</Alert>}
-      <Button type="submit" disabled={pending} className="self-start">
+      <Button type="submit" pending={pending} className="self-start">
         {props.mode === "signup" ? tSignup("submit") : tAccount("create")}
       </Button>
     </form>

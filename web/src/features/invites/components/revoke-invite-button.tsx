@@ -23,7 +23,7 @@ export function RevokeInviteButton({
     <div className="flex flex-col items-end">
       <Button
         variant="link"
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

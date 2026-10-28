@@ -28,11 +28,14 @@ export function TournamentHeader({
 
   return (
     <header className="flex flex-col gap-1">
-      <Link href={`/${tenant}`} className="text-sm opacity-70 hover:underline">
+      <Link
+        href={`/${tenant}`}
+        className="text-sm text-muted underline underline-offset-4 hover:decoration-2"
+      >
         {tenantName}
       </Link>
       <h1 className="text-3xl font-semibold">{name}</h1>
-      <p className="text-sm opacity-70">
+      <p className="text-sm text-muted">
         {tStatus(tournament.status)} · {tVisibility(tournament.visibility)}
       </p>
       <p className="text-sm">

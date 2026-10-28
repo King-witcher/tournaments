@@ -37,12 +37,12 @@ export function MatchEventRow({ event }: Props) {
 
   return (
     <li className="flex flex-col gap-0.5 text-sm">
-      <span className="text-xs opacity-60">
+      <span className="text-xs text-muted">
         <LocalDateTime value={event.at} />
       </span>
       <span>{parts.join(" · ")}</span>
       {event.comment && (
-        <q className="text-sm italic opacity-80">{event.comment}</q>
+        <q className="text-sm italic text-muted">{event.comment}</q>
       )}
     </li>
   );

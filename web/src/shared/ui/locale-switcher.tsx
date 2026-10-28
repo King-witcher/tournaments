@@ -26,7 +26,7 @@ export function LocaleSwitcher() {
             key={locale}
             href={pathname}
             locale={locale}
-            className="opacity-70 hover:underline"
+            className="text-muted underline underline-offset-4 hover:decoration-2"
           >
             {t(`names.${locale}`)}
           </Link>

@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 type Props = {
   tenant: string;
@@ -31,12 +31,12 @@ export function WithdrawParticipantButton({
 
   return (
     <div className="flex flex-col items-end">
-      <Button
+      <ConfirmButton
         variant="link"
-        disabled={pending}
+        pending={pending}
         className="text-red-600 dark:text-red-400"
-        onClick={() => {
-          if (!window.confirm(t("withdrawConfirm", { name: nickname }))) return;
+        question={t("withdrawConfirm", { name: nickname })}
+        onConfirm={() => {
           run(
             () =>
               api.POST(
@@ -52,7 +52,7 @@ export function WithdrawParticipantButton({
         }}
       >
         {t("withdrawParticipant")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText size="xs">{error}</ErrorText>}
     </div>
   );

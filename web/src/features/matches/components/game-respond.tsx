@@ -55,7 +55,7 @@ export function GameRespond({ target, number }: Props) {
             />
           </Field>
           <div className="flex flex-wrap gap-2">
-            <Button disabled={pending} onClick={contest}>
+            <Button pending={pending} onClick={contest}>
               {t("submitContest")}
             </Button>
             <Button variant="outline" onClick={() => setContesting(false)}>
@@ -65,7 +65,7 @@ export function GameRespond({ target, number }: Props) {
         </>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button disabled={pending} onClick={confirm}>
+          <Button pending={pending} onClick={confirm}>
             {t("confirm")}
           </Button>
           <Button

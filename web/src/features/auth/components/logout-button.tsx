@@ -19,7 +19,7 @@ export function LogoutButton() {
   return (
     <Button
       variant="link"
-      disabled={pending}
+      pending={pending}
       onClick={() =>
         run(
           () => api.POST("/auth/logout"),

@@ -60,10 +60,10 @@ export function CreateTenantForm() {
       </Field>
       {error && <Alert>{error}</Alert>}
       <div className="flex items-center gap-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {t("submit")}
         </Button>
-        <span className="text-xs opacity-70">{t("limit")}</span>
+        <span className="text-xs text-muted">{t("limit")}</span>
       </div>
     </form>
   );

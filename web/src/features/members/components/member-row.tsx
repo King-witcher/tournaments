@@ -22,10 +22,10 @@ export function MemberRow({ slug, member, canChangeRoles, canRemove }: Props) {
       <span className="flex flex-1 flex-col">
         <span className="font-medium">{member.nickname}</span>
         {member.display_name !== member.nickname && (
-          <span className="text-xs opacity-60">{member.display_name}</span>
+          <span className="text-xs text-muted">{member.display_name}</span>
         )}
       </span>
-      <span className="text-sm opacity-70">{tRoles(member.role)}</span>
+      <span className="text-sm text-muted">{tRoles(member.role)}</span>
       {(changeRole || canRemove) && (
         // No celular, as ações vão para a linha de baixo, à direita.
         <span className="flex w-full justify-end gap-3 sm:w-auto">

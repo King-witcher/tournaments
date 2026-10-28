@@ -97,10 +97,10 @@ export function TournamentForm({ tenant, tournament }: Props) {
         onChange={(contestMinutes) => onChange({ contestMinutes })}
         disabled={finished}
       />
-      {setupLocked && <p className="text-sm opacity-70">{t("setupLocked")}</p>}
+      {setupLocked && <p className="text-sm text-muted">{t("setupLocked")}</p>}
       {error && <Alert>{error}</Alert>}
       <div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {tournament ? t("save") : t("create")}
         </Button>
       </div>

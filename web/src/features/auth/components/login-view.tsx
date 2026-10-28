@@ -23,7 +23,7 @@ export async function LoginView({ searchParams }: Props) {
       <DiscordButton action="login" returnTo={returnTo}>
         {tAuth("discord")}
       </DiscordButton>
-      <p className="text-sm opacity-70">{tAuth("or")}</p>
+      <p className="text-sm text-muted">{tAuth("or")}</p>
       <LoginForm returnTo={returnTo} />
       <p className="text-sm">
         {t("noAccount")}{" "}

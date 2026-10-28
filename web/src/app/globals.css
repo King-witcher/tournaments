@@ -1,13 +1,23 @@
 @import "tailwindcss";
 
+/*
+ * Cores de texto além do corpo, com contraste AA (4.5:1) nos dois temas:
+ * --muted (metadado, dica) dá 7.8:1 no claro e 8:1 no escuro, no lugar de
+ * opacity, que caía abaixo de 4.5:1 em 50–60%; --link (texto clicável) dá
+ * 6.7:1 e 7.9:1 e se distingue do corpo sem precisar de hover.
+ */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #525252;
+  --link: #1d4ed8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-link: var(--link);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +26,8 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #a3a3a3;
+    --link: #60a5fa;
   }
 }
 
@@ -23,4 +35,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Foco do teclado igual em todo controle, visível nos dois temas. */
+:where(a, button, summary, input, select, textarea):focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { TenantView } from "@/features/tenants/components/tenant-view";
 import { Page } from "@/shared/ui/page";
+import { PageSkeleton } from "@/shared/ui/skeleton";
 
 export default async function TenantPage({
   params,
@@ -10,7 +11,7 @@ export default async function TenantPage({
   const t = await getTranslations("Tenant");
   return (
     <Page spacing="loose">
-      <Suspense fallback={<p>{t("loading")}</p>}>
+      <Suspense fallback={<PageSkeleton label={t("loading")} />}>
         {params.then(({ tenant }) => (
           <TenantView slug={tenant} />
         ))}

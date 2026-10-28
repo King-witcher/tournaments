@@ -23,7 +23,7 @@ export function CheckInPanel({ tenant, tournament, now }: Props) {
   if (tournament.check_in_minutes == null || !opensAt) return null;
 
   const hint = (text: ReactNode) => (
-    <p className="text-sm opacity-70">{text}</p>
+    <p className="text-sm text-muted">{text}</p>
   );
   if (tournament.status === "registration") {
     // Quem não está inscrito precisa se inscrever antes: o aviso do check-in

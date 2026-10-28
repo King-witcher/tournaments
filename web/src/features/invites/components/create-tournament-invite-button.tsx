@@ -27,7 +27,7 @@ export function CreateTournamentInviteButton({ tenant, tournament }: Props) {
       <Button
         variant="outline"
         size="sm"
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

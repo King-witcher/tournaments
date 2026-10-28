@@ -114,7 +114,7 @@ export function GameForm(props: Props) {
         <legend className="text-sm font-medium">{t("frags")}</legend>
         <div className="flex items-center gap-2">
           {frags("a")}
-          <span className="text-sm opacity-60">{tMatch("vs")}</span>
+          <span className="text-sm text-muted">{tMatch("vs")}</span>
           {frags("b")}
         </div>
       </fieldset>
@@ -129,7 +129,7 @@ export function GameForm(props: Props) {
       )}
       {error && <Alert>{error}</Alert>}
       <div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" pending={pending}>
           {submitLabel}
         </Button>
       </div>

@@ -12,7 +12,10 @@ export async function UserMenu() {
   return (
     <div className="flex items-center gap-3">
       {user.avatar_url && <Avatar src={user.avatar_url} />}
-      <Link href="/account" className="text-sm font-medium hover:underline">
+      <Link
+        href="/account"
+        className="text-sm font-medium underline underline-offset-4 hover:decoration-2"
+      >
         {user.display_name}
       </Link>
       <LogoutButton />

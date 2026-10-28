@@ -42,7 +42,7 @@ export async function TenantView({ slug }: { slug: string }) {
     <>
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold">{me.name}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {t("yourRole", { role: tRoles(me.role) })}
         </p>
       </header>

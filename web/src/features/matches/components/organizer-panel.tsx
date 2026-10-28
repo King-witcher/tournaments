@@ -23,7 +23,7 @@ export function OrganizerPanel({ target, names, resultKey }: Props) {
     <section className="flex flex-col gap-3 rounded-md border border-black/10 p-4 dark:border-white/15">
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold">{t("title")}</h2>
-        <p className="text-sm opacity-70">{t("hint")}</p>
+        <p className="text-sm text-muted">{t("hint")}</p>
       </div>
       <Disclosure key={resultKey} summary={t("walkoverTitle")}>
         <WalkoverForm target={target} names={names} />

@@ -38,13 +38,13 @@ export function MatchCardSide({
 
   return (
     <div className="flex items-center gap-2 px-3 py-1">
-      <span className="w-5 text-right text-xs tabular-nums opacity-50">
+      <span className="w-5 text-right text-xs tabular-nums text-muted">
         {entrant?.seed}
       </span>
       <span
         className={cn(
           "flex-1 truncate",
-          entrant ? winner && "font-semibold" : "text-xs italic opacity-50",
+          entrant ? winner && "font-semibold" : "text-xs italic text-muted",
         )}
       >
         {entrant?.nickname ?? placeholder}
@@ -57,7 +57,7 @@ export function MatchCardSide({
           className={cn(
             "tabular-nums",
             winner && "font-semibold",
-            tentative && "italic opacity-60",
+            tentative && "italic text-muted",
           )}
         >
           {score}

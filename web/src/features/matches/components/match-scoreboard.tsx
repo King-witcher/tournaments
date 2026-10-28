@@ -60,7 +60,7 @@ export function MatchScoreboard({ detail }: Props) {
           winner={decided && r?.winner === "a"}
           tentative={!decided}
         />
-        <span className="text-sm opacity-50">{t("vs")}</span>
+        <span className="text-sm text-muted">{t("vs")}</span>
         <MatchScoreboardSide
           entrant={b}
           side={s.b}
@@ -73,7 +73,7 @@ export function MatchScoreboard({ detail }: Props) {
       </div>
       {lines.map((line, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
-        <p key={i} className="text-sm opacity-70">
+        <p key={i} className="text-sm text-muted">
           {line}
         </p>
       ))}

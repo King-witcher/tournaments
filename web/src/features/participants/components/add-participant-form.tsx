@@ -41,7 +41,8 @@ export function AddParticipantForm({ tenant, tournament, candidates }: Props) {
         </Select>
         <Button
           variant="outline"
-          disabled={pending || !userId}
+          pending={pending}
+          disabled={!userId}
           onClick={() =>
             run(
               () =>

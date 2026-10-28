@@ -92,7 +92,7 @@ export function TranslationForm({
       </Field>
       {state.error && <Alert>{state.error}</Alert>}
       <div className="flex flex-wrap items-start gap-3">
-        <Button type="submit" variant="outline" disabled={pending}>
+        <Button type="submit" variant="outline" pending={pending}>
           {t("save")}
         </Button>
         {translation && (
@@ -103,7 +103,7 @@ export function TranslationForm({
           />
         )}
         {state.saved && !pending && (
-          <p className="py-2 text-sm opacity-70">{t("saved")}</p>
+          <p className="py-2 text-sm text-muted">{t("saved")}</p>
         )}
       </div>
     </form>

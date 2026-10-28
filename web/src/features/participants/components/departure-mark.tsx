@@ -15,7 +15,7 @@ export function DepartureMark({ withdrawn, left }: Props) {
   const t = useTranslations("Participants");
   if (!withdrawn && !left) return null;
   return (
-    <span className="shrink-0 text-xs italic opacity-60">
+    <span className="shrink-0 text-xs italic text-muted">
       {left ? t("left") : t("withdrawn")}
     </span>
   );

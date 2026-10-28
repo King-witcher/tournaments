@@ -16,7 +16,7 @@ export function RegistrationPanel({ tenant, tournament }: Props) {
   const t = useTranslations("Participants.registration");
   if (tournament.status !== "registration") return null;
 
-  const hint = (text: string) => <p className="text-sm opacity-70">{text}</p>;
+  const hint = (text: string) => <p className="text-sm text-muted">{text}</p>;
   if (tournament.registered) {
     return (
       <div className="flex flex-wrap items-center gap-3">

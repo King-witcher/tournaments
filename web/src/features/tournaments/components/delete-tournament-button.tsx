@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 /** Exclui o rascunho (pede confirmação) e volta para o tenant. */
 export function DeleteTournamentButton({
@@ -22,12 +22,12 @@ export function DeleteTournamentButton({
 
   return (
     <div className="flex flex-col gap-1">
-      <Button
+      <ConfirmButton
         variant="outline"
         size="sm"
-        disabled={pending}
-        onClick={() => {
-          if (!window.confirm(t("deleteConfirm"))) return;
+        pending={pending}
+        question={t("deleteConfirm")}
+        onConfirm={() => {
           run(
             () =>
               api.DELETE("/tenants/{slug}/tournaments/{tournament}", {
@@ -41,7 +41,7 @@ export function DeleteTournamentButton({
         }}
       >
         {t("delete")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
   );

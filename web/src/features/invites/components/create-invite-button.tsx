@@ -23,7 +23,7 @@ export function CreateInviteButton({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col items-start gap-2">
       <Button
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

@@ -36,9 +36,9 @@ export async function SeedingPanel({ tenant, tournament }: Props) {
       <h2 className="text-xl font-semibold">
         {t("title", { count: order.length, total: tournament.participants })}
       </h2>
-      <p className="text-sm opacity-70">{t("hint")}</p>
+      <p className="text-sm text-muted">{t("hint")}</p>
       {order.length === 0 ? (
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {hasCheckIn ? t("empty") : t("emptyNoCheckIn")}
         </p>
       ) : (

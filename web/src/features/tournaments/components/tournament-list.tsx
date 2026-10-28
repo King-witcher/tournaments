@@ -52,7 +52,7 @@ export async function TournamentList({ slug, viewerRole }: Props) {
         )}
       </div>
       {tournaments.length === 0 ? (
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {viewerRole === "player" ? t("emptyPlayer") : t("empty")}
         </p>
       ) : (

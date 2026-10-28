@@ -46,7 +46,7 @@ export function NextGameRow({
           submitLabel={tForm("submit", { number })}
         />
       ) : (
-        <p className="text-sm opacity-70">{t("awaiting")}</p>
+        <p className="text-sm text-muted">{t("awaiting")}</p>
       )}
       {/* Lançar pelos jogadores é exceção: fica fechado. A chave reinicia o
           bloco a cada mapa novo. */}

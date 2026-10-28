@@ -54,14 +54,14 @@ export function NicknameForm({
             onChange={(e) => setValue(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" variant="outline" size="sm" disabled={pending}>
+          <Button type="submit" variant="outline" size="sm" pending={pending}>
             {t("save")}
           </Button>
         </span>
       </Field>
       {state.error && <ErrorText>{state.error}</ErrorText>}
       {state.saved && !pending && (
-        <p className="text-sm opacity-70">{t("saved")}</p>
+        <p className="text-sm text-muted">{t("saved")}</p>
       )}
     </form>
   );

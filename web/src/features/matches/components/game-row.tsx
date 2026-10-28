@@ -59,7 +59,7 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
           <span className="font-medium">
             {t("number", { number: g.number })}
           </span>
-          <span className={g.map ? "" : "text-sm italic opacity-60"}>
+          <span className={g.map ? "" : "text-sm italic text-muted"}>
             {g.map?.name ?? t("noMap")}
           </span>
         </span>
@@ -68,7 +68,7 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
             {t("won", { name: names[g.winner] })}
           </span>
           {g.a_frags != null && g.b_frags != null && (
-            <span className="text-sm tabular-nums opacity-70">
+            <span className="text-sm tabular-nums text-muted">
               {g.a_frags} × {g.b_frags}
             </span>
           )}
@@ -76,7 +76,7 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
       </div>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Badge variant={BADGE[g.status]}>{t(`badge.${g.status}`)}</Badge>
-        {status && <span className="opacity-80">{status}</span>}
+        {status && <span className="text-muted">{status}</span>}
       </div>
       {g.task === "respond" && (
         <GameRespond target={target} number={g.number} />

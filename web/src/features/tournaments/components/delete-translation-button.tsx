@@ -26,7 +26,7 @@ export function DeleteTranslationButton({ tenant, tournament, locale }: Props) {
       <Button
         variant="link"
         className="py-2"
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

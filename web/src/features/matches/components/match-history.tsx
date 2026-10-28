@@ -13,7 +13,7 @@ export function MatchHistory({ detail }: Props) {
     <section className="flex flex-col gap-3">
       <h2 className="text-xl font-semibold">{t("title")}</h2>
       {detail.history.length === 0 ? (
-        <p className="text-sm opacity-70">{t("empty")}</p>
+        <p className="text-sm text-muted">{t("empty")}</p>
       ) : (
         <ol className="flex flex-col gap-3 border-l border-black/10 pl-4 dark:border-white/15">
           {detail.history.map((event) => (

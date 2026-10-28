@@ -20,7 +20,7 @@ export function TranslationSection({ tenant, tournament }: Props) {
       <h2 className="text-xl font-semibold">
         {t("title", { language: tLocales(locale) })}
       </h2>
-      <p className="text-sm opacity-70">{t("hint")}</p>
+      <p className="text-sm text-muted">{t("hint")}</p>
       <TranslationForm
         tenant={tenant}
         tournament={tournament.slug}

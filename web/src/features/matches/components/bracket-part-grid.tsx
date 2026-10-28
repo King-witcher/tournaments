@@ -38,7 +38,7 @@ export function BracketPartGrid({
         <div className="flex w-max gap-4">
           {rounds.map(({ round, matches }) => (
             <div key={round} className="flex w-56 flex-col gap-2">
-              <h4 className="text-xs font-medium uppercase tracking-wide opacity-60">
+              <h4 className="text-xs font-medium uppercase tracking-wide text-muted">
                 {roundTitle(part, round, lastRound)}
               </h4>
               <ol className="flex flex-1 flex-col justify-around gap-3">

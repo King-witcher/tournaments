@@ -57,7 +57,8 @@ export function UndoStartButton({ tenant, slug, results, message }: Props) {
       <div className="flex gap-2">
         <Button
           size="sm"
-          disabled={!ready || pending}
+          pending={pending}
+          disabled={!ready}
           onClick={() =>
             run(
               () =>

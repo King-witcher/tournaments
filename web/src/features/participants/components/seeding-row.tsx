@@ -29,13 +29,13 @@ export function SeedingRow({
 
   return (
     <li className="flex items-center gap-3 py-2">
-      <span className="w-6 text-right text-sm tabular-nums opacity-70">
+      <span className="w-6 text-right text-sm tabular-nums text-muted">
         {position}
       </span>
       <Avatar src={p.avatar_url} name={p.nickname} />
       <span className="flex-1 font-medium">{p.nickname}</span>
       {showNoSeed && p.seed == null && (
-        <span className="text-xs opacity-60">{t("noSeed")}</span>
+        <span className="text-xs text-muted">{t("noSeed")}</span>
       )}
       <Button
         variant="outline"

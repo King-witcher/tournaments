@@ -46,7 +46,7 @@ export function RemoveLoginForm({ login }: { login: "password" | "discord" }) {
             onChange={(e) => setCurrent(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" variant="outline" size="sm" disabled={pending}>
+          <Button type="submit" variant="outline" size="sm" pending={pending}>
             {login === "password" ? t("password.remove") : t("discord.unlink")}
           </Button>
         </span>

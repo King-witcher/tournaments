@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { EditTournamentView } from "@/features/tournaments/components/edit-tournament-view";
 import { Page } from "@/shared/ui/page";
+import { PageSkeleton } from "@/shared/ui/skeleton";
 
 export default async function EditTournamentPage({
   params,
@@ -10,7 +11,7 @@ export default async function EditTournamentPage({
   const t = await getTranslations("Tournament");
   return (
     <Page spacing="loose">
-      <Suspense fallback={<p>{t("loading")}</p>}>
+      <Suspense fallback={<PageSkeleton label={t("loading")} />}>
         {params.then(({ tenant, tournament }) => (
           <EditTournamentView tenant={tenant} slug={tournament} />
         ))}

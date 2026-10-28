@@ -1,10 +1,10 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { getMyTenants } from "@/features/tenants/server";
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { RowLink } from "@/shared/ui/row-link";
 import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 
@@ -68,29 +68,24 @@ export async function MyTournaments() {
       <ul className="divide-y divide-black/10 dark:divide-white/10">
         {entries.map(({ tenant, tournament }) => (
           <li key={`${tenant.slug}/${tournament.slug}`}>
-            <Link
+            <RowLink
               href={`/${tenant.slug}/${tournament.slug}`}
-              className="flex flex-col gap-0.5 py-2 hover:underline sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+              title={localizedName(tournament, locale)}
             >
-              <span className="font-medium">
-                {localizedName(tournament, locale)}
-              </span>
-              <span className="text-sm opacity-70 sm:text-right">
-                {tenant.name} · {tStatus(tournament.status)}
-                {tournament.starts_at && (
-                  <>
-                    {" · "}
-                    <LocalDateTime value={tournament.starts_at} />
-                  </>
-                )}
-                {checkInPending(tournament) && (
-                  <span className="font-medium text-red-700 dark:text-red-400">
-                    {" · "}
-                    {tList("checkInPending")}
-                  </span>
-                )}
-              </span>
-            </Link>
+              {tenant.name} · {tStatus(tournament.status)}
+              {tournament.starts_at && (
+                <>
+                  {" · "}
+                  <LocalDateTime value={tournament.starts_at} />
+                </>
+              )}
+              {checkInPending(tournament) && (
+                <span className="font-medium text-red-700 dark:text-red-400">
+                  {" · "}
+                  {tList("checkInPending")}
+                </span>
+              )}
+            </RowLink>
           </li>
         ))}
       </ul>

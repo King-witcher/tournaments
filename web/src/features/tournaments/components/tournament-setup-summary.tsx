@@ -48,7 +48,7 @@ export function TournamentSetupSummary({ tournament }: Props) {
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
-            <dt className="opacity-70">{label}</dt>
+            <dt className="text-muted">{label}</dt>
             <dd>{value}</dd>
           </div>
         ))}

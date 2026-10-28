@@ -57,7 +57,7 @@ export function GameOrganizerActions({
     return (
       <div className="flex flex-col gap-2">
         {game.status === "confirmed" && (
-          <p className="text-xs opacity-70">{t("correctHint")}</p>
+          <p className="text-xs text-muted">{t("correctHint")}</p>
         )}
         <GameForm
           target={target}
@@ -87,7 +87,7 @@ export function GameOrganizerActions({
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap gap-2">
         {confirmable && (
-          <Button size="sm" disabled={pending} onClick={confirm}>
+          <Button size="sm" pending={pending} onClick={confirm}>
             {game.status === "contested" ? t("accept") : t("confirmNow")}
           </Button>
         )}

@@ -15,7 +15,7 @@ export async function PasswordLoginSection({ username, discordLinked }: Props) {
       <h2 className="text-xl font-semibold">{t("title")}</h2>
       {!username ? (
         <>
-          <p className="text-sm opacity-70">{t("none")}</p>
+          <p className="text-sm text-muted">{t("none")}</p>
           <CredentialsForm mode="add" />
         </>
       ) : (
@@ -25,11 +25,11 @@ export async function PasswordLoginSection({ username, discordLinked }: Props) {
           <h3 className="pt-2 font-semibold">{t("remove")}</h3>
           {discordLinked ? (
             <>
-              <p className="text-sm opacity-70">{t("removeHint")}</p>
+              <p className="text-sm text-muted">{t("removeHint")}</p>
               <RemoveLoginForm login="password" />
             </>
           ) : (
-            <p className="text-sm opacity-70">{t("needsDiscord")}</p>
+            <p className="text-sm text-muted">{t("needsDiscord")}</p>
           )}
         </>
       )}

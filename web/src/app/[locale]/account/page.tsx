@@ -5,6 +5,7 @@ import { AccountLogins } from "@/features/auth/components/account-logins";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { Page } from "@/shared/ui/page";
+import { LoadingSection } from "@/shared/ui/skeleton";
 
 export default async function AccountPage({
   searchParams,
@@ -16,7 +17,7 @@ export default async function AccountPage({
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
-      <Suspense fallback={<p>{t("loading")}</p>}>
+      <Suspense fallback={<LoadingSection label={t("loading")} />}>
         <RequireLogin message={t("loginRequired")}>
           <AccountLogins />
         </RequireLogin>

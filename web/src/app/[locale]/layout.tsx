@@ -47,7 +47,10 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>
           <header className="flex items-center justify-between gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
-            <Link href="/" className="text-sm font-medium hover:underline">
+            <Link
+              href="/"
+              className="text-sm font-medium underline underline-offset-4 hover:decoration-2"
+            >
               {t("home")}
             </Link>
             <div className="flex items-center gap-4">

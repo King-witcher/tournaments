@@ -40,7 +40,7 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
         <>
           <p className="text-sm">{t("draftHint")}</p>
           {undated && (
-            <p className="text-sm opacity-70">{t("publishNeedsDate")}</p>
+            <p className="text-sm text-muted">{t("publishNeedsDate")}</p>
           )}
           <div className="flex flex-wrap items-start gap-3">
             <PublishTournamentButton

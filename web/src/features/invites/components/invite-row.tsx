@@ -23,7 +23,7 @@ export function InviteRow({ slug, invite, now }: Props) {
             expires: format.relativeTime(new Date(invite.expires_at), now),
           })}
         </span>
-        <span className="text-xs opacity-60">
+        <span className="text-xs text-muted">
           {t("uses", { count: invite.uses })}
         </span>
       </span>

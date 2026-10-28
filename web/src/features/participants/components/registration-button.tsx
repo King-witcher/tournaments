@@ -28,7 +28,7 @@ export function RegistrationButton({ tenant, slug, registered }: Props) {
       <Button
         variant={registered ? "outline" : "default"}
         size={registered ? "sm" : "default"}
-        disabled={pending}
+        pending={pending}
         onClick={() =>
           run(
             () =>

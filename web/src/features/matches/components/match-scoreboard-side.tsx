@@ -51,7 +51,7 @@ export function MatchScoreboardSide({
         <span
           className={cn(
             "truncate",
-            entrant ? winner && "font-semibold" : "text-sm italic opacity-60",
+            entrant ? winner && "font-semibold" : "text-sm italic text-muted",
           )}
         >
           {entrant?.nickname ?? placeholder}
@@ -59,7 +59,7 @@ export function MatchScoreboardSide({
         {entrant && (
           <span
             className={cn(
-              "flex gap-2 text-xs opacity-60",
+              "flex gap-2 text-xs text-muted",
               alignEnd && "justify-end",
             )}
           >
@@ -73,7 +73,7 @@ export function MatchScoreboardSide({
           className={cn(
             "text-2xl tabular-nums",
             winner && "font-semibold",
-            tentative && "italic opacity-60",
+            tentative && "italic text-muted",
           )}
         >
           {score}

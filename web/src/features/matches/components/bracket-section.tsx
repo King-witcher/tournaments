@@ -49,11 +49,11 @@ export async function BracketSection({ tenant, tournament }: Props) {
       <section className="flex w-[min(100vw_-_2rem,50vw_+_19rem,72rem)] flex-col gap-3">
         <h2 className="text-xl font-semibold">{t("title")}</h2>
         {bracket.status === "in_progress" && (
-          <p className="text-sm opacity-70">{t("hint")}</p>
+          <p className="text-sm text-muted">{t("hint")}</p>
         )}
         {bracket.matches.some((m) => m.round > 1) && (
           // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
-          <p className="text-sm opacity-70 sm:hidden">{t("scrollHint")}</p>
+          <p className="text-sm text-muted sm:hidden">{t("scrollHint")}</p>
         )}
         <BracketView
           tenant={tenant}

@@ -14,21 +14,21 @@ export async function DiscordLoginSection({ linked, hasPassword }: Props) {
       <h2 className="text-xl font-semibold">{t("title")}</h2>
       {!linked ? (
         <>
-          <p className="text-sm opacity-70">{t("notLinked")}</p>
+          <p className="text-sm text-muted">{t("notLinked")}</p>
           <DiscordButton action="link" returnTo="/account">
             {t("link")}
           </DiscordButton>
         </>
       ) : (
         <>
-          <p className="text-sm opacity-70">{t("linked")}</p>
+          <p className="text-sm text-muted">{t("linked")}</p>
           {hasPassword ? (
             <>
-              <p className="text-sm opacity-70">{t("unlinkHint")}</p>
+              <p className="text-sm text-muted">{t("unlinkHint")}</p>
               <RemoveLoginForm login="discord" />
             </>
           ) : (
-            <p className="text-sm opacity-70">{t("needsPassword")}</p>
+            <p className="text-sm text-muted">{t("needsPassword")}</p>
           )}
         </>
       )}

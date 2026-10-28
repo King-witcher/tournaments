@@ -46,17 +46,23 @@ export function MatchHeader({
 
   return (
     <header className="flex flex-col gap-1">
-      <nav className="flex flex-wrap gap-x-2 text-sm opacity-70">
-        <Link href={`/${tenant}`} className="hover:underline">
+      <nav className="flex flex-wrap gap-x-2 text-sm text-muted">
+        <Link
+          href={`/${tenant}`}
+          className="underline underline-offset-4 hover:decoration-2"
+        >
           {tenantName}
         </Link>
         <span aria-hidden>›</span>
-        <Link href={`/${tenant}/${slug}`} className="hover:underline">
+        <Link
+          href={`/${tenant}/${slug}`}
+          className="underline underline-offset-4 hover:decoration-2"
+        >
           {tournamentName}
         </Link>
       </nav>
       <h1 className="text-2xl font-semibold">{label}</h1>
-      <p className="text-sm opacity-70">
+      <p className="text-sm text-muted">
         {code(s.key)} · {t("bestOf", { count: s.best_of })}
       </p>
     </header>

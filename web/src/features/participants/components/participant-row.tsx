@@ -39,7 +39,7 @@ export function ParticipantRow({
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
       {showSeed && p.seed != null && (
-        <span className="w-8 text-right text-sm tabular-nums opacity-70">
+        <span className="w-8 text-right text-sm tabular-nums text-muted">
           {t("seed", { seed: p.seed })}
         </span>
       )}
@@ -50,7 +50,7 @@ export function ParticipantRow({
         <span
           className={cn(
             "text-xs",
-            p.checked_in ? "text-green-700 dark:text-green-400" : "opacity-60",
+            p.checked_in ? "text-green-700 dark:text-green-400" : "text-muted",
           )}
         >
           {p.checked_in ? t("checkIn.checkedIn") : t("checkIn.notCheckedIn")}
@@ -65,6 +65,7 @@ export function ParticipantRow({
               tournament={tournament}
               userId={p.user_id}
               checkedIn={p.checked_in}
+              nickname={p.nickname}
             />
           )}
           {canRemove && (
@@ -72,6 +73,7 @@ export function ParticipantRow({
               tenant={tenant}
               tournament={tournament}
               userId={p.user_id}
+              nickname={p.nickname}
             />
           )}
           {withdrawable && (

@@ -43,7 +43,7 @@ export async function InviteView({ token }: { token: string }) {
           : t("title", { name: invite.tenant_name })}
       </h1>
       {tournament && (
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {t("tournamentSpots", {
             count: tournament.participants,
             max: tournament.max_participants,
@@ -52,7 +52,7 @@ export async function InviteView({ token }: { token: string }) {
         </p>
       )}
       {invite.expires_at && (
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {t("expires", {
             expires: format.relativeTime(
               new Date(invite.expires_at),

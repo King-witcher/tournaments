@@ -35,7 +35,7 @@ export function MatchGamesPanel({
     <section className="flex flex-col gap-1">
       <h2 className="text-xl font-semibold">{t("title")}</h2>
       {open && (
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {t("hint", { minutes: contestMinutes })}
         </p>
       )}
