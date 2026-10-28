@@ -246,6 +246,7 @@
     "organizerTitle": "Organização",
     "editTitle": "Editar torneio",
     "publish": "Publicar e abrir inscrições",
+    "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
     "delete": "Excluir rascunho",
     "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
     "rules": "Regras",
@@ -332,7 +333,7 @@
       "unmark": "Desmarcar check-in"
     },
     "seeding": {
-      "title": "Seeding ({count})",
+      "title": "Seeding: {count} de {total} inscritos entram na chave",
       "hint": "A ordem da chave: o 1 é o melhor seed. Quem entrar depois vai para o fim. Se ninguém tiver seed ao iniciar, a ordem é sorteada.",
       "empty": "Ninguém elegível ainda: só entra quem fizer check-in.",
       "emptyNoCheckIn": "Ninguém inscrito ainda.",

@@ -34,7 +34,7 @@ export async function SeedingPanel({ tenant, tournament }: Props) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xl font-semibold">
-        {t("title", { count: order.length })}
+        {t("title", { count: order.length, total: tournament.participants })}
       </h2>
       <p className="text-sm opacity-70">{t("hint")}</p>
       {order.length === 0 ? (

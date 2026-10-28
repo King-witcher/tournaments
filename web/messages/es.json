@@ -246,6 +246,7 @@
     "organizerTitle": "Organización",
     "editTitle": "Editar torneo",
     "publish": "Publicar y abrir inscripciones",
+    "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
     "delete": "Eliminar borrador",
     "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
     "rules": "Reglas",
@@ -332,7 +333,7 @@
       "unmark": "Desmarcar check-in"
     },
     "seeding": {
-      "title": "Seeding ({count})",
+      "title": "Seeding: {count} de {total} inscritos entran en el cuadro",
       "hint": "El orden del cuadro: el 1 es el mejor seed. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
       "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
       "emptyNoCheckIn": "Nadie inscrito todavía.",
