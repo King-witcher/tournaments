@@ -1,0 +1,35 @@
+{
+  "notices": {
+    "check_in": {
+      "opened": {
+        "title": "Check-in abierto",
+        "body": "{tournament}: haz el check-in para jugar."
+      }
+    },
+    "match": {
+      "ready": {
+        "title": "Tu partida está lista",
+        "body": "{tournament}: tú contra {opponent}."
+      },
+      "game_reported": {
+        "title": "{opponent} envió el mapa {game}",
+        "body": "{tournament}: confirma o impugna hasta {deadline}. Sin respuesta, el mapa vale."
+      },
+      "game_contested": {
+        "title": "Mapa impugnado",
+        "body": "{tournament}: {player} impugnó el mapa {game}. Resuélvelo en la partida."
+      }
+    },
+    "tournament": {
+      "start_due": {
+        "title": "Hora de iniciar",
+        "body": "{tournament} llegó a la hora marcada y todavía no se inició."
+      }
+    }
+  },
+  "open": {
+    "match": "Abrir partida",
+    "tournament": "Abrir torneo"
+  },
+  "region": "Avisos"
+}
