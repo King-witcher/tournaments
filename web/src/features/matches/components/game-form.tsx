@@ -91,7 +91,7 @@ export function GameForm(props: Props) {
       placeholder={names[side]}
       value={game[side]}
       onChange={(e) => setGame({ ...game, [side]: e.target.value })}
-      className="w-24"
+      className="w-full"
     />
   );
 
@@ -112,7 +112,9 @@ export function GameForm(props: Props) {
       </Field>
       <fieldset className="flex flex-col gap-1">
         <legend className="text-sm font-medium">{t("frags")}</legend>
-        <div className="flex items-center gap-2">
+        {/* O nome no placeholder é o que diz de quem é cada campo: largura
+            para ele aparecer inteiro no celular. */}
+        <div className="grid max-w-sm grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
           {frags("a")}
           <span className="text-sm text-muted">{tMatch("vs")}</span>
           {frags("b")}

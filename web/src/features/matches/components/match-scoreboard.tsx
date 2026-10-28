@@ -51,7 +51,9 @@ export function MatchScoreboard({ detail }: Props) {
 
   return (
     <section className="flex flex-col gap-2">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-md border border-black/10 p-4 dark:border-white/15">
+      {/* minmax(0, 1fr): com 1fr, um apelido longo não encolhe a coluna e
+          empurra a página para o lado no celular. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-md border border-black/10 p-3 sm:gap-3 sm:p-4 dark:border-white/15">
         <MatchScoreboardSide
           entrant={a}
           side={s.a}

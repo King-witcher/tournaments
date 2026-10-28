@@ -42,15 +42,16 @@ export function MatchScoreboardSide({
   return (
     <div
       className={cn(
-        "flex items-center gap-3",
+        "flex min-w-0 items-center gap-2 sm:gap-3",
         alignEnd && "flex-row-reverse text-right",
       )}
     >
       {entrant && <Avatar src={entrant.avatar_url} name={entrant.nickname} />}
       <div className="flex min-w-0 flex-1 flex-col">
+        {/* Quebra em vez de cortar: no celular, cada lado tem uns 150px. */}
         <span
           className={cn(
-            "truncate",
+            "break-words",
             entrant ? winner && "font-semibold" : "text-sm italic text-muted",
           )}
         >
