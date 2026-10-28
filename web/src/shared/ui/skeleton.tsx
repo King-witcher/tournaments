@@ -1,4 +1,5 @@
 import {
+  BreadcrumbSkeleton,
   ButtonSkeleton,
   DataTableSkeleton,
   SkeletonText,
@@ -41,7 +42,7 @@ export function PageHeaderSkeleton({
   return (
     <div className={styles.header}>
       <LoadingLabel label={label} />
-      {breadcrumb && <span aria-hidden className={styles.crumb} />}
+      {breadcrumb && <BreadcrumbSkeleton aria-hidden items={2} />}
       <span aria-hidden className={styles.title} />
       {meta && <span aria-hidden className={styles.meta} />}
     </div>

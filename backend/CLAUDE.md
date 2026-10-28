@@ -4,7 +4,7 @@ Organização do código. Siga ao criar arquivo, módulo, rota ou teste. Regras 
 
 ## Crates
 
-- `engine`: regras de torneio, puras (sem I/O, banco nem relógio).
+- `engine`: regras de torneio, puras (sem I/O, banco nem relógio). Organização em `crates/engine/CLAUDE.md`.
 - `api`: HTTP e banco. Carrega dados, chama o `engine` e grava. Não reimplementa regra de formato, pontuação, veto, campeões nem rating.
 - `migrate`: só aplica as migrations.
 
@@ -15,89 +15,26 @@ crates/api/src/
   lib.rs          AppState, MIGRATOR e app(), que junta o router() de cada domínio
   main.rs         lê config, conecta, migra, sobe
   config.rs       variáveis de ambiente
-  health.rs       domínio pequeno: um arquivo só
-  shared/         o que todo domínio usa; não conhece nenhum domínio
-    error.rs        ApiError (código + params numéricos), ErrorBody
-    engine.rs       From<EngineError> for ApiError: um código por variante do engine
-    extract.rs      JsonBody, PathParams, nullable (campo de PATCH em que null limpa)
-    token.rs        random_token, random_secret, hash_token, hex, constant_time_eq
-    text.rs         clean_text (uma linha), clean_long_text (Markdown)
-    slug.rs         formato de slug; reservados e códigos ficam em cada domínio
-    locale.rs       Locale (pt, es)
-    redis.rs        Redis: conexão (abre no primeiro comando), key (prefixo do ambiente),
-                    query/query_pipe (tentam de novo uma vez se a conexão parada caiu)
-  outbox/         eventos de mudança e avisos (event.rs) e `emit`, que grava na transação de
-                  quem muda; claim/remove para o despachante; track (a requisição emitiu?).
-                  Só depende de shared: todo domínio emite, inclusive auth
-  mail/           email sem domínio: normalize (forma canônica; recusa descartáveis e apelidos,
-                  disposable.rs + disposable_domains.txt), trait Mailer (ResendMailer, LogMailer),
-                  Mail::reserve (limites de envio no Redis, kv.rs) → Ticket::send (segundo plano).
-                  Sem rota nem texto. Só depende de shared
-  auth/           login com Discord e com username e senha (argon2, limite de tentativas),
-                  ligar e desligar cada um, sessão em cookie, CurrentUser (`Option<CurrentUser>` em rota
-                  pública que muda para quem está logado, como a prévia do convite), PATCH /me (nome),
-                  /auth/sessions (listar, encerrar uma, encerrar as outras). signup.rs (cadastro
-                  por link: só cria a conta na confirmação), recovery.rs (senha por email),
-                  email_change.rs (pôr ou trocar o email), emails.rs (os textos, pt e es).
-                  Sessões, erros de senha, cadastros por confirmar e links no Redis (kv/); contas,
-                  email, logins externos (user_identities) e senha (password_credentials) no banco (db/)
-  tenants/        tenants (criar, ver, transferir a posse), e a base de todo dado de tenant:
-                  TenantId, Role, TenantMember (e `TenantMember::all_of`, as participações de quem vê;
-                  `TenantMember::of`, a checagem fora de rota), apelido; changes.rs (changed,
-                  access_lost) e staff (organizers e owner, destinatários dos avisos da organização)
-  members/        /tenants/{slug}/me (apelido, sair) e /tenants/{slug}/members (listar,
-                  perfil, papel, remover); departure.rs (quem remove quem; sair deixa o membro
-                  inativo: sai das inscrições abertas e os convites dele são revogados);
-                  history.rs (os torneios do perfil: tournaments::list de quem vê,
-                  participants::registrations_of, matches::place_of, my_tournaments::Situation).
-                  Fica acima de lifecycle, invites e my_tournaments
-  invites/        /tenants/{slug}/invites, /invites/{token} e os links de inscrição
-                  (/tenants/{slug}/tournaments/{t}/invites, em tournament.rs)
-  tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
-                  status, setup (vagas, campeões, fases → checagem do engine), edit (PATCH),
-                  visibility (quem vê: can_see, find_visible), schedule (data de início,
-                  janela de check-in e a abertura automática, aplicada em db/read.rs ao ler),
-                  changes.rs (changed, check_in_opened, start_due: comunidade, torneio e "Seus
-                  torneios" dos inscritos), scheduled.rs (o que o agendador faz: abrir o check-in,
-                  avisar a hora de iniciar)
-  participants/   /tenants/{slug}/tournaments/{t}/participants, .../registration, .../check-in
-                  e .../seeding; registration.rs (os três caminhos de inscrição; o convite usa
-                  register), check_in.rs, seeding.rs (finalize, que o início usa), seed_order.rs
-  lifecycle/      transições depois de publicar (.../check-in/open, .../registration/reopen,
-                  .../start): transition.rs concentra de onde, para onde e o que cada uma faz;
-                  withdrawal.rs, a desistência (.../participants/{user_id}/withdrawal) e o membro
-                  que sai da comunidade (sai das inscrições abertas, desiste das em andamento).
-                  Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
-                  gera a chave; desfazer a descarta)
-  maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
-  my_tournaments/ GET /me/tournaments: os torneios de quem vê em todas as comunidades, com a
-                  situação e a próxima partida (TenantMember::all_of, tournaments::list,
-                  matches::place); situation.rs (Situation antes da chave e pelo lugar nela,
-                  que o perfil do membro também usa). Fica acima de tournaments e matches
-  matches/        .../bracket, .../matches/{match}[/result] e .../matches/{match}/games/{n}
-                  [/report|/confirm|/contest|/replay]: a série mapa a mapa. stage.rs (fase → chave por
-                  replay das séries decididas, com os mapas; start, discard, sync_status),
-                  games.rs (mapa gravado → engine), result.rs (série decidida), settle.rs (depois
-                  de toda mudança: anula os mapas depois da decisão, fecha as séries, W.O.
-                  automático, status), due.rs (confirmação por tempo dos mapas,
-                  apply_due_confirmations), report.rs (jogadores), manage.rs (organizador:
-                  lançar, resolver e corrigir mapas, W.O. na série), replay.rs (organizador anula o último mapa sem
-                  confirmar para ser jogado de novo), outcome.rs (mapa pelos lados
-                  → engine), tasks.rs (o que a partida e cada mapa esperam de quem vê), key.rs
-                  (wb-1-3), history.rs, view.rs, mine.rs (lugar de quem vê na chave e próxima partida; place_of, o de outro inscrito), detail.rs, actions.rs, withdrawals.rs (W.O.
-                  automático de quem desistiu; settle_withdrawals), changes.rs (o que a chave emite:
-                  Snapshot antes da mudança, comparado depois do settle; partida pronta, mapa
-                  enviado e contestado); SQL em db/ (leitura e confirmação por tempo, writes da
-                  série, events, games)
-  push/           GET /push/key e /push/subscriptions (inscrições de Web Push por navegador);
-                  sender.rs (trait WebPush e HttpWebPush: web-push-native + reqwest),
-                  subscription.rs (formato aceito), delivery.rs (deliver, que o despachante chama)
-  realtime/       GET /ws (socket.rs; connection.rs, o que cada conexão assina e recebe, puro),
-                  hub.rs (Realtime: broadcast dos eventos e o despertador do despachante, e a
-                  camada que acorda depois da requisição que emitiu), dispatcher.rs (outbox →
-                  sockets e push), scheduler.rs (a cada 10 s, com advisory lock: check-in, hora
-                  de iniciar, confirmação por tempo). Fica acima de todos os domínios
+  shared/         erro, extractors, tokens, texto, slug, idioma, Redis; não conhece nenhum domínio
+  outbox/         eventos de mudança e avisos, gravados na transação de quem muda (emit)
+  mail/           email sem domínio: forma canônica do endereço, envio (Mailer) e limites de envio
+  auth/           login (Discord, username e senha), sessão, CurrentUser; cadastro, recuperação
+                  de senha e troca de email por link
+  tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
+  members/        membros: listar, perfil, papel, apelido, sair, remover
+  invites/        convites da comunidade e links de inscrição em torneio
+  tournaments/    torneio, traduções, fases, quem vê, agenda e check-in automático
+  participants/   inscrição, check-in, seeding
+  lifecycle/      transições depois de publicar (check-in, reabrir, iniciar, desfazer) e desistência
+  matches/        chave e resultados, mapa a mapa
+  my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
+  push/           Web Push: inscrições dos navegadores e envio
+  realtime/       WebSocket, despachante do outbox, agendador
+  health.rs       domínios pequenos, um arquivo cada
+  maps.rs
 ```
+
+O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//!` do `mod.rs` dele: leia antes de mexer, e atualize-o quando acrescentar um arquivo ou uma responsabilidade ao domínio.
 
 Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `media` (prints no S3), `ratings`.
 
@@ -173,25 +110,3 @@ O banco recusa estado inválido mesmo que a API erre (decisões em "Consistênci
 - **Dados existentes**: a migration roda em produção. Corrija antes de criar a regra, de forma determinística (e diga como no comentário), ou use `not valid` + `validate`. Teste o SQL numa cópia do banco local antes de aplicar. Migration aplicada não muda mais.
 - **Teste por SQL direto**: para cada regra, gravar o estado inválido e conferir código e nome (`schema::rejected`); para cada cascata, apagar o pai e contar que nada sobrou.
 - Horário de uma ação comparado com o de outra (enviado → contestado, inscrito → check-in) não vira `check`: cada uma grava o `now()` da própria transação, que pode ter começado antes da outra.
-
-## engine
-
-```
-crates/engine/src/
-  core.rs         tipos de mais de um formato: ParticipantId, MapId, MatchId, Match, Occupant,
-                  Outcome, EngineError
-  series/         melhor de N: mod.rs (tamanho e placar, validate_score), games.rs (a série
-                  mapa a mapa: próximo mapa, troca, onde a série fecha e o que fica depois dela)
-  seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
-  champions.rs    ChampionRules e o orçamento da regra de não repetição
-  tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
-  formats/
-    mod.rs        StageFormat (o JSON gravado em tournament_stages.config)
-    elimination/  mod.rs (config, estado, replay), build.rs (topologia), resolve.rs (estados), tests/
-```
-
-- O JSON de `StageFormat` e `ChampionRules` fica gravado no banco: mudar o serde deles exige migration dos dados. Os testes em `formats/tests.rs` fixam o formato.
-
-- Um formato por pasta em `formats/` (`round_robin/`, `swiss/`, `ffa/`): `mod.rs` com a API pública (config, estado, `replay`) e um arquivo por etapa.
-- O que não é formato fica no topo, como `scoring/` (pontos e desempate de FFA), `veto/` e `rating/`. Um arquivo até ~300 linhas, depois pasta.
-- Tipo usado por mais de um formato vai para `core.rs`.

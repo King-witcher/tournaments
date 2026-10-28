@@ -42,15 +42,15 @@ static RUN_PREFIX: LazyLock<String> = LazyLock::new(|| {
     format!("test:{now}:")
 });
 
-/// `REDIS_URL` ou o Redis local, no database 0 (o do projeto).
+/// `REDIS_URL` ou o Redis local, no database 1 (o do projeto).
 fn redis_url() -> String {
-    std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/0".into())
+    std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/1".into())
 }
 
 fn sweep_runs_before(before: i64) {
     let mut conn = redis::Client::open(redis_url())
         .and_then(|c| c.get_connection())
-        .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/0)");
+        .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/1)");
     let old: Vec<String> = conn
         .scan_match::<_, String>("test:*")
         .unwrap()
