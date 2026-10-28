@@ -23,6 +23,9 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let config = Config::from_env()?;
+    // Antes das migrations, como o Redis abaixo: um deploy sem o Resend
+    // configurado falha sem mexer no banco.
+    let mail = Mail::new(mailer(&config)?, config.email_daily_limit);
 
     let db = PgPoolOptions::new()
         .max_connections(5)
@@ -54,7 +57,6 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("DISCORD_CLIENT_ID/SECRET ausentes: login com Discord desligado");
     }
     let push = web_push(&config)?;
-    let mail = Mail::new(mailer(&config)?, config.email_daily_limit);
     let state = AppState {
         db,
         redis,
