@@ -1,7 +1,9 @@
 //! Regras do banco para o schema inteiro, gravando o estado inválido direto
-//! por SQL: o que cada exclusão apaga ou recusa (`deletion`) e o owner de cada
-//! tenant (`owner`). As de resultados e histórico ficam em `matches::schema`.
+//! por SQL: o que cada exclusão apaga ou recusa (`deletion`), o owner de cada
+//! tenant (`owner`) e a coerência e a forma dos dados (`checks`). As de
+//! resultados e histórico ficam em `matches::schema`.
 
+mod checks;
 mod deletion;
 mod owner;
 
