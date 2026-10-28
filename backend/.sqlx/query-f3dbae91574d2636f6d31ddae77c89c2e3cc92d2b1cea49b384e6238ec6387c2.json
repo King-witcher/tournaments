@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.mode, t.status, t.visibility,\n                  t.max_participants, t.starts_at, t.check_in_minutes,\n                  t.registration_reopened_at, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = $1\n             and ($3 or (t.status <> 'draft'\n                         and (t.visibility = 'public'\n                              or exists(select 1 from participants p\n                                        where p.tournament_id = t.id and p.user_id = $2))))\n           group by t.id\n           order by t.created_at desc, t.id desc",
+  "query": "select t.id, t.slug, t.locale, t.name, t.mode, t.status, t.visibility,\n                  t.max_participants, t.starts_at, t.check_in_minutes,\n                  t.registration_reopened_at, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = $1\n             and ($3 or (t.status <> 'draft'\n                         and (t.visibility = 'public'\n                              or exists(select 1 from participants p\n                                        where p.tournament_id = t.id and p.user_id = $2))))\n           group by t.id\n           order by t.created_at desc, t.id desc",
   "describe": {
     "columns": [
       {
@@ -149,12 +149,18 @@
       },
       {
         "ordinal": 14,
+        "name": "checked_in!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 15,
         "name": "translation_locales!",
         "type_info": "TextArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "translation_names!",
         "type_info": "TextArray",
         "origin": "Expression"
@@ -183,8 +189,9 @@
       null,
       null,
       null,
+      null,
       null
     ]
   },
-  "hash": "bf8f7514e7e4ef4872f298fcb95fd03cd31338637ef2403e95fa1e69c3a4aa2c"
+  "hash": "f3dbae91574d2636f6d31ddae77c89c2e3cc92d2b1cea49b384e6238ec6387c2"
 }

@@ -1400,6 +1400,8 @@ export interface components {
         TournamentStatus: "draft" | "registration" | "check_in" | "in_progress" | "finished";
         /** @description Item da lista de torneios do tenant. */
         TournamentSummary: {
+            /** @description Se quem vê fez check-in (no check-in, falso é o aviso de que falta). */
+            checked_in: boolean;
             /** Format: date-time */
             created_at: string;
             locale: components["schemas"]["Locale"];

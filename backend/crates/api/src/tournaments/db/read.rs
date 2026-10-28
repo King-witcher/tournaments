@@ -52,6 +52,9 @@ pub async fn list(
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $2) as "registered!",
+                  exists(select 1 from participants p
+                         where p.tournament_id = t.id and p.user_id = $2
+                           and p.checked_in_at is not null) as "checked_in!",
                   coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),
                            '{}') as "translation_locales!",
                   coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),
@@ -108,6 +111,7 @@ pub async fn list(
             max_participants: r.max_participants,
             participants: r.participants,
             registered: r.registered,
+            checked_in: r.checked_in,
             starts_at: r.starts_at,
             translations,
             created_at: r.created_at,

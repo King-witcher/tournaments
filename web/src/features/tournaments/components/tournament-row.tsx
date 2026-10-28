@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 
 type Props = {
@@ -40,6 +41,12 @@ export function TournamentRow({ tenant, tournament }: Props) {
             </>
           )}
           {details.join(" · ")}
+          {checkInPending(tournament) && (
+            <span className="font-medium text-red-700 dark:text-red-400">
+              {" · "}
+              {t("checkInPending")}
+            </span>
+          )}
         </span>
       </Link>
     </li>

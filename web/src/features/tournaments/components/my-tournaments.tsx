@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 
 type Schemas = components["schemas"];
@@ -55,8 +56,9 @@ export async function MyTournaments() {
     );
   if (entries.length === 0) return null;
 
-  const [t, tStatus, locale] = await Promise.all([
+  const [t, tList, tStatus, locale] = await Promise.all([
     getTranslations("Home.tournaments"),
+    getTranslations("Tournaments"),
     getTranslations("TournamentStatus"),
     getLocale(),
   ]);
@@ -80,6 +82,12 @@ export async function MyTournaments() {
                     {" · "}
                     <LocalDateTime value={tournament.starts_at} />
                   </>
+                )}
+                {checkInPending(tournament) && (
+                  <span className="font-medium text-red-700 dark:text-red-400">
+                    {" · "}
+                    {tList("checkInPending")}
+                  </span>
                 )}
               </span>
             </Link>

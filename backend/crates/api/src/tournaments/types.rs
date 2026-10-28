@@ -193,6 +193,8 @@ pub struct TournamentSummary {
     pub participants: i64,
     /// Se quem vê está inscrito.
     pub registered: bool,
+    /// Se quem vê fez check-in (no check-in, falso é o aviso de que falta).
+    pub checked_in: bool,
     /// Início previsto; `null` só no rascunho.
     pub starts_at: Option<DateTime<Utc>>,
     /// Nome nas traduções que existem.

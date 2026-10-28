@@ -44,6 +44,8 @@ async fn participants_check_in_only_during_check_in(db: PgPool) {
     }
     let (_, seen) = get(&app, COPA, &bia).await;
     assert_eq!(seen["checked_in"], true);
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
+    assert_eq!(list[0]["checked_in"], true);
     assert_eq!(check_ins(&participants(&app, &caio).await), [("Bia", true)]);
 
     // Quem não está inscrito não faz check-in; desfazer é sempre sem erro.
@@ -61,6 +63,8 @@ async fn participants_check_in_only_during_check_in(db: PgPool) {
     );
     let (_, seen) = get(&app, COPA, &bia).await;
     assert_eq!(seen["checked_in"], false);
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
+    assert_eq!(list[0]["checked_in"], false);
 
     // Durante o check-in a inscrição está fechada, e sair também.
     assert_eq!(
