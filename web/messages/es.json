@@ -327,7 +327,7 @@
     },
     "seed": "#{seed}",
     "checkIn": {
-      "opensAt": "El check-in abre <date></date>.",
+      "opensAt": "El check-in abre <date></date>. Vuelve desde ese momento para confirmar tu presencia: sin check-in, quedas fuera de la llave.",
       "suspended": "La organización reabrió las inscripciones; el check-in vuelve cuando la abra.",
       "open": "Check-in abierto hasta el inicio: confirma tu presencia para entrar en la llave.",
       "openNotRegistered": "Check-in abierto. Las inscripciones están cerradas.",
@@ -587,6 +587,7 @@
       "title": "Enviar resultado",
       "hint": "Resultado de la serie en mapas. El rival confirma o impugna; sin respuesta en {minutes} min, se confirma solo.",
       "wins": "Mapas de {name}",
+      "winsHint": "Al mejor de {bestOf}: quien gana la serie gana {needed} mapas.",
       "detail": "Detalle por mapa (opcional)",
       "detailHint": "Un mapa por línea, en el orden jugado, con los frags de cada uno. Los ganadores tienen que coincidir con el resultado.",
       "addGame": "Agregar mapa",

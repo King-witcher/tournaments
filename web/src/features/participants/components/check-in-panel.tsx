@@ -26,6 +26,9 @@ export function CheckInPanel({ tenant, tournament, now }: Props) {
     <p className="text-sm opacity-70">{text}</p>
   );
   if (tournament.status === "registration") {
+    // Quem não está inscrito precisa se inscrever antes: o aviso do check-in
+    // ainda não é com ele (e o organizador já vê a abertura no quadro dele).
+    if (!tournament.registered) return null;
     // Com a abertura no passado e ainda em inscrição, a organização reabriu.
     return new Date(opensAt) <= now
       ? hint(t("suspended"))

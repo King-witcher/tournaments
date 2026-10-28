@@ -40,7 +40,8 @@ export function OrganizerPanel({ target, detail, maps, names }: Props) {
         <h2 className="text-lg font-semibold">{t("title")}</h2>
         <p className="text-sm opacity-70">{t("hint")}</p>
       </div>
-      {reported && (
+      {/* Quem responde como jogador já tem o próprio "confirmar" acima. */}
+      {reported && s.task !== "respond" && (
         <ConfirmResultButton
           target={target}
           label={r.status === "contested" ? t("accept") : t("confirm")}

@@ -96,9 +96,14 @@ export function ScoreForm(props: Props) {
 
   return (
     <form onSubmit={submitAction(submit)} className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-4">
-        {winsField("a")}
-        {winsField("b")}
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap gap-4">
+          {winsField("a")}
+          {winsField("b")}
+        </div>
+        <p className="text-xs opacity-70">
+          {t("report.winsHint", { bestOf, needed })}
+        </p>
       </div>
       <GamesEditor
         games={games}
