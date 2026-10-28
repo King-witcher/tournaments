@@ -5,8 +5,8 @@ use serde_json::json;
 use sqlx::PgPool;
 
 use super::{
-    app, body_text, discord_user, do_login, get, location, oauth_round_trip, send, signup,
-    start_oauth,
+    app, body_text, discord_user, do_login, get, location, oauth_round_trip, send, set_email,
+    signup, start_oauth,
 };
 use crate::common::{self, User, WEB, call, err, post};
 
@@ -16,14 +16,17 @@ const LINK: &str = "/auth/discord/link?return_to=/pt/account";
 #[sqlx::test(migrations = "../../migrations")]
 async fn password_account_links_discord(db: PgPool) {
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
-    let me = signup(&app, "Rapha", PASSWORD).await;
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
     let (session, res) = oauth_round_trip(&app, LINK, Some(&me.cookie)).await;
     assert!(session.is_empty(), "ligar não cria sessão");
     assert_eq!(location(&res), format!("{WEB}/pt/account"));
 
     let (_, body) = common::get(&app, "/auth/logins", &me).await;
-    assert_eq!(body, json!({ "discord": true, "username": "Rapha" }));
+    assert_eq!(
+        body,
+        json!({ "discord": true, "username": "Rapha", "email": "rapha@example.com" })
+    );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", me.id)
         .fetch_one(&db)
         .await
@@ -62,7 +65,7 @@ async fn link_requires_session(db: PgPool) {
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     // A sessão também precisa estar no callback.
-    let me = signup(&app, "Rapha", PASSWORD).await;
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
     let (state_cookie, state) = start_oauth(&app, LINK, Some(&me.cookie)).await;
     let res = send(
         &app,
@@ -82,7 +85,7 @@ async fn link_requires_session(db: PgPool) {
 async fn discord_of_another_account_is_refused(db: PgPool) {
     let app = app(db.clone(), Some(discord_user(None)), true);
     do_login(&app, "/").await;
-    let me = signup(&app, "Rapha", PASSWORD).await;
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
     let (_, res) = oauth_round_trip(
         &app,
@@ -101,7 +104,7 @@ async fn discord_of_another_account_is_refused(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn link_errors_go_back_to_return_to(db: PgPool) {
     let failing = app(db.clone(), None, true);
-    let me = signup(&failing, "Rapha", PASSWORD).await;
+    let me = signup(&failing, &db, "Rapha", PASSWORD).await;
     let (_, res) = oauth_round_trip(&failing, LINK, Some(&me.cookie)).await;
     assert_eq!(
         location(&res),
@@ -124,7 +127,7 @@ async fn link_errors_go_back_to_return_to(db: PgPool) {
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn unlink_needs_password_login(db: PgPool) {
+async fn unlink_needs_password_and_email(db: PgPool) {
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
     let (session, _) = do_login(&app, "/").await;
     let id = sqlx::query_scalar!("select id from users")
@@ -164,9 +167,20 @@ async fn unlink_needs_password_login(db: PgPool) {
         (status, body),
         (StatusCode::FORBIDDEN, err("auth.wrong_password"))
     );
+    // Só com a senha, a conta precisa do email para recuperar o acesso.
+    let (status, body) = unlink(PASSWORD).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.email_required"))
+    );
+
+    set_email(&db, id, "quaker@example.com").await;
     let (status, body) = unlink(PASSWORD).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    assert_eq!(body, json!({ "discord": false, "username": "quaker" }));
+    assert_eq!(
+        body,
+        json!({ "discord": false, "username": "quaker", "email": "quaker@example.com" })
+    );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", id)
         .fetch_one(&db)
         .await

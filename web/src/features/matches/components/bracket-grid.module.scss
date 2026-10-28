@@ -2,30 +2,30 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-.part {
-  display: flex;
-  flex-direction: column;
-  gap: spacing.$spacing-04;
+// A chave rola para o lado dentro da própria caixa, sem empurrar a página
+// (o resto do site não tem rolagem horizontal). O espaço embaixo é o da
+// barra de rolagem, para ela não cobrir o último cartão.
+.scroller {
+  overflow-x: auto;
+  padding-block-end: spacing.$spacing-05;
 }
 
-.title {
-  @include type.type-style("heading-02");
-}
-
-// As rodadas lado a lado, na largura que precisarem: quem rola é a chave.
+// As rodadas lado a lado, na largura que precisarem: quem rola é a chave. O
+// vão entre elas é onde passam as linhas, largo o bastante para a curva
+// mostrar de que partida sai e em que lado entra.
 .rounds {
   display: flex;
-  gap: spacing.$spacing-06;
+  gap: spacing.$spacing-07;
   inline-size: max-content;
 }
 
 // Largura fixa por rodada (os cartões alinham de uma rodada para a outra):
-// cabem o seed, um apelido de uns 16 caracteres e o placar.
+// cabem o seed, o avatar, um apelido de uns 16 caracteres e o placar.
 .round {
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-03;
-  inline-size: spacing.$spacing-13 + spacing.$spacing-10;
+  inline-size: spacing.$spacing-13 + spacing.$spacing-11;
 }
 
 .roundTitle {

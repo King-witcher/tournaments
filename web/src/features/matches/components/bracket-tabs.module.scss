@@ -1,0 +1,14 @@
+@use "@carbon/react/scss/spacing";
+
+// Sem o padding e o fundo que o Carbon põe no painel das abas `contained`:
+// os cartões já têm o fundo de camada e a chave alinha com o resto da
+// página. Só o respiro entre as abas e os títulos das rodadas. Classe
+// dobrada para vencer a do Carbon, que tem o mesmo peso. O painel é item do
+// `Stack` (uma grade): sem `min-inline-size: 0`, ele cresce até a largura
+// da chave e empurra a página, em vez de a chave rolar dentro da caixa.
+.panel.panel {
+  min-inline-size: 0;
+  padding: 0;
+  padding-block-start: spacing.$spacing-05;
+  background: none;
+}

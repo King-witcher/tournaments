@@ -20,27 +20,21 @@ import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
-import { useEnterAccount } from "../hooks/use-enter-account";
 import { type AuthField, errorField } from "../lib/auth-field";
 import { LOGIN_SECTION } from "../lib/login-sections";
 
-type Props =
-  /** Cria a conta e entra, indo para `returnTo`. */
-  | { mode: "signup"; returnTo: string }
-  /** Dá nome de usuário e senha à conta logada. */
-  | { mode: "add" };
-
 /**
- * Nome de usuário, senha e a senha repetida. O erro de um campo (nome em uso,
- * senhas diferentes) vai nele, que recebe o foco; o resto, acima do botão.
+ * Dá nome de usuário e senha à conta logada (que entra pelo Discord, que
+ * continua sendo a recuperação: aqui não se pede email). Nome, senha e a
+ * senha repetida. O erro de um campo (nome em uso, senhas diferentes) vai
+ * nele, que recebe o foco; o resto, acima do botão. O cadastro com senha é o
+ * `SignupForm`.
  */
-export function CredentialsForm(props: Props) {
+export function CredentialsForm() {
   const t = useTranslations("Auth");
-  const tSignup = useTranslations("Signup");
   const tAccount = useTranslations("Account.password");
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
-  const enter = useEnterAccount();
   const prefix = useId();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -51,28 +45,18 @@ export function CredentialsForm(props: Props) {
       if (password !== confirm) {
         return { error: t("passwordsDiffer"), field: "confirm" };
       }
-      const body = { username, password };
-      if (props.mode === "signup") {
-        const outcome = await callApi(api.POST("/auth/signup", { body }));
-        if (!outcome.ok) {
-          return {
-            error: errorMessage(outcome.code, outcome.params),
-            field: errorField(outcome.code),
-          };
-        }
-        enter(props.returnTo);
-      } else {
-        const outcome = await callApi(api.POST("/auth/password", { body }));
-        if (!outcome.ok) {
-          return {
-            error: errorMessage(outcome.code, outcome.params),
-            field: errorField(outcome.code),
-          };
-        }
-        router.refresh();
-        // O formulário some quando a conta passa a ter senha.
-        focusIfLost(LOGIN_SECTION.password);
+      const outcome = await callApi(
+        api.POST("/auth/password", { body: { username, password } }),
+      );
+      if (!outcome.ok) {
+        return {
+          error: errorMessage(outcome.code, outcome.params),
+          field: errorField(outcome.code),
+        };
       }
+      router.refresh();
+      // O formulário some quando a conta passa a ter senha.
+      focusIfLost(LOGIN_SECTION.password);
       return {};
     },
     {},
@@ -119,7 +103,7 @@ export function CredentialsForm(props: Props) {
         />
         {general && <FormError>{general}</FormError>}
         <Button type="submit" pending={pending}>
-          {props.mode === "signup" ? tSignup("submit") : tAccount("create")}
+          {tAccount("create")}
         </Button>
       </Stack>
     </Form>

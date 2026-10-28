@@ -1,7 +1,20 @@
 {
   "title": "Criar conta",
-  "noRecovery": "Não há recuperação de senha por email. Depois de criar a conta, vincule o Discord a ela para não perder o acesso se esquecer a senha.",
   "submit": "Criar conta",
   "hasAccount": "Já tem conta?",
-  "login": "Entrar"
+  "login": "Entrar",
+  "sent": {
+    "title": "Confira seu email",
+    "text": "Enviamos um link para {email}. A conta só é criada quando você abrir o link, que vale 1 hora. Não chegou? Confira a caixa de spam.",
+    "resend": "Reenviar o link",
+    "resent": "Link novo enviado. O anterior parou de valer.",
+    "back": "Usar outro email"
+  },
+  "confirm": {
+    "title": "Confirmar email",
+    "text": "Falta um passo: confirme o email para criar a conta. Você entra nela em seguida.",
+    "submit": "Confirmar email e criar conta",
+    "signupAgain": "Criar conta de novo",
+    "login": "Entrar"
+  }
 }

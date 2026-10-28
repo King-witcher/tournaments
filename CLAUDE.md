@@ -44,23 +44,24 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - `engine` não depende de axum, sqlx, tokio nem do relógio. Aleatoriedade entra por seed/RNG passado como parâmetro.
 - Sem ORM: SQL escrito à mão com `sqlx::query!`/`query_as!`. Migrations em `backend/migrations/`.
 - Todo acesso a dados de tenant recebe um `TenantId` tipado. Nunca filtre tenant com string solta.
-- Rota que exige login recebe o extractor `CurrentUser` (`crates/api/src/auth/current_user.rs`). Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenants/access.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
+- Rota que exige login recebe o extractor `CurrentUser` (`crates/api/src/auth/current_user.rs`); rota pública que muda para quem está logado, `Option<CurrentUser>`. Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenants/access.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
 - Erros saem por `ApiError` (`shared/error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`shared/extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
 - Ids: chave interna `bigint` identity; identificador público é slug; segredo é token aleatório com só o hash guardado, no banco ou no Redis (ver "Ids" em `docs/decisions.md`).
 - Estado de formato no `engine` é reconstruído por `replay` (config + participantes + histórico); nunca desserializado direto.
-- A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`.
+- A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`. A exceção são os emails, que saem da API com o texto em pt e es (`auth/emails.rs`).
 - Datas em UTC no banco.
 - O Next nunca acessa o banco; só chama a API Rust.
 - Supabase é só host de Postgres: não use Supabase Auth, Realtime, Storage nem supabase-js.
-- Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL: hoje, sessões e tentativas de senha (`auth/kv/`). Cada comando conta na cota: nada de Redis novo no caminho de toda requisição, nem cache ou lock sem medir antes (ver "Redis" em `docs/decisions.md`). Sempre no database 0 (os outros são de outros projetos do usuário), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.
+- Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL: hoje, sessões, tentativas de senha, cadastros esperando o link e links por email (`auth/kv/`) e limites de envio de email (`mail/kv.rs`). Cada comando conta na cota: nada de Redis novo no caminho de toda requisição, nem cache ou lock sem medir antes (ver "Redis" em `docs/decisions.md`). Localmente, sempre no database 1 (os outros são de outros projetos do usuário; no Upstash, o 0, o único que há), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.
 - Storage pela API S3 genérica, provedor por variável de ambiente.
+- Email pelo Resend, por API HTTP (o Render free bloqueia SMTP), atrás da trait `Mailer` (`mail/`). Todo envio passa por `Mail::reserve`, que aplica os limites (60 s por endereço, teto do dia abaixo dos 100 do plano grátis).
 - Nenhum segredo no repositório (ele vai ficar público).
 
 ## Como trabalhar aqui
 
 - Ordem do trabalho e próximo passo: `docs/roadmap.md`. Ao terminar um incremento, ajuste a linha da área em "Feito" (uma linha por área; o detalhe vai no commit) e tire de "Pendências" o que resolveu.
 - Decisões de produto em aberto: pergunte ao usuário (ele prefere rodadas de perguntas com opções) em vez de decidir sozinho; registre a resposta em `docs/decisions.md`.
-- Use os subagentes abaixo para trabalho no `engine` e para rodar testes; passe a especificação completa no prompt, porque eles não veem esta conversa.
+- Subagentes (`.claude/agents/`): `format-engine` para trabalho no `engine`, `test-runner` para rodar testes, `rules-reviewer` para revisar um formato. Passe a especificação completa no prompt, porque eles não veem esta conversa.
 
 ## Armadilhas (Windows)
 
@@ -69,9 +70,3 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 4003`.
 - Parar uma tarefa em segundo plano pode deixar o processo filho (`api.exe`, `node`) vivo. Depois de parar, confira as portas e encerre só o que for seu.
 - Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:4002` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:4002/openapi.json -o src/shared/api/schema.d.ts`.
-
-## Subagentes (`.claude/agents/`)
-
-- `test-runner`: roda testes e devolve só as falhas.
-- `format-engine`: implementa ou altera formatos, pontuação, regras de campeões e rating no `engine`.
-- `rules-reviewer`: revisa casos de borda de um formato (só leitura).

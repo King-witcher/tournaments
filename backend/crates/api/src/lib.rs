@@ -6,6 +6,7 @@ pub mod config;
 mod health;
 mod invites;
 mod lifecycle;
+pub mod mail;
 mod maps;
 mod matches;
 mod members;
@@ -53,6 +54,8 @@ pub struct AppState {
     pub realtime: realtime::Realtime,
     /// `None`: sem chaves VAPID, o Web Push fica desligado.
     pub push: Option<Arc<dyn push::WebPush>>,
+    /// Envio de email (Resend; sem chave, só o log).
+    pub mail: mail::Mail,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`

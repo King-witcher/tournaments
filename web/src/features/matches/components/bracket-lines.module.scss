@@ -1,0 +1,22 @@
+@use "@carbon/react/scss/theme";
+
+// As linhas ficam atrás dos cartões (vêm antes deles e os cartões são
+// posicionados): onde uma passaria por cima de um cartão, ele a cobre.
+.box {
+  position: relative;
+  inline-size: max-content;
+}
+
+// Na cor da borda dos cartões, para ler como parte da chave e não como
+// conteúdo; curvas em vez de ângulos, para não competir com os cartões.
+.lines {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: theme.$border-subtle-01;
+  stroke-width: 1px;
+}

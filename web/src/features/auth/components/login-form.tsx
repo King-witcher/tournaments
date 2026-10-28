@@ -9,6 +9,7 @@ import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
+import { Link } from "@/shared/ui/link";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
 import { useEnterAccount } from "../hooks/use-enter-account";
@@ -16,7 +17,8 @@ import { useEnterAccount } from "../hooks/use-enter-account";
 /**
  * Nome de usuário e senha; entrando, vai para `returnTo`. O erro (senha
  * errada, tentativas demais) é do formulário todo: dizer qual campo errou
- * revelaria quem tem conta.
+ * revelaria quem tem conta. Embaixo do botão, o link para recuperar a senha
+ * (depois dele na ordem do Tab, para não ficar entre a senha e o "Entrar").
  */
 export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
@@ -55,6 +57,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         <Button type="submit" pending={pending}>
           {t("submit")}
         </Button>
+        <Link href="/login/forgot">{t("forgotPassword")}</Link>
       </Stack>
     </Form>
   );

@@ -38,7 +38,13 @@ type Props = {
   size?: "sm" | "md";
 };
 
-/** Etiqueta de estado (`Tag` do Carbon) com a cor do significado. */
+/**
+ * Etiqueta de estado (`Tag` do Carbon) com a cor do significado. Código da
+ * API com outro nome: um mapa `Record<CódigoDaApi, Status>` na feature; a
+ * situação de quem joga tem o seu (`SITUATION_STATUS`, em
+ * `features/participants/lib/situation.ts`), que as outras features importam
+ * em vez de repetir.
+ */
 export function StatusTag({ status, children, size = "md" }: Props) {
   return (
     <Tag type={COLOR[status]} size={size}>

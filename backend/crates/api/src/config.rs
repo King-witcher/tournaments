@@ -24,6 +24,14 @@ pub struct Config {
     /// Contato que vai na assinatura VAPID (`mailto:` ou `https:`); sem ele, a
     /// origem do front.
     pub vapid_subject: Option<String>,
+    /// Chave da API do Resend; sem ela, os emails só vão para o log (em
+    /// produção, com `COOKIE_SECURE`, a API não sobe).
+    pub resend_api_key: Option<String>,
+    /// Remetente dos emails, num domínio verificado no Resend
+    /// (`Nome <nao-responda@dominio>`).
+    pub email_from: Option<String>,
+    /// Teto de emails por dia, abaixo do plano do provedor.
+    pub email_daily_limit: u32,
 }
 
 impl Config {
@@ -52,6 +60,12 @@ impl Config {
             vapid_public_key: env_opt("VAPID_PUBLIC_KEY"),
             vapid_private_key: env_opt("VAPID_PRIVATE_KEY"),
             vapid_subject: env_opt("VAPID_SUBJECT"),
+            resend_api_key: env_opt("RESEND_API_KEY"),
+            email_from: env_opt("EMAIL_FROM"),
+            email_daily_limit: match env_opt("EMAIL_DAILY_LIMIT") {
+                Some(limit) => limit.parse().context("EMAIL_DAILY_LIMIT inválido")?,
+                None => crate::mail::DEFAULT_DAILY_LIMIT,
+            },
         })
     }
 }

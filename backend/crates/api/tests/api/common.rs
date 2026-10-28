@@ -1,15 +1,21 @@
-//! Helpers dos testes: app de teste, usuários com sessão, requisições e os
-//! passos que vários domínios repetem (criar tenant, convidar, entrar, criar
-//! e publicar torneio).
+//! Helpers dos testes: app de teste, usuários com sessão, requisições, a
+//! caixa de emails e os passos que vários domínios repetem (criar tenant,
+//! convidar, entrar, criar e publicar torneio).
 
-use std::sync::{Arc, LazyLock};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::{Arc, LazyLock, Mutex},
+    time::Duration,
+};
 
 use api::{
     AppState,
     auth::{AuthSettings, DiscordApi, HttpDiscord, create_session},
+    mail::{Email, Mail, Mailer},
     realtime::Realtime,
     shared::Redis,
 };
+use async_trait::async_trait;
 use axum::{
     Router,
     body::Body,
@@ -19,6 +25,7 @@ use http_body_util::BodyExt;
 use redis::Commands;
 use serde_json::{Value, json};
 use sqlx::PgPool;
+use tokio::sync::Notify;
 use tower::ServiceExt;
 
 pub const WEB: &str = "http://localhost:4001";
@@ -35,15 +42,15 @@ static RUN_PREFIX: LazyLock<String> = LazyLock::new(|| {
     format!("test:{now}:")
 });
 
-/// `REDIS_URL` ou o Redis local, no database 0 (o do projeto).
+/// `REDIS_URL` ou o Redis local, no database 1 (o do projeto).
 fn redis_url() -> String {
-    std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/0".into())
+    std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/1".into())
 }
 
 fn sweep_runs_before(before: i64) {
     let mut conn = redis::Client::open(redis_url())
         .and_then(|c| c.get_connection())
-        .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/0)");
+        .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/1)");
     let old: Vec<String> = conn
         .scan_match::<_, String>("test:*")
         .unwrap()
@@ -69,12 +76,72 @@ pub fn redis(db: &PgPool) -> Redis {
     Redis::open(&redis_url(), &format!("{}{database}:", *RUN_PREFIX)).unwrap()
 }
 
+/// Teto de emails por dia do app de teste.
+pub const DAILY_EMAILS: u32 = 20;
+
+/// Emails que o app de teste mandaria, na ordem em que saíram.
+#[derive(Default)]
+pub struct Mailbox {
+    sent: Mutex<VecDeque<Email>>,
+    arrived: Notify,
+}
+
+#[async_trait]
+impl Mailer for Mailbox {
+    async fn send(&self, email: &Email) -> anyhow::Result<()> {
+        self.sent.lock().unwrap().push_back(email.clone());
+        self.arrived.notify_one();
+        Ok(())
+    }
+}
+
+impl Mailbox {
+    /// O próximo email; o envio é em segundo plano, então espera um pouco.
+    pub async fn next(&self) -> Email {
+        let wait = async {
+            loop {
+                if let Some(email) = self.sent.lock().unwrap().pop_front() {
+                    return email;
+                }
+                self.arrived.notified().await;
+            }
+        };
+        tokio::time::timeout(Duration::from_secs(5), wait)
+            .await
+            .expect("nenhum email saiu")
+    }
+
+    /// Nenhum email saiu (depois de dar tempo ao envio em segundo plano).
+    pub async fn assert_empty(&self) {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let sent = self.sent.lock().unwrap();
+        assert!(sent.is_empty(), "saiu email: {:?}", sent.front());
+    }
+}
+
+/// Caixa de emails do app de teste deste banco: o app e os helpers do mesmo
+/// teste veem a mesma.
+pub fn mailbox(db: &PgPool) -> Arc<Mailbox> {
+    static BOXES: LazyLock<Mutex<HashMap<String, Arc<Mailbox>>>> = LazyLock::new(Default::default);
+    let options = db.connect_options();
+    let database = options.get_database().unwrap_or("postgres").to_owned();
+    BOXES.lock().unwrap().entry(database).or_default().clone()
+}
+
+/// Token do link de um email (o que vem depois do `#`).
+pub fn link_token(email: &Email) -> String {
+    let (_, rest) = email.text.split_once('#').expect("email sem link");
+    rest.split_whitespace().next().unwrap().to_owned()
+}
+
 /// Estado do app de teste: login do Discord desligado (os testes criam sessões
-/// direto no Redis), Web Push desligado e nenhuma tarefa em segundo plano (os
-/// testes do tempo real chamam o despachante e o agendador direto).
+/// direto no Redis), Web Push desligado, emails na `mailbox(&db)` e nenhuma
+/// tarefa em segundo plano (os testes do tempo real chamam o despachante e o
+/// agendador direto).
 pub fn state(db: PgPool) -> AppState {
     AppState {
         redis: redis(&db),
+        mail: Mail::new(mailbox(&db), DAILY_EMAILS),
         db,
         discord: Arc::new(HttpDiscord::new(String::new(), String::new())),
         auth: Arc::new(AuthSettings {

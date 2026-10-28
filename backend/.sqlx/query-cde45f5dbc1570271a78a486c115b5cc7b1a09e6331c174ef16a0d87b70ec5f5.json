@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select user_id, provider_user_id as username, password_hash as \"password_hash!\"\n           from user_identities\n           where provider = 'password' and lower(provider_user_id) = lower($1)",
+  "query": "select user_id, username, password_hash from password_credentials",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "user_identities",
+            "table": "password_credentials",
             "name": "user_id"
           }
         }
@@ -20,33 +20,31 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "user_identities",
-            "name": "provider_user_id"
+            "table": "password_credentials",
+            "name": "username"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "password_hash!",
+        "name": "password_hash",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "user_identities",
+            "table": "password_credentials",
             "name": "password_hash"
           }
         }
       }
     ],
     "parameters": {
-      "Left": [
-        "Text"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
       false,
-      true
+      false
     ]
   },
-  "hash": "686342faf59667ddce20f0e6b040ed0409f716a7f9b77413434eb4d1e961b79c"
+  "hash": "cde45f5dbc1570271a78a486c115b5cc7b1a09e6331c174ef16a0d87b70ec5f5"
 }

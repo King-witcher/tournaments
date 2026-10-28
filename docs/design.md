@@ -39,7 +39,7 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". No fim do painel, com ou sem sessão, o tema (`ContentSwitcher` de ícones: claro, do navegador, escuro). `Content` embaixo com `Grid`. Sem `SideNav` no MVP (as comunidades são pequenas e a maioria abre pelo celular).
+`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". No fim do painel, com ou sem sessão, o tema (`ContentSwitcher` de ícones: claro, do navegador, escuro). `Content` embaixo com `Grid`. Sem `SideNav` no MVP: cada nível (comunidade, torneio, conta) tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
 
 ### Início `/`
 
@@ -48,11 +48,15 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Entrar `/login`, Criar conta `/signup`
 
-Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord; "Você já entrou como X" quando há sessão. `return_to` continua.
+Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord; "Você já entrou como X" quando há sessão. `return_to` continua. No cadastro, o email é obrigatório; depois do envio, o formulário dá lugar a "Confira seu email" (o endereço canônico, validade de 1 hora, "Reenviar o link", "Usar outro email"). Embaixo do "Entrar", o link "Esqueci a senha".
+
+### Páginas dos links por email
+
+`/signup/confirm`, `/login/reset` e `/email/confirm` leem o token depois do `#`. Coluna estreita e um `Tile` com uma ação só: "Confirmar email e criar conta", a senha nova, "Confirmar email". Nunca confirmam sozinhas ao abrir (os verificadores de link dos provedores abririam a página). Link vencido ou incompleto: `Notice` de erro e o caminho (criar conta de novo, pedir outro link, ir para a conta). `/login/forgot`: um campo (nome de usuário ou email) e a resposta neutra, com o aviso de que conta sem email não se recupera por email e o botão do Discord.
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (Discord e senha: ligar, remover), **Senha** (trocar).
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar). Na aba Logins, o email vem primeiro: o atual e o formulário para pôr ou trocar (com a senha atual, se a conta tem senha); conta com senha e sem email vê o aviso do que perde, e o desvincular do Discord dá lugar à explicação.
 
 ### Convite `/invite/[token]`
 
@@ -91,6 +95,7 @@ A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `jo
 
 - **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (texto simples, `UserText`); resumo do formato (`StructuredList`).
 - **Chave** (`/bracket`, a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e, abaixo, a classificação.
+  - Cada lado do cartão: seed, avatar, apelido e placar. Linhas curvas, na cor da borda dos cartões, ligam cada partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas `contained`: **Chave principal**, com a grande final à direita da final, e **Repescagem** (a chave de quem perdeu uma vez), para a página não descer uma chave embaixo da outra; abre na aba da partida de quem vê. Quem muda de aba fica só com o texto ("Perdedor de C2.1").
 - **Inscritos** (`/participants`): `DataTable` (seed, apelido com avatar, estado: inscrito / check-in feito / desistiu / saiu, inscrito em), busca, paginação; organização: "Inscrever alguém" na barra e, por linha, marcar/desmarcar check-in, tirar, marcar desistência.
 - **Regras** (`/rules`): texto simples (`UserText`). Organização: "Editar regras" (ou "Escrever regras") abre o campo ali mesmo; para ela a aba aparece também sem regras. Para os outros, sem regras, a aba não aparece.
 - **Organização** (`/manage`, organização): o quadro de estado com o próximo passo e o motivo quando não dá (mínimo de inscritos, check-in aberto); resumo do seeding (definido ou "será sorteado") com o link "Editar seeding"; links de inscrição (tabela, gerar, revogar); W.O. e correções ficam na partida.

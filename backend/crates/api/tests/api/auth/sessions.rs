@@ -46,7 +46,7 @@ async fn me_status(app: &Router, who: &User) -> StatusCode {
 #[sqlx::test(migrations = "../../migrations")]
 async fn sessions_are_listed_newest_first_with_the_browser(db: PgPool) {
     let app = app(db.clone());
-    signup(&app, "Rapha", PASSWORD).await;
+    signup(&app, &db, "Rapha", PASSWORD).await;
     let pc = login_from(&app, "rapha", "Firefox/140").await;
     login_from(&app, "rapha", "Celular").await;
 
@@ -82,7 +82,7 @@ async fn sessions_are_listed_newest_first_with_the_browser(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn sessions_end_one_by_one_or_all_others(db: PgPool) {
     let app = app(db.clone());
-    let first = signup(&app, "Rapha", PASSWORD).await;
+    let first = signup(&app, &db, "Rapha", PASSWORD).await;
     let pc = login_from(&app, "rapha", "Firefox/140").await;
     let phone = login_from(&app, "rapha", "Celular").await;
     let other = user(&db, "Outro").await;

@@ -2,15 +2,19 @@
 //! helpers que leem redirect e cookies, que os outros domínios não precisam.
 
 mod discord;
+mod email;
 mod link;
 mod password;
 mod profile;
+mod recovery;
 mod sessions;
+mod signup;
 
 use std::sync::Arc;
 
 use api::{
     auth::{AuthSettings, DiscordApi, DiscordUser},
+    mail::Email,
     shared::{
         Redis,
         token::{hash_token, hex},
@@ -23,11 +27,12 @@ use axum::{
     http::{Method, Request, Response, StatusCode, header},
 };
 use http_body_util::BodyExt;
-use serde_json::Value;
+use redis::Cmd;
+use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-use crate::common::{User, WEB, app_with};
+use crate::common::{User, WEB, app_with, link_token, mailbox, redis};
 
 const REDIRECT: &str = "http://localhost:4000/auth/discord/callback";
 
@@ -140,14 +145,30 @@ async fn send_json(
     (status, json, session)
 }
 
-/// Cria a conta pelo cadastro com senha e devolve o usuário com a sessão.
-async fn signup(app: &Router, username: &str, password: &str) -> User {
+/// Email do cadastro de `username` nos helpers.
+fn email_of(username: &str) -> String {
+    format!("{}@example.com", username.to_lowercase())
+}
+
+/// Cria a conta pelo cadastro com senha (email `email_of(username)`,
+/// confirmado pelo link) e devolve o usuário com a sessão.
+async fn signup(app: &Router, db: &PgPool, username: &str, password: &str) -> User {
+    let email = email_of(username);
+    let body = json!({ "username": username, "password": password, "email": email });
+    let (status, body, _) = send_json(app, Method::POST, "/auth/signup", None, body).await;
+    assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+    confirm_signup(app, &mailbox(db).next().await).await
+}
+
+/// Abre o link do email de cadastro e devolve a conta criada, com a sessão.
+async fn confirm_signup(app: &Router, email: &Email) -> User {
+    let token = link_token(email);
     let (status, body, session) = send_json(
         app,
         Method::POST,
-        "/auth/signup",
+        "/auth/signup/confirm",
         None,
-        serde_json::json!({ "username": username, "password": password }),
+        json!({ "token": token }),
     )
     .await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
@@ -155,6 +176,40 @@ async fn signup(app: &Router, username: &str, password: &str) -> User {
         id: body["id"].as_i64().unwrap(),
         cookie: session.unwrap(),
     }
+}
+
+/// Liga um Discord à conta direto no banco.
+async fn add_discord(db: &PgPool, user_id: i64) {
+    sqlx::query!(
+        "insert into user_identities (user_id, provider, provider_user_id) values ($1, 'discord', $2)",
+        user_id,
+        format!("discord-{user_id}")
+    )
+    .execute(db)
+    .await
+    .unwrap();
+}
+
+/// Grava o email da conta direto no banco, como se já tivesse confirmado.
+async fn set_email(db: &PgPool, user_id: i64, email: &str) {
+    sqlx::query!("update users set email = $2 where id = $1", user_id, email)
+        .execute(db)
+        .await
+        .unwrap();
+}
+
+/// Quantas sessões a conta de `who` tem abertas.
+async fn session_count(app: &Router, who: &User) -> usize {
+    let (status, body) = crate::common::get(app, "/auth/sessions", who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body.as_array().unwrap().len()
+}
+
+/// Libera um envio novo para `address` antes da espera entre envios.
+async fn skip_cooldown(db: &PgPool, address: &str) {
+    let redis = redis(db);
+    let key = redis.key(format_args!("email_cooldown:{address}"));
+    redis.query::<()>(&Cmd::del(key)).await.unwrap();
 }
 
 /// Abre o OAuth em `start` (login ou link) e devolve o cookie `oauth_state=..`

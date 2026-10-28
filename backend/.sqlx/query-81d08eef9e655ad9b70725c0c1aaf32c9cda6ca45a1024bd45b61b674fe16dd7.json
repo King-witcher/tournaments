@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from password_credentials where user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "81d08eef9e655ad9b70725c0c1aaf32c9cda6ca45a1024bd45b61b674fe16dd7"
+}

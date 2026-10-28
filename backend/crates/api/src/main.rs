@@ -5,6 +5,7 @@ use api::{
     AppState, MIGRATOR,
     auth::{AuthSettings, HttpDiscord},
     config::Config,
+    mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
     shared::Redis,
@@ -22,6 +23,9 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let config = Config::from_env()?;
+    // Antes das migrations, como o Redis abaixo: um deploy sem o Resend
+    // configurado falha sem mexer no banco.
+    let mail = Mail::new(mailer(&config)?, config.email_daily_limit);
 
     let db = PgPoolOptions::new()
         .max_connections(5)
@@ -69,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
         }),
         realtime: Realtime::new(),
         push,
+        mail,
     };
     realtime::spawn(state.clone());
     let app = api::app(state, web_origin);
@@ -94,6 +99,22 @@ fn web_push(config: &Config) -> anyhow::Result<Option<Arc<dyn WebPush>>> {
         .clone()
         .unwrap_or_else(|| config.web_origin.trim_end_matches('/').to_owned());
     Ok(Some(Arc::new(HttpWebPush::new(public, private, subject)?)))
+}
+
+/// Resend com a chave e o remetente. Sem os dois, os emails vão para o log, o
+/// que só serve em desenvolvimento: em produção (`COOKIE_SECURE`) o log
+/// guardaria os links de cadastro e de recuperação, e a API não sobe.
+fn mailer(config: &Config) -> anyhow::Result<Arc<dyn Mailer>> {
+    match (&config.resend_api_key, &config.email_from) {
+        (Some(key), Some(from)) => Ok(Arc::new(ResendMailer::new(key.clone(), from.clone()))),
+        _ if config.cookie_secure => {
+            anyhow::bail!("RESEND_API_KEY e EMAIL_FROM são obrigatórias em produção")
+        }
+        _ => {
+            tracing::warn!("RESEND_API_KEY/EMAIL_FROM ausentes: emails só no log");
+            Ok(Arc::new(LogMailer))
+        }
+    }
 }
 
 /// Encerra com Ctrl+C localmente e com SIGTERM no Render.

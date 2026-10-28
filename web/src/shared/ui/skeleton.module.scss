@@ -31,14 +31,6 @@
   block-size: spacing.$spacing-08;
 }
 
-.crumb {
-  @include skeleton;
-
-  display: block;
-  inline-size: 30%;
-  block-size: spacing.$spacing-05;
-}
-
 .tabs {
   @include skeleton;
 
