@@ -24,6 +24,10 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
   const t = useTranslations("Tournament");
   const draft = tournament.status === "draft";
   const undated = !tournament.starts_at;
+  // Pela data e pela janela, o check-in já abriu: publicado agora, o torneio
+  // vai direto para o check-in, sem inscrições.
+  const opensAt = tournament.check_in_opens_at;
+  const skipsRegistration = opensAt != null && new Date(opensAt) <= now;
   const edit = (
     <Link
       href={`/${tenant}/${tournament.slug}/edit`}
@@ -42,11 +46,15 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
           {undated && (
             <p className="text-sm text-muted">{t("publishNeedsDate")}</p>
           )}
+          {skipsRegistration && (
+            <p className="text-sm">{t("publishSkipsRegistration")}</p>
+          )}
           <div className="flex flex-wrap items-start gap-3">
             <PublishTournamentButton
               tenant={tenant}
               slug={tournament.slug}
               disabled={undated}
+              skipsRegistration={skipsRegistration}
             />
             {edit}
             <DeleteTournamentButton tenant={tenant} slug={tournament.slug} />

@@ -17,10 +17,13 @@ export function PublishTournamentButton({
   tenant,
   slug,
   disabled = false,
+  skipsRegistration = false,
 }: {
   tenant: string;
   slug: string;
   disabled?: boolean;
+  /** O check-in já devia ter aberto: publicar pula as inscrições. */
+  skipsRegistration?: boolean;
 }) {
   const t = useTranslations("Tournament");
   const router = useRouter();
@@ -33,7 +36,9 @@ export function PublishTournamentButton({
         size="sm"
         pending={pending}
         disabled={disabled}
-        question={t("publishConfirm")}
+        question={t(
+          skipsRegistration ? "publishConfirmCheckIn" : "publishConfirm",
+        )}
         onConfirm={() => {
           run(
             () =>
@@ -44,7 +49,7 @@ export function PublishTournamentButton({
           );
         }}
       >
-        {t("publish")}
+        {t(skipsRegistration ? "publishToCheckIn" : "publish")}
       </ConfirmButton>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
