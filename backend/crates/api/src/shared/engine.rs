@@ -35,6 +35,16 @@ impl From<EngineError> for ApiError {
             }
             E::GamesDisagreeWithScore { .. } => Self::invalid("match.games_disagree"),
             E::MapRepeated(_) => Self::invalid("match.map_repeated"),
+            E::FragsDisagree { game } => {
+                Self::invalid("match.frags_disagree").with_params([("game", game as i64)])
+            }
+            E::SeriesDecided => Self::conflict("match.series_decided"),
+            E::GameOutOfOrder { next } => {
+                Self::conflict("match.game_out_of_order").with_params([("next", next as i64)])
+            }
+            E::NoGamesLeft { best_of } => {
+                Self::conflict("match.no_games_left").with_params([("best_of", n(best_of))])
+            }
             E::ChampionPoolExhausted {
                 required,
                 available,

@@ -1,4 +1,11 @@
-//! Séries melhor de N mapas.
+//! Séries melhor de N mapas: tamanho e placar aqui; mapa a mapa em `games`.
+
+mod games;
+
+pub use games::{
+    Decision, GameStatus, SeriesGame, SeriesState, Side, check_frags, check_map, check_next,
+    evaluate, put,
+};
 
 use std::collections::HashSet;
 

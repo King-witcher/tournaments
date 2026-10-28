@@ -126,7 +126,8 @@ O banco recusa estado inválido mesmo que a API erre (decisões em "Consistênci
 crates/engine/src/
   core.rs         tipos de mais de um formato: ParticipantId, MapId, MatchId, Match, Occupant,
                   Outcome, EngineError
-  series.rs       melhor de N: placar (validate_score) e detalhe por mapa (validate_games)
+  series/         melhor de N: mod.rs (tamanho e placar, validate_score), games.rs (a série
+                  mapa a mapa: próximo mapa, troca, onde a série fecha e o que fica depois dela)
   seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
   champions.rs    ChampionRules e o orçamento da regra de não repetição
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar

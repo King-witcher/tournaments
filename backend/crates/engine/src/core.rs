@@ -160,6 +160,14 @@ pub enum EngineError {
     GamesDisagreeWithScore { score: SeriesScore },
     #[error("mapa repetido na série: {0:?}")]
     MapRepeated(MapId),
+    #[error("os frags do mapa {game} não batem com o vencedor")]
+    FragsDisagree { game: usize },
+    #[error("a série já está decidida pelos mapas enviados")]
+    SeriesDecided,
+    #[error("o próximo mapa da série é o {next}")]
+    GameOutOfOrder { next: usize },
+    #[error("a série melhor de {best_of} já teve todos os mapas")]
+    NoGamesLeft { best_of: u8 },
     #[error("no pior caso são necessários {required} campeões; o pool tem {available}")]
     ChampionPoolExhausted { required: u32, available: u32 },
     #[error("o torneio precisa de pelo menos uma fase")]
