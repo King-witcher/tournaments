@@ -42,6 +42,12 @@ export async function ParticipantSection({
           .then(({ data }) => data ?? [])
       : [],
   ]);
+  // Depois de iniciar, na ordem da chave (quem ficou de fora, sem seed, no fim).
+  const listed = beforeStart
+    ? participants
+    : participants.toSorted(
+        (a, b) => (a.seed ?? Infinity) - (b.seed ?? Infinity),
+      );
   const registered = new Set(participants.map((p) => p.user_id));
   const candidates = members
     .filter((m) => !registered.has(m.user_id))
@@ -69,7 +75,7 @@ export async function ParticipantSection({
         <p className="text-sm opacity-70">{t("empty")}</p>
       ) : (
         <ul className="divide-y divide-black/10 dark:divide-white/10">
-          {participants.map((participant) => (
+          {listed.map((participant) => (
             <ParticipantRow
               key={participant.user_id}
               tenant={tenant}

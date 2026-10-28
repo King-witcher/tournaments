@@ -34,7 +34,7 @@ export function BracketPartGrid({
   return (
     <div className="flex flex-col gap-2">
       {title && <h3 className="font-semibold">{title}</h3>}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2">
+      <div className="overflow-x-auto pb-2">
         <div className="flex w-max gap-4">
           {rounds.map(({ round, matches }) => (
             <div key={round} className="flex w-56 flex-col gap-2">

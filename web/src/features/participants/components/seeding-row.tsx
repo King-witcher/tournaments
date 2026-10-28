@@ -8,6 +8,8 @@ type Props = {
   /** Seed que fica se a ordem for salva (1 = melhor). */
   position: number;
   participant: components["schemas"]["Participant"];
+  /** Marca quem está sem seed (quando só alguns estão). */
+  showNoSeed: boolean;
   disabled: boolean;
   /** Ausente no primeiro. */
   onUp?: () => void;
@@ -18,6 +20,7 @@ type Props = {
 export function SeedingRow({
   position,
   participant: p,
+  showNoSeed,
   disabled,
   onUp,
   onDown,
@@ -31,7 +34,7 @@ export function SeedingRow({
       </span>
       <Avatar src={p.avatar_url} />
       <span className="flex-1 font-medium">{p.nickname}</span>
-      {p.seed == null && (
+      {showNoSeed && p.seed == null && (
         <span className="text-xs opacity-60">{t("noSeed")}</span>
       )}
       <Button

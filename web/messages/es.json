@@ -228,6 +228,7 @@
     "loginRequired": "Inicia sesión para ver este torneo.",
     "draftHint": "Borrador: solo lo ven los organizadores. Publícalo para abrir las inscripciones.",
     "edit": "Editar",
+    "organizerTitle": "Organización",
     "editTitle": "Editar torneo",
     "publish": "Publicar y abrir inscripciones",
     "delete": "Eliminar borrador",
@@ -279,6 +280,7 @@
       "uses": "{count, plural, =0 {nadie se inscribió todavía} one {# inscripción} other {# inscripciones}}"
     },
     "startsAt": "Empieza <date></date>",
+    "startedAt": "Inicio programado para <date></date>",
     "noStartDate": "Sin fecha de inicio.",
     "publishNeedsDate": "Define la fecha de inicio (en Editar) para publicar."
   },
@@ -320,6 +322,7 @@
       "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
       "emptyNoCheckIn": "Nadie inscrito todavía.",
       "noSeed": "sin seed",
+      "noneSeeded": "Este orden todavía no vale: si inicias así, el orden del cuadro se sortea. Guárdalo para usar este orden, o sortea ahora para ver el resultado antes.",
       "up": "Subir a {name}",
       "down": "Bajar a {name}",
       "changed": "Orden cambiado: guárdalo para que valga.",
@@ -468,8 +471,8 @@
     "startConfirm": "¿Iniciar el torneo? Inscripciones y check-ins se congelan y quien no hizo check-in queda fuera.",
     "startConfirmNoCheckIn": "¿Iniciar el torneo? Las inscripciones se congelan.",
     "undoStart": "Deshacer inicio",
-    "undoStartConfirm": "¿Deshacer el inicio? El torneo vuelve al check-in, con inscritos, check-ins y seeds como estaban.",
-    "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban.",
+    "undoStartConfirm": "¿Deshacer el inicio? El torneo vuelve al check-in, con inscritos, check-ins y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
+    "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
     "finished": "Terminado: los resultados aún se pueden corregir en la página de cada partida.",
     "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún resultado.} one {Se borrará # resultado (pendiente, impugnado o confirmado), con el historial de las partidas.} other {Se borrarán # resultados (pendientes, impugnados o confirmados), con el historial de las partidas.}}",
     "undoStartTypeSlug": "Para confirmar, escribe la dirección del torneo: {slug}",
@@ -521,6 +524,10 @@
       "resolve": "Resolver impugnación"
     },
     "yours": "Tu partida",
+    "pending": {
+      "title": "Partidas que esperan tu acción",
+      "item": "{match} · {a} × {b}: {task}"
+    },
     "standings": {
       "title": "Clasificación",
       "rank": "{rank}º",
@@ -590,9 +597,11 @@
       "accept": "Aceptar el resultado enviado",
       "confirm": "Confirmar el resultado enviado",
       "set": "Cargar resultado",
+      "setOther": "Cargar otro resultado",
       "correct": "Corregir resultado",
       "correctHint": "El cuadro se rehace con el resultado nuevo. Si contradice una partida confirmada después de esta, se rechaza.",
       "walkover": "W.O. para {name}",
+      "walkoverTitle": "Dar W.O.",
       "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria sin resultado.",
       "comment": "Nota en el historial (opcional)",
       "save": "Guardar resultado"

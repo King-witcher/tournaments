@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { Alert } from "@/shared/ui/alert";
 import { loadBracket } from "../server";
 import { BracketView } from "./bracket-view";
+import { PendingMatches } from "./pending-matches";
 import { StandingsList } from "./standings-list";
 
 type Props = {
@@ -36,7 +37,16 @@ export async function BracketSection({ tenant, tournament }: Props) {
           entrants={bracket.entrants}
         />
       )}
-      <section className="flex flex-col gap-3">
+      <PendingMatches
+        bracket={bracket}
+        basePath={`/${tenant}/${tournament.slug}/matches`}
+      />
+      {/*
+        A chave sai da coluna do texto para a direita (até 72rem, sem passar
+        da tela): com três ou mais rodadas ela não cabe na coluna, e a rolagem
+        horizontal escondia a final.
+      */}
+      <section className="flex w-[min(100vw_-_2rem,50vw_+_19rem,72rem)] flex-col gap-3">
         <h2 className="text-xl font-semibold">{t("title")}</h2>
         {bracket.status === "in_progress" && (
           <p className="text-sm opacity-70">{t("hint")}</p>

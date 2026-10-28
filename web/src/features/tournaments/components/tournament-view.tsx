@@ -3,7 +3,6 @@ import { Suspense } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { TournamentInviteSection } from "@/features/invites/components/tournament-invite-section";
-import { LifecyclePanel } from "@/features/lifecycle/components/lifecycle-panel";
 import { BracketSection } from "@/features/matches/components/bracket-section";
 import { CheckInPanel } from "@/features/participants/components/check-in-panel";
 import { ParticipantSection } from "@/features/participants/components/participant-section";
@@ -56,10 +55,7 @@ export async function TournamentView({ tenant, slug }: Props) {
         tournament={tournament}
       />
       {organizer && (
-        <TournamentActions tenant={tenant} tournament={tournament} />
-      )}
-      {organizer && (
-        <LifecyclePanel tenant={tenant} tournament={tournament} now={now} />
+        <TournamentActions tenant={tenant} tournament={tournament} now={now} />
       )}
       <Suspense fallback={<p className="text-sm">{tBracket("loading")}</p>}>
         <BracketSection tenant={tenant} tournament={tournament} />

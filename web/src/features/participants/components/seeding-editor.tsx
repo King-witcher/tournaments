@@ -28,6 +28,8 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
   const [order, setOrder] = useState(initial);
   const params = { path: { slug: tenant, tournament } };
   const changed = order.some((p, i) => p.user_id !== initial[i].user_id);
+  // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
+  const noneSeeded = initial.every((p) => p.seed == null);
   // Ainda há quem não tem seed: salvar grava a ordem que aparece.
   const unsaved = changed || initial.some((p) => p.seed == null);
 
@@ -41,12 +43,14 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
+      {noneSeeded && <p className="text-sm">{t("noneSeeded")}</p>}
       <ol className="divide-y divide-black/10 dark:divide-white/10">
         {order.map((p, i) => (
           <SeedingRow
             key={p.user_id}
             position={i + 1}
             participant={p}
+            showNoSeed={!noneSeeded}
             disabled={pending}
             onUp={i > 0 ? () => move(i, -1) : undefined}
             onDown={i < order.length - 1 ? () => move(i, 1) : undefined}

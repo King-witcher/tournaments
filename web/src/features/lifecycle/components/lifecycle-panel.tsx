@@ -11,13 +11,16 @@ type Props = {
   tournament: components["schemas"]["Tournament"];
   /** Referência para saber se a abertura do check-in já passou. */
   now: Date;
+  /** Botão de quem monta o quadro (editar), depois das ações do ciclo. */
+  extra?: ReactNode;
 };
 
 /**
  * Para organizer e owner, depois de publicar: em que pé está o ciclo e os
- * botões de abrir o check-in, reabrir as inscrições, iniciar e desfazer.
+ * botões de abrir o check-in, reabrir as inscrições, iniciar e desfazer. Vai
+ * dentro do quadro da organização (`TournamentActions`).
  */
-export function LifecyclePanel({ tenant, tournament, now }: Props) {
+export function LifecyclePanel({ tenant, tournament, now, extra }: Props) {
   const t = useTranslations("Lifecycle");
   const { status, slug } = tournament;
   const hasCheckIn = tournament.check_in_minutes != null;
@@ -80,13 +83,16 @@ export function LifecyclePanel({ tenant, tournament, now }: Props) {
   } else if (status === "finished") {
     hint = t("finished");
   } else {
-    return null;
+    return extra ?? null;
   }
 
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-black/10 p-3 dark:border-white/15">
+    <>
       {hint && <p className="text-sm">{hint}</p>}
-      <div className="flex flex-wrap items-start gap-3">{actions}</div>
-    </section>
+      <div className="flex flex-wrap items-start gap-3">
+        {actions}
+        {extra}
+      </div>
+    </>
   );
 }

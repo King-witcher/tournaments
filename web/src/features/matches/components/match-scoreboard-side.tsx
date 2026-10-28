@@ -57,7 +57,12 @@ export function MatchScoreboardSide({
           {entrant?.nickname ?? placeholder}
         </span>
         {entrant && (
-          <span className="flex gap-2 text-xs opacity-60">
+          <span
+            className={cn(
+              "flex gap-2 text-xs opacity-60",
+              alignEnd && "justify-end",
+            )}
+          >
             {t("seed", { seed: entrant.seed })}
             <DepartureMark withdrawn={entrant.withdrawn} left={entrant.left} />
           </span>

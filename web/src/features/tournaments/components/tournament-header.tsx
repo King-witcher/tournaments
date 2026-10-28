@@ -23,6 +23,8 @@ export function TournamentHeader({
   const tStatus = useTranslations("TournamentStatus");
   const tVisibility = useTranslations("Visibility");
   const startsAt = tournament.starts_at;
+  const started =
+    tournament.status === "in_progress" || tournament.status === "finished";
 
   return (
     <header className="flex flex-col gap-1">
@@ -35,7 +37,7 @@ export function TournamentHeader({
       </p>
       <p className="text-sm">
         {startsAt
-          ? t.rich("startsAt", {
+          ? t.rich(started ? "startedAt" : "startsAt", {
               date: () => <LocalDateTime value={startsAt} />,
             })
           : t("noStartDate")}
