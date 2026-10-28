@@ -12,10 +12,12 @@ type Props = {
   token: string;
   /** Link de inscrição: aceitar também inscreve no torneio. */
   tournament: boolean;
+  /** Já é membro: no link de inscrição, aceitar só inscreve. */
+  member: boolean;
 };
 
 /** Aceita o convite e leva para a página da comunidade ou do torneio. */
-export function AcceptInviteButton({ token, tournament }: Props) {
+export function AcceptInviteButton({ token, tournament, member }: Props) {
   const t = useTranslations("Invite");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -39,7 +41,7 @@ export function AcceptInviteButton({ token, tournament }: Props) {
           )
         }
       >
-        {tournament ? t("acceptTournament") : t("accept")}
+        {tournament ? t(member ? "register" : "acceptTournament") : t("accept")}
       </Button>
       {error && <ErrorText>{error}</ErrorText>}
     </div>

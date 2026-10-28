@@ -1,4 +1,7 @@
-use axum::{extract::FromRequestParts, http::request::Parts};
+use axum::{
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    http::request::Parts,
+};
 use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -35,5 +38,22 @@ impl FromRequestParts<AppState> for CurrentUser {
         db::user_by_session(&state.db, &hash_token(token))
             .await?
             .ok_or(ApiError::unauthenticated())
+    }
+}
+
+/// `Option<CurrentUser>`: rota pública que muda a resposta para quem está
+/// logado (sem sessão válida, `None`).
+impl OptionalFromRequestParts<AppState> for CurrentUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        let jar = CookieJar::from_headers(&parts.headers);
+        let Some(cookie) = jar.get(SESSION_COOKIE) else {
+            return Ok(None);
+        };
+        Ok(db::user_by_session(&state.db, &hash_token(cookie.value())).await?)
     }
 }

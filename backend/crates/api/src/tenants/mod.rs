@@ -17,7 +17,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use access::{Organizer, Owner, Role, TenantId, TenantMember};
-pub use db::my_tenant;
+pub use db::{my_tenant, standing};
 pub use nickname::{default_nickname, validate_nickname};
 pub use types::MyTenant;
 

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select i.id, i.tenant_id, t.name as tenant_name, tr.slug as \"tournament_slug?\",\n                  i.expires_at,\n                  i.revoked_at is not null as \"revoked!\",\n                  coalesce(i.expires_at <= now(), false) as \"expired!\"\n           from tenant_invites i\n           join tenants t on t.id = i.tenant_id\n           left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id\n           where i.token_hash = $1",
+  "query": "select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as \"tournament_slug?\",\n                  i.expires_at,\n                  i.revoked_at is not null as \"revoked!\",\n                  coalesce(i.expires_at <= now(), false) as \"expired!\"\n           from tenant_invites i\n           join tenants t on t.id = i.tenant_id\n           left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id\n           where i.token_hash = $1",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "tenant_slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "tenant_name",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "tournament_slug?",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "expires_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,13 +70,13 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "revoked!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "expired!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -80,11 +91,12 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       null,
       null
     ]
   },
-  "hash": "3a6f616f88160cdcda0642e48371e31b759c5d43093b0432d2a024e6a464daaf"
+  "hash": "0540e0bc2a769f13bdcce4fdcc0a8d57a268863e6f367b3649fe2da78a64b00a"
 }

@@ -3,14 +3,17 @@ use sqlx::PgConnection;
 
 use super::{
     db::{self, StoredInvite},
-    types::{AcceptedInvite, CreatedInvite, Invite, InvitePath, InvitePreview, InvitedTournament},
+    types::{
+        AcceptedInvite, CreatedInvite, Invite, InviteMembership, InvitePath, InvitePreview,
+        InviteViewer, InvitedTournament,
+    },
 };
 use crate::{
     AppState,
     auth::CurrentUser,
     participants::{self, Entry},
     shared::{ApiError, ErrorBody, PathParams, token},
-    tenants::{self, Organizer, TenantMember, default_nickname},
+    tenants::{self, Organizer, TenantId, TenantMember, default_nickname},
     tournaments::{self, NameTranslation, StoredTournament},
 };
 
@@ -106,28 +109,56 @@ pub async fn revoke_invite(
     tag = "invites",
     params(("token" = String, Path, description = "Token do link de convite")),
     responses(
-        (status = OK, body = InvitePreview, description = "Convite válido (não exige login). No link de inscrição, o torneio vem com status e vagas: só dá para aceitar com a inscrição aberta e vaga sobrando"),
+        (status = OK, body = InvitePreview, description = "Convite válido (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
         (status = GONE, body = ErrorBody, description = "invite.expired, invite.revoked"),
     )
 )]
 pub async fn preview_invite(
     State(state): State<AppState>,
+    user: Option<CurrentUser>,
     PathParams(token): PathParams<String>,
 ) -> Result<Json<InvitePreview>, ApiError> {
     let mut conn = state.db.acquire().await?;
     let invite = find_valid_invite(&mut conn, &token).await?;
-    let tournament = match &invite.tournament {
-        Some(slug) => Some(invited(
-            tournaments::find(&mut conn, invite.tenant, slug, None).await?,
-        )?),
+    let user_id = user.as_ref().map(|u| u.id);
+    let found = match &invite.tournament {
+        Some(slug) => Some(tournaments::find(&mut conn, invite.tenant, slug, user_id).await?),
+        None => None,
+    };
+    let registered = found
+        .as_ref()
+        .is_some_and(|t| t.as_ref().is_some_and(|t| t.registered));
+    let viewer = match user_id {
+        Some(id) => Some(viewer(&state, invite.tenant, id, registered).await?),
         None => None,
     };
     Ok(Json(InvitePreview {
+        tenant_slug: invite.tenant_slug,
         tenant_name: invite.tenant_name,
         expires_at: invite.expires_at,
-        tournament,
+        tournament: found.map(invited).transpose()?,
+        viewer,
     }))
+}
+
+/// Quem abre o link, logado: membro, ex-membro ou de fora.
+async fn viewer(
+    state: &AppState,
+    tenant: TenantId,
+    user_id: i64,
+    registered: bool,
+) -> Result<InviteViewer, ApiError> {
+    let standing = tenants::standing(&state.db, tenant, user_id).await?;
+    Ok(InviteViewer {
+        membership: match &standing {
+            None => InviteMembership::None,
+            Some(s) if s.active => InviteMembership::Member,
+            Some(_) => InviteMembership::Former,
+        },
+        nickname: standing.map(|s| s.nickname),
+        registered,
+    })
 }
 
 #[utoipa::path(
@@ -204,5 +235,6 @@ fn invited(found: Option<StoredTournament>) -> Result<InvitedTournament, ApiErro
         status: t.status,
         max_participants: t.setup.max_participants,
         participants: t.participants,
+        starts_at: t.schedule.starts_at,
     })
 }

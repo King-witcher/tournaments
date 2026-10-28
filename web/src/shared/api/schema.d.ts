@@ -1089,6 +1089,8 @@ export interface components {
              */
             uses: number;
         };
+        /** @enum {string} */
+        InviteMembership: "none" | "member" | "former";
         /** @description O que quem recebeu o link vê antes de aceitar. */
         InvitePreview: {
             /**
@@ -1097,7 +1099,21 @@ export interface components {
              */
             expires_at?: string | null;
             tenant_name: string;
+            /** @description Endereço da comunidade (para quem já é membro ir direto a ela). */
+            tenant_slug: string;
             tournament?: components["schemas"]["InvitedTournament"] | null;
+            viewer?: components["schemas"]["InviteViewer"] | null;
+        };
+        /** @description Quem abre o convite, em relação à comunidade e ao torneio do link. */
+        InviteViewer: {
+            membership: components["schemas"]["InviteMembership"];
+            /**
+             * @description Apelido na comunidade (o de antes, para quem saiu); `null` para quem
+             *     nunca foi membro.
+             */
+            nickname?: string | null;
+            /** @description No link de inscrição: já está inscrito no torneio. */
+            registered: boolean;
         };
         /**
          * @description O torneio de um link de inscrição. O link deixa de valer quando a
@@ -1111,6 +1127,11 @@ export interface components {
             /** Format: int64 */
             participants: number;
             slug: string;
+            /**
+             * Format: date-time
+             * @description Início previsto (sempre definido fora do rascunho).
+             */
+            starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["NameTranslation"][];
         };
@@ -2137,7 +2158,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Convite válido (não exige login). No link de inscrição, o torneio vem com status e vagas: só dá para aceitar com a inscrição aberta e vaga sobrando */
+            /** @description Convite válido (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link */
             200: {
                 headers: {
                     [name: string]: unknown;

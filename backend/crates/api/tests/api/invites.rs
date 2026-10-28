@@ -213,12 +213,15 @@ async fn tournament_link_joins_the_tenant_and_registers(db: PgPool) {
         (
             StatusCode::OK,
             json!({
+                "tenant_slug": "quake-br",
                 "tenant_name": "Tenant quake-br",
                 "expires_at": null,
                 "tournament": {
                     "slug": "copa", "locale": "pt", "name": "Copa de Outubro", "translations": [],
-                    "status": "draft", "max_participants": 16, "participants": 0
-                }
+                    "status": "draft", "max_participants": 16, "participants": 0,
+                    "starts_at": "2099-01-01T20:00:00Z"
+                },
+                "viewer": null
             })
         )
     );
@@ -332,5 +335,56 @@ async fn tournament_links_only_before_the_start(db: PgPool) {
     assert_eq!(
         preview(&app, created["token"].as_str().unwrap()).await,
         (StatusCode::NOT_FOUND, err("invite.not_found"))
+    );
+}
+
+/// `viewer` da prévia como `who` a vê.
+async fn viewer(app: &Router, token: &str, who: &User) -> Value {
+    let (status, body) = get(app, &format!("/invites/{token}"), who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["viewer"].clone()
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn preview_knows_who_opens_it(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = user(&db, "Caio").await;
+    let token = invite(&app, &ana, "quake-br").await;
+
+    // Sem login, só o convite; logado, se é membro.
+    assert_eq!(preview(&app, &token).await.1["tenant_slug"], "quake-br");
+    assert_eq!(
+        viewer(&app, &token, &caio).await,
+        json!({ "membership": "none", "nickname": null, "registered": false })
+    );
+    assert_eq!(
+        viewer(&app, &token, &bia).await,
+        json!({ "membership": "member", "nickname": "Bia", "registered": false })
+    );
+    // Quem saiu volta com o apelido de antes.
+    let (status, _) = patch(
+        &app,
+        "/tenants/quake-br/me",
+        &bia,
+        json!({ "nickname": "Bia QC" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, body) = delete(&app, "/tenants/quake-br/me", &bia).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    assert_eq!(
+        viewer(&app, &token, &bia).await,
+        json!({ "membership": "former", "nickname": "Bia QC", "registered": false })
+    );
+
+    // No link de inscrição, também se já está inscrito.
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let link = copa_invite(&app, &ana).await;
+    assert_eq!(viewer(&app, &link, &ana).await["registered"], false);
+    register(&app, "copa", &[&ana]).await;
+    assert_eq!(
+        viewer(&app, &link, &ana).await,
+        json!({ "membership": "member", "nickname": "Ana", "registered": true })
     );
 }

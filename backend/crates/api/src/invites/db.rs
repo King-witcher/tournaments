@@ -130,6 +130,7 @@ pub struct StoredInvite {
     pub id: i64,
     /// O token é a autorização para entrar neste tenant.
     pub tenant: TenantId,
+    pub tenant_slug: String,
     pub tenant_name: String,
     /// Slug do torneio, no link de inscrição.
     pub tournament: Option<String>,
@@ -144,7 +145,7 @@ pub async fn find_by_token_hash(
     token_hash: &[u8; 32],
 ) -> Result<Option<StoredInvite>, sqlx::Error> {
     let row = sqlx::query!(
-        r#"select i.id, i.tenant_id, t.name as tenant_name, tr.slug as "tournament_slug?",
+        r#"select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as "tournament_slug?",
                   i.expires_at,
                   i.revoked_at is not null as "revoked!",
                   coalesce(i.expires_at <= now(), false) as "expired!"
@@ -160,6 +161,7 @@ pub async fn find_by_token_hash(
     Ok(row.map(|r| StoredInvite {
         id: r.id,
         tenant: TenantId::new(r.tenant_id),
+        tenant_slug: r.tenant_slug,
         tenant_name: r.tenant_name,
         tournament: r.tournament_slug,
         expires_at: r.expires_at,

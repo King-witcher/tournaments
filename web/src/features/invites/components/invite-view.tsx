@@ -5,7 +5,9 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { Alert } from "@/shared/ui/alert";
+import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { AcceptInviteButton } from "./accept-invite-button";
+import { InviteMembership } from "./invite-membership";
 
 type InvitedTournament = components["schemas"]["InvitedTournament"];
 
@@ -32,8 +34,11 @@ export async function InviteView({ token }: { token: string }) {
       </Alert>
     );
   }
-  const { tournament } = invite;
+  const { tournament, viewer } = invite;
   const closed = tournament && (await closedReason(tournament));
+  const member = viewer?.membership === "member";
+  // Já é membro e não há o que aceitar (nem inscrição a fazer).
+  const done = member && (!tournament || viewer.registered);
 
   return (
     <>
@@ -48,7 +53,12 @@ export async function InviteView({ token }: { token: string }) {
             count: tournament.participants,
             max: tournament.max_participants,
           })}{" "}
-          {t("tournamentHint", { tenant: invite.tenant_name })}
+          {!member && t("tournamentHint", { tenant: invite.tenant_name })}
+        </p>
+      )}
+      {tournament?.starts_at && (
+        <p className="text-sm text-muted">
+          {t("startsAt")} <LocalDateTime value={tournament.starts_at} />
         </p>
       )}
       {invite.expires_at && (
@@ -61,11 +71,28 @@ export async function InviteView({ token }: { token: string }) {
           })}
         </p>
       )}
-      {closed ? (
+      {viewer?.membership === "former" && !done && (
+        <p>
+          {t("returning", {
+            tenant: invite.tenant_name,
+            nickname: viewer.nickname ?? "",
+          })}
+        </p>
+      )}
+      {member && tournament && !done && !closed && (
+        <p>{t("memberRegisters", { tenant: invite.tenant_name })}</p>
+      )}
+      {done ? (
+        <InviteMembership invite={invite} />
+      ) : closed ? (
         <Alert>{closed}</Alert>
       ) : (
         <RequireLogin message={t("loginRequired")}>
-          <AcceptInviteButton token={token} tournament={!!tournament} />
+          <AcceptInviteButton
+            token={token}
+            tournament={!!tournament}
+            member={member}
+          />
         </RequireLogin>
       )}
     </>

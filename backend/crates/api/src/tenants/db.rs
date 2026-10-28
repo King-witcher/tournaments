@@ -41,6 +41,30 @@ pub async fn membership(
     .transpose()
 }
 
+/// A linha de um usuário num tenant, ativa ou de quem saiu.
+pub struct Standing {
+    /// Membro agora; falso para quem saiu ou foi removido.
+    pub active: bool,
+    pub nickname: String,
+}
+
+/// Se `user_id` é (ou já foi) membro do tenant: para a prévia do convite.
+pub async fn standing(
+    db: &PgPool,
+    tenant: TenantId,
+    user_id: i64,
+) -> Result<Option<Standing>, sqlx::Error> {
+    sqlx::query_as!(
+        Standing,
+        r#"select left_at is null as "active!", nickname
+           from tenant_members where tenant_id = $1 and user_id = $2"#,
+        tenant.get(),
+        user_id
+    )
+    .fetch_optional(db)
+    .await
+}
+
 /// As participações ativas de um usuário, na ordem em que entrou.
 pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, ApiError> {
     let rows = sqlx::query!(

@@ -59,11 +59,40 @@ pub struct InvitePath {
 /// O que quem recebeu o link vê antes de aceitar.
 #[derive(Serialize, ToSchema)]
 pub struct InvitePreview {
+    /// Endereço da comunidade (para quem já é membro ir direto a ela).
+    pub tenant_slug: String,
     pub tenant_name: String,
     /// Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
     pub expires_at: Option<DateTime<Utc>>,
     /// Link de inscrição: aceitar também inscreve neste torneio.
     pub tournament: Option<InvitedTournament>,
+    /// Quem abre o link e está logado: se já é (ou foi) membro. `null` sem
+    /// login.
+    pub viewer: Option<InviteViewer>,
+}
+
+/// Quem abre o convite, em relação à comunidade e ao torneio do link.
+#[derive(Serialize, ToSchema)]
+pub struct InviteViewer {
+    pub membership: InviteMembership,
+    /// Apelido na comunidade (o de antes, para quem saiu); `null` para quem
+    /// nunca foi membro.
+    pub nickname: Option<String>,
+    /// No link de inscrição: já está inscrito no torneio.
+    pub registered: bool,
+}
+
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum InviteMembership {
+    /// Ainda não é membro.
+    None,
+    /// Membro ativo: aceitar não muda papel nem apelido (no link de
+    /// inscrição, só inscreve).
+    Member,
+    /// Saiu ou foi removido: aceitar o traz de volta como player, com o
+    /// apelido e o histórico de antes.
+    Former,
 }
 
 /// O torneio de um link de inscrição. O link deixa de valer quando a
@@ -77,6 +106,8 @@ pub struct InvitedTournament {
     pub status: TournamentStatus,
     pub max_participants: i32,
     pub participants: i64,
+    /// Início previsto (sempre definido fora do rascunho).
+    pub starts_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, ToSchema)]
