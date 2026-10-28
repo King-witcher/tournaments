@@ -17,7 +17,7 @@
     "ready": "Por jugar.",
     "bye": "Sin rival: avanza sin jugar.",
     "completed": "Terminada.",
-    "not_needed": "No fue necesaria: quien venía de la llave de ganadores ganó la gran final."
+    "not_needed": "No fue necesaria: quien venía de la llave principal ganó la gran final."
   },
   "confirmedVia": {
     "opponent": "Confirmado por el rival <time></time>.",

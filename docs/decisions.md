@@ -20,7 +20,7 @@ Registro das decisões tomadas antes do início do código, com o motivo de cada
 | Banco | Postgres. Dev: cluster local. Prod: database com usuário próprio no projeto Supabase us-east-1 existente |
 | Redis | Sessões e tentativas de senha, no database 0. Dev: servidor local (Memurai no Windows; os outros databases ficam para outros projetos). Prod: Upstash grátis (256 MB, 500 mil comandos por mês, `rediss://`). Ver "Redis" |
 | Tempo real | WebSocket no Axum, `tokio::broadcast` em memória (uma instância). `LISTEN/NOTIFY` se um dia houver mais de uma |
-| Storage | API S3 genérica, provedor por variável de ambiente (Cloudflare R2 sugerido) |
+| Storage | API S3 genérica, provedor por variável de ambiente. Prod: AWS S3, classe Standard, sem CloudFront (ver "Resultados") |
 | Observabilidade | Sentry no Rust e no Next |
 | Hospedagem | API no Render (Virgínia, free + uptime monitor). Front na Vercel (funções em `iad1`, perto da API). Domínio próprio |
 
@@ -196,6 +196,8 @@ Entrou em 2026-10-28, com a instância grátis do Upstash: 256 MB e 500 mil coma
 - Print do placar: o torneio decide se é obrigatório.
 - Upload direto do navegador para o bucket, com URL assinada gerada pela API. O front converte para WebP antes.
 - Prints apagados 30 dias após o fim do torneio (rotina diária).
+- **Bucket na AWS S3, classe Standard** (28/10). Express One Zone custa quase 5 vezes o Standard e só ganha latência para máquina na mesma zona da AWS (a API está no Render). One Zone-IA economiza centavos e cobra leitura, mínimo de 30 dias e 128 KB por arquivo, além de exigir a classe assinada no upload.
+- **Sem CloudFront por enquanto**: os prints seguem a visibilidade do tenant e do torneio, e a URL assinada de leitura do S3 expira sozinha; no CloudFront isso pediria URL assinada própria (outro par de chaves). Os 100 GB de saída grátis por mês da AWS bastam. A API devolve a URL de cada print (o front não monta endereço do bucket), para o CloudFront poder entrar depois só no backend.
 
 ## Consistência do banco
 
