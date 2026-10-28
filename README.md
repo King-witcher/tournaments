@@ -87,3 +87,12 @@ bun run dev
 | Regenerar tipos da API no front (API rodando) | `web/` | `bun run gen:api` |
 | Lint / formatar o front (Biome) | `web/` | `bun run lint` / `bun run format` |
 | Build do front | `web/` | `bun run build` |
+
+## CI
+
+`.github/workflows/ci.yml` roda em push na `main` e em pull request, com os dois lados em paralelo:
+
+- **backend**: `cargo fmt --check`, `cargo clippy` com `SQLX_OFFLINE=true` (confere que o `.sqlx/` cobre todas as queries, como no deploy), migrations, `cargo test` (Postgres 18 e Redis como serviços) e uma conferência de que o `.sqlx/` versionado é igual ao que as queries geram. Se falhar nela, rode `bun scripts/sqlx-prepare.ts` em `backend/` e faça commit.
+- **web**: `bun install --frozen-lockfile`, `bun run lint` e `bun run build` (não precisa de API no ar).
+
+Em pull request só roda o lado cujos arquivos mudaram; em push na `main` rodam os dois. Uma execução nova do mesmo ref cancela a anterior. A versão do Bun está fixa no workflow: ao subir o Bun localmente, suba lá também.

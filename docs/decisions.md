@@ -313,6 +313,7 @@ Como ficou o backend (28/10; o que não estava acima é decisão minha, fácil d
 
 - Privado agora, público depois: nenhum segredo no código (`.env.example` versionado), histórico limpo desde o primeiro commit.
 - GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês).
+- CI (`.github/workflows/ci.yml`): em pull request roda só o lado cujos arquivos mudaram (`dorny/paths-filter`), em push na `main` os dois; execução antiga do mesmo ref é cancelada. A conferência do `.sqlx/` regrava as queries num diretório à parte e compara (`diff -r`) com o versionado, reaproveitando as dependências já compiladas (cerca de 1 min), em vez de rodar `sqlx-prepare.ts`, que compilaria tudo de novo num `target` próprio. Só `.sqlx/` sobrando ou diferente seria invisível ao clippy offline, por isso a conferência existe.
 - Banco de dev: cluster Postgres local (sqlx confere queries na compilação; `sqlx::test` cria um banco por teste). Usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos bancos de teste.
 
 ## Organização do código
