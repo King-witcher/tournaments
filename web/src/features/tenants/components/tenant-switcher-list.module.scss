@@ -1,0 +1,12 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Carregando, erro e "nenhuma comunidade": com a margem dos itens da lista,
+// para não colar na borda do painel.
+.status {
+  @include type.type-style("body-compact-01");
+
+  padding: spacing.$spacing-05;
+  color: theme.$text-secondary;
+}

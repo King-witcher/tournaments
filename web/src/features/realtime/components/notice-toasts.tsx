@@ -16,8 +16,8 @@ type Props = {
 };
 
 /**
- * Os avisos que chegaram com a aba visível, traduzidos, com o link para a
- * partida ou o torneio (menos quando a página já é essa).
+ * Os avisos que chegaram (com a aba escondida, quando ela volta), traduzidos,
+ * com o link para a partida ou o torneio (menos quando a página já é essa).
  */
 export function NoticeToasts({ notices, onClose }: Props) {
   const t = useTranslations("Notifications");

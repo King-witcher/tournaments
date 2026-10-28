@@ -14,6 +14,7 @@ import { UserMenu } from "@/features/auth/components/user-menu";
 import { PushSession } from "@/features/push/components/push-session";
 import { RealtimeProvider } from "@/features/realtime/components/realtime-provider";
 import { RealtimeSession } from "@/features/realtime/components/realtime-session";
+import { TenantSwitcher } from "@/features/tenants/components/tenant-switcher";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 import { themeInitScript } from "@/shared/lib/theme";
@@ -72,6 +73,9 @@ export default async function LocaleLayout({
           <RealtimeProvider>
             <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
               {/* O lugar de cada ação enquanto ela chega: a barra não pula. */}
+              <Suspense fallback={<HeaderPlaceholder />}>
+                <TenantSwitcher />
+              </Suspense>
               <Suspense fallback={<HeaderPlaceholder />}>
                 <LocaleSwitcher />
               </Suspense>

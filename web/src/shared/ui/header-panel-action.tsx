@@ -4,6 +4,7 @@ import { HeaderGlobalAction, HeaderPanel } from "@carbon/react";
 import {
   type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
   useEffect,
   useId,
@@ -25,8 +26,10 @@ type Props = {
 /**
  * Ação da barra do cabeçalho que abre um `HeaderPanel` à direita (idioma, a
  * pessoa). Abre e fecha no clique; fecha com Esc (o foco volta ao botão),
- * clicando fora, saindo dele pelo Tab ou ao trocar de página. Ao abrir, o
- * foco vai para o primeiro item.
+ * clicando fora, saindo dele pelo Tab, num link dele ou ao trocar de página.
+ * Ao abrir, o foco vai para o primeiro item; num painel que carrega ao abrir
+ * (as comunidades), quando o primeiro item chega, se o foco ainda está no
+ * botão.
  */
 export function HeaderPanelAction({ label, icon, children }: Props) {
   const [open, setOpen] = useState(false);
@@ -44,7 +47,21 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    panel.current?.querySelector<HTMLElement>("a, button, input")?.focus();
+    const focusFirst = () => {
+      const first =
+        panel.current?.querySelector<HTMLElement>("a, button, input");
+      first?.focus();
+      return Boolean(first);
+    };
+    const waiting = new MutationObserver(() => {
+      const active = document.activeElement;
+      if (active !== trigger.current && active !== document.body) {
+        waiting.disconnect();
+      } else if (focusFirst()) waiting.disconnect();
+    });
+    if (!focusFirst() && panel.current) {
+      waiting.observe(panel.current, { childList: true, subtree: true });
+    }
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (
@@ -54,7 +71,10 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
         setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    return () => {
+      waiting.disconnect();
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [open]);
 
   // O HeaderGlobalAction e o HeaderPanel repassam estes atributos ao
@@ -79,6 +99,11 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
       if (event.key !== "Escape") return;
       setOpen(false);
       trigger.current?.focus();
+    },
+    // Também o link da página atual (a comunidade em que se está), que não
+    // troca de página.
+    onClick: (event: MouseEvent<HTMLDivElement>) => {
+      if ((event.target as Element).closest("a")) setOpen(false);
     },
   } as object;
 

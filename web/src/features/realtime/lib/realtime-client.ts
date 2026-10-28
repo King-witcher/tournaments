@@ -8,6 +8,12 @@ export type Topic = { tenant: string; tournament?: string };
 
 /** Espera antes de cada tentativa de reconectar; a última se repete. */
 const BACKOFF_MS = [1000, 2000, 5000, 10000, 30000];
+/**
+ * A espera com a aba escondida, que cresce até 5 min: cada tentativa lê a
+ * sessão no Redis, e uma aba esquecida com a sessão vencida tentaria para
+ * sempre (a cada 5 min, ~290 comandos por dia; a cada 30 s, ~2.900).
+ */
+const HIDDEN_BACKOFF_MS = [1000, 5000, 30000, 120000, 300000];
 /** Fechamento da API quando a sessão acaba (sair, encerrar, trocar a senha). */
 const SESSION_ENDED = 4001;
 /**
@@ -30,8 +36,10 @@ const topicKey = ({ tenant, tournament }: Topic) =>
  * A conexão de uma aba com `GET /ws`, sem React. Conta as assinaturas por
  * tópico (duas páginas iguais, uma assinatura), assina de novo ao reconectar
  * e reconecta com espera crescente, menos depois do fechamento 4001 (sessão
- * encerrada). Com a aba escondida não tenta reconectar (cada tentativa lê a
- * sessão no Redis): espera ela voltar a ficar visível.
+ * encerrada). Com a aba escondida também reconecta, para os avisos chegarem a
+ * quem deixou o site numa aba de lado, mas esperando mais
+ * (`HIDDEN_BACKOFF_MS`); ao voltar a ser vista, a tentativa longa marcada
+ * enquanto ela estava escondida sai na hora.
  */
 export class RealtimeClient {
   private socket?: WebSocket;
@@ -43,7 +51,8 @@ export class RealtimeClient {
   private attempt = 0;
   private opened = false;
   private retry?: ReturnType<typeof setTimeout>;
-  private waitingVisible = false;
+  /** A tentativa marcada foi marcada com a aba escondida (espera longa). */
+  private retryWhileHidden = false;
 
   constructor(private readonly url: string) {}
 
@@ -61,7 +70,7 @@ export class RealtimeClient {
     this.opened = false;
     this.attempt = 0;
     clearTimeout(this.retry);
-    this.waitingVisible = false;
+    this.retry = undefined;
     document.removeEventListener("visibilitychange", this.onVisibility);
     const socket = this.socket;
     this.socket = undefined;
@@ -149,21 +158,21 @@ export class RealtimeClient {
 
   private scheduleRetry() {
     if (!this.active) return;
-    if (document.visibilityState === "hidden") {
-      this.waitingVisible = true;
-      return;
-    }
-    const wait = BACKOFF_MS[Math.min(this.attempt, BACKOFF_MS.length - 1)];
+    this.retryWhileHidden = document.visibilityState === "hidden";
+    const steps = this.retryWhileHidden ? HIDDEN_BACKOFF_MS : BACKOFF_MS;
+    const wait = steps[Math.min(this.attempt, steps.length - 1)];
     this.attempt++;
     this.retry = setTimeout(() => {
-      if (document.visibilityState === "hidden") this.waitingVisible = true;
-      else this.open();
+      this.retry = undefined;
+      this.open();
     }, wait);
   }
 
   private onVisibility = () => {
-    if (document.visibilityState !== "visible" || !this.waitingVisible) return;
-    this.waitingVisible = false;
+    if (document.visibilityState !== "visible") return;
+    if (this.retry === undefined || !this.retryWhileHidden) return;
+    clearTimeout(this.retry);
+    this.retry = undefined;
     this.open();
   };
 

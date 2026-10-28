@@ -6,6 +6,7 @@
  */
 
 import type { components } from "@/shared/api/schema";
+import { pushSupport } from "./push-support";
 
 type PutSubscription = components["schemas"]["PutSubscription"];
 type Locale = PutSubscription["locale"];
@@ -16,6 +17,16 @@ const SAVED_KEY = "push-subscription";
 export async function currentSubscription() {
   const registration = await navigator.serviceWorker.getRegistration("/");
   return (await registration?.pushManager.getSubscription()) ?? null;
+}
+
+/**
+ * Se os avisos chegam a este navegador por Web Push (permissão dada e
+ * inscrito): com a aba escondida, a notificação do sistema já avisa.
+ */
+export async function receivesPush() {
+  if (pushSupport() !== "supported") return false;
+  if (Notification.permission !== "granted") return false;
+  return (await currentSubscription().catch(() => null)) !== null;
 }
 
 /**

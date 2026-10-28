@@ -32,6 +32,7 @@
     "tournament": "Abrir torneio"
   },
   "region": "Avisos",
+  "tabTitle": "({count}) {title}",
   "push": {
     "title": "Avisos com o site fechado",
     "description": "Check-in aberto, partida pronta e mapa enviado pelo adversário; para a organização, mapa contestado e hora de iniciar. Cada navegador se ativa à parte: ative em cada aparelho que você usa.",
@@ -55,7 +56,7 @@
   },
   "sound": {
     "title": "Som",
-    "description": "Com o site aberto, cada aviso toca um som curto. A escolha vale para este navegador.",
+    "description": "Com o site aberto, cada aviso toca um som curto, também com a aba em segundo plano (a não ser que os avisos com o site fechado estejam ativados: aí quem avisa é a notificação). A escolha vale para este navegador.",
     "label": "Tocar som com os avisos",
     "test": "Ouvir o som"
   }

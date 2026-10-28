@@ -4,5 +4,12 @@
   "backToCommunity": "Volver a la comunidad",
   "backToTournament": "Volver al torneo",
   "brand": "Torneos QC",
-  "skipToContent": "Saltar al contenido"
+  "skipToContent": "Saltar al contenido",
+  "tenants": {
+    "label": "Tus comunidades",
+    "loading": "Cargando tus comunidades…",
+    "failed": "No se pudieron cargar tus comunidades. Cierra y vuelve a abrir.",
+    "empty": "Todavía no participas en ninguna comunidad.",
+    "create": "Crear comunidad"
+  }
 }

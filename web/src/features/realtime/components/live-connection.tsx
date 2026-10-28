@@ -4,6 +4,7 @@ import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { playChime, unlockAudioOnGesture } from "@/shared/lib/chime";
+import { useMissedNotices } from "../hooks/use-missed-notices";
 import type { Notice } from "../hooks/use-notice-text";
 import { useRealtimeHub } from "../hooks/use-realtime-hub";
 import { createRefreshScheduler } from "../lib/refresh-scheduler";
@@ -16,6 +17,15 @@ const MAX_NOTICES = 3;
 let lastId = 0;
 
 /**
+ * Põe na pilha os avisos que chegaram, cada um com um id (só os últimos
+ * ficam). O id sai fora do updater, que o React pode chamar duas vezes.
+ */
+function append(arrived: Notice[]) {
+  const shown = arrived.map((notice) => ({ id: String(++lastId), notice }));
+  return (list: ShownNotice[]) => [...list, ...shown].slice(-MAX_NOTICES);
+}
+
+/**
  * Abre a conexão da aba enquanto está montado (o layout o monta só para quem
  * está logado) e recarrega a página (`router.refresh()`, que mantém o estado
  * dos componentes de cliente, o foco e o que está sendo digitado) quando muda
@@ -24,8 +34,9 @@ let lastId = 0;
  * viram uma recarga; com a aba escondida, recarrega ao voltar.
  *
  * Aviso para a pessoa (`notify`) com a aba visível: o toast e o som (se não
- * foi desligado). Com a aba escondida, nada: o Web Push cuida. Abrir a página
- * de um aviso o tira da tela.
+ * foi desligado). Com a aba escondida, `useMissedNotices`: o título da aba,
+ * o som se não houver Web Push e o toast quando ela volta. Abrir a página de
+ * um aviso o tira da tela.
  */
 export function LiveConnection() {
   const hub = useRealtimeHub();
@@ -38,12 +49,15 @@ export function LiveConnection() {
     setNotices((list) => list.filter((n) => n.notice.path !== pathname));
   }
 
+  const miss = useMissedNotices((missed) => setNotices(append(missed)));
+
   const refresh = useEffectEvent(() => router.refresh());
   const show = useEffectEvent((notice: Notice) => {
-    if (document.visibilityState !== "visible") return;
-    lastId++;
-    const shown = { id: String(lastId), notice };
-    setNotices((list) => [...list, shown].slice(-MAX_NOTICES));
+    if (document.visibilityState !== "visible") {
+      miss(notice);
+      return;
+    }
+    setNotices(append([notice]));
     if (soundEnabled()) playChime();
   });
   const close = useCallback(
