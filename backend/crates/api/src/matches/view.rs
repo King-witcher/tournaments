@@ -42,6 +42,7 @@ pub fn entrant(e: &Seeded) -> BracketEntrant {
         nickname: e.nickname.clone(),
         avatar_url: e.avatar_url.clone(),
         seed: e.seed,
+        withdrawn: e.withdrawn,
         left: e.left,
     }
 }

@@ -1,13 +1,14 @@
 //! Regras do banco para o schema inteiro, gravando o estado inválido direto
 //! por SQL: o que cada exclusão apaga ou recusa (`deletion`), o owner de cada
-//! tenant (`owner`), o membro inativo (`inactive`) e a coerência e a forma
-//! dos dados (`checks`). As de resultados e histórico ficam em
-//! `matches::schema`.
+//! tenant (`owner`), o membro inativo (`inactive`), a desistência e o W.O.
+//! automático (`withdrawal`) e a coerência e a forma dos dados (`checks`). As
+//! de resultados e histórico ficam em `matches::schema`.
 
 mod checks;
 mod deletion;
 mod inactive;
 mod owner;
+mod withdrawal;
 
 use axum::{Router, http::StatusCode};
 use serde_json::json;

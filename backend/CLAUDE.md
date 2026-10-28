@@ -42,7 +42,8 @@ crates/api/src/
                   register), check_in.rs, seeding.rs (finalize, que o início usa), seed_order.rs
   lifecycle/      transições depois de publicar (.../check-in/open, .../registration/reopen,
                   .../start): transition.rs concentra de onde, para onde e o que cada uma faz;
-                  withdrawal.rs, quem deixa os torneios (o membro que sai da comunidade).
+                  withdrawal.rs, a desistência (.../participants/{user_id}/withdrawal) e o membro
+                  que sai da comunidade (sai das inscrições abertas, desiste das em andamento).
                   Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
                   gera a chave; desfazer a descarta)
   maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
@@ -51,11 +52,12 @@ crates/api/src/
                   (confirmação por tempo, apply_due_confirmations), report.rs (jogadores),
                   manage.rs (organizador: lançar, resolver, corrigir, W.O.), outcome.rs (placar
                   pelos lados → engine), key.rs (wb-1-3), result.rs, history.rs, view.rs,
-                  detail.rs, actions.rs; SQL em db/ (leitura e confirmação por tempo, writes,
-                  events, games)
+                  detail.rs, actions.rs, withdrawals.rs (W.O. automático de quem desistiu, depois
+                  de toda mudança; settle_withdrawals); SQL em db/ (leitura e confirmação por
+                  tempo, writes, events, games)
 ```
 
-Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `realtime` (WebSocket; o agendador chama `matches::due::apply_due_confirmations`), `media` (prints no S3), `ratings`.
+Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `realtime` (WebSocket; o agendador chama `matches::apply_due_confirmations`), `media` (prints no S3), `ratings`.
 
 ### O que é um domínio
 

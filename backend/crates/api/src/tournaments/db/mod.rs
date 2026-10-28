@@ -40,6 +40,8 @@ impl TournamentId {
 
 pub struct StoredTournament {
     pub id: TournamentId,
+    /// O tenant em que `find` achou o torneio.
+    pub tenant: TenantId,
     pub slug: String,
     pub locale: Locale,
     pub texts: Texts,

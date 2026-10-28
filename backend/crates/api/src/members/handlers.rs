@@ -42,7 +42,7 @@ pub async fn update_my_membership(
     tag = "tenants",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave. Volta por convite, como player, com o apelido de antes"),
+        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "member.owner_must_transfer (o owner transfere a posse antes)"),

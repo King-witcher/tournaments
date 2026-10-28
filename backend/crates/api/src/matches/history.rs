@@ -17,6 +17,7 @@ impl EventKind {
             Self::Entered => "entered",
             Self::Corrected => "corrected",
             Self::Walkover => "walkover",
+            Self::AutoWalkover => "auto_walkover",
             Self::Voided => "voided",
         }
     }
@@ -33,6 +34,7 @@ impl EventKind {
             Entered,
             Corrected,
             Walkover,
+            AutoWalkover,
             Voided,
         ]
         .into_iter()
@@ -47,8 +49,9 @@ impl EventKind {
 /// Um evento a gravar.
 pub struct NewEvent<'a> {
     pub kind: EventKind,
-    /// Quem agiu (`None` só na confirmação por tempo, que o SQL grava sozinho).
-    pub actor: i64,
+    /// Quem agiu; `None` no W.O. automático (e na confirmação por tempo, que
+    /// o SQL grava sozinho).
+    pub actor: Option<i64>,
     /// O resultado que a ação deixou, quando ela define um.
     pub outcome: Option<Outcome>,
     pub comment: Option<&'a str>,
@@ -74,7 +77,7 @@ mod tests {
 
     #[test]
     fn kinds_round_trip() {
-        for kind in ["reported", "auto_confirmed", "voided"] {
+        for kind in ["reported", "auto_confirmed", "auto_walkover", "voided"] {
             assert_eq!(EventKind::from_db(kind).unwrap().as_str(), kind);
         }
         assert!(EventKind::from_db("undone").is_err());

@@ -14,7 +14,9 @@ use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
 pub use games::{GameRow, games, replace_games};
-pub use writes::{NewResult, confirm, contest, insert_report, put_by_organizer, void};
+pub use writes::{
+    NewResult, confirm, contest, insert_report, put_by_organizer, put_walkover, void,
+};
 
 /// Uma partida no banco: tenant, torneio, fase e identificador.
 pub struct MatchRef<'a> {

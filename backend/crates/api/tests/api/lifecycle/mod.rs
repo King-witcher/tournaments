@@ -1,5 +1,8 @@
 //! Transições depois de publicar: abrir o check-in, reabrir a inscrição,
-//! iniciar e desfazer o início.
+//! iniciar e desfazer o início; a desistência e o W.O. automático em
+//! `withdrawal`.
+
+mod withdrawal;
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};

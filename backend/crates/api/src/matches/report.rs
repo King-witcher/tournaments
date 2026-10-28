@@ -76,7 +76,7 @@ pub async fn report(
     db::replace_games(&mut tx, id, &proposed.games).await?;
     let event = NewEvent {
         kind: EventKind::Reported,
-        actor: member.user.id,
+        actor: Some(member.user.id),
         outcome: Some(proposed.outcome),
         comment: None,
     };
@@ -132,7 +132,7 @@ pub async fn confirm(
     db::confirm(&mut tx, &at, r.id, via, member.user.id).await?;
     let event = NewEvent {
         kind,
-        actor: member.user.id,
+        actor: Some(member.user.id),
         // A resolução registra o placar que passou a valer.
         outcome: (kind == EventKind::Resolved).then(|| r.outcome()),
         comment: None,
@@ -192,7 +192,7 @@ pub async fn contest(
     db::contest(&mut tx, r.id, member.user.id, &comment).await?;
     let event = NewEvent {
         kind: EventKind::Contested,
-        actor: member.user.id,
+        actor: Some(member.user.id),
         outcome: None,
         comment: Some(&comment),
     };

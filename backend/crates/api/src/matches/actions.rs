@@ -11,6 +11,7 @@ use super::{
     stage::{self, Stage},
     types::{GameInput, MatchDetail},
     view::Viewer,
+    withdrawals,
 };
 use crate::{
     shared::{ApiError, text::clean_text},
@@ -81,15 +82,16 @@ pub fn at<'a, R>(
     }
 }
 
-/// Depois de gravar: refaz a chave, encerra ou reabre o torneio conforme
-/// ela e devolve a partida `key` como ficou.
+/// Depois de gravar: refaz a chave, dá os W.O. automáticos que a mudança
+/// deixou prontos, encerra ou reabre o torneio conforme a chave e devolve a
+/// partida `key` como ficou.
 pub async fn respond<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     mut tournament: StoredTournament,
     key: &str,
 ) -> Result<MatchDetail, ApiError> {
-    let stage = stage::load(conn, &tournament).await?;
+    let stage = withdrawals::apply(conn, &tournament).await?;
     tournament.status = stage::sync_status(conn, &tournament, &stage).await?;
     let viewer = Viewer::new(member, &stage);
     let m = detail::find(&stage, key)?;

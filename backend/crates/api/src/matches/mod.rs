@@ -8,7 +8,10 @@
 //! início e no desfazer do `lifecycle` (`start`, `discard`); encerrar e
 //! reabrir o torneio conforme a chave, aqui (`stage::sync_status`). A
 //! confirmação por tempo é aplicada ao ler e agir (`due`);
-//! `apply_due_confirmations` é o que um agendador chamaria.
+//! `apply_due_confirmations` é o que um agendador chamaria. Partida pronta
+//! com quem desistiu ou saiu da comunidade vira W.O. automático depois de
+//! cada mudança (`withdrawals`); a desistência, que fica no `lifecycle`,
+//! chama `settle_withdrawals`.
 
 mod actions;
 mod db;
@@ -24,12 +27,15 @@ mod result;
 mod stage;
 mod types;
 mod view;
+mod withdrawals;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use due::apply_due_confirmations;
 pub use stage::{discard, start};
+pub use withdrawals::settle as settle_withdrawals;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

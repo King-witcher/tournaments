@@ -7,7 +7,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{Acquire, PgConnection};
 
-use super::{db, stage};
+use super::{db, withdrawals};
 use crate::{
     shared::ApiError,
     tenants::TenantMember,
@@ -15,8 +15,9 @@ use crate::{
 };
 
 /// Confirma os resultados com a janela vencida em `now` e, se algum
-/// confirmou, encerra o torneio se a chave terminou. Quem chama trava o
-/// torneio (`find_for_update`). Devolve quantos confirmou.
+/// confirmou, dá os W.O. automáticos que ficaram prontos e encerra o torneio
+/// se a chave terminou. Quem chama trava o torneio (`find_for_update`).
+/// Devolve quantos confirmou.
 pub async fn apply_due_confirmations(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -24,8 +25,7 @@ pub async fn apply_due_confirmations(
 ) -> Result<u64, ApiError> {
     let confirmed = db::confirm_due(conn, tournament.id, now).await?;
     if confirmed > 0 {
-        let stage = stage::load(conn, tournament).await?;
-        stage::sync_status(conn, tournament, &stage).await?;
+        withdrawals::settle(conn, tournament).await?;
     }
     Ok(confirmed)
 }

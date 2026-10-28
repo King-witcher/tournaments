@@ -194,6 +194,7 @@ pub async fn find(
 
     Ok(Some(StoredTournament {
         id,
+        tenant,
         slug: row.slug,
         locale: Locale::from_db(&row.locale)?,
         texts: Texts {

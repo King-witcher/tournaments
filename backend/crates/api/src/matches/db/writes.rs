@@ -1,5 +1,6 @@
 //! Escritas em `match_results`: enviar, confirmar, contestar, o organizador
-//! definir e anular. Quem chama trava o torneio: as posições do replay são
+//! definir, o W.O. automático e anular. Quem chama trava o torneio: as
+//! posições do replay são
 //! `max + 1`.
 
 use engine::core::{Outcome, ParticipantId};
@@ -145,6 +146,44 @@ pub async fn put_by_organizer(
         a_wins,
         b_wins,
         new.by
+    )
+    .fetch_one(conn)
+    .await
+}
+
+/// W.O. automático para `winner` (o outro lado desistiu ou saiu da
+/// comunidade): já confirmado, sem autor. Substitui o pendente ou contestado
+/// da partida e entra no fim do replay. Devolve o id.
+pub async fn put_walkover(
+    conn: &mut PgConnection,
+    at: &MatchRef<'_>,
+    best_of: u8,
+    (a, b): (ParticipantId, ParticipantId),
+    winner: ParticipantId,
+) -> Result<i64, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"insert into match_results
+               (tenant_id, tournament_id, stage, match_key, best_of, side_a, side_b, status,
+                winner, confirmed_via, confirmed_at, position)
+           values ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, 'withdrawal', now(),
+                   (select coalesce(max(position), 0) + 1
+                    from match_results where tournament_id = $2))
+           on conflict (tournament_id, stage, match_key) do update
+           set side_a = excluded.side_a, side_b = excluded.side_b, status = 'confirmed',
+               winner = excluded.winner, a_wins = null, b_wins = null, reported_side = null,
+               reported_by = null, reported_at = now(), confirm_by = null, contested_by = null,
+               contested_at = null, contest_comment = null, confirmed_via = 'withdrawal',
+               confirmed_by = null, confirmed_at = now(), position = excluded.position
+           where match_results.status <> 'confirmed'
+           returning id"#,
+        at.tenant.get(),
+        at.tournament.get(),
+        at.stage,
+        at.key,
+        i16::from(best_of),
+        a.0,
+        b.0,
+        winner.0
     )
     .fetch_one(conn)
     .await

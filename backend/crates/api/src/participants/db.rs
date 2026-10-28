@@ -13,7 +13,7 @@ pub async fn list(
         Participant,
         r#"select p.user_id, m.nickname, u.avatar_url, p.registered_at,
                   p.checked_in_at is not null as "checked_in!", p.seed,
-                  m.left_at is not null as "left!"
+                  p.withdrawn_at is not null as "withdrawn!", m.left_at is not null as "left!"
            from participants p
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
            join users u on u.id = p.user_id
@@ -35,8 +35,18 @@ pub struct Seeded {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub seed: i32,
+    /// Desistiu do torneio em andamento.
+    pub withdrawn: bool,
     /// Saiu da comunidade (ou foi removido).
     pub left: bool,
+}
+
+impl Seeded {
+    /// Fora do torneio: desistiu ou saiu da comunidade. Toda partida pronta
+    /// com ele vira W.O. para o adversário.
+    pub const fn out(&self) -> bool {
+        self.withdrawn || self.left
+    }
 }
 
 /// Quem está na chave: os inscritos com seed, do 1 em diante. Depois de
@@ -48,7 +58,7 @@ pub async fn seeded(
     sqlx::query_as!(
         Seeded,
         r#"select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as "seed!",
-                  m.left_at is not null as "left!"
+                  p.withdrawn_at is not null as "withdrawn!", m.left_at is not null as "left!"
            from participants p
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
            join users u on u.id = p.user_id
@@ -134,8 +144,9 @@ pub async fn delete(
     Ok(result.rows_affected() > 0)
 }
 
-/// Tira as inscrições de quem saiu do tenant, ao desfazer o início (com o
-/// torneio já fora de andamento: inscrito de torneio iniciado não sai).
+/// Tira as inscrições de quem desistiu ou saiu do tenant, ao desfazer o
+/// início (com o torneio já fora de andamento: inscrito de torneio iniciado
+/// não sai).
 pub async fn delete_departed(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -144,12 +155,47 @@ pub async fn delete_departed(
         r#"delete from participants p
            using tenant_members m
            where m.tenant_id = p.tenant_id and m.user_id = p.user_id
-             and p.tournament_id = $1 and m.left_at is not null"#,
+             and p.tournament_id = $1 and (p.withdrawn_at is not null or m.left_at is not null)"#,
         tournament.get()
     )
     .execute(conn)
     .await?;
     Ok(result.rows_affected())
+}
+
+/// Marca a desistência de `user_id` no torneio em andamento (`by`: o
+/// organizador que marcou; `None`, saiu da comunidade). Quem já tinha
+/// desistido fica como estava. `None` se ele não está inscrito; `Some(false)`
+/// se está, mas fora da chave (sem seed).
+pub async fn withdraw(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    user_id: i64,
+    by: Option<i64>,
+) -> Result<Option<bool>, sqlx::Error> {
+    let seed = sqlx::query_scalar!(
+        "select seed from participants where tournament_id = $1 and user_id = $2",
+        tournament.get(),
+        user_id
+    )
+    .fetch_optional(&mut *conn)
+    .await?;
+    match seed {
+        None => Ok(None),
+        Some(None) => Ok(Some(false)),
+        Some(Some(_)) => {
+            sqlx::query!(
+                r#"update participants set withdrawn_at = now(), withdrawn_by = $3
+                   where tournament_id = $1 and user_id = $2 and withdrawn_at is null"#,
+                tournament.get(),
+                user_id,
+                by
+            )
+            .execute(conn)
+            .await?;
+            Ok(Some(true))
+        }
+    }
 }
 
 /// Marca o check-in de `user_id` (`by`: o organizador que marcou; `None`, o

@@ -64,6 +64,8 @@ pub enum Confirmation {
     Deadline,
     /// Organizer ou owner (confirmou, resolveu, lançou ou corrigiu).
     Organizer,
+    /// W.O. automático: o perdedor desistiu ou saiu da comunidade.
+    Withdrawal,
 }
 
 impl Confirmation {
@@ -72,6 +74,7 @@ impl Confirmation {
             Self::Opponent => "opponent",
             Self::Deadline => "deadline",
             Self::Organizer => "organizer",
+            Self::Withdrawal => "withdrawal",
         }
     }
 
@@ -80,6 +83,7 @@ impl Confirmation {
             "opponent" => Ok(Self::Opponent),
             "deadline" => Ok(Self::Deadline),
             "organizer" => Ok(Self::Organizer),
+            "withdrawal" => Ok(Self::Withdrawal),
             other => Err(unknown("confirmed_via", other)),
         }
     }

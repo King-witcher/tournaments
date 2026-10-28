@@ -5,7 +5,9 @@
 //! inscreve por `register`; iniciar o torneio fica em `lifecycle`, que fecha
 //! o seeding por `finalize_seeding`. A chave (`matches`) lê os participantes
 //! por `seeded`. Quem sai do tenant sai das inscrições abertas por
-//! `unregister`, e desfazer o início tira quem saiu por `delete_departed`.
+//! `unregister`; quem desiste do torneio em andamento é marcado por
+//! `withdraw` (o W.O. fica em `matches`), e desfazer o início tira quem
+//! desistiu ou saiu por `delete_departed`.
 
 mod check_in;
 mod db;
@@ -19,9 +21,10 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::{Seeded, delete as unregister, delete_departed, seeded};
+pub use db::{Seeded, delete as unregister, delete_departed, seeded, withdraw};
 pub use registration::{Entry, register};
 pub use seeding::finalize as finalize_seeding;
+pub use types::ParticipantPath;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

@@ -101,7 +101,7 @@ pub async fn set_result(
     db::replace_games(&mut tx, id, &proposed.games).await?;
     let event = NewEvent {
         kind,
-        actor: member.user.id,
+        actor: Some(member.user.id),
         outcome: Some(proposed.outcome),
         comment: comment.as_deref(),
     };
@@ -153,7 +153,7 @@ async fn void(
     db::void(conn, stale.id).await?;
     let event = NewEvent {
         kind: EventKind::Voided,
-        actor: by,
+        actor: Some(by),
         outcome: None,
         comment: None,
     };

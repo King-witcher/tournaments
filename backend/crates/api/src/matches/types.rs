@@ -32,6 +32,8 @@ pub struct BracketEntrant {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub seed: i32,
+    /// Desistiu: as partidas prontas dele viram W.O. para o adversário.
+    pub withdrawn: bool,
     /// Saiu da comunidade (ou foi removido); continua na chave como histórico.
     pub left: bool,
 }
@@ -205,6 +207,8 @@ pub enum EventKind {
     Corrected,
     /// O organizador deu W.O.
     Walkover,
+    /// W.O. automático: um lado desistiu ou saiu da comunidade.
+    AutoWalkover,
     /// Resultado pendente anulado porque uma correção mudou os lados.
     Voided,
 }
@@ -212,7 +216,7 @@ pub enum EventKind {
 #[derive(Serialize, ToSchema)]
 pub struct MatchEvent {
     pub kind: EventKind,
-    /// Quem agiu; `null` na confirmação por tempo.
+    /// Quem agiu; `null` na confirmação por tempo e no W.O. automático.
     pub actor: Option<EventActor>,
     pub at: DateTime<Utc>,
     /// O resultado que a ação deixou, quando ela define um.
