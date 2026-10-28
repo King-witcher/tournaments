@@ -24,13 +24,11 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
       <Suspense fallback={null}>
         <ApiStatus />
       </Suspense>
-      <Suspense fallback={null}>
+      {/* Uma espera só: quem não entrou vê o convite a entrar, quem entrou vê as
+          listas, e a página troca o esqueleto uma vez em vez de pular três. */}
+      <Suspense fallback={<LoadingSection rows={3} />}>
         <AnonymousIntro />
-      </Suspense>
-      <Suspense fallback={<LoadingSection rows={2} />}>
         <MyTournaments />
-      </Suspense>
-      <Suspense fallback={<LoadingSection rows={2} />}>
         <MyTenants />
       </Suspense>
     </Page>

@@ -33,6 +33,7 @@
   "Auth": {
     "login": "Entrar",
     "logout": "Salir",
+    "signup": "Crear cuenta",
     "submit": "Entrar",
     "discord": "Entrar con Discord",
     "or": "o",
@@ -149,7 +150,7 @@
     "loading": "Cargando la invitación…",
     "title": "Invitación para unirte a {name}",
     "expires": "La invitación vence {expires}.",
-    "loginRequired": "Inicia sesión para aceptar la invitación.",
+    "loginRequired": "Inicia sesión o crea una cuenta para aceptar la invitación.",
     "accept": "Unirme a la comunidad",
     "tournamentTitle": "Inscripción en {name}",
     "tournamentSpots": "{count, plural, =0 {Nadie inscrito todavía} one {# inscrito} other {# inscritos}} de {max} cupos.",
