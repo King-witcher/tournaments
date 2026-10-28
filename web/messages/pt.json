@@ -479,7 +479,7 @@
       "contested": "O resultado foi contestado: quem resolve é a organização.",
       "own_report": "Você enviou este resultado: quem confirma ou contesta é o adversário.",
       "comment_invalid": "Escreva um comentário de 1 a 280 caracteres, numa linha.",
-      "correction_conflicts": "A correção contradiz uma partida confirmada depois desta, jogada por outros participantes. Só dá para mudar o placar mantendo o vencedor."
+      "correction_conflicts": "A correção contradiz uma partida confirmada depois desta: com outro vencedor aqui, aquela partida teria outros lados ou nem existiria. Só dá para mudar o placar mantendo o vencedor."
     }
   },
   "Lifecycle": {

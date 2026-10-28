@@ -479,7 +479,7 @@
       "contested": "El resultado fue impugnado: lo resuelve la organización.",
       "own_report": "Tú enviaste este resultado: quien confirma o impugna es el rival.",
       "comment_invalid": "Escribe un comentario de 1 a 280 caracteres, en una línea.",
-      "correction_conflicts": "La corrección contradice una partida confirmada después de esta, jugada por otros participantes. Solo se puede cambiar el resultado manteniendo al ganador."
+      "correction_conflicts": "La corrección contradice una partida confirmada después de esta: con otro ganador aquí, esa partida tendría otros lados o ni existiría. Solo se puede cambiar el resultado manteniendo al ganador."
     }
   },
   "Lifecycle": {
