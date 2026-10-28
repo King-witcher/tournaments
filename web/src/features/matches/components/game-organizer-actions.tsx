@@ -55,6 +55,8 @@ export function GameOrganizerActions({
         router.refresh();
         focusIfLost(gameRowId(game.number));
       },
+      // Tela para trás (o jogador já confirmou): mostra o estado de agora.
+      () => router.refresh(),
     );
 
   if (editing) {

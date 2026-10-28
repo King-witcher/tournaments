@@ -36,6 +36,9 @@ export function GameRespond({ target, number }: Props) {
           { params },
         ),
       done,
+      // A tela pode ter ficado para trás (o mapa já foi confirmado pela
+      // organização, ou anulado): recarrega para mostrar o estado de agora.
+      () => router.refresh(),
     );
   const contest = () =>
     run(
@@ -45,6 +48,9 @@ export function GameRespond({ target, number }: Props) {
           { params, body: { comment } },
         ),
       done,
+      // A tela pode ter ficado para trás (o mapa já foi confirmado pela
+      // organização, ou anulado): recarrega para mostrar o estado de agora.
+      () => router.refresh(),
     );
 
   return (
