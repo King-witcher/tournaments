@@ -10,13 +10,13 @@ export async function UserMenu() {
   if (!user) return <LoginButton />;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-0 items-center gap-3">
       {user.avatar_url && <Avatar src={user.avatar_url} />}
       <Link
         href="/account"
-        className="inline-flex min-h-11 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
+        className="inline-flex min-h-11 min-w-0 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
       >
-        {user.display_name}
+        <span className="truncate">{user.display_name}</span>
       </Link>
       <LogoutButton />
     </div>

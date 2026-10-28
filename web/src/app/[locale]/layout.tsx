@@ -50,11 +50,13 @@ export default async function LocaleLayout({
           <header className="flex items-center justify-between gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
+              className="inline-flex min-h-11 shrink-0 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
             >
               {t("home")}
             </Link>
-            <div className="flex items-center gap-4">
+            {/* min-w-0: um nome exibido longo encolhe (e corta) em vez de
+                empurrar a página para o lado no celular. */}
+            <div className="flex min-w-0 items-center gap-4">
               <Suspense fallback={null}>
                 <LocaleSwitcher />
               </Suspense>

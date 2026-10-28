@@ -15,7 +15,7 @@ export function LocaleSwitcher() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label={t("label")} className="flex gap-2 text-sm">
+    <nav aria-label={t("label")} className="flex shrink-0 gap-2 text-sm">
       {routing.locales.map((locale) =>
         locale === current ? (
           <span
