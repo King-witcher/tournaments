@@ -705,7 +705,7 @@
     "labelPart": "{part} · {round}",
     "vs": "×",
     "series": {
-      "needed": "Melhor de {bestOf}: vence quem fizer {needed} mapas.",
+      "needed": "Melhor de {bestOf}: vence quem fizer {needed, plural, one {# mapa} other {# mapas}}.",
       "open": "Placar dos mapas confirmados.",
       "pending": "{count, plural, one {# mapa espera confirmação.} other {# mapas esperam confirmação.}}",
       "contested": "{count, plural, one {# mapa contestado: a organização resolve.} other {# mapas contestados: a organização resolve.}}"
