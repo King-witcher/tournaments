@@ -40,5 +40,9 @@
     "itemRange": "{min}–{max} de {total}",
     "pageRange": "de {total, plural, one {# página} other {# páginas}}",
     "pageSelect": "Página, de {total}"
+  },
+  "toggle": {
+    "on": "Activado",
+    "off": "Desactivado"
   }
 }

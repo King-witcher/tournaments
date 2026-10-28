@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
+import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { TenantFrame } from "@/features/tenants/components/tenant-frame";
 import { Page } from "@/shared/ui/page";
 import {
@@ -31,7 +31,10 @@ export default async function CommunityLayout({
         }
       >
         {params.then(({ tenant }) => (
-          <TenantFrame slug={tenant}>{children}</TenantFrame>
+          <>
+            <LiveUpdates tenant={tenant} />
+            <TenantFrame slug={tenant}>{children}</TenantFrame>
+          </>
         ))}
       </Suspense>
     </Page>

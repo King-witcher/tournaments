@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { MemberProfile } from "@/features/members/components/member-profile";
+import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { Page } from "@/shared/ui/page";
 import { PageHeaderSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
 
@@ -24,7 +25,10 @@ export default async function MemberPage({
         }
       >
         {params.then(({ tenant, user }) => (
-          <MemberProfile tenant={tenant} user={user} />
+          <>
+            <LiveUpdates tenant={tenant} />
+            <MemberProfile tenant={tenant} user={user} />
+          </>
         ))}
       </Suspense>
     </Page>

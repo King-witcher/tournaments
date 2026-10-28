@@ -1,0 +1,26 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/z-index";
+
+// Canto de baixo, acima do conteúdo, o mais novo embaixo (perto do canto).
+// A região ocupa só o que os avisos ocupam: o resto da página continua
+// clicável.
+.stack {
+  position: fixed;
+  z-index: z-index.z("modal");
+  inset-block-end: spacing.$spacing-05;
+  inset-inline: spacing.$spacing-05;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: spacing.$spacing-03;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+// O link fica numa linha só dele, depois da frase.
+.action {
+  margin-block: spacing.$spacing-03;
+}

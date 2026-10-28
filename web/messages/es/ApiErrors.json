@@ -137,5 +137,9 @@
     "game_not_last": "Solo se puede anular el último mapa de la serie: anula antes el mapa {last}.",
     "map_required": "Elige el mapa jugado.",
     "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó."
+  },
+  "push": {
+    "not_configured": "Los avisos con el sitio cerrado están desactivados por ahora.",
+    "subscription_invalid": "Este navegador envió una suscripción de avisos que no se puede usar. Inténtalo de nuevo o usa otro navegador."
   }
 }

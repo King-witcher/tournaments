@@ -16,7 +16,7 @@
     "single": "Eliminación simple",
     "double": "Eliminación doble"
   },
-  "grandFinalReset": "Gran final con reset: si gana quien viene de la llave de perdedores, se juega otra serie",
+  "grandFinalReset": "Gran final con reset: si gana quien viene del repechaje, se juega otra serie",
   "bestOf": "Partidas",
   "finalsBestOf": {
     "single": "Final",

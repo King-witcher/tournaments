@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { SeedingView } from "@/features/participants/components/seeding-view";
+import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { Page } from "@/shared/ui/page";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
@@ -21,7 +22,10 @@ export default async function SeedingPage({
         }
       >
         {params.then(({ tenant, tournament }) => (
-          <SeedingView tenant={tenant} slug={tournament} />
+          <>
+            <LiveUpdates tenant={tenant} tournament={tournament} />
+            <SeedingView tenant={tenant} slug={tournament} />
+          </>
         ))}
       </Suspense>
     </Page>

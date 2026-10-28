@@ -11,6 +11,9 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/features/auth/components/user-menu";
+import { PushSession } from "@/features/push/components/push-session";
+import { RealtimeProvider } from "@/features/realtime/components/realtime-provider";
+import { RealtimeSession } from "@/features/realtime/components/realtime-session";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 import { themeInitScript } from "@/shared/lib/theme";
@@ -63,16 +66,27 @@ export default async function LocaleLayout({
       </head>
       <body>
         <NextIntlClientProvider>
-          <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
-            {/* O lugar de cada ação enquanto ela chega: a barra não pula. */}
-            <Suspense fallback={<HeaderPlaceholder />}>
-              <LocaleSwitcher />
+          {/* As páginas dizem o que mostram (LiveUpdates); a conexão abre
+              só para quem está logado (RealtimeSession), e a inscrição de
+              Web Push acompanha o idioma e a conta (PushSession). */}
+          <RealtimeProvider>
+            <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
+              {/* O lugar de cada ação enquanto ela chega: a barra não pula. */}
+              <Suspense fallback={<HeaderPlaceholder />}>
+                <LocaleSwitcher />
+              </Suspense>
+              <Suspense fallback={<HeaderPlaceholder />}>
+                <UserMenu />
+              </Suspense>
+            </AppHeader>
+            <AppContent>{children}</AppContent>
+            <Suspense fallback={null}>
+              <RealtimeSession />
             </Suspense>
-            <Suspense fallback={<HeaderPlaceholder />}>
-              <UserMenu />
+            <Suspense fallback={null}>
+              <PushSession />
             </Suspense>
-          </AppHeader>
-          <AppContent>{children}</AppContent>
+          </RealtimeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

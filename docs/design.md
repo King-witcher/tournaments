@@ -93,6 +93,7 @@ Um formulário, coluna estreita, `FormGroup` por seção: Identificação (nome,
 
 - **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (Markdown); resumo do formato (`StructuredList`).
 - **Chave** (`/bracket`, a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e, abaixo, a classificação.
+  - Cada lado do cartão: seed, avatar, apelido e placar. Linhas curvas, na cor da borda dos cartões, ligam cada partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas `contained`: **Chave principal**, com a grande final à direita da final, e **Repescagem** (a chave de quem perdeu uma vez), para a página não descer uma chave embaixo da outra; abre na aba da partida de quem vê. Quem muda de aba fica só com o texto ("Perdedor de C2.1").
 - **Inscritos** (`/participants`): `DataTable` (seed, apelido com avatar, estado: inscrito / check-in feito / desistiu / saiu, inscrito em), busca, paginação; organização: "Inscrever alguém" na barra e, por linha, marcar/desmarcar check-in, tirar, marcar desistência.
 - **Regras** (`/rules`): Markdown. Sem regras, a aba não aparece.
 - **Organização** (`/manage`, organização): o quadro de estado com o próximo passo e o motivo quando não dá (mínimo de inscritos, check-in aberto); resumo do seeding (definido ou "será sorteado") com o link "Editar seeding"; links de inscrição (tabela, gerar, revogar); W.O. e correções ficam na partida.

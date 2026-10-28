@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 
+import { PushPrompt } from "@/features/push/components/push-prompt";
 import { hasStarted } from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
 import { Countdown } from "@/shared/ui/countdown";
@@ -25,7 +26,8 @@ type Props = {
  * check-in que falta (até o início, com a contagem) ou feito e, depois de
  * iniciar, a situação na chave e a próxima partida. Para quem não está
  * inscrito, só o motivo de não haver botão de inscrição (privado, lotado,
- * inscrições fechadas). Nada a dizer, nada aparece.
+ * inscrições fechadas). Nada a dizer, nada aparece. Para quem está inscrito e
+ * ainda vai jogar, o convite a ativar os avisos (`PushPrompt`).
  */
 export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
   const t = useTranslations("Participants");
@@ -71,6 +73,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
       return (
         <ParticipationTile tag={tag("checked_in")}>
           <p>{t("checkIn.done")}</p>
+          <PushPrompt />
         </ParticipationTile>
       );
     }
@@ -86,6 +89,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
             })}
           </p>
         )}
+        <PushPrompt />
       </ParticipationTile>
     );
   }
@@ -106,6 +110,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
     <ParticipationTile tag={tag("registered")}>
       <p>{t("registration.registered")}</p>
       {checkInHint && <p>{checkInHint}</p>}
+      <PushPrompt />
     </ParticipationTile>
   );
 }

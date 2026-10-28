@@ -17,7 +17,7 @@
     "ready": "A jogar.",
     "bye": "Sem adversário: avança sem jogar.",
     "completed": "Encerrada.",
-    "not_needed": "Não precisou: quem veio da chave de cima venceu a grande final."
+    "not_needed": "Não precisou: quem veio da chave principal venceu a grande final."
   },
   "confirmedVia": {
     "opponent": "Confirmado pelo adversário <time></time>.",

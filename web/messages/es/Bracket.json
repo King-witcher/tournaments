@@ -7,9 +7,10 @@
   "hint": "Abre una partida para enviar o ver el resultado.",
   "scrollHint": "Desliza la llave hacia el costado para ver las otras rondas.",
   "scrollLabel": "Llave del torneo (se desplaza hacia el costado)",
+  "partsLabel": "Partes de la llave",
   "parts": {
-    "winners": "Llave de ganadores",
-    "losers": "Llave de perdedores",
+    "winners": "Llave principal",
+    "losers": "Repechaje",
     "grand_final": "Gran final"
   },
   "rounds": {
@@ -22,8 +23,8 @@
   },
   "short": {
     "single": "{round}.{index}",
-    "winners": "G{round}.{index}",
-    "losers": "P{round}.{index}",
+    "winners": "L{round}.{index}",
+    "losers": "R{round}.{index}",
     "grand_final": "GF{round}"
   },
   "from": {

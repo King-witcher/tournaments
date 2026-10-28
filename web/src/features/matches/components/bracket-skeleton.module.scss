@@ -24,7 +24,7 @@
 // (a chave de verdade rola).
 .rounds {
   display: flex;
-  gap: spacing.$spacing-06;
+  gap: spacing.$spacing-07;
   overflow: hidden;
 }
 
@@ -34,7 +34,7 @@
   flex-shrink: 0;
   justify-content: space-around;
   gap: spacing.$spacing-05;
-  inline-size: spacing.$spacing-13 + spacing.$spacing-10;
+  inline-size: spacing.$spacing-13 + spacing.$spacing-11;
 }
 
 // A altura de um cartão: cabeçalho, dois lados e o rodapé.

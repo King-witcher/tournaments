@@ -4,28 +4,57 @@ type Schemas = components["schemas"];
 type Match = Schemas["BracketMatch"];
 type Part = Schemas["BracketPart"];
 
-export type Round = { round: number; matches: Match[] };
-export type PartRounds = { part: Part; rounds: Round[] };
+/** Uma coluna da chave: as partidas de uma rodada de uma parte. */
+export type Column = {
+  part: Part;
+  round: number;
+  /** A última rodada da parte, para o nome da rodada (final, semifinal…). */
+  lastRound: number;
+  matches: Match[];
+};
 
-const PARTS: Part[] = ["winners", "losers", "grand_final"];
+/** Uma linha entre partidas: de onde vem quem ocupa um lado de `to`. */
+export type Edge = { from: string; to: string; side: "a" | "b" };
 
-/** Partidas por parte da chave (cima, baixo, grande final) e rodada. */
-export function groupByRound(matches: Match[]): PartRounds[] {
-  return PARTS.map((part) => {
+/**
+ * As colunas das partes pedidas, na ordem delas e das rodadas, lado a lado
+ * (a chave principal e, à direita, a grande final).
+ */
+export function bracketColumns(matches: Match[], parts: Part[]): Column[] {
+  return parts.flatMap((part) => {
     const rounds = new Map<number, Match[]>();
     for (const m of matches.filter((m) => m.part === part)) {
       rounds.set(m.round, [...(rounds.get(m.round) ?? []), m]);
     }
-    return {
-      part,
-      rounds: [...rounds.entries()]
-        .sort(([a], [b]) => a - b)
-        .map(([round, list]) => ({
-          round,
-          matches: list.sort((a, b) => a.index - b.index),
-        })),
-    };
-  }).filter((p) => p.rounds.length > 0);
+    const lastRound = Math.max(0, ...rounds.keys());
+    return [...rounds.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([round, list]) => ({
+        part,
+        round,
+        lastRound,
+        matches: list.sort((a, b) => a.index - b.index),
+      }));
+  });
+}
+
+/**
+ * As linhas entre as partidas de um grupo de colunas: cada lado que vem de
+ * outra partida do mesmo grupo. Quem cai da chave principal para a
+ * repescagem (ou vem dela para a grande final) muda de aba e fica só com o
+ * texto ("Perdedor de C2.1"). O reset que não precisou não recebe linha.
+ */
+export function bracketEdges(columns: Column[]): Edge[] {
+  const matches = columns.flatMap((c) => c.matches);
+  const keys = new Set(matches.map((m) => m.key));
+  return matches.flatMap((m) =>
+    m.state === "not_needed"
+      ? []
+      : (["a", "b"] as const).flatMap((side) => {
+          const from = m[side].from?.match_key;
+          return from && keys.has(from) ? [{ from, to: m.key, side }] : [];
+        }),
+  );
 }
 
 /**

@@ -6,7 +6,8 @@
   "tabs": {
     "profile": "Perfil",
     "logins": "Logins",
-    "password": "Senha"
+    "password": "Senha",
+    "notifications": "Avisos"
   },
   "name": {
     "title": "Nome exibido",

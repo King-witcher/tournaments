@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
+import { forgetPush } from "@/features/push/lib/forget-push";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
@@ -14,9 +15,9 @@ type Props = {
 };
 
 /**
- * O painel de quem está logado: Conta e Sair. Sair volta para o início:
- * quase toda página é só para membros e, sem sessão, só mostraria "entre
- * para ver".
+ * O painel de quem está logado: Conta e Sair. Sair desliga antes os avisos
+ * deste navegador (`forgetPush`) e volta para o início: quase toda página é
+ * só para membros e, sem sessão, só mostraria "entre para ver".
  */
 export function UserMenuPanel({ label, name, avatarSrc }: Props) {
   const t = useTranslations("Auth");
@@ -35,7 +36,10 @@ export function UserMenuPanel({ label, name, avatarSrc }: Props) {
           pending,
           onSelect: () =>
             run(
-              () => api.POST("/auth/logout"),
+              async () => {
+                await forgetPush();
+                return api.POST("/auth/logout");
+              },
               () => {
                 router.replace("/");
                 router.refresh();
