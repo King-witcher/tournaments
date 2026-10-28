@@ -408,7 +408,7 @@
       "invalid_path": "Endereço inválido."
     },
     "auth": {
-      "unauthenticated": "Você precisa entrar para continuar.",
+      "unauthenticated": "Sua sessão terminou. Recarregue a página para entrar de novo.",
       "discord_not_configured": "O login com Discord ainda não está configurado.",
       "state_mismatch": "O login expirou ou foi interrompido. Tente de novo.",
       "discord_denied": "Autorização cancelada no Discord.",

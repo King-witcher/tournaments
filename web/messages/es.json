@@ -408,7 +408,7 @@
       "invalid_path": "Dirección inválida."
     },
     "auth": {
-      "unauthenticated": "Tienes que iniciar sesión para continuar.",
+      "unauthenticated": "Tu sesión terminó. Recarga la página para volver a iniciar sesión.",
       "discord_not_configured": "El inicio de sesión con Discord todavía no está configurado.",
       "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
       "discord_denied": "Autorización cancelada en Discord.",
