@@ -139,7 +139,7 @@
     "frags_disagree": "Os frags do mapa {game} não batem com quem venceu."
   },
   "push": {
-    "not_configured": "Os avisos com o site fechado estão desligados por enquanto.",
-    "subscription_invalid": "Este navegador mandou uma inscrição de avisos que não dá para usar. Tente de novo ou use outro navegador."
+    "not_configured": "As notificações com o site fechado estão desligadas por enquanto.",
+    "subscription_invalid": "Este navegador mandou uma inscrição de notificações que não dá para usar. Tente de novo ou use outro navegador."
   }
 }
