@@ -1,8 +1,12 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
+// Quebra sempre, mesmo dentro de uma célula de tabela com `white-space:
+// nowrap` (a das ações): sem isso o erro estoura a célula.
 .error {
   @include type.type-style("helper-text-01");
 
+  overflow-wrap: anywhere;
   color: theme.$text-error;
+  white-space: normal;
 }

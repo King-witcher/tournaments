@@ -2,8 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { MembershipSettings } from "@/features/members/components/membership-settings";
-import { TenantTabSkeleton } from "@/features/tenants/components/tenant-tab-skeleton";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** Aba Configurações da comunidade: o que é de quem vê. */
 export default async function TenantSettingsPage({
@@ -13,10 +12,10 @@ export default async function TenantSettingsPage({
   return (
     <Suspense
       fallback={
-        <TenantTabSkeleton label={t("loading")}>
+        <TabLoading label={t("loading")}>
           <SectionSkeleton rows={2} />
           <SectionSkeleton rows={1} />
-        </TenantTabSkeleton>
+        </TabLoading>
       }
     >
       {params.then(({ tenant }) => (

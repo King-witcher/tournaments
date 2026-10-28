@@ -13,6 +13,7 @@ import { Suspense } from "react";
 import { UserMenu } from "@/features/auth/components/user-menu";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
+import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
 import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
@@ -48,7 +49,18 @@ export default async function LocaleLayout({
   const t = await getTranslations("Nav");
 
   return (
-    <html lang={locale} className={cn(plexSans.variable, plexMono.variable)}>
+    <html
+      lang={locale}
+      className={cn(plexSans.variable, plexMono.variable)}
+      // O script do tema põe data-theme antes da hidratação.
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: constante nossa, sem entrada de usuário
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+      </head>
       <body>
         <NextIntlClientProvider>
           <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>

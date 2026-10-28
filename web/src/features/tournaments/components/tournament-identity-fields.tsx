@@ -4,11 +4,11 @@ import { useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { slugify } from "@/shared/lib/slugify";
+import { FormSection } from "@/shared/ui/form-section";
 import { Select } from "@/shared/ui/select";
 import { TextInput } from "@/shared/ui/text-input";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
-import { TournamentFormGroup } from "./tournament-form-group";
 
 type Props = {
   tenant: string;
@@ -42,7 +42,7 @@ export function TournamentIdentityFields({
   const address = `${host}/${locale}/${tenant}/${values.slug || "…"}`;
 
   return (
-    <TournamentFormGroup legend={t("identity")}>
+    <FormSection legend={t("identity")}>
       <TextInput
         labelText={t("name")}
         name="name"
@@ -95,6 +95,6 @@ export function TournamentIdentityFields({
         <SelectItem value="public" text={t("visibilityOptions.public")} />
         <SelectItem value="private" text={t("visibilityOptions.private")} />
       </Select>
-    </TournamentFormGroup>
+    </FormSection>
   );
 }

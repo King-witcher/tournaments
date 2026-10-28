@@ -8,20 +8,21 @@ import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import {
+  type FormResult,
+  fieldId,
+  formError,
+  invalidProps,
+} from "@/shared/lib/form-result";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { TextInput } from "@/shared/ui/text-input";
-import { fieldId, useFocusInvalid } from "../hooks/use-focus-invalid";
-import {
-  errorField,
-  type FormResult,
-  formError,
-  invalidProps,
-} from "../lib/form-result";
+import { type AuthField, errorField } from "../lib/auth-field";
 
 /** O nome salvo, para o "Salvo." sumir quando ele é editado de novo. */
-type Result = FormResult & { savedName?: string };
+type Result = FormResult<AuthField> & { savedName?: string };
 
 /** Nome exibido da conta; salvar atualiza o cabeçalho (`router.refresh`). */
 export function DisplayNameForm({ name }: { name: string }) {

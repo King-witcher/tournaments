@@ -8,18 +8,19 @@ import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import {
+  type FormResult,
+  fieldId,
+  formError,
+  invalidProps,
+} from "@/shared/lib/form-result";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
-import { fieldId, useFocusInvalid } from "../hooks/use-focus-invalid";
-import {
-  errorField,
-  type FormResult,
-  formError,
-  invalidProps,
-} from "../lib/form-result";
+import { type AuthField, errorField } from "../lib/auth-field";
 
 /**
  * Troca o nome de usuário e/ou a senha, confirmando a senha atual. A senha
@@ -37,32 +38,35 @@ export function ChangePasswordForm({ username }: { username: string }) {
   const [confirm, setConfirm] = useState("");
   const [current, setCurrent] = useState("");
 
-  const [result, submit, pending] = useActionState<FormResult>(async () => {
-    // Sem senha nova, a repetida nem aparece: não há o que comparar.
-    if (password && password !== confirm) {
-      return { error: t("passwordsDiffer"), field: "confirm" };
-    }
-    const outcome = await callApi(
-      api.PATCH("/auth/password", {
-        body: {
-          current_password: current,
-          username: newUsername.trim() === username ? undefined : newUsername,
-          password: password || undefined,
-        },
-      }),
-    );
-    if (!outcome.ok) {
-      return {
-        error: errorMessage(outcome.code, outcome.params),
-        field: errorField(outcome.code),
-      };
-    }
-    setPassword("");
-    setConfirm("");
-    setCurrent("");
-    router.refresh();
-    return { saved: true };
-  }, {});
+  const [result, submit, pending] = useActionState<FormResult<AuthField>>(
+    async () => {
+      // Sem senha nova, a repetida nem aparece: não há o que comparar.
+      if (password && password !== confirm) {
+        return { error: t("passwordsDiffer"), field: "confirm" };
+      }
+      const outcome = await callApi(
+        api.PATCH("/auth/password", {
+          body: {
+            current_password: current,
+            username: newUsername.trim() === username ? undefined : newUsername,
+            password: password || undefined,
+          },
+        }),
+      );
+      if (!outcome.ok) {
+        return {
+          error: errorMessage(outcome.code, outcome.params),
+          field: errorField(outcome.code),
+        };
+      }
+      setPassword("");
+      setConfirm("");
+      setCurrent("");
+      router.refresh();
+      return { saved: true };
+    },
+    {},
+  );
   useFocusInvalid(prefix, result);
   const general = formError(result);
 

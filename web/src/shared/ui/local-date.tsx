@@ -5,10 +5,11 @@ import { useLocale } from "next-intl";
 import { useIsClient } from "@/shared/hooks/use-is-client";
 
 /**
- * O dia (sem hora) de `value` no fuso e no idioma de quem vê: "membro desde".
- * No servidor e até hidratar sai em UTC, que pode ser o dia vizinho.
+ * Só o dia de `value` (ISO), sem hora, no fuso e no idioma de quem vê: "membro
+ * desde", datas de histórico. No servidor e até hidratar sai em UTC, que pode
+ * ser o dia vizinho. Com hora, `LocalDateTime`.
  */
-export function MemberSince({ value }: { value: string }) {
+export function LocalDate({ value }: { value: string }) {
   const locale = useLocale();
   const isClient = useIsClient();
   const text = new Intl.DateTimeFormat(locale, {

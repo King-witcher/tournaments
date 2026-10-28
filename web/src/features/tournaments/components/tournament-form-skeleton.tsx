@@ -2,14 +2,12 @@ import {
   ButtonSkeleton,
   NumberInputSkeleton,
   SelectSkeleton,
-  SkeletonText,
   Stack,
   TextAreaSkeleton,
   TextInputSkeleton,
 } from "@carbon/react";
-import type { ReactNode } from "react";
 
-import { PageHeaderSkeleton } from "@/shared/ui/skeleton";
+import { FormSectionSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
 
 type Props = {
   /** O que está carregando, lido pelo leitor de tela. */
@@ -20,7 +18,9 @@ type Props = {
 
 /**
  * A página do formulário de torneio carregando, na forma dela: o cabeçalho
- * com a trilha e os grupos de campos com os botões no fim.
+ * com a trilha e as seções de campos de formas diferentes (por isso monta as
+ * seções com `FormSectionSkeleton`, e não com o `FormSkeleton`) com os botões
+ * no fim.
  */
 export function TournamentFormSkeleton({ label, edit = false }: Props) {
   return (
@@ -28,32 +28,32 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
       <PageHeaderSkeleton label={label} />
       <div aria-hidden>
         <Stack gap={7}>
-          <Group>
+          <FormSectionSkeleton>
             <TextInputSkeleton />
             {!edit && <TextInputSkeleton />}
             <SelectSkeleton />
-          </Group>
-          <Group>
+          </FormSectionSkeleton>
+          <FormSectionSkeleton>
             <SelectSkeleton />
             <SelectSkeleton />
             <SelectSkeleton />
-          </Group>
-          <Group>
+          </FormSectionSkeleton>
+          <FormSectionSkeleton>
             <NumberInputSkeleton />
             <TextInputSkeleton />
             <SelectSkeleton />
-          </Group>
-          <Group>
+          </FormSectionSkeleton>
+          <FormSectionSkeleton>
             <TextAreaSkeleton />
             <TextAreaSkeleton />
-          </Group>
+          </FormSectionSkeleton>
           {edit && (
-            <Group>
+            <FormSectionSkeleton>
               <TextInputSkeleton />
               <TextAreaSkeleton />
-            </Group>
+            </FormSectionSkeleton>
           )}
-          {/* Cancelar e Salvar, lado a lado como no ButtonSet. */}
+          {/* Cancelar e Salvar, lado a lado como no FormActions. */}
           <div>
             <ButtonSkeleton />
             <ButtonSkeleton />
@@ -61,15 +61,5 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
         </Stack>
       </div>
     </>
-  );
-}
-
-/** A legenda de um grupo e os campos dele. */
-function Group({ children }: { children: ReactNode }) {
-  return (
-    <Stack gap={6}>
-      <SkeletonText heading width="40%" />
-      {children}
-    </Stack>
   );
 }

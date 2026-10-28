@@ -19,8 +19,7 @@ export async function AlreadySignedIn({ returnTo }: { returnTo: string }) {
     <Notice
       kind="info"
       title={t("alreadySignedIn", { name: user.display_name })}
-    >
-      <Link href={returnTo}>{t("continueSignedIn")}</Link>
-    </Notice>
+      action={<Link href={returnTo}>{t("continueSignedIn")}</Link>}
+    />
   );
 }

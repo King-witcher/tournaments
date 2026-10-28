@@ -6,8 +6,8 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
-import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { ErrorText } from "@/shared/ui/error-text";
 
 type Props = {
   token: string;

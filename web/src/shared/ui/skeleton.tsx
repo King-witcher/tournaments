@@ -1,5 +1,14 @@
-import { DataTableSkeleton } from "@carbon/react";
+import {
+  ButtonSkeleton,
+  DataTableSkeleton,
+  SkeletonText,
+  Stack,
+  TextAreaSkeleton,
+  TextInputSkeleton,
+  Tile,
+} from "@carbon/react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import styles from "./skeleton.module.scss";
 
@@ -7,16 +16,6 @@ import styles from "./skeleton.module.scss";
 // cada rota com elas (o mesmo `Page`, as mesmas seções), para a página não
 // pular quando o conteúdo chega. Uma peça por página leva o `label`, lido
 // pelo leitor de tela; as outras são só visuais.
-
-/**
- * @deprecated Use as peças com forma (`PageHeaderSkeleton`, `SectionSkeleton`,
- * `LoadingSection`, `TableSkeleton`, `TileGridSkeleton`) ou `SkeletonText`/
- * `SkeletonPlaceholder` do `@carbon/react`. A `className` antiga (Tailwind)
- * não faz mais nada.
- */
-export function Skeleton(_: { className?: string }) {
-  return <span aria-hidden className={styles.crumb} />;
-}
 
 /** O texto "Carregando…" só para leitor de tela. */
 function LoadingLabel({ label }: { label?: string }) {
@@ -46,6 +45,30 @@ export function PageHeaderSkeleton({
       <span aria-hidden className={styles.title} />
       {meta && <span aria-hidden className={styles.meta} />}
     </div>
+  );
+}
+
+/**
+ * Uma aba carregando, dentro da casca (cabeçalho e abas já prontos): o
+ * "Carregando…" só para leitor de tela, com o `label` da aba, e os esqueletos
+ * com a forma dela, empilhados como os blocos da aba. Use no `loading.tsx` e
+ * no `<Suspense>` de toda aba, para quem usa leitor de tela saber que a aba
+ * está chegando.
+ */
+export function TabLoading({
+  label,
+  children,
+}: {
+  /** O que está carregando, lido pelo leitor de tela. */
+  label: string;
+  /** Os esqueletos na forma da aba. */
+  children: ReactNode;
+}) {
+  return (
+    <Stack gap={7}>
+      <LoadingLabel label={label} />
+      {children}
+    </Stack>
   );
 }
 
@@ -148,6 +171,94 @@ export function PageSkeleton({
       <PageHeaderSkeleton label={label} />
       {tabs && <TabsSkeleton />}
       <SectionSkeleton rows={4} />
+    </div>
+  );
+}
+
+/** Uma seção de formulário carregando: a legenda e os campos, com o espaço do `FormSection`. */
+export function FormSectionSkeleton({
+  heading = true,
+  children,
+}: {
+  /** Com a legenda da seção em cima. */
+  heading?: boolean;
+  /** Os campos (`TextInputSkeleton`, `SelectSkeleton`, `TextAreaSkeleton`…). */
+  children: ReactNode;
+}) {
+  return (
+    <Stack gap={6}>
+      {heading && <SkeletonText heading width="40%" />}
+      {children}
+    </Stack>
+  );
+}
+
+/**
+ * Um formulário carregando, na forma dele: as seções com os campos e o botão
+ * do Carbon em esqueleto, para a página não pular quando ele chega. Cada
+ * seção repete a legenda (`heading`), a frase (`text`), `fields` campos e,
+ * com `textarea`, uma área de texto. Formulário com seções de formas
+ * diferentes (o de torneio) monta as suas com `FormSectionSkeleton`.
+ */
+export function FormSkeleton({
+  sections = 1,
+  fields = 2,
+  textarea = false,
+  heading = false,
+  text = false,
+  tile = false,
+  label,
+}: {
+  /** Quantas seções. */
+  sections?: number;
+  /** Quantos campos (rótulo e caixa) por seção. */
+  fields?: number;
+  /** Com uma área de texto depois dos campos de cada seção. */
+  textarea?: boolean;
+  /** Com o título da seção em cima. */
+  heading?: boolean;
+  /** Com uma linha de texto (a descrição) antes dos campos. */
+  text?: boolean;
+  /** Dentro de um `Tile` (entrar, cadastro). */
+  tile?: boolean;
+  /**
+   * O que está carregando, lido pelo leitor de tela; padrão "Carregando…".
+   * `false` quando outra peça da mesma página já diz (um aviso por página).
+   */
+  label?: string | false;
+}) {
+  const section = (
+    <>
+      {heading && <SkeletonText heading width="40%" />}
+      {text && <SkeletonText width="80%" />}
+      {Array.from({ length: fields }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: campos fixos, sem identidade.
+        <TextInputSkeleton key={i} />
+      ))}
+      {textarea && <TextAreaSkeleton />}
+    </>
+  );
+  const body =
+    sections === 1 ? (
+      <Stack gap={6}>
+        {section}
+        <ButtonSkeleton />
+      </Stack>
+    ) : (
+      <Stack gap={7}>
+        {Array.from({ length: sections }, (_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: seções fixas, sem identidade.
+          <Stack key={i} gap={6}>
+            {section}
+          </Stack>
+        ))}
+        <ButtonSkeleton />
+      </Stack>
+    );
+  return (
+    <div>
+      {label !== false && <LoadingLabel label={label} />}
+      <div aria-hidden>{tile ? <Tile>{body}</Tile> : body}</div>
     </div>
   );
 }

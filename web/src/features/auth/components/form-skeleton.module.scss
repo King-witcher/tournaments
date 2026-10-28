@@ -1,6 +1,0 @@
-@use "@carbon/react/scss/utilities/visually-hidden" as *;
-
-// O "Carregando…" só para leitor de tela: o esqueleto já mostra que vem algo.
-.label {
-  @include visually-hidden;
-}

@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
 import { TournamentOverview } from "@/features/tournaments/components/tournament-overview";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** A aba Visão geral (o cabeçalho e as abas vêm do `layout.tsx` do grupo). */
 export default async function TournamentOverviewPage({

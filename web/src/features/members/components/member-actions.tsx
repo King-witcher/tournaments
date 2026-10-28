@@ -7,7 +7,7 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
+import { ErrorText } from "@/shared/ui/error-text";
 import {
   type OverflowAction,
   OverflowActions,

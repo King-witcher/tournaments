@@ -29,9 +29,9 @@ src/
     lib/                funções puras do domínio (ex.: slugify)
   shared/               o que serve a qualquer domínio; nunca importa de features/
     ui/                 a biblioteca sobre o Carbon (inventário em "Biblioteca shared/ui")
-    hooks/              hooks genéricos (ex.: useCopyToClipboard)
+    hooks/              hooks genéricos (ex.: useCopyToClipboard, useFocusInvalid)
     api/                client, serverApi, callApi, useApiAction, tradução de erro, schema.d.ts
-    lib/                utilitários genéricos (cn, focus, datetime-local)
+    lib/                utilitários genéricos (cn, focus, datetime-local, form-result)
   i18n/                 next-intl: routing, navigation (Link, Href), request, namespaces
 messages/<pt|es>/       um JSON por namespace
 ```
@@ -60,7 +60,7 @@ messages/<pt|es>/       um JSON por namespace
 
 ### Como está montado
 
-- `src/app/globals.scss` (o primeiro import do `layout.tsx`): os estilos do Carbon **por componente** (o `@use "@carbon/react"` inteiro dava 1,25 MB de CSS; a lista dá ~0,6 MB), o tema `white` em `:root` e o `g100` em `prefers-color-scheme: dark`, a regra de toque e o `:focus-visible` dos controles nativos. **Componente do Carbon que não está na lista aparece sem estilo**: acrescente `@use "@carbon/react/scss/components/<pasta>";` (o nome da pasta em `node_modules/@carbon/styles/scss/components`), em ordem alfabética, sem mexer no resto do arquivo.
+- `src/app/globals.scss` (o primeiro import do `layout.tsx`): os estilos do Carbon **por componente** (o `@use "@carbon/react"` inteiro dava 1,25 MB de CSS; a lista dá ~0,6 MB), o tema `white` em `:root` e o `g100` em `prefers-color-scheme: dark` ou em `data-theme="dark"` (a escolha da pessoa, que vence o sistema), a regra de toque e o `:focus-visible` dos controles nativos. **Componente do Carbon que não está na lista aparece sem estilo**: acrescente `@use "@carbon/react/scss/components/<pasta>";` (o nome da pasta em `node_modules/@carbon/styles/scss/components`), em ordem alfabética, sem mexer no resto do arquivo.
 - Fonte: IBM Plex Sans e Mono do `next/font/google` (sem CDN), nas variáveis `--font-plex-sans` e `--font-plex-mono` do `<html>`. O `$font-families` do Carbon lê essas variáveis, e os tokens de tipo saem como `--cds-*` (por isso `type.type-style("code-02")` num módulo já pega a Plex Mono).
 - Toque: abaixo de `md` (672px), os tamanhos `sm` e `md` dos controles do Carbon (botão, campo, select, ⋯, abas, acordeão, paginação, busca) valem `lg` (48px), por token em `globals.scss`. Nenhum componente precisa tratar: passe o tamanho de desktop (`md`, o padrão; `sm` em linha de tabela).
 - O `.scss` passa por um `sass-loader` próprio (`turbopack.rules` no `next.config.ts`): o embutido do Turbopack não acha os `@use` relativos do Carbon. Não volte para o embutido.
@@ -107,7 +107,7 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
 
 ### Casca e página
 
-- **`AppHeader`** (c), **`AppContent`**, **`HeaderPanelAction`** (c), **`HeaderPlaceholder`**, **`LocaleSwitcher`** (c), **`UserPanel`** (c): a casca, montada em `app/[locale]/layout.tsx`. `UserPanel` recebe `label`, `name`, `avatarSrc` e `items` (`{ label, href }` ou `{ label, onSelect, pending }`); os itens vêm de `features/auth` (`UserMenu`). Os fluxos não mexem aqui.
+- **`AppHeader`** (c), **`AppContent`**, **`HeaderPanelAction`** (c), **`HeaderPlaceholder`**, **`LocaleSwitcher`** (c), **`UserPanel`** (c): a casca, montada em `app/[locale]/layout.tsx`. `UserPanel` recebe `label`, `name`, `avatarSrc` e `items` (`{ label, href }` ou `{ label, onSelect, pending }`); os itens vêm de `features/auth` (`UserMenu`). No fim do painel, sempre, o `ThemeSwitcher` (claro, do navegador, escuro), que grava a escolha no `localStorage` e em `data-theme` no `<html>` (`useTheme`, `shared/lib/theme.ts`). Os fluxos não mexem aqui.
 - **`Page`** `width="narrow" | "wide"`: a coluna da página (`Grid`/`Column`) e o espaço entre os blocos (`Stack gap={7}`). `narrow` (padrão): texto e formulário, 8 colunas centradas a partir de `lg`. `wide`: tabela, grade de tiles, chave.
 
   ```tsx
@@ -118,7 +118,7 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
     </Suspense>
   </Page>
   ```
-- **`PageHeader`**: o topo de toda página. `breadcrumbs` (`{ href, label }[]`, da raiz até a mãe; a atual é o título), `title`, `tags` (`StatusTag`s), `meta` (uma linha: formato · início · inscritos), `actions` (uma `primary` e as secundárias, na ordem), `overflow` (um `OverflowActions` com o raro e o destrutivo). No celular as ações descem para baixo do título.
+- **`PageHeader`**: o topo de toda página. `breadcrumbs` (`{ href, label }[]`, da raiz até a mãe; a atual é o título; a `key` sai do destino, então rótulos iguais não colidem), `title`, `tags` (`StatusTag`s), `meta` (uma linha: formato · início · inscritos), `actions` (uma `primary` e as secundárias, na ordem), `overflow` (um `OverflowActions` com o raro e o destrutivo). No celular as ações descem para baixo do título.
 
   ```tsx
   <PageHeader
@@ -130,7 +130,7 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
     overflow={<TournamentOverflow tenant={tenant} slug={slug} />}
   />
   ```
-- **`PageTabs`** (c) `tabs={{ href, label }[]} label children`: abas do Carbon que são links para sub-rotas; a atual sai do endereço (href igual ou o prefixo mais longo). Vai no `layout.tsx` do segmento, com as sub-rotas em `children` (cada uma com o próprio `loading.tsx`). Aba que não se aplica (Regras sem regras, Organização para jogador) simplesmente não entra na lista.
+- **`PageTabs`** (c) `tabs={{ href, label }[]} label children`: abas do Carbon que são links para sub-rotas; a atual sai do endereço (href igual ou o prefixo mais longo). Vai no `layout.tsx` do segmento, com as sub-rotas em `children` (cada uma com o próprio `loading.tsx`). Aba que não se aplica (Regras sem regras, Organização para jogador) simplesmente não entra na lista. O respiro entre a barra de abas e o conteúdo (`spacing-07`, o mesmo do `Page`) já vem do painel: o conteúdo da aba não leva margem nem `Stack` extra para isso.
 
   ```tsx
   // app/[locale]/[tenant]/layout.tsx
@@ -159,8 +159,9 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
   </Button>
   {error && <ErrorText>{error}</ErrorText>}
   ```
-- **`ButtonLink`** (c) `href kind size renderIcon`: link com cara de botão, para ação que leva a outra página (Criar, Editar, Entrar). `<ButtonLink href={`/${slug}/new`} kind="tertiary">{t("create")}</ButtonLink>`.
-- **`Link`** (c) `href inline size renderIcon`: o link do Carbon sobre o do i18n. Solto: azul e, no celular, 48px de altura. No meio de um parágrafo: `inline` (sublinhado). `<Link href={`/${tenant}`}>{t("backToCommunity")}</Link>`.
+- **`ButtonLink`** (c) `href kind size renderIcon external?`: link com cara de botão, para ação que leva a outra página (Criar, Editar, Entrar). `<ButtonLink href={`/${slug}/new`} kind="tertiary">{t("create")}</ButtonLink>`. `external`: o `href` é um endereço de fora das rotas do site (o OAuth do Discord, na API) e vai cru, sem o prefixo de idioma: `<ButtonLink external href={apiUrl} kind="tertiary" renderIcon={LogoDiscord}>…</ButtonLink>`.
+- **`IconButton`** (c) `label kind size pending`: botão só com ícone (`<IconButton label={t("up", { name })} size="sm" onClick={up}><ArrowUp /></IconButton>`). O `label` é obrigatório: vira o tooltip e o nome acessível. `kind` padrão `ghost`; `pending` age como o do `Button` (sem `disabled`, `aria-disabled`/`aria-busy`, ignora o clique e troca o ícone pelo indicador).
+- **`Link`** (c) `href inline size renderIcon`: o link do Carbon sobre o do i18n (repassa `aria-label` e as outras props de acessibilidade, como `aria-describedby`). Solto: azul e, no celular, 48px de altura. No meio de um parágrafo: `inline` (sublinhado). `<Link href={`/${tenant}`}>{t("backToCommunity")}</Link>`.
 - **`ConfirmButton`** (c): ação que não se desfaz fácil. O clique abre o `Modal` com `title` (padrão: o texto do botão), `question` (o que vai acontecer), o primário com o mesmo texto do botão e "Não", que recebe o foco; ao fechar, o foco volta ao botão, que fica `pending` enquanto a ação roda. `destructive` (padrão `true`): Modal `danger`; `false` para o que só avança (publicar, iniciar). `confirmSlug`: o primário só libera com o slug digitado (desfazer início, transferir posse). Padrões: `size="sm"` e `kind` `danger--tertiary` (destrutivo) ou `tertiary`.
 
   ```tsx
@@ -172,7 +173,32 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
     {t("remove")}
   </ConfirmButton>
   ```
-- **`ConfirmModal`** (c) `open onClose onConfirm title confirmLabel destructive slug`: o mesmo Modal, para quem o abre por conta (um formulário que confirma antes de enviar). Quem abre devolve o foco ao fechar.
+- **`ConfirmModal`** (c) `open onClose onConfirm title confirmLabel destructive slug extra confirmDisabled`: o mesmo Modal, para quem o abre por conta (um formulário que confirma antes de enviar). `children` é a pergunta; `extra` é um campo a mais depois dela (a nota do histórico), que recebe o foco inicial no lugar do "Não"; `confirmDisabled` trava o primário (falta preencher o `extra`). Quem abre devolve o foco ao fechar.
+
+  ```tsx
+  <ConfirmModal
+    open={open}
+    onClose={close}
+    onConfirm={replay}
+    title={t("replaySubmit", { number })}
+    confirmLabel={t("replay")}
+    destructive
+    extra={<TextInput labelText={t("note")} value={note} onChange={(e) => setNote(e.target.value)} />}
+  >
+    {t("replayQuestion", { number })}
+  </ConfirmModal>
+  ```
+- **`FormModal`** (c) `title submitLabel onSubmit onClose pending? submitDisabled? error? returnFocusTo?` + os campos em `children`: o Modal de um formulário curto (um ou dois campos). Primário com o nome da ação (`pending`), "Cancelar", `error` (o que a API devolveu) acima dos botões, foco no primeiro campo, Enter envia e, ao fechar sem enviar, o foco volta ao botão que abriu (`returnFocusTo` se o navegador não der foco ao botão no clique). Existe só enquanto aberto e sai da árvore (portal no `body`): monte `{open && <Dialogo />}`, com o estado dos campos no `Dialogo`, para cada abertura começar vazia; depois de enviar, quem abriu desmonta e leva o foco para onde faz sentido.
+
+  ```tsx
+  {open && (
+    <FormModal title={t("add.title")} submitLabel={t("add.submit")} pending={pending} submitDisabled={!userId} error={error} onClose={() => setOpen(false)} onSubmit={add}>
+      <Select labelText={t("add.member")} value={userId} onChange={(e) => setUserId(e.target.value)}>…</Select>
+    </FormModal>
+  )}
+  ```
+- **`PassiveModal`** (c) `title onClose returnFocusTo?`: Modal só de informação, com o X para fechar (o link gerado, que a API só mostra uma vez). Existe só enquanto aberto, como o `FormModal`: `{link && <PassiveModal title={t("createdTitle")} onClose={() => setLink(undefined)}><InviteLink link={link} /></PassiveModal>}`. As features não usam `Modal`/`ComposedModal` do Carbon direto.
+- **`ActionWithNote`** `note? error? align?`: o botão (ou ⋯) com, logo embaixo, o motivo de não dar ou o erro da última tentativa (`useApiAction`). O invólucro existe sempre, para o botão não ser recriado (e perder o foco) quando o erro aparece; `align="end"` na célula de ações de uma tabela. `<ActionWithNote error={error} note={blocked && t("why")}><Button disabled={blocked}>…</Button></ActionWithNote>`.
 - **`OverflowActions`** (c) `items label? pending? size?`: o menu ⋯ (por linha de tabela ou no `PageHeader`). Item: `{ label, onSelect?, href?, destructive?, disabled?, confirm?: { question, title?, slug? } }`; com `confirm`, abre o `ConfirmModal` e devolve o foco ao ⋯. `pending` mostra o indicador ao lado.
 
   ```tsx
@@ -186,46 +212,46 @@ Cada componente já cumpre os princípios (foco, `pending`, toque, celular, conf
 
 ### Formulário
 
-O padrão: `Form` (do `@carbon/react`, com `action={submit}` do `useActionState`), um `FormGroup legendText` por seção, `Stack gap={6}` dentro, campos com `labelText`, `helperText`, `invalid` e `invalidText`, `FormError` acima dos botões e `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos.
+O padrão: `Form` (do `@carbon/react`, com `action={submit}` do `useActionState`), um `FormSection legend` por seção (quando há mais de um grupo de campos; com um só, os campos vão direto num `Stack gap={6}`), campos com `labelText`, `helperText`, `invalid` e `invalidText`, `FormError` acima dos botões e `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos.
 
 ```tsx
 <Form action={submit}>
   <Stack gap={7}>
-    <FormGroup legendText={t("identity")}>
-      <Stack gap={6}>
-        <TextInput
-          labelText={t("name")}
-          helperText={t("nameHint")}
-          name="name"
-          required
-          invalid={nameError !== undefined}
-          invalidText={nameError}
-        />
-        <Select
-          labelText={t("visibility")}
-          value={visibility}
-          onChange={(e) => setVisibility(e.target.value)}
-        >
-          <SelectItem value="public" text={t("public")} />
-        </Select>
-      </Stack>
-    </FormGroup>
+    <FormSection legend={t("identity")}>
+      <TextInput
+        labelText={t("name")}
+        helperText={t("nameHint")}
+        name="name"
+        required
+        invalid={nameError !== undefined}
+        invalidText={nameError}
+      />
+      <Select
+        labelText={t("visibility")}
+        value={visibility}
+        onChange={(e) => setVisibility(e.target.value)}
+      >
+        <SelectItem value="public" text={t("public")} />
+      </Select>
+    </FormSection>
     {error && <FormError>{error}</FormError>}
     <FormActions pending={pending} cancelHref={`/${tenant}`} />
   </Stack>
 </Form>;
 ```
 
+- **`FormSection`** `legend description?`: uma seção do formulário: `FormGroup` do Carbon com a legenda em `heading-02`, a frase `description` e `Stack gap={6}` com os campos.
 - **`TextInput`**, **`PasswordInput`**, **`TextArea`**, **`Select`** (c): os do Carbon com `id` gerado (e, no `PasswordInput`, o mostrar/esconder traduzido); as props são as do Carbon. `Select` aceita `<option>` ou `SelectItem`.
 - **`NumberInput`** (c) `labelText value onChange min max step`: `value` e `onChange` em `number | null` (vazio é `null`, com `allowEmpty`).
 - **`DateTimeInput`** (c) `labelText value onChange helperText`: data e hora no fuso de quem usa; entra e sai em ISO (UTC); vazio até hidratar.
-- **`Checkbox`** (c) `labelText checked onChange(boolean)`; **`RadioGroup`** (c) `legendText options={{ value, label }[]} value onChange orientation` (até ~5 opções; mais que isso, `Select`).
+- **`Checkbox`** (c) `labelText checked onChange(boolean)`; **`RadioGroup`** (c) `legendText options={{ value, label }[]} value onChange orientation` (até ~5 opções; mais que isso, `Select`): cada opção tem alvo de toque de 48px abaixo de `md`, rótulo longo quebra em qualquer ponto e as opções horizontais que não cabem descem para a linha de baixo.
 - **`FormError`** `title?`: o erro geral (o que a API devolveu), em `InlineNotification` de erro. Erro de um campo vai no `invalidText` dele.
-- **`FormActions`** (c) `submitLabel? pending disabled cancelHref? onCancel? cancelLabel? destructive?`: o `ButtonSet` com "Cancelar" secundário à esquerda e o primário (`type="submit"`, padrão "Salvar") à direita.
+- **`FormActions`** (c) `submitLabel? pending disabled cancelHref? onCancel? cancelLabel? destructive? extra?`: "Cancelar" secundário à esquerda e o primário (`type="submit"`, padrão "Salvar") à direita, cada botão com a largura do próprio texto (o `ButtonSet` do Carbon limita todo botão a 196px, por isso não é usado aqui). `extra` é uma ação a mais na ponta oposta (um botão `tertiary` ou `ghost`): `<FormActions pending={pending} cancelHref={back} extra={<Button kind="tertiary" onClick={shuffle}>{t("shuffle")}</Button>} />`.
+- **`FormResult<F>`**, `invalidProps`, `formError`, `fieldId` (`shared/lib/form-result.ts`) e **`useFocusInvalid`** (`shared/hooks/use-focus-invalid.ts`): o erro de um envio, por campo. `useActionState<FormResult<"name" | "slug">>` devolve `{ error, field }` (o `field` sai de um mapa código da API → campo na feature, como `errorField` em `features/auth/lib/auth-field.ts`); `{...invalidProps(result, "name")}` põe `invalid`/`invalidText` no campo, `formError(result)` é o que vai no `FormError` e `useFocusInvalid(prefix, result)` leva o foco ao campo recusado. Os campos levam `id={fieldId(prefix, "name")}` (`prefix` do `useId`); com a ref do formulário no lugar do `prefix`, o campo é achado pelo `name`.
 
 ### Listas
 
-- **`DataTable`** (c): lista grande (inscritos, membros, convites, torneios da comunidade), com busca na barra, paginação no cliente (25, 50 ou 100; aparece com mais de 25 linhas), linha que abre página, ações por linha e estado vazio. As células chegam prontas (o Server Component monta as linhas) e a busca procura em `search`. `columns`: `{ key, header, secondary? }` (`secondary` some até `md`; deixe sem a principal e a de estado). `rows`: `{ id, cells, search?, href?, actions? }`; com `href`, a célula principal (`primaryColumn`, padrão a primeira) vira link e o clique na linha leva ao mesmo lugar. `toolbar`: a ação da barra (a primária da aba). `empty`: `{ text, action? }`.
+- **`DataTable`** (c): lista grande (inscritos, membros, convites, torneios da comunidade), com busca na barra, paginação no cliente (25, 50 ou 100; aparece com mais de 25 linhas), linha que abre página, ações por linha e estado vazio. As células chegam prontas (o Server Component monta as linhas) e a busca procura em `search`. `columns`: `{ key, header, secondary? }` (`secondary` some até `md`; deixe sem a principal e a de estado). `rows`: `{ id, cells, search?, href?, actions? }`; com `href`, a célula principal (`primaryColumn`, padrão a primeira) vira link e o clique na linha leva ao mesmo lugar. `toolbar`: a ação da barra (a primária da aba); com `toolbar`, a barra fica montada também sem linhas (a ação não perde o foco quando a primeira linha chega); a busca só aparece com linhas. `empty`: `{ text, action? }`.
 
   ```tsx
   <DataTable
@@ -253,13 +279,13 @@ O padrão: `Form` (do `@carbon/react`, com `action={submit}` do `useActionState`
 
 ### Estado e retorno
 
-- **`StatusTag`** `status size?`: a `Tag` com a cor do significado. `draft` cinza, `registration` azul, `check_in` roxo, `in_progress` verde, `finished` cinza frio, `cancelled` vermelho (cancelado, desistiu, saiu, perdeu a vaga), `waiting` verde-azulado, `contested` magenta, `confirmed` verde, `neutral` cinza (papel, contagem). Os códigos do torneio são os da API: `<StatusTag status={tournament.status}>{tStatus(tournament.status)}</StatusTag>`. Código da API com outro nome: um mapa `Record<CódigoDaApi, Status>` na feature (ver `my-tournament-tile.tsx`).
-- **`Notice`** `kind="error" | "warning" | "info" | "success"` `title?`: aviso na página (`InlineNotification` sem fechar); o de erro é `role="alert"`.
-- **`ErrorText`** (em `@/shared/ui/alert`): erro curto junto do botão de linha que falhou (o `error` do `useApiAction`).
+- **`StatusTag`** `status size?`: a `Tag` com a cor do significado. `draft` cinza, `registration` azul, `check_in` roxo, `in_progress` verde, `finished` cinza frio, `cancelled` vermelho (cancelado, desistiu, saiu, perdeu a vaga), `waiting` verde-azulado, `contested` magenta, `confirmed` verde, `neutral` cinza (papel, contagem). Os códigos do torneio são os da API: `<StatusTag status={tournament.status}>{tStatus(tournament.status)}</StatusTag>`. Código da API com outro nome: um mapa `Record<CódigoDaApi, Status>` na feature; a situação de quem joga tem o seu em `features/participants/lib/situation.ts` (`SITUATION_STATUS`), que as outras features importam em vez de repetir.
+- **`Notice`** `kind="error" | "warning" | "info" | "success"` `title? action?`: aviso na página (`InlineNotification` sem fechar); o de erro é `role="alert"`. `action` é um botão ou link depois do texto: `<Notice title={t("alreadySignedIn", { name })} action={<Link href={back}>{t("continue")}</Link>} />`.
+- **`ErrorText`** (`@/shared/ui/error-text`): erro curto junto do botão de linha que falhou (o `error` do `useApiAction`). Quebra de linha sempre, mesmo em célula de tabela com `white-space: nowrap`.
 - **`Toast`** (c) `open onClose title kind? timeout?`: só para "copiado" e afins; some sozinho.
 - **`ProgressSteps`** (c) `steps={{ key, label, secondaryLabel? }[]} current label`: o ciclo do torneio, só leitura; vertical no celular.
 - **`Accordion`** `title open?`: um bloco fechado (encerrados, histórico, organização da partida). Vários seguidos: `Accordion` e `AccordionItem` do Carbon direto.
-- **Esqueletos** (`@/shared/ui/skeleton`): `PageHeaderSkeleton breadcrumb? meta? label?` (leva o "Carregando…" para leitor de tela; um por página), `TabsSkeleton`, `SectionSkeleton tiles? rows?`, `TableSkeleton columns? rows?`, `TileGridSkeleton count?`, `LoadingSection label? rows?` (com o texto visível) e `PageSkeleton` (genérico). Monte o `loading.tsx` na forma da página:
+- **Esqueletos** (`@/shared/ui/skeleton`): `PageHeaderSkeleton breadcrumb? meta? label?` (leva o "Carregando…" para leitor de tela; um por página), `TabsSkeleton`, `SectionSkeleton tiles? rows?`, `TableSkeleton columns? rows?`, `TileGridSkeleton count?`, `LoadingSection label? rows?` (com o texto visível), `TabLoading label` (uma aba carregando: o "Carregando…" para leitor de tela e os esqueletos em volta, em `Stack gap={7}`; use no `loading.tsx` e no `<Suspense>` de toda aba), `FormSkeleton sections? fields? textarea? heading? text? tile? label?` (um formulário: seções com legenda, campos, área de texto e o botão; `label={false}` quando outra peça da página já fala), `FormSectionSkeleton heading?` (uma seção de formato próprio, para o formulário que não cabe no `FormSkeleton`, como o de torneio) e `PageSkeleton` (genérico). Monte o `loading.tsx` na forma da página:
 
   ```tsx
   export default function Loading() {
@@ -277,11 +303,7 @@ O padrão: `Form` (do `@carbon/react`, com `action={submit}` do `useActionState`
 
 - **`Avatar`** `src? name? size="sm" | "md" | "lg"` (24, 32 e 48px): sem imagem, a inicial. Decorativo: o nome vai sempre ao lado.
 - **`Markdown`**: texto de usuário (descrição, regras) com a tipografia do Carbon, em coluna de leitura.
-- **`Countdown`** (c) `until onExpire?`, **`LocalDateTime`** (c) `value`, **`LocalTime`** (c) `value`: tempo e data no fuso de quem vê (UTC até hidratar).
-
-### Antigos (adaptadores `@deprecated`, só até o fluxo refazer a tela)
-
-`Field` + `Input`/`Textarea` → `TextInput`, `TextArea`, `Select` com `labelText`; `Alert` → `Notice kind="error"` ou `FormError`; `Badge` → `StatusTag`; `RowLink` → `DataTable` com `href` ou `TileGrid` + `LinkTile`; `Disclosure` → `Accordion`; `Skeleton` → as peças de esqueleto; `Button variant` → `kind` (`default`→`primary`, `outline`→`tertiary`, `destructive`→`danger`, `link`→botão com cara de link); `ConfirmButton danger`/`variant` → `destructive`/`kind`; `Page spacing` → nada. Tela refeita não usa nenhum deles.
+- **`Countdown`** (c) `until onExpire?`, **`LocalDateTime`** (c) `value`, **`LocalDate`** (c) `value` (só o dia), **`LocalTime`** (c) `value` (só a hora): tempo e data no fuso de quem vê (UTC até hidratar).
 
 ## Textos (messages)
 

@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** As regras carregando: o texto. */
 export default async function Loading() {

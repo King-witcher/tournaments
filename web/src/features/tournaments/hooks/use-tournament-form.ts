@@ -1,5 +1,5 @@
 import { useLocale } from "next-intl";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -7,6 +7,8 @@ import { type ApiErrorParams, callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import type { FormResult } from "@/shared/lib/form-result";
 import {
   controlName,
   type FieldErrors,
@@ -126,15 +128,16 @@ export function useTournamentForm(
     undefined,
   );
 
-  // Erro num campo: o foco vai para ele, e o leitor de tela lê o rótulo e o erro.
-  useEffect(() => {
-    if (failure?.field === undefined) return;
-    formRef.current
-      ?.querySelector<HTMLElement>(
-        `[name="${controlName(failure.field, failure.locale)}"]`,
-      )
-      ?.focus();
-  }, [failure]);
+  // Erro num campo: o foco vai para ele (pelo `name`), e o leitor de tela lê o
+  // rótulo e o erro.
+  const result = useMemo<FormResult>(
+    () => ({
+      error: failure?.message,
+      field: failure?.field && controlName(failure.field, failure.locale),
+    }),
+    [failure],
+  );
+  useFocusInvalid(formRef, result);
 
   const current = (f: Failure) =>
     f.field === undefined

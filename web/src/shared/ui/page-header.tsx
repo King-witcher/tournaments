@@ -29,6 +29,11 @@ type Props = {
   children?: ReactNode;
 };
 
+/** O destino identifica a migalha (dois rótulos iguais não colidem); o índice desempata destinos repetidos. */
+function crumbKey({ href }: Crumb, index: number) {
+  return `${index}-${typeof href === "string" ? href : JSON.stringify(href)}`;
+}
+
 /**
  * O topo de toda página: onde estou (trilha e título), o que é isto (tags e
  * metadado) e o que posso fazer agora (uma ação primária, as secundárias e o
@@ -48,8 +53,8 @@ export function PageHeader({
     <header className={styles.header}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumb aria-label={t("breadcrumb")}>
-          {breadcrumbs.map((crumb) => (
-            <BreadcrumbItem key={crumb.label}>
+          {breadcrumbs.map((crumb, index) => (
+            <BreadcrumbItem key={crumbKey(crumb, index)}>
               <IntlLink href={crumb.href}>{crumb.label}</IntlLink>
             </BreadcrumbItem>
           ))}

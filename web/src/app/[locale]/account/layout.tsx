@@ -1,13 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { type ReactNode, Suspense } from "react";
 
-import { AccountTab } from "@/features/auth/components/account-tab";
-import { FormSkeleton } from "@/features/auth/components/form-skeleton";
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { Page } from "@/shared/ui/page";
 import { PageHeader } from "@/shared/ui/page-header";
 import { PageTabs } from "@/shared/ui/page-tabs";
-import { TabsSkeleton } from "@/shared/ui/skeleton";
+import { FormSkeleton, TabLoading, TabsSkeleton } from "@/shared/ui/skeleton";
 
 /**
  * A conta: o título e as abas Perfil, Logins e Senha, cada uma uma sub-rota
@@ -29,9 +27,9 @@ export default async function AccountLayout({
         fallback={
           <>
             <TabsSkeleton />
-            <AccountTab>
-              <FormSkeleton heading fields={1} label={t("loading")} />
-            </AccountTab>
+            <TabLoading label={t("loading")}>
+              <FormSkeleton heading fields={1} label={false} />
+            </TabLoading>
           </>
         }
       >

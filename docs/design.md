@@ -5,7 +5,7 @@ Alvo da experiência de uso do site, decidido em 28/10/2026 para o MVP. Este arq
 ## Decisões de base
 
 - **Carbon v11** (`@carbon/react`, `@carbon/icons-react`), fonte IBM Plex (Sans e Mono) servida pelo `next/font`, sem CDN.
-- **Temas**: `white` no claro e `g100` no escuro, seguindo `prefers-color-scheme` (como hoje). Toda tela é conferida nos dois.
+- **Temas**: `white` no claro e `g100` no escuro, seguindo `prefers-color-scheme` até a pessoa escolher outro no painel dela (claro, escuro ou do navegador). Toda tela é conferida nos dois.
 - **Só Carbon**: Tailwind sai. Layout com `Grid`/`Column`/`Stack`/`Layer`; o pouco de CSS próprio (chave, avatar, placar) fica em `.module.scss` usando tokens do Carbon (`@use "@carbon/styles/scss/spacing"`, `theme`, `type`, `breakpoint`). Nada de `style={{}}`, nada de pixel ou cor solta.
 - **Idiomas**: pt e es continuam; todo texto nos `messages/`, agora um arquivo por namespace (`messages/<locale>/<Namespace>.json`), para fluxos paralelos não disputarem o mesmo arquivo.
 - **Os princípios de uso de antes continuam valendo** (carregamento com esqueleto, `pending` sem `disabled`, foco depois de agir, 44px de toque no celular, 390px sem rolagem horizontal fora da chave, estado vazio com próximo passo, erro traduzido junto do controle). Eles estão em `web/CLAUDE.md`; só a forma muda.
@@ -39,7 +39,7 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". `Content` embaixo com `Grid`. Sem `SideNav` no MVP (as comunidades são pequenas e a maioria abre pelo celular).
+`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". No fim do painel, com ou sem sessão, o tema (`ContentSwitcher` de ícones: claro, do navegador, escuro). `Content` embaixo com `Grid`. Sem `SideNav` no MVP (as comunidades são pequenas e a maioria abre pelo celular).
 
 ### Início `/`
 

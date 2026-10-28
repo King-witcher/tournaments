@@ -2,12 +2,12 @@ import { useTranslations } from "next-intl";
 import { useId } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { FormSection } from "@/shared/ui/form-section";
 import { TextArea } from "@/shared/ui/text-area";
 import { TextInput } from "@/shared/ui/text-input";
 import { controlName, type FieldErrors } from "../lib/form-errors";
 import { type TranslationValues, translationChanged } from "../lib/form-values";
 import { DeleteTranslationButton } from "./delete-translation-button";
-import { TournamentFormGroup } from "./tournament-form-group";
 
 type Props = {
   tenant: string;
@@ -42,7 +42,7 @@ export function TranslationFields({
   const required = saved || translationChanged(tournament, locale, values);
 
   return (
-    <TournamentFormGroup
+    <FormSection
       legend={t("translation.title", { language: tLocales(locale) })}
       description={t("translation.hint")}
     >
@@ -91,6 +91,6 @@ export function TranslationFields({
           onRemoved={onRemoved}
         />
       )}
-    </TournamentFormGroup>
+    </FormSection>
   );
 }

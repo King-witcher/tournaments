@@ -3,7 +3,7 @@
 @use "@carbon/react/scss/type";
 
 .name {
-  @include type.type-style("heading-compact-01");
+  @include type.type-style("heading-compact-02");
 
   padding: spacing.$spacing-05 spacing.$spacing-05 spacing.$spacing-03;
   color: theme.$text-primary;

@@ -1,10 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
-import { FormSkeleton } from "@/features/auth/components/form-skeleton";
 import { LoginView } from "@/features/auth/components/login-view";
 import { Page } from "@/shared/ui/page";
 import { PageHeader } from "@/shared/ui/page-header";
+import { FormSkeleton } from "@/shared/ui/skeleton";
 
 export default async function LoginPage({
   searchParams,

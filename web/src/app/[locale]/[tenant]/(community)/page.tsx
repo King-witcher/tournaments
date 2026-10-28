@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { TenantTabSkeleton } from "@/features/tenants/components/tenant-tab-skeleton";
 import { TournamentList } from "@/features/tournaments/components/tournament-list";
-import { TableSkeleton } from "@/shared/ui/skeleton";
+import { TabLoading, TableSkeleton } from "@/shared/ui/skeleton";
 
 /** Aba Torneios da comunidade. */
 export default async function TenantTournamentsPage({
@@ -13,9 +12,9 @@ export default async function TenantTournamentsPage({
   return (
     <Suspense
       fallback={
-        <TenantTabSkeleton label={t("loading")}>
+        <TabLoading label={t("loading")}>
           <TableSkeleton columns={5} />
-        </TenantTabSkeleton>
+        </TabLoading>
       }
     >
       {params.then(({ tenant }) => (

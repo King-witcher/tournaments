@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
 import { TournamentRules } from "@/features/tournaments/components/tournament-rules";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** A aba Regras. */
 export default async function RulesPage({

@@ -1,7 +1,10 @@
 import { getTranslations } from "next-intl/server";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
-import { SectionSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
+import {
+  SectionSkeleton,
+  TabLoading,
+  TableSkeleton,
+} from "@/shared/ui/skeleton";
 
 /** Os inscritos carregando: o título e a tabela. */
 export default async function Loading() {

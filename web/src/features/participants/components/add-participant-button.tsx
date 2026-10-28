@@ -1,22 +1,14 @@
 "use client";
 
-import {
-  ComposedModal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  Stack,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { type RefObject, useRef, useState } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
-import { FormError } from "@/shared/ui/form-error";
+import { FormModal } from "@/shared/ui/form-modal";
 import { Select } from "@/shared/ui/select";
 import { PARTICIPANTS_ID } from "../lib/focus";
 
@@ -31,7 +23,7 @@ type Props = {
 
 /**
  * "Inscrever alguém", na barra da tabela de inscritos (organizer e owner, em
- * torneio público ou privado): abre o Modal com a escolha do membro. Ao
+ * torneio público ou privado): abre o `FormModal` com a escolha do membro. Ao
  * fechar sem inscrever, o foco volta ao botão; inscrito, a tabela recarrega e
  * o foco vai para ela.
  */
@@ -45,32 +37,25 @@ export function AddParticipantButton({
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
-  const close = () => {
-    setOpen(false);
-    // O Modal sai da árvore e o foco cairia no body: volta para o botão.
-    requestAnimationFrame(() => trigger.current?.focus());
-  };
-
   return (
     <>
       <Button ref={trigger} onClick={() => setOpen(true)}>
         {t("add.open")}
       </Button>
-      {open &&
-        createPortal(
-          <AddParticipantModal
-            tenant={tenant}
-            tournament={tournament}
-            candidates={candidates}
-            onClose={close}
-            onDone={() => {
-              setOpen(false);
-              router.refresh();
-              focusIfLost(PARTICIPANTS_ID);
-            }}
-          />,
-          document.body,
-        )}
+      {open && (
+        <AddParticipantModal
+          tenant={tenant}
+          tournament={tournament}
+          candidates={candidates}
+          trigger={trigger}
+          onClose={() => setOpen(false)}
+          onDone={() => {
+            setOpen(false);
+            router.refresh();
+            focusIfLost(PARTICIPANTS_ID);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -80,56 +65,51 @@ function AddParticipantModal({
   tenant,
   tournament,
   candidates,
+  trigger,
   onClose,
   onDone,
-}: Props & { onClose: () => void; onDone: () => void }) {
+}: Props & {
+  trigger: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const t = useTranslations("Participants");
-  const tCommon = useTranslations("Common");
   const { run, pending, error } = useApiAction();
   const [userId, setUserId] = useState("");
 
-  const submit = () => {
-    if (!userId) return;
-    run(
-      () =>
-        api.POST("/tenants/{slug}/tournaments/{tournament}/participants", {
-          params: { path: { slug: tenant, tournament } },
-          body: { user_id: Number(userId) },
-        }),
-      onDone,
-    );
-  };
-
   return (
-    <ComposedModal open size="sm" onClose={onClose}>
-      <ModalHeader title={t("add.title")} iconDescription={tCommon("close")} />
-      <ModalBody>
-        <Stack gap={5}>
-          <p>{t("add.hint")}</p>
-          <Select
-            labelText={t("add.member")}
-            value={userId}
-            onChange={(event) => setUserId(event.target.value)}
-            data-modal-primary-focus
-          >
-            <option value="">{t("add.choose")}</option>
-            {candidates.map((c) => (
-              <option key={c.userId} value={c.userId}>
-                {c.nickname}
-              </option>
-            ))}
-          </Select>
-          {error && <FormError>{error}</FormError>}
-        </Stack>
-      </ModalBody>
-      <ModalFooter>
-        <Button kind="secondary" onClick={onClose}>
-          {tCommon("cancel")}
-        </Button>
-        <Button pending={pending} disabled={!userId} onClick={submit}>
-          {t("add.submit")}
-        </Button>
-      </ModalFooter>
-    </ComposedModal>
+    <FormModal
+      title={t("add.title")}
+      submitLabel={t("add.submit")}
+      pending={pending}
+      submitDisabled={!userId}
+      error={error}
+      returnFocusTo={trigger}
+      onClose={onClose}
+      onSubmit={() =>
+        run(
+          () =>
+            api.POST("/tenants/{slug}/tournaments/{tournament}/participants", {
+              params: { path: { slug: tenant, tournament } },
+              body: { user_id: Number(userId) },
+            }),
+          onDone,
+        )
+      }
+    >
+      <p>{t("add.hint")}</p>
+      <Select
+        labelText={t("add.member")}
+        value={userId}
+        onChange={(event) => setUserId(event.target.value)}
+      >
+        <option value="">{t("add.choose")}</option>
+        {candidates.map((c) => (
+          <option key={c.userId} value={c.userId}>
+            {c.nickname}
+          </option>
+        ))}
+      </Select>
+    </FormModal>
   );
 }

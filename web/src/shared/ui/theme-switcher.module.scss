@@ -1,0 +1,19 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O rótulo em cima e o seletor embaixo, com o respiro lateral dos itens do
+// painel; o seletor fica do tamanho dos ícones, não estica.
+.theme {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-03 spacing.$spacing-05 spacing.$spacing-05;
+}
+
+.label {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}

@@ -76,15 +76,24 @@
 @use "@carbon/react/scss/components/ui-shell";
 
 // Tema claro (white) por padrão e escuro (g100) quando o sistema pede; os
-// tokens viram variáveis --cds-* que os componentes e os módulos leem.
+// tokens viram variáveis --cds-* que os componentes e os módulos leem. A
+// escolha de quem usa (ThemeSwitcher) vem em data-theme no <html> e vence o
+// sistema; sem ela, vale o do navegador.
 :root {
+  color-scheme: light;
   @include theme.theme(themes.$white);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     @include theme.theme(themes.$g100);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  @include theme.theme(themes.$g100);
 }
 
 // Toque: abaixo de md (celular), os tamanhos sm e md dos controles do Carbon

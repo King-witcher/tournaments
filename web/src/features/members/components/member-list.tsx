@@ -3,11 +3,11 @@ import { getTranslations } from "next-intl/server";
 import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
+import { LocalDate } from "@/shared/ui/local-date";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { getMembers } from "../server";
 import { MemberActions } from "./member-actions";
 import { MemberName } from "./member-name";
-import { MemberSince } from "./member-since";
 
 type Role = components["schemas"]["Role"];
 
@@ -58,7 +58,7 @@ export async function MemberList({ slug }: { slug: string }) {
               role: (
                 <StatusTag status="neutral">{tRoles(member.role)}</StatusTag>
               ),
-              since: <MemberSince value={member.joined_at} />,
+              since: <LocalDate value={member.joined_at} />,
             },
             actions:
               changeRole || remove ? (

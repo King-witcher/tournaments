@@ -6,10 +6,10 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
+import { ActionWithNote } from "@/shared/ui/action-with-note";
 import type { ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
-import { ActionWithNote } from "./action-with-note";
 
 type Props = {
   tenant: string;

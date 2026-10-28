@@ -1,12 +1,11 @@
 import { useLocale, useTranslations } from "next-intl";
-
+import { SITUATION_STATUS } from "@/features/participants/lib/situation";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { DataTable } from "@/shared/ui/data-table";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
-import { SITUATION_STATUS } from "../lib/situation";
 
 type Schemas = components["schemas"];
 

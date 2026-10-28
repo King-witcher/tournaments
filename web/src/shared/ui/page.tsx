@@ -8,8 +8,6 @@ type Props = {
    * `lg`, a largura toda abaixo. `wide`: tabela e chave, 16 colunas.
    */
   width?: "narrow" | "wide";
-  /** @deprecated O espaçamento entre os blocos é um só agora; ignorado. */
-  spacing?: "normal" | "loose";
 };
 
 /**

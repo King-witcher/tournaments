@@ -5,18 +5,6 @@
   max-inline-size: spacing.$spacing-13 * 3;
 }
 
-// Os nomes podem ser longos e sem espaço: quebram em qualquer ponto em vez
-// de empurrar as duas opções para fora da tela no celular. Cada opção tem a
-// altura de um controle (48px no celular, pela regra global de toque), para
-// o dedo.
-.winner {
-  overflow-wrap: anywhere;
-
-  label {
-    min-block-size: var(--cds-layout-size-height-md);
-  }
-}
-
 // Os frags de cada lado, lado a lado, na ordem dos nomes acima.
 .frags {
   display: grid;

@@ -1,6 +1,10 @@
+@use "@carbon/react/scss/spacing";
+
 // O conteúdo da aba fica alinhado com o resto da página: sem o padding que
-// o Carbon põe no painel (classe dobrada para vencer a do Carbon, que tem o
-// mesmo peso).
+// o Carbon põe no painel, só o respiro entre a barra de abas e o conteúdo, o
+// mesmo que há entre os blocos da página (`Page`, `Stack gap={7}`). Classe
+// dobrada para vencer a do Carbon, que tem o mesmo peso.
 .panel.panel {
   padding: 0;
+  padding-block-start: spacing.$spacing-07;
 }

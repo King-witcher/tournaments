@@ -2,8 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { InviteSection } from "@/features/invites/components/invite-section";
-import { TenantTabSkeleton } from "@/features/tenants/components/tenant-tab-skeleton";
-import { TableSkeleton } from "@/shared/ui/skeleton";
+import { TabLoading, TableSkeleton } from "@/shared/ui/skeleton";
 
 /** Aba Convites da comunidade (organização). */
 export default async function TenantInvitesPage({
@@ -13,9 +12,9 @@ export default async function TenantInvitesPage({
   return (
     <Suspense
       fallback={
-        <TenantTabSkeleton label={t("loading")}>
+        <TabLoading label={t("loading")}>
           <TableSkeleton columns={4} rows={3} />
-        </TenantTabSkeleton>
+        </TabLoading>
       }
     >
       {params.then(({ tenant }) => (

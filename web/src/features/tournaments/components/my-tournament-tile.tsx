@@ -1,25 +1,14 @@
 import { useLocale, useTranslations } from "next-intl";
 
 import { NextMatchLink } from "@/features/matches/components/next-match-link";
+import { SITUATION_STATUS } from "@/features/participants/lib/situation";
 import type { components } from "@/shared/api/schema";
 import { LinkTile } from "@/shared/ui/link-tile";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { type Status, StatusTag } from "@/shared/ui/status-tag";
+import { StatusTag } from "@/shared/ui/status-tag";
 import { localizedName } from "../lib/localize";
 
 type Schemas = components["schemas"];
-
-/** Cor da etiqueta pelo significado da situação de quem vê. */
-const STATUS: Record<Schemas["Situation"], Status> = {
-  registered: "registration",
-  check_in_pending: "check_in",
-  checked_in: "confirmed",
-  missed_check_in: "cancelled",
-  playing: "in_progress",
-  eliminated: "finished",
-  withdrawn: "cancelled",
-  champion: "confirmed",
-};
 
 /**
  * Um torneio de quem vê, como tile: nome, comunidade e início, a situação
@@ -59,7 +48,7 @@ export function MyTournamentTile({
         </>
       }
       tags={
-        <StatusTag status={STATUS[entry.situation]}>
+        <StatusTag status={SITUATION_STATUS[entry.situation]}>
           {t(`situation.${entry.situation}`, { place: place ?? "" })}
         </StatusTag>
       }

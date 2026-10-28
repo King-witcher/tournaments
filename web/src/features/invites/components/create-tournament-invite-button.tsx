@@ -1,15 +1,13 @@
 "use client";
 
-import { Modal } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
-import { createPortal } from "react-dom";
-
-import { ActionWithNote } from "@/features/tournaments/components/action-with-note";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
+import { PassiveModal } from "@/shared/ui/passive-modal";
 import { InviteLink } from "./invite-link";
 
 type Props = { tenant: string; tournament: string };
@@ -21,17 +19,10 @@ type Props = { tenant: string; tournament: string };
  */
 export function CreateTournamentInviteButton({ tenant, tournament }: Props) {
   const t = useTranslations("Tournament.invites");
-  const tCommon = useTranslations("Common");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
   const trigger = useRef<HTMLButtonElement>(null);
   const [link, setLink] = useState<string>();
-
-  const close = () => {
-    setLink(undefined);
-    // O Modal sai da árvore e o foco cairia no body: volta para o botão.
-    requestAnimationFrame(() => trigger.current?.focus());
-  };
 
   return (
     <ActionWithNote error={error}>
@@ -55,20 +46,15 @@ export function CreateTournamentInviteButton({ tenant, tournament }: Props) {
       >
         {t("create")}
       </Button>
-      {link &&
-        createPortal(
-          <Modal
-            open
-            passiveModal
-            size="sm"
-            modalHeading={t("createdTitle")}
-            closeButtonLabel={tCommon("close")}
-            onRequestClose={close}
-          >
-            <InviteLink link={link} />
-          </Modal>,
-          document.body,
-        )}
+      {link && (
+        <PassiveModal
+          title={t("createdTitle")}
+          returnFocusTo={trigger}
+          onClose={() => setLink(undefined)}
+        >
+          <InviteLink link={link} />
+        </PassiveModal>
+      )}
     </ActionWithNote>
   );
 }

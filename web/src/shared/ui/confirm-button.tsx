@@ -3,7 +3,7 @@
 import type { CarbonIconType } from "@carbon/icons-react";
 import { type ReactNode, useRef, useState } from "react";
 
-import { Button, type ButtonKind, type ButtonVariant } from "./button";
+import { Button, type ButtonKind, type ButtonSize } from "./button";
 import { ConfirmModal } from "./confirm-modal";
 
 type Props = {
@@ -18,15 +18,11 @@ type Props = {
   disabled?: boolean;
   /** Apaga ou tira algo (padrão): Modal `danger`. `false` para o que só avança (publicar, iniciar). */
   destructive?: boolean;
-  /** @deprecated Use `destructive`. */
-  danger?: boolean;
   /** Grave e raro (desfazer início, transferir posse): pede este texto digitado. */
   confirmSlug?: string;
   /** Aparência do gatilho; padrão `danger--tertiary` (destrutivo) ou `tertiary`. */
   kind?: ButtonKind;
-  /** @deprecated Use `kind`. */
-  variant?: ButtonVariant;
-  size?: "sm" | "md" | "lg" | "default";
+  size?: ButtonSize;
   renderIcon?: CarbonIconType;
   className?: string;
 };
@@ -44,18 +40,15 @@ export function ConfirmButton({
   onConfirm,
   pending,
   disabled,
-  destructive,
-  danger,
+  destructive = true,
   confirmSlug,
   kind,
-  variant,
   size = "sm",
   renderIcon,
   className,
 }: Props) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const isDestructive = destructive ?? danger ?? true;
 
   const close = () => {
     setOpen(false);
@@ -67,15 +60,7 @@ export function ConfirmButton({
     <>
       <Button
         ref={trigger}
-        kind={
-          kind ??
-          (variant
-            ? undefined
-            : isDestructive
-              ? "danger--tertiary"
-              : "tertiary")
-        }
-        variant={variant}
+        kind={kind ?? (destructive ? "danger--tertiary" : "tertiary")}
         size={size}
         pending={pending}
         disabled={disabled}
@@ -94,7 +79,7 @@ export function ConfirmButton({
         }}
         title={title ?? children}
         confirmLabel={children}
-        destructive={isDestructive}
+        destructive={destructive}
         slug={confirmSlug}
       >
         {question}

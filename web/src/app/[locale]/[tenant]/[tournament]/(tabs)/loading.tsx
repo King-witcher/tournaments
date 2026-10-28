@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** A Visão geral carregando: o ciclo, a descrição e o formato. */
 export default async function Loading() {

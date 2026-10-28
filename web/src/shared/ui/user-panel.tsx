@@ -1,11 +1,17 @@
 "use client";
 
 import { UserAvatar } from "@carbon/icons-react";
-import { InlineLoading, Switcher, SwitcherItem } from "@carbon/react";
+import {
+  InlineLoading,
+  Switcher,
+  SwitcherDivider,
+  SwitcherItem,
+} from "@carbon/react";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { Avatar } from "./avatar";
 import { HeaderPanelAction } from "./header-panel-action";
+import { ThemeSwitcher } from "./theme-switcher";
 import styles from "./user-panel.module.scss";
 
 export type UserPanelItem =
@@ -31,9 +37,10 @@ function asIntlLink(href: Href) {
 
 /**
  * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) que abre um
- * painel com os itens (Conta e Sair; sem sessão, Entrar e Criar conta). O
- * nome não fica na barra: no celular um nome longo empurraria a página. Os
- * itens vêm de `features/auth`.
+ * painel com os itens (Conta e Sair; sem sessão, Entrar e Criar conta) e,
+ * no fim, o tema de cor, que vale com ou sem sessão. O nome não fica na
+ * barra: no celular um nome longo empurraria a página. Os itens vêm de
+ * `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
   return (
@@ -79,6 +86,8 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
           ),
         )}
       </Switcher>
+      <SwitcherDivider />
+      <ThemeSwitcher />
     </HeaderPanelAction>
   );
 }

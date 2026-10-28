@@ -133,20 +133,18 @@ export function GameForm(props: Props) {
     >
       <Stack gap={6}>
         {/* Os dois nomes lado a lado: um toque escolhe quem venceu. */}
-        <div className={styles.winner}>
-          <RadioGroup
-            legendText={t("winner", { number })}
-            orientation="horizontal"
-            options={[
-              { value: "a", label: names.a },
-              { value: "b", label: names.b },
-            ]}
-            value={game.winner}
-            onChange={(winner) => setGame({ ...game, winner })}
-            invalid={errors?.winner !== undefined}
-            invalidText={errors?.winner}
-          />
-        </div>
+        <RadioGroup
+          legendText={t("winner", { number })}
+          orientation="horizontal"
+          options={[
+            { value: "a", label: names.a },
+            { value: "b", label: names.b },
+          ]}
+          value={game.winner}
+          onChange={(winner) => setGame({ ...game, winner })}
+          invalid={errors?.winner !== undefined}
+          invalidText={errors?.winner}
+        />
         <MapSelect
           maps={maps}
           value={game.map}

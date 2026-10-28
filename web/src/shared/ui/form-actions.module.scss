@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/spacing";
+
+// "Cancelar" e o primário ficam juntos, cada um com a largura do próprio
+// texto (o `ButtonSet` do Carbon limita todo botão a 196px); a ação extra
+// fica na ponta oposta. Se não couber, o que sobra desce, sem rolagem lateral.
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: spacing.$spacing-05;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}

@@ -2,27 +2,34 @@
 
 import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
 import { useIsClient } from "@/shared/hooks/use-is-client";
+import {
+  type FormResult,
+  fieldId,
+  formError,
+  invalidProps,
+} from "@/shared/lib/form-result";
 import { slugify } from "@/shared/lib/slugify";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { TextInput } from "@/shared/ui/text-input";
 
-type Failure = { code: string; message: string };
+type Field = "name" | "slug";
 
-/** Erros que são de um campo: vão no `invalidText` dele, não acima dos botões. */
-const NAME_ERRORS = new Set(["tenant.name_invalid"]);
-const SLUG_ERRORS = new Set([
-  "tenant.slug_taken",
-  "tenant.slug_invalid",
-  "tenant.slug_reserved",
-]);
+/** Os erros que são de um campo: vão no `invalidText` dele, não acima dos botões. */
+const FIELD_OF_ERROR: Partial<Record<string, Field>> = {
+  "tenant.name_invalid": "name",
+  "tenant.slug_taken": "slug",
+  "tenant.slug_invalid": "slug",
+  "tenant.slug_reserved": "slug",
+};
 
 /**
  * Nome + endereço, com a prévia do link da comunidade. O endereço acompanha
@@ -33,31 +40,29 @@ export function CreateTenantForm() {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const isClient = useIsClient();
+  const prefix = useId();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
 
-  const [error, submit, pending] = useActionState<Failure | undefined>(
+  const [result, submit, pending] = useActionState<FormResult<Field>>(
     async () => {
-      const result = await callApi(
+      const outcome = await callApi(
         api.POST("/tenants", { body: { name, slug } }),
       );
-      if (!result.ok) {
+      if (!outcome.ok) {
         return {
-          code: result.code,
-          message: errorMessage(result.code, result.params),
+          error: errorMessage(outcome.code, outcome.params),
+          field: FIELD_OF_ERROR[outcome.code],
         };
       }
-      router.push(`/${result.data.slug}`);
-      return undefined;
+      router.push(`/${outcome.data.slug}`);
+      return {};
     },
-    undefined,
+    {},
   );
-
-  const nameError =
-    error && NAME_ERRORS.has(error.code) ? error.message : undefined;
-  const slugError =
-    error && SLUG_ERRORS.has(error.code) ? error.message : undefined;
+  useFocusInvalid(prefix, result);
+  const general = formError(result);
   // O endereço completo só no navegador (a origem); no servidor, o caminho.
   const address = `${isClient ? window.location.origin : ""}/${slug || t("slugPlaceholder")}`;
 
@@ -65,6 +70,7 @@ export function CreateTenantForm() {
     <Form action={submit}>
       <Stack gap={6}>
         <TextInput
+          id={fieldId(prefix, "name")}
           labelText={t("name")}
           name="name"
           required
@@ -75,10 +81,10 @@ export function CreateTenantForm() {
             setName(event.target.value);
             if (!slugEdited) setSlug(slugify(event.target.value));
           }}
-          invalid={nameError !== undefined}
-          invalidText={nameError}
+          {...invalidProps(result, "name")}
         />
         <TextInput
+          id={fieldId(prefix, "slug")}
           labelText={t("slug")}
           helperText={t("slugHint", { address })}
           name="slug"
@@ -93,12 +99,9 @@ export function CreateTenantForm() {
             setSlugEdited(true);
             setSlug(event.target.value.toLowerCase());
           }}
-          invalid={slugError !== undefined}
-          invalidText={slugError}
+          {...invalidProps(result, "slug")}
         />
-        {error && nameError === undefined && slugError === undefined && (
-          <FormError>{error.message}</FormError>
-        )}
+        {general && <FormError>{general}</FormError>}
         <FormActions
           submitLabel={t("submit")}
           pending={pending}

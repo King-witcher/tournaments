@@ -7,8 +7,8 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
+import { ErrorText } from "@/shared/ui/error-text";
 
 type Props = {
   tenant: string;

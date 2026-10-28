@@ -4,12 +4,12 @@ import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { browserTimeZone } from "@/shared/lib/datetime-local";
 import { DateTimeInput } from "@/shared/ui/date-time-input";
+import { FormSection } from "@/shared/ui/form-section";
 import { NumberInput } from "@/shared/ui/number-input";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
 import { TournamentCheckInField } from "./tournament-check-in-field";
 import { TournamentContestField } from "./tournament-contest-field";
-import { TournamentFormGroup } from "./tournament-form-group";
 
 /** Os limites de vagas da API. */
 const SLOTS = { min: 2, max: 1024 };
@@ -43,7 +43,7 @@ export function TournamentScheduleFields({
   const isClient = useIsClient();
 
   return (
-    <TournamentFormGroup legend={t("schedule")}>
+    <FormSection legend={t("schedule")}>
       <NumberInput
         labelText={t("maxParticipants")}
         helperText={t("maxParticipantsHint")}
@@ -88,6 +88,6 @@ export function TournamentScheduleFields({
         error={errors.contestMinutes}
         disabled={finished}
       />
-    </TournamentFormGroup>
+    </FormSection>
   );
 }

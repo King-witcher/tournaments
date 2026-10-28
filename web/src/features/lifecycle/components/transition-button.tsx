@@ -1,11 +1,11 @@
 "use client";
 
-import { ActionWithNote } from "@/features/tournaments/components/action-with-note";
 import { TOURNAMENT_TITLE_ID } from "@/features/tournaments/lib/focus";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
+import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button, type ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 

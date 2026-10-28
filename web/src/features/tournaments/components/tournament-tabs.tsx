@@ -5,7 +5,6 @@ import type { components } from "@/shared/api/schema";
 import { PageTabs } from "@/shared/ui/page-tabs";
 import { localizedTexts } from "../lib/localize";
 import { hasStarted } from "../lib/status";
-import styles from "./tournament-tabs.module.scss";
 
 type Props = {
   tenant: string;
@@ -44,7 +43,7 @@ export function TournamentTabs({
 
   return (
     <PageTabs label={t("sections")} tabs={tabs}>
-      <div className={styles.content}>{children}</div>
+      {children}
     </PageTabs>
   );
 }

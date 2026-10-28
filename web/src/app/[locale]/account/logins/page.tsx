@@ -1,8 +1,8 @@
+import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { AccountLogins } from "@/features/auth/components/account-logins";
-import { AccountTab } from "@/features/auth/components/account-tab";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { LoginsSkeleton } from "@/features/auth/components/logins-skeleton";
 
@@ -18,7 +18,7 @@ export default async function AccountLoginsPage({
 }) {
   const t = await getTranslations("Account");
   return (
-    <AccountTab>
+    <Stack gap={7}>
       {/* Vincular o Discord volta para cá; recusado, com ?auth_error=. */}
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
@@ -26,6 +26,6 @@ export default async function AccountLoginsPage({
       <Suspense fallback={<LoginsSkeleton label={t("loading")} />}>
         <AccountLogins />
       </Suspense>
-    </AccountTab>
+    </Stack>
   );
 }

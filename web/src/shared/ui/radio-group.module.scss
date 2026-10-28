@@ -1,0 +1,16 @@
+// Cada opção tem a altura de um controle: 40px no desktop e 48px abaixo de
+// `md` (o token já vale `lg` lá, pela regra de toque do `globals.scss`), para
+// o dedo. Rótulos longos, sem espaço, quebram em qualquer ponto em vez de
+// empurrar as opções para fora da tela; opções horizontais que não cabem
+// descem para a linha de baixo.
+.group {
+  overflow-wrap: anywhere;
+
+  fieldset {
+    flex-wrap: wrap;
+  }
+
+  label {
+    min-block-size: var(--cds-layout-size-height-md);
+  }
+}

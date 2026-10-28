@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
 import { TournamentManage } from "@/features/tournaments/components/tournament-manage";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** A aba Organização. */
 export default async function ManagePage({

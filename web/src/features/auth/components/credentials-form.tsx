@@ -8,19 +8,20 @@ import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
 import { focusIfLost } from "@/shared/lib/focus";
+import {
+  type FormResult,
+  fieldId,
+  formError,
+  invalidProps,
+} from "@/shared/lib/form-result";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
 import { useEnterAccount } from "../hooks/use-enter-account";
-import { fieldId, useFocusInvalid } from "../hooks/use-focus-invalid";
-import {
-  errorField,
-  type FormResult,
-  formError,
-  invalidProps,
-} from "../lib/form-result";
+import { type AuthField, errorField } from "../lib/auth-field";
 import { LOGIN_SECTION } from "../lib/login-sections";
 
 type Props =
@@ -45,34 +46,37 @@ export function CredentialsForm(props: Props) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const [result, submit, pending] = useActionState<FormResult>(async () => {
-    if (password !== confirm) {
-      return { error: t("passwordsDiffer"), field: "confirm" };
-    }
-    const body = { username, password };
-    if (props.mode === "signup") {
-      const outcome = await callApi(api.POST("/auth/signup", { body }));
-      if (!outcome.ok) {
-        return {
-          error: errorMessage(outcome.code, outcome.params),
-          field: errorField(outcome.code),
-        };
+  const [result, submit, pending] = useActionState<FormResult<AuthField>>(
+    async () => {
+      if (password !== confirm) {
+        return { error: t("passwordsDiffer"), field: "confirm" };
       }
-      enter(props.returnTo);
-    } else {
-      const outcome = await callApi(api.POST("/auth/password", { body }));
-      if (!outcome.ok) {
-        return {
-          error: errorMessage(outcome.code, outcome.params),
-          field: errorField(outcome.code),
-        };
+      const body = { username, password };
+      if (props.mode === "signup") {
+        const outcome = await callApi(api.POST("/auth/signup", { body }));
+        if (!outcome.ok) {
+          return {
+            error: errorMessage(outcome.code, outcome.params),
+            field: errorField(outcome.code),
+          };
+        }
+        enter(props.returnTo);
+      } else {
+        const outcome = await callApi(api.POST("/auth/password", { body }));
+        if (!outcome.ok) {
+          return {
+            error: errorMessage(outcome.code, outcome.params),
+            field: errorField(outcome.code),
+          };
+        }
+        router.refresh();
+        // O formulário some quando a conta passa a ter senha.
+        focusIfLost(LOGIN_SECTION.password);
       }
-      router.refresh();
-      // O formulário some quando a conta passa a ter senha.
-      focusIfLost(LOGIN_SECTION.password);
-    }
-    return {};
-  }, {});
+      return {};
+    },
+    {},
+  );
   useFocusInvalid(prefix, result);
   const general = formError(result);
 

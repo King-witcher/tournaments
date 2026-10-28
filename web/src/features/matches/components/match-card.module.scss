@@ -1,7 +1,6 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/utilities/visually-hidden" as *;
 
 // O cartão inteiro abre a partida: o código é o link e o ::after dele cobre
 // o cartão (os apelidos, links para a pessoa, ficam por cima). O fundo muda
@@ -55,10 +54,6 @@
   @include type.type-style("label-01");
 
   color: theme.$text-secondary;
-}
-
-.srOnly {
-  @include visually-hidden;
 }
 
 // Bye e reset que não precisou: não se jogam, então ficam sem fundo nem

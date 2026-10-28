@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowDown, ArrowUp } from "@carbon/icons-react";
-import { IconButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import {
   type KeyboardEvent,
@@ -13,6 +12,7 @@ import {
 
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
+import { IconButton } from "@/shared/ui/icon-button";
 import { NumberInput } from "@/shared/ui/number-input";
 import { StatusTag } from "@/shared/ui/status-tag";
 import styles from "./seeding-row.module.scss";
@@ -86,7 +86,6 @@ export function SeedingRow({
       )}
       <span className={styles.moves}>
         <IconButton
-          kind="ghost"
           size="sm"
           label={t("up", { name: p.nickname })}
           disabled={disabled || !onUp}
@@ -95,7 +94,6 @@ export function SeedingRow({
           <ArrowUp />
         </IconButton>
         <IconButton
-          kind="ghost"
           size="sm"
           label={t("down", { name: p.nickname })}
           disabled={disabled || !onDown}

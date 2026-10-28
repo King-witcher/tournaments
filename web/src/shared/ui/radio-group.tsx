@@ -3,6 +3,8 @@
 import { RadioButton, RadioButtonGroup } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
+import styles from "./radio-group.module.scss";
+
 type Option<V extends string> = {
   value: V;
   label: ReactNode;
@@ -24,7 +26,11 @@ type Props<V extends string> = {
   name?: string;
 };
 
-/** Escolha única entre poucas opções visíveis (até ~5; mais que isso, `Select`). */
+/**
+ * Escolha única entre poucas opções visíveis (até ~5; mais que isso,
+ * `Select`). Cada opção tem alvo de toque de 48px abaixo de `md`, e as
+ * horizontais que não cabem quebram de linha.
+ */
 export function RadioGroup<V extends string>({
   legendText,
   options,
@@ -38,6 +44,7 @@ export function RadioGroup<V extends string>({
   const groupName = name ?? generated;
   return (
     <RadioButtonGroup
+      className={styles.group}
       legendText={legendText}
       name={groupName}
       orientation={orientation}

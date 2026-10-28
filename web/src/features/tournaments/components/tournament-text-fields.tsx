@@ -2,11 +2,11 @@ import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { routing } from "@/i18n/routing";
+import { FormSection } from "@/shared/ui/form-section";
 import { Select } from "@/shared/ui/select";
 import { TextArea } from "@/shared/ui/text-area";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
-import { TournamentFormGroup } from "./tournament-form-group";
 
 type Props = {
   values: TournamentValues;
@@ -27,7 +27,7 @@ export function TournamentTextFields({
   const tLocales = useTranslations("Locales");
 
   return (
-    <TournamentFormGroup
+    <FormSection
       legend={
         isNew ? t("texts") : t("textsIn", { language: tLocales(values.locale) })
       }
@@ -71,6 +71,6 @@ export function TournamentTextFields({
         invalidText={errors.rules}
         onChange={(e) => onChange({ rules: e.target.value })}
       />
-    </TournamentFormGroup>
+    </FormSection>
   );
 }

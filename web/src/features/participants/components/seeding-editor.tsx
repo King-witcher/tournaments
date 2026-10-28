@@ -125,35 +125,35 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
         {(save.error ?? shuffle.error) && (
           <FormError>{save.error ?? shuffle.error}</FormError>
         )}
-        <div className={styles.footer}>
-          {changed ? (
-            <ConfirmButton
-              destructive={false}
-              kind="tertiary"
-              size="md"
-              pending={shuffle.pending}
-              question={t("shuffleConfirm")}
-              onConfirm={runShuffle}
-            >
-              {t("shuffle")}
-            </ConfirmButton>
-          ) : (
-            <Button
-              id={SHUFFLE_ID}
-              kind="tertiary"
-              pending={shuffle.pending}
-              onClick={runShuffle}
-            >
-              {t("shuffle")}
-            </Button>
-          )}
-          <FormActions
-            submitLabel={t("save")}
-            pending={save.pending}
-            disabled={!unsaved}
-            cancelHref={manage}
-          />
-        </div>
+        <FormActions
+          submitLabel={t("save")}
+          pending={save.pending}
+          disabled={!unsaved}
+          cancelHref={manage}
+          extra={
+            changed ? (
+              <ConfirmButton
+                destructive={false}
+                kind="tertiary"
+                size="md"
+                pending={shuffle.pending}
+                question={t("shuffleConfirm")}
+                onConfirm={runShuffle}
+              >
+                {t("shuffle")}
+              </ConfirmButton>
+            ) : (
+              <Button
+                id={SHUFFLE_ID}
+                kind="tertiary"
+                pending={shuffle.pending}
+                onClick={runShuffle}
+              >
+                {t("shuffle")}
+              </Button>
+            )
+          }
+        />
       </Stack>
     </Form>
   );

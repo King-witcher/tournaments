@@ -86,11 +86,14 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
       <div className={styles.head}>
         {/* O código sublinhado na cor de link mostra que o cartão abre a
             partida; quem usa leitor de tela ouve também os dois lados. */}
-        <Link href={href} inline size="sm" className={styles.open}>
+        <Link
+          href={href}
+          inline
+          size="sm"
+          className={styles.open}
+          aria-label={`${code(m.key)} ${t("matchSides", { a: name(m.a), b: name(m.b) })}`}
+        >
           {code(m.key)}
-          <span className={styles.srOnly}>
-            {` ${t("matchSides", { a: name(m.a), b: name(m.b) })}`}
-          </span>
         </Link>
         <span className={styles.bestOf}>
           {t("bestOf", { count: m.best_of })}

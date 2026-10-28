@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
+import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /** A organização carregando: o estado, o seeding e os links de inscrição. */
 export default async function Loading() {

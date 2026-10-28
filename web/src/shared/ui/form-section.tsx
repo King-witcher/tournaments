@@ -1,7 +1,7 @@
 import { FormGroup, Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
-import styles from "./tournament-form-group.module.scss";
+import styles from "./form-section.module.scss";
 
 type Props = {
   /** O nome da seção (vira a `legend`). */
@@ -12,10 +12,12 @@ type Props = {
 };
 
 /**
- * Uma seção do formulário de torneio: `FormGroup` com a legenda no tamanho de
- * título de bloco e os campos empilhados com o espaço do Carbon.
+ * Uma seção de formulário: `FormGroup` do Carbon com a legenda no tamanho de
+ * título de bloco (`heading-02`) e os campos empilhados com `Stack gap={6}`.
+ * Formulário com mais de um grupo de campos usa uma por grupo (um `Stack
+ * gap={7}` entre elas); com um grupo só, os campos vão direto no `Stack`.
  */
-export function TournamentFormGroup({ legend, description, children }: Props) {
+export function FormSection({ legend, description, children }: Props) {
   return (
     <FormGroup legendText={<span className={styles.legend}>{legend}</span>}>
       <Stack gap={6}>

@@ -8,7 +8,7 @@ import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import styles from "./link.module.scss";
 
-type Props = {
+type Own = {
   href: Href;
   children: ReactNode;
   /** Dentro de um parágrafo: sublinhado sempre, sem a altura de toque. */
@@ -19,14 +19,20 @@ type Props = {
   /** Troca de idioma mantendo a página (só o seletor de idioma usa). */
   locale?: ComponentProps<typeof IntlLink>["locale"];
   className?: string;
-  id?: string;
-  "aria-current"?: ComponentProps<"a">["aria-current"];
 };
+
+/** Além das próprias, as props de acessibilidade e de identificação de um `<a>` (`aria-label`, `aria-describedby`, `id`, `title`…). */
+type Props = Own &
+  Omit<
+    ComponentProps<"a">,
+    keyof Own | "onClick" | "target" | "rel" | "style" | "ref"
+  >;
 
 /**
  * Link do Carbon sobre o `Link` do i18n (mantém o prefixo de idioma). Solto,
  * fica azul e, no celular, com 48px de altura para o dedo; no meio do texto,
- * use `inline` (sublinhado).
+ * use `inline` (sublinhado). Repassa `aria-label` e as outras props de
+ * acessibilidade ao link.
  */
 export function Link({
   href,

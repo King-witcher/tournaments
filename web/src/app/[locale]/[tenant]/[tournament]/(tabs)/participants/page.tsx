@@ -2,8 +2,11 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { ParticipantTable } from "@/features/participants/components/participant-table";
-import { TabLoading } from "@/features/tournaments/components/tab-loading";
-import { SectionSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
+import {
+  SectionSkeleton,
+  TabLoading,
+  TableSkeleton,
+} from "@/shared/ui/skeleton";
 
 /** A aba Inscritos. */
 export default async function ParticipantsPage({

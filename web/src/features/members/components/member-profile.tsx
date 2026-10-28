@@ -7,11 +7,11 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { Avatar } from "@/shared/ui/avatar";
 import { ButtonLink } from "@/shared/ui/button-link";
+import { LocalDate } from "@/shared/ui/local-date";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
 import styles from "./member-profile.module.scss";
-import { MemberSince } from "./member-since";
 import { MemberTournaments } from "./member-tournaments";
 
 type Props = {
@@ -98,7 +98,7 @@ export async function MemberProfile({ tenant, user }: Props) {
         meta={
           <>
             {t.rich("since", {
-              date: () => <MemberSince value={profile.joined_at} />,
+              date: () => <LocalDate value={profile.joined_at} />,
             })}
             {profile.display_name !== profile.nickname &&
               ` · ${profile.display_name}`}

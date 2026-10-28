@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
+import { ErrorText } from "@/shared/ui/error-text";
 import { OverflowActions } from "@/shared/ui/overflow-actions";
 import styles from "./invite-actions.module.scss";
 

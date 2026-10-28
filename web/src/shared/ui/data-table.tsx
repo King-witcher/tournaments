@@ -50,9 +50,9 @@ type Props = {
   description?: ReactNode;
   /** A coluna que vira link quando a linha tem `href`; padrão, a primeira. */
   primaryColumn?: string;
-  /** Ação da barra (ex.: "Gerar link", primária), à direita da busca. */
+  /** Ação da barra (ex.: "Gerar link", primária), à direita da busca; a barra fica no lugar também sem linhas. */
   toolbar?: ReactNode;
-  /** Sem nenhuma linha: o que falta e o próximo passo, com a ação. */
+  /** Sem nenhuma linha: o que falta e o próximo passo (a ação da barra, se houver, continua nela). */
   empty: { text: ReactNode; action?: ReactNode };
   size?: "sm" | "md" | "lg";
 };
@@ -92,14 +92,10 @@ export function DataTable({
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const primary = primaryColumn ?? columns[0]?.key;
   const hasActions = rows.some((row) => row.actions !== undefined);
-
-  if (rows.length === 0) {
-    return (
-      <TableContainer title={title} description={description}>
-        <EmptyState action={empty.action ?? toolbar}>{empty.text}</EmptyState>
-      </TableContainer>
-    );
-  }
+  // A barra fica montada quando as linhas vão de 0 para 1 e de volta (a ação
+  // não perde o foco); a busca só aparece com linhas, e sem ação nem linhas
+  // não há o que mostrar nela.
+  const showBar = rows.length > 0 || toolbar !== undefined;
 
   const needle = normalize(query.trim());
   const filtered = needle
@@ -123,75 +119,83 @@ export function DataTable({
 
   return (
     <TableContainer title={title} description={description}>
-      <TableToolbar aria-label={label}>
-        <TableToolbarContent>
-          <TableToolbarSearch
-            persistent
-            labelText={t("search")}
-            placeholder={t("search")}
-            closeButtonLabelText={t("clearSearch")}
-            onChange={(event) => {
-              setQuery(event === "" ? "" : event.target.value);
-              setPage(1);
-            }}
-          />
-          {toolbar}
-        </TableToolbarContent>
-      </TableToolbar>
-      <Table aria-label={label} size={size} className={styles.table}>
-        <TableHead>
-          <TableRow>
-            {columns.map((column) => (
-              <TableHeader
-                key={column.key}
-                className={cn(column.secondary && styles.secondary)}
-              >
-                {column.header}
-              </TableHeader>
-            ))}
-            {hasActions && (
-              <TableHeader className={styles.actions}>
-                <span className={styles.visuallyHidden}>{t("actions")}</span>
-              </TableHeader>
+      {showBar && (
+        <TableToolbar aria-label={label}>
+          <TableToolbarContent>
+            {rows.length > 0 && (
+              <TableToolbarSearch
+                persistent
+                labelText={t("search")}
+                placeholder={t("search")}
+                closeButtonLabelText={t("clearSearch")}
+                onChange={(event) => {
+                  setQuery(event === "" ? "" : event.target.value);
+                  setPage(1);
+                }}
+              />
             )}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {visible.length === 0 ? (
+            {toolbar}
+          </TableToolbarContent>
+        </TableToolbar>
+      )}
+      {rows.length === 0 ? (
+        <EmptyState action={empty.action}>{empty.text}</EmptyState>
+      ) : (
+        <Table aria-label={label} size={size} className={styles.table}>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                {t("noResults", { query: query.trim() })}
-              </TableCell>
+              {columns.map((column) => (
+                <TableHeader
+                  key={column.key}
+                  className={cn(column.secondary && styles.secondary)}
+                >
+                  {column.header}
+                </TableHeader>
+              ))}
+              {hasActions && (
+                <TableHeader className={styles.actions}>
+                  <span className={styles.visuallyHidden}>{t("actions")}</span>
+                </TableHeader>
+              )}
             </TableRow>
-          ) : (
-            visible.map((row) => (
-              <TableRow
-                key={row.id}
-                className={cn(row.href !== undefined && styles.linkRow)}
-                onClick={openRow(row)}
-              >
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.key}
-                    className={cn(column.secondary && styles.secondary)}
-                  >
-                    {row.href !== undefined && column.key === primary ? (
-                      <Link href={row.href}>{row.cells[column.key]}</Link>
-                    ) : (
-                      row.cells[column.key]
-                    )}
-                  </TableCell>
-                ))}
-                {hasActions && (
-                  <TableCell className={styles.actions}>
-                    {row.actions}
-                  </TableCell>
-                )}
+          </TableHead>
+          <TableBody>
+            {visible.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
+                  {t("noResults", { query: query.trim() })}
+                </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              visible.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className={cn(row.href !== undefined && styles.linkRow)}
+                  onClick={openRow(row)}
+                >
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.key}
+                      className={cn(column.secondary && styles.secondary)}
+                    >
+                      {row.href !== undefined && column.key === primary ? (
+                        <Link href={row.href}>{row.cells[column.key]}</Link>
+                      ) : (
+                        row.cells[column.key]
+                      )}
+                    </TableCell>
+                  ))}
+                  {hasActions && (
+                    <TableCell className={styles.actions}>
+                      {row.actions}
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      )}
       {filtered.length > PAGE_SIZES[0] && (
         <Pagination
           page={current}

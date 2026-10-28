@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/cn";
-import { ErrorText } from "@/shared/ui/alert";
 import styles from "./action-with-note.module.scss";
+import { ErrorText } from "./error-text";
 
 type Props = {
   /** O botão (ou o menu ⋯). */

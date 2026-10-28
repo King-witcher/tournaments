@@ -2,10 +2,10 @@ import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FormSection } from "@/shared/ui/form-section";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import type { NoRepeatChoice, TournamentValues } from "../lib/form-values";
-import { TournamentFormGroup } from "./tournament-form-group";
 import styles from "./tournament-setup-fields.module.scss";
 
 const BEST_OF = [1, 3, 5, 7, 9];
@@ -33,7 +33,7 @@ export function TournamentSetupFields({
   ));
 
   return (
-    <TournamentFormGroup legend={t("setup")}>
+    <FormSection legend={t("setup")}>
       <Select
         labelText={t("bracket")}
         name="bracket"
@@ -110,6 +110,6 @@ export function TournamentSetupFields({
           />
         ))}
       </Select>
-    </TournamentFormGroup>
+    </FormSection>
   );
 }

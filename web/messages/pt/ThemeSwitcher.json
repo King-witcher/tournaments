@@ -1,0 +1,8 @@
+{
+  "label": "Tema",
+  "choices": {
+    "system": "Tema do navegador",
+    "light": "Tema claro",
+    "dark": "Tema escuro"
+  }
+}
