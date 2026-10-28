@@ -70,7 +70,7 @@ pub fn redis(db: &PgPool) -> Redis {
 }
 
 /// Estado do app de teste: login do Discord desligado (os testes criam sessões
-/// direto no Redis) e nenhuma tarefa em segundo plano (os
+/// direto no Redis), Web Push desligado e nenhuma tarefa em segundo plano (os
 /// testes do tempo real chamam o despachante e o agendador direto).
 pub fn state(db: PgPool) -> AppState {
     AppState {
@@ -85,6 +85,7 @@ pub fn state(db: PgPool) -> AppState {
             cookie_secure: false,
         }),
         realtime: Realtime::new(),
+        push: None,
     }
 }
 

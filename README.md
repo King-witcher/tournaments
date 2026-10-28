@@ -50,6 +50,8 @@ cd web && bun install
 
 Para o login, crie uma aplicação em https://discord.com/developers/applications, adicione o redirect `http://localhost:4000/auth/discord/callback` em **OAuth2 → Redirects** e coloque `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` no `backend/.env`. Sem eles, tudo funciona menos o login com Discord (o login com nome de usuário e senha não depende dele).
 
+Para os avisos fora do site (Web Push), gere as chaves VAPID com `bun scripts/vapid-keys.ts` (em `backend/`, sem instalar nada) e cole as duas linhas que ele imprime (`VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`) no `backend/.env`; `VAPID_SUBJECT` (um `mailto:` ou `https:`) é opcional e, sem ele, vai a origem do front. Sem as chaves, tudo funciona e os avisos só chegam com o site aberto, pelo WebSocket. Em produção, as mesmas variáveis no Render: trocar o par depois faz cada navegador precisar ativar os avisos de novo.
+
 Depois, em um terminal, a API com recarga automática: a cada `.rs`, `.sql`, `Cargo.toml` ou `.env` salvo, ela para, aplica as migrations, recompila e sobe de novo. Se a compilação falhar, espera a próxima mudança.
 
 ```sh

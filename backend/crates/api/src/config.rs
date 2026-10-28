@@ -17,6 +17,13 @@ pub struct Config {
     /// Domínio do cookie de sessão (em produção, `.dominio`).
     pub cookie_domain: Option<String>,
     pub cookie_secure: bool,
+    /// Chaves VAPID do Web Push, em base64url (sem as duas, o push fica
+    /// desligado).
+    pub vapid_public_key: Option<String>,
+    pub vapid_private_key: Option<String>,
+    /// Contato que vai na assinatura VAPID (`mailto:` ou `https:`); sem ele, a
+    /// origem do front.
+    pub vapid_subject: Option<String>,
 }
 
 impl Config {
@@ -42,6 +49,9 @@ impl Config {
                     .as_str(),
                 "1" | "true"
             ),
+            vapid_public_key: env_opt("VAPID_PUBLIC_KEY"),
+            vapid_private_key: env_opt("VAPID_PRIVATE_KEY"),
+            vapid_subject: env_opt("VAPID_SUBJECT"),
         })
     }
 }

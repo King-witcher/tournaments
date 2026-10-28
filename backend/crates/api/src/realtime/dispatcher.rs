@@ -1,9 +1,14 @@
 //! O despachante: lê o outbox em ordem, publica cada evento no canal dos
-//! sockets e apaga o que saiu, tudo numa
+//! sockets, manda os Web Push dos avisos e apaga o que saiu, tudo numa
 //! transação (outra instância pula as linhas travadas). Roda quando acordado:
 //! depois de cada requisição que emitiu e a cada passada do agendador.
 
-use crate::{AppState, outbox, shared::ApiError};
+use crate::{
+    AppState,
+    outbox::{self, Event},
+    push,
+    shared::ApiError,
+};
 
 /// Eventos por passada; com mais, o despachante passa de novo.
 const BATCH: i64 = 200;
@@ -17,6 +22,9 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
         let Some(event) = &stored.event else {
             continue;
         };
+        if let (Event::Notice { users, notice }, Some(sender)) = (event, &state.push) {
+            push::deliver(&state.db, sender.as_ref(), users, notice).await?;
+        }
         state.realtime.publish(event.clone());
     }
     let ids: Vec<i64> = batch.iter().map(|s| s.id).collect();

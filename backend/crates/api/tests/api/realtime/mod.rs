@@ -1,12 +1,13 @@
 //! Testes do tempo real: os eventos que cada ação grava no outbox
 //! (`events`), os avisos e seus destinatários (`notices`), o despachante
-//! (`dispatcher`), o agendador (`scheduler`) e o WebSocket (`socket`). As
-//! tarefas em segundo plano não sobem nos testes: eles chamam `dispatch_once`
-//! e `tick` direto.
+//! (`dispatcher`), o agendador (`scheduler`), o WebSocket (`socket`) e o Web
+//! Push (`push`). As tarefas em segundo plano não sobem nos testes: eles
+//! chamam `dispatch_once` e `tick` direto.
 
 mod dispatcher;
 mod events;
 mod notices;
+mod push;
 mod scheduler;
 mod socket;
 

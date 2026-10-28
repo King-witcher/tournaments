@@ -12,6 +12,7 @@ mod members;
 mod my_tournaments;
 pub mod outbox;
 mod participants;
+pub mod push;
 pub mod realtime;
 pub mod shared;
 mod tenants;
@@ -50,6 +51,8 @@ pub struct AppState {
     pub auth: Arc<auth::AuthSettings>,
     /// Canal dos sockets e o despertador do despachante.
     pub realtime: realtime::Realtime,
+    /// `None`: sem chaves VAPID, o Web Push fica desligado.
+    pub push: Option<Arc<dyn push::WebPush>>,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
@@ -68,6 +71,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(maps::router())
         .merge(matches::router())
         .merge(my_tournaments::router())
+        .merge(push::router())
         .merge(realtime::router())
         .with_state(state)
         .split_for_parts();

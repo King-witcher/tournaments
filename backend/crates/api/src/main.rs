@@ -5,6 +5,7 @@ use api::{
     AppState, MIGRATOR,
     auth::{AuthSettings, HttpDiscord},
     config::Config,
+    push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
     shared::Redis,
 };
@@ -51,6 +52,7 @@ async fn main() -> anyhow::Result<()> {
     if !configured {
         tracing::warn!("DISCORD_CLIENT_ID/SECRET ausentes: login com Discord desligado");
     }
+    let push = web_push(&config)?;
     let state = AppState {
         db,
         redis,
@@ -66,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
             cookie_secure: config.cookie_secure,
         }),
         realtime: Realtime::new(),
+        push,
     };
     realtime::spawn(state.clone());
     let app = api::app(state, web_origin);
@@ -76,6 +79,21 @@ async fn main() -> anyhow::Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await?;
     Ok(())
+}
+
+/// Web Push com as chaves VAPID, se as duas existem (par que não confere
+/// impede a subida); sem elas, desligado.
+fn web_push(config: &Config) -> anyhow::Result<Option<Arc<dyn WebPush>>> {
+    let (Some(public), Some(private)) = (&config.vapid_public_key, &config.vapid_private_key)
+    else {
+        tracing::warn!("VAPID_PUBLIC_KEY/PRIVATE_KEY ausentes: Web Push desligado");
+        return Ok(None);
+    };
+    let subject = config
+        .vapid_subject
+        .clone()
+        .unwrap_or_else(|| config.web_origin.trim_end_matches('/').to_owned());
+    Ok(Some(Arc::new(HttpWebPush::new(public, private, subject)?)))
 }
 
 /// Encerra com Ctrl+C localmente e com SIGTERM no Render.

@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 utoipa = { version = "6.0.0", features = ["axum_extras", "chrono"] }
 utoipa-axum = "0.3.0"
 utoipa-scalar = { version = "0.4.0", features = ["axum"] }
+web-push-native = "0.5.0"
 
 [dev-dependencies]
 http-body-util = "0.1.5"
