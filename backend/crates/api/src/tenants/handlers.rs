@@ -1,8 +1,10 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    MyTenant, Role, TenantMember, db, nickname::default_nickname, slug::validate_slug,
-    types::CreateTenant,
+    MyTenant, Owner, Role, TenantMember, db,
+    nickname::default_nickname,
+    slug::validate_slug,
+    types::{CreateTenant, TransferOwnership},
 };
 use crate::{
     AppState,
@@ -85,4 +87,44 @@ pub async fn list_my_tenants(
 )]
 pub async fn get_tenant(member: TenantMember) -> Json<MyTenant> {
     Json(member.into())
+}
+
+#[utoipa::path(
+    post,
+    path = "/tenants/{slug}/transfer-ownership",
+    tag = "tenants",
+    params(("slug" = String, Path, description = "Slug do tenant")),
+    request_body = TransferOwnership,
+    responses(
+        (status = OK, body = MyTenant, description = "Posse transferida: o membro escolhido vira owner (dentro do limite de 3 tenants como owner) e quem era owner vira organizer. Devolve o tenant visto por quem transferiu"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo)"),
+        (status = CONFLICT, body = ErrorBody, description = "member.is_owner (já é o owner), member.owner_limit_reached {max}"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body"),
+    )
+)]
+pub async fn transfer_ownership(
+    State(state): State<AppState>,
+    owner: TenantMember<Owner>,
+    JsonBody(body): JsonBody<TransferOwnership>,
+) -> Result<Json<MyTenant>, ApiError> {
+    if body.confirm_slug.trim() != owner.slug {
+        return Err(ApiError::invalid("tenant.confirmation_mismatch"));
+    }
+    if body.user_id == owner.user.id {
+        return Err(ApiError::conflict("member.is_owner"));
+    }
+    db::transfer_ownership(
+        &state.db,
+        owner.tenant,
+        owner.user.id,
+        body.user_id,
+        MAX_OWNED_TENANTS,
+    )
+    .await?;
+    Ok(Json(MyTenant {
+        role: Role::Organizer,
+        ..owner.into()
+    }))
 }

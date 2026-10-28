@@ -1,3 +1,8 @@
+//! Testes de `tenants`: criar, listar e ver aqui; transferir a posse em
+//! `transfer`.
+
+mod transfer;
+
 use axum::http::{Method, StatusCode};
 use serde_json::json;
 use sqlx::PgPool;

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select user_id from tenant_members where role = 'owner' order by user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fd7ab4f8ee1cd7d7206c1e0d13e34ef755094c8368fe3636e0642ea752a3bae3"
+}

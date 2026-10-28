@@ -13,6 +13,15 @@ pub struct CreateTenant {
     pub slug: String,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct TransferOwnership {
+    /// Membro ativo que vira owner.
+    pub user_id: i64,
+    /// O slug do tenant, digitado para confirmar.
+    #[schema(example = "quake-br")]
+    pub confirm_slug: String,
+}
+
 /// Um tenant do ponto de vista do usuário logado.
 #[derive(Serialize, ToSchema)]
 pub struct MyTenant {

@@ -86,6 +86,69 @@ pub async fn create_with_owner(
     Ok(())
 }
 
+/// Passa a posse do tenant de `from` para `to`, membro ativo que ainda não é
+/// owner de `max_owned` tenants: `from` vira organizer. Erros: 404
+/// `member.not_found`, 409 `member.owner_limit_reached` `{max}` e 403
+/// `tenant.forbidden` se `from` deixou de ser o owner no meio do caminho.
+pub async fn transfer_ownership(
+    db: &PgPool,
+    tenant: TenantId,
+    from: i64,
+    to: i64,
+    max_owned: i64,
+) -> Result<(), ApiError> {
+    let mut tx = db.begin().await?;
+    // Trava o novo owner, como na criação: o limite dele vale até o commit.
+    sqlx::query_scalar!("select id from users where id = $1 for update", to)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(ApiError::not_found("member.not_found"))?;
+    sqlx::query_scalar!(
+        r#"select user_id from tenant_members
+           where tenant_id = $1 and user_id = $2 and left_at is null
+           for no key update"#,
+        tenant.get(),
+        to
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(ApiError::not_found("member.not_found"))?;
+    let owned = sqlx::query_scalar!(
+        r#"select count(*) as "count!" from tenant_members where user_id = $1 and role = 'owner'"#,
+        to
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+    if owned >= max_owned {
+        return Err(
+            ApiError::conflict("member.owner_limit_reached").with_params([("max", max_owned)])
+        );
+    }
+
+    // Rebaixa antes de promover: "no máximo um owner" vale na hora (índice
+    // único); "pelo menos um", no commit.
+    let demoted = sqlx::query!(
+        r#"update tenant_members set role = 'organizer'
+           where tenant_id = $1 and user_id = $2 and role = 'owner'"#,
+        tenant.get(),
+        from
+    )
+    .execute(&mut *tx)
+    .await?;
+    if demoted.rows_affected() == 0 {
+        return Err(ApiError::forbidden("tenant.forbidden"));
+    }
+    sqlx::query!(
+        "update tenant_members set role = 'owner' where tenant_id = $1 and user_id = $2",
+        tenant.get(),
+        to
+    )
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(())
+}
+
 /// Tenants de que o usuário participa (sem os que deixou), na ordem em que
 /// entrou.
 pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, ApiError> {
