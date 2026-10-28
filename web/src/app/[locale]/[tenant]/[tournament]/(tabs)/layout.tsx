@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
+import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { TournamentView } from "@/features/tournaments/components/tournament-view";
 import { Page } from "@/shared/ui/page";
 import {
@@ -31,9 +31,12 @@ export default async function TournamentLayout({
         }
       >
         {params.then(({ tenant, tournament }) => (
-          <TournamentView tenant={tenant} slug={tournament}>
-            {children}
-          </TournamentView>
+          <>
+            <LiveUpdates tenant={tenant} tournament={tournament} />
+            <TournamentView tenant={tenant} slug={tournament}>
+              {children}
+            </TournamentView>
+          </>
         ))}
       </Suspense>
     </Page>

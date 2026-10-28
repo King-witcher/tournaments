@@ -276,6 +276,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/push/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_key"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/push/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["put_subscription"];
+        post?: never;
+        delete: operations["delete_subscription"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants": {
         parameters: {
             query?: never;
@@ -804,6 +836,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ws"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -899,6 +947,36 @@ export interface components {
             /** @description Trocar a senha encerra as outras sessões da conta. */
             password?: string | null;
             username?: string | null;
+        };
+        /** @description O que mudou. */
+        Changed: {
+            /** @enum {string} */
+            scope: "tenant";
+            tenant: string;
+        } | {
+            match?: string | null;
+            /** @enum {string} */
+            scope: "tournament";
+            tenant: string;
+            tournament: string;
+        } | {
+            /** @enum {string} */
+            scope: "me";
+        };
+        /**
+         * @description Do navegador para a API. A API confere o acesso como na leitura e
+         *     responde `subscribed` ou `error`.
+         */
+        ClientMessage: {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "subscribe";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "unsubscribe";
         };
         /**
          * @description Como um mapa ou a série foi confirmado.
@@ -1020,6 +1098,9 @@ export interface components {
             /** Format: int64 */
             id: number;
             locale: string;
+        };
+        DeleteSubscription: {
+            endpoint: string;
         };
         /** @description Corpo de erro da API: só um código estável, o texto fica no front. */
         ErrorBody: {
@@ -1380,6 +1461,80 @@ export interface components {
          * @enum {string}
          */
         NoRepeatWho: "player" | "team";
+        /**
+         * @description Aviso para uma pessoa: o front traduz `code` com `params` e leva a `path`.
+         *     É também o corpo do Web Push, com o `locale` da inscrição ao lado.
+         */
+        Notice: components["schemas"]["NoticeKind"] & {
+            /**
+             * @description Caminho no site, sem o idioma (ex.: `/quake-br/copa/matches/wb-1-1`).
+             * @example /quake-br/copa/matches/wb-1-1
+             */
+            path: string;
+        };
+        /**
+         * @description Código do aviso e os parâmetros dele. `tournament` é o nome do torneio no
+         *     idioma original; `match`, a partida (`wb-1-3`); `opponent` e `player`,
+         *     apelidos na comunidade.
+         */
+        NoticeKind: {
+            /** @enum {string} */
+            code: "check_in.opened";
+            /** @description O check-in abriu (para os inscritos). */
+            params: {
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.ready";
+            /** @description A partida tem os dois lados e pode ser jogada (para os dois). */
+            params: {
+                match: string;
+                opponent: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.game_reported";
+            /**
+             * @description O adversário enviou um mapa; sem resposta até `confirm_by`, ele
+             *     confirma sozinho.
+             */
+            params: {
+                /** Format: date-time */
+                confirm_by: string;
+                /** Format: int32 */
+                game: number;
+                match: string;
+                opponent: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.game_contested";
+            /**
+             * @description Um mapa foi contestado e espera a organização (para organizers e
+             *     owner).
+             */
+            params: {
+                /** Format: int32 */
+                game: number;
+                match: string;
+                /** @description Quem contestou. */
+                player: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tournament.start_due";
+            /**
+             * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
+             *     owner, uma vez).
+             */
+            params: {
+                tournament: string;
+            };
+        };
         /** @description Inscrito num torneio. */
         Participant: {
             avatar_url?: string | null;
@@ -1407,6 +1562,24 @@ export interface components {
             user_id: number;
             /** @description Desistiu do torneio em andamento: as partidas dele viram W.O. */
             withdrawn: boolean;
+        };
+        PushKey: {
+            /**
+             * @description Chave pública VAPID em base64url: o `applicationServerKey` de
+             *     `pushManager.subscribe`.
+             */
+            public_key: string;
+        };
+        /**
+         * @description A inscrição do navegador, como `PushSubscription.toJSON()` entrega (sem o
+         *     `expirationTime`), e o idioma dos avisos.
+         */
+        PutSubscription: {
+            /** @description URL `https` do serviço de push do navegador. */
+            endpoint: string;
+            keys: components["schemas"]["SubscriptionKeys"];
+            /** @description Idioma do texto dos avisos (o da página ao se inscrever). */
+            locale: components["schemas"]["Locale"];
         };
         PutTranslation: {
             /** @description Markdown, até 2000 caracteres; vazio usa o original. */
@@ -1436,6 +1609,34 @@ export interface components {
         SeedingOrder: {
             /** @description Todos os elegíveis, cada um uma vez, do seed 1 em diante. */
             user_ids: number[];
+        };
+        /** @description Da API para o navegador. */
+        ServerMessage: (components["schemas"]["Changed"] & {
+            /** @enum {string} */
+            type: "changed";
+        }) | (components["schemas"]["Notice"] & {
+            /** @enum {string} */
+            type: "notify";
+        }) | {
+            tenant: string;
+            /** @enum {string} */
+            type: "access_lost";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "subscribed";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "unsubscribed";
+        } | {
+            code: string;
+            tenant?: string | null;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "error";
         };
         /** @enum {string} */
         ServiceStatus: "ok" | "unavailable";
@@ -1516,6 +1717,12 @@ export interface components {
             tied: number;
             /** Format: int64 */
             user_id: number;
+        };
+        SubscriptionKeys: {
+            /** @description Segredo de autenticação (base64url). */
+            auth: string;
+            /** @description Chave pública ECDH do navegador (base64url). */
+            p256dh: string;
         };
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
@@ -2560,6 +2767,124 @@ export interface operations {
             };
             /** @description auth.unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_key: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Chave pública VAPID para inscrever o navegador */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushKey"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description push.not_configured (a API está sem as chaves VAPID: só há avisos com o site aberto) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_subscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutSubscription"];
+            };
+        };
+        responses: {
+            /** @description Navegador inscrito para os avisos de quem está logado (o endpoint que era de outra conta passa a ser desta), com o idioma dos avisos */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description push.subscription_invalid (endpoint fora de https num domínio, chaves com outro tamanho), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_subscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteSubscription"];
+            };
+        };
+        responses: {
+            /** @description Inscrição do navegador removida, se era de quem está logado (também se não havia) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5454,6 +5779,51 @@ export interface operations {
             };
             /** @description tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    ws: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
+            101: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description realtime.origin_forbidden (o Origin não é o do site) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description realtime.upgrade_required (não é um pedido de WebSocket) */
+            426: {
                 headers: {
                     [name: string]: unknown;
                 };
