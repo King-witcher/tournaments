@@ -51,6 +51,12 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - Testes: `members/departure`, `lifecycle/withdrawal` (W.O. agora e depois na dupla, pendente substituído, dois lados fora, confirmação por tempo, desfazer), `tenants/transfer` e, por SQL direto, `schema/inactive` e `schema/withdrawal`.
   - Front: "Remover" na lista de membros para quem pode, "Sair da comunidade" e, para o owner, "Transferir a posse" (escolher o membro e digitar o endereço), com o que acontece em cada confirmação; "Desistência" para o organizador em cada inscrito da chave de torneio em andamento; marca "saiu"/"desistiu" nos inscritos, na chave, na partida e na classificação; textos e erros novos em pt e es.
 
+- **Resultado mapa a mapa** (pedido do usuário; decisões em "Resultados" e "Interface" no `decisions.md`):
+  - `engine`: `series::games` (próximo mapa, troca de um mapa, onde a série fecha e quais mapas ficam depois da decisão; o contestado não conta), revisado pelo `rules-reviewer`; saiu o detalhe por série (`validate_games`).
+  - Migrations: janela padrão de 10 minutos (os torneios que não começaram com 5 passaram para 10) e `match_games` por mapa (estado, autoria, prazo e contestação de cada um), com a conversão das séries enviadas inteiras, `match_results` só com a série decidida (`confirmed_via = maps`), coerência série × mapas no commit e eventos com o número do mapa (`decided`, `reopened`).
+  - API: `POST .../matches/{partida}/games/{n}/report`, `.../confirm`, `.../contest`, `PUT .../games/{n}` (organizador) e `PUT .../result` só com W.O.; `settle.rs` depois de toda mudança (anula, fecha a série, W.O. automático, status); `tasks.rs` (o que a partida e cada mapa esperam de quem vê). Testes de envio e confirmação mapa a mapa, fechamento na maioria, prazo de 10 minutos, confirmar na hora, contestação e resolução, mapa fora de ordem, repetido e depois da decisão, correções, W.O., regras do banco e a conversão (aplicando as migrations até a anterior, gravando dados na forma antiga e aplicando o resto).
+  - Front: página da partida com o placar da série, uma linha por mapa e o envio do próximo na própria linha; chave com o placar dos mapas confirmados e a marca de mapa pendente ou contestado; `LocalTime` em `shared/ui`; textos e erros novos em pt e es.
+
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
 - Melhor de N: um valor padrão + um para a decisiva (final na simples; grande final e reset na dupla). Ex.: md3 + md5.
