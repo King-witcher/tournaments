@@ -28,12 +28,9 @@ impl From<EngineError> for ApiError {
             E::InvalidScore { best_of, .. } => {
                 Self::invalid("match.invalid_score").with_params([("best_of", n(best_of))])
             }
-            E::GameCountMismatch { expected, got } => Self::invalid("match.games_count_mismatch")
-                .with_params([("expected", expected as i64), ("got", got as i64)]),
             E::GameTied { game } => {
                 Self::invalid("match.game_tied").with_params([("game", game as i64)])
             }
-            E::GamesDisagreeWithScore { .. } => Self::invalid("match.games_disagree"),
             E::MapRepeated(_) => Self::invalid("match.map_repeated"),
             E::FragsDisagree { game } => {
                 Self::invalid("match.frags_disagree").with_params([("game", game as i64)])

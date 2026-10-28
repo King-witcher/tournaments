@@ -1,0 +1,245 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,\n                  m.slug as \"map_slug?\", m.name as \"map_name?\", g.a_frags, g.b_frags, g.status,\n                  g.reported_side, g.reported_at, g.confirm_by, g.contested_at,\n                  g.contest_comment, g.confirmed_via, g.confirmed_at\n           from match_games g\n           left join maps m on m.id = g.map_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "side_a",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "side_a"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "side_b",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "side_b"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "winner",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "winner"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "map_slug?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "map_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "a_frags",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "a_frags"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "b_frags",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "b_frags"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "reported_side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "reported_side"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "reported_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "reported_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "confirm_by",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirm_by"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "contested_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "contested_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "contest_comment",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "contest_comment"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "confirmed_via",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_via"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "confirmed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "e8fcf5f6539c1a5112c2832367383802263db490449d5425c14cb1f014acba1f"
+}

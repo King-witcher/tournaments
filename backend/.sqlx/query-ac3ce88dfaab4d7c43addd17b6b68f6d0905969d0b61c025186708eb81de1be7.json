@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into match_results\n               (tenant_id, tournament_id, stage, match_key, best_of, side_a, side_b, status,\n                winner, a_wins, b_wins, reported_at, confirmed_via, confirmed_at, position)\n           values ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9, $10, $11, 'maps', $11,\n                   (select coalesce(max(position), 0) + 1\n                    from match_results where tournament_id = $2))\n           on conflict (tournament_id, stage, match_key) do update\n           set side_a = excluded.side_a, side_b = excluded.side_b, winner = excluded.winner,\n               a_wins = excluded.a_wins, b_wins = excluded.b_wins, reported_side = null,\n               reported_by = null, reported_at = excluded.reported_at, confirm_by = null,\n               contested_by = null, contested_at = null, contest_comment = null,\n               confirmed_via = 'maps', confirmed_by = null, confirmed_at = excluded.confirmed_at,\n               position = match_results.position",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int2",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac3ce88dfaab4d7c43addd17b6b68f6d0905969d0b61c025186708eb81de1be7"
+}

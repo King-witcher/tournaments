@@ -1,5 +1,6 @@
-//! Um jogador envia, o adversário confirma (ou a janela acaba) e a chave
-//! avança; o que dá código no caminho.
+//! Mapa a mapa: um jogador envia, o adversário confirma (ou a janela acaba),
+//! a série fecha na maioria e só então a chave avança; o que dá código no
+//! caminho.
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
@@ -9,7 +10,7 @@ use super::*;
 use crate::common::*;
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn the_bracket_advances_only_when_the_opponent_confirms(db: PgPool) {
+async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -20,45 +21,94 @@ async fn the_bracket_advances_only_when_the_opponent_confirms(db: PgPool) {
     )
     .await;
 
-    // P4 (lado b) envia a derrota por 2 x 0.
-    let (status, sent) = report(&app, &p[3], "wb-1-1", score(2, 0)).await;
+    // P4 (lado b) envia o mapa 1, vencido por P1, com frags.
+    let first = json!({ "winner": "a", "map": "awoken", "a_frags": 20, "b_frags": 12 });
+    let (status, sent) = report(&app, &p[3], "wb-1-1", 1, first).await;
     assert_eq!(status, StatusCode::OK, "{sent}");
-    let summary = &sent["summary"];
-    assert_eq!(
-        (&summary["state"], &summary["task"]),
-        (&json!("ready"), &json!("await_opponent"))
-    );
-    let result = &summary["result"];
+    let g = &sent["games"][0];
     assert_eq!(
         (
-            &result["status"],
-            &result["winner"],
-            &result["reported_side"]
+            &g["status"],
+            &g["winner"],
+            &g["reported_side"],
+            &g["map"]["name"]
         ),
-        (&json!("pending"), &json!("a"), &json!("b"))
+        (
+            &json!("pending"),
+            &json!("a"),
+            &json!("b"),
+            &json!("Awoken")
+        )
     );
-    assert!(result["confirm_by"].is_string());
+    assert!(g["confirm_by"].is_string());
+    assert_eq!(g["task"], "await_opponent");
+    // Quem enviou já pode mandar o próximo, sem esperar a confirmação.
+    assert_eq!(
+        (&sent["next_game"], &sent["summary"]["task"]),
+        (&json!(2), &json!("report"))
+    );
 
-    // Pendente não avança: a final ainda espera o vencedor.
     let b = bracket(&app, &p[0]).await;
-    assert_eq!(b["results"], 1);
-    assert_eq!(find(&b, "wb-1-1")["task"], "respond");
+    let m = find(&b, "wb-1-1");
+    assert_eq!(
+        (&m["task"], &m["pending_maps"], &m["a_maps"]),
+        (&json!("respond"), &json!(1), &json!(0))
+    );
+
+    let (status, confirmed) = confirm(&app, &p[0], "wb-1-1", 1).await;
+    assert_eq!(status, StatusCode::OK, "{confirmed}");
+    assert_eq!(confirmed["games"][0]["confirmed_via"], "opponent");
+    // 1 x 0 ainda não decide a md3: a final continua esperando.
+    let b = bracket(&app, &p[0]).await;
+    let m = find(&b, "wb-1-1");
+    assert_eq!(
+        (&m["state"], &m["a_maps"], &m["result"]),
+        (&json!("ready"), &json!(1), &Value::Null)
+    );
     assert_eq!(find(&b, "wb-2-1")["a"]["user_id"], Value::Null);
 
-    let (status, confirmed) = confirm(&app, &p[0], "wb-1-1").await;
-    assert_eq!(status, StatusCode::OK, "{confirmed}");
-    assert_eq!(confirmed["summary"]["state"], "completed");
-    assert_eq!(confirmed["summary"]["result"]["confirmed_via"], "opponent");
-    assert_eq!(kinds(&confirmed), ["reported", "confirmed"]);
-    let actors: Vec<&Value> = confirmed["history"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|e| &e["actor"]["user_id"])
-        .collect();
-    assert_eq!(actors, [&json!(p[3].id), &json!(p[0].id)]);
+    // O mapa 2, enviado por P1 e confirmado por P4, fecha a série.
+    let (status, _) = report(&app, &p[0], "wb-1-1", 2, game("a", "exile")).await;
+    assert_eq!(status, StatusCode::OK);
     assert_eq!(
-        confirmed["history"][0]["outcome"],
+        find(&bracket(&app, &p[0]).await, "wb-2-1")["a"]["user_id"],
+        Value::Null
+    );
+    let (status, closed) = confirm(&app, &p[3], "wb-1-1", 2).await;
+    assert_eq!(status, StatusCode::OK, "{closed}");
+    let result = &closed["summary"]["result"];
+    assert_eq!(
+        (
+            &closed["summary"]["state"],
+            &result["winner"],
+            &result["a_wins"],
+            &result["b_wins"],
+            &result["confirmed_via"]
+        ),
+        (
+            &json!("completed"),
+            &json!("a"),
+            &json!(2),
+            &json!(0),
+            &json!("maps")
+        )
+    );
+    assert_eq!(closed["next_game"], Value::Null);
+    assert_eq!(
+        kinds(&closed),
+        [
+            "reported:1",
+            "confirmed:1",
+            "reported:2",
+            "confirmed:2",
+            "decided"
+        ]
+    );
+    let history = closed["history"].as_array().unwrap();
+    assert_eq!(history[0]["actor"]["user_id"], p[3].id);
+    assert_eq!(history[0]["outcome"]["winner"], p[0].id);
+    assert_eq!(
+        history[4]["outcome"],
         json!({ "winner": p[0].id, "winner_nickname": "P1", "walkover": false, "winner_maps": 2, "loser_maps": 0 })
     );
 
@@ -68,7 +118,6 @@ async fn the_bracket_advances_only_when_the_opponent_confirms(db: PgPool) {
         (&final_["a"]["user_id"], &final_["state"]),
         (&json!(p[0].id), &json!("pending"))
     );
-    // P4 já tem a colocação: 3º–4º.
     assert_eq!(
         b["standings"],
         json!([{ "user_id": p[3].id, "rank": 3, "tied": 2 }])
@@ -87,191 +136,161 @@ async fn reporting_rules(db: PgPool) {
     )
     .await;
     let not_player = (StatusCode::FORBIDDEN, err("match.not_player"));
+    let conflict = |code: &str| (StatusCode::CONFLICT, err(code));
+    let invalid = |code: &str| (StatusCode::UNPROCESSABLE_ENTITY, err(code));
+    let k = "wb-1-1";
 
-    assert_eq!(report(&app, &p[1], "wb-1-1", score(2, 0)).await, not_player);
-    // O organizador que não joga também não envia (ele lança pelo resultado).
-    assert_eq!(report(&app, &ana, "wb-1-1", score(2, 0)).await, not_player);
     assert_eq!(
-        report(&app, &p[0], "wb-2-1", score(2, 0)).await,
-        (StatusCode::CONFLICT, err("match.not_ready"))
+        report(&app, &p[1], k, 1, game("a", "awoken")).await,
+        not_player
+    );
+    // O organizador que não joga também não envia (ele lança).
+    assert_eq!(
+        report(&app, &ana, k, 1, game("a", "awoken")).await,
+        not_player
     );
     assert_eq!(
-        report(&app, &p[0], "wb-1-1", score(1, 0)).await,
+        report(&app, &p[0], "wb-2-1", 1, game("a", "awoken")).await,
+        conflict("match.not_ready")
+    );
+    // Fora de ordem: o mapa 2 antes do 1.
+    assert_eq!(
+        report(&app, &p[0], k, 2, game("a", "awoken")).await,
         (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "match.invalid_score", "params": { "best_of": 3 } })
+            StatusCode::CONFLICT,
+            json!({ "error": "match.game_out_of_order", "params": { "next": 1 } })
         )
     );
     assert_eq!(
-        report(&app, &p[0], "wb-1-1", score(2, 2)).await.1["error"],
-        "match.invalid_score"
+        report(&app, &p[0], k, 1, json!({ "winner": "a" })).await,
+        invalid("match.map_required")
     );
     assert_eq!(
-        confirm(&app, &p[1], "wb-1-2").await,
-        (StatusCode::CONFLICT, err("match.no_report"))
+        report(&app, &p[0], k, 1, game("a", "q3dm17")).await,
+        invalid("match.map_unknown")
+    );
+    assert_eq!(
+        report(
+            &app,
+            &p[0],
+            k,
+            1,
+            json!({ "winner": "a", "map": "awoken", "a_frags": 5, "b_frags": 9 })
+        )
+        .await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({ "error": "match.frags_disagree", "params": { "game": 1 } })
+        )
+    );
+    assert_eq!(
+        confirm(&app, &p[3], k, 1).await,
+        (StatusCode::NOT_FOUND, err("match.game_not_found"))
     );
 
-    let (status, _) = report(&app, &p[0], "wb-1-1", score(2, 1)).await;
+    let (status, _) = report(&app, &p[0], k, 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK);
-    let reported = (StatusCode::CONFLICT, err("match.already_reported"));
-    assert_eq!(report(&app, &p[0], "wb-1-1", score(2, 1)).await, reported);
-    assert_eq!(report(&app, &p[3], "wb-1-1", score(0, 2)).await, reported);
     assert_eq!(
-        confirm(&app, &p[0], "wb-1-1").await,
+        report(&app, &p[3], k, 1, game("b", "exile")).await,
+        conflict("match.game_already_reported")
+    );
+    // Mapa repetido na série.
+    assert_eq!(
+        report(&app, &p[3], k, 2, game("a", "awoken")).await,
+        invalid("match.map_repeated")
+    );
+    assert_eq!(
+        confirm(&app, &p[0], k, 1).await,
         (StatusCode::FORBIDDEN, err("match.own_report"))
     );
-    assert_eq!(confirm(&app, &p[1], "wb-1-1").await, not_player);
     assert_eq!(
-        contest(&app, &p[0], "wb-1-1", "errado").await,
+        contest(&app, &p[0], k, 1, "errado").await,
         (StatusCode::FORBIDDEN, err("match.own_report"))
     );
+    assert_eq!(confirm(&app, &p[1], k, 1).await, not_player);
 
-    let (status, _) = confirm(&app, &p[3], "wb-1-1").await;
+    // O segundo mapa de A, ainda pendente, já decide pela soma dos enviados:
+    // não há terceiro.
+    let (status, _) = report(&app, &p[3], k, 2, game("a", "exile")).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(report(&app, &p[0], "wb-1-1", score(2, 1)).await, reported);
     assert_eq!(
-        confirm(&app, &p[3], "wb-1-1").await,
-        (StatusCode::CONFLICT, err("match.already_confirmed"))
+        report(&app, &p[3], k, 3, game("b", "insomnia")).await,
+        conflict("match.series_decided")
+    );
+    let (status, _) = confirm(&app, &p[3], k, 1).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        confirm(&app, &p[3], k, 1).await,
+        conflict("match.already_confirmed")
+    );
+    let (status, _) = confirm(&app, &p[0], k, 2).await;
+    assert_eq!(status, StatusCode::OK);
+    // Série decidida: nada mais entra.
+    assert_eq!(
+        report(&app, &p[0], k, 3, game("a", "insomnia")).await,
+        conflict("match.series_decided")
     );
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn the_map_detail_must_agree_with_the_score(db: PgPool) {
+async fn unanswered_maps_confirm_when_the_ten_minute_window_ends(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
-    let with_games = |games: Value| json!({ "a_wins": 2, "b_wins": 1, "games": games });
-    let game = |map: &str, a: u16, b: u16| json!({ "map": map, "a_frags": a, "b_frags": b });
-    let invalid = |code: &str| (StatusCode::UNPROCESSABLE_ENTITY, err(code));
-
-    let cases = [
-        (
-            json!([game("awoken", 20, 10), game("exile", 5, 10)]),
-            (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                json!({ "error": "match.games_count_mismatch", "params": { "expected": 3, "got": 2 } }),
-            ),
-        ),
-        (
-            json!([
-                game("awoken", 20, 10),
-                game("exile", 10, 10),
-                game("insomnia", 30, 2)
-            ]),
-            (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                json!({ "error": "match.game_tied", "params": { "game": 2 } }),
-            ),
-        ),
-        (
-            json!([
-                game("awoken", 20, 10),
-                game("awoken", 5, 10),
-                game("insomnia", 30, 2)
-            ]),
-            invalid("match.map_repeated"),
-        ),
-        (
-            json!([
-                game("awoken", 20, 10),
-                game("q3dm17", 5, 10),
-                game("insomnia", 30, 2)
-            ]),
-            invalid("match.map_unknown"),
-        ),
-        // A ganhou o terceiro mapa depois de já ter 2: a série acabaria antes.
-        (
-            json!([
-                game("awoken", 20, 10),
-                game("exile", 25, 10),
-                game("insomnia", 3, 30)
-            ]),
-            invalid("match.games_disagree"),
-        ),
-        (
-            json!([
-                game("awoken", 1000, 10),
-                game("exile", 5, 10),
-                game("insomnia", 30, 2)
-            ]),
-            (
-                StatusCode::UNPROCESSABLE_ENTITY,
-                json!({ "error": "match.frags_invalid", "params": { "max": 999 } }),
-            ),
-        ),
-    ];
-    for (games, expected) in cases {
-        assert_eq!(
-            report(&app, &p[1], "wb-1-1", with_games(games.clone())).await,
-            expected,
-            "{games}"
-        );
+    for (n, map) in [(1, "awoken"), (2, "exile")] {
+        let (status, body) = report(&app, &p[0], "wb-1-1", n, game("a", map)).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
     }
-
-    let games = json!([
-        game("awoken", 20, 10),
-        game("exile", 5, 10),
-        game("insomnia", 30, 2)
-    ]);
-    let (status, sent) = report(&app, &p[1], "wb-1-1", with_games(games)).await;
-    assert_eq!(status, StatusCode::OK, "{sent}");
-    assert_eq!(
-        sent["games"][1],
-        json!({ "number": 2, "map": { "slug": "exile", "name": "Exile" }, "a_frags": 5, "b_frags": 10 })
-    );
-    assert_eq!(sent["games"].as_array().unwrap().len(), 3);
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn unanswered_reports_confirm_when_the_window_ends(db: PgPool) {
-    let (app, ana, _) = quake_br(&db).await;
-    let p = players(&app, &db, &ana, 2).await;
-    start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
-    let (status, _) = report(&app, &p[0], "wb-1-1", score(2, 0)).await;
-    assert_eq!(status, StatusCode::OK);
     let window = sqlx::query_scalar!(
         r#"select extract(epoch from confirm_by - reported_at)::integer as "seconds!"
-           from match_results"#
+           from match_games where number = 1"#
     )
     .fetch_one(&db)
     .await
     .unwrap();
     assert_eq!(window, 10 * 60);
 
-    // Ainda na janela: segue pendente.
+    // Nove minutos depois, ainda na janela: seguem pendentes.
+    age(&db, 9).await;
     let b = bracket(&app, &p[1]).await;
-    assert_eq!(find(&b, "wb-1-1")["result"]["status"], "pending");
+    assert_eq!(find(&b, "wb-1-1")["pending_maps"], 2);
 
-    // Dez minutos depois (o relógio volta no banco em vez de esperar).
-    sqlx::query!("update match_events set created_at = created_at - interval '11 minutes'")
-        .execute(&db)
-        .await
-        .unwrap();
-    sqlx::query!(
-        "update match_results set reported_at = reported_at - interval '11 minutes',
-                                  confirm_by = confirm_by - interval '11 minutes'"
-    )
-    .execute(&db)
-    .await
-    .unwrap();
+    // Mais dois minutos: confirmam pelo tempo e a série fecha.
+    age(&db, 2).await;
     let b = bracket(&app, &p[1]).await;
     let m = find(&b, "wb-1-1");
     assert_eq!(
-        (&m["state"], &m["result"]["confirmed_via"]),
-        (&json!("completed"), &json!("deadline"))
+        (
+            &m["state"],
+            &m["result"]["confirmed_via"],
+            &m["pending_maps"]
+        ),
+        (&json!("completed"), &json!("maps"), &json!(0))
     );
     // Era a final: o torneio encerrou sozinho.
     assert_eq!(b["status"], "finished");
-    let (_, seen) = get(&app, COPA, &p[1]).await;
-    assert_eq!(seen["status"], "finished");
     assert_eq!(
-        contest(&app, &p[1], "wb-1-1", "tarde demais").await,
+        contest(&app, &p[1], "wb-1-1", 1, "tarde demais").await,
         (StatusCode::CONFLICT, err("tournament.not_in_progress"))
     );
 
-    let (_, detail) = get(&app, &format!("{COPA}/matches/wb-1-1"), &p[1]).await;
-    assert_eq!(kinds(&detail), ["reported", "auto_confirmed"]);
-    assert_eq!(detail["history"][1]["actor"], Value::Null);
-    let confirmed_at = &detail["summary"]["result"]["confirmed_at"];
-    assert_eq!(&detail["history"][1]["at"], confirmed_at);
+    let d = detail(&app, &p[1], "wb-1-1").await;
+    assert_eq!(
+        kinds(&d),
+        [
+            "reported:1",
+            "reported:2",
+            "auto_confirmed:1",
+            "auto_confirmed:2",
+            "decided"
+        ]
+    );
+    assert_eq!(d["history"][2]["actor"], Value::Null);
+    assert_eq!(d["games"][1]["confirmed_via"], "deadline");
+    // A série fecha quando o último mapa confirmou.
+    assert_eq!(&d["history"][4]["at"], &d["games"][1]["confirmed_at"]);
+    assert_eq!(
+        &d["summary"]["result"]["confirmed_at"],
+        &d["games"][1]["confirmed_at"]
+    );
 }

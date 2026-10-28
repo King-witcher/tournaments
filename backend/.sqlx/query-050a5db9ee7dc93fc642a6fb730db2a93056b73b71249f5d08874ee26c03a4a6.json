@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into match_games\n               (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,\n                map_id, a_frags, b_frags, status, reported_by, confirmed_via, confirmed_by,\n                confirmed_at)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'confirmed', $12,\n                   'organizer', $12, now())\n           on conflict (tournament_id, stage, match_key, number) do update\n           set side_a = excluded.side_a, side_b = excluded.side_b, winner = excluded.winner,\n               map_id = excluded.map_id, a_frags = excluded.a_frags, b_frags = excluded.b_frags,\n               status = 'confirmed', reported_side = null, reported_by = excluded.reported_by,\n               reported_at = now(), confirm_by = null, contested_by = null,\n               contested_at = null, contest_comment = null, confirmed_via = 'organizer',\n               confirmed_by = excluded.confirmed_by, confirmed_at = now()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int2",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "050a5db9ee7dc93fc642a6fb730db2a93056b73b71249f5d08874ee26c03a4a6"
+}

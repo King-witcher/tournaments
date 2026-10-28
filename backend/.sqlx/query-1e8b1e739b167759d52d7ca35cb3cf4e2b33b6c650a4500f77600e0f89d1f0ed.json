@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from (\n               select stage, match_key from match_results where tournament_id = $1\n               union\n               select stage, match_key from match_games where tournament_id = $1\n           ) touched",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1e8b1e739b167759d52d7ca35cb3cf4e2b33b6c650a4500f77600e0f89d1f0ed"
+}

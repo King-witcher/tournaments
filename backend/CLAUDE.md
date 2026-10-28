@@ -48,14 +48,18 @@ crates/api/src/
                   Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
                   gera a chave; desfazer a descarta)
   maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
-  matches/        .../bracket e .../matches/{match}[/report|/confirm|/contest|/result]:
-                  stage.rs (fase → chave por replay, start, discard, sync_status), due.rs
-                  (confirmação por tempo, apply_due_confirmations), report.rs (jogadores),
-                  manage.rs (organizador: lançar, resolver, corrigir, W.O.), outcome.rs (placar
-                  pelos lados → engine), key.rs (wb-1-3), result.rs, history.rs, view.rs,
-                  detail.rs, actions.rs, withdrawals.rs (W.O. automático de quem desistiu, depois
-                  de toda mudança; settle_withdrawals); SQL em db/ (leitura e confirmação por
-                  tempo, writes, events, games)
+  matches/        .../bracket, .../matches/{match}[/result] e .../matches/{match}/games/{n}
+                  [/report|/confirm|/contest]: a série mapa a mapa. stage.rs (fase → chave por
+                  replay das séries decididas, com os mapas; start, discard, sync_status),
+                  games.rs (mapa gravado → engine), result.rs (série decidida), settle.rs (depois
+                  de toda mudança: anula os mapas depois da decisão, fecha as séries, W.O.
+                  automático, status), due.rs (confirmação por tempo dos mapas,
+                  apply_due_confirmations), report.rs (jogadores), manage.rs (organizador:
+                  lançar, resolver e corrigir mapas, W.O. na série), outcome.rs (mapa pelos lados
+                  → engine), tasks.rs (o que a partida e cada mapa esperam de quem vê), key.rs
+                  (wb-1-3), history.rs, view.rs, detail.rs, actions.rs, withdrawals.rs (W.O.
+                  automático de quem desistiu; settle_withdrawals); SQL em db/ (leitura e
+                  confirmação por tempo, writes da série, events, games)
 ```
 
 Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `realtime` (WebSocket; o agendador chama `matches::apply_due_confirmations`), `media` (prints no S3), `ratings`.

@@ -1,11 +1,12 @@
-//! Testes de `matches`: a chave (`bracket`), envio e confirmação
+//! Testes de `matches`: a chave (`bracket`), envio e confirmação mapa a mapa
 //! (`results`), contestação e organizador (`organizer`), correções e fim
-//! (`corrections`) e as regras do banco para
-//! resultados e histórico (`schema`). Helpers para montar um torneio iniciado
-//! com jogadores em ordem de seed.
+//! (`corrections`), as regras do banco para mapas, séries e histórico
+//! (`schema`) e a conversão das séries antigas para mapas (`migration`).
+//! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod bracket;
 mod corrections;
+mod migration;
 mod organizer;
 mod results;
 mod schema;
@@ -17,6 +18,9 @@ use sqlx::PgPool;
 use crate::common::*;
 
 pub const COPA: &str = "/tenants/quake-br/tournaments/copa";
+
+/// Mapas do pool de duelo, um para cada mapa de uma série.
+pub const MAPS: [&str; 5] = ["awoken", "exile", "insomnia", "blood-run", "deep-embrace"];
 
 /// Torneio `copa` sem check-in: `duel` com `changes`.
 pub fn copa(changes: Value) -> Value {
@@ -70,6 +74,12 @@ pub async fn bracket(app: &Router, who: &User) -> Value {
     body
 }
 
+pub async fn detail(app: &Router, who: &User, key: &str) -> Value {
+    let (status, body) = get(app, &format!("{COPA}/matches/{key}"), who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}
+
 /// A partida `key` da chave.
 pub fn find<'a>(bracket: &'a Value, key: &str) -> &'a Value {
     bracket["matches"]
@@ -85,35 +95,65 @@ pub fn sides(m: &Value) -> (Value, Value) {
     (m["a"]["user_id"].clone(), m["b"]["user_id"].clone())
 }
 
-fn match_uri(key: &str, action: &str) -> String {
-    format!("{COPA}/matches/{key}/{action}")
+fn game_uri(key: &str, game: u8, action: &str) -> String {
+    format!("{COPA}/matches/{key}/games/{game}{action}")
 }
 
-/// Placar de `a` e de `b`, sem detalhe por mapa.
-pub fn score(a: u8, b: u8) -> Value {
-    json!({ "a_wins": a, "b_wins": b })
+/// Um mapa vencido pelo lado `winner` (`"a"` ou `"b"`) em `map`, sem frags.
+pub fn game(winner: &str, map: &str) -> Value {
+    json!({ "winner": winner, "map": map })
 }
 
-pub async fn report(app: &Router, who: &User, key: &str, body: Value) -> (StatusCode, Value) {
-    post(app, &match_uri(key, "report"), who, body).await
+/// O mapa `n` de `key`, enviado por um jogador.
+pub async fn report(
+    app: &Router,
+    who: &User,
+    key: &str,
+    n: u8,
+    body: Value,
+) -> (StatusCode, Value) {
+    post(app, &game_uri(key, n, "/report"), who, body).await
 }
 
-pub async fn confirm(app: &Router, who: &User, key: &str) -> (StatusCode, Value) {
-    post_empty(app, &match_uri(key, "confirm"), who).await
+pub async fn confirm(app: &Router, who: &User, key: &str, n: u8) -> (StatusCode, Value) {
+    post_empty(app, &game_uri(key, n, "/confirm"), who).await
 }
 
-pub async fn contest(app: &Router, who: &User, key: &str, comment: &str) -> (StatusCode, Value) {
+pub async fn contest(
+    app: &Router,
+    who: &User,
+    key: &str,
+    n: u8,
+    comment: &str,
+) -> (StatusCode, Value) {
     post(
         app,
-        &match_uri(key, "contest"),
+        &game_uri(key, n, "/contest"),
         who,
         json!({ "comment": comment }),
     )
     .await
 }
 
-/// O organizador define o resultado (`result`: `{"kind": "played", ...}` ou
-/// `{"kind": "walkover", "winner": "a"}`).
+/// O organizador lança ou corrige o mapa `n`.
+pub async fn set_game(
+    app: &Router,
+    who: &User,
+    key: &str,
+    n: u8,
+    body: Value,
+    comment: Option<&str>,
+) -> (StatusCode, Value) {
+    put(
+        app,
+        &game_uri(key, n, ""),
+        who,
+        json!({ "game": body, "comment": comment }),
+    )
+    .await
+}
+
+/// O organizador dá W.O. na série para o lado `winner`.
 pub async fn set_result(
     app: &Router,
     who: &User,
@@ -130,25 +170,61 @@ pub async fn set_result(
     .await
 }
 
-/// Série jogada para `set_result`.
-pub fn played(a: u8, b: u8) -> Value {
-    json!({ "kind": "played", "a_wins": a, "b_wins": b })
+/// W.O. para `set_result`.
+pub fn walkover(winner: &str) -> Value {
+    json!({ "kind": "walkover", "winner": winner })
 }
 
-/// `reporter` envia `a` × `b` em `key` e `opponent` confirma.
+/// A série `key` jogada `a` × `b` em mapas: os do perdedor primeiro, depois
+/// os do vencedor, cada um enviado por `reporter` e confirmado por
+/// `opponent`.
 pub async fn play(app: &Router, reporter: &User, opponent: &User, key: &str, a: u8, b: u8) {
-    let (status, body) = report(app, reporter, key, score(a, b)).await;
-    assert_eq!(status, StatusCode::OK, "{key}: {body}");
-    let (status, body) = confirm(app, opponent, key).await;
-    assert_eq!(status, StatusCode::OK, "{key}: {body}");
+    let (winner, loser) = if a > b { ("a", "b") } else { ("b", "a") };
+    let order = std::iter::repeat_n(loser, a.min(b) as usize)
+        .chain(std::iter::repeat_n(winner, a.max(b) as usize));
+    for (i, side) in order.enumerate() {
+        let n = i as u8 + 1;
+        let (status, body) = report(app, reporter, key, n, game(side, MAPS[i])).await;
+        assert_eq!(status, StatusCode::OK, "{key} {n}: {body}");
+        let (status, body) = confirm(app, opponent, key, n).await;
+        assert_eq!(status, StatusCode::OK, "{key} {n}: {body}");
+    }
 }
 
-/// Os `kind` do histórico da partida, na ordem.
-pub fn kinds(detail: &Value) -> Vec<&str> {
+/// Os `kind` do histórico da partida, na ordem, com o mapa (`reported:1`) nos
+/// eventos de um mapa.
+pub fn kinds(detail: &Value) -> Vec<String> {
     detail["history"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|e| e["kind"].as_str().unwrap())
+        .map(|e| {
+            let kind = e["kind"].as_str().unwrap();
+            match e["game"].as_i64() {
+                Some(n) => format!("{kind}:{n}"),
+                None => kind.to_owned(),
+            }
+        })
         .collect()
+}
+
+/// Volta o relógio `minutes` minutos em todos os mapas e eventos, em vez de
+/// esperar a janela de contestação.
+pub async fn age(db: &PgPool, minutes: i32) {
+    sqlx::query!(
+        "update match_events set created_at = created_at - make_interval(mins => $1)",
+        minutes
+    )
+    .execute(db)
+    .await
+    .unwrap();
+    sqlx::query!(
+        "update match_games set reported_at = reported_at - make_interval(mins => $1),
+                                confirm_by = confirm_by - make_interval(mins => $1)
+         where status = 'pending'",
+        minutes
+    )
+    .execute(db)
+    .await
+    .unwrap();
 }

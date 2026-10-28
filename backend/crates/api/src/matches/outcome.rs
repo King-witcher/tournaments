@@ -1,115 +1,69 @@
-//! Placar que chega pelos lados (mapas de `a` e de `b`, frags de `a` e de `b`
-//! por mapa) → o resultado que o `engine` valida e que se grava. As regras de
-//! série (placar do melhor de N, detalhe batendo com ele) são do `engine`;
-//! aqui ficam os limites do site e a troca de orientação.
+//! O que chega para um mapa (vencedor pelo lado, mapa pelo slug, frags de
+//! `a` e de `b`) → o mapa que se grava, e o W.O. pelo lado. As regras de
+//! série (frags batendo com o vencedor, mapa sem repetir, próximo mapa) são
+//! do `engine`; aqui ficam os limites do site.
 
 use std::collections::HashMap;
 
 use engine::{
-    core::{MapId, Outcome, ParticipantId, SeriesScore},
-    series::{self, GameResult},
+    core::{MapId, Outcome, ParticipantId},
+    series,
 };
 
-use super::{result::Side, types::GameInput};
+use super::{db::NewGame, result::Side, types::GameInput};
 use crate::shared::ApiError;
 
 /// Teto de frags num mapa (o mesmo check está na tabela).
 pub const MAX_FRAGS: u16 = 999;
 
-/// Um mapa do detalhe, pronto para gravar.
-pub struct NewGame {
-    pub map: MapId,
-    pub a_frags: i16,
-    pub b_frags: i16,
-}
-
-/// O resultado que uma ação propõe para a partida.
-pub struct Proposed {
-    pub outcome: Outcome,
-    /// Mapas de `a` e de `b`; `None` no W.O.
-    pub score: Option<(u8, u8)>,
-    pub games: Vec<NewGame>,
-}
-
-/// Série jogada entre `a` e `b` numa melhor de `best_of`, com o detalhe
-/// opcional por mapa (`maps`: ids dos mapas ativos pelo slug). Erros: 422
-/// `match.invalid_score` `{best_of}`, `match.frags_invalid` `{max}`,
-/// `match.map_unknown` e os do detalhe (`match.games_count_mismatch`
-/// `{expected, got}`, `match.map_repeated`, `match.game_tied` `{game}`,
-/// `match.games_disagree`).
-pub fn played(
-    best_of: u8,
-    (a, b): (ParticipantId, ParticipantId),
-    (a_wins, b_wins): (u8, u8),
-    games: &[GameInput],
+/// O mapa `number` entre `sides`, com o mapa resolvido por `maps` (ids dos
+/// mapas ativos pelo slug). `require_map`: o jogador sempre diz o mapa; o
+/// organizador pode deixar sem (série antiga). Erros: 422
+/// `match.map_required` (também frags sem mapa), `match.map_unknown`,
+/// `match.frags_invalid` `{max}` (um lado só, ou acima do teto) e os do
+/// `engine` (`match.game_tied` `{game}`, `match.frags_disagree` `{game}`).
+pub fn game(
+    number: i16,
+    sides: (ParticipantId, ParticipantId),
+    input: &GameInput,
     maps: &HashMap<String, MapId>,
-) -> Result<Proposed, ApiError> {
-    let a_won = a_wins > b_wins;
-    let (winner, score) = if a_won {
-        (
-            a,
-            SeriesScore {
-                winner: a_wins,
-                loser: b_wins,
-            },
-        )
-    } else {
-        (
-            b,
-            SeriesScore {
-                winner: b_wins,
-                loser: a_wins,
-            },
-        )
+    require_map: bool,
+) -> Result<NewGame, ApiError> {
+    let map = match &input.map {
+        Some(slug) => Some(
+            *maps
+                .get(slug)
+                .ok_or(ApiError::invalid("match.map_unknown"))?,
+        ),
+        None => None,
     };
-    series::validate_score(best_of, score)?;
-
-    let mut detail = Vec::with_capacity(games.len());
-    let mut checked = Vec::with_capacity(games.len());
-    for g in games {
-        if g.a_frags > MAX_FRAGS || g.b_frags > MAX_FRAGS {
+    let frags = match (input.a_frags, input.b_frags) {
+        (None, None) => None,
+        (Some(a), Some(b)) if a <= MAX_FRAGS && b <= MAX_FRAGS => Some((a, b)),
+        _ => {
             return Err(ApiError::invalid("match.frags_invalid")
                 .with_params([("max", i64::from(MAX_FRAGS))]));
         }
-        let map = *maps
-            .get(&g.map)
-            .ok_or(ApiError::invalid("match.map_unknown"))?;
-        let (winner_frags, loser_frags) = if a_won {
-            (g.a_frags, g.b_frags)
-        } else {
-            (g.b_frags, g.a_frags)
-        };
-        checked.push(GameResult {
-            map,
-            winner_frags,
-            loser_frags,
-        });
-        // Cabem em i16: no máximo MAX_FRAGS.
-        detail.push(NewGame {
-            map,
-            a_frags: g.a_frags as i16,
-            b_frags: g.b_frags as i16,
-        });
+    };
+    if map.is_none() && (require_map || frags.is_some()) {
+        return Err(ApiError::invalid("match.map_required"));
     }
-    series::validate_games(score, &checked)?;
-    Ok(Proposed {
-        outcome: Outcome::Played { winner, score },
-        score: Some((a_wins, b_wins)),
-        games: detail,
+    let game = usize::try_from(number).map_err(|_| ApiError::internal())?;
+    series::check_frags(game, input.winner.into(), frags)?;
+    Ok(NewGame {
+        number,
+        sides,
+        winner: input.winner.of(sides),
+        map,
+        // Cabem em i16: no máximo MAX_FRAGS.
+        frags: frags.map(|(a, b)| (a as i16, b as i16)),
     })
 }
 
 /// W.O. para o lado `winner`.
-pub fn walkover((a, b): (ParticipantId, ParticipantId), winner: Side) -> Proposed {
-    Proposed {
-        outcome: Outcome::Walkover {
-            winner: match winner {
-                Side::A => a,
-                Side::B => b,
-            },
-        },
-        score: None,
-        games: Vec::new(),
+pub fn walkover(sides: (ParticipantId, ParticipantId), winner: Side) -> Outcome {
+    Outcome::Walkover {
+        winner: winner.of(sides),
     }
 }
 
@@ -117,88 +71,99 @@ pub fn walkover((a, b): (ParticipantId, ParticipantId), winner: Side) -> Propose
 mod tests {
     use super::*;
 
-    const A: ParticipantId = ParticipantId(10);
-    const B: ParticipantId = ParticipantId(20);
+    const SIDES: (ParticipantId, ParticipantId) = (ParticipantId(10), ParticipantId(20));
 
     fn maps() -> HashMap<String, MapId> {
-        ["awoken", "exile", "insomnia"]
-            .into_iter()
-            .zip(1..)
-            .map(|(slug, id)| (slug.to_owned(), MapId(id)))
-            .collect()
+        [("awoken".to_owned(), MapId(1))].into_iter().collect()
     }
 
-    fn game(map: &str, a_frags: u16, b_frags: u16) -> GameInput {
+    fn input(winner: Side, map: Option<&str>, frags: (Option<u16>, Option<u16>)) -> GameInput {
         GameInput {
-            map: map.into(),
-            a_frags,
-            b_frags,
+            winner,
+            map: map.map(str::to_owned),
+            a_frags: frags.0,
+            b_frags: frags.1,
         }
     }
 
-    fn code(r: Result<Proposed, ApiError>) -> &'static str {
+    fn code(r: Result<NewGame, ApiError>) -> &'static str {
         r.err().map_or("ok", |e| e.code)
     }
 
     #[test]
-    fn b_can_win_and_the_detail_is_turned_around() {
-        let games = [
-            game("awoken", 20, 10),
-            game("exile", 5, 15),
-            game("insomnia", 9, 30),
-        ];
-        let p = played(3, (A, B), (1, 2), &games, &maps()).unwrap();
+    fn a_map_with_or_without_frags() {
+        let g = game(
+            2,
+            SIDES,
+            &input(Side::B, Some("awoken"), (Some(3), Some(9))),
+            &maps(),
+            true,
+        )
+        .unwrap();
         assert_eq!(
-            p.outcome,
-            Outcome::Played {
-                winner: B,
-                score: SeriesScore {
-                    winner: 2,
-                    loser: 1
-                }
-            }
+            (g.winner, g.map, g.frags),
+            (ParticipantId(20), Some(MapId(1)), Some((3, 9)))
         );
-        assert_eq!(p.score, Some((1, 2)));
-        assert_eq!(p.games[2].b_frags, 30);
+        let g = game(
+            1,
+            SIDES,
+            &input(Side::A, Some("awoken"), (None, None)),
+            &maps(),
+            true,
+        );
+        assert_eq!(g.unwrap().frags, None);
+        // O organizador pode lançar sem o mapa (série antiga).
+        let g = game(
+            1,
+            SIDES,
+            &input(Side::A, None, (None, None)),
+            &maps(),
+            false,
+        );
+        assert_eq!(g.unwrap().map, None);
     }
 
     #[test]
     fn site_limits_and_engine_rules() {
         let m = maps();
+        let check = |i: GameInput, require| code(game(1, SIDES, &i, &m, require));
         assert_eq!(
-            code(played(3, (A, B), (2, 2), &[], &m)),
-            "match.invalid_score"
+            check(input(Side::A, None, (None, None)), true),
+            "match.map_required"
         );
         assert_eq!(
-            code(played(3, (A, B), (3, 0), &[], &m)),
-            "match.invalid_score"
+            check(input(Side::A, None, (Some(1), Some(0))), false),
+            "match.map_required"
         );
-        let too_many = [game("awoken", 1000, 0), game("exile", 1, 0)];
         assert_eq!(
-            code(played(3, (A, B), (2, 0), &too_many, &m)),
-            "match.frags_invalid"
-        );
-        let unknown = [game("q3dm17", 10, 0), game("exile", 1, 0)];
-        assert_eq!(
-            code(played(3, (A, B), (2, 0), &unknown, &m)),
+            check(input(Side::A, Some("q3dm17"), (None, None)), true),
             "match.map_unknown"
         );
-        let short = [game("awoken", 10, 0)];
         assert_eq!(
-            code(played(3, (A, B), (2, 0), &short, &m)),
-            "match.games_count_mismatch"
+            check(input(Side::A, Some("awoken"), (Some(1000), Some(0))), true),
+            "match.frags_invalid"
         );
-        let wrong = [game("awoken", 0, 10), game("exile", 1, 0)];
         assert_eq!(
-            code(played(3, (A, B), (2, 0), &wrong, &m)),
-            "match.games_disagree"
+            check(input(Side::A, Some("awoken"), (Some(10), None)), true),
+            "match.frags_invalid"
+        );
+        assert_eq!(
+            check(input(Side::A, Some("awoken"), (Some(10), Some(10))), true),
+            "match.game_tied"
+        );
+        assert_eq!(
+            check(input(Side::A, Some("awoken"), (Some(1), Some(10))), true),
+            "match.frags_disagree"
         );
     }
 
     #[test]
-    fn walkover_has_no_score() {
-        let p = walkover((A, B), Side::B);
-        assert_eq!(p.outcome, Outcome::Walkover { winner: B });
-        assert_eq!(p.score, None);
+    fn walkover_goes_to_the_side() {
+        assert_eq!(
+            walkover(SIDES, Side::B),
+            Outcome::Walkover {
+                winner: ParticipantId(20)
+            }
+        );
     }
 }

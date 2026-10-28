@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with confirmed as (\n               update match_games\n               set status = 'confirmed', confirmed_via = 'deadline', confirmed_at = confirm_by\n               where tournament_id = $1 and status = 'pending' and confirm_by <= $2\n               returning tenant_id, tournament_id, stage, match_key, number, confirm_by\n           )\n           insert into match_events\n               (tenant_id, tournament_id, stage, match_key, game, kind, created_at)\n           select tenant_id, tournament_id, stage, match_key, number, 'auto_confirmed', confirm_by\n           from confirmed",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "99f2fae65edd77da29a4a3f26cf92d535b14d0f413e9f28208934bc2acc01bce"
+}

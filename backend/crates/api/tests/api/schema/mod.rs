@@ -15,7 +15,7 @@ use serde_json::json;
 use sqlx::PgPool;
 
 use crate::common::*;
-use crate::matches::{COPA, copa, report, set_result, single};
+use crate::matches::{COPA, confirm, contest, copa, report, set_game, single};
 
 pub const CHECK: &str = "23514";
 pub const FOREIGN_KEY: &str = "23503";
@@ -60,19 +60,20 @@ pub struct Cup {
     /// Player sem inscrição.
     pub bia: User,
     /// Organizer: criou um convite do tenant e o link de inscrição, inscreveu
-    /// `p1`, marcou o check-in dele e resolveu a final.
+    /// `p1`, marcou o check-in dele e resolveu o mapa 3 da final.
     pub olga: User,
     /// Entrou pelo convite da Olga.
     pub ze: User,
     /// Os finalistas: `p1` (seed 1, inscrito pela Olga) venceu `p2` (seed 2,
-    /// inscrito pelo link) por 2 x 1, com detalhe por mapa.
+    /// inscrito pelo link) por 2 x 1, mapa a mapa.
     pub p1: User,
     pub p2: User,
     pub tenant: i64,
     pub tournament: i64,
 }
 
-/// Monta o `Cup`: final única em md3 contestada e resolvida pela organizadora.
+/// Monta o `Cup`: final única em md3, com o mapa 3 contestado e resolvido
+/// pela organizadora.
 pub async fn finished_cup(db: &PgPool) -> Cup {
     let (app, ana, bia) = quake_br(db).await;
     let olga = member(&app, db, &ana, "Olga").await;
@@ -127,26 +128,18 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
-    let game = |map: &str, a: u16, b: u16| json!({ "map": map, "a_frags": a, "b_frags": b });
-    let games = json!([
-        game("awoken", 20, 10),
-        game("exile", 5, 10),
-        game("insomnia", 30, 2)
-    ]);
-    let (status, body) = report(
-        &app,
-        &p1,
-        "wb-1-1",
-        json!({ "a_wins": 2, "b_wins": 1, "games": games }),
-    )
-    .await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    let uri = format!("{COPA}/matches/wb-1-1/contest");
-    let (status, body) = post(&app, &uri, &p2, json!({ "comment": "foi 2 x 0" })).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    let result = json!({ "kind": "played", "a_wins": 2, "b_wins": 1, "games": games });
-    let (status, body) = set_result(&app, &olga, "wb-1-1", result, Some("conferido")).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
+    let game = |winner: &str, map: &str, a: u16, b: u16| json!({ "winner": winner, "map": map, "a_frags": a, "b_frags": b });
+    let ok = |(status, body): (StatusCode, serde_json::Value)| {
+        assert_eq!(status, StatusCode::OK, "{body}");
+    };
+    ok(report(&app, &p1, "wb-1-1", 1, game("a", "awoken", 20, 10)).await);
+    ok(confirm(&app, &p2, "wb-1-1", 1).await);
+    ok(report(&app, &p2, "wb-1-1", 2, game("b", "exile", 5, 10)).await);
+    ok(confirm(&app, &p1, "wb-1-1", 2).await);
+    let third = game("a", "insomnia", 30, 2);
+    ok(report(&app, &p1, "wb-1-1", 3, third.clone()).await);
+    ok(contest(&app, &p2, "wb-1-1", 3, "foi meu").await);
+    ok(set_game(&app, &olga, "wb-1-1", 3, third, Some("conferido")).await);
 
     let t = sqlx::query!("select tenant_id, id, status from tournaments where slug = 'copa'")
         .fetch_one(db)
@@ -154,7 +147,7 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
         .unwrap();
     assert_eq!(t.status, "finished");
     assert_eq!(count(db, "select count(*) from match_games").await, 3);
-    assert_eq!(count(db, "select count(*) from match_events").await, 3);
+    assert_eq!(count(db, "select count(*) from match_events").await, 8);
     Cup {
         app,
         ana,

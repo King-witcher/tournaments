@@ -1,22 +1,26 @@
-//! Chave e resultados: ver a chave e uma partida, enviar o placar, confirmar
-//! ou contestar (`report`), e o organizador resolver, lançar, corrigir e dar
-//! W.O. (`manage`).
+//! Chave e resultados, mapa a mapa: ver a chave e uma partida, enviar um
+//! mapa, confirmar ou contestar (`report`), e o organizador lançar ou
+//! corrigir mapas e dar W.O. na série (`manage`).
 //!
-//! A chave nunca é gravada: sai do `replay` do `engine` com a configuração
-//! da fase, os participantes pelo seed e os resultados confirmados, na ordem
-//! em que passaram a valer (`stage`). Gerar e descartar a chave fica no
-//! início e no desfazer do `lifecycle` (`start`, `discard`); encerrar e
-//! reabrir o torneio conforme a chave, aqui (`stage::sync_status`). A
+//! Cada mapa da série é enviado e confirmado sozinho (`games`); a série
+//! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
+//! `series::games`), e só a série decidida entra na chave (`result`). A chave
+//! nunca é gravada: sai do `replay` do `engine` com a configuração da fase,
+//! os participantes pelo seed e as séries decididas, na ordem em que
+//! passaram a valer (`stage`). Gerar e descartar a chave fica no início e no
+//! desfazer do `lifecycle` (`start`, `discard`). Depois de toda mudança,
+//! `settle` anula os mapas que ficaram depois da decisão, fecha as séries
+//! decididas, dá os W.O. automáticos de quem desistiu ou saiu da comunidade
+//! (`withdrawals`) e encerra ou reabre o torneio conforme a chave. A
 //! confirmação por tempo é aplicada ao ler e agir (`due`);
-//! `apply_due_confirmations` é o que um agendador chamaria. Partida pronta
-//! com quem desistiu ou saiu da comunidade vira W.O. automático depois de
-//! cada mudança (`withdrawals`); a desistência, que fica no `lifecycle`,
-//! chama `settle_withdrawals`.
+//! `apply_due_confirmations` é o que um agendador chamaria. A desistência,
+//! que fica no `lifecycle`, chama `settle_withdrawals`.
 
 mod actions;
 mod db;
 mod detail;
 mod due;
+mod games;
 mod handlers;
 mod history;
 mod key;
@@ -24,7 +28,9 @@ mod manage;
 mod outcome;
 mod report;
 mod result;
+mod settle;
 mod stage;
+mod tasks;
 mod types;
 mod view;
 mod withdrawals;
@@ -44,5 +50,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(report::report))
         .routes(routes!(report::confirm))
         .routes(routes!(report::contest))
+        .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
 }

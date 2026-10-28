@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_games set reported_at = reported_at - make_interval(mins => $1),\n                                confirm_by = confirm_by - make_interval(mins => $1)\n         where status = 'pending'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "88b80971e4b57fb5834f04ccea2171e00ea89631238e6043121850c9b959ee73"
+}

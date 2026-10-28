@@ -4,10 +4,7 @@ use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
 use super::MatchRef;
-use crate::{
-    matches::history::{NewEvent, outcome_columns},
-    tournaments::TournamentId,
-};
+use crate::{matches::history::NewEvent, tournaments::TournamentId};
 
 /// Um evento do histórico, com o apelido de quem agiu.
 pub struct EventRow {
@@ -16,6 +13,8 @@ pub struct EventRow {
     /// Apelido no tenant (ou o nome exibido, se saiu do tenant).
     pub actor_name: Option<String>,
     pub actor_avatar: Option<String>,
+    /// Mapa a que o evento se refere; `None`: a série inteira.
+    pub game: Option<i16>,
     pub winner: Option<i64>,
     pub winner_maps: Option<i16>,
     pub loser_maps: Option<i16>,
@@ -33,7 +32,7 @@ pub async fn events(
     sqlx::query_as!(
         EventRow,
         r#"select e.kind, e.actor, coalesce(m.nickname, u.display_name) as actor_name,
-                  u.avatar_url as actor_avatar, e.winner, e.winner_maps, e.loser_maps,
+                  u.avatar_url as actor_avatar, e.game, e.winner, e.winner_maps, e.loser_maps,
                   e.comment, e.created_at
            from match_events e
            left join users u on u.id = e.actor
@@ -54,22 +53,24 @@ pub async fn insert_event(
     at: &MatchRef<'_>,
     event: &NewEvent<'_>,
 ) -> Result<(), sqlx::Error> {
-    let (winner, winner_maps, loser_maps) = outcome_columns(event.outcome);
+    let (winner_maps, loser_maps) = event.maps.unzip();
     sqlx::query!(
         r#"insert into match_events
-               (tenant_id, tournament_id, stage, match_key, kind, actor, winner, winner_maps,
-                loser_maps, comment)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
+               (tenant_id, tournament_id, stage, match_key, kind, actor, game, winner,
+                winner_maps, loser_maps, comment, created_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, coalesce($12, now()))"#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
         at.key,
         event.kind.as_str(),
         event.actor,
-        winner,
-        winner_maps,
-        loser_maps,
-        event.comment
+        event.game,
+        event.winner.map(|w| w.0),
+        winner_maps.map(i16::from),
+        loser_maps.map(i16::from),
+        event.comment,
+        event.at
     )
     .execute(conn)
     .await?;

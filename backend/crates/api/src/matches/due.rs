@@ -1,4 +1,4 @@
-//! Confirmação por tempo: resultado pendente sem resposta confirma sozinho
+//! Confirmação por tempo: mapa pendente sem resposta confirma sozinho
 //! ao fim da janela de contestação. Sem job em segundo plano: a API aplica
 //! ao ler a chave ou uma partida e antes de cada ação sobre ela (como a
 //! abertura automática do check-in). `apply_due_confirmations` é a peça
@@ -7,17 +7,17 @@
 use chrono::{DateTime, Utc};
 use sqlx::{Acquire, PgConnection};
 
-use super::{db, withdrawals};
+use super::{db, settle};
 use crate::{
     shared::ApiError,
     tenants::TenantMember,
     tournaments::{StoredTournament, find_visible, find_visible_for_update},
 };
 
-/// Confirma os resultados com a janela vencida em `now` e, se algum
-/// confirmou, dá os W.O. automáticos que ficaram prontos e encerra o torneio
-/// se a chave terminou. Quem chama trava o torneio (`find_for_update`).
-/// Devolve quantos confirmou.
+/// Confirma os mapas com a janela vencida em `now` e, se algum confirmou,
+/// fecha as séries que eles decidiram, dá os W.O. automáticos que ficaram
+/// prontos e encerra o torneio se a chave terminou (`settle`). Quem chama
+/// trava o torneio (`find_for_update`). Devolve quantos confirmou.
 pub async fn apply_due_confirmations(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -25,7 +25,7 @@ pub async fn apply_due_confirmations(
 ) -> Result<u64, ApiError> {
     let confirmed = db::confirm_due(conn, tournament.id, now).await?;
     if confirmed > 0 {
-        withdrawals::settle(conn, tournament).await?;
+        settle::settle(conn, tournament, None).await?;
     }
     Ok(confirmed)
 }

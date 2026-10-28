@@ -464,23 +464,25 @@
     "match": {
       "not_found": "Partida no encontrada.",
       "not_ready": "Esta partida todavía no se puede jugar.",
-      "already_reported": "Esta partida ya tiene un resultado enviado.",
       "not_player": "Solo quien juega la partida puede hacer esto.",
       "not_in_match": "Ese participante no juega esta partida.",
-      "invalid_score": "Resultado inválido para un al mejor de {best_of}: el ganador gana exactamente la mayoría de los mapas.",
-      "frags_invalid": "Los frags de un mapa van de 0 a {max}.",
+      "frags_invalid": "Informa los frags de los dos lados, de 0 a {max}, o ninguno.",
       "map_unknown": "Mapa desconocido.",
-      "games_count_mismatch": "El detalle tiene {got} mapas, pero el resultado suma {expected}.",
-      "map_repeated": "El mismo mapa aparece dos veces en la serie.",
-      "game_tied": "El mapa {game} está empatado: en el duelo siempre hay un ganador.",
-      "games_disagree": "Los ganadores de los mapas no coinciden con el resultado (y el último mapa siempre es de quien ganó la serie).",
-      "no_report": "Nadie envió resultado para esta partida.",
-      "already_confirmed": "El resultado ya fue confirmado.",
-      "already_contested": "El resultado ya fue impugnado.",
-      "contested": "El resultado fue impugnado: lo resuelve la organización.",
-      "own_report": "Tú enviaste este resultado: quien confirma o impugna es el rival.",
+      "map_repeated": "Ese mapa ya se jugó en esta serie.",
+      "game_tied": "Los frags del mapa {game} están empatados: en el duelo siempre hay un ganador.",
+      "already_confirmed": "Este mapa ya fue confirmado.",
+      "already_contested": "Este mapa ya fue impugnado.",
+      "contested": "Este mapa fue impugnado: lo resuelve la organización.",
+      "own_report": "Tú enviaste este mapa: quien confirma o impugna es el rival.",
       "comment_invalid": "Escribe un comentario de 1 a 280 caracteres, en una línea.",
-      "correction_conflicts": "La corrección contradice una partida confirmada después de esta: con otro ganador aquí, esa partida tendría otros lados o ni existiría. Solo se puede cambiar el resultado manteniendo al ganador."
+      "correction_conflicts": "La corrección cambia el resultado de la serie, y eso contradice una partida decidida después de esta (tendría otros lados o ni existiría).",
+      "series_decided": "La serie ya está decidida por los mapas enviados: no hay próximo mapa.",
+      "no_games_left": "El al mejor de {best_of} ya tuvo todos sus mapas.",
+      "game_already_reported": "Este mapa ya fue enviado. Recarga la página.",
+      "game_out_of_order": "El próximo mapa de la serie es el {next}.",
+      "game_not_found": "Este mapa no fue enviado.",
+      "map_required": "Elige el mapa jugado.",
+      "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó."
     }
   },
   "Lifecycle": {
@@ -499,7 +501,7 @@
     "undoStartConfirm": "¿Deshacer el inicio? El torneo vuelve al check-in, con inscritos, check-ins y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
     "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
     "finished": "Terminado: los resultados aún se pueden corregir en la página de cada partida.",
-    "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún resultado.} one {Se borrará # resultado (pendiente, impugnado o confirmado), con el historial de las partidas.} other {Se borrarán # resultados (pendientes, impugnados o confirmados), con el historial de las partidas.}}",
+    "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún mapa.} one {Se borrarán los mapas y el resultado de # partida, con el historial de las partidas.} other {Se borrarán los mapas y los resultados de # partidas, con el historial de las partidas.}}",
     "undoStartTypeSlug": "Para confirmar, escribe la dirección del torneo: {slug}",
     "undoStartSubmit": "Deshacer inicio",
     "cancel": "Cancelar"
@@ -539,12 +541,12 @@
     "notNeeded": "No fue necesaria",
     "advances": "avanza sin jugar",
     "result": {
-      "pending": "Esperando confirmación",
-      "contested": "Impugnada"
+      "pending": "Mapa esperando confirmación",
+      "contested": "Mapa impugnado"
     },
     "task": {
-      "report": "Envía el resultado",
-      "respond": "Confirma o impugna",
+      "report": "Envía el próximo mapa",
+      "respond": "Confirma o impugna el mapa",
       "await_opponent": "Esperando al rival",
       "await_organizer": "Esperando a la organización",
       "resolve": "Resolver impugnación"
@@ -578,34 +580,33 @@
       "opponent": "Confirmado por el rival <time></time>.",
       "deadline": "Confirmado al terminar el plazo para impugnar <time></time>.",
       "organizer": "Definido por la organización <time></time>.",
-      "withdrawal": "W.O. automático: quien perdió abandonó o salió de la comunidad <time></time>."
+      "withdrawal": "W.O. automático: quien perdió abandonó o salió de la comunidad <time></time>.",
+      "maps": "Decidida por los mapas confirmados <time></time>."
     },
     "games": {
       "title": "Mapas",
-      "map": "Mapa",
-      "number": "{number}"
-    },
-    "report": {
-      "title": "Enviar resultado",
-      "hint": "Resultado de la serie en mapas. El rival confirma o impugna; sin respuesta en {minutes} min, se confirma solo.",
-      "wins": "Mapas de {name}",
-      "winsHint": "Al mejor de {bestOf}: quien gana la serie gana {needed} mapas.",
-      "detail": "Detalle por mapa (opcional)",
-      "detailHint": "Un mapa por línea, en el orden jugado, con los frags de cada uno. Los ganadores tienen que coincidir con el resultado.",
-      "addGame": "Agregar mapa",
-      "removeGame": "Quitar mapa {number}",
-      "map": "Mapa {number}",
-      "chooseMap": "Elige el mapa…",
-      "pool": "Pool de duelo",
-      "others": "Otros mapas",
-      "frags": "Frags de {name}",
-      "submit": "Enviar resultado",
-      "incomplete": "Elige el mapa de cada línea del detalle, o quita las líneas sin mapa.",
-      "remove": "Quitar"
+      "hint": "Cada mapa se envía y se confirma por separado. El rival tiene {minutes} min para confirmar o impugnar; sin respuesta, se confirma solo.",
+      "number": "Mapa {number}",
+      "noMap": "mapa sin informar",
+      "won": "Ganó {name}",
+      "awaiting": "Esperando envío.",
+      "pending": "Enviado por {name}. Se confirma solo a las <at></at> (faltan <time></time>).",
+      "contested": "Impugnado por {name}: “{comment}”. Lo resuelve la organización.",
+      "confirmed": {
+        "opponent": "Confirmado por el rival.",
+        "deadline": "Confirmado al terminar el plazo.",
+        "organizer": "Confirmado por la organización.",
+        "withdrawal": "Confirmado.",
+        "maps": "Confirmado."
+      },
+      "empty": "Todavía no se envió ningún mapa.",
+      "badge": {
+        "pending": "Pendiente",
+        "contested": "Impugnado",
+        "confirmed": "Confirmado"
+      }
     },
     "respond": {
-      "title": "{name} envió el resultado",
-      "hint": "Confirma si es correcto o impúgnalo con un comentario. Sin respuesta, se confirma solo en <time></time>.",
       "confirm": "Confirmar",
       "contest": "Impugnar",
       "comment": "¿Qué está mal?",
@@ -613,46 +614,68 @@
       "submitContest": "Enviar impugnación",
       "cancel": "Cancelar"
     },
-    "waiting": {
-      "opponent": "Enviaste el resultado. El rival tiene <time></time> para confirmar o impugnar; sin respuesta, se confirma solo.",
-      "organizer": "Resultado impugnado: la organización lo va a resolver.",
-      "contestComment": "Impugnación: “{comment}”"
-    },
     "organizer": {
       "title": "Organización",
-      "hint": "Lo que definas aquí ya vale (incluso en una partida que juegas) y queda en el historial.",
-      "accept": "Aceptar el resultado enviado",
-      "confirm": "Confirmar el resultado enviado",
-      "set": "Cargar resultado",
-      "setOther": "Cargar otro resultado",
-      "correct": "Corregir resultado",
-      "correctHint": "La llave se rehace con el resultado nuevo. Si contradice una partida confirmada después de esta, se rechaza.",
+      "hint": "El W.O. vale para toda la serie: los mapas confirmados quedan y los pendientes se van. Para cargar o corregir un mapa, usa su línea arriba.",
       "walkover": "W.O. para {name}",
-      "walkoverTitle": "Dar W.O.",
-      "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria sin resultado.",
-      "comment": "Nota en el historial (opcional)",
-      "save": "Guardar resultado"
+      "walkoverTitle": "Dar W.O. en la serie",
+      "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria de la serie sin resultado.",
+      "comment": "Nota en el historial (opcional)"
     },
     "history": {
       "title": "Historial",
       "empty": "Todavía no pasó nada en esta partida.",
       "score": "{winner} ganó {winnerMaps} a {loserMaps}",
       "walkover": "W.O. para {winner}",
+      "game": "Mapa {number}",
+      "mapWinner": "ganó {winner}",
       "kinds": {
-        "reported": "{actor} envió el resultado",
+        "reported": "{actor} envió",
         "confirmed": "{actor} confirmó",
-        "auto_confirmed": "Confirmado al terminar el plazo para impugnar",
+        "auto_confirmed": "Confirmado al terminar el plazo",
         "contested": "{actor} impugnó",
         "resolved": "{actor} resolvió la impugnación",
-        "entered": "{actor} cargó el resultado",
-        "corrected": "{actor} corrigió el resultado",
+        "entered": "{actor} cargó",
+        "corrected": "{actor} corrigió",
         "walkover": "{actor} dio W.O.",
         "auto_walkover": "W.O. automático: uno de los lados abandonó o salió de la comunidad",
-        "voided": "{actor} anuló el envío: una corrección cambió quién juega la partida"
+        "voided": "{actor} anuló: el mapa quedó después de la decisión de la serie, o cambió quién juega la partida",
+        "voided_auto": "Anulado: la serie pasó a W.O.",
+        "decided": "Serie decidida por los mapas confirmados",
+        "reopened": "{actor} reabrió la serie: la corrección la dejó sin decisión"
       }
     },
     "labelSingle": "{round} · partida {index}",
     "labelPart": "{part} · {round}",
-    "vs": "×"
+    "vs": "×",
+    "series": {
+      "needed": "Al mejor de {bestOf}: gana quien gane {needed} mapas.",
+      "open": "Resultado de los mapas confirmados.",
+      "pending": "{count, plural, one {# mapa espera confirmación.} other {# mapas esperan confirmación.}}",
+      "contested": "{count, plural, one {# mapa impugnado: lo resuelve la organización.} other {# mapas impugnados: los resuelve la organización.}}"
+    },
+    "form": {
+      "winner": "Quién ganó el mapa {number}",
+      "map": "Mapa jugado",
+      "chooseMap": "Elige el mapa…",
+      "pool": "Pool de duelo",
+      "others": "Otros mapas",
+      "frags": "Frags (opcional)",
+      "fragsOf": "Frags de {name}",
+      "submit": "Enviar mapa {number}",
+      "enter": "Cargar mapa {number}",
+      "save": "Guardar mapa {number}",
+      "chooseWinner": "Elige quién ganó el mapa.",
+      "chooseTheMap": "Elige el mapa jugado.",
+      "comment": "Nota en el historial (opcional)"
+    },
+    "gameOrganizer": {
+      "confirmNow": "Confirmar ahora",
+      "accept": "Aceptar como se envió",
+      "other": "Resolver con otro resultado",
+      "correct": "Corregir",
+      "correctHint": "La llave se rehace. Si la serie cambia y eso contradice una partida decidida después de esta, la corrección se rechaza; los mapas que queden después de la decisión se anulan.",
+      "cancel": "Cancelar"
+    }
   }
 }

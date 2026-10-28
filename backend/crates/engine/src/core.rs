@@ -152,12 +152,8 @@ pub enum EngineError {
     },
     #[error("placar {score:?} inválido para melhor de {best_of}")]
     InvalidScore { best_of: u8, score: SeriesScore },
-    #[error("o detalhe tem {got} mapas; o placar soma {expected}")]
-    GameCountMismatch { expected: usize, got: usize },
     #[error("o mapa {game} do detalhe está empatado")]
     GameTied { game: usize },
-    #[error("os vencedores dos mapas não batem com o placar {score:?}")]
-    GamesDisagreeWithScore { score: SeriesScore },
     #[error("mapa repetido na série: {0:?}")]
     MapRepeated(MapId),
     #[error("os frags do mapa {game} não batem com o vencedor")]

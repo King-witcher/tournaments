@@ -1,0 +1,110 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select g.match_key, g.number, g.winner, m.slug as \"slug?\", g.a_frags, g.status,\n                  g.reported_side, g.confirmed_via\n           from match_games g left join maps m on m.id = g.map_id\n           order by g.match_key, g.number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "winner",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "winner"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "slug?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "a_frags",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "a_frags"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "reported_side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "reported_side"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "confirmed_via",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_via"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "c4691e7822e34858287c8313c1a522e13bb1725467c28f11b988206150470d01"
+}

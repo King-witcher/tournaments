@@ -1,5 +1,5 @@
-//! Uma partida com lados, detalhe por mapa e histórico: o que a página da
-//! partida mostra e o que toda ação sobre ela devolve.
+//! Uma partida com lados, mapas e histórico: o que a página da partida
+//! mostra e o que toda ação sobre ela devolve.
 
 use engine::core::Match;
 use sqlx::PgConnection;
@@ -7,6 +7,7 @@ use sqlx::PgConnection;
 use super::{
     db, key,
     stage::Stage,
+    tasks,
     types::MatchDetail,
     view::{self, Viewer},
 };
@@ -29,10 +30,8 @@ pub async fn load(
     m: &Match,
 ) -> Result<MatchDetail, ApiError> {
     let summary = view::summary(tournament.status, stage, m, viewer);
-    let games = match stage.result(m.id) {
-        Some(r) => db::games(conn, r.id).await?,
-        None => Vec::new(),
-    };
+    let games = stage.games_of(m.id);
+    let mine = view::viewer_side(stage, m, viewer);
     let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;
     let entrant = |user: Option<i64>| {
         user.and_then(|u| stage.entrants.iter().find(|e| e.user_id == u))
@@ -51,7 +50,15 @@ pub async fn load(
             .max()
             .unwrap_or(1),
         status: tournament.status,
-        games: games.into_iter().map(view::game).collect(),
+        games: games
+            .iter()
+            .map(|g| {
+                let task = tasks::game_task(tournament.status, m, g, mine, viewer);
+                view::game(g, task)
+            })
+            .collect(),
+        next_game: tasks::next_game(tournament.status, m, &games),
+        viewer_side: mine,
         history: events
             .into_iter()
             .map(|e| view::event(stage, e))

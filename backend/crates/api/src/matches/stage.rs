@@ -1,6 +1,6 @@
 //! A fase em jogo: configuração (`tournament_stages`), participantes (pelo
-//! seed) e resultados confirmados → chave, sempre por `replay`. Nada do
-//! estado do `engine` é gravado.
+//! seed) e séries decididas → chave, sempre por `replay`. Nada do estado do
+//! `engine` é gravado. Os mapas das séries vêm junto.
 //!
 //! Só existe a primeira fase. Outras fases entrariam aqui: cada uma com a
 //! classificação da anterior como participantes, montada quando a anterior
@@ -12,10 +12,7 @@ use engine::{
 };
 use sqlx::PgConnection;
 
-use super::{
-    db,
-    result::{ResultStatus, StoredResult},
-};
+use super::{db, games::StoredGame, result::StoredResult};
 use crate::{
     participants::{self, Seeded},
     shared::ApiError,
@@ -30,9 +27,10 @@ pub struct Stage {
     pub format: ef::StageFormat,
     /// Na ordem dos seeds.
     pub entrants: Vec<Seeded>,
-    /// Todos os resultados vigentes da fase, confirmados primeiro, na ordem
-    /// do replay.
+    /// As séries decididas da fase, na ordem do replay.
     pub results: Vec<StoredResult>,
+    /// Os mapas enviados da fase, por partida e na ordem.
+    pub games: Vec<StoredGame>,
     pub bracket: EliminationBracket,
 }
 
@@ -50,6 +48,11 @@ impl Stage {
 
     pub fn result(&self, id: MatchId) -> Option<&StoredResult> {
         self.results.iter().find(|r| r.match_id == id)
+    }
+
+    /// Os mapas da partida `id`, na ordem.
+    pub fn games_of(&self, id: MatchId) -> Vec<&StoredGame> {
+        self.games.iter().filter(|g| g.match_id == id).collect()
     }
 }
 
@@ -72,10 +75,7 @@ pub fn replay(
 ) -> Result<EliminationBracket, Contradiction> {
     let ef::StageFormat::Elimination(config) = stage;
     let seeded = entrants.iter().map(|e| ParticipantId(e.id)).collect();
-    let mut confirmed: Vec<&StoredResult> = results
-        .iter()
-        .filter(|r| r.status == ResultStatus::Confirmed)
-        .collect();
+    let mut confirmed: Vec<&StoredResult> = results.iter().collect();
     confirmed.sort_by_key(|r| r.position);
     let reports = confirmed.iter().map(|r| r.report());
     let bracket =
@@ -114,6 +114,7 @@ pub async fn load(
     let number = FIRST_STAGE;
     let entrants = participants::seeded(conn, tournament.id).await?;
     let results = db::results(conn, tournament.id, number).await?;
+    let games = db::games(conn, tournament.id, number).await?;
     let format = *config(tournament, number)?;
     let bracket = replay(&format, &entrants, &results).map_err(|err| {
         let id = tournament.id.get();
@@ -130,6 +131,7 @@ pub async fn load(
         format,
         entrants,
         results,
+        games,
         bracket,
     })
 }
@@ -154,8 +156,8 @@ pub async fn start(
     Ok(())
 }
 
-/// Descarta a chave ao desfazer o início: apaga resultados e histórico.
-/// Devolve quantos resultados havia.
+/// Descarta a chave ao desfazer o início: apaga séries, mapas e histórico.
+/// Devolve quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: &StoredTournament,

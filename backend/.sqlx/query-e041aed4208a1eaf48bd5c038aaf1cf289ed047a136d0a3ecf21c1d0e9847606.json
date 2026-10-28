@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select reported_by, confirmed_by from match_games where number = 3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reported_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "reported_by"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "confirmed_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true
+    ]
+  },
+  "hash": "e041aed4208a1eaf48bd5c038aaf1cf289ed047a136d0a3ecf21c1d0e9847606"
+}

@@ -1,19 +1,23 @@
 //! Peças comuns às ações sobre uma partida (`report`, `manage`): as
 //! checagens com código de erro e a resposta depois de gravar.
 
-use engine::core::{Match, MatchState, ParticipantId};
+use std::collections::HashMap;
+
+use engine::core::{EngineError, MapId, Match, MatchState, ParticipantId};
 use sqlx::PgConnection;
 
 use super::{
     db::MatchRef,
     detail,
+    games::StoredGame,
     result::Side,
+    settle,
     stage::{self, Stage},
     types::{GameInput, MatchDetail},
     view::Viewer,
-    withdrawals,
 };
 use crate::{
+    maps,
     shared::{ApiError, text::clean_text},
     tenants::TenantMember,
     tournaments::{StoredTournament, TournamentStatus},
@@ -31,13 +35,13 @@ pub fn in_progress(tournament: &StoredTournament) -> Result<(), ApiError> {
     Ok(())
 }
 
-/// Os lados da partida pronta. 409 `match.already_reported` se ela já tem
-/// resultado confirmado e `match.not_ready` se ainda não dá para jogar (lado
-/// por definir, bye, reset que não precisou).
+/// Os lados da partida pronta. 409 `match.series_decided` se a série já está
+/// decidida e `match.not_ready` se ainda não dá para jogar (lado por
+/// definir, bye, reset que não precisou).
 pub fn ready(m: &Match) -> Result<(ParticipantId, ParticipantId), ApiError> {
     match m.state {
         MatchState::Ready { a, b } => Ok((a, b)),
-        MatchState::Completed { .. } => Err(ApiError::conflict("match.already_reported")),
+        MatchState::Completed { .. } => Err(ApiError::conflict("match.series_decided")),
         _ => Err(ApiError::conflict("match.not_ready")),
     }
 }
@@ -63,9 +67,31 @@ pub fn comment(raw: &str) -> Result<String, ApiError> {
     clean_text(raw, MAX_COMMENT, "match.comment_invalid")
 }
 
-/// Slugs dos mapas do detalhe, para buscar os ids.
-pub fn map_slugs(games: &[GameInput]) -> Vec<String> {
-    games.iter().map(|g| g.map.clone()).collect()
+/// O id do mapa do envio, se veio, entre os ativos.
+pub async fn map_ids(
+    conn: &mut PgConnection,
+    input: &GameInput,
+) -> Result<HashMap<String, MapId>, ApiError> {
+    let slugs: Vec<String> = input.map.iter().cloned().collect();
+    Ok(maps::active_ids(conn, &slugs).await?)
+}
+
+/// O mapa `number` da partida, se já foi enviado. 404 `match.game_not_found`.
+pub fn game<'a>(games: &[&'a StoredGame], number: i16) -> Result<&'a StoredGame, ApiError> {
+    games
+        .iter()
+        .find(|g| g.number == number)
+        .copied()
+        .ok_or(ApiError::not_found("match.game_not_found"))
+}
+
+/// O índice (a partir de 0) do mapa `number`. 409 `match.game_out_of_order`
+/// `{next}` para número abaixo de 1 (acima do próximo, o `engine` recusa).
+pub fn game_index(number: i16, len: usize) -> Result<usize, ApiError> {
+    usize::try_from(number)
+        .ok()
+        .and_then(|n| n.checked_sub(1))
+        .ok_or_else(|| EngineError::GameOutOfOrder { next: len + 1 }.into())
 }
 
 pub fn at<'a, R>(
@@ -82,16 +108,16 @@ pub fn at<'a, R>(
     }
 }
 
-/// Depois de gravar: refaz a chave, dá os W.O. automáticos que a mudança
-/// deixou prontos, encerra ou reabre o torneio conforme a chave e devolve a
-/// partida `key` como ficou.
+/// Depois de gravar: fecha as séries decididas, anula o que ficou depois da
+/// decisão, dá os W.O. automáticos, encerra ou reabre o torneio conforme a
+/// chave e devolve a partida `key` como ficou.
 pub async fn respond<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     mut tournament: StoredTournament,
     key: &str,
 ) -> Result<MatchDetail, ApiError> {
-    let stage = withdrawals::apply(conn, &tournament).await?;
+    let stage = settle::apply(conn, &tournament, Some(member.user.id)).await?;
     tournament.status = stage::sync_status(conn, &tournament, &stage).await?;
     let viewer = Viewer::new(member, &stage);
     let m = detail::find(&stage, key)?;

@@ -8,8 +8,10 @@ import { MatchScoreboardSide } from "./match-scoreboard-side";
 type Props = { detail: components["schemas"]["MatchDetail"] };
 
 /**
- * Os dois lados com o placar e, embaixo, o estado: a jogar, esperando
- * confirmação, contestada (com o comentário) ou como foi confirmada.
+ * O placar da série no topo: os dois lados com os mapas de cada um (os
+ * confirmados, enquanto a série não fecha) e, embaixo, o estado: quantos
+ * mapas vencem, quantos esperam confirmação ou estão contestados, ou como a
+ * série foi decidida.
  */
 export function MatchScoreboard({ detail }: Props) {
   const t = useTranslations("Match");
@@ -17,23 +19,34 @@ export function MatchScoreboard({ detail }: Props) {
   const { summary: s, a, b } = detail;
   const r = s.result;
   const single = detail.format.bracket === "single";
-  const confirmed = s.state === "completed";
+  const decided = s.state === "completed";
+  const playing = s.state === "ready";
   const score = (side: "a" | "b") => {
-    if (!r) return null;
-    if (r.walkover) return r.winner === side ? tBracket("walkover") : "–";
-    return String(side === "a" ? r.a_wins : r.b_wins);
+    if (r?.walkover) return r.winner === side ? tBracket("walkover") : "–";
+    if (r) return String(side === "a" ? r.a_wins : r.b_wins);
+    if (playing) return String(side === "a" ? s.a_maps : s.b_maps);
+    return null;
   };
+  const needed = Math.floor(s.best_of / 2) + 1;
 
-  let status: ReactNode = t(`state.${s.state}`);
-  if (s.state === "ready" && r) {
-    status = tBracket(
-      `result.${r.status === "contested" ? "contested" : "pending"}`,
-    );
-  } else if (confirmed && r?.confirmed_via && r.confirmed_at) {
+  const lines: ReactNode[] = [];
+  if (decided && r) {
     const at = r.confirmed_at;
-    status = t.rich(`confirmedVia.${r.confirmed_via}`, {
-      time: () => <LocalDateTime value={at} />,
-    });
+    lines.push(
+      t.rich(`confirmedVia.${r.confirmed_via}`, {
+        time: () => <LocalDateTime value={at} />,
+      }),
+    );
+  } else if (playing) {
+    lines.push(
+      `${t("series.open")} ${t("series.needed", { bestOf: s.best_of, needed })}`,
+    );
+    if (s.pending_maps > 0)
+      lines.push(t("series.pending", { count: s.pending_maps }));
+    if (s.contested_maps > 0)
+      lines.push(t("series.contested", { count: s.contested_maps }));
+  } else {
+    lines.push(t(`state.${s.state}`));
   }
 
   return (
@@ -44,8 +57,8 @@ export function MatchScoreboard({ detail }: Props) {
           side={s.a}
           single={single}
           score={score("a")}
-          winner={confirmed && r?.winner === "a"}
-          tentative={!confirmed}
+          winner={decided && r?.winner === "a"}
+          tentative={!decided}
         />
         <span className="text-sm opacity-50">{t("vs")}</span>
         <MatchScoreboardSide
@@ -53,17 +66,17 @@ export function MatchScoreboard({ detail }: Props) {
           side={s.b}
           single={single}
           score={score("b")}
-          winner={confirmed && r?.winner === "b"}
-          tentative={!confirmed}
+          winner={decided && r?.winner === "b"}
+          tentative={!decided}
           alignEnd
         />
       </div>
-      <p className="text-sm opacity-70">{status}</p>
-      {r?.status === "contested" && r.contest_comment && (
-        <p className="text-sm">
-          {t("waiting.contestComment", { comment: r.contest_comment })}
+      {lines.map((line, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
+        <p key={i} className="text-sm opacity-70">
+          {line}
         </p>
-      )}
+      ))}
     </section>
   );
 }

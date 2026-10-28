@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_events set created_at = created_at - make_interval(mins => $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ba7b9b8e3239412c0915ce8d7298c5b994809309c406e34c55addf8540040f72"
+}

@@ -16,15 +16,21 @@ type Props = {
   href: string;
 };
 
-/** Os placares de cada lado no cartão (o enviado ainda sem confirmar também). */
+/**
+ * Os placares de cada lado no cartão: o da série decidida ou, enquanto ela
+ * corre, os mapas confirmados de cada um.
+ */
 function scores(
   m: Schemas["BracketMatch"],
   walkover: string,
 ): [string | null, string | null] {
   const r = m.result;
-  if (!r) return [null, null];
-  if (r.walkover) return r.winner === "a" ? [walkover, "–"] : ["–", walkover];
-  return [String(r.a_wins), String(r.b_wins)];
+  if (r?.walkover) return r.winner === "a" ? [walkover, "–"] : ["–", walkover];
+  if (r) return [String(r.a_wins), String(r.b_wins)];
+  const played = m.a_maps + m.b_maps + m.pending_maps + m.contested_maps > 0;
+  if (m.state === "ready" && played)
+    return [String(m.a_maps), String(m.b_maps)];
+  return [null, null];
 }
 
 /**

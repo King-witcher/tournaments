@@ -2,7 +2,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::result::{Confirmation, ResultStatus, Side};
+use super::{
+    games::GameStatus,
+    result::{Confirmation, Side},
+};
 use crate::tournaments::{StageFormat, TournamentStatus};
 
 /// A chave da fase em jogo, refeita dos resultados confirmados.
@@ -18,10 +21,10 @@ pub struct TournamentBracket {
     /// Colocações já definidas (os eliminados e, no fim, campeão e vice).
     /// Empatados dividem a faixa: `rank` 5 com `tied` 4 é 5º–8º.
     pub standings: Vec<Standing>,
-    /// Janela de contestação em minutos.
+    /// Janela de contestação de cada mapa, em minutos.
     pub contest_minutes: i32,
-    /// Resultados (pendentes, contestados ou confirmados) que desfazer o
-    /// início apaga.
+    /// Partidas com algum mapa enviado ou resultado, que desfazer o início
+    /// apaga.
     pub results: i64,
 }
 
@@ -50,36 +53,35 @@ pub enum BracketPart {
     GrandFinal,
 }
 
-/// Estado da partida na chave (só resultados confirmados contam).
+/// Estado da partida na chave (só séries decididas contam).
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum MatchState {
     /// Algum lado ainda depende de outra partida.
     Pending,
-    /// Os dois lados são conhecidos: dá para jogar (o resultado pode estar
-    /// enviado ou contestado).
+    /// Os dois lados são conhecidos: dá para jogar (pode ter mapas enviados).
     Ready,
     /// Um lado vazio: o outro avança sem jogar.
     Bye,
-    /// Resultado confirmado.
+    /// Série decidida.
     Completed,
     /// Reset da grande final que não precisou acontecer.
     NotNeeded,
 }
 
-/// O que a partida espera de quem vê.
+/// O que a partida (ou um mapa dela) espera de quem vê.
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ViewerTask {
-    /// Enviar o placar (joga a partida e ninguém enviou).
+    /// Enviar o próximo mapa (joga a partida e a série está aberta).
     Report,
-    /// Confirmar ou contestar o placar que o adversário enviou.
+    /// Confirmar ou contestar um mapa que o adversário enviou.
     Respond,
     /// Enviou e espera o adversário (ou o fim da janela).
     AwaitOpponent,
-    /// Contestada: espera o organizador.
+    /// Mapa contestado: espera o organizador.
     AwaitOrganizer,
-    /// Organizer ou owner: resolver a contestação.
+    /// Organizer ou owner: resolver um mapa contestado.
     Resolve,
 }
 
@@ -95,8 +97,15 @@ pub struct BracketMatch {
     pub state: MatchState,
     pub a: MatchSide,
     pub b: MatchSide,
-    /// Resultado vigente, se houver.
+    /// A série decidida, se já está.
     pub result: Option<MatchResult>,
+    /// Mapas confirmados vencidos por cada lado (o placar da série até agora).
+    pub a_maps: u8,
+    pub b_maps: u8,
+    /// Mapas enviados esperando o adversário (ou o fim da janela).
+    pub pending_maps: u8,
+    /// Mapas contestados, esperando o organizador.
+    pub contested_maps: u8,
     /// Quem vê joga a partida.
     pub yours: bool,
     pub task: Option<ViewerTask>,
@@ -126,26 +135,19 @@ pub enum SourceOutcome {
     Loser,
 }
 
-/// O resultado vigente de uma partida.
+/// A série decidida.
 #[derive(Serialize, ToSchema)]
 pub struct MatchResult {
-    pub status: ResultStatus,
     pub walkover: bool,
     pub winner: Side,
     /// Mapas vencidos por cada lado; `null` no W.O.
     pub a_wins: Option<u8>,
     pub b_wins: Option<u8>,
-    /// Lado do jogador que enviou; `null` quando o organizador lançou.
-    pub reported_side: Option<Side>,
-    pub reported_at: DateTime<Utc>,
-    /// Pendente: até quando o adversário confirma ou contesta; depois,
-    /// confirma sozinho.
-    pub confirm_by: Option<DateTime<Utc>>,
-    /// Contestado: o comentário de quem contestou.
-    pub contest_comment: Option<String>,
-    pub contested_at: Option<DateTime<Utc>>,
-    pub confirmed_via: Option<Confirmation>,
-    pub confirmed_at: Option<DateTime<Utc>>,
+    /// `maps` (os mapas confirmados deram a maioria), `organizer` (W.O.),
+    /// `withdrawal` (W.O. automático); `opponent` e `deadline` só em séries
+    /// enviadas inteiras, antes do envio mapa a mapa.
+    pub confirmed_via: Confirmation,
+    pub confirmed_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -166,20 +168,44 @@ pub struct MatchDetail {
     pub status: TournamentStatus,
     pub a: Option<BracketEntrant>,
     pub b: Option<BracketEntrant>,
-    /// Detalhe por mapa do resultado vigente, na ordem jogada (pode faltar).
+    /// Os mapas enviados, na ordem.
     pub games: Vec<GameDetail>,
+    /// O próximo mapa que dá para enviar (série aberta, torneio em
+    /// andamento); `null` quando não há.
+    pub next_game: Option<i16>,
+    /// O lado de quem vê, se joga a partida.
+    pub viewer_side: Option<Side>,
     /// Do mais antigo ao mais novo.
     pub history: Vec<MatchEvent>,
     /// Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.).
     pub can_manage: bool,
 }
 
+/// Um mapa da série.
 #[derive(Serialize, ToSchema)]
 pub struct GameDetail {
     pub number: i16,
-    pub map: MapRef,
-    pub a_frags: i16,
-    pub b_frags: i16,
+    pub winner: Side,
+    /// `null` só em série antiga, enviada sem detalhe por mapa.
+    pub map: Option<MapRef>,
+    /// Frags de cada lado, se vieram.
+    pub a_frags: Option<i16>,
+    pub b_frags: Option<i16>,
+    pub status: GameStatus,
+    /// Lado de quem enviou; `null` quando o organizador lançou.
+    pub reported_side: Option<Side>,
+    pub reported_at: DateTime<Utc>,
+    /// Pendente: até quando o adversário confirma ou contesta; depois,
+    /// confirma sozinho.
+    pub confirm_by: Option<DateTime<Utc>>,
+    /// Contestado: o comentário de quem contestou.
+    pub contest_comment: Option<String>,
+    pub contested_at: Option<DateTime<Utc>>,
+    pub confirmed_via: Option<Confirmation>,
+    pub confirmed_at: Option<DateTime<Utc>>,
+    /// O que este mapa espera de quem vê (`respond`, `await_opponent`,
+    /// `await_organizer`, `resolve`).
+    pub task: Option<ViewerTask>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -191,7 +217,7 @@ pub struct MapRef {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum EventKind {
-    /// Um jogador enviou o placar.
+    /// Um jogador enviou o mapa (ou, antes do envio mapa a mapa, a série).
     Reported,
     /// O adversário (ou o organizador) confirmou.
     Confirmed,
@@ -199,24 +225,32 @@ pub enum EventKind {
     AutoConfirmed,
     /// O adversário contestou, com comentário.
     Contested,
-    /// O organizador resolveu a contestação com um placar.
+    /// O organizador resolveu a contestação.
     Resolved,
-    /// O organizador lançou o placar direto.
+    /// O organizador lançou o mapa direto.
     Entered,
-    /// O organizador corrigiu um resultado já confirmado.
+    /// O organizador corrigiu um mapa já confirmado.
     Corrected,
-    /// O organizador deu W.O.
+    /// O organizador deu W.O. na série.
     Walkover,
     /// W.O. automático: um lado desistiu ou saiu da comunidade.
     AutoWalkover,
-    /// Resultado pendente anulado porque uma correção mudou os lados.
+    /// Mapa anulado: veio depois da decisão da série, ou uma correção mudou
+    /// quem joga a partida.
     Voided,
+    /// A série fechou: os mapas confirmados deram a maioria a um lado.
+    Decided,
+    /// Uma correção de mapa deixou a série sem decisão.
+    Reopened,
 }
 
 #[derive(Serialize, ToSchema)]
 pub struct MatchEvent {
     pub kind: EventKind,
-    /// Quem agiu; `null` na confirmação por tempo e no W.O. automático.
+    /// O mapa a que o evento se refere; `null`: a série inteira.
+    pub game: Option<i16>,
+    /// Quem agiu; `null` no que acontece sozinho (confirmação por tempo,
+    /// W.O. automático, série decidida).
     pub actor: Option<EventActor>,
     pub at: DateTime<Utc>,
     /// O resultado que a ação deixou, quando ela define um.
@@ -239,7 +273,8 @@ pub struct EventOutcome {
     /// anulado).
     pub winner_nickname: String,
     pub walkover: bool,
-    /// Mapas do vencedor e do perdedor; `null` no W.O.
+    /// Mapas do vencedor e do perdedor da série; `null` no W.O. e nos
+    /// eventos de um mapa.
     pub winner_maps: Option<u8>,
     pub loser_maps: Option<u8>,
 }
@@ -253,27 +288,41 @@ pub struct MatchPath {
     pub key: String,
 }
 
-/// Um mapa do detalhe enviado.
-#[derive(Deserialize, ToSchema)]
-pub struct GameInput {
-    /// Slug do mapa (`GET /maps`).
-    #[schema(example = "blood-covenant")]
-    pub map: String,
-    /// Frags do lado `a` e do lado `b`, de 0 a 999; não pode empatar.
-    pub a_frags: u16,
-    pub b_frags: u16,
+/// `{tournament}`, `{match}` e `{game}` de
+/// `/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}`.
+#[derive(Deserialize)]
+pub struct GamePath {
+    pub tournament: String,
+    #[serde(rename = "match")]
+    pub key: String,
+    /// Número do mapa na série, a partir de 1.
+    pub game: i16,
 }
 
-/// Placar da série que um jogador envia.
+/// Um mapa da série: quem venceu, o mapa e os frags.
 #[derive(Deserialize, ToSchema)]
-pub struct ReportScore {
-    /// Mapas vencidos pelo lado `a` e pelo lado `b` (ex.: 2 e 1 numa md3).
-    pub a_wins: u8,
-    pub b_wins: u8,
-    /// Detalhe opcional por mapa, na ordem jogada: um item por mapa, com os
-    /// vencedores batendo com o placar.
+pub struct GameInput {
+    pub winner: Side,
+    /// Slug do mapa (`GET /maps`), sem repetir na série. Obrigatório no envio
+    /// do jogador; o organizador pode deixar sem, numa série antiga.
+    #[schema(example = "blood-covenant")]
     #[serde(default)]
-    pub games: Vec<GameInput>,
+    pub map: Option<String>,
+    /// Frags do lado `a` e do lado `b`, de 0 a 999, opcionais (os dois ou
+    /// nenhum); sem empate e com mais frags para quem venceu.
+    #[serde(default)]
+    pub a_frags: Option<u16>,
+    #[serde(default)]
+    pub b_frags: Option<u16>,
+}
+
+/// O mapa que o organizador lança ou corrige, já confirmado.
+#[derive(Deserialize, ToSchema)]
+pub struct SetGame {
+    pub game: GameInput,
+    /// Nota opcional no histórico, até 280 caracteres.
+    #[serde(default)]
+    pub comment: Option<String>,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -282,16 +331,10 @@ pub struct ContestReport {
     pub comment: String,
 }
 
-/// O resultado que o organizador define: série jogada ou W.O.
+/// O resultado da série que o organizador define: W.O.
 #[derive(Deserialize, ToSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ResultInput {
-    Played {
-        a_wins: u8,
-        b_wins: u8,
-        #[serde(default)]
-        games: Vec<GameInput>,
-    },
     Walkover {
         /// Lado que avança.
         winner: Side,

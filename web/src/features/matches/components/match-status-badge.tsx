@@ -2,19 +2,16 @@ import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { Badge } from "@/shared/ui/badge";
-import { DeadlineCountdown } from "./deadline-countdown";
 
 type Props = { match: components["schemas"]["BracketMatch"] };
 
 /**
- * Rodapé do cartão: o que a partida espera de quem vê (com o tempo que falta
- * para responder) ou, para os outros, se o resultado está pendente ou
- * contestado. Nada quando não há o que dizer.
+ * Rodapé do cartão: o que a partida espera de quem vê ou, para os outros, se
+ * há mapa esperando confirmação ou contestado. Nada quando não há o que
+ * dizer.
  */
 export function MatchStatusBadge({ match: m }: Props) {
   const t = useTranslations("Bracket");
-  const deadline = m.result?.confirm_by;
-  const timed = m.task === "respond" || m.task === "await_opponent";
 
   let badge = null;
   if (m.task) {
@@ -22,20 +19,12 @@ export function MatchStatusBadge({ match: m }: Props) {
     badge = (
       <Badge variant={urgent ? "accent" : "neutral"}>
         {t(`task.${m.task}`)}
-        {timed && deadline && (
-          <>
-            {" · "}
-            <DeadlineCountdown until={deadline} />
-          </>
-        )}
       </Badge>
     );
-  } else if (m.result && m.result.status !== "confirmed") {
-    badge = (
-      <Badge variant={m.result.status === "contested" ? "warning" : "neutral"}>
-        {t(`result.${m.result.status}`)}
-      </Badge>
-    );
+  } else if (m.contested_maps > 0) {
+    badge = <Badge variant="warning">{t("result.contested")}</Badge>;
+  } else if (m.pending_maps > 0) {
+    badge = <Badge>{t("result.pending")}</Badge>;
   } else if (m.yours && m.state === "ready") {
     badge = <Badge>{t("yours")}</Badge>;
   }

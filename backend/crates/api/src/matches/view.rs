@@ -1,13 +1,15 @@
 //! Fase refeita → resposta da API, do ponto de vista de quem vê (as partidas
-//! dele e o que cada uma espera dele).
+//! dele e o que cada uma espera dele, em `tasks`).
 
 use engine::core::{self as ec, Match, Occupant, ParticipantId, Slot};
 
 use super::{
-    db::{EventRow, GameRow},
+    db::EventRow,
+    games::{GameStatus, StoredGame, confirmed_wins},
     key,
-    result::{ResultStatus, StoredResult},
+    result::{Side, StoredResult},
     stage::Stage,
+    tasks,
     types::{
         BracketEntrant, BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail,
         MapRef, MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome,
@@ -65,20 +67,49 @@ pub fn bracket(
             })
         })
         .collect::<Result<_, ApiError>>()?;
+    let matches: Vec<BracketMatch> = stage
+        .bracket
+        .matches()
+        .iter()
+        .map(|m| summary(tournament.status, stage, m, viewer))
+        .collect();
+    let touched = stage
+        .bracket
+        .matches()
+        .iter()
+        .filter(|m| stage.result(m.id).is_some() || !stage.games_of(m.id).is_empty())
+        .count();
     Ok(TournamentBracket {
         format: stage.format.into(),
         status: tournament.status,
         entrants: stage.entrants.iter().map(entrant).collect(),
-        matches: stage
-            .bracket
-            .matches()
-            .iter()
-            .map(|m| summary(tournament.status, stage, m, viewer))
-            .collect(),
+        matches,
         standings,
         contest_minutes: tournament.contest_minutes,
-        results: stage.results.len() as i64,
+        results: touched as i64,
     })
+}
+
+/// Os dois lados que a partida tem agora, como o `engine` os vê.
+fn occupants(stage: &Stage, m: &Match) -> (Occupant, Occupant) {
+    match m.state {
+        // O reset que não precisou acontecer não tem lados.
+        ec::MatchState::NotNeeded => (Occupant::Unknown, Occupant::Unknown),
+        _ => stage
+            .bracket
+            .occupants(m.id)
+            .unwrap_or((Occupant::Unknown, Occupant::Unknown)),
+    }
+}
+
+/// O lado de quem vê na partida `m`, se joga.
+pub fn viewer_side(stage: &Stage, m: &Match, viewer: &Viewer) -> Option<Side> {
+    let me = viewer.participant?;
+    match occupants(stage, m) {
+        (Occupant::Participant(a), _) if a == me => Some(Side::A),
+        (_, Occupant::Participant(b)) if b == me => Some(Side::B),
+        _ => None,
+    }
 }
 
 pub fn summary(
@@ -87,22 +118,11 @@ pub fn summary(
     m: &Match,
     viewer: &Viewer,
 ) -> BracketMatch {
-    let (oa, ob) = match m.state {
-        // O reset que não precisou acontecer não tem lados.
-        ec::MatchState::NotNeeded => (Occupant::Unknown, Occupant::Unknown),
-        _ => stage
-            .bracket
-            .occupants(m.id)
-            .unwrap_or((Occupant::Unknown, Occupant::Unknown)),
-    };
-    let player = |o: Occupant| match o {
-        Occupant::Participant(p) => Some(p),
-        _ => None,
-    };
-    let yours = viewer
-        .participant
-        .is_some_and(|me| [player(oa), player(ob)].contains(&Some(me)));
-    let result = stage.result(m.id);
+    let (oa, ob) = occupants(stage, m);
+    let mine = viewer_side(stage, m, viewer);
+    let games = stage.games_of(m.id);
+    let (a_maps, b_maps) = confirmed_wins(&games);
+    let count = |s: GameStatus| games.iter().filter(|g| g.status == s).count() as u8;
     BracketMatch {
         key: key::format(m.id),
         part: match m.id.side {
@@ -122,9 +142,13 @@ pub fn summary(
         },
         a: side(stage, m.a, oa),
         b: side(stage, m.b, ob),
-        result: result.map(match_result),
-        yours,
-        task: task(status, m, result, yours, viewer),
+        result: stage.result(m.id).map(match_result),
+        a_maps,
+        b_maps,
+        pending_maps: count(GameStatus::Pending),
+        contested_maps: count(GameStatus::Contested),
+        yours: mine.is_some(),
+        task: tasks::match_task(status, m, &games, mine, viewer),
     }
 }
 
@@ -151,62 +175,36 @@ fn side(stage: &Stage, slot: Slot, occupant: Occupant) -> MatchSide {
 
 fn match_result(r: &StoredResult) -> MatchResult {
     MatchResult {
-        status: r.status,
         walkover: r.score.is_none(),
         winner: r.winner_side(),
         a_wins: r.score.map(|(a, _)| a),
         b_wins: r.score.map(|(_, b)| b),
-        reported_side: r.reported_side,
-        reported_at: r.reported_at,
-        confirm_by: (r.status == ResultStatus::Pending)
-            .then_some(r.confirm_by)
-            .flatten(),
-        contest_comment: r.contest_comment.clone(),
-        contested_at: r.contested_at,
         confirmed_via: r.confirmed_via,
         confirmed_at: r.confirmed_at,
     }
 }
 
-/// O que a partida espera de quem vê. Só com o torneio em andamento e a
-/// partida pronta.
-fn task(
-    status: TournamentStatus,
-    m: &Match,
-    result: Option<&StoredResult>,
-    yours: bool,
-    viewer: &Viewer,
-) -> Option<ViewerTask> {
-    if status != TournamentStatus::InProgress || !matches!(m.state, ec::MatchState::Ready { .. }) {
-        return None;
-    }
-    let Some(r) = result else {
-        return yours.then_some(ViewerTask::Report);
-    };
-    match r.status {
-        ResultStatus::Contested if viewer.organizer => Some(ViewerTask::Resolve),
-        ResultStatus::Contested => yours.then_some(ViewerTask::AwaitOrganizer),
-        ResultStatus::Pending if yours => {
-            let mine = viewer.participant.and_then(|p| r.side_of(p));
-            Some(if mine == r.reported_side {
-                ViewerTask::AwaitOpponent
-            } else {
-                ViewerTask::Respond
-            })
-        }
-        ResultStatus::Pending | ResultStatus::Confirmed => None,
-    }
-}
-
-pub fn game(g: GameRow) -> GameDetail {
+pub fn game(g: &StoredGame, task: Option<ViewerTask>) -> GameDetail {
     GameDetail {
         number: g.number,
-        map: MapRef {
-            slug: g.map_slug,
-            name: g.map_name,
-        },
-        a_frags: g.a_frags,
-        b_frags: g.b_frags,
+        winner: g.winner_side(),
+        map: g.map.as_ref().map(|m| MapRef {
+            slug: m.slug.clone(),
+            name: m.name.clone(),
+        }),
+        a_frags: g.frags.map(|(a, _)| a),
+        b_frags: g.frags.map(|(_, b)| b),
+        status: g.status,
+        reported_side: g.reported_side,
+        reported_at: g.reported_at,
+        confirm_by: (g.status == GameStatus::Pending)
+            .then_some(g.confirm_by)
+            .flatten(),
+        contest_comment: g.contest_comment.clone(),
+        contested_at: g.contested_at,
+        confirmed_via: g.confirmed_via,
+        confirmed_at: g.confirmed_at,
+        task,
     }
 }
 
@@ -220,7 +218,7 @@ pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
             Some(EventOutcome {
                 winner: entrant.user_id,
                 winner_nickname: entrant.nickname.clone(),
-                walkover: e.winner_maps.is_none(),
+                walkover: e.game.is_none() && e.winner_maps.is_none(),
                 winner_maps: maps(e.winner_maps).map_err(|_| ApiError::internal())?,
                 loser_maps: maps(e.loser_maps).map_err(|_| ApiError::internal())?,
             })
@@ -229,6 +227,7 @@ pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
     };
     Ok(MatchEvent {
         kind: EventKind::from_db(&e.kind)?,
+        game: e.game,
         actor: e.actor.map(|user_id| EventActor {
             user_id,
             nickname: e.actor_name.unwrap_or_default(),

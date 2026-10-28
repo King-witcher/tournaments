@@ -1,6 +1,6 @@
-//! SQL da chave: leitura dos resultados, confirmação por tempo e descarte
-//! aqui; escritas de resultado em `writes`, histórico em `events`, detalhe
-//! por mapa em `games`.
+//! SQL da chave: leitura das séries decididas, confirmação por tempo dos
+//! mapas e descarte aqui; escritas da série em `writes`, mapas em `games`,
+//! histórico em `events`.
 
 mod events;
 mod games;
@@ -13,10 +13,8 @@ use super::result::{ResultRow, StoredResult};
 use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
-pub use games::{GameRow, games, replace_games};
-pub use writes::{
-    NewResult, confirm, contest, insert_report, put_by_organizer, put_walkover, void,
-};
+pub use games::{NewGame, confirm_game, contest_game, games, insert_report, put_game, void_games};
+pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
 /// Uma partida no banco: tenant, torneio, fase e identificador.
 pub struct MatchRef<'a> {
@@ -26,8 +24,7 @@ pub struct MatchRef<'a> {
     pub key: &'a str,
 }
 
-/// Resultados da fase `stage`: os confirmados na ordem do replay, depois os
-/// outros.
+/// Séries decididas da fase `stage`, na ordem do replay.
 pub async fn results(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -35,12 +32,12 @@ pub async fn results(
 ) -> Result<Vec<StoredResult>, ApiError> {
     sqlx::query_as!(
         ResultRow,
-        r#"select id, match_key, side_a, side_b, status, winner, a_wins, b_wins, reported_side,
-                  reported_at, confirm_by, contested_at, contest_comment,
-                  confirmed_via, confirmed_at, position
+        r#"select id, match_key, side_a, side_b, winner, a_wins, b_wins,
+                  confirmed_via as "confirmed_via!", confirmed_at as "confirmed_at!",
+                  position as "position!"
            from match_results
            where tournament_id = $1 and stage = $2
-           order by position nulls last, id"#,
+           order by position"#,
         tournament.get(),
         stage
     )
@@ -51,14 +48,14 @@ pub async fn results(
     .collect()
 }
 
-/// Há resultado pendente com a janela de contestação vencida em `now`.
+/// Há mapa pendente com a janela de contestação vencida em `now`.
 pub async fn has_due(
     conn: &mut PgConnection,
     tournament: TournamentId,
     now: DateTime<Utc>,
 ) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar!(
-        r#"select exists(select 1 from match_results
+        r#"select exists(select 1 from match_games
                          where tournament_id = $1 and status = 'pending' and confirm_by <= $2)
            as "due!""#,
         tournament.get(),
@@ -68,35 +65,24 @@ pub async fn has_due(
     .await
 }
 
-/// Confirma os pendentes com a janela vencida em `now`, como se tivessem
-/// confirmado no fim da janela (com o histórico), e entram no replay nessa
-/// ordem. Quem chama trava o torneio: as posições são `max + 1`. Devolve
-/// quantos confirmou.
+/// Confirma os mapas pendentes com a janela vencida em `now`, como se
+/// tivessem confirmado no fim da janela (com o histórico). Fechar as séries
+/// que isso decide fica com quem chama. Devolve quantos confirmou.
 pub async fn confirm_due(
     conn: &mut PgConnection,
     tournament: TournamentId,
     now: DateTime<Utc>,
 ) -> Result<u64, sqlx::Error> {
     let done = sqlx::query!(
-        r#"with due as (
-               select id, row_number() over (order by confirm_by, id) as n
-               from match_results
+        r#"with confirmed as (
+               update match_games
+               set status = 'confirmed', confirmed_via = 'deadline', confirmed_at = confirm_by
                where tournament_id = $1 and status = 'pending' and confirm_by <= $2
-           ),
-           top as (
-               select coalesce(max(position), 0) as position
-               from match_results where tournament_id = $1
-           ),
-           confirmed as (
-               update match_results r
-               set status = 'confirmed', confirmed_via = 'deadline', confirmed_at = r.confirm_by,
-                   position = (top.position + due.n)::integer
-               from due, top
-               where r.id = due.id
-               returning r.tenant_id, r.tournament_id, r.stage, r.match_key, r.confirm_by
+               returning tenant_id, tournament_id, stage, match_key, number, confirm_by
            )
-           insert into match_events (tenant_id, tournament_id, stage, match_key, kind, created_at)
-           select tenant_id, tournament_id, stage, match_key, 'auto_confirmed', confirm_by
+           insert into match_events
+               (tenant_id, tournament_id, stage, match_key, game, kind, created_at)
+           select tenant_id, tournament_id, stage, match_key, number, 'auto_confirmed', confirm_by
            from confirmed"#,
         tournament.get(),
         now
@@ -106,23 +92,31 @@ pub async fn confirm_due(
     Ok(done.rows_affected())
 }
 
-/// Apaga resultados e histórico do torneio (desfazer o início). Devolve
-/// quantos resultados havia.
+/// Apaga séries, mapas e histórico do torneio (desfazer o início). Devolve
+/// quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: TournamentId,
 ) -> Result<u64, sqlx::Error> {
-    sqlx::query!(
-        "delete from match_events where tournament_id = $1",
+    let touched = sqlx::query_scalar!(
+        r#"select count(*) as "n!" from (
+               select stage, match_key from match_results where tournament_id = $1
+               union
+               select stage, match_key from match_games where tournament_id = $1
+           ) touched"#,
         tournament.get()
     )
-    .execute(&mut *conn)
+    .fetch_one(&mut *conn)
     .await?;
-    let deleted = sqlx::query!(
-        "delete from match_results where tournament_id = $1",
-        tournament.get()
-    )
-    .execute(conn)
-    .await?;
-    Ok(deleted.rows_affected())
+    let id = tournament.get();
+    sqlx::query!("delete from match_events where tournament_id = $1", id)
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query!("delete from match_games where tournament_id = $1", id)
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query!("delete from match_results where tournament_id = $1", id)
+        .execute(&mut *conn)
+        .await?;
+    Ok(touched as u64)
 }

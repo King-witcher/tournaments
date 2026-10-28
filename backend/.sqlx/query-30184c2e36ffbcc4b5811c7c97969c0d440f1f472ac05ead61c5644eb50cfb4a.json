@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select (select count(*) from match_results) + (select count(*) from match_games)\n                  + (select count(*) from match_events) as \"n!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "30184c2e36ffbcc4b5811c7c97969c0d440f1f472ac05ead61c5644eb50cfb4a"
+}

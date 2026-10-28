@@ -17,7 +17,10 @@ export function MatchHistory({ detail }: Props) {
       ) : (
         <ol className="flex flex-col gap-3 border-l border-black/10 pl-4 dark:border-white/15">
           {detail.history.map((event) => (
-            <MatchEventRow key={`${event.at}:${event.kind}`} event={event} />
+            <MatchEventRow
+              key={`${event.at}:${event.kind}:${event.game}`}
+              event={event}
+            />
           ))}
         </ol>
       )}

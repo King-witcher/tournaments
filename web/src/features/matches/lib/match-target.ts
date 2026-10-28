@@ -6,10 +6,27 @@ export function matchParams({ tenant, slug, matchKey }: MatchTarget) {
   return { path: { slug: tenant, tournament: slug, match: matchKey } };
 }
 
-/** Uma linha do detalhe por mapa no formulário (frags como digitados). */
-export type GameValues = { map: string; a: string; b: string };
+/** Parâmetros de caminho das rotas `.../matches/{match}/games/{game}...`. */
+export function gameParams(target: MatchTarget, game: number) {
+  return { path: { ...matchParams(target).path, game } };
+}
 
-/** A linha como a API recebe. */
-export function gameInput(g: GameValues) {
-  return { map: g.map, a_frags: Number(g.a) || 0, b_frags: Number(g.b) || 0 };
+/** Um mapa no formulário: vencedor, slug do mapa e frags como digitados. */
+export type GameValues = {
+  winner: "a" | "b" | "";
+  map: string;
+  a: string;
+  b: string;
+};
+
+export const EMPTY_GAME: GameValues = { winner: "", map: "", a: "", b: "" };
+
+/** O mapa como a API recebe (frags de um lado só voltam como erro da API). */
+export function gameInput(g: GameValues & { winner: "a" | "b" }) {
+  return {
+    winner: g.winner,
+    map: g.map || null,
+    a_frags: g.a.trim() ? Number(g.a) : null,
+    b_frags: g.b.trim() ? Number(g.b) : null,
+  };
 }

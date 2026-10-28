@@ -8,7 +8,7 @@ use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{
-    COPA, bracket, copa, find, kinds, play, players, report, score, single, start,
+    COPA, age, bracket, copa, find, game, kinds, play, players, report, single, start,
 };
 
 async fn withdraw(app: &Router, by: &User, who: &User) -> (StatusCode, Value) {
@@ -43,17 +43,13 @@ async fn auto_walkover(app: &Router, viewer: &User, key: &str) -> (Vec<String>, 
     let d = detail(app, viewer, key).await;
     let result = &d["summary"]["result"];
     assert_eq!(
-        (
-            &result["walkover"],
-            &result["confirmed_via"],
-            &result["status"]
-        ),
-        (&json!(true), &json!("withdrawal"), &json!("confirmed")),
+        (&result["walkover"], &result["confirmed_via"]),
+        (&json!(true), &json!("withdrawal")),
         "{key}: {d}"
     );
     let last = d["history"].as_array().unwrap().last().unwrap().clone();
     assert_eq!(last["actor"], Value::Null, "{key}");
-    let history = kinds(&d).into_iter().map(str::to_owned).collect();
+    let history = kinds(&d);
     (history, last["outcome"]["winner"].clone())
 }
 
@@ -117,15 +113,37 @@ async fn a_pending_report_gives_way_to_the_walkover(db: PgPool) {
         &[&p[0], &p[1], &p[2], &p[3]],
     )
     .await;
-    let (status, _) = report(&app, &p[0], "wb-1-1", score(2, 0)).await;
+    // Um mapa confirmado e outro pendente.
+    let (status, _) = report(&app, &p[0], "wb-1-1", 1, game("a", "awoken")).await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, _) = report(&app, &p[3], "wb-1-1", 1, game("a", "awoken")).await;
+    assert_eq!(status, StatusCode::CONFLICT);
+    let (status, _) = post_empty(
+        &app,
+        &format!("{COPA}/matches/wb-1-1/games/1/confirm"),
+        &p[3],
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, _) = report(&app, &p[3], "wb-1-1", 2, game("b", "exile")).await;
     assert_eq!(status, StatusCode::OK);
 
     ok(&app, &ana, &p[0]).await;
     let (history, winner) = auto_walkover(&app, &ana, "wb-1-1").await;
-    assert_eq!(history, ["reported", "auto_walkover"]);
+    assert_eq!(
+        history,
+        [
+            "reported:1",
+            "confirmed:1",
+            "reported:2",
+            "voided:2",
+            "auto_walkover"
+        ]
+    );
     assert_eq!(winner, p[3].id);
+    // O mapa jogado fica.
     let d = detail(&app, &ana, "wb-1-1").await;
-    assert_eq!(d["summary"]["result"]["reported_side"], Value::Null);
+    assert_eq!(d["games"].as_array().unwrap().len(), 1);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
@@ -198,20 +216,16 @@ async fn walkovers_follow_confirmations_by_deadline(db: PgPool) {
         "pending"
     );
 
-    let (status, _) = report(&app, &p[1], "wb-1-2", score(2, 0)).await;
-    assert_eq!(status, StatusCode::OK);
-    sqlx::query!(
-        "update match_results set reported_at = reported_at - interval '1 hour',
-                                  confirm_by = confirm_by - interval '1 hour'
-         where status = 'pending'"
-    )
-    .execute(&db)
-    .await
-    .unwrap();
+    for (n, map) in [(1, "awoken"), (2, "exile")] {
+        let (status, _) = report(&app, &p[1], "wb-1-2", n, game("a", map)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+    age(&db, 60).await;
 
-    // Ler a chave confirma pelo tempo, e a final vira W.O.: acabou.
+    // Ler a chave confirma os mapas pelo tempo, a série fecha e a final vira
+    // W.O.: acabou.
     let b = bracket(&app, &ana).await;
-    assert_eq!(find(&b, "wb-1-2")["result"]["confirmed_via"], "deadline");
+    assert_eq!(find(&b, "wb-1-2")["result"]["confirmed_via"], "maps");
     assert_eq!(b["status"], "finished");
     let (_, winner) = auto_walkover(&app, &ana, "wb-2-1").await;
     assert_eq!(winner, p[1].id);

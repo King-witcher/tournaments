@@ -1,7 +1,9 @@
-//! Histórico das partidas: o que cada evento grava (`match_events.kind`) e
-//! como um resultado vira as colunas do evento.
+//! Histórico das partidas: o que cada evento grava (`match_events.kind`). O
+//! evento de um mapa (`game`) grava o vencedor do mapa nas ações que o
+//! definem; o da série, o vencedor e o placar (nada no W.O.).
 
-use engine::core::Outcome;
+use chrono::{DateTime, Utc};
+use engine::core::{Outcome, ParticipantId};
 
 use super::types::EventKind;
 use crate::shared::ApiError;
@@ -19,6 +21,8 @@ impl EventKind {
             Self::Walkover => "walkover",
             Self::AutoWalkover => "auto_walkover",
             Self::Voided => "voided",
+            Self::Decided => "decided",
+            Self::Reopened => "reopened",
         }
     }
 
@@ -36,6 +40,8 @@ impl EventKind {
             Walkover,
             AutoWalkover,
             Voided,
+            Decided,
+            Reopened,
         ]
         .into_iter()
         .find(|kind| kind.as_str() == value)
@@ -49,25 +55,60 @@ impl EventKind {
 /// Um evento a gravar.
 pub struct NewEvent<'a> {
     pub kind: EventKind,
-    /// Quem agiu; `None` no W.O. automático (e na confirmação por tempo, que
-    /// o SQL grava sozinho).
+    /// Quem agiu; `None` no que acontece sozinho (W.O. automático, série
+    /// decidida).
     pub actor: Option<i64>,
-    /// O resultado que a ação deixou, quando ela define um.
-    pub outcome: Option<Outcome>,
+    /// O mapa; `None`: a série inteira.
+    pub game: Option<i16>,
+    pub winner: Option<ParticipantId>,
+    /// Mapas do vencedor e do perdedor da série.
+    pub maps: Option<(u8, u8)>,
     pub comment: Option<&'a str>,
+    /// Quando; `None`: agora.
+    pub at: Option<DateTime<Utc>>,
 }
 
-/// `(vencedor, mapas do vencedor, mapas do perdedor)` de um resultado, como
-/// o evento grava.
-pub fn outcome_columns(outcome: Option<Outcome>) -> (Option<i64>, Option<i16>, Option<i16>) {
-    match outcome {
-        None => (None, None, None),
-        Some(Outcome::Walkover { winner }) => (Some(winner.0), None, None),
-        Some(Outcome::Played { winner, score }) => (
-            Some(winner.0),
-            Some(i16::from(score.winner)),
-            Some(i16::from(score.loser)),
-        ),
+impl<'a> NewEvent<'a> {
+    /// Ação sobre o mapa `game`; `winner` nas que definem o vencedor dele.
+    pub fn game(
+        kind: EventKind,
+        actor: Option<i64>,
+        game: i16,
+        winner: Option<ParticipantId>,
+    ) -> Self {
+        Self {
+            kind,
+            actor,
+            game: Some(game),
+            winner,
+            maps: None,
+            comment: None,
+            at: None,
+        }
+    }
+
+    /// Ação sobre a série inteira, com o resultado que ela deixou.
+    pub fn series(kind: EventKind, actor: Option<i64>, outcome: Option<Outcome>) -> Self {
+        let (winner, maps) = match outcome {
+            None => (None, None),
+            Some(Outcome::Walkover { winner }) => (Some(winner), None),
+            Some(Outcome::Played { winner, score }) => {
+                (Some(winner), Some((score.winner, score.loser)))
+            }
+        };
+        Self {
+            kind,
+            actor,
+            game: None,
+            winner,
+            maps,
+            comment: None,
+            at: None,
+        }
+    }
+
+    pub fn with_comment(self, comment: Option<&'a str>) -> Self {
+        Self { comment, ..self }
     }
 }
 
@@ -77,7 +118,13 @@ mod tests {
 
     #[test]
     fn kinds_round_trip() {
-        for kind in ["reported", "auto_confirmed", "auto_walkover", "voided"] {
+        for kind in [
+            "reported",
+            "auto_confirmed",
+            "auto_walkover",
+            "voided",
+            "decided",
+        ] {
             assert_eq!(EventKind::from_db(kind).unwrap().as_str(), kind);
         }
         assert!(EventKind::from_db("undone").is_err());

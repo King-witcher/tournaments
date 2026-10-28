@@ -291,6 +291,11 @@ async fn deleting_an_author_keeps_what_they_did(db: PgPool) {
         ),
         ("confirmed", None, None)
     );
+    let third = sqlx::query!("select reported_by, confirmed_by from match_games where number = 3")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!((third.reported_by, third.confirmed_by), (None, None));
     let actors = sqlx::query!("select kind, actor from match_events order by id")
         .fetch_all(&db)
         .await
@@ -298,12 +303,18 @@ async fn deleting_an_author_keeps_what_they_did(db: PgPool) {
         .into_iter()
         .map(|e| (e.kind, e.actor))
         .collect::<Vec<_>>();
+    let (p1, p2) = (Some(cup.p1.id), Some(cup.p2.id));
     assert_eq!(
         actors,
         [
-            ("reported".to_owned(), Some(cup.p1.id)),
-            ("contested".to_owned(), Some(cup.p2.id)),
+            ("reported".to_owned(), p1),
+            ("confirmed".to_owned(), p2),
+            ("reported".to_owned(), p2),
+            ("confirmed".to_owned(), p1),
+            ("reported".to_owned(), p1),
+            ("contested".to_owned(), p2),
             ("resolved".to_owned(), None),
+            ("decided".to_owned(), None),
         ]
     );
     // Os convites dela saem; quem entrou ou se inscreveu por eles fica.

@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select extract(epoch from confirm_by - reported_at)::integer as \"seconds!\"\n           from match_games where number = 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seconds!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "827bcaecf3a4808c5ada6a8e89f39392c3e8bdc008d16c5c9a1af7385880a079"
+}

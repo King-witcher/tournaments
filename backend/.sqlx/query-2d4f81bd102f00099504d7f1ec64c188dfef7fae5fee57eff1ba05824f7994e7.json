@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists(select 1 from match_games\n                         where tournament_id = $1 and status = 'pending' and confirm_by <= $2)\n           as \"due!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "due!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2d4f81bd102f00099504d7f1ec64c188dfef7fae5fee57eff1ba05824f7994e7"
+}
