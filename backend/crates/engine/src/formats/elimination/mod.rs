@@ -35,8 +35,8 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::core::{
-    BracketSide, EngineError, Match, MatchId, MatchReport, MatchState, Outcome, ParticipantId,
-    Placement, Slot,
+    BracketSide, EngineError, Match, MatchId, MatchReport, MatchState, Occupant, Outcome,
+    ParticipantId, Placement, Slot,
 };
 use crate::seeding::bracket_size;
 use crate::series::{SeriesLength, validate_score};
@@ -133,6 +133,16 @@ impl EliminationBracket {
 
     pub fn get(&self, id: MatchId) -> Option<&Match> {
         self.matches.iter().find(|m| m.id == id)
+    }
+
+    /// Quem ocupa cada lado (`a`, `b`) da partida agora; `None` se ela não
+    /// existe. Numa partida `NotNeeded`, os que a jogariam.
+    pub fn occupants(&self, id: MatchId) -> Option<(Occupant, Occupant)> {
+        let m = self.get(id)?;
+        Some((
+            resolve::occupant(&self.matches, m.a),
+            resolve::occupant(&self.matches, m.b),
+        ))
     }
 
     /// Partidas que podem ser jogadas agora (`MatchState::Ready`).

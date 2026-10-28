@@ -126,3 +126,19 @@ fn replay_returns_error_of_contradicted_match() {
         }
     );
 }
+
+#[test]
+fn occupants_follow_the_results() {
+    use Occupant::{Bye, Participant, Unknown};
+    // 3 participantes: o seed 1 tem bye na primeira rodada.
+    let mut b = EliminationBracket::new(single(3, 5), seeds(3)).unwrap();
+    assert_eq!(b.occupants(id(W, 1, 1)), Some((Participant(p(1)), Bye)));
+    assert_eq!(b.occupants(id(W, 2, 1)), Some((Participant(p(1)), Unknown)));
+    let m = *b.get(id(W, 1, 2)).unwrap();
+    b.report(played(&m, p(3))).unwrap();
+    assert_eq!(
+        b.occupants(id(W, 2, 1)),
+        Some((Participant(p(1)), Participant(p(3))))
+    );
+    assert_eq!(b.occupants(id(W, 9, 9)), None);
+}

@@ -8,6 +8,11 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct ParticipantId(pub i64);
 
+/// Mapa do jogo: o id interno da tabela de mapas (`maps.id` na API).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct MapId(pub i64);
+
 /// Em qual parte da chave a partida está.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -37,6 +42,17 @@ pub enum Slot {
     WinnerOf(MatchId),
     LoserOf(MatchId),
     /// Ninguém ocupa este lado: o outro avança sem jogar.
+    Bye,
+}
+
+/// Quem ocupa um lado de uma partida agora, conforme os resultados.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "value", rename_all = "snake_case")]
+pub enum Occupant {
+    /// Ainda depende de uma partida sem resultado.
+    Unknown,
+    Participant(ParticipantId),
+    /// Ninguém: o outro lado avança sem jogar.
     Bye,
 }
 
@@ -136,6 +152,14 @@ pub enum EngineError {
     },
     #[error("placar {score:?} inválido para melhor de {best_of}")]
     InvalidScore { best_of: u8, score: SeriesScore },
+    #[error("o detalhe tem {got} mapas; o placar soma {expected}")]
+    GameCountMismatch { expected: usize, got: usize },
+    #[error("o mapa {game} do detalhe está empatado")]
+    GameTied { game: usize },
+    #[error("os vencedores dos mapas não batem com o placar {score:?}")]
+    GamesDisagreeWithScore { score: SeriesScore },
+    #[error("mapa repetido na série: {0:?}")]
+    MapRepeated(MapId),
     #[error("no pior caso são necessários {required} campeões; o pool tem {available}")]
     ChampionPoolExhausted { required: u32, available: u32 },
     #[error("o torneio precisa de pelo menos uma fase")]
