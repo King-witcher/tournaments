@@ -1,59 +1,65 @@
-import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
-import { routing } from "@/i18n/routing";
-import { FormSection } from "@/shared/ui/form-section";
-import { Select } from "@/shared/ui/select";
+import type { components } from "@/shared/api/schema";
 import { TextArea } from "@/shared/ui/text-area";
-import type { FieldErrors } from "../lib/form-errors";
-import type { TournamentValues } from "../lib/form-values";
+import { TextInput } from "@/shared/ui/text-input";
+import { controlName, type FieldErrors } from "../lib/form-errors";
+import type { TranslationValues } from "../lib/form-values";
 
 type Props = {
-  values: TournamentValues;
-  onChange: (patch: Partial<TournamentValues>) => void;
-  errors: FieldErrors;
-  /** Na criação aparece o idioma, que depois não muda. */
-  isNew: boolean;
+  /** O idioma dos textos (o `lang` dos campos). */
+  locale: components["schemas"]["Locale"];
+  values: TranslationValues;
+  onChange: (patch: Partial<TranslationValues>) => void;
+  errors: FieldErrors<keyof TranslationValues>;
+  /**
+   * Os textos são de uma tradução: entra o nome (o original fica no topo do
+   * formulário) e os `name` dos controles levam o idioma.
+   */
+  translation?: boolean;
+  /** O `id` do campo do nome, para receber o foco ao ligar a tradução. */
+  nameId?: string;
 };
 
-/** Textos no idioma original: o idioma (só na criação), a descrição e as regras. */
+/**
+ * Descrição e regras de um idioma, em texto simples (as quebras de linha
+ * ficam), e o nome quando é uma tradução.
+ */
 export function TournamentTextFields({
+  locale,
   values,
   onChange,
   errors,
-  isNew,
+  translation = false,
+  nameId,
 }: Props) {
   const t = useTranslations("TournamentForm");
-  const tLocales = useTranslations("Locales");
+  const name = (field: keyof TranslationValues) =>
+    translation ? controlName(field, locale) : field;
 
   return (
-    <FormSection
-      legend={
-        isNew ? t("texts") : t("textsIn", { language: tLocales(values.locale) })
-      }
-    >
-      {isNew && (
-        <Select
-          labelText={t("locale")}
-          helperText={t("localeHint")}
-          name="locale"
-          value={values.locale}
-          onChange={(e) =>
-            onChange({ locale: e.target.value as TournamentValues["locale"] })
-          }
-        >
-          {routing.locales.map((locale) => (
-            <SelectItem key={locale} value={locale} text={tLocales(locale)} />
-          ))}
-        </Select>
+    <>
+      {translation && (
+        <TextInput
+          id={nameId}
+          labelText={t("name")}
+          name={name("name")}
+          required
+          maxLength={80}
+          lang={locale}
+          value={values.name}
+          invalid={errors.name !== undefined}
+          invalidText={errors.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+        />
       )}
       <TextArea
         labelText={t("description")}
-        helperText={t("markdownHint")}
-        name="description"
-        rows={4}
+        helperText={t("plainTextHint")}
+        name={name("description")}
+        rows={3}
         maxLength={2000}
-        lang={values.locale}
+        lang={locale}
         value={values.description}
         invalid={errors.description !== undefined}
         invalidText={errors.description}
@@ -61,16 +67,16 @@ export function TournamentTextFields({
       />
       <TextArea
         labelText={t("rules")}
-        helperText={t("markdownHint")}
-        name="rules"
-        rows={10}
+        helperText={t("plainTextHint")}
+        name={name("rules")}
+        rows={8}
         maxLength={20000}
-        lang={values.locale}
+        lang={locale}
         value={values.rules}
         invalid={errors.rules !== undefined}
         invalidText={errors.rules}
         onChange={(e) => onChange({ rules: e.target.value })}
       />
-    </FormSection>
+    </>
   );
 }

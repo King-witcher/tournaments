@@ -1018,7 +1018,7 @@ export interface components {
              * @example 5
              */
             contest_minutes: number;
-            /** @description Markdown, até 2000 caracteres. */
+            /** @description Texto simples; as quebras de linha são preservadas. Até 2000 caracteres. */
             description?: string;
             /** @description Idioma original dos textos. Não muda depois. */
             locale: components["schemas"]["Locale"];
@@ -1034,7 +1034,14 @@ export interface components {
              * @example Copa de Outubro
              */
             name: string;
-            /** @description Markdown, até 20000 caracteres. */
+            /**
+             * @description Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
+             *     transação: exige `starts_at` (`tournament.starts_at_required`) e, se a
+             *     janela de check-in já abriu, o torneio vem em `check_in`; senão, em
+             *     `registration`. Qualquer erro e nada é gravado.
+             */
+            publish?: boolean;
+            /** @description Texto simples; as quebras de linha são preservadas. Até 20000 caracteres. */
             rules?: string;
             /**
              * @description a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Não muda depois.
@@ -1048,8 +1055,32 @@ export interface components {
              * @description Início previsto. O rascunho pode ficar sem; publicar exige.
              */
             starts_at?: string | null;
+            /**
+             * @description Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
+             *     original. Erro de texto numa delas (`tournament.name_invalid`,
+             *     `tournament.description_invalid`, `tournament.rules_invalid`) e
+             *     `tournament.translation_same_locale` trazem `params.locale` com o
+             *     idioma dela; idioma repetido dá `request.invalid_body`.
+             */
+            translations?: components["schemas"]["CreateTranslation"][];
             /** @description Padrão `public`. Muda depois, até o torneio encerrar. */
             visibility?: components["schemas"]["Visibility"];
+        };
+        /** @description Tradução enviada junto com a criação do torneio. */
+        CreateTranslation: {
+            /**
+             * @description Texto simples; as quebras de linha são preservadas. Até 2000
+             *     caracteres; vazio usa o original.
+             */
+            description?: string;
+            locale: components["schemas"]["Locale"];
+            /** @description 1 a 80 caracteres. */
+            name: string;
+            /**
+             * @description Texto simples; as quebras de linha são preservadas. Até 20000
+             *     caracteres; vazio usa o original.
+             */
+            rules?: string;
         };
         CreatedInvite: {
             /** Format: date-time */
@@ -1109,10 +1140,12 @@ export interface components {
             /**
              * @description Números que a mensagem traduzida mostra, quando o código tem
              *     (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+             *     Alguns códigos trazem também um texto (ex.: `locale`, o idioma da
+             *     tradução com erro).
              */
             params?: {
-                [key: string]: number;
-            } | null;
+                [key: string]: components["schemas"]["ParamValue"];
+            };
         };
         EventActor: {
             avatar_url?: string | null;
@@ -1535,6 +1568,8 @@ export interface components {
                 tournament: string;
             };
         };
+        /** @description Valor de um parâmetro do erro: número ou texto curto. */
+        ParamValue: number | string;
         /** @description Inscrito num torneio. */
         Participant: {
             avatar_url?: string | null;
@@ -1582,11 +1617,11 @@ export interface components {
             locale: components["schemas"]["Locale"];
         };
         PutTranslation: {
-            /** @description Markdown, até 2000 caracteres; vazio usa o original. */
+            /** @description Texto simples; as quebras de linha são preservadas. Até 2000 caracteres; vazio usa o original. */
             description?: string;
             /** @description 1 a 80 caracteres. */
             name: string;
-            /** @description Markdown, até 20000 caracteres; vazio usa o original. */
+            /** @description Texto simples; as quebras de linha são preservadas. Até 20000 caracteres; vazio usa o original. */
             rules?: string;
         };
         /** @description Anular o último mapa para ser jogado de novo. */
@@ -3577,7 +3612,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio criado como rascunho */
+            /** @description Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta, ou em check-in se a janela já abriu) com `publish: true`. Tudo numa transação só */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -3622,7 +3657,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.starts_at_required (com `publish: true`), tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

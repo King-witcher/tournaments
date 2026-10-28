@@ -1,43 +1,46 @@
 {
-  "identity": "Identificação",
+  "tournament": "Torneio",
   "name": "Nome",
   "slug": "Endereço",
   "slugHint": "O link do torneio será {address}. Letras minúsculas, números e hífen, de 3 a 32; não dá para mudar depois.",
+  "startsAt": "Início",
+  "startsAtHint": "No seu fuso horário ({timeZone}). Obrigatório para publicar; muda até o torneio começar.",
+  "startsAtHintNew": "No seu fuso horário ({timeZone}). Obrigatório para criar; o rascunho pode ficar sem.",
+  "format": "Formato",
+  "formatLocked": "O torneio já começou: formato e campeões não mudam mais.",
+  "bracket": "Chave",
+  "brackets": {
+    "single": "Eliminação simples",
+    "double": "Eliminação dupla"
+  },
+  "grandFinalReset": "Grande final com reset: se quem vem da repescagem vencer, joga-se mais uma série",
+  "bestOf": "Séries",
+  "finalsBestOf": {
+    "single": "Final",
+    "double": "Grande final"
+  },
+  "bestOfOption": "Melhor de {count}",
+  "champions": "Campeões",
+  "bansPerGame": "Bans de campeão por mapa",
+  "bansOption": "{count, plural, =0 {Sem bans} one {# ban} other {# bans}}",
+  "noRepeat": "Repetir campeão",
+  "noRepeatOptions": {
+    "off": "Pode repetir",
+    "match": "Não repete na série",
+    "stage": "Não repete na fase",
+    "tournament": "Não repete no torneio"
+  },
+  "noRepeatHint": "Cada jogador usa um campeão por mapa. Na série, quem jogou um mapa com um campeão não o usa nos outros mapas da mesma partida (md3, md5); no torneio, não o usa em mais nenhum mapa. A regra é conferida no pior caso de mapas para o número de vagas: se faltar campeão, o torneio não é salvo.",
+  "registration": "Inscrições e prazos",
+  "registrationLocked": "O torneio já começou: início, vagas e check-in não mudam mais.",
+  "maxParticipants": "Vagas",
+  "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
   "visibility": "Visibilidade",
   "visibilityOptions": {
     "public": "Pública",
     "private": "Privada"
   },
   "visibilityHint": "Pública: todos da comunidade veem e se inscrevem. Privada: só inscritos e organizadores veem, e entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
-  "setupLocked": "O torneio já começou: formato, vagas, campeões, data e check-in não mudam mais.",
-  "setup": "Formato",
-  "bracket": "Chave",
-  "brackets": {
-    "single": "Eliminação simples",
-    "double": "Eliminação dupla"
-  },
-  "grandFinalReset": "Grande final com reset: se quem vem da chave de baixo vencer, joga-se mais uma série",
-  "bestOf": "Partidas",
-  "finalsBestOf": {
-    "single": "Final",
-    "double": "Grande final"
-  },
-  "bestOfOption": "Melhor de {count}",
-  "bansPerGame": "Bans de campeão por mapa",
-  "bansOption": "{count, plural, =0 {Sem bans} one {# ban} other {# bans}}",
-  "noRepeat": "Não repetir campeão",
-  "noRepeatOptions": {
-    "off": "Pode repetir",
-    "match": "Dentro de cada partida",
-    "stage": "Em toda a fase",
-    "tournament": "No torneio inteiro"
-  },
-  "noRepeatHint": "A regra é conferida no pior caso de mapas para o número de vagas. Se faltar campeão, o torneio não é salvo.",
-  "schedule": "Inscrições e datas",
-  "maxParticipants": "Vagas",
-  "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
-  "startsAt": "Início",
-  "startsAtHint": "No seu fuso horário ({timeZone}). Obrigatório para publicar; muda até o torneio começar.",
   "checkIn": "Check-in",
   "checkInOff": "Sem check-in",
   "checkInOption": "Abre {minutes} min antes do início",
@@ -45,20 +48,51 @@
   "contest": "Janela de contestação",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios.",
-  "texts": "Textos",
-  "textsIn": "Textos: {language}",
-  "locale": "Idioma dos textos",
-  "localeHint": "Traduções para os outros idiomas são opcionais e ficam na edição. O idioma original não muda depois.",
+  "summary": {
+    "slots": "{count, plural, one {# vaga} other {# vagas}}",
+    "checkIn": "check-in {window} antes",
+    "noCheckIn": "sem check-in",
+    "contest": "{window} para contestar"
+  },
+  "texts": "Descrição e regras",
+  "textsHint": "Opcionais. Cada idioma numa aba: quem usa o site num idioma sem tradução vê o original.",
+  "languages": "Idiomas dos textos",
+  "original": "Original",
+  "translated": "Tradução",
+  "untranslated": "Sem tradução",
   "description": "Descrição",
   "rules": "Regras",
-  "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
+  "plainTextHint": "Texto simples: as quebras de linha são mantidas.",
   "translation": {
-    "title": "Tradução: {language}",
-    "hint": "Opcional; é salva junto com o resto. Descrição ou regras em branco mostram as do idioma original.",
+    "off": "Sem tradução: quem usa o site em {language} vê o nome, a descrição e as regras do original ({original}).",
+    "add": "Adicionar tradução",
     "remove": "Remover tradução",
-    "removeConfirm": "Remover esta tradução? O texto traduzido é apagado e quem lê neste idioma passa a ver o original."
+    "hint": "O nome é obrigatório; descrição ou regras em branco mostram as do original.",
+    "willDelete": "A tradução salva vai ser apagada quando você salvar. Para mantê-la, adicione de novo antes de salvar."
   },
-  "create": "Criar rascunho",
+  "create": "Criar",
+  "createDraft": "Criar como rascunho",
+  "review": {
+    "title": "Criar e publicar",
+    "question": "Confira antes de publicar. As inscrições abrem na hora e a comunidade passa a ver o torneio (o privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído; para revisar com calma, crie como rascunho.",
+    "confirm": "Criar e publicar",
+    "label": "Resumo do torneio",
+    "labels": {
+      "name": "Nome",
+      "startsAt": "Início",
+      "format": "Formato",
+      "registration": "Inscrições",
+      "champions": "Campeões",
+      "languages": "Idiomas"
+    },
+    "checkInNow": "Pela data de início e pela janela de check-in, o check-in já abriu: o torneio vai direto para o check-in, sem inscrições. Para ter inscrições, mude a data ou a janela."
+  },
+  "tabs": {
+    "label": "Partes do torneio",
+    "general": "Geral",
+    "format": "Formato",
+    "registration": "Inscrições e prazos"
+  },
   "edit": {
     "title": "Editar torneio",
     "loading": "Carregando o torneio…",

@@ -28,3 +28,17 @@ export function localizedTexts(
     rules: translation?.rules || tournament.rules,
   };
 }
+
+/**
+ * De onde vêm as regras que quem vê lê: da tradução no idioma dele, se ela
+ * tem regras; senão, do original. É esse texto que "Editar regras", na aba
+ * Regras, muda.
+ */
+export function rulesSource(tournament: Schemas["Tournament"], locale: string) {
+  const translation = tournament.translations.find(
+    (t) => t.locale === locale && t.rules,
+  );
+  return translation
+    ? { locale: translation.locale, rules: translation.rules, translation }
+    : { locale: tournament.locale, rules: tournament.rules };
+}

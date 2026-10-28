@@ -7,7 +7,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { localizedName } from "../lib/localize";
 import { textsEditable } from "../lib/status";
 import { loadTournament } from "../server";
-import { TournamentForm } from "./tournament-form";
+import { EditTournamentForm } from "./edit-tournament-form";
 
 type Props = { tenant: string; slug: string };
 
@@ -72,7 +72,7 @@ export async function EditTournamentView({ tenant, slug }: Props) {
           {await apiErrorMessage(blocked)}
         </PageError>
       ) : (
-        <TournamentForm tenant={tenant} tournament={tournament} />
+        <EditTournamentForm tenant={tenant} tournament={tournament} />
       )}
     </>
   );

@@ -5,7 +5,7 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
-import { TournamentForm } from "./tournament-form";
+import { NewTournamentForm } from "./new-tournament-form";
 
 /**
  * Criar torneio na comunidade, para organizer e owner: o cabeçalho com a
@@ -55,7 +55,7 @@ export async function NewTournamentView({ tenant }: { tenant: string }) {
           {await apiErrorMessage("tenant.forbidden")}
         </PageError>
       ) : (
-        <TournamentForm tenant={tenant} />
+        <NewTournamentForm tenant={tenant} />
       )}
     </>
   );

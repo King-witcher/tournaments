@@ -1,26 +1,30 @@
 import {
+  AccordionSkeleton,
   ButtonSkeleton,
-  NumberInputSkeleton,
+  RadioButtonSkeleton,
   SelectSkeleton,
   Stack,
   TextAreaSkeleton,
   TextInputSkeleton,
 } from "@carbon/react";
 
-import { FormSectionSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
+import {
+  FormSectionSkeleton,
+  PageHeaderSkeleton,
+  TabsSkeleton,
+} from "@/shared/ui/skeleton";
 
 type Props = {
   /** O que está carregando, lido pelo leitor de tela. */
   label: string;
-  /** Edição: sem o endereço e com a seção da tradução. */
+  /** Edição: as abas, com a primeira (nome e textos) aberta. */
   edit?: boolean;
 };
 
 /**
- * A página do formulário de torneio carregando, na forma dela: o cabeçalho
- * com a trilha e as seções de campos de formas diferentes (por isso monta as
- * seções com `FormSectionSkeleton`, e não com o `FormSkeleton`) com os botões
- * no fim.
+ * A página do formulário de torneio carregando, na forma dela: na criação,
+ * as seções à vista, os dois grupos fechados e os textos; na edição, as abas
+ * com a primeira. Os botões no fim, como no `FormActions`.
  */
 export function TournamentFormSkeleton({ label, edit = false }: Props) {
   return (
@@ -28,32 +32,34 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
       <PageHeaderSkeleton label={label} />
       <div aria-hidden>
         <Stack gap={7}>
-          <FormSectionSkeleton>
-            <TextInputSkeleton />
-            {!edit && <TextInputSkeleton />}
-            <SelectSkeleton />
-          </FormSectionSkeleton>
-          <FormSectionSkeleton>
-            <SelectSkeleton />
-            <SelectSkeleton />
-            <SelectSkeleton />
-          </FormSectionSkeleton>
-          <FormSectionSkeleton>
-            <NumberInputSkeleton />
-            <TextInputSkeleton />
-            <SelectSkeleton />
-          </FormSectionSkeleton>
-          <FormSectionSkeleton>
-            <TextAreaSkeleton />
-            <TextAreaSkeleton />
-          </FormSectionSkeleton>
-          {edit && (
-            <FormSectionSkeleton>
+          {edit ? (
+            <>
+              <TabsSkeleton />
               <TextInputSkeleton />
-              <TextAreaSkeleton />
-            </FormSectionSkeleton>
+              <FormSectionSkeleton>
+                <TabsSkeleton />
+                <TextAreaSkeleton />
+                <TextAreaSkeleton />
+              </FormSectionSkeleton>
+            </>
+          ) : (
+            <>
+              <FormSectionSkeleton>
+                <TextInputSkeleton />
+                <TextInputSkeleton />
+                <TextInputSkeleton />
+              </FormSectionSkeleton>
+              <FormSectionSkeleton>
+                <RadioButtonSkeleton />
+                <SelectSkeleton />
+              </FormSectionSkeleton>
+              <AccordionSkeleton count={2} open={false} />
+              <FormSectionSkeleton>
+                <TabsSkeleton />
+                <TextAreaSkeleton />
+              </FormSectionSkeleton>
+            </>
           )}
-          {/* Cancelar e Salvar, lado a lado como no FormActions. */}
           <div>
             <ButtonSkeleton />
             <ButtonSkeleton />

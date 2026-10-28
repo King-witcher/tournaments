@@ -1,14 +1,15 @@
 import type { components } from "@/shared/api/schema";
 
 type Schemas = components["schemas"];
+type Locale = Schemas["Locale"];
 
 export type NoRepeatChoice = "off" | Schemas["NoRepeatScope"];
 
-/** Campos do formulário de torneio (criação e edição). */
+/** Campos do formulário de torneio (criação e edição), no idioma original. */
 export type TournamentValues = {
   name: string;
   slug: string;
-  locale: Schemas["Locale"];
+  locale: Locale;
   description: string;
   rules: string;
   visibility: Schemas["Visibility"];
@@ -28,22 +29,36 @@ export type TournamentValues = {
   contestMinutes: number;
 };
 
-/** Uma tradução no formulário de edição: campos vazios quando ainda não existe. */
+/** Os textos de uma tradução. */
 export type TranslationValues = {
   name: string;
   description: string;
   rules: string;
 };
 
+/**
+ * Uma tradução no formulário. Desligada, não vai no envio (e, se existia, é
+ * apagada ao salvar), mas o texto fica: ligar de novo antes de salvar o traz
+ * de volta.
+ */
+export type TranslationDraft = TranslationValues & { enabled: boolean };
+
+/** As traduções do formulário, por idioma diferente do original. */
+export type Translations = Partial<Record<Locale, TranslationDraft>>;
+
 /** A tradução que ainda não existe. */
-export const EMPTY_TRANSLATION: TranslationValues = {
+export const EMPTY_TRANSLATION: TranslationDraft = {
+  enabled: false,
   name: "",
   description: "",
   rules: "",
 };
 
-/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min, 10 min para contestar. */
-export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
+/**
+ * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
+ * vagas, 1 ban, check-in de 30 min, 10 min para contestar.
+ */
+export function defaultValues(locale: Locale): TournamentValues {
   return {
     name: "",
     slug: "",
@@ -53,7 +68,7 @@ export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
     visibility: "public",
     maxParticipants: 16,
     bracket: "double",
-    grandFinalReset: true,
+    grandFinalReset: false,
     bestOf: 3,
     finalsBestOf: 5,
     bansPerGame: 1,
@@ -90,35 +105,63 @@ export function valuesFrom(
   };
 }
 
-/** A tradução de `locale` que o torneio já tem, ou campos vazios. */
-export function translationValuesFrom(
+/** A tradução de `locale` que o torneio já tem (ligada), ou uma vazia. */
+export function translationFrom(
   tournament: Schemas["Tournament"],
-  locale: Schemas["Locale"],
-): TranslationValues {
+  locale: Locale,
+): TranslationDraft {
   const saved = tournament.translations.find((x) => x.locale === locale);
-  return {
-    name: saved?.name ?? "",
-    description: saved?.description ?? "",
-    rules: saved?.rules ?? "",
-  };
+  return saved
+    ? {
+        enabled: true,
+        name: saved.name,
+        description: saved.description,
+        rules: saved.rules,
+      }
+    : EMPTY_TRANSLATION;
 }
 
-/** A tradução difere da que está salva (ou da falta dela): é preciso gravá-la. */
-export function translationChanged(
+/** O que salvar a tradução de `locale` faz: gravar (PUT), apagar ou nada. */
+export function translationChange(
   tournament: Schemas["Tournament"],
-  locale: Schemas["Locale"],
-  values: TranslationValues,
-) {
-  const saved = translationValuesFrom(tournament, locale);
-  return (
-    values.name !== saved.name ||
-    values.description !== saved.description ||
-    values.rules !== saved.rules
-  );
+  locale: Locale,
+  draft: TranslationDraft,
+): "put" | "delete" | undefined {
+  const saved = translationFrom(tournament, locale);
+  if (!draft.enabled) return saved.enabled ? "delete" : undefined;
+  const changed =
+    !saved.enabled ||
+    draft.name !== saved.name ||
+    draft.description !== saved.description ||
+    draft.rules !== saved.rules;
+  return changed ? "put" : undefined;
 }
 
-/** Corpo da criação (rascunho de duelo). */
-export function createBody(values: TournamentValues) {
+/**
+ * As escolhas de não repetição. "Na fase" só se distingue de "no torneio"
+ * quando houver mais de uma fase: fica de fora, a não ser que o torneio já
+ * a tenha.
+ */
+export function noRepeatChoices(current: NoRepeatChoice): NoRepeatChoice[] {
+  return current === "stage"
+    ? ["off", "match", "stage", "tournament"]
+    : ["off", "match", "tournament"];
+}
+
+/** A janela de check-in, contada a partir do início, já abriu em `now`. */
+export function checkInOpensNow(values: TournamentValues, now: Date) {
+  if (values.startsAt === null || values.checkInMinutes === null) return false;
+  const opens =
+    new Date(values.startsAt).getTime() - values.checkInMinutes * 60_000;
+  return opens <= now.getTime();
+}
+
+/** Corpo da criação (duelo): rascunho, ou já publicado com `publish`. */
+export function createBody(
+  values: TournamentValues,
+  translations: Translations,
+  publish: boolean,
+) {
   return {
     ...textsBody(values),
     ...setupBody(values),
@@ -126,6 +169,19 @@ export function createBody(values: TournamentValues) {
     slug: values.slug,
     locale: values.locale,
     mode: "duel" as const,
+    translations: Object.entries(translations).flatMap(([locale, draft]) =>
+      draft?.enabled
+        ? [
+            {
+              locale: locale as Locale,
+              name: draft.name,
+              description: draft.description,
+              rules: draft.rules,
+            },
+          ]
+        : [],
+    ),
+    publish,
   };
 }
 

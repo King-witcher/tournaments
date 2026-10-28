@@ -1,5 +1,8 @@
-/** Números que alguns erros trazem para a mensagem (ex.: `{ required, available }`). */
-export type ApiErrorParams = Record<string, number>;
+/**
+ * Números que alguns erros trazem para a mensagem (ex.: `{ required, available }`)
+ * e, em poucos, um texto (o `locale` da tradução recusada na criação).
+ */
+export type ApiErrorParams = Record<string, number | string>;
 
 /** O que `callApi` usa da resposta do openapi-fetch. */
 export type ApiResponse<T> = {
