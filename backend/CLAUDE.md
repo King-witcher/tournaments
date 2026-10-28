@@ -94,6 +94,24 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 - Em `crates/api/tests/api/`, num binário só: `main.rs` declara os módulos. Arquivo solto em `tests/` vira outro binário, que linka a crate inteira de novo.
 - Um arquivo por domínio, com o nome do módulo em `src/`. Helpers comuns (app, usuário com sessão, `get`/`post`/..., `create`/`invite`/`join`) em `common.rs`; helper de um domínio só fica no arquivo dele.
 - Filtrar: `cargo test -p api invites::`.
+- Regras do banco, por SQL direto: `schema/` para o schema inteiro (exclusões, owner, checks), `matches/schema.rs` para resultados e histórico.
+
+## Consistência do banco
+
+O banco recusa estado inválido mesmo que a API erre (decisões em "Consistência do banco" no `docs/decisions.md`). Toda migration nova segue:
+
+- **`on delete` decidido caso a caso**, nunca o padrão por descuido:
+  - `cascade` do pai para o que só existe dentro dele (tenant → membros, convites, torneios; torneio → tudo dele);
+  - `set null (coluna)` para autoria (quem fez), com a coluna nula permitida;
+  - recusa quando apagar deixaria a história incoerente (inscrito e fase de torneio iniciado, owner, usuário que jogou). FK de recusa é `no action`, nunca `restrict`: `no action` é conferida no fim do comando, então a cascata do pai passa. Trigger de recusa reconhece a cascata pelo pai já apagado (`tournament_started` é falso sem torneio ou sem tenant).
+- **FK composta com `tenant_id`** (ou `tournament_id`) em toda referência entre dados de tenant, com alvo `unique (tenant_id, id)`. Autor dentro do tenant aponta para `tenant_members (tenant_id, user_id)`.
+- **`check`** em todo enum (`in (...)`), faixa (a mesma da constante da API), formato (slug, username, tamanho do hash) e estado (colunas que andam juntas, `(a is null) = (b is null)`; status que exige coluna). JSON gravado: função `*_valid(jsonb)` imutável com a forma mínima, que devolve falso (nunca erro) para qualquer entrada.
+- **`not null`** em tudo que não é opcional; o significado do nulo fica no comentário da coluna.
+- **`unique`** para toda regra de "um por" (parcial, com `where`, quando vale só para parte das linhas).
+- Regra entre linhas ou tabelas: trigger `before` (vale na hora) ou `constraint trigger ... deferrable initially deferred` (vale no commit, como "pelo menos um owner"). Erro com `errcode` (`check_violation` para estado, `foreign_key_violation` para exclusão recusada) e `constraint = '<tabela>_<regra>'`.
+- **Dados existentes**: a migration roda em produção. Corrija antes de criar a regra, de forma determinística (e diga como no comentário), ou use `not valid` + `validate`. Teste o SQL numa cópia do banco local antes de aplicar. Migration aplicada não muda mais.
+- **Teste por SQL direto**: para cada regra, gravar o estado inválido e conferir código e nome (`schema::rejected`); para cada cascata, apagar o pai e contar que nada sobrou.
+- Horário de uma ação comparado com o de outra (enviado → contestado, inscrito → check-in) não vira `check`: cada uma grava o `now()` da própria transação, que pode ter começado antes da outra.
 
 ## engine
 

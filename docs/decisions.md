@@ -53,7 +53,7 @@ Motivos e cuidados:
 - Na interface, tenant se chama **comunidade** (es: comunidad).
 - Limite: cada usuário é owner de no máximo **3** tenants, fixo no código (`MAX_OWNED_TENANTS`). Ser organizer ou player em outros não conta.
 - Slug: o front sugere a partir do nome, o usuário ajusta na criação e depois ele **não muda** (links de convite e de torneio nunca quebram). Formato a-z, 0-9 e hífen simples, de 3 a 32 caracteres, com uma lista de palavras reservadas para rotas do front (`new`, `invite`...).
-- Um owner por tenant: quem criou. Transferir a posse fica para depois.
+- Um owner por tenant: quem criou. Transferir a posse fica para depois. O banco garante exatamente um (ver "Consistência do banco").
 - Convite: link **multiuso**, vale 7 dias, revogável. Owner e organizer geram; quem entra vira **player**. Só o hash do token fica no banco, então o link aparece uma vez, na criação. O link vai sem idioma (`/invite/{token}`) e o proxy do next-intl manda cada pessoa para o seu. O link de inscrição de um torneio (ver "Torneios") também faz entrar no tenant.
 - Aceitar um convite sendo já membro não muda papel nem apelido.
 - Gestão de membros: o owner alterna player ↔ organizer. Remover membro e sair do tenant ficam para depois.
@@ -150,10 +150,23 @@ Motivos e cuidados:
 - **Histórico** por partida (`match_events`): enviado, confirmado, confirmado por tempo, contestado (com o comentário), resolvido, lançado, corrigido, W.O. e anulado, com autor, horário e o placar que a ação deixou; nota opcional do organizador. Só desfazer o início apaga.
 - **Mapas**: tabela global `maps` (como `champions`), com `duel_pool`. Lista **provisória, para o usuário revisar**: pool de duelo = Awoken, Blood Covenant, Blood Run, Corrupted Keep, Deep Embrace, Exile, Insomnia, Molten Falls, Ruins of Sarnath, Vale of Pnath; fora do pool = Burial Chamber, Church of Azathoth, Lockbox, Tempest Shrine, The Longest Yard, Tower of Koth. Nome de mapa é nome próprio (não se traduz). `GET /maps` é pública. Até o veto definir um pool por torneio, o detalhe aceita qualquer mapa ativo (o formulário mostra o pool de duelo primeiro).
 - **Rating por mapa** (item futuro): por isso o detalhe por mapa fica em `match_games`; sem detalhe, o placar diz quantos mapas cada um venceu.
-- **Banco rigoroso**: as invariantes de série e de estado também são `check` (placar dentro do melhor de N com o vencedor tendo mais mapas, contestado com comentário, confirmado com via, horário e posição, envio de jogador com lado e prazo, mapa sem empate e sem repetir), as FKs são compostas pelo torneio (participante do mesmo torneio, torneio do mesmo tenant) e participante ou fase com resultado não pode ser apagado.
+- **Banco rigoroso**: as invariantes de série e de estado também são `check` (placar dentro do melhor de N com o vencedor tendo mais mapas, contestado com comentário, confirmado com via, horário e posição, envio de jogador com lado e prazo, mapa sem empate e sem repetir), as FKs são compostas pelo torneio (participante do mesmo torneio, torneio do mesmo tenant) e participante ou fase de torneio iniciado não sai avulso (ver "Consistência do banco").
 - Print do placar: o torneio decide se é obrigatório.
 - Upload direto do navegador para o bucket, com URL assinada gerada pela API. O front converte para WebP antes.
 - Prints apagados 30 dias após o fim do torneio (rotina diária).
+
+## Consistência do banco
+
+- O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API continua conferindo antes, para devolver o código certo. Regras nas migrations `20261030000000_delete_rules` e `20261030010000_consistency_checks`, testes em `tests/api/schema/`, checklist para migration nova no `backend/CLAUDE.md`.
+- **Excluir usuário** é recusado se ele for owner de algum tenant ou tiver participado de torneio iniciado (em andamento ou encerrado), para a chave antiga não perder um lado. Sessões, logins e tentativas de senha vão junto. A autoria (quem inscreveu, marcou o check-in, enviou, contestou ou confirmou um resultado, agiu no histórico) fica nula. Os convites que ele criou saem com a participação dele no tenant: convite é uma autorização dada pelo membro.
+- **"Excluir conta"** (quando existir) vai **anonimizar** o usuário (nome, avatar, logins, sessões) em vez de apagar a linha, para os torneios que ele jogou continuarem inteiros.
+- **Excluir tenant** apaga tudo o que está dentro. **Excluir torneio** também, inclusive resultados, mapas e histórico (a API só exclui rascunho, mas o banco aceita qualquer um).
+- **Inscrito e fase de torneio iniciado** não saem avulsos, só com o torneio ou o tenant; também ninguém entra e seed e check-in não mudam. Por isso o membro inscrito num torneio iniciado também não sai do tenant: sair mantendo o histórico vai ser membro inativo, não linha apagada.
+- **Owner**: exatamente um por tenant, e ele é membro. "No máximo um" vale na hora (índice único parcial); "pelo menos um", no commit. Transferir a posse é, numa transação, rebaixar o owner atual e depois promover o novo (na ordem inversa, o índice recusa).
+- Quem inscreveu, quem marcou o check-in e quem criou o convite são membros do mesmo tenant (FK composta); o convite gravado numa inscrição é um link do mesmo torneio.
+- **Estado e forma também no banco**: data de início fora do rascunho; status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slug do tenant e slug, tenant e idioma original do torneio fixos; JSON de regras de campeões e de fase com a forma do `engine` (bans de 0 a 3, melhor de N ímpar); username no formato do cadastro, senha só como hash argon2id, tokens como SHA-256 de 32 bytes, avatar só por https, nome exibido não vazio, campeão com nome único.
+- Torneios publicados antes de existir a data de início ganharam a data de criação, e os que estavam na inscrição ficaram com a abertura automática do check-in suspensa (como numa reabertura), para não mudarem de status sozinhos.
+- **Fica fora do banco, de propósito**: ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra); validade de sessão e de convite posterior à criação e histórico imutável (os testes envelhecem essas datas direto no banco); o limite de 3 tenants por owner e o pool de campeões (regras da API, que mudam sem migration).
 
 ## Notificações
 
