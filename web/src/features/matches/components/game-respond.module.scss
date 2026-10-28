@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+
+// Na largura de um formulário, mesmo na linha larga do mapa.
+.respond {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  max-inline-size: spacing.$spacing-13 * 3;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}

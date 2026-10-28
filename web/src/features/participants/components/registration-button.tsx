@@ -2,60 +2,54 @@
 
 import { useTranslations } from "next-intl";
 
+import { ActionWithNote } from "@/features/tournaments/components/action-with-note";
+import { TOURNAMENT_TITLE_ID } from "@/features/tournaments/lib/focus";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
-import { ConfirmButton } from "@/shared/ui/confirm-button";
-
-const REGISTRATION_ID = "registration-action";
+import { Button, type ButtonKind } from "@/shared/ui/button";
+import { MY_PARTICIPATION_ID } from "../lib/focus";
 
 type Props = {
   tenant: string;
   slug: string;
-  /** Inscrito: o botão cancela a inscrição. */
-  registered: boolean;
+  /** `primary` para quem joga; `tertiary` para a organização (o primário dela é o ciclo). */
+  kind?: ButtonKind;
 };
 
-/** Inscreve quem vê no torneio, ou cancela a inscrição (depois de confirmar: a vaga pode ir para outro). */
-export function RegistrationButton({ tenant, slug, registered }: Props) {
+/**
+ * Inscreve quem vê no torneio. Cancelar a inscrição fica no ⋯ do cabeçalho,
+ * com confirmação. Inscrito, o botão some: o foco vai para "Sua situação",
+ * que passa a dizer que ele está inscrito.
+ */
+export function RegistrationButton({ tenant, slug, kind = "primary" }: Props) {
   const t = useTranslations("Participants.registration");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
-  const params = { path: { slug: tenant, tournament: slug } };
-  const path = "/tenants/{slug}/tournaments/{tournament}/registration";
-  // Inscrever troca o botão pelo de cancelar (e vice-versa) no refresh: o
-  // foco vai para o bloco novo, em vez de cair no começo da página.
-  const done = () => {
-    router.refresh();
-    focusIfLost(REGISTRATION_ID);
-  };
 
   return (
-    <div
-      id={REGISTRATION_ID}
-      tabIndex={-1}
-      className="flex flex-col items-start gap-1"
-    >
-      {registered ? (
-        <ConfirmButton
-          pending={pending}
-          question={t("withdrawConfirm")}
-          onConfirm={() => run(() => api.DELETE(path, { params }), done)}
-        >
-          {t("withdraw")}
-        </ConfirmButton>
-      ) : (
-        <Button
-          pending={pending}
-          onClick={() => run(() => api.POST(path, { params }), done)}
-        >
-          {t("register")}
-        </Button>
-      )}
-      {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    <ActionWithNote error={error}>
+      <Button
+        kind={kind}
+        pending={pending}
+        onClick={() =>
+          run(
+            () =>
+              api.POST(
+                "/tenants/{slug}/tournaments/{tournament}/registration",
+                { params: { path: { slug: tenant, tournament: slug } } },
+              ),
+            () => {
+              router.refresh();
+              focusIfLost(MY_PARTICIPATION_ID);
+              focusIfLost(TOURNAMENT_TITLE_ID);
+            },
+          )
+        }
+      >
+        {t("register")}
+      </Button>
+    </ActionWithNote>
   );
 }

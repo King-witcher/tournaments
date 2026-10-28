@@ -7,8 +7,9 @@ type Schemas = components["schemas"];
 
 /**
  * Nomes das partidas e rodadas no idioma de quem vê: código curto
- * (`C1.2`), título da rodada e de onde vem um lado ("Vencedor de C1.2").
- * `single`: eliminação simples (uma chave só).
+ * (`C1.2`), título da rodada, de onde vem um lado ("Vencedor de C1.2") e o
+ * que fica no lugar de quem ainda não se sabe. `single`: eliminação simples
+ * (uma chave só).
  */
 export function useMatchLabels(single: boolean) {
   const t = useTranslations("Bracket");
@@ -33,5 +34,11 @@ export function useMatchLabels(single: boolean) {
     return t(`from.${from.outcome}`, { match: code(from.match_key) });
   }
 
-  return { code, roundTitle, source };
+  /** Um lado sem jogador: bye, de onde ele vem ou "a definir". */
+  function placeholder(side: Schemas["MatchSide"]) {
+    if (side.bye) return t("bye");
+    return side.from ? source(side.from) : t("tbd");
+  }
+
+  return { code, roundTitle, source, placeholder };
 }

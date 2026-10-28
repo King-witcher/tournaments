@@ -2,46 +2,52 @@
 
 import { useTranslations } from "next-intl";
 
+import { ActionWithNote } from "@/features/tournaments/components/action-with-note";
+import { TOURNAMENT_TITLE_ID } from "@/features/tournaments/lib/focus";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
-import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { focusIfLost } from "@/shared/lib/focus";
+import { Button, type ButtonKind } from "@/shared/ui/button";
+import { MY_PARTICIPATION_ID } from "../lib/focus";
 
 type Props = {
   tenant: string;
   slug: string;
-  /** Já fez: o botão desfaz. */
-  checkedIn: boolean;
+  /** `primary` para quem joga; `tertiary` para a organização. */
+  kind?: ButtonKind;
 };
 
-/** O check-in de quem vê, durante o check-in: fazer ou desfazer. */
-export function CheckInButton({ tenant, slug, checkedIn }: Props) {
+/**
+ * O check-in de quem vê, durante o check-in. Desfazer fica no ⋯ do
+ * cabeçalho. Feito, o botão some: o foco vai para "Sua situação".
+ */
+export function CheckInButton({ tenant, slug, kind = "primary" }: Props) {
   const t = useTranslations("Participants.checkIn");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
-  const params = { path: { slug: tenant, tournament: slug } };
-  const path = "/tenants/{slug}/tournaments/{tournament}/check-in";
 
   return (
-    <div className="flex flex-col items-start gap-1">
+    <ActionWithNote error={error}>
       <Button
-        variant={checkedIn ? "outline" : "default"}
-        size={checkedIn ? "sm" : "default"}
+        kind={kind}
         pending={pending}
         onClick={() =>
           run(
             () =>
-              checkedIn
-                ? api.DELETE(path, { params })
-                : api.POST(path, { params }),
-            () => router.refresh(),
+              api.POST("/tenants/{slug}/tournaments/{tournament}/check-in", {
+                params: { path: { slug: tenant, tournament: slug } },
+              }),
+            () => {
+              router.refresh();
+              focusIfLost(MY_PARTICIPATION_ID);
+              focusIfLost(TOURNAMENT_TITLE_ID);
+            },
           )
         }
       >
-        {checkedIn ? t("undo") : t("do")}
+        {t("do")}
       </Button>
-      {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    </ActionWithNote>
   );
 }

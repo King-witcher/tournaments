@@ -1,9 +1,10 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { Disclosure } from "@/shared/ui/disclosure";
+import { Accordion } from "@/shared/ui/accordion";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameForm } from "./game-form";
+import styles from "./next-game-row.module.scss";
 
 type Schemas = components["schemas"];
 
@@ -19,8 +20,9 @@ type Props = {
 };
 
 /**
- * A linha do próximo mapa: o formulário de envio para quem joga, ou
- * "aguardando envio" com o lançamento da organização fechado num botão.
+ * A última linha da lista: o próximo mapa. Para quem joga, o formulário de
+ * envio aberto; para os outros, "aguardando envio" e, para a organização, o
+ * lançamento fechado num bloco (é exceção).
  */
 export function NextGameRow({
   target,
@@ -35,38 +37,42 @@ export function NextGameRow({
 
   return (
     // tabIndex -1: recebe o foco depois de anular o mapa com este número.
-    <li
-      id={gameRowId(number)}
-      tabIndex={-1}
-      className="flex flex-col gap-2 py-3"
-    >
-      <span className="font-medium">{t("number", { number })}</span>
-      {plays ? (
-        <GameForm
-          target={target}
-          number={number}
-          mode="report"
-          names={names}
-          maps={maps}
-          submitLabel={tForm("submit", { number })}
-        />
-      ) : (
-        <p className="text-sm text-muted">{t("awaiting")}</p>
-      )}
-      {/* Lançar pelos jogadores é exceção: fica fechado. A chave reinicia o
-          bloco a cada mapa novo. */}
-      {enters && (
-        <Disclosure key={number} summary={tForm("enter", { number })}>
+    <li id={gameRowId(number)} tabIndex={-1} className={styles.row}>
+      <span className={styles.num}>
+        {t.rich("numberCell", {
+          number,
+          prefix: (chunks) => (
+            <span className={styles.numPrefix}>{chunks}</span>
+          ),
+        })}
+      </span>
+      <div className={styles.body}>
+        {plays ? (
           <GameForm
             target={target}
             number={number}
-            mode="organizer"
+            mode="report"
             names={names}
             maps={maps}
-            submitLabel={tForm("enter", { number })}
+            submitLabel={tForm("submit", { number })}
           />
-        </Disclosure>
-      )}
+        ) : (
+          <p className={styles.awaiting}>{t("awaiting")}</p>
+        )}
+        {/* A chave reinicia o bloco (fechado) a cada mapa novo. */}
+        {enters && (
+          <Accordion key={number} title={tForm("enter", { number })}>
+            <GameForm
+              target={target}
+              number={number}
+              mode="organizer"
+              names={names}
+              maps={maps}
+              submitLabel={tForm("enter", { number })}
+            />
+          </Accordion>
+        )}
+      </div>
     </li>
   );
 }

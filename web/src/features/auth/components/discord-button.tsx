@@ -1,5 +1,7 @@
 "use client";
 
+import { LogoDiscord } from "@carbon/icons-react";
+import { Button } from "@carbon/react";
 import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -14,18 +16,21 @@ type Props = {
   children: ReactNode;
 };
 
-/** Navega para o OAuth do Discord na API, que volta para `returnTo` neste idioma. */
+/**
+ * Leva ao OAuth do Discord na API, que volta para `returnTo` neste idioma.
+ * É um link para fora do site (a API), por isso o `Button` do Carbon com
+ * `href` (um `<a>`) e não o `ButtonLink`, que é para páginas daqui. Terciário:
+ * a outra forma de entrar, ao lado do primário do formulário; o logo é o que
+ * a pessoa procura para reconhecer o login de terceiros.
+ */
 export function DiscordButton({ action, returnTo, children }: Props) {
   const locale = useLocale();
   const back = getPathname({ href: returnTo, locale });
   const href = `${API_URL}/auth/discord/${action}?return_to=${encodeURIComponent(back)}`;
 
   return (
-    <a
-      href={href}
-      className="inline-flex min-h-11 items-center self-start rounded-md bg-[#5865F2] px-3 py-1.5 text-sm sm:min-h-8 font-medium text-white hover:bg-[#4752C4]"
-    >
+    <Button href={href} kind="tertiary" renderIcon={LogoDiscord}>
       {children}
-    </a>
+    </Button>
   );
 }

@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { ACTIONABLE } from "../lib/status";
 
 type Props = {
   next: components["schemas"]["NextMatch"];
@@ -10,16 +11,10 @@ type Props = {
   tournamentPath: string;
 };
 
-/** O que pede uma ação de quem vê: vai em negrito. */
-const ACTIONABLE: components["schemas"]["ViewerTask"][] = [
-  "report",
-  "respond",
-  "resolve",
-];
-
 /**
  * A próxima partida de quem vê, com o adversário (ou de onde ele vem) e o que
- * ela espera dele, como link para a página da partida.
+ * ela espera dele, como link para a página da partida. O que pede uma ação
+ * de quem vê vai em negrito.
  */
 export function NextMatchLink({ next, tournamentPath }: Props) {
   const t = useTranslations("Home.tournaments.next");

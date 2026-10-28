@@ -1,56 +1,81 @@
 import { getTranslations } from "next-intl/server";
 
+import { TOURNAMENT_INVITES_ID } from "@/features/tournaments/lib/focus";
+import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
+import { DataTable } from "@/shared/ui/data-table";
+import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { Notice } from "@/shared/ui/notice";
+import { Section } from "@/shared/ui/section";
 import { CreateTournamentInviteButton } from "./create-tournament-invite-button";
-import { TournamentInviteRow } from "./tournament-invite-row";
+import { TournamentInviteActions } from "./tournament-invite-actions";
 
 type Props = {
   tenant: string;
-  tournament: string;
-  /** Vagas preenchidas: o link não inscreve ninguém até abrir vaga. */
-  full: boolean;
+  tournament: components["schemas"]["Tournament"];
 };
 
 /**
- * Links de inscrição do torneio, para organizer e owner, no rascunho ou com a
- * inscrição aberta. Fica em `<Suspense>`.
+ * Na aba Organização, os links de inscrição do torneio (no rascunho e com a
+ * inscrição aberta): gerar (o link aparece uma vez, para copiar) e, por
+ * linha, quem criou, quando, quantos entraram por ele e revogar. Fica em
+ * `<Suspense>`.
  */
-export async function TournamentInviteSection({
-  tenant,
-  tournament,
-  full,
-}: Props) {
+export async function TournamentInviteSection({ tenant, tournament }: Props) {
   const api = await serverApi();
   const [t, invites] = await Promise.all([
     getTranslations("Tournament.invites"),
     api
       .GET("/tenants/{slug}/tournaments/{tournament}/invites", {
-        params: { path: { slug: tenant, tournament } },
+        params: { path: { slug: tenant, tournament: tournament.slug } },
       })
-      .then(({ data }) => data ?? []),
+      .then(({ data }) => data ?? [])
+      .catch(() => []),
   ]);
-  const now = new Date();
+  // Vagas preenchidas: o link não inscreve ninguém até abrir vaga.
+  const full = tournament.participants >= tournament.max_participants;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
-      <p className="text-sm text-muted">{t("description")}</p>
-      {full && <p className="text-sm">{t("full")}</p>}
-      <CreateTournamentInviteButton tenant={tenant} tournament={tournament} />
-      {invites.length === 0 ? (
-        <p className="text-sm text-muted">{t("empty")}</p>
-      ) : (
-        <ul className="divide-y divide-black/10 dark:divide-white/10">
-          {invites.map((invite) => (
-            <TournamentInviteRow
-              key={invite.id}
-              tenant={tenant}
-              invite={invite}
-              now={now}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
+    // tabIndex -1: recebe o foco quando a linha do link revogado some.
+    <div id={TOURNAMENT_INVITES_ID} tabIndex={-1}>
+      <Section
+        title={t("title")}
+        description={t("description")}
+        action={
+          <CreateTournamentInviteButton
+            tenant={tenant}
+            tournament={tournament.slug}
+          />
+        }
+      >
+        {full && <Notice kind="warning">{t("full")}</Notice>}
+        <DataTable
+          label={t("title")}
+          size="sm"
+          columns={[
+            { key: "createdBy", header: t("columns.createdBy") },
+            {
+              key: "createdAt",
+              header: t("columns.createdAt"),
+              secondary: true,
+            },
+            { key: "uses", header: t("columns.uses") },
+          ]}
+          rows={invites.map((invite) => ({
+            id: String(invite.id),
+            search: invite.created_by,
+            cells: {
+              createdBy: invite.created_by,
+              createdAt: <LocalDateTime value={invite.created_at} />,
+              uses: String(invite.uses),
+            },
+            actions: (
+              <TournamentInviteActions tenant={tenant} inviteId={invite.id} />
+            ),
+          }))}
+          empty={{ text: t("empty") }}
+        />
+      </Section>
+    </div>
   );
 }

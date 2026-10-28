@@ -1,31 +1,36 @@
 "use client";
 
+import { CodeSnippet } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
 
-import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import styles from "./invite-link.module.scss";
 
-/** Link recém-gerado, com botão de copiar. */
+/**
+ * Link recém-gerado (de convite ou de inscrição), com o botão de copiar do
+ * Carbon. Aparece uma vez (a API só guarda o hash), então recebe o foco ao
+ * aparecer: o próximo passo de quem gerou é copiar.
+ */
 export function InviteLink({ link }: { link: string }) {
   const t = useTranslations("Tenant.invites");
-  const { copied, copy } = useCopyToClipboard();
+  const wrapper = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    wrapper.current?.querySelector("button")?.focus();
+  }, []);
 
   return (
-    <div className="flex w-full flex-col gap-1 rounded-md border border-black/15 p-3 dark:border-white/20">
-      <span className="flex gap-2">
-        <Input
-          readOnly
-          value={link}
-          aria-label={t("createdHint")}
-          onFocus={(e) => e.target.select()}
-          className="flex-1 font-mono text-sm"
-        />
-        <Button variant="outline" size="sm" onClick={() => copy(link)}>
-          {copied ? t("copied") : t("copy")}
-        </Button>
-      </span>
-      <span className="text-xs text-muted">{t("createdHint")}</span>
+    <div ref={wrapper} className={styles.link}>
+      <p className={styles.label}>{t("link")}</p>
+      <CodeSnippet
+        type="single"
+        aria-label={t("link")}
+        copyButtonDescription={t("copy")}
+        feedback={t("copied")}
+      >
+        {link}
+      </CodeSnippet>
+      <p className={styles.hint}>{t("createdHint")}</p>
     </div>
   );
 }

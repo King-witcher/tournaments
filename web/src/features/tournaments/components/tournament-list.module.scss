@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// O estado do torneio e, ao lado, o que é de quem vê (inscrito, falta o
+// check-in) e a visibilidade; quebram de linha em vez de alargar a tabela.
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-02;
+}

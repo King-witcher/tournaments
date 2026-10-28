@@ -1,73 +1,93 @@
 import { useTranslations } from "next-intl";
 
+import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { browserTimeZone } from "@/shared/lib/datetime-local";
 import { DateTimeInput } from "@/shared/ui/date-time-input";
-import { Field } from "@/shared/ui/field";
-import { Select } from "@/shared/ui/select";
+import { NumberInput } from "@/shared/ui/number-input";
+import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
+import { TournamentCheckInField } from "./tournament-check-in-field";
+import { TournamentContestField } from "./tournament-contest-field";
+import { TournamentFormGroup } from "./tournament-form-group";
 
-const WINDOWS = [15, 30, 45, 60];
+/** Os limites de vagas da API. */
+const SLOTS = { min: 2, max: 1024 };
 
 type Props = {
   values: TournamentValues;
   onChange: (patch: Partial<TournamentValues>) => void;
-  /** O torneio já começou: data e check-in ficam travados. */
-  disabled: boolean;
+  errors: FieldErrors;
+  /** O torneio já começou: vagas, data e check-in ficam travados. */
+  setupLocked: boolean;
   /** Publicado: a data não pode ficar vazia. */
-  required: boolean;
+  published: boolean;
+  /** Encerrado: nem a janela de contestação muda. */
+  finished: boolean;
 };
 
-/** Data e hora de início (no fuso de quem preenche) e janela de check-in. */
+/**
+ * Inscrições e datas: vagas, início (no fuso de quem preenche), janela de
+ * check-in e janela de contestação.
+ */
 export function TournamentScheduleFields({
   values,
   onChange,
-  disabled,
-  required,
+  errors,
+  setupLocked,
+  published,
+  finished,
 }: Props) {
   const t = useTranslations("TournamentForm");
+  const errorMessage = useApiErrorMessage();
   const isClient = useIsClient();
-  const current = values.checkInMinutes;
-  // Uma janela que veio da API fora das opções continua aparecendo.
-  const windows =
-    current === null || WINDOWS.includes(current)
-      ? WINDOWS
-      : [...WINDOWS, current].sort((a, b) => a - b);
 
   return (
-    <fieldset disabled={disabled} className="flex flex-col gap-4">
-      <legend className="mb-2 text-lg font-semibold">{t("schedule")}</legend>
-      <Field
-        label={t("startsAt")}
-        hint={t("startsAtHint", {
+    <TournamentFormGroup legend={t("schedule")}>
+      <NumberInput
+        labelText={t("maxParticipants")}
+        helperText={t("maxParticipantsHint")}
+        name="maxParticipants"
+        required
+        allowEmpty
+        disableWheel
+        min={SLOTS.min}
+        max={SLOTS.max}
+        value={values.maxParticipants}
+        disabled={setupLocked}
+        invalid={errors.maxParticipants !== undefined}
+        // Fora dos limites o próprio campo fica inválido, com o texto da API.
+        invalidText={
+          errors.maxParticipants ??
+          errorMessage("tournament.max_participants_invalid", SLOTS)
+        }
+        onChange={(maxParticipants) => onChange({ maxParticipants })}
+      />
+      <DateTimeInput
+        labelText={t("startsAt")}
+        helperText={t("startsAtHint", {
           timeZone: isClient ? browserTimeZone() : "…",
         })}
-      >
-        <DateTimeInput
-          value={values.startsAt}
-          onChange={(startsAt) => onChange({ startsAt })}
-          required={required}
-          className="w-64"
-        />
-      </Field>
-      <Field label={t("checkIn")} hint={t("checkInHint")}>
-        <Select
-          value={current ?? "off"}
-          onChange={(e) =>
-            onChange({
-              checkInMinutes:
-                e.target.value === "off" ? null : Number(e.target.value),
-            })
-          }
-        >
-          <option value="off">{t("checkInOff")}</option>
-          {windows.map((minutes) => (
-            <option key={minutes} value={minutes}>
-              {t("checkInOption", { minutes })}
-            </option>
-          ))}
-        </Select>
-      </Field>
-    </fieldset>
+        name="startsAt"
+        value={values.startsAt}
+        required={published}
+        disabled={setupLocked}
+        invalid={errors.startsAt !== undefined}
+        invalidText={errors.startsAt}
+        onChange={(startsAt) => onChange({ startsAt })}
+      />
+      <TournamentCheckInField
+        value={values.checkInMinutes}
+        onChange={(checkInMinutes) => onChange({ checkInMinutes })}
+        error={errors.checkInMinutes}
+        disabled={setupLocked}
+      />
+      <TournamentContestField
+        value={values.contestMinutes}
+        onChange={(contestMinutes) => onChange({ contestMinutes })}
+        error={errors.contestMinutes}
+        disabled={finished}
+      />
+    </TournamentFormGroup>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
+import { Form, FormGroup, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
@@ -9,10 +10,11 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { submitAction } from "@/shared/lib/submit-action";
-import { Alert } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
-import { Field } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { FormActions } from "@/shared/ui/form-actions";
+import { FormError } from "@/shared/ui/form-error";
+import { NumberInput } from "@/shared/ui/number-input";
+import { RadioGroup } from "@/shared/ui/radio-group";
+import { TextInput } from "@/shared/ui/text-input";
 import {
   EMPTY_GAME,
   type GameValues,
@@ -20,8 +22,8 @@ import {
   gameParams,
   type MatchTarget,
 } from "../lib/match-target";
+import styles from "./game-form.module.scss";
 import { MapSelect } from "./map-select";
-import { WinnerChoice } from "./winner-choice";
 
 type Props = {
   target: MatchTarget;
@@ -36,25 +38,52 @@ type Props = {
   submitLabel: string;
   /** Depois de salvar (fecha o formulário de quem abriu). */
   onDone?: () => void;
+  /** Fecha sem salvar: "Cancelar" ao lado do primário. */
+  onCancel?: () => void;
+  /** Abriu por um botão que sumiu: o foco vai para o primeiro campo. */
+  focusOnMount?: boolean;
 };
+
+/** O que falta preencher (junto do campo) ou o erro da API (acima dos botões). */
+type Errors = { winner?: string; map?: string; form?: string } | undefined;
+
+/** Frags vão de 0 a 999 (a API confere de novo). */
+const MAX_FRAGS = 999;
 
 /** Um mapa da série: quem venceu, o mapa jogado e os frags opcionais. */
 export function GameForm(props: Props) {
-  const { target, number, mode, names, maps, initial, submitLabel, onDone } =
-    props;
+  const {
+    target,
+    number,
+    mode,
+    names,
+    maps,
+    initial,
+    submitLabel,
+    onDone,
+    onCancel,
+    focusOnMount,
+  } = props;
   const t = useTranslations("Match.form");
-  const tMatch = useTranslations("Match");
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
+  const form = useRef<HTMLFormElement>(null);
   const [game, setGame] = useState<GameValues>(initial ?? EMPTY_GAME);
   const [comment, setComment] = useState("");
   // Mapa antigo, sem nome: o organizador pode manter assim.
   const mapOptional = mode === "organizer" && initial != null && !initial.map;
 
-  const [error, submit, pending] = useActionState(async () => {
+  useEffect(() => {
+    if (focusOnMount) form.current?.querySelector("input")?.focus();
+  }, [focusOnMount]);
+
+  const [errors, submit, pending] = useActionState<Errors>(async () => {
     const { winner } = game;
-    if (!winner) return t("chooseWinner");
-    if (!game.map && !mapOptional) return t("chooseTheMap");
+    const missing = {
+      winner: winner ? undefined : t("chooseWinner"),
+      map: game.map || mapOptional ? undefined : t("chooseTheMap"),
+    };
+    if (!winner || missing.map) return missing;
     const body = gameInput({ ...game, winner });
     const params = gameParams(target, number);
     const result =
@@ -74,7 +103,7 @@ export function GameForm(props: Props) {
               },
             ),
           );
-    if (!result.ok) return errorMessage(result.code, result.params);
+    if (!result.ok) return { form: errorMessage(result.code, result.params) };
     setGame(EMPTY_GAME);
     onDone?.();
     router.refresh();
@@ -82,59 +111,69 @@ export function GameForm(props: Props) {
   }, undefined);
 
   const frags = (side: "a" | "b") => (
-    <Input
-      type="number"
-      min={0}
-      max={999}
-      inputMode="numeric"
-      aria-label={t("fragsOf", { name: names[side] })}
-      placeholder={names[side]}
+    <NumberInput
+      labelText={t("fragsOf", { name: names[side] })}
       value={game[side]}
-      onChange={(e) => setGame({ ...game, [side]: e.target.value })}
-      className="w-full"
+      onChange={(value) => setGame({ ...game, [side]: value })}
+      allowEmpty
+      hideSteppers
+      min={0}
+      max={MAX_FRAGS}
+      inputMode="numeric"
+      invalidText={t("fragsRange", { max: MAX_FRAGS })}
     />
   );
 
   return (
-    <form onSubmit={submitAction(submit)} className="flex flex-col gap-3">
-      <WinnerChoice
-        legend={t("winner", { number })}
-        names={names}
-        value={game.winner}
-        onChange={(winner) => setGame({ ...game, winner })}
-      />
-      <Field label={t("map")}>
+    <Form
+      ref={form}
+      onSubmit={submitAction(submit)}
+      className={styles.form}
+      noValidate
+    >
+      <Stack gap={6}>
+        {/* Os dois nomes lado a lado: um toque escolhe quem venceu. */}
+        <div className={styles.winner}>
+          <RadioGroup
+            legendText={t("winner", { number })}
+            orientation="horizontal"
+            options={[
+              { value: "a", label: names.a },
+              { value: "b", label: names.b },
+            ]}
+            value={game.winner}
+            onChange={(winner) => setGame({ ...game, winner })}
+            invalid={errors?.winner !== undefined}
+            invalidText={errors?.winner}
+          />
+        </div>
         <MapSelect
           maps={maps}
           value={game.map}
           onChange={(map) => setGame({ ...game, map })}
+          invalidText={errors?.map}
         />
-      </Field>
-      <fieldset className="flex flex-col gap-1">
-        <legend className="text-sm font-medium">{t("frags")}</legend>
-        {/* O nome no placeholder é o que diz de quem é cada campo: largura
-            para ele aparecer inteiro no celular. */}
-        <div className="grid max-w-sm grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-          {frags("a")}
-          <span className="text-sm text-muted">{tMatch("vs")}</span>
-          {frags("b")}
-        </div>
-      </fieldset>
-      {mode === "organizer" && (
-        <Field label={t("comment")}>
-          <Input
+        <FormGroup legendText={t("frags")}>
+          <div className={styles.frags}>
+            {frags("a")}
+            {frags("b")}
+          </div>
+        </FormGroup>
+        {mode === "organizer" && (
+          <TextInput
+            labelText={t("comment")}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             maxLength={280}
           />
-        </Field>
-      )}
-      {error && <Alert>{error}</Alert>}
-      <div>
-        <Button type="submit" pending={pending}>
-          {submitLabel}
-        </Button>
-      </div>
-    </form>
+        )}
+        {errors?.form && <FormError>{errors.form}</FormError>}
+        <FormActions
+          submitLabel={submitLabel}
+          pending={pending}
+          onCancel={onCancel}
+        />
+      </Stack>
+    </Form>
   );
 }

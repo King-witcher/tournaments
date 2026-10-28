@@ -1,5 +1,6 @@
 "use client";
 
+import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
@@ -8,6 +9,11 @@ import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 
+/**
+ * Revoga um link (de convite ou de inscrição: a rota é a mesma), depois da
+ * confirmação. Na tabela de convites da comunidade a ação fica no ⋯
+ * (`InviteActions`); este botão serve a quem lista links fora de tabela.
+ */
 export function RevokeInviteButton({
   slug,
   inviteId,
@@ -20,9 +26,8 @@ export function RevokeInviteButton({
   const { run, pending, error } = useApiAction();
 
   return (
-    <div className="flex flex-col items-end">
+    <Stack gap={2}>
       <ConfirmButton
-        variant="link"
         pending={pending}
         question={t("revokeConfirm")}
         onConfirm={() =>
@@ -34,11 +39,10 @@ export function RevokeInviteButton({
             () => router.refresh(),
           )
         }
-        className="text-red-600 dark:text-red-400"
       >
         {t("revoke")}
       </ConfirmButton>
-      {error && <ErrorText size="xs">{error}</ErrorText>}
-    </div>
+      {error && <ErrorText>{error}</ErrorText>}
+    </Stack>
   );
 }

@@ -1,13 +1,34 @@
 {
+  "loading": "Cargando los inscritos…",
   "title": "Inscritos ({count}/{max})",
   "empty": "Todavía no hay inscritos.",
-  "member": "Miembro",
-  "choose": "Elige un miembro…",
-  "add": "Inscribir",
+  "emptyOrganizer": "Todavía no hay inscritos. Inscribe a un miembro de la comunidad o genera un enlace de inscripción en la pestaña Organización.",
+  "columns": {
+    "seed": "Seed",
+    "member": "Miembro",
+    "state": "Estado",
+    "registeredAt": "Inscrito el"
+  },
+  "state": {
+    "registered": "inscrito",
+    "checkedIn": "check-in hecho",
+    "notCheckedIn": "sin check-in",
+    "missedCheckIn": "fuera de la llave: sin check-in",
+    "withdrawn": "abandonó",
+    "left": "salió"
+  },
+  "seed": "#{seed}",
+  "actionsFor": "Acciones de {name}",
+  "add": {
+    "open": "Inscribir a alguien",
+    "title": "Inscribir a un miembro",
+    "hint": "Vale en torneo público o privado. Durante el check-in, quien inscribas entra sin check-in.",
+    "member": "Miembro",
+    "choose": "Elige un miembro…",
+    "submit": "Inscribir"
+  },
   "remove": "Quitar del torneo",
   "removeConfirm": "¿Quitar a {name} del torneo? La inscripción se borra y el cupo queda libre; {name} puede volver a inscribirse mientras las inscripciones estén abiertas.",
-  "left": "salió",
-  "withdrawn": "abandonó",
   "withdrawParticipant": "Marcar abandono",
   "withdrawConfirm": "¿Marcar el abandono de {name}? {name} sigue en la llave, pero cada partida suya, ahora o cuando esté lista, pasa a W.O. para el rival. No se puede deshacer (los resultados todavía se pueden corregir).",
   "registration": {
@@ -18,25 +39,39 @@
     "full": "Se agotaron los cupos.",
     "privateHint": "Torneo privado: solo entra quien un organizador inscriba o quien use un enlace de inscripción."
   },
-  "seed": "#{seed}",
+  "situation": {
+    "title": "Tu situación",
+    "registered": "Inscripción hecha",
+    "check_in_pending": "Falta tu check-in",
+    "checked_in": "Check-in hecho",
+    "missed_check_in": "Fuera de la llave: sin check-in",
+    "playing": "En la llave",
+    "eliminated": "Terminó en {place}",
+    "withdrawn": "Abandonó",
+    "champion": "1.er puesto: ganaste",
+    "rank": "{rank}.º",
+    "range": "{from}.º–{to}.º"
+  },
   "checkIn": {
     "opensAt": "El check-in abre <date></date>. Vuelve desde ese momento para confirmar tu presencia: sin check-in, quedas fuera de la llave.",
     "suspended": "La organización reabrió las inscripciones; el check-in vuelve cuando la abra.",
     "open": "Check-in abierto hasta el inicio: confirma tu presencia para entrar en la llave.",
+    "until": "Hasta <date></date> (faltan <countdown></countdown>).",
     "openNotRegistered": "Check-in abierto. Las inscripciones están cerradas.",
     "done": "Check-in hecho: estás en la llave.",
     "missed": "No hiciste el check-in antes del inicio y quedaste fuera de la llave.",
     "do": "Hacer check-in",
     "undo": "Deshacer check-in",
-    "checkedIn": "check-in hecho",
-    "notCheckedIn": "sin check-in",
     "mark": "Marcar check-in",
     "unmark": "Desmarcar check-in",
-    "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera del cuadro si el torneo empieza así."
+    "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera de la llave si el torneo empieza así."
   },
   "seeding": {
+    "loading": "Cargando el seeding…",
+    "pageTitle": "Seeding",
     "title": "Seeding: {count} de {total} inscritos entran en la llave",
     "hint": "El orden de la llave: el 1 es el mejor seed. Escribe la posición de alguien para llevarlo directo allí, o usa las flechas. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
+    "listLabel": "Orden del seeding",
     "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
     "emptyNoCheckIn": "Nadie inscrito todavía.",
     "noSeed": "sin seed",
@@ -47,6 +82,20 @@
     "save": "Guardar orden",
     "shuffle": "Sortear",
     "shuffleConfirm": "Sortear ahora descarta el orden que cambiaste. ¿Continuar?",
-    "position": "Posición de {name} (1 a {total})"
+    "position": "Posición de {name} (1 a {total})",
+    "closed": "El seeding se revisa en el check-in (o, en un torneo sin check-in, con la inscripción abierta), antes de iniciar.",
+    "backToManage": "Volver a la organización",
+    "edit": "Editar seeding",
+    "summary": {
+      "title": "Seeding",
+      "count": "{count} de {total} inscritos entran en la llave.",
+      "random": "Todavía sin definir: si inicias así, el orden de la llave se sortea.",
+      "partial": "Definido para parte de los inscritos; quien entró después va al final, en el orden de inscripción.",
+      "set": "Definido: la llave sigue este orden al iniciar.",
+      "unavailable": "No se pudo cargar el orden ahora. Recarga la página.",
+      "started": "La llave ya se armó con los seeds; el orden está en la pestaña Inscritos.",
+      "atCheckIn": "El seeding se revisa en el check-in, con quien confirmó su presencia.",
+      "atRegistration": "El seeding se revisa después de publicar, con la inscripción abierta."
+    }
   }
 }

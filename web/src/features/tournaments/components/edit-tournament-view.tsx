@@ -1,59 +1,78 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
-import { Link } from "@/i18n/navigation";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
+import { PageHeader } from "@/shared/ui/page-header";
+import { localizedName } from "../lib/localize";
 import { textsEditable } from "../lib/status";
 import { loadTournament } from "../server";
-import { ErrorBack } from "./error-back";
 import { TournamentForm } from "./tournament-form";
-import { TranslationSection } from "./translation-section";
 
 type Props = { tenant: string; slug: string };
 
-/** Editar torneio e traduções, para organizer e owner. Fica em `<Suspense>`. */
+/**
+ * Editar torneio e traduções, para organizer e owner: o cabeçalho com a
+ * trilha até o torneio e o formulário. Sem permissão ou com o torneio
+ * encerrado, o erro e a volta para o torneio. Fica em `<Suspense>`.
+ */
 export async function EditTournamentView({ tenant, slug }: Props) {
-  const [t, tNav, loaded] = await Promise.all([
-    getTranslations("Tournament"),
+  const [t, tNav, locale, loaded] = await Promise.all([
+    getTranslations("TournamentForm.edit"),
     getTranslations("Nav"),
+    getLocale(),
     loadTournament(tenant, slug),
   ]);
   if (loaded.kind === "login") {
-    return <LoginPrompt message={t("loginRequired")} />;
+    return (
+      <>
+        <PageHeader title={t("title")} />
+        <LoginPrompt message={t("loginRequired")} />
+      </>
+    );
   }
   if (loaded.kind === "error") {
-    return <ErrorBack tenant={tenant} code={loaded.code} />;
+    // A volta é para a comunidade, se ela ainda abre; senão, para o início.
+    const outside =
+      loaded.code.startsWith("tenant.") || loaded.code.startsWith("auth.");
+    return (
+      <>
+        <PageHeader title={t("title")} />
+        <PageError
+          href={outside ? "/" : `/${tenant}`}
+          label={outside ? tNav("backHome") : tNav("backToCommunity")}
+        >
+          {await apiErrorMessage(loaded.code)}
+        </PageError>
+      </>
+    );
   }
+
   const { me, tournament } = loaded;
-  // Sem permissão ou encerrado: o erro e a volta para o torneio.
-  const back = (message: string) => (
-    <PageError href={`/${tenant}/${slug}`} label={tNav("backToTournament")}>
-      {message}
-    </PageError>
-  );
-  if (me.role === "player") {
-    return back(await apiErrorMessage("tenant.forbidden"));
-  }
+  const path = `/${tenant}/${slug}`;
+  const blocked =
+    me.role === "player"
+      ? "tenant.forbidden"
+      : textsEditable(tournament.status)
+        ? undefined
+        : "tournament.finished";
 
   return (
     <>
-      <header className="flex flex-col gap-1">
-        <Link
-          href={`/${tenant}/${slug}`}
-          className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-        >
-          {tournament.name}
-        </Link>
-        <h1 className="text-3xl font-semibold">{t("editTitle")}</h1>
-      </header>
-      {textsEditable(tournament.status) ? (
-        <>
-          <TournamentForm tenant={tenant} tournament={tournament} />
-          <TranslationSection tenant={tenant} tournament={tournament} />
-        </>
+      <PageHeader
+        breadcrumbs={[
+          { href: "/", label: tNav("home") },
+          { href: `/${tenant}`, label: me.name },
+          { href: path, label: localizedName(tournament, locale) },
+        ]}
+        title={t("title")}
+      />
+      {blocked ? (
+        <PageError href={path} label={tNav("backToTournament")}>
+          {await apiErrorMessage(blocked)}
+        </PageError>
       ) : (
-        back(await apiErrorMessage("tournament.finished"))
+        <TournamentForm tenant={tenant} tournament={tournament} />
       )}
     </>
   );

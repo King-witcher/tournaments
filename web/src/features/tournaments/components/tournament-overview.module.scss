@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Descrição (texto longo, coluna de leitura) e formato (pares curtos) lado a
+// lado a partir do lg; abaixo, um depois do outro, com o respiro dos blocos.
+.columns {
+  display: grid;
+  gap: spacing.$spacing-07;
+
+  @include breakpoint.breakpoint(lg) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 3fr);
+  }
+}
+
+// Sem descrição, o formato sozinho não se estica pela largura toda.
+.single {
+  @include breakpoint.breakpoint(lg) {
+    max-inline-size: 50%;
+  }
+}

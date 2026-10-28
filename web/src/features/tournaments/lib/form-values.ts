@@ -12,7 +12,8 @@ export type TournamentValues = {
   description: string;
   rules: string;
   visibility: Schemas["Visibility"];
-  maxParticipants: number;
+  /** `null` com o campo vazio (o `required` do campo não deixa enviar assim). */
+  maxParticipants: number | null;
   bracket: Schemas["Bracket"];
   grandFinalReset: boolean;
   bestOf: number;
@@ -25,6 +26,20 @@ export type TournamentValues = {
   checkInMinutes: number | null;
   /** Janela de contestação de resultado, em minutos. */
   contestMinutes: number;
+};
+
+/** Uma tradução no formulário de edição: campos vazios quando ainda não existe. */
+export type TranslationValues = {
+  name: string;
+  description: string;
+  rules: string;
+};
+
+/** A tradução que ainda não existe. */
+export const EMPTY_TRANSLATION: TranslationValues = {
+  name: "",
+  description: "",
+  rules: "",
 };
 
 /** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min, 10 min para contestar. */
@@ -75,6 +90,33 @@ export function valuesFrom(
   };
 }
 
+/** A tradução de `locale` que o torneio já tem, ou campos vazios. */
+export function translationValuesFrom(
+  tournament: Schemas["Tournament"],
+  locale: Schemas["Locale"],
+): TranslationValues {
+  const saved = tournament.translations.find((x) => x.locale === locale);
+  return {
+    name: saved?.name ?? "",
+    description: saved?.description ?? "",
+    rules: saved?.rules ?? "",
+  };
+}
+
+/** A tradução difere da que está salva (ou da falta dela): é preciso gravá-la. */
+export function translationChanged(
+  tournament: Schemas["Tournament"],
+  locale: Schemas["Locale"],
+  values: TranslationValues,
+) {
+  const saved = translationValuesFrom(tournament, locale);
+  return (
+    values.name !== saved.name ||
+    values.description !== saved.description ||
+    values.rules !== saved.rules
+  );
+}
+
 /** Corpo da criação (rascunho de duelo). */
 export function createBody(values: TournamentValues) {
   return {
@@ -120,7 +162,9 @@ function scheduleBody(values: TournamentValues) {
 /** Vagas, regra de campeões e fases no formato da API. */
 function setupBody(values: TournamentValues) {
   return {
-    max_participants: values.maxParticipants,
+    // Vazio não passa do `required` do campo; se passar, a API recusa e o
+    // erro aparece no campo.
+    max_participants: values.maxParticipants ?? 0,
     champion_rules: {
       bans_per_game: values.bansPerGame,
       no_repeat:

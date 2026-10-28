@@ -37,3 +37,25 @@ export const loadTournament = cache(
     return { kind: "ok", me: me.data, tournament: found.data };
   },
 );
+
+/**
+ * A entrada de quem vê em "Seus torneios" para este torneio: a situação (na
+ * chave, eliminado, campeão…), a colocação e a próxima partida. `undefined`
+ * se ele não está inscrito, se o torneio não aparece ali (rascunho) ou se a
+ * API falhar. Lê a sessão: quem usa fica em `<Suspense>`.
+ */
+export const getMyTournamentEntry = cache(
+  async (
+    tenant: string,
+    slug: string,
+  ): Promise<Schemas["MyTournament"] | undefined> => {
+    const api = await serverApi();
+    const entries = await api
+      .GET("/me/tournaments")
+      .then(({ data }) => data ?? [])
+      .catch(() => []);
+    return entries.find(
+      (e) => e.tenant_slug === tenant && e.tournament.slug === slug,
+    );
+  },
+);

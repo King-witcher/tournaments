@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Coluna de leitura, mesmo com o bloco na largura toda.
+.hint {
+  @include type.type-style("body-01");
+
+  max-inline-size: spacing.$spacing-13 * 4;
+  color: theme.$text-secondary;
+}

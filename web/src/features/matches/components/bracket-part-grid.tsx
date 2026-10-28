@@ -1,11 +1,13 @@
 import type { components } from "@/shared/api/schema";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import type { Round } from "../lib/bracket-layout";
+import styles from "./bracket-part-grid.module.scss";
 import { MatchCard } from "./match-card";
 
 type Schemas = components["schemas"];
 
 type Props = {
+  tenant: string;
   /** Título da parte (só na dupla). */
   title?: string;
   part: Schemas["BracketPart"];
@@ -18,9 +20,11 @@ type Props = {
 
 /**
  * Uma parte da chave: uma coluna por rodada, com as partidas distribuídas na
- * altura para lembrar o chaveamento. Rola na horizontal em tela pequena.
+ * altura para lembrar o chaveamento. A rolagem para o lado é da chave
+ * inteira (`BracketView`).
  */
 export function BracketPartGrid({
+  tenant,
   title,
   part,
   rounds,
@@ -32,30 +36,29 @@ export function BracketPartGrid({
   const lastRound = rounds[rounds.length - 1]?.round ?? 1;
 
   return (
-    <div className="flex flex-col gap-2">
-      {title && <h3 className="font-semibold">{title}</h3>}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex w-max gap-4">
-          {rounds.map(({ round, matches }) => (
-            <div key={round} className="flex w-56 flex-col gap-2">
-              <h4 className="text-xs font-medium uppercase tracking-wide text-muted">
-                {roundTitle(part, round, lastRound)}
-              </h4>
-              <ol className="flex flex-1 flex-col justify-around gap-3">
-                {matches.map((m) => (
-                  <li key={m.key}>
-                    <MatchCard
-                      match={m}
-                      single={single}
-                      entrants={entrants}
-                      href={`${basePath}/${m.key}`}
-                    />
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ))}
-        </div>
+    <div className={styles.part}>
+      {title && <h3 className={styles.title}>{title}</h3>}
+      <div className={styles.rounds}>
+        {rounds.map(({ round, matches }) => (
+          <div key={round} className={styles.round}>
+            <h4 className={styles.roundTitle}>
+              {roundTitle(part, round, lastRound)}
+            </h4>
+            <ol className={styles.matches}>
+              {matches.map((m) => (
+                <li key={m.key}>
+                  <MatchCard
+                    tenant={tenant}
+                    match={m}
+                    single={single}
+                    entrants={entrants}
+                    href={`${basePath}/${m.key}`}
+                  />
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
       </div>
     </div>
   );

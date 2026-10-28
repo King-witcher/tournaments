@@ -1,21 +1,23 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
+import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { TournamentRow } from "./tournament-row";
+import { DataTable } from "@/shared/ui/data-table";
+import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { StatusTag } from "@/shared/ui/status-tag";
+import { checkInPending } from "../lib/check-in";
+import { localizedName } from "../lib/localize";
+import styles from "./tournament-list.module.scss";
 
-type Props = {
-  slug: string;
-  /** Organizer e owner criam torneios e veem os rascunhos. */
-  viewerRole: components["schemas"]["Role"];
-};
+type Schemas = components["schemas"];
 
 /**
  * Do que está acontecendo para o que já acabou; dentro de cada status, a
  * ordem da API (mais novo primeiro).
  */
-const ORDER: components["schemas"]["TournamentStatus"][] = [
+const ORDER: Schemas["TournamentStatus"][] = [
   "in_progress",
   "check_in",
   "registration",
@@ -23,45 +25,100 @@ const ORDER: components["schemas"]["TournamentStatus"][] = [
   "finished",
 ];
 
-/** Torneios do tenant. Fica em `<Suspense>`. */
-export async function TournamentList({ slug, viewerRole }: Props) {
+/**
+ * A aba Torneios da comunidade: a tabela (nome, formato, estado, início,
+ * inscritos), do que está acontecendo para o que acabou. O jogador só recebe
+ * os publicados (a API filtra); a organização vê os rascunhos e, sem
+ * nenhum, o "Criar torneio". Fica em `<Suspense>`.
+ */
+export async function TournamentList({ slug }: { slug: string }) {
   const api = await serverApi();
-  const [t, tournaments] = await Promise.all([
-    getTranslations("Tournaments"),
-    api
-      .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
-      .then(({ data }) =>
-        (data ?? []).toSorted(
-          (a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status),
+  const [loaded, t, tStatus, tVisibility, locale, tournaments] =
+    await Promise.all([
+      getTenant(slug),
+      getTranslations("Tournaments"),
+      getTranslations("TournamentStatus"),
+      getTranslations("Visibility"),
+      getLocale(),
+      api
+        .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
+        .then(({ data }) =>
+          (data ?? []).toSorted(
+            (a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status),
+          ),
         ),
-      ),
-  ]);
+    ]);
+  const organizer = loaded.kind === "ok" && loaded.tenant.role !== "player";
 
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">{t("title")}</h2>
-        {viewerRole !== "player" && (
-          <ButtonLink href={`/${slug}/new`} kind="tertiary" size="sm">
-            {t("create")}
-          </ButtonLink>
-        )}
-      </div>
-      {tournaments.length === 0 ? (
-        <p className="text-sm text-muted">
-          {viewerRole === "player" ? t("emptyPlayer") : t("empty")}
-        </p>
-      ) : (
-        <ul className="divide-y divide-black/10 dark:divide-white/10">
-          {tournaments.map((tournament) => (
-            <TournamentRow
-              key={tournament.slug}
-              tenant={slug}
-              tournament={tournament}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
+    <DataTable
+      label={t("label")}
+      columns={[
+        { key: "name", header: t("columns.name") },
+        { key: "format", header: t("columns.format"), secondary: true },
+        { key: "status", header: t("columns.status") },
+        { key: "starts", header: t("columns.starts"), secondary: true },
+        {
+          key: "participants",
+          header: t("columns.participants"),
+          secondary: true,
+        },
+      ]}
+      rows={tournaments.map((tournament) => {
+        const name = localizedName(tournament, locale);
+        return {
+          id: tournament.slug,
+          href: `/${slug}/${tournament.slug}`,
+          search: `${name} ${tournament.name}`,
+          cells: {
+            name,
+            format: t(`mode.${tournament.mode}`),
+            status: (
+              <span className={styles.tags}>
+                <StatusTag status={tournament.status}>
+                  {tStatus(tournament.status)}
+                </StatusTag>
+                {checkInPending(tournament) ? (
+                  <StatusTag status="check_in">{t("checkInPending")}</StatusTag>
+                ) : (
+                  tournament.registered && (
+                    <StatusTag status="registration">
+                      {t("registered")}
+                    </StatusTag>
+                  )
+                )}
+                {tournament.visibility === "private" && (
+                  <StatusTag status="neutral">
+                    {tVisibility("private")}
+                  </StatusTag>
+                )}
+              </span>
+            ),
+            starts: tournament.starts_at ? (
+              <LocalDateTime value={tournament.starts_at} />
+            ) : (
+              t("noDate")
+            ),
+            participants: t("participants", {
+              count: tournament.participants,
+              max: tournament.max_participants,
+            }),
+          },
+        };
+      })}
+      empty={
+        organizer
+          ? {
+              text: t("empty"),
+              // O "Novo torneio" primário já está no cabeçalho.
+              action: (
+                <ButtonLink href={`/${slug}/new`} kind="tertiary">
+                  {t("create")}
+                </ButtonLink>
+              ),
+            }
+          : { text: t("emptyPlayer") }
+      }
+    />
   );
 }

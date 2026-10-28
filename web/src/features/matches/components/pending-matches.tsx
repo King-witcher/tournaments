@@ -1,8 +1,11 @@
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
+import { Link } from "@/shared/ui/link";
+import { Section } from "@/shared/ui/section";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { ACTIONABLE } from "../lib/status";
+import styles from "./pending-matches.module.scss";
 
 type Schemas = components["schemas"];
 
@@ -14,12 +17,11 @@ type Props = {
   exclude?: string;
 };
 
-const ACTIONABLE: Schemas["ViewerTask"][] = ["report", "respond", "resolve"];
-
 /**
  * As partidas que esperam uma ação de quem vê (enviar, responder ou, para a
- * organização, resolver), em destaque antes da chave: numa chave grande ou no
- * celular, o cartão da partida pode estar fora da tela. Some sem pendência.
+ * organização, resolver), cada uma como link com os lados e o que falta: numa
+ * chave grande ou no celular, o cartão da partida pode estar fora da tela.
+ * Some sem pendência.
  */
 export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const t = useTranslations("Bracket");
@@ -33,15 +35,11 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const name = (side: Schemas["MatchSide"]) =>
     (side.user_id != null && names.get(side.user_id)) || t("tbd");
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-blue-500/50 p-3">
-      <h2 className="font-semibold">{t("pending.title")}</h2>
-      <ul className="flex flex-col gap-1">
+    <Section title={t("pending.title")}>
+      <ul className={styles.list}>
         {pending.map((m) => (
           <li key={m.key}>
-            <Link
-              href={`${basePath}/${m.key}`}
-              className="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4 sm:min-h-0"
-            >
+            <Link href={`${basePath}/${m.key}`}>
               {t("pending.item", {
                 match: code(m.key),
                 a: name(m.a),
@@ -52,6 +50,6 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
           </li>
         ))}
       </ul>
-    </section>
+    </Section>
   );
 }

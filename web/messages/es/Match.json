@@ -1,10 +1,17 @@
 {
   "loading": "Cargando la partida…",
   "loginRequired": "Inicia sesión para ver esta partida.",
-  "back": "Volver al torneo",
+  "title": "{code}: {a} × {b}",
   "label": "{part} · {round} · partida {index}",
   "bestOf": "Al mejor de {count}",
   "seed": "seed {seed}",
+  "stateTag": {
+    "pending": "Esperando los lados",
+    "ready": "Por jugar",
+    "bye": "Sin rival",
+    "completed": "Decidida",
+    "not_needed": "No fue necesaria"
+  },
   "state": {
     "pending": "Los lados todavía dependen de otras partidas.",
     "ready": "Por jugar.",
@@ -22,7 +29,15 @@
   "games": {
     "title": "Mapas",
     "hint": "Cada mapa se envía y se confirma por separado. El rival tiene {window} para confirmar o impugnar; sin respuesta, se confirma solo.",
-    "number": "Mapa {number}",
+    "columns": {
+      "number": "N.º",
+      "map": "Mapa",
+      "result": "Resultado",
+      "frags": "Frags",
+      "status": "Estado"
+    },
+    "numberCell": "<prefix>Mapa </prefix>{number}",
+    "fragsCell": "<prefix>Frags: </prefix>{a} × {b}",
     "noMap": "mapa sin informar",
     "won": "Ganó {name}",
     "claim": "{reporter} envió: ganó {winner}",
@@ -36,7 +51,6 @@
       "withdrawal": "Confirmado.",
       "maps": "Confirmado."
     },
-    "empty": "Todavía no se envió ningún mapa.",
     "badge": {
       "pending": "Pendiente",
       "contested": "Impugnado",
@@ -93,6 +107,11 @@
   "labelSingle": "{round} · partida {index}",
   "labelPart": "{part} · {round}",
   "vs": "×",
+  "score": {
+    "label": "Resultado de la serie",
+    "sr": "{a}: {aScore}; {b}: {bScore}",
+    "deadline": "El mapa {number} se confirma solo a las <at></at> (faltan <time></time>)."
+  },
   "series": {
     "needed": "Al mejor de {bestOf}: gana quien gane {needed, plural, one {# mapa} other {# mapas}}.",
     "open": "Resultado de los mapas confirmados.",
@@ -107,6 +126,7 @@
     "others": "Otros mapas",
     "frags": "Frags (opcional)",
     "fragsOf": "Frags de {name}",
+    "fragsRange": "De 0 a {max}.",
     "submit": "Enviar mapa {number}",
     "enter": "Cargar mapa {number}",
     "save": "Guardar mapa {number}",
@@ -123,7 +143,6 @@
     "replaySubmit": "Anular el mapa {number}",
     "note": "Nota en el historial (opcional)",
     "correct": "Corregir",
-    "correctHint": "La llave se rehace. Si la serie cambia y eso contradice una partida decidida después de esta, la corrección se rechaza; los mapas que queden después de la decisión se anulan.",
-    "cancel": "Cancelar"
+    "correctHint": "La llave se rehace. Si la serie cambia y eso contradice una partida decidida después de esta, la corrección se rechaza; los mapas que queden después de la decisión se anulan."
   }
 }

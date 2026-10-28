@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/spacing";
+
+// O painel da aba vem sem padding: o conteúdo ganha o mesmo respiro que há
+// entre os blocos da página, para não colar na linha das abas.
+.content {
+  padding-block-start: spacing.$spacing-07;
+}

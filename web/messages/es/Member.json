@@ -1,0 +1,31 @@
+{
+  "loading": "Cargando el miembro…",
+  "loginRequired": "Inicia sesión para ver los miembros de esta comunidad.",
+  "members": "Miembros",
+  "backToMembers": "Ver los miembros",
+  "since": "Miembro desde <date></date>",
+  "editNickname": "Editar apodo",
+  "tournaments": {
+    "title": "Torneos en esta comunidad",
+    "tournament": "Torneo",
+    "status": "Estado",
+    "situation": "Situación",
+    "placement": "Posición",
+    "noPlacement": "—",
+    "rank": "{rank}.º",
+    "range": "{from}.º–{to}.º",
+    "situations": {
+      "registered": "Inscripción hecha",
+      "check_in_pending": "Falta el check-in",
+      "checked_in": "Check-in hecho",
+      "missed_check_in": "Fuera de la llave: sin check-in",
+      "playing": "En la llave",
+      "eliminated": "Terminó en {place}",
+      "withdrawn": "Abandonó",
+      "champion": "1.er puesto"
+    },
+    "empty": "{name} todavía no jugó aquí: no hay inscripción en ningún torneo de esta comunidad que tú veas.",
+    "emptyYou": "Todavía no jugaste aquí. Los torneos con inscripción abierta están en la pestaña Torneos.",
+    "browse": "Ver los torneos"
+  }
+}

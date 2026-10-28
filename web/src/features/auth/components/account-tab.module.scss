@@ -1,0 +1,6 @@
+@use "@carbon/react/scss/spacing";
+
+// Sem isto a primeira seção encostaria na linha das abas.
+.tab {
+  padding-block-start: spacing.$spacing-06;
+}

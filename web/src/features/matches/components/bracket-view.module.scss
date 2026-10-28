@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/spacing";
+
+// A chave rola para o lado dentro da própria caixa, sem empurrar a página
+// (o resto do site não tem rolagem horizontal). O espaço embaixo é o da
+// barra de rolagem, para ela não cobrir o último cartão.
+.scroller {
+  overflow-x: auto;
+  padding-block-end: spacing.$spacing-05;
+}
+
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-07;
+  inline-size: max-content;
+}

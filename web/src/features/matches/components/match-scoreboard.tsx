@@ -2,18 +2,27 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { cn } from "@/shared/lib/cn";
+import { Countdown } from "@/shared/ui/countdown";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { LocalTime } from "@/shared/ui/local-time";
+import { SCORE_ID } from "../lib/match-target";
+import styles from "./match-scoreboard.module.scss";
 import { MatchScoreboardSide } from "./match-scoreboard-side";
 
-type Props = { detail: components["schemas"]["MatchDetail"] };
+type Props = {
+  tenant: string;
+  detail: components["schemas"]["MatchDetail"];
+};
 
 /**
- * O placar da série no topo: os dois lados com os mapas de cada um (os
- * confirmados, enquanto a série não fecha) e, embaixo, o estado: quantos
- * mapas vencem, quantos esperam confirmação ou estão contestados, ou como a
- * série foi decidida.
+ * O placar da série logo abaixo do cabeçalho: os dois lados com avatar e os
+ * mapas de cada um em tipo grande (os confirmados, enquanto a série não
+ * fecha); embaixo, o estado (quantos mapas vencem, quantos esperam
+ * confirmação ou estão contestados, ou como a série foi decidida) e o prazo
+ * do próximo mapa que confirma sozinho.
  */
-export function MatchScoreboard({ detail }: Props) {
+export function MatchScoreboard({ tenant, detail }: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
   const { summary: s, a, b } = detail;
@@ -27,7 +36,13 @@ export function MatchScoreboard({ detail }: Props) {
     if (playing) return String(side === "a" ? s.a_maps : s.b_maps);
     return null;
   };
+  const scoreA = score("a");
+  const scoreB = score("b");
   const needed = Math.floor(s.best_of / 2) + 1;
+  // O mapa pendente que confirma primeiro (a linha dele tem o mesmo prazo).
+  const due = detail.games
+    .filter((g) => g.status === "pending" && g.confirm_by)
+    .sort((x, y) => (x.confirm_by ?? "").localeCompare(y.confirm_by ?? ""))[0];
 
   const lines: ReactNode[] = [];
   if (decided && r) {
@@ -48,37 +63,75 @@ export function MatchScoreboard({ detail }: Props) {
   } else {
     lines.push(t(`state.${s.state}`));
   }
+  if (due?.confirm_by) {
+    const until = due.confirm_by;
+    lines.push(
+      t.rich("score.deadline", {
+        number: due.number,
+        at: () => <LocalTime value={until} />,
+        time: () => <Countdown until={until} />,
+      }),
+    );
+  }
 
+  const name = (who: "a" | "b") => detail[who]?.nickname ?? "";
   return (
-    <section className="flex flex-col gap-2">
-      {/* minmax(0, 1fr): com 1fr, um apelido longo não encolhe a coluna e
-          empurra a página para o lado no celular. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-md border border-black/10 p-3 sm:gap-3 sm:p-4 dark:border-white/15">
+    // tabIndex -1: recebe o foco depois do W.O., que fecha o bloco da
+    // organização com o botão usado.
+    <section
+      id={SCORE_ID}
+      tabIndex={-1}
+      aria-label={t("score.label")}
+      className={styles.board}
+    >
+      <div className={styles.sides}>
         <MatchScoreboardSide
+          tenant={tenant}
           entrant={a}
           side={s.a}
           single={single}
-          score={score("a")}
           winner={decided && r?.winner === "a"}
-          tentative={!decided}
         />
-        <span className="text-sm text-muted">{t("vs")}</span>
+        <p className={cn(styles.score, !decided && styles.tentative)}>
+          {scoreA != null && scoreB != null && (
+            <span className={styles.srOnly}>
+              {t("score.sr", {
+                a: name("a"),
+                b: name("b"),
+                aScore: scoreA,
+                bScore: scoreB,
+              })}
+            </span>
+          )}
+          <span aria-hidden className={styles.digits}>
+            <span
+              className={cn(decided && r?.winner === "a" && styles.winnerScore)}
+            >
+              {scoreA}
+            </span>
+            <span className={styles.vs}>{t("vs")}</span>
+            <span
+              className={cn(decided && r?.winner === "b" && styles.winnerScore)}
+            >
+              {scoreB}
+            </span>
+          </span>
+        </p>
         <MatchScoreboardSide
+          tenant={tenant}
           entrant={b}
           side={s.b}
           single={single}
-          score={score("b")}
           winner={decided && r?.winner === "b"}
-          tentative={!decided}
           alignEnd
         />
       </div>
-      {lines.map((line, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
-        <p key={i} className="text-sm text-muted">
-          {line}
-        </p>
-      ))}
+      <div className={styles.lines}>
+        {lines.map((line, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
+          <p key={i}>{line}</p>
+        ))}
+      </div>
     </section>
   );
 }

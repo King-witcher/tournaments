@@ -1,11 +1,14 @@
-import { Page } from "@/shared/ui/page";
-import { PageSkeleton } from "@/shared/ui/skeleton";
+import { getTranslations } from "next-intl/server";
 
-/** Enquanto a página do segmento chega: o lugar do título e do conteúdo. */
-export default function Loading() {
+import { TournamentFormSkeleton } from "@/features/tournaments/components/tournament-form-skeleton";
+import { Page } from "@/shared/ui/page";
+
+/** Editar torneio carregando, na forma da página: a trilha, o título e o formulário. */
+export default async function Loading() {
+  const t = await getTranslations("TournamentForm.edit");
   return (
-    <Page spacing="loose">
-      <PageSkeleton />
+    <Page>
+      <TournamentFormSkeleton label={t("loading")} edit />
     </Page>
   );
 }

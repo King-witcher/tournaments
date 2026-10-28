@@ -1,0 +1,10 @@
+@use "@carbon/react/scss/spacing";
+
+// A altura de uma etiqueta pequena mesmo sem etiqueta: os cartões de uma
+// rodada ficam do mesmo tamanho.
+.status {
+  display: flex;
+  align-items: center;
+  min-block-size: spacing.$spacing-07;
+  padding-inline: spacing.$spacing-03;
+}

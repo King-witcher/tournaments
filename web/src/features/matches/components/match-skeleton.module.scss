@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+
+// O placar: os dois lados com avatar e o placar grande, e as linhas do
+// estado embaixo.
+.board {
+  @include skeleton;
+
+  display: block;
+  max-inline-size: spacing.$spacing-13 * 4;
+  block-size: spacing.$spacing-13;
+}
+
+// Os blocos fechados do fim (organização, histórico).
+.closed {
+  @include skeleton;
+
+  display: block;
+  block-size: spacing.$spacing-09;
+}

@@ -1,0 +1,43 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+@use "./games-grid";
+
+// O cabeçalho das colunas, como o de uma StructuredList; no celular as
+// linhas viram blocos e ele sai.
+.header {
+  @include type.type-style("heading-compact-01");
+
+  display: none;
+  padding-block: spacing.$spacing-03;
+  border-block-end: 1px solid theme.$border-subtle-01;
+  color: theme.$text-primary;
+
+  @include games-grid.columns;
+  @include games-grid.cells;
+
+  @include breakpoint.breakpoint(md) {
+    display: grid;
+  }
+}
+
+.num {
+  grid-area: num;
+}
+
+.map {
+  grid-area: map;
+}
+
+.result {
+  grid-area: result;
+}
+
+.frags {
+  grid-area: frags;
+}
+
+.status {
+  grid-area: status;
+}

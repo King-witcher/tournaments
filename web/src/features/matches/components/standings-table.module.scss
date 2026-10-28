@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing";
+
+.player {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+// Apelido longo quebra em vez de empurrar a tabela para o lado no celular.
+.name {
+  overflow-wrap: anywhere;
+}
+
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-03;
+}

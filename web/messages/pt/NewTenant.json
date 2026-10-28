@@ -1,9 +1,11 @@
 {
   "title": "Criar comunidade",
+  "loading": "Carregando o formulário…",
   "loginRequired": "Entre para criar uma comunidade.",
   "name": "Nome",
   "slug": "Endereço",
-  "slugHint": "Letras minúsculas, números e hífen, de 3 a 32. Não dá para mudar depois.",
+  "slugHint": "Letras minúsculas, números e hífen, de 3 a 32. Não dá para mudar depois. O link fica {address}",
+  "slugPlaceholder": "seu-endereco",
   "limit": "Cada pessoa pode ser dona de até 3 comunidades.",
   "submit": "Criar comunidade"
 }

@@ -3,8 +3,21 @@
   "loginRequired": "Entre para ver este torneio.",
   "draftHint": "Rascunho: só organizadores veem. Publique para abrir as inscrições.",
   "edit": "Editar",
-  "organizerTitle": "Organização",
-  "editTitle": "Editar torneio",
+  "sections": "Seções do torneio",
+  "tabs": {
+    "overview": "Visão geral",
+    "bracket": "Chave",
+    "participants": "Inscritos",
+    "rules": "Regras",
+    "manage": "Organização"
+  },
+  "meta": {
+    "bestOf": "Melhor de {bestOf}",
+    "participants": "{count}/{max} inscritos"
+  },
+  "progress": "Ciclo do torneio",
+  "description": "Descrição",
+  "noRules": "Este torneio não tem regras escritas. Na dúvida, pergunte à organização.",
   "publish": "Publicar e abrir inscrições",
   "publishToCheckIn": "Publicar e abrir o check-in",
   "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
@@ -12,7 +25,6 @@
   "publishConfirmCheckIn": "Publicar o torneio direto no check-in, sem inscrições? A comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
-  "rules": "Regras",
   "setup": {
     "title": "Formato",
     "labels": {
@@ -43,25 +55,23 @@
     "noCheckIn": "sem check-in: todos os inscritos entram na chave",
     "contest": "{window} para o adversário confirmar ou contestar"
   },
-  "translation": {
-    "title": "Tradução: {language}",
-    "hint": "Opcional. Descrição ou regras em branco mostram as do idioma original.",
-    "save": "Salvar tradução",
-    "saved": "Tradução salva.",
-    "remove": "Remover tradução",
-    "removeConfirm": "Remover esta tradução? O texto traduzido é apagado e quem lê neste idioma passa a ver o original."
-  },
   "invites": {
     "title": "Links de inscrição",
     "description": "Quem entra pelo link vira jogador da comunidade e já fica inscrito. O link serve para várias pessoas e vale enquanto a inscrição estiver aberta.",
     "full": "As vagas acabaram: os links não inscrevem mais ninguém até abrir vaga (alguém sair ou as vagas aumentarem).",
     "create": "Gerar link de inscrição",
-    "empty": "Nenhum link de inscrição.",
-    "item": "Criado por {name} {created}",
-    "uses": "{count, plural, =0 {ninguém se inscreveu ainda} one {# inscrição} other {# inscrições}}"
+    "createdTitle": "Link de inscrição gerado",
+    "empty": "Nenhum link de inscrição. Gere um e mande para quem você quer inscrever, inclusive quem ainda não é da comunidade.",
+    "columns": {
+      "createdBy": "Criado por",
+      "createdAt": "Criado em",
+      "uses": "Inscrições"
+    },
+    "revoke": "Revogar",
+    "revokeConfirm": "Revogar este link de inscrição? Quem abrir o link depois não entra mais por ele; quem já se inscreveu continua inscrito. Dá para gerar outro depois."
   },
   "startsAt": "Começa <date></date>",
   "startedAt": "Início marcado para <date></date>",
-  "noStartDate": "Sem data de início.",
+  "noStartDate": "Sem data de início",
   "publishNeedsDate": "Defina a data de início (em Editar) para publicar."
 }

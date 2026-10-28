@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.empty {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}
+
+// Uma linha do tempo: a borda à esquerda liga os eventos, em ordem.
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+  padding-inline-start: spacing.$spacing-05;
+  border-inline-start: 1px solid theme.$border-subtle-01;
+}

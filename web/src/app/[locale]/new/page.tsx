@@ -3,15 +3,23 @@ import { Suspense } from "react";
 
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { CreateTenantForm } from "@/features/tenants/components/create-tenant-form";
+import { NewTenantFormSkeleton } from "@/features/tenants/components/new-tenant-form-skeleton";
 import { Page } from "@/shared/ui/page";
-import { LoadingSection } from "@/shared/ui/skeleton";
+import { PageHeader } from "@/shared/ui/page-header";
 
 export default async function NewTenantPage() {
-  const t = await getTranslations("NewTenant");
+  const [t, tNav] = await Promise.all([
+    getTranslations("NewTenant"),
+    getTranslations("Nav"),
+  ]);
   return (
     <Page>
-      <h1 className="text-3xl font-semibold">{t("title")}</h1>
-      <Suspense fallback={<LoadingSection rows={2} />}>
+      <PageHeader
+        breadcrumbs={[{ href: "/", label: tNav("home") }]}
+        title={t("title")}
+        meta={t("limit")}
+      />
+      <Suspense fallback={<NewTenantFormSkeleton />}>
         <RequireLogin message={t("loginRequired")}>
           <CreateTenantForm />
         </RequireLogin>

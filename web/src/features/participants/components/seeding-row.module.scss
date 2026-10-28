@@ -1,0 +1,35 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Posição, avatar e apelido, a marca "sem seed" e as setas numa linha; no
+// celular, o que não cabe desce sem rolagem lateral.
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03 spacing.$spacing-04;
+  padding-block: spacing.$spacing-03;
+  border-block-end: 1px solid theme.$border-subtle-01;
+}
+
+// Cabe um número de até quatro dígitos sem o campo ocupar a linha.
+.position {
+  flex-shrink: 0;
+  inline-size: spacing.$spacing-12;
+}
+
+.name {
+  @include type.type-style("body-compact-01");
+
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.moves {
+  display: inline-flex;
+}

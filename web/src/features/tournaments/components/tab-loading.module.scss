@@ -1,0 +1,6 @@
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// O texto existe para o leitor de tela; quem vê tem os esqueletos.
+.label {
+  @include visually-hidden;
+}

@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// Avatar e apelido juntos, alinhados ao centro; o apelido quebra se for longo.
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  overflow-wrap: anywhere;
+}

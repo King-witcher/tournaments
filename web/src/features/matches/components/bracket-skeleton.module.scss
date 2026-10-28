@@ -1,0 +1,46 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+.title {
+  @include skeleton;
+
+  display: block;
+  inline-size: 30%;
+  block-size: spacing.$spacing-07;
+}
+
+// As rodadas com a largura das de verdade; no celular, o que não cabe some
+// (a chave de verdade rola).
+.rounds {
+  display: flex;
+  gap: spacing.$spacing-06;
+  overflow: hidden;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  justify-content: space-around;
+  gap: spacing.$spacing-05;
+  inline-size: spacing.$spacing-13 + spacing.$spacing-10;
+}
+
+// A altura de um cartão: cabeçalho, dois lados e o rodapé.
+.card {
+  @include skeleton;
+
+  display: block;
+  block-size: spacing.$spacing-12 + spacing.$spacing-07;
+}

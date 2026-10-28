@@ -1,0 +1,51 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "./games-grid";
+
+// O número na coluna dele e, ao lado (no celular, embaixo, na largura
+// toda), o formulário ou o aviso de que falta o envio.
+.row {
+  @include type.type-style("body-compact-01");
+
+  display: grid;
+  align-items: baseline;
+  padding-block: spacing.$spacing-05;
+  border-block-end: 1px solid theme.$border-subtle-01;
+  grid-template-areas:
+    "num num num"
+    "body body body";
+
+  @include games-grid.columns;
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-areas: "num body body body body";
+  }
+}
+
+.num {
+  @include type.font-weight("semibold");
+
+  grid-area: num;
+  font-variant-numeric: tabular-nums;
+}
+
+.numPrefix {
+  @include breakpoint.breakpoint(md) {
+    @include visually-hidden;
+  }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+  grid-area: body;
+  min-inline-size: 0;
+}
+
+.awaiting {
+  color: theme.$text-secondary;
+}

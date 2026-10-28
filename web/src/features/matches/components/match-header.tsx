@@ -1,8 +1,10 @@
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
+import { PageHeader } from "@/shared/ui/page-header";
+import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { MATCH_STATE_STATUS, TASK_STATUS } from "../lib/status";
 
 type Props = {
   tenant: string;
@@ -14,8 +16,9 @@ type Props = {
 };
 
 /**
- * Comunidade e torneio (links de volta), parte, rodada e número da partida,
- * o código curto (o mesmo do cartão na chave) e melhor de N.
+ * O topo da partida: a trilha até a chave, o código curto (o mesmo do
+ * cartão na chave) com os dois lados, o estado e o que ela espera de quem
+ * vê, e a parte, a rodada e o melhor de N.
  */
 export function MatchHeader({
   tenant,
@@ -26,9 +29,10 @@ export function MatchHeader({
 }: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
+  const tNav = useTranslations("Nav");
   const s = detail.summary;
   const single = detail.format.bracket === "single";
-  const { code, roundTitle } = useMatchLabels(single);
+  const { code, roundTitle, placeholder } = useMatchLabels(single);
   const round = roundTitle(s.part, s.round, detail.part_rounds);
   // A final, a grande final e o reset têm uma partida só: basta o nome.
   const alone = s.part === "grand_final" || s.round === detail.part_rounds;
@@ -43,29 +47,30 @@ export function MatchHeader({
           round,
           index: s.index,
         });
+  const side = (who: "a" | "b") => detail[who]?.nickname ?? placeholder(s[who]);
 
   return (
-    <header className="flex flex-col gap-1">
-      {/* Links com 44px de altura no celular: é por eles que se volta ao torneio. */}
-      <nav className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
-        <Link
-          href={`/${tenant}`}
-          className="inline-flex min-h-11 items-center underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-        >
-          {tenantName}
-        </Link>
-        <span aria-hidden>›</span>
-        <Link
-          href={`/${tenant}/${slug}`}
-          className="inline-flex min-h-11 items-center underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-        >
-          {tournamentName}
-        </Link>
-      </nav>
-      <h1 className="text-2xl font-semibold">{label}</h1>
-      <p className="text-sm text-muted">
-        {code(s.key)} · {t("bestOf", { count: s.best_of })}
-      </p>
-    </header>
+    <PageHeader
+      breadcrumbs={[
+        { href: "/", label: tNav("home") },
+        { href: `/${tenant}`, label: tenantName },
+        { href: `/${tenant}/${slug}`, label: tournamentName },
+        { href: `/${tenant}/${slug}/bracket`, label: tBracket("title") },
+      ]}
+      title={t("title", { code: code(s.key), a: side("a"), b: side("b") })}
+      tags={
+        <>
+          <StatusTag status={MATCH_STATE_STATUS[s.state]}>
+            {t(`stateTag.${s.state}`)}
+          </StatusTag>
+          {s.task && (
+            <StatusTag status={TASK_STATUS[s.task]}>
+              {tBracket(`task.${s.task}`)}
+            </StatusTag>
+          )}
+        </>
+      }
+      meta={`${label} · ${t("bestOf", { count: s.best_of })}`}
+    />
   );
 }

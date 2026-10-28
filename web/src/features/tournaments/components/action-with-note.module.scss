@@ -1,0 +1,36 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.action {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-02;
+  max-inline-size: 100%;
+}
+
+// O motivo e o erro ficam numa coluna estreita embaixo do botão (20rem),
+// sem empurrar os outros botões da linha.
+.note {
+  @include type.type-style("helper-text-01");
+
+  max-inline-size: calc(#{spacing.$spacing-13} * 2);
+  color: theme.$text-secondary;
+}
+
+.error {
+  max-inline-size: calc(#{spacing.$spacing-13} * 2);
+}
+
+// Na célula de ações (que não quebra linha), o texto quebra numa largura
+// que ainda dá para ler, alinhado com o botão.
+.end {
+  align-items: flex-end;
+  text-align: end;
+  white-space: normal;
+
+  .error {
+    min-inline-size: spacing.$spacing-13;
+  }
+}

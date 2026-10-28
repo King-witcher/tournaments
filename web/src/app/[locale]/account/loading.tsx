@@ -1,11 +1,14 @@
-import { Page } from "@/shared/ui/page";
-import { PageSkeleton } from "@/shared/ui/skeleton";
+import { getTranslations } from "next-intl/server";
 
-/** Enquanto a página do segmento chega: o lugar do título e do conteúdo. */
-export default function Loading() {
+import { AccountTab } from "@/features/auth/components/account-tab";
+import { FormSkeleton } from "@/features/auth/components/form-skeleton";
+
+/** A aba Perfil carregando, dentro das abas da conta: o título e o campo do nome. */
+export default async function Loading() {
+  const t = await getTranslations("Account");
   return (
-    <Page spacing="loose">
-      <PageSkeleton />
-    </Page>
+    <AccountTab>
+      <FormSkeleton heading fields={1} label={t("loading")} />
+    </AccountTab>
   );
 }

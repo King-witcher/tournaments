@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Ao lado do nome, menor e na cor secundária: informa sem competir com ele.
+.mark {
+  @include type.type-style("helper-text-01");
+
+  flex-shrink: 0;
+  color: theme.$text-secondary;
+  font-style: italic;
+}

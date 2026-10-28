@@ -1,0 +1,24 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Rótulo, o link e o aviso, como um campo do Carbon (rótulo em cima, dica
+// embaixo). O link longo rola dentro do próprio snippet, não a página.
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+.label {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.hint {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-helper;
+}

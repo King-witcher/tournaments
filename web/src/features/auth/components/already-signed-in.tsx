@@ -1,13 +1,14 @@
 import { getTranslations } from "next-intl/server";
 
-import { Link } from "@/i18n/navigation";
+import { Link } from "@/shared/ui/link";
+import { Notice } from "@/shared/ui/notice";
 import { getCurrentUser } from "../server";
 
 /**
  * No login e no cadastro, para quem já entrou (voltou para a página pelo
  * histórico, ou abriu o link de novo): diz com que conta e leva de volta,
  * em vez de mostrar só o formulário. O formulário continua embaixo, para
- * entrar com outra conta.
+ * entrar com outra conta. Fica em `<Suspense>`.
  */
 export async function AlreadySignedIn({ returnTo }: { returnTo: string }) {
   const user = await getCurrentUser();
@@ -15,14 +16,11 @@ export async function AlreadySignedIn({ returnTo }: { returnTo: string }) {
   const t = await getTranslations("Auth");
 
   return (
-    <p className="text-sm">
-      {t("alreadySignedIn", { name: user.display_name })}{" "}
-      <Link
-        href={returnTo}
-        className="inline-flex min-h-11 items-center underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-      >
-        {t("continueSignedIn")}
-      </Link>
-    </p>
+    <Notice
+      kind="info"
+      title={t("alreadySignedIn", { name: user.display_name })}
+    >
+      <Link href={returnTo}>{t("continueSignedIn")}</Link>
+    </Notice>
   );
 }

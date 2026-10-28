@@ -1,9 +1,21 @@
 {
-  "title": "Torneios",
+  "label": "Torneios da comunidade",
+  "loading": "Carregando os torneios…",
+  "columns": {
+    "name": "Torneio",
+    "format": "Formato",
+    "status": "Estado",
+    "starts": "Início",
+    "participants": "Inscritos"
+  },
+  "mode": {
+    "duel": "Duelo"
+  },
+  "noDate": "A definir",
+  "participants": "{count}/{max}",
+  "registered": "Você está inscrito",
+  "checkInPending": "Falta seu check-in",
   "create": "Criar torneio",
   "empty": "Nenhum torneio ainda. Crie um: ele começa como rascunho, que só a organização vê, até ser publicado.",
-  "emptyPlayer": "Nenhum torneio publicado ainda. Quando a organização publicar um, ele aparece aqui.",
-  "participants": "{count}/{max} inscritos",
-  "registered": "você está inscrito",
-  "checkInPending": "falta seu check-in"
+  "emptyPlayer": "Nenhum torneio publicado ainda. Quando a organização publicar um, ele aparece aqui."
 }

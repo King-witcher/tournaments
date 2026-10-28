@@ -23,3 +23,25 @@ export function participantsEditable(status: Status) {
 export function invitesAllowed(status: Status) {
   return status === "draft" || status === "registration";
 }
+
+/** Já começou: a chave, as partidas e a classificação existem. */
+export function hasStarted(status: Status) {
+  return status === "in_progress" || status === "finished";
+}
+
+/**
+ * A ordem do seeding se revisa agora: no check-in ou, em torneio sem
+ * check-in, com a inscrição aberta (antes disso, não se sabe quem entra).
+ */
+export function seedingOpen(
+  tournament: Pick<
+    components["schemas"]["Tournament"],
+    "status" | "check_in_minutes"
+  >,
+) {
+  return (
+    tournament.status === "check_in" ||
+    (tournament.status === "registration" &&
+      tournament.check_in_minutes == null)
+  );
+}

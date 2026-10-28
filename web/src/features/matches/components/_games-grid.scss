@@ -1,0 +1,45 @@
+// As colunas da lista de mapas da partida, divididas entre o cabeçalho
+// (match-games-panel) e as linhas (game-row, next-game-row), para ficarem
+// alinhados: nº, mapa, resultado, frags e estado. No celular cada mapa vira
+// um bloco de linhas (nº e mapa; resultado e frags; estado); as ações e os
+// formulários vêm embaixo, na largura toda (ver `actions`). Quem inclui põe
+// o `display: grid` e as próprias declarações antes destes mixins.
+
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+@mixin columns {
+  gap: spacing.$spacing-03 spacing.$spacing-05;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns:
+      spacing.$spacing-07
+      minmax(0, 2fr)
+      minmax(0, 3fr)
+      spacing.$spacing-11
+      minmax(0, 4fr);
+  }
+}
+
+@mixin cells {
+  grid-template-areas:
+    "num map map"
+    "result result frags"
+    "status status status";
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-areas: "num map result frags status";
+  }
+}
+
+// O que vem embaixo dos dados da linha (botões, formulário aberto): na
+// largura toda no celular e a partir da coluna do mapa no resto. Sem linha
+// fixa no template, a linha só ganha altura quando há ações.
+@mixin actions {
+  grid-column: 1 / -1;
+
+  @include breakpoint.breakpoint(md) {
+    grid-column: 2 / -1;
+  }
+}

@@ -1,29 +1,27 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { AccountLogins } from "@/features/auth/components/account-logins";
+import { AccountTab } from "@/features/auth/components/account-tab";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { DisplayNameSection } from "@/features/auth/components/display-name-section";
-import { RequireLogin } from "@/features/auth/components/require-login";
-import { Page } from "@/shared/ui/page";
-import { LoadingSection } from "@/shared/ui/skeleton";
+import { FormSkeleton } from "@/features/auth/components/form-skeleton";
 
-export default async function AccountPage({
+/** Aba Perfil da conta: o nome exibido. */
+export default async function AccountProfilePage({
   searchParams,
 }: PageProps<"/[locale]/account">) {
   const t = await getTranslations("Account");
   return (
-    <Page spacing="loose">
-      <h1 className="text-3xl font-semibold">{t("title")}</h1>
+    <AccountTab>
+      {/* Links antigos do Discord voltavam para /account com o erro. */}
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
-      <Suspense fallback={<LoadingSection label={t("loading")} />}>
-        <RequireLogin message={t("loginRequired")}>
-          <DisplayNameSection />
-          <AccountLogins />
-        </RequireLogin>
+      <Suspense
+        fallback={<FormSkeleton heading fields={1} label={t("loading")} />}
+      >
+        <DisplayNameSection />
       </Suspense>
-    </Page>
+    </AccountTab>
   );
 }

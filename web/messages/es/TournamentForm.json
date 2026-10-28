@@ -1,21 +1,16 @@
 {
+  "identity": "Identificación",
   "name": "Nombre",
   "slug": "Dirección",
-  "slugHint": "Minúsculas, números y guion, de 3 a 32. No se puede cambiar después.",
-  "locale": "Idioma de los textos",
-  "localeHint": "Las traducciones a otros idiomas son opcionales y se agregan al editar. El idioma original no cambia después.",
-  "description": "Descripción",
-  "rules": "Reglas",
-  "markdownHint": "Acepta Markdown: **negrita**, listas con -, enlaces.",
+  "slugHint": "El enlace del torneo será {address}. Minúsculas, números y guion, de 3 a 32; no se puede cambiar después.",
   "visibility": "Visibilidad",
   "visibilityOptions": {
     "public": "Pública",
     "private": "Privada"
   },
   "visibilityHint": "Pública: toda la comunidad lo ve y se inscribe. Privada: solo lo ven los inscritos y los organizadores, y entra quien un organizador inscriba o quien use un enlace de inscripción. Se puede cambiar hasta que el torneo termine.",
+  "setupLocked": "El torneo ya empezó: formato, cupos, campeones, fecha y check-in ya no cambian.",
   "setup": "Formato",
-  "maxParticipants": "Cupos",
-  "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
   "bracket": "Llave",
   "brackets": {
     "single": "Eliminación simple",
@@ -38,18 +33,35 @@
     "tournament": "En todo el torneo"
   },
   "noRepeatHint": "La regla se verifica en el peor caso de mapas para la cantidad de cupos. Si faltan campeones, el torneo no se guarda.",
-  "setupLocked": "El torneo ya empezó: formato, cupos, campeones, fecha y check-in ya no cambian.",
-  "create": "Crear borrador",
-  "save": "Guardar",
-  "schedule": "Fecha y check-in",
+  "schedule": "Inscripciones y fechas",
+  "maxParticipants": "Cupos",
+  "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
   "startsAt": "Inicio",
   "startsAtHint": "En tu zona horaria ({timeZone}). Obligatorio para publicar; cambia hasta que el torneo empiece.",
   "checkIn": "Check-in",
   "checkInOff": "Sin check-in",
   "checkInOption": "Abre {minutes} min antes del inicio",
   "checkInHint": "Solo quien haga check-in entra en la llave; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
-  "results": "Resultados",
   "contest": "Plazo para impugnar",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
-  "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos."
+  "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos.",
+  "texts": "Textos",
+  "textsIn": "Textos: {language}",
+  "locale": "Idioma de los textos",
+  "localeHint": "Las traducciones a otros idiomas son opcionales y se agregan al editar. El idioma original no cambia después.",
+  "description": "Descripción",
+  "rules": "Reglas",
+  "markdownHint": "Acepta Markdown: **negrita**, listas con -, enlaces.",
+  "translation": {
+    "title": "Traducción: {language}",
+    "hint": "Opcional; se guarda junto con el resto. Si la descripción o las reglas quedan vacías, se muestran las del idioma original.",
+    "remove": "Quitar traducción",
+    "removeConfirm": "¿Quitar esta traducción? El texto traducido se borra y quien lee en este idioma pasa a ver el original."
+  },
+  "create": "Crear borrador",
+  "edit": {
+    "title": "Editar torneo",
+    "loading": "Cargando el torneo…",
+    "loginRequired": "Inicia sesión para editar este torneo."
+  }
 }

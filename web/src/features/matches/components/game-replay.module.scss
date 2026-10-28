@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// O botão e, embaixo dele, o erro, se a anulação falhar.
+.replay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+}

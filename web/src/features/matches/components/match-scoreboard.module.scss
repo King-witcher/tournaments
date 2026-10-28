@@ -1,0 +1,67 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// Um bloco só (a mesma camada dos cartões da chave), com largura de leitura:
+// numa tela larga os dois lados não ficam longe demais do placar.
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+  max-inline-size: spacing.$spacing-13 * 4;
+  padding: spacing.$spacing-05;
+  background-color: theme.$layer-01;
+}
+
+// Os dois lados nas pontas e o placar no meio. minmax(0, 1fr): um apelido
+// longo quebra em vez de empurrar a página para o lado no celular.
+.sides {
+  display: grid;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+// O placar é o que se procura ao abrir a partida: tipo grande.
+.score {
+  @include type.type-style("heading-06");
+
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.digits {
+  display: flex;
+  align-items: baseline;
+  gap: spacing.$spacing-03;
+}
+
+.vs {
+  @include type.type-style("heading-03");
+
+  color: theme.$text-secondary;
+}
+
+// Enquanto a série corre, o placar é o dos mapas confirmados: sem o peso de
+// resultado.
+.tentative {
+  color: theme.$text-secondary;
+}
+
+.winnerScore {
+  @include type.font-weight("semibold");
+}
+
+.lines {
+  @include type.type-style("body-01");
+
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  color: theme.$text-secondary;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

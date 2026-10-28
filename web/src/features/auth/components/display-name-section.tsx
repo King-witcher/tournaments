@@ -1,9 +1,10 @@
 import { getTranslations } from "next-intl/server";
 
+import { Section } from "@/shared/ui/section";
 import { getCurrentUser } from "../server";
 import { DisplayNameForm } from "./display-name-form";
 
-/** O nome que aparece no cabeçalho, e o que trocá-lo muda. Fica em `<Suspense>`. */
+/** A aba Perfil da conta: o nome que aparece no cabeçalho. Fica em `<Suspense>`. */
 export async function DisplayNameSection() {
   const [user, t] = await Promise.all([
     getCurrentUser(),
@@ -12,9 +13,8 @@ export async function DisplayNameSection() {
   if (!user) return null;
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
+    <Section title={t("title")}>
       <DisplayNameForm name={user.display_name} />
-    </section>
+    </Section>
   );
 }

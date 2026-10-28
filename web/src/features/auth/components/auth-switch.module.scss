@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.text {
+  @include type.type-style("body-01");
+
+  color: theme.$text-primary;
+}

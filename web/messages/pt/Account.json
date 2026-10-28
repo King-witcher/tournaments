@@ -2,11 +2,16 @@
   "title": "Sua conta",
   "loading": "Carregando a conta…",
   "loginRequired": "Entre para ver sua conta.",
+  "sections": "Seções da conta",
+  "tabs": {
+    "profile": "Perfil",
+    "logins": "Logins",
+    "password": "Senha"
+  },
   "name": {
     "title": "Nome exibido",
     "label": "Nome",
     "hint": "Aparece no cabeçalho e é o apelido inicial de quem entra numa comunidade. Os apelidos que você já tem nas comunidades não mudam (cada um se troca na página da comunidade).",
-    "save": "Salvar",
     "saved": "Salvo."
   },
   "currentPassword": "Senha atual",
@@ -16,7 +21,8 @@
     "link": "Vincular Discord",
     "linked": "Vinculado: você pode entrar com o Discord.",
     "unlinkHint": "Para desvincular, confirme sua senha. O avatar do Discord sai junto.",
-    "unlink": "Desvincular",
+    "unlink": "Desvincular o Discord",
+    "unlinkConfirm": "Você deixa de entrar com o Discord e o avatar dele sai da sua conta. Você continua entrando com nome de usuário e senha, e pode vincular de novo depois.",
     "needsPassword": "Para desvincular o Discord, crie antes um nome de usuário e senha: a conta precisa de pelo menos um jeito de entrar."
   },
   "password": {
@@ -24,12 +30,15 @@
     "none": "Crie um nome de usuário e senha para entrar sem o Discord.",
     "create": "Criar nome de usuário e senha",
     "current": "Seu nome de usuário: {username}",
+    "changeTitle": "Trocar nome de usuário ou senha",
+    "noPassword": "Sua conta ainda não tem nome de usuário e senha: você entra com o Discord. Crie os dois na aba Logins para poder trocá-los aqui.",
+    "goToLogins": "Ir para Logins",
     "newPassword": "Nova senha",
     "newPasswordHint": "Deixe em branco para manter a atual. Trocar a senha encerra suas outras sessões.",
-    "save": "Salvar",
     "saved": "Salvo.",
     "remove": "Remover nome de usuário e senha",
-    "removeHint": "Você continua entrando com o Discord.",
+    "removeHint": "Para remover, confirme sua senha. Você continua entrando com o Discord.",
+    "removeConfirm": "Você deixa de entrar com nome de usuário e senha e passa a entrar só com o Discord. Dá para criar outros depois.",
     "needsDiscord": "Para remover a senha, vincule antes o Discord: a conta precisa de pelo menos um jeito de entrar."
   }
 }

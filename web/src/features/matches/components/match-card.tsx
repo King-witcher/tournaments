@@ -1,15 +1,19 @@
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
+import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { ACTIONABLE } from "../lib/status";
+import styles from "./match-card.module.scss";
 import { MatchCardSide } from "./match-card-side";
-import { MatchStatusBadge } from "./match-status-badge";
+import { MatchCardStatus } from "./match-card-status";
+import { MemberLink } from "./member-link";
 
 type Schemas = components["schemas"];
 
 type Props = {
+  tenant: string;
   match: Schemas["BracketMatch"];
   single: boolean;
   entrants: Map<number, Schemas["BracketEntrant"]>;
@@ -34,49 +38,66 @@ function scores(
 }
 
 /**
- * Uma partida na chave: os dois lados (seed, apelido, placar), o estado e o
- * que ela espera de quem vê. As de quem vê ficam destacadas, e mais ainda as
- * que pedem ação. Bye e reset que não precisou ficam discretos.
+ * Uma partida na chave: o código (o link da partida, que cobre o cartão
+ * inteiro), os dois lados (seed, apelido como link para a pessoa, placar) e
+ * o que ela espera de quem vê. As de quem vê têm a borda na cor de
+ * interação; as que pedem ação, também a faixa à esquerda. Bye e reset que
+ * não precisou ficam discretos, sem link.
  */
-export function MatchCard({ match: m, single, entrants, href }: Props) {
+export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const t = useTranslations("Bracket");
-  const { code } = useMatchLabels(single);
+  const { code, placeholder } = useMatchLabels(single);
 
   if (m.state === "bye" || m.state === "not_needed") {
     const who = entrants.get(m.a.user_id ?? m.b.user_id ?? -1);
     return (
-      <div className="rounded-md border border-dashed border-black/15 px-3 py-2 text-xs text-muted dark:border-white/20">
+      <p className={styles.ghost}>
         {m.state === "not_needed"
           ? `${code(m.key)} · ${t("notNeeded")}`
           : who
-            ? `${who.nickname} ${t("advances")}`
+            ? t.rich("advances", {
+                name: () => (
+                  <MemberLink tenant={tenant} userId={who.user_id} inline>
+                    {who.nickname}
+                  </MemberLink>
+                ),
+              })
             : t("bye")}
-      </div>
+      </p>
     );
   }
 
   const [scoreA, scoreB] = scores(m, t("walkover"));
   const confirmed = m.state === "completed";
   const winner = confirmed ? m.result?.winner : undefined;
-  const actionable =
-    m.task === "report" || m.task === "respond" || m.task === "resolve";
+  const actionable = m.task != null && ACTIONABLE.includes(m.task);
+  const name = (side: Schemas["MatchSide"]) =>
+    (side.user_id != null && entrants.get(side.user_id)?.nickname) ||
+    placeholder(side);
+
   return (
-    <Link
-      href={href}
+    <div
       className={cn(
-        "block rounded-md border text-sm hover:bg-black/5 dark:hover:bg-white/5",
-        m.yours ? "border-blue-500/70" : "border-black/15 dark:border-white/20",
-        actionable && "ring-2 ring-blue-500/40",
+        styles.card,
+        m.yours && styles.yours,
+        actionable && styles.actionable,
       )}
     >
-      <div className="flex justify-between px-3 pt-1.5 text-xs text-muted">
-        {/* O código sublinhado na cor de link mostra que o cartão abre a partida. */}
-        <span className="text-link underline underline-offset-2">
+      <div className={styles.head}>
+        {/* O código sublinhado na cor de link mostra que o cartão abre a
+            partida; quem usa leitor de tela ouve também os dois lados. */}
+        <Link href={href} inline size="sm" className={styles.open}>
           {code(m.key)}
+          <span className={styles.srOnly}>
+            {` ${t("matchSides", { a: name(m.a), b: name(m.b) })}`}
+          </span>
+        </Link>
+        <span className={styles.bestOf}>
+          {t("bestOf", { count: m.best_of })}
         </span>
-        <span>{t("bestOf", { count: m.best_of })}</span>
       </div>
       <MatchCardSide
+        tenant={tenant}
         side={m.a}
         entrants={entrants}
         single={single}
@@ -85,6 +106,7 @@ export function MatchCard({ match: m, single, entrants, href }: Props) {
         tentative={!confirmed}
       />
       <MatchCardSide
+        tenant={tenant}
         side={m.b}
         entrants={entrants}
         single={single}
@@ -92,7 +114,7 @@ export function MatchCard({ match: m, single, entrants, href }: Props) {
         winner={winner === "b"}
         tentative={!confirmed}
       />
-      <MatchStatusBadge match={m} />
-    </Link>
+      <MatchCardStatus match={m} />
+    </div>
   );
 }

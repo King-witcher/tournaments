@@ -1,5 +1,6 @@
 "use client";
 
+import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -7,9 +8,13 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
-import { ErrorText } from "@/shared/ui/alert";
+import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
+import { FormActions } from "@/shared/ui/form-actions";
+import { FormError } from "@/shared/ui/form-error";
+import { Notice } from "@/shared/ui/notice";
+import styles from "./seeding-editor.module.scss";
 import { SeedingRow } from "./seeding-row";
 
 type Participant = components["schemas"]["Participant"];
@@ -21,17 +26,25 @@ type Props = {
   initial: Participant[];
 };
 
+/** "Sortear" volta a existir depois do refresh: o foco vai para ele. */
+const SHUFFLE_ID = "seeding-shuffle";
+
 /**
- * Ordem do seeding: digitar a posição (vai direto), subir e descer, salvar a
- * ordem ou sortear.
+ * A ordem do seeding: digitar a posição (Enter ou sair do campo leva direto
+ * para lá), subir e descer com as setas, sortear (pergunta antes quando a
+ * ordem foi mudada, porque descarta a mudança) ou salvar e voltar para a aba
+ * Organização.
  */
 export function SeedingEditor({ tenant, tournament, initial }: Props) {
   const t = useTranslations("Participants.seeding");
   const router = useRouter();
-  const { run, pending, error } = useApiAction();
+  const save = useApiAction();
+  const shuffle = useApiAction();
+  const pending = save.pending || shuffle.pending;
   const [order, setOrder] = useState(initial);
   const [focus, setFocus] = useState<{ id: number; n: number }>();
   const params = { path: { slug: tenant, tournament } };
+  const manage = `/${tenant}/${tournament}/manage`;
   const changed = order.some((p, i) => p.user_id !== initial[i].user_id);
   // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
   const noneSeeded = initial.every((p) => p.seed == null);
@@ -59,74 +72,89 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
     if (keepFocus) setFocus((f) => ({ id: userId, n: (f?.n ?? 0) + 1 }));
   }
 
-  const shuffle = () =>
-    run(
+  const runShuffle = () =>
+    shuffle.run(
       () =>
         api.POST("/tenants/{slug}/tournaments/{tournament}/seeding/shuffle", {
           params,
         }),
-      () => router.refresh(),
+      () => {
+        router.refresh();
+        focusIfLost(SHUFFLE_ID);
+      },
     );
 
   return (
-    <div className="flex flex-col gap-3">
-      {noneSeeded && <p className="text-sm">{t("noneSeeded")}</p>}
-      <ol className="divide-y divide-black/10 dark:divide-white/10">
-        {order.map((p, i) => (
-          <SeedingRow
-            key={p.user_id}
-            position={i + 1}
-            total={order.length}
-            participant={p}
-            showNoSeed={!noneSeeded}
-            disabled={pending}
-            onUp={i > 0 ? () => move(i, -1) : undefined}
-            onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
-            onMoveTo={(to, keepFocus) => moveTo(p.user_id, to, keepFocus)}
-            focusToken={focus?.id === p.user_id ? focus.n : undefined}
-          />
-        ))}
-      </ol>
-      {changed && <p className="text-sm">{t("changed")}</p>}
-      <div className="flex flex-wrap gap-3">
-        <Button
-          size="sm"
-          pending={pending}
-          disabled={!unsaved}
-          onClick={() =>
-            run(
-              () =>
-                api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
-                  params,
-                  body: { user_ids: order.map((p) => p.user_id) },
-                }),
-              () => router.refresh(),
-            )
-          }
-        >
-          {t("save")}
-        </Button>
-        {changed ? (
-          <ConfirmButton
-            pending={pending}
-            danger={false}
-            question={t("shuffleConfirm")}
-            onConfirm={shuffle}
-          >
-            {t("shuffle")}
-          </ConfirmButton>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            pending={pending}
-            onClick={shuffle}
-          >
-            {t("shuffle")}
-          </Button>
+    <Form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!unsaved || pending) return;
+        save.run(
+          () =>
+            api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
+              params,
+              body: { user_ids: order.map((p) => p.user_id) },
+            }),
+          () => {
+            router.push(manage);
+            router.refresh();
+          },
+        );
+      }}
+    >
+      <Stack gap={6}>
+        {noneSeeded && <Notice kind="warning">{t("noneSeeded")}</Notice>}
+        <ol className={styles.list} aria-label={t("listLabel")}>
+          {order.map((p, i) => (
+            <SeedingRow
+              key={p.user_id}
+              position={i + 1}
+              total={order.length}
+              participant={p}
+              showNoSeed={!noneSeeded}
+              disabled={pending}
+              onUp={i > 0 ? () => move(i, -1) : undefined}
+              onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
+              onMoveTo={(to, keepFocus) => moveTo(p.user_id, to, keepFocus)}
+              focusToken={focus?.id === p.user_id ? focus.n : undefined}
+            />
+          ))}
+        </ol>
+        {changed && <Notice kind="info">{t("changed")}</Notice>}
+        {(save.error ?? shuffle.error) && (
+          <FormError>{save.error ?? shuffle.error}</FormError>
         )}
-      </div>
-      {error && <ErrorText>{error}</ErrorText>}
-    </div>
+        <div className={styles.footer}>
+          {changed ? (
+            <ConfirmButton
+              destructive={false}
+              kind="tertiary"
+              size="md"
+              pending={shuffle.pending}
+              question={t("shuffleConfirm")}
+              onConfirm={runShuffle}
+            >
+              {t("shuffle")}
+            </ConfirmButton>
+          ) : (
+            <Button
+              id={SHUFFLE_ID}
+              kind="tertiary"
+              pending={shuffle.pending}
+              onClick={runShuffle}
+            >
+              {t("shuffle")}
+            </Button>
+          )}
+          <FormActions
+            submitLabel={t("save")}
+            pending={save.pending}
+            disabled={!unsaved}
+            cancelHref={manage}
+          />
+        </div>
+      </Stack>
+    </Form>
   );
 }

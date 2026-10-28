@@ -1,21 +1,25 @@
+import { AccordionItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { MatchEventRow } from "./match-event-row";
+import styles from "./match-history.module.scss";
 
 type Props = { detail: components["schemas"]["MatchDetail"] };
 
-/** Tudo o que aconteceu na partida, com quem e quando, do mais antigo. */
+/**
+ * O bloco fechado "Histórico", no fim da partida: tudo o que aconteceu, com
+ * quem e quando, do mais antigo. Vai dentro de um `Accordion`.
+ */
 export function MatchHistory({ detail }: Props) {
   const t = useTranslations("Match.history");
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
+    <AccordionItem title={t("title")}>
       {detail.history.length === 0 ? (
-        <p className="text-sm text-muted">{t("empty")}</p>
+        <p className={styles.empty}>{t("empty")}</p>
       ) : (
-        <ol className="flex flex-col gap-3 border-l border-black/10 pl-4 dark:border-white/15">
+        <ol className={styles.events}>
           {detail.history.map((event) => (
             <MatchEventRow
               key={`${event.at}:${event.kind}:${event.game}`}
@@ -24,6 +28,6 @@ export function MatchHistory({ detail }: Props) {
           ))}
         </ol>
       )}
-    </section>
+    </AccordionItem>
   );
 }

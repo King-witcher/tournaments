@@ -1,5 +1,6 @@
 "use client";
 
+import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -10,8 +11,10 @@ import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { Notice } from "@/shared/ui/notice";
 import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameForm } from "./game-form";
+import styles from "./game-organizer-actions.module.scss";
 import { GameReplay } from "./game-replay";
 
 type Schemas = components["schemas"];
@@ -30,8 +33,8 @@ type Props = {
 /**
  * Para organizer e owner, num mapa enviado: confirmar agora (pendente),
  * confirmar a vitória enviada (contestado), lançar outro resultado no lugar
- * (resolver ou corrigir), já confirmado, e anular o último mapa ainda sem
- * confirmar para ser jogado de novo.
+ * (resolver ou corrigir), já confirmado, com o formulário na própria linha,
+ * e anular o último mapa ainda sem confirmar para ser jogado de novo.
  */
 export function GameOrganizerActions({
   target,
@@ -48,6 +51,12 @@ export function GameOrganizerActions({
   const [editing, setEditing] = useState(false);
   const confirmable =
     game.status === "contested" || (game.status === "pending" && !responds);
+  // O botão usado some (ao abrir ou fechar o formulário): o foco fica na
+  // linha do mapa.
+  const close = () => {
+    setEditing(false);
+    focusIfLost(gameRowId(game.number));
+  };
 
   const confirm = () =>
     run(
@@ -66,9 +75,9 @@ export function GameOrganizerActions({
 
   if (editing) {
     return (
-      <div className="flex flex-col gap-2">
+      <Stack gap={5}>
         {game.status === "confirmed" && (
-          <p className="text-xs text-muted">{t("correctHint")}</p>
+          <Notice kind="info">{t("correctHint")}</Notice>
         )}
         <GameForm
           target={target}
@@ -79,27 +88,21 @@ export function GameOrganizerActions({
           initial={{
             winner: game.winner,
             map: game.map?.slug ?? "",
-            a: game.a_frags?.toString() ?? "",
-            b: game.b_frags?.toString() ?? "",
+            a: game.a_frags ?? null,
+            b: game.b_frags ?? null,
           }}
           submitLabel={tForm("save", { number: game.number })}
-          onDone={() => {
-            setEditing(false);
-            focusIfLost(gameRowId(game.number));
-          }}
+          onDone={close}
+          onCancel={close}
+          focusOnMount
         />
-        <div>
-          <Button variant="link" onClick={() => setEditing(false)}>
-            {t("cancel")}
-          </Button>
-        </div>
-      </div>
+      </Stack>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap gap-2">
+    <div className={styles.actions}>
+      <div className={styles.buttons}>
         {confirmable && (
           <Button size="sm" pending={pending} onClick={confirm}>
             {game.status === "contested"
@@ -107,12 +110,7 @@ export function GameOrganizerActions({
               : t("confirmNow")}
           </Button>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          onClick={() => setEditing(true)}
-        >
+        <Button size="sm" kind="tertiary" onClick={() => setEditing(true)}>
           {game.status === "confirmed" ? t("correct") : t("other")}
         </Button>
         {last && game.status !== "confirmed" && (

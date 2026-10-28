@@ -1,0 +1,69 @@
+import type { TournamentValues, TranslationValues } from "./form-values";
+
+/** Campo do formulário de torneio que um erro da API pode apontar. */
+export type TournamentField = keyof Pick<
+  TournamentValues,
+  | "name"
+  | "slug"
+  | "description"
+  | "rules"
+  | "maxParticipants"
+  | "bestOf"
+  | "bansPerGame"
+  | "noRepeat"
+  | "startsAt"
+  | "checkInMinutes"
+  | "contestMinutes"
+>;
+
+/** Os erros de cada campo, já traduzidos. */
+export type FieldErrors<F extends string = TournamentField> = Partial<
+  Record<F, string>
+>;
+
+/**
+ * O campo que cada código de erro da criação, do PATCH e da tradução aponta.
+ * O resto (torneio já começou, encerrado, sem permissão, rede) é do
+ * formulário inteiro. Faltar campeão depende de vagas, séries, bans e da
+ * regra de não repetição, mas só acontece com a regra ligada, e a dica dela
+ * já explica a conferência: o erro fica nela.
+ */
+const FIELD_OF_CODE: Record<string, TournamentField> = {
+  "tournament.name_invalid": "name",
+  "tournament.slug_invalid": "slug",
+  "tournament.slug_taken": "slug",
+  "tournament.slug_reserved": "slug",
+  "tournament.description_invalid": "description",
+  "tournament.rules_invalid": "rules",
+  "tournament.max_participants_invalid": "maxParticipants",
+  "tournament.max_participants_below_registered": "maxParticipants",
+  "format.invalid_best_of": "bestOf",
+  "tournament.bans_invalid": "bansPerGame",
+  "champions.pool_exhausted": "noRepeat",
+  "tournament.starts_at_required": "startsAt",
+  "tournament.check_in_minutes_invalid": "checkInMinutes",
+  "tournament.contest_minutes_invalid": "contestMinutes",
+};
+
+/** O campo do torneio que o erro aponta, ou `undefined` se é do formulário. */
+export function tournamentFieldOf(code: string): TournamentField | undefined {
+  return FIELD_OF_CODE[code];
+}
+
+/** Na tradução, só nome, descrição e regras têm erro próprio. */
+export function translationFieldOf(
+  code: string,
+): keyof TranslationValues | undefined {
+  const field = FIELD_OF_CODE[code];
+  return field === "name" || field === "description" || field === "rules"
+    ? field
+    : undefined;
+}
+
+/**
+ * O `name` do controle de um campo (da tradução de `locale`, se vier), para o
+ * foco ir até ele quando a API o recusa.
+ */
+export function controlName(field: string, locale?: string) {
+  return locale ? `translations.${locale}.${field}` : field;
+}

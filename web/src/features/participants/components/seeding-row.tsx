@@ -1,10 +1,21 @@
+"use client";
+
+import { ArrowDown, ArrowUp } from "@carbon/icons-react";
+import { IconButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { type KeyboardEvent, useEffect, useRef } from "react";
+import {
+  type KeyboardEvent,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import { NumberInput } from "@/shared/ui/number-input";
+import { StatusTag } from "@/shared/ui/status-tag";
+import styles from "./seeding-row.module.scss";
 
 type Props = {
   /** Seed que fica se a ordem for salva (1 = melhor). */
@@ -52,64 +63,102 @@ export function SeedingRow({
     if (focusToken !== undefined) input.current?.focus();
   }, [focusToken]);
 
-  function commit(field: HTMLInputElement, keepFocus: boolean) {
-    const to = Number(field.value);
-    if (field.value.trim() && Number.isInteger(to) && to !== position) {
-      onMoveTo(Math.min(Math.max(to, 1), total), keepFocus);
+  return (
+    <li className={styles.row}>
+      <PositionField
+        // Recriado quando a posição muda, para mostrar a nova.
+        key={position}
+        inputRef={input}
+        position={position}
+        total={total}
+        label={t("position", { name: p.nickname, total })}
+        disabled={disabled}
+        onMoveTo={onMoveTo}
+      />
+      <span className={styles.name}>
+        <Avatar src={p.avatar_url} name={p.nickname} />
+        {p.nickname}
+      </span>
+      {showNoSeed && p.seed == null && (
+        <StatusTag status="neutral" size="sm">
+          {t("noSeed")}
+        </StatusTag>
+      )}
+      <span className={styles.moves}>
+        <IconButton
+          kind="ghost"
+          size="sm"
+          label={t("up", { name: p.nickname })}
+          disabled={disabled || !onUp}
+          onClick={onUp}
+        >
+          <ArrowUp />
+        </IconButton>
+        <IconButton
+          kind="ghost"
+          size="sm"
+          label={t("down", { name: p.nickname })}
+          disabled={disabled || !onDown}
+          onClick={onDown}
+        >
+          <ArrowDown />
+        </IconButton>
+      </span>
+    </li>
+  );
+}
+
+/** O campo da posição, com o número que está sendo digitado. */
+function PositionField({
+  inputRef,
+  position,
+  total,
+  label,
+  disabled,
+  onMoveTo,
+}: {
+  inputRef: RefObject<HTMLInputElement | null>;
+  position: number;
+  total: number;
+  label: string;
+  disabled: boolean;
+  onMoveTo: (to: number, keepFocus: boolean) => void;
+}) {
+  const [value, setValue] = useState<number | null>(position);
+
+  function commit(keepFocus: boolean) {
+    if (value !== null && Number.isInteger(value) && value !== position) {
+      onMoveTo(Math.min(Math.max(value, 1), total), keepFocus);
     } else {
-      field.value = String(position);
+      setValue(position);
     }
   }
 
-  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commit(e.currentTarget, true);
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      // Enter move, não envia o formulário.
+      event.preventDefault();
+      commit(true);
     }
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
-      <Input
-        // Recriado quando a posição muda, para mostrar a nova.
-        key={position}
-        ref={input}
-        type="number"
+    <div className={styles.position}>
+      <NumberInput
+        ref={inputRef}
+        labelText={label}
+        hideLabel
+        hideSteppers
+        allowEmpty
+        disableWheel
+        size="sm"
         inputMode="numeric"
-        min={1}
-        max={total}
-        defaultValue={position}
+        value={value}
+        onChange={setValue}
         disabled={disabled}
-        onBlur={(e) => commit(e.currentTarget, false)}
+        onBlur={() => commit(false)}
         onKeyDown={onKeyDown}
-        aria-label={t("position", { name: p.nickname, total })}
-        className="w-16 text-right tabular-nums sm:min-h-8 sm:py-1"
       />
-      <Avatar src={p.avatar_url} name={p.nickname} />
-      <span className="min-w-0 flex-1 font-medium">{p.nickname}</span>
-      {showNoSeed && p.seed == null && (
-        <span className="text-xs text-muted">{t("noSeed")}</span>
-      )}
-      <span className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || !onUp}
-          onClick={onUp}
-          aria-label={t("up", { name: p.nickname })}
-        >
-          ↑
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled || !onDown}
-          onClick={onDown}
-          aria-label={t("down", { name: p.nickname })}
-        >
-          ↓
-        </Button>
-      </span>
-    </li>
+    </div>
   );
 }

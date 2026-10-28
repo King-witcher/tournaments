@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A linha com a borda de quem está sobre o layer-01 (o Tile).
+.divider {
+  @include type.type-style("label-01");
+
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  color: theme.$text-secondary;
+
+  &::before,
+  &::after {
+    flex: 1;
+    border-block-start: 1px solid theme.$border-subtle-01;
+    content: "";
+  }
+}

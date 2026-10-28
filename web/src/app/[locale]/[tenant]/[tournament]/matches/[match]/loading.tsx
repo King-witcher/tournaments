@@ -1,11 +1,14 @@
-import { Page } from "@/shared/ui/page";
-import { PageSkeleton } from "@/shared/ui/skeleton";
+import { getTranslations } from "next-intl/server";
 
-/** Enquanto a página do segmento chega: o lugar do título e do conteúdo. */
-export default function Loading() {
+import { MatchSkeleton } from "@/features/matches/components/match-skeleton";
+import { Page } from "@/shared/ui/page";
+
+/** A partida carregando: cabeçalho, placar, mapas e os blocos fechados. */
+export default async function Loading() {
+  const t = await getTranslations("Match");
   return (
-    <Page spacing="loose">
-      <PageSkeleton />
+    <Page width="wide">
+      <MatchSkeleton label={t("loading")} />
     </Page>
   );
 }

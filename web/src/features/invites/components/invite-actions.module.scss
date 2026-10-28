@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+// A coluna das ações não quebra linha (o ⋯ só ocupa o que precisa); o erro
+// quebra, numa largura que cabe ao lado do nome no celular.
+.error {
+  inline-size: spacing.$spacing-13;
+  white-space: normal;
+  text-align: end;
+}

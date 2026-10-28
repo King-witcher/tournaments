@@ -1,7 +1,9 @@
+import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
+import styles from "./invite-membership.module.scss";
 
 type Props = {
   invite: components["schemas"]["InvitePreview"];
@@ -19,8 +21,8 @@ export async function InviteMembership({ invite }: Props) {
     ? `/${invite.tenant_slug}/${tournament.slug}`
     : `/${invite.tenant_slug}`;
   return (
-    <div className="flex flex-col items-start gap-3">
-      <p>
+    <Stack gap={5}>
+      <p className={styles.text}>
         {tournament
           ? t("alreadyRegistered")
           : t("alreadyMember", { tenant: invite.tenant_name })}
@@ -28,6 +30,6 @@ export async function InviteMembership({ invite }: Props) {
       <ButtonLink href={href}>
         {tournament ? t("goToTournament") : t("goToTenant")}
       </ButtonLink>
-    </div>
+    </Stack>
   );
 }

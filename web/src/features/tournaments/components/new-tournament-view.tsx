@@ -1,45 +1,59 @@
 import { getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
-import { Link } from "@/i18n/navigation";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
-import { Alert } from "@/shared/ui/alert";
+import { PageError } from "@/shared/ui/page-error";
+import { PageHeader } from "@/shared/ui/page-header";
 import { TournamentForm } from "./tournament-form";
 
-/** Criar torneio no tenant, para organizer e owner. Lê a sessão, então fica em `<Suspense>`. */
+/**
+ * Criar torneio na comunidade, para organizer e owner: o cabeçalho com a
+ * trilha e o formulário. Lê a sessão, então fica em `<Suspense>`.
+ */
 export async function NewTournamentView({ tenant }: { tenant: string }) {
   const api = await serverApi();
-  const [t, result] = await Promise.all([
+  const [t, tNav, result] = await Promise.all([
     getTranslations("NewTournament"),
+    getTranslations("Nav"),
     api
       .GET("/tenants/{slug}", { params: { path: { slug: tenant } } })
       .catch(() => undefined),
   ]);
 
   if (result?.response.status === 401) {
-    return <LoginPrompt message={t("loginRequired")} />;
+    return (
+      <>
+        <PageHeader title={t("title")} />
+        <LoginPrompt message={t("loginRequired")} />
+      </>
+    );
   }
   const me = result?.data;
   if (!me) {
     return (
-      <Alert>{await apiErrorMessage(result?.error?.error ?? "internal")}</Alert>
+      <>
+        <PageHeader title={t("title")} />
+        <PageError href="/" label={tNav("backHome")}>
+          {await apiErrorMessage(result?.error?.error ?? "internal")}
+        </PageError>
+      </>
     );
   }
 
   return (
     <>
-      <header className="flex flex-col gap-1">
-        <Link
-          href={`/${tenant}`}
-          className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-        >
-          {me.name}
-        </Link>
-        <h1 className="text-3xl font-semibold">{t("title")}</h1>
-      </header>
+      <PageHeader
+        breadcrumbs={[
+          { href: "/", label: tNav("home") },
+          { href: `/${tenant}`, label: me.name },
+        ]}
+        title={t("title")}
+      />
       {me.role === "player" ? (
-        <Alert>{await apiErrorMessage("tenant.forbidden")}</Alert>
+        <PageError href={`/${tenant}`} label={tNav("backToCommunity")}>
+          {await apiErrorMessage("tenant.forbidden")}
+        </PageError>
       ) : (
         <TournamentForm tenant={tenant} />
       )}

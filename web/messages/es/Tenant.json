@@ -1,21 +1,37 @@
 {
   "loading": "Cargando la comunidad…",
   "loginRequired": "Inicia sesión para ver esta comunidad.",
-  "yourRole": "Tu rol: {role}",
-  "membership": {
-    "title": "Tú en esta comunidad"
-  },
-  "nickname": {
-    "label": "Tu apodo en esta comunidad",
-    "save": "Guardar",
-    "saved": "Apodo guardado."
+  "sections": "Secciones de la comunidad",
+  "newTournament": "Nuevo torneo",
+  "tabs": {
+    "tournaments": "Torneos",
+    "members": "Miembros",
+    "invites": "Invitaciones",
+    "settings": "Configuración"
   },
   "members": {
-    "title": "Miembros ({count})",
+    "label": "Miembros de la comunidad",
+    "loading": "Cargando los miembros…",
+    "count": "{count, plural, one {# miembro} other {# miembros}}",
+    "member": "Miembro",
+    "role": "Rol",
+    "since": "Desde",
+    "empty": "Todavía no hay nadie en la comunidad. Genera un enlace en la pestaña Invitaciones para llamar a quien va a jugar.",
+    "actions": "Acciones de {name}",
     "makeOrganizer": "Hacer organizador",
     "makePlayer": "Hacer jugador",
     "remove": "Quitar",
+    "removeTitle": "Quitar a {name}",
     "removeConfirm": "¿Quitar a {name} de la comunidad? {name} pierde el acceso, sale de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierde por W.O. las partidas pendientes. Las invitaciones que {name} creó se revocan. El historial queda, y {name} puede volver con una invitación, como jugador."
+  },
+  "settings": {
+    "loading": "Cargando la configuración…"
+  },
+  "nickname": {
+    "title": "Tu apodo",
+    "label": "Apodo en esta comunidad",
+    "hint": "Es como apareces aquí: en las inscripciones, en la llave y en las partidas. De 1 a 32 caracteres.",
+    "saved": "Apodo guardado."
   },
   "leave": {
     "title": "Salir de la comunidad",
@@ -28,20 +44,28 @@
     "description": "El miembro elegido pasa a ser el dueño y tú pasas a organizador. Para salir de la comunidad, el dueño transfiere la propiedad antes.",
     "member": "Nuevo dueño",
     "choose": "Elige un miembro…",
-    "typeSlug": "Escribe {slug} para confirmar",
+    "chooseFirst": "Elige quién recibirá la propiedad.",
     "submit": "Transferir propiedad",
-    "empty": "Todavía no hay otro miembro que pueda recibir la propiedad."
+    "confirm": "{name} pasa a ser el dueño de la comunidad y tú pasas a organizador. Para recuperar la propiedad, {name} tendría que transferírtela.",
+    "empty": "Todavía no hay otro miembro que pueda recibir la propiedad. Invita a alguien y, cuando entre, vuelve aquí.",
+    "invite": "Invitar a alguien"
   },
   "invites": {
-    "title": "Invitaciones",
+    "label": "Enlaces de invitación",
+    "loading": "Cargando las invitaciones…",
     "description": "Quien entra por el enlace queda como jugador. Cada enlace vale 7 días y sirve para varias personas.",
     "create": "Generar enlace de invitación",
+    "createdBy": "Creado por",
+    "expires": "Vence",
+    "uses": "Entraron",
+    "usesCount": "{count, plural, =0 {nadie todavía} one {# persona} other {# personas}}",
+    "createdAt": "Creado el",
+    "empty": "No hay invitaciones activas. Genera un enlace y envíalo a quien quieras invitar: quien entra por él queda como jugador.",
+    "actions": "Acciones de la invitación de {name}",
+    "link": "Enlace generado",
     "createdHint": "Cópialo ahora: este enlace no vuelve a aparecer.",
-    "copy": "Copiar",
+    "copy": "Copiar el enlace",
     "copied": "¡Copiado!",
-    "empty": "No hay invitaciones activas.",
-    "item": "Creada por {name}, vence {expires}",
-    "uses": "{count, plural, =0 {nadie entró todavía} one {# persona entró} other {# personas entraron}}",
     "revoke": "Revocar",
     "revokeConfirm": "¿Revocar este enlace? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
   }

@@ -1,0 +1,19 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A legenda do FormGroup vem com o estilo do rótulo de campo (label-01): no
+// tamanho de título de bloco, a seção se distingue dos campos que ela agrupa.
+.legend {
+  @include type.type-style("heading-02");
+
+  display: block;
+  margin-block-end: spacing.$spacing-03;
+  color: theme.$text-primary;
+}
+
+.description {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}

@@ -1,0 +1,45 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.part {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+}
+
+.title {
+  @include type.type-style("heading-02");
+}
+
+// As rodadas lado a lado, na largura que precisarem: quem rola é a chave.
+.rounds {
+  display: flex;
+  gap: spacing.$spacing-06;
+  inline-size: max-content;
+}
+
+// Largura fixa por rodada (os cartões alinham de uma rodada para a outra):
+// cabem o seed, um apelido de uns 16 caracteres e o placar.
+.round {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  inline-size: spacing.$spacing-13 + spacing.$spacing-10;
+}
+
+.roundTitle {
+  @include type.type-style("heading-compact-01");
+
+  color: theme.$text-secondary;
+}
+
+// As partidas se espalham na altura da rodada mais longa: as da rodada
+// seguinte ficam entre as duas de onde vêm os lados.
+.matches {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: spacing.$spacing-05;
+}

@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+}
+
+// Título e etiqueta na mesma linha; no celular a etiqueta desce se não couber.
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}
+
+.title {
+  @include type.type-style("heading-compact-02");
+}
+
+// As frases da situação, em coluna de leitura (40rem).
+.body {
+  @include type.type-style("body-01");
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+}

@@ -1,27 +1,28 @@
 "use client";
 
+import { ActionWithNote } from "@/features/tournaments/components/action-with-note";
+import { TOURNAMENT_TITLE_ID } from "@/features/tournaments/lib/focus";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { Button, type ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
-import { ORGANIZER_PANEL_ID } from "../lib/organizer-panel";
 
-/** Desfazer o início tem botão próprio, com confirmação forte (`UndoStartButton`). */
-export type Transition = "open_check_in" | "reopen_registration" | "start";
+/** Reabrir inscrições e desfazer o início ficam no ⋯ do cabeçalho. */
+export type Transition = "open_check_in" | "start";
 
 type Props = {
   tenant: string;
   slug: string;
   transition: Transition;
   label: string;
-  /** Pergunta antes de chamar a API. */
+  /** Pergunta antes de chamar a API (o Modal com o mesmo texto do botão). */
   confirm?: string;
-  variant?: "default" | "outline";
-  /** Sem como dar certo agora (quem monta diz por quê ao lado). */
-  disabled?: boolean;
+  /** `primary` no cabeçalho; `secondary` na aba Organização. */
+  kind?: ButtonKind;
+  /** Sem como dar certo agora: o botão fica desabilitado com este motivo embaixo. */
+  disabledReason?: string;
 };
 
 function call(transition: Transition, tenant: string, slug: string) {
@@ -32,11 +33,6 @@ function call(transition: Transition, tenant: string, slug: string) {
         "/tenants/{slug}/tournaments/{tournament}/check-in/open",
         { params },
       );
-    case "reopen_registration":
-      return api.POST(
-        "/tenants/{slug}/tournaments/{tournament}/registration/reopen",
-        { params },
-      );
     case "start":
       return api.POST("/tenants/{slug}/tournaments/{tournament}/start", {
         params,
@@ -44,53 +40,51 @@ function call(transition: Transition, tenant: string, slug: string) {
   }
 }
 
-/** Para organizer e owner: uma transição de status do torneio. */
+/**
+ * Para organizer e owner: uma transição do ciclo do torneio (abrir o
+ * check-in, iniciar). Depois, o foco vai para o título do torneio, porque o
+ * botão some quando o estado muda.
+ */
 export function TransitionButton({
   tenant,
   slug,
   transition,
   label,
   confirm,
-  variant = "outline",
-  disabled,
+  kind = "primary",
+  disabledReason,
 }: Props) {
   const router = useRouter();
   const { run, pending, error } = useApiAction();
-  const start = () =>
+  const disabled = disabledReason !== undefined;
+  const go = () =>
     run(
       () => call(transition, tenant, slug),
       () => {
         router.refresh();
-        focusIfLost(ORGANIZER_PANEL_ID);
+        focusIfLost(TOURNAMENT_TITLE_ID);
       },
     );
 
   return (
-    <div className="flex flex-col gap-1">
+    <ActionWithNote note={disabledReason} error={error}>
       {confirm ? (
         <ConfirmButton
-          size="sm"
-          variant={variant}
+          destructive={false}
+          kind={kind}
+          size="md"
           pending={pending}
           disabled={disabled}
-          danger={false}
           question={confirm}
-          onConfirm={start}
+          onConfirm={go}
         >
           {label}
         </ConfirmButton>
       ) : (
-        <Button
-          size="sm"
-          variant={variant}
-          pending={pending}
-          disabled={disabled}
-          onClick={start}
-        >
+        <Button kind={kind} pending={pending} disabled={disabled} onClick={go}>
           {label}
         </Button>
       )}
-      {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    </ActionWithNote>
   );
 }

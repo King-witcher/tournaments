@@ -1,9 +1,12 @@
+import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
-import { Field } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Select } from "@/shared/ui/select";
+import type { FieldErrors } from "../lib/form-errors";
 import type { NoRepeatChoice, TournamentValues } from "../lib/form-values";
+import { TournamentFormGroup } from "./tournament-form-group";
+import styles from "./tournament-setup-fields.module.scss";
 
 const BEST_OF = [1, 3, 5, 7, 9];
 const BANS = [0, 1, 2, 3];
@@ -12,100 +15,101 @@ const NO_REPEAT: NoRepeatChoice[] = ["off", "match", "stage", "tournament"];
 type Props = {
   values: TournamentValues;
   onChange: (patch: Partial<TournamentValues>) => void;
+  errors: FieldErrors;
   /** O torneio já começou: tudo aqui fica travado. */
   disabled: boolean;
 };
 
-/** Vagas, chave, séries e regras de campeões. */
-export function TournamentSetupFields({ values, onChange, disabled }: Props) {
+/** Formato: chave, séries e regras de campeões. */
+export function TournamentSetupFields({
+  values,
+  onChange,
+  errors,
+  disabled,
+}: Props) {
   const t = useTranslations("TournamentForm");
-  const bestOfOptions = BEST_OF.map((n) => (
-    <option key={n} value={n}>
-      {t("bestOfOption", { count: n })}
-    </option>
+  const bestOfItems = BEST_OF.map((n) => (
+    <SelectItem key={n} value={n} text={t("bestOfOption", { count: n })} />
   ));
 
   return (
-    <fieldset disabled={disabled} className="flex flex-col gap-4">
-      <legend className="mb-2 text-lg font-semibold">{t("setup")}</legend>
-      <Field label={t("maxParticipants")} hint={t("maxParticipantsHint")}>
-        <Input
-          type="number"
-          required
-          min={2}
-          max={1024}
-          value={values.maxParticipants}
-          onChange={(e) =>
-            onChange({ maxParticipants: e.target.valueAsNumber })
-          }
-          className="w-32"
-        />
-      </Field>
-      <Field label={t("bracket")}>
-        <Select
-          value={values.bracket}
-          onChange={(e) =>
-            onChange({ bracket: e.target.value as TournamentValues["bracket"] })
-          }
-        >
-          <option value="double">{t("brackets.double")}</option>
-          <option value="single">{t("brackets.single")}</option>
-        </Select>
-      </Field>
+    <TournamentFormGroup legend={t("setup")}>
+      <Select
+        labelText={t("bracket")}
+        name="bracket"
+        value={values.bracket}
+        disabled={disabled}
+        onChange={(e) =>
+          onChange({ bracket: e.target.value as TournamentValues["bracket"] })
+        }
+      >
+        <SelectItem value="double" text={t("brackets.double")} />
+        <SelectItem value="single" text={t("brackets.single")} />
+      </Select>
       {values.bracket === "double" && (
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={values.grandFinalReset}
-            onChange={(e) => onChange({ grandFinalReset: e.target.checked })}
-          />
-          {t("grandFinalReset")}
-        </label>
+        <Checkbox
+          labelText={t("grandFinalReset")}
+          name="grandFinalReset"
+          checked={values.grandFinalReset}
+          disabled={disabled}
+          onChange={(grandFinalReset) => onChange({ grandFinalReset })}
+        />
       )}
-      <div className="flex flex-wrap gap-4">
-        <Field label={t("bestOf")}>
-          <Select
-            value={values.bestOf}
-            onChange={(e) => onChange({ bestOf: Number(e.target.value) })}
-          >
-            {bestOfOptions}
-          </Select>
-        </Field>
-        <Field label={t(`finalsBestOf.${values.bracket}`)}>
-          <Select
-            value={values.finalsBestOf}
-            onChange={(e) => onChange({ finalsBestOf: Number(e.target.value) })}
-          >
-            {bestOfOptions}
-          </Select>
-        </Field>
-        <Field label={t("bansPerGame")}>
-          <Select
-            value={values.bansPerGame}
-            onChange={(e) => onChange({ bansPerGame: Number(e.target.value) })}
-          >
-            {BANS.map((n) => (
-              <option key={n} value={n}>
-                {t("bansOption", { count: n })}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      </div>
-      <Field label={t("noRepeat")} hint={t("noRepeatHint")}>
+      <div className={styles.pair}>
         <Select
-          value={values.noRepeat}
-          onChange={(e) =>
-            onChange({ noRepeat: e.target.value as NoRepeatChoice })
-          }
+          labelText={t("bestOf")}
+          name="bestOf"
+          value={values.bestOf}
+          disabled={disabled}
+          invalid={errors.bestOf !== undefined}
+          invalidText={errors.bestOf}
+          onChange={(e) => onChange({ bestOf: Number(e.target.value) })}
         >
-          {NO_REPEAT.map((choice) => (
-            <option key={choice} value={choice}>
-              {t(`noRepeatOptions.${choice}`)}
-            </option>
-          ))}
+          {bestOfItems}
         </Select>
-      </Field>
-    </fieldset>
+        <Select
+          labelText={t(`finalsBestOf.${values.bracket}`)}
+          name="finalsBestOf"
+          value={values.finalsBestOf}
+          disabled={disabled}
+          onChange={(e) => onChange({ finalsBestOf: Number(e.target.value) })}
+        >
+          {bestOfItems}
+        </Select>
+      </div>
+      <Select
+        labelText={t("bansPerGame")}
+        name="bansPerGame"
+        value={values.bansPerGame}
+        disabled={disabled}
+        invalid={errors.bansPerGame !== undefined}
+        invalidText={errors.bansPerGame}
+        onChange={(e) => onChange({ bansPerGame: Number(e.target.value) })}
+      >
+        {BANS.map((n) => (
+          <SelectItem key={n} value={n} text={t("bansOption", { count: n })} />
+        ))}
+      </Select>
+      <Select
+        labelText={t("noRepeat")}
+        helperText={t("noRepeatHint")}
+        name="noRepeat"
+        value={values.noRepeat}
+        disabled={disabled}
+        invalid={errors.noRepeat !== undefined}
+        invalidText={errors.noRepeat}
+        onChange={(e) =>
+          onChange({ noRepeat: e.target.value as NoRepeatChoice })
+        }
+      >
+        {NO_REPEAT.map((choice) => (
+          <SelectItem
+            key={choice}
+            value={choice}
+            text={t(`noRepeatOptions.${choice}`)}
+          />
+        ))}
+      </Select>
+    </TournamentFormGroup>
   );
 }

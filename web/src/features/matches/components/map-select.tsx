@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectItem, SelectItemGroup } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
@@ -11,26 +12,32 @@ type Props = {
   maps: Map[];
   value: string;
   onChange: (slug: string) => void;
+  /** Erro do campo, já traduzido. */
+  invalidText?: string;
 };
 
-/** Os mapas ativos, o pool de duelo primeiro. */
-export function MapSelect({ maps, value, onChange }: Props) {
+/** O mapa jogado: os ativos, o pool de duelo primeiro. */
+export function MapSelect({ maps, value, onChange, invalidText }: Props) {
   const t = useTranslations("Match.form");
-  const option = (m: Map) => (
-    <option key={m.slug} value={m.slug}>
-      {m.name}
-    </option>
+  const item = (m: Map) => (
+    <SelectItem key={m.slug} value={m.slug} text={m.name} />
   );
 
   return (
-    <Select value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">{t("chooseMap")}</option>
-      <optgroup label={t("pool")}>
-        {maps.filter((m) => m.duel_pool).map(option)}
-      </optgroup>
-      <optgroup label={t("others")}>
-        {maps.filter((m) => !m.duel_pool).map(option)}
-      </optgroup>
+    <Select
+      labelText={t("map")}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      invalid={invalidText !== undefined}
+      invalidText={invalidText}
+    >
+      <SelectItem value="" text={t("chooseMap")} />
+      <SelectItemGroup label={t("pool")}>
+        {maps.filter((m) => m.duel_pool).map(item)}
+      </SelectItemGroup>
+      <SelectItemGroup label={t("others")}>
+        {maps.filter((m) => !m.duel_pool).map(item)}
+      </SelectItemGroup>
     </Select>
   );
 }

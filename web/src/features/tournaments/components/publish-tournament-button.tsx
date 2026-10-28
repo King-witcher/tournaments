@@ -2,42 +2,50 @@
 
 import { useTranslations } from "next-intl";
 
-import { ORGANIZER_PANEL_ID } from "@/features/lifecycle/lib/organizer-panel";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ErrorText } from "@/shared/ui/alert";
+import type { ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
+import { TOURNAMENT_TITLE_ID } from "../lib/focus";
+import { ActionWithNote } from "./action-with-note";
+
+type Props = {
+  tenant: string;
+  slug: string;
+  /** `primary` no cabeçalho; `secondary` na aba Organização. */
+  kind?: ButtonKind;
+  /** O check-in já devia ter aberto: publicar pula as inscrições. */
+  skipsRegistration?: boolean;
+  /** Por que ainda não dá para publicar (sem data de início). */
+  disabledReason?: string;
+};
 
 /**
  * Rascunho → inscrição, com confirmação: publicado, o torneio não volta a
  * rascunho nem pode ser excluído. A API confere os campeões de novo (e exige a
- * data de início).
+ * data de início). Sem data, o botão fica desabilitado com o motivo embaixo.
  */
 export function PublishTournamentButton({
   tenant,
   slug,
-  disabled = false,
+  kind = "primary",
   skipsRegistration = false,
-}: {
-  tenant: string;
-  slug: string;
-  disabled?: boolean;
-  /** O check-in já devia ter aberto: publicar pula as inscrições. */
-  skipsRegistration?: boolean;
-}) {
+  disabledReason,
+}: Props) {
   const t = useTranslations("Tournament");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
 
   return (
-    <div className="flex flex-col gap-1">
+    <ActionWithNote note={disabledReason} error={error}>
       <ConfirmButton
-        danger={false}
-        size="sm"
+        destructive={false}
+        kind={kind}
+        size="md"
         pending={pending}
-        disabled={disabled}
+        disabled={disabledReason !== undefined}
         question={t(
           skipsRegistration ? "publishConfirmCheckIn" : "publishConfirm",
         )}
@@ -49,14 +57,13 @@ export function PublishTournamentButton({
               }),
             () => {
               router.refresh();
-              focusIfLost(ORGANIZER_PANEL_ID);
+              focusIfLost(TOURNAMENT_TITLE_ID);
             },
           );
         }}
       >
         {t(skipsRegistration ? "publishToCheckIn" : "publish")}
       </ConfirmButton>
-      {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    </ActionWithNote>
   );
 }

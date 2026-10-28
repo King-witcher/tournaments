@@ -3,8 +3,21 @@
   "loginRequired": "Inicia sesión para ver este torneo.",
   "draftHint": "Borrador: solo lo ven los organizadores. Publícalo para abrir las inscripciones.",
   "edit": "Editar",
-  "organizerTitle": "Organización",
-  "editTitle": "Editar torneo",
+  "sections": "Secciones del torneo",
+  "tabs": {
+    "overview": "Resumen",
+    "bracket": "Llave",
+    "participants": "Inscritos",
+    "rules": "Reglas",
+    "manage": "Organización"
+  },
+  "meta": {
+    "bestOf": "Al mejor de {bestOf}",
+    "participants": "{count}/{max} inscritos"
+  },
+  "progress": "Ciclo del torneo",
+  "description": "Descripción",
+  "noRules": "Este torneo no tiene reglas escritas. Si tienes dudas, pregúntale a la organización.",
   "publish": "Publicar y abrir inscripciones",
   "publishToCheckIn": "Publicar y abrir el check-in",
   "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
@@ -12,7 +25,6 @@
   "publishConfirmCheckIn": "¿Publicar el torneo directo en el check-in, sin inscripciones? La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
-  "rules": "Reglas",
   "setup": {
     "title": "Formato",
     "labels": {
@@ -43,25 +55,23 @@
     "noCheckIn": "sin check-in: entran todos los inscritos",
     "contest": "{window} para que el rival confirme o impugne"
   },
-  "translation": {
-    "title": "Traducción: {language}",
-    "hint": "Opcional. Si la descripción o las reglas quedan vacías, se muestran las del idioma original.",
-    "save": "Guardar traducción",
-    "saved": "Traducción guardada.",
-    "remove": "Quitar traducción",
-    "removeConfirm": "¿Quitar esta traducción? El texto traducido se borra y quien lee en este idioma pasa a ver el original."
-  },
   "invites": {
     "title": "Enlaces de inscripción",
     "description": "Quien entra por el enlace queda como jugador de la comunidad y ya inscrito. El enlace sirve para varias personas y vale mientras la inscripción esté abierta.",
     "full": "Los cupos se agotaron: los enlaces no inscriben a nadie más hasta que se libere un cupo (alguien sale o se amplían los cupos).",
     "create": "Generar enlace de inscripción",
-    "empty": "No hay enlaces de inscripción.",
-    "item": "Creado por {name} {created}",
-    "uses": "{count, plural, =0 {nadie se inscribió todavía} one {# inscripción} other {# inscripciones}}"
+    "createdTitle": "Enlace de inscripción generado",
+    "empty": "No hay enlaces de inscripción. Genera uno y envíalo a quien quieras inscribir, incluso a quien todavía no es de la comunidad.",
+    "columns": {
+      "createdBy": "Creado por",
+      "createdAt": "Creado el",
+      "uses": "Inscripciones"
+    },
+    "revoke": "Revocar",
+    "revokeConfirm": "¿Revocar este enlace de inscripción? Quien lo abra después ya no entra por él; quien ya se inscribió sigue inscrito. Puedes generar otro después."
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",
-  "noStartDate": "Sin fecha de inicio.",
+  "noStartDate": "Sin fecha de inicio",
   "publishNeedsDate": "Define la fecha de inicio (en Editar) para publicar."
 }

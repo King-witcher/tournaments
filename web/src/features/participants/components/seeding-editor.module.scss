@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// A lista em linhas separadas por um fio, como uma tabela sem cabeçalho.
+.list {
+  border-block-start: 1px solid theme.$border-subtle-01;
+}
+
+// "Sortear" à esquerda, Cancelar e Salvar à direita; no celular, um embaixo
+// do outro.
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: spacing.$spacing-05;
+}

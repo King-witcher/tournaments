@@ -1,0 +1,10 @@
+@use "@carbon/react/scss/spacing";
+
+// O avatar ao lado do apelido, no título: quem já viu a pessoa na chave a
+// reconhece pela imagem.
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  min-inline-size: 0;
+}

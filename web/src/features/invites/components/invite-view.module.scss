@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O que aceitar faz (entra como jogador, recupera o apelido): texto corrido.
+.note {
+  @include type.type-style("body-01");
+
+  color: theme.$text-primary;
+}

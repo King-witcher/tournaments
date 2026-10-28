@@ -1,8 +1,12 @@
 {
   "title": "Chave",
   "loading": "Carregando a chave…",
+  "loginRequired": "Entre para ver a chave.",
+  "notStarted": "A chave aparece aqui quando a organização iniciar o torneio. Até lá, confira quem está inscrito.",
+  "seeParticipants": "Ver os inscritos",
   "hint": "Abra uma partida para enviar ou ver o resultado.",
   "scrollHint": "Arraste a chave para o lado para ver as outras rodadas.",
+  "scrollLabel": "Chave do torneio (rola para o lado)",
   "parts": {
     "winners": "Chave de cima",
     "losers": "Chave de baixo",
@@ -31,7 +35,8 @@
   "bestOf": "md{count}",
   "walkover": "W.O.",
   "notNeeded": "Não precisou",
-  "advances": "avança sem jogar",
+  "advances": "<name></name> avança sem jogar",
+  "matchSides": "{a} × {b}",
   "result": {
     "pending": "Mapa esperando confirmação",
     "contested": "Mapa contestado"
@@ -44,6 +49,10 @@
     "resolve": "Resolver contestação"
   },
   "yours": "Sua partida",
+  "departure": {
+    "left": "saiu",
+    "withdrawn": "desistiu"
+  },
   "pending": {
     "title": "Partidas que esperam você",
     "item": "{match} · {a} × {b}: {task}"
@@ -51,6 +60,12 @@
   "standings": {
     "title": "Classificação",
     "rank": "{rank}º",
-    "range": "{from}º–{to}º"
+    "range": "{from}º–{to}º",
+    "position": "Posição",
+    "player": "Jogador",
+    "result": "Resultado",
+    "champion": "Venceu o torneio",
+    "eliminated": "Eliminação: <match></match> ({score})",
+    "empty": "A classificação aparece aqui quando a última partida da chave for decidida."
   }
 }

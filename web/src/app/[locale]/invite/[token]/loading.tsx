@@ -1,11 +1,14 @@
-import { Page } from "@/shared/ui/page";
-import { PageSkeleton } from "@/shared/ui/skeleton";
+import { getTranslations } from "next-intl/server";
 
-/** Enquanto a página do segmento chega: o lugar do título e do conteúdo. */
-export default function Loading() {
+import { InviteSkeleton } from "@/features/invites/components/invite-skeleton";
+import { Page } from "@/shared/ui/page";
+
+/** O convite carregando: o título e o tile com o que ele é e o botão. */
+export default async function Loading() {
+  const t = await getTranslations("Invite");
   return (
-    <Page spacing="loose">
-      <PageSkeleton />
+    <Page>
+      <InviteSkeleton label={t("loading")} />
     </Page>
   );
 }

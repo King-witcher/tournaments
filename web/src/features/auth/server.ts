@@ -27,3 +27,17 @@ export const getCurrentUser = cache(async () => {
     .then(({ data }) => data)
     .catch(() => undefined);
 });
+
+/**
+ * As formas de login da conta logada (Discord e nome de usuário), buscadas
+ * uma vez por requisição (as abas Logins e Senha da conta usam). Sem sessão,
+ * `undefined`; a API recusando, o código do erro. Lê cookies: quem usa fica
+ * em `<Suspense>`.
+ */
+export const getLogins = cache(async () => {
+  if (!(await hasSessionCookie())) return undefined;
+  const api = await serverApi();
+  const result = await api.GET("/auth/logins").catch(() => undefined);
+  if (result?.data) return { ok: true as const, logins: result.data };
+  return { ok: false as const, code: result?.error?.error ?? "internal" };
+});

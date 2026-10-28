@@ -1,38 +1,35 @@
 import { getTranslations } from "next-intl/server";
 
-import { ChangePasswordForm } from "./change-password-form";
+import { Notice } from "@/shared/ui/notice";
+import { Section } from "@/shared/ui/section";
+import { LOGIN_SECTION } from "../lib/login-sections";
 import { CredentialsForm } from "./credentials-form";
 import { RemoveLoginForm } from "./remove-login-form";
 
 type Props = { username?: string; discordLinked: boolean };
 
-/** Nome de usuário e senha da conta: criar, ou trocar e remover. */
+/**
+ * Nome de usuário e senha da conta: criar, ou remover se o Discord estiver
+ * vinculado (trocar fica na aba Senha). O bloco recebe o foco quando o
+ * formulário some (`tabIndex={-1}`).
+ */
 export async function PasswordLoginSection({ username, discordLinked }: Props) {
   const t = await getTranslations("Account.password");
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
-      {!username ? (
-        <>
-          <p className="text-sm text-muted">{t("none")}</p>
+    <div id={LOGIN_SECTION.password} tabIndex={-1}>
+      <Section
+        title={t("title")}
+        description={username ? t("current", { username }) : t("none")}
+      >
+        {!username ? (
           <CredentialsForm mode="add" />
-        </>
-      ) : (
-        <>
-          <p className="text-sm">{t("current", { username })}</p>
-          <ChangePasswordForm username={username} />
-          <h3 className="pt-2 font-semibold">{t("remove")}</h3>
-          {discordLinked ? (
-            <>
-              <p className="text-sm text-muted">{t("removeHint")}</p>
-              <RemoveLoginForm login="password" />
-            </>
-          ) : (
-            <p className="text-sm text-muted">{t("needsDiscord")}</p>
-          )}
-        </>
-      )}
-    </section>
+        ) : discordLinked ? (
+          <RemoveLoginForm login="password" />
+        ) : (
+          <Notice kind="info">{t("needsDiscord")}</Notice>
+        )}
+      </Section>
+    </div>
   );
 }

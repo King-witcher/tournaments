@@ -1,3 +1,4 @@
+import { Accordion } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
@@ -18,10 +19,12 @@ import { PendingMatches } from "./pending-matches";
 type Props = { tenant: string; slug: string; matchKey: string };
 
 /**
- * Página da partida: o placar da série, os mapas um por linha (enviar o
- * próximo, confirmar ou contestar; para a organização, confirmar na hora,
- * resolver e corrigir), o W.O. da organização e o histórico. Lê a sessão:
- * fica em `<Suspense>`.
+ * Página da partida, de cima para baixo: o cabeçalho (trilha até a chave,
+ * código e lados, estado), o placar da série, os mapas um por linha (enviar
+ * o próximo, confirmar ou contestar; para a organização, confirmar na hora,
+ * resolver, corrigir e anular), o aviso de correção recusada, as outras
+ * partidas que esperam quem vê e, fechados no fim, o W.O. da organização e
+ * o histórico. Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
   const [t, tNav, locale, loaded, found, bracket] = await Promise.all([
@@ -55,6 +58,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
   const needsMaps = detail.next_game != null || detail.can_manage;
   const maps = needsMaps ? await loadMaps() : [];
   const r = s.result;
+  const basePath = `/${tenant}/${slug}/matches`;
   return (
     <>
       <MatchHeader
@@ -64,7 +68,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         tournamentName={localizedTexts(tournament, locale).name}
         detail={detail}
       />
-      <MatchScoreboard detail={detail} />
+      <MatchScoreboard tenant={tenant} detail={detail} />
       <MatchGamesPanel
         target={target}
         detail={detail}
@@ -77,25 +81,28 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
           <CorrectionNote
             bracket={bracket.data}
             matchKey={s.key}
-            basePath={`/${tenant}/${slug}/matches`}
+            basePath={basePath}
           />
         )}
-      {detail.can_manage && playable && (
-        <OrganizerPanel
-          target={target}
-          names={names}
-          resultKey={`${r?.winner}:${r?.walkover}:${r?.a_wins}:${r?.b_wins}`}
-        />
-      )}
       {bracket.kind === "ok" && (
         // O que mais espera quem vê, para seguir depois de agir nesta.
         <PendingMatches
           bracket={bracket.data}
-          basePath={`/${tenant}/${slug}/matches`}
+          basePath={basePath}
           exclude={matchKey}
         />
       )}
-      <MatchHistory detail={detail} />
+      <Accordion align="start">
+        {detail.can_manage && playable && (
+          // A chave muda a cada resultado: o bloco fecha depois de salvar.
+          <OrganizerPanel
+            key={`${r?.winner}:${r?.walkover}:${r?.a_wins}:${r?.b_wins}`}
+            target={target}
+            names={names}
+          />
+        )}
+        <MatchHistory detail={detail} />
+      </Accordion>
     </>
   );
 }

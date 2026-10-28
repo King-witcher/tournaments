@@ -1,0 +1,72 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Seed, apelido, marca e placar numa linha. A altura acompanha a dos
+// controles: 48px no celular, onde o apelido é alvo de toque.
+.side {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-block-size: var(--cds-layout-size-height-sm);
+  padding-inline: spacing.$spacing-04;
+}
+
+.seed {
+  @include type.type-style("label-01");
+
+  flex-shrink: 0;
+  min-inline-size: spacing.$spacing-04;
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+// Por cima do link do cartão (o ::after dele cobre o cartão inteiro), para o
+// toque no apelido abrir a pessoa e não a partida.
+.name {
+  position: relative;
+  z-index: 1;
+  min-inline-size: 0;
+}
+
+// O apelido cabe na largura fixa da rodada: o que sobra vira reticências (o
+// nome inteiro está na página da pessoa e na da partida).
+.nameText {
+  overflow: hidden;
+  min-inline-size: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  @include type.type-style("label-01");
+
+  overflow: hidden;
+  min-inline-size: 0;
+  color: theme.$text-secondary;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  @include type.type-style("body-compact-01");
+
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+// Quem venceu a série: apelido e placar em negrito.
+.winner .name,
+.winner .score {
+  @include type.font-weight("semibold");
+}
+
+// A série ainda não fechou: o placar dos mapas confirmados, sem o peso de
+// resultado.
+.tentative {
+  color: theme.$text-secondary;
+  font-style: italic;
+}

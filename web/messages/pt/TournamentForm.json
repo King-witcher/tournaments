@@ -1,21 +1,16 @@
 {
+  "identity": "Identificação",
   "name": "Nome",
   "slug": "Endereço",
-  "slugHint": "Letras minúsculas, números e hífen, de 3 a 32. Não dá para mudar depois.",
-  "locale": "Idioma dos textos",
-  "localeHint": "Traduções para os outros idiomas são opcionais e ficam na edição. O idioma original não muda depois.",
-  "description": "Descrição",
-  "rules": "Regras",
-  "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
+  "slugHint": "O link do torneio será {address}. Letras minúsculas, números e hífen, de 3 a 32; não dá para mudar depois.",
   "visibility": "Visibilidade",
   "visibilityOptions": {
     "public": "Pública",
     "private": "Privada"
   },
   "visibilityHint": "Pública: todos da comunidade veem e se inscrevem. Privada: só inscritos e organizadores veem, e entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
+  "setupLocked": "O torneio já começou: formato, vagas, campeões, data e check-in não mudam mais.",
   "setup": "Formato",
-  "maxParticipants": "Vagas",
-  "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
   "bracket": "Chave",
   "brackets": {
     "single": "Eliminação simples",
@@ -38,18 +33,35 @@
     "tournament": "No torneio inteiro"
   },
   "noRepeatHint": "A regra é conferida no pior caso de mapas para o número de vagas. Se faltar campeão, o torneio não é salvo.",
-  "setupLocked": "O torneio já começou: formato, vagas, campeões, data e check-in não mudam mais.",
-  "create": "Criar rascunho",
-  "save": "Salvar",
-  "schedule": "Data e check-in",
+  "schedule": "Inscrições e datas",
+  "maxParticipants": "Vagas",
+  "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
   "startsAt": "Início",
   "startsAtHint": "No seu fuso horário ({timeZone}). Obrigatório para publicar; muda até o torneio começar.",
   "checkIn": "Check-in",
   "checkInOff": "Sem check-in",
   "checkInOption": "Abre {minutes} min antes do início",
   "checkInHint": "Só quem fizer check-in entra na chave; quem não fizer continua inscrito. Sem check-in, todos os inscritos entram.",
-  "results": "Resultados",
   "contest": "Janela de contestação",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
-  "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios."
+  "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios.",
+  "texts": "Textos",
+  "textsIn": "Textos: {language}",
+  "locale": "Idioma dos textos",
+  "localeHint": "Traduções para os outros idiomas são opcionais e ficam na edição. O idioma original não muda depois.",
+  "description": "Descrição",
+  "rules": "Regras",
+  "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
+  "translation": {
+    "title": "Tradução: {language}",
+    "hint": "Opcional; é salva junto com o resto. Descrição ou regras em branco mostram as do idioma original.",
+    "remove": "Remover tradução",
+    "removeConfirm": "Remover esta tradução? O texto traduzido é apagado e quem lê neste idioma passa a ver o original."
+  },
+  "create": "Criar rascunho",
+  "edit": {
+    "title": "Editar torneio",
+    "loading": "Carregando o torneio…",
+    "loginRequired": "Entre para editar este torneio."
+  }
 }

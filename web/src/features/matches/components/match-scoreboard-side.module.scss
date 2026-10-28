@@ -1,0 +1,49 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Avatar, apelido e seed um embaixo do outro: no celular cada lado tem uns
+// 120px ao lado do placar.
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-02;
+  min-inline-size: 0;
+}
+
+.end {
+  align-items: flex-end;
+  text-align: end;
+}
+
+// Quebra em vez de cortar: é aqui que se lê o apelido inteiro.
+.name {
+  overflow-wrap: anywhere;
+}
+
+.winner .name {
+  @include type.font-weight("semibold");
+}
+
+.meta {
+  @include type.type-style("helper-text-01");
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  color: theme.$text-secondary;
+}
+
+.end .meta {
+  justify-content: flex-end;
+}
+
+.placeholder {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}

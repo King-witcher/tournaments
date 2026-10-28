@@ -1,5 +1,6 @@
 "use client";
 
+import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
@@ -23,7 +24,7 @@ export function AcceptInviteButton({ token, tournament, member }: Props) {
   const { run, pending, error } = useApiAction();
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <Stack gap={3}>
       <Button
         pending={pending}
         onClick={() =>
@@ -44,6 +45,6 @@ export function AcceptInviteButton({ token, tournament, member }: Props) {
         {tournament ? t(member ? "register" : "acceptTournament") : t("accept")}
       </Button>
       {error && <ErrorText>{error}</ErrorText>}
-    </div>
+    </Stack>
   );
 }

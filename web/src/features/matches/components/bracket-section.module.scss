@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/breakpoint";
+
+// A dica de arrastar só faz sentido onde a chave não cabe: no celular.
+.mobileOnly {
+  @include breakpoint.breakpoint(md) {
+    display: none;
+  }
+}

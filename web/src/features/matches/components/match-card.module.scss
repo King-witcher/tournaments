@@ -1,0 +1,72 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// O cartão inteiro abre a partida: o código é o link e o ::after dele cobre
+// o cartão (os apelidos, links para a pessoa, ficam por cima). O fundo muda
+// sob o cursor, como uma linha de tabela clicável.
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid theme.$border-subtle-01;
+  background-color: theme.$layer-01;
+
+  &:hover {
+    background-color: theme.$layer-hover-01;
+  }
+
+  // Com o teclado no link da partida, o contorno do foco é o do cartão.
+  &:has(.open:focus-visible) {
+    outline: spacing.$spacing-01 solid theme.$focus;
+    outline-offset: spacing.$spacing-01;
+  }
+}
+
+// Partida de quem vê.
+.yours {
+  border-color: theme.$border-interactive;
+}
+
+// Partida que espera uma ação de quem vê (também a contestação que a
+// organização resolve, numa partida que não é dela): a faixa à esquerda
+// chama o olho numa chave grande.
+.actionable {
+  border-inline-start-width: spacing.$spacing-02;
+  border-inline-start-color: theme.$border-interactive;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-03 spacing.$spacing-04 0;
+}
+
+.open::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+}
+
+.bestOf {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
+// Bye e reset que não precisou: não se jogam, então ficam sem fundo nem
+// link, com a borda tracejada.
+.ghost {
+  @include type.type-style("label-01");
+
+  padding: spacing.$spacing-03 spacing.$spacing-04;
+  border: 1px dashed theme.$border-subtle-01;
+  color: theme.$text-secondary;
+}

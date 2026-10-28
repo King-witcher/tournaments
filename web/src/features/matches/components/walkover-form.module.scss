@@ -1,0 +1,13 @@
+@use "@carbon/react/scss/spacing";
+
+// A nota na largura de um campo de formulário.
+.field {
+  max-inline-size: spacing.$spacing-13 * 3;
+}
+
+// Os dois W.O. lado a lado; quebram de linha no celular.
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}

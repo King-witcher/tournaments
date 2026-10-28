@@ -1,57 +1,119 @@
 "use client";
 
+import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useActionState, useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "@/i18n/navigation";
-import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
-import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Field } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { ConfirmModal } from "@/shared/ui/confirm-modal";
+import { PasswordInput } from "@/shared/ui/password-input";
+import { LOGIN_SECTION } from "../lib/login-sections";
+
+type Props = {
+  /** O nome de usuário e a senha (`password`) ou o Discord (`discord`). */
+  login: "password" | "discord";
+};
+
+/** Erros que são da senha digitada (vão no campo); o resto vai embaixo do botão. */
+const PASSWORD_ERRORS = new Set([
+  "auth.wrong_password",
+  "auth.too_many_attempts",
+]);
 
 /**
- * Remove um login da conta, confirmando a senha atual: o nome de usuário e a
- * senha (`password`) ou o Discord (`discord`).
+ * Remove um login da conta. Pede a senha atual (a API confere) e, ao enviar,
+ * o `ConfirmModal` diz o que a conta perde; só o "sim" chama a API. O foco
+ * volta para onde estava ao fechar e, quando o login sai, vai para o bloco
+ * dele (o formulário some no refresh).
  */
-export function RemoveLoginForm({ login }: { login: "password" | "discord" }) {
+export function RemoveLoginForm({ login }: Props) {
   const t = useTranslations("Account");
-  const errorMessage = useApiErrorMessage();
   const router = useRouter();
+  const { run, pending, error } = useApiAction();
   const [current, setCurrent] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const opener = useRef<HTMLElement | null>(null);
+  const text =
+    login === "password"
+      ? {
+          action: t("password.remove"),
+          hint: t("password.removeHint"),
+          question: t("password.removeConfirm"),
+        }
+      : {
+          action: t("discord.unlink"),
+          hint: t("discord.unlinkHint"),
+          question: t("discord.unlinkConfirm"),
+        };
 
-  const [error, submit, pending] = useActionState(async () => {
+  const close = () => {
+    setConfirming(false);
+    // O Modal sai da árvore e o foco cairia no body.
+    requestAnimationFrame(() => opener.current?.focus());
+  };
+
+  const remove = () => {
     const body = { current_password: current };
-    const result =
-      login === "password"
-        ? await callApi(api.DELETE("/auth/password", { body }))
-        : await callApi(api.DELETE("/auth/discord", { body }));
-    if (!result.ok) return errorMessage(result.code, result.params);
-    setCurrent("");
-    router.refresh();
-    return undefined;
-  }, undefined);
+    const done = () => {
+      setCurrent("");
+      setPasswordError(false);
+      router.refresh();
+      focusIfLost(LOGIN_SECTION[login]);
+    };
+    const failed = (code: string) =>
+      setPasswordError(PASSWORD_ERRORS.has(code));
+    if (login === "password") {
+      run(() => api.DELETE("/auth/password", { body }), done, failed);
+    } else {
+      run(() => api.DELETE("/auth/discord", { body }), done, failed);
+    }
+  };
 
   return (
-    <form action={submit} className="flex flex-col gap-1">
-      <Field label={t("currentPassword")}>
-        <span className="flex gap-2">
-          <Input
-            required
-            type="password"
-            autoComplete="current-password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit" variant="outline" size="sm" pending={pending}>
-            {login === "password" ? t("password.remove") : t("discord.unlink")}
-          </Button>
-        </span>
-      </Field>
-      {error && <ErrorText>{error}</ErrorText>}
-    </form>
+    <Form
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (pending) return;
+        // O botão ou, com Enter, o campo: o foco volta para lá ao fechar.
+        opener.current = document.activeElement as HTMLElement | null;
+        setConfirming(true);
+      }}
+    >
+      <Stack gap={5}>
+        <PasswordInput
+          labelText={t("currentPassword")}
+          helperText={text.hint}
+          required
+          autoComplete="current-password"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          invalid={passwordError && error !== undefined}
+          invalidText={error}
+        />
+        <Button type="submit" kind="danger--tertiary" pending={pending}>
+          {text.action}
+        </Button>
+        {error && !passwordError && <ErrorText>{error}</ErrorText>}
+      </Stack>
+      <ConfirmModal
+        open={confirming}
+        onClose={close}
+        onConfirm={() => {
+          close();
+          remove();
+        }}
+        title={text.action}
+        confirmLabel={text.action}
+        destructive
+      >
+        {text.question}
+      </ConfirmModal>
+    </Form>
   );
 }

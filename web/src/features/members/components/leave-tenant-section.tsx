@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { Section } from "@/shared/ui/section";
 import { LeaveTenantButton } from "./leave-tenant-button";
 
 /** Para quem não é owner: sair da comunidade, com o que acontece. */
@@ -7,10 +8,8 @@ export function LeaveTenantSection({ slug }: { slug: string }) {
   const t = useTranslations("Tenant.leave");
 
   return (
-    <section className="flex flex-col gap-2">
-      <h3 className="font-semibold">{t("title")}</h3>
-      <p className="text-sm text-muted">{t("description")}</p>
+    <Section title={t("title")} description={t("description")}>
       <LeaveTenantButton slug={slug} />
-    </section>
+    </Section>
   );
 }

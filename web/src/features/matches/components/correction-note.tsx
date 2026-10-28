@@ -1,8 +1,10 @@
+import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { Fragment } from "react";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
+import { Link } from "@/shared/ui/link";
+import { Notice } from "@/shared/ui/notice";
 import { useMatchLabels } from "../hooks/use-match-labels";
 
 type Schemas = components["schemas"];
@@ -17,9 +19,10 @@ type Props = {
 
 /**
  * Para a organização, numa série decidida cujo vencedor (ou perdedor) já
- * jogou uma partida seguinte que também está decidida: a correção que muda o
- * resultado desta é recusada, e a nota diz por quê e o que fazer antes de
- * tentar, com o link da partida seguinte. Some quando não há nenhuma.
+ * jogou uma partida seguinte que também está decidida: o aviso, abaixo dos
+ * mapas, de que a correção que muda o resultado desta é recusada, por quê e
+ * o que fazer antes de tentar, com o link da partida seguinte. Some quando
+ * não há nenhuma.
  */
 export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
   const t = useTranslations("Match.correction");
@@ -36,22 +39,20 @@ export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
   const links = later.map((m, i) => (
     <Fragment key={m.key}>
       {i > 0 && ", "}
-      <Link
-        href={`${basePath}/${m.key}`}
-        className="text-link underline underline-offset-4"
-      >
+      <Link href={`${basePath}/${m.key}`} inline>
         {code(m.key)}
       </Link>
     </Fragment>
   ));
   return (
-    <section className="flex flex-col gap-1 rounded-md border border-amber-500/60 p-3 text-sm">
-      <h2 className="font-semibold">{t("title")}</h2>
-      <p>{t.rich("why", { matches: () => links })}</p>
-      <p>
-        {t.rich(walkover ? "howWalkover" : "how", { matches: () => links })}
-      </p>
-      <p className="text-muted">{t("allowed")}</p>
-    </section>
+    <Notice kind="warning" title={t("title")}>
+      <Stack gap={3}>
+        <p>{t.rich("why", { matches: () => links })}</p>
+        <p>
+          {t.rich(walkover ? "howWalkover" : "how", { matches: () => links })}
+        </p>
+        <p>{t("allowed")}</p>
+      </Stack>
+    </Notice>
   );
 }

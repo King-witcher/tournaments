@@ -1,84 +1,67 @@
 import { useTranslations } from "next-intl";
 
-import { DepartureMark } from "@/features/participants/components/departure-mark";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Avatar } from "@/shared/ui/avatar";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { DepartureTag } from "./departure-tag";
+import styles from "./match-scoreboard-side.module.scss";
+import { MemberLink } from "./member-link";
 
 type Schemas = components["schemas"];
 
 type Props = {
+  tenant: string;
   entrant?: Schemas["BracketEntrant"] | null;
   side: Schemas["MatchSide"];
   single: boolean;
-  score: string | null;
+  /** Venceu a série. */
   winner: boolean;
-  /** O placar ainda não vale. */
-  tentative: boolean;
   /** Lado direito: alinha ao fim. */
   alignEnd?: boolean;
 };
 
-/** Um lado no placar da página da partida. */
+/**
+ * Um lado no placar da partida: avatar, apelido (link para a pessoa), seed e
+ * a marca de quem saiu; sem jogador, de onde ele vem.
+ */
 export function MatchScoreboardSide({
+  tenant,
   entrant,
   side,
   single,
-  score,
   winner,
-  tentative,
   alignEnd = false,
 }: Props) {
   const t = useTranslations("Match");
-  const tBracket = useTranslations("Bracket");
-  const { source } = useMatchLabels(single);
-  const placeholder = side.bye
-    ? tBracket("bye")
-    : side.from
-      ? source(side.from)
-      : tBracket("tbd");
+  const { placeholder } = useMatchLabels(single);
 
   return (
     <div
       className={cn(
-        "flex min-w-0 items-center gap-2 sm:gap-3",
-        alignEnd && "flex-row-reverse text-right",
+        styles.side,
+        alignEnd && styles.end,
+        winner && styles.winner,
       )}
     >
-      {entrant && <Avatar src={entrant.avatar_url} name={entrant.nickname} />}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Quebra em vez de cortar: no celular, cada lado tem uns 150px. */}
-        <span
-          className={cn(
-            "break-words",
-            entrant ? winner && "font-semibold" : "text-sm italic text-muted",
-          )}
-        >
-          {entrant?.nickname ?? placeholder}
-        </span>
-        {entrant && (
-          <span
-            className={cn(
-              "flex gap-2 text-xs text-muted",
-              alignEnd && "justify-end",
-            )}
+      {entrant ? (
+        <>
+          <Avatar src={entrant.avatar_url} name={entrant.nickname} size="lg" />
+          <MemberLink
+            tenant={tenant}
+            userId={entrant.user_id}
+            size="lg"
+            className={styles.name}
           >
+            {entrant.nickname}
+          </MemberLink>
+          <span className={styles.meta}>
             {t("seed", { seed: entrant.seed })}
-            <DepartureMark withdrawn={entrant.withdrawn} left={entrant.left} />
+            <DepartureTag withdrawn={entrant.withdrawn} left={entrant.left} />
           </span>
-        )}
-      </div>
-      {score != null && (
-        <span
-          className={cn(
-            "text-2xl tabular-nums",
-            winner && "font-semibold",
-            tentative && "italic text-muted",
-          )}
-        >
-          {score}
-        </span>
+        </>
+      ) : (
+        <span className={styles.placeholder}>{placeholder(side)}</span>
       )}
     </div>
   );

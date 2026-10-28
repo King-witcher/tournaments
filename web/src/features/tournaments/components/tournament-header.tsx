@@ -1,57 +1,106 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { PageHeader } from "@/shared/ui/page-header";
+import { StatusTag } from "@/shared/ui/status-tag";
+import { TOURNAMENT_TITLE_ID } from "../lib/focus";
+import { localizedName } from "../lib/localize";
+import { hasStarted } from "../lib/status";
+import { TournamentActions } from "./tournament-actions";
+import { TournamentOverflow } from "./tournament-overflow";
+
+type Schemas = components["schemas"];
 
 type Props = {
   tenant: string;
-  tenantName: string;
-  /** Nome já no idioma de quem vê. */
-  name: string;
-  tournament: components["schemas"]["Tournament"];
+  /** A comunidade, com o papel de quem vê. */
+  me: Schemas["MyTenant"];
+  tournament: Schemas["Tournament"];
   /** Referência para saber se a data de início já passou. */
   now: Date;
 };
 
-/** Comunidade, nome, status, visibilidade e início (no fuso de quem vê). */
-export function TournamentHeader({
-  tenant,
-  tenantName,
-  name,
-  tournament,
-  now,
-}: Props) {
+/**
+ * O topo da página do torneio: a trilha até a comunidade, o nome no idioma
+ * de quem vê, o estado (e "Privado"), a linha formato · melhor de · início ·
+ * inscritos e as ações de quem vê, com o raro e o destrutivo no ⋯.
+ */
+export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const t = useTranslations("Tournament");
+  const tNav = useTranslations("Nav");
   const tStatus = useTranslations("TournamentStatus");
   const tVisibility = useTranslations("Visibility");
+  const locale = useLocale();
+  const organizer = me.role !== "player";
+  const [stage] = tournament.stages;
+  const bracket =
+    stage.bracket === "double" && stage.grand_final_reset
+      ? "doubleReset"
+      : stage.bracket;
   const startsAt = tournament.starts_at;
   // Data que já passou (começou, ou a organização ainda não iniciou): "início
   // marcado para", não "começa", que daria a entender que ainda vai começar.
   const past =
-    tournament.status === "in_progress" ||
-    tournament.status === "finished" ||
+    hasStarted(tournament.status) ||
     (startsAt != null && new Date(startsAt) <= now);
 
   return (
-    <header className="flex flex-col gap-1">
-      <Link
-        href={`/${tenant}`}
-        className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4 hover:decoration-2 sm:min-h-0"
-      >
-        {tenantName}
-      </Link>
-      <h1 className="text-3xl font-semibold">{name}</h1>
-      <p className="text-sm text-muted">
-        {tStatus(tournament.status)} · {tVisibility(tournament.visibility)}
-      </p>
-      <p className="text-sm">
-        {startsAt
-          ? t.rich(past ? "startedAt" : "startsAt", {
-              date: () => <LocalDateTime value={startsAt} />,
-            })
-          : t("noStartDate")}
-      </p>
-    </header>
+    <PageHeader
+      breadcrumbs={[
+        { href: "/", label: tNav("home") },
+        { href: `/${tenant}`, label: me.name },
+      ]}
+      // tabIndex -1: recebe o foco depois de publicar, iniciar, desfazer…,
+      // quando o botão usado some no refresh.
+      title={
+        <span id={TOURNAMENT_TITLE_ID} tabIndex={-1}>
+          {localizedName(tournament, locale)}
+        </span>
+      }
+      tags={
+        <>
+          <StatusTag status={tournament.status}>
+            {tStatus(tournament.status)}
+          </StatusTag>
+          {tournament.visibility === "private" && (
+            <StatusTag status="neutral">{tVisibility("private")}</StatusTag>
+          )}
+        </>
+      }
+      meta={
+        <>
+          {t(`setup.bracket.${bracket}`)}
+          {" · "}
+          {t("meta.bestOf", { bestOf: stage.best_of })}
+          {" · "}
+          {startsAt
+            ? t.rich(past ? "startedAt" : "startsAt", {
+                date: () => <LocalDateTime value={startsAt} />,
+              })
+            : t("noStartDate")}
+          {" · "}
+          {t("meta.participants", {
+            count: tournament.participants,
+            max: tournament.max_participants,
+          })}
+        </>
+      }
+      actions={
+        <TournamentActions
+          tenant={tenant}
+          tournament={tournament}
+          organizer={organizer}
+          now={now}
+        />
+      }
+      overflow={
+        <TournamentOverflow
+          tenant={tenant}
+          tournament={tournament}
+          organizer={organizer}
+        />
+      }
+    />
   );
 }

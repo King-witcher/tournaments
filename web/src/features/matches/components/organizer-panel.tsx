@@ -1,33 +1,31 @@
+import { AccordionItem, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
-import { Disclosure } from "@/shared/ui/disclosure";
 import type { MatchTarget } from "../lib/match-target";
+import styles from "./organizer-panel.module.scss";
 import { WalkoverForm } from "./walkover-form";
 
 type Props = {
   target: MatchTarget;
   names: { a: string; b: string };
-  /** Muda a cada resultado: o bloco fecha depois de salvar. */
-  resultKey: string;
 };
 
 /**
- * Para organizer e owner, numa partida pronta ou decidida: o W.O. na série
- * inteira, fechado atrás de um botão porque é exceção. Lançar, resolver e
- * corrigir mapas fica na linha de cada mapa.
+ * Para organizer e owner, numa partida pronta ou decidida: o bloco fechado
+ * "Organização" com o W.O. na série inteira (é exceção). Confirmar agora,
+ * resolver, corrigir e anular um mapa ficam na linha de cada mapa. Vai
+ * dentro de um `Accordion`; quem monta troca a `key` a cada resultado, para
+ * o bloco fechar depois de salvar.
  */
-export function OrganizerPanel({ target, names, resultKey }: Props) {
+export function OrganizerPanel({ target, names }: Props) {
   const t = useTranslations("Match.organizer");
 
   return (
-    <section className="flex flex-col gap-3 rounded-md border border-black/10 p-4 dark:border-white/15">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">{t("title")}</h2>
-        <p className="text-sm text-muted">{t("hint")}</p>
-      </div>
-      <Disclosure key={resultKey} summary={t("walkoverTitle")}>
+    <AccordionItem title={t("title")}>
+      <Stack gap={5}>
+        <p className={styles.hint}>{t("hint")}</p>
         <WalkoverForm target={target} names={names} />
-      </Disclosure>
-    </section>
+      </Stack>
+    </AccordionItem>
   );
 }

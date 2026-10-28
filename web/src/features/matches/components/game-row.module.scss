@@ -1,0 +1,91 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "./games-grid";
+
+// Uma linha por mapa, separada da seguinte como numa StructuredList.
+.row {
+  @include type.type-style("body-compact-01");
+
+  display: grid;
+  align-items: baseline;
+  padding-block: spacing.$spacing-05;
+  border-block-end: 1px solid theme.$border-subtle-01;
+
+  @include games-grid.columns;
+  @include games-grid.cells;
+}
+
+.num {
+  @include type.font-weight("semibold");
+
+  grid-area: num;
+  font-variant-numeric: tabular-nums;
+}
+
+// "Mapa " antes do número: no celular, onde não há cabeçalho de coluna, ele
+// aparece; no resto, só o leitor de tela lê (a coluna se chama "Nº").
+.numPrefix {
+  @include breakpoint.breakpoint(md) {
+    @include visually-hidden;
+  }
+}
+
+.map {
+  grid-area: map;
+  overflow-wrap: anywhere;
+}
+
+// Mapa antigo, enviado sem nome.
+.missing {
+  color: theme.$text-secondary;
+  font-style: italic;
+}
+
+.result {
+  grid-area: result;
+  overflow-wrap: anywhere;
+}
+
+.settled {
+  @include type.font-weight("semibold");
+}
+
+.frags {
+  grid-area: frags;
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// A etiqueta e, embaixo, a frase do estado.
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-02;
+  grid-area: status;
+}
+
+.phrase {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+  overflow-wrap: anywhere;
+}
+
+// Os botões de responder e os da organização, um bloco embaixo do outro.
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+  padding-block-start: spacing.$spacing-03;
+
+  @include games-grid.actions;
+}
+
+.srOnly {
+  @include visually-hidden;
+}
