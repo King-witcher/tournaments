@@ -76,10 +76,12 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
 - **Revisão de uso, rodada 2c** (teste de ponta a ponta no navegador, banco limpo: organizador no desktop, jogador pelo convite no celular em pt e em es, casos de borda; decisões em "Interface" no `decisions.md`):
   - Bug: o placar da partida empurrava a página para o lado no celular com apelidos longos (`1fr` não encolhe); agora as colunas encolhem e o nome quebra. Os campos de frags ficaram largos o bastante para o nome de cada lado aparecer.
   - Bug: um nome exibido longo empurrava o cabeçalho (e a página) para o lado no celular; agora ele é cortado com reticências (a conta mostra inteiro).
+  - Bug: endereço que nenhuma rota atende (ex.: `/pt/a/b/c`) mostrava a página padrão do Next, em inglês e sem cabeçalho; agora há `[locale]/not-found.tsx` traduzido, com o caminho para o início, e um `[...rest]` que leva a ele (status 404).
   - Foco: botão pendente fica com `aria-disabled` (com `disabled`, o foco caía no começo da página a cada ação, inclusive depois de um erro); depois de uma ação cujo botão some, o foco vai para a linha do mapa (confirmar, contestar, resolver), para o bloco da inscrição (inscrever-se, cancelar) ou para o quadro da organização (publicar, abrir o check-in, reabrir, iniciar, desfazer); o `ConfirmButton` devolve o foco ao botão.
   - Publicar com o check-in já aberto pela data levava direto ao check-in, sem inscrições, sem aviso: agora o rascunho avisa, o botão diz "Publicar e abrir o check-in" e a confirmação explica a saída.
   - Partida desatualizada: confirmar um mapa que a organização já confirmou recarrega a tela além de mostrar o erro.
   - Login e cadastro dizem com que conta a pessoa já entrou, com link de volta; sessão expirada no meio de uma ação diz para recarregar e entrar.
+  - Edição de torneio iniciado: o motivo dos campos travados (formato, data, check-in) aparece antes deles, não no fim do formulário.
   - Textos: "1 mapa" no singular (md1), dica da chave sem "clique" (no celular é toque), vagas na prévia do convite ("16 vagas, nenhuma ocupada ainda"), "Início marcado para" quando a data passou e o torneio ainda não começou; links de volta (comunidade, torneio) com 44px no celular.
 
 ## UX: pendências
