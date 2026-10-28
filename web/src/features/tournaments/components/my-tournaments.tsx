@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { hasSessionCookie } from "@/features/auth/server";
 import { serverApi } from "@/shared/api/server";
 import { MyTournamentRow } from "./my-tournament-row";
 
@@ -11,6 +12,7 @@ import { MyTournamentRow } from "./my-tournament-row";
  * `<Suspense>`.
  */
 export async function MyTournaments() {
+  if (!(await hasSessionCookie())) return null;
   const api = await serverApi();
   const entries = await api
     .GET("/me/tournaments")

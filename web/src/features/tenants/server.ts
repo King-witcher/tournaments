@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { hasSessionCookie } from "@/features/auth/server";
 import { serverApi } from "@/shared/api/server";
 
 /**
@@ -8,6 +9,7 @@ import { serverApi } from "@/shared/api/server";
  * torneios. Lê a sessão: quem usa fica em `<Suspense>`.
  */
 export const getMyTenants = cache(async () => {
+  if (!(await hasSessionCookie())) return undefined;
   const api = await serverApi();
   return api
     .GET("/tenants")
