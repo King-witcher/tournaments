@@ -12,6 +12,18 @@ type Props = {
   viewerRole: components["schemas"]["Role"];
 };
 
+/**
+ * Do que está acontecendo para o que já acabou; dentro de cada status, a
+ * ordem da API (mais novo primeiro).
+ */
+const ORDER: components["schemas"]["TournamentStatus"][] = [
+  "in_progress",
+  "check_in",
+  "registration",
+  "draft",
+  "finished",
+];
+
 /** Torneios do tenant. Fica em `<Suspense>`. */
 export async function TournamentList({ slug, viewerRole }: Props) {
   const api = await serverApi();
@@ -19,7 +31,11 @@ export async function TournamentList({ slug, viewerRole }: Props) {
     getTranslations("Tournaments"),
     api
       .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
-      .then(({ data }) => data ?? []),
+      .then(({ data }) =>
+        (data ?? []).toSorted(
+          (a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status),
+        ),
+      ),
   ]);
 
   return (

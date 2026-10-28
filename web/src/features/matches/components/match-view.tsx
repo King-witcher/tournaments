@@ -6,12 +6,13 @@ import { localizedTexts } from "@/features/tournaments/lib/localize";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
-import { loadMaps, loadMatch } from "../server";
+import { loadBracket, loadMaps, loadMatch } from "../server";
 import { MatchActions } from "./match-actions";
 import { MatchGames } from "./match-games";
 import { MatchHeader } from "./match-header";
 import { MatchHistory } from "./match-history";
 import { MatchScoreboard } from "./match-scoreboard";
+import { PendingMatches } from "./pending-matches";
 
 type Props = { tenant: string; slug: string; matchKey: string };
 
@@ -21,12 +22,13 @@ type Props = { tenant: string; slug: string; matchKey: string };
  * dar W.O.), detalhe por mapa e histórico. Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
-  const [t, tNav, locale, loaded, found] = await Promise.all([
+  const [t, tNav, locale, loaded, found, bracket] = await Promise.all([
     getTranslations("Match"),
     getTranslations("Nav"),
     getLocale(),
     loadTournament(tenant, slug),
     loadMatch(tenant, slug, matchKey),
+    loadBracket(tenant, slug),
   ]);
   if (loaded.kind === "login") {
     return <LoginPrompt message={t("loginRequired")} />;
@@ -51,6 +53,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
       <MatchHeader
         tenant={tenant}
         slug={slug}
+        tenantName={loaded.me.name}
         tournamentName={localizedTexts(tournament, locale).name}
         detail={detail}
       />
@@ -62,6 +65,14 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         maps={maps}
         contestMinutes={tournament.contest_minutes}
       />
+      {bracket.kind === "ok" && (
+        // O que mais espera quem vê, para seguir depois de agir nesta.
+        <PendingMatches
+          bracket={bracket.data}
+          basePath={`/${tenant}/${slug}/matches`}
+          exclude={matchKey}
+        />
+      )}
       {detail.games.length > 0 && <MatchGames detail={detail} />}
       <MatchHistory detail={detail} />
     </>

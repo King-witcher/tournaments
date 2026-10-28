@@ -7,16 +7,23 @@ import { useMatchLabels } from "../hooks/use-match-labels";
 type Props = {
   tenant: string;
   slug: string;
+  tenantName: string;
   /** Nome já no idioma de quem vê. */
   tournamentName: string;
   detail: components["schemas"]["MatchDetail"];
 };
 
 /**
- * Torneio (link de volta), parte, rodada e número da partida, o código curto
- * (o mesmo do cartão na chave) e melhor de N.
+ * Comunidade e torneio (links de volta), parte, rodada e número da partida,
+ * o código curto (o mesmo do cartão na chave) e melhor de N.
  */
-export function MatchHeader({ tenant, slug, tournamentName, detail }: Props) {
+export function MatchHeader({
+  tenant,
+  slug,
+  tenantName,
+  tournamentName,
+  detail,
+}: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
   const s = detail.summary;
@@ -39,12 +46,15 @@ export function MatchHeader({ tenant, slug, tournamentName, detail }: Props) {
 
   return (
     <header className="flex flex-col gap-1">
-      <Link
-        href={`/${tenant}/${slug}`}
-        className="text-sm opacity-70 hover:underline"
-      >
-        {tournamentName}
-      </Link>
+      <nav className="flex flex-wrap gap-x-2 text-sm opacity-70">
+        <Link href={`/${tenant}`} className="hover:underline">
+          {tenantName}
+        </Link>
+        <span aria-hidden>›</span>
+        <Link href={`/${tenant}/${slug}`} className="hover:underline">
+          {tournamentName}
+        </Link>
+      </nav>
       <h1 className="text-2xl font-semibold">{label}</h1>
       <p className="text-sm opacity-70">
         {code(s.key)} · {t("bestOf", { count: s.best_of })}
