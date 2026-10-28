@@ -25,7 +25,8 @@ src/
     hooks/              hooks do domínio
     lib/                funções puras do domínio (ex.: slugify)
   shared/               o que serve a qualquer domínio; nunca importa de features/
-    ui/                 componentes visuais genéricos: Button, Input, Field, Alert, Avatar, Page
+    ui/                 componentes visuais genéricos: Button, Input, Field, Alert, Avatar, Page,
+                        Badge, Countdown
     hooks/              hooks genéricos (ex.: useCopyToClipboard)
     api/                client, serverApi, callApi, useApiAction, tradução de erro, schema.d.ts
     lib/                utilitários genéricos (ex.: cn)

@@ -33,6 +33,12 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - API: `tournaments/schedule.rs` (data, janela, abertura automática do check-in aplicada por `find`/`list` ao ler, PATCH da data e da janela) e `tournaments/db/` dividido em `read`, `status`, `translations`; publicar exige data. `participants/check_in.rs` (o próprio e o organizador, só no check-in), `seeding.rs` (ver, sortear, ordenar; `finalize` ao iniciar) e `seed_order.rs` (elegíveis e ordem, puro). Domínio novo `lifecycle/` com abrir check-in, reabrir inscrição, iniciar e desfazer início, todas por `transition::apply`. `shared::nullable` para PATCH com `null`. Testes de rota de `tournaments` e `participants` viraram pasta (`schedule`, `check_in`, `seeding`) e há `lifecycle.rs`.
   - Front: data (no fuso de quem preenche) e janela no formulário; página com início no fuso de quem vê (`LocalDateTime`), aviso de quando o check-in abre, botão de check-in, marca de check-in e seed nos inscritos; para o organizador, marcar e desmarcar, `LifecyclePanel` (abrir check-in, reabrir, iniciar e desfazer, com confirmação) e painel de seeding (sortear, subir/descer, salvar). Feature nova `lifecycle`.
 
+- **Chave e resultados** (fecha o duelo de ponta a ponta, sem veto; decisões em "Resultados" no `decisions.md`):
+  - `engine`: `series::validate_games` (detalhe por mapa: um por mapa jogado, sem empate nem mapa repetido, vencedores batendo com o placar e o último mapa do vencedor), `MapId`, `Occupant` e `EliminationBracket::occupants`.
+  - Migration: `maps` (16 mapas, pool de duelo provisório), `tournaments.contest_minutes` (padrão 5), `match_results` (resultado vigente por partida, com `position` no replay), `match_games` (detalhe por mapa) e `match_events` (histórico), com FKs compostas para o torneio e os participantes e `check` em cada invariante de série e de estado. Testes que gravam estado inválido direto por SQL.
+  - API: `maps.rs` (`GET /maps`) e domínio `matches/`: `GET .../bracket` e `.../matches/{match}` (a chave sai sempre do replay dos confirmados), `POST .../report`, `.../confirm`, `.../contest` e `PUT .../result` (organizador: lança, resolve, corrige, W.O.). Iniciar roda `TournamentSetup::validate` com os elegíveis e o pool de agora; desfazer apaga resultados e histórico. Confirmação por tempo ao ler e agir (`due.rs`), encerramento e reabertura automáticos (`stage::sync_status`). Testes em `tests/api/matches/` (chave, envio, organizador, correções, banco).
+  - Front: feature `matches` (chave simples e dupla com destaque das partidas de quem vê e do que esperam dele, contagem regressiva, classificação; página `/[tenant]/[torneio]/matches/[partida]` com envio, detalhe por mapa, confirmar e contestar, painel do organizador e histórico), `Badge` e `Countdown` em `shared/ui`, janela de contestação no formulário e desfazer início com contagem de resultados e o endereço digitado.
+
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
 - Melhor de N: um valor padrão + um para a decisiva (final na simples; grande final e reset na dupla). Ex.: md3 + md5.
@@ -40,24 +46,17 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
 - Ban de campeão pelo capitão; pick por cada jogador. Timeout no veto: escolha aleatória, desfazível pelo organizador.
 - Corrigir resultado = refazer o estado com `replay` e o histórico corrigido; correção que contradiz partida posterior é recusada.
 
-## Próximo: duelo de ponta a ponta
+## Próximo
 
-Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::test`, tipos regenerados no front e tela mínima.
+O duelo já vai da inscrição ao campeão. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::test`, tipos regenerados no front e tela mínima.
 
-1. **Chave e resultados** (check-in e seeding já existem)
-   - Gerar a chave com `EliminationBracket` no "Iniciar": em `lifecycle/transition.rs`, `apply` com `Transition::Start` já recebe de `participants::finalize_seeding` os `ParticipantId` na ordem dos seeds; gerar e gravar ali, na mesma transação. `Transition::UndoStart` descarta a chave (decidir se recusa quando já há resultado).
-   - Persistir só config, participantes e `match_reports` (histórico); reconstruir por `replay`.
-   - Ao gerar: rodar `TournamentSetup::validate` de novo com o número real de elegíveis e o pool atual.
-   - Envio de resultado por um lado, janela de contestação, organizador resolve contestação.
-   - Front: visualização da chave (simples e dupla), página da partida.
+1. **Membros**: remover membro, sair do tenant, transferir a posse. Quem sai com torneio em andamento não pode sumir da chave (as FKs de `match_results`/`match_events` já recusam apagar participante com resultado): manter a inscrição e dar W.O. nas partidas pendentes dele pelo mesmo caminho do organizador (`matches/manage.rs`: `put_by_organizer` com `Outcome::Walkover`, evento `walkover`).
+2. **Tempo real** (WebSocket no Axum) para chave, check-in e partida. Um agendador chama `matches::due::apply_due_confirmations` (hoje aplicada ao ler e agir) para os torneios com pendente vencido e avisa quem vê.
+3. **Veto** de mapas e pick/ban de campeões ao vivo, com regra de não repetição aplicada. Encaixa entre a partida ficar pronta e o envio do resultado: o pool por torneio sai de `maps`, e o detalhe por mapa do envio passa a ter de seguir os mapas do veto.
+4. **Prints do placar** (S3 genérico, URL assinada, WebP, apagar 30 dias após o fim).
+5. **Rating** (Elo, configurável por tenant), por mapa a partir de `match_games` (sem detalhe, pelos mapas vencidos).
 
 ## Depois
 
-- Membros: remover membro, sair do tenant, transferir a posse.
-
-- Tempo real (WebSocket no Axum) para chave, check-in e partida.
-- Veto de mapas e pick/ban de campeões ao vivo, com regra de não repetição aplicada.
-- Prints do placar (S3 genérico, URL assinada, WebP, apagar 30 dias após o fim).
-- Rating (Elo, configurável por tenant).
 - Outros formatos: FFA por pontos/frags, 2v2/3v3 com formação de times, round robin, suíço.
 - Deploy: Render (API), Vercel (web), Supabase (Postgres), CI no GitHub Actions conferindo que o `.sqlx/` está em dia (`SQLX_OFFLINE=true cargo check`).

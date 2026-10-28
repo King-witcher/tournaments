@@ -39,10 +39,19 @@ crates/api/src/
                   register), check_in.rs, seeding.rs (finalize, que o início usa), seed_order.rs
   lifecycle/      transições depois de publicar (.../check-in/open, .../registration/reopen,
                   .../start): transition.rs concentra de onde, para onde e o que cada uma faz.
-                  Fica acima de tournaments e participants (iniciar fecha o seeding)
+                  Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
+                  gera a chave; desfazer a descarta)
+  maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
+  matches/        .../bracket e .../matches/{match}[/report|/confirm|/contest|/result]:
+                  stage.rs (fase → chave por replay, start, discard, sync_status), due.rs
+                  (confirmação por tempo, apply_due_confirmations), report.rs (jogadores),
+                  manage.rs (organizador: lançar, resolver, corrigir, W.O.), outcome.rs (placar
+                  pelos lados → engine), key.rs (wb-1-3), result.rs, history.rs, view.rs,
+                  detail.rs, actions.rs; SQL em db/ (leitura e confirmação por tempo, writes,
+                  events, games)
 ```
 
-Domínios previstos pelo roadmap: `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`. Gerar e descartar a chave entra em `lifecycle::transition::apply` (que chama `matches`).
+Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `realtime` (WebSocket; o agendador chama `matches::due::apply_due_confirmations`), `media` (prints no S3), `ratings`.
 
 ### O que é um domínio
 
@@ -90,8 +99,9 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 
 ```
 crates/engine/src/
-  core.rs         tipos de mais de um formato: ParticipantId, MatchId, Match, Outcome, EngineError
-  series.rs       melhor de N
+  core.rs         tipos de mais de um formato: ParticipantId, MapId, MatchId, Match, Occupant,
+                  Outcome, EngineError
+  series.rs       melhor de N: placar (validate_score) e detalhe por mapa (validate_games)
   seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
   champions.rs    ChampionRules e o orçamento da regra de não repetição
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar

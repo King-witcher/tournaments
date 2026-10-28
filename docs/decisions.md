@@ -136,7 +136,21 @@ Motivos e cuidados:
 
 ## Resultados
 
-- Um lado envia o placar; os demais têm X minutos para contestar. Sem contestação, confirma. Contestação vai para o organizador. Vale para duelo, times e FFA.
+- Um lado envia o placar; os demais têm uma janela para contestar. Sem contestação, confirma. Contestação vai para o organizador. Vale para duelo, times e FFA.
+- **A chave nasce no "Iniciar"**, na mesma transação: `TournamentSetup::validate` roda de novo com o número real de elegíveis e o pool de campeões de agora (`champions.pool_exhausted` com os números se faltar), e a chave é montada com os elegíveis na ordem dos seeds. **Nada do estado do `engine` é gravado**: ficam a configuração (`tournament_stages`), os participantes (seeds 1..N) e os resultados (`match_results`); a chave é sempre refeita por `replay` com os confirmados na ordem em que passaram a valer (`position`, mantida nas correções), e cada resultado também guarda os lados com que entrou, conferidos no replay.
+- **Uma fase por enquanto**: os resultados já têm `stage`; uma fase seguinte teria como participantes a classificação da anterior, montada quando ela termina (`matches/stage.rs`).
+- **Identificador de partida** nas rotas e no banco: o `MatchId` legível, `wb-1-3` (chave de cima; na simples, tudo é `wb`), `lb-2-1` (de baixo), `gf-1-1` e `gf-2-1` (grande final e reset). Rotas `.../bracket` e `.../matches/{partida}`; chave e partidas seguem a visibilidade do torneio.
+- **Envio**: qualquer um dos dois jogadores de uma partida pronta envia o placar da série em mapas (pelos lados, ex.: 2 x 1), com **detalhe opcional por mapa**: todos os mapas ou nenhum, na ordem jogada, cada um com um mapa ativo e os frags de cada lado (0 a 999). A regra de série é do `engine` (`series::validate_games`): um item por mapa jogado, sem empate (o duelo sempre tem vencedor), sem repetir mapa na série e com os vencedores batendo com o placar (o último mapa é sempre de quem venceu a série). Enviar de novo, partida não pronta e quem não joga a partida dão código. O organizador que não joga não envia: ele lança.
+- **Resposta**: o adversário confirma ou contesta com um comentário (1 a 280 caracteres); contestado sai da janela e espera o organizador. Quem enviou não confirma nem contesta o próprio placar.
+- **Janela de contestação**: por torneio, padrão **5 minutos**, a API aceita de 1 a 1440 e o formulário oferece 2, 5, 10, 15, 30 e 60. Muda até o torneio encerrar e vale para os envios seguintes (o prazo fica gravado no envio). Sem resposta, confirma sozinho no fim da janela, avaliado pela API ao ler a chave ou a partida e antes de cada ação (como a abertura do check-in, sem job; só trava o torneio quando há prazo vencido). `matches::due::apply_due_confirmations` é a peça isolada que o agendador do tempo real vai chamar.
+- **A chave só avança com resultado confirmado** (pelo adversário, pelo tempo ou pelo organizador). Pendente ou contestado, a próxima partida continua esperando.
+- **Organizador** (organizer ou owner, **inclusive em partida que ele joga**; tudo fica no histórico com autor e horário): confirma o pendente, resolve a contestação (aceitando o placar enviado, com outro placar ou com W.O.), lança direto e **corrige** qualquer resultado confirmado, também com o torneio encerrado. **W.O. só ele dá.** A correção refaz a chave por `replay` com o resultado novo na mesma posição; é recusada (`match.correction_conflicts`) se uma partida confirmada depois deixa de fechar (vencedor que não chega lá, outros lados, reset que deixa de existir), e os envios pendentes ou contestados de partidas cujos lados mudaram são anulados (evento `voided`).
+- **Fim**: quando a decisiva é confirmada (final da simples; grande final sem reset necessário, ou o reset), o torneio vira `finished` sozinho e mostra a classificação (`Placement`). Uma correção que volta a deixar partida por jogar (ex.: o reset passa a ser necessário) devolve o torneio para `in_progress`.
+- **Desfazer o início** é permitido com resultados e apaga resultados e histórico; a chave informa quantos resultados seriam apagados e a tela pede, havendo algum, que se digite o endereço do torneio. Só em andamento: depois de encerrado não se desfaz (assumido; a correção continua valendo).
+- **Histórico** por partida (`match_events`): enviado, confirmado, confirmado por tempo, contestado (com o comentário), resolvido, lançado, corrigido, W.O. e anulado, com autor, horário e o placar que a ação deixou; nota opcional do organizador. Só desfazer o início apaga.
+- **Mapas**: tabela global `maps` (como `champions`), com `duel_pool`. Lista **provisória, para o usuário revisar**: pool de duelo = Awoken, Blood Covenant, Blood Run, Corrupted Keep, Deep Embrace, Exile, Insomnia, Molten Falls, Ruins of Sarnath, Vale of Pnath; fora do pool = Burial Chamber, Church of Azathoth, Lockbox, Tempest Shrine, The Longest Yard, Tower of Koth. Nome de mapa é nome próprio (não se traduz). `GET /maps` é pública. Até o veto definir um pool por torneio, o detalhe aceita qualquer mapa ativo (o formulário mostra o pool de duelo primeiro).
+- **Rating por mapa** (item futuro): por isso o detalhe por mapa fica em `match_games`; sem detalhe, o placar diz quantos mapas cada um venceu.
+- **Banco rigoroso**: as invariantes de série e de estado também são `check` (placar dentro do melhor de N com o vencedor tendo mais mapas, contestado com comentário, confirmado com via, horário e posição, envio de jogador com lado e prazo, mapa sem empate e sem repetir), as FKs são compostas pelo torneio (participante do mesmo torneio, torneio do mesmo tenant) e participante ou fase com resultado não pode ser apagado.
 - Print do placar: o torneio decide se é obrigatório.
 - Upload direto do navegador para o bucket, com URL assinada gerada pela API. O front converte para WebP antes.
 - Prints apagados 30 dias após o fim do torneio (rotina diária).
@@ -163,10 +177,8 @@ Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code car
 
 ## Em aberto
 
-- Organizer inscrito no próprio torneio: pode resolver contestação ou corrigir resultado de partida em que joga? Decidir junto com chave e resultados.
 - Duelo: sequência do veto (ex.: ban-ban-pick-pick-decider) e tempo do cronômetro.
-- Janela de contestação padrão (X minutos).
-- Desfazer o início depois de haver resultado na chave: recusar ou descartar? Decidir junto com chave e resultados.
+- Lista de mapas e pool de duelo (a atual é provisória; ver "Resultados").
 - Critérios de desempate (FFA por pontos e grupos).
 - Rating para FFA e times (Elo par a par? média do time?).
 - Substitutos em times.
