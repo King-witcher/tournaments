@@ -73,6 +73,14 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - "Iniciar torneio": a confirmação diz quantos entram e quantos ficam de fora sem check-in; com menos de 2 elegíveis o botão fica desabilitado, com o motivo (era pendência da 2a).
   - Home sem cookie de sessão não chama a API (era o motivo da espera de quem não entrou).
 
+- **Revisão de uso, rodada 2c** (teste de ponta a ponta no navegador, banco limpo: organizador no desktop, jogador pelo convite no celular em pt e em es, casos de borda; decisões em "Interface" no `decisions.md`):
+  - Bug: o placar da partida empurrava a página para o lado no celular com apelidos longos (`1fr` não encolhe); agora as colunas encolhem e o nome quebra. Os campos de frags ficaram largos o bastante para o nome de cada lado aparecer.
+  - Foco: botão pendente fica com `aria-disabled` (com `disabled`, o foco caía no começo da página a cada ação, inclusive depois de um erro); na partida, o foco vai para a linha do mapa depois de confirmar, contestar ou resolver; o `ConfirmButton` devolve o foco ao botão.
+  - Publicar com o check-in já aberto pela data levava direto ao check-in, sem inscrições, sem aviso: agora o rascunho avisa, o botão diz "Publicar e abrir o check-in" e a confirmação explica a saída.
+  - Partida desatualizada: confirmar um mapa que a organização já confirmou recarrega a tela além de mostrar o erro.
+  - Login e cadastro dizem com que conta a pessoa já entrou, com link de volta; sessão expirada no meio de uma ação diz para recarregar e entrar.
+  - Textos: "1 mapa" no singular (md1), dica da chave sem "clique" (no celular é toque), vagas na prévia do convite ("16 vagas, nenhuma ocupada ainda"), "Início marcado para" quando a data passou e o torneio ainda não começou; links de volta (comunidade, torneio) com 44px no celular.
+
 ## UX: pendências
 
 Ficaram para depois das rodadas 2a e 2b, com o motivo:
@@ -85,6 +93,10 @@ Ficaram para depois das rodadas 2a e 2b, com o motivo:
 - **Histórico completo de torneios de quem vê**: "Seus torneios" mostra só os 5 encerrados mais recentes (cada um refaz a chave). A lista inteira cabe numa página de perfil, junto com o rating.
 - **Pendências da organização em todas as comunidades**: "Seus torneios" mostra as partidas de quem joga; contestações a resolver em torneios que a pessoa só organiza continuam na página de cada torneio.
 - **Arrastar no seeding**: ficou o campo de posição; arrastar numa lista que rola é impreciso no celular e pede uma biblioteca.
+- **Foco depois de ações que trocam a seção** (rodada 2c): inscrever-se, cancelar, check-in, publicar, abrir o check-in e iniciar trocam o botão por outro no refresh, e o foco cai no começo da página. Na partida isso foi resolvido com a linha do mapa como alvo (`focusIfLost`); falta escolher um alvo por seção (o título do quadro, por exemplo) e aplicar em cada uma.
+- **Publicar com o check-in já aberto** (rodada 2c): hoje há aviso, mas a regra continua levando direto ao check-in. A alternativa (publicar suspende a abertura automática, como reabrir a inscrição, e o organizador abre o check-in quando quiser) muda a API e a regra de "Torneios"; decidir com o usuário.
+- **"Não encontrado" responde 200** (rodada 2c): comunidade, torneio e partida inexistentes mostram a mensagem certa, mas o status HTTP é 200, porque o conteúdo chega por streaming dentro do `<Suspense>` depois de o status sair. Para pessoas não muda nada; para buscadores e pré-visualização de link, pediria `notFound()` antes do streaming (fora do `Suspense`), o que mexe na estrutura das páginas com Cache Components.
+- **Dica do campo no nome acessível** (rodada 2c): `Field` envolve rótulo, controle e dica num `<label>`, e o leitor de tela lê a dica (e, no `<select>`, as opções) como parte do nome do campo. O certo é a dica por `aria-describedby`, o que pede id por campo em todos os formulários.
 
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
