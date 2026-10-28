@@ -12,6 +12,7 @@ import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameForm } from "./game-form";
+import { GameReplay } from "./game-replay";
 
 type Schemas = components["schemas"];
 
@@ -22,12 +23,15 @@ type Props = {
   maps: Schemas["Map"][];
   /** Quem vê já tem o "confirmar" de jogador neste mapa. */
   responds: boolean;
+  /** É o último mapa da série: o único que pode ser anulado. */
+  last: boolean;
 };
 
 /**
  * Para organizer e owner, num mapa enviado: confirmar agora (pendente),
- * aceitar como enviado (contestado) e lançar outro resultado no lugar
- * (resolver ou corrigir), já confirmado.
+ * confirmar a vitória enviada (contestado), lançar outro resultado no lugar
+ * (resolver ou corrigir), já confirmado, e anular o último mapa ainda sem
+ * confirmar para ser jogado de novo.
  */
 export function GameOrganizerActions({
   target,
@@ -35,6 +39,7 @@ export function GameOrganizerActions({
   names,
   maps,
   responds,
+  last,
 }: Props) {
   const t = useTranslations("Match.gameOrganizer");
   const tForm = useTranslations("Match.form");
@@ -97,7 +102,9 @@ export function GameOrganizerActions({
       <div className="flex flex-wrap gap-2">
         {confirmable && (
           <Button size="sm" pending={pending} onClick={confirm}>
-            {game.status === "contested" ? t("accept") : t("confirmNow")}
+            {game.status === "contested"
+              ? t("accept", { name: names[game.winner] })
+              : t("confirmNow")}
           </Button>
         )}
         <Button
@@ -108,6 +115,9 @@ export function GameOrganizerActions({
         >
           {game.status === "confirmed" ? t("correct") : t("other")}
         </Button>
+        {last && game.status !== "confirmed" && (
+          <GameReplay target={target} number={game.number} />
+        )}
       </div>
       {error && <ErrorText>{error}</ErrorText>}
     </div>

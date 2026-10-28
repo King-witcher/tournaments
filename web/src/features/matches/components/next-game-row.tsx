@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { Disclosure } from "@/shared/ui/disclosure";
-import type { MatchTarget } from "../lib/match-target";
+import { gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameForm } from "./game-form";
 
 type Schemas = components["schemas"];
@@ -34,7 +34,12 @@ export function NextGameRow({
   const tForm = useTranslations("Match.form");
 
   return (
-    <li className="flex flex-col gap-2 py-3">
+    // tabIndex -1: recebe o foco depois de anular o mapa com este número.
+    <li
+      id={gameRowId(number)}
+      tabIndex={-1}
+      className="flex flex-col gap-2 py-3"
+    >
       <span className="font-medium">{t("number", { number })}</span>
       {plays ? (
         <GameForm

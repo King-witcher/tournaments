@@ -325,9 +325,9 @@
         "stage": "sin repetir campeón en la fase",
         "tournament": "sin repetir campeón en el torneo"
       },
-      "checkIn": "abre {minutes} min antes del inicio",
+      "checkIn": "abre {window} antes del inicio",
       "noCheckIn": "sin check-in: entran todos los inscritos",
-      "contest": "{minutes} min para que el rival confirme o impugne"
+      "contest": "{window} para que el rival confirme o impugne"
     },
     "translation": {
       "title": "Traducción: {language}",
@@ -529,6 +529,7 @@
       "game_already_reported": "Este mapa ya fue enviado. Recarga la página.",
       "game_out_of_order": "El próximo mapa de la serie es el {next}.",
       "game_not_found": "Este mapa no fue enviado.",
+      "game_not_last": "Solo se puede anular el último mapa de la serie: anula antes el mapa {last}.",
       "map_required": "Elige el mapa jugado.",
       "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó."
     }
@@ -636,13 +637,14 @@
     },
     "games": {
       "title": "Mapas",
-      "hint": "Cada mapa se envía y se confirma por separado. El rival tiene {minutes} min para confirmar o impugnar; sin respuesta, se confirma solo.",
+      "hint": "Cada mapa se envía y se confirma por separado. El rival tiene {window} para confirmar o impugnar; sin respuesta, se confirma solo.",
       "number": "Mapa {number}",
       "noMap": "mapa sin informar",
       "won": "Ganó {name}",
+      "claim": "{reporter} envió: ganó {winner}",
       "awaiting": "Esperando envío.",
-      "pending": "Enviado por {name}. Se confirma solo a las <at></at> (faltan <time></time>).",
-      "contested": "Impugnado por {name}: “{comment}”. Lo resuelve la organización.",
+      "pending": "Todavía no cuenta en el marcador: se confirma solo a las <at></at> (faltan <time></time>).",
+      "contested": "Impugnado por {name}: “{comment}”. No cuenta en el marcador hasta que lo resuelva la organización.",
       "confirmed": {
         "opponent": "Confirmado por el rival.",
         "deadline": "Confirmado al terminar el plazo.",
@@ -698,6 +700,7 @@
         "walkover": "{actor} dio W.O.",
         "auto_walkover": "W.O. automático: uno de los lados abandonó o salió de la comunidad",
         "voided": "{actor} anuló: el mapa quedó después de la decisión de la serie, o cambió quién juega la partida",
+        "replay": "{actor} anuló el mapa para jugarlo de nuevo",
         "voided_auto": "Anulado: la serie pasó a W.O.",
         "decided": "Serie decidida por los mapas confirmados",
         "reopened": "{actor} reabrió la serie: la corrección la dejó sin decisión"
@@ -729,8 +732,12 @@
     },
     "gameOrganizer": {
       "confirmNow": "Confirmar ahora",
-      "accept": "Aceptar como se envió",
-      "other": "Resolver con otro resultado",
+      "accept": "Confirmar victoria de {name}",
+      "other": "Cargar otro resultado",
+      "replay": "Anular: se juega de nuevo",
+      "replayQuestion": "El mapa {number} sale de la serie, y los jugadores juegan y envían el mapa {number} de nuevo. El historial guarda quién lo anuló y la nota.",
+      "replaySubmit": "Anular el mapa {number}",
+      "note": "Nota en el historial (opcional)",
       "correct": "Corregir",
       "correctHint": "La llave se rehace. Si la serie cambia y eso contradice una partida decidida después de esta, la corrección se rechaza; los mapas que queden después de la decisión se anulan.",
       "cancel": "Cancelar"
@@ -738,7 +745,12 @@
   },
   "Common": {
     "loading": "Cargando…",
-    "no": "No"
+    "no": "No",
+    "duration": {
+      "minutes": "{minutes} min",
+      "hours": "{hours} h",
+      "hoursMinutes": "{hours} h {minutes} min"
+    }
   },
   "NotFound": {
     "text": "Esta página no existe. Revisa la dirección o vuelve al inicio.",

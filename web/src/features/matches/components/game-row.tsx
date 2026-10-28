@@ -16,6 +16,8 @@ type Props = {
   names: { a: string; b: string };
   maps: Schemas["Map"][];
   canManage: boolean;
+  /** É o último mapa da série. */
+  last: boolean;
 };
 
 const BADGE = {
@@ -25,19 +27,27 @@ const BADGE = {
 } as const;
 
 /**
- * Um mapa enviado: número, mapa, quem venceu e os frags, o estado (enviado
- * por quem e até quando confirma, contestado e por quê, ou confirmado) e o
- * que quem vê pode fazer nele.
+ * Um mapa enviado: número, mapa, quem venceu e os frags (sem confirmar, como
+ * o que quem enviou diz), o estado (até quando confirma sozinho, contestado e
+ * por quê, ou confirmado) e o que quem vê pode fazer nele.
  */
-export function GameRow({ target, game: g, names, maps, canManage }: Props) {
+export function GameRow({
+  target,
+  game: g,
+  names,
+  maps,
+  canManage,
+  last,
+}: Props) {
   const t = useTranslations("Match.games");
   const other = (side: "a" | "b") => (side === "a" ? "b" : "a");
   const deadline = g.confirm_by;
+  const winner = names[g.winner];
+  const settled = g.status === "confirmed";
 
   let status: React.ReactNode = null;
   if (g.status === "pending" && g.reported_side && deadline) {
     status = t.rich("pending", {
-      name: names[g.reported_side],
       at: () => <LocalTime value={deadline} />,
       time: () => <DeadlineCountdown until={deadline} />,
     });
@@ -70,8 +80,12 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
           </span>
         </span>
         <span className="flex items-baseline gap-2">
-          <span className="font-semibold">
-            {t("won", { name: names[g.winner] })}
+          {/* Negrito só no que vale: sem confirmar, é a palavra de quem
+              enviou, e o placar no topo ainda não conta o mapa. */}
+          <span className={settled ? "font-semibold" : undefined}>
+            {settled || !g.reported_side
+              ? t("won", { name: winner })
+              : t("claim", { reporter: names[g.reported_side], winner })}
           </span>
           {g.a_frags != null && g.b_frags != null && (
             <span className="text-sm tabular-nums text-muted">
@@ -94,6 +108,7 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
           names={names}
           maps={maps}
           responds={g.task === "respond"}
+          last={last}
         />
       )}
     </li>

@@ -1,6 +1,7 @@
 //! Chave e resultados, mapa a mapa: ver a chave e uma partida, enviar um
 //! mapa, confirmar ou contestar (`report`), e o organizador lançar ou
-//! corrigir mapas e dar W.O. na série (`manage`).
+//! corrigir mapas e dar W.O. na série (`manage`) ou anular um mapa para ser
+//! jogado de novo (`replay`).
 //!
 //! Cada mapa da série é enviado e confirmado sozinho (`games`); a série
 //! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
@@ -29,6 +30,7 @@ mod key;
 mod manage;
 mod mine;
 mod outcome;
+mod replay;
 mod report;
 mod result;
 mod settle;
@@ -57,4 +59,5 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(report::contest))
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
+        .routes(routes!(replay::replay))
 }

@@ -532,6 +532,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["replay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/report": {
         parameters: {
             query?: never;
@@ -992,7 +1008,7 @@ export interface components {
             user_id: number;
         };
         /** @enum {string} */
-        EventKind: "reported" | "confirmed" | "auto_confirmed" | "contested" | "resolved" | "entered" | "corrected" | "walkover" | "auto_walkover" | "voided" | "decided" | "reopened";
+        EventKind: "reported" | "confirmed" | "auto_confirmed" | "contested" | "resolved" | "entered" | "corrected" | "walkover" | "auto_walkover" | "voided" | "replay" | "decided" | "reopened";
         EventOutcome: {
             /** Format: int32 */
             loser_maps?: number | null;
@@ -1338,6 +1354,11 @@ export interface components {
             name: string;
             /** @description Markdown, até 20000 caracteres; vazio usa o original. */
             rules?: string;
+        };
+        /** @description Anular o último mapa para ser jogado de novo. */
+        ReplayGame: {
+            /** @description Nota opcional no histórico, até 280 caracteres. */
+            comment?: string | null;
         };
         /** @description O resultado da série que o organizador define: W.O. */
         ResultInput: {
@@ -3802,6 +3823,84 @@ export interface operations {
                 };
             };
             /** @description tournament.not_in_progress, match.already_contested, match.already_confirmed (inclusive pela janela, que já acabou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.comment_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    replay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+                /** @description Número do mapa na série, a partir de 1 */
+                game: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayGame"];
+            };
+        };
+        responses: {
+            /** @description Mapa anulado pelo organizador para ser jogado de novo: sai da série (evento `replay` no histórico, com a nota) e o mesmo número volta a poder ser enviado. Só o último mapa da série, pendente ou contestado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, match.already_confirmed (inclusive pela janela, que já acabou), match.game_not_last {last} */
             409: {
                 headers: {
                     [name: string]: unknown;

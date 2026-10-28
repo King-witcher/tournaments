@@ -256,6 +256,9 @@ pub enum EventKind {
     /// Mapa anulado: veio depois da decisão da série, ou uma correção mudou
     /// quem joga a partida.
     Voided,
+    /// O organizador anulou o mapa (pendente ou contestado) para ser jogado
+    /// de novo.
+    Replay,
     /// A série fechou: os mapas confirmados deram a maioria a um lado.
     Decided,
     /// Uma correção de mapa deixou a série sem decisão.
@@ -338,6 +341,14 @@ pub struct GameInput {
 #[derive(Deserialize, ToSchema)]
 pub struct SetGame {
     pub game: GameInput,
+    /// Nota opcional no histórico, até 280 caracteres.
+    #[serde(default)]
+    pub comment: Option<String>,
+}
+
+/// Anular o último mapa para ser jogado de novo.
+#[derive(Deserialize, ToSchema)]
+pub struct ReplayGame {
     /// Nota opcional no histórico, até 280 caracteres.
     #[serde(default)]
     pub comment: Option<String>,

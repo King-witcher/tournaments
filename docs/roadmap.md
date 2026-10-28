@@ -84,6 +84,11 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - Edição de torneio iniciado: o motivo dos campos travados (formato, data, check-in) aparece antes deles, não no fim do formulário.
   - Textos: "1 mapa" no singular (md1), dica da chave sem "clique" (no celular é toque), vagas na prévia do convite ("16 vagas, nenhuma ocupada ainda"), "Início marcado para" quando a data passou e o torneio ainda não começou; links de volta (comunidade, torneio) com 44px no celular.
 
+- **Contestação mais clara e mapa anulado para jogar de novo** (pedido do usuário ao testar uma contestação de md1 que dizia "combinamos de refazer"; decisões em "Resultados" e "Interface" no `decisions.md`):
+  - `POST .../matches/{match}/games/{n}/replay` (organizer ou owner): anula o último mapa pendente ou contestado, com nota; evento `replay` no histórico (migration `20261102000000_game_replay`); o número volta a aceitar envio. Recusa mapa confirmado (`match.already_confirmed`) e do meio (`match.game_not_last {last}`).
+  - Linha do mapa: sem confirmar, "X enviou: Y venceu" sem negrito e "ainda não conta no placar"; "Aceitar como enviado" virou "Confirmar vitória de X", "Resolver com outro resultado" virou "Lançar outro resultado", e "Anular: jogam de novo" no último mapa sem confirmar.
+  - Janelas de contestação e check-in em horas a partir de 60 minutos ("24 h").
+
 ## UX: pendências
 
 Ficaram para depois das rodadas 2a e 2b, com o motivo:

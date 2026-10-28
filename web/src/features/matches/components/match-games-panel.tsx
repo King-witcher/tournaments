@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import type { MatchTarget } from "../lib/match-target";
 import { GameRow } from "./game-row";
 import { NextGameRow } from "./next-game-row";
@@ -25,6 +26,7 @@ export function MatchGamesPanel({
   contestMinutes,
 }: Props) {
   const t = useTranslations("Match.games");
+  const formatMinutes = useFormatMinutes();
   const s = detail.summary;
   const names = { a: detail.a?.nickname ?? "", b: detail.b?.nickname ?? "" };
   const next = detail.next_game;
@@ -36,7 +38,7 @@ export function MatchGamesPanel({
       <h2 className="text-xl font-semibold">{t("title")}</h2>
       {open && (
         <p className="text-sm text-muted">
-          {t("hint", { minutes: contestMinutes })}
+          {t("hint", { window: formatMinutes(contestMinutes) })}
         </p>
       )}
       {/* Divisória entre mapas: cada linha é uma unidade com estado e ações. */}
@@ -49,6 +51,7 @@ export function MatchGamesPanel({
             names={names}
             maps={maps}
             canManage={detail.can_manage}
+            last={game.number === detail.games.length}
           />
         ))}
         {next != null && (

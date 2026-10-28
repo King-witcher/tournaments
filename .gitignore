@@ -21,3 +21,7 @@ Thumbs.db
 
 # Claude Code: configurações locais da máquina
 .claude/settings.local.json
+
+gitignore/
+ignore.*
+*.ignore

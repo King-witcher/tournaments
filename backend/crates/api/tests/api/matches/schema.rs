@@ -381,21 +381,28 @@ async fn events_reject_invalid_rows(db: PgPool) {
     let me = Some(p[0].id);
     let outcome = rule(CHECK, "match_events_outcome_check");
 
-    // O que vale passa: mapa enviado (só o vencedor), série decidida.
+    // O que vale passa: mapa enviado (só o vencedor), série decidida, mapa
+    // anulado para ser jogado de novo (sem vencedor).
     event("reported", me, Some(1), Some(a), None, None)
         .await
         .unwrap();
     event("decided", None, None, Some(a), Some((2, 1)), None)
         .await
         .unwrap();
+    event("replay", me, Some(1), None, None, None)
+        .await
+        .unwrap();
     // Mapa com placar de série, mapa enviado sem vencedor, confirmação com
-    // vencedor, série fechada sem placar ou com autor, W.O. num mapa.
+    // vencedor, série fechada sem placar ou com autor, W.O. num mapa, mapa
+    // anulado com vencedor ou sem o mapa.
     for (kind, game, winner, maps) in [
         ("reported", Some(1), Some(a), Some((2, 1))),
         ("reported", Some(1), None, None),
         ("confirmed", Some(1), Some(a), None),
         ("decided", None, Some(a), None),
         ("walkover", Some(1), Some(a), None),
+        ("replay", Some(1), Some(a), None),
+        ("replay", None, None, None),
     ] {
         assert_eq!(
             rejected(event(kind, None, game, winner, maps, None).await),

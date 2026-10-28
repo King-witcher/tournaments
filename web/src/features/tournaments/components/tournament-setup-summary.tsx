@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 
 type Props = { tournament: components["schemas"]["Tournament"] };
 
@@ -10,6 +11,7 @@ type Props = { tournament: components["schemas"]["Tournament"] };
  */
 export function TournamentSetupSummary({ tournament }: Props) {
   const t = useTranslations("Tournament.setup");
+  const formatMinutes = useFormatMinutes();
   const [stage] = tournament.stages;
   const rules = tournament.champion_rules;
   const bracket =
@@ -34,11 +36,11 @@ export function TournamentSetupSummary({ tournament }: Props) {
       t("labels.checkIn"),
       tournament.check_in_minutes == null
         ? t("noCheckIn")
-        : t("checkIn", { minutes: tournament.check_in_minutes }),
+        : t("checkIn", { window: formatMinutes(tournament.check_in_minutes) }),
     ],
     [
       t("labels.contest"),
-      t("contest", { minutes: tournament.contest_minutes }),
+      t("contest", { window: formatMinutes(tournament.contest_minutes) }),
     ],
   ];
 

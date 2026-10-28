@@ -1,13 +1,15 @@
 //! Testes de `matches`: a chave (`bracket`), envio e confirmação mapa a mapa
-//! (`results`), contestação e organizador (`organizer`), correções e fim
-//! (`corrections`), as regras do banco para mapas, séries e histórico
-//! (`schema`) e a conversão das séries antigas para mapas (`migration`).
-//! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
+//! (`results`), contestação e organizador (`organizer`), mapa anulado para
+//! ser jogado de novo (`replay`), correções e fim (`corrections`), as regras
+//! do banco para mapas, séries e histórico (`schema`) e a conversão das
+//! séries antigas para mapas (`migration`). Helpers para montar um torneio
+//! iniciado com jogadores em ordem de seed.
 
 mod bracket;
 mod corrections;
 mod migration;
 mod organizer;
+mod replay;
 mod results;
 mod schema;
 

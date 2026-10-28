@@ -21,6 +21,7 @@ impl EventKind {
             Self::Walkover => "walkover",
             Self::AutoWalkover => "auto_walkover",
             Self::Voided => "voided",
+            Self::Replay => "replay",
             Self::Decided => "decided",
             Self::Reopened => "reopened",
         }
@@ -40,6 +41,7 @@ impl EventKind {
             Walkover,
             AutoWalkover,
             Voided,
+            Replay,
             Decided,
             Reopened,
         ]
@@ -123,6 +125,7 @@ mod tests {
             "auto_confirmed",
             "auto_walkover",
             "voided",
+            "replay",
             "decided",
         ] {
             assert_eq!(EventKind::from_db(kind).unwrap().as_str(), kind);

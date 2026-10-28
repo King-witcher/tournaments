@@ -54,13 +54,14 @@ crates/api/src/
                   situação e a próxima partida (TenantMember::all_of, tournaments::list,
                   matches::place). Fica acima de tournaments e matches
   matches/        .../bracket, .../matches/{match}[/result] e .../matches/{match}/games/{n}
-                  [/report|/confirm|/contest]: a série mapa a mapa. stage.rs (fase → chave por
+                  [/report|/confirm|/contest|/replay]: a série mapa a mapa. stage.rs (fase → chave por
                   replay das séries decididas, com os mapas; start, discard, sync_status),
                   games.rs (mapa gravado → engine), result.rs (série decidida), settle.rs (depois
                   de toda mudança: anula os mapas depois da decisão, fecha as séries, W.O.
                   automático, status), due.rs (confirmação por tempo dos mapas,
                   apply_due_confirmations), report.rs (jogadores), manage.rs (organizador:
-                  lançar, resolver e corrigir mapas, W.O. na série), outcome.rs (mapa pelos lados
+                  lançar, resolver e corrigir mapas, W.O. na série), replay.rs (organizador anula o último mapa sem
+                  confirmar para ser jogado de novo), outcome.rs (mapa pelos lados
                   → engine), tasks.rs (o que a partida e cada mapa esperam de quem vê), key.rs
                   (wb-1-3), history.rs, view.rs, mine.rs (lugar de quem vê na chave e próxima partida), detail.rs, actions.rs, withdrawals.rs (W.O.
                   automático de quem desistiu; settle_withdrawals); SQL em db/ (leitura e
