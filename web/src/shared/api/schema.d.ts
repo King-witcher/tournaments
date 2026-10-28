@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/tournaments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["my_tournaments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants": {
         parameters: {
             query?: never;
@@ -1208,6 +1224,13 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
+        /** @description Faixa de colocação: `rank` 5 com `tied` 4 é 5º–8º. */
+        MyPlacement: {
+            /** Format: int32 */
+            rank: number;
+            /** Format: int32 */
+            tied: number;
+        };
         /** @description Um tenant do ponto de vista do usuário logado. */
         MyTenant: {
             name: string;
@@ -1216,9 +1239,34 @@ export interface components {
             role: components["schemas"]["Role"];
             slug: string;
         };
+        /** @description Um torneio em que quem vê está inscrito. */
+        MyTournament: {
+            next_match?: components["schemas"]["NextMatch"] | null;
+            placement?: components["schemas"]["MyPlacement"] | null;
+            situation: components["schemas"]["Situation"];
+            tenant_name: string;
+            tenant_slug: string;
+            tournament: components["schemas"]["TournamentSummary"];
+        };
         NameTranslation: {
             locale: components["schemas"]["Locale"];
             name: string;
+        };
+        /** @description A próxima partida de quem vê num torneio em andamento. */
+        NextMatch: {
+            /** @example wb-2-1 */
+            key: string;
+            /** @description Apelido do adversário no tenant, quando já se sabe. */
+            opponent?: string | null;
+            opponent_from?: components["schemas"]["SideSource"] | null;
+            /** @description Eliminação simples: o código da partida não tem a parte da chave. */
+            single: boolean;
+            /**
+             * @description `ready` (dá para jogar) ou `pending` (o adversário sai de outra
+             *     partida).
+             */
+            state: components["schemas"]["MatchState"];
+            task?: components["schemas"]["ViewerTask"] | null;
         };
         NoRepeatRule: {
             scope: components["schemas"]["NoRepeatScope"];
@@ -1311,6 +1359,11 @@ export interface components {
             match_key: string;
             outcome: components["schemas"]["SourceOutcome"];
         };
+        /**
+         * @description A situação de quem vê no torneio.
+         * @enum {string}
+         */
+        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "playing" | "eliminated" | "withdrawn" | "champion";
         /** @enum {string} */
         SourceOutcome: "winner" | "loser";
         /** @description Formato de uma fase. */
@@ -2208,6 +2261,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    my_tournaments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Torneios em que quem vê está inscrito, de todas as comunidades de que participa: primeiro os que não encerraram (em andamento, check-in, inscrição, rascunho; dentro de cada um, pelo início), depois os 5 encerrados de início mais recente. As confirmações por tempo vencidas são aplicadas antes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTournament"][];
                 };
             };
             /** @description auth.unauthenticated */

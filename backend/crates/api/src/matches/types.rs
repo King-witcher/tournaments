@@ -85,6 +85,24 @@ pub enum ViewerTask {
     Resolve,
 }
 
+/// A próxima partida de quem vê num torneio em andamento.
+#[derive(Serialize, ToSchema)]
+pub struct NextMatch {
+    #[schema(example = "wb-2-1")]
+    pub key: String,
+    /// `ready` (dá para jogar) ou `pending` (o adversário sai de outra
+    /// partida).
+    pub state: MatchState,
+    /// Eliminação simples: o código da partida não tem a parte da chave.
+    pub single: bool,
+    /// Apelido do adversário no tenant, quando já se sabe.
+    pub opponent: Option<String>,
+    /// De que partida sai o adversário, enquanto não se sabe.
+    pub opponent_from: Option<SideSource>,
+    /// O que a partida espera de quem vê; `null` se nada.
+    pub task: Option<ViewerTask>,
+}
+
 #[derive(Serialize, ToSchema)]
 pub struct BracketMatch {
     /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`.

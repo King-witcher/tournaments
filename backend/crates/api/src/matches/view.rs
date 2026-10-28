@@ -91,7 +91,7 @@ pub fn bracket(
 }
 
 /// Os dois lados que a partida tem agora, como o `engine` os vê.
-fn occupants(stage: &Stage, m: &Match) -> (Occupant, Occupant) {
+pub fn occupants(stage: &Stage, m: &Match) -> (Occupant, Occupant) {
     match m.state {
         // O reset que não precisou acontecer não tem lados.
         ec::MatchState::NotNeeded => (Occupant::Unknown, Occupant::Unknown),

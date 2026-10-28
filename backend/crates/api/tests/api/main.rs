@@ -11,6 +11,7 @@ mod lifecycle;
 mod maps;
 mod matches;
 mod members;
+mod my_tournaments;
 mod participants;
 mod schema;
 mod tenants;

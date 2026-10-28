@@ -14,7 +14,9 @@
 //! (`withdrawals`) e encerra ou reabre o torneio conforme a chave. A
 //! confirmação por tempo é aplicada ao ler e agir (`due`);
 //! `apply_due_confirmations` é o que um agendador chamaria. A desistência,
-//! que fica no `lifecycle`, chama `settle_withdrawals`.
+//! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
+//! chave e a próxima partida dele, para `/me/tournaments`, saem de `place`
+//! (`mine`).
 
 mod actions;
 mod db;
@@ -25,6 +27,7 @@ mod handlers;
 mod history;
 mod key;
 mod manage;
+mod mine;
 mod outcome;
 mod report;
 mod result;
@@ -40,7 +43,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use due::apply_due_confirmations;
+pub use mine::{Place, place};
 pub use stage::{discard, start};
+pub use types::NextMatch;
 pub use withdrawals::settle as settle_withdrawals;
 
 pub fn router() -> OpenApiRouter<AppState> {

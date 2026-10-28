@@ -48,6 +48,9 @@ crates/api/src/
                   Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
                   gera a chave; desfazer a descarta)
   maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
+  my_tournaments/ GET /me/tournaments: os torneios de quem vê em todas as comunidades, com a
+                  situação e a próxima partida (TenantMember::all_of, tournaments::list,
+                  matches::place). Fica acima de tournaments e matches
   matches/        .../bracket, .../matches/{match}[/result] e .../matches/{match}/games/{n}
                   [/report|/confirm|/contest]: a série mapa a mapa. stage.rs (fase → chave por
                   replay das séries decididas, com os mapas; start, discard, sync_status),
@@ -57,7 +60,7 @@ crates/api/src/
                   apply_due_confirmations), report.rs (jogadores), manage.rs (organizador:
                   lançar, resolver e corrigir mapas, W.O. na série), outcome.rs (mapa pelos lados
                   → engine), tasks.rs (o que a partida e cada mapa esperam de quem vê), key.rs
-                  (wb-1-3), history.rs, view.rs, detail.rs, actions.rs, withdrawals.rs (W.O.
+                  (wb-1-3), history.rs, view.rs, mine.rs (lugar de quem vê na chave e próxima partida), detail.rs, actions.rs, withdrawals.rs (W.O.
                   automático de quem desistiu; settle_withdrawals); SQL em db/ (leitura e
                   confirmação por tempo, writes da série, events, games)
 ```

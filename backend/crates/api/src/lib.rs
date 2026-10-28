@@ -9,6 +9,7 @@ mod lifecycle;
 mod maps;
 mod matches;
 mod members;
+mod my_tournaments;
 mod participants;
 pub mod shared;
 mod tenants;
@@ -54,6 +55,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(lifecycle::router())
         .merge(maps::router())
         .merge(matches::router())
+        .merge(my_tournaments::router())
         .with_state(state)
         .split_for_parts();
 

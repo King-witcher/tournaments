@@ -41,6 +41,32 @@ pub async fn membership(
     .transpose()
 }
 
+/// As participações ativas de um usuário, na ordem em que entrou.
+pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, ApiError> {
+    let rows = sqlx::query!(
+        r#"select t.id, t.slug, t.name, m.role, m.nickname
+           from tenant_members m
+           join tenants t on t.id = m.tenant_id
+           where m.user_id = $1 and m.left_at is null
+           order by m.joined_at, t.id"#,
+        user_id
+    )
+    .fetch_all(db)
+    .await?;
+
+    rows.into_iter()
+        .map(|r| {
+            Ok(Membership {
+                tenant: TenantId::new(r.id),
+                slug: r.slug,
+                name: r.name,
+                role: Role::from_db(&r.role)?,
+                nickname: r.nickname,
+            })
+        })
+        .collect()
+}
+
 /// Cria o tenant com `owner_id` como owner, desde que ele ainda não seja
 /// owner de `max_owned` tenants.
 pub async fn create_with_owner(

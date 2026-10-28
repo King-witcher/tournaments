@@ -29,11 +29,11 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use db::{
-    StoredTournament, TournamentId, champion_pool, find, find_for_update,
+    StoredTournament, TournamentId, champion_pool, find, find_for_update, list,
     mark_registration_reopened, set_status, slugs_for_member, sync_finished,
 };
 pub use status::TournamentStatus;
-pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath};
+pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath, TournamentSummary};
 pub use visibility::{Visibility, find_visible, find_visible_for_update};
 
 pub fn router() -> OpenApiRouter<AppState> {

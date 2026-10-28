@@ -5,6 +5,7 @@ use axum::{
     http::request::Parts,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use utoipa::ToSchema;
 
 use super::db;
@@ -94,6 +95,27 @@ pub struct TenantMember<R = Player> {
     pub role: Role,
     pub nickname: String,
     min_role: PhantomData<R>,
+}
+
+impl TenantMember {
+    /// Todas as participações ativas de `user`, na ordem em que entrou, para
+    /// as rotas de quem vê que juntam as comunidades (`/me/tournaments`): o
+    /// `TenantId` continua saindo só de uma participação conferida no banco.
+    pub async fn all_of(db: &PgPool, user: &CurrentUser) -> Result<Vec<Self>, ApiError> {
+        Ok(db::memberships(db, user.id)
+            .await?
+            .into_iter()
+            .map(|m| Self {
+                tenant: m.tenant,
+                slug: m.slug,
+                name: m.name,
+                user: user.clone(),
+                role: m.role,
+                nickname: m.nickname,
+                min_role: PhantomData,
+            })
+            .collect())
+    }
 }
 
 impl<R: MinRole> FromRequestParts<AppState> for TenantMember<R> {

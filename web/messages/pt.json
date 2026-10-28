@@ -22,7 +22,27 @@
       "offline": "Não foi possível falar com a API."
     },
     "tournaments": {
-      "title": "Seus torneios"
+      "title": "Seus torneios",
+      "noneActive": "Nenhum torneio seu em andamento ou com inscrição aberta. Os torneios da comunidade ficam na página dela.",
+      "finished": "Encerrados recentemente",
+      "rank": "{rank}º",
+      "range": "{from}º–{to}º",
+      "situation": {
+        "registered": "Inscrição feita",
+        "check_in_pending": "Falta o seu check-in",
+        "checked_in": "Check-in feito",
+        "missed_check_in": "Fora da chave: sem check-in",
+        "playing": "Na chave",
+        "eliminated": "Terminou em {place}",
+        "withdrawn": "Desistiu",
+        "champion": "1º lugar: você venceu"
+      },
+      "next": {
+        "against": "Próxima partida: {match} contra {opponent}",
+        "winner": "Próxima partida: {match} contra quem vencer {source}",
+        "loser": "Próxima partida: {match} contra quem perder {source}",
+        "unknown": "Próxima partida: {match}"
+      }
     },
     "tenants": {
       "title": "Minhas comunidades",
