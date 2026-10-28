@@ -1,31 +1,34 @@
 //! Senha conferida com limite de tentativas, no login e quando a conta logada
 //! mexe nos próprios logins. O limite é por username (exista a conta ou não),
 //! não por IP: não depende do proxy, mas quem erra de propósito bloqueia o
-//! login com senha do outro por um tempo (o Discord continua entrando).
+//! login com senha do outro por um tempo (o Discord continua entrando). A
+//! contagem fica no Redis (`kv::password_blocked_until`).
 
 use axum::http::StatusCode;
-use chrono::Utc;
-use sqlx::PgPool;
+use chrono::{TimeDelta, Utc};
 
-use super::{db, password::verify_password, username::username_key};
-use crate::shared::ApiError;
+use super::{db, kv, password::verify_password, username::username_key};
+use crate::{
+    AppState,
+    shared::{ApiError, Redis},
+};
 
 /// Erros de senha que a janela aceita; o seguinte é recusado sem conferir.
-const MAX_PASSWORD_FAILURES: i64 = 5;
-const FAILURE_WINDOW_MINUTES: i32 = 15;
+const MAX_PASSWORD_FAILURES: usize = 5;
+const FAILURE_WINDOW: TimeDelta = TimeDelta::minutes(15);
 
 /// Confere `password` contra o hash do login `username`. Bloqueado → 429
 /// `auth.too_many_attempts` com `{"minutes"}`, sem nem olhar a senha. Erro
 /// conta uma tentativa; acerto zera a contagem.
 pub async fn check_password(
-    db: &PgPool,
+    redis: &Redis,
     username: &str,
     hash: Option<String>,
     password: String,
 ) -> Result<bool, ApiError> {
     let key = username_key(username);
     if let Some(until) =
-        db::password_blocked_until(db, &key, MAX_PASSWORD_FAILURES, FAILURE_WINDOW_MINUTES).await?
+        kv::password_blocked_until(redis, &key, MAX_PASSWORD_FAILURES, FAILURE_WINDOW).await?
     {
         let minutes = ((until - Utc::now()).num_seconds() + 59) / 60;
         return Err(
@@ -36,26 +39,28 @@ pub async fn check_password(
 
     let ok = verify_password(hash, password).await?;
     if ok {
-        db::clear_password_failures(db, &key).await?;
+        kv::clear_password_failures(redis, &key).await?;
     } else {
-        db::record_password_failure(db, &key, FAILURE_WINDOW_MINUTES).await?;
+        kv::record_password_failure(redis, &key, FAILURE_WINDOW).await?;
     }
     Ok(ok)
 }
 
 /// Exige a senha atual da conta logada antes de mudar seus logins: sem senha
-/// → 409 `missing`; errada → 403 `auth.wrong_password`.
+/// → 409 `missing`; errada → 403 `auth.wrong_password`. O acerto zera os
+/// erros do username, então trocar ou remover o username não deixa erros
+/// para quem pegar o nome depois.
 pub async fn confirm_password(
-    db: &PgPool,
+    state: &AppState,
     user_id: i64,
     current_password: String,
     missing: &'static str,
 ) -> Result<(), ApiError> {
-    let login = db::password_login_of_user(db, user_id)
+    let login = db::password_login_of_user(&state.db, user_id)
         .await?
         .ok_or(ApiError::conflict(missing))?;
     if check_password(
-        db,
+        &state.redis,
         &login.username,
         Some(login.password_hash),
         current_password,

@@ -5,10 +5,17 @@ mod discord;
 mod link;
 mod password;
 mod profile;
+mod sessions;
 
 use std::sync::Arc;
 
-use api::auth::{AuthSettings, DiscordApi, DiscordUser};
+use api::{
+    auth::{AuthSettings, DiscordApi, DiscordUser},
+    shared::{
+        Redis,
+        token::{hash_token, hex},
+    },
+};
 use async_trait::async_trait;
 use axum::{
     Router,
@@ -94,6 +101,12 @@ fn set_cookie(res: &Response<Body>, name: &str) -> Option<String> {
 /// Só `nome=valor` de um Set-Cookie.
 fn pair(set_cookie: &str) -> String {
     set_cookie.split(';').next().unwrap().to_owned()
+}
+
+/// Chave no Redis da sessão do cookie `session=..`.
+fn session_key(redis: &Redis, cookie: &str) -> String {
+    let token = cookie.strip_prefix("session=").unwrap();
+    redis.key(format_args!("session:{}", hex(&hash_token(token))))
 }
 
 async fn body_text(res: Response<Body>) -> String {

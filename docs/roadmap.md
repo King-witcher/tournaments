@@ -94,11 +94,18 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - Telas: login e cadastro em `Tile`; conta em três abas (`/account`, `/logins`, `/password`); convite; comunidade em quatro abas por sub-rota (grupo `(community)`: torneios, membros, convites, configurações) com `DataTable` (busca, paginação no cliente, ⋯ por linha); página da pessoa na comunidade (`/[tenant]/members/[user]`); torneio em abas (grupo `(tabs)`: visão geral com `ProgressSteps`, chave, inscritos, regras, organização) com cabeçalho de uma ação primária por papel e o `Tile` "Sua situação"; seeding em página própria; partida com placar, lista própria de mapas responsiva e Modal para anular; formulários de torneio em `FormGroup`s com erro por campo e foco; confirmações em `Modal`.
   - Feito por agentes: base (Opus), depois os fluxos A–D em duas variantes com briefs idênticos, Opus (1,71 M tokens, 32 min) e Sonnet (1,03 M, 15 min); a variante Opus foi a mesclada. A variante Sonnet ficou no branch `carbon-sonnet` para consulta.
 
+- **Sessões e tentativas de senha no Redis** (pedido do usuário, Upstash grátis em produção; decisões em "Redis" e "Autenticação" no `decisions.md`):
+  - `shared/redis.rs` (`Redis`: conexão que abre no primeiro comando, prefixo `REDIS_PREFIX` em toda chave, uma nova tentativa quando a conexão parada caiu); `REDIS_URL` obrigatória, `PING` ao subir, provedor aws-lc do rustls instalado no `main` para o `rediss://`.
+  - `auth/kv/`: `session:{hash}` (dono, criação, `User-Agent`, TTL de 30 dias) e o índice `user_sessions:{user_id}`, gravados juntos; `password_failures:{username}` (zset por horário, expira com a janela). Migration `20261103000000_sessions_in_redis` apaga `sessions`, `password_failures` e o trigger que limpava os erros.
+  - Rotas novas: `GET /auth/sessions` (com `current` e o navegador), `DELETE /auth/sessions` (as outras) e `DELETE /auth/sessions/{id}`. Ainda sem tela no front (ver "UX: pendências").
+  - Testes no Redis local: `common::redis(&db)` dá a cada teste um prefixo próprio por execução; `user()` cria a sessão por `auth::create_session`.
+
 ## UX: pendências
 
 Ficaram para depois das rodadas 2a e 2b, com o motivo:
 
 - **Tempo real** (item 1 de "Próximo"): chave, check-in, partida e "Seus torneios" só mudam ao recarregar a página. Depende do WebSocket e do agendador da confirmação por tempo.
+- **Sessões abertas na conta**: a API já lista e encerra (`/auth/sessions`); falta a seção na página da conta (navegador, desde quando, "esta sessão", encerrar uma, encerrar as outras).
 - **Aviso fora do site** (DM ou webhook do Discord, email): a decisão do MVP é avisar só no site ("Notificações" no `decisions.md`); precisa de bot ou provedor de email e de decidir o que vale aviso.
 - **Excluir conta e excluir comunidade**: apagam (ou, a conta, anonimizam) dados de outras pessoas e torneios jogados; ficam para o usuário decidir a regra (ver "Consistência do banco" no `decisions.md`).
 - **Home de quem não entrou**: o esqueleto ainda aparece por um instante antes do convite a entrar, porque saber se há sessão lê cookies e, com Cache Components, isso fica dentro do `<Suspense>`. A espera pela API saiu (sem cookie de sessão, nada é perguntado); tirar o esqueleto de vez pediria uma home estática para quem não tem cookie (decidir no proxy).

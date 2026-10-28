@@ -37,6 +37,7 @@ struct ApiDoc;
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
+    pub redis: shared::Redis,
     pub discord: Arc<dyn auth::DiscordApi>,
     pub auth: Arc<auth::AuthSettings>,
 }

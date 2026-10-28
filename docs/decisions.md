@@ -18,6 +18,7 @@ Registro das decisões tomadas antes do início do código, com o motivo de cada
 | Frontend | Next.js (App Router), **só apresentação**, next-intl, Bun (pacotes e scripts), Biome (lint e formatação) |
 | Tipos no front | gerados do OpenAPI com openapi-typescript |
 | Banco | Postgres. Dev: cluster local. Prod: database com usuário próprio no projeto Supabase us-east-1 existente |
+| Redis | Sessões e tentativas de senha, no database 0. Dev: servidor local (Memurai no Windows; os outros databases ficam para outros projetos). Prod: Upstash grátis (256 MB, 500 mil comandos por mês, `rediss://`). Ver "Redis" |
 | Tempo real | WebSocket no Axum, `tokio::broadcast` em memória (uma instância). `LISTEN/NOTIFY` se um dia houver mais de uma |
 | Storage | API S3 genérica, provedor por variável de ambiente (Cloudflare R2 sugerido) |
 | Observabilidade | Sentry no Rust e no Next |
@@ -33,16 +34,36 @@ Motivos e cuidados:
 - **Render free**: 750 h/mês por workspace, o que cabe em **um** serviço sempre ligado.
 - **Conexão Render → Supabase**: a conexão direta é só IPv6 e costuma falhar no Render; use o pooler em **modo sessão**. Teste cedo com o usuário próprio (formato `usuario.<project-ref>`). Se o pooler não aceitar outro database, use um schema dedicado dentro do database `postgres`.
 
+## Redis
+
+Entrou em 2026-10-28, com a instância grátis do Upstash: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da cota faz os comandos falharem até o mês virar.
+
+- **O que vai: dado efêmero, que some sozinho com TTL.** Sessões e tentativas de senha (escolha do usuário). As sessões no Postgres já sobreviviam a deploy; o ganho é a expiração sozinha (a tabela só crescia), o índice por conta e tirar as escritas de login do banco.
+- **Cota**: a sessão é o único comando no caminho de cada requisição logada (um `HGET`). Conta de referência: noite de torneio com 32 jogadores recarregando a chave a cada 30 s por 3 horas, com ~4 chamadas à API por página, dá ~46 mil comandos. Se apertar: pago por uso (US$ 0,20 por 100 mil comandos) ou o fixo de 250 MB (US$ 10/mês, sem limite de comandos). Pipe e MULTI juntam idas e voltas, mas cada comando deles conta.
+- **O que não vai, por ora**:
+  - cache de leitura: a chave e o torneio mudam com o tempo (confirmação por tempo, abertura do check-in), parte da resposta depende de quem vê, e cada acerto também gasta cota. Só depois de medir onde dói;
+  - locks: a concorrência já é `select ... for update` dentro da transação, mais correto que um lock fora dela. O agendador do tempo real, com mais de uma instância, usa advisory lock do Postgres, que não gasta cota;
+  - tempo real entre instâncias: continua `tokio::broadcast`, e `LISTEN/NOTIFY` se um dia houver mais de uma;
+  - limite por conta nas escritas (rate limiting por usuário): não pedido.
+- **Sem Redis a API não sobe** (`REDIS_URL` obrigatória e um `PING` ao subir) e, se ele cair, as rotas que leem a sessão respondem 500: as sessões só existem lá. O `/health` não consulta o Redis, porque o monitor de uptime gastaria a cota.
+- **Conexão**: `ConnectionManager` do redis-rs, que abre no primeiro comando e reconecta; o comando que falha porque a conexão parada caiu tenta de novo uma vez (`shared/redis.rs`). TLS (`rediss://`) pelo rustls com o provedor aws-lc instalado no `main`: com ring (sqlx) e aws-lc (reqwest) ativos, o rustls não escolhe sozinho, e o primeiro `rediss://` entrava em pânico (conferido).
+- **Database 0 e prefixo**: o projeto usa só o database 0 (o único do Upstash; no Redis local, os outros são de outros projetos do usuário). Dentro dele, toda chave passa por `Redis::key`, com `REDIS_PREFIX` (padrão `tournaments:`) na frente, para ambientes deste projeto dividirem o database (checkout principal e worktrees). Os testes usam `test:{execução}:{banco do teste}:`, e as chaves de execuções com mais de uma hora saem na execução seguinte.
+- **Deploy**: definir `REDIS_URL` no Render (o `rediss://default:<senha>@<host>:6379` do Upstash) antes de subir a migration `20261103000000_sessions_in_redis`, que apaga `sessions` e `password_failures`. A API confere o Redis (`PING`) antes de aplicar as migrations: sem ele, o deploy falha sem apagar nada, e a instância antiga segue no ar.
+
 ## Autenticação
 
 - Própria, em Rust. Dois logins: Discord (OAuth2) e nome de usuário + senha.
 - `users` + `user_identities (provider, provider_user_id, UNIQUE(provider, provider_user_id))`: cada forma de login é uma linha (`discord`, `password`; Steam no futuro é só mais uma). No máximo um login de cada provedor por usuário (`UNIQUE(user_id, provider)`).
 - **Username e senha**: o username fica em `provider_user_id` como digitado e o hash argon2id em `password_hash` (só nas linhas `password`). Formato: 3 a 20 letras ou números ASCII, `_`, `.` e `-` (só ASCII para não haver nomes que parecem iguais). Único sem diferenciar maiúsculas (índice em `lower(provider_user_id)`), e o login também não diferencia. No cadastro o username vira o nome exibido; trocar o username depois não muda o nome. O próprio usuário troca o **nome exibido** na conta (`PATCH /me`, rodada 2b): de 1 a 32 caracteres numa linha, sem espaços nas pontas (assumido: o cadastro não pede nome, ele vem do username; 32 é o limite do apelido, que começa com o nome, e o do Discord). Trocar não muda os apelidos que ele já tem nas comunidades, e o login pelo Discord não sobrescreve o nome. Senha de 8 a 128 caracteres, sem regra de composição (NIST 800-63B).
-- **Limite de tentativas por username, no banco** (`password_failures`): 5 senhas erradas em 15 minutos bloqueiam aquele username até o erro mais antigo sair da janela (429 `auth.too_many_attempts` com os minutos). Vale também para username inexistente, que confere contra um hash fixo para não revelar pelo tempo quem existe. Não usa IP (não depende do `X-Forwarded-For` do Render); o custo é que alguém pode travar o login por senha de outra pessoa por 15 minutos, e o Discord continua entrando.
+- **Limite de tentativas por username, no Redis** (`password_failures:{username}`, um zset com o horário de cada erro, que expira com a janela; era a tabela `password_failures` até 2026-10-28): 5 senhas erradas em 15 minutos bloqueiam aquele username até o erro mais antigo sair da janela (429 `auth.too_many_attempts` com os minutos). Vale também para username inexistente, que confere contra um hash fixo para não revelar pelo tempo quem existe. Não usa IP (não depende do `X-Forwarded-For` do Render); o custo é que alguém pode travar o login por senha de outra pessoa por 15 minutos, e o Discord continua entrando.
 - **Sem recuperação de conta por enquanto**: não há email. O Discord é o backup, e a tela de conta e o cadastro avisam isso. Recuperação por email fica para quando houver provedor de email.
 - **Vincular e desvincular**: quem entrou pelo Discord pode criar username e senha, e quem tem senha pode vincular o Discord (pelo mesmo OAuth, com a intenção "link" no cookie do state). A conta nunca fica sem login: remover a senha exige Discord vinculado, e desvincular o Discord exige senha. Trocar ou remover a senha e desvincular o Discord pedem a senha atual (com o mesmo limite de tentativas); trocar a senha encerra as outras sessões. Desvincular o Discord tira o avatar, que vinha dele.
 - Vincular um Discord que já é login de outra conta é recusado (`auth.discord_taken`); não há mesclagem de contas.
-- Sessão em cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, com as sessões numa tabela no Postgres.
+- Sessão em cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, de 30 dias contados da entrada (sem renovar a cada uso, que gastaria um comando de escrita por requisição). As sessões ficam no Redis desde 2026-10-28 (antes, numa tabela no Postgres; a troca deslogou todo mundo uma vez):
+  - `session:{sha256 do token}`: hash com `user_id`, `created_at` e `user_agent` (o do login, até 256 caracteres), com o TTL da sessão. Cada requisição logada faz um `HGET` dela e lê o usuário no banco pela chave primária; o usuário não fica em cache no Redis, para nome, avatar e idioma nunca ficarem velhos.
+  - `user_sessions:{user_id}`: zset com os hashes das sessões da conta e a expiração como score, gravado junto com a sessão (MULTI). Serve para listar (`GET /auth/sessions`), encerrar uma (`DELETE /auth/sessions/{id}`, que também apaga o cookie se for a da requisição) e encerrar as outras (`DELETE /auth/sessions` e a troca de senha). As vencidas saem do índice ao criar sessão e ao listar.
+  - O `id` público de uma sessão são os 16 primeiros caracteres hexadecimais do hash (64 bits): não serve para entrar, não precisa de outra chave e não se repete entre as sessões de uma conta.
+  - Conta apagada direto no banco deixa a sessão no Redis, sem efeito (o usuário não existe mais) até expirar.
 
 ## Multi-tenant
 
@@ -73,7 +94,7 @@ Motivos e cuidados:
 - **Não escondemos esses ids.** Toda rota que recebe um id confere a participação no tenant, então enumerar não dá acesso a nada; no máximo revela a ordem e o total aproximado de cadastros.
 - **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`. Exceção: `participants` tem id próprio (bigint) além do `unique (tournament_id, user_id)`, porque ele vira o `ParticipantId` da chave (`engine::core::ParticipantId(i64)`; o `engine` não depende mais de `uuid`); nas rotas, o inscrito é identificado pelo `user_id`.
 - **Identificador público e legível**: slug (tenant; torneio por tenant depois). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
-- **Segredos** (sessão, convite): aleatórios, e só o SHA-256 vai para o banco. O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
+- **Segredos** (sessão, convite): aleatórios, e só o SHA-256 fica guardado (o do convite no banco; o da sessão, no Redis). O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
 - Se um dia houver ids gerados fora do banco ou bancos que se fundem: `uuidv7()`, nativo no PG18 (a ideia do ULID, com tipo nativo).
 
 ## Torneios
@@ -179,7 +200,7 @@ Motivos e cuidados:
 ## Consistência do banco
 
 - O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API continua conferindo antes, para devolver o código certo. Regras nas migrations `20261030000000_delete_rules` e `20261030010000_consistency_checks`, testes em `tests/api/schema/`, checklist para migration nova no `backend/CLAUDE.md`.
-- **Excluir usuário** é recusado se ele for owner de algum tenant ou tiver participado de torneio iniciado (em andamento ou encerrado), para a chave antiga não perder um lado. Sessões, logins e tentativas de senha vão junto. A autoria (quem inscreveu, marcou o check-in, enviou, contestou ou confirmou um resultado, agiu no histórico) fica nula. Os convites que ele criou saem com a participação dele no tenant: convite é uma autorização dada pelo membro.
+- **Excluir usuário** é recusado se ele for owner de algum tenant ou tiver participado de torneio iniciado (em andamento ou encerrado), para a chave antiga não perder um lado. Os logins vão junto; as sessões dele, no Redis, ficam sem efeito até expirar, e as tentativas de senha expiram com a janela. A autoria (quem inscreveu, marcou o check-in, enviou, contestou ou confirmou um resultado, agiu no histórico) fica nula. Os convites que ele criou saem com a participação dele no tenant: convite é uma autorização dada pelo membro.
 - **"Excluir conta"** (quando existir) vai **anonimizar** o usuário (nome, avatar, logins, sessões) em vez de apagar a linha, para os torneios que ele jogou continuarem inteiros.
 - **Excluir tenant** apaga tudo o que está dentro. **Excluir torneio** também, inclusive resultados, mapas e histórico (a API só exclui rascunho, mas o banco aceita qualquer um).
 - **Inscrito e fase de torneio iniciado** não saem avulsos, só com o torneio ou o tenant; também ninguém entra e seed e check-in não mudam. Por isso o membro inscrito num torneio iniciado também não sai do tenant: sair mantendo o histórico é ficar inativo, não linha apagada.
@@ -189,7 +210,7 @@ Motivos e cuidados:
 - Quem inscreveu, quem marcou o check-in e quem criou o convite são membros do mesmo tenant (FK composta); o convite gravado numa inscrição é um link do mesmo torneio.
 - **Estado e forma também no banco**: data de início fora do rascunho; status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slug do tenant e slug, tenant e idioma original do torneio fixos; JSON de regras de campeões e de fase com a forma do `engine` (bans de 0 a 3, melhor de N ímpar); username no formato do cadastro, senha só como hash argon2id, tokens como SHA-256 de 32 bytes, avatar só por https, nome exibido não vazio, campeão com nome único.
 - Torneios publicados antes de existir a data de início ganharam a data de criação, e os que estavam na inscrição ficaram com a abertura automática do check-in suspensa (como numa reabertura), para não mudarem de status sozinhos.
-- **Fica fora do banco, de propósito**: ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra); validade de sessão e de convite posterior à criação e histórico imutável (os testes envelhecem essas datas direto no banco); o limite de 3 tenants por owner e o pool de campeões (regras da API, que mudam sem migration).
+- **Fica fora do banco, de propósito**: ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra); validade de convite posterior à criação e histórico imutável (os testes envelhecem essas datas direto no banco); o limite de 3 tenants por owner e o pool de campeões (regras da API, que mudam sem migration).
 
 ## Interface
 

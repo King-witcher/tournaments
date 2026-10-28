@@ -336,14 +336,12 @@ async fn deleting_an_author_keeps_what_they_did(db: PgPool) {
     .await
     .unwrap();
     assert_eq!(p2, None);
-    for table in ["sessions", "tenant_members"] {
-        let sql = format!("select count(*) from {table} where user_id = {olga}");
-        assert_eq!(count(&db, &sql).await, 0, "{table}");
-    }
+    let members = format!("select count(*) from tenant_members where user_id = {olga}");
+    assert_eq!(count(&db, &members).await, 0);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn deleting_a_user_takes_logins_sessions_and_registrations(db: PgPool) {
+async fn deleting_a_user_takes_logins_and_registrations(db: PgPool) {
     let cup = finished_cup(&db).await;
     let bia = cup.bia.id;
     sqlx::query(
@@ -355,12 +353,6 @@ async fn deleting_a_user_takes_logins_sessions_and_registrations(db: PgPool) {
     .execute(&db)
     .await
     .unwrap();
-    exec(
-        &db,
-        "insert into password_failures (username) values ('bia_1'), ('bia_1'), ('outra')",
-    )
-    .await
-    .unwrap();
     // Inscrita num torneio que não começou.
     create_tournament(&cup.app, &cup.ana, duel("outra")).await;
     publish(&cup.app, &cup.ana, "outra").await;
@@ -370,62 +362,8 @@ async fn deleting_a_user_takes_logins_sessions_and_registrations(db: PgPool) {
         .await
         .unwrap();
 
-    for table in [
-        "sessions",
-        "user_identities",
-        "tenant_members",
-        "participants",
-    ] {
+    for table in ["user_identities", "tenant_members", "participants"] {
         let sql = format!("select count(*) from {table} where user_id = {bia}");
         assert_eq!(count(&db, &sql).await, 0, "{table}");
     }
-    // As tentativas do username dela saem; as dos outros, não.
-    let failures = sqlx::query_scalar!("select username from password_failures")
-        .fetch_all(&db)
-        .await
-        .unwrap();
-    assert_eq!(failures, ["outra"]);
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_failures_leave_with_the_username(db: PgPool) {
-    let me = user(&db, "Rapha").await;
-    sqlx::query(
-        "insert into user_identities (user_id, provider, provider_user_id, password_hash)
-         values ($1, 'password', 'Rapha', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
-    )
-    .bind(me.id)
-    .execute(&db)
-    .await
-    .unwrap();
-    let failures = "select count(*) from password_failures";
-    exec(
-        &db,
-        "insert into password_failures (username) values ('rapha')",
-    )
-    .await
-    .unwrap();
-
-    // Trocar só a senha (ou a caixa do username) mantém.
-    exec(&db, "update user_identities set provider_user_id = 'RAPHA'")
-        .await
-        .unwrap();
-    assert_eq!(count(&db, failures).await, 1);
-    // Trocar o username apaga as do antigo.
-    exec(
-        &db,
-        "update user_identities set provider_user_id = 'rapha2'",
-    )
-    .await
-    .unwrap();
-    assert_eq!(count(&db, failures).await, 0);
-    // Remover o login também.
-    exec(
-        &db,
-        "insert into password_failures (username) values ('rapha2')",
-    )
-    .await
-    .unwrap();
-    exec(&db, "delete from user_identities").await.unwrap();
-    assert_eq!(count(&db, failures).await, 0);
 }

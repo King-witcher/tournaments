@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -45,6 +46,26 @@ pub struct ChangePassword {
 #[derive(Deserialize, ToSchema)]
 pub struct CurrentPassword {
     pub current_password: String,
+}
+
+/// Uma sessão aberta da conta.
+#[derive(Serialize, ToSchema)]
+pub struct SessionInfo {
+    /// Identifica a sessão para encerrá-la; não serve para entrar.
+    #[schema(example = "3f9a0c1b2d4e5f60")]
+    pub id: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    /// `User-Agent` do navegador que entrou, se veio.
+    pub user_agent: Option<String>,
+    /// É a sessão desta requisição.
+    pub current: bool,
+}
+
+/// `{id}` de `/auth/sessions/{id}`.
+#[derive(Deserialize)]
+pub struct SessionPath {
+    pub id: String,
 }
 
 /// Formas de login da conta. Sempre sobra pelo menos uma.

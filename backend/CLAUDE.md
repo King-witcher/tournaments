@@ -20,13 +20,17 @@ crates/api/src/
     error.rs        ApiError (código + params numéricos), ErrorBody
     engine.rs       From<EngineError> for ApiError: um código por variante do engine
     extract.rs      JsonBody, PathParams, nullable (campo de PATCH em que null limpa)
-    token.rs        random_token, random_secret, hash_token, constant_time_eq
+    token.rs        random_token, random_secret, hash_token, hex, constant_time_eq
     text.rs         clean_text (uma linha), clean_long_text (Markdown)
     slug.rs         formato de slug; reservados e códigos ficam em cada domínio
     locale.rs       Locale (pt, es)
+    redis.rs        Redis: conexão (abre no primeiro comando), key (prefixo do ambiente),
+                    query/query_pipe (tentam de novo uma vez se a conexão parada caiu)
   auth/           login com Discord e com username e senha (argon2, limite de tentativas),
                   ligar e desligar cada um, sessão em cookie, CurrentUser (`Option<CurrentUser>` em rota
-                  pública que muda para quem está logado, como a prévia do convite), PATCH /me (nome)
+                  pública que muda para quem está logado, como a prévia do convite), PATCH /me (nome),
+                  /auth/sessions (listar, encerrar uma, encerrar as outras). Sessões e erros de
+                  senha no Redis (kv/); contas e logins no banco (db/)
   tenants/        tenants (criar, ver, transferir a posse), e a base de todo dado de tenant:
                   TenantId, Role, TenantMember (e `TenantMember::all_of`, as participações de quem vê),
                   apelido
@@ -87,6 +91,7 @@ Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `realt
 | `handlers.rs` | handlers com `#[utoipa::path]`: extrair, validar, chamar `db`, montar a resposta. Constantes de regra (limite, validade) | SQL |
 | `types.rs` | DTOs da API (`Serialize`/`Deserialize`/`ToSchema`) e structs de caminho (`MemberPath`) | lógica, SQL |
 | `db.rs` | toda query do domínio (`query!`/`query_as!`), inclusive transações | HTTP, extractor |
+| `kv.rs` | o que o domínio guarda no Redis: formato das chaves (o comentário do arquivo diz cada uma), TTL e comandos | HTTP, SQL |
 | `<conceito>.rs` | regra pura ou peça com nome próprio (`slug.rs`, `nickname.rs`, `session.rs`, `access.rs`, `discord.rs`), com os testes unitários no próprio arquivo | — |
 
 Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódulos são privados (`mod db;`); o que sai do domínio sai pelo `pub use` do `mod.rs`.
@@ -103,6 +108,13 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 - Devolve tipo do domínio, nunca o record anônimo do `query!`. Erro `sqlx::Error` quando só o banco pode falhar; `ApiError` quando aplica regra (conflito, limite) ou lê enum do banco (`Role::from_db`).
 - Número de regra (limite, validade) é constante no `handlers.rs` e entra como parâmetro (`create_with_owner(.., MAX_OWNED_TENANTS)`).
 
+### kv.rs
+
+- Recebe `&Redis`; toda chave sai de `redis.key(..)`, que põe o prefixo do ambiente (e o de cada teste).
+- Comandos por `redis.query`/`redis.query_pipe` (`Cmd::hget(..)`, `redis::pipe()`), nunca pela conexão crua: eles reconectam. Escrita que precisa ir junto (sessão + índice) vai num pipe `atomic()` (MULTI).
+- Devolve tipo do domínio; erro `RedisError`, que vira 500 pelo `ApiError`.
+- Pense na cota (cada comando conta): uma leitura por requisição no máximo, e só onde não tem jeito (a sessão). Pipe junta idas e voltas, mas cada comando dele conta.
+
 ### Tamanho
 
 - Handler com corpo acima de ~30 linhas: leve passos para `db.rs` ou para um `<conceito>.rs`.
@@ -112,7 +124,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 ### Testes de rota
 
 - Em `crates/api/tests/api/`, num binário só: `main.rs` declara os módulos. Arquivo solto em `tests/` vira outro binário, que linka a crate inteira de novo.
-- Um arquivo por domínio, com o nome do módulo em `src/`. Helpers comuns (app, usuário com sessão, `get`/`post`/..., `create`/`invite`/`join`) em `common.rs`; helper de um domínio só fica no arquivo dele.
+- Um arquivo por domínio, com o nome do módulo em `src/`. Helpers comuns (app, usuário com sessão, `redis(&db)` com o prefixo do teste, `get`/`post`/..., `create`/`invite`/`join`) em `common.rs`; helper de um domínio só fica no arquivo dele.
 - Filtrar: `cargo test -p api invites::`.
 - Regras do banco, por SQL direto: `schema/` para o schema inteiro (exclusões, owner, checks), `matches/schema.rs` para resultados e histórico.
 

@@ -5,6 +5,7 @@ use api::{
     AppState, MIGRATOR,
     auth::{AuthSettings, HttpDiscord},
     config::Config,
+    shared::Redis,
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
@@ -26,6 +27,19 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("falha ao conectar no Postgres (confira DATABASE_URL)")?;
 
+    // O rustls vem com dois provedores de criptografia (ring pelo sqlx, aws-lc
+    // pelo reqwest) e assim não escolhe sozinho; o TLS do Redis (`rediss://`)
+    // usa o padrão do processo.
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+    let redis =
+        Redis::open(&config.redis_url, &config.redis_prefix).context("REDIS_URL inválida")?;
+    // Antes das migrations: um deploy sem Redis falha sem mexer no banco, e a
+    // instância antiga continua com o schema que conhece.
+    redis
+        .ping()
+        .await
+        .context("falha ao conectar no Redis (confira REDIS_URL)")?;
+
     MIGRATOR
         .run(&db)
         .await
@@ -38,6 +52,7 @@ async fn main() -> anyhow::Result<()> {
     }
     let state = AppState {
         db,
+        redis,
         discord: Arc::new(HttpDiscord::new(
             config.discord_client_id.clone().unwrap_or_default(),
             config.discord_client_secret.clone().unwrap_or_default(),

@@ -6,7 +6,7 @@ use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::{db, session::SESSION_COOKIE};
+use super::{db, kv, session::SESSION_COOKIE};
 use crate::{
     AppState,
     shared::{ApiError, token::hash_token},
@@ -22,6 +22,20 @@ pub struct CurrentUser {
     pub locale: String,
 }
 
+impl CurrentUser {
+    /// Dono da sessão com este hash: o dono vem do Redis e o usuário, do
+    /// banco. Sessão vencida ou conta que não existe mais → `None`.
+    pub(super) async fn of_session(
+        state: &AppState,
+        hash: &[u8; 32],
+    ) -> Result<Option<Self>, ApiError> {
+        let Some(user_id) = kv::session_user(&state.redis, hash).await? else {
+            return Ok(None);
+        };
+        Ok(db::find_user(&state.db, user_id).await?)
+    }
+}
+
 impl FromRequestParts<AppState> for CurrentUser {
     type Rejection = ApiError;
 
@@ -35,7 +49,7 @@ impl FromRequestParts<AppState> for CurrentUser {
             .ok_or(ApiError::unauthenticated())?
             .value();
 
-        db::user_by_session(&state.db, &hash_token(token))
+        Self::of_session(state, &hash_token(token))
             .await?
             .ok_or(ApiError::unauthenticated())
     }
@@ -54,6 +68,6 @@ impl OptionalFromRequestParts<AppState> for CurrentUser {
         let Some(cookie) = jar.get(SESSION_COOKIE) else {
             return Ok(None);
         };
-        Ok(db::user_by_session(&state.db, &hash_token(cookie.value())).await?)
+        Self::of_session(state, &hash_token(cookie.value())).await
     }
 }

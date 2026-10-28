@@ -1,6 +1,9 @@
 //! Cookies da sessão e do state do OAuth, e a configuração que eles usam.
 
-use axum::response::Redirect;
+use axum::{
+    http::{HeaderMap, header},
+    response::Redirect,
+};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
@@ -130,6 +133,23 @@ pub fn sanitize_return_to(raw: Option<&str>) -> String {
     }
 }
 
+/// Tamanho máximo do `User-Agent` guardado com a sessão.
+const USER_AGENT_MAX: usize = 256;
+
+/// O `User-Agent` do login, que a lista de sessões mostra para a pessoa
+/// reconhecer cada uma.
+pub fn user_agent(headers: &HeaderMap) -> Option<String> {
+    let agent: String = headers
+        .get(header::USER_AGENT)?
+        .to_str()
+        .ok()?
+        .trim()
+        .chars()
+        .take(USER_AGENT_MAX)
+        .collect();
+    (!agent.is_empty()).then_some(agent)
+}
+
 /// `path` com `auth_error=<código>` na query, para o front mostrar o erro.
 pub fn with_auth_error(path: &str, code: &str) -> String {
     let separator = if path.contains('?') { '&' } else { '?' };
@@ -166,6 +186,23 @@ mod tests {
         }
         let evil = format!("abc.link.{}", URL_SAFE_NO_PAD.encode("//evil.com"));
         assert_eq!(OAuthFlow::decode(&evil).unwrap().return_to, "/");
+    }
+
+    #[test]
+    fn user_agent_is_trimmed_and_capped() {
+        let headers = |value: &str| {
+            let mut h = HeaderMap::new();
+            h.insert(header::USER_AGENT, value.parse().unwrap());
+            h
+        };
+        assert_eq!(user_agent(&HeaderMap::new()), None);
+        assert_eq!(user_agent(&headers("  ")), None);
+        assert_eq!(
+            user_agent(&headers(" Firefox/140 ")).as_deref(),
+            Some("Firefox/140")
+        );
+        let long = "a".repeat(USER_AGENT_MAX + 10);
+        assert_eq!(user_agent(&headers(&long)).unwrap().len(), USER_AGENT_MAX);
     }
 
     #[test]

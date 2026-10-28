@@ -132,6 +132,38 @@ export interface paths {
         patch: operations["change_password"];
         trace?: never;
     };
+    "/auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sessions"];
+        put?: never;
+        post?: never;
+        delete: operations["end_other_sessions"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["end_session"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/signup": {
         parameters: {
             query?: never;
@@ -1407,6 +1439,22 @@ export interface components {
         };
         /** @enum {string} */
         ServiceStatus: "ok" | "unavailable";
+        /** @description Uma sessão aberta da conta. */
+        SessionInfo: {
+            /** Format: date-time */
+            created_at: string;
+            /** @description É a sessão desta requisição. */
+            current: boolean;
+            /** Format: date-time */
+            expires_at: string;
+            /**
+             * @description Identifica a sessão para encerrá-la; não serve para entrar.
+             * @example 3f9a0c1b2d4e5f60
+             */
+            id: string;
+            /** @description `User-Agent` do navegador que entrou, se veio. */
+            user_agent?: string | null;
+        };
         /** @description O mapa que o organizador lança ou corrige, já confirmado. */
         SetGame: {
             /** @description Nota opcional no histórico, até 280 caracteres. */
@@ -2126,6 +2174,101 @@ export interface operations {
             };
             /** @description auth.too_many_attempts {minutes} */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    sessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessões abertas da conta, da mais nova para a mais antiga */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionInfo"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    end_other_sessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description As outras sessões da conta foram encerradas; a desta requisição continua */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    end_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description id de GET /auth/sessions */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessão encerrada. Se era a desta requisição, o cookie sai junto, como no logout */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.session_not_found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

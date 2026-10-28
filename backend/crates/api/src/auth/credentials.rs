@@ -1,15 +1,19 @@
 //! Rotas de username e senha: cadastro, entrar, e criar, trocar ou remover o
 //! login com senha da conta logada.
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{
+    Json,
+    extract::State,
+    http::{HeaderMap, StatusCode},
+};
 use axum_extra::extract::CookieJar;
 
 use super::{
     CurrentUser,
     attempts::{check_password, confirm_password},
-    db,
+    db, kv,
     password::{hash_password, is_acceptable, validate_password},
-    session::SESSION_COOKIE,
+    session::{SESSION_COOKIE, user_agent},
     types::{ChangePassword, Credentials, CurrentPassword, LoginMethods},
     username::validate_username,
 };
@@ -31,6 +35,7 @@ use crate::{
 )]
 pub async fn signup(
     State(state): State<AppState>,
+    headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<Credentials>,
 ) -> Result<(StatusCode, CookieJar, Json<CurrentUser>), ApiError> {
@@ -38,7 +43,7 @@ pub async fn signup(
     validate_password(&body.password)?;
     let hash = hash_password(body.password).await?;
     let user_id = db::create_password_user(&state.db, &username, &hash).await?;
-    let (jar, user) = start_session(&state, jar, user_id).await?;
+    let (jar, user) = start_session(&state, &headers, jar, user_id).await?;
     Ok((StatusCode::CREATED, jar, user))
 }
 
@@ -56,6 +61,7 @@ pub async fn signup(
 )]
 pub async fn login(
     State(state): State<AppState>,
+    headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<Credentials>,
 ) -> Result<(CookieJar, Json<CurrentUser>), ApiError> {
@@ -71,19 +77,21 @@ pub async fn login(
     let found = db::password_login_by_username(&state.db, &username).await?;
     // Sem conta, confere contra um hash fixo: mesmo tempo e mesma contagem.
     let hash = found.as_ref().map(|f| f.password_hash.clone());
-    let ok = check_password(&state.db, &username, hash, body.password).await?;
+    let ok = check_password(&state.redis, &username, hash, body.password).await?;
     match found {
-        Some(login) if ok => start_session(&state, jar, login.user_id).await,
+        Some(login) if ok => start_session(&state, &headers, jar, login.user_id).await,
         _ => Err(invalid),
     }
 }
 
 async fn start_session(
     state: &AppState,
+    headers: &HeaderMap,
     jar: CookieJar,
     user_id: i64,
 ) -> Result<(CookieJar, Json<CurrentUser>), ApiError> {
-    let token = db::create_session(&state.db, user_id).await?;
+    let agent = user_agent(headers);
+    let token = kv::create_session(&state.redis, user_id, agent.as_deref()).await?;
     let user = db::user_by_id(&state.db, user_id).await?;
     Ok((jar.add(state.auth.session_cookie(token)), Json(user)))
 }
@@ -141,13 +149,7 @@ pub async fn change_password(
     if let Some(password) = &body.password {
         validate_password(password)?;
     }
-    confirm_password(
-        &state.db,
-        user.id,
-        body.current_password,
-        "auth.no_password",
-    )
-    .await?;
+    confirm_password(&state, user.id, body.current_password, "auth.no_password").await?;
 
     let hash = match body.password {
         Some(password) => Some(hash_password(password).await?),
@@ -157,7 +159,8 @@ pub async fn change_password(
     if hash.is_some()
         && let Some(cookie) = jar.get(SESSION_COOKIE)
     {
-        db::delete_other_sessions(&state.db, user.id, &token::hash_token(cookie.value())).await?;
+        kv::delete_other_sessions(&state.redis, user.id, &token::hash_token(cookie.value()))
+            .await?;
     }
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }
@@ -181,13 +184,7 @@ pub async fn remove_password(
     user: CurrentUser,
     JsonBody(body): JsonBody<CurrentPassword>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    confirm_password(
-        &state.db,
-        user.id,
-        body.current_password,
-        "auth.no_password",
-    )
-    .await?;
+    confirm_password(&state, user.id, body.current_password, "auth.no_password").await?;
     db::remove_password(&state.db, user.id).await?;
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }

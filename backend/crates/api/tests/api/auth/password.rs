@@ -5,11 +5,12 @@ use axum::{
     Router,
     http::{Method, StatusCode},
 };
+use redis::Cmd;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use super::{send_json, signup};
-use crate::common::{User, app, call, err, get, patch, post, user};
+use crate::common::{User, app, call, err, get, patch, post, redis, user};
 
 const PASSWORD: &str = "senha forte 1";
 
@@ -49,6 +50,13 @@ async fn add_discord(db: &PgPool, user_id: i64) {
     .execute(db)
     .await
     .unwrap();
+}
+
+/// Quantas sessões a conta de `who` tem abertas.
+async fn session_count(app: &Router, who: &User) -> usize {
+    let (status, body) = get(app, "/auth/sessions", who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body.as_array().unwrap().len()
 }
 
 async fn count(db: &PgPool, sql: &'static str) -> i64 {
@@ -140,7 +148,7 @@ async fn login_ignores_username_case(db: PgPool) {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["id"], rapha.id);
     assert_ne!(session.unwrap(), rapha.cookie);
-    assert_eq!(count(&db, "select count(*) from sessions").await, 2);
+    assert_eq!(session_count(&app, &rapha).await, 2);
 
     for (username, password) in [
         ("Rapha", "senha errada"),
@@ -188,19 +196,23 @@ async fn wrong_passwords_block_the_username(db: PgPool) {
     );
 
     // Com os erros fora da janela, entra, e o acerto zera a contagem.
-    sqlx::query!("update password_failures set failed_at = failed_at - interval '15 minutes'")
-        .execute(&db)
+    let redis = redis(&db);
+    let failures = redis.key("password_failures:rapha");
+    let recent: Vec<(String, f64)> = redis
+        .query(&Cmd::zrange_withscores(&failures, 0, -1))
         .await
         .unwrap();
+    assert_eq!(recent.len(), 5);
+    for (failure, at) in recent {
+        let fifteen_minutes = 15.0 * 60_000.0;
+        let _: i64 = redis
+            .query(&Cmd::zadd(&failures, failure, at - fifteen_minutes))
+            .await
+            .unwrap();
+    }
     assert_eq!(login(&app, "Rapha", PASSWORD).await.0, StatusCode::OK);
-    assert_eq!(
-        count(
-            &db,
-            "select count(*) from password_failures where username = 'rapha'"
-        )
-        .await,
-        0
-    );
+    let left: bool = redis.query(&Cmd::exists(&failures)).await.unwrap();
+    assert!(!left);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
@@ -311,11 +323,7 @@ async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
     .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["username"], "rapha2");
-    let sessions = sqlx::query_scalar!("select count(*) from sessions where user_id = $1", me.id)
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    assert_eq!(sessions, Some(2));
+    assert_eq!(session_count(&app, &me).await, 2);
 }
 
 #[sqlx::test(migrations = "../../migrations")]

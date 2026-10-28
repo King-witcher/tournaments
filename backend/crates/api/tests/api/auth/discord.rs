@@ -1,14 +1,18 @@
 //! Entrar com Discord, `/me` e sair.
 
-use api::shared::token::hash_token;
+use std::time::Duration;
+
 use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
+use redis::Cmd;
 use sqlx::PgPool;
 
-use super::{app, body_text, discord_user, do_login, get, location, pair, send, set_cookie};
-use crate::common::WEB;
+use super::{
+    app, body_text, discord_user, do_login, get, location, pair, send, session_key, set_cookie,
+};
+use crate::common::{WEB, redis};
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn login_without_config_is_503(db: PgPool) {
@@ -134,15 +138,19 @@ async fn callback_creates_user_identity_and_session(db: PgPool) {
     assert_eq!(ident.user_id, user.id);
     assert_eq!(ident.provider_user_id, "123");
 
-    // O banco guarda só o hash, nunca o token.
-    let token = session.strip_prefix("session=").unwrap();
-    let stored = sqlx::query!("select id, user_id from sessions")
-        .fetch_one(&db)
+    // O Redis guarda a sessão pelo hash, nunca pelo token.
+    let redis = redis(&db);
+    let owner: Option<i64> = redis
+        .query(&Cmd::hget(session_key(&redis, &session), "user_id"))
         .await
         .unwrap();
-    assert_eq!(stored.id, hash_token(token).to_vec());
-    assert_ne!(stored.id, token.as_bytes());
-    assert_eq!(stored.user_id, user.id);
+    assert_eq!(owner, Some(user.id));
+    let token = session.strip_prefix("session=").unwrap();
+    let by_token: bool = redis
+        .query(&Cmd::exists(redis.key(format_args!("session:{token}"))))
+        .await
+        .unwrap();
+    assert!(!by_token);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
@@ -150,7 +158,7 @@ async fn second_login_reuses_user_and_updates_avatar(db: PgPool) {
     let first = app(db.clone(), Some(discord_user(Some("old"))), true);
     do_login(&first, "/").await;
     let second = app(db.clone(), Some(discord_user(Some("new"))), true);
-    do_login(&second, "/").await;
+    let (session, _) = do_login(&second, "/").await;
 
     let users = sqlx::query!("select avatar_url from users")
         .fetch_all(&db)
@@ -166,11 +174,9 @@ async fn second_login_reuses_user_and_updates_avatar(db: PgPool) {
         .await
         .unwrap();
     assert_eq!(idents, Some(1));
-    let sessions = sqlx::query_scalar!("select count(*) from sessions")
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    assert_eq!(sessions, Some(2));
+    let res = send(&second, get("/auth/sessions", Some(&session))).await;
+    let sessions: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
+    assert_eq!(sessions.as_array().unwrap().len(), 2);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
@@ -199,10 +205,13 @@ async fn me_requires_valid_session(db: PgPool) {
     assert!(json["avatar_url"].is_null());
     assert!(json["id"].is_i64());
 
-    sqlx::query!("update sessions set expires_at = now() - interval '1 second'")
-        .execute(&db)
-        .await
-        .unwrap();
+    // A sessão expira sozinha no Redis, em 30 dias.
+    let redis = redis(&db);
+    let key = session_key(&redis, &session);
+    let ttl: i64 = redis.query(&Cmd::ttl(&key)).await.unwrap();
+    assert!((30 * 86_400 - 60..=30 * 86_400).contains(&ttl), "{ttl}");
+    let _: bool = redis.query(&Cmd::pexpire(&key, 1)).await.unwrap();
+    tokio::time::sleep(Duration::from_millis(5)).await;
     let res = send(&app, get("/me", Some(&session))).await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
@@ -223,11 +232,21 @@ async fn logout_removes_session(db: PgPool) {
     let res = send(&app, post(Some(&session))).await;
     assert_eq!(res.status(), StatusCode::NO_CONTENT);
     assert!(set_cookie(&res, "session").unwrap().contains("Max-Age=0"));
-    let n = sqlx::query_scalar!("select count(*) from sessions")
+    // Sai a sessão e sai do índice da conta.
+    let redis = redis(&db);
+    let user_id = sqlx::query_scalar!("select id from users")
         .fetch_one(&db)
         .await
         .unwrap();
-    assert_eq!(n, Some(0));
+    let left: (bool, i64) = redis
+        .query_pipe(
+            redis::pipe()
+                .exists(session_key(&redis, &session))
+                .zcard(redis.key(format_args!("user_sessions:{user_id}"))),
+        )
+        .await
+        .unwrap();
+    assert_eq!(left, (false, 0));
 
     let res = send(&app, get("/me", Some(&session))).await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);

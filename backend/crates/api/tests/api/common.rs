@@ -2,12 +2,12 @@
 //! passos que vários domínios repetem (criar tenant, convidar, entrar, criar
 //! e publicar torneio).
 
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use api::{
     AppState,
-    auth::{AuthSettings, DiscordApi, HttpDiscord},
-    shared::token::hash_token,
+    auth::{AuthSettings, DiscordApi, HttpDiscord, create_session},
+    shared::Redis,
 };
 use axum::{
     Router,
@@ -15,13 +15,60 @@ use axum::{
     http::{HeaderValue, Method, Request, StatusCode, header},
 };
 use http_body_util::BodyExt;
+use redis::Commands;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
 pub const WEB: &str = "http://localhost:4001";
 
-/// App com login do Discord desligado (os testes criam sessões direto no banco).
+/// Chaves de execução anterior que já podem sair do Redis local: as sessões
+/// duram 30 dias, e um teste nunca passa de uma hora.
+const OLD_RUN_MS: i64 = 60 * 60 * 1000;
+
+/// Prefixo das chaves desta execução. Ao montar, apaga as de execuções com
+/// mais de uma hora; as de uma execução em andamento (outro worktree) ficam.
+static RUN_PREFIX: LazyLock<String> = LazyLock::new(|| {
+    let now = chrono::Utc::now().timestamp_millis();
+    sweep_runs_before(now - OLD_RUN_MS);
+    format!("test:{now}:")
+});
+
+/// `REDIS_URL` ou o Redis local, no database 0 (o do projeto).
+fn redis_url() -> String {
+    std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/0".into())
+}
+
+fn sweep_runs_before(before: i64) {
+    let mut conn = redis::Client::open(redis_url())
+        .and_then(|c| c.get_connection())
+        .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/0)");
+    let old: Vec<String> = conn
+        .scan_match::<_, String>("test:*")
+        .unwrap()
+        .map(Result::unwrap)
+        .filter(|key| {
+            key.split(':')
+                .nth(1)
+                .and_then(|run| run.parse::<i64>().ok())
+                .is_some_and(|run| run < before)
+        })
+        .collect();
+    for keys in old.chunks(500) {
+        let _: () = conn.del(keys).unwrap();
+    }
+}
+
+/// Redis do teste: cada banco do `sqlx::test` ganha um prefixo nesta execução,
+/// então o app e os helpers do mesmo teste veem as mesmas chaves, e um teste
+/// não vê as do outro.
+pub fn redis(db: &PgPool) -> Redis {
+    let options = db.connect_options();
+    let database = options.get_database().unwrap_or("postgres");
+    Redis::open(&redis_url(), &format!("{}{database}:", *RUN_PREFIX)).unwrap()
+}
+
+/// App com login do Discord desligado (os testes criam sessões direto no Redis).
 pub fn app(db: PgPool) -> Router {
     app_with(
         db,
@@ -39,6 +86,7 @@ pub fn app(db: PgPool) -> Router {
 pub fn app_with(db: PgPool, discord: Arc<dyn DiscordApi>, auth: AuthSettings) -> Router {
     api::app(
         AppState {
+            redis: redis(&db),
             db,
             discord,
             auth: Arc::new(auth),
@@ -52,7 +100,7 @@ pub struct User {
     pub cookie: String,
 }
 
-/// Cria um usuário com sessão válida direto no banco, sem passar pelo Discord.
+/// Cria um usuário direto no banco, com sessão no Redis, sem passar pelo login.
 pub async fn user(db: &PgPool, display_name: &str) -> User {
     let id = sqlx::query_scalar!(
         "insert into users (display_name) values ($1) returning id",
@@ -61,15 +109,7 @@ pub async fn user(db: &PgPool, display_name: &str) -> User {
     .fetch_one(db)
     .await
     .unwrap();
-    let token = format!("token-{id}");
-    sqlx::query!(
-        "insert into sessions (id, user_id, expires_at) values ($1, $2, now() + interval '1 day')",
-        &hash_token(&token)[..],
-        id
-    )
-    .execute(db)
-    .await
-    .unwrap();
+    let token = create_session(&redis(db), id, None).await.unwrap();
     User {
         id,
         cookie: format!("session={token}"),

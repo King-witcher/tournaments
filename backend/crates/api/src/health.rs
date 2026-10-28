@@ -31,6 +31,8 @@ pub enum ServiceStatus {
     )
 )]
 pub async fn health(State(state): State<AppState>) -> (StatusCode, Json<Health>) {
+    // O Redis fica de fora: o monitor de uptime chama a cada poucos minutos, e
+    // cada consulta gastaria um comando da cota mensal do Upstash.
     match sqlx::query("select 1").execute(&state.db).await {
         Ok(_) => (
             StatusCode::OK,

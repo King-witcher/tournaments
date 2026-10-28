@@ -309,25 +309,6 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
     );
     identity("password", "Ana_1", argon).await.unwrap();
 
-    assert_eq!(
-        rejected(
-            exec(
-                &db,
-                "insert into password_failures (username) values ('Ana_1')"
-            )
-            .await
-        ),
-        rule(CHECK, "password_failures_username_format")
-    );
-    let short = sqlx::query(
-        "insert into sessions (id, user_id, expires_at) values ($1, $2, now() + interval '1 day')",
-    )
-    .bind(&[7u8; 16][..])
-    .bind(ana.id)
-    .execute(&db)
-    .await;
-    assert_eq!(rejected(short), rule(CHECK, "sessions_id_sha256"));
-
     for (change, name) in [
         ("display_name = ''", "users_display_name_check"),
         (

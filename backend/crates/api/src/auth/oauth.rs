@@ -4,7 +4,7 @@
 use axum::{
     Json,
     extract::{Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::Redirect,
 };
 use axum_extra::extract::CookieJar;
@@ -12,10 +12,10 @@ use axum_extra::extract::CookieJar;
 use super::{
     CurrentUser, DiscordUser,
     attempts::confirm_password,
-    db,
+    db, kv,
     session::{
         AuthSettings, OAuthFlow, OAuthIntent, SESSION_COOKIE, STATE_COOKIE, sanitize_return_to,
-        with_auth_error,
+        user_agent, with_auth_error,
     },
     types::{CallbackQuery, CurrentPassword, LoginMethods, LoginQuery},
 };
@@ -112,6 +112,7 @@ fn authorize(
 pub async fn discord_callback(
     State(state): State<AppState>,
     Query(q): Query<CallbackQuery>,
+    headers: HeaderMap,
     jar: CookieJar,
 ) -> (CookieJar, Redirect) {
     let auth = &state.auth;
@@ -124,7 +125,8 @@ pub async fn discord_callback(
     let jar = jar.remove(auth.clear_state_cookie());
     let return_to = flow.as_ref().map_or("/", |f| f.return_to.as_str());
 
-    match complete_callback(&state, &q, flow.as_ref(), session).await {
+    let agent = user_agent(&headers);
+    match complete_callback(&state, &q, flow.as_ref(), session, agent.as_deref()).await {
         Ok(Some(session_token)) => (
             jar.add(auth.session_cookie(session_token)),
             auth.web_redirect(return_to),
@@ -147,6 +149,7 @@ async fn complete_callback(
     q: &CallbackQuery,
     flow: Option<&OAuthFlow>,
     session: Option<[u8; 32]>,
+    user_agent: Option<&str>,
 ) -> Result<Option<String>, &'static str> {
     if q.error.is_some() {
         return Err("auth.discord_denied");
@@ -166,7 +169,7 @@ async fn complete_callback(
                 let user_id =
                     db::upsert_discord_user(&state.db, &du.id, du.display_name(), du.avatar_url())
                         .await?;
-                db::create_session(&state.db, user_id).await
+                anyhow::Ok(kv::create_session(&state.redis, user_id, user_agent).await?)
             }
             .await;
             result.map(Some).map_err(|err| {
@@ -178,9 +181,9 @@ async fn complete_callback(
             // O state prova que o pedido saiu deste navegador; a sessão diz
             // de quem é a conta.
             let user = match session {
-                Some(hash) => db::user_by_session(&state.db, &hash)
+                Some(hash) => CurrentUser::of_session(state, &hash)
                     .await
-                    .map_err(|err| ApiError::from(err).code)?,
+                    .map_err(|err| err.code)?,
                 None => None,
             }
             .ok_or("auth.unauthenticated")?;
@@ -227,7 +230,7 @@ pub async fn unlink_discord(
     user: CurrentUser,
     JsonBody(body): JsonBody<CurrentPassword>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    confirm_password(&state.db, user.id, body.current_password, "auth.last_login").await?;
+    confirm_password(&state, user.id, body.current_password, "auth.last_login").await?;
     db::unlink_discord(&state.db, user.id).await?;
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }

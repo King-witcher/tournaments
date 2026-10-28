@@ -4,6 +4,10 @@ use anyhow::Context;
 
 pub struct Config {
     pub database_url: String,
+    /// Redis das sessões e do limite de tentativas (Upstash: `rediss://...`).
+    pub redis_url: String,
+    /// Prefixo das chaves, para mais de um ambiente dividir o mesmo Redis.
+    pub redis_prefix: String,
     pub addr: SocketAddr,
     /// Origem do frontend, liberada no CORS.
     pub web_origin: String,
@@ -19,6 +23,8 @@ impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         Ok(Self {
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL não definida")?,
+            redis_url: std::env::var("REDIS_URL").context("REDIS_URL não definida")?,
+            redis_prefix: env_or("REDIS_PREFIX", "tournaments:"),
             addr: env_or("API_ADDR", "127.0.0.1:4000")
                 .parse()
                 .context("API_ADDR inválido")?,

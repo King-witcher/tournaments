@@ -1,6 +1,6 @@
-//! Segredos aleatórios e o hash que vai para o banco: o valor só existe na
-//! resposta ou no cookie. A estratégia de ids do projeto está em "Ids" no
-//! `docs/decisions.md`.
+//! Segredos aleatórios e o hash que fica guardado (banco ou Redis): o valor
+//! só existe na resposta ou no cookie. A estratégia de ids do projeto está em
+//! "Ids" no `docs/decisions.md`.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use sha2::{Digest, Sha256};
@@ -28,9 +28,14 @@ pub fn random_secret() -> String {
     URL_SAFE_NO_PAD.encode(bytes)
 }
 
-/// SHA-256 do token, que é o que vai para o banco.
+/// SHA-256 do token, que é o que fica guardado.
 pub fn hash_token(token: &str) -> [u8; 32] {
     Sha256::digest(token.as_bytes()).into()
+}
+
+/// O hash em hexadecimal minúsculo, para chave de texto (Redis).
+pub fn hex(hash: &[u8]) -> String {
+    hash.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Comparação em tempo constante, para não vazar o segredo pelo tempo de resposta.

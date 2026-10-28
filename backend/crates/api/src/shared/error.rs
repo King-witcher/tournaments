@@ -89,3 +89,10 @@ impl From<sqlx::Error> for ApiError {
         Self::internal()
     }
 }
+
+impl From<redis::RedisError> for ApiError {
+    fn from(err: redis::RedisError) -> Self {
+        tracing::error!(error = %err, "erro do Redis");
+        Self::internal()
+    }
+}

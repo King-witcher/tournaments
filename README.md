@@ -5,6 +5,7 @@ Site multi-tenant para organizar torneios de Quake Champions. API em Rust (Axum 
 ## Pré-requisitos
 
 - PostgreSQL 18 local
+- Redis local (no Windows, o [Memurai](https://www.memurai.com/), compatível; ou `docker run -d -p 6379:6379 redis`)
 - Rust (stable)
 - Bun e Node 24 (o Bun instala e roda os scripts; o Next roda em Node, igual à Vercel)
 
@@ -32,6 +33,10 @@ local   all                         tournaments                    reject
 ```
 
 As três primeiras liberam o usuário sem senha só no próprio banco e nos de teste; as duas últimas recusam o resto.
+
+## Redis local
+
+Sessões e tentativas de senha ficam no Redis, sempre no database 0 (`redis://127.0.0.1:6379/0` no `.env.example`); os outros databases do servidor ficam para outros projetos. Dentro do 0, a API põe `REDIS_PREFIX` (padrão `tournaments:`) na frente de toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database (ou o de `REDIS_URL`), com um prefixo `test:` por execução e por teste; as chaves de execuções com mais de uma hora saem na execução seguinte.
 
 ## Rodando
 
@@ -72,7 +77,7 @@ bun run dev
 |---|---|---|
 | API com recarga automática | `backend/` | `bun scripts/dev.ts` |
 | Testes do engine (rápidos, sem banco) | `backend/` | `cargo test -p engine` |
-| Todos os testes do backend | `backend/` | `cargo test` |
+| Todos os testes do backend (Postgres e Redis locais) | `backend/` | `cargo test` |
 | Lint do backend | `backend/` | `cargo clippy --all-targets -- -D warnings` |
 | Nova migration | `backend/` | criar `migrations/AAAAMMDDHHMMSS_nome.sql` e rodar `cargo run -p migrate` |
 | Regenerar tipos da API no front (API rodando) | `web/` | `bun run gen:api` |
