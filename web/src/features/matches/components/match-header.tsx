@@ -46,17 +46,18 @@ export function MatchHeader({
 
   return (
     <header className="flex flex-col gap-1">
-      <nav className="flex flex-wrap gap-x-2 text-sm text-muted">
+      {/* Links com 44px de altura no celular: é por eles que se volta ao torneio. */}
+      <nav className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
         <Link
           href={`/${tenant}`}
-          className="underline underline-offset-4 hover:decoration-2"
+          className="inline-flex min-h-11 items-center underline underline-offset-4 hover:decoration-2 sm:min-h-0"
         >
           {tenantName}
         </Link>
         <span aria-hidden>›</span>
         <Link
           href={`/${tenant}/${slug}`}
-          className="underline underline-offset-4 hover:decoration-2"
+          className="inline-flex min-h-11 items-center underline underline-offset-4 hover:decoration-2 sm:min-h-0"
         >
           {tournamentName}
         </Link>

@@ -30,7 +30,7 @@ export function TournamentHeader({
     <header className="flex flex-col gap-1">
       <Link
         href={`/${tenant}`}
-        className="text-sm text-muted underline underline-offset-4 hover:decoration-2"
+        className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4 hover:decoration-2 sm:min-h-0"
       >
         {tenantName}
       </Link>
