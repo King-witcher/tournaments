@@ -58,7 +58,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 
 ## Como trabalhar aqui
 
-- Ordem do trabalho e próximo passo: `docs/roadmap.md`. Atualize a seção "Feito" ao terminar um incremento.
+- Ordem do trabalho e próximo passo: `docs/roadmap.md`. Ao terminar um incremento, ajuste a linha da área em "Feito" (uma linha por área; o detalhe vai no commit) e tire de "Pendências" o que resolveu.
 - Decisões de produto em aberto: pergunte ao usuário (ele prefere rodadas de perguntas com opções) em vez de decidir sozinho; registre a resposta em `docs/decisions.md`.
 - Use os subagentes abaixo para trabalho no `engine` e para rodar testes; passe a especificação completa no prompt, porque eles não veem esta conversa.
 
