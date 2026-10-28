@@ -62,7 +62,9 @@
     "password": "Senha",
     "passwordHint": "De 8 a 128 caracteres.",
     "confirmPassword": "Repita a senha",
-    "passwordsDiffer": "As senhas não são iguais."
+    "passwordsDiffer": "As senhas não são iguais.",
+    "alreadySignedIn": "Você já entrou como {name}.",
+    "continueSignedIn": "Continuar com esta conta"
   },
   "Login": {
     "title": "Entrar",

@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { safeReturnTo } from "../lib/return-to";
+import { AlreadySignedIn } from "./already-signed-in";
 import { CredentialsForm } from "./credentials-form";
 import { DiscordButton } from "./discord-button";
 
@@ -20,6 +21,7 @@ export async function SignupView({ searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <AlreadySignedIn returnTo={returnTo} />
       <p className="text-sm text-muted">{t("noRecovery")}</p>
       <CredentialsForm mode="signup" returnTo={returnTo} />
       <p className="text-sm text-muted">{tAuth("or")}</p>

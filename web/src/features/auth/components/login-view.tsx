@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { safeReturnTo } from "../lib/return-to";
+import { AlreadySignedIn } from "./already-signed-in";
 import { DiscordButton } from "./discord-button";
 import { LoginForm } from "./login-form";
 
@@ -20,6 +21,7 @@ export async function LoginView({ searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <AlreadySignedIn returnTo={returnTo} />
       <DiscordButton action="login" returnTo={returnTo}>
         {tAuth("discord")}
       </DiscordButton>

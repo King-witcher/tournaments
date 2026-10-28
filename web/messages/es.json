@@ -62,7 +62,9 @@
     "password": "Contraseña",
     "passwordHint": "De 8 a 128 caracteres.",
     "confirmPassword": "Repite la contraseña",
-    "passwordsDiffer": "Las contraseñas no coinciden."
+    "passwordsDiffer": "Las contraseñas no coinciden.",
+    "alreadySignedIn": "Ya iniciaste sesión como {name}.",
+    "continueSignedIn": "Continuar con esta cuenta"
   },
   "Login": {
     "title": "Entrar",
