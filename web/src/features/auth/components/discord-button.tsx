@@ -23,7 +23,7 @@ export function DiscordButton({ action, returnTo, children }: Props) {
   return (
     <a
       href={href}
-      className="self-start rounded-md bg-[#5865F2] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#4752C4]"
+      className="inline-flex min-h-11 items-center self-start rounded-md bg-[#5865F2] px-3 py-1.5 text-sm sm:min-h-8 font-medium text-white hover:bg-[#4752C4]"
     >
       {children}
     </a>

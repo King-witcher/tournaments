@@ -323,6 +323,7 @@
     "registration": {
       "register": "Inscribirme",
       "withdraw": "Cancelar inscripción",
+      "withdrawConfirm": "¿Cancelar tu inscripción? El cupo queda libre para otra persona. Para volver, inscríbete de nuevo mientras haya cupo (en un torneo privado, solo por la organización o con un enlace de inscripción).",
       "registered": "Estás inscrito.",
       "full": "Se agotaron los cupos.",
       "privateHint": "Torneo privado: solo entra quien un organizador inscriba o quien use un enlace de inscripción."
@@ -682,6 +683,6 @@
   },
   "Common": {
     "loading": "Cargando…",
-    "cancel": "Cancelar"
+    "no": "No"
   }
 }

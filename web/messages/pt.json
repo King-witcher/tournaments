@@ -323,6 +323,7 @@
     "registration": {
       "register": "Inscrever-se",
       "withdraw": "Cancelar inscrição",
+      "withdrawConfirm": "Cancelar sua inscrição? A vaga fica livre para outra pessoa. Para voltar, inscreva-se de novo enquanto houver vaga (em torneio privado, só pela organização ou por um link de inscrição).",
       "registered": "Você está inscrito.",
       "full": "As vagas acabaram.",
       "privateHint": "Torneio privado: só entra quem um organizador inscrever ou quem usar um link de inscrição."
@@ -682,6 +683,6 @@
   },
   "Common": {
     "loading": "Carregando…",
-    "cancel": "Cancelar"
+    "no": "Não"
   }
 }

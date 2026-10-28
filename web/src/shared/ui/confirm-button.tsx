@@ -22,7 +22,7 @@ type Props = {
 
 /**
  * Botão de ação que não se desfaz fácil: o primeiro clique troca o botão pela
- * pergunta, com "sim" (o mesmo texto do botão) e "Cancelar"; só o sim roda a
+ * pergunta, com "sim" (o mesmo texto do botão) e "Não"; só o sim roda a
  * ação. Fica na tela, no lugar do botão, em vez do `confirm()` do navegador,
  * que não diz de onde veio e some com o contexto. Esc cancela.
  */
@@ -41,7 +41,7 @@ export function ConfirmButton({
   const [asking, setAsking] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  // O foco vai para o "Cancelar": o botão clicado sumiu, e um Enter a mais não confirma.
+  // O foco vai para o "Não": o botão clicado sumiu, e um Enter a mais não confirma.
   useEffect(() => {
     if (asking) cancelRef.current?.focus();
   }, [asking]);
@@ -86,7 +86,7 @@ export function ConfirmButton({
           size="sm"
           onClick={() => setAsking(false)}
         >
-          {t("cancel")}
+          {t("no")}
         </Button>
       </div>
     </fieldset>
