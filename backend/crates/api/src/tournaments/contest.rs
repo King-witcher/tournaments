@@ -8,7 +8,7 @@ use std::ops::RangeInclusive;
 use crate::shared::ApiError;
 
 /// Janela quando a criação não diz.
-pub const DEFAULT_CONTEST_MINUTES: i32 = 5;
+pub const DEFAULT_CONTEST_MINUTES: i32 = 10;
 /// Janela aceita, em minutos (o mesmo check está na tabela).
 const CONTEST_MINUTES: RangeInclusive<i32> = 1..=1440;
 

@@ -17,7 +17,7 @@ async fn start_generates_the_bracket_in_seed_order(db: PgPool) {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(b["status"], "in_progress");
     assert_eq!(b["format"]["bracket"], "double");
-    assert_eq!(b["contest_minutes"], 5);
+    assert_eq!(b["contest_minutes"], 10);
     assert_eq!(b["results"], 0);
     let seeds: Vec<(i64, i64)> = b["entrants"]
         .as_array()

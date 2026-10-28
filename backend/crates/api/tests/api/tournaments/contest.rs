@@ -9,10 +9,10 @@ use crate::common::*;
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn contest_window_defaults_to_five_and_changes_until_finished(db: PgPool) {
+async fn contest_window_defaults_to_ten_and_changes_until_finished(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, duel("copa")).await;
-    assert_eq!(created["contest_minutes"], 5);
+    assert_eq!(created["contest_minutes"], 10);
 
     let invalid = (
         StatusCode::UNPROCESSABLE_ENTITY,

@@ -236,20 +236,20 @@ async fn unanswered_reports_confirm_when_the_window_ends(db: PgPool) {
     .fetch_one(&db)
     .await
     .unwrap();
-    assert_eq!(window, 5 * 60);
+    assert_eq!(window, 10 * 60);
 
     // Ainda na janela: segue pendente.
     let b = bracket(&app, &p[1]).await;
     assert_eq!(find(&b, "wb-1-1")["result"]["status"], "pending");
 
-    // Cinco minutos depois (o relógio volta no banco em vez de esperar).
-    sqlx::query!("update match_events set created_at = created_at - interval '6 minutes'")
+    // Dez minutos depois (o relógio volta no banco em vez de esperar).
+    sqlx::query!("update match_events set created_at = created_at - interval '11 minutes'")
         .execute(&db)
         .await
         .unwrap();
     sqlx::query!(
-        "update match_results set reported_at = reported_at - interval '6 minutes',
-                                  confirm_by = confirm_by - interval '6 minutes'"
+        "update match_results set reported_at = reported_at - interval '11 minutes',
+                                  confirm_by = confirm_by - interval '11 minutes'"
     )
     .execute(&db)
     .await

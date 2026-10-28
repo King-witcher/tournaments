@@ -27,7 +27,7 @@ export type TournamentValues = {
   contestMinutes: number;
 };
 
-/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min, 5 min para contestar. */
+/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min, 10 min para contestar. */
 export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
   return {
     name: "",
@@ -45,7 +45,7 @@ export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
     noRepeat: "off",
     startsAt: null,
     checkInMinutes: 30,
-    contestMinutes: 5,
+    contestMinutes: 10,
   };
 }
 
