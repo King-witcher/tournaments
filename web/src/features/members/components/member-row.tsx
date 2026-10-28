@@ -27,8 +27,8 @@ export function MemberRow({ slug, member, canChangeRoles, canRemove }: Props) {
       </span>
       <span className="text-sm text-muted">{tRoles(member.role)}</span>
       {(changeRole || canRemove) && (
-        // No celular, as ações vão para a linha de baixo, à direita.
-        <span className="flex w-full justify-end gap-3 sm:w-auto">
+        // À direita; vão para a linha de baixo só quando não cabem (celular, várias ações).
+        <span className="ml-auto flex flex-wrap justify-end gap-3">
           {canChangeRoles && member.role !== "owner" && (
             <MemberRoleButton
               slug={slug}

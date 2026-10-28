@@ -57,8 +57,8 @@ export function ParticipantRow({
         </span>
       )}
       {(canCheckIn || canRemove || withdrawable) && (
-        // No celular, as ações vão para a linha de baixo, à direita.
-        <span className="flex w-full justify-end gap-3 sm:w-auto">
+        // À direita; vão para a linha de baixo só quando não cabem (celular, várias ações).
+        <span className="ml-auto flex flex-wrap justify-end gap-3">
           {canCheckIn && (
             <ParticipantCheckInButton
               tenant={tenant}

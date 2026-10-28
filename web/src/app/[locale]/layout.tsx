@@ -11,6 +11,7 @@ import { UserMenu } from "@/features/auth/components/user-menu";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
+import { Skeleton } from "@/shared/ui/skeleton";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -57,7 +58,8 @@ export default async function LocaleLayout({
               <Suspense fallback={null}>
                 <LocaleSwitcher />
               </Suspense>
-              <Suspense fallback={null}>
+              {/* O lugar do menu enquanto a sessão é lida: o cabeçalho não pula. */}
+              <Suspense fallback={<Skeleton className="h-5 w-24" />}>
                 <UserMenu />
               </Suspense>
             </div>
