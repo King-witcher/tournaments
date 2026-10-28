@@ -180,7 +180,7 @@
     "loginRequired": "Inicia sesión o crea una cuenta para aceptar la invitación.",
     "accept": "Unirme a la comunidad",
     "tournamentTitle": "Inscripción en {name}",
-    "tournamentSpots": "{count, plural, =0 {Nadie inscrito todavía} one {# inscrito} other {# inscritos}} de {max} cupos.",
+    "tournamentSpots": "{count, plural, =0 {{max} cupos, ninguno ocupado todavía} one {# inscrito de {max} cupos} other {# inscritos de {max} cupos}}.",
     "tournamentHint": "Aceptar también te une a la comunidad {tenant} como jugador.",
     "acceptTournament": "Unirme e inscribirme",
     "startsAt": "Empieza",
@@ -558,7 +558,7 @@
   "Bracket": {
     "title": "Llave",
     "loading": "Cargando la llave…",
-    "hint": "Haz clic en una partida para enviar o ver el resultado.",
+    "hint": "Abre una partida para enviar o ver el resultado.",
     "scrollHint": "Desliza la llave hacia el costado para ver las otras rondas.",
     "parts": {
       "winners": "Llave de ganadores",
