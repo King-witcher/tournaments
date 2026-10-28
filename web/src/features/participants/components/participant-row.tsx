@@ -3,8 +3,10 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Avatar } from "@/shared/ui/avatar";
+import { DepartureMark } from "./departure-mark";
 import { ParticipantCheckInButton } from "./participant-check-in-button";
 import { RemoveParticipantButton } from "./remove-participant-button";
+import { WithdrawParticipantButton } from "./withdraw-participant-button";
 
 type Props = {
   tenant: string;
@@ -17,6 +19,8 @@ type Props = {
   /** Organizador durante o check-in: marca e desmarca. */
   canCheckIn: boolean;
   canRemove: boolean;
+  /** Organizador com o torneio em andamento: marca a desistência. */
+  canWithdraw: boolean;
 };
 
 export function ParticipantRow({
@@ -27,6 +31,7 @@ export function ParticipantRow({
   showSeed,
   canCheckIn,
   canRemove,
+  canWithdraw,
 }: Props) {
   const t = useTranslations("Participants");
 
@@ -39,6 +44,7 @@ export function ParticipantRow({
       )}
       <Avatar src={p.avatar_url} />
       <span className="flex-1 font-medium">{p.nickname}</span>
+      <DepartureMark withdrawn={p.withdrawn} left={p.left} />
       {showCheckIn && (
         <span
           className={cn(
@@ -62,6 +68,14 @@ export function ParticipantRow({
           tenant={tenant}
           tournament={tournament}
           userId={p.user_id}
+        />
+      )}
+      {canWithdraw && p.seed != null && !p.withdrawn && (
+        <WithdrawParticipantButton
+          tenant={tenant}
+          tournament={tournament}
+          userId={p.user_id}
+          nickname={p.nickname}
         />
       )}
     </li>

@@ -15,7 +15,8 @@ type Props = {
 
 /**
  * Inscritos do torneio, com check-in e (depois de iniciar) seed; para quem
- * gerencia, inscrever, tirar e marcar o check-in. Fica em `<Suspense>`.
+ * gerencia, inscrever, tirar, marcar o check-in e (em andamento) a
+ * desistência. Fica em `<Suspense>`.
  */
 export async function ParticipantSection({
   tenant,
@@ -78,6 +79,7 @@ export async function ParticipantSection({
               showSeed={!beforeStart}
               canCheckIn={organizer && status === "check_in"}
               canRemove={canManage}
+              canWithdraw={organizer && status === "in_progress"}
             />
           ))}
         </ul>

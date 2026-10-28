@@ -100,7 +100,24 @@
     "members": {
       "title": "Membros ({count})",
       "makeOrganizer": "Tornar organizador",
-      "makePlayer": "Tornar jogador"
+      "makePlayer": "Tornar jogador",
+      "remove": "Remover",
+      "removeConfirm": "Remover {name} da comunidade? {name} perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as partidas pendentes. Os convites que {name} criou são revogados. O histórico fica, e {name} pode voltar por um convite, como jogador."
+    },
+    "leave": {
+      "title": "Sair da comunidade",
+      "description": "Você perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as partidas pendentes. Os convites que você criou são revogados. Seu nome continua na chave dos torneios que você jogou, e você pode voltar por um convite, como jogador e com o mesmo apelido.",
+      "submit": "Sair da comunidade",
+      "confirm": "Sair da comunidade? Nos torneios em andamento, suas partidas pendentes viram W.O."
+    },
+    "transfer": {
+      "title": "Transferir a posse",
+      "description": "O membro escolhido vira o dono e você vira organizador. Para sair da comunidade, o dono transfere a posse antes.",
+      "member": "Novo dono",
+      "choose": "Escolha um membro…",
+      "typeSlug": "Digite {slug} para confirmar",
+      "submit": "Transferir posse",
+      "empty": "Ainda não há outro membro para receber a posse."
     },
     "invites": {
       "title": "Convites",
@@ -272,6 +289,10 @@
     "choose": "Escolha um membro…",
     "add": "Inscrever",
     "remove": "Tirar",
+    "left": "saiu",
+    "withdrawn": "desistiu",
+    "withdrawParticipant": "Desistência",
+    "withdrawConfirm": "Marcar a desistência de {name}? {name} continua na chave, mas cada partida dele, agora ou quando ficar pronta, vira W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos).",
     "registration": {
       "register": "Inscrever-se",
       "withdraw": "Cancelar inscrição",
@@ -339,7 +360,8 @@
       "slug_taken": "Esse endereço já está em uso.",
       "slug_invalid": "Use de 3 a 32 letras minúsculas, números ou hífens, sem hífen no começo, no fim ou repetido.",
       "slug_reserved": "Esse endereço é reservado. Escolha outro.",
-      "name_invalid": "O nome precisa ter de 1 a 64 caracteres."
+      "name_invalid": "O nome precisa ter de 1 a 64 caracteres.",
+      "confirmation_mismatch": "O endereço digitado não confere com o da comunidade."
     },
     "invite": {
       "not_found": "Convite não encontrado. Confira o link.",
@@ -348,7 +370,10 @@
     },
     "member": {
       "not_found": "Membro não encontrado.",
-      "is_owner": "O papel do dono não pode ser alterado.",
+      "is_owner": "Isso não vale para o dono: o papel dele não muda e ninguém o remove.",
+      "owner_must_transfer": "O dono não sai da comunidade: transfira a posse antes.",
+      "remove_self": "Para sair da comunidade, use \"Sair da comunidade\".",
+      "owner_limit_reached": "Esse membro já é dono do máximo de {max} comunidades.",
       "nickname_invalid": "O apelido precisa ter de 1 a 32 caracteres."
     },
     "tournament": {
@@ -389,7 +414,8 @@
     "participant": {
       "already_registered": "Esse membro já está inscrito.",
       "not_found": "Esse membro não está inscrito.",
-      "not_registered": "Você não está inscrito neste torneio."
+      "not_registered": "Você não está inscrito neste torneio.",
+      "not_in_bracket": "Esse inscrito ficou fora da chave (sem check-in): não há do que desistir."
     },
     "format": {
       "invalid_best_of": "Melhor de {best_of} não vale: use um número ímpar (1, 3, 5...).",
@@ -518,7 +544,8 @@
     "confirmedVia": {
       "opponent": "Confirmado pelo adversário <time></time>.",
       "deadline": "Confirmado pelo fim da janela de contestação <time></time>.",
-      "organizer": "Definido pela organização <time></time>."
+      "organizer": "Definido pela organização <time></time>.",
+      "withdrawal": "W.O. automático: quem perdeu desistiu ou saiu da comunidade <time></time>."
     },
     "games": {
       "title": "Mapas",
@@ -584,6 +611,7 @@
         "entered": "{actor} lançou o placar",
         "corrected": "{actor} corrigiu o resultado",
         "walkover": "{actor} deu W.O.",
+        "auto_walkover": "W.O. automático: um dos lados desistiu ou saiu da comunidade",
         "voided": "{actor} anulou o envio: uma correção mudou quem joga a partida"
       }
     },

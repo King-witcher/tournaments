@@ -302,7 +302,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["leave_tenant"];
         options?: never;
         head?: never;
         patch: operations["update_my_membership"];
@@ -319,6 +319,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_member"];
         options?: never;
         head?: never;
         patch?: never;
@@ -564,6 +580,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdraw_participant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/publish": {
         parameters: {
             query?: never;
@@ -676,6 +708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/transfer-ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["transfer_ownership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -702,12 +750,16 @@ export interface components {
         Bracket: "single" | "double";
         BracketEntrant: {
             avatar_url?: string | null;
+            /** @description Saiu da comunidade (ou foi removido); continua na chave como histórico. */
+            left: boolean;
             /** @description Apelido no tenant. */
             nickname: string;
             /** Format: int32 */
             seed: number;
             /** Format: int64 */
             user_id: number;
+            /** @description Desistiu: as partidas prontas dele viram W.O. para o adversário. */
+            withdrawn: boolean;
         };
         BracketMatch: {
             a: components["schemas"]["MatchSide"];
@@ -755,7 +807,7 @@ export interface components {
          * @description Como o resultado foi confirmado.
          * @enum {string}
          */
-        Confirmation: "opponent" | "deadline" | "organizer";
+        Confirmation: "opponent" | "deadline" | "organizer" | "withdrawal";
         ContestReport: {
             /** @description O que está errado, de 1 a 280 caracteres. */
             comment: string;
@@ -891,7 +943,7 @@ export interface components {
             user_id: number;
         };
         /** @enum {string} */
-        EventKind: "reported" | "confirmed" | "auto_confirmed" | "contested" | "resolved" | "entered" | "corrected" | "walkover" | "voided";
+        EventKind: "reported" | "confirmed" | "auto_confirmed" | "contested" | "resolved" | "entered" | "corrected" | "walkover" | "auto_walkover" | "voided";
         EventOutcome: {
             /** Format: int32 */
             loser_maps?: number | null;
@@ -1121,6 +1173,11 @@ export interface components {
              *     na chave.
              */
             checked_in: boolean;
+            /**
+             * @description Saiu da comunidade (ou foi removido). Só fica inscrito assim em
+             *     torneio iniciado, como histórico; no em andamento, também desistiu.
+             */
+            left: boolean;
             /** @description Apelido no tenant. */
             nickname: string;
             /** Format: date-time */
@@ -1133,6 +1190,8 @@ export interface components {
             seed?: number | null;
             /** Format: int64 */
             user_id: number;
+            /** @description Desistiu do torneio em andamento: as partidas dele viram W.O. */
+            withdrawn: boolean;
         };
         PutTranslation: {
             /** @description Markdown, até 2000 caracteres; vazio usa o original. */
@@ -1372,6 +1431,18 @@ export interface components {
             locale: components["schemas"]["Locale"];
             name: string;
             rules: string;
+        };
+        TransferOwnership: {
+            /**
+             * @description O slug do tenant, digitado para confirmar.
+             * @example quake-br
+             */
+            confirm_slug: string;
+            /**
+             * Format: int64
+             * @description Membro ativo que vira owner.
+             */
+            user_id: number;
         };
         UpdateMyMembership: {
             /** @description 1 a 32 caracteres; espaços nas pontas são removidos. */
@@ -2006,7 +2077,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Entrou como player (quem já era membro mantém papel e apelido) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant */
+            /** @description Entrou como player (quem já era membro mantém papel e apelido; quem tinha saído volta como player, com o apelido e o histórico de antes) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2382,6 +2453,54 @@ export interface operations {
             };
         };
     };
+    leave_tenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description member.owner_must_transfer (o owner transfere a posse antes) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     update_my_membership: {
         parameters: {
             query?: never;
@@ -2468,6 +2587,74 @@ export interface operations {
             };
             /** @description tenant.not_found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Membro removido (o owner remove qualquer um; o organizer, só players): fica como quem saiu sozinho */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (player, ou organizer removendo organizer) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description member.is_owner (ninguém remove o owner), member.remove_self (para sair, DELETE /tenants/{slug}/me) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3829,6 +4016,76 @@ export interface operations {
             };
         };
     };
+    withdraw_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do usuário inscrito */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Desistência marcada pelo organizador (também se já estava): o inscrito continua na chave e na comunidade, e cada partida pronta com ele, agora ou depois, vira W.O. automático para o adversário (com os dois lados fora, para o seed melhor). Envio pendente ou contestado dessas partidas dá lugar ao W.O. Não se desfaz; o organizador ainda pode corrigir resultados */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, participant.not_in_bracket (inscrito que ficou fora da chave) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     publish_tournament: {
         parameters: {
             query?: never;
@@ -4322,7 +4579,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Início desfeito (iniciou por engano): volta para o check-in, ou para a inscrição sem check-in. Inscrições, check-ins e seeds continuam como estavam */
+            /** @description Início desfeito (iniciou por engano): volta para o check-in, ou para a inscrição sem check-in. Inscrições, check-ins e seeds continuam como estavam, menos as de quem desistiu ou saiu da comunidade, que saem */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4515,6 +4772,78 @@ export interface operations {
             };
             /** @description tournament.finished */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    transfer_ownership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferOwnership"];
+            };
+        };
+        responses: {
+            /** @description Posse transferida: o membro escolhido vira owner (dentro do limite de 3 tenants como owner) e quem era owner vira organizer. Devolve o tenant visto por quem transferiu */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTenant"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description member.is_owner (já é o owner), member.owner_limit_reached {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

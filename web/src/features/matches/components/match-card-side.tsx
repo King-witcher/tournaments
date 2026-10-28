@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { DepartureMark } from "@/features/participants/components/departure-mark";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { useMatchLabels } from "../hooks/use-match-labels";
@@ -48,6 +49,9 @@ export function MatchCardSide({
       >
         {entrant?.nickname ?? placeholder}
       </span>
+      {entrant && (
+        <DepartureMark withdrawn={entrant.withdrawn} left={entrant.left} />
+      )}
       {score != null && (
         <span
           className={cn(

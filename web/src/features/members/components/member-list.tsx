@@ -1,23 +1,28 @@
 import { getTranslations } from "next-intl/server";
 
 import type { components } from "@/shared/api/schema";
-import { serverApi } from "@/shared/api/server";
+import { getMembers } from "../server";
 import { MemberRow } from "./member-row";
+
+type Role = components["schemas"]["Role"];
 
 type Props = {
   slug: string;
-  /** Papel de quem está vendo: o owner troca o papel dos outros. */
-  viewerRole: components["schemas"]["Role"];
+  /** Papel de quem está vendo: o owner troca papéis e remove; o organizer remove players. */
+  viewerRole: Role;
 };
+
+/** Quem `viewer` pode remover (a API confere de novo). */
+function canRemove(viewer: Role, member: Role) {
+  if (member === "owner") return false;
+  return viewer === "owner" || (viewer === "organizer" && member === "player");
+}
 
 /** Membros do tenant. Fica em `<Suspense>`. */
 export async function MemberList({ slug, viewerRole }: Props) {
-  const api = await serverApi();
   const [t, members] = await Promise.all([
     getTranslations("Tenant.members"),
-    api
-      .GET("/tenants/{slug}/members", { params: { path: { slug } } })
-      .then(({ data }) => data ?? []),
+    getMembers(slug),
   ]);
 
   return (
@@ -32,6 +37,7 @@ export async function MemberList({ slug, viewerRole }: Props) {
             slug={slug}
             member={member}
             canChangeRoles={viewerRole === "owner"}
+            canRemove={canRemove(viewerRole, member.role)}
           />
         ))}
       </ul>

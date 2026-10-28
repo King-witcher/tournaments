@@ -3,14 +3,16 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { MemberRoleButton } from "./member-role-button";
+import { RemoveMemberButton } from "./remove-member-button";
 
 type Props = {
   slug: string;
   member: components["schemas"]["Member"];
   canChangeRoles: boolean;
+  canRemove: boolean;
 };
 
-export function MemberRow({ slug, member, canChangeRoles }: Props) {
+export function MemberRow({ slug, member, canChangeRoles, canRemove }: Props) {
   const tRoles = useTranslations("Roles");
 
   return (
@@ -28,6 +30,13 @@ export function MemberRow({ slug, member, canChangeRoles }: Props) {
           slug={slug}
           userId={member.user_id}
           role={member.role}
+        />
+      )}
+      {canRemove && (
+        <RemoveMemberButton
+          slug={slug}
+          userId={member.user_id}
+          nickname={member.nickname}
         />
       )}
     </li>

@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { DepartureMark } from "@/features/participants/components/departure-mark";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 
@@ -32,6 +33,12 @@ export function StandingsList({ standings, entrants }: Props) {
               <span className={s.rank === 1 ? "font-semibold" : "font-medium"}>
                 {entrant?.nickname}
               </span>
+              {entrant && (
+                <DepartureMark
+                  withdrawn={entrant.withdrawn}
+                  left={entrant.left}
+                />
+              )}
             </li>
           );
         })}

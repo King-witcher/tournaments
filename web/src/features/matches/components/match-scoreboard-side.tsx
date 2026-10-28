@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { DepartureMark } from "@/features/participants/components/departure-mark";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Avatar } from "@/shared/ui/avatar";
@@ -56,8 +57,9 @@ export function MatchScoreboardSide({
           {entrant?.nickname ?? placeholder}
         </span>
         {entrant && (
-          <span className="text-xs opacity-60">
+          <span className="flex gap-2 text-xs opacity-60">
             {t("seed", { seed: entrant.seed })}
+            <DepartureMark withdrawn={entrant.withdrawn} left={entrant.left} />
           </span>
         )}
       </div>
