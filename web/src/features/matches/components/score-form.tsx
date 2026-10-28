@@ -8,6 +8,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { submitAction } from "@/shared/lib/submit-action";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field } from "@/shared/ui/field";
@@ -94,7 +95,7 @@ export function ScoreForm(props: Props) {
   );
 
   return (
-    <form action={submit} className="flex flex-col gap-4">
+    <form onSubmit={submitAction(submit)} className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-4">
         {winsField("a")}
         {winsField("b")}
