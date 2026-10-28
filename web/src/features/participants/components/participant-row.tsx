@@ -34,9 +34,10 @@ export function ParticipantRow({
   canWithdraw,
 }: Props) {
   const t = useTranslations("Participants");
+  const withdrawable = canWithdraw && p.seed != null && !p.withdrawn;
 
   return (
-    <li className="flex items-center gap-3 py-2">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
       {showSeed && p.seed != null && (
         <span className="w-8 text-right text-sm tabular-nums opacity-70">
           {t("seed", { seed: p.seed })}
@@ -55,28 +56,33 @@ export function ParticipantRow({
           {p.checked_in ? t("checkIn.checkedIn") : t("checkIn.notCheckedIn")}
         </span>
       )}
-      {canCheckIn && (
-        <ParticipantCheckInButton
-          tenant={tenant}
-          tournament={tournament}
-          userId={p.user_id}
-          checkedIn={p.checked_in}
-        />
-      )}
-      {canRemove && (
-        <RemoveParticipantButton
-          tenant={tenant}
-          tournament={tournament}
-          userId={p.user_id}
-        />
-      )}
-      {canWithdraw && p.seed != null && !p.withdrawn && (
-        <WithdrawParticipantButton
-          tenant={tenant}
-          tournament={tournament}
-          userId={p.user_id}
-          nickname={p.nickname}
-        />
+      {(canCheckIn || canRemove || withdrawable) && (
+        // No celular, as ações vão para a linha de baixo, à direita.
+        <span className="flex w-full justify-end gap-3 sm:w-auto">
+          {canCheckIn && (
+            <ParticipantCheckInButton
+              tenant={tenant}
+              tournament={tournament}
+              userId={p.user_id}
+              checkedIn={p.checked_in}
+            />
+          )}
+          {canRemove && (
+            <RemoveParticipantButton
+              tenant={tenant}
+              tournament={tournament}
+              userId={p.user_id}
+            />
+          )}
+          {withdrawable && (
+            <WithdrawParticipantButton
+              tenant={tenant}
+              tournament={tournament}
+              userId={p.user_id}
+              nickname={p.nickname}
+            />
+          )}
+        </span>
       )}
     </li>
   );

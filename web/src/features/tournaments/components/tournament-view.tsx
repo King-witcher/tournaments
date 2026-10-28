@@ -8,12 +8,11 @@ import { CheckInPanel } from "@/features/participants/components/check-in-panel"
 import { ParticipantSection } from "@/features/participants/components/participant-section";
 import { RegistrationPanel } from "@/features/participants/components/registration-panel";
 import { SeedingPanel } from "@/features/participants/components/seeding-panel";
-import { apiErrorMessage } from "@/shared/api/errors";
-import { Alert } from "@/shared/ui/alert";
 import { Markdown } from "@/shared/ui/markdown";
 import { localizedTexts } from "../lib/localize";
 import { invitesAllowed } from "../lib/status";
 import { loadTournament } from "../server";
+import { ErrorBack } from "./error-back";
 import { TournamentActions } from "./tournament-actions";
 import { TournamentHeader } from "./tournament-header";
 import { TournamentRules } from "./tournament-rules";
@@ -40,7 +39,7 @@ export async function TournamentView({ tenant, slug }: Props) {
     return <LoginPrompt message={t("loginRequired")} />;
   }
   if (loaded.kind === "error") {
-    return <Alert>{await apiErrorMessage(loaded.code)}</Alert>;
+    return <ErrorBack tenant={tenant} code={loaded.code} />;
   }
 
   const { me, tournament } = loaded;

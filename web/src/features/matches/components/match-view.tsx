@@ -1,10 +1,11 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedTexts } from "@/features/tournaments/lib/localize";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
-import { Alert } from "@/shared/ui/alert";
+import { PageError } from "@/shared/ui/page-error";
 import { loadMaps, loadMatch } from "../server";
 import { MatchActions } from "./match-actions";
 import { MatchGames } from "./match-games";
@@ -20,8 +21,9 @@ type Props = { tenant: string; slug: string; matchKey: string };
  * dar W.O.), detalhe por mapa e histórico. Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
-  const [t, locale, loaded, found] = await Promise.all([
+  const [t, tNav, locale, loaded, found] = await Promise.all([
     getTranslations("Match"),
+    getTranslations("Nav"),
     getLocale(),
     loadTournament(tenant, slug),
     loadMatch(tenant, slug, matchKey),
@@ -30,10 +32,14 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
     return <LoginPrompt message={t("loginRequired")} />;
   }
   if (loaded.kind === "error") {
-    return <Alert>{await apiErrorMessage(loaded.code)}</Alert>;
+    return <ErrorBack tenant={tenant} code={loaded.code} />;
   }
   if (found.kind === "error") {
-    return <Alert>{await apiErrorMessage(found.code)}</Alert>;
+    return (
+      <PageError href={`/${tenant}/${slug}`} label={tNav("backToTournament")}>
+        {await apiErrorMessage(found.code)}
+      </PageError>
+    );
   }
 
   const detail = found.data;

@@ -7,7 +7,7 @@ import { MembershipSection } from "@/features/members/components/membership-sect
 import { TournamentList } from "@/features/tournaments/components/tournament-list";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
-import { Alert } from "@/shared/ui/alert";
+import { PageError } from "@/shared/ui/page-error";
 
 /**
  * Página do tenant, só para membros: torneios, membros, (organizer ou owner)
@@ -17,9 +17,10 @@ import { Alert } from "@/shared/ui/alert";
  */
 export async function TenantView({ slug }: { slug: string }) {
   const api = await serverApi();
-  const [t, tRoles, result] = await Promise.all([
+  const [t, tRoles, tNav, result] = await Promise.all([
     getTranslations("Tenant"),
     getTranslations("Roles"),
+    getTranslations("Nav"),
     api
       .GET("/tenants/{slug}", { params: { path: { slug } } })
       .catch(() => undefined),
@@ -31,7 +32,9 @@ export async function TenantView({ slug }: { slug: string }) {
   const me = result?.data;
   if (!me) {
     return (
-      <Alert>{await apiErrorMessage(result?.error?.error ?? "internal")}</Alert>
+      <PageError href="/" label={tNav("backHome")}>
+        {await apiErrorMessage(result?.error?.error ?? "internal")}
+      </PageError>
     );
   }
 

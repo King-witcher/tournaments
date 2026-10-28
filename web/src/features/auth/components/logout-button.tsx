@@ -7,6 +7,10 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { Button } from "@/shared/ui/button";
 
+/**
+ * Sai e volta para a home: quase toda página é só para membros e, sem
+ * sessão, só mostraria "entre para ver".
+ */
 export function LogoutButton() {
   const t = useTranslations("Auth");
   const router = useRouter();
@@ -19,7 +23,10 @@ export function LogoutButton() {
       onClick={() =>
         run(
           () => api.POST("/auth/logout"),
-          () => router.refresh(),
+          () => {
+            router.replace("/");
+            router.refresh();
+          },
         )
       }
     >

@@ -4,7 +4,10 @@
     "description": "Organize torneios de Quake Champions: duelo, FFA, 2v2 e 3v3."
   },
   "Nav": {
-    "home": "Início"
+    "home": "Início",
+    "backHome": "Ir para o início",
+    "backToCommunity": "Voltar à comunidade",
+    "backToTournament": "Voltar ao torneio"
   },
   "Home": {
     "title": "Torneios de Quake Champions",
