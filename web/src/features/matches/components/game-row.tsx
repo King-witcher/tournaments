@@ -48,31 +48,36 @@ export function GameRow({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select
-        aria-label={t("map", { number })}
-        value={game.map}
-        onChange={(e) => onChange({ ...game, map: e.target.value })}
-        className="w-48"
-      >
-        <option value="">{t("chooseMap")}</option>
-        <optgroup label={t("pool")}>
-          {maps.filter((m) => m.duel_pool).map(option)}
-        </optgroup>
-        <optgroup label={t("others")}>
-          {maps.filter((m) => !m.duel_pool).map(option)}
-        </optgroup>
-      </Select>
-      {frags("a")}
-      {frags("b")}
-      <Button
-        size="sm"
-        variant="link"
-        onClick={onRemove}
-        aria-label={t("removeGame", { number })}
-      >
-        {t("remove")}
-      </Button>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex items-center gap-2">
+        <span className="w-4 text-sm tabular-nums opacity-60">{number}</span>
+        <Select
+          aria-label={t("map", { number })}
+          value={game.map}
+          onChange={(e) => onChange({ ...game, map: e.target.value })}
+          className="flex-1 sm:w-48 sm:flex-none"
+        >
+          <option value="">{t("chooseMap")}</option>
+          <optgroup label={t("pool")}>
+            {maps.filter((m) => m.duel_pool).map(option)}
+          </optgroup>
+          <optgroup label={t("others")}>
+            {maps.filter((m) => !m.duel_pool).map(option)}
+          </optgroup>
+        </Select>
+      </div>
+      <div className="flex items-center gap-2 pl-6 sm:pl-0">
+        {frags("a")}
+        {frags("b")}
+        <Button
+          size="sm"
+          variant="link"
+          onClick={onRemove}
+          aria-label={t("removeGame", { number })}
+        >
+          {t("remove")}
+        </Button>
+      </div>
     </div>
   );
 }
