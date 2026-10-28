@@ -51,6 +51,10 @@ export async function BracketSection({ tenant, tournament }: Props) {
         {bracket.status === "in_progress" && (
           <p className="text-sm opacity-70">{t("hint")}</p>
         )}
+        {bracket.matches.some((m) => m.round > 1) && (
+          // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
+          <p className="text-sm opacity-70 sm:hidden">{t("scrollHint")}</p>
+        )}
         <BracketView
           tenant={tenant}
           tournament={tournament.slug}

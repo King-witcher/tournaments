@@ -508,6 +508,7 @@
     "title": "Llave",
     "loading": "Cargando la llave…",
     "hint": "Haz clic en una partida para enviar o ver el resultado.",
+    "scrollHint": "Desliza la llave hacia el costado para ver las otras rondas.",
     "parts": {
       "winners": "Llave de ganadores",
       "losers": "Llave de perdedores",

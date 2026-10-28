@@ -508,6 +508,7 @@
     "title": "Chave",
     "loading": "Carregando a chave…",
     "hint": "Clique numa partida para enviar ou ver o resultado.",
+    "scrollHint": "Arraste a chave para o lado para ver as outras rodadas.",
     "parts": {
       "winners": "Chave de cima",
       "losers": "Chave de baixo",
