@@ -32,16 +32,18 @@ export function buttonVariants({
   size = "default",
 }: ButtonStyle = {}) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-md text-sm disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-md text-sm disabled:cursor-not-allowed disabled:opacity-50 aria-busy:cursor-progress aria-busy:opacity-50",
     variants[variant],
     variant === "link" ? "min-h-11 sm:min-h-0" : sizes[size],
   );
 }
 
 /**
- * Botão. `pending`: a ação está em andamento; desabilita (sem clique duplo) e
- * mostra um indicador girando ao lado do texto, para quem clicou saber que
- * algo vai acontecer.
+ * Botão. `pending`: a ação está em andamento; ignora o clique (sem clique
+ * duplo, nem pelo Enter num campo do formulário) e mostra um indicador
+ * girando ao lado do texto, para quem clicou saber que algo vai acontecer.
+ * Pendente, ele não recebe `disabled`: o navegador tiraria o foco dele, e
+ * quem usa teclado voltaria para o começo da página depois de cada ação.
  */
 export function Button({
   variant,
@@ -50,6 +52,7 @@ export function Button({
   type = "button",
   pending,
   disabled,
+  onClick,
   children,
   ...props
 }: ComponentProps<"button"> & ButtonStyle & { pending?: boolean }) {
@@ -57,8 +60,19 @@ export function Button({
     <button
       type={type}
       className={cn(buttonVariants({ variant, size }), className)}
-      disabled={disabled || pending}
+      disabled={disabled}
+      aria-disabled={pending || undefined}
       aria-busy={pending || undefined}
+      // Só quem passa `pending` (componente de cliente) recebe o guarda: um
+      // Server Component não pode pôr função no botão.
+      onClick={
+        pending === undefined
+          ? onClick
+          : (event) => {
+              if (pending) event.preventDefault();
+              else onClick?.(event);
+            }
+      }
       {...props}
     >
       {pending && (

@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Badge } from "@/shared/ui/badge";
 import { LocalTime } from "@/shared/ui/local-time";
-import type { MatchTarget } from "../lib/match-target";
+import { gameRowId, type MatchTarget } from "../lib/match-target";
 import { DeadlineCountdown } from "./deadline-countdown";
 import { GameOrganizerActions } from "./game-organizer-actions";
 import { GameRespond } from "./game-respond";
@@ -51,7 +51,13 @@ export function GameRow({ target, game: g, names, maps, canManage }: Props) {
   }
 
   return (
-    <li className="flex flex-col gap-2 py-3">
+    // tabIndex -1: recebe o foco depois de confirmar, contestar ou resolver o
+    // mapa, quando o botão usado some.
+    <li
+      id={gameRowId(g.number)}
+      tabIndex={-1}
+      className="flex flex-col gap-2 py-3"
+    >
       {/* Número e mapa à esquerda, resultado à direita: dá para correr o olho
           pela coluna. Quebra em duas linhas quando não cabe (390px). */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">

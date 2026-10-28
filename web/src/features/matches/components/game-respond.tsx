@@ -6,11 +6,12 @@ import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field } from "@/shared/ui/field";
 import { Textarea } from "@/shared/ui/textarea";
-import { gameParams, type MatchTarget } from "../lib/match-target";
+import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 
 type Props = { target: MatchTarget; number: number };
 
@@ -22,6 +23,10 @@ export function GameRespond({ target, number }: Props) {
   const [contesting, setContesting] = useState(false);
   const [comment, setComment] = useState("");
   const params = gameParams(target, number);
+  const done = () => {
+    router.refresh();
+    focusIfLost(gameRowId(number));
+  };
 
   const confirm = () =>
     run(
@@ -30,7 +35,7 @@ export function GameRespond({ target, number }: Props) {
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/confirm",
           { params },
         ),
-      () => router.refresh(),
+      done,
     );
   const contest = () =>
     run(
@@ -39,7 +44,7 @@ export function GameRespond({ target, number }: Props) {
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/contest",
           { params, body: { comment } },
         ),
-      () => router.refresh(),
+      done,
     );
 
   return (

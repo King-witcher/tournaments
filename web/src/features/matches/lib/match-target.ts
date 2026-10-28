@@ -30,3 +30,6 @@ export function gameInput(g: GameValues & { winner: "a" | "b" }) {
     b_frags: g.b.trim() ? Number(g.b) : null,
   };
 }
+
+/** Id da linha de um mapa na página da partida: o foco vai para ela depois de agir no mapa. */
+export const gameRowId = (number: number) => `game-${number}`;

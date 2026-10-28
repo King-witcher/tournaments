@@ -40,15 +40,29 @@ export function ConfirmButton({
   const t = useTranslations("Common");
   const [asking, setAsking] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Fechou a pergunta (sim, não ou Esc): o foco volta para o botão, que
+  // reaparece no lugar dela (pendente, no sim), em vez de cair no começo da página.
+  const returnFocus = useRef(false);
 
   // O foco vai para o "Não": o botão clicado sumiu, e um Enter a mais não confirma.
   useEffect(() => {
     if (asking) cancelRef.current?.focus();
+    else if (returnFocus.current) {
+      returnFocus.current = false;
+      buttonRef.current?.focus();
+    }
   }, [asking]);
+
+  const close = () => {
+    returnFocus.current = true;
+    setAsking(false);
+  };
 
   if (!asking) {
     return (
       <Button
+        ref={buttonRef}
         variant={variant}
         size={size}
         pending={pending}
@@ -65,7 +79,7 @@ export function ConfirmButton({
     <fieldset
       className="min-w-0 max-w-prose"
       onKeyDown={(event) => {
-        if (event.key === "Escape") setAsking(false);
+        if (event.key === "Escape") close();
       }}
     >
       <legend className="mb-2 text-sm">{question}</legend>
@@ -74,18 +88,13 @@ export function ConfirmButton({
           variant={danger ? "destructive" : "default"}
           size="sm"
           onClick={() => {
-            setAsking(false);
+            close();
             onConfirm();
           }}
         >
           {children}
         </Button>
-        <Button
-          ref={cancelRef}
-          variant="outline"
-          size="sm"
-          onClick={() => setAsking(false)}
-        >
+        <Button ref={cancelRef} variant="outline" size="sm" onClick={close}>
           {t("no")}
         </Button>
       </div>

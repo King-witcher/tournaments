@@ -7,9 +7,10 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { gameParams, type MatchTarget } from "../lib/match-target";
+import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameForm } from "./game-form";
 
 type Schemas = components["schemas"];
@@ -50,7 +51,10 @@ export function GameOrganizerActions({
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/confirm",
           { params: gameParams(target, game.number) },
         ),
-      () => router.refresh(),
+      () => {
+        router.refresh();
+        focusIfLost(gameRowId(game.number));
+      },
     );
 
   if (editing) {
@@ -72,7 +76,10 @@ export function GameOrganizerActions({
             b: game.b_frags?.toString() ?? "",
           }}
           submitLabel={tForm("save", { number: game.number })}
-          onDone={() => setEditing(false)}
+          onDone={() => {
+            setEditing(false);
+            focusIfLost(gameRowId(game.number));
+          }}
         />
         <div>
           <Button variant="link" onClick={() => setEditing(false)}>
