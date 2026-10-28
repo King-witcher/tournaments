@@ -22,10 +22,11 @@ import { TournamentSetupSummary } from "./tournament-setup-summary";
 type Props = { tenant: string; slug: string };
 
 /**
- * Página do torneio: textos no idioma de quem vê, chave e classificação
- * (depois de iniciar), inscrição, check-in, formato, inscritos e regras;
- * para organizer e owner, as ações, o ciclo (check-in, iniciar, desfazer),
- * o seeding e os links de inscrição. Lê a sessão, então fica em
+ * Página do torneio, de cima para baixo: para organizer e owner, o quadro da
+ * organização (estado, próximo passo, editar); a inscrição e o check-in de
+ * quem vê; chave e classificação (depois de iniciar); descrição, formato,
+ * seeding (organização), inscritos, links de inscrição (organização) e
+ * regras. Textos no idioma de quem vê. Lê a sessão, então fica em
  * `<Suspense>`.
  */
 export async function TournamentView({ tenant, slug }: Props) {
@@ -57,11 +58,11 @@ export async function TournamentView({ tenant, slug }: Props) {
       {organizer && (
         <TournamentActions tenant={tenant} tournament={tournament} now={now} />
       )}
+      <RegistrationPanel tenant={tenant} tournament={tournament} />
+      <CheckInPanel tenant={tenant} tournament={tournament} now={now} />
       <Suspense fallback={<p className="text-sm">{tBracket("loading")}</p>}>
         <BracketSection tenant={tenant} tournament={tournament} />
       </Suspense>
-      <RegistrationPanel tenant={tenant} tournament={tournament} />
-      <CheckInPanel tenant={tenant} tournament={tournament} now={now} />
       {texts.description && <Markdown>{texts.description}</Markdown>}
       <TournamentSetupSummary tournament={tournament} />
       {organizer && <SeedingPanel tenant={tenant} tournament={tournament} />}

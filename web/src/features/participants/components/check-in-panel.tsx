@@ -13,8 +13,9 @@ type Props = {
 };
 
 /**
- * O check-in para quem vê: quando abre, e no check-in o botão de fazer ou
- * desfazer (só para inscritos). Some sem check-in no torneio.
+ * O check-in para quem vê: quando abre, no check-in o botão de fazer ou
+ * desfazer (só para inscritos) e, depois de iniciar, o aviso para o inscrito
+ * que ficou de fora por não ter feito. Some sem check-in no torneio.
  */
 export function CheckInPanel({ tenant, tournament, now }: Props) {
   const t = useTranslations("Participants.checkIn");
@@ -31,6 +32,13 @@ export function CheckInPanel({ tenant, tournament, now }: Props) {
       : hint(
           t.rich("opensAt", { date: () => <LocalDateTime value={opensAt} /> }),
         );
+  }
+  if (tournament.status === "in_progress" || tournament.status === "finished") {
+    // Inscrito que não fez check-in ficou fora da chave: sem isto, ele só
+    // não se acharia nela.
+    return tournament.registered && !tournament.checked_in
+      ? hint(t("missed"))
+      : null;
   }
   if (tournament.status !== "check_in") return null;
   if (!tournament.registered) return hint(t("openNotRegistered"));

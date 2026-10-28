@@ -328,6 +328,7 @@
       "open": "Check-in abierto hasta el inicio: confirma tu presencia para entrar en el cuadro.",
       "openNotRegistered": "Check-in abierto. Las inscripciones están cerradas.",
       "done": "Check-in hecho: estás en el cuadro.",
+      "missed": "No hiciste el check-in antes del inicio y quedaste fuera del cuadro.",
       "do": "Hacer check-in",
       "undo": "Deshacer check-in",
       "checkedIn": "check-in hecho",

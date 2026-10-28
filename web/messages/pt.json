@@ -328,6 +328,7 @@
       "open": "Check-in aberto até o início: confirme presença para entrar na chave.",
       "openNotRegistered": "Check-in aberto. As inscrições estão fechadas.",
       "done": "Check-in feito: você está na chave.",
+      "missed": "Você não fez check-in antes do início e ficou fora da chave.",
       "do": "Fazer check-in",
       "undo": "Desfazer check-in",
       "checkedIn": "check-in feito",
