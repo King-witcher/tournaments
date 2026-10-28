@@ -1,0 +1,54 @@
+//! Uma partida com lados, detalhe por mapa e histórico: o que a página da
+//! partida mostra e o que toda ação sobre ela devolve.
+
+use engine::core::Match;
+use sqlx::PgConnection;
+
+use super::{
+    db, key,
+    stage::Stage,
+    types::MatchDetail,
+    view::{self, Viewer},
+};
+use crate::{shared::ApiError, tournaments::StoredTournament};
+
+const NOT_FOUND: ApiError = ApiError::not_found("match.not_found");
+
+/// A partida `key` da fase. 404 `match.not_found` se o identificador não
+/// existe na chave.
+pub fn find<'a>(stage: &'a Stage, key: &str) -> Result<&'a Match, ApiError> {
+    let id = key::parse(key).ok_or(NOT_FOUND)?;
+    stage.bracket.get(id).ok_or(NOT_FOUND)
+}
+
+pub async fn load(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    stage: &Stage,
+    viewer: &Viewer,
+    m: &Match,
+) -> Result<MatchDetail, ApiError> {
+    let summary = view::summary(tournament.status, stage, m, viewer);
+    let games = match stage.result(m.id) {
+        Some(r) => db::games(conn, r.id).await?,
+        None => Vec::new(),
+    };
+    let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;
+    let entrant = |user: Option<i64>| {
+        user.and_then(|u| stage.entrants.iter().find(|e| e.user_id == u))
+            .map(view::entrant)
+    };
+    Ok(MatchDetail {
+        a: entrant(summary.a.user_id),
+        b: entrant(summary.b.user_id),
+        format: stage.format.into(),
+        status: tournament.status,
+        games: games.into_iter().map(view::game).collect(),
+        history: events
+            .into_iter()
+            .map(|e| view::event(stage, e))
+            .collect::<Result<_, _>>()?,
+        can_manage: viewer.organizer,
+        summary,
+    })
+}

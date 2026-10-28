@@ -24,7 +24,7 @@ use crate::{
 };
 
 pub use read::{find, find_for_update, list};
-pub use status::{mark_registration_reopened, publish, set_status};
+pub use status::{mark_registration_reopened, publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 
 /// Id interno de um torneio. Só sai do banco por `find`/`find_for_update`,
@@ -49,6 +49,8 @@ pub struct StoredTournament {
     pub visibility: Visibility,
     pub setup: Setup,
     pub schedule: Schedule,
+    /// Janela de contestação de resultado, em minutos.
+    pub contest_minutes: i32,
     pub translations: Vec<TournamentTranslation>,
     /// Inscritos agora.
     pub participants: i64,
@@ -67,6 +69,7 @@ pub struct NewTournament<'a> {
     pub visibility: Visibility,
     pub setup: &'a Setup,
     pub schedule: Schedule,
+    pub contest_minutes: i32,
 }
 
 /// Campeões ativos: o pool de todo torneio, por enquanto.
@@ -83,8 +86,8 @@ pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Re
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
-                max_participants, champion_rules, starts_at, check_in_minutes)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -98,7 +101,8 @@ pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Re
         new.setup.max_participants,
         Json(new.setup.champion_rules) as _,
         new.schedule.starts_at,
-        new.schedule.check_in_minutes
+        new.schedule.check_in_minutes,
+        new.contest_minutes
     )
     .fetch_optional(&mut *tx)
     .await?
@@ -127,7 +131,8 @@ async fn insert_stages(
 }
 
 /// Grava o PATCH: os textos e, quando vieram, a visibilidade, a configuração
-/// (vagas, campeões e fases), a data e a janela de check-in e o status.
+/// (vagas, campeões e fases), a data e a janela de check-in, a janela de
+/// contestação e o status.
 pub async fn update(
     conn: &mut PgConnection,
     id: TournamentId,
@@ -136,14 +141,16 @@ pub async fn update(
     sqlx::query!(
         r#"update tournaments
            set name = $2, description = $3, rules = $4, visibility = coalesce($5, visibility),
-               status = coalesce($6, status), updated_at = now()
+               status = coalesce($6, status), contest_minutes = coalesce($7, contest_minutes),
+               updated_at = now()
            where id = $1"#,
         id.0,
         edit.texts.name,
         edit.texts.description,
         edit.texts.rules,
         edit.visibility.map(Visibility::as_str),
-        edit.status.map(TournamentStatus::as_str)
+        edit.status.map(TournamentStatus::as_str),
+        edit.contest_minutes
     )
     .execute(&mut *conn)
     .await?;

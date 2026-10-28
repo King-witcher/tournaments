@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set status = $2, updated_at = now()\n           where id = $1 and status in ('in_progress', 'finished') and status <> $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f3cad4d358602e62d552ba5763d95fae0cb4ba32de9f8b5aaefbe457ff347d3c"
+}

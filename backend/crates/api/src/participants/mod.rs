@@ -3,7 +3,8 @@
 //! membros (público ou privado, até começar), o check-in (`check_in`) e o
 //! seeding (`seeding`). O link de convite de torneio fica em `invites`, que
 //! inscreve por `register`; iniciar o torneio fica em `lifecycle`, que fecha
-//! o seeding por `finalize_seeding`.
+//! o seeding por `finalize_seeding`. A chave (`matches`) lê os participantes
+//! por `seeded`.
 
 mod check_in;
 mod db;
@@ -17,6 +18,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use db::{Seeded, seeded};
 pub use registration::{Entry, register};
 pub use seeding::finalize as finalize_seeding;
 

@@ -25,6 +25,37 @@ pub async fn list(
     .await
 }
 
+/// Um participante da chave.
+pub struct Seeded {
+    /// `participants.id`: o `ParticipantId` do `engine`.
+    pub id: i64,
+    pub user_id: i64,
+    /// Apelido no tenant.
+    pub nickname: String,
+    pub avatar_url: Option<String>,
+    pub seed: i32,
+}
+
+/// Quem está na chave: os inscritos com seed, do 1 em diante. Depois de
+/// iniciar, os seeds são 1..N entre os elegíveis (`seeding::finalize`).
+pub async fn seeded(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+) -> Result<Vec<Seeded>, sqlx::Error> {
+    sqlx::query_as!(
+        Seeded,
+        r#"select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as "seed!"
+           from participants p
+           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
+           join users u on u.id = p.user_id
+           where p.tournament_id = $1 and p.seed is not null
+           order by p.seed"#,
+        tournament.get()
+    )
+    .fetch_all(conn)
+    .await
+}
+
 /// Inscritos para o seeding, na ordem de inscrição (a mesma de `list`).
 pub async fn entrants(
     conn: &mut PgConnection,

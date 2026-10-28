@@ -129,7 +129,8 @@ pub async fn find(
         r#"select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,
                   t.visibility, t.max_participants,
                   t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
-                  t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.created_at,
+                  t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,
+                  t.created_at,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
@@ -209,6 +210,7 @@ pub async fn find(
             stages: stages.into_iter().map(|s| s.0).collect(),
         },
         schedule,
+        contest_minutes: row.contest_minutes,
         translations,
         participants: row.participants,
         registered: row.registered,

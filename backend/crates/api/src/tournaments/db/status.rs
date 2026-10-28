@@ -28,6 +28,31 @@ pub async fn set_status(
     Ok(())
 }
 
+/// Em andamento ↔ encerrado conforme a chave: encerra quando a partida
+/// decisiva é confirmada e volta para em andamento se uma correção deixa
+/// partida por jogar. Só mexe nesses dois status (desfazer o início é
+/// transição do `lifecycle`).
+pub async fn sync_finished(
+    conn: &mut PgConnection,
+    id: TournamentId,
+    finished: bool,
+) -> Result<TournamentStatus, sqlx::Error> {
+    let status = if finished {
+        TournamentStatus::Finished
+    } else {
+        TournamentStatus::InProgress
+    };
+    sqlx::query!(
+        r#"update tournaments set status = $2, updated_at = now()
+           where id = $1 and status in ('in_progress', 'finished') and status <> $2"#,
+        id.get(),
+        status.as_str()
+    )
+    .execute(conn)
+    .await?;
+    Ok(status)
+}
+
 /// Guarda quando o organizador reabriu a inscrição: a abertura automática
 /// não reabre a janela que já tinha aberto (`Schedule::check_in_due`).
 pub async fn mark_registration_reopened(

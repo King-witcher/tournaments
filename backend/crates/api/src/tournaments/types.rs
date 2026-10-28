@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{
-    schedule::DEFAULT_CHECK_IN_MINUTES, setup::TournamentMode, status::TournamentStatus,
-    visibility::Visibility,
+    contest::DEFAULT_CONTEST_MINUTES, schedule::DEFAULT_CHECK_IN_MINUTES, setup::TournamentMode,
+    status::TournamentStatus, visibility::Visibility,
 };
 use crate::shared::{Locale, nullable};
 
@@ -101,10 +101,19 @@ pub struct CreateTournament {
     #[serde(default = "default_check_in_minutes")]
     #[schema(required = false, default = 30, example = 30)]
     pub check_in_minutes: Option<i32>,
+    /// Minutos que o adversário tem para confirmar ou contestar um resultado
+    /// enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 5.
+    #[serde(default = "default_contest_minutes")]
+    #[schema(required = false, default = 5, example = 5)]
+    pub contest_minutes: i32,
 }
 
 fn default_check_in_minutes() -> Option<i32> {
     Some(DEFAULT_CHECK_IN_MINUTES)
+}
+
+fn default_contest_minutes() -> i32 {
+    DEFAULT_CONTEST_MINUTES
 }
 
 /// Campos ausentes não mudam. Textos e visibilidade podem mudar até o
@@ -129,6 +138,9 @@ pub struct UpdateTournament {
     #[serde(default, deserialize_with = "nullable")]
     #[schema(value_type = Option<i32>)]
     pub check_in_minutes: Option<Option<i32>>,
+    /// Janela de contestação; muda até o torneio encerrar e vale para os
+    /// resultados enviados depois.
+    pub contest_minutes: Option<i32>,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o
@@ -160,6 +172,9 @@ pub struct Tournament {
     /// Com o status ainda em inscrição depois disso, o organizador reabriu a
     /// inscrição e a abertura automática está suspensa.
     pub check_in_opens_at: Option<DateTime<Utc>>,
+    /// Minutos que o adversário tem para confirmar ou contestar um resultado
+    /// enviado.
+    pub contest_minutes: i32,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
 }

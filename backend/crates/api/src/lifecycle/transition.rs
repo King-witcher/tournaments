@@ -1,7 +1,9 @@
 //! As transições manuais de status depois de publicar, num lugar só: de onde
 //! cada uma sai, para onde vai e o que faz junto. Publicar fica em
 //! `tournaments` (só mexe no torneio) e a abertura automática do check-in em
-//! `tournaments::schedule`, aplicada ao ler.
+//! `tournaments::schedule`, aplicada ao ler. Iniciar gera a chave e desfazer
+//! a descarta, com os resultados (`matches::start`, `matches::discard`); em
+//! andamento ↔ encerrado anda sozinho conforme a chave, em `matches`.
 //!
 //! ```text
 //! com check-in: inscrição ──abrir check-in (ou a hora)──▶ check-in ──iniciar──▶ em andamento
@@ -14,7 +16,7 @@ use engine::core::ParticipantId;
 use sqlx::PgConnection;
 
 use crate::{
-    participants,
+    matches, participants,
     shared::ApiError,
     tournaments::{self, StoredTournament, TournamentStatus},
 };
@@ -79,13 +81,12 @@ pub async fn apply(
             tournaments::mark_registration_reopened(conn, tournament.id).await?;
         }
         Transition::Start => {
-            let _seeded: Vec<ParticipantId> =
+            let seeded: Vec<ParticipantId> =
                 participants::finalize_seeding(conn, tournament, MIN_TO_START).await?;
-            // Próximo item (chave): gerar a chave aqui com `_seeded`, na ordem
-            // dos seeds, e gravá-la na mesma transação.
+            matches::start(conn, tournament, &seeded).await?;
         }
         Transition::UndoStart => {
-            // Próximo item (chave): descartar aqui a chave gerada no início.
+            matches::discard(conn, tournament).await?;
         }
         Transition::OpenCheckIn => {}
     }

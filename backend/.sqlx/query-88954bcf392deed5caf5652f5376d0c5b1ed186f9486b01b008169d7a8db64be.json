@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with due as (\n               select id, row_number() over (order by confirm_by, id) as n\n               from match_results\n               where tournament_id = $1 and status = 'pending' and confirm_by <= $2\n           ),\n           top as (\n               select coalesce(max(position), 0) as position\n               from match_results where tournament_id = $1\n           ),\n           confirmed as (\n               update match_results r\n               set status = 'confirmed', confirmed_via = 'deadline', confirmed_at = r.confirm_by,\n                   position = (top.position + due.n)::integer\n               from due, top\n               where r.id = due.id\n               returning r.tenant_id, r.tournament_id, r.stage, r.match_key, r.confirm_by\n           )\n           insert into match_events (tenant_id, tournament_id, stage, match_key, kind, created_at)\n           select tenant_id, tournament_id, stage, match_key, 'auto_confirmed', confirm_by\n           from confirmed",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "88954bcf392deed5caf5652f5376d0c5b1ed186f9486b01b008169d7a8db64be"
+}

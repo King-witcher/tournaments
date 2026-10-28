@@ -3,6 +3,7 @@
 //! chama, com o pool lido na mesma transação.
 
 use super::{
+    contest,
     schedule::Schedule,
     setup::Setup,
     status::TournamentStatus,
@@ -21,21 +22,25 @@ pub struct Edit {
     pub setup: Option<Setup>,
     /// `Some` só quando a data de início ou a janela de check-in mudam.
     pub schedule: Option<Schedule>,
+    /// `Some` só quando a janela de contestação muda.
+    pub contest_minutes: Option<i32>,
     /// `Some` quando o status muda junto: desligar o check-in durante o
     /// check-in volta para a inscrição (sem check-in, esse status não existe).
     pub status: Option<TournamentStatus>,
 }
 
-/// Erros: 409 `tournament.finished` (texto ou visibilidade depois de
-/// encerrar), 409 `tournament.setup_locked` (configuração depois de começar),
-/// os de `Schedule::edit` e os de validação dos textos. Mandar a
-/// configuração igual à atual não conta como mudança, então o front pode
-/// reenviar o formulário inteiro.
+/// Erros: 409 `tournament.finished` (texto, visibilidade ou janela de
+/// contestação depois de encerrar), 409 `tournament.setup_locked`
+/// (configuração depois de começar), os de `Schedule::edit`, o de
+/// `contest::check` e os de validação dos textos. Mandar a configuração igual
+/// à atual não conta como mudança, então o front pode reenviar o formulário
+/// inteiro.
 pub fn apply(
     status: TournamentStatus,
     current_texts: &Texts,
     current_setup: &Setup,
     current_schedule: Schedule,
+    current_contest_minutes: i32,
     patch: UpdateTournament,
 ) -> Result<Edit, ApiError> {
     let touches_texts = patch.name.is_some()
@@ -78,11 +83,21 @@ pub fn apply(
     }
     let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes)?;
     let check_in_off = schedule.is_some_and(|s| !s.has_check_in());
+    let contest_minutes = patch
+        .contest_minutes
+        .filter(|&minutes| minutes != current_contest_minutes);
+    if let Some(minutes) = contest_minutes {
+        if !status.texts_editable() {
+            return Err(ApiError::conflict("tournament.finished"));
+        }
+        contest::check(minutes)?;
+    }
     Ok(Edit {
         texts,
         visibility: patch.visibility,
         setup,
         schedule,
+        contest_minutes,
         status: (check_in_off && status == TournamentStatus::CheckIn)
             .then_some(TournamentStatus::Registration),
     })
@@ -139,11 +154,12 @@ mod tests {
             stages: None,
             starts_at: None,
             check_in_minutes: None,
+            contest_minutes: None,
         }
     }
 
     fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
-        apply(status, &texts(), &setup(), schedule(), patch)
+        apply(status, &texts(), &setup(), schedule(), 5, patch)
     }
 
     #[test]

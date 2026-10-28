@@ -99,9 +99,21 @@ impl Setup {
             return Err(ApiError::invalid("tournament.stage_count_invalid")
                 .with_params([("max", MAX_STAGES as i64)]));
         }
+        self.check_entrants(mode, champion_pool, self.max_participants as usize)
+    }
+
+    /// A checagem do `engine` com `entrants` participantes, que ao iniciar são
+    /// os que entram na chave (com o pool de campeões de agora, que pode ter
+    /// mudado desde a criação).
+    pub fn check_entrants(
+        &self,
+        mode: TournamentMode,
+        champion_pool: u32,
+        entrants: usize,
+    ) -> Result<(), ApiError> {
         TournamentSetup {
             team_size: mode.team_size(),
-            max_participants: self.max_participants as usize,
+            max_participants: entrants,
             champions: self.champion_rules,
             champion_pool,
             stages: &self.stages,

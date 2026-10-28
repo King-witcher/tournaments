@@ -22,6 +22,7 @@ impl From<StoredTournament> for Tournament {
             starts_at: t.schedule.starts_at,
             check_in_minutes: t.schedule.check_in_minutes,
             check_in_opens_at: t.schedule.check_in_opens_at(),
+            contest_minutes: t.contest_minutes,
             translations: t.translations,
             created_at: t.created_at,
         }

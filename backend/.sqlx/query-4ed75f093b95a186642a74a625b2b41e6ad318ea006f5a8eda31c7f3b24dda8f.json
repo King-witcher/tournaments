@@ -1,0 +1,209 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, match_key, side_a, side_b, status, winner, a_wins, b_wins, reported_side,\n                  reported_at, confirm_by, contested_at, contest_comment,\n                  confirmed_via, confirmed_at, position\n           from match_results\n           where tournament_id = $1 and stage = $2\n           order by position nulls last, id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "side_a",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "side_a"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "side_b",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "side_b"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "winner",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "winner"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "a_wins",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "a_wins"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "b_wins",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "b_wins"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "reported_side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "reported_side"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "reported_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "reported_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "confirm_by",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "confirm_by"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "contested_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "contested_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "contest_comment",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "contest_comment"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "confirmed_via",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "confirmed_via"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "confirmed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "confirmed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "position",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "position"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "4ed75f093b95a186642a74a625b2b41e6ad318ea006f5a8eda31c7f3b24dda8f"
+}

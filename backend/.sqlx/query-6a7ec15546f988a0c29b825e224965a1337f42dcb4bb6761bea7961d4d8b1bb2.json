@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update champions set active = false where slug not in ('anarki', 'athena')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "6a7ec15546f988a0c29b825e224965a1337f42dcb4bb6761bea7961d4d8b1bb2"
+}

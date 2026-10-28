@@ -8,6 +8,8 @@ mod docs;
 mod health;
 mod invites;
 mod lifecycle;
+mod maps;
+mod matches;
 mod members;
 mod participants;
 mod tenants;
