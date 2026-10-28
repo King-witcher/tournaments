@@ -7,6 +7,7 @@ import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
 import { loadBracket, loadMaps, loadMatch } from "../server";
+import { CorrectionNote } from "./correction-note";
 import { MatchGamesPanel } from "./match-games-panel";
 import { MatchHeader } from "./match-header";
 import { MatchHistory } from "./match-history";
@@ -70,6 +71,15 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         maps={maps}
         contestMinutes={tournament.contest_minutes}
       />
+      {detail.can_manage &&
+        s.state === "completed" &&
+        bracket.kind === "ok" && (
+          <CorrectionNote
+            bracket={bracket.data}
+            matchKey={s.key}
+            basePath={`/${tenant}/${slug}/matches`}
+          />
+        )}
       {detail.can_manage && playable && (
         <OrganizerPanel
           target={target}

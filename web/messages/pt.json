@@ -518,7 +518,7 @@
       "contested": "Este mapa foi contestado: quem resolve é a organização.",
       "own_report": "Você enviou este mapa: quem confirma ou contesta é o adversário.",
       "comment_invalid": "Escreva um comentário de 1 a 280 caracteres, numa linha.",
-      "correction_conflicts": "A correção muda o resultado da série, e isso contradiz uma partida decidida depois desta (ela teria outros lados ou nem existiria).",
+      "correction_conflicts": "Recusado: esta correção muda o resultado da série (outro vencedor, ou série sem decisão), mas a partida seguinte, jogada a partir dele, já está decidida. Corrija antes a partida seguinte até ela ficar sem decisão e depois volte a esta.",
       "series_decided": "A série já está decidida pelos mapas enviados: não há próximo mapa.",
       "no_games_left": "A melhor de {best_of} já teve todos os mapas.",
       "game_already_reported": "Este mapa já foi enviado. Recarregue a página.",
@@ -664,6 +664,12 @@
       "walkoverTitle": "Dar W.O. na série",
       "walkoverConfirm": "Dar W.O. para {name}? Conta como vitória da série sem placar.",
       "comment": "Nota no histórico (opcional)"
+    },
+    "correction": {
+      "title": "Antes de corrigir esta série",
+      "why": "Quem passou por aqui já jogou <matches></matches>, que está decidida. Por isso, uma correção que mude o resultado desta série (outro vencedor, ou série sem decisão) é recusada: aquela partida foi jogada com os lados que este resultado definiu.",
+      "how": "Para mudar o resultado, corrija antes <matches></matches> até ela ficar sem decisão (mude o vencedor de um mapa dela) e depois volte aqui. Os mapas dela são anulados quando os lados mudarem. Se ela também levou a outra partida decidida, comece pela última.",
+      "allowed": "Corrigir sem mudar o resultado da série (o mapa jogado ou os frags) continua valendo."
     },
     "history": {
       "title": "Histórico",
