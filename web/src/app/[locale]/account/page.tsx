@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { AccountLogins } from "@/features/auth/components/account-logins";
 import { AuthError } from "@/features/auth/components/auth-error";
+import { DisplayNameSection } from "@/features/auth/components/display-name-section";
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { Page } from "@/shared/ui/page";
 import { LoadingSection } from "@/shared/ui/skeleton";
@@ -19,6 +20,7 @@ export default async function AccountPage({
       </Suspense>
       <Suspense fallback={<LoadingSection label={t("loading")} />}>
         <RequireLogin message={t("loginRequired")}>
+          <DisplayNameSection />
           <AccountLogins />
         </RequireLogin>
       </Suspense>

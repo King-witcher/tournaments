@@ -34,6 +34,13 @@ pub async fn user_by_id(db: &PgPool, id: i64) -> Result<CurrentUser, sqlx::Error
     .await
 }
 
+pub async fn set_display_name(db: &PgPool, id: i64, name: &str) -> Result<(), sqlx::Error> {
+    sqlx::query!("update users set display_name = $1 where id = $2", name, id)
+        .execute(db)
+        .await?;
+    Ok(())
+}
+
 /// Cria a sessão e devolve o token (só o hash vai para o banco).
 pub async fn create_session(db: &PgPool, user_id: i64) -> Result<String, sqlx::Error> {
     let token = token::random_secret();

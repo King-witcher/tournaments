@@ -80,6 +80,13 @@
     "title": "Tu cuenta",
     "loading": "Cargando la cuenta…",
     "loginRequired": "Inicia sesión para ver tu cuenta.",
+    "name": {
+      "title": "Nombre visible",
+      "label": "Nombre",
+      "hint": "Aparece en el encabezado y es el apodo inicial al entrar en una comunidad. Los apodos que ya tienes en las comunidades no cambian (cada uno se cambia en la página de la comunidad).",
+      "save": "Guardar",
+      "saved": "Guardado."
+    },
     "currentPassword": "Contraseña actual",
     "discord": {
       "title": "Discord",
@@ -409,6 +416,7 @@
       "invalid_credentials": "Nombre de usuario o contraseña incorrectos.",
       "too_many_attempts": "Demasiados intentos con contraseña incorrecta. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
       "username_invalid": "El nombre de usuario debe tener de 3 a 20 letras, números, _ . o -, sin espacios ni tildes.",
+      "display_name_invalid": "El nombre debe tener de 1 a 32 caracteres, en una sola línea.",
       "username_taken": "Ese nombre de usuario ya está en uso.",
       "password_invalid": "La contraseña debe tener de 8 a 128 caracteres.",
       "password_exists": "Tu cuenta ya tiene nombre de usuario y contraseña.",

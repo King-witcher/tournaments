@@ -14,6 +14,15 @@ pub struct CallbackQuery {
     pub error: Option<String>,
 }
 
+/// O que o próprio usuário muda na conta.
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateMe {
+    /// Nome exibido: 1 a 32 caracteres, uma linha; espaços nas pontas são
+    /// removidos. Não muda os apelidos nas comunidades.
+    #[schema(example = "Rapha")]
+    pub display_name: String,
+}
+
 #[derive(Deserialize, ToSchema)]
 pub struct Credentials {
     /// 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são

@@ -225,7 +225,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["update_me"];
         trace?: never;
     };
     "/me/tournaments": {
@@ -1566,6 +1566,15 @@ export interface components {
              */
             user_id: number;
         };
+        /** @description O que o próprio usuário muda na conta. */
+        UpdateMe: {
+            /**
+             * @description Nome exibido: 1 a 32 caracteres, uma linha; espaços nas pontas são
+             *     removidos. Não muda os apelidos nas comunidades.
+             * @example Rapha
+             */
+            display_name: string;
+        };
         UpdateMyMembership: {
             /** @description 1 a 32 caracteres; espaços nas pontas são removidos. */
             nickname: string;
@@ -2286,6 +2295,48 @@ export interface operations {
             };
             /** @description auth.unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMe"];
+            };
+        };
+        responses: {
+            /** @description Nome exibido trocado (os apelidos nas comunidades continuam como estão) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.display_name_invalid, request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

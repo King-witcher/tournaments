@@ -35,7 +35,7 @@ pub fn router() -> OpenApiRouter<AppState> {
             credentials::change_password,
             credentials::remove_password
         ))
-        .routes(routes!(handlers::me))
+        .routes(routes!(handlers::me, handlers::update_me))
         .routes(routes!(handlers::logins))
         .routes(routes!(handlers::logout))
 }

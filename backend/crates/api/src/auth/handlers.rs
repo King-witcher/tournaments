@@ -6,11 +6,19 @@ use axum::{
 };
 use axum_extra::extract::CookieJar;
 
-use super::{CurrentUser, db, session::SESSION_COOKIE, types::LoginMethods};
+use super::{
+    CurrentUser, db,
+    session::SESSION_COOKIE,
+    types::{LoginMethods, UpdateMe},
+};
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, token},
+    shared::{ApiError, ErrorBody, JsonBody, text::clean_text, token},
 };
+
+/// Tamanho máximo do nome exibido: o do apelido, que começa com ele (e o do
+/// nome do Discord).
+const DISPLAY_NAME_MAX: usize = 32;
 
 #[utoipa::path(
     get,
@@ -23,6 +31,31 @@ use crate::{
 )]
 pub async fn me(user: CurrentUser) -> Json<CurrentUser> {
     Json(user)
+}
+
+#[utoipa::path(
+    patch,
+    path = "/me",
+    tag = "auth",
+    request_body = UpdateMe,
+    responses(
+        (status = OK, body = CurrentUser, description = "Nome exibido trocado (os apelidos nas comunidades continuam como estão)"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.display_name_invalid, request.invalid_body"),
+    )
+)]
+pub async fn update_me(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    JsonBody(body): JsonBody<UpdateMe>,
+) -> Result<Json<CurrentUser>, ApiError> {
+    let name = clean_text(
+        &body.display_name,
+        DISPLAY_NAME_MAX,
+        "auth.display_name_invalid",
+    )?;
+    db::set_display_name(&state.db, user.id, &name).await?;
+    Ok(Json(db::user_by_id(&state.db, user.id).await?))
 }
 
 #[utoipa::path(

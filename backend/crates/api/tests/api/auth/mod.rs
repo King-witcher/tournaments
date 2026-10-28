@@ -4,6 +4,7 @@
 mod discord;
 mod link;
 mod password;
+mod profile;
 
 use std::sync::Arc;
 
