@@ -13,7 +13,7 @@ pub fn clean_text(raw: &str, max: usize, code: &'static str) -> Result<String, A
     Ok(text.to_owned())
 }
 
-/// Texto longo de várias linhas (Markdown de descrição e regras): quebras de
+/// Texto longo de várias linhas (descrição e regras): quebras de
 /// linha viram `\n`, sem espaços nas pontas, sem outros caracteres de controle
 /// além de tabulação, de 0 a `max` caracteres. Fora disso, 422 com `code` e
 /// `max` nos parâmetros.

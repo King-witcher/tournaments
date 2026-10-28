@@ -76,10 +76,10 @@ pub struct CreateTournament {
     /// 1 a 80 caracteres.
     #[schema(example = "Copa de Outubro")]
     pub name: String,
-    /// Markdown, até 2000 caracteres.
+    /// Texto simples; as quebras de linha são preservadas. Até 2000 caracteres.
     #[serde(default)]
     pub description: String,
-    /// Markdown, até 20000 caracteres.
+    /// Texto simples; as quebras de linha são preservadas. Até 20000 caracteres.
     #[serde(default)]
     pub rules: String,
     pub mode: TournamentMode,
@@ -106,6 +106,35 @@ pub struct CreateTournament {
     #[serde(default = "default_contest_minutes")]
     #[schema(required = false, default = 5, example = 5)]
     pub contest_minutes: i32,
+    /// Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
+    /// original. Erro de texto numa delas (`tournament.name_invalid`,
+    /// `tournament.description_invalid`, `tournament.rules_invalid`) e
+    /// `tournament.translation_same_locale` trazem `params.locale` com o
+    /// idioma dela; idioma repetido dá `request.invalid_body`.
+    #[serde(default)]
+    pub translations: Vec<CreateTranslation>,
+    /// Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
+    /// transação: exige `starts_at` (`tournament.starts_at_required`) e, se a
+    /// janela de check-in já abriu, o torneio vem em `check_in`; senão, em
+    /// `registration`. Qualquer erro e nada é gravado.
+    #[serde(default)]
+    pub publish: bool,
+}
+
+/// Tradução enviada junto com a criação do torneio.
+#[derive(Deserialize, ToSchema)]
+pub struct CreateTranslation {
+    pub locale: Locale,
+    /// 1 a 80 caracteres.
+    pub name: String,
+    /// Texto simples; as quebras de linha são preservadas. Até 2000
+    /// caracteres; vazio usa o original.
+    #[serde(default)]
+    pub description: String,
+    /// Texto simples; as quebras de linha são preservadas. Até 20000
+    /// caracteres; vazio usa o original.
+    #[serde(default)]
+    pub rules: String,
 }
 
 fn default_check_in_minutes() -> Option<i32> {
@@ -221,10 +250,10 @@ pub struct NameTranslation {
 pub struct PutTranslation {
     /// 1 a 80 caracteres.
     pub name: String,
-    /// Markdown, até 2000 caracteres; vazio usa o original.
+    /// Texto simples; as quebras de linha são preservadas. Até 2000 caracteres; vazio usa o original.
     #[serde(default)]
     pub description: String,
-    /// Markdown, até 20000 caracteres; vazio usa o original.
+    /// Texto simples; as quebras de linha são preservadas. Até 20000 caracteres; vazio usa o original.
     #[serde(default)]
     pub rules: String,
 }
