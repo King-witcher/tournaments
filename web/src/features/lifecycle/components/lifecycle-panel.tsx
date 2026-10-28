@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { type Transition, TransitionButton } from "./transition-button";
+import { UndoStartControl } from "./undo-start-control";
 
 type Props = {
   tenant: string;
@@ -67,11 +68,17 @@ export function LifecyclePanel({ tenant, tournament, now }: Props) {
     );
   } else if (status === "in_progress") {
     hint = t("inProgress");
-    actions = button("undo_start", t("undoStart"), {
-      confirm: hasCheckIn
-        ? t("undoStartConfirm")
-        : t("undoStartConfirmNoCheckIn"),
-    });
+    actions = (
+      <UndoStartControl
+        tenant={tenant}
+        slug={slug}
+        message={
+          hasCheckIn ? t("undoStartConfirm") : t("undoStartConfirmNoCheckIn")
+        }
+      />
+    );
+  } else if (status === "finished") {
+    hint = t("finished");
   } else {
     return null;
   }

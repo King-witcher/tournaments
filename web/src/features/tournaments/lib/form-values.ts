@@ -23,9 +23,11 @@ export type TournamentValues = {
   startsAt: string | null;
   /** Janela de check-in em minutos; `null` sem check-in. */
   checkInMinutes: number | null;
+  /** Janela de contestação de resultado, em minutos. */
+  contestMinutes: number;
 };
 
-/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min. */
+/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min, 5 min para contestar. */
 export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
   return {
     name: "",
@@ -43,6 +45,7 @@ export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
     noRepeat: "off",
     startsAt: null,
     checkInMinutes: 30,
+    contestMinutes: 5,
   };
 }
 
@@ -68,6 +71,7 @@ export function valuesFrom(
     noRepeat: rules.no_repeat?.scope ?? "off",
     startsAt: tournament.starts_at ?? null,
     checkInMinutes: tournament.check_in_minutes ?? null,
+    contestMinutes: tournament.contest_minutes,
   };
 }
 
@@ -94,12 +98,14 @@ export function updateBody(values: TournamentValues, setupLocked: boolean) {
   };
 }
 
+/** O que muda até o torneio encerrar: textos, visibilidade e janela de contestação. */
 function textsBody(values: TournamentValues) {
   return {
     name: values.name,
     description: values.description,
     rules: values.rules,
     visibility: values.visibility,
+    contest_minutes: values.contestMinutes,
   };
 }
 

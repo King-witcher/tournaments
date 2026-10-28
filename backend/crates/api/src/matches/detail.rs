@@ -42,6 +42,14 @@ pub async fn load(
         a: entrant(summary.a.user_id),
         b: entrant(summary.b.user_id),
         format: stage.format.into(),
+        part_rounds: stage
+            .bracket
+            .matches()
+            .iter()
+            .filter(|x| x.id.side == m.id.side)
+            .map(|x| x.id.round)
+            .max()
+            .unwrap_or(1),
         status: tournament.status,
         games: games.into_iter().map(view::game).collect(),
         history: events

@@ -200,7 +200,11 @@
     "checkIn": "Check-in",
     "checkInOff": "Sin check-in",
     "checkInOption": "Abre {minutes} min antes del inicio",
-    "checkInHint": "Solo quien haga check-in entra en el cuadro; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos."
+    "checkInHint": "Solo quien haga check-in entra en el cuadro; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
+    "results": "Resultados",
+    "contest": "Plazo para impugnar",
+    "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
+    "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos."
   },
   "Tournament": {
     "loading": "Cargando el torneo…",
@@ -219,7 +223,8 @@
         "series": "Series",
         "slots": "Cupos",
         "champions": "Campeones",
-        "checkIn": "Check-in"
+        "checkIn": "Check-in",
+        "contest": "Impugnación"
       },
       "bracket": {
         "single": "Eliminación simple",
@@ -238,7 +243,8 @@
         "tournament": "sin repetir campeón en el torneo"
       },
       "checkIn": "abre {minutes} min antes del inicio",
-      "noCheckIn": "sin check-in: entran todos los inscritos"
+      "noCheckIn": "sin check-in: entran todos los inscritos",
+      "contest": "{minutes} min para que el rival confirme o impugne"
     },
     "translation": {
       "title": "Traducción: {language}",
@@ -377,7 +383,8 @@
       "not_in_progress": "El torneo no está en curso.",
       "not_published": "Publica el torneo antes.",
       "already_started": "El torneo ya empezó.",
-      "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en el cuadro (con check-in, si lo hay); ahora hay {eligible}."
+      "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en el cuadro (con check-in, si lo hay); ahora hay {eligible}.",
+      "contest_minutes_invalid": "El plazo para impugnar tiene que estar entre {min} y {max} minutos."
     },
     "participant": {
       "already_registered": "Ese miembro ya está inscrito.",
@@ -396,6 +403,30 @@
     },
     "seeding": {
       "order_invalid": "La lista de elegibles cambió (alguien hizo o deshizo el check-in). Recarga la página y ajusta de nuevo."
+    },
+    "bracket": {
+      "not_found": "El cuadro todavía no existe: el torneo no empezó."
+    },
+    "match": {
+      "not_found": "Partida no encontrada.",
+      "not_ready": "Esta partida todavía no se puede jugar.",
+      "already_reported": "Esta partida ya tiene un resultado enviado.",
+      "not_player": "Solo quien juega la partida puede hacer esto.",
+      "not_in_match": "Ese participante no juega esta partida.",
+      "invalid_score": "Resultado inválido para un al mejor de {best_of}: el ganador gana exactamente la mayoría de los mapas.",
+      "frags_invalid": "Los frags de un mapa van de 0 a {max}.",
+      "map_unknown": "Mapa desconocido.",
+      "games_count_mismatch": "El detalle tiene {got} mapas, pero el resultado suma {expected}.",
+      "map_repeated": "El mismo mapa aparece dos veces en la serie.",
+      "game_tied": "El mapa {game} está empatado: en el duelo siempre hay un ganador.",
+      "games_disagree": "Los ganadores de los mapas no coinciden con el resultado (y el último mapa siempre es de quien ganó la serie).",
+      "no_report": "Nadie envió resultado para esta partida.",
+      "already_confirmed": "El resultado ya fue confirmado.",
+      "already_contested": "El resultado ya fue impugnado.",
+      "contested": "El resultado fue impugnado: lo resuelve la organización.",
+      "own_report": "Tú enviaste este resultado: quien confirma o impugna es el rival.",
+      "comment_invalid": "Escribe un comentario de 1 a 280 caracteres, en una línea.",
+      "correction_conflicts": "La corrección contradice una partida confirmada después de esta, jugada por otros participantes. Solo se puede cambiar el resultado manteniendo al ganador."
     }
   },
   "Lifecycle": {
@@ -412,6 +443,152 @@
     "startConfirmNoCheckIn": "¿Iniciar el torneo? Las inscripciones se congelan.",
     "undoStart": "Deshacer inicio",
     "undoStartConfirm": "¿Deshacer el inicio? El torneo vuelve al check-in, con inscritos, check-ins y seeds como estaban.",
-    "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban."
+    "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban.",
+    "finished": "Terminado: los resultados aún se pueden corregir en la página de cada partida.",
+    "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún resultado.} one {Se borrará # resultado (pendiente, impugnado o confirmado), con el historial de las partidas.} other {Se borrarán # resultados (pendientes, impugnados o confirmados), con el historial de las partidas.}}",
+    "undoStartTypeSlug": "Para confirmar, escribe la dirección del torneo: {slug}",
+    "undoStartSubmit": "Deshacer inicio",
+    "cancel": "Cancelar"
+  },
+  "Bracket": {
+    "title": "Cuadro",
+    "loading": "Cargando el cuadro…",
+    "hint": "Haz clic en una partida para enviar o ver el resultado.",
+    "parts": {
+      "winners": "Cuadro de ganadores",
+      "losers": "Cuadro de perdedores",
+      "grand_final": "Gran final"
+    },
+    "rounds": {
+      "final": "Final",
+      "semifinal": "Semifinal",
+      "quarterfinal": "Cuartos de final",
+      "round": "Ronda {round}",
+      "grandFinal": "Gran final",
+      "reset": "Reset"
+    },
+    "short": {
+      "single": "{round}.{index}",
+      "winners": "G{round}.{index}",
+      "losers": "P{round}.{index}",
+      "grand_final": "GF{round}"
+    },
+    "from": {
+      "winner": "Ganador de {match}",
+      "loser": "Perdedor de {match}"
+    },
+    "bye": "bye",
+    "tbd": "por definir",
+    "bestOf": "al mejor de {count}",
+    "walkover": "W.O.",
+    "notNeeded": "No fue necesaria",
+    "advances": "avanza sin jugar",
+    "result": {
+      "pending": "Esperando confirmación",
+      "contested": "Impugnada"
+    },
+    "task": {
+      "report": "Envía el resultado",
+      "respond": "Confirma o impugna",
+      "await_opponent": "Esperando al rival",
+      "await_organizer": "Esperando a la organización",
+      "resolve": "Resolver impugnación"
+    },
+    "yours": "Tu partida",
+    "standings": {
+      "title": "Clasificación",
+      "rank": "{rank}º",
+      "range": "{from}º–{to}º"
+    }
+  },
+  "Match": {
+    "loading": "Cargando la partida…",
+    "loginRequired": "Inicia sesión para ver esta partida.",
+    "back": "Volver al torneo",
+    "label": "{part} · {round} · partida {index}",
+    "bestOf": "Al mejor de {count}",
+    "seed": "seed {seed}",
+    "state": {
+      "pending": "Los lados todavía dependen de otras partidas.",
+      "ready": "Por jugar.",
+      "bye": "Sin rival: avanza sin jugar.",
+      "completed": "Terminada.",
+      "not_needed": "No fue necesaria: quien venía del cuadro de ganadores ganó la gran final."
+    },
+    "confirmedVia": {
+      "opponent": "Confirmado por el rival <time></time>.",
+      "deadline": "Confirmado al terminar el plazo para impugnar <time></time>.",
+      "organizer": "Definido por la organización <time></time>."
+    },
+    "games": {
+      "title": "Mapas",
+      "map": "Mapa",
+      "number": "{number}"
+    },
+    "report": {
+      "title": "Enviar resultado",
+      "hint": "Resultado de la serie en mapas. El rival confirma o impugna; sin respuesta en {minutes} min, se confirma solo.",
+      "wins": "Mapas de {name}",
+      "detail": "Detalle por mapa (opcional)",
+      "detailHint": "Un mapa por línea, en el orden jugado, con los frags de cada uno. Los ganadores tienen que coincidir con el resultado.",
+      "addGame": "Agregar mapa",
+      "removeGame": "Quitar mapa {number}",
+      "map": "Mapa {number}",
+      "chooseMap": "Elige el mapa…",
+      "pool": "Pool de duelo",
+      "others": "Otros mapas",
+      "frags": "Frags de {name}",
+      "submit": "Enviar resultado",
+      "incomplete": "Elige el mapa de cada línea del detalle, o quita las líneas sin mapa.",
+      "remove": "Quitar"
+    },
+    "respond": {
+      "title": "{name} envió el resultado",
+      "hint": "Confirma si es correcto o impúgnalo con un comentario. Sin respuesta, se confirma solo en <time></time>.",
+      "confirm": "Confirmar",
+      "contest": "Impugnar",
+      "comment": "¿Qué está mal?",
+      "commentHint": "Hasta 280 caracteres. La organización lo verá y resolverá.",
+      "submitContest": "Enviar impugnación",
+      "cancel": "Cancelar"
+    },
+    "waiting": {
+      "opponent": "Enviaste el resultado. El rival tiene <time></time> para confirmar o impugnar; sin respuesta, se confirma solo.",
+      "organizer": "Resultado impugnado: la organización lo va a resolver.",
+      "contestComment": "Impugnación: “{comment}”"
+    },
+    "organizer": {
+      "title": "Organización",
+      "hint": "Lo que definas aquí ya vale (incluso en una partida que juegas) y queda en el historial.",
+      "accept": "Aceptar el resultado enviado",
+      "confirm": "Confirmar el resultado enviado",
+      "set": "Cargar resultado",
+      "correct": "Corregir resultado",
+      "correctHint": "El cuadro se rehace con el resultado nuevo. Si contradice una partida confirmada después de esta, se rechaza.",
+      "walkover": "W.O. para {name}",
+      "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria sin resultado.",
+      "comment": "Nota en el historial (opcional)",
+      "save": "Guardar resultado"
+    },
+    "history": {
+      "title": "Historial",
+      "empty": "Todavía no pasó nada en esta partida.",
+      "score": "{winner} ganó {winnerMaps} a {loserMaps}",
+      "walkover": "W.O. para {winner}",
+      "kinds": {
+        "reported": "{actor} envió el resultado",
+        "confirmed": "{actor} confirmó",
+        "auto_confirmed": "Confirmado al terminar el plazo para impugnar",
+        "contested": "{actor} impugnó",
+        "resolved": "{actor} resolvió la impugnación",
+        "entered": "{actor} cargó el resultado",
+        "corrected": "{actor} corrigió el resultado",
+        "walkover": "{actor} dio W.O.",
+        "voided": "{actor} anuló el envío: una corrección cambió quién juega la partida"
+      }
+    },
+    "labelSingle": "{round} · partida {index}",
+    "labelPart": "{part} · {round}",
+    "vs": "×"
   }
 }

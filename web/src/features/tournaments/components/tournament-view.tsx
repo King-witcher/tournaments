@@ -1,8 +1,10 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { TournamentInviteSection } from "@/features/invites/components/tournament-invite-section";
 import { LifecyclePanel } from "@/features/lifecycle/components/lifecycle-panel";
+import { BracketSection } from "@/features/matches/components/bracket-section";
 import { CheckInPanel } from "@/features/participants/components/check-in-panel";
 import { ParticipantSection } from "@/features/participants/components/participant-section";
 import { RegistrationPanel } from "@/features/participants/components/registration-panel";
@@ -21,14 +23,16 @@ import { TournamentSetupSummary } from "./tournament-setup-summary";
 type Props = { tenant: string; slug: string };
 
 /**
- * Página do torneio: textos no idioma de quem vê, inscrição, check-in,
- * formato, inscritos e regras; para organizer e owner, as ações, o ciclo
- * (check-in, iniciar), o seeding e os links de inscrição. Lê a sessão, então
- * fica em `<Suspense>`.
+ * Página do torneio: textos no idioma de quem vê, chave e classificação
+ * (depois de iniciar), inscrição, check-in, formato, inscritos e regras;
+ * para organizer e owner, as ações, o ciclo (check-in, iniciar, desfazer),
+ * o seeding e os links de inscrição. Lê a sessão, então fica em
+ * `<Suspense>`.
  */
 export async function TournamentView({ tenant, slug }: Props) {
-  const [t, locale, loaded] = await Promise.all([
+  const [t, tBracket, locale, loaded] = await Promise.all([
     getTranslations("Tournament"),
+    getTranslations("Bracket"),
     getLocale(),
     loadTournament(tenant, slug),
   ]);
@@ -57,6 +61,9 @@ export async function TournamentView({ tenant, slug }: Props) {
       {organizer && (
         <LifecyclePanel tenant={tenant} tournament={tournament} now={now} />
       )}
+      <Suspense fallback={<p className="text-sm">{tBracket("loading")}</p>}>
+        <BracketSection tenant={tenant} tournament={tournament} />
+      </Suspense>
       <RegistrationPanel tenant={tenant} tournament={tournament} />
       <CheckInPanel tenant={tenant} tournament={tournament} now={now} />
       {texts.description && <Markdown>{texts.description}</Markdown>}

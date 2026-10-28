@@ -59,7 +59,7 @@ async fn the_bracket_advances_only_when_the_opponent_confirms(db: PgPool) {
     assert_eq!(actors, [&json!(p[3].id), &json!(p[0].id)]);
     assert_eq!(
         confirmed["history"][0]["outcome"],
-        json!({ "winner": p[0].id, "walkover": false, "winner_maps": 2, "loser_maps": 0 })
+        json!({ "winner": p[0].id, "winner_nickname": "P1", "walkover": false, "winner_maps": 2, "loser_maps": 0 })
     );
 
     let b = bracket(&app, &p[0]).await;

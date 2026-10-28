@@ -211,15 +211,18 @@ pub fn game(g: GameRow) -> GameDetail {
 pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
     let maps = |n: Option<i16>| n.map(u8::try_from).transpose();
     let outcome = match e.winner {
-        Some(winner) => Some(EventOutcome {
-            winner: stage
+        Some(winner) => {
+            let entrant = stage
                 .entrant(ParticipantId(winner))
-                .ok_or_else(ApiError::internal)?
-                .user_id,
-            walkover: e.winner_maps.is_none(),
-            winner_maps: maps(e.winner_maps).map_err(|_| ApiError::internal())?,
-            loser_maps: maps(e.loser_maps).map_err(|_| ApiError::internal())?,
-        }),
+                .ok_or_else(ApiError::internal)?;
+            Some(EventOutcome {
+                winner: entrant.user_id,
+                winner_nickname: entrant.nickname.clone(),
+                walkover: e.winner_maps.is_none(),
+                winner_maps: maps(e.winner_maps).map_err(|_| ApiError::internal())?,
+                loser_maps: maps(e.loser_maps).map_err(|_| ApiError::internal())?,
+            })
+        }
         None => None,
     };
     Ok(MatchEvent {

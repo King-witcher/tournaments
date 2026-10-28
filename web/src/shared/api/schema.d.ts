@@ -196,6 +196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/maps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_maps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -356,6 +372,22 @@ export interface paths {
         patch: operations["update_tournament"];
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/bracket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_bracket"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/check-in": {
         parameters: {
             query?: never;
@@ -398,6 +430,86 @@ export interface paths {
         get: operations["list_tournament_invites"];
         put?: never;
         post: operations["create_tournament_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_match"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/contest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["contest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_result"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -588,6 +700,41 @@ export interface components {
         AssignableRole: "organizer" | "player";
         /** @enum {string} */
         Bracket: "single" | "double";
+        BracketEntrant: {
+            avatar_url?: string | null;
+            /** @description Apelido no tenant. */
+            nickname: string;
+            /** Format: int32 */
+            seed: number;
+            /** Format: int64 */
+            user_id: number;
+        };
+        BracketMatch: {
+            a: components["schemas"]["MatchSide"];
+            b: components["schemas"]["MatchSide"];
+            /** Format: int32 */
+            best_of: number;
+            /** Format: int32 */
+            index: number;
+            /**
+             * @description Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`.
+             * @example wb-1-3
+             */
+            key: string;
+            part: components["schemas"]["BracketPart"];
+            result?: components["schemas"]["MatchResult"] | null;
+            /** Format: int32 */
+            round: number;
+            state: components["schemas"]["MatchState"];
+            task?: components["schemas"]["ViewerTask"] | null;
+            /** @description Quem vê joga a partida. */
+            yours: boolean;
+        };
+        /**
+         * @description Parte da chave.
+         * @enum {string}
+         */
+        BracketPart: "winners" | "losers" | "grand_final";
         ChampionRules: {
             /**
              * Format: int32
@@ -603,6 +750,15 @@ export interface components {
             /** @description Trocar a senha encerra as outras sessões da conta. */
             password?: string | null;
             username?: string | null;
+        };
+        /**
+         * @description Como o resultado foi confirmado.
+         * @enum {string}
+         */
+        Confirmation: "opponent" | "deadline" | "organizer";
+        ContestReport: {
+            /** @description O que está errado, de 1 a 280 caracteres. */
+            comment: string;
         };
         CreateTenant: {
             /**
@@ -627,6 +783,14 @@ export interface components {
              * @example 30
              */
             check_in_minutes: number | null;
+            /**
+             * Format: int32
+             * @description Minutos que o adversário tem para confirmar ou contestar um resultado
+             *     enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 5.
+             * @default 5
+             * @example 5
+             */
+            contest_minutes: number;
             /** @description Markdown, até 2000 caracteres. */
             description?: string;
             /** @description Idioma original dos textos. Não muda depois. */
@@ -720,6 +884,58 @@ export interface components {
                 [key: string]: number;
             } | null;
         };
+        EventActor: {
+            avatar_url?: string | null;
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
+        };
+        /** @enum {string} */
+        EventKind: "reported" | "confirmed" | "auto_confirmed" | "contested" | "resolved" | "entered" | "corrected" | "walkover" | "voided";
+        EventOutcome: {
+            /** Format: int32 */
+            loser_maps?: number | null;
+            walkover: boolean;
+            /**
+             * Format: int64
+             * @description `user_id` do vencedor.
+             */
+            winner: number;
+            /**
+             * Format: int32
+             * @description Mapas do vencedor e do perdedor; `null` no W.O.
+             */
+            winner_maps?: number | null;
+            /**
+             * @description Apelido do vencedor (que pode não ser mais um dos lados, num envio
+             *     anulado).
+             */
+            winner_nickname: string;
+        };
+        GameDetail: {
+            /** Format: int32 */
+            a_frags: number;
+            /** Format: int32 */
+            b_frags: number;
+            map: components["schemas"]["MapRef"];
+            /** Format: int32 */
+            number: number;
+        };
+        /** @description Um mapa do detalhe enviado. */
+        GameInput: {
+            /**
+             * Format: int32
+             * @description Frags do lado `a` e do lado `b`, de 0 a 999; não pode empatar.
+             */
+            a_frags: number;
+            /** Format: int32 */
+            b_frags: number;
+            /**
+             * @description Slug do mapa (`GET /maps`).
+             * @example blood-covenant
+             */
+            map: string;
+        };
         Health: {
             database: components["schemas"]["ServiceStatus"];
         };
@@ -772,6 +988,94 @@ export interface components {
             /** @description Username do login com senha, se a conta tem senha. */
             username?: string | null;
         };
+        Map: {
+            /** @description Faz parte do pool de duelo. */
+            duel_pool: boolean;
+            /**
+             * @description Nome próprio, igual em todos os idiomas.
+             * @example Blood Covenant
+             */
+            name: string;
+            /** @example blood-covenant */
+            slug: string;
+        };
+        MapRef: {
+            name: string;
+            slug: string;
+        };
+        /** @description Uma partida com os lados, o detalhe por mapa e o histórico. */
+        MatchDetail: {
+            a?: components["schemas"]["BracketEntrant"] | null;
+            b?: components["schemas"]["BracketEntrant"] | null;
+            /** @description Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.). */
+            can_manage: boolean;
+            format: components["schemas"]["StageFormat"];
+            /** @description Detalhe por mapa do resultado vigente, na ordem jogada (pode faltar). */
+            games: components["schemas"]["GameDetail"][];
+            /** @description Do mais antigo ao mais novo. */
+            history: components["schemas"]["MatchEvent"][];
+            /**
+             * Format: int32
+             * @description Rodadas da parte da chave desta partida (para nomear final,
+             *     semifinal...).
+             */
+            part_rounds: number;
+            status: components["schemas"]["TournamentStatus"];
+            summary: components["schemas"]["BracketMatch"];
+        };
+        MatchEvent: {
+            actor?: components["schemas"]["EventActor"] | null;
+            /** Format: date-time */
+            at: string;
+            comment?: string | null;
+            kind: components["schemas"]["EventKind"];
+            outcome?: components["schemas"]["EventOutcome"] | null;
+        };
+        /** @description O resultado vigente de uma partida. */
+        MatchResult: {
+            /**
+             * Format: int32
+             * @description Mapas vencidos por cada lado; `null` no W.O.
+             */
+            a_wins?: number | null;
+            /** Format: int32 */
+            b_wins?: number | null;
+            /**
+             * Format: date-time
+             * @description Pendente: até quando o adversário confirma ou contesta; depois,
+             *     confirma sozinho.
+             */
+            confirm_by?: string | null;
+            /** Format: date-time */
+            confirmed_at?: string | null;
+            confirmed_via?: components["schemas"]["Confirmation"] | null;
+            /** @description Contestado: o comentário de quem contestou. */
+            contest_comment?: string | null;
+            /** Format: date-time */
+            contested_at?: string | null;
+            /** Format: date-time */
+            reported_at: string;
+            reported_side?: components["schemas"]["Side"] | null;
+            status: components["schemas"]["ResultStatus"];
+            walkover: boolean;
+            winner: components["schemas"]["Side"];
+        };
+        /** @description Um lado da partida. */
+        MatchSide: {
+            /** @description Lado vazio: o outro avança sem jogar. */
+            bye: boolean;
+            from?: components["schemas"]["SideSource"] | null;
+            /**
+             * Format: int64
+             * @description Quem joga deste lado, quando já se sabe.
+             */
+            user_id?: number | null;
+        };
+        /**
+         * @description Estado da partida na chave (só resultados confirmados contam).
+         * @enum {string}
+         */
+        MatchState: "pending" | "ready" | "bye" | "completed" | "not_needed";
         Member: {
             avatar_url?: string | null;
             /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
@@ -838,6 +1142,42 @@ export interface components {
             /** @description Markdown, até 20000 caracteres; vazio usa o original. */
             rules?: string;
         };
+        /** @description Placar da série que um jogador envia. */
+        ReportScore: {
+            /**
+             * Format: int32
+             * @description Mapas vencidos pelo lado `a` e pelo lado `b` (ex.: 2 e 1 numa md3).
+             */
+            a_wins: number;
+            /** Format: int32 */
+            b_wins: number;
+            /**
+             * @description Detalhe opcional por mapa, na ordem jogada: um item por mapa, com os
+             *     vencedores batendo com o placar.
+             */
+            games?: components["schemas"]["GameInput"][];
+        };
+        /** @description O resultado que o organizador define: série jogada ou W.O. */
+        ResultInput: {
+            /** Format: int32 */
+            a_wins: number;
+            /** Format: int32 */
+            b_wins: number;
+            games?: components["schemas"]["GameInput"][];
+            /** @enum {string} */
+            kind: "played";
+        } | {
+            /** @enum {string} */
+            kind: "walkover";
+            /** @description Lado que avança. */
+            winner: components["schemas"]["Side"];
+        };
+        /**
+         * @description pendente (esperando o adversário) → confirmado, ou → contestado
+         *     (esperando o organizador) → confirmado.
+         * @enum {string}
+         */
+        ResultStatus: "pending" | "contested" | "confirmed";
         /**
          * @description Papel no tenant. A ordem das variantes é a hierarquia (`Player < Owner`).
          * @enum {string}
@@ -849,9 +1189,25 @@ export interface components {
         };
         /** @enum {string} */
         ServiceStatus: "ok" | "unavailable";
+        SetResult: {
+            /** @description Nota opcional no histórico, até 280 caracteres. */
+            comment?: string | null;
+            result: components["schemas"]["ResultInput"];
+        };
         SetRole: {
             role: components["schemas"]["AssignableRole"];
         };
+        /**
+         * @description Um dos dois lados de uma partida.
+         * @enum {string}
+         */
+        Side: "a" | "b";
+        SideSource: {
+            match_key: string;
+            outcome: components["schemas"]["SourceOutcome"];
+        };
+        /** @enum {string} */
+        SourceOutcome: "winner" | "loser";
         /** @description Formato de uma fase. */
         StageFormat: {
             /**
@@ -875,6 +1231,14 @@ export interface components {
              */
             grand_final_reset?: boolean;
         };
+        Standing: {
+            /** Format: int32 */
+            rank: number;
+            /** Format: int32 */
+            tied: number;
+            /** Format: int64 */
+            user_id: number;
+        };
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
          *     front escolhe pelo idioma de quem vê.
@@ -895,6 +1259,12 @@ export interface components {
             check_in_opens_at?: string | null;
             /** @description Se quem vê fez check-in. */
             checked_in: boolean;
+            /**
+             * Format: int32
+             * @description Minutos que o adversário tem para confirmar ou contestar um resultado
+             *     enviado.
+             */
+            contest_minutes: number;
             /** Format: date-time */
             created_at: string;
             description: string;
@@ -921,6 +1291,32 @@ export interface components {
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["TournamentTranslation"][];
             visibility: components["schemas"]["Visibility"];
+        };
+        /** @description A chave da fase em jogo, refeita dos resultados confirmados. */
+        TournamentBracket: {
+            /**
+             * Format: int32
+             * @description Janela de contestação em minutos.
+             */
+            contest_minutes: number;
+            /** @description Participantes na ordem dos seeds. */
+            entrants: components["schemas"]["BracketEntrant"][];
+            format: components["schemas"]["StageFormat"];
+            /** @description Todas as partidas, por parte da chave, rodada e índice. */
+            matches: components["schemas"]["BracketMatch"][];
+            /**
+             * Format: int64
+             * @description Resultados (pendentes, contestados ou confirmados) que desfazer o
+             *     início apaga.
+             */
+            results: number;
+            /**
+             * @description Colocações já definidas (os eliminados e, no fim, campeão e vice).
+             *     Empatados dividem a faixa: `rank` 5 com `tied` 4 é 5º–8º.
+             */
+            standings: components["schemas"]["Standing"][];
+            /** @description Status do torneio depois das confirmações por tempo. */
+            status: components["schemas"]["TournamentStatus"];
         };
         /** @description Link de inscrição não revogado de um torneio. */
         TournamentInvite: {
@@ -995,6 +1391,12 @@ export interface components {
              *     inscrição.
              */
             check_in_minutes?: number | null;
+            /**
+             * Format: int32
+             * @description Janela de contestação; muda até o torneio encerrar e vale para os
+             *     resultados enviados depois.
+             */
+            contest_minutes?: number | null;
             description?: string | null;
             /** Format: int32 */
             max_participants?: number | null;
@@ -1008,6 +1410,11 @@ export interface components {
             starts_at?: string | null;
             visibility?: components["schemas"]["Visibility"] | null;
         };
+        /**
+         * @description O que a partida espera de quem vê.
+         * @enum {string}
+         */
+        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve";
         /** @enum {string} */
         Visibility: "public" | "private";
     };
@@ -1646,6 +2053,26 @@ export interface operations {
             };
         };
     };
+    list_maps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mapas ativos: os do pool de duelo primeiro, depois os outros, por nome */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Map"][];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -2235,7 +2662,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2402,7 +2829,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2413,6 +2840,49 @@ export interface operations {
             };
             /** @description Os mesmos da criação, menos slug; tournament.starts_at_required (tirar a data fora do rascunho) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_bracket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A chave, refeita dos resultados confirmados (as confirmações por tempo vencidas são aplicadas antes), com as partidas de quem vê e o que esperam dele */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentBracket"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found (inclusive privado para quem não vê), bracket.not_found (ainda não começou) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2687,6 +3157,342 @@ export interface operations {
             };
             /** @description tournament.registration_closed (só no rascunho ou com a inscrição aberta) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_match: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A partida, com lados, resultado, detalhe por mapa e histórico */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resultado confirmado: pelo adversário de quem enviou, ou por organizer ou owner (no contestado, é a resolução que aceita o placar enviado). A chave avança e, se era a partida decisiva, o torneio encerra */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player, match.own_report (quem enviou não confirma o próprio placar) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.no_report, match.already_confirmed, match.contested (espera o organizador) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    contest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContestReport"];
+            };
+        };
+        responses: {
+            /** @description O adversário de quem enviou contesta o placar, com comentário: o resultado sai da janela de contestação e espera o organizador */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player, match.own_report */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.no_report, match.already_contested, match.already_confirmed (inclusive pela janela, que já acabou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.comment_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportScore"];
+            };
+        };
+        responses: {
+            /** @description Placar enviado por um jogador da partida: fica pendente até o adversário confirmar ou contestar; sem resposta, confirma sozinho no fim da janela de contestação. A chave só avança quando confirma */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player (quem envia não joga a partida) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.already_reported */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.invalid_score {best_of}, match.frags_invalid {max}, match.map_unknown, match.games_count_mismatch {expected, got}, match.map_repeated, match.game_tied {game}, match.games_disagree, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    set_result: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetResult"];
+            };
+        };
+        responses: {
+            /** @description Resultado definido pelo organizador, já confirmado: lança, resolve a contestação, dá W.O. ou corrige um resultado confirmado (também com o torneio encerrado). A correção refaz a chave; resultados pendentes de partidas cujos lados mudaram são anulados; o torneio encerra ou volta para em andamento conforme a chave */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_ready, match.correction_conflicts (uma partida confirmada depois deixaria de fechar) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Os do envio (match.invalid_score {best_of}, detalhe por mapa...), match.comment_invalid, request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

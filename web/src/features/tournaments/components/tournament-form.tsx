@@ -18,6 +18,7 @@ import {
   valuesFrom,
 } from "../lib/form-values";
 import { setupEditable, textsEditable } from "../lib/status";
+import { TournamentContestField } from "./tournament-contest-field";
 import { TournamentScheduleFields } from "./tournament-schedule-fields";
 import { TournamentSetupFields } from "./tournament-setup-fields";
 import { TournamentTextFields } from "./tournament-text-fields";
@@ -89,6 +90,11 @@ export function TournamentForm({ tenant, tournament }: Props) {
         values={values}
         onChange={onChange}
         disabled={setupLocked}
+      />
+      <TournamentContestField
+        value={values.contestMinutes}
+        onChange={(contestMinutes) => onChange({ contestMinutes })}
+        disabled={finished}
       />
       {setupLocked && <p className="text-sm opacity-70">{t("setupLocked")}</p>}
       {error && <Alert>{error}</Alert>}

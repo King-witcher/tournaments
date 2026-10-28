@@ -6,11 +6,8 @@ import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 
-export type Transition =
-  | "open_check_in"
-  | "reopen_registration"
-  | "start"
-  | "undo_start";
+/** Desfazer o início tem botão próprio, com confirmação forte (`UndoStartButton`). */
+export type Transition = "open_check_in" | "reopen_registration" | "start";
 
 type Props = {
   tenant: string;
@@ -37,10 +34,6 @@ function call(transition: Transition, tenant: string, slug: string) {
       );
     case "start":
       return api.POST("/tenants/{slug}/tournaments/{tournament}/start", {
-        params,
-      });
-    case "undo_start":
-      return api.DELETE("/tenants/{slug}/tournaments/{tournament}/start", {
         params,
       });
   }

@@ -99,7 +99,7 @@ async fn contested_results_wait_for_the_organizer(db: PgPool) {
     assert_eq!(history[2]["comment"], "Vi o print");
     assert_eq!(
         history[2]["outcome"],
-        json!({ "winner": p[0].id, "walkover": false, "winner_maps": 2, "loser_maps": 1 })
+        json!({ "winner": p[0].id, "winner_nickname": "P1", "walkover": false, "winner_maps": 2, "loser_maps": 1 })
     );
     assert_eq!(resolved["can_manage"], true);
     assert_eq!(
@@ -171,7 +171,7 @@ async fn organizers_enter_results_and_walkovers(db: PgPool) {
     assert_eq!(kinds(&walkover), ["reported", "walkover"]);
     assert_eq!(
         walkover["history"][1]["outcome"],
-        json!({ "winner": p[3].id, "walkover": true, "winner_maps": null, "loser_maps": null })
+        json!({ "winner": p[3].id, "winner_nickname": "P4", "walkover": true, "winner_maps": null, "loser_maps": null })
     );
     let b = bracket(&app, &p[3]).await;
     assert_eq!(sides(find(&b, "wb-2-1")), (json!(p[3].id), json!(p[2].id)));

@@ -156,6 +156,9 @@ pub struct Standing {
 pub struct MatchDetail {
     pub summary: BracketMatch,
     pub format: StageFormat,
+    /// Rodadas da parte da chave desta partida (para nomear final,
+    /// semifinal...).
+    pub part_rounds: u16,
     pub status: TournamentStatus,
     pub a: Option<BracketEntrant>,
     pub b: Option<BracketEntrant>,
@@ -226,6 +229,9 @@ pub struct EventActor {
 pub struct EventOutcome {
     /// `user_id` do vencedor.
     pub winner: i64,
+    /// Apelido do vencedor (que pode não ser mais um dos lados, num envio
+    /// anulado).
+    pub winner_nickname: String,
     pub walkover: bool,
     /// Mapas do vencedor e do perdedor; `null` no W.O.
     pub winner_maps: Option<u8>,
