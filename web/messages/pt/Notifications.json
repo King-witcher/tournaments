@@ -31,5 +31,32 @@
     "match": "Abrir partida",
     "tournament": "Abrir torneio"
   },
-  "region": "Avisos"
+  "region": "Avisos",
+  "push": {
+    "title": "Avisos com o site fechado",
+    "description": "Check-in aberto, partida pronta e mapa enviado pelo adversário; para a organização, mapa contestado e hora de iniciar. Cada navegador se ativa à parte: ative em cada aparelho que você usa.",
+    "loading": "Conferindo este navegador…",
+    "on": "Ativados neste navegador: os avisos chegam mesmo com o site fechado.",
+    "off": "Desligados neste navegador. Com o site aberto, os avisos aparecem na página.",
+    "enable": "Ativar avisos",
+    "disable": "Desativar avisos",
+    "failed": "Não deu para mudar os avisos deste navegador. Tente de novo.",
+    "deniedTitle": "Avisos bloqueados neste navegador.",
+    "denied": "Para ativar, permita as notificações deste site nas configurações do navegador (no ícone ao lado do endereço) e recarregue a página.",
+    "unsupported": "Este navegador não recebe avisos com o site fechado. Com o site aberto, eles aparecem na página.",
+    "serverOff": "Os avisos com o site fechado estão desligados por enquanto. Com o site aberto, eles aparecem na página.",
+    "installTitle": "No iPhone e no iPad, instale o site primeiro.",
+    "install": "Os avisos com o site fechado só chegam com o site na tela inicial: toque em Compartilhar, depois em Adicionar à Tela de Início, abra o site pelo ícone novo e ative aqui.",
+    "prompt": "Receba um aviso quando o check-in abrir e quando sua partida estiver pronta, mesmo com o site fechado.",
+    "promptInstall": "Para receber avisos no iPhone com o site fechado, instale o site: Compartilhar → Adicionar à Tela de Início.",
+    "enabled": "Avisos ativados neste navegador.",
+    "blocked": "Avisos bloqueados neste navegador.",
+    "settings": "Como mudar"
+  },
+  "sound": {
+    "title": "Som",
+    "description": "Com o site aberto, cada aviso toca um som curto. A escolha vale para este navegador.",
+    "label": "Tocar som com os avisos",
+    "test": "Ouvir o som"
+  }
 }

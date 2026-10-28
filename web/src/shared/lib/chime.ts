@@ -35,10 +35,26 @@ export function unlockAudioOnGesture() {
   };
 }
 
-/** Dois bipes curtos subindo (~0,3 s), em volume baixo. */
+/**
+ * Dois bipes curtos subindo (~0,3 s), em volume baixo. Com o áudio ainda
+ * acordando (o gesto acabou de acontecer), toca se ele voltar logo; um som
+ * atrasado (o sistema só devolve o áudio no próximo gesto) não toca.
+ */
 export function playChime() {
   const audio = context;
-  if (audio?.state !== "running") return;
+  if (audio?.state === "running") beep(audio);
+  else if (audio?.state === "suspended") {
+    const asked = performance.now();
+    audio
+      .resume()
+      .then(() => {
+        if (performance.now() - asked < 500) beep(audio);
+      })
+      .catch(() => {});
+  }
+}
+
+function beep(audio: AudioContext) {
   const start = audio.currentTime;
   for (const [frequency, offset] of [
     [660, 0],
