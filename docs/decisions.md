@@ -226,7 +226,11 @@ Decididas em 28/10/2026, ao adotar o Carbon Design System no MVP. O alvo página
 - **Confirmação em `Modal`** (kind `danger` quando apaga ou tira algo), no lugar da pergunta inline: o texto continua dizendo o que vai acontecer, o primário tem o nome da ação, "Não" é o secundário e o foco volta ao gatilho. A regra "nada de `confirm()`" continua.
 - **Messages por namespace** (`messages/<locale>/<Namespace>.json`): um arquivo por domínio, como o resto do código, para fluxos em paralelo não escreverem no mesmo arquivo.
 - **Fonte IBM Plex pelo `next/font`**, sem CDN, para não depender de rede externa em runtime.
-- **Trabalho em agentes**: uma base (biblioteca, casca, guia, home) antes dos fluxos; depois fluxos A–D em paralelo, donos de arquivos disjuntos. O usuário quis comparar Opus e Sonnet nos fluxos com os mesmos briefs, em branches a partir do mesmo commit da base.
+- **Trabalho em agentes**: uma base (biblioteca, casca, guia, home) antes dos fluxos; depois fluxos A–D em paralelo, donos de arquivos disjuntos. O usuário quis comparar Opus e Sonnet nos fluxos com os mesmos briefs, em branches a partir do mesmo commit da base. Resultado: estrutura igual nas duas; Opus com melhor julgamento de detalhe (um título por página, erro de campo com foco, uma ação primária por papel) a 1,65× os tokens e o dobro do tempo. A variante Opus foi mesclada. Daqui em diante: Opus para o que pede julgamento de interface; Sonnet para trabalho com guia claro (migração mecânica, correção pontual, tela que copia um padrão).
+- **Página da pessoa fora das abas da comunidade**: mesma URL (`/[tenant]/members/[user]`), mas com cabeçalho próprio, para a página ter um só título e o breadcrumb dizer de onde veio (Membros).
+- **Formulários enviam por `onSubmit`, não por `action`**: o `action` do React reseta os campos controlados (os selects voltavam ao valor errado). `submitAction` continua.
+- **Ações da organização na linha do mapa**, não no acordeão fechado: resolver uma contestação não pode ficar escondido. O acordeão fica com o W.O. e o histórico.
+- **Organizador que também joga**: a ação de jogador dele (inscrever-se, check-in) fica como terciária ou no `Tile` "Sua situação", para o cabeçalho ter uma primária só (a da organização).
 
 ## Notificações
 
