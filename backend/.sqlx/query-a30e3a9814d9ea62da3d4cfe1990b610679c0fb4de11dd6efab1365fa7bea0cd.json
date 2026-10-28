@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_results set reported_at = reported_at - interval '1 hour',\n                                  confirm_by = confirm_by - interval '1 hour'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "a30e3a9814d9ea62da3d4cfe1990b610679c0fb4de11dd6efab1365fa7bea0cd"
+}

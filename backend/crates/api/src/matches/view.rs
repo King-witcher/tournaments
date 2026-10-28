@@ -223,7 +223,7 @@ pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
         None => None,
     };
     Ok(MatchEvent {
-        kind: event_kind(&e.kind)?,
+        kind: EventKind::from_db(&e.kind)?,
         actor: e.actor.map(|user_id| EventActor {
             user_id,
             nickname: e.actor_name.unwrap_or_default(),
@@ -232,24 +232,5 @@ pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
         at: e.created_at,
         outcome,
         comment: e.comment,
-    })
-}
-
-pub fn event_kind(value: &str) -> Result<EventKind, ApiError> {
-    use EventKind::*;
-    Ok(match value {
-        "reported" => Reported,
-        "confirmed" => Confirmed,
-        "auto_confirmed" => AutoConfirmed,
-        "contested" => Contested,
-        "resolved" => Resolved,
-        "entered" => Entered,
-        "corrected" => Corrected,
-        "walkover" => Walkover,
-        "voided" => Voided,
-        other => {
-            tracing::error!(kind = other, "evento de partida desconhecido no banco");
-            return Err(ApiError::internal());
-        }
     })
 }

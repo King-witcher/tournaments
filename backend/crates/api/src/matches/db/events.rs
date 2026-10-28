@@ -3,7 +3,11 @@
 use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
-use crate::tournaments::TournamentId;
+use super::MatchRef;
+use crate::{
+    matches::history::{NewEvent, outcome_columns},
+    tournaments::TournamentId,
+};
 
 /// Um evento do histórico, com o apelido de quem agiu.
 pub struct EventRow {
@@ -42,4 +46,32 @@ pub async fn events(
     )
     .fetch_all(conn)
     .await
+}
+
+/// Grava um evento da partida `at`.
+pub async fn insert_event(
+    conn: &mut PgConnection,
+    at: &MatchRef<'_>,
+    event: &NewEvent<'_>,
+) -> Result<(), sqlx::Error> {
+    let (winner, winner_maps, loser_maps) = outcome_columns(event.outcome);
+    sqlx::query!(
+        r#"insert into match_events
+               (tenant_id, tournament_id, stage, match_key, kind, actor, winner, winner_maps,
+                loser_maps, comment)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
+        at.tenant.get(),
+        at.tournament.get(),
+        at.stage,
+        at.key,
+        event.kind.as_str(),
+        event.actor,
+        winner,
+        winner_maps,
+        loser_maps,
+        event.comment
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
 }

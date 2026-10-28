@@ -48,3 +48,17 @@ pub async fn find_current<R>(
     tx.commit().await?;
     Ok(current)
 }
+
+/// Para as ações: trava o torneio `slug` (como `member` o vê), aplica as
+/// confirmações vencidas e devolve o torneio como ficou.
+pub async fn lock_current<R>(
+    conn: &mut PgConnection,
+    member: &TenantMember<R>,
+    slug: &str,
+) -> Result<StoredTournament, ApiError> {
+    let locked = find_visible_for_update(conn, member, slug).await?;
+    if apply_due_confirmations(conn, &locked, Utc::now()).await? == 0 {
+        return Ok(locked);
+    }
+    find_visible(conn, member, slug).await
+}

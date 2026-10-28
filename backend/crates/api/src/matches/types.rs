@@ -240,3 +240,56 @@ pub struct MatchPath {
     #[serde(rename = "match")]
     pub key: String,
 }
+
+/// Um mapa do detalhe enviado.
+#[derive(Deserialize, ToSchema)]
+pub struct GameInput {
+    /// Slug do mapa (`GET /maps`).
+    #[schema(example = "blood-covenant")]
+    pub map: String,
+    /// Frags do lado `a` e do lado `b`, de 0 a 999; não pode empatar.
+    pub a_frags: u16,
+    pub b_frags: u16,
+}
+
+/// Placar da série que um jogador envia.
+#[derive(Deserialize, ToSchema)]
+pub struct ReportScore {
+    /// Mapas vencidos pelo lado `a` e pelo lado `b` (ex.: 2 e 1 numa md3).
+    pub a_wins: u8,
+    pub b_wins: u8,
+    /// Detalhe opcional por mapa, na ordem jogada: um item por mapa, com os
+    /// vencedores batendo com o placar.
+    #[serde(default)]
+    pub games: Vec<GameInput>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct ContestReport {
+    /// O que está errado, de 1 a 280 caracteres.
+    pub comment: String,
+}
+
+/// O resultado que o organizador define: série jogada ou W.O.
+#[derive(Deserialize, ToSchema)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum ResultInput {
+    Played {
+        a_wins: u8,
+        b_wins: u8,
+        #[serde(default)]
+        games: Vec<GameInput>,
+    },
+    Walkover {
+        /// Lado que avança.
+        winner: Side,
+    },
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct SetResult {
+    pub result: ResultInput,
+    /// Nota opcional no histórico, até 280 caracteres.
+    #[serde(default)]
+    pub comment: Option<String>,
+}

@@ -1,17 +1,28 @@
-//! SQL da chave: resultados aqui; histórico em `events`, detalhe por mapa em
-//! `games`.
+//! SQL da chave: leitura dos resultados, confirmação por tempo e descarte
+//! aqui; escritas de resultado em `writes`, histórico em `events`, detalhe
+//! por mapa em `games`.
 
 mod events;
 mod games;
+mod writes;
 
 use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
 use super::result::{ResultRow, StoredResult};
-use crate::{shared::ApiError, tournaments::TournamentId};
+use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
-pub use events::{EventRow, events};
-pub use games::{GameRow, games};
+pub use events::{EventRow, events, insert_event};
+pub use games::{GameRow, games, replace_games};
+pub use writes::{NewResult, confirm, contest, insert_report, put_by_organizer, void};
+
+/// Uma partida no banco: tenant, torneio, fase e identificador.
+pub struct MatchRef<'a> {
+    pub tenant: TenantId,
+    pub tournament: TournamentId,
+    pub stage: i16,
+    pub key: &'a str,
+}
 
 /// Resultados da fase `stage`: os confirmados na ordem do replay, depois os
 /// outros.

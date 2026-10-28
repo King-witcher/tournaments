@@ -38,6 +38,13 @@ pub enum Side {
 }
 
 impl Side {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::A => "a",
+            Self::B => "b",
+        }
+    }
+
     fn from_db(value: &str) -> Result<Self, ApiError> {
         match value {
             "a" => Ok(Self::A),
@@ -60,6 +67,14 @@ pub enum Confirmation {
 }
 
 impl Confirmation {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Opponent => "opponent",
+            Self::Deadline => "deadline",
+            Self::Organizer => "organizer",
+        }
+    }
+
     fn from_db(value: &str) -> Result<Self, ApiError> {
         match value {
             "opponent" => Ok(Self::Opponent),
@@ -76,6 +91,7 @@ fn unknown(column: &'static str, value: &str) -> ApiError {
 }
 
 /// Uma linha de `match_results` (`db::results`), com os enums já lidos.
+#[derive(Clone)]
 pub struct StoredResult {
     pub id: i64,
     pub match_id: MatchId,

@@ -3,8 +3,12 @@
 //! veto vai ter um pool por torneio a partir dela. Domínio pequeno: um
 //! arquivo só, com o SQL junto.
 
+use std::collections::HashMap;
+
 use axum::{Json, extract::State};
+use engine::core::MapId;
 use serde::Serialize;
+use sqlx::PgConnection;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -41,4 +45,19 @@ pub async fn list_maps(State(state): State<AppState>) -> Result<Json<Vec<Map>>, 
     .fetch_all(&state.db)
     .await?;
     Ok(Json(maps))
+}
+
+/// Ids dos mapas ativos entre `slugs`; o que não existe (ou saiu do jogo)
+/// fica de fora.
+pub async fn active_ids(
+    conn: &mut PgConnection,
+    slugs: &[String],
+) -> Result<HashMap<String, MapId>, sqlx::Error> {
+    let rows = sqlx::query!(
+        "select slug, id from maps where active and slug = any($1)",
+        slugs
+    )
+    .fetch_all(conn)
+    .await?;
+    Ok(rows.into_iter().map(|r| (r.slug, MapId(r.id))).collect())
 }

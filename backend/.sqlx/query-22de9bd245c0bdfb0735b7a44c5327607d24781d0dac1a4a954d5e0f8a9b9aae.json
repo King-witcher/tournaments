@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from match_games where result_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "22de9bd245c0bdfb0735b7a44c5327607d24781d0dac1a4a954d5e0f8a9b9aae"
+}

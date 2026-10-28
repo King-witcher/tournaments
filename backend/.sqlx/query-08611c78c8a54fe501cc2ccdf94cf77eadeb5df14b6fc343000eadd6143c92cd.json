@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into match_results\n               (tenant_id, tournament_id, stage, match_key, best_of, side_a, side_b, status,\n                winner, a_wins, b_wins, reported_side, reported_by, confirm_by)\n           values ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11, $12,\n                   now() + make_interval(mins => $13))\n           returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "08611c78c8a54fe501cc2ccdf94cf77eadeb5df14b6fc343000eadd6143c92cd"
+}

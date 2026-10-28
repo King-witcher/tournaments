@@ -1,8 +1,13 @@
-//! Testes de `matches`: a chave (`bracket`) e as regras do banco para
+//! Testes de `matches`: a chave (`bracket`), envio e confirmação
+//! (`results`), contestação e organizador (`organizer`), correções e fim
+//! (`corrections`) e as regras do banco para
 //! resultados e histórico (`schema`). Helpers para montar um torneio iniciado
 //! com jogadores em ordem de seed.
 
 mod bracket;
+mod corrections;
+mod organizer;
+mod results;
 mod schema;
 
 use axum::{Router, http::StatusCode};
@@ -78,4 +83,72 @@ pub fn find<'a>(bracket: &'a Value, key: &str) -> &'a Value {
 /// `(user_id de a, user_id de b)` da partida.
 pub fn sides(m: &Value) -> (Value, Value) {
     (m["a"]["user_id"].clone(), m["b"]["user_id"].clone())
+}
+
+fn match_uri(key: &str, action: &str) -> String {
+    format!("{COPA}/matches/{key}/{action}")
+}
+
+/// Placar de `a` e de `b`, sem detalhe por mapa.
+pub fn score(a: u8, b: u8) -> Value {
+    json!({ "a_wins": a, "b_wins": b })
+}
+
+pub async fn report(app: &Router, who: &User, key: &str, body: Value) -> (StatusCode, Value) {
+    post(app, &match_uri(key, "report"), who, body).await
+}
+
+pub async fn confirm(app: &Router, who: &User, key: &str) -> (StatusCode, Value) {
+    post_empty(app, &match_uri(key, "confirm"), who).await
+}
+
+pub async fn contest(app: &Router, who: &User, key: &str, comment: &str) -> (StatusCode, Value) {
+    post(
+        app,
+        &match_uri(key, "contest"),
+        who,
+        json!({ "comment": comment }),
+    )
+    .await
+}
+
+/// O organizador define o resultado (`result`: `{"kind": "played", ...}` ou
+/// `{"kind": "walkover", "winner": "a"}`).
+pub async fn set_result(
+    app: &Router,
+    who: &User,
+    key: &str,
+    result: Value,
+    comment: Option<&str>,
+) -> (StatusCode, Value) {
+    put(
+        app,
+        &format!("{COPA}/matches/{key}/result"),
+        who,
+        json!({ "result": result, "comment": comment }),
+    )
+    .await
+}
+
+/// Série jogada para `set_result`.
+pub fn played(a: u8, b: u8) -> Value {
+    json!({ "kind": "played", "a_wins": a, "b_wins": b })
+}
+
+/// `reporter` envia `a` × `b` em `key` e `opponent` confirma.
+pub async fn play(app: &Router, reporter: &User, opponent: &User, key: &str, a: u8, b: u8) {
+    let (status, body) = report(app, reporter, key, score(a, b)).await;
+    assert_eq!(status, StatusCode::OK, "{key}: {body}");
+    let (status, body) = confirm(app, opponent, key).await;
+    assert_eq!(status, StatusCode::OK, "{key}: {body}");
+}
+
+/// Os `kind` do histórico da partida, na ordem.
+pub fn kinds(detail: &Value) -> Vec<&str> {
+    detail["history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kind"].as_str().unwrap())
+        .collect()
 }

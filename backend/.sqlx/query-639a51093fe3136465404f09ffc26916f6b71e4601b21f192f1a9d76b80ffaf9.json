@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into match_games (result_id, number, map_id, a_frags, b_frags)\n           select $1, g.n::smallint, g.map, g.a, g.b\n           from unnest($2::bigint[], $3::smallint[], $4::smallint[])\n                with ordinality as g(map, a, b, n)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array",
+        "Int2Array",
+        "Int2Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "639a51093fe3136465404f09ffc26916f6b71e4601b21f192f1a9d76b80ffaf9"
+}
