@@ -48,11 +48,15 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Entrar `/login`, Criar conta `/signup`
 
-Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord; "Você já entrou como X" quando há sessão. `return_to` continua.
+Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord; "Você já entrou como X" quando há sessão. `return_to` continua. No cadastro, o email é obrigatório; depois do envio, o formulário dá lugar a "Confira seu email" (o endereço canônico, validade de 1 hora, "Reenviar o link", "Usar outro email"). Embaixo do "Entrar", o link "Esqueci a senha".
+
+### Páginas dos links por email
+
+`/signup/confirm`, `/login/reset` e `/email/confirm` leem o token depois do `#`. Coluna estreita e um `Tile` com uma ação só: "Confirmar email e criar conta", a senha nova, "Confirmar email". Nunca confirmam sozinhas ao abrir (os verificadores de link dos provedores abririam a página). Link vencido ou incompleto: `Notice` de erro e o caminho (criar conta de novo, pedir outro link, ir para a conta). `/login/forgot`: um campo (nome de usuário ou email) e a resposta neutra, com o aviso de que conta sem email não se recupera por email e o botão do Discord.
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (Discord e senha: ligar, remover), **Senha** (trocar).
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar). Na aba Logins, o email vem primeiro: o atual e o formulário para pôr ou trocar (com a senha atual, se a conta tem senha); conta com senha e sem email vê o aviso do que perde, e o desvincular do Discord dá lugar à explicação.
 
 ### Convite `/invite/[token]`
 

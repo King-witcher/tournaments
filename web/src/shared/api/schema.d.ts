@@ -68,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["change_email"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -132,6 +164,38 @@ export interface paths {
         patch: operations["change_password"];
         trace?: never;
     };
+    "/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["request_password_reset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reset_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/sessions": {
         parameters: {
             query?: never;
@@ -174,6 +238,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["signup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/signup/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_signup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -271,6 +351,38 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/push/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_key"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/push/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["put_subscription"];
+        post?: never;
+        delete: operations["delete_subscription"];
         options?: never;
         head?: never;
         patch?: never;
@@ -804,6 +916,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ws": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ws"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -893,12 +1021,48 @@ export interface components {
             bans_per_game: number;
             no_repeat?: components["schemas"]["NoRepeatRule"] | null;
         };
+        ChangeEmail: {
+            /** @description Senha atual: obrigatória se a conta tem senha. */
+            current_password?: string | null;
+            /** @example rapha@gmail.com */
+            email: string;
+        };
         /** @description Campos ausentes não mudam. */
         ChangePassword: {
             current_password: string;
             /** @description Trocar a senha encerra as outras sessões da conta. */
             password?: string | null;
             username?: string | null;
+        };
+        /** @description O que mudou. */
+        Changed: {
+            /** @enum {string} */
+            scope: "tenant";
+            tenant: string;
+        } | {
+            match?: string | null;
+            /** @enum {string} */
+            scope: "tournament";
+            tenant: string;
+            tournament: string;
+        } | {
+            /** @enum {string} */
+            scope: "me";
+        };
+        /**
+         * @description Do navegador para a API. A API confere o acesso como na leitura e
+         *     responde `subscribed` ou `error`.
+         */
+        ClientMessage: {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "subscribe";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "unsubscribe";
         };
         /**
          * @description Como um mapa ou a série foi confirmado.
@@ -1020,6 +1184,17 @@ export interface components {
             /** Format: int64 */
             id: number;
             locale: string;
+        };
+        DeleteSubscription: {
+            endpoint: string;
+        };
+        /** @description Para onde o link foi (ou iria, se a conta já existe). */
+        EmailSent: {
+            /**
+             * @description O endereço na forma canônica, que é para onde o link vai.
+             * @example rapha@gmail.com
+             */
+            email: string;
         };
         /** @description Corpo de erro da API: só um código estável, o texto fica no front. */
         ErrorBody: {
@@ -1183,11 +1358,23 @@ export interface components {
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["NameTranslation"][];
         };
+        /** @description Token de um link mandado por email (cadastro, troca de email). */
+        LinkToken: {
+            token: string;
+        };
         /** @enum {string} */
         Locale: "pt" | "es";
-        /** @description Formas de login da conta. Sempre sobra pelo menos uma. */
+        /**
+         * @description Formas de login da conta, e o email que recupera a senha. Sempre sobra
+         *     pelo menos um login.
+         */
         LoginMethods: {
             discord: boolean;
+            /**
+             * @description Email confirmado, na forma canônica. Sem ele, a senha esquecida não
+             *     tem recuperação e o Discord não pode sair.
+             */
+            email?: string | null;
             /** @description Username do login com senha, se a conta tem senha. */
             username?: string | null;
         };
@@ -1380,6 +1567,80 @@ export interface components {
          * @enum {string}
          */
         NoRepeatWho: "player" | "team";
+        /**
+         * @description Aviso para uma pessoa: o front traduz `code` com `params` e leva a `path`.
+         *     É também o corpo do Web Push, com o `locale` da inscrição ao lado.
+         */
+        Notice: components["schemas"]["NoticeKind"] & {
+            /**
+             * @description Caminho no site, sem o idioma (ex.: `/quake-br/copa/matches/wb-1-1`).
+             * @example /quake-br/copa/matches/wb-1-1
+             */
+            path: string;
+        };
+        /**
+         * @description Código do aviso e os parâmetros dele. `tournament` é o nome do torneio no
+         *     idioma original; `match`, a partida (`wb-1-3`); `opponent` e `player`,
+         *     apelidos na comunidade.
+         */
+        NoticeKind: {
+            /** @enum {string} */
+            code: "check_in.opened";
+            /** @description O check-in abriu (para os inscritos). */
+            params: {
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.ready";
+            /** @description A partida tem os dois lados e pode ser jogada (para os dois). */
+            params: {
+                match: string;
+                opponent: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.game_reported";
+            /**
+             * @description O adversário enviou um mapa; sem resposta até `confirm_by`, ele
+             *     confirma sozinho.
+             */
+            params: {
+                /** Format: date-time */
+                confirm_by: string;
+                /** Format: int32 */
+                game: number;
+                match: string;
+                opponent: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.game_contested";
+            /**
+             * @description Um mapa foi contestado e espera a organização (para organizers e
+             *     owner).
+             */
+            params: {
+                /** Format: int32 */
+                game: number;
+                match: string;
+                /** @description Quem contestou. */
+                player: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tournament.start_due";
+            /**
+             * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
+             *     owner, uma vez).
+             */
+            params: {
+                tournament: string;
+            };
+        };
         /** @description Inscrito num torneio. */
         Participant: {
             avatar_url?: string | null;
@@ -1407,6 +1668,37 @@ export interface components {
             user_id: number;
             /** @description Desistiu do torneio em andamento: as partidas dele viram W.O. */
             withdrawn: boolean;
+        };
+        PasswordReset: {
+            /** @description Senha nova, de 8 a 128 caracteres. */
+            password: string;
+            /** @description Token do link do email. */
+            token: string;
+        };
+        PasswordResetRequest: {
+            /**
+             * @description Username ou email da conta.
+             * @example Rapha
+             */
+            login: string;
+        };
+        PushKey: {
+            /**
+             * @description Chave pública VAPID em base64url: o `applicationServerKey` de
+             *     `pushManager.subscribe`.
+             */
+            public_key: string;
+        };
+        /**
+         * @description A inscrição do navegador, como `PushSubscription.toJSON()` entrega (sem o
+         *     `expirationTime`), e o idioma dos avisos.
+         */
+        PutSubscription: {
+            /** @description URL `https` do serviço de push do navegador. */
+            endpoint: string;
+            keys: components["schemas"]["SubscriptionKeys"];
+            /** @description Idioma do texto dos avisos (o da página ao se inscrever). */
+            locale: components["schemas"]["Locale"];
         };
         PutTranslation: {
             /** @description Markdown, até 2000 caracteres; vazio usa o original. */
@@ -1436,6 +1728,34 @@ export interface components {
         SeedingOrder: {
             /** @description Todos os elegíveis, cada um uma vez, do seed 1 em diante. */
             user_ids: number[];
+        };
+        /** @description Da API para o navegador. */
+        ServerMessage: (components["schemas"]["Changed"] & {
+            /** @enum {string} */
+            type: "changed";
+        }) | (components["schemas"]["Notice"] & {
+            /** @enum {string} */
+            type: "notify";
+        }) | {
+            tenant: string;
+            /** @enum {string} */
+            type: "access_lost";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "subscribed";
+        } | {
+            tenant: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "unsubscribed";
+        } | {
+            code: string;
+            tenant?: string | null;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "error";
         };
         /** @enum {string} */
         ServiceStatus: "ok" | "unavailable";
@@ -1478,6 +1798,24 @@ export interface components {
             match_key: string;
             outcome: components["schemas"]["SourceOutcome"];
         };
+        /** @description Cadastro com senha: a conta só é criada quando o link do email é aberto. */
+        Signup: {
+            /**
+             * @description Gravado na forma canônica: minúsculo, sem `+etiqueta` e, no Gmail, sem
+             *     pontos. Domínio descartável ou de apelidos é recusado.
+             * @example rapha@gmail.com
+             */
+            email: string;
+            locale?: components["schemas"]["Locale"] | null;
+            /** @description 8 a 128 caracteres. */
+            password: string;
+            /**
+             * @description 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
+             *     removidos. Único sem diferenciar maiúsculas.
+             * @example Rapha
+             */
+            username: string;
+        };
         /**
          * @description A situação de um inscrito no torneio: quem vê, em `/me/tournaments`; o
          *     membro, no perfil dele na comunidade.
@@ -1516,6 +1854,12 @@ export interface components {
             tied: number;
             /** Format: int64 */
             user_id: number;
+        };
+        SubscriptionKeys: {
+            /** @description Segredo de autenticação (base64url). */
+            auth: string;
+            /** @description Chave pública ECDH do navegador (base64url). */
+            p256dh: string;
         };
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
@@ -1767,7 +2111,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.last_login (a conta não tem senha), auth.discord_not_linked */
+            /** @description auth.last_login (a conta não tem senha), auth.email_required (a conta não tem email para recuperar a senha), auth.discord_not_linked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1887,6 +2231,133 @@ export interface operations {
             };
             /** @description auth.discord_not_configured */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    change_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEmail"];
+            };
+        };
+        responses: {
+            /** @description Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailSent"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.email_unchanged, auth.email_taken (é de outra conta) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.invalid, email.disposable, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes}, email.too_soon {seconds} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.unavailable (teto de envios do dia) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkToken"];
+            };
+        };
+        responses: {
+            /** @description Email da conta trocado. Não pede login: o link prova que quem abriu recebe no email novo */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.email_taken (outra conta confirmou este email antes) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2025,7 +2496,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.password_exists, auth.username_taken */
+            /** @description auth.password_exists, auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2154,7 +2625,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.no_password, auth.username_taken */
+            /** @description auth.no_password, auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2174,6 +2645,88 @@ export interface operations {
             };
             /** @description auth.too_many_attempts {minutes} */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    request_password_reset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio, para não revelar quem tem conta */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    reset_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordReset"];
+            };
+        };
+        responses: {
+            /** @description Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
+                };
+            };
+            /** @description auth.no_password (a senha foi removida depois do pedido) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.password_invalid, request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2287,7 +2840,67 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Credentials"];
+                "application/json": components["schemas"]["Signup"];
+            };
+        };
+        responses: {
+            /** @description Link de confirmação enviado (vale 1 hora); a conta só é criada quando ele é aberto. Pedir de novo com o mesmo email troca o link; com o mesmo username e a mesma senha e outro email, troca o email (o link anterior para de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailSent"];
+                };
+            };
+            /** @description auth.username_taken (por uma conta ou pelo cadastro de outra pessoa esperando confirmação) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.username_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.too_soon {seconds} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.unavailable (teto de envios do dia) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm_signup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkToken"];
             };
         };
         responses: {
@@ -2300,7 +2913,7 @@ export interface operations {
                     "application/json": components["schemas"]["CurrentUser"];
                 };
             };
-            /** @description auth.username_taken */
+            /** @description auth.username_taken, auth.email_taken (outra conta pegou desde o pedido) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2309,7 +2922,16 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2560,6 +3182,124 @@ export interface operations {
             };
             /** @description auth.unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_key: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Chave pública VAPID para inscrever o navegador */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushKey"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description push.not_configured (a API está sem as chaves VAPID: só há avisos com o site aberto) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_subscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutSubscription"];
+            };
+        };
+        responses: {
+            /** @description Navegador inscrito para os avisos de quem está logado (o endpoint que era de outra conta passa a ser desta), com o idioma dos avisos */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description push.subscription_invalid (endpoint fora de https num domínio, chaves com outro tamanho), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_subscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteSubscription"];
+            };
+        };
+        responses: {
+            /** @description Inscrição do navegador removida, se era de quem está logado (também se não havia) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5454,6 +6194,51 @@ export interface operations {
             };
             /** @description tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    ws: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
+            101: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description realtime.origin_forbidden (o Origin não é o do site) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description realtime.upgrade_required (não é um pedido de WebSocket) */
+            426: {
                 headers: {
                     [name: string]: unknown;
                 };

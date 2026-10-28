@@ -48,12 +48,13 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - Erros saem por `ApiError` (`shared/error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`shared/extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
 - Ids: chave interna `bigint` identity; identificador público é slug; segredo é token aleatório com só o hash guardado, no banco ou no Redis (ver "Ids" em `docs/decisions.md`).
 - Estado de formato no `engine` é reconstruído por `replay` (config + participantes + histórico); nunca desserializado direto.
-- A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`.
+- A API devolve códigos (`match.already_reported`), nunca texto para o usuário. Traduções ficam em `web/`. A exceção são os emails, que saem da API com o texto em pt e es (`auth/emails.rs`).
 - Datas em UTC no banco.
 - O Next nunca acessa o banco; só chama a API Rust.
 - Supabase é só host de Postgres: não use Supabase Auth, Realtime, Storage nem supabase-js.
-- Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL: hoje, sessões e tentativas de senha (`auth/kv/`). Cada comando conta na cota: nada de Redis novo no caminho de toda requisição, nem cache ou lock sem medir antes (ver "Redis" em `docs/decisions.md`). Sempre no database 0 (os outros são de outros projetos do usuário), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.
+- Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL: hoje, sessões, tentativas de senha, cadastros esperando o link e links por email (`auth/kv/`) e limites de envio de email (`mail/kv.rs`). Cada comando conta na cota: nada de Redis novo no caminho de toda requisição, nem cache ou lock sem medir antes (ver "Redis" em `docs/decisions.md`). Sempre no database 0 (os outros são de outros projetos do usuário), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.
 - Storage pela API S3 genérica, provedor por variável de ambiente.
+- Email pelo Resend, por API HTTP (o Render free bloqueia SMTP), atrás da trait `Mailer` (`mail/`). Todo envio passa por `Mail::reserve`, que aplica os limites (60 s por endereço, teto do dia abaixo dos 100 do plano grátis).
 - Nenhum segredo no repositório (ele vai ficar público).
 
 ## Como trabalhar aqui

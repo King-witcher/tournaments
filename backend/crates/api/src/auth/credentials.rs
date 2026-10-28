@@ -1,5 +1,5 @@
-//! Rotas de username e senha: cadastro, entrar, e criar, trocar ou remover o
-//! login com senha da conta logada.
+//! Rotas de username e senha: entrar, e criar, trocar ou remover o login com
+//! senha da conta logada. O cadastro fica em `signup.rs`.
 
 use axum::{
     Json,
@@ -23,31 +23,6 @@ use crate::{
     AppState,
     shared::{ApiError, ErrorBody, JsonBody, token},
 };
-
-#[utoipa::path(
-    post,
-    path = "/auth/signup",
-    tag = "auth",
-    request_body = Credentials,
-    responses(
-        (status = CREATED, body = CurrentUser, description = "Conta criada, já com a sessão no cookie. O nome exibido é o username"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.username_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, request.invalid_body"),
-    )
-)]
-pub async fn signup(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    jar: CookieJar,
-    JsonBody(body): JsonBody<Credentials>,
-) -> Result<(StatusCode, CookieJar, Json<CurrentUser>), ApiError> {
-    let username = validate_username(&body.username)?;
-    validate_password(&body.password)?;
-    let hash = hash_password(body.password).await?;
-    let user_id = db::create_password_user(&state.db, &username, &hash).await?;
-    let (jar, user) = start_session(&state, &headers, jar, user_id).await?;
-    Ok((StatusCode::CREATED, jar, user))
-}
 
 #[utoipa::path(
     post,
@@ -86,7 +61,8 @@ pub async fn login(
     }
 }
 
-async fn start_session(
+/// Sessão nova para `user_id`, no cookie, e o usuário para a resposta.
+pub(super) async fn start_session(
     state: &AppState,
     headers: &HeaderMap,
     jar: CookieJar,
@@ -106,7 +82,7 @@ async fn start_session(
     responses(
         (status = CREATED, body = LoginMethods, description = "Username e senha criados para a conta logada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.username_taken"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.username_taken (por uma conta ou por um cadastro esperando confirmação)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, request.invalid_body"),
     )
 )]
@@ -117,6 +93,7 @@ pub async fn create_password(
 ) -> Result<(StatusCode, Json<LoginMethods>), ApiError> {
     let username = validate_username(&body.username)?;
     validate_password(&body.password)?;
+    refuse_reserved(&state, &username).await?;
     let hash = hash_password(body.password).await?;
     db::add_password(&state.db, user.id, &username, &hash).await?;
     let methods = db::login_methods(&state.db, user.id).await?;
@@ -132,7 +109,7 @@ pub async fn create_password(
         (status = OK, body = LoginMethods, description = "Username e/ou senha trocados. Trocar a senha encerra as outras sessões"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.no_password, auth.username_taken"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.no_password, auth.username_taken (por uma conta ou por um cadastro esperando confirmação)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, request.invalid_body"),
     )
@@ -150,6 +127,9 @@ pub async fn change_password(
         .transpose()?;
     if let Some(password) = &body.password {
         validate_password(password)?;
+    }
+    if let Some(username) = &username {
+        refuse_reserved(&state, username).await?;
     }
     confirm_password(&state, user.id, body.current_password, "auth.no_password").await?;
 
@@ -190,4 +170,13 @@ pub async fn remove_password(
     confirm_password(&state, user.id, body.current_password, "auth.no_password").await?;
     db::remove_password(&state.db, user.id).await?;
     Ok(Json(db::login_methods(&state.db, user.id).await?))
+}
+
+/// Username reservado por um cadastro esperando confirmação → 409
+/// `auth.username_taken`, como se já fosse de uma conta.
+async fn refuse_reserved(state: &AppState, username: &str) -> Result<(), ApiError> {
+    if kv::username_reserved(&state.redis, username).await? {
+        return Err(ApiError::conflict("auth.username_taken"));
+    }
+    Ok(())
 }

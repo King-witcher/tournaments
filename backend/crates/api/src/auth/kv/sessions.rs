@@ -137,6 +137,13 @@ pub async fn session_hashes(redis: &Redis, user_id: i64) -> RedisResult<Vec<Stri
         .await
 }
 
+/// Encerra todas as sessões da conta e devolve os hashes (em hexadecimal).
+pub async fn delete_all_sessions(redis: &Redis, user_id: i64) -> RedisResult<Vec<String>> {
+    let all = session_hashes(redis, user_id).await?;
+    delete_sessions(redis, user_id, &all).await?;
+    Ok(all)
+}
+
 /// Encerra as sessões da conta, menos a de hash `keep`, e devolve os hashes
 /// (em hexadecimal) das que encerrou.
 pub async fn delete_other_sessions(

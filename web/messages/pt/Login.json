@@ -1,5 +1,23 @@
 {
   "title": "Entrar",
   "noAccount": "Não tem conta?",
-  "signup": "Criar conta"
+  "signup": "Criar conta",
+  "forgot": {
+    "title": "Esqueci a senha",
+    "text": "Mandamos um link para o email da conta, para você criar uma senha nova.",
+    "login": "Nome de usuário ou email",
+    "submit": "Enviar link",
+    "sentTitle": "Pedido recebido",
+    "sent": "Se houver uma conta com senha e email confirmado para “{login}”, enviamos o link para o email dela. Ele vale 1 hora. Não chegou? Confira a caixa de spam.",
+    "again": "Pedir outro link",
+    "noEmail": "Conta sem email cadastrado não tem recuperação por email. Se você vinculou o Discord a ela, entre com ele.",
+    "remembered": "Lembrou a senha?",
+    "backToLogin": "Entrar"
+  },
+  "reset": {
+    "title": "Nova senha",
+    "text": "Escolha a senha nova. Ao salvar, você entra na conta e as outras sessões dela são encerradas.",
+    "submit": "Salvar e entrar",
+    "requestAgain": "Pedir outro link"
+  }
 }

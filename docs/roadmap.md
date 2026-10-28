@@ -25,7 +25,8 @@ O que ficou de fora de incrementos já feitos, com o que falta.
 - **Foco depois das ações da organização nas listas** (inscrever, tirar, check-in, desistência, seeding, convites e links): o item some ou muda de lugar, e o alvo certo é a lista.
 - **Publicar com o check-in já aberto** leva direto ao check-in (hoje com aviso). A alternativa, publicar suspender a abertura automática, muda a API: decidir com o usuário.
 - **Excluir conta e excluir comunidade**: regra para o usuário decidir ("Consistência do banco" no `decisions.md`).
-- **Aviso fora do site** (Discord, email): precisa de bot ou provedor e de decidir o que vale aviso.
+- **Aviso fora do site** (Discord, email): o provedor de email já existe (Resend, `mail/`); falta o bot do Discord e decidir o que vale aviso por email (a cota grátis é de 100 por dia).
+- **Email, o que ficou para depois**: captcha (Cloudflare Turnstile) no cadastro e na recuperação se aparecer abuso; avisar o email antigo quando o da conta muda; remover o email da conta; webhook de bounce do Resend para não insistir em endereço que não existe.
 - **Tirar um W.O.**: série decidida por W.O. não reabre, então corrigir a partida anterior a ela só se resolve desfazendo o início. Criar a rota se aparecer na prática.
 - **Pendências da organização em todas as comunidades**: "Seus torneios" só mostra as partidas de quem joga; contestações a resolver ficam na página de cada torneio.
 - **Histórico completo de quem vê**: "Seus torneios" mostra só os 5 encerrados mais recentes; a lista inteira vai para uma página de perfil, com o rating.
@@ -37,7 +38,7 @@ O que ficou de fora de incrementos já feitos, com o que falta.
 O que existe hoje, uma linha por área. Ao terminar um incremento, ajuste a linha da área (ou crie uma); o detalhe vai no commit e as regras no `decisions.md`.
 
 - **Base**: workspace Rust (`engine`, `api`, `migrate`), Next 16 com next-intl (pt, es), Bun, Biome, recarga automática da API, código por domínio dos dois lados.
-- **Contas**: login com Discord e com username e senha, vincular e desvincular, nome exibido; sessões e tentativas de senha no Redis, com rotas para listar e encerrar sessões.
+- **Contas**: login com Discord e com username e senha, vincular e desvincular, nome exibido; cadastro com senha só com email confirmado pelo link (forma canônica, sem descartáveis), recuperação de senha e troca de email por link (Resend); sessões, tentativas de senha, cadastros por confirmar e links no Redis, com rotas para listar e encerrar sessões.
 - **Comunidades**: criar (até 3 como owner), convites, papéis, apelido, sair, remover, transferir a posse; membro inativo mantém o histórico; página da pessoa com os torneios dela na comunidade.
 - **Duelo de ponta a ponta**: rascunho, traduções, visibilidade, inscrição (botão, organizador, link), check-in com abertura automática, seeding (sorteio com seed, ordem manual), iniciar e desfazer; eliminação simples e dupla; resultado mapa a mapa com confirmação por tempo, contestação, correção, anulação e W.O.; desistência com W.O. automático; encerramento com classificação.
 - **"Seus torneios"** na home (`GET /me/tournaments`): situação de quem vê e a próxima partida.

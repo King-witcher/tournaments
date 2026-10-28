@@ -12,7 +12,7 @@ export default async function SignupPage({
   return (
     <Page>
       <PageHeader title={t("title")} />
-      <Suspense fallback={<FormSkeleton fields={3} text tile />}>
+      <Suspense fallback={<FormSkeleton fields={4} tile />}>
         <SignupView searchParams={searchParams} />
       </Suspense>
     </Page>

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from user_identities where user_id = $1 and provider = $2",
+  "query": "update users set email = $2 where id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -11,5 +11,5 @@
     },
     "nullable": []
   },
-  "hash": "4214eef6a59a76682a1c291533e4eced4922963c4a6457654946073926a345a3"
+  "hash": "cd869908c79f51847c013e03fa1c5058143c823bc020b618ac973df70254acae"
 }

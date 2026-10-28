@@ -279,35 +279,62 @@ async fn participants_fit_and_stay_inside_tenant_and_tournament(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn logins_and_secrets_keep_their_format(db: PgPool) {
     let ana = user(&db, "Ana").await;
-    let identity = |provider: &'static str, id: &'static str, hash: Option<&'static str>| {
+    let password = |username: &'static str, hash: &'static str| {
         sqlx::query(
-            "insert into user_identities (user_id, provider, provider_user_id, password_hash)
-             values ($1, $2, $3, $4)",
+            "insert into password_credentials (user_id, username, password_hash)
+             values ($1, $2, $3)",
+        )
+        .bind(ana.id)
+        .bind(username)
+        .bind(hash)
+        .execute(&db)
+    };
+    let identity = |provider: &'static str, id: &'static str| {
+        sqlx::query(
+            "insert into user_identities (user_id, provider, provider_user_id) values ($1, $2, $3)",
         )
         .bind(ana.id)
         .bind(provider)
         .bind(id)
-        .bind(hash)
         .execute(&db)
     };
-    let argon = Some("$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA");
+    let argon = "$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA";
 
     for username in ["ab", "com espaço", "ação", "a23456789012345678901"] {
         assert_eq!(
-            rejected(identity("password", username, argon).await),
-            rule(CHECK, "user_identities_username_format"),
+            rejected(password(username, argon).await),
+            rule(CHECK, "password_credentials_username_format"),
             "{username}"
         );
     }
     assert_eq!(
-        rejected(identity("password", "Ana_1", Some("hunter22")).await),
-        rule(CHECK, "user_identities_password_hash_format")
+        rejected(password("Ana_1", "hunter22").await),
+        rule(CHECK, "password_credentials_password_hash_format")
     );
     assert_eq!(
-        rejected(identity("discord", "", None).await),
+        rejected(identity("discord", "").await),
         rule(CHECK, "user_identities_provider_user_id_check")
     );
-    identity("password", "Ana_1", argon).await.unwrap();
+    // A senha saiu de user_identities, que só tem provedores externos.
+    assert_eq!(
+        rejected(identity("password", "Ana_1").await),
+        rule(CHECK, "user_identities_provider_check")
+    );
+    password("Ana_1", argon).await.unwrap();
+    let bia = user(&db, "Bia").await;
+    assert_eq!(
+        rejected(
+            sqlx::query(
+                "insert into password_credentials (user_id, username, password_hash)
+                 values ($1, 'ANA_1', $2)"
+            )
+            .bind(bia.id)
+            .bind(argon)
+            .execute(&db)
+            .await
+        ),
+        rule(UNIQUE, "password_credentials_username_idx")
+    );
 
     for (change, name) in [
         ("display_name = ''", "users_display_name_check"),
@@ -315,6 +342,11 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
             "avatar_url = 'javascript:alert(1)'",
             "users_avatar_url_https",
         ),
+        ("email = 'Ana@outlook.com'", "users_email_format"),
+        ("email = 'ana+x@outlook.com'", "users_email_format"),
+        ("email = 'ana.silva@gmail.com'", "users_email_format"),
+        ("email = 'anasilva@googlemail.com'", "users_email_format"),
+        ("email = 'ana@localhost'", "users_email_format"),
     ] {
         let sql = format!("update users set {change}");
         assert_eq!(
@@ -323,6 +355,12 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
             "{change}"
         );
     }
+    let email = |id: i64| format!("update users set email = 'ana@outlook.com' where id = {id}");
+    exec(&db, &email(ana.id)).await.unwrap();
+    assert_eq!(
+        rejected(exec(&db, &email(bia.id)).await),
+        rule(UNIQUE, "users_email_key")
+    );
     assert_eq!(
         rejected(
             exec(

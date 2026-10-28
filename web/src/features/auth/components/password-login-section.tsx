@@ -23,7 +23,7 @@ export async function PasswordLoginSection({ username, discordLinked }: Props) {
         description={username ? t("current", { username }) : t("none")}
       >
         {!username ? (
-          <CredentialsForm mode="add" />
+          <CredentialsForm />
         ) : discordLinked ? (
           <RemoveLoginForm login="password" />
         ) : (

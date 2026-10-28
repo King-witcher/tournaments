@@ -1,27 +1,27 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select provider, provider_user_id, password_hash from user_identities",
+  "query": "select user_id, username, password_hash from password_credentials where user_id = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "provider",
-        "type_info": "Text",
+        "name": "user_id",
+        "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "user_identities",
-            "name": "provider"
+            "table": "password_credentials",
+            "name": "user_id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "provider_user_id",
+        "name": "username",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "user_identities",
-            "name": "provider_user_id"
+            "table": "password_credentials",
+            "name": "username"
           }
         }
       },
@@ -31,20 +31,22 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "user_identities",
+            "table": "password_credentials",
             "name": "password_hash"
           }
         }
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Int8"
+      ]
     },
     "nullable": [
       false,
       false,
-      true
+      false
     ]
   },
-  "hash": "95a1b81a9d4a1edb2f325d0486a3d52fd3f998bc86816d78dee5362c8e158773"
+  "hash": "acd6b0cff520f1472a9cc66a1bce1696bfb47424cc27de03e811519ebc00974b"
 }

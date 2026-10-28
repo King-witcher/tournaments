@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update password_credentials\n         set username = coalesce($2, username),\n             password_hash = coalesce($3, password_hash)\n         where user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3ce6ff77222ae6a378ea217b672875b9f06e9361f04dd557a410938be7e70f02"
+}

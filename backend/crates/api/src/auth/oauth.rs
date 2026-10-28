@@ -220,7 +220,7 @@ async fn fetch_discord_user(state: &AppState, code: &str) -> Result<DiscordUser,
         (status = OK, body = LoginMethods, description = "Discord desligado; o avatar, que vinha dele, sai junto"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem senha), auth.discord_not_linked"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem senha), auth.email_required (a conta não tem email para recuperar a senha), auth.discord_not_linked"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )

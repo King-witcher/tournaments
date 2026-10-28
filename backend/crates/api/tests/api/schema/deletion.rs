@@ -345,9 +345,16 @@ async fn deleting_a_user_takes_logins_and_registrations(db: PgPool) {
     let cup = finished_cup(&db).await;
     let bia = cup.bia.id;
     sqlx::query(
-        "insert into user_identities (user_id, provider, provider_user_id, password_hash)
-         values ($1, 'password', 'Bia_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA'),
-                ($1, 'discord', '987654321', null)",
+        "insert into user_identities (user_id, provider, provider_user_id)
+         values ($1, 'discord', '987654321')",
+    )
+    .bind(bia)
+    .execute(&db)
+    .await
+    .unwrap();
+    sqlx::query(
+        "insert into password_credentials (user_id, username, password_hash)
+         values ($1, 'Bia_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
     )
     .bind(bia)
     .execute(&db)
@@ -362,7 +369,12 @@ async fn deleting_a_user_takes_logins_and_registrations(db: PgPool) {
         .await
         .unwrap();
 
-    for table in ["user_identities", "tenant_members", "participants"] {
+    for table in [
+        "user_identities",
+        "password_credentials",
+        "tenant_members",
+        "participants",
+    ] {
         let sql = format!("select count(*) from {table} where user_id = {bia}");
         assert_eq!(count(&db, &sql).await, 0, "{table}");
     }

@@ -1,5 +1,5 @@
-//! Cadastro e login com username e senha, limite de tentativas, e criar,
-//! trocar e remover a senha da conta logada.
+//! Login com username e senha, limite de tentativas, e criar, trocar e
+//! remover a senha da conta logada. O cadastro fica em `signup.rs`.
 
 use axum::{
     Router,
@@ -9,7 +9,7 @@ use redis::Cmd;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
-use super::{send_json, signup};
+use super::{add_discord, send_json, session_count, signup};
 use crate::common::{User, app, call, err, get, patch, post, redis, user};
 
 const PASSWORD: &str = "senha forte 1";
@@ -40,109 +40,10 @@ async fn remove(app: &Router, uri: &str, who: &User, current: &str) -> (StatusCo
     .await
 }
 
-/// Liga um Discord à conta direto no banco.
-async fn add_discord(db: &PgPool, user_id: i64) {
-    sqlx::query!(
-        "insert into user_identities (user_id, provider, provider_user_id) values ($1, 'discord', $2)",
-        user_id,
-        format!("discord-{user_id}")
-    )
-    .execute(db)
-    .await
-    .unwrap();
-}
-
-/// Quantas sessões a conta de `who` tem abertas.
-async fn session_count(app: &Router, who: &User) -> usize {
-    let (status, body) = get(app, "/auth/sessions", who).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    body.as_array().unwrap().len()
-}
-
-async fn count(db: &PgPool, sql: &'static str) -> i64 {
-    sqlx::query_scalar::<_, i64>(sql)
-        .fetch_one(db)
-        .await
-        .unwrap()
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn signup_creates_account_with_session(db: PgPool) {
-    let app = app(db.clone());
-    let (status, body, session) = send_json(
-        &app,
-        Method::POST,
-        "/auth/signup",
-        None,
-        json!({ "username": " Rapha ", "password": PASSWORD }),
-    )
-    .await;
-    assert_eq!(status, StatusCode::CREATED, "{body}");
-    assert_eq!(body["display_name"], "Rapha");
-    let me = User {
-        id: body["id"].as_i64().unwrap(),
-        cookie: session.unwrap(),
-    };
-
-    let (status, body) = get(&app, "/me", &me).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["display_name"], "Rapha");
-    let (_, body) = get(&app, "/auth/logins", &me).await;
-    assert_eq!(body, json!({ "discord": false, "username": "Rapha" }));
-
-    // O banco guarda o username como digitado e só o hash da senha.
-    let ident =
-        sqlx::query!("select provider, provider_user_id, password_hash from user_identities")
-            .fetch_one(&db)
-            .await
-            .unwrap();
-    assert_eq!(ident.provider, "password");
-    assert_eq!(ident.provider_user_id, "Rapha");
-    let hash = ident.password_hash.unwrap();
-    assert!(hash.starts_with("$argon2id$"), "{hash}");
-    assert!(!hash.contains(PASSWORD));
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn signup_validates_and_refuses_taken_username(db: PgPool) {
-    let app = app(db.clone());
-    for (username, password, code) in [
-        ("ab", PASSWORD, "auth.username_invalid"),
-        ("com espaço", PASSWORD, "auth.username_invalid"),
-        ("rapha", "curta", "auth.password_invalid"),
-    ] {
-        let (status, body, session) = send_json(
-            &app,
-            Method::POST,
-            "/auth/signup",
-            None,
-            json!({ "username": username, "password": password }),
-        )
-        .await;
-        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{username}");
-        assert_eq!(body, err(code));
-        assert!(session.is_none());
-    }
-
-    signup(&app, "Rapha", PASSWORD).await;
-    let (status, body, _) = send_json(
-        &app,
-        Method::POST,
-        "/auth/signup",
-        None,
-        json!({ "username": "RAPHA", "password": PASSWORD }),
-    )
-    .await;
-    assert_eq!(status, StatusCode::CONFLICT);
-    assert_eq!(body, err("auth.username_taken"));
-    // O usuário da tentativa recusada não fica para trás.
-    assert_eq!(count(&db, "select count(*) from users").await, 1);
-}
-
 #[sqlx::test(migrations = "../../migrations")]
 async fn login_ignores_username_case(db: PgPool) {
     let app = app(db.clone());
-    let rapha = signup(&app, "Rapha", PASSWORD).await;
+    let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
 
     let (status, body, session) = login(&app, "rAPHA", PASSWORD).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -166,7 +67,7 @@ async fn login_ignores_username_case(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn wrong_passwords_block_the_username(db: PgPool) {
     let app = app(db.clone());
-    signup(&app, "Rapha", PASSWORD).await;
+    signup(&app, &db, "Rapha", PASSWORD).await;
     for _ in 0..5 {
         assert_eq!(
             login(&app, "rapha", "senha errada").await.0,
@@ -221,12 +122,18 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     let me = user(&db, "Quaker").await;
     add_discord(&db, me.id).await;
     let (_, body) = get(&app, "/auth/logins", &me).await;
-    assert_eq!(body, json!({ "discord": true, "username": null }));
+    assert_eq!(
+        body,
+        json!({ "discord": true, "username": null, "email": null })
+    );
 
     let creds = json!({ "username": "quaker", "password": PASSWORD });
     let (status, body) = post(&app, "/auth/password", &me, creds.clone()).await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
-    assert_eq!(body, json!({ "discord": true, "username": "quaker" }));
+    assert_eq!(
+        body,
+        json!({ "discord": true, "username": "quaker", "email": null })
+    );
 
     let (status, body) = post(
         &app,
@@ -249,6 +156,22 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     assert_eq!(status, StatusCode::CONFLICT);
     assert_eq!(body, err("auth.username_taken"));
 
+    // Username reservado por um cadastro que espera o link também está em uso.
+    let signup = json!({ "username": "Reservado", "password": PASSWORD, "email": "r@example.com" });
+    let (status, body, _) = send_json(&app, Method::POST, "/auth/signup", None, signup).await;
+    assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+    let (status, body) = post(
+        &app,
+        "/auth/password",
+        &other,
+        json!({ "username": "reservado", "password": PASSWORD }),
+    )
+    .await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.username_taken"))
+    );
+
     // Entra na mesma conta, que mantém o nome exibido.
     let (status, body, _) = login(&app, "Quaker", PASSWORD).await;
     assert_eq!(status, StatusCode::OK);
@@ -262,12 +185,12 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
     let app = app(db.clone());
-    let me = signup(&app, "Rapha", PASSWORD).await;
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
     let other_session = User {
         id: me.id,
         cookie: login(&app, "rapha", PASSWORD).await.2.unwrap(),
     };
-    signup(&app, "Outro", PASSWORD).await;
+    signup(&app, &db, "Outro", PASSWORD).await;
 
     for (change, status, code) in [
         (
@@ -298,7 +221,10 @@ async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    assert_eq!(body, json!({ "discord": false, "username": "Rapha2" }));
+    assert_eq!(
+        body,
+        json!({ "discord": false, "username": "Rapha2", "email": "rapha@example.com" })
+    );
     assert_eq!(get(&app, "/me", &me).await.0, StatusCode::OK);
     assert_eq!(
         get(&app, "/me", &other_session).await.0,
@@ -329,7 +255,7 @@ async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn password_is_removed_only_with_discord_left(db: PgPool) {
     let app = app(db.clone());
-    let me = signup(&app, "Rapha", PASSWORD).await;
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
     let (status, body) = remove(&app, "/auth/password", &me, PASSWORD).await;
     assert_eq!(
@@ -345,7 +271,11 @@ async fn password_is_removed_only_with_discord_left(db: PgPool) {
     );
     let (status, body) = remove(&app, "/auth/password", &me, PASSWORD).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    assert_eq!(body, json!({ "discord": true, "username": null }));
+    // O email fica: recupera o acesso se a senha voltar.
+    assert_eq!(
+        body,
+        json!({ "discord": true, "username": null, "email": "rapha@example.com" })
+    );
     assert_eq!(
         login(&app, "Rapha", PASSWORD).await.0,
         StatusCode::UNAUTHORIZED

@@ -22,7 +22,17 @@
     "password_exists": "Sua conta já tem nome de usuário e senha.",
     "no_password": "Sua conta não tem senha.",
     "wrong_password": "Senha atual incorreta.",
-    "last_login": "Esse é o único jeito de entrar na sua conta. Adicione outro antes de remover este."
+    "last_login": "Esse é o único jeito de entrar na sua conta. Adicione outro antes de remover este.",
+    "link_expired": "Este link não vale mais: passou de 1 hora, já foi usado ou foi trocado por um mais novo.",
+    "email_taken": "Esse email já é de outra conta.",
+    "email_unchanged": "Esse já é o email da sua conta.",
+    "email_required": "Para desvincular o Discord, cadastre e confirme antes um email na conta: sem ele, quem esquece a senha perde a conta."
+  },
+  "email": {
+    "invalid": "Email inválido. Antes do @, use só letras, números, ponto, _ ou - (no Gmail, só letras, números e ponto); depois, um domínio como gmail.com.",
+    "disposable": "Email temporário ou de apelido (que só repassa para outro endereço) não é aceito. Use o seu email de sempre.",
+    "too_soon": "Acabamos de mandar um email para esse endereço. Espere {seconds, plural, one {# segundo} other {# segundos}} para pedir outro.",
+    "unavailable": "O site chegou ao limite de emails que pode mandar hoje. Tente de novo mais tarde, ou entre com o Discord."
   },
   "tenant": {
     "not_found": "Comunidade não encontrada, ou você não faz parte dela.",

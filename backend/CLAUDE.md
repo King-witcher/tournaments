@@ -29,11 +29,18 @@ crates/api/src/
   outbox/         eventos de mudança e avisos (event.rs) e `emit`, que grava na transação de
                   quem muda; claim/remove para o despachante; track (a requisição emitiu?).
                   Só depende de shared: todo domínio emite, inclusive auth
+  mail/           email sem domínio: normalize (forma canônica; recusa descartáveis e apelidos,
+                  disposable.rs + disposable_domains.txt), trait Mailer (ResendMailer, LogMailer),
+                  Mail::reserve (limites de envio no Redis, kv.rs) → Ticket::send (segundo plano).
+                  Sem rota nem texto. Só depende de shared
   auth/           login com Discord e com username e senha (argon2, limite de tentativas),
                   ligar e desligar cada um, sessão em cookie, CurrentUser (`Option<CurrentUser>` em rota
                   pública que muda para quem está logado, como a prévia do convite), PATCH /me (nome),
-                  /auth/sessions (listar, encerrar uma, encerrar as outras). Sessões e erros de
-                  senha no Redis (kv/); contas e logins no banco (db/)
+                  /auth/sessions (listar, encerrar uma, encerrar as outras). signup.rs (cadastro
+                  por link: só cria a conta na confirmação), recovery.rs (senha por email),
+                  email_change.rs (pôr ou trocar o email), emails.rs (os textos, pt e es).
+                  Sessões, erros de senha, cadastros por confirmar e links no Redis (kv/); contas,
+                  email, logins externos (user_identities) e senha (password_credentials) no banco (db/)
   tenants/        tenants (criar, ver, transferir a posse), e a base de todo dado de tenant:
                   TenantId, Role, TenantMember (e `TenantMember::all_of`, as participações de quem vê;
                   `TenantMember::of`, a checagem fora de rota), apelido; changes.rs (changed,
@@ -119,7 +126,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 
 ### Dependências
 
-- `shared` ← `outbox` ← `auth` ← `tenants` ← demais domínios ← `realtime`. Nunca ao contrário, nunca em ciclo.
+- `shared` ← `outbox` e `mail` ← `auth` ← `tenants` ← demais domínios ← `realtime`. Nunca ao contrário, nunca em ciclo.
 - Um domínio usa outro só pelo que o `mod.rs` dele exporta (`crate::tenants::{TenantMember, my_tenant}`).
 - Query que mais de um domínio precisa fica no domínio dono do conceito e sai pelo `mod.rs` (ex.: `tenants::my_tenant`, usado por `invites`). Só vai para `shared` o que não tem conceito de domínio nenhum.
 
