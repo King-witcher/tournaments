@@ -6,7 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 export function RevokeInviteButton({
   slug,
@@ -21,10 +21,11 @@ export function RevokeInviteButton({
 
   return (
     <div className="flex flex-col items-end">
-      <Button
+      <ConfirmButton
         variant="link"
         pending={pending}
-        onClick={() =>
+        question={t("revokeConfirm")}
+        onConfirm={() =>
           run(
             () =>
               api.DELETE("/tenants/{slug}/invites/{invite_id}", {
@@ -36,7 +37,7 @@ export function RevokeInviteButton({
         className="text-red-600 dark:text-red-400"
       >
         {t("revoke")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText size="xs">{error}</ErrorText>}
     </div>
   );

@@ -7,7 +7,7 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
-import { Button } from "@/shared/ui/button";
+import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 type Props = {
   tenant: string;
@@ -23,11 +23,12 @@ export function DeleteTranslationButton({ tenant, tournament, locale }: Props) {
 
   return (
     <div className="flex flex-col gap-1">
-      <Button
+      <ConfirmButton
         variant="link"
-        className="py-2"
         pending={pending}
-        onClick={() =>
+        className="py-2"
+        question={t("removeConfirm")}
+        onConfirm={() =>
           run(
             () =>
               api.DELETE(
@@ -39,7 +40,7 @@ export function DeleteTranslationButton({ tenant, tournament, locale }: Props) {
         }
       >
         {t("remove")}
-      </Button>
+      </ConfirmButton>
       {error && <ErrorText>{error}</ErrorText>}
     </div>
   );

@@ -141,7 +141,8 @@
       "empty": "No hay invitaciones activas.",
       "item": "Creada por {name}, vence {expires}",
       "uses": "{count, plural, =0 {nadie entró todavía} one {# persona entró} other {# personas entraron}}",
-      "revoke": "Revocar"
+      "revoke": "Revocar",
+      "revokeConfirm": "¿Revocar este enlace? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
     }
   },
   "Invite": {
@@ -292,7 +293,8 @@
       "hint": "Opcional. Si la descripción o las reglas quedan vacías, se muestran las del idioma original.",
       "save": "Guardar traducción",
       "saved": "Traducción guardada.",
-      "remove": "Quitar traducción"
+      "remove": "Quitar traducción",
+      "removeConfirm": "¿Quitar esta traducción? El texto traducido se borra y quien lee en este idioma pasa a ver el original."
     },
     "invites": {
       "title": "Enlaces de inscripción",
