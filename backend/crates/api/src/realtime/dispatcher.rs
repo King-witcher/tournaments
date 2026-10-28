@@ -23,7 +23,7 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
             continue;
         };
         if let (Event::Notice { users, notice }, Some(sender)) = (event, &state.push) {
-            push::deliver(&state.db, sender.as_ref(), users, notice).await?;
+            push::deliver(&mut tx, sender.as_ref(), users, notice).await?;
         }
         state.realtime.publish(event.clone());
     }

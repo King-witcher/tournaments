@@ -3,7 +3,7 @@
 //! em JSON (`{code, params, path}`), que o service worker traduz no idioma da
 //! inscrição.
 
-use sqlx::PgPool;
+use sqlx::PgConnection;
 
 use super::{
     db,
@@ -13,14 +13,14 @@ use crate::outbox::Notice;
 
 /// Manda `notice` para as inscrições de `users`. A inscrição que o serviço diz
 /// não existir mais (404, 410) sai; erro de rede ou outra resposta fica no log
-/// e não segura os outros envios.
+/// e não segura os outros envios. Roda na transação do despachante.
 pub async fn deliver(
-    db: &PgPool,
+    conn: &mut PgConnection,
     push: &dyn WebPush,
     users: &[i64],
     notice: &Notice,
 ) -> Result<(), sqlx::Error> {
-    let targets = db::of_users(db, users).await?;
+    let targets = db::of_users(conn, users).await?;
     if targets.is_empty() {
         return Ok(());
     }
@@ -34,10 +34,10 @@ pub async fn deliver(
         }
     }
     if !gone.is_empty() {
-        db::remove(db, &gone).await?;
+        db::remove(conn, &gone).await?;
     }
     if !delivered.is_empty() {
-        db::mark_used(db, &delivered).await?;
+        db::mark_used(conn, &delivered).await?;
     }
     Ok(())
 }

@@ -1,6 +1,6 @@
 //! SQL das inscrições de Web Push (`push_subscriptions`).
 
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
 use super::sender::Target;
 use crate::shared::Locale;
@@ -43,7 +43,7 @@ pub async fn delete(db: &PgPool, user_id: i64, endpoint: &str) -> Result<(), sql
 }
 
 /// As inscrições de `users`.
-pub async fn of_users(db: &PgPool, users: &[i64]) -> Result<Vec<Target>, sqlx::Error> {
+pub async fn of_users(conn: &mut PgConnection, users: &[i64]) -> Result<Vec<Target>, sqlx::Error> {
     sqlx::query_as!(
         Target,
         r#"select id, endpoint, p256dh, auth from push_subscriptions
@@ -51,25 +51,25 @@ pub async fn of_users(db: &PgPool, users: &[i64]) -> Result<Vec<Target>, sqlx::E
            order by id"#,
         users
     )
-    .fetch_all(db)
+    .fetch_all(conn)
     .await
 }
 
 /// Apaga as inscrições que o serviço de push disse não existirem mais.
-pub async fn remove(db: &PgPool, ids: &[i64]) -> Result<(), sqlx::Error> {
+pub async fn remove(conn: &mut PgConnection, ids: &[i64]) -> Result<(), sqlx::Error> {
     sqlx::query!("delete from push_subscriptions where id = any($1)", ids)
-        .execute(db)
+        .execute(conn)
         .await?;
     Ok(())
 }
 
 /// Marca o último aviso entregue.
-pub async fn mark_used(db: &PgPool, ids: &[i64]) -> Result<(), sqlx::Error> {
+pub async fn mark_used(conn: &mut PgConnection, ids: &[i64]) -> Result<(), sqlx::Error> {
     sqlx::query!(
         "update push_subscriptions set last_used_at = now() where id = any($1)",
         ids
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(())
 }
