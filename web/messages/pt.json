@@ -305,10 +305,10 @@
     "member": "Membro",
     "choose": "Escolha um membro…",
     "add": "Inscrever",
-    "remove": "Tirar",
+    "remove": "Tirar do torneio",
     "left": "saiu",
     "withdrawn": "desistiu",
-    "withdrawParticipant": "Desistência",
+    "withdrawParticipant": "Marcar desistência",
     "withdrawConfirm": "Marcar a desistência de {name}? {name} continua na chave, mas cada partida dele, agora ou quando ficar pronta, vira W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos).",
     "registration": {
       "register": "Inscrever-se",

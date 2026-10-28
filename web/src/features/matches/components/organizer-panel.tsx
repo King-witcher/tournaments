@@ -28,6 +28,9 @@ export function OrganizerPanel({ target, detail, maps, names }: Props) {
   const r = s.result;
   const played = s.state === "completed";
   const reported = r != null && r.status !== "confirmed";
+  // Muda a cada resultado: o formulário recomeça do placar que vale e os
+  // blocos fecham depois de salvar.
+  const resultKey = `${r?.status}:${r?.a_wins}:${r?.b_wins}:${r?.walkover}:${r?.winner}`;
   const initial =
     r && !r.walkover ? { a: r.a_wins ?? 0, b: r.b_wins ?? 0 } : undefined;
 
@@ -44,12 +47,11 @@ export function OrganizerPanel({ target, detail, maps, names }: Props) {
         />
       )}
       <Disclosure
+        key={`score:${resultKey}`}
         summary={played ? t("correct") : reported ? t("setOther") : t("set")}
       >
         {played && <p className="text-sm opacity-70">{t("correctHint")}</p>}
         <ScoreForm
-          // Recomeça do placar que vale a cada atualização da página.
-          key={`${r?.status}:${r?.a_wins}:${r?.b_wins}:${r?.walkover}`}
           target={target}
           mode="organizer"
           bestOf={s.best_of}
@@ -59,7 +61,7 @@ export function OrganizerPanel({ target, detail, maps, names }: Props) {
           submitLabel={t("save")}
         />
       </Disclosure>
-      <Disclosure summary={t("walkoverTitle")}>
+      <Disclosure key={`walkover:${resultKey}`} summary={t("walkoverTitle")}>
         <WalkoverForm target={target} names={names} />
       </Disclosure>
     </section>

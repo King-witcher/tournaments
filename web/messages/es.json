@@ -305,10 +305,10 @@
     "member": "Miembro",
     "choose": "Elige un miembro…",
     "add": "Inscribir",
-    "remove": "Quitar",
+    "remove": "Quitar del torneo",
     "left": "salió",
     "withdrawn": "abandonó",
-    "withdrawParticipant": "Abandono",
+    "withdrawParticipant": "Marcar abandono",
     "withdrawConfirm": "¿Marcar el abandono de {name}? {name} sigue en la llave, pero cada partida suya, ahora o cuando esté lista, pasa a W.O. para el rival. No se puede deshacer (los resultados todavía se pueden corregir).",
     "registration": {
       "register": "Inscribirme",

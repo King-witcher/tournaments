@@ -4,6 +4,7 @@ import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { Link } from "@/i18n/navigation";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Alert } from "@/shared/ui/alert";
+import { textsEditable } from "../lib/status";
 import { loadTournament } from "../server";
 import { TournamentForm } from "./tournament-form";
 import { TranslationSection } from "./translation-section";
@@ -38,8 +39,14 @@ export async function EditTournamentView({ tenant, slug }: Props) {
         </Link>
         <h1 className="text-3xl font-semibold">{t("editTitle")}</h1>
       </header>
-      <TournamentForm tenant={tenant} tournament={tournament} />
-      <TranslationSection tenant={tenant} tournament={tournament} />
+      {textsEditable(tournament.status) ? (
+        <>
+          <TournamentForm tenant={tenant} tournament={tournament} />
+          <TranslationSection tenant={tenant} tournament={tournament} />
+        </>
+      ) : (
+        <Alert>{await apiErrorMessage("tournament.finished")}</Alert>
+      )}
     </>
   );
 }

@@ -4,6 +4,7 @@ import { LifecyclePanel } from "@/features/lifecycle/components/lifecycle-panel"
 import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { buttonVariants } from "@/shared/ui/button";
+import { textsEditable } from "../lib/status";
 import { DeleteTournamentButton } from "./delete-tournament-button";
 import { PublishTournamentButton } from "./publish-tournament-button";
 
@@ -56,7 +57,8 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
           tenant={tenant}
           tournament={tournament}
           now={now}
-          extra={edit}
+          // Encerrado, nada mais muda (só a correção de resultados, na partida).
+          extra={textsEditable(tournament.status) ? edit : undefined}
         />
       )}
     </section>
