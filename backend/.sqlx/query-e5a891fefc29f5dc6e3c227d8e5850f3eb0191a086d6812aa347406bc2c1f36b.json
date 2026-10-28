@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select invite_id from tenant_members where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "invite_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "invite_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "e5a891fefc29f5dc6e3c227d8e5850f3eb0191a086d6812aa347406bc2c1f36b"
+}

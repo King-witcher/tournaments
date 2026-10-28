@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select kind, actor from match_events order by id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_events",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "actor",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_events",
+            "name": "actor"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "f98e4a153d04192135ab8f3cb37a6643239607d37245def554e9d43f6c35b056"
+}

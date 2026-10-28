@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select u.display_name, m.role from tenant_members m join users u on u.id = m.user_id\n         order by u.display_name",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "display_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "display_name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "role"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "827a04f8d46d810e6dd0d7103b1c1bfc08492dcd3133a811f9d62f01f71ba04f"
+}

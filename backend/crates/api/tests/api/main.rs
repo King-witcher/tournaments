@@ -12,5 +12,6 @@ mod maps;
 mod matches;
 mod members;
 mod participants;
+mod schema;
 mod tenants;
 mod tournaments;

@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select status, reported_by, confirmed_by from match_results",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reported_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "reported_by"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "confirmed_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_results",
+            "name": "confirmed_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "c5c342c32f80ea27588b88dcefd3fc171526ab5951edc15ac2646c3ce9a9d16c"
+}

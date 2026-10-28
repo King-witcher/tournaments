@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select added_by, checked_in_at, checked_in_by from participants where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "added_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "added_by"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "checked_in_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "checked_in_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "checked_in_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "checked_in_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "481164ea0c958e8833853bc431cbb1b00c409fc2dc3eae498d97c234b995367a"
+}
