@@ -2,8 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{setup::TournamentMode, status::TournamentStatus, visibility::Visibility};
-use crate::shared::Locale;
+use super::{
+    schedule::DEFAULT_CHECK_IN_MINUTES, setup::TournamentMode, status::TournamentStatus,
+    visibility::Visibility,
+};
+use crate::shared::{Locale, nullable};
 
 /// Formato de uma fase.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,11 +92,25 @@ pub struct CreateTournament {
     pub champion_rules: ChampionRules,
     /// Fases, na ordem. Por enquanto, exatamente uma.
     pub stages: Vec<StageFormat>,
+    /// Início previsto. O rascunho pode ficar sem; publicar exige.
+    #[serde(default)]
+    pub starts_at: Option<DateTime<Utc>>,
+    /// Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
+    /// Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
+    /// andamento).
+    #[serde(default = "default_check_in_minutes")]
+    #[schema(required = false, default = 30, example = 30)]
+    pub check_in_minutes: Option<i32>,
+}
+
+fn default_check_in_minutes() -> Option<i32> {
+    Some(DEFAULT_CHECK_IN_MINUTES)
 }
 
 /// Campos ausentes não mudam. Textos e visibilidade podem mudar até o
-/// torneio encerrar; vagas, regra de campeões e fases, até ele começar (e as
-/// vagas nunca abaixo do número de inscritos).
+/// torneio encerrar; vagas, regra de campeões, fases, data de início e
+/// janela de check-in, até ele começar (e as vagas nunca abaixo do número de
+/// inscritos).
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTournament {
     pub name: Option<String>,
@@ -103,6 +120,15 @@ pub struct UpdateTournament {
     pub max_participants: Option<i32>,
     pub champion_rules: Option<ChampionRules>,
     pub stages: Option<Vec<StageFormat>>,
+    /// `null` tira a data, o que só vale no rascunho.
+    #[serde(default, deserialize_with = "nullable")]
+    #[schema(value_type = Option<DateTime<Utc>>)]
+    pub starts_at: Option<Option<DateTime<Utc>>>,
+    /// `null` desliga o check-in; durante o check-in, o torneio volta para a
+    /// inscrição.
+    #[serde(default, deserialize_with = "nullable")]
+    #[schema(value_type = Option<i32>)]
+    pub check_in_minutes: Option<Option<i32>>,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o
@@ -122,8 +148,18 @@ pub struct Tournament {
     pub participants: i64,
     /// Se quem vê está inscrito.
     pub registered: bool,
+    /// Se quem vê fez check-in.
+    pub checked_in: bool,
     pub champion_rules: ChampionRules,
     pub stages: Vec<StageFormat>,
+    /// Início previsto; `null` só no rascunho.
+    pub starts_at: Option<DateTime<Utc>>,
+    /// Janela de check-in em minutos; `null`: sem check-in.
+    pub check_in_minutes: Option<i32>,
+    /// Quando o check-in abre (ou abriu) sozinho: o início menos a janela.
+    /// Com o status ainda em inscrição depois disso, o organizador reabriu a
+    /// inscrição e a abertura automática está suspensa.
+    pub check_in_opens_at: Option<DateTime<Utc>>,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
 }
@@ -142,6 +178,8 @@ pub struct TournamentSummary {
     pub participants: i64,
     /// Se quem vê está inscrito.
     pub registered: bool,
+    /// Início previsto; `null` só no rascunho.
+    pub starts_at: Option<DateTime<Utc>>,
     /// Nome nas traduções que existem.
     pub translations: Vec<NameTranslation>,
     pub created_at: DateTime<Utc>,

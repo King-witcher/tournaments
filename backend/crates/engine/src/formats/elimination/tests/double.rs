@@ -254,7 +254,7 @@ fn worst_case_double_sixteen() {
 
 #[test]
 fn dropping_players_do_not_meet_old_opponents_first() {
-    for n in [8u128, 16, 32] {
+    for n in [8i64, 16, 32] {
         let mut b = EliminationBracket::new(double(false), seeds(n)).unwrap();
         let mut met: HashSet<(ParticipantId, ParticipantId)> = HashSet::new();
         loop {

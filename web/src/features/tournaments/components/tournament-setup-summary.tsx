@@ -4,7 +4,7 @@ import type { components } from "@/shared/api/schema";
 
 type Props = { tournament: components["schemas"]["Tournament"] };
 
-/** Chave, séries, vagas e regras de campeões da fase única. */
+/** Chave, séries, vagas e regras de campeões da fase única, e a janela de check-in. */
 export function TournamentSetupSummary({ tournament }: Props) {
   const t = useTranslations("Tournament.setup");
   const [stage] = tournament.stages;
@@ -26,6 +26,12 @@ export function TournamentSetupSummary({ tournament }: Props) {
     [
       t("labels.champions"),
       `${t("bans", { count: rules.bans_per_game })} · ${t(`noRepeat.${rules.no_repeat?.scope ?? "off"}`)}`,
+    ],
+    [
+      t("labels.checkIn"),
+      tournament.check_in_minutes == null
+        ? t("noCheckIn")
+        : t("checkIn", { minutes: tournament.check_in_minutes }),
     ],
   ];
 

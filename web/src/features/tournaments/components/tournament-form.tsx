@@ -11,12 +11,14 @@ import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { Alert } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import {
+  createBody,
   defaultValues,
-  setupBody,
   type TournamentValues,
+  updateBody,
   valuesFrom,
 } from "../lib/form-values";
 import { setupEditable, textsEditable } from "../lib/status";
+import { TournamentScheduleFields } from "./tournament-schedule-fields";
 import { TournamentSetupFields } from "./tournament-setup-fields";
 import { TournamentTextFields } from "./tournament-text-fields";
 import { TournamentVisibilityField } from "./tournament-visibility-field";
@@ -29,7 +31,7 @@ type Props = {
 
 /**
  * Criação e edição de torneio. Na edição de um torneio que já começou, o
- * formato fica travado e não vai no corpo.
+ * formato, a data e o check-in ficam travados e não vão no corpo.
  */
 export function TournamentForm({ tenant, tournament }: Props) {
   const t = useTranslations("TournamentForm");
@@ -43,31 +45,20 @@ export function TournamentForm({ tenant, tournament }: Props) {
     setValues((current) => ({ ...current, ...patch }));
   const setupLocked = tournament ? !setupEditable(tournament.status) : false;
   const finished = tournament ? !textsEditable(tournament.status) : false;
+  const published = tournament ? tournament.status !== "draft" : false;
 
   const [error, submit, pending] = useActionState(async () => {
-    const texts = {
-      name: values.name,
-      description: values.description,
-      rules: values.rules,
-      visibility: values.visibility,
-    };
     const result = tournament
       ? await callApi(
           api.PATCH("/tenants/{slug}/tournaments/{tournament}", {
             params: { path: { slug: tenant, tournament: tournament.slug } },
-            body: { ...texts, ...(!setupLocked && setupBody(values)) },
+            body: updateBody(values, setupLocked),
           }),
         )
       : await callApi(
           api.POST("/tenants/{slug}/tournaments", {
             params: { path: { slug: tenant } },
-            body: {
-              ...texts,
-              ...setupBody(values),
-              slug: values.slug,
-              locale: values.locale,
-              mode: "duel",
-            },
+            body: createBody(values),
           }),
         );
     if (!result.ok) return errorMessage(result.code, result.params);
@@ -87,6 +78,12 @@ export function TournamentForm({ tenant, tournament }: Props) {
         value={values.visibility}
         onChange={(visibility) => onChange({ visibility })}
         disabled={finished}
+      />
+      <TournamentScheduleFields
+        values={values}
+        onChange={onChange}
+        disabled={setupLocked}
+        required={published}
       />
       <TournamentSetupFields
         values={values}

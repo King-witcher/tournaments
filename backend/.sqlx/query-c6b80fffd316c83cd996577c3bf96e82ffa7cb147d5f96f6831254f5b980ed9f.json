@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select checked_in_by from participants where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "checked_in_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "checked_in_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "c6b80fffd316c83cd996577c3bf96e82ffa7cb147d5f96f6831254f5b980ed9f"
+}

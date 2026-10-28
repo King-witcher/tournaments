@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select status from tournaments where slug = 'copa'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "47db8c50a1bada08ad973ce18be0af50e6e9388fa1ef55c96159f2bff8b0a266"
+}

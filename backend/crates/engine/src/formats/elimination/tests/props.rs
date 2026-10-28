@@ -77,7 +77,7 @@ fn arb_config() -> impl Strategy<Value = EliminationConfig> {
 proptest! {
     #[test]
     fn random_play_always_finishes_with_consistent_standings(
-        n in 2u128..=64,
+        n in 2i64..=64,
         config in arb_config(),
         choices in proptest::collection::vec(any::<bool>(), 1..200),
         walkovers in proptest::collection::vec(any::<bool>(), 1..50),

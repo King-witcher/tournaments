@@ -99,7 +99,7 @@ fn walkover_skips_score_validation() {
 #[test]
 fn replay_matches_incremental_state() {
     for config in [single(3, 5), double(true), double(false)] {
-        for n in [2u128, 3, 5, 8, 11] {
+        for n in [2i64, 3, 5, 8, 11] {
             let mut inc = EliminationBracket::new(config, seeds(n)).unwrap();
             let reports = play_favorites(&mut inc, false);
             let replayed = EliminationBracket::replay(config, seeds(n), reports).unwrap();

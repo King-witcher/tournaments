@@ -356,6 +356,38 @@ export interface paths {
         patch: operations["update_tournament"];
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["check_in"];
+        delete: operations["undo_check_in"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/check-in/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["open_check_in"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/invites": {
         parameters: {
             query?: never;
@@ -404,6 +436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["check_in_participant"];
+        post?: never;
+        delete: operations["undo_check_in_participant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/publish": {
         parameters: {
             query?: never;
@@ -431,6 +479,70 @@ export interface paths {
         put?: never;
         post: operations["register"];
         delete: operations["withdraw"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/registration/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reopen_registration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/seeding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_seeding"];
+        put: operations["put_seeding"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/seeding/shuffle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["shuffle_seeding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start"];
+        delete: operations["undo_start"];
         options?: never;
         head?: never;
         patch?: never;
@@ -506,6 +618,15 @@ export interface components {
         };
         CreateTournament: {
             champion_rules: components["schemas"]["ChampionRules"];
+            /**
+             * Format: int32
+             * @description Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
+             *     Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
+             *     andamento).
+             * @default 30
+             * @example 30
+             */
+            check_in_minutes: number | null;
             /** @description Markdown, até 2000 caracteres. */
             description?: string;
             /** @description Idioma original dos textos. Não muda depois. */
@@ -531,6 +652,11 @@ export interface components {
             slug: string;
             /** @description Fases, na ordem. Por enquanto, exatamente uma. */
             stages: components["schemas"]["StageFormat"][];
+            /**
+             * Format: date-time
+             * @description Início previsto. O rascunho pode ficar sem; publicar exige.
+             */
+            starts_at?: string | null;
             /** @description Padrão `public`. Muda depois, até o torneio encerrar. */
             visibility?: components["schemas"]["Visibility"];
         };
@@ -686,10 +812,21 @@ export interface components {
         /** @description Inscrito num torneio. */
         Participant: {
             avatar_url?: string | null;
+            /**
+             * @description Fez check-in. Com check-in no torneio, só quem fez entra no seeding e
+             *     na chave.
+             */
+            checked_in: boolean;
             /** @description Apelido no tenant. */
             nickname: string;
             /** Format: date-time */
             registered_at: string;
+            /**
+             * Format: int32
+             * @description Posição no seeding (1 = melhor); `null` sem seed. Depois de iniciar,
+             *     1..N entre os elegíveis.
+             */
+            seed?: number | null;
             /** Format: int64 */
             user_id: number;
         };
@@ -706,6 +843,10 @@ export interface components {
          * @enum {string}
          */
         Role: "player" | "organizer" | "owner";
+        SeedingOrder: {
+            /** @description Todos os elegíveis, cada um uma vez, do seed 1 em diante. */
+            user_ids: number[];
+        };
         /** @enum {string} */
         ServiceStatus: "ok" | "unavailable";
         SetRole: {
@@ -740,6 +881,20 @@ export interface components {
          */
         Tournament: {
             champion_rules: components["schemas"]["ChampionRules"];
+            /**
+             * Format: int32
+             * @description Janela de check-in em minutos; `null`: sem check-in.
+             */
+            check_in_minutes?: number | null;
+            /**
+             * Format: date-time
+             * @description Quando o check-in abre (ou abriu) sozinho: o início menos a janela.
+             *     Com o status ainda em inscrição depois disso, o organizador reabriu a
+             *     inscrição e a abertura automática está suspensa.
+             */
+            check_in_opens_at?: string | null;
+            /** @description Se quem vê fez check-in. */
+            checked_in: boolean;
             /** Format: date-time */
             created_at: string;
             description: string;
@@ -758,6 +913,11 @@ export interface components {
             rules: string;
             slug: string;
             stages: components["schemas"]["StageFormat"][];
+            /**
+             * Format: date-time
+             * @description Início previsto; `null` só no rascunho.
+             */
+            starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["TournamentTranslation"][];
             visibility: components["schemas"]["Visibility"];
@@ -800,6 +960,11 @@ export interface components {
             /** @description Se quem vê está inscrito. */
             registered: boolean;
             slug: string;
+            /**
+             * Format: date-time
+             * @description Início previsto; `null` só no rascunho.
+             */
+            starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
@@ -818,17 +983,29 @@ export interface components {
         };
         /**
          * @description Campos ausentes não mudam. Textos e visibilidade podem mudar até o
-         *     torneio encerrar; vagas, regra de campeões e fases, até ele começar (e as
-         *     vagas nunca abaixo do número de inscritos).
+         *     torneio encerrar; vagas, regra de campeões, fases, data de início e
+         *     janela de check-in, até ele começar (e as vagas nunca abaixo do número de
+         *     inscritos).
          */
         UpdateTournament: {
             champion_rules?: components["schemas"]["ChampionRules"] | null;
+            /**
+             * Format: int32
+             * @description `null` desliga o check-in; durante o check-in, o torneio volta para a
+             *     inscrição.
+             */
+            check_in_minutes?: number | null;
             description?: string | null;
             /** Format: int32 */
             max_participants?: number | null;
             name?: string | null;
             rules?: string | null;
             stages?: components["schemas"]["StageFormat"][] | null;
+            /**
+             * Format: date-time
+             * @description `null` tira a data, o que só vale no rascunho.
+             */
+            starts_at?: string | null;
             visibility?: components["schemas"]["Visibility"] | null;
         };
         /** @enum {string} */
@@ -2058,7 +2235,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2225,7 +2402,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2234,8 +2411,169 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Os mesmos da criação, menos slug */
+            /** @description Os mesmos da criação, menos slug; tournament.starts_at_required (tirar a data fora do rascunho) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in feito (também se já estava) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.check_in_closed, participant.not_registered */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    undo_check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in desfeito (também se não havia, ou se não está inscrito) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.check_in_closed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    open_check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in aberto antes da hora da abertura automática */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_registration, tournament.check_in_disabled */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2545,6 +2883,146 @@ export interface operations {
             };
         };
     };
+    check_in_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do usuário inscrito */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in marcado pelo organizador (também se já estava) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.check_in_closed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    undo_check_in_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do usuário inscrito */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in desmarcado pelo organizador (também se não havia) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.check_in_closed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     publish_tournament: {
         parameters: {
             query?: never;
@@ -2559,7 +3037,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos) */
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se a janela de check-in já abriu, vem em check-in */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2604,7 +3082,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
+            /** @description tournament.starts_at_required, champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2705,6 +3183,376 @@ export interface operations {
                 };
             };
             /** @description tournament.registration_closed (depois disso, só o organizador tira) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    reopen_registration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Inscrição reaberta durante o check-in. Os check-ins feitos continuam. A abertura automática não reabre a mesma janela: o check-in volta pelo botão ou se a data de início ou a janela mudarem para uma abertura posterior */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_check_in */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_seeding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Elegíveis (com check-in; sem check-in no torneio, todos os inscritos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de inscrição */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Participant"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_seeding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeedingOrder"];
+            };
+        };
+        responses: {
+            /** @description Ordem manual gravada como seeds 1..N */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Participant"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.participants_locked (já começou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description seeding.order_invalid (não são exatamente os elegíveis, cada um uma vez), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    shuffle_seeding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Elegíveis na ordem sorteada, já gravada como seeds 1..N; a seed do sorteio fica no torneio */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Participant"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.participants_locked (já começou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Torneio em andamento: inscrições e check-ins congelam. Entram os elegíveis (com check-in; sem check-in no torneio, todos), na ordem do seeding gravado; os sem seed vão para o fim e, se ninguém tem seed, a ordem é sorteada. Os seeds viram 1..N */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_published, tournament.check_in_not_open (com check-in, só a partir do check-in), tournament.already_started, tournament.not_enough_eligible {min, eligible} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    undo_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Início desfeito (iniciou por engano): volta para o check-in, ou para a inscrição sem check-in. Inscrições, check-ins e seeds continuam como estavam */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress */
             409: {
                 headers: {
                     [name: string]: unknown;

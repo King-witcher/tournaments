@@ -4,9 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ChaCha8 para o sorteio de seeds: algoritmo fixo, mesma ordem para a mesma
+# seed em qualquer versão (o StdRng do rand não garante isso).
+chacha20 = { version = "0.10.2", default-features = false, features = ["rng"] }
+rand_core = "0.10.1"
 serde = { version = "1.0.229", features = ["derive"] }
 thiserror = "2.0.21"
-uuid = { version = "1.29.0", features = ["serde"] }
 
 [dev-dependencies]
 proptest = "1.12.0"

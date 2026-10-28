@@ -10,17 +10,16 @@ use super::*;
 use crate::core::SeriesScore;
 use crate::series::wins_needed;
 use proptest::prelude::*;
-use uuid::Uuid;
 
 const W: BracketSide = BracketSide::Winners;
 const L: BracketSide = BracketSide::Losers;
 const GF: BracketSide = BracketSide::GrandFinal;
 
-fn p(n: u128) -> ParticipantId {
-    ParticipantId(Uuid::from_u128(n))
+fn p(n: i64) -> ParticipantId {
+    ParticipantId(n)
 }
 
-fn seeds(n: u128) -> Vec<ParticipantId> {
+fn seeds(n: i64) -> Vec<ParticipantId> {
     (1..=n).map(p).collect()
 }
 

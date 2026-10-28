@@ -19,9 +19,13 @@ export type TournamentValues = {
   finalsBestOf: number;
   bansPerGame: number;
   noRepeat: NoRepeatChoice;
+  /** Início em ISO (UTC); `null` sem data, só no rascunho. */
+  startsAt: string | null;
+  /** Janela de check-in em minutos; `null` sem check-in. */
+  checkInMinutes: number | null;
 };
 
-/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban. */
+/** Padrão do duelo: público, dupla com reset, md3 e md5 na grande final, 16 vagas, 1 ban, check-in de 30 min. */
 export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
   return {
     name: "",
@@ -37,6 +41,8 @@ export function defaultValues(locale: Schemas["Locale"]): TournamentValues {
     finalsBestOf: 5,
     bansPerGame: 1,
     noRepeat: "off",
+    startsAt: null,
+    checkInMinutes: 30,
   };
 }
 
@@ -60,11 +66,53 @@ export function valuesFrom(
     finalsBestOf: stage.finals_best_of,
     bansPerGame: rules.bans_per_game,
     noRepeat: rules.no_repeat?.scope ?? "off",
+    startsAt: tournament.starts_at ?? null,
+    checkInMinutes: tournament.check_in_minutes ?? null,
+  };
+}
+
+/** Corpo da criação (rascunho de duelo). */
+export function createBody(values: TournamentValues) {
+  return {
+    ...textsBody(values),
+    ...setupBody(values),
+    ...scheduleBody(values),
+    slug: values.slug,
+    locale: values.locale,
+    mode: "duel" as const,
+  };
+}
+
+/**
+ * Corpo do PATCH: o formulário inteiro (a API ignora o que não mudou). Com o
+ * torneio já começado, formato, data e check-in não vão.
+ */
+export function updateBody(values: TournamentValues, setupLocked: boolean) {
+  return {
+    ...textsBody(values),
+    ...(!setupLocked && { ...setupBody(values), ...scheduleBody(values) }),
+  };
+}
+
+function textsBody(values: TournamentValues) {
+  return {
+    name: values.name,
+    description: values.description,
+    rules: values.rules,
+    visibility: values.visibility,
+  };
+}
+
+/** Data de início e janela de check-in no formato da API. */
+function scheduleBody(values: TournamentValues) {
+  return {
+    starts_at: values.startsAt,
+    check_in_minutes: values.checkInMinutes,
   };
 }
 
 /** Vagas, regra de campeões e fases no formato da API. */
-export function setupBody(values: TournamentValues) {
+function setupBody(values: TournamentValues) {
   return {
     max_participants: values.maxParticipants,
     champion_rules: {

@@ -27,6 +27,11 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - Migration: `tournaments.visibility` (`public`/`private`), `participants` (id bigint, tenant, torneio, membro, convite usado, quem inscreveu) com FK para `tenant_members`, e `tenant_invites.tournament_id` (link de inscrição, sem validade).
   - API: domínio `participants/` (listar, inscrever-se e sair pelo botão, organizador inscrever e tirar; regras em `registration.rs`, que o aceite do convite reusa). `tournaments/visibility.rs` decide quem vê (`can_see`, `find_visible`); lista e página escondem rascunho e privado de quem não pode ver. `invites/tournament.rs` gera e lista os links de um torneio; prévia e aceite tratam os dois tipos, e aceitar o de torneio entra no tenant e inscreve numa transação só, com o torneio travado. O PATCH recusa vagas abaixo dos inscritos e muda a visibilidade até encerrar.
   - Front: visibilidade no formulário, inscrição na página do torneio (botão, inscritos, organizador inscrever e tirar, links de inscrição), `/invite/[token]` com a prévia do torneio, e a lista do tenant com privado, "inscrito" e ocupação.
+- **Check-in e seeding** (item 1 do duelo; decisões em "Torneios" no `decisions.md`):
+  - Migration: `tournaments.starts_at`, `check_in_minutes` (padrão 30, nulo sem check-in), `registration_reopened_at` e `seeding_seed`; `participants.checked_in_at`, `checked_in_by` e `seed` (único por torneio).
+  - `engine`: `ParticipantId(i64)` (saiu o `uuid`) e `seeding::random_order` (ChaCha8 do `chacha20` com a seed, Fisher–Yates, sorteio sem viés; teste fixa a saída).
+  - API: `tournaments/schedule.rs` (data, janela, abertura automática do check-in aplicada por `find`/`list` ao ler, PATCH da data e da janela) e `tournaments/db/` dividido em `read`, `status`, `translations`; publicar exige data. `participants/check_in.rs` (o próprio e o organizador, só no check-in), `seeding.rs` (ver, sortear, ordenar; `finalize` ao iniciar) e `seed_order.rs` (elegíveis e ordem, puro). Domínio novo `lifecycle/` com abrir check-in, reabrir inscrição, iniciar e desfazer início, todas por `transition::apply`. `shared::nullable` para PATCH com `null`. Testes de rota de `tournaments` e `participants` viraram pasta (`schedule`, `check_in`, `seeding`) e há `lifecycle.rs`.
+  - Front: data (no fuso de quem preenche) e janela no formulário; página com início no fuso de quem vê (`LocalDateTime`), aviso de quando o check-in abre, botão de check-in, marca de check-in e seed nos inscritos; para o organizador, marcar e desmarcar, `LifecyclePanel` (abrir check-in, reabrir, iniciar e desfazer, com confirmação) e painel de seeding (sortear, subir/descer, salvar). Feature nova `lifecycle`.
 
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
@@ -39,15 +44,10 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
 
 Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::test`, tipos regenerados no front e tela mínima.
 
-1. **Check-in e seeding** (a inscrição já existe)
-   - `participants` ganha seed e check-in. Janela de check-in; quem não fizer sai antes da chave.
-   - Data de início do torneio entra aqui, junto com a janela de check-in, e com ela as transições inscrição → check-in → em andamento.
-   - Seeding manual, aleatório (seed salva para reproduzir) ou por rating (quando existir).
-   - Decidir se o apelido é único dentro do tenant (em aberto no `decisions.md`).
-   - `engine::core::ParticipantId` ainda é `Uuid`; com `participants` em bigint, trocar por um id inteiro (regra de ids do `decisions.md`).
-2. **Chave e resultados**
-   - Gerar a chave com `EliminationBracket`; persistir só config, participantes e `match_reports` (histórico); reconstruir por `replay`.
-   - Ao gerar: rodar `TournamentSetup::validate` de novo com o número real de inscritos e o pool atual.
+1. **Chave e resultados** (check-in e seeding já existem)
+   - Gerar a chave com `EliminationBracket` no "Iniciar": em `lifecycle/transition.rs`, `apply` com `Transition::Start` já recebe de `participants::finalize_seeding` os `ParticipantId` na ordem dos seeds; gerar e gravar ali, na mesma transação. `Transition::UndoStart` descarta a chave (decidir se recusa quando já há resultado).
+   - Persistir só config, participantes e `match_reports` (histórico); reconstruir por `replay`.
+   - Ao gerar: rodar `TournamentSetup::validate` de novo com o número real de elegíveis e o pool atual.
    - Envio de resultado por um lado, janela de contestação, organizador resolve contestação.
    - Front: visualização da chave (simples e dupla), página da partida.
 

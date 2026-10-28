@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set starts_at = now() + make_interval(mins => $2) where slug = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ebc2263912aabebbd634c5b75ed07982697b196086b9aa6d1f4f2e13f4a6423b"
+}

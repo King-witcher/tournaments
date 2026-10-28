@@ -53,10 +53,7 @@ async fn main() -> anyhow::Result<()> {
     let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
-    tracing::info!(
-        "API em http://{0} (Swagger UI em http://{0}/docs)",
-        config.addr
-    );
+    tracing::info!("API em http://{0} (docs em http://{0}/docs)", config.addr);
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;

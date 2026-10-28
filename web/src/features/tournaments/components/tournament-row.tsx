@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
+import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { localizedName } from "../lib/localize";
 
 type Props = {
@@ -31,7 +32,15 @@ export function TournamentRow({ tenant, tournament }: Props) {
         className="flex items-center justify-between gap-4 py-2 hover:underline"
       >
         <span className="font-medium">{localizedName(tournament, locale)}</span>
-        <span className="text-sm opacity-70">{details.join(" · ")}</span>
+        <span className="text-right text-sm opacity-70">
+          {tournament.starts_at && (
+            <>
+              <LocalDateTime value={tournament.starts_at} />
+              {" · "}
+            </>
+          )}
+          {details.join(" · ")}
+        </span>
       </Link>
     </li>
   );

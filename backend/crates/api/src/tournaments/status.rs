@@ -18,6 +18,16 @@ pub enum TournamentStatus {
 }
 
 impl TournamentStatus {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Registration => "registration",
+            Self::CheckIn => "check_in",
+            Self::InProgress => "in_progress",
+            Self::Finished => "finished",
+        }
+    }
+
     /// Lê `tournaments.status` (garantida pelo check da tabela).
     pub fn from_db(value: &str) -> Result<Self, ApiError> {
         match value {
@@ -33,9 +43,15 @@ impl TournamentStatus {
         }
     }
 
-    /// Vagas, regra de campeões e fases só mudam antes de o torneio começar.
+    /// Vagas, regra de campeões, fases, data de início e janela de check-in
+    /// só mudam antes de o torneio começar.
     pub const fn setup_editable(self) -> bool {
         matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
+    }
+
+    /// Check-in (o próprio inscrito ou o organizador) só se faz e desfaz aqui.
+    pub const fn check_in_open(self) -> bool {
+        matches!(self, Self::CheckIn)
     }
 
     /// Textos, traduções e visibilidade mudam até o torneio encerrar.
@@ -88,6 +104,10 @@ mod tests {
         assert_eq!(
             allows(TournamentStatus::invites_allowed),
             [true, true, false, false, false]
+        );
+        assert_eq!(
+            allows(TournamentStatus::check_in_open),
+            [false, false, true, false, false]
         );
     }
 }

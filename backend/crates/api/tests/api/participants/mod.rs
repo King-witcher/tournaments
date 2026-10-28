@@ -1,3 +1,9 @@
+//! Testes de `participants`: inscrição aqui, check-in e seeding nos
+//! submódulos, que usam os helpers deste arquivo.
+
+mod check_in;
+mod seeding;
+
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
 use sqlx::PgPool;

@@ -1,31 +1,36 @@
 import { getTranslations } from "next-intl/server";
 
+import { participantsEditable } from "@/features/tournaments/lib/status";
+import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { AddParticipantForm } from "./add-participant-form";
 import { ParticipantRow } from "./participant-row";
 
 type Props = {
   tenant: string;
-  tournament: string;
-  /** Vagas do torneio. */
-  max: number;
-  /** Organizer ou owner, com o torneio ainda sem começar: inscreve e tira membros. */
-  canManage: boolean;
+  tournament: components["schemas"]["Tournament"];
+  /** Organizer ou owner. */
+  organizer: boolean;
 };
 
-/** Inscritos do torneio e, para quem gerencia, inscrever membros. Fica em `<Suspense>`. */
+/**
+ * Inscritos do torneio, com check-in e (depois de iniciar) seed; para quem
+ * gerencia, inscrever, tirar e marcar o check-in. Fica em `<Suspense>`.
+ */
 export async function ParticipantSection({
   tenant,
   tournament,
-  max,
-  canManage,
+  organizer,
 }: Props) {
+  const { slug, status, max_participants: max } = tournament;
+  const beforeStart = participantsEditable(status);
+  const canManage = organizer && beforeStart;
   const api = await serverApi();
   const [t, participants, members] = await Promise.all([
     getTranslations("Participants"),
     api
       .GET("/tenants/{slug}/tournaments/{tournament}/participants", {
-        params: { path: { slug: tenant, tournament } },
+        params: { path: { slug: tenant, tournament: slug } },
       })
       .then(({ data }) => data ?? []),
     canManage
@@ -40,6 +45,12 @@ export async function ParticipantSection({
   const candidates = members
     .filter((m) => !registered.has(m.user_id))
     .map((m) => ({ userId: m.user_id, nickname: m.nickname }));
+  // Antes de abrir, todos estão sem check-in; depois de reabrir a inscrição,
+  // os que já fizeram continuam marcados.
+  const showCheckIn =
+    tournament.check_in_minutes != null &&
+    (!["draft", "registration"].includes(status) ||
+      participants.some((p) => p.checked_in));
 
   return (
     <section className="flex flex-col gap-3">
@@ -49,7 +60,7 @@ export async function ParticipantSection({
       {canManage && candidates.length > 0 && participants.length < max && (
         <AddParticipantForm
           tenant={tenant}
-          tournament={tournament}
+          tournament={slug}
           candidates={candidates}
         />
       )}
@@ -61,8 +72,11 @@ export async function ParticipantSection({
             <ParticipantRow
               key={participant.user_id}
               tenant={tenant}
-              tournament={tournament}
+              tournament={slug}
               participant={participant}
+              showCheckIn={showCheckIn}
+              showSeed={!beforeStart}
+              canCheckIn={organizer && status === "check_in"}
               canRemove={canManage}
             />
           ))}

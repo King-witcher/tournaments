@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update participants\n           set checked_in_by = case when checked_in_at is null then $3 else checked_in_by end,\n               checked_in_at = coalesce(checked_in_at, now())\n           where tournament_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c8b0047b982408bd321e4807378846919d42cbeb032fedb98578f06d55ef905a"
+}

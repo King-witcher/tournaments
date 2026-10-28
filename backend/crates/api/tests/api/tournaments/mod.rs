@@ -1,3 +1,7 @@
+//! Testes de `tournaments`; data de início e janela de check-in em `schedule`.
+
+mod schedule;
+
 use axum::http::StatusCode;
 use serde_json::{Value, json};
 use sqlx::PgPool;

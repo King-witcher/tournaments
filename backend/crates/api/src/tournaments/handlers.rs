@@ -1,8 +1,9 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    db::{self, NewTournament, StoredTournament},
+    db::{self, NewTournament},
     edit,
+    schedule::Schedule,
     setup::Setup,
     slug::validate_slug,
     status::TournamentStatus,
@@ -30,7 +31,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -42,6 +43,11 @@ pub async fn create_tournament(
     let texts = Texts::clean(&body.name, &body.description, &body.rules)?;
     let setup = Setup::from_dto(body.max_participants, body.champion_rules, body.stages);
     setup.check(body.mode, db::champion_pool(&state.db).await?, 0)?;
+    let schedule = Schedule {
+        starts_at: body.starts_at,
+        check_in_minutes: body.check_in_minutes,
+    };
+    schedule.check()?;
 
     let new = NewTournament {
         slug: &body.slug,
@@ -50,6 +56,7 @@ pub async fn create_tournament(
         mode: body.mode,
         visibility: body.visibility,
         setup: &setup,
+        schedule,
     };
     db::create(&state.db, member.tenant, new).await?;
     let created = db::find(
@@ -60,7 +67,7 @@ pub async fn create_tournament(
     )
     .await?
     .ok_or_else(ApiError::internal)?;
-    Ok((StatusCode::CREATED, Json(view(created))))
+    Ok((StatusCode::CREATED, Json(created.into())))
 }
 
 #[utoipa::path(
@@ -108,7 +115,7 @@ pub async fn get_tournament(
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<Tournament>, ApiError> {
     let found = find_visible(&mut *state.db.acquire().await?, &member, &path.tournament).await?;
-    Ok(Json(view(found)))
+    Ok(Json(found.into()))
 }
 
 #[utoipa::path(
@@ -125,8 +132,8 @@ pub async fn get_tournament(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.max_participants_below_registered {registered}"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos ou visibilidade), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug; tournament.starts_at_required (tirar a data fora do rascunho)"),
     )
 )]
 pub async fn update_tournament(
@@ -140,24 +147,23 @@ pub async fn update_tournament(
     let current = db::find_for_update(&mut tx, member.tenant, &path.tournament, viewer)
         .await?
         .ok_or(NOT_FOUND)?;
-    let edit = edit::apply(current.status, &current.texts, &current.setup, body)?;
+    let edit = edit::apply(
+        current.status,
+        &current.texts,
+        &current.setup,
+        current.schedule,
+        body,
+    )?;
     if let Some(setup) = &edit.setup {
         let pool = db::champion_pool(&mut *tx).await?;
         setup.check(current.mode, pool, current.participants)?;
     }
-    db::update(
-        &mut tx,
-        current.id,
-        &edit.texts,
-        edit.visibility,
-        edit.setup.as_ref(),
-    )
-    .await?;
+    db::update(&mut tx, current.id, &edit).await?;
     let updated = db::find(&mut tx, member.tenant, &path.tournament, viewer)
         .await?
         .ok_or_else(ApiError::internal)?;
     tx.commit().await?;
-    Ok(Json(view(updated)))
+    Ok(Json(updated.into()))
 }
 
 #[utoipa::path(
@@ -169,12 +175,12 @@ pub async fn update_tournament(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos)"),
+        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se a janela de check-in já abriu, vem em check-in"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.starts_at_required, champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
     )
 )]
 pub async fn publish_tournament(
@@ -182,28 +188,27 @@ pub async fn publish_tournament(
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<Tournament>, ApiError> {
+    let viewer = Some(member.user.id);
     let mut tx = state.db.begin().await?;
-    let current = db::find_for_update(
-        &mut tx,
-        member.tenant,
-        &path.tournament,
-        Some(member.user.id),
-    )
-    .await?
-    .ok_or(NOT_FOUND)?;
+    let current = db::find_for_update(&mut tx, member.tenant, &path.tournament, viewer)
+        .await?
+        .ok_or(NOT_FOUND)?;
     if current.status != TournamentStatus::Draft {
         return Err(ApiError::conflict("tournament.not_draft"));
+    }
+    if current.schedule.starts_at.is_none() {
+        return Err(ApiError::invalid("tournament.starts_at_required"));
     }
     let pool = db::champion_pool(&mut *tx).await?;
     current
         .setup
         .check(current.mode, pool, current.participants)?;
     db::publish(&mut tx, current.id).await?;
+    let published = db::find(&mut tx, member.tenant, &path.tournament, viewer)
+        .await?
+        .ok_or_else(ApiError::internal)?;
     tx.commit().await?;
-    Ok(Json(view(StoredTournament {
-        status: TournamentStatus::Registration,
-        ..current
-    })))
+    Ok(Json(published.into()))
 }
 
 #[utoipa::path(
@@ -239,25 +244,4 @@ pub async fn delete_tournament(
         return Err(ApiError::conflict("tournament.not_draft"));
     }
     Ok(StatusCode::NO_CONTENT)
-}
-
-/// Torneio gravado → resposta da API.
-fn view(t: StoredTournament) -> Tournament {
-    Tournament {
-        slug: t.slug,
-        locale: t.locale,
-        name: t.texts.name,
-        description: t.texts.description,
-        rules: t.texts.rules,
-        mode: t.mode,
-        status: t.status,
-        visibility: t.visibility,
-        max_participants: t.setup.max_participants,
-        participants: t.participants,
-        registered: t.registered,
-        champion_rules: t.setup.champion_rules.into(),
-        stages: t.setup.stages.into_iter().map(Into::into).collect(),
-        translations: t.translations,
-        created_at: t.created_at,
-    }
 }

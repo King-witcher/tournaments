@@ -55,7 +55,7 @@ bun scripts/dev.ts
 Sem recarga, `cargo run -p api` sobe uma vez (e também aplica as migrations).
 
 - API: http://localhost:8080
-- Swagger UI: http://localhost:8080/docs
+- Docs (Scalar): http://localhost:8080/docs
 
 Em outro terminal, o frontend:
 

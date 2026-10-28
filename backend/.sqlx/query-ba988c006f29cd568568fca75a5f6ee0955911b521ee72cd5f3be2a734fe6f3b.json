@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select seeding_seed from tournaments",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seeding_seed",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "seeding_seed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "ba988c006f29cd568568fca75a5f6ee0955911b521ee72cd5f3be2a734fe6f3b"
+}

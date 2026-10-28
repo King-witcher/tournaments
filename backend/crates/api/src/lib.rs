@@ -5,6 +5,7 @@ pub mod auth;
 pub mod config;
 mod health;
 mod invites;
+mod lifecycle;
 mod members;
 mod participants;
 pub mod shared;
@@ -14,14 +15,15 @@ mod tournaments;
 use std::sync::Arc;
 
 use axum::{
-    Router,
+    Json, Router,
     http::{HeaderValue, Method, header},
+    routing::get,
 };
 use sqlx::{PgPool, migrate::Migrator};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_scalar::{Scalar, Servable};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 
@@ -36,7 +38,8 @@ pub struct AppState {
     pub auth: Arc<auth::AuthSettings>,
 }
 
-/// Monta o app completo: rotas, OpenAPI em `/openapi.json` e Swagger UI em `/docs`.
+/// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
+/// do front) e Scalar em `/docs`.
 pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
     let (router, openapi) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .merge(health::router())
@@ -46,6 +49,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(invites::router())
         .merge(tournaments::router())
         .merge(participants::router())
+        .merge(lifecycle::router())
         .with_state(state)
         .split_for_parts();
 
@@ -61,8 +65,10 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .allow_headers([header::CONTENT_TYPE])
         .allow_credentials(true);
 
+    let spec = Json(openapi.clone());
     router
-        .merge(SwaggerUi::new("/docs").url("/openapi.json", openapi))
+        .route("/openapi.json", get(move || async move { spec }))
+        .merge(Scalar::with_url("/docs", openapi))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
 }

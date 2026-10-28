@@ -4,7 +4,7 @@ use super::*;
 
 #[test]
 fn participant_cap() {
-    let max = MAX_PARTICIPANTS as u128;
+    let max = MAX_PARTICIPANTS as i64;
     let full = EliminationBracket::new(double(true), seeds(max)).unwrap();
     assert!(full.worst_case_games() > 0);
     assert!(full.standings().is_empty());

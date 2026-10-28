@@ -14,7 +14,7 @@ Registro das decisões tomadas antes do início do código, com o motivo de cada
 
 | Camada | Escolha |
 |---|---|
-| Backend | Rust + Axum + sqlx (SQL puro, sem ORM) + utoipa (OpenAPI, Swagger UI em `/docs`) |
+| Backend | Rust + Axum + sqlx (SQL puro, sem ORM) + utoipa (OpenAPI em `/openapi.json`, Scalar em `/docs`) |
 | Frontend | Next.js (App Router), **só apresentação**, next-intl, Bun (pacotes e scripts), Biome (lint e formatação) |
 | Tipos no front | gerados do OpenAPI com openapi-typescript |
 | Banco | Postgres. Dev: cluster local. Prod: database com usuário próprio no projeto Supabase us-east-1 existente |
@@ -25,7 +25,7 @@ Registro das decisões tomadas antes do início do código, com o motivo de cada
 
 Motivos e cuidados:
 
-- **Rust**: interesse em aprender; o Swagger UI permite acompanhar os endpoints.
+- **Rust**: interesse em aprender; o Scalar em `/docs` permite acompanhar e testar os endpoints (trocou o Swagger UI, mais elegante).
 - **Bun só como gerenciador de pacotes e executor de scripts.** A Vercel detecta o `bun.lock` e instala com `bun install`. As funções continuam no runtime Node (o runtime Bun na Vercel ainda é beta), e localmente o `next` também roda em Node.
 - **Nada de ferramenta global além de Rust e Bun.** Sem pnpm e sem sqlx-cli: as migrations são arquivos criados à mão, aplicados pelo binário `cargo run -p migrate` (que não usa macros de query, então compila mesmo antes da tabela existir) e também pela API ao subir. O build sem banco (Render) usa o modo offline do sqlx: `bun scripts/sqlx-prepare.ts` faz o papel do `cargo sqlx prepare` sem o sqlx-cli (com `SQLX_OFFLINE_DIR` definido, as próprias macros gravam o `.sqlx/`), o `.sqlx/` vai para o repositório e o Render compila com `SQLX_OFFLINE=true`.
 - **Next só apresentação**: renderiza no servidor as páginas públicas (preview do link no Discord) e cuida das rotas por idioma. Nunca acessa o banco.
@@ -58,14 +58,14 @@ Motivos e cuidados:
 - Aceitar um convite sendo já membro não muda papel nem apelido.
 - Gestão de membros: o owner alterna player ↔ organizer. Remover membro e sair do tenant ficam para depois.
 - Página do tenant **só para membros**. Para quem é de fora, a API responde 404 `tenant.not_found`, o mesmo de um tenant inexistente, para não revelar que ele existe. A prévia do convite (`GET /invites/{token}`) é pública: ter o token já é o convite.
-- Perfil por tenant: por enquanto só o **apelido** (`tenant_members.nickname`). Começa com o nome exibido do usuário (o do Discord ou o username do cadastro) e o próprio membro edita. Não é único dentro do tenant.
+- Perfil por tenant: por enquanto só o **apelido** (`tenant_members.nickname`). Começa com o nome exibido do usuário (o do Discord ou o username do cadastro) e o próprio membro edita. **Pode repetir** dentro do tenant, sem tratamento (decidido junto com o check-in): as telas mostram o avatar ao lado, e as rotas identificam o membro pelo `user_id`.
 - Configurações do tenant: ranking ligado/desligado, sistema (Elo no MVP, Glicko-2 depois), parâmetros (K, rating inicial), rating único ou por modalidade.
 
 ## Ids
 
 - **Chave interna**: `bigint generated always as identity` (users, tenants, convites e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não trazem vantagem. São 8 bytes contra 16, sequenciais (índice compacto, sem a fragmentação do UUID aleatório) e cabem no `number` do JS. `tenant_id` também é bigint: num índice composto com outro bigint, um `int4` não economiza nada por causa do alinhamento.
 - **Não escondemos esses ids.** Toda rota que recebe um id confere a participação no tenant, então enumerar não dá acesso a nada; no máximo revela a ordem e o total aproximado de cadastros.
-- **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`. Exceção: `participants` tem id próprio (bigint) além do `unique (tournament_id, user_id)`, porque ele vira o `ParticipantId` da chave; nas rotas, o inscrito é identificado pelo `user_id`.
+- **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`. Exceção: `participants` tem id próprio (bigint) além do `unique (tournament_id, user_id)`, porque ele vira o `ParticipantId` da chave (`engine::core::ParticipantId(i64)`; o `engine` não depende mais de `uuid`); nas rotas, o inscrito é identificado pelo `user_id`.
 - **Identificador público e legível**: slug (tenant; torneio por tenant depois). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
 - **Segredos** (sessão, convite): aleatórios, e só o SHA-256 vai para o banco. O token de convite tem 128 bits em base58 (22 caracteres, sem `0/O/I/l` e sem pontuação, então um duplo clique seleciona o token inteiro). O de sessão tem 256 bits em base64url (vive só no cookie).
 - Se um dia houver ids gerados fora do banco ou bancos que se fundem: `uuidv7()`, nativo no PG18 (a ideia do ULID, com tipo nativo).
@@ -81,7 +81,15 @@ Motivos e cuidados:
 - Bans de campeão por mapa: de 0 a 3, padrão 1.
 - Não repetição na checagem: escopo partida usa o maior melhor de N; fase, o pior caso da fase mais longa; torneio, a soma dos piores casos das fases. Sem a regra, basta sobrar um campeão depois dos bans.
 - Formato padrão no formulário de duelo: eliminação dupla com reset, md3 nas partidas e md5 na grande final.
-- Edição: nome, descrição, regras, traduções e visibilidade até o torneio encerrar. Formato, vagas e regra de campeões até ele começar; a checagem roda de novo a cada mudança e ao publicar. Vagas abaixo do número de inscritos são recusadas (`tournament.max_participants_below_registered`).
+- Edição: nome, descrição, regras, traduções e visibilidade até o torneio encerrar. Formato, vagas, regra de campeões, data de início e janela de check-in até ele começar; a checagem roda de novo a cada mudança e ao publicar. Vagas abaixo do número de inscritos são recusadas (`tournament.max_participants_below_registered`).
+- **Data e hora de início** (`starts_at`, UTC). O rascunho pode ficar sem; publicar exige (`tournament.starts_at_required`), e depois de publicado ela não sai mais. O organizador digita no fuso dele (o navegador converte para UTC) e cada um vê no próprio fuso (formatado no navegador; no HTML do servidor sai em UTC até hidratar). Data no passado não é recusada.
+- **Check-in**: janela por torneio, em minutos antes do início (padrão 30; a API aceita de 5 a 1440 e o formulário oferece 15, 30, 45 e 60), ou **sem check-in**. Sem check-in não existe o status `check_in`: a inscrição vai direto para em andamento.
+- **Ciclo depois de publicar**: inscrição → check-in → em andamento. O check-in **abre sozinho** quando chega `starts_at - janela`, avaliado pela API ao ler o torneio (lista ou página), sem job em segundo plano: a primeira leitura depois da hora grava a transição (com guarda contra mudança concorrente). O relógio fica na API, nunca no `engine`. Só anda para a frente: adiar o início com o check-in aberto não o fecha.
+- O **início é sempre manual**: organizer ou owner clica em "Iniciar" a partir do check-in (ou da inscrição, sem check-in). O organizador também pode **abrir o check-in antes da hora**, **reabrir a inscrição** durante o check-in (os check-ins feitos continuam) e **desfazer o início** (volta para o check-in, ou para a inscrição sem check-in), para quando iniciou por engano. Desligar o check-in durante o check-in volta para a inscrição.
+- **Reabrir a inscrição suspende a abertura automática** da janela que já tinha aberto: a API guarda quando reabriu (`registration_reopened_at`) e só reabre sozinha uma janela cuja abertura seja posterior a esse momento, ou seja, quando a data de início ou a janela mudam para depois. Assim a ordem entre reabrir e mudar a data não importa, e mudar a data só um pouco (para uma abertura que já tinha passado) não fecha a inscrição de novo na hora. A tela avisa que a automática está suspensa.
+- **Check-in** se faz e desfaz só durante o check-in: o próprio inscrito, e organizer ou owner para qualquer inscrito (fica gravado quem marcou). Quem não fez continua inscrito (histórico), marcado sem check-in, mas fica fora do seeding e da chave. Inscrição manual pelo organizador durante o check-in entra **sem** check-in. Depois de iniciar, inscrições e check-ins congelam.
+- **Seeding** na revisão antes de iniciar, só para organizer e owner: os elegíveis (com check-in; sem check-in no torneio, todos os inscritos) na ordem que vale. "Sortear" gera uma seed u64 aleatória na API, grava no torneio e embaralha pelo `engine` (`seeding::random_order`, ChaCha8 com a seed: a mesma seed e os mesmos elegíveis dão a mesma ordem em qualquer versão; um teste fixa o resultado). O ajuste manual manda a ordem completa de `user_id`s; ela precisa ter exatamente os elegíveis (`seeding.order_invalid` se alguém fez ou desfez check-in no meio). Seeds ficam em `participants.seed`.
+- **Ao iniciar**: vale a ordem gravada; elegíveis sem seed vão para o fim, na ordem de inscrição; se ninguém tem seed, sorteia (e grava a seed). Os seeds são compactados para 1..N entre os elegíveis e os outros ficam sem. Mínimo de 2 elegíveis (`tournament.not_enough_eligible`). Seeding por rating fica para quando houver rating.
 - **Inscrição**, por três caminhos, sempre de membros do tenant:
   - **botão**: o próprio membro, de qualquer papel (ver "Formatos"), só em torneio **público** e com a inscrição aberta; no privado, organizer e owner se inscrevem pela inserção manual;
   - **organizador**: organizer ou owner inscreve qualquer membro, em público ou privado, do rascunho até o torneio começar;
@@ -111,10 +119,10 @@ Motivos e cuidados:
   - **partida**: melhor de N mapas; no FFA, pontos por colocação **ou** soma de frags (configurável).
 - Duelo, 2v2 e 3v3 são o mesmo motor com `team_size` diferente.
 - O torneio tem **fases** (`stages`) no modelo desde o início; a interface pode começar com uma.
-- Fluxo: inscrição individual → check-in (janela antes de começar; quem não fizer sai) → formação de times → seeding → chave.
+- Fluxo: inscrição individual → check-in (janela antes de começar; quem não fizer fica fora da chave) → formação de times → seeding → chave. Detalhes do check-in e do seeding em "Torneios".
 - Qualquer membro do tenant se inscreve, inclusive organizer e owner: os papéis são cumulativos (organizer também é jogador), então a rota usa `TenantMember<Player>`.
 - Times são por torneio, montados pelo organizador: sorteio aleatório, sorteio balanceado por rating (zigue-zague) ou manual (arrastar). O capitão é definido pelo organizador ou pelo sorteio.
-- Seeding: manual, aleatório ou por rating.
+- Seeding: manual, aleatório (seed salva) ou por rating (quando houver rating).
 - Toda aleatoriedade (sorteios, timeouts) recebe uma seed ou RNG por parâmetro e a seed é salva, para que o resultado seja reproduzível e auditável.
 
 ## Veto e campeões
@@ -155,10 +163,10 @@ Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code car
 
 ## Em aberto
 
-- Apelido único dentro do tenant? Hoje pode repetir; decidir junto com a inscrição em torneios.
 - Organizer inscrito no próprio torneio: pode resolver contestação ou corrigir resultado de partida em que joga? Decidir junto com chave e resultados.
 - Duelo: sequência do veto (ex.: ban-ban-pick-pick-decider) e tempo do cronômetro.
-- Janela de contestação padrão (X minutos) e duração da janela de check-in.
+- Janela de contestação padrão (X minutos).
+- Desfazer o início depois de haver resultado na chave: recusar ou descartar? Decidir junto com chave e resultados.
 - Critérios de desempate (FFA por pontos e grupos).
 - Rating para FFA e times (Elo par a par? média do time?).
 - Substitutos em times.

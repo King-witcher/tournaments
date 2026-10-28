@@ -3,6 +3,7 @@
 //! chama, com o pool lido na mesma transação.
 
 use super::{
+    schedule::Schedule,
     setup::Setup,
     status::TournamentStatus,
     texts::{self, Texts},
@@ -18,16 +19,23 @@ pub struct Edit {
     pub visibility: Option<Visibility>,
     /// `Some` só quando vagas, regra de campeões ou fases mudam de fato.
     pub setup: Option<Setup>,
+    /// `Some` só quando a data de início ou a janela de check-in mudam.
+    pub schedule: Option<Schedule>,
+    /// `Some` quando o status muda junto: desligar o check-in durante o
+    /// check-in volta para a inscrição (sem check-in, esse status não existe).
+    pub status: Option<TournamentStatus>,
 }
 
 /// Erros: 409 `tournament.finished` (texto ou visibilidade depois de
-/// encerrar), 409 `tournament.setup_locked` (configuração depois de começar)
-/// e os de validação dos textos. Mandar a configuração igual à atual não
-/// conta como mudança, então o front pode reenviar o formulário inteiro.
+/// encerrar), 409 `tournament.setup_locked` (configuração depois de começar),
+/// os de `Schedule::edit` e os de validação dos textos. Mandar a
+/// configuração igual à atual não conta como mudança, então o front pode
+/// reenviar o formulário inteiro.
 pub fn apply(
     status: TournamentStatus,
     current_texts: &Texts,
     current_setup: &Setup,
+    current_schedule: Schedule,
     patch: UpdateTournament,
 ) -> Result<Edit, ApiError> {
     let touches_texts = patch.name.is_some()
@@ -68,10 +76,15 @@ pub fn apply(
     if setup.is_some() && !status.setup_editable() {
         return Err(ApiError::conflict("tournament.setup_locked"));
     }
+    let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes)?;
+    let check_in_off = schedule.is_some_and(|s| !s.has_check_in());
     Ok(Edit {
         texts,
         visibility: patch.visibility,
         setup,
+        schedule,
+        status: (check_in_off && status == TournamentStatus::CheckIn)
+            .then_some(TournamentStatus::Registration),
     })
 }
 
@@ -108,6 +121,13 @@ mod tests {
         Setup::from_dto(16, rules(), vec![stage(Bracket::Single, false)])
     }
 
+    fn schedule() -> Schedule {
+        Schedule {
+            starts_at: chrono::DateTime::from_timestamp(1_800_000_000, 0),
+            check_in_minutes: Some(30),
+        }
+    }
+
     fn patch() -> UpdateTournament {
         UpdateTournament {
             name: None,
@@ -117,14 +137,37 @@ mod tests {
             max_participants: None,
             champion_rules: None,
             stages: None,
+            starts_at: None,
+            check_in_minutes: None,
         }
+    }
+
+    fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
+        apply(status, &texts(), &setup(), schedule(), patch)
     }
 
     #[test]
     fn empty_patch_changes_nothing() {
-        let edit = apply(TournamentStatus::Finished, &texts(), &setup(), patch()).unwrap();
+        let edit = run(TournamentStatus::Finished, patch()).unwrap();
         assert_eq!(edit.texts.name, "Copa");
         assert!(edit.setup.is_none());
+        assert!(edit.schedule.is_none());
+        assert!(edit.status.is_none());
+    }
+
+    #[test]
+    fn turning_check_in_off_during_check_in_reopens_registration() {
+        let off = || UpdateTournament {
+            check_in_minutes: Some(None),
+            ..patch()
+        };
+        let edit = run(TournamentStatus::CheckIn, off()).unwrap();
+        assert_eq!(edit.schedule.unwrap().check_in_minutes, None);
+        assert_eq!(edit.status, Some(TournamentStatus::Registration));
+        let edit = run(TournamentStatus::Registration, off()).unwrap();
+        assert_eq!(edit.status, None);
+        let err = run(TournamentStatus::InProgress, off()).unwrap_err();
+        assert_eq!(err.code, "tournament.schedule_locked");
     }
 
     #[test]
@@ -133,7 +176,7 @@ mod tests {
             name: Some("  Copa 2 ".into()),
             ..patch()
         };
-        let edit = apply(TournamentStatus::InProgress, &texts(), &setup(), p).unwrap();
+        let edit = run(TournamentStatus::InProgress, p).unwrap();
         assert_eq!(
             (edit.texts.name.as_str(), edit.texts.rules.as_str()),
             ("Copa 2", "md3")
@@ -146,7 +189,7 @@ mod tests {
             rules: Some("x".into()),
             ..patch()
         };
-        let err = apply(TournamentStatus::Finished, &texts(), &setup(), p).unwrap_err();
+        let err = run(TournamentStatus::Finished, p).unwrap_err();
         assert_eq!(err.code, "tournament.finished");
     }
 
@@ -156,9 +199,9 @@ mod tests {
             visibility: Some(Visibility::Private),
             ..patch()
         };
-        let edit = apply(TournamentStatus::InProgress, &texts(), &setup(), p()).unwrap();
+        let edit = run(TournamentStatus::InProgress, p()).unwrap();
         assert_eq!(edit.visibility, Some(Visibility::Private));
-        let err = apply(TournamentStatus::Finished, &texts(), &setup(), p()).unwrap_err();
+        let err = run(TournamentStatus::Finished, p()).unwrap_err();
         assert_eq!(err.code, "tournament.finished");
     }
 
@@ -171,7 +214,7 @@ mod tests {
             stages: Some(vec![stage(Bracket::Single, true)]),
             ..patch()
         };
-        let edit = apply(TournamentStatus::InProgress, &texts(), &setup(), p).unwrap();
+        let edit = run(TournamentStatus::InProgress, p).unwrap();
         assert!(edit.setup.is_none());
     }
 
@@ -181,9 +224,9 @@ mod tests {
             stages: Some(vec![stage(Bracket::Double, true)]),
             ..patch()
         };
-        let edit = apply(TournamentStatus::CheckIn, &texts(), &setup(), p()).unwrap();
+        let edit = run(TournamentStatus::CheckIn, p()).unwrap();
         assert_eq!(edit.setup.unwrap().max_participants, 16);
-        let err = apply(TournamentStatus::InProgress, &texts(), &setup(), p()).unwrap_err();
+        let err = run(TournamentStatus::InProgress, p()).unwrap_err();
         assert_eq!(err.code, "tournament.setup_locked");
     }
 }

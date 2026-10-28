@@ -11,5 +11,5 @@ pub mod text;
 pub mod token;
 
 pub use error::{ApiError, ErrorBody};
-pub use extract::{JsonBody, PathParams};
+pub use extract::{JsonBody, PathParams, nullable};
 pub use locale::Locale;

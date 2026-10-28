@@ -8,13 +8,15 @@ import { useApiAction } from "@/shared/api/use-api-action";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 
-/** Rascunho → inscrição. A API confere os campeões de novo. */
+/** Rascunho → inscrição. A API confere os campeões de novo (e exige a data de início). */
 export function PublishTournamentButton({
   tenant,
   slug,
+  disabled = false,
 }: {
   tenant: string;
   slug: string;
+  disabled?: boolean;
 }) {
   const t = useTranslations("Tournament");
   const router = useRouter();
@@ -24,7 +26,7 @@ export function PublishTournamentButton({
     <div className="flex flex-col gap-1">
       <Button
         size="sm"
-        disabled={pending}
+        disabled={pending || disabled}
         onClick={() =>
           run(
             () =>

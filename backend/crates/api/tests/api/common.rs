@@ -124,6 +124,10 @@ pub async fn put(app: &Router, uri: &str, user: &User, body: Value) -> (StatusCo
     call(app, Method::PUT, uri, Some(user), Some(body)).await
 }
 
+pub async fn put_empty(app: &Router, uri: &str, user: &User) -> (StatusCode, Value) {
+    call(app, Method::PUT, uri, Some(user), None).await
+}
+
 pub async fn patch(app: &Router, uri: &str, user: &User, body: Value) -> (StatusCode, Value) {
     call(app, Method::PATCH, uri, Some(user), Some(body)).await
 }
@@ -174,7 +178,19 @@ pub async fn quake_br(db: &PgPool) -> (Router, User, User) {
     (app, ana, bia)
 }
 
-/// Duelo público em dupla com reset, md3/md5, 16 vagas, 1 ban, sem não repetição.
+/// Membro novo (player) de `quake-br`, convidado por `owner`.
+pub async fn member(app: &Router, db: &PgPool, owner: &User, name: &str) -> User {
+    let who = user(db, name).await;
+    join(app, &who, &invite(app, owner, "quake-br").await).await;
+    who
+}
+
+/// Início dos torneios de `duel`: longe o bastante para o check-in nunca
+/// abrir sozinho nos testes que não mexem nele.
+pub const FAR_START: &str = "2099-01-01T20:00:00Z";
+
+/// Duelo público em dupla com reset, md3/md5, 16 vagas, 1 ban, sem não
+/// repetição, começando em `FAR_START` com check-in de 30 minutos (o padrão).
 pub fn duel(slug: &str) -> Value {
     json!({
         "slug": slug,
@@ -191,7 +207,8 @@ pub fn duel(slug: &str) -> Value {
             "grand_final_reset": true,
             "best_of": 3,
             "finals_best_of": 5
-        }]
+        }],
+        "starts_at": FAR_START
     })
 }
 
@@ -217,8 +234,30 @@ pub async fn publish(app: &Router, by: &User, slug: &str) {
     assert_eq!(status, StatusCode::OK, "{body}");
 }
 
-/// Põe o torneio direto num status (as transições depois da inscrição ainda
-/// não têm rota).
+/// Inscreve cada um de `who` no torneio `slug` de `quake-br` pelo botão.
+pub async fn register(app: &Router, slug: &str, who: &[&User]) {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/registration");
+    for u in who {
+        let (status, body) = post_empty(app, &uri, u).await;
+        assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    }
+}
+
+/// Põe o início do torneio `slug` a `minutes` de agora (negativo: já
+/// passou), para a janela de check-in abrir sem esperar.
+pub async fn starts_in(db: &PgPool, slug: &str, minutes: i32) {
+    sqlx::query!(
+        "update tournaments set starts_at = now() + make_interval(mins => $2) where slug = $1",
+        slug,
+        minutes
+    )
+    .execute(db)
+    .await
+    .unwrap();
+}
+
+/// Põe o torneio direto num status, sem passar pelas regras de transição
+/// (ex.: encerrado, que ainda não tem rota).
 pub async fn set_status(db: &PgPool, slug: &str, status: &str) {
     sqlx::query!(
         "update tournaments set status = $2 where slug = $1",

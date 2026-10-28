@@ -1,12 +1,12 @@
 //! Tipos compartilhados pelos formatos.
 
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-/// Participante de um torneio: um jogador (duelo) ou um time (2v2, 3v3).
+/// Participante de um torneio: um jogador (duelo) ou um time (2v2, 3v3). É o
+/// id interno da inscrição (`participants.id` na API, bigint).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ParticipantId(pub Uuid);
+pub struct ParticipantId(pub i64);
 
 /// Em qual parte da chave a partida está.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]

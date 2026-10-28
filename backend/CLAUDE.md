@@ -19,7 +19,7 @@ crates/api/src/
   shared/         o que todo domínio usa; não conhece nenhum domínio
     error.rs        ApiError (código + params numéricos), ErrorBody
     engine.rs       From<EngineError> for ApiError: um código por variante do engine
-    extract.rs      JsonBody, PathParams
+    extract.rs      JsonBody, PathParams, nullable (campo de PATCH em que null limpa)
     token.rs        random_token, random_secret, hash_token, constant_time_eq
     text.rs         clean_text (uma linha), clean_long_text (Markdown)
     slug.rs         formato de slug; reservados e códigos ficam em cada domínio
@@ -32,12 +32,17 @@ crates/api/src/
                   (/tenants/{slug}/tournaments/{t}/invites, em tournament.rs)
   tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
                   status, setup (vagas, campeões, fases → checagem do engine), edit (PATCH),
-                  visibility (quem vê: can_see, find_visible)
-  participants/   /tenants/{slug}/tournaments/{t}/participants e .../registration;
-                  registration.rs (os três caminhos de inscrição; o convite usa register)
+                  visibility (quem vê: can_see, find_visible), schedule (data de início,
+                  janela de check-in e a abertura automática, aplicada em db/read.rs ao ler)
+  participants/   /tenants/{slug}/tournaments/{t}/participants, .../registration, .../check-in
+                  e .../seeding; registration.rs (os três caminhos de inscrição; o convite usa
+                  register), check_in.rs, seeding.rs (finalize, que o início usa), seed_order.rs
+  lifecycle/      transições depois de publicar (.../check-in/open, .../registration/reopen,
+                  .../start): transition.rs concentra de onde, para onde e o que cada uma faz.
+                  Fica acima de tournaments e participants (iniciar fecha o seeding)
 ```
 
-Domínios previstos pelo roadmap: `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`. Check-in e seeding entram em `participants`.
+Domínios previstos pelo roadmap: `matches` (chave, resultado, contestação), `veto` (mapas, pick/ban), `realtime` (WebSocket), `media` (prints no S3), `ratings`. Gerar e descartar a chave entra em `lifecycle::transition::apply` (que chama `matches`).
 
 ### O que é um domínio
 
@@ -87,7 +92,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 crates/engine/src/
   core.rs         tipos de mais de um formato: ParticipantId, MatchId, Match, Outcome, EngineError
   series.rs       melhor de N
-  seeding.rs      tamanho e ordem da chave
+  seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
   champions.rs    ChampionRules e o orçamento da regra de não repetição
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
   formats/

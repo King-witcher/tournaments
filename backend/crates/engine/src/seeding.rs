@@ -1,4 +1,41 @@
-//! Posicionamento de seeds numa chave de eliminação.
+//! Seeds: o sorteio da ordem e o posicionamento numa chave de eliminação.
+
+use chacha20::ChaCha8Rng;
+use rand_core::{Rng, SeedableRng};
+
+use crate::core::ParticipantId;
+
+/// Ordem sorteada de `participants` (o primeiro é o seed 1), reproduzível: o
+/// mesmo conjunto com a mesma `seed` dá sempre a mesma ordem, em qualquer
+/// máquina e versão. A ordem de entrada não importa (é ordenada antes).
+///
+/// Embaralhamento de Fisher–Yates com ChaCha8 sobre a `seed` (os 8 bytes
+/// little-endian no início da chave de 32 bytes, o resto zero) e sorteio de
+/// índice por rejeição, sem viés. Mudar qualquer passo muda os sorteios já
+/// salvos: o teste `draw_is_pinned` fixa o resultado.
+pub fn random_order(participants: &[ParticipantId], seed: u64) -> Vec<ParticipantId> {
+    let mut order = participants.to_vec();
+    order.sort_unstable();
+    let mut key = [0u8; 32];
+    key[..8].copy_from_slice(&seed.to_le_bytes());
+    let mut rng = ChaCha8Rng::from_seed(key);
+    for i in (1..order.len()).rev() {
+        let j = below(&mut rng, i as u64 + 1) as usize;
+        order.swap(i, j);
+    }
+    order
+}
+
+/// Inteiro uniforme em `0..n`: descarta o resto que favoreceria os menores.
+fn below(rng: &mut ChaCha8Rng, n: u64) -> u64 {
+    let limit = u64::MAX - u64::MAX % n;
+    loop {
+        let x = rng.next_u64();
+        if x < limit {
+            return x % n;
+        }
+    }
+}
 
 /// Tamanho da chave para `participants`: a menor potência de 2 que comporta
 /// todos (mínimo 2). As posições que sobram viram byes dos melhores seeds.
@@ -32,6 +69,63 @@ pub fn bracket_order(size: usize) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn ids(range: std::ops::RangeInclusive<i64>) -> Vec<ParticipantId> {
+        range.map(ParticipantId).collect()
+    }
+
+    #[test]
+    fn same_seed_same_order() {
+        let all = ids(1..=16);
+        assert_eq!(random_order(&all, 42), random_order(&all, 42));
+        assert_ne!(random_order(&all, 42), random_order(&all, 43));
+    }
+
+    #[test]
+    fn input_order_does_not_matter() {
+        let mut reversed = ids(1..=16);
+        reversed.reverse();
+        assert_eq!(random_order(&reversed, 7), random_order(&ids(1..=16), 7));
+    }
+
+    #[test]
+    fn draw_is_a_permutation() {
+        for n in [0, 1, 2, 3, 17, 64] {
+            let all = ids(1..=n);
+            let mut drawn = random_order(&all, n as u64);
+            drawn.sort();
+            assert_eq!(drawn, all);
+        }
+    }
+
+    #[test]
+    fn draw_is_pinned() {
+        // Sorteios já salvos dependem deste resultado: se ele mudar, a seed
+        // gravada deixa de reproduzir a ordem.
+        let drawn: Vec<i64> = random_order(&ids(1..=8), 2026)
+            .into_iter()
+            .map(|p| p.0)
+            .collect();
+        assert_eq!(drawn, [8, 7, 3, 1, 6, 4, 5, 2]);
+    }
+
+    #[test]
+    fn every_position_is_reachable() {
+        // Sem viés grosseiro: em 2000 sorteios de 4, cada um cai em cada
+        // posição perto de 500 vezes.
+        let all = ids(1..=4);
+        let mut counts = [[0u32; 4]; 4];
+        for seed in 0..2000 {
+            for (pos, p) in random_order(&all, seed).into_iter().enumerate() {
+                counts[(p.0 - 1) as usize][pos] += 1;
+            }
+        }
+        for row in counts {
+            for c in row {
+                assert!((400..600).contains(&c), "{counts:?}");
+            }
+        }
+    }
 
     #[test]
     fn size_rounds_up_to_power_of_two() {

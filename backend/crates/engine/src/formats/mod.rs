@@ -3,7 +3,6 @@
 pub mod elimination;
 
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::core::{EngineError, ParticipantId};
 use elimination::{EliminationBracket, EliminationConfig, MAX_PARTICIPANTS};
@@ -45,9 +44,7 @@ impl StageFormat {
                         got: participants,
                     });
                 }
-                let seeded = (1..=participants as u128)
-                    .map(|i| ParticipantId(Uuid::from_u128(i)))
-                    .collect();
+                let seeded = (1..=participants as i64).map(ParticipantId).collect();
                 Ok(EliminationBracket::new(*c, seeded)?.worst_case_games())
             }
         }

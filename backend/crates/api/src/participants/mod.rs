@@ -1,11 +1,16 @@
 //! Inscritos de um torneio: listar, o membro se inscrever ou sair (torneio
-//! público, com a inscrição aberta) e o organizador inscrever ou tirar
-//! membros (público ou privado, até começar). O link de convite de torneio
-//! fica em `invites`, que inscreve por `register`.
+//! público, com a inscrição aberta), o organizador inscrever ou tirar
+//! membros (público ou privado, até começar), o check-in (`check_in`) e o
+//! seeding (`seeding`). O link de convite de torneio fica em `invites`, que
+//! inscreve por `register`; iniciar o torneio fica em `lifecycle`, que fecha
+//! o seeding por `finalize_seeding`.
 
+mod check_in;
 mod db;
 mod handlers;
 mod registration;
+mod seed_order;
+mod seeding;
 mod types;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -13,6 +18,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use registration::{Entry, register};
+pub use seeding::finalize as finalize_seeding;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -22,4 +28,11 @@ pub fn router() -> OpenApiRouter<AppState> {
         ))
         .routes(routes!(handlers::remove_participant))
         .routes(routes!(handlers::register, handlers::withdraw))
+        .routes(routes!(check_in::check_in, check_in::undo_check_in))
+        .routes(routes!(
+            check_in::check_in_participant,
+            check_in::undo_check_in_participant
+        ))
+        .routes(routes!(seeding::get_seeding, seeding::put_seeding))
+        .routes(routes!(seeding::shuffle_seeding))
 }

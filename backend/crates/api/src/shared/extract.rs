@@ -6,7 +6,7 @@ use axum::{
     extract::{FromRequest, FromRequestParts, Request},
     http::request::Parts,
 };
-use serde::de::DeserializeOwned;
+use serde::{Deserialize, Deserializer, de::DeserializeOwned};
 
 use super::ApiError;
 
@@ -22,6 +22,17 @@ impl<S: Send + Sync, T: DeserializeOwned> FromRequest<S> for JsonBody<T> {
             .map(|axum::Json(value)| Self(value))
             .map_err(|rej| ApiError::new(rej.status(), "request.invalid_body"))
     }
+}
+
+/// Campo de PATCH em que `null` quer dizer limpar: com `#[serde(default,
+/// deserialize_with = "nullable")]` num `Option<Option<T>>`, ausente fica
+/// `None` (não muda), `null` vira `Some(None)` e um valor, `Some(Some(v))`.
+pub fn nullable<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
 }
 
 /// Parâmetros do caminho. Inválido (ex.: id que não é número) → 400 `request.invalid_path`.

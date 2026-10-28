@@ -4,8 +4,10 @@
 
 mod auth;
 mod common;
+mod docs;
 mod health;
 mod invites;
+mod lifecycle;
 mod members;
 mod participants;
 mod tenants;

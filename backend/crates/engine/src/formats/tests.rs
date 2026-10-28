@@ -69,9 +69,7 @@ fn worst_case_matches_the_built_bracket() {
     for f in kinds() {
         let StageFormat::Elimination(c) = f;
         for n in [2usize, 5, 8, 16] {
-            let ids = (1..=n as u128)
-                .map(|i| ParticipantId(Uuid::from_u128(i)))
-                .collect();
+            let ids = (1..=n as i64).map(ParticipantId).collect();
             let expected = EliminationBracket::new(c, ids).unwrap().worst_case_games();
             assert_eq!(f.worst_case_games(n), Ok(expected));
         }

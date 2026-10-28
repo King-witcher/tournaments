@@ -24,7 +24,7 @@ O código é organizado por domínio dos dois lados, com `shared/` para o que é
 
 Backend (em `backend/`):
 - `bun scripts/dev.ts`: API com recarga automática (para, aplica migrations, recompila e sobe a cada `.rs`/`.sql`/`Cargo.toml`/`.env` salvo; respeita `CARGO_TARGET_DIR` e `API_ADDR`)
-- `cargo run -p api`: sobe a API em http://localhost:8080 (Swagger em `/docs`) e aplica as migrations
+- `cargo run -p api`: sobe a API em http://localhost:8080 (docs Scalar em `/docs`, OpenAPI em `/openapi.json`) e aplica as migrations
 - `cargo test -p engine`: testes dos motores (rápidos, sem banco)
 - `cargo test`: tudo, inclusive testes de API com `sqlx::test` (precisa do Postgres local)
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
