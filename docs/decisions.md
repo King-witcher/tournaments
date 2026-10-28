@@ -256,7 +256,23 @@ Decididas em 28/10/2026, ao adotar o Carbon Design System no MVP. O alvo página
 
 ## Notificações
 
-- MVP: só no site, em tempo real pelo WebSocket. Webhook e DM do Discord ficam para depois.
+- MVP: no site pelo WebSocket e no navegador por Web Push (também com a aba fechada). Webhook e DM do Discord e email ficam para depois.
+
+## Tempo real e avisos
+
+Decidido em 28/10 (o usuário escolheu Web Push já neste incremento e os avisos da organização; o resto é padrão meu, fácil de mudar).
+
+- **Canal**: um WebSocket por aba em `GET /ws`, autenticado pelo cookie de sessão no upgrade (o navegador já fala direto com a API; em produção o cookie é do domínio comum), com o `Origin` conferido contra `WEB_ORIGIN`: sem isso, outro site abriria o socket com o cookie de quem o visita. Sem sessão, 401 antes do upgrade. Ping a cada 30 s, porque proxy derruba conexão parada.
+- **Assinaturas**: a aba pede o que a página mostra (comunidade; comunidade + torneio), e a API confere o acesso como na leitura (`TenantMember`, `can_see`). O canal da própria pessoa vem sozinho.
+- **O que trafega é o aviso de mudança, não o dado**: tópico, tipo e, quando houver, a partida, nada que a pessoa não pudesse ler. A página pede de novo à API (`router.refresh()`), com o mesmo controle de acesso. Motivo: chave e partida dependem de quem vê (tarefas, destaques), e montar isso de novo no socket duplicaria a lógica. Pela cota do Redis (cada refresh lê a sessão), a aba junta os avisos de ~1,5 s num refresh só e ignora os que não são da página dela (a partida só recarrega pela própria partida; a chave, por qualquer uma).
+- **Outbox**: quem muda o estado grava os eventos na tabela `outbox` na mesma transação; depois do commit, um despachante (uma tarefa da API, acordada pela rota e pelo agendador) lê, publica no `tokio::broadcast`, manda os Web Push e apaga. Motivo: só sai evento de transação confirmada, push não se perde se a API cair entre o commit e o envio, e há um lugar só para despachar (com `LISTEN/NOTIFY` se um dia houver mais de uma instância).
+- **Agendador**: tarefa da API a cada 10 s, com advisory lock do Postgres (com mais de uma instância, só uma roda): confirma os mapas vencidos (`apply_due_confirmations`), abre o check-in que chegou na hora e avisa "hora de iniciar" uma vez por torneio (marcado no banco). Aplicar ao ler e agir continua, para quem chega antes do agendador ver o estado certo; o evento sai de quem fez a transição, seja quem for.
+- **Acesso perdido na hora**: quem sai ou é removido de uma comunidade recebe o aviso no próprio canal, perde as assinaturas daquela comunidade e a aba recarrega (cai no "sem acesso"). Sessão encerrada (sair, encerrar sessão) fecha os sockets dela.
+- **Avisos** (notificação, além de recarregar): para quem joga, check-in abriu (inscritos), partida pronta (os dois lados) e adversário enviou um mapa (com o prazo para confirmar ou contestar); para organizer e owner, contestação a resolver e hora de iniciar (o início marcado chegou e o torneio não foi iniciado; iniciar continua manual). "Veto começou" entra com o veto.
+- **Web Push**: service worker, chaves VAPID em variável de ambiente (opcionais: sem elas a API sobe e o push fica desligado, como o Discord), tabela de inscrições do navegador por usuário (endpoint único, com o idioma de quando se inscreveu), envio pela API com `web-push-native` (só cifra e assina; o HTTP é o `reqwest` que já existe), inscrição apagada quando o serviço responde 404 ou 410. No iPhone só funciona com o site instalado na tela inicial (por isso o manifest).
+- **Texto do aviso**: a API manda código, parâmetros e o endereço, nunca texto; o service worker traduz com `messages/<idioma>/Notifications.json`, embutido nele por uma rota do Next que gera o script, no idioma da inscrição.
+- **Aba visível**: o service worker não mostra notificação, porque a página já mostra um `Toast` com som pelo WebSocket. Sem push (negado ou sem suporte), o aviso com o site aberto continua pelo WebSocket. Som curto gerado pelo Web Audio (sem arquivo), ligado por padrão e desligável na conta (preferência do navegador).
+- **Permissão**: nunca pedida ao abrir o site; botão "Ativar avisos" na conta (aba própria, com o som e o estado deste navegador) e no tile "Sua situação" de quem está inscrito num torneio que não acabou.
 
 ## Repositório
 
