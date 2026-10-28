@@ -25,8 +25,8 @@ src/
     hooks/              hooks do domínio
     lib/                funções puras do domínio (ex.: slugify)
   shared/               o que serve a qualquer domínio; nunca importa de features/
-    ui/                 componentes visuais genéricos: Button, Input, Field, Alert, Avatar, Page,
-                        Badge, Countdown
+    ui/                 componentes visuais genéricos: Button, ConfirmButton, RowLink, Skeleton,
+                        Input, Field, Alert, Avatar, Page, Badge, Countdown
     hooks/              hooks genéricos (ex.: useCopyToClipboard)
     api/                client, serverApi, callApi, useApiAction, tradução de erro, schema.d.ts
     lib/                utilitários genéricos (ex.: cn)
@@ -54,7 +54,8 @@ src/
 
 ### Estilo
 
-- Use `shared/ui` em vez de repetir classes: `Button` com `variant` (`default`, `outline`, `link`) e `size` (`default`, `sm`); `buttonVariants()` para `<Link>` com cara de botão; `Field` + `Input` em formulário; `Alert` (erro principal) e `ErrorText` (erro junto do controle).
+- Use `shared/ui` em vez de repetir classes: `Button` com `variant` (`default`, `outline`, `destructive`, `link`), `size` (`default`, `sm`) e `pending`; `buttonVariants()` para `<Link>` com cara de botão; `ConfirmButton` para ação que não se desfaz; `RowLink` para item de lista que abre página; `Skeleton`/`LoadingSection`/`PageSkeleton` em fallback; `Field` + `Input` em formulário; `Alert` (erro principal) e `ErrorText` (erro junto do controle).
+- Cores de texto: `text-muted` (secundário) e `text-link` (clicável), definidas em `globals.css` com contraste AA nos dois temas. Não use `opacity-*` em texto.
 - Não há tailwind-merge: `className` extra só para o que a variante não define (largura, cor, fonte). Precisa mudar padding ou fundo? Crie uma variante.
 - shadcn, quando entrar: `components.json` com `aliases.ui = "@/shared/ui"`, `aliases.utils = "@/shared/lib/cn"` e `aliases.hooks = "@/shared/hooks"`. Os primitivos atuais já usam os nomes de variante dele.
 
@@ -68,3 +69,18 @@ Quebre quando aparecer qualquer um destes sinais:
 - item de lista com mais de ~10 linhas de JSX: `<XRow>`;
 - estado que só uma parte usa (ex.: "copiado"): componente da parte (`InviteLink`);
 - lógica com estado que se repete: hook (em `shared/hooks` se for genérica).
+
+## Princípios de interface
+
+Utilidade antes de enfeite: cada classe precisa de um motivo de uso (hierarquia, affordance, legibilidade, toque, foco, leitura no celular). "Fica bonito" não é motivo; classe que não faz nada sai. Nada de gradiente, sombra decorativa, ícone enfeitando card ou emoji.
+
+- **Carregamento**: toda rota que busca dado tem `loading.tsx` e a parte lenta fica em `<Suspense>` com `PageSkeleton`/`LoadingSection`, nunca `fallback={null}` onde vai aparecer conteúdo. Motivo: sem isso, o clique parece não ter funcionado, e o esqueleto com a altura do conteúdo evita que a página pule quando ele chega.
+- **Pending**: botão que chama a API recebe `pending` (de `useApiAction` ou `useActionState`). Motivo: desabilita (sem clique duplo) e o indicador girando diz que a ação está em andamento.
+- **Link**: item de lista que abre página usa `RowLink` (linha inteira clicável, nome sublinhado em `text-link`); link solto no texto e botão `link` são sempre sublinhados. Motivo: sem hover (celular) nada mostra que é clicável.
+- **Hierarquia**: título de página `text-3xl font-semibold`, de seção `text-xl font-semibold`, subseção `font-semibold`; corpo no tamanho base; metadado e dica `text-sm text-muted`. Motivo: título, descrição e metadado se distinguem por tamanho e peso, não só por cor.
+- **Contraste**: texto secundário em `text-muted`, nunca `opacity-*` (50–60% caía abaixo de 4.5:1); borda de campo forte o bastante para ser vista como campo. Motivo: WCAG AA (4.5:1) nos temas claro e escuro.
+- **Toque**: botão, campo e link de ação com pelo menos 44px de altura abaixo de `sm` (`min-h-11 sm:min-h-*`); no desktop, a altura compacta. Motivo: alvo de dedo no celular sem inflar a tela com mouse.
+- **Foco**: todo controle tem contorno visível no `:focus-visible` (em `globals.css`). Não remova `outline`. Motivo: quem usa teclado precisa ver onde está.
+- **Ação destrutiva ou que não volta**: `ConfirmButton` (a pergunta diz o que acontece; "sim" com o texto do botão; "Cancelar" recebe o foco). Nada de `window.confirm`. Para o que é grave e raro (desfazer início, transferir posse), peça para digitar o slug. Motivo: `confirm()` não diz de onde veio, some com o contexto e é confirmado no automático.
+- **Celular (390px)**: nada de rolagem horizontal fora da chave; linhas de lista quebram o metadado para baixo do nome e as ações para a linha de baixo. Motivo: a maior parte dos jogadores abre o link do torneio pelo celular.
+- **Estado vazio e erro**: diga o próximo passo (o que fazer ou para onde ir), não só "nada aqui"; erro sempre traduzido, junto do controle que falhou.

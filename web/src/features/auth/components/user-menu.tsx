@@ -14,7 +14,7 @@ export async function UserMenu() {
       {user.avatar_url && <Avatar src={user.avatar_url} />}
       <Link
         href="/account"
-        className="text-sm font-medium underline underline-offset-4 hover:decoration-2"
+        className="inline-flex min-h-11 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
       >
         {user.display_name}
       </Link>

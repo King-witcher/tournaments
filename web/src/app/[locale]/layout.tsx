@@ -49,7 +49,7 @@ export default async function LocaleLayout({
           <header className="flex items-center justify-between gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
             <Link
               href="/"
-              className="text-sm font-medium underline underline-offset-4 hover:decoration-2"
+              className="inline-flex min-h-11 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
             >
               {t("home")}
             </Link>

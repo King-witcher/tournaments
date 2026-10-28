@@ -13,12 +13,14 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
   const t = await getTranslations("Home");
 
   return (
-    <Page>
+    <Page spacing="loose">
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
-      <h1 className="text-3xl font-semibold">{t("title")}</h1>
-      <p className="text-muted">{t("subtitle")}</p>
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold">{t("title")}</h1>
+        <p className="text-muted">{t("subtitle")}</p>
+      </header>
       <Suspense fallback={null}>
         <ApiStatus />
       </Suspense>

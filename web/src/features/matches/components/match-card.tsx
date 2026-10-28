@@ -70,7 +70,10 @@ export function MatchCard({ match: m, single, entrants, href }: Props) {
       )}
     >
       <div className="flex justify-between px-3 pt-1.5 text-xs text-muted">
-        <span>{code(m.key)}</span>
+        {/* O código sublinhado na cor de link mostra que o cartão abre a partida. */}
+        <span className="text-link underline underline-offset-2">
+          {code(m.key)}
+        </span>
         <span>{t("bestOf", { count: m.best_of })}</span>
       </div>
       <MatchCardSide

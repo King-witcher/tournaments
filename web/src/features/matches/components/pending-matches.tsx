@@ -38,7 +38,10 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
       <ul className="flex flex-col gap-1">
         {pending.map((m) => (
           <li key={m.key}>
-            <Link href={`${basePath}/${m.key}`} className="text-sm underline">
+            <Link
+              href={`${basePath}/${m.key}`}
+              className="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4 sm:min-h-0"
+            >
               {t("pending.item", {
                 match: code(m.key),
                 a: name(m.a),
