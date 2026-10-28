@@ -1,0 +1,132 @@
+# Confere backend e front. Em pull request só roda o lado cujos arquivos
+# mudaram; em push na main roda os dois. Regras e motivos: "Repositório" em
+# docs/decisions.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Uma execução nova do mesmo ref cancela a anterior (economiza minutos).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - id: filter
+        uses: dorny/paths-filter@v3.0.2
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+            web:
+              - 'web/**'
+              - '.github/workflows/ci.yml'
+
+  backend:
+    name: backend
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: tournaments
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: tournaments
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tournaments"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # O usuário do serviço é superusuário: o sqlx::test cria os bancos dele.
+      DATABASE_URL: postgres://tournaments@localhost:5432/tournaments
+      REDIS_URL: redis://127.0.0.1:6379/0
+      RUST_TEST_THREADS: "4"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Toolchain
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy --no-self-update
+      - uses: Swatinem/rust-cache@v2.7.8
+        with:
+          workspaces: backend
+      - name: fmt
+        run: cargo fmt --check
+      # Sem banco: confere que o .sqlx/ cobre todas as queries, como no Render.
+      - name: clippy (SQLX_OFFLINE=true)
+        run: SQLX_OFFLINE=true cargo clippy --all-targets -- -D warnings
+      - name: migrations
+        run: cargo run -q -p migrate
+      - name: testes
+        run: cargo test
+      # Equivale a `bun scripts/sqlx-prepare.ts`: regrava as queries num
+      # diretório à parte e compara com o .sqlx/ versionado (pega arquivo
+      # sobrando ou diferente). Reaproveita as dependências já compiladas.
+      - name: .sqlx/ em dia
+        run: |
+          rm -rf "$RUNNER_TEMP/sqlx"
+          mkdir "$RUNNER_TEMP/sqlx"
+          cargo clean -q -p api
+          SQLX_OFFLINE=false SQLX_OFFLINE_DIR="$RUNNER_TEMP/sqlx" cargo check -q -p api --all-targets
+          diff -r "$RUNNER_TEMP/sqlx" .sqlx \
+            || { echo "::error::.sqlx/ desatualizado: rode 'bun scripts/sqlx-prepare.ts' em backend/ e faça commit"; exit 1; }
+
+  web:
+    name: web
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: oven-sh/setup-bun@v2.0.2
+        with:
+          bun-version: 1.3.11
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 24
+      - uses: actions/cache@v4.2.0
+        with:
+          path: |
+            ~/.bun/install/cache
+            web/.next/cache
+          key: web-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}-${{ hashFiles('web/src/**', 'web/messages/**') }}
+          restore-keys: |
+            web-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      # Não precisa de API no ar nem de variável: NEXT_PUBLIC_API_URL cai em localhost:4000.
+      - run: bun run build

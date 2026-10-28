@@ -13,7 +13,6 @@ Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::tes
 ## Depois
 
 - Outros formatos: FFA por pontos/frags, 2v2/3v3 com formação de times, round robin, suíço.
-- CI no GitHub Actions conferindo que o `.sqlx/` está em dia (`SQLX_OFFLINE=true cargo check`).
 
 ## Pendências
 
@@ -38,6 +37,7 @@ O que ficou de fora de incrementos já feitos, com o que falta.
 
 O que existe hoje, uma linha por área. Ao terminar um incremento, ajuste a linha da área (ou crie uma); o detalhe vai no commit e as regras no `decisions.md`.
 
+- **CI** (`.github/workflows/ci.yml`): backend (fmt, clippy com `SQLX_OFFLINE=true`, migrations, testes, `.sqlx/` igual ao que as queries geram) e web (lint, build), só o lado que mudou em pull request e os dois em push na `main`.
 - **Base**: workspace Rust (`engine`, `api`, `migrate`), Next 16 com next-intl (pt, es), Bun, Biome, recarga automática da API, código por domínio dos dois lados.
 - **Contas**: login com Discord e com username e senha, vincular e desvincular, nome exibido; cadastro com senha só com email confirmado pelo link (forma canônica, sem descartáveis), recuperação de senha e troca de email por link (Resend); sessões, tentativas de senha, cadastros por confirmar e links no Redis, com rotas para listar e encerrar sessões.
 - **Comunidades**: criar (até 3 como owner), convites, papéis, apelido, sair, remover, transferir a posse; membro inativo mantém o histórico; página da pessoa com os torneios dela na comunidade.
