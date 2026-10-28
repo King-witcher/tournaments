@@ -10,6 +10,8 @@ type Props = {
   /** Nome já no idioma de quem vê. */
   name: string;
   tournament: components["schemas"]["Tournament"];
+  /** Referência para saber se a data de início já passou. */
+  now: Date;
 };
 
 /** Comunidade, nome, status, visibilidade e início (no fuso de quem vê). */
@@ -18,13 +20,18 @@ export function TournamentHeader({
   tenantName,
   name,
   tournament,
+  now,
 }: Props) {
   const t = useTranslations("Tournament");
   const tStatus = useTranslations("TournamentStatus");
   const tVisibility = useTranslations("Visibility");
   const startsAt = tournament.starts_at;
-  const started =
-    tournament.status === "in_progress" || tournament.status === "finished";
+  // Data que já passou (começou, ou a organização ainda não iniciou): "início
+  // marcado para", não "começa", que daria a entender que ainda vai começar.
+  const past =
+    tournament.status === "in_progress" ||
+    tournament.status === "finished" ||
+    (startsAt != null && new Date(startsAt) <= now);
 
   return (
     <header className="flex flex-col gap-1">
@@ -40,7 +47,7 @@ export function TournamentHeader({
       </p>
       <p className="text-sm">
         {startsAt
-          ? t.rich(started ? "startedAt" : "startsAt", {
+          ? t.rich(past ? "startedAt" : "startsAt", {
               date: () => <LocalDateTime value={startsAt} />,
             })
           : t("noStartDate")}

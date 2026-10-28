@@ -50,6 +50,7 @@ export async function TournamentView({ tenant, slug }: Props) {
   return (
     <>
       <TournamentHeader
+        now={now}
         tenant={tenant}
         tenantName={me.name}
         name={texts.name}
