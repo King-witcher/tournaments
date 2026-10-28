@@ -672,6 +672,7 @@
       "title": "Antes de corrigir esta série",
       "why": "Quem passou por aqui já jogou <matches></matches>, que está decidida. Por isso, uma correção que mude o resultado desta série (outro vencedor, ou série sem decisão) é recusada: aquela partida foi jogada com os lados que este resultado definiu.",
       "how": "Para mudar o resultado, corrija antes <matches></matches> até ela ficar sem decisão (mude o vencedor de um mapa dela) e depois volte aqui. Os mapas dela são anulados quando os lados mudarem. Se ela também levou a outra partida decidida, comece pela última.",
+      "howWalkover": "<matches></matches> foi decidida por W.O., que uma correção de mapa não desfaz: ela não volta a ficar sem decisão. Para mudar o resultado desta série, só desfazendo o início do torneio.",
       "allowed": "Corrigir sem mudar o resultado da série (o mapa jogado ou os frags) continua valendo."
     },
     "history": {

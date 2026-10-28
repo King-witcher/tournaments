@@ -64,6 +64,28 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - Contraste e toque: cores `muted` e `link` com AA nos dois temas no lugar de `opacity`, borda de campo mais forte, 44px de altura no celular, contorno de foco em todo controle.
   - Login pedido: "Entrar" e "Criar conta" lado a lado.
 
+- **Revisão de uso, rodada 2b** (pendências que precisavam de API; decisões em "Interface", "Multi-tenant" e "Autenticação" no `decisions.md`):
+  - "Seus torneios" na home por `GET /me/tournaments` (domínio novo `my_tournaments`, acima de `tournaments` e `matches`; `TenantMember::all_of` dá as participações sem perder o `TenantId` conferido): situação de quem vê em cada torneio (inscrição, check-in pendente ou feito, fora da chave sem check-in, na chave, colocação, desistiu, 1º lugar) e a próxima partida (adversário ou de onde ele vem, e o que ela espera), com link; encerrados à parte, só os 5 mais recentes.
+  - Prévia do convite (`GET /invites/{token}`, com `Option<CurrentUser>`): slug da comunidade, início do torneio e, para quem está logado, membro, ex-membro (volta com apelido e histórico) ou de fora, e se já está inscrito. A tela troca o botão por "você já é membro" com o link, ou por "Inscrever-se".
+  - Seeding: a posição de cada um é um campo numérico (Enter ou sair do campo leva direto para lá; o foco acompanha com Enter); as setas ficaram.
+  - Conta: `PATCH /me` troca o nome exibido (1 a 32 caracteres), com a seção "Nome exibido" na conta (o nome no cabeçalho já leva a ela).
+  - Partida: nota para a organização quando a série já levou a uma partida decidida, dizendo por que mudar o resultado é recusado e o que corrigir antes (com o link); o erro `match.correction_conflicts` diz o mesmo.
+  - "Iniciar torneio": a confirmação diz quantos entram e quantos ficam de fora sem check-in; com menos de 2 elegíveis o botão fica desabilitado, com o motivo (era pendência da 2a).
+  - Home sem cookie de sessão não chama a API (era o motivo da espera de quem não entrou).
+
+## UX: pendências
+
+Ficaram para depois das rodadas 2a e 2b, com o motivo:
+
+- **Tempo real** (item 1 de "Próximo"): chave, check-in, partida e "Seus torneios" só mudam ao recarregar a página. Depende do WebSocket e do agendador da confirmação por tempo.
+- **Aviso fora do site** (DM ou webhook do Discord, email): a decisão do MVP é avisar só no site ("Notificações" no `decisions.md`); precisa de bot ou provedor de email e de decidir o que vale aviso.
+- **Excluir conta e excluir comunidade**: apagam (ou, a conta, anonimizam) dados de outras pessoas e torneios jogados; ficam para o usuário decidir a regra (ver "Consistência do banco" no `decisions.md`).
+- **Home de quem não entrou**: o esqueleto ainda aparece por um instante antes do convite a entrar, porque saber se há sessão lê cookies e, com Cache Components, isso fica dentro do `<Suspense>`. A espera pela API saiu (sem cookie de sessão, nada é perguntado); tirar o esqueleto de vez pediria uma home estática para quem não tem cookie (decidir no proxy).
+- **Reabrir uma série decidida por W.O.**: a nota de correção manda corrigir antes a partida seguinte até ela ficar sem decisão, mas uma série decidida por W.O. não volta a ficar aberta (mapas por cima de um W.O. o substituem com outra decisão). Nesse caso a nota avisa que só desfazer o início resolve; falta uma rota de "tirar o W.O." se isso aparecer na prática.
+- **Histórico completo de torneios de quem vê**: "Seus torneios" mostra só os 5 encerrados mais recentes (cada um refaz a chave). A lista inteira cabe numa página de perfil, junto com o rating.
+- **Pendências da organização em todas as comunidades**: "Seus torneios" mostra as partidas de quem joga; contestações a resolver em torneios que a pessoa só organiza continuam na página de cada torneio.
+- **Arrastar no seeding**: ficou o campo de posição; arrastar numa lista que rola é impreciso no celular e pede uma biblioteca.
+
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
 - Melhor de N: um valor padrão + um para a decisiva (final na simples; grande final e reset na dupla). Ex.: md3 + md5.

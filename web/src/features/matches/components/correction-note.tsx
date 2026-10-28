@@ -30,6 +30,8 @@ export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
       (m.a.from?.match_key === matchKey || m.b.from?.match_key === matchKey),
   );
   if (later.length === 0) return null;
+  // W.O. não volta a ficar sem decisão por correção de mapa.
+  const walkover = later.some((m) => m.result?.walkover);
 
   const links = later.map((m, i) => (
     <Fragment key={m.key}>
@@ -46,7 +48,9 @@ export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
     <section className="flex flex-col gap-1 rounded-md border border-amber-500/60 p-3 text-sm">
       <h2 className="font-semibold">{t("title")}</h2>
       <p>{t.rich("why", { matches: () => links })}</p>
-      <p>{t.rich("how", { matches: () => links })}</p>
+      <p>
+        {t.rich(walkover ? "howWalkover" : "how", { matches: () => links })}
+      </p>
       <p className="text-muted">{t("allowed")}</p>
     </section>
   );
