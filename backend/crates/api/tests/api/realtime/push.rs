@@ -50,7 +50,11 @@ impl WebPush for FakePush {
 }
 
 fn subscription(endpoint: &str) -> Value {
-    json!({ "endpoint": endpoint, "keys": { "p256dh": P256DH, "auth": AUTH }, "locale": "es" })
+    subscription_in(endpoint, "es")
+}
+
+fn subscription_in(endpoint: &str, locale: &str) -> Value {
+    json!({ "endpoint": endpoint, "keys": { "p256dh": P256DH, "auth": AUTH }, "locale": locale })
 }
 
 async fn owners(db: &PgPool) -> Vec<(String, i64, String)> {
@@ -141,12 +145,14 @@ async fn the_dispatcher_pushes_notices(db: PgPool) {
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
     create(&app, &ana, "quake-br").await;
     join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
-    for endpoint in [
-        "https://a.push.example/ok",
-        "https://a.push.example/gone",
-        "https://a.push.example/down",
+    // Cada navegador com o idioma de quando se inscreveu.
+    for (endpoint, locale) in [
+        ("https://a.push.example/ok", "pt"),
+        ("https://a.push.example/gone", "es"),
+        ("https://a.push.example/down", "es"),
     ] {
-        let (status, _) = put(&app, "/push/subscriptions", &bia, subscription(endpoint)).await;
+        let body = subscription_in(endpoint, locale);
+        let (status, _) = put(&app, "/push/subscriptions", &bia, body).await;
         assert_eq!(status, StatusCode::NO_CONTENT);
     }
     let (status, _) = put(
@@ -166,18 +172,22 @@ async fn the_dispatcher_pushes_notices(db: PgPool) {
     let (status, _) = post_empty(&app, &format!("{COPA}/check-in/open"), &ana).await;
     assert_eq!(status, StatusCode::OK);
     realtime::dispatch_once(&state).await.unwrap();
-    let payload = json!({
-        "code": "check_in.opened",
-        "params": { "tournament": "Copa de Outubro" },
-        "path": "/quake-br/copa"
-    });
+    // O aviso com o idioma de cada inscrição, para o service worker traduzir.
+    let payload = |locale: &str| {
+        json!({
+            "code": "check_in.opened",
+            "params": { "tournament": "Copa de Outubro" },
+            "path": "/quake-br/copa",
+            "locale": locale
+        })
+    };
     let sent = fake.sent.lock().unwrap().clone();
     assert_eq!(
         sent,
         [
-            ("https://a.push.example/ok".to_owned(), payload.clone()),
-            ("https://a.push.example/gone".to_owned(), payload.clone()),
-            ("https://a.push.example/down".to_owned(), payload),
+            ("https://a.push.example/ok".to_owned(), payload("pt")),
+            ("https://a.push.example/gone".to_owned(), payload("es")),
+            ("https://a.push.example/down".to_owned(), payload("es")),
         ]
     );
     // A que não existe mais sai; a da falha de rede fica; a entregue fica

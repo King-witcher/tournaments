@@ -1,15 +1,24 @@
 //! O envio de um aviso por Web Push, que o despachante do tempo real chama:
 //! uma requisição por inscrição das pessoas do aviso. O corpo é o `Notice`
-//! em JSON (`{code, params, path}`), que o service worker traduz no idioma da
-//! inscrição.
+//! em JSON com o idioma da inscrição (`{code, params, path, locale}`), que o
+//! service worker usa para traduzir e montar o endereço (`/{locale}{path}`).
 
+use serde::Serialize;
 use sqlx::PgConnection;
 
 use super::{
     db,
     sender::{Sent, WebPush},
 };
-use crate::outbox::Notice;
+use crate::{outbox::Notice, shared::Locale};
+
+/// O corpo de um push: o aviso e o idioma da inscrição.
+#[derive(Serialize)]
+struct Payload<'a> {
+    #[serde(flatten)]
+    notice: &'a Notice,
+    locale: Locale,
+}
 
 /// Manda `notice` para as inscrições de `users`. A inscrição que o serviço diz
 /// não existir mais (404, 410) sai; erro de rede ou outra resposta fica no log
@@ -24,9 +33,13 @@ pub async fn deliver(
     if targets.is_empty() {
         return Ok(());
     }
-    let payload = serde_json::to_vec(notice).expect("o aviso vira JSON");
     let (mut delivered, mut gone) = (Vec::new(), Vec::new());
     for target in &targets {
+        let payload = Payload {
+            notice,
+            locale: target.locale,
+        };
+        let payload = serde_json::to_vec(&payload).expect("o aviso vira JSON");
         match push.send(target, &payload).await {
             Ok(Sent::Delivered) => delivered.push(target.id),
             Ok(Sent::Gone) => gone.push(target.id),

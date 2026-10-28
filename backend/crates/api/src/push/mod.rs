@@ -1,7 +1,8 @@
 //! Web Push: a chave pública VAPID (`GET /push/key`), as inscrições dos
 //! navegadores de quem está logado (`/push/subscriptions`, uma por endpoint,
 //! com o idioma dos avisos) e o envio de um aviso (`deliver`), que o
-//! despachante do `realtime` chama para cada `Notice` do outbox. O envio fica
+//! despachante do `realtime` chama para cada `Notice` do outbox: o corpo é o
+//! aviso com o idioma da inscrição (`{code, params, path, locale}`). O envio fica
 //! atrás da trait `WebPush` (`HttpWebPush` com o `web-push-native` e o
 //! `reqwest`); sem as chaves VAPID, o push fica desligado e os avisos só
 //! chegam pelo WebSocket.

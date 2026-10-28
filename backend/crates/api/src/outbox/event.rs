@@ -66,7 +66,7 @@ fn sorted(users: impl IntoIterator<Item = i64>) -> Vec<i64> {
 }
 
 /// Aviso para uma pessoa: o front traduz `code` com `params` e leva a `path`.
-/// É também o corpo do Web Push.
+/// É também o corpo do Web Push, com o `locale` da inscrição ao lado.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 pub struct Notice {
     #[serde(flatten)]

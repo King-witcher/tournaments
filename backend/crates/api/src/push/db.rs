@@ -42,17 +42,30 @@ pub async fn delete(db: &PgPool, user_id: i64, endpoint: &str) -> Result<(), sql
     Ok(())
 }
 
-/// As inscrições de `users`.
+/// As inscrições de `users`, cada uma com o idioma dos avisos.
 pub async fn of_users(conn: &mut PgConnection, users: &[i64]) -> Result<Vec<Target>, sqlx::Error> {
-    sqlx::query_as!(
-        Target,
-        r#"select id, endpoint, p256dh, auth from push_subscriptions
+    let rows = sqlx::query!(
+        r#"select id, endpoint, p256dh, auth, locale from push_subscriptions
            where user_id = any($1)
            order by id"#,
         users
     )
     .fetch_all(conn)
-    .await
+    .await?;
+    rows.into_iter()
+        .map(|r| {
+            // O check da tabela só deixa pt e es.
+            let locale = Locale::from_db(&r.locale)
+                .map_err(|_| sqlx::Error::Decode(format!("locale {}", r.locale).into()))?;
+            Ok(Target {
+                id: r.id,
+                endpoint: r.endpoint,
+                p256dh: r.p256dh,
+                auth: r.auth,
+                locale,
+            })
+        })
+        .collect()
 }
 
 /// Apaga as inscrições que o serviço de push disse não existirem mais.

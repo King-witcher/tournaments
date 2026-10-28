@@ -14,6 +14,8 @@ use web_push_native::{
     p256,
 };
 
+use crate::shared::Locale;
+
 /// Quanto o serviço de push guarda o aviso se o navegador estiver
 /// desconectado (e a validade da assinatura VAPID). Depois disso o aviso já
 /// não serve.
@@ -30,6 +32,9 @@ pub struct Target {
     pub p256dh: String,
     /// Segredo de autenticação, base64url sem padding.
     pub auth: String,
+    /// Idioma dos avisos desta inscrição (vai no corpo, para o service worker
+    /// traduzir).
+    pub locale: Locale,
 }
 
 /// O que o serviço de push respondeu.

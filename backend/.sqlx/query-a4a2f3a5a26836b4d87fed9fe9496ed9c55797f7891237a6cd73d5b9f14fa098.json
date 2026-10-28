@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, endpoint, p256dh, auth from push_subscriptions\n           where user_id = any($1)\n           order by id",
+  "query": "select id, endpoint, p256dh, auth, locale from push_subscriptions\n           where user_id = any($1)\n           order by id",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,17 @@
             "name": "auth"
           }
         }
+      },
+      {
+        "ordinal": 4,
+        "name": "locale",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "push_subscriptions",
+            "name": "locale"
+          }
+        }
       }
     ],
     "parameters": {
@@ -57,8 +68,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "a0992ed24d686bddb1fbac3814c67c791cbc469ea993fccbb89dd31c679c56d3"
+  "hash": "a4a2f3a5a26836b4d87fed9fe9496ed9c55797f7891237a6cd73d5b9f14fa098"
 }
