@@ -1,19 +1,25 @@
 import type { ReactNode } from "react";
 
+import styles from "./legacy-field.module.scss";
+
 type Props = {
   label: string;
   hint?: string;
   children: ReactNode;
 };
 
-/** Rótulo, controle e dica opcional num `<label>`: clicar no texto foca o controle. */
+/**
+ * @deprecated Use o campo do Carbon com o rótulo embutido: `TextInput`,
+ * `TextArea`, `Select`, `NumberInput`, `DateTimeInput` com `labelText` e
+ * `helperText`. Este embrulha um controle antigo num `<label>`.
+ */
 export function Field({ label, hint, children }: Props) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: o controle chega por `children`, dentro do label.
-    <label className="flex flex-col gap-1">
-      <span className="text-sm font-medium">{label}</span>
+    <label className={styles.field}>
+      <span className={styles.label}>{label}</span>
       {children}
-      {hint && <span className="text-sm text-muted">{hint}</span>}
+      {hint && <span className={styles.hint}>{hint}</span>}
     </label>
   );
 }

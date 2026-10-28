@@ -1,0 +1,7 @@
+// O lugar de uma ação do cabeçalho enquanto ela carrega: o mesmo quadrado
+// de 48px, para a barra não pular quando ela chega.
+.placeholder {
+  display: block;
+  inline-size: var(--cds-layout-size-height-lg);
+  block-size: var(--cds-layout-size-height-lg);
+}

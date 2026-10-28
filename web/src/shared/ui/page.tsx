@@ -1,23 +1,28 @@
+import { Column, Grid, Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/shared/lib/cn";
-
-/** Coluna central do conteúdo de uma página. No celular, menos espaço no topo: o conteúdo começa acima da dobra. */
-export function Page({
-  children,
-  spacing = "normal",
-}: {
+type Props = {
   children: ReactNode;
+  /**
+   * `narrow` (padrão): texto e formulário, 8 colunas centradas a partir de
+   * `lg`, a largura toda abaixo. `wide`: tabela e chave, 16 colunas.
+   */
+  width?: "narrow" | "wide";
+  /** @deprecated O espaçamento entre os blocos é um só agora; ignorado. */
   spacing?: "normal" | "loose";
-}) {
+};
+
+/**
+ * O conteúdo de uma página, dentro do `Content` da casca: `Grid` do Carbon
+ * com a coluna da largura pedida e os blocos (`PageHeader`, `PageTabs`,
+ * `Section`) empilhados com o espaçamento padrão.
+ */
+export function Page({ children, width = "narrow" }: Props) {
   return (
-    <main
-      className={cn(
-        "mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-16",
-        spacing === "loose" ? "gap-8" : "gap-4",
-      )}
-    >
-      {children}
-    </main>
+    <Grid>
+      <Column sm={4} md={8} lg={width === "wide" ? 16 : { span: 8, offset: 4 }}>
+        <Stack gap={7}>{children}</Stack>
+      </Column>
+    </Grid>
   );
 }

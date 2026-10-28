@@ -1,0 +1,35 @@
+{
+  "title": "Sua conta",
+  "loading": "Carregando a conta…",
+  "loginRequired": "Entre para ver sua conta.",
+  "name": {
+    "title": "Nome exibido",
+    "label": "Nome",
+    "hint": "Aparece no cabeçalho e é o apelido inicial de quem entra numa comunidade. Os apelidos que você já tem nas comunidades não mudam (cada um se troca na página da comunidade).",
+    "save": "Salvar",
+    "saved": "Salvo."
+  },
+  "currentPassword": "Senha atual",
+  "discord": {
+    "title": "Discord",
+    "notLinked": "Vincule o Discord para entrar com ele. Sem ele, quem esquece a senha perde a conta: não há recuperação por email.",
+    "link": "Vincular Discord",
+    "linked": "Vinculado: você pode entrar com o Discord.",
+    "unlinkHint": "Para desvincular, confirme sua senha. O avatar do Discord sai junto.",
+    "unlink": "Desvincular",
+    "needsPassword": "Para desvincular o Discord, crie antes um nome de usuário e senha: a conta precisa de pelo menos um jeito de entrar."
+  },
+  "password": {
+    "title": "Nome de usuário e senha",
+    "none": "Crie um nome de usuário e senha para entrar sem o Discord.",
+    "create": "Criar nome de usuário e senha",
+    "current": "Seu nome de usuário: {username}",
+    "newPassword": "Nova senha",
+    "newPasswordHint": "Deixe em branco para manter a atual. Trocar a senha encerra suas outras sessões.",
+    "save": "Salvar",
+    "saved": "Salvo.",
+    "remove": "Remover nome de usuário e senha",
+    "removeHint": "Você continua entrando com o Discord.",
+    "needsDiscord": "Para remover a senha, vincule antes o Discord: a conta precisa de pelo menos um jeito de entrar."
+  }
+}

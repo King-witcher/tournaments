@@ -1,0 +1,112 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// Blocos de esqueleto com o mixin do Carbon (o mesmo do SkeletonPlaceholder),
+// mas com a largura e a altura do que vai chegar.
+.block {
+  @include skeleton;
+
+  display: block;
+  inline-size: 100%;
+  block-size: spacing.$spacing-09;
+}
+
+.tile {
+  @include skeleton;
+
+  display: block;
+  inline-size: 100%;
+  block-size: spacing.$spacing-12;
+}
+
+.title {
+  @include skeleton;
+
+  display: block;
+  inline-size: 60%;
+  block-size: spacing.$spacing-08;
+}
+
+.crumb {
+  @include skeleton;
+
+  display: block;
+  inline-size: 30%;
+  block-size: spacing.$spacing-05;
+}
+
+.tabs {
+  @include skeleton;
+
+  display: block;
+  inline-size: 100%;
+  block-size: spacing.$spacing-08;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+}
+
+.label {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-07;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+}
+
+.tileGrid {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-columns: 1fr;
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include breakpoint.breakpoint(lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sectionTitle {
+  @include skeleton;
+
+  display: block;
+  inline-size: 40%;
+  block-size: spacing.$spacing-07;
+}
+
+.meta {
+  @include skeleton;
+
+  display: block;
+  inline-size: 50%;
+  block-size: spacing.$spacing-05;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { serverApi } from "@/shared/api/server";
-import { Alert } from "@/shared/ui/alert";
+import { Notice } from "@/shared/ui/notice";
 
 type Status = "ok" | "unavailable" | "offline";
 
@@ -28,5 +28,5 @@ export async function ApiStatus() {
   ]);
 
   if (status === "ok") return null;
-  return <Alert>{t(status)}</Alert>;
+  return <Notice kind="error">{t(status)}</Notice>;
 }

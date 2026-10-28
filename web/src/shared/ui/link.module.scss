@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Link solto (fora de um parágrafo) é alvo de toque: no celular, a altura
+// de um botão, com o texto centrado.
+.standalone {
+  @include breakpoint.breakpoint-down(md) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--cds-layout-size-height-lg);
+  }
+}

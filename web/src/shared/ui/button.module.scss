@@ -1,0 +1,22 @@
+@use "@carbon/react/scss/spacing";
+
+// O indicador de "em andamento" dentro do botão: na cor do texto (o azul do
+// Carbon sumiria no botão primário), sem a largura e a altura que o
+// InlineLoading tem quando fica sozinho.
+.pending .spinner {
+  inline-size: auto;
+  min-block-size: 0;
+  margin-inline-start: spacing.$spacing-03;
+
+  svg circle {
+    stroke: currentColor;
+  }
+
+  svg circle:first-of-type {
+    stroke: transparent;
+  }
+}
+
+.pending {
+  cursor: progress;
+}

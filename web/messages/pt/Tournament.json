@@ -1,0 +1,67 @@
+{
+  "loading": "Carregando o torneio…",
+  "loginRequired": "Entre para ver este torneio.",
+  "draftHint": "Rascunho: só organizadores veem. Publique para abrir as inscrições.",
+  "edit": "Editar",
+  "organizerTitle": "Organização",
+  "editTitle": "Editar torneio",
+  "publish": "Publicar e abrir inscrições",
+  "publishToCheckIn": "Publicar e abrir o check-in",
+  "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
+  "publishSkipsRegistration": "Pela data de início e pela janela de check-in, o check-in já abriu: publicado agora, o torneio vai direto para o check-in, sem inscrições (só entra na chave quem você já inscreveu). Para abrir as inscrições, mude a data em Editar antes de publicar, ou use \"Reabrir inscrições\" depois.",
+  "publishConfirmCheckIn": "Publicar o torneio direto no check-in, sem inscrições? A comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
+  "delete": "Excluir rascunho",
+  "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
+  "rules": "Regras",
+  "setup": {
+    "title": "Formato",
+    "labels": {
+      "bracket": "Chave",
+      "series": "Séries",
+      "slots": "Vagas",
+      "champions": "Campeões",
+      "checkIn": "Check-in",
+      "contest": "Contestação"
+    },
+    "bracket": {
+      "single": "Eliminação simples",
+      "double": "Eliminação dupla",
+      "doubleReset": "Eliminação dupla, grande final com reset"
+    },
+    "series": {
+      "single": "Melhor de {bestOf}; final melhor de {finals}",
+      "double": "Melhor de {bestOf}; grande final melhor de {finals}"
+    },
+    "bans": "{count, plural, =0 {sem bans} one {# ban por mapa} other {# bans por mapa}}",
+    "noRepeat": {
+      "off": "pode repetir campeão",
+      "match": "sem repetir campeão na mesma partida",
+      "stage": "sem repetir campeão na fase",
+      "tournament": "sem repetir campeão no torneio"
+    },
+    "checkIn": "abre {window} antes do início",
+    "noCheckIn": "sem check-in: todos os inscritos entram na chave",
+    "contest": "{window} para o adversário confirmar ou contestar"
+  },
+  "translation": {
+    "title": "Tradução: {language}",
+    "hint": "Opcional. Descrição ou regras em branco mostram as do idioma original.",
+    "save": "Salvar tradução",
+    "saved": "Tradução salva.",
+    "remove": "Remover tradução",
+    "removeConfirm": "Remover esta tradução? O texto traduzido é apagado e quem lê neste idioma passa a ver o original."
+  },
+  "invites": {
+    "title": "Links de inscrição",
+    "description": "Quem entra pelo link vira jogador da comunidade e já fica inscrito. O link serve para várias pessoas e vale enquanto a inscrição estiver aberta.",
+    "full": "As vagas acabaram: os links não inscrevem mais ninguém até abrir vaga (alguém sair ou as vagas aumentarem).",
+    "create": "Gerar link de inscrição",
+    "empty": "Nenhum link de inscrição.",
+    "item": "Criado por {name} {created}",
+    "uses": "{count, plural, =0 {ninguém se inscreveu ainda} one {# inscrição} other {# inscrições}}"
+  },
+  "startsAt": "Começa <date></date>",
+  "startedAt": "Início marcado para <date></date>",
+  "noStartDate": "Sem data de início.",
+  "publishNeedsDate": "Defina a data de início (em Editar) para publicar."
+}

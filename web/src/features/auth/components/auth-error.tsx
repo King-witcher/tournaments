@@ -1,5 +1,5 @@
 import { apiErrorMessage } from "@/shared/api/errors";
-import { Alert } from "@/shared/ui/alert";
+import { Notice } from "@/shared/ui/notice";
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -10,5 +10,5 @@ export async function AuthError({ searchParams }: Props) {
   const { auth_error } = await searchParams;
   if (typeof auth_error !== "string") return null;
 
-  return <Alert>{await apiErrorMessage(auth_error)}</Alert>;
+  return <Notice kind="error">{await apiErrorMessage(auth_error)}</Notice>;
 }

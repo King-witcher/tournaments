@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4001",
     "lint": "biome check",
     "format": "biome check --write",
-    "gen:api": "openapi-typescript http://localhost:8080/openapi.json -o src/shared/api/schema.d.ts"
+    "gen:api": "openapi-typescript http://localhost:4000/openapi.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
+    "@carbon/icons-react": "^11.91.0",
+    "@carbon/react": "^1.119.0",
     "next": "16.4.3",
     "next-intl": "^4.14.9",
     "openapi-fetch": "^0.17.0",
@@ -20,12 +22,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
-    "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "openapi-typescript": "^7.13.0",
-    "tailwindcss": "^4",
+    "sass": "^1.106.1",
+    "sass-loader": "^17.1.0",
     "typescript": "^5"
   }
 }

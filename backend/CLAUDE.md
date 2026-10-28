@@ -31,9 +31,11 @@ crates/api/src/
                   TenantId, Role, TenantMember (e `TenantMember::all_of`, as participações de quem vê),
                   apelido
   members/        /tenants/{slug}/me (apelido, sair) e /tenants/{slug}/members (listar,
-                  papel, remover); departure.rs (quem remove quem; sair deixa o membro
-                  inativo: sai das inscrições abertas e os convites dele são revogados).
-                  Fica acima de lifecycle e invites
+                  perfil, papel, remover); departure.rs (quem remove quem; sair deixa o membro
+                  inativo: sai das inscrições abertas e os convites dele são revogados);
+                  history.rs (os torneios do perfil: tournaments::list de quem vê,
+                  participants::registrations_of, matches::place_of, my_tournaments::Situation).
+                  Fica acima de lifecycle, invites e my_tournaments
   invites/        /tenants/{slug}/invites, /invites/{token} e os links de inscrição
                   (/tenants/{slug}/tournaments/{t}/invites, em tournament.rs)
   tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
@@ -52,7 +54,8 @@ crates/api/src/
   maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa
   my_tournaments/ GET /me/tournaments: os torneios de quem vê em todas as comunidades, com a
                   situação e a próxima partida (TenantMember::all_of, tournaments::list,
-                  matches::place). Fica acima de tournaments e matches
+                  matches::place); situation.rs (Situation antes da chave e pelo lugar nela,
+                  que o perfil do membro também usa). Fica acima de tournaments e matches
   matches/        .../bracket, .../matches/{match}[/result] e .../matches/{match}/games/{n}
                   [/report|/confirm|/contest|/replay]: a série mapa a mapa. stage.rs (fase → chave por
                   replay das séries decididas, com os mapas; start, discard, sync_status),
@@ -63,7 +66,7 @@ crates/api/src/
                   lançar, resolver e corrigir mapas, W.O. na série), replay.rs (organizador anula o último mapa sem
                   confirmar para ser jogado de novo), outcome.rs (mapa pelos lados
                   → engine), tasks.rs (o que a partida e cada mapa esperam de quem vê), key.rs
-                  (wb-1-3), history.rs, view.rs, mine.rs (lugar de quem vê na chave e próxima partida), detail.rs, actions.rs, withdrawals.rs (W.O.
+                  (wb-1-3), history.rs, view.rs, mine.rs (lugar de quem vê na chave e próxima partida; place_of, o de outro inscrito), detail.rs, actions.rs, withdrawals.rs (W.O.
                   automático de quem desistiu; settle_withdrawals); SQL em db/ (leitura e
                   confirmação por tempo, writes da série, events, games)
 ```

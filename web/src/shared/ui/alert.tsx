@@ -1,35 +1,29 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/shared/lib/cn";
+import styles from "./error-text.module.scss";
+import { Notice } from "./notice";
 
-/** Erro em destaque: o erro principal de uma página ou formulário. */
+/**
+ * @deprecated Use `Notice kind="error"` (erro da página) ou `FormError` (erro
+ * geral de formulário, acima dos botões).
+ */
 export function Alert({ children }: { children: ReactNode }) {
-  return (
-    <p
-      role="alert"
-      className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm"
-    >
-      {children}
-    </p>
-  );
+  return <Notice kind="error">{children}</Notice>;
 }
 
-/** Erro curto, junto do controle que falhou. */
+/**
+ * Erro curto, junto do controle que falhou (um botão de linha que chamou a
+ * API). Em campo de formulário, use o `invalidText` do próprio campo.
+ */
 export function ErrorText({
   children,
-  size = "sm",
 }: {
   children: ReactNode;
+  /** @deprecated Não muda mais nada: o texto tem um tamanho só. */
   size?: "sm" | "xs";
 }) {
   return (
-    <p
-      role="alert"
-      className={cn(
-        "text-red-600 dark:text-red-400",
-        size === "xs" ? "text-xs" : "text-sm",
-      )}
-    >
+    <p role="alert" className={styles.error}>
       {children}
     </p>
   );

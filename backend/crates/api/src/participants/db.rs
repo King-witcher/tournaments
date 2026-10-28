@@ -102,6 +102,32 @@ pub async fn is_registered(
     .await
 }
 
+/// Uma inscrição de um membro, num torneio do tenant.
+pub struct Registration {
+    /// Slug do torneio.
+    pub tournament: String,
+    pub checked_in: bool,
+}
+
+/// As inscrições de `user_id` nos torneios do tenant, em qualquer status.
+pub async fn registrations_of(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    user_id: i64,
+) -> Result<Vec<Registration>, sqlx::Error> {
+    sqlx::query_as!(
+        Registration,
+        r#"select t.slug as tournament, p.checked_in_at is not null as "checked_in!"
+           from participants p
+           join tournaments t on t.tenant_id = p.tenant_id and t.id = p.tournament_id
+           where p.tenant_id = $1 and p.user_id = $2"#,
+        tenant.get(),
+        user_id
+    )
+    .fetch_all(conn)
+    .await
+}
+
 /// Inscreve `user_id` se ele for membro ativo do tenant; `false` se não é.
 /// Quem chama já conferiu que ele não está inscrito, com o torneio travado.
 pub async fn insert(

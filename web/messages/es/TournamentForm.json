@@ -1,0 +1,55 @@
+{
+  "name": "Nombre",
+  "slug": "Dirección",
+  "slugHint": "Minúsculas, números y guion, de 3 a 32. No se puede cambiar después.",
+  "locale": "Idioma de los textos",
+  "localeHint": "Las traducciones a otros idiomas son opcionales y se agregan al editar. El idioma original no cambia después.",
+  "description": "Descripción",
+  "rules": "Reglas",
+  "markdownHint": "Acepta Markdown: **negrita**, listas con -, enlaces.",
+  "visibility": "Visibilidad",
+  "visibilityOptions": {
+    "public": "Pública",
+    "private": "Privada"
+  },
+  "visibilityHint": "Pública: toda la comunidad lo ve y se inscribe. Privada: solo lo ven los inscritos y los organizadores, y entra quien un organizador inscriba o quien use un enlace de inscripción. Se puede cambiar hasta que el torneo termine.",
+  "setup": "Formato",
+  "maxParticipants": "Cupos",
+  "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
+  "bracket": "Llave",
+  "brackets": {
+    "single": "Eliminación simple",
+    "double": "Eliminación doble"
+  },
+  "grandFinalReset": "Gran final con reset: si gana quien viene de la llave de perdedores, se juega otra serie",
+  "bestOf": "Partidas",
+  "finalsBestOf": {
+    "single": "Final",
+    "double": "Gran final"
+  },
+  "bestOfOption": "Al mejor de {count}",
+  "bansPerGame": "Bans de campeón por mapa",
+  "bansOption": "{count, plural, =0 {Sin bans} one {# ban} other {# bans}}",
+  "noRepeat": "No repetir campeón",
+  "noRepeatOptions": {
+    "off": "Se puede repetir",
+    "match": "Dentro de cada partida",
+    "stage": "En toda la fase",
+    "tournament": "En todo el torneo"
+  },
+  "noRepeatHint": "La regla se verifica en el peor caso de mapas para la cantidad de cupos. Si faltan campeones, el torneo no se guarda.",
+  "setupLocked": "El torneo ya empezó: formato, cupos, campeones, fecha y check-in ya no cambian.",
+  "create": "Crear borrador",
+  "save": "Guardar",
+  "schedule": "Fecha y check-in",
+  "startsAt": "Inicio",
+  "startsAtHint": "En tu zona horaria ({timeZone}). Obligatorio para publicar; cambia hasta que el torneo empiece.",
+  "checkIn": "Check-in",
+  "checkInOff": "Sin check-in",
+  "checkInOption": "Abre {minutes} min antes del inicio",
+  "checkInHint": "Solo quien haga check-in entra en la llave; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
+  "results": "Resultados",
+  "contest": "Plazo para impugnar",
+  "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
+  "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos."
+}

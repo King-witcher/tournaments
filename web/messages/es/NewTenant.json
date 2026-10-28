@@ -1,0 +1,9 @@
+{
+  "title": "Crear comunidad",
+  "loginRequired": "Inicia sesión para crear una comunidad.",
+  "name": "Nombre",
+  "slug": "Dirección",
+  "slugHint": "Minúsculas, números y guion, de 3 a 32. No se puede cambiar después.",
+  "limit": "Cada persona puede ser dueña de hasta 3 comunidades.",
+  "submit": "Crear comunidad"
+}

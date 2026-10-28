@@ -1,103 +1,104 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import type { CarbonIconType } from "@carbon/icons-react";
+import { type ReactNode, useRef, useState } from "react";
 
-import { Button } from "./button";
+import { Button, type ButtonKind, type ButtonVariant } from "./button";
+import { ConfirmModal } from "./confirm-modal";
 
 type Props = {
-  /** Texto do botão; o mesmo vai no "sim", para dizer o que acontece. */
+  /** Texto do botão; o mesmo vai no primário do Modal, para dizer o que acontece. */
   children: ReactNode;
-  /** O que vai acontecer, numa frase, mostrado antes do sim. */
+  /** O que vai acontecer, numa frase, no corpo do Modal. */
   question: ReactNode;
+  /** Título do Modal; sem ele, o texto do botão. */
+  title?: ReactNode;
   onConfirm: () => void;
   pending?: boolean;
   disabled?: boolean;
-  variant?: "default" | "outline" | "link";
-  size?: "default" | "sm";
-  className?: string;
-  /** Vermelho no sim (padrão): a ação apaga ou tira algo. `false` para as que só avançam (publicar, iniciar). */
+  /** Apaga ou tira algo (padrão): Modal `danger`. `false` para o que só avança (publicar, iniciar). */
+  destructive?: boolean;
+  /** @deprecated Use `destructive`. */
   danger?: boolean;
+  /** Grave e raro (desfazer início, transferir posse): pede este texto digitado. */
+  confirmSlug?: string;
+  /** Aparência do gatilho; padrão `danger--tertiary` (destrutivo) ou `tertiary`. */
+  kind?: ButtonKind;
+  /** @deprecated Use `kind`. */
+  variant?: ButtonVariant;
+  size?: "sm" | "md" | "lg" | "default";
+  renderIcon?: CarbonIconType;
+  className?: string;
 };
 
 /**
- * Botão de ação que não se desfaz fácil: o primeiro clique troca o botão pela
- * pergunta, com "sim" (o mesmo texto do botão) e "Não"; só o sim roda a
- * ação. Fica na tela, no lugar do botão, em vez do `confirm()` do navegador,
- * que não diz de onde veio e some com o contexto. Esc cancela.
+ * Botão de ação que não se desfaz fácil: o clique abre o `ConfirmModal` (o que
+ * vai acontecer, o primário com o mesmo texto do botão e "Não"); só o
+ * primário roda `onConfirm`. Ao fechar, o foco volta para este botão, que
+ * fica pendente enquanto a ação roda. Nada de `window.confirm`.
  */
 export function ConfirmButton({
   children,
   question,
+  title,
   onConfirm,
   pending,
   disabled,
-  variant = "outline",
+  destructive,
+  danger,
+  confirmSlug,
+  kind,
+  variant,
   size = "sm",
+  renderIcon,
   className,
-  danger = true,
 }: Props) {
-  const t = useTranslations("Common");
-  const [asking, setAsking] = useState(false);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  // Fechou a pergunta (sim, não ou Esc): o foco volta para o botão, que
-  // reaparece no lugar dela (pendente, no sim), em vez de cair no começo da página.
-  const returnFocus = useRef(false);
-
-  // O foco vai para o "Não": o botão clicado sumiu, e um Enter a mais não confirma.
-  useEffect(() => {
-    if (asking) cancelRef.current?.focus();
-    else if (returnFocus.current) {
-      returnFocus.current = false;
-      buttonRef.current?.focus();
-    }
-  }, [asking]);
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const isDestructive = destructive ?? danger ?? true;
 
   const close = () => {
-    returnFocus.current = true;
-    setAsking(false);
+    setOpen(false);
+    // O Modal sai da árvore e o foco cairia no body: volta para o gatilho.
+    requestAnimationFrame(() => trigger.current?.focus());
   };
 
-  if (!asking) {
-    return (
+  return (
+    <>
       <Button
-        ref={buttonRef}
+        ref={trigger}
+        kind={
+          kind ??
+          (variant
+            ? undefined
+            : isDestructive
+              ? "danger--tertiary"
+              : "tertiary")
+        }
         variant={variant}
         size={size}
         pending={pending}
         disabled={disabled}
+        renderIcon={renderIcon}
         className={className}
-        onClick={() => setAsking(true)}
+        onClick={() => setOpen(true)}
       >
         {children}
       </Button>
-    );
-  }
-  return (
-    // min-w-0: o fieldset não encolhe abaixo do conteúdo e empurraria a página para o lado no celular.
-    <fieldset
-      className="min-w-0 max-w-prose"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") close();
-      }}
-    >
-      <legend className="mb-2 text-sm">{question}</legend>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={danger ? "destructive" : "default"}
-          size="sm"
-          onClick={() => {
-            close();
-            onConfirm();
-          }}
-        >
-          {children}
-        </Button>
-        <Button ref={cancelRef} variant="outline" size="sm" onClick={close}>
-          {t("no")}
-        </Button>
-      </div>
-    </fieldset>
+      <ConfirmModal
+        open={open}
+        onClose={close}
+        onConfirm={() => {
+          close();
+          onConfirm();
+        }}
+        title={title ?? children}
+        confirmLabel={children}
+        destructive={isDestructive}
+        slug={confirmSlug}
+      >
+        {question}
+      </ConfirmModal>
+    </>
   );
 }

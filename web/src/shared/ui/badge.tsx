@@ -1,30 +1,28 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/shared/lib/cn";
+import { type Status, StatusTag } from "./status-tag";
 
-const variants = {
-  neutral: "bg-black/5 dark:bg-white/10",
-  accent: "bg-blue-600 text-white dark:bg-blue-500",
-  warning: "bg-amber-500/20 text-amber-900 dark:text-amber-200",
-  success: "bg-green-600/15 text-green-800 dark:text-green-300",
+const STATUS: Record<"neutral" | "accent" | "warning" | "success", Status> = {
+  neutral: "neutral",
+  accent: "registration",
+  warning: "check_in",
+  success: "confirmed",
 };
 
-/** Etiqueta curta de estado, em pílula. */
+/**
+ * @deprecated Use `StatusTag` com o significado (`status`), não a cor. Este
+ * só traduz as variantes antigas.
+ */
 export function Badge({
   children,
   variant = "neutral",
 }: {
   children: ReactNode;
-  variant?: keyof typeof variants;
+  variant?: keyof typeof STATUS;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-        variants[variant],
-      )}
-    >
+    <StatusTag status={STATUS[variant]} size="sm">
       {children}
-    </span>
+    </StatusTag>
   );
 }

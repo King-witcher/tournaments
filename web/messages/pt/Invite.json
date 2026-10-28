@@ -1,0 +1,19 @@
+{
+  "loading": "Carregando o convite…",
+  "title": "Convite para entrar em {name}",
+  "expires": "O convite expira {expires}.",
+  "loginRequired": "Entre ou crie uma conta para aceitar o convite.",
+  "accept": "Entrar na comunidade",
+  "tournamentTitle": "Inscrição em {name}",
+  "tournamentSpots": "{count, plural, =0 {{max} vagas, nenhuma ocupada ainda} one {# inscrito de {max} vagas} other {# inscritos de {max} vagas}}.",
+  "tournamentHint": "Aceitar também faz você entrar na comunidade {tenant} como jogador.",
+  "acceptTournament": "Entrar e se inscrever",
+  "startsAt": "Começa",
+  "alreadyMember": "Você já é membro de {tenant}: não precisa aceitar o convite.",
+  "alreadyRegistered": "Sua inscrição neste torneio já está feita.",
+  "goToTenant": "Ir para a comunidade",
+  "goToTournament": "Ir para o torneio",
+  "returning": "Você já fez parte de {tenant}. Ao voltar, entra como jogador e recupera o apelido \"{nickname}\" e o seu histórico de torneios.",
+  "memberRegisters": "Você já é membro de {tenant}: aceitar só faz a sua inscrição.",
+  "register": "Inscrever-se"
+}

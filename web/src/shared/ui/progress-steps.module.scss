@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Cinco passos lado a lado não cabem em 390px: no celular a lista fica
+// vertical. Os dois existem no HTML e um some por CSS (sem pular na hidratação).
+.horizontal {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.vertical {
+  @include breakpoint.breakpoint(md) {
+    display: none;
+  }
+}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
+import styles from "./countdown.module.scss";
 
 type Props = {
   /** Instante final em ISO (UTC). */
@@ -45,7 +46,7 @@ export function Countdown({ until, onExpire }: Props) {
 
   if (!isClient) return null;
   return (
-    <time dateTime={until} className="tabular-nums">
+    <time dateTime={until} className={styles.countdown}>
       {format(end - now)}
     </time>
   );

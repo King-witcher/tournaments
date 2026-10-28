@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/spacing";
+
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+}

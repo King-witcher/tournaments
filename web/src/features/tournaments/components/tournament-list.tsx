@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
-import { buttonVariants } from "@/shared/ui/button";
+import { ButtonLink } from "@/shared/ui/button-link";
 import { TournamentRow } from "./tournament-row";
 
 type Props = {
@@ -43,12 +42,9 @@ export async function TournamentList({ slug, viewerRole }: Props) {
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">{t("title")}</h2>
         {viewerRole !== "player" && (
-          <Link
-            href={`/${slug}/new`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
+          <ButtonLink href={`/${slug}/new`} kind="tertiary" size="sm">
             {t("create")}
-          </Link>
+          </ButtonLink>
         )}
       </div>
       {tournaments.length === 0 ? (

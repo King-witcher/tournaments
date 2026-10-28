@@ -1,8 +1,8 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    db, departure,
-    types::{Member, MemberPath, SetRole, UpdateMyMembership},
+    db, departure, history,
+    types::{Member, MemberPath, MemberProfile, SetRole, UpdateMyMembership},
 };
 use crate::{
     AppState,
@@ -120,6 +120,49 @@ pub async fn list_members(
     member: TenantMember,
 ) -> Result<Json<Vec<Member>>, ApiError> {
     db::list(&state.db, member.tenant, None).await.map(Json)
+}
+
+#[utoipa::path(
+    get,
+    path = "/tenants/{slug}/members/{user_id}",
+    tag = "tenants",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("user_id" = i64, Path, description = "Id do usuário membro"),
+    ),
+    responses(
+        (status = OK, body = MemberProfile, description = "O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho nem privado em que não está inscrito), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes"),
+        (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo: nunca foi, saiu ou foi removido)"),
+    )
+)]
+pub async fn get_member(
+    State(state): State<AppState>,
+    member: TenantMember,
+    PathParams(path): PathParams<MemberPath>,
+) -> Result<Json<MemberProfile>, ApiError> {
+    let Member {
+        user_id,
+        nickname,
+        display_name,
+        avatar_url,
+        role,
+        joined_at,
+    } = db::list(&state.db, member.tenant, Some(path.user_id))
+        .await?
+        .pop()
+        .ok_or(ApiError::not_found("member.not_found"))?;
+    let tournaments = history::of(&state.db, &member, user_id).await?;
+    Ok(Json(MemberProfile {
+        user_id,
+        nickname,
+        display_name,
+        avatar_url,
+        role,
+        joined_at,
+        tournaments,
+    }))
 }
 
 #[utoipa::path(

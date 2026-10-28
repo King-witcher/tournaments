@@ -1,0 +1,41 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O tile cresce até a altura da linha da grade (todos do mesmo tamanho).
+.tile {
+  flex: 1;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+}
+
+.title {
+  @include type.type-style("heading-compact-02");
+
+  color: theme.$text-primary;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-02;
+}
+
+// O link à parte (a próxima partida) fica colado ao tile, na mesma camada,
+// sem entrar no link do tile (link dentro de link não é permitido).
+.footer {
+  padding: spacing.$spacing-03 spacing.$spacing-05;
+  background-color: theme.$layer-01;
+  border-block-start: 1px solid theme.$border-subtle-01;
+}

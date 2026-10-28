@@ -7,26 +7,31 @@ import { ApiStatus } from "@/features/health/components/api-status";
 import { MyTenants } from "@/features/tenants/components/my-tenants";
 import { MyTournaments } from "@/features/tournaments/components/my-tournaments";
 import { Page } from "@/shared/ui/page";
-import { LoadingSection } from "@/shared/ui/skeleton";
+import { PageHeader } from "@/shared/ui/page-header";
+import { SectionSkeleton } from "@/shared/ui/skeleton";
 
 export default async function Home({ searchParams }: PageProps<"/[locale]">) {
   const t = await getTranslations("Home");
 
   return (
-    <Page spacing="loose">
+    <Page width="wide">
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">{t("title")}</h1>
-        <p className="text-muted">{t("subtitle")}</p>
-      </header>
+      <PageHeader title={t("title")} meta={t("subtitle")} />
       <Suspense fallback={null}>
         <ApiStatus />
       </Suspense>
       {/* Uma espera só: quem não entrou vê o convite a entrar, quem entrou vê as
           listas, e a página troca o esqueleto uma vez em vez de pular três. */}
-      <Suspense fallback={<LoadingSection rows={3} />}>
+      <Suspense
+        fallback={
+          <>
+            <SectionSkeleton tiles={3} />
+            <SectionSkeleton tiles={2} />
+          </>
+        }
+      >
         <AnonymousIntro />
         <MyTournaments />
         <MyTenants />

@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
-import { Link, usePathname } from "@/i18n/navigation";
-import { buttonVariants } from "@/shared/ui/button";
+import { usePathname } from "@/i18n/navigation";
+import { ButtonLink } from "@/shared/ui/button-link";
 
 /**
  * Leva ao cadastro, que depois volta para a página atual. Ao lado do "Entrar"
@@ -15,11 +15,11 @@ export function SignupButton() {
   const pathname = usePathname();
 
   return (
-    <Link
+    <ButtonLink
       href={{ pathname: "/signup", query: { return_to: pathname } }}
-      className={buttonVariants({ variant: "outline", size: "sm" })}
+      kind="secondary"
     >
       {t("signup")}
-    </Link>
+    </ButtonLink>
   );
 }

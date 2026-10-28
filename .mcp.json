@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ibm-carbon-design": {
+      "type": "http",
+      "url": "https://mcp.carbondesignsystem.com/mcp"
+    }
+  }
+}

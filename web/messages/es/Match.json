@@ -1,0 +1,129 @@
+{
+  "loading": "Cargando la partida…",
+  "loginRequired": "Inicia sesión para ver esta partida.",
+  "back": "Volver al torneo",
+  "label": "{part} · {round} · partida {index}",
+  "bestOf": "Al mejor de {count}",
+  "seed": "seed {seed}",
+  "state": {
+    "pending": "Los lados todavía dependen de otras partidas.",
+    "ready": "Por jugar.",
+    "bye": "Sin rival: avanza sin jugar.",
+    "completed": "Terminada.",
+    "not_needed": "No fue necesaria: quien venía de la llave de ganadores ganó la gran final."
+  },
+  "confirmedVia": {
+    "opponent": "Confirmado por el rival <time></time>.",
+    "deadline": "Confirmado al terminar el plazo para impugnar <time></time>.",
+    "organizer": "Definido por la organización <time></time>.",
+    "withdrawal": "W.O. automático: quien perdió abandonó o salió de la comunidad <time></time>.",
+    "maps": "Decidida por los mapas confirmados <time></time>."
+  },
+  "games": {
+    "title": "Mapas",
+    "hint": "Cada mapa se envía y se confirma por separado. El rival tiene {window} para confirmar o impugnar; sin respuesta, se confirma solo.",
+    "number": "Mapa {number}",
+    "noMap": "mapa sin informar",
+    "won": "Ganó {name}",
+    "claim": "{reporter} envió: ganó {winner}",
+    "awaiting": "Esperando envío.",
+    "pending": "Todavía no cuenta en el marcador: se confirma solo a las <at></at> (faltan <time></time>).",
+    "contested": "Impugnado por {name}: “{comment}”. No cuenta en el marcador hasta que lo resuelva la organización.",
+    "confirmed": {
+      "opponent": "Confirmado por el rival.",
+      "deadline": "Confirmado al terminar el plazo.",
+      "organizer": "Confirmado por la organización.",
+      "withdrawal": "Confirmado.",
+      "maps": "Confirmado."
+    },
+    "empty": "Todavía no se envió ningún mapa.",
+    "badge": {
+      "pending": "Pendiente",
+      "contested": "Impugnado",
+      "confirmed": "Confirmado"
+    }
+  },
+  "respond": {
+    "confirm": "Confirmar",
+    "contest": "Impugnar",
+    "comment": "¿Qué está mal?",
+    "commentHint": "Hasta 280 caracteres. La organización lo verá y resolverá.",
+    "submitContest": "Enviar impugnación",
+    "cancel": "Cancelar"
+  },
+  "organizer": {
+    "title": "Organización",
+    "hint": "El W.O. vale para toda la serie: los mapas confirmados quedan y los pendientes se van. Para cargar o corregir un mapa, usa su línea arriba.",
+    "walkover": "W.O. para {name}",
+    "walkoverTitle": "Dar W.O. en la serie",
+    "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria de la serie sin resultado.",
+    "comment": "Nota en el historial (opcional)"
+  },
+  "correction": {
+    "title": "Antes de corregir esta serie",
+    "why": "Quien pasó por aquí ya jugó <matches></matches>, que está decidida. Por eso, una corrección que cambie el resultado de esta serie (otro ganador, o serie sin decisión) se rechaza: esa partida se jugó con los lados que este resultado definió.",
+    "how": "Para cambiar el resultado, corrige antes <matches></matches> hasta que quede sin decisión (cambia el ganador de un mapa) y después vuelve aquí. Sus mapas se anulan cuando cambien los lados. Si ella también llevó a otra partida decidida, empieza por la última.",
+    "howWalkover": "<matches></matches> se decidió por W.O., que una corrección de mapa no deshace: no vuelve a quedar sin decisión. Para cambiar el resultado de esta serie, solo deshaciendo el inicio del torneo.",
+    "allowed": "Corregir sin cambiar el resultado de la serie (el mapa jugado o los frags) sigue valiendo."
+  },
+  "history": {
+    "title": "Historial",
+    "empty": "Todavía no pasó nada en esta partida.",
+    "score": "{winner} ganó {winnerMaps} a {loserMaps}",
+    "walkover": "W.O. para {winner}",
+    "game": "Mapa {number}",
+    "mapWinner": "ganó {winner}",
+    "kinds": {
+      "reported": "{actor} envió",
+      "confirmed": "{actor} confirmó",
+      "auto_confirmed": "Confirmado al terminar el plazo",
+      "contested": "{actor} impugnó",
+      "resolved": "{actor} resolvió la impugnación",
+      "entered": "{actor} cargó",
+      "corrected": "{actor} corrigió",
+      "walkover": "{actor} dio W.O.",
+      "auto_walkover": "W.O. automático: uno de los lados abandonó o salió de la comunidad",
+      "voided": "{actor} anuló: el mapa quedó después de la decisión de la serie, o cambió quién juega la partida",
+      "replay": "{actor} anuló el mapa para jugarlo de nuevo",
+      "voided_auto": "Anulado: la serie pasó a W.O.",
+      "decided": "Serie decidida por los mapas confirmados",
+      "reopened": "{actor} reabrió la serie: la corrección la dejó sin decisión"
+    }
+  },
+  "labelSingle": "{round} · partida {index}",
+  "labelPart": "{part} · {round}",
+  "vs": "×",
+  "series": {
+    "needed": "Al mejor de {bestOf}: gana quien gane {needed, plural, one {# mapa} other {# mapas}}.",
+    "open": "Resultado de los mapas confirmados.",
+    "pending": "{count, plural, one {# mapa espera confirmación.} other {# mapas esperan confirmación.}}",
+    "contested": "{count, plural, one {# mapa impugnado: lo resuelve la organización.} other {# mapas impugnados: los resuelve la organización.}}"
+  },
+  "form": {
+    "winner": "Quién ganó el mapa {number}",
+    "map": "Mapa jugado",
+    "chooseMap": "Elige el mapa…",
+    "pool": "Pool de duelo",
+    "others": "Otros mapas",
+    "frags": "Frags (opcional)",
+    "fragsOf": "Frags de {name}",
+    "submit": "Enviar mapa {number}",
+    "enter": "Cargar mapa {number}",
+    "save": "Guardar mapa {number}",
+    "chooseWinner": "Elige quién ganó el mapa.",
+    "chooseTheMap": "Elige el mapa jugado.",
+    "comment": "Nota en el historial (opcional)"
+  },
+  "gameOrganizer": {
+    "confirmNow": "Confirmar ahora",
+    "accept": "Confirmar victoria de {name}",
+    "other": "Cargar otro resultado",
+    "replay": "Anular: se juega de nuevo",
+    "replayQuestion": "El mapa {number} sale de la serie, y los jugadores juegan y envían el mapa {number} de nuevo. El historial guarda quién lo anuló y la nota.",
+    "replaySubmit": "Anular el mapa {number}",
+    "note": "Nota en el historial (opcional)",
+    "correct": "Corregir",
+    "correctHint": "La llave se rehace. Si la serie cambia y eso contradice una partida decidida después de esta, la corrección se rechaza; los mapas que queden después de la decisión se anulan.",
+    "cancel": "Cancelar"
+  }
+}

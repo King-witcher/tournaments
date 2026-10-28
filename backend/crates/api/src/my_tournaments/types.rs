@@ -17,7 +17,8 @@ pub struct MyTournament {
     pub next_match: Option<NextMatch>,
 }
 
-/// A situação de quem vê no torneio.
+/// A situação de um inscrito no torneio: quem vê, em `/me/tournaments`; o
+/// membro, no perfil dele na comunidade.
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Situation {

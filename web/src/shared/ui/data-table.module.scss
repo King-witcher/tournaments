@@ -1,0 +1,27 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// Colunas marcadas como secundárias somem até o md: no celular ficam a
+// coluna principal, o estado e as ações, sem rolagem lateral.
+.table .secondary {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+// Linha que abre uma página: o nome é o link (teclado e leitor de tela); o
+// clique em qualquer lugar da linha leva ao mesmo lugar.
+.linkRow {
+  cursor: pointer;
+}
+
+// A coluna das ações (⋯) só ocupa o que o botão precisa.
+.actions {
+  inline-size: 1%;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}

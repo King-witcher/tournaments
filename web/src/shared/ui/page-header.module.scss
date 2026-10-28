@@ -1,0 +1,46 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+}
+
+// Título e tags à esquerda, ações à direita; no celular as ações descem
+// para a linha de baixo em vez de espremer o título.
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: spacing.$spacing-05;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+.title {
+  @include type.type-style("heading-04");
+
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}
+
+.meta {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+}

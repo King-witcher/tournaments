@@ -1,0 +1,21 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.name {
+  @include type.type-style("heading-compact-01");
+
+  padding: spacing.$spacing-05 spacing.$spacing-05 spacing.$spacing-03;
+  color: theme.$text-primary;
+  overflow-wrap: anywhere;
+}
+
+// Item que é botão ("Sair") com a mesma cara dos itens que são link (a
+// classe vai no <li>; o botão é o filho).
+.action button {
+  inline-size: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: start;
+}

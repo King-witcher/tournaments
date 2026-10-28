@@ -1,0 +1,52 @@
+{
+  "title": "Inscritos ({count}/{max})",
+  "empty": "Ninguém inscrito ainda.",
+  "member": "Membro",
+  "choose": "Escolha um membro…",
+  "add": "Inscrever",
+  "remove": "Tirar do torneio",
+  "removeConfirm": "Tirar {name} do torneio? A inscrição é apagada e a vaga fica livre; {name} pode se inscrever de novo enquanto as inscrições estiverem abertas.",
+  "left": "saiu",
+  "withdrawn": "desistiu",
+  "withdrawParticipant": "Marcar desistência",
+  "withdrawConfirm": "Marcar a desistência de {name}? {name} continua na chave, mas as partidas que tiver, agora ou quando ficarem prontas, viram W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos).",
+  "registration": {
+    "register": "Inscrever-se",
+    "withdraw": "Cancelar inscrição",
+    "withdrawConfirm": "Cancelar sua inscrição? A vaga fica livre para outra pessoa. Para voltar, inscreva-se de novo enquanto houver vaga (em torneio privado, só pela organização ou por um link de inscrição).",
+    "registered": "Você está inscrito.",
+    "full": "As vagas acabaram.",
+    "privateHint": "Torneio privado: só entra quem um organizador inscrever ou quem usar um link de inscrição."
+  },
+  "seed": "#{seed}",
+  "checkIn": {
+    "opensAt": "O check-in abre <date></date>. Volte a partir daí para confirmar presença: sem check-in, você fica fora da chave.",
+    "suspended": "A organização reabriu as inscrições; o check-in volta quando ela abrir.",
+    "open": "Check-in aberto até o início: confirme presença para entrar na chave.",
+    "openNotRegistered": "Check-in aberto. As inscrições estão fechadas.",
+    "done": "Check-in feito: você está na chave.",
+    "missed": "Você não fez check-in antes do início e ficou fora da chave.",
+    "do": "Fazer check-in",
+    "undo": "Desfazer check-in",
+    "checkedIn": "check-in feito",
+    "notCheckedIn": "sem check-in",
+    "mark": "Marcar check-in",
+    "unmark": "Desmarcar check-in",
+    "unmarkConfirm": "Desmarcar o check-in de {name}? Sem check-in, {name} fica fora da chave se o torneio começar assim."
+  },
+  "seeding": {
+    "title": "Seeding: {count} de {total} inscritos entram na chave",
+    "hint": "A ordem da chave: o 1 é o melhor seed. Digite a posição de alguém para levá-lo direto para lá, ou use as setas. Quem entrar depois vai para o fim. Se ninguém tiver seed ao iniciar, a ordem é sorteada.",
+    "empty": "Ninguém elegível ainda: só entra quem fizer check-in.",
+    "emptyNoCheckIn": "Ninguém inscrito ainda.",
+    "noSeed": "sem seed",
+    "noneSeeded": "Esta ordem ainda não vale: se iniciar assim, a ordem da chave é sorteada. Salve para usar esta ordem, ou sorteie agora para ver o resultado antes.",
+    "up": "Subir {name}",
+    "down": "Descer {name}",
+    "changed": "Ordem alterada: salve para valer.",
+    "save": "Salvar ordem",
+    "shuffle": "Sortear",
+    "shuffleConfirm": "Sortear agora descarta a ordem que você mudou. Continuar?",
+    "position": "Posição de {name} (1 a {total})"
+  }
+}

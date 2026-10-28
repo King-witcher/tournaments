@@ -1,0 +1,23 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: spacing.$spacing-03 spacing.$spacing-05;
+}
+
+.title {
+  @include type.type-style("heading-03");
+}
+
+.description {
+  @include type.type-style("body-01");
+
+  flex-basis: 100%;
+  max-inline-size: 40rem;
+  color: theme.$text-secondary;
+}

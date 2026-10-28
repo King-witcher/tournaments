@@ -1,0 +1,131 @@
+{
+  "internal": "Algo salió mal. Inténtalo de nuevo.",
+  "request": {
+    "invalid_body": "Datos inválidos.",
+    "invalid_path": "Dirección inválida."
+  },
+  "auth": {
+    "unauthenticated": "Tu sesión terminó. Recarga la página para volver a iniciar sesión.",
+    "discord_not_configured": "El inicio de sesión con Discord todavía no está configurado.",
+    "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
+    "discord_denied": "Autorización cancelada en Discord.",
+    "discord_failed": "No se pudo hablar con Discord. Inténtalo de nuevo.",
+    "discord_taken": "Ese Discord ya lo usa otra cuenta. Entra en ella y desvincúlalo antes.",
+    "discord_already_linked": "Tu cuenta ya tiene un Discord vinculado.",
+    "discord_not_linked": "Tu cuenta no tiene Discord vinculado.",
+    "invalid_credentials": "Nombre de usuario o contraseña incorrectos.",
+    "too_many_attempts": "Demasiados intentos con contraseña incorrecta. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
+    "username_invalid": "El nombre de usuario debe tener de 3 a 20 letras, números, _ . o -, sin espacios ni tildes.",
+    "display_name_invalid": "El nombre debe tener de 1 a 32 caracteres, en una sola línea.",
+    "username_taken": "Ese nombre de usuario ya está en uso.",
+    "password_invalid": "La contraseña debe tener de 8 a 128 caracteres.",
+    "password_exists": "Tu cuenta ya tiene nombre de usuario y contraseña.",
+    "no_password": "Tu cuenta no tiene contraseña.",
+    "wrong_password": "Contraseña actual incorrecta.",
+    "last_login": "Es la única forma de entrar en tu cuenta. Agrega otra antes de quitar esta."
+  },
+  "tenant": {
+    "not_found": "Comunidad no encontrada, o no formas parte de ella.",
+    "forbidden": "No tienes permiso para hacer esto en esta comunidad.",
+    "limit_reached": "Ya eres dueño del máximo de 3 comunidades.",
+    "slug_taken": "Esa dirección ya está en uso.",
+    "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
+    "slug_reserved": "Esa dirección está reservada. Elige otra.",
+    "name_invalid": "El nombre debe tener de 1 a 64 caracteres.",
+    "confirmation_mismatch": "La dirección escrita no coincide con la de la comunidad."
+  },
+  "invite": {
+    "not_found": "Invitación no encontrada. Revisa el enlace.",
+    "expired": "Esta invitación venció. Pide un enlace nuevo.",
+    "revoked": "Esta invitación fue revocada. Pide un enlace nuevo."
+  },
+  "member": {
+    "not_found": "Miembro no encontrado.",
+    "is_owner": "Esto no vale para el dueño: su rol no cambia y nadie lo quita.",
+    "owner_must_transfer": "El dueño no sale de la comunidad: transfiere la propiedad antes.",
+    "remove_self": "Para salir de la comunidad, usa \"Salir de la comunidad\".",
+    "owner_limit_reached": "Ese miembro ya es dueño del máximo de {max} comunidades.",
+    "nickname_invalid": "El apodo debe tener de 1 a 32 caracteres."
+  },
+  "tournament": {
+    "not_found": "Torneo no encontrado.",
+    "slug_taken": "Ya hay un torneo con esa dirección en esta comunidad.",
+    "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
+    "slug_reserved": "Esa dirección está reservada. Elige otra.",
+    "name_invalid": "El nombre debe tener de 1 a 80 caracteres.",
+    "description_invalid": "La descripción puede tener hasta {max} caracteres.",
+    "rules_invalid": "Las reglas pueden tener hasta {max} caracteres.",
+    "max_participants_invalid": "Los cupos deben estar entre {min} y {max}.",
+    "bans_invalid": "Son como máximo {max} bans por mapa.",
+    "stage_count_invalid": "Por ahora un torneo tiene una sola fase.",
+    "not_draft": "Esto solo vale para borradores.",
+    "setup_locked": "El torneo ya empezó: formato, cupos y campeones ya no cambian.",
+    "finished": "El torneo ya terminó y no se puede modificar.",
+    "translation_same_locale": "Ese ya es el idioma original del torneo.",
+    "translation_not_found": "No hay traducción en ese idioma.",
+    "private": "Este torneo es privado: la inscripción es por enlace de inscripción o por un organizador.",
+    "registration_closed": "Las inscripciones de este torneo no están abiertas.",
+    "participants_locked": "El torneo ya empezó: los inscritos ya no cambian.",
+    "full": "Ya se llenaron los {max} cupos.",
+    "max_participants_below_registered": "Ya hay {registered} inscritos: los cupos no pueden quedar por debajo de eso.",
+    "starts_at_required": "Define la fecha de inicio del torneo.",
+    "check_in_minutes_invalid": "La ventana de check-in tiene que quedar entre {min} y {max} minutos.",
+    "schedule_locked": "El torneo ya empezó: la fecha de inicio y el check-in ya no cambian.",
+    "check_in_closed": "El check-in no está abierto.",
+    "check_in_disabled": "Este torneo no tiene check-in.",
+    "check_in_not_open": "Abre el check-in antes de iniciar: solo quien haga check-in entra en la llave.",
+    "not_registration": "Esto solo vale con las inscripciones abiertas.",
+    "not_check_in": "Esto solo vale durante el check-in.",
+    "not_in_progress": "El torneo no está en curso.",
+    "not_published": "Publica el torneo antes.",
+    "already_started": "El torneo ya empezó.",
+    "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en la llave (con check-in, si lo hay); ahora hay {eligible}.",
+    "contest_minutes_invalid": "El plazo para impugnar tiene que estar entre {min} y {max} minutos."
+  },
+  "participant": {
+    "already_registered": "Ese miembro ya está inscrito.",
+    "not_found": "Ese miembro no está inscrito.",
+    "not_registered": "No estás inscrito en este torneo.",
+    "not_in_bracket": "Ese inscrito quedó fuera de la llave (sin check-in): no hay de qué abandonar."
+  },
+  "format": {
+    "invalid_best_of": "Al mejor de {best_of} no vale: usa un número impar (1, 3, 5...).",
+    "not_enough_participants": "Se necesitan al menos {min} participantes.",
+    "too_many_participants": "El máximo es de {max} participantes.",
+    "duplicate_participant": "Participante repetido.",
+    "no_stages": "El torneo necesita al menos una fase."
+  },
+  "champions": {
+    "pool_exhausted": "En el peor caso se necesitan {required} campeones, pero el pool tiene {available}. Reduce los cupos, las series o los bans, o afloja la regla de no repetición."
+  },
+  "seeding": {
+    "order_invalid": "La lista de elegibles cambió (alguien hizo o deshizo el check-in). Recarga la página y ajusta de nuevo."
+  },
+  "bracket": {
+    "not_found": "La llave todavía no existe: el torneo no empezó."
+  },
+  "match": {
+    "not_found": "Partida no encontrada.",
+    "not_ready": "Esta partida todavía no se puede jugar.",
+    "not_player": "Solo quien juega la partida puede hacer esto.",
+    "not_in_match": "Ese participante no juega esta partida.",
+    "frags_invalid": "Informa los frags de los dos lados, de 0 a {max}, o ninguno.",
+    "map_unknown": "Mapa desconocido.",
+    "map_repeated": "Ese mapa ya se jugó en esta serie.",
+    "game_tied": "Los frags del mapa {game} están empatados: en el duelo siempre hay un ganador.",
+    "already_confirmed": "Este mapa ya fue confirmado.",
+    "already_contested": "Este mapa ya fue impugnado.",
+    "contested": "Este mapa fue impugnado: lo resuelve la organización.",
+    "own_report": "Tú enviaste este mapa: quien confirma o impugna es el rival.",
+    "comment_invalid": "Escribe un comentario de 1 a 280 caracteres, en una línea.",
+    "correction_conflicts": "Rechazado: esta corrección cambia el resultado de la serie (otro ganador, o serie sin decisión), pero la partida siguiente, jugada a partir de él, ya está decidida. Corrige antes la partida siguiente hasta que quede sin decisión y después vuelve a esta.",
+    "series_decided": "La serie ya está decidida por los mapas enviados: no hay próximo mapa.",
+    "no_games_left": "El al mejor de {best_of} ya tuvo todos sus mapas.",
+    "game_already_reported": "Este mapa ya fue enviado. Recarga la página.",
+    "game_out_of_order": "El próximo mapa de la serie es el {next}.",
+    "game_not_found": "Este mapa no fue enviado.",
+    "game_not_last": "Solo se puede anular el último mapa de la serie: anula antes el mapa {last}.",
+    "map_required": "Elige el mapa jugado.",
+    "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó."
+  }
+}

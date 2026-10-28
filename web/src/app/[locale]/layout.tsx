@@ -1,27 +1,34 @@
+// Os estilos globais (Carbon e temas) entram antes de qualquer componente,
+// para os .module.scss virem depois deles na ordem do CSS.
+import "../globals.scss";
+
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
-
 import { Suspense } from "react";
 
 import { UserMenu } from "@/features/auth/components/user-menu";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { cn } from "@/shared/lib/cn";
+import { AppContent } from "@/shared/ui/app-content";
+import { AppHeader } from "@/shared/ui/app-header";
+import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
 import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
-import { Skeleton } from "@/shared/ui/skeleton";
-import "../globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// IBM Plex, a fonte do Carbon, servida pelo next/font (sem CDN). As
+// variáveis são lidas pelas famílias do Carbon em globals.scss.
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["400", "600"],
 });
 
 export function generateStaticParams() {
@@ -41,32 +48,19 @@ export default async function LocaleLayout({
   const t = await getTranslations("Nav");
 
   return (
-    <html
-      lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang={locale} className={cn(plexSans.variable, plexMono.variable)}>
+      <body>
         <NextIntlClientProvider>
-          <header className="flex items-center justify-between gap-4 border-b border-black/10 px-4 py-3 dark:border-white/10">
-            <Link
-              href="/"
-              className="inline-flex min-h-11 shrink-0 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
-            >
-              {t("home")}
-            </Link>
-            {/* min-w-0: um nome exibido longo encolhe (e corta) em vez de
-                empurrar a página para o lado no celular. */}
-            <div className="flex min-w-0 items-center gap-4">
-              <Suspense fallback={null}>
-                <LocaleSwitcher />
-              </Suspense>
-              {/* O lugar do menu enquanto a sessão é lida: o cabeçalho não pula. */}
-              <Suspense fallback={<Skeleton className="h-5 w-24" />}>
-                <UserMenu />
-              </Suspense>
-            </div>
-          </header>
-          {children}
+          <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
+            {/* O lugar de cada ação enquanto ela chega: a barra não pula. */}
+            <Suspense fallback={<HeaderPlaceholder />}>
+              <LocaleSwitcher />
+            </Suspense>
+            <Suspense fallback={<HeaderPlaceholder />}>
+              <UserMenu />
+            </Suspense>
+          </AppHeader>
+          <AppContent>{children}</AppContent>
         </NextIntlClientProvider>
       </body>
     </html>

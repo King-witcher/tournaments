@@ -347,7 +347,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["get_member"];
         put?: never;
         post?: never;
         delete: operations["remove_member"];
@@ -1261,6 +1261,35 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
+        /** @description Um membro na comunidade, com os torneios dela em que se inscreveu. */
+        MemberProfile: {
+            avatar_url?: string | null;
+            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
+            display_name: string;
+            /** Format: date-time */
+            joined_at: string;
+            nickname: string;
+            role: components["schemas"]["Role"];
+            /**
+             * @description Os torneios da comunidade em que ele se inscreveu, só os que quem vê
+             *     vê na lista dela, do início mais recente ao mais antigo (os sem data,
+             *     só rascunhos, primeiro; no empate, o criado por último).
+             */
+            tournaments: components["schemas"]["MemberTournament"][];
+            /** Format: int64 */
+            user_id: number;
+        };
+        /** @description Um torneio em que o membro se inscreveu. */
+        MemberTournament: {
+            placement?: components["schemas"]["MyPlacement"] | null;
+            /** @description A situação do membro no torneio. */
+            situation: components["schemas"]["Situation"];
+            /**
+             * @description Como na lista da comunidade: `registered` e `checked_in` são de quem
+             *     vê, não do membro.
+             */
+            tournament: components["schemas"]["TournamentSummary"];
+        };
         /** @description Faixa de colocação: `rank` 5 com `tied` 4 é 5º–8º. */
         MyPlacement: {
             /** Format: int32 */
@@ -1402,7 +1431,8 @@ export interface components {
             outcome: components["schemas"]["SourceOutcome"];
         };
         /**
-         * @description A situação de quem vê no torneio.
+         * @description A situação de um inscrito no torneio: quem vê, em `/me/tournaments`; o
+         *     membro, no perfil dele na comunidade.
          * @enum {string}
          */
         Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "playing" | "eliminated" | "withdrawn" | "champion";
@@ -2809,6 +2839,58 @@ export interface operations {
                 };
             };
             /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho nem privado em que não está inscrito), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberProfile"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo: nunca foi, saiu ou foi removido) */
             404: {
                 headers: {
                     [name: string]: unknown;

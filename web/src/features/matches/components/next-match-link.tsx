@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
+import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
 
 type Props = {
@@ -32,24 +32,17 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
     : from
       ? t(from.outcome, { match, source: code(from.match_key) })
       : t("unknown", { match });
+  const task = next.task && tTask(next.task);
+  const urgent =
+    next.task !== undefined &&
+    next.task !== null &&
+    ACTIONABLE.includes(next.task);
 
   return (
-    <Link
-      href={`${tournamentPath}/matches/${next.key}`}
-      className="inline-flex min-h-11 items-center self-start text-sm text-link underline underline-offset-4 sm:min-h-0"
-    >
+    <Link href={`${tournamentPath}/matches/${next.key}`}>
       <span>
         {label}
-        {next.task && (
-          <span
-            className={
-              ACTIONABLE.includes(next.task) ? "font-semibold" : undefined
-            }
-          >
-            {" · "}
-            {tTask(next.task)}
-          </span>
-        )}
+        {task && (urgent ? <strong> · {task}</strong> : <> · {task}</>)}
       </span>
     </Link>
   );

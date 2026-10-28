@@ -7,7 +7,8 @@
 //! por `seeded`. Quem sai do tenant sai das inscrições abertas por
 //! `unregister`; quem desiste do torneio em andamento é marcado por
 //! `withdraw` (o W.O. fica em `matches`), e desfazer o início tira quem
-//! desistiu ou saiu por `delete_departed`.
+//! desistiu ou saiu por `delete_departed`. O perfil do membro (`members`) lê
+//! as inscrições dele por `registrations_of`.
 
 mod check_in;
 mod db;
@@ -21,7 +22,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::{Seeded, delete as unregister, delete_departed, seeded, withdraw};
+pub use db::{Seeded, delete as unregister, delete_departed, registrations_of, seeded, withdraw};
 pub use registration::{Entry, register};
 pub use seeding::finalize as finalize_seeding;
 pub use types::ParticipantPath;

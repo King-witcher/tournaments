@@ -1,0 +1,48 @@
+{
+  "loading": "Carregando a comunidade…",
+  "loginRequired": "Entre para ver esta comunidade.",
+  "yourRole": "Seu papel: {role}",
+  "membership": {
+    "title": "Você nesta comunidade"
+  },
+  "nickname": {
+    "label": "Seu apelido nesta comunidade",
+    "save": "Salvar",
+    "saved": "Apelido salvo."
+  },
+  "members": {
+    "title": "Membros ({count})",
+    "makeOrganizer": "Tornar organizador",
+    "makePlayer": "Tornar jogador",
+    "remove": "Remover",
+    "removeConfirm": "Remover {name} da comunidade? {name} perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as partidas pendentes. Os convites que {name} criou são revogados. O histórico fica, e {name} pode voltar por um convite, como jogador."
+  },
+  "leave": {
+    "title": "Sair da comunidade",
+    "description": "Você perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as partidas pendentes. Os convites que você criou são revogados. Seu nome continua na chave dos torneios que você jogou, e você pode voltar por um convite, como jogador e com o mesmo apelido.",
+    "submit": "Sair da comunidade",
+    "confirm": "Sair da comunidade? Nos torneios em andamento, suas partidas pendentes viram W.O."
+  },
+  "transfer": {
+    "title": "Transferir a posse",
+    "description": "O membro escolhido vira o dono e você vira organizador. Para sair da comunidade, o dono transfere a posse antes.",
+    "member": "Novo dono",
+    "choose": "Escolha um membro…",
+    "typeSlug": "Digite {slug} para confirmar",
+    "submit": "Transferir posse",
+    "empty": "Ainda não há outro membro para receber a posse."
+  },
+  "invites": {
+    "title": "Convites",
+    "description": "Quem entra pelo link vira jogador. Cada link vale por 7 dias e serve para várias pessoas.",
+    "create": "Gerar link de convite",
+    "createdHint": "Copie agora: este link não aparece de novo.",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "empty": "Nenhum convite ativo.",
+    "item": "Criado por {name}, expira {expires}",
+    "uses": "{count, plural, =0 {ninguém entrou ainda} one {# pessoa entrou} other {# pessoas entraram}}",
+    "revoke": "Revogar",
+    "revokeConfirm": "Revogar este link? Quem ainda não usou não consegue mais entrar por ele; dá para gerar outro depois."
+  }
+}

@@ -1,0 +1,14 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+// O Content do Carbon traz 2rem de padding em volta; as margens laterais
+// ficam com o Grid da página (no celular sobraria pouco espaço para o
+// texto). Classe dobrada para vencer a do Carbon, que tem o mesmo peso.
+.content.content {
+  padding-block: spacing.$spacing-06 spacing.$spacing-10;
+  padding-inline: 0;
+
+  @include breakpoint.breakpoint(md) {
+    padding-block-start: spacing.$spacing-07;
+  }
+}

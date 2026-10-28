@@ -1,10 +1,10 @@
 use axum::{Json, extract::State};
 
-use super::types::{MyPlacement, MyTournament, Situation};
+use super::types::{MyTournament, Situation};
 use crate::{
     AppState,
     auth::CurrentUser,
-    matches::{self, Place},
+    matches,
     shared::{ApiError, ErrorBody},
     tenants::{Role, TenantMember},
     tournaments::{self, TournamentStatus, TournamentSummary},
@@ -62,19 +62,14 @@ pub async fn my_tournaments(
     let mut conn = state.db.acquire().await?;
     let mut out = Vec::with_capacity(active.len() + finished.len());
     for (member, mut tournament) in active.into_iter().chain(finished) {
-        let (situation, placement, next_match) = match tournament.status {
-            TournamentStatus::InProgress | TournamentStatus::Finished => {
+        let before = Situation::before_bracket(tournament.status, tournament.checked_in);
+        let (situation, placement, next_match) = match before {
+            Some(situation) => (situation, None, None),
+            None => {
                 let place = matches::place(&mut conn, member, &tournament.slug).await?;
                 tournament.status = place.tournament.status;
-                let (situation, placement) = situation(place.place);
+                let (situation, placement) = Situation::in_bracket(place.place);
                 (situation, placement, place.next)
-            }
-            TournamentStatus::CheckIn if tournament.checked_in => {
-                (Situation::CheckedIn, None, None)
-            }
-            TournamentStatus::CheckIn => (Situation::CheckInPending, None, None),
-            TournamentStatus::Draft | TournamentStatus::Registration => {
-                (Situation::Registered, None, None)
             }
         };
         out.push(MyTournament {
@@ -87,15 +82,4 @@ pub async fn my_tournaments(
         });
     }
     Ok(Json(out))
-}
-
-fn situation(place: Place) -> (Situation, Option<MyPlacement>) {
-    let placement = |(rank, tied)| MyPlacement { rank, tied };
-    match place {
-        Place::Missed => (Situation::MissedCheckIn, None),
-        Place::Playing => (Situation::Playing, None),
-        Place::Withdrawn(p) => (Situation::Withdrawn, p.map(placement)),
-        Place::Eliminated(rank, tied) => (Situation::Eliminated, Some(placement((rank, tied)))),
-        Place::Champion => (Situation::Champion, Some(MyPlacement { rank: 1, tied: 1 })),
-    }
 }

@@ -1,7 +1,8 @@
 //! Testes de `members`: papéis e apelido aqui, sair e remover em
-//! `departure`.
+//! `departure`, o perfil com os torneios do membro em `profile`.
 
 mod departure;
+mod profile;
 
 use axum::http::StatusCode;
 use serde_json::json;

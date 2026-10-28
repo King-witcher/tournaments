@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/z-index";
+
+// Canto de baixo, acima do conteúdo; no celular, a toda a largura.
+.toast {
+  position: fixed;
+  z-index: z-index.z("modal");
+  inset-block-end: spacing.$spacing-05;
+  inset-inline: spacing.$spacing-05;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}

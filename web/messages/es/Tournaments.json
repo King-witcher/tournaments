@@ -1,0 +1,9 @@
+{
+  "title": "Torneos",
+  "create": "Crear torneo",
+  "empty": "Todavía no hay torneos. Crea uno: empieza como borrador, que solo ve la organización, hasta que se publique.",
+  "emptyPlayer": "Todavía no hay torneos publicados. Cuando la organización publique uno, aparecerá aquí.",
+  "participants": "{count}/{max} inscritos",
+  "registered": "estás inscrito",
+  "checkInPending": "falta tu check-in"
+}

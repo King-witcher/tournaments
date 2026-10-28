@@ -21,18 +21,12 @@
     },
     "domains": {
       "next": "recommended",
-      "react": "recommended",
-      "tailwind": "recommended"
+      "react": "recommended"
     }
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
-    }
-  },
-  "css": {
-    "parser": {
-      "tailwindDirectives": true
     }
   },
   "assist": {

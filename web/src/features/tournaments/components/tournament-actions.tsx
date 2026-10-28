@@ -2,9 +2,8 @@ import { useTranslations } from "next-intl";
 
 import { LifecyclePanel } from "@/features/lifecycle/components/lifecycle-panel";
 import { ORGANIZER_PANEL_ID } from "@/features/lifecycle/lib/organizer-panel";
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
-import { buttonVariants } from "@/shared/ui/button";
+import { ButtonLink } from "@/shared/ui/button-link";
 import { textsEditable } from "../lib/status";
 import { DeleteTournamentButton } from "./delete-tournament-button";
 import { PublishTournamentButton } from "./publish-tournament-button";
@@ -30,12 +29,13 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
   const opensAt = tournament.check_in_opens_at;
   const skipsRegistration = opensAt != null && new Date(opensAt) <= now;
   const edit = (
-    <Link
+    <ButtonLink
       href={`/${tenant}/${tournament.slug}/edit`}
-      className={buttonVariants({ variant: "outline", size: "sm" })}
+      kind="tertiary"
+      size="sm"
     >
       {t("edit")}
-    </Link>
+    </ButtonLink>
   );
 
   return (

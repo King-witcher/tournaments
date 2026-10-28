@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.error {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-error;
+}

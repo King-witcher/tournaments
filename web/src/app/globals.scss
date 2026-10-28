@@ -1,44 +1,107 @@
-@import "tailwindcss";
+@use "sass:string";
 
-/*
- * Cores de texto além do corpo, com contraste AA (4.5:1) nos dois temas:
- * --muted (metadado, dica) dá 7.8:1 no claro e 8:1 no escuro, no lugar de
- * opacity, que caía abaixo de 4.5:1 em 50–60%; --link (texto clicável) dá
- * 6.7:1 e 7.9:1 e se distingue do corpo sem precisar de hover.
- */
+// A fonte (IBM Plex) vem do next/font (layout.tsx), que põe as famílias em
+// --font-plex-sans e --font-plex-mono no <html>; nenhum @font-face sai daqui.
+// As famílias do Carbon (body, code e os componentes) leem essas variáveis,
+// com o nome da fonte e as do sistema de reserva. Os tokens de tipo também
+// saem como variáveis (--cds-code-02-font-family etc.), para os .module.scss
+// que usam type.type-style() pegarem a mesma família. Esta configuração tem
+// de vir antes de qualquer outro módulo do Carbon.
+@use "@carbon/react/scss/config" with (
+  $css--emit-type-custom-props: true
+);
+@use "@carbon/react/scss/type" with (
+  $font-families: (
+    "sans":
+      string.unquote(
+        "var(--font-plex-sans), 'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+      ),
+    "mono":
+      string.unquote(
+        "var(--font-plex-mono), 'IBM Plex Mono', Menlo, 'DejaVu Sans Mono', monospace"
+      ),
+    "serif": string.unquote("'IBM Plex Serif', Georgia, Times, serif"),
+  )
+);
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/reset";
+@use "@carbon/react/scss/grid";
+@use "@carbon/react/scss/layer";
+@use "@carbon/react/scss/layout";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/theme";
+
+// Só os componentes que o site usa: o @use "@carbon/react" inteiro gerava
+// 1,25 MB de CSS (minificado); esta lista, cerca de 0,6 MB. Componente do
+// Carbon que não está aqui aparece sem estilo: acrescente a linha dele, em
+// ordem alfabética (nome da pasta em node_modules/@carbon/styles/scss/components).
+@use "@carbon/react/scss/components/accordion";
+@use "@carbon/react/scss/components/breadcrumb";
+@use "@carbon/react/scss/components/button";
+@use "@carbon/react/scss/components/checkbox";
+@use "@carbon/react/scss/components/code-snippet";
+@use "@carbon/react/scss/components/combo-box";
+@use "@carbon/react/scss/components/content-switcher";
+@use "@carbon/react/scss/components/copy-button";
+@use "@carbon/react/scss/components/data-table";
+@use "@carbon/react/scss/components/dropdown";
+@use "@carbon/react/scss/components/form";
+@use "@carbon/react/scss/components/inline-loading";
+@use "@carbon/react/scss/components/link";
+@use "@carbon/react/scss/components/list";
+@use "@carbon/react/scss/components/list-box";
+@use "@carbon/react/scss/components/loading";
+@use "@carbon/react/scss/components/menu";
+@use "@carbon/react/scss/components/modal";
+@use "@carbon/react/scss/components/notification";
+@use "@carbon/react/scss/components/number-input";
+@use "@carbon/react/scss/components/overflow-menu";
+@use "@carbon/react/scss/components/pagination";
+@use "@carbon/react/scss/components/popover";
+@use "@carbon/react/scss/components/progress-indicator";
+@use "@carbon/react/scss/components/radio-button";
+@use "@carbon/react/scss/components/search";
+@use "@carbon/react/scss/components/select";
+@use "@carbon/react/scss/components/skeleton-styles";
+@use "@carbon/react/scss/components/stack";
+@use "@carbon/react/scss/components/structured-list";
+@use "@carbon/react/scss/components/tabs";
+@use "@carbon/react/scss/components/tag";
+@use "@carbon/react/scss/components/text-area";
+@use "@carbon/react/scss/components/text-input";
+@use "@carbon/react/scss/components/tile";
+@use "@carbon/react/scss/components/toggle";
+@use "@carbon/react/scss/components/tooltip";
+@use "@carbon/react/scss/components/ui-shell";
+
+// Tema claro (white) por padrão e escuro (g100) quando o sistema pede; os
+// tokens viram variáveis --cds-* que os componentes e os módulos leem.
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #525252;
-  --link: #1d4ed8;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-link: var(--link);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  @include theme.theme(themes.$white);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a3a3a3;
-    --link: #60a5fa;
+    @include theme.theme(themes.$g100);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+// Toque: abaixo de md (celular), os tamanhos sm e md dos controles do Carbon
+// (botão, campo, select, menu ⋯, abas, acordeão, paginação, busca) valem lg,
+// 48px, o alvo de dedo; do md para cima, a altura compacta. Os componentes
+// leem a altura destes tokens, então nenhum precisa tratar o toque por conta.
+@include breakpoint.breakpoint-down(md) {
+  :root {
+    --cds-layout-size-height-sm: var(--cds-layout-size-height-lg);
+    --cds-layout-size-height-md: var(--cds-layout-size-height-lg);
+  }
 }
 
-/* Foco do teclado igual em todo controle, visível nos dois temas. */
-:where(a, button, summary, input, select, textarea):focus-visible {
-  outline: 2px solid var(--link);
-  outline-offset: 2px;
+// Foco do teclado nos controles nativos que o Carbon não estiliza (link fora
+// do Link do Carbon, <summary>, alvo de focusIfLost com tabIndex=-1). Os
+// componentes do Carbon têm o próprio foco, mais específico que este.
+:where(a, button, summary, input, select, textarea, [tabindex]):focus-visible {
+  outline: spacing.$spacing-01 solid theme.$focus;
+  outline-offset: spacing.$spacing-01;
 }

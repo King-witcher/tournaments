@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
-import { Link, usePathname } from "@/i18n/navigation";
-import { buttonVariants } from "@/shared/ui/button";
+import { usePathname } from "@/i18n/navigation";
+import { ButtonLink } from "@/shared/ui/button-link";
 
 /** Leva para a página de login, que depois volta para a página atual. */
 export function LoginButton() {
@@ -14,15 +14,14 @@ export function LoginButton() {
   const onSignup = pathname === "/signup";
 
   return (
-    <Link
+    <ButtonLink
       href={
         onSignup
           ? "/login"
           : { pathname: "/login", query: { return_to: pathname } }
       }
-      className={buttonVariants({ size: "sm" })}
     >
       {t("login")}
-    </Link>
+    </ButtonLink>
   );
 }

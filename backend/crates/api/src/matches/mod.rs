@@ -17,7 +17,7 @@
 //! `apply_due_confirmations` é o que um agendador chamaria. A desistência,
 //! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
 //! chave e a próxima partida dele, para `/me/tournaments`, saem de `place`
-//! (`mine`).
+//! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`.
 
 mod actions;
 mod db;
@@ -45,7 +45,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use due::apply_due_confirmations;
-pub use mine::{Place, place};
+pub use mine::{Place, place, place_of};
 pub use stage::{discard, start};
 pub use types::NextMatch;
 pub use withdrawals::settle as settle_withdrawals;

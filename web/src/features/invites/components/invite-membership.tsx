@@ -1,8 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
-import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
-import { buttonVariants } from "@/shared/ui/button";
+import { ButtonLink } from "@/shared/ui/button-link";
 
 type Props = {
   invite: components["schemas"]["InvitePreview"];
@@ -26,9 +25,9 @@ export async function InviteMembership({ invite }: Props) {
           ? t("alreadyRegistered")
           : t("alreadyMember", { tenant: invite.tenant_name })}
       </p>
-      <Link href={href} className={buttonVariants()}>
+      <ButtonLink href={href}>
         {tournament ? t("goToTournament") : t("goToTenant")}
-      </Link>
+      </ButtonLink>
     </div>
   );
 }

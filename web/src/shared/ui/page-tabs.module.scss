@@ -1,0 +1,6 @@
+// O conteúdo da aba fica alinhado com o resto da página: sem o padding que
+// o Carbon põe no painel (classe dobrada para vencer a do Carbon, que tem o
+// mesmo peso).
+.panel.panel {
+  padding: 0;
+}

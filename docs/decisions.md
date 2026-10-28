@@ -215,6 +215,19 @@ Decididas na revisão de uso de 28/10 (todas assumidas, sem rodada de perguntas;
 - **Data de início que passou** (rodada 2c): enquanto a organização não inicia, a página diz "Início marcado para", não "Começa", que daria a entender que ainda vai começar.
 - **Sessão que expirou no meio de uma ação**: o erro diz para recarregar a página e entrar de novo (recarregada, ela mostra "Entrar" e "Criar conta" voltando para lá).
 
+## Interface (Carbon)
+
+Decididas em 28/10/2026, ao adotar o Carbon Design System no MVP. O alvo página a página está em `docs/design.md`; o guia de código em `web/CLAUDE.md`.
+
+- **Carbon v11 e só ele**: o Tailwind sai. Motivo: dois sistemas de espaçamento e cor convivendo derivam com o tempo, e o auditor do Carbon só ajuda se o código for Carbon. Como toda tela seria refeita de qualquer jeito, o custo de tirar agora é o mesmo de manter.
+- **Tema segue o sistema**: `white` no claro, `g100` no escuro, como antes. Decidido pelo usuário (opções: só escuro, só claro).
+- **Uma coisa por tela, o resto em abas por sub-rota**: comunidade (torneios, membros, convites, configurações) e torneio (visão geral, chave, inscritos, regras, organização). Motivo: as páginas listavam tudo numa coluna só (inscritos sem paginação em cima das regras); sub-rota dá link direto, `loading.tsx` por aba e menos dado por página. `members`, `invites` e `settings` viram slugs reservados de torneio.
+- **Listas grandes em `DataTable` com busca e paginação no cliente** (25 por página). A API não pagina: as listas são limitadas pelo tamanho do torneio ou da comunidade, e paginar no servidor fica para quando uma lista for ilimitada.
+- **Confirmação em `Modal`** (kind `danger` quando apaga ou tira algo), no lugar da pergunta inline: o texto continua dizendo o que vai acontecer, o primário tem o nome da ação, "Não" é o secundário e o foco volta ao gatilho. A regra "nada de `confirm()`" continua.
+- **Messages por namespace** (`messages/<locale>/<Namespace>.json`): um arquivo por domínio, como o resto do código, para fluxos em paralelo não escreverem no mesmo arquivo.
+- **Fonte IBM Plex pelo `next/font`**, sem CDN, para não depender de rede externa em runtime.
+- **Trabalho em agentes**: uma base (biblioteca, casca, guia, home) antes dos fluxos; depois fluxos A–D em paralelo, donos de arquivos disjuntos. O usuário quis comparar Opus e Sonnet nos fluxos com os mesmos briefs, em branches a partir do mesmo commit da base.
+
 ## Notificações
 
 - MVP: só no site, em tempo real pelo WebSocket. Webhook e DM do Discord ficam para depois.

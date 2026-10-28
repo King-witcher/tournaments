@@ -1,8 +1,10 @@
 //! Onde quem vê está na chave de um torneio e qual é a próxima partida dele,
-//! para a lista dos torneios dele em todas as comunidades (`/me/tournaments`).
+//! para a lista dos torneios dele em todas as comunidades (`/me/tournaments`),
+//! e onde outro inscrito está, sem a próxima partida, para o perfil do membro
+//! na comunidade (`place_of`).
 
 use engine::{
-    core::{self as ec, Occupant, Slot},
+    core::{self as ec, Occupant, ParticipantId, Slot},
     formats::{self as ef, elimination::EliminationKind},
 };
 use sqlx::PgConnection;
@@ -40,7 +42,7 @@ pub struct BracketPlace {
     /// O torneio depois das confirmações por tempo (pode ter encerrado).
     pub tournament: StoredTournament,
     pub place: Place,
-    /// Só de quem ainda joga.
+    /// Só de quem ainda joga, e só em `place` (quem vê).
     pub next: Option<NextMatch>,
 }
 
@@ -54,26 +56,7 @@ pub async fn place<R>(
     let tournament = due::find_current(conn, member, slug).await?;
     let stage = stage::load(conn, &tournament).await?;
     let viewer = Viewer::new(member, &stage);
-    let Some(me) = viewer.participant else {
-        return Ok(BracketPlace {
-            tournament,
-            place: Place::Missed,
-            next: None,
-        });
-    };
-    let standing = stage
-        .bracket
-        .standings()
-        .into_iter()
-        .find(|p| p.participant == me)
-        .map(|p| (p.rank, p.tied));
-    let withdrawn = stage.entrant(me).is_some_and(|e| e.withdrawn);
-    let place = match standing {
-        Some((1, _)) => Place::Champion,
-        _ if withdrawn => Place::Withdrawn(standing),
-        Some((rank, tied)) => Place::Eliminated(rank, tied),
-        None => Place::Playing,
-    };
+    let place = locate(&stage, viewer.participant);
     let next = match place {
         Place::Playing => next_match(tournament.status, &stage, &viewer),
         _ => None,
@@ -83,6 +66,44 @@ pub async fn place<R>(
         place,
         next,
     })
+}
+
+/// Como `place`, para outro inscrito, `user_id`, no torneio `slug` como
+/// `member` o vê: sem a próxima partida, que é só de quem joga.
+pub async fn place_of<R>(
+    conn: &mut PgConnection,
+    member: &TenantMember<R>,
+    slug: &str,
+    user_id: i64,
+) -> Result<BracketPlace, ApiError> {
+    let tournament = due::find_current(conn, member, slug).await?;
+    let stage = stage::load(conn, &tournament).await?;
+    let place = locate(&stage, stage.participant_of(user_id));
+    Ok(BracketPlace {
+        tournament,
+        place,
+        next: None,
+    })
+}
+
+/// O lugar de `participant` na chave; `None` é o inscrito sem seed.
+fn locate(stage: &Stage, participant: Option<ParticipantId>) -> Place {
+    let Some(me) = participant else {
+        return Place::Missed;
+    };
+    let standing = stage
+        .bracket
+        .standings()
+        .into_iter()
+        .find(|p| p.participant == me)
+        .map(|p| (p.rank, p.tied));
+    let withdrawn = stage.entrant(me).is_some_and(|e| e.withdrawn);
+    match standing {
+        Some((1, _)) => Place::Champion,
+        _ if withdrawn => Place::Withdrawn(standing),
+        Some((rank, tied)) => Place::Eliminated(rank, tied),
+        None => Place::Playing,
+    }
 }
 
 /// A partida pronta de quem vê ou, sem nenhuma, a primeira em que ele já

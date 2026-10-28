@@ -1,24 +1,22 @@
-import { Link } from "@/i18n/navigation";
-import { Avatar } from "@/shared/ui/avatar";
-import { getCurrentUser } from "../server";
-import { LoginButton } from "./login-button";
-import { LogoutButton } from "./logout-button";
+import { getTranslations } from "next-intl/server";
 
-/** Usuário logado (avatar, nome que leva à conta, sair) ou botão de entrar. Fica em `<Suspense>`. */
+import { getCurrentUser } from "../server";
+import { AnonymousMenu } from "./anonymous-menu";
+import { UserMenuPanel } from "./user-menu-panel";
+
+/**
+ * O lugar da pessoa no cabeçalho: logado, o avatar abre o painel com Conta e
+ * Sair; sem sessão, Entrar e Criar conta. Lê a sessão: fica em `<Suspense>`.
+ */
 export async function UserMenu() {
   const user = await getCurrentUser();
-  if (!user) return <LoginButton />;
-
+  if (!user) return <AnonymousMenu />;
+  const t = await getTranslations("Auth");
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      {user.avatar_url && <Avatar src={user.avatar_url} />}
-      <Link
-        href="/account"
-        className="inline-flex min-h-11 min-w-0 items-center sm:min-h-0 text-sm font-medium underline underline-offset-4 hover:decoration-2"
-      >
-        <span className="truncate">{user.display_name}</span>
-      </Link>
-      <LogoutButton />
-    </div>
+    <UserMenuPanel
+      label={t("menu", { name: user.display_name })}
+      name={user.display_name}
+      avatarSrc={user.avatar_url}
+    />
   );
 }

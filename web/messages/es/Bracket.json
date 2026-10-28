@@ -1,0 +1,56 @@
+{
+  "title": "Llave",
+  "loading": "Cargando la llave…",
+  "hint": "Abre una partida para enviar o ver el resultado.",
+  "scrollHint": "Desliza la llave hacia el costado para ver las otras rondas.",
+  "parts": {
+    "winners": "Llave de ganadores",
+    "losers": "Llave de perdedores",
+    "grand_final": "Gran final"
+  },
+  "rounds": {
+    "final": "Final",
+    "semifinal": "Semifinal",
+    "quarterfinal": "Cuartos de final",
+    "round": "Ronda {round}",
+    "grandFinal": "Gran final",
+    "reset": "Reset"
+  },
+  "short": {
+    "single": "{round}.{index}",
+    "winners": "G{round}.{index}",
+    "losers": "P{round}.{index}",
+    "grand_final": "GF{round}"
+  },
+  "from": {
+    "winner": "Ganador de {match}",
+    "loser": "Perdedor de {match}"
+  },
+  "bye": "bye",
+  "tbd": "por definir",
+  "bestOf": "al mejor de {count}",
+  "walkover": "W.O.",
+  "notNeeded": "No fue necesaria",
+  "advances": "avanza sin jugar",
+  "result": {
+    "pending": "Mapa esperando confirmación",
+    "contested": "Mapa impugnado"
+  },
+  "task": {
+    "report": "Envía el próximo mapa",
+    "respond": "Confirma o impugna el mapa",
+    "await_opponent": "Esperando al rival",
+    "await_organizer": "Esperando a la organización",
+    "resolve": "Resolver impugnación"
+  },
+  "yours": "Tu partida",
+  "pending": {
+    "title": "Partidas que esperan tu acción",
+    "item": "{match} · {a} × {b}: {task}"
+  },
+  "standings": {
+    "title": "Clasificación",
+    "rank": "{rank}º",
+    "range": "{from}º–{to}º"
+  }
+}

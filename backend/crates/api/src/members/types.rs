@@ -2,7 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::tenants::Role;
+use crate::{
+    my_tournaments::{MyPlacement, Situation},
+    tenants::Role,
+    tournaments::TournamentSummary,
+};
 
 #[derive(Serialize, ToSchema)]
 pub struct Member {
@@ -13,6 +17,35 @@ pub struct Member {
     pub avatar_url: Option<String>,
     pub role: Role,
     pub joined_at: DateTime<Utc>,
+}
+
+/// Um membro na comunidade, com os torneios dela em que se inscreveu.
+#[derive(Serialize, ToSchema)]
+pub struct MemberProfile {
+    pub user_id: i64,
+    pub nickname: String,
+    /// Nome exibido do usuário: o do Discord ou o username do cadastro.
+    pub display_name: String,
+    pub avatar_url: Option<String>,
+    pub role: Role,
+    pub joined_at: DateTime<Utc>,
+    /// Os torneios da comunidade em que ele se inscreveu, só os que quem vê
+    /// vê na lista dela, do início mais recente ao mais antigo (os sem data,
+    /// só rascunhos, primeiro; no empate, o criado por último).
+    pub tournaments: Vec<MemberTournament>,
+}
+
+/// Um torneio em que o membro se inscreveu.
+#[derive(Serialize, ToSchema)]
+pub struct MemberTournament {
+    /// Como na lista da comunidade: `registered` e `checked_in` são de quem
+    /// vê, não do membro.
+    pub tournament: TournamentSummary,
+    /// A situação do membro no torneio.
+    pub situation: Situation,
+    /// Colocação do membro, se foi eliminado, desistiu ou venceu, quando já
+    /// se definiu.
+    pub placement: Option<MyPlacement>,
 }
 
 #[derive(Deserialize, ToSchema)]

@@ -1,8 +1,8 @@
+import { Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
-import { Link } from "@/i18n/navigation";
-import { Alert } from "./alert";
-import { buttonVariants } from "./button";
+import { Link } from "./link";
+import { Notice } from "./notice";
 
 type Props = {
   /** O erro já traduzido. */
@@ -12,17 +12,15 @@ type Props = {
   label: string;
 };
 
-/** Erro que ocupa a página (não encontrado, sem acesso), com o caminho de volta. */
+/**
+ * Erro que ocupa a página (não encontrado, sem acesso): o aviso e o caminho
+ * de volta como link.
+ */
 export function PageError({ children, href, label }: Props) {
   return (
-    <div className="flex flex-col items-start gap-3">
-      <Alert>{children}</Alert>
-      <Link
-        href={href}
-        className={buttonVariants({ variant: "outline", size: "sm" })}
-      >
-        {label}
-      </Link>
-    </div>
+    <Stack gap={5}>
+      <Notice kind="error">{children}</Notice>
+      <Link href={href}>{label}</Link>
+    </Stack>
   );
 }

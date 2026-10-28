@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.slug as tournament, p.checked_in_at is not null as \"checked_in!\"\n           from participants p\n           join tournaments t on t.tenant_id = p.tenant_id and t.id = p.tournament_id\n           where p.tenant_id = $1 and p.user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tournament",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "checked_in!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "bb29fd3f68a2ee716382eaa303b1aa4f1993f8f241ba4c886f8d8ad81eaeda17"
+}

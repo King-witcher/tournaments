@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.hint {
+  @include type.type-style("body-02");
+
+  max-inline-size: 40rem;
+  color: theme.$text-primary;
+}

@@ -1,0 +1,23 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+// Uma coluna no celular, duas no md, três no lg. Sem rolagem lateral: o
+// minmax(0, 1fr) deixa um nome longo quebrar em vez de alargar a coluna.
+.grid {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-columns: minmax(0, 1fr);
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include breakpoint.breakpoint(lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+}

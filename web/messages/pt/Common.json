@@ -1,0 +1,44 @@
+{
+  "loading": "Carregando…",
+  "no": "Não",
+  "duration": {
+    "minutes": "{minutes} min",
+    "hours": "{hours} h",
+    "hoursMinutes": "{hours} h {minutes} min"
+  },
+  "close": "Fechar",
+  "cancel": "Cancelar",
+  "save": "Salvar",
+  "moreActions": "Mais ações",
+  "typeToConfirm": "Digite {slug} para confirmar",
+  "showPassword": "Mostrar a senha",
+  "hidePassword": "Esconder a senha",
+  "increment": "Aumentar",
+  "decrement": "Diminuir",
+  "breadcrumb": "Você está em",
+  "notice": {
+    "error": "Erro",
+    "warning": "Aviso",
+    "info": "Informação",
+    "success": "Feito"
+  },
+  "progress": {
+    "complete": "Feito",
+    "current": "Agora",
+    "incomplete": "Ainda não",
+    "invalid": "Com problema"
+  },
+  "table": {
+    "search": "Buscar",
+    "clearSearch": "Limpar a busca",
+    "actions": "Ações",
+    "noResults": "Nada encontrado para “{query}”. Confira a grafia ou limpe a busca.",
+    "previousPage": "Página anterior",
+    "nextPage": "Próxima página",
+    "itemsPerPage": "Por página:",
+    "pageNumber": "Número da página",
+    "itemRange": "{min}–{max} de {total}",
+    "pageRange": "de {total, plural, one {# página} other {# páginas}}",
+    "pageSelect": "Página, de {total}"
+  }
+}

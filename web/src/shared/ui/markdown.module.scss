@@ -1,0 +1,83 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Texto de usuário (descrição, regras) com os tokens de tipo do Carbon, em
+// coluna de leitura. O reset do Carbon zera margens e listas: aqui voltam.
+.markdown {
+  @include type.type-style("body-02");
+
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+  max-inline-size: 42rem;
+  overflow-wrap: anywhere;
+
+  h1 {
+    @include type.type-style("heading-04");
+  }
+
+  h2 {
+    @include type.type-style("heading-03");
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    @include type.type-style("heading-02");
+  }
+
+  ul,
+  ol {
+    padding-inline-start: spacing.$spacing-06;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  li + li {
+    margin-block-start: spacing.$spacing-03;
+  }
+
+  a {
+    color: theme.$link-primary;
+    text-decoration: underline;
+  }
+
+  a:hover {
+    color: theme.$link-primary-hover;
+  }
+
+  strong {
+    @include type.font-weight("semibold");
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  code {
+    @include type.type-style("code-02");
+
+    padding: 0 spacing.$spacing-02;
+    background-color: theme.$layer-01;
+  }
+
+  blockquote {
+    padding-inline-start: spacing.$spacing-05;
+    border-inline-start: spacing.$spacing-02 solid theme.$border-subtle-01;
+    color: theme.$text-secondary;
+  }
+
+  hr {
+    inline-size: 100%;
+    border: none;
+    border-block-start: 1px solid theme.$border-subtle-01;
+  }
+}
