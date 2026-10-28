@@ -18,6 +18,9 @@
       "unavailable": "A API respondeu, mas o banco está indisponível.",
       "offline": "Não foi possível falar com a API."
     },
+    "tournaments": {
+      "title": "Seus torneios"
+    },
     "tenants": {
       "title": "Minhas comunidades",
       "empty": "Você ainda não participa de nenhuma comunidade. Crie uma ou peça um link de convite.",

@@ -1,16 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { serverApi } from "@/shared/api/server";
 import { buttonVariants } from "@/shared/ui/button";
+import { getMyTenants } from "../server";
 
 /** Comunidades do usuário logado; sem login não mostra nada. Fica em `<Suspense>`. */
 export async function MyTenants() {
-  const api = await serverApi();
-  const tenants = await api
-    .GET("/tenants")
-    .then(({ data }) => data)
-    .catch(() => undefined);
+  const tenants = await getMyTenants();
   if (!tenants) return null;
 
   const [t, tRoles] = await Promise.all([

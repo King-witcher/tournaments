@@ -5,6 +5,7 @@ import { AnonymousIntro } from "@/features/auth/components/anonymous-intro";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { ApiStatus } from "@/features/health/components/api-status";
 import { MyTenants } from "@/features/tenants/components/my-tenants";
+import { MyTournaments } from "@/features/tournaments/components/my-tournaments";
 import { Page } from "@/shared/ui/page";
 
 export default async function Home({ searchParams }: PageProps<"/[locale]">) {
@@ -22,6 +23,9 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
       </Suspense>
       <Suspense fallback={null}>
         <AnonymousIntro />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MyTournaments />
       </Suspense>
       <Suspense fallback={null}>
         <MyTenants />

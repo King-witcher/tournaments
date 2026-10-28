@@ -18,6 +18,9 @@
       "unavailable": "La API respondió, pero la base de datos no está disponible.",
       "offline": "No se pudo conectar con la API."
     },
+    "tournaments": {
+      "title": "Tus torneos"
+    },
     "tenants": {
       "title": "Mis comunidades",
       "empty": "Todavía no participas en ninguna comunidad. Crea una o pide un enlace de invitación.",
