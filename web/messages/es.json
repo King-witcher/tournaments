@@ -8,7 +8,7 @@
   },
   "Home": {
     "title": "Torneos de Quake Champions",
-    "subtitle": "Organiza torneos de duelo de tu comunidad: inscripción, check-in, cuadro y resultados en un solo lugar.",
+    "subtitle": "Organiza torneos de duelo de tu comunidad: inscripción, check-in, llave y resultados en un solo lugar.",
     "anonymous": {
       "hint": "Para participar, entra o crea una cuenta. Si recibiste un enlace de invitación, ábrelo directamente: te lleva al registro.",
       "login": "Entrar",
@@ -209,7 +209,7 @@
       "single": "Eliminación simple",
       "double": "Eliminación doble"
     },
-    "grandFinalReset": "Gran final con reset: si gana quien viene de la llave de abajo, se juega otra serie",
+    "grandFinalReset": "Gran final con reset: si gana quien viene de la llave de perdedores, se juega otra serie",
     "bestOf": "Partidas",
     "finalsBestOf": {
       "single": "Final",
@@ -235,7 +235,7 @@
     "checkIn": "Check-in",
     "checkInOff": "Sin check-in",
     "checkInOption": "Abre {minutes} min antes del inicio",
-    "checkInHint": "Solo quien haga check-in entra en el cuadro; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
+    "checkInHint": "Solo quien haga check-in entra en la llave; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
     "results": "Resultados",
     "contest": "Plazo para impugnar",
     "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
@@ -325,10 +325,10 @@
     "checkIn": {
       "opensAt": "El check-in abre <date></date>.",
       "suspended": "La organización reabrió las inscripciones; el check-in vuelve cuando la abra.",
-      "open": "Check-in abierto hasta el inicio: confirma tu presencia para entrar en el cuadro.",
+      "open": "Check-in abierto hasta el inicio: confirma tu presencia para entrar en la llave.",
       "openNotRegistered": "Check-in abierto. Las inscripciones están cerradas.",
-      "done": "Check-in hecho: estás en el cuadro.",
-      "missed": "No hiciste el check-in antes del inicio y quedaste fuera del cuadro.",
+      "done": "Check-in hecho: estás en la llave.",
+      "missed": "No hiciste el check-in antes del inicio y quedaste fuera de la llave.",
       "do": "Hacer check-in",
       "undo": "Deshacer check-in",
       "checkedIn": "check-in hecho",
@@ -337,12 +337,12 @@
       "unmark": "Desmarcar check-in"
     },
     "seeding": {
-      "title": "Seeding: {count} de {total} inscritos entran en el cuadro",
-      "hint": "El orden del cuadro: el 1 es el mejor seed. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
+      "title": "Seeding: {count} de {total} inscritos entran en la llave",
+      "hint": "El orden de la llave: el 1 es el mejor seed. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
       "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
       "emptyNoCheckIn": "Nadie inscrito todavía.",
       "noSeed": "sin seed",
-      "noneSeeded": "Este orden todavía no vale: si inicias así, el orden del cuadro se sortea. Guárdalo para usar este orden, o sortea ahora para ver el resultado antes.",
+      "noneSeeded": "Este orden todavía no vale: si inicias así, el orden de la llave se sortea. Guárdalo para usar este orden, o sortea ahora para ver el resultado antes.",
       "up": "Subir a {name}",
       "down": "Bajar a {name}",
       "changed": "Orden cambiado: guárdalo para que valga.",
@@ -425,13 +425,13 @@
       "schedule_locked": "El torneo ya empezó: la fecha de inicio y el check-in ya no cambian.",
       "check_in_closed": "El check-in no está abierto.",
       "check_in_disabled": "Este torneo no tiene check-in.",
-      "check_in_not_open": "Abre el check-in antes de iniciar: solo quien haga check-in entra en el cuadro.",
+      "check_in_not_open": "Abre el check-in antes de iniciar: solo quien haga check-in entra en la llave.",
       "not_registration": "Esto solo vale con las inscripciones abiertas.",
       "not_check_in": "Esto solo vale durante el check-in.",
       "not_in_progress": "El torneo no está en curso.",
       "not_published": "Publica el torneo antes.",
       "already_started": "El torneo ya empezó.",
-      "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en el cuadro (con check-in, si lo hay); ahora hay {eligible}.",
+      "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en la llave (con check-in, si lo hay); ahora hay {eligible}.",
       "contest_minutes_invalid": "El plazo para impugnar tiene que estar entre {min} y {max} minutos."
     },
     "participant": {
@@ -454,7 +454,7 @@
       "order_invalid": "La lista de elegibles cambió (alguien hizo o deshizo el check-in). Recarga la página y ajusta de nuevo."
     },
     "bracket": {
-      "not_found": "El cuadro todavía no existe: el torneo no empezó."
+      "not_found": "La llave todavía no existe: el torneo no empezó."
     },
     "match": {
       "not_found": "Partida no encontrada.",
@@ -482,7 +482,7 @@
     "opensAt": "El check-in abre solo <date></date>.",
     "suspended": "Inscripciones reabiertas: el check-in no vuelve a abrir solo. Ábrelo cuando quieras, o cambia la fecha de inicio.",
     "noCheckIn": "Sin check-in: al iniciar, entran todos los inscritos.",
-    "checkInOpen": "Check-in abierto: al iniciar, solo quien hizo check-in entra en el cuadro. Quien no lo hizo sigue inscrito.",
+    "checkInOpen": "Check-in abierto: al iniciar, solo quien hizo check-in entra en la llave. Quien no lo hizo sigue inscrito.",
     "inProgress": "En curso: inscripciones y check-ins están congelados.",
     "openCheckIn": "Abrir check-in ahora",
     "reopenRegistration": "Reabrir inscripciones",
@@ -500,12 +500,12 @@
     "cancel": "Cancelar"
   },
   "Bracket": {
-    "title": "Cuadro",
-    "loading": "Cargando el cuadro…",
+    "title": "Llave",
+    "loading": "Cargando la llave…",
     "hint": "Haz clic en una partida para enviar o ver el resultado.",
     "parts": {
-      "winners": "Cuadro de ganadores",
-      "losers": "Cuadro de perdedores",
+      "winners": "Llave de ganadores",
+      "losers": "Llave de perdedores",
       "grand_final": "Gran final"
     },
     "rounds": {
@@ -566,7 +566,7 @@
       "ready": "Por jugar.",
       "bye": "Sin rival: avanza sin jugar.",
       "completed": "Terminada.",
-      "not_needed": "No fue necesaria: quien venía del cuadro de ganadores ganó la gran final."
+      "not_needed": "No fue necesaria: quien venía de la llave de ganadores ganó la gran final."
     },
     "confirmedVia": {
       "opponent": "Confirmado por el rival <time></time>.",
@@ -619,7 +619,7 @@
       "set": "Cargar resultado",
       "setOther": "Cargar otro resultado",
       "correct": "Corregir resultado",
-      "correctHint": "El cuadro se rehace con el resultado nuevo. Si contradice una partida confirmada después de esta, se rechaza.",
+      "correctHint": "La llave se rehace con el resultado nuevo. Si contradice una partida confirmada después de esta, se rechaza.",
       "walkover": "W.O. para {name}",
       "walkoverTitle": "Dar W.O.",
       "walkoverConfirm": "¿Dar W.O. a {name}? Cuenta como victoria sin resultado.",
