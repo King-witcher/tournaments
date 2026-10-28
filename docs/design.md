@@ -56,7 +56,7 @@ Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar). Na aba Logins, o email vem primeiro: o atual e o formulário para pôr ou trocar (com a senha atual, se a conta tem senha); conta com senha e sem email vê o aviso do que perde, e o desvincular do Discord dá lugar à explicação.
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras). Na aba Logins, o email vem primeiro: o atual e o formulário para pôr ou trocar (com a senha atual, se a conta tem senha); conta com senha e sem email vê o aviso do que perde, e o desvincular do Discord dá lugar à explicação.
 
 ### Convite `/invite/[token]`
 

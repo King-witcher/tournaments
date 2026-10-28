@@ -41,3 +41,16 @@ export const getLogins = cache(async () => {
   if (result?.data) return { ok: true as const, logins: result.data };
   return { ok: false as const, code: result?.error?.error ?? "internal" };
 });
+
+/**
+ * As sessões abertas da conta logada (a atual marcada), buscadas uma vez por
+ * requisição. Sem sessão, `undefined`; a API recusando, o código do erro. Lê
+ * cookies: quem usa fica em `<Suspense>`.
+ */
+export const getSessions = cache(async () => {
+  if (!(await hasSessionCookie())) return undefined;
+  const api = await serverApi();
+  const result = await api.GET("/auth/sessions").catch(() => undefined);
+  if (result?.data) return { ok: true as const, sessions: result.data };
+  return { ok: false as const, code: result?.error?.error ?? "internal" };
+});

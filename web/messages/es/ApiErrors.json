@@ -26,7 +26,8 @@
     "link_expired": "Este enlace ya no vale: pasó más de 1 hora, ya se usó o fue reemplazado por uno más nuevo.",
     "email_taken": "Ese email ya es de otra cuenta.",
     "email_unchanged": "Ese ya es el email de tu cuenta.",
-    "email_required": "Para desvincular Discord, registra y confirma antes un email en la cuenta: sin él, quien olvida la contraseña pierde la cuenta."
+    "email_required": "Para desvincular Discord, registra y confirma antes un email en la cuenta: sin él, quien olvida la contraseña pierde la cuenta.",
+    "session_not_found": "Esa sesión ya se cerró."
   },
   "email": {
     "invalid": "Email inválido. Antes de la @, usa solo letras, números, punto, _ o - (en Gmail, solo letras, números y punto); después, un dominio como gmail.com.",
