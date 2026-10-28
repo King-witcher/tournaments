@@ -3,7 +3,10 @@
 
 use sqlx::{PgConnection, PgPool};
 
-use super::logins::{has_discord, lock_user};
+use super::{
+    emails::has_email,
+    logins::{has_discord, lock_user},
+};
 use crate::{shared::ApiError, shared::Locale};
 
 /// Login com senha de um usuário.
@@ -82,7 +85,8 @@ pub async fn create_password_user(db: &PgPool, user: NewPasswordUser<'_>) -> Res
     Ok(user_id)
 }
 
-/// Dá username e senha a uma conta que ainda não tem.
+/// Dá username e senha a uma conta que ainda não tem. Sem email → 409
+/// `auth.email_required`: é por ele que a senha esquecida volta.
 pub async fn add_password(
     db: &PgPool,
     user_id: i64,
@@ -93,6 +97,9 @@ pub async fn add_password(
     lock_user(&mut tx, user_id).await?;
     if password_login_exists(&mut tx, user_id).await? {
         return Err(ApiError::conflict("auth.password_exists"));
+    }
+    if !has_email(&mut tx, user_id).await? {
+        return Err(ApiError::conflict("auth.email_required"));
     }
     insert_password(&mut tx, user_id, username, password_hash).await?;
     tx.commit().await?;
@@ -170,7 +177,10 @@ async fn insert_password(
     Ok(())
 }
 
-async fn password_login_exists(conn: &mut PgConnection, user_id: i64) -> Result<bool, sqlx::Error> {
+pub(super) async fn password_login_exists(
+    conn: &mut PgConnection,
+    user_id: i64,
+) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar!(
         r#"select exists (select 1 from password_credentials where user_id = $1) as "exists!""#,
         user_id

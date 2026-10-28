@@ -131,7 +131,7 @@ pub struct LoginMethods {
     pub discord: bool,
     /// Username do login com senha, se a conta tem senha.
     pub username: Option<String>,
-    /// Email confirmado, na forma canônica. Sem ele, a senha esquecida não
-    /// tem recuperação e o Discord não pode sair.
+    /// Email confirmado, na forma canônica. Toda conta com senha tem (é por
+    /// ele que a senha esquecida volta); só a conta sem senha fica sem.
     pub email: Option<String>,
 }

@@ -1,11 +1,12 @@
 //! Login com Discord (OAuth2) e com username e senha, sessão em cookie e o
 //! extractor `CurrentUser`. A conta pode ter os dois logins, ligar e desligar
-//! cada um, mas nunca fica sem nenhum, e só com a senha precisa de email (a
-//! recuperação). O cadastro com senha exige email e só cria a conta quando o
-//! link chega (`signup.rs`); a recuperação de senha (`recovery.rs`) e a troca
-//! de email (`email_change.rs`) também vão por link, com os textos em
-//! `emails.rs`. Sessões, erros de senha, cadastros por confirmar e links ficam
-//! no Redis (`kv/`); contas, logins e email, no banco (`db/`).
+//! cada um, mas nunca fica sem nenhum, e com senha tem sempre email (a
+//! recuperação; o banco também confere). O cadastro com senha exige email e
+//! só cria a conta quando o link chega (`signup.rs`); a recuperação de senha
+//! (`recovery.rs`) e a troca de email (`email_change.rs`) também vão por link,
+//! com os textos em `emails.rs`. Sessões, erros de senha, cadastros por
+//! confirmar e links ficam no Redis (`kv/`); contas, logins e email, no banco
+//! (`db/`).
 
 mod attempts;
 mod credentials;
@@ -50,7 +51,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         ))
         .routes(routes!(recovery::request_password_reset))
         .routes(routes!(recovery::reset_password))
-        .routes(routes!(email_change::change_email))
+        .routes(routes!(
+            email_change::change_email,
+            email_change::remove_email
+        ))
         .routes(routes!(email_change::confirm_email))
         .routes(routes!(handlers::me, handlers::update_me))
         .routes(routes!(handlers::logins))

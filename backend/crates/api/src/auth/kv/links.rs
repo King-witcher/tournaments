@@ -4,7 +4,8 @@
 //! - `password_reset_user:{user_id}` e `email_change_user:{user_id}`: o hash
 //!   do último link da conta, para um pedido novo derrubar o anterior.
 //!
-//! Tudo expira com o link; abrir o link apaga a chave dele.
+//! Tudo expira com o link; abrir o link apaga a chave dele, e remover o email
+//! da conta apaga o de troca.
 
 use std::collections::HashMap;
 
@@ -73,6 +74,25 @@ pub async fn take_email_change(redis: &Redis, link: &str) -> RedisResult<Option<
     Ok(take(redis, Kind::EmailChange, link)
         .await?
         .and_then(|(user_id, mut fields)| Some((user_id, fields.remove("email")?))))
+}
+
+/// Derruba o link de troca de email da conta, se houver um vivo.
+pub async fn cancel_email_change(redis: &Redis, user_id: i64) -> RedisResult<()> {
+    let last = user_key(redis, Kind::EmailChange, user_id);
+    let Some(hash) = redis.query::<Option<String>>(&Cmd::get(&last)).await? else {
+        return Ok(());
+    };
+    let key = link_key(redis, Kind::EmailChange, &hash);
+    redis
+        .query_pipe(
+            redis::pipe()
+                .atomic()
+                .del(&key)
+                .ignore()
+                .del(&last)
+                .ignore(),
+        )
+        .await
 }
 
 async fn create(

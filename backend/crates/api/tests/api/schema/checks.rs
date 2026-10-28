@@ -1,5 +1,6 @@
 //! Coerência e forma: estado, JSON, identidade imutável, vagas, autoria e
-//! convite dentro do tenant e do torneio, formato de logins e segredos.
+//! convite dentro do tenant e do torneio, formato de logins e segredos, senha
+//! só com email.
 
 use serde_json::json;
 use sqlx::PgPool;
@@ -279,6 +280,10 @@ async fn participants_fit_and_stay_inside_tenant_and_tournament(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn logins_and_secrets_keep_their_format(db: PgPool) {
     let ana = user(&db, "Ana").await;
+    let email =
+        |id: i64, address: &str| format!("update users set email = '{address}' where id = {id}");
+    // A senha pede o email da conta (`password_needs_the_account_email`).
+    exec(&db, &email(ana.id, "ana@outlook.com")).await.unwrap();
     let password = |username: &'static str, hash: &'static str| {
         sqlx::query(
             "insert into password_credentials (user_id, username, password_hash)
@@ -322,6 +327,7 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
     );
     password("Ana_1", argon).await.unwrap();
     let bia = user(&db, "Bia").await;
+    exec(&db, &email(bia.id, "bia@outlook.com")).await.unwrap();
     assert_eq!(
         rejected(
             sqlx::query(
@@ -355,10 +361,8 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
             "{change}"
         );
     }
-    let email = |id: i64| format!("update users set email = 'ana@outlook.com' where id = {id}");
-    exec(&db, &email(ana.id)).await.unwrap();
     assert_eq!(
-        rejected(exec(&db, &email(bia.id)).await),
+        rejected(exec(&db, &email(bia.id, "ana@outlook.com")).await),
         rule(UNIQUE, "users_email_key")
     );
     assert_eq!(
@@ -371,6 +375,39 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
         ),
         rule(UNIQUE, "champions_name_key")
     );
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn password_needs_the_account_email(db: PgPool) {
+    let ana = user(&db, "Ana").await;
+    let bia = user(&db, "Bia").await;
+    let password = format!(
+        "insert into password_credentials (user_id, username, password_hash)
+         values ({}, 'Ana_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
+        ana.id
+    );
+    let email = |value: &str| format!("update users set email = {value} where id = {}", ana.id);
+    let required = rule(CHECK, "password_credentials_email_required");
+
+    assert_eq!(rejected(exec(&db, &password).await), required);
+    exec(&db, &email("'ana@outlook.com'")).await.unwrap();
+    exec(&db, &password).await.unwrap();
+    assert_eq!(rejected(exec(&db, &email("null")).await), required);
+    // Trocar de email pode; passar a senha para quem não tem email, não.
+    exec(&db, &email("'ana@gmail.com'")).await.unwrap();
+    let to_bia = format!(
+        "update password_credentials set user_id = {} where user_id = {}",
+        bia.id, ana.id
+    );
+    assert_eq!(rejected(exec(&db, &to_bia).await), required);
+
+    // Sem a senha, o email sai.
+    let remove = format!(
+        "delete from password_credentials where user_id = {}",
+        ana.id
+    );
+    exec(&db, &remove).await.unwrap();
+    exec(&db, &email("null")).await.unwrap();
 }
 
 #[sqlx::test(migrations = "../../migrations")]

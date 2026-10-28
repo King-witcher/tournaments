@@ -352,6 +352,12 @@ async fn deleting_a_user_takes_logins_and_registrations(db: PgPool) {
     .execute(&db)
     .await
     .unwrap();
+    exec(
+        &db,
+        &format!("update users set email = 'bia@example.com' where id = {bia}"),
+    )
+    .await
+    .unwrap();
     sqlx::query(
         "insert into password_credentials (user_id, username, password_hash)
          values ($1, 'Bia_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",

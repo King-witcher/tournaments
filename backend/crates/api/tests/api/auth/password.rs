@@ -9,7 +9,7 @@ use redis::Cmd;
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
-use super::{add_discord, send_json, session_count, signup};
+use super::{add_discord, send_json, session_count, set_email, signup};
 use crate::common::{User, app, call, err, get, patch, post, redis, user};
 
 const PASSWORD: &str = "senha forte 1";
@@ -127,12 +127,19 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
         json!({ "discord": true, "username": null, "email": null })
     );
 
+    // Sem email, a senha esquecida não teria volta.
     let creds = json!({ "username": "quaker", "password": PASSWORD });
+    let (status, body) = post(&app, "/auth/password", &me, creds.clone()).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.email_required"))
+    );
+    set_email(&db, me.id, "quaker@example.com").await;
     let (status, body) = post(&app, "/auth/password", &me, creds.clone()).await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "username": "quaker", "email": null })
+        json!({ "discord": true, "username": "quaker", "email": "quaker@example.com" })
     );
 
     let (status, body) = post(
@@ -146,6 +153,7 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     assert_eq!(body, err("auth.password_exists"));
 
     let other = user(&db, "Outro").await;
+    set_email(&db, other.id, "outro@example.com").await;
     let (status, body) = post(
         &app,
         "/auth/password",

@@ -1,4 +1,5 @@
-//! Pôr ou trocar o email da conta logada, confirmado pelo link.
+//! Pôr, trocar ou tirar o email da conta logada; pôr e trocar, confirmados
+//! pelo link.
 
 use axum::{
     Router,
@@ -8,7 +9,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use super::{add_discord, send_json, set_email, signup};
-use crate::common::{User, app, err, get, link_token, mailbox, put, user};
+use crate::common::{User, app, call, delete, err, get, link_token, mailbox, put, user};
 
 const PASSWORD: &str = "senha forte 1";
 
@@ -144,5 +145,47 @@ async fn discord_account_sets_email_without_password(db: PgPool) {
         json!({ "email": "z@outlook.com" }),
     )
     .await;
+    assert_eq!(unauthenticated.0, StatusCode::UNAUTHORIZED);
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn only_accounts_without_password_remove_the_email(db: PgPool) {
+    let app = app(db.clone());
+    // Com senha, o email é o que a recupera.
+    let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
+    assert_eq!(
+        delete(&app, "/auth/email", &rapha).await,
+        (StatusCode::CONFLICT, err("auth.password_needs_email"))
+    );
+    assert_eq!(email_of(&app, &rapha).await, "rapha@example.com");
+
+    let me = user(&db, "Quaker").await;
+    add_discord(&db, me.id).await;
+    assert_eq!(
+        delete(&app, "/auth/email", &me).await,
+        (StatusCode::CONFLICT, err("auth.no_email"))
+    );
+
+    // Com um link de troca esperando, tirar o email derruba o link.
+    set_email(&db, me.id, "q@outlook.com").await;
+    let change = json!({ "email": "novo@outlook.com" });
+    assert_eq!(
+        put(&app, "/auth/email", &me, change).await.0,
+        StatusCode::ACCEPTED
+    );
+    let pending = mailbox(&db).next().await;
+    let (status, body) = delete(&app, "/auth/email", &me).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(
+        body,
+        json!({ "discord": true, "username": null, "email": null })
+    );
+    assert_eq!(
+        confirm(&app, &link_token(&pending)).await,
+        (StatusCode::GONE, err("auth.link_expired"))
+    );
+    assert_eq!(email_of(&app, &me).await, Value::Null);
+
+    let unauthenticated = call(&app, Method::DELETE, "/auth/email", None, None).await;
     assert_eq!(unauthenticated.0, StatusCode::UNAUTHORIZED);
 }

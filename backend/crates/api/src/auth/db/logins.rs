@@ -4,6 +4,7 @@
 
 use sqlx::{PgConnection, PgPool};
 
+use super::passwords::password_login_exists;
 use crate::{auth::types::LoginMethods, shared::ApiError};
 
 /// Acha o usuário pela identidade do Discord (atualizando o avatar) ou cria
@@ -106,29 +107,16 @@ pub async fn link_discord(
 }
 
 /// Desliga o Discord e tira o avatar que vinha dele. Sem Discord → 409
-/// `auth.discord_not_linked`; sem senha → 409 `auth.last_login`; sem email
-/// → 409 `auth.email_required`: só com a senha, a conta precisa do email para
-/// recuperar o acesso.
+/// `auth.discord_not_linked`; sem senha → 409 `auth.last_login`. A senha que
+/// fica sempre tem o email da conta para recuperá-la (regra do banco).
 pub async fn unlink_discord(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
     if !has_discord(&mut tx, user_id).await? {
         return Err(ApiError::conflict("auth.discord_not_linked"));
     }
-    let left = sqlx::query!(
-        r#"select
-             exists (select 1 from password_credentials where user_id = $1) as "password!",
-             email is not null as "email!"
-           from users where id = $1"#,
-        user_id
-    )
-    .fetch_one(&mut *tx)
-    .await?;
-    if !left.password {
+    if !password_login_exists(&mut tx, user_id).await? {
         return Err(ApiError::conflict("auth.last_login"));
-    }
-    if !left.email {
-        return Err(ApiError::conflict("auth.email_required"));
     }
     sqlx::query!(
         "delete from user_identities where user_id = $1 and provider = 'discord'",

@@ -1,7 +1,9 @@
 //! Email da conta (`users.email`): só confirmado e na forma canônica, único.
+//! A conta com senha sempre tem (o banco recusa o contrário).
 
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
+use super::{logins::lock_user, passwords::password_login_exists};
 use crate::shared::ApiError;
 
 /// Conta como a recuperação de senha a vê.
@@ -34,6 +36,33 @@ pub async fn set_email(db: &PgPool, user_id: i64, email: &str) -> Result<(), Api
         }
         Err(err) => Err(err.into()),
     }
+}
+
+/// Tira o email da conta. Sem email → 409 `auth.no_email`; com senha → 409
+/// `auth.password_needs_email`: é por ele que a senha esquecida volta.
+pub async fn remove_email(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
+    let mut tx = db.begin().await?;
+    lock_user(&mut tx, user_id).await?;
+    if !has_email(&mut tx, user_id).await? {
+        return Err(ApiError::conflict("auth.no_email"));
+    }
+    if password_login_exists(&mut tx, user_id).await? {
+        return Err(ApiError::conflict("auth.password_needs_email"));
+    }
+    sqlx::query!("update users set email = null where id = $1", user_id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+pub(super) async fn has_email(conn: &mut PgConnection, user_id: i64) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select email is not null as "email!" from users where id = $1"#,
+        user_id
+    )
+    .fetch_one(conn)
+    .await
 }
 
 /// Conta deste email (canônico).

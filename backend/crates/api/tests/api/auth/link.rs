@@ -127,7 +127,7 @@ async fn link_errors_go_back_to_return_to(db: PgPool) {
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn unlink_needs_password_and_email(db: PgPool) {
+async fn unlink_needs_password(db: PgPool) {
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
     let (session, _) = do_login(&app, "/").await;
     let id = sqlx::query_scalar!("select id from users")
@@ -154,6 +154,8 @@ async fn unlink_needs_password_and_email(db: PgPool) {
         (StatusCode::CONFLICT, err("auth.last_login"))
     );
 
+    // A senha vem com o email que a recupera.
+    set_email(&db, id, "quaker@example.com").await;
     let (status, _) = post(
         &app,
         "/auth/password",
@@ -167,14 +169,6 @@ async fn unlink_needs_password_and_email(db: PgPool) {
         (status, body),
         (StatusCode::FORBIDDEN, err("auth.wrong_password"))
     );
-    // Só com a senha, a conta precisa do email para recuperar o acesso.
-    let (status, body) = unlink(PASSWORD).await;
-    assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.email_required"))
-    );
-
-    set_email(&db, id, "quaker@example.com").await;
     let (status, body) = unlink(PASSWORD).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
