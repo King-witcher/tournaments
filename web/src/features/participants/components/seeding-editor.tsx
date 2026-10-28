@@ -21,12 +21,16 @@ type Props = {
   initial: Participant[];
 };
 
-/** Ordem do seeding: subir e descer, salvar a ordem ou sortear. */
+/**
+ * Ordem do seeding: digitar a posição (vai direto), subir e descer, salvar a
+ * ordem ou sortear.
+ */
 export function SeedingEditor({ tenant, tournament, initial }: Props) {
   const t = useTranslations("Participants.seeding");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
   const [order, setOrder] = useState(initial);
+  const [focus, setFocus] = useState<{ id: number; n: number }>();
   const params = { path: { slug: tenant, tournament } };
   const changed = order.some((p, i) => p.user_id !== initial[i].user_id);
   // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
@@ -40,6 +44,19 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
       [next[index], next[index + delta]] = [next[index + delta], next[index]];
       return next;
     });
+  }
+
+  /** Pelo id: um blur atrasado de um campo já movido não mexe em outro. */
+  function moveTo(userId: number, to: number, keepFocus: boolean) {
+    setOrder((current) => {
+      const from = current.findIndex((p) => p.user_id === userId);
+      if (from < 0 || from === to - 1) return current;
+      const next = [...current];
+      const [moved] = next.splice(from, 1);
+      next.splice(to - 1, 0, moved);
+      return next;
+    });
+    if (keepFocus) setFocus((f) => ({ id: userId, n: (f?.n ?? 0) + 1 }));
   }
 
   const shuffle = () =>
@@ -59,11 +76,14 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
           <SeedingRow
             key={p.user_id}
             position={i + 1}
+            total={order.length}
             participant={p}
             showNoSeed={!noneSeeded}
             disabled={pending}
             onUp={i > 0 ? () => move(i, -1) : undefined}
             onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
+            onMoveTo={(to, keepFocus) => moveTo(p.user_id, to, keepFocus)}
+            focusToken={focus?.id === p.user_id ? focus.n : undefined}
           />
         ))}
       </ol>

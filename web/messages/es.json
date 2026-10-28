@@ -377,7 +377,7 @@
     },
     "seeding": {
       "title": "Seeding: {count} de {total} inscritos entran en la llave",
-      "hint": "El orden de la llave: el 1 es el mejor seed. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
+      "hint": "El orden de la llave: el 1 es el mejor seed. Escribe la posición de alguien para llevarlo directo allí, o usa las flechas. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
       "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
       "emptyNoCheckIn": "Nadie inscrito todavía.",
       "noSeed": "sin seed",
@@ -387,7 +387,8 @@
       "changed": "Orden cambiado: guárdalo para que valga.",
       "save": "Guardar orden",
       "shuffle": "Sortear",
-      "shuffleConfirm": "Sortear ahora descarta el orden que cambiaste. ¿Continuar?"
+      "shuffleConfirm": "Sortear ahora descarta el orden que cambiaste. ¿Continuar?",
+      "position": "Posición de {name} (1 a {total})"
     }
   },
   "ApiErrors": {
