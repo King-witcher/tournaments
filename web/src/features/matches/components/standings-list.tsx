@@ -29,7 +29,7 @@ export function StandingsList({ standings, entrants }: Props) {
                   ? t("range", { from: s.rank, to: s.rank + s.tied - 1 })
                   : t("rank", { rank: s.rank })}
               </span>
-              <Avatar src={entrant?.avatar_url} />
+              <Avatar src={entrant?.avatar_url} name={entrant?.nickname} />
               <span className={s.rank === 1 ? "font-semibold" : "font-medium"}>
                 {entrant?.nickname}
               </span>

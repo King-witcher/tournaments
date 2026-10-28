@@ -46,7 +46,7 @@ export function MatchScoreboardSide({
         alignEnd && "flex-row-reverse text-right",
       )}
     >
-      {entrant && <Avatar src={entrant.avatar_url} />}
+      {entrant && <Avatar src={entrant.avatar_url} name={entrant.nickname} />}
       <div className="flex min-w-0 flex-1 flex-col">
         <span
           className={cn(

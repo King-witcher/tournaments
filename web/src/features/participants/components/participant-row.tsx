@@ -43,7 +43,7 @@ export function ParticipantRow({
           {t("seed", { seed: p.seed })}
         </span>
       )}
-      <Avatar src={p.avatar_url} />
+      <Avatar src={p.avatar_url} name={p.nickname} />
       <span className="flex-1 font-medium">{p.nickname}</span>
       <DepartureMark withdrawn={p.withdrawn} left={p.left} />
       {showCheckIn && (

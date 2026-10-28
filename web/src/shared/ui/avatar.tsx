@@ -1,10 +1,18 @@
 import Image from "next/image";
 
-/** Avatar redondo de 28px; sem imagem, um círculo vazio do mesmo tamanho. */
-export function Avatar({ src }: { src?: string | null }) {
+/**
+ * Avatar redondo de 28px; sem imagem, a inicial do nome no mesmo tamanho
+ * (ajuda a achar alguém na lista quando ninguém tem avatar).
+ */
+export function Avatar({ src, name }: { src?: string | null; name?: string }) {
   if (!src) {
     return (
-      <span className="size-7 rounded-full bg-black/10 dark:bg-white/10" />
+      <span
+        aria-hidden
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-black/10 text-xs font-medium uppercase dark:bg-white/10"
+      >
+        {name?.trim().charAt(0)}
+      </span>
     );
   }
   return (

@@ -18,7 +18,7 @@ export function MemberRow({ slug, member, canChangeRoles, canRemove }: Props) {
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-      <Avatar src={member.avatar_url} />
+      <Avatar src={member.avatar_url} name={member.nickname} />
       <span className="flex flex-1 flex-col">
         <span className="font-medium">{member.nickname}</span>
         {member.display_name !== member.nickname && (
