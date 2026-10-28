@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { StartButton } from "./start-button";
 import { type Transition, TransitionButton } from "./transition-button";
 import { UndoStartControl } from "./undo-start-control";
 
@@ -52,18 +53,12 @@ export function LifecyclePanel({ tenant, tournament, now, extra }: Props) {
     actions = button("open_check_in", t("openCheckIn"), { primary: true });
   } else if (status === "registration") {
     hint = t("noCheckIn");
-    actions = button("start", t("start"), {
-      confirm: t("startConfirmNoCheckIn"),
-      primary: true,
-    });
+    actions = <StartButton tenant={tenant} tournament={tournament} />;
   } else if (status === "check_in") {
     hint = t("checkInOpen");
     actions = (
       <>
-        {button("start", t("start"), {
-          confirm: t("startConfirm"),
-          primary: true,
-        })}
+        <StartButton tenant={tenant} tournament={tournament} />
         {button("reopen_registration", t("reopenRegistration"), {
           confirm: t("reopenConfirm"),
         })}

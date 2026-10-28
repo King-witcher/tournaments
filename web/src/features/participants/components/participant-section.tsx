@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { participantsEditable } from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
+import { getParticipants } from "../server";
 import { AddParticipantForm } from "./add-participant-form";
 import { ParticipantRow } from "./participant-row";
 
@@ -29,11 +30,7 @@ export async function ParticipantSection({
   const api = await serverApi();
   const [t, participants, members] = await Promise.all([
     getTranslations("Participants"),
-    api
-      .GET("/tenants/{slug}/tournaments/{tournament}/participants", {
-        params: { path: { slug: tenant, tournament: slug } },
-      })
-      .then(({ data }) => data ?? []),
+    getParticipants(tenant, slug).then((list) => list ?? []),
     canManage
       ? api
           .GET("/tenants/{slug}/members", {

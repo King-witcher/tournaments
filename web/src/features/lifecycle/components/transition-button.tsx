@@ -18,6 +18,8 @@ type Props = {
   /** Pergunta antes de chamar a API. */
   confirm?: string;
   variant?: "default" | "outline";
+  /** Sem como dar certo agora (quem monta diz por quê ao lado). */
+  disabled?: boolean;
 };
 
 function call(transition: Transition, tenant: string, slug: string) {
@@ -48,6 +50,7 @@ export function TransitionButton({
   label,
   confirm,
   variant = "outline",
+  disabled,
 }: Props) {
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -64,6 +67,7 @@ export function TransitionButton({
           size="sm"
           variant={variant}
           pending={pending}
+          disabled={disabled}
           danger={false}
           question={confirm}
           onConfirm={start}
@@ -71,7 +75,13 @@ export function TransitionButton({
           {label}
         </ConfirmButton>
       ) : (
-        <Button size="sm" variant={variant} pending={pending} onClick={start}>
+        <Button
+          size="sm"
+          variant={variant}
+          pending={pending}
+          disabled={disabled}
+          onClick={start}
+        >
           {label}
         </Button>
       )}
