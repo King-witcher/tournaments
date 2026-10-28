@@ -81,6 +81,9 @@ export function TournamentForm({ tenant, tournament }: Props) {
         onChange={(visibility) => onChange({ visibility })}
         disabled={finished}
       />
+      {/* O motivo antes dos campos travados, não no fim do formulário: quem
+          rola vê os campos cinza e já sabe por quê. */}
+      {setupLocked && <p className="text-sm">{t("setupLocked")}</p>}
       <TournamentScheduleFields
         values={values}
         onChange={onChange}
@@ -97,7 +100,6 @@ export function TournamentForm({ tenant, tournament }: Props) {
         onChange={(contestMinutes) => onChange({ contestMinutes })}
         disabled={finished}
       />
-      {setupLocked && <p className="text-sm text-muted">{t("setupLocked")}</p>}
       {error && <Alert>{error}</Alert>}
       <div>
         <Button type="submit" pending={pending}>
