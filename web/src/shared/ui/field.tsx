@@ -13,7 +13,7 @@ export function Field({ label, hint, children }: Props) {
     <label className="flex flex-col gap-1">
       <span className="text-sm font-medium">{label}</span>
       {children}
-      {hint && <span className="text-xs text-muted">{hint}</span>}
+      {hint && <span className="text-sm text-muted">{hint}</span>}
     </label>
   );
 }

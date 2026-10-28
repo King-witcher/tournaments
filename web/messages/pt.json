@@ -203,10 +203,10 @@
     "markdownHint": "Aceita Markdown: **negrito**, listas com -, links.",
     "visibility": "Visibilidade",
     "visibilityOptions": {
-      "public": "Pública: todos da comunidade veem e se inscrevem",
-      "private": "Privada: só inscritos e organizadores veem"
+      "public": "Pública",
+      "private": "Privada"
     },
-    "visibilityHint": "No privado, entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
+    "visibilityHint": "Pública: todos da comunidade veem e se inscrevem. Privada: só inscritos e organizadores veem, e entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
     "setup": "Formato",
     "maxParticipants": "Vagas",
     "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
