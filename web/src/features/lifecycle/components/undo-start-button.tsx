@@ -6,10 +6,12 @@ import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Field } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
+import { ORGANIZER_PANEL_ID } from "../lib/organizer-panel";
 
 type Props = {
   tenant: string;
@@ -65,7 +67,10 @@ export function UndoStartButton({ tenant, slug, results, message }: Props) {
                 api.DELETE("/tenants/{slug}/tournaments/{tournament}/start", {
                   params: { path: { slug: tenant, tournament: slug } },
                 }),
-              () => router.refresh(),
+              () => {
+                router.refresh();
+                focusIfLost(ORGANIZER_PANEL_ID);
+              },
             )
           }
         >

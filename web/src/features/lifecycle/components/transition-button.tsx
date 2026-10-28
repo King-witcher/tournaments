@@ -3,9 +3,11 @@
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
+import { ORGANIZER_PANEL_ID } from "../lib/organizer-panel";
 
 /** Desfazer o início tem botão próprio, com confirmação forte (`UndoStartButton`). */
 export type Transition = "open_check_in" | "reopen_registration" | "start";
@@ -57,7 +59,10 @@ export function TransitionButton({
   const start = () =>
     run(
       () => call(transition, tenant, slug),
-      () => router.refresh(),
+      () => {
+        router.refresh();
+        focusIfLost(ORGANIZER_PANEL_ID);
+      },
     );
 
   return (

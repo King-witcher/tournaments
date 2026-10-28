@@ -2,9 +2,11 @@
 
 import { useTranslations } from "next-intl";
 
+import { ORGANIZER_PANEL_ID } from "@/features/lifecycle/lib/organizer-panel";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { ErrorText } from "@/shared/ui/alert";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 
@@ -45,7 +47,10 @@ export function PublishTournamentButton({
               api.POST("/tenants/{slug}/tournaments/{tournament}/publish", {
                 params: { path: { slug: tenant, tournament: slug } },
               }),
-            () => router.refresh(),
+            () => {
+              router.refresh();
+              focusIfLost(ORGANIZER_PANEL_ID);
+            },
           );
         }}
       >

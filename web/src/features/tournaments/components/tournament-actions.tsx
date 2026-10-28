@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import { LifecyclePanel } from "@/features/lifecycle/components/lifecycle-panel";
+import { ORGANIZER_PANEL_ID } from "@/features/lifecycle/lib/organizer-panel";
 import { Link } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { buttonVariants } from "@/shared/ui/button";
@@ -38,7 +39,13 @@ export function TournamentActions({ tenant, tournament, now }: Props) {
   );
 
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-black/10 p-3 dark:border-white/15">
+    // tabIndex -1: recebe o foco depois de publicar, abrir o check-in,
+    // iniciar ou desfazer, quando o botão usado some.
+    <section
+      id={ORGANIZER_PANEL_ID}
+      tabIndex={-1}
+      className="flex flex-col gap-2 rounded-md border border-black/10 p-3 dark:border-white/15"
+    >
       <h2 className="font-semibold">{t("organizerTitle")}</h2>
       {draft ? (
         <>
