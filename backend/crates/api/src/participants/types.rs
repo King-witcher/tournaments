@@ -16,6 +16,9 @@ pub struct Participant {
     /// Posição no seeding (1 = melhor); `null` sem seed. Depois de iniciar,
     /// 1..N entre os elegíveis.
     pub seed: Option<i32>,
+    /// Saiu da comunidade (ou foi removido). Só fica inscrito assim em
+    /// torneio iniciado, como histórico.
+    pub left: bool,
 }
 
 #[derive(Deserialize, ToSchema)]

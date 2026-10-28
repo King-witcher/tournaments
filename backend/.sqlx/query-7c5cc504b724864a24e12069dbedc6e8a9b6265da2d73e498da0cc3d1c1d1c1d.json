@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at\n           from tenant_members m\n           join users u on u.id = m.user_id\n           where m.tenant_id = $1 and ($2::bigint is null or m.user_id = $2)\n           order by case m.role when 'owner' then 0 when 'organizer' then 1 else 2 end,\n                    lower(m.nickname), m.user_id",
+  "query": "select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at\n           from tenant_members m\n           join users u on u.id = m.user_id\n           where m.tenant_id = $1 and m.left_at is null\n             and ($2::bigint is null or m.user_id = $2)\n           order by case m.role when 'owner' then 0 when 'organizer' then 1 else 2 end,\n                    lower(m.nickname), m.user_id",
   "describe": {
     "columns": [
       {
@@ -85,5 +85,5 @@
       false
     ]
   },
-  "hash": "9688b2cd4b15a1e343951c7913e480d34898414b88f843fe7e2d1baae791dc94"
+  "hash": "7c5cc504b724864a24e12069dbedc6e8a9b6265da2d73e498da0cc3d1c1d1c1d"
 }

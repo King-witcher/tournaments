@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_invites set revoked_at = now()\n           where tenant_id = $1 and created_by = $2 and revoked_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "925d83ae90cd77c8a8e72aef3dd61f084b67c043af84314a2e24c1bee543272e"
+}

@@ -1,6 +1,8 @@
 //! Links de convite: organizer ou owner gera, lista e revoga; quem recebe vê
 //! a prévia sem login e aceita para entrar como player. O link de inscrição
 //! de um torneio (`tournament`) é um convite do tenant que também inscreve.
+//! Quem tinha saído do tenant volta por qualquer convite (`join_as_player`);
+//! quem sai tem os convites que criou revogados (`revoke_created_by`).
 
 mod db;
 mod handlers;
@@ -10,6 +12,8 @@ mod types;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
+
+pub use db::revoke_created_by;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

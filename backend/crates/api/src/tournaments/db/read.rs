@@ -219,6 +219,29 @@ pub async fn find(
     }))
 }
 
+/// Slugs dos torneios do tenant que a saída de `user_id` pode mudar: os que
+/// não encerraram (ele pode estar se inscrevendo agora) e os encerrados em que
+/// ele está inscrito (uma correção pode reabrir), na ordem dos ids, para quem
+/// trava vários travar sempre na mesma ordem.
+pub async fn slugs_for_member(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    user_id: i64,
+) -> Result<Vec<String>, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select t.slug from tournaments t
+           where t.tenant_id = $1
+             and (t.status <> 'finished'
+                  or exists(select 1 from participants p
+                            where p.tournament_id = t.id and p.user_id = $2))
+           order by t.id"#,
+        tenant.get(),
+        user_id
+    )
+    .fetch_all(conn)
+    .await
+}
+
 /// Como `find`, travando a linha do torneio até o fim da transação: status,
 /// configuração e inscritos não mudam entre a checagem e a gravação (toda
 /// inscrição trava o torneio antes).

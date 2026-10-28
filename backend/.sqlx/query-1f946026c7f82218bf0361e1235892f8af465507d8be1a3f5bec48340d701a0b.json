@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as \"seed!\"\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1 and p.seed is not null\n           order by p.seed",
+  "query": "select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as \"seed!\",\n                  m.left_at is not null as \"left!\"\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1 and p.seed is not null\n           order by p.seed",
   "describe": {
     "columns": [
       {
@@ -57,6 +57,12 @@
             "name": "seed"
           }
         }
+      },
+      {
+        "ordinal": 5,
+        "name": "left!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -69,8 +75,9 @@
       false,
       false,
       true,
-      true
+      true,
+      null
     ]
   },
-  "hash": "471f6ccbe7fe8165fedd4adfc31401d7011199e44e3f118e2340be285e91bddf"
+  "hash": "1f946026c7f82218bf0361e1235892f8af465507d8be1a3f5bec48340d701a0b"
 }

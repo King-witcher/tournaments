@@ -27,7 +27,10 @@ crates/api/src/
   auth/           login com Discord e com username e senha (argon2, limite de tentativas),
                   ligar e desligar cada um, sessão em cookie, CurrentUser
   tenants/        tenants, e a base de todo dado de tenant: TenantId, Role, TenantMember, apelido
-  members/        /tenants/{slug}/me e /tenants/{slug}/members
+  members/        /tenants/{slug}/me (apelido, sair) e /tenants/{slug}/members (listar,
+                  papel, remover); departure.rs (quem remove quem; sair deixa o membro
+                  inativo: sai das inscrições abertas e os convites dele são revogados).
+                  Fica acima de lifecycle e invites
   invites/        /tenants/{slug}/invites, /invites/{token} e os links de inscrição
                   (/tenants/{slug}/tournaments/{t}/invites, em tournament.rs)
   tournaments/    /tenants/{slug}/tournaments/...: torneio, traduções, fases; TournamentId,
@@ -38,7 +41,8 @@ crates/api/src/
                   e .../seeding; registration.rs (os três caminhos de inscrição; o convite usa
                   register), check_in.rs, seeding.rs (finalize, que o início usa), seed_order.rs
   lifecycle/      transições depois de publicar (.../check-in/open, .../registration/reopen,
-                  .../start): transition.rs concentra de onde, para onde e o que cada uma faz.
+                  .../start): transition.rs concentra de onde, para onde e o que cada uma faz;
+                  withdrawal.rs, quem deixa os torneios (o membro que sai da comunidade).
                   Fica acima de tournaments, participants e matches (iniciar fecha o seeding e
                   gera a chave; desfazer a descarta)
   maps.rs         domínio pequeno: GET /maps e a busca de ids por slug que matches usa

@@ -23,7 +23,7 @@ use crate::{
     tenants::TenantId,
 };
 
-pub use read::{find, find_for_update, list};
+pub use read::{find, find_for_update, list, slugs_for_member};
 pub use status::{mark_registration_reopened, publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 

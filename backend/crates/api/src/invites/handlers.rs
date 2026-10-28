@@ -136,7 +136,7 @@ pub async fn preview_invite(
     tag = "invites",
     params(("token" = String, Path, description = "Token do link de convite")),
     responses(
-        (status = OK, body = AcceptedInvite, description = "Entrou como player (quem já era membro mantém papel e apelido) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant"),
+        (status = OK, body = AcceptedInvite, description = "Entrou como player (quem já era membro mantém papel e apelido; quem tinha saído volta como player, com o apelido e o histórico de antes) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed, tournament.full {max}"),

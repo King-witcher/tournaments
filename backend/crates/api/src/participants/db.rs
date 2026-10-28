@@ -12,7 +12,8 @@ pub async fn list(
     sqlx::query_as!(
         Participant,
         r#"select p.user_id, m.nickname, u.avatar_url, p.registered_at,
-                  p.checked_in_at is not null as "checked_in!", p.seed
+                  p.checked_in_at is not null as "checked_in!", p.seed,
+                  m.left_at is not null as "left!"
            from participants p
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
            join users u on u.id = p.user_id
@@ -34,6 +35,8 @@ pub struct Seeded {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub seed: i32,
+    /// Saiu da comunidade (ou foi removido).
+    pub left: bool,
 }
 
 /// Quem está na chave: os inscritos com seed, do 1 em diante. Depois de
@@ -44,7 +47,8 @@ pub async fn seeded(
 ) -> Result<Vec<Seeded>, sqlx::Error> {
     sqlx::query_as!(
         Seeded,
-        r#"select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as "seed!"
+        r#"select p.id, p.user_id, m.nickname, u.avatar_url, p.seed as "seed!",
+                  m.left_at is not null as "left!"
            from participants p
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
            join users u on u.id = p.user_id
@@ -88,8 +92,8 @@ pub async fn is_registered(
     .await
 }
 
-/// Inscreve `user_id` se ele for membro do tenant; `false` se não é. Quem
-/// chama já conferiu que ele não está inscrito, com o torneio travado.
+/// Inscreve `user_id` se ele for membro ativo do tenant; `false` se não é.
+/// Quem chama já conferiu que ele não está inscrito, com o torneio travado.
 pub async fn insert(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -102,7 +106,7 @@ pub async fn insert(
         r#"insert into participants (tenant_id, tournament_id, user_id, invite_id, added_by)
            select $1::bigint, $2::bigint, $3::bigint, $4::bigint, $5::bigint
            from tenant_members
-           where tenant_id = $1 and user_id = $3"#,
+           where tenant_id = $1 and user_id = $3 and left_at is null"#,
         tenant.get(),
         tournament.get(),
         user_id,
@@ -128,6 +132,24 @@ pub async fn delete(
     .execute(conn)
     .await?;
     Ok(result.rows_affected() > 0)
+}
+
+/// Tira as inscrições de quem saiu do tenant, ao desfazer o início (com o
+/// torneio já fora de andamento: inscrito de torneio iniciado não sai).
+pub async fn delete_departed(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+) -> Result<u64, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"delete from participants p
+           using tenant_members m
+           where m.tenant_id = p.tenant_id and m.user_id = p.user_id
+             and p.tournament_id = $1 and m.left_at is not null"#,
+        tournament.get()
+    )
+    .execute(conn)
+    .await?;
+    Ok(result.rows_affected())
 }
 
 /// Marca o check-in de `user_id` (`by`: o organizador que marcou; `None`, o

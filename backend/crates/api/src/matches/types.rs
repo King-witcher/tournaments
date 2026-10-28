@@ -32,6 +32,8 @@ pub struct BracketEntrant {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub seed: i32,
+    /// Saiu da comunidade (ou foi removido); continua na chave como histórico.
+    pub left: bool,
 }
 
 /// Parte da chave.

@@ -1,4 +1,4 @@
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
 use super::types::Member;
 use crate::{
@@ -6,8 +6,8 @@ use crate::{
     tenants::{Role, TenantId},
 };
 
-/// Membros do tenant (ou só `only_user`), owner primeiro, depois organizers e
-/// players, cada grupo por apelido.
+/// Membros ativos do tenant (ou só `only_user`), owner primeiro, depois
+/// organizers e players, cada grupo por apelido.
 pub async fn list(
     db: &PgPool,
     tenant: TenantId,
@@ -17,7 +17,8 @@ pub async fn list(
         r#"select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at
            from tenant_members m
            join users u on u.id = m.user_id
-           where m.tenant_id = $1 and ($2::bigint is null or m.user_id = $2)
+           where m.tenant_id = $1 and m.left_at is null
+             and ($2::bigint is null or m.user_id = $2)
            order by case m.role when 'owner' then 0 when 'organizer' then 1 else 2 end,
                     lower(m.nickname), m.user_id"#,
         tenant.get(),
@@ -40,14 +41,15 @@ pub async fn list(
         .collect()
 }
 
-/// Papel do usuário no tenant; `None` se ele não é membro.
+/// Papel do usuário no tenant; `None` se ele não é membro ativo.
 pub async fn role_of(
     db: &PgPool,
     tenant: TenantId,
     user_id: i64,
 ) -> Result<Option<Role>, ApiError> {
     sqlx::query_scalar!(
-        "select role from tenant_members where tenant_id = $1 and user_id = $2",
+        r#"select role from tenant_members
+           where tenant_id = $1 and user_id = $2 and left_at is null"#,
         tenant.get(),
         user_id
     )
@@ -57,6 +59,47 @@ pub async fn role_of(
     .transpose()
 }
 
+/// Como `role_of`, travando a linha do membro até o fim da transação (sem
+/// travar quem só a referencia, como uma inscrição nova): papel e
+/// participação não mudam até a saída gravar.
+pub async fn lock_role(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    user_id: i64,
+) -> Result<Option<Role>, ApiError> {
+    sqlx::query_scalar!(
+        r#"select role from tenant_members
+           where tenant_id = $1 and user_id = $2 and left_at is null
+           for no key update"#,
+        tenant.get(),
+        user_id
+    )
+    .fetch_optional(conn)
+    .await?
+    .map(|role| Role::from_db(&role))
+    .transpose()
+}
+
+/// Deixa o membro inativo (`by`: quem removeu; `None`, saiu sozinho). Quem
+/// chama já tirou as inscrições abertas e revogou os convites dele.
+pub async fn deactivate(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    user_id: i64,
+    by: Option<i64>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"update tenant_members set left_at = now(), removed_by = $3
+           where tenant_id = $1 and user_id = $2 and left_at is null"#,
+        tenant.get(),
+        user_id,
+        by
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
 pub async fn set_role(
     db: &PgPool,
     tenant: TenantId,
@@ -64,7 +107,8 @@ pub async fn set_role(
     role: Role,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
-        "update tenant_members set role = $3 where tenant_id = $1 and user_id = $2",
+        r#"update tenant_members set role = $3
+           where tenant_id = $1 and user_id = $2 and left_at is null"#,
         tenant.get(),
         user_id,
         role.as_str()

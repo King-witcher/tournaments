@@ -90,7 +90,7 @@ pub async fn start(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Início desfeito (iniciou por engano): volta para o check-in, ou para a inscrição sem check-in. Inscrições, check-ins e seeds continuam como estavam"),
+        (status = OK, body = Tournament, description = "Início desfeito (iniciou por engano): volta para o check-in, ou para a inscrição sem check-in. Inscrições, check-ins e seeds continuam como estavam, menos as de quem saiu da comunidade, que saem"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),

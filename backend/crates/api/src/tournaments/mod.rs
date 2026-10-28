@@ -30,7 +30,7 @@ use crate::AppState;
 
 pub use db::{
     StoredTournament, TournamentId, champion_pool, find, find_for_update,
-    mark_registration_reopened, set_status, sync_finished,
+    mark_registration_reopened, set_status, slugs_for_member, sync_finished,
 };
 pub use status::TournamentStatus;
 pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath};

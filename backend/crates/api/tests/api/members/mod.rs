@@ -1,3 +1,8 @@
+//! Testes de `members`: papéis e apelido aqui, sair e remover em
+//! `departure`.
+
+mod departure;
+
 use axum::http::StatusCode;
 use serde_json::json;
 use sqlx::PgPool;

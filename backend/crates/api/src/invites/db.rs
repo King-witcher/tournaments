@@ -108,6 +108,24 @@ pub async fn revoke(db: &PgPool, tenant: TenantId, invite_id: i64) -> Result<boo
     Ok(result.rows_affected() > 0)
 }
 
+/// Revoga os convites abertos que `user_id` criou no tenant (do tenant e
+/// links de inscrição), quando ele deixa o tenant.
+pub async fn revoke_created_by(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    user_id: i64,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"update tenant_invites set revoked_at = now()
+           where tenant_id = $1 and created_by = $2 and revoked_at is null"#,
+        tenant.get(),
+        user_id
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
 pub struct StoredInvite {
     pub id: i64,
     /// O token é a autorização para entrar neste tenant.
@@ -150,7 +168,9 @@ pub async fn find_by_token_hash(
     }))
 }
 
-/// Entra no tenant como player; quem já é membro mantém papel e apelido.
+/// Entra no tenant como player; quem já é membro mantém papel e apelido, e
+/// quem tinha saído volta (a mesma linha, com o apelido de antes) como
+/// player, por este convite.
 pub async fn join_as_player(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -161,7 +181,9 @@ pub async fn join_as_player(
     sqlx::query!(
         r#"insert into tenant_members (tenant_id, user_id, role, nickname, invite_id)
            values ($1, $2, 'player', $3, $4)
-           on conflict (tenant_id, user_id) do nothing"#,
+           on conflict (tenant_id, user_id) do update
+           set role = 'player', left_at = null, removed_by = null, invite_id = excluded.invite_id
+           where tenant_members.left_at is not null"#,
         tenant.get(),
         user_id,
         nickname,

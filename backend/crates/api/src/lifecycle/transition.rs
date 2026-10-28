@@ -2,8 +2,9 @@
 //! cada uma sai, para onde vai e o que faz junto. Publicar fica em
 //! `tournaments` (só mexe no torneio) e a abertura automática do check-in em
 //! `tournaments::schedule`, aplicada ao ler. Iniciar gera a chave e desfazer
-//! a descarta, com os resultados (`matches::start`, `matches::discard`); em
-//! andamento ↔ encerrado anda sozinho conforme a chave, em `matches`.
+//! a descarta, com os resultados (`matches::start`, `matches::discard`), e
+//! tira as inscrições de quem saiu da comunidade; em andamento ↔ encerrado
+//! anda sozinho conforme a chave, em `matches`.
 //!
 //! ```text
 //! com check-in: inscrição ──abrir check-in (ou a hora)──▶ check-in ──iniciar──▶ em andamento
@@ -91,6 +92,11 @@ pub async fn apply(
         Transition::OpenCheckIn => {}
     }
     tournaments::set_status(conn, tournament.id, to).await?;
+    if transition == Transition::UndoStart {
+        // Fora de andamento, quem saiu da comunidade sai da inscrição (antes,
+        // o banco não deixa: inscrito de torneio iniciado não sai).
+        participants::delete_departed(conn, tournament.id).await?;
+    }
     Ok(())
 }
 

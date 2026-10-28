@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tenant_members (tenant_id, user_id, role, nickname, invite_id)\n           values ($1, $2, 'player', $3, $4)\n           on conflict (tenant_id, user_id) do update\n           set role = 'player', left_at = null, removed_by = null, invite_id = excluded.invite_id\n           where tenant_members.left_at is not null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a6e84e5def95a8a010e74ba4ddf463bef8b71be4f17abcd0093622d5404fd878"
+}

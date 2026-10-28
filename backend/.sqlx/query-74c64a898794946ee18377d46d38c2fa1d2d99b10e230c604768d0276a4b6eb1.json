@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.slug from tournaments t\n           where t.tenant_id = $1\n             and (t.status <> 'finished'\n                  or exists(select 1 from participants p\n                            where p.tournament_id = t.id and p.user_id = $2))\n           order by t.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "74c64a898794946ee18377d46d38c2fa1d2d99b10e230c604768d0276a4b6eb1"
+}

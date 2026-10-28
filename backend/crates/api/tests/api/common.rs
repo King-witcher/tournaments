@@ -185,6 +185,15 @@ pub async fn member(app: &Router, db: &PgPool, owner: &User, name: &str) -> User
     who
 }
 
+/// Membro novo de `quake-br` promovido a organizer por `owner`.
+pub async fn organizer(app: &Router, db: &PgPool, owner: &User, name: &str) -> User {
+    let who = member(app, db, owner, name).await;
+    let uri = format!("/tenants/quake-br/members/{}/role", who.id);
+    let (status, body) = put(app, &uri, owner, json!({ "role": "organizer" })).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    who
+}
+
 /// Início dos torneios de `duel`: longe o bastante para o check-in nunca
 /// abrir sozinho nos testes que não mexem nele.
 pub const FAR_START: &str = "2099-01-01T20:00:00Z";

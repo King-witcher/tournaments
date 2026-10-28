@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select removed_by from tenant_members where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "removed_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "removed_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "c74b8554e4ac79f867ebfdda4624f5377876c6858852351b4e2015014c28b522"
+}

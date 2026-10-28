@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select p.user_id, m.nickname, u.avatar_url, p.registered_at,\n                  p.checked_in_at is not null as \"checked_in!\", p.seed\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1 and ($2::bigint is null or p.user_id = $2)\n           order by p.registered_at, p.id",
+  "query": "select p.user_id, m.nickname, u.avatar_url, p.registered_at,\n                  p.checked_in_at is not null as \"checked_in!\", p.seed,\n                  m.left_at is not null as \"left!\"\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1 and ($2::bigint is null or p.user_id = $2)\n           order by p.registered_at, p.id",
   "describe": {
     "columns": [
       {
@@ -63,6 +63,12 @@
             "name": "seed"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "left!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -77,8 +83,9 @@
       true,
       false,
       null,
-      true
+      true,
+      null
     ]
   },
-  "hash": "219a21e255cca5454819d0cd9f1dacd40d59b03114dcc074d2875770d98f08c4"
+  "hash": "e65ea7b37e1270504e9f7773f7b9362d2889d99885e25f47bcda90f78adad4be"
 }

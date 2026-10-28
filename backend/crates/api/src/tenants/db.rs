@@ -3,7 +3,8 @@ use sqlx::PgPool;
 use super::{MyTenant, Role, TenantId};
 use crate::shared::ApiError;
 
-/// Participação de um usuário num tenant, lida pelo extractor `TenantMember`.
+/// Participação ativa de um usuário num tenant, lida pelo extractor
+/// `TenantMember`: quem saiu é tratado como quem é de fora.
 pub struct Membership {
     pub tenant: TenantId,
     pub slug: String,
@@ -21,7 +22,7 @@ pub async fn membership(
         r#"select t.id, t.slug, t.name, m.role, m.nickname
            from tenants t
            join tenant_members m on m.tenant_id = t.id
-           where t.slug = $1 and m.user_id = $2"#,
+           where t.slug = $1 and m.user_id = $2 and m.left_at is null"#,
         slug,
         user_id
     )
@@ -85,13 +86,14 @@ pub async fn create_with_owner(
     Ok(())
 }
 
-/// Tenants de que o usuário participa, na ordem em que entrou.
+/// Tenants de que o usuário participa (sem os que deixou), na ordem em que
+/// entrou.
 pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, ApiError> {
     let rows = sqlx::query!(
         r#"select t.slug, t.name, m.role, m.nickname
            from tenant_members m
            join tenants t on t.id = m.tenant_id
-           where m.user_id = $1
+           where m.user_id = $1 and m.left_at is null
            order by m.joined_at, t.id"#,
         user_id
     )

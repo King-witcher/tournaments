@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.slug, t.name, m.role, m.nickname\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1\n           order by m.joined_at, t.id",
+  "query": "select t.slug, t.name, m.role, m.nickname\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
   "describe": {
     "columns": [
       {
@@ -60,5 +60,5 @@
       false
     ]
   },
-  "hash": "f04ccae49827166f5d2663cf4cf06aa4e5392fe102524d372ba3e7f43597a661"
+  "hash": "ef1227df1d036dc4b2de985fb633c833a1e6e8e2e96dafd1ea61c0ef992c24a8"
 }

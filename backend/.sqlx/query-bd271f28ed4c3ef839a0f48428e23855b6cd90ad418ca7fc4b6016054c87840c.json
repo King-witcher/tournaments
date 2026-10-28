@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into participants (tenant_id, tournament_id, user_id, invite_id, added_by)\n           select $1::bigint, $2::bigint, $3::bigint, $4::bigint, $5::bigint\n           from tenant_members\n           where tenant_id = $1 and user_id = $3 and left_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bd271f28ed4c3ef839a0f48428e23855b6cd90ad418ca7fc4b6016054c87840c"
+}

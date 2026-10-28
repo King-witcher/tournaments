@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_members set left_at = now(), removed_by = $3\n           where tenant_id = $1 and user_id = $2 and left_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a3a7489a68625ca94776972b43c4d956f845baba1ed80bca8a835a0725f65160"
+}
