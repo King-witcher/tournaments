@@ -26,7 +26,9 @@
     "link_expired": "Este enlace ya no vale: pasó más de 1 hora, ya se usó o fue reemplazado por uno más nuevo.",
     "email_taken": "Ese email ya es de otra cuenta.",
     "email_unchanged": "Ese ya es el email de tu cuenta.",
-    "email_required": "Para desvincular Discord, registra y confirma antes un email en la cuenta: sin él, quien olvida la contraseña pierde la cuenta."
+    "email_required": "Para crear nombre de usuario y contraseña, registra y confirma antes un email en la cuenta: es con él que recuperas la contraseña si la olvidas.",
+    "no_email": "Tu cuenta no tiene email.",
+    "password_needs_email": "Con nombre de usuario y contraseña en la cuenta, el email no sale: es con él que recuperas la contraseña. Quita antes la contraseña."
   },
   "email": {
     "invalid": "Email inválido. Antes de la @, usa solo letras, números, punto, _ o - (en Gmail, solo letras, números y punto); después, un dominio como gmail.com.",

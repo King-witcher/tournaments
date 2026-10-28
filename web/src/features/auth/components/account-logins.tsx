@@ -6,10 +6,9 @@ import { EmailLoginSection } from "./email-login-section";
 import { PasswordLoginSection } from "./password-login-section";
 
 /**
- * A aba Logins da conta: o email (primeiro, porque recupera a senha e o
- * desvincular do Discord depende dele; a conta sem email vê o aviso logo no
- * topo), o Discord e o nome de usuário com senha, cada um para ligar ou
- * remover. Fica em `<Suspense>`.
+ * A aba Logins da conta: o email (primeiro, porque a senha depende dele: só
+ * se cria com email, e com senha ele não sai), o Discord e o nome de usuário
+ * com senha, cada um para ligar ou remover. Fica em `<Suspense>`.
  */
 export async function AccountLogins() {
   const result = await getLogins();
@@ -26,14 +25,11 @@ export async function AccountLogins() {
         email={logins.email ?? undefined}
         hasPassword={hasPassword}
       />
-      <DiscordLoginSection
-        linked={logins.discord}
-        hasPassword={hasPassword}
-        hasEmail={Boolean(logins.email)}
-      />
+      <DiscordLoginSection linked={logins.discord} hasPassword={hasPassword} />
       <PasswordLoginSection
         username={logins.username ?? undefined}
         discordLinked={logins.discord}
+        hasEmail={Boolean(logins.email)}
       />
     </>
   );
