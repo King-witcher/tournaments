@@ -8,10 +8,13 @@
   },
   "Home": {
     "title": "Torneos de Quake Champions",
-    "subtitle": "Duelo, FFA, 2v2 y 3v3. Muy pronto.",
+    "subtitle": "Organiza torneos de duelo de tu comunidad: inscripción, check-in, cuadro y resultados en un solo lugar.",
+    "anonymous": {
+      "hint": "Para participar, entra o crea una cuenta. Si recibiste un enlace de invitación, ábrelo directamente: te lleva al registro.",
+      "login": "Entrar",
+      "signup": "Crear cuenta"
+    },
     "status": {
-      "checking": "Verificando la API…",
-      "ok": "API y base de datos funcionando.",
       "unavailable": "La API respondió, pero la base de datos no está disponible.",
       "offline": "No se pudo conectar con la API."
     },
@@ -92,6 +95,9 @@
     "loading": "Cargando la comunidad…",
     "loginRequired": "Inicia sesión para ver esta comunidad.",
     "yourRole": "Tu rol: {role}",
+    "membership": {
+      "title": "Tú en esta comunidad"
+    },
     "nickname": {
       "label": "Tu apodo en esta comunidad",
       "save": "Guardar",
@@ -139,12 +145,20 @@
     "loginRequired": "Inicia sesión para aceptar la invitación.",
     "accept": "Unirme a la comunidad",
     "tournamentTitle": "Inscripción en {name}",
+    "tournamentSpots": "{count, plural, =0 {Nadie inscrito todavía} one {# inscrito} other {# inscritos}} de {max} cupos.",
     "tournamentHint": "Aceptar también te une a la comunidad {tenant} como jugador.",
     "acceptTournament": "Unirme e inscribirme"
   },
   "Locales": {
     "pt": "Portugués",
     "es": "Español"
+  },
+  "LocaleSwitcher": {
+    "label": "Idioma",
+    "names": {
+      "pt": "Português",
+      "es": "Español"
+    }
   },
   "TournamentStatus": {
     "draft": "Borrador",
@@ -160,7 +174,8 @@
   "Tournaments": {
     "title": "Torneos",
     "create": "Crear torneo",
-    "empty": "Todavía no hay torneos.",
+    "empty": "Todavía no hay torneos. Crea uno: empieza como borrador, que solo ve la organización, hasta que se publique.",
+    "emptyPlayer": "Todavía no hay torneos publicados. Cuando la organización publique uno, aparecerá aquí.",
     "participants": "{count}/{max} inscritos",
     "registered": "estás inscrito"
   },

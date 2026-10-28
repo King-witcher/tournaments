@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import { UserMenu } from "@/features/auth/components/user-menu";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -49,9 +50,14 @@ export default async function LocaleLayout({
             <Link href="/" className="text-sm font-medium hover:underline">
               {t("home")}
             </Link>
-            <Suspense fallback={null}>
-              <UserMenu />
-            </Suspense>
+            <div className="flex items-center gap-4">
+              <Suspense fallback={null}>
+                <LocaleSwitcher />
+              </Suspense>
+              <Suspense fallback={null}>
+                <UserMenu />
+              </Suspense>
+            </div>
           </header>
           {children}
         </NextIntlClientProvider>

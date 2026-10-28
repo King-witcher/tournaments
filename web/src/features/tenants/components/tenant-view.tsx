@@ -2,20 +2,18 @@ import { getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { InviteSection } from "@/features/invites/components/invite-section";
-import { LeaveTenantSection } from "@/features/members/components/leave-tenant-section";
 import { MemberList } from "@/features/members/components/member-list";
-import { NicknameForm } from "@/features/members/components/nickname-form";
-import { TransferOwnershipSection } from "@/features/members/components/transfer-ownership-section";
+import { MembershipSection } from "@/features/members/components/membership-section";
 import { TournamentList } from "@/features/tournaments/components/tournament-list";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { Alert } from "@/shared/ui/alert";
 
 /**
- * Página do tenant, só para membros: torneios, apelido, membros, (organizer
- * ou owner) convites e, por último, sair (ou, para o owner, transferir a
- * posse). Cada seção busca o próprio dado. Lê a sessão, então
- * fica em `<Suspense>`.
+ * Página do tenant, só para membros: torneios, membros, (organizer ou owner)
+ * convites e, por último, o que é de quem vê (apelido e sair, ou, para o
+ * owner, transferir a posse). Cada seção busca o próprio dado. Lê a sessão,
+ * então fica em `<Suspense>`.
  */
 export async function TenantView({ slug }: { slug: string }) {
   const api = await serverApi();
@@ -46,14 +44,13 @@ export async function TenantView({ slug }: { slug: string }) {
         </p>
       </header>
       <TournamentList slug={slug} viewerRole={me.role} />
-      <NicknameForm slug={slug} nickname={me.nickname} />
       <MemberList slug={slug} viewerRole={me.role} />
       {me.role !== "player" && <InviteSection slug={slug} />}
-      {me.role === "owner" ? (
-        <TransferOwnershipSection slug={slug} />
-      ) : (
-        <LeaveTenantSection slug={slug} />
-      )}
+      <MembershipSection
+        slug={slug}
+        nickname={me.nickname}
+        owner={me.role === "owner"}
+      />
     </>
   );
 }

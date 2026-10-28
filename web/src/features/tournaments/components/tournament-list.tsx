@@ -36,7 +36,9 @@ export async function TournamentList({ slug, viewerRole }: Props) {
         )}
       </div>
       {tournaments.length === 0 ? (
-        <p className="text-sm opacity-70">{t("empty")}</p>
+        <p className="text-sm opacity-70">
+          {viewerRole === "player" ? t("emptyPlayer") : t("empty")}
+        </p>
       ) : (
         <ul className="divide-y divide-black/10 dark:divide-white/10">
           {tournaments.map((tournament) => (

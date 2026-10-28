@@ -18,7 +18,7 @@ export async function TransferOwnershipSection({ slug }: { slug: string }) {
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
+      <h3 className="font-semibold">{t("title")}</h3>
       <p className="text-sm opacity-70">{t("description")}</p>
       {candidates.length === 0 ? (
         <p className="text-sm opacity-70">{t("empty")}</p>

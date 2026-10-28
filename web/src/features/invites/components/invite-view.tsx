@@ -44,6 +44,10 @@ export async function InviteView({ token }: { token: string }) {
       </h1>
       {tournament && (
         <p className="text-sm opacity-70">
+          {t("tournamentSpots", {
+            count: tournament.participants,
+            max: tournament.max_participants,
+          })}{" "}
           {t("tournamentHint", { tenant: invite.tenant_name })}
         </p>
       )}

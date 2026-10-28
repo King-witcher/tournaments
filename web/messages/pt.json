@@ -8,10 +8,13 @@
   },
   "Home": {
     "title": "Torneios de Quake Champions",
-    "subtitle": "Duelo, FFA, 2v2 e 3v3. Em breve.",
+    "subtitle": "Organize torneios de duelo da sua comunidade: inscrição, check-in, chave e resultados num lugar só.",
+    "anonymous": {
+      "hint": "Para participar, entre ou crie uma conta. Quem recebeu um link de convite pode abri-lo direto: ele leva ao cadastro.",
+      "login": "Entrar",
+      "signup": "Criar conta"
+    },
     "status": {
-      "checking": "Verificando a API…",
-      "ok": "API e banco funcionando.",
       "unavailable": "A API respondeu, mas o banco está indisponível.",
       "offline": "Não foi possível falar com a API."
     },
@@ -92,6 +95,9 @@
     "loading": "Carregando a comunidade…",
     "loginRequired": "Entre para ver esta comunidade.",
     "yourRole": "Seu papel: {role}",
+    "membership": {
+      "title": "Você nesta comunidade"
+    },
     "nickname": {
       "label": "Seu apelido nesta comunidade",
       "save": "Salvar",
@@ -139,12 +145,20 @@
     "loginRequired": "Entre para aceitar o convite.",
     "accept": "Entrar na comunidade",
     "tournamentTitle": "Inscrição em {name}",
+    "tournamentSpots": "{count, plural, =0 {Ninguém inscrito ainda} one {# inscrito} other {# inscritos}} de {max} vagas.",
     "tournamentHint": "Aceitar também faz você entrar na comunidade {tenant} como jogador.",
     "acceptTournament": "Entrar e se inscrever"
   },
   "Locales": {
     "pt": "Português",
     "es": "Espanhol"
+  },
+  "LocaleSwitcher": {
+    "label": "Idioma",
+    "names": {
+      "pt": "Português",
+      "es": "Español"
+    }
   },
   "TournamentStatus": {
     "draft": "Rascunho",
@@ -160,7 +174,8 @@
   "Tournaments": {
     "title": "Torneios",
     "create": "Criar torneio",
-    "empty": "Nenhum torneio ainda.",
+    "empty": "Nenhum torneio ainda. Crie um: ele começa como rascunho, que só a organização vê, até ser publicado.",
+    "emptyPlayer": "Nenhum torneio publicado ainda. Quando a organização publicar um, ele aparece aqui.",
     "participants": "{count}/{max} inscritos",
     "registered": "você está inscrito"
   },
