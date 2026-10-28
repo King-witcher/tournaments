@@ -19,7 +19,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-pub const WEB: &str = "http://localhost:3000";
+pub const WEB: &str = "http://localhost:4001";
 
 /// App com login do Discord desligado (os testes criam sessões direto no banco).
 pub fn app(db: PgPool) -> Router {

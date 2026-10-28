@@ -19,15 +19,15 @@ impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         Ok(Self {
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL não definida")?,
-            addr: env_or("API_ADDR", "127.0.0.1:8080")
+            addr: env_or("API_ADDR", "127.0.0.1:4000")
                 .parse()
                 .context("API_ADDR inválido")?,
-            web_origin: env_or("WEB_ORIGIN", "http://localhost:3000"),
+            web_origin: env_or("WEB_ORIGIN", "http://localhost:4001"),
             discord_client_id: env_opt("DISCORD_CLIENT_ID"),
             discord_client_secret: env_opt("DISCORD_CLIENT_SECRET"),
             discord_redirect_uri: env_or(
                 "DISCORD_REDIRECT_URI",
-                "http://localhost:8080/auth/discord/callback",
+                "http://localhost:4000/auth/discord/callback",
             ),
             cookie_domain: env_opt("COOKIE_DOMAIN"),
             cookie_secure: matches!(

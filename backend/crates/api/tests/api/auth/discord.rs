@@ -49,7 +49,7 @@ async fn login_redirects_to_discord(db: PgPool) {
     assert!(url.contains("client_id=client-1"));
     assert!(url.contains("scope=identify"));
     assert!(url.contains(&format!("state={state}")));
-    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fdiscord%2Fcallback"));
+    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fdiscord%2Fcallback"));
 }
 
 #[sqlx::test(migrations = "../../migrations")]

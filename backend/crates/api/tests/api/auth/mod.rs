@@ -22,7 +22,7 @@ use tower::ServiceExt;
 
 use crate::common::{User, WEB, app_with};
 
-const REDIRECT: &str = "http://localhost:8080/auth/discord/callback";
+const REDIRECT: &str = "http://localhost:4000/auth/discord/callback";
 
 struct FakeDiscord {
     user: Option<DiscordUser>,

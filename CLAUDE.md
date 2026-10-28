@@ -24,7 +24,7 @@ O código é organizado por domínio dos dois lados, com `shared/` para o que é
 
 Backend (em `backend/`):
 - `bun scripts/dev.ts`: API com recarga automática (para, aplica migrations, recompila e sobe a cada `.rs`/`.sql`/`Cargo.toml`/`.env` salvo; respeita `CARGO_TARGET_DIR` e `API_ADDR`)
-- `cargo run -p api`: sobe a API em http://localhost:8080 (docs Scalar em `/docs`, OpenAPI em `/openapi.json`) e aplica as migrations
+- `cargo run -p api`: sobe a API em http://localhost:4000 (docs Scalar em `/docs`, OpenAPI em `/openapi.json`) e aplica as migrations
 - `cargo test -p engine`: testes dos motores (rápidos, sem banco)
 - `cargo test`: tudo, inclusive testes de API com `sqlx::test` (precisa do Postgres local)
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
@@ -64,10 +64,10 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 ## Armadilhas (Windows)
 
 - Enquanto a API roda, `target\debug\api.exe` fica travado e `cargo build`/`cargo test` falham com "Access denied". Peça para o usuário parar a API, ou compile com `CARGO_TARGET_DIR` temporário. Com o watcher (`bun scripts/dev.ts`), cada arquivo que você salva reinicia a API do usuário, e uma API sem reinício continua rodando código velho: depois de mudar schema ou rotas, confira se ela foi reiniciada.
-- O usuário costuma deixar a API (8080) e o `bun run dev` (3000) rodando. Nunca encerre processos que você não iniciou; confira o dono com `Get-NetTCPConnection -LocalPort <porta>` e o horário de início.
-- Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 3001`.
+- O usuário costuma deixar a API (4000) e o `bun run dev` (4001) rodando. Nunca encerre processos que você não iniciou; confira o dono com `Get-NetTCPConnection -LocalPort <porta>` e o horário de início.
+- Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 4003`.
 - Parar uma tarefa em segundo plano pode deixar o processo filho (`api.exe`, `node`) vivo. Depois de parar, confira as portas e encerre só o que for seu.
-- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:8081` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:8081/openapi.json -o src/shared/api/schema.d.ts`.
+- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:4002` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:4002/openapi.json -o src/shared/api/schema.d.ts`.
 
 ## Subagentes (`.claude/agents/`)
 
