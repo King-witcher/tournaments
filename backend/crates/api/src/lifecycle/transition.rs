@@ -70,7 +70,8 @@ impl Transition {
 }
 
 /// Aplica `transition` ao torneio, que quem chama já travou
-/// (`find_for_update`), com o que ela faz junto.
+/// (`find_for_update`), com o que ela faz junto, e emite a mudança (abrir o
+/// check-in também avisa os inscritos; iniciar, os lados das partidas prontas).
 pub async fn apply(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -92,11 +93,20 @@ pub async fn apply(
         Transition::OpenCheckIn => {}
     }
     tournaments::set_status(conn, tournament.id, to).await?;
-    if transition == Transition::UndoStart {
-        // Fora de andamento, quem desistiu ou saiu da comunidade sai da
-        // inscrição (antes, o banco não deixa: inscrito de torneio iniciado
-        // não sai).
-        participants::delete_departed(conn, tournament.id).await?;
+    match transition {
+        Transition::OpenCheckIn => tournaments::check_in_opened(conn, tournament.id).await?,
+        Transition::UndoStart => {
+            // A mudança sai antes, com os inscritos de agora: "Seus torneios"
+            // de quem sai a seguir também muda.
+            tournaments::changed(conn, tournament.id).await?;
+            // Fora de andamento, quem desistiu ou saiu da comunidade sai da
+            // inscrição (antes, o banco não deixa: inscrito de torneio
+            // iniciado não sai).
+            participants::delete_departed(conn, tournament.id).await?;
+        }
+        Transition::ReopenRegistration | Transition::Start => {
+            tournaments::changed(conn, tournament.id).await?;
+        }
     }
     Ok(())
 }

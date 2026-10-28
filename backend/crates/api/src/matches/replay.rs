@@ -68,7 +68,7 @@ pub async fn replay(
     let event = NewEvent::game(EventKind::Replay, Some(member.user.id), g.number, None)
         .with_comment(comment.as_deref());
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }

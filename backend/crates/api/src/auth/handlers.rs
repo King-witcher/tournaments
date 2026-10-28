@@ -8,21 +8,18 @@ use axum_extra::extract::CookieJar;
 
 use super::{
     CurrentUser, db, kv,
-    session::SESSION_COOKIE,
+    session::{SESSION_COOKIE, SESSION_ID_LEN, current_hash, session_id},
     types::{LoginMethods, SessionInfo, SessionPath, UpdateMe},
 };
 use crate::{
     AppState,
+    outbox::{self, Event},
     shared::{ApiError, ErrorBody, JsonBody, PathParams, text::clean_text, token},
 };
 
 /// Tamanho máximo do nome exibido: o do apelido, que começa com ele (e o do
 /// nome do Discord).
 const DISPLAY_NAME_MAX: usize = 32;
-
-/// Caracteres do hash (em hexadecimal) que identificam a sessão na lista: 64
-/// bits, que não se repetem entre as sessões de uma conta.
-const SESSION_ID_LEN: usize = 16;
 
 #[utoipa::path(
     get,
@@ -86,16 +83,26 @@ pub async fn logins(
 )]
 pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Result<Response, ApiError> {
     if let Some(cookie) = jar.get(SESSION_COOKIE) {
-        kv::delete_session(&state.redis, &token::hash_token(cookie.value())).await?;
+        let hash = token::hash_token(cookie.value());
+        if let Some(user) = kv::delete_session(&state.redis, &hash).await? {
+            sessions_ended(&state, user, &[token::hex(&hash)]).await?;
+        }
     }
     let jar = jar.remove(state.auth.clear_session_cookie());
     Ok((jar, StatusCode::NO_CONTENT).into_response())
 }
 
-/// Hash (em hexadecimal) da sessão do cookie.
-fn current_hash(jar: &CookieJar) -> Option<String> {
-    jar.get(SESSION_COOKIE)
-        .map(|c| token::hex(&token::hash_token(c.value())))
+/// Sessões de `user` encerradas (hashes em hexadecimal): os sockets delas
+/// fecham, pelo outbox.
+pub(super) async fn sessions_ended(
+    state: &AppState,
+    user: i64,
+    hashes: &[String],
+) -> Result<(), ApiError> {
+    let sessions = hashes.iter().map(|h| session_id(h)).collect();
+    let event = Event::SessionsEnded { user, sessions };
+    outbox::emit(&mut *state.db.acquire().await?, event).await?;
+    Ok(())
 }
 
 #[utoipa::path(
@@ -118,7 +125,7 @@ pub async fn sessions(
         sessions
             .into_iter()
             .map(|s| SessionInfo {
-                id: s.hash[..SESSION_ID_LEN].to_owned(),
+                id: session_id(&s.hash),
                 current: current.as_ref() == Some(&s.hash),
                 created_at: s.created_at,
                 expires_at: s.expires_at,
@@ -143,7 +150,9 @@ pub async fn end_other_sessions(
     jar: CookieJar,
 ) -> Result<StatusCode, ApiError> {
     let cookie = jar.get(SESSION_COOKIE).ok_or(ApiError::unauthenticated())?;
-    kv::delete_other_sessions(&state.redis, user.id, &token::hash_token(cookie.value())).await?;
+    let keep = token::hash_token(cookie.value());
+    let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
+    sessions_ended(&state, user.id, &ended).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -170,6 +179,7 @@ pub async fn end_session(
         .find(|h| path.id.len() == SESSION_ID_LEN && h.starts_with(&path.id))
         .ok_or(ApiError::not_found("auth.session_not_found"))?;
     kv::delete_sessions(&state.redis, user.id, std::slice::from_ref(&hash)).await?;
+    sessions_ended(&state, user.id, std::slice::from_ref(&hash)).await?;
     let jar = if current_hash(&jar) == Some(hash) {
         jar.remove(state.auth.clear_session_cookie())
     } else {

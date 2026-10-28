@@ -8,13 +8,13 @@ use axum::{Json, extract::State};
 use engine::series;
 
 use super::{
-    actions, db,
+    actions, changes, db,
     db::NewGame,
     detail, due,
     games::{GameStatus, series_games},
     history::NewEvent,
     outcome,
-    result::Confirmation,
+    result::{Confirmation, Side},
     stage,
     types::{ContestReport, EventKind, GameInput, GamePath, MatchDetail},
 };
@@ -75,15 +75,25 @@ pub async fn report(
     series::put(m.best_of, &series_games(&games), index, candidate)?;
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
-    db::insert_report(
-        &mut tx,
-        &at,
-        &new,
-        side,
-        member.user.id,
-        tournament.contest_minutes,
-    )
-    .await?;
+    let contest_minutes = tournament.contest_minutes;
+    let confirm_by =
+        db::insert_report(&mut tx, &at, &new, side, member.user.id, contest_minutes).await?;
+    let (from, to) = match side {
+        Side::A => sides,
+        Side::B => (sides.1, sides.0),
+    };
+    if let (Some(from), Some(to)) = (stage.entrant(from), stage.entrant(to)) {
+        let players = (from, to);
+        changes::game_reported(
+            &mut tx,
+            &tournament,
+            &path.key,
+            path.game,
+            players,
+            confirm_by,
+        )
+        .await?;
+    }
     let event = NewEvent::game(
         EventKind::Reported,
         Some(member.user.id),
@@ -91,7 +101,7 @@ pub async fn report(
         Some(new.winner),
     );
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -146,7 +156,7 @@ pub async fn confirm(
     let winner = (kind == EventKind::Resolved).then_some(g.winner);
     let event = NewEvent::game(kind, Some(member.user.id), g.number, winner);
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -200,10 +210,12 @@ pub async fn contest(
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
     db::contest_game(&mut tx, g.id, member.user.id, &comment).await?;
+    let by = (member.user.id, member.nickname.as_str());
+    changes::game_contested(&mut tx, &tournament, &path.key, g.number, by).await?;
     let event = NewEvent::game(EventKind::Contested, Some(member.user.id), g.number, None)
         .with_comment(Some(&comment));
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }

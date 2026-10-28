@@ -1,31 +1,61 @@
 //! Confirmação por tempo: mapa pendente sem resposta confirma sozinho
-//! ao fim da janela de contestação. Sem job em segundo plano: a API aplica
-//! ao ler a chave ou uma partida e antes de cada ação sobre ela (como a
-//! abertura automática do check-in). `apply_due_confirmations` é a peça
-//! isolada que um agendador (tempo real) também pode chamar.
+//! ao fim da janela de contestação. A API aplica ao ler a chave ou uma
+//! partida e antes de cada ação sobre ela (como a abertura automática do
+//! check-in), e o agendador do tempo real aplica nos torneios com mapa
+//! vencido que ninguém leu (`confirm_all_due`), para a chave andar e os
+//! jogadores serem avisados.
 
 use chrono::{DateTime, Utc};
-use sqlx::{Acquire, PgConnection};
+use sqlx::{Acquire, PgConnection, PgPool};
 
-use super::{db, settle};
+use super::{changes::Snapshot, db, settle, stage};
 use crate::{
     shared::ApiError,
     tenants::TenantMember,
-    tournaments::{StoredTournament, find_visible, find_visible_for_update},
+    tournaments::{self, StoredTournament, find_visible, find_visible_for_update},
 };
 
 /// Confirma os mapas com a janela vencida em `now` e, se algum confirmou,
 /// fecha as séries que eles decidiram, dá os W.O. automáticos que ficaram
-/// prontos e encerra o torneio se a chave terminou (`settle`). Quem chama
-/// trava o torneio (`find_for_update`). Devolve quantos confirmou.
+/// prontos, encerra o torneio se a chave terminou e emite o que mudou
+/// (`settle`). Quem chama trava o torneio (`find_for_update`). Devolve
+/// quantos confirmou.
 pub async fn apply_due_confirmations(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     now: DateTime<Utc>,
 ) -> Result<u64, ApiError> {
+    if !db::has_due(conn, tournament.id, now).await? {
+        return Ok(0);
+    }
+    let before = Snapshot::of(&stage::load(conn, tournament).await?);
     let confirmed = db::confirm_due(conn, tournament.id, now).await?;
     if confirmed > 0 {
-        settle::settle(conn, tournament, None).await?;
+        settle::settle(conn, tournament, None, &before).await?;
+    }
+    Ok(confirmed)
+}
+
+/// Para o agendador: aplica `apply_due_confirmations` em cada torneio com
+/// mapa vencido em `now`, cada um na própria transação e com o torneio
+/// travado. Devolve quantos mapas confirmou; o erro de um torneio fica no
+/// log e não para os outros.
+pub async fn confirm_all_due(db: &PgPool, now: DateTime<Utc>) -> Result<u64, ApiError> {
+    let mut confirmed = 0;
+    for (tenant, slug) in db::due_tournaments(db, now).await? {
+        let confirm = async {
+            let mut tx = db.begin().await?;
+            let Some(t) = tournaments::find_for_update(&mut tx, tenant, &slug, None).await? else {
+                return Ok(0);
+            };
+            let n = apply_due_confirmations(&mut tx, &t, now).await?;
+            tx.commit().await?;
+            Ok::<_, ApiError>(n)
+        };
+        match confirm.await {
+            Ok(n) => confirmed += n,
+            Err(e) => tracing::error!(slug, code = e.code, "confirmação por tempo falhou"),
+        }
     }
     Ok(confirmed)
 }

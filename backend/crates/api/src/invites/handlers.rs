@@ -38,14 +38,17 @@ pub async fn create_invite(
     member: TenantMember<Organizer>,
 ) -> Result<(StatusCode, Json<CreatedInvite>), ApiError> {
     let token = token::random_token();
+    let mut tx = state.db.begin().await?;
     let (id, expires_at) = db::create(
-        &state.db,
+        &mut tx,
         member.tenant,
         &token::hash_token(&token),
         member.user.id,
         INVITE_DAYS,
     )
     .await?;
+    tenants::changed(&mut tx, member.tenant).await?;
+    tx.commit().await?;
 
     Ok((
         StatusCode::CREATED,
@@ -97,9 +100,13 @@ pub async fn revoke_invite(
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<InvitePath>,
 ) -> Result<StatusCode, ApiError> {
-    if !db::revoke(&state.db, member.tenant, path.invite_id).await? {
+    let mut tx = state.db.begin().await?;
+    if !db::revoke(&mut tx, member.tenant, path.invite_id).await? {
         return Err(ApiError::not_found("invite.not_found"));
     }
+    // Também os links de inscrição: a aba do torneio recebe o aviso da comunidade.
+    tenants::changed(&mut tx, member.tenant).await?;
+    tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -191,6 +198,7 @@ pub async fn accept_invite(
     };
     let nickname = default_nickname(&user.display_name);
     db::join_as_player(&mut tx, invite.tenant, user.id, &nickname, invite.id).await?;
+    tenants::changed(&mut tx, invite.tenant).await?;
     if let Some(t) = &tournament {
         let entry = Entry::Invite(invite.id);
         participants::register(&mut tx, invite.tenant, t, user.id, entry).await?;

@@ -1,13 +1,13 @@
 //! Traduções de um torneio.
 
-use sqlx::PgPool;
+use sqlx::PgConnection;
 
 use super::TournamentId;
 use crate::{shared::Locale, tournaments::texts::Texts};
 
 /// Cria ou substitui a tradução de `locale`.
 pub async fn put_translation(
-    db: &PgPool,
+    conn: &mut PgConnection,
     id: TournamentId,
     locale: Locale,
     texts: &Texts,
@@ -23,14 +23,14 @@ pub async fn put_translation(
         texts.description,
         texts.rules
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(())
 }
 
 /// `false` se não havia tradução nesse idioma.
 pub async fn delete_translation(
-    db: &PgPool,
+    conn: &mut PgConnection,
     id: TournamentId,
     locale: Locale,
 ) -> Result<bool, sqlx::Error> {
@@ -39,7 +39,7 @@ pub async fn delete_translation(
         id.get(),
         locale.as_str()
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(result.rows_affected() > 0)
 }

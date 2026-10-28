@@ -6,7 +6,7 @@ use crate::{tenants::TenantId, tournaments::TournamentId};
 
 /// Grava o convite do tenant (só o hash do token) e devolve id e validade.
 pub async fn create(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     token_hash: &[u8; 32],
     created_by: i64,
@@ -21,7 +21,7 @@ pub async fn create(
         created_by,
         valid_days
     )
-    .fetch_one(db)
+    .fetch_one(conn)
     .await?;
     Ok((row.id, row.expires_at))
 }
@@ -29,7 +29,7 @@ pub async fn create(
 /// Grava o link de inscrição do torneio, sem validade (vale enquanto a
 /// inscrição estiver aberta), e devolve o id.
 pub async fn create_for_tournament(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     tournament: TournamentId,
     token_hash: &[u8; 32],
@@ -44,7 +44,7 @@ pub async fn create_for_tournament(
         &token_hash[..],
         created_by
     )
-    .fetch_one(db)
+    .fetch_one(conn)
     .await
 }
 
@@ -97,13 +97,17 @@ pub async fn list_for_tournament(
 }
 
 /// Revoga (de novo não muda a data). `false` se o convite não é deste tenant.
-pub async fn revoke(db: &PgPool, tenant: TenantId, invite_id: i64) -> Result<bool, sqlx::Error> {
+pub async fn revoke(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    invite_id: i64,
+) -> Result<bool, sqlx::Error> {
     let result = sqlx::query!(
         "update tenant_invites set revoked_at = coalesce(revoked_at, now()) where tenant_id = $1 and id = $2",
         tenant.get(),
         invite_id
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(result.rows_affected() > 0)
 }

@@ -9,11 +9,12 @@ use engine::core::{MatchId, MatchState, Outcome, ParticipantId};
 use sqlx::PgConnection;
 
 use super::{
+    changes::Snapshot,
     db::{self, MatchRef},
     games::{GameStatus, StoredGame},
     history::NewEvent,
     key, settle,
-    stage::Stage,
+    stage::{self, Stage},
     types::EventKind,
 };
 use crate::{
@@ -98,5 +99,6 @@ pub async fn settle(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
 ) -> Result<TournamentStatus, ApiError> {
-    settle::settle(conn, tournament, None).await
+    let before = Snapshot::of(&stage::load(conn, tournament).await?);
+    Ok(settle::settle(conn, tournament, None, &before).await?.1)
 }

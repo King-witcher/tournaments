@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select slug from tenants where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "62b7086376c14d1b37c9916d82454ae081d78a4cb3e945426032ca24ce6f1c2b"
+}

@@ -3,7 +3,7 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    db,
+    changes, db,
     texts::Texts,
     types::{PutTranslation, TournamentTranslation, TranslationPath},
 };
@@ -39,14 +39,10 @@ pub async fn put_translation(
     PathParams(path): PathParams<TranslationPath>,
     JsonBody(body): JsonBody<PutTranslation>,
 ) -> Result<Json<TournamentTranslation>, ApiError> {
-    let found = db::find(
-        &mut *state.db.acquire().await?,
-        member.tenant,
-        &path.tournament,
-        None,
-    )
-    .await?
-    .ok_or(ApiError::not_found("tournament.not_found"))?;
+    let mut tx = state.db.begin().await?;
+    let found = db::find(&mut tx, member.tenant, &path.tournament, None)
+        .await?
+        .ok_or(ApiError::not_found("tournament.not_found"))?;
     if !found.status.texts_editable() {
         return Err(ApiError::conflict("tournament.finished"));
     }
@@ -54,7 +50,9 @@ pub async fn put_translation(
         return Err(ApiError::invalid("tournament.translation_same_locale"));
     }
     let texts = Texts::clean(&body.name, &body.description, &body.rules)?;
-    db::put_translation(&state.db, found.id, path.locale, &texts).await?;
+    db::put_translation(&mut tx, found.id, path.locale, &texts).await?;
+    changes::changed(&mut tx, found.id).await?;
+    tx.commit().await?;
     Ok(Json(TournamentTranslation {
         locale: path.locale,
         name: texts.name,
@@ -86,19 +84,17 @@ pub async fn delete_translation(
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TranslationPath>,
 ) -> Result<StatusCode, ApiError> {
-    let found = db::find(
-        &mut *state.db.acquire().await?,
-        member.tenant,
-        &path.tournament,
-        None,
-    )
-    .await?
-    .ok_or(ApiError::not_found("tournament.not_found"))?;
+    let mut tx = state.db.begin().await?;
+    let found = db::find(&mut tx, member.tenant, &path.tournament, None)
+        .await?
+        .ok_or(ApiError::not_found("tournament.not_found"))?;
     if !found.status.texts_editable() {
         return Err(ApiError::conflict("tournament.finished"));
     }
-    if !db::delete_translation(&state.db, found.id, path.locale).await? {
+    if !db::delete_translation(&mut tx, found.id, path.locale).await? {
         return Err(ApiError::not_found("tournament.translation_not_found"));
     }
+    changes::changed(&mut tx, found.id).await?;
+    tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }

@@ -1,6 +1,7 @@
 //! Mapas da série (`match_games`): ler, enviar, confirmar, contestar, o
 //! organizador lançar e anular.
 
+use chrono::{DateTime, Utc};
 use engine::core::{MapId, ParticipantId};
 use sqlx::PgConnection;
 
@@ -51,7 +52,7 @@ pub async fn games(
 }
 
 /// O mapa que um jogador do lado `side` enviou: pendente até o adversário
-/// responder ou acabar a janela (`contest_minutes`).
+/// responder ou acabar a janela (`contest_minutes`). Devolve o prazo.
 pub async fn insert_report(
     conn: &mut PgConnection,
     at: &MatchRef<'_>,
@@ -59,14 +60,15 @@ pub async fn insert_report(
     side: Side,
     by: i64,
     contest_minutes: i32,
-) -> Result<(), sqlx::Error> {
+) -> Result<DateTime<Utc>, sqlx::Error> {
     let (a_frags, b_frags) = game.frags.unzip();
-    sqlx::query!(
+    sqlx::query_scalar!(
         r#"insert into match_games
                (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,
                 map_id, a_frags, b_frags, status, reported_side, reported_by, confirm_by)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13,
-                   now() + make_interval(mins => $14))"#,
+                   now() + make_interval(mins => $14))
+           returning confirm_by as "confirm_by!""#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
@@ -82,9 +84,8 @@ pub async fn insert_report(
         by,
         contest_minutes
     )
-    .execute(conn)
-    .await?;
-    Ok(())
+    .fetch_one(conn)
+    .await
 }
 
 /// O organizador `by` lança o mapa, já confirmado: novo ou no lugar do que

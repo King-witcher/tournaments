@@ -4,12 +4,38 @@ use axum::{
     http::{HeaderMap, header},
     response::Redirect,
 };
-use axum_extra::extract::cookie::{Cookie, SameSite};
+use axum_extra::extract::{
+    CookieJar,
+    cookie::{Cookie, SameSite},
+};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+
+use crate::shared::token;
 
 pub const SESSION_COOKIE: &str = "session";
 pub const STATE_COOKIE: &str = "oauth_state";
 pub const SESSION_DAYS: i64 = 30;
+
+/// Caracteres do hash (em hexadecimal) que identificam a sessão na lista e
+/// nos eventos do tempo real: 64 bits, que não se repetem entre as sessões de
+/// uma conta.
+pub const SESSION_ID_LEN: usize = 16;
+
+/// O id público da sessão de hash `hash` (em hexadecimal).
+pub fn session_id(hash: &str) -> String {
+    hash[..SESSION_ID_LEN].to_owned()
+}
+
+/// Hash (em hexadecimal) da sessão do cookie.
+pub fn current_hash(jar: &CookieJar) -> Option<String> {
+    jar.get(SESSION_COOKIE)
+        .map(|c| token::hex(&token::hash_token(c.value())))
+}
+
+/// O id público da sessão do cookie.
+pub fn current_session_id(jar: &CookieJar) -> Option<String> {
+    current_hash(jar).map(|h| session_id(&h))
+}
 
 /// Configuração de auth que os handlers precisam em tempo de execução.
 #[derive(Clone, Debug)]

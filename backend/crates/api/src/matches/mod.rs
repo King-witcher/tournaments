@@ -13,13 +13,16 @@
 //! `settle` anula os mapas que ficaram depois da decisão, fecha as séries
 //! decididas, dá os W.O. automáticos de quem desistiu ou saiu da comunidade
 //! (`withdrawals`) e encerra ou reabre o torneio conforme a chave. A
-//! confirmação por tempo é aplicada ao ler e agir (`due`);
-//! `apply_due_confirmations` é o que um agendador chamaria. A desistência,
+//! confirmação por tempo é aplicada ao ler e agir (`due`), e o agendador do
+//! tempo real a aplica nos torneios que ninguém leu (`confirm_all_due`). O que
+//! muda na chave vai para o outbox pelo `settle` e pelo início (`changes`),
+//! com os avisos de partida pronta, mapa enviado e contestado. A desistência,
 //! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
 //! chave e a próxima partida dele, para `/me/tournaments`, saem de `place`
 //! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`.
 
 mod actions;
+mod changes;
 mod db;
 mod detail;
 mod due;
@@ -44,7 +47,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use due::apply_due_confirmations;
+pub use due::{apply_due_confirmations, confirm_all_due};
 pub use mine::{Place, place, place_of};
 pub use stage::{discard, start};
 pub use types::NextMatch;

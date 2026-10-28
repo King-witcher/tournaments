@@ -120,3 +120,25 @@ pub async fn discard(
         .await?;
     Ok(touched as u64)
 }
+
+/// Torneios em andamento com mapa pendente de janela vencida em `now`, para
+/// o agendador (que age pelo sistema, sem membro: o tenant sai daqui).
+pub async fn due_tournaments(
+    db: &sqlx::PgPool,
+    now: DateTime<Utc>,
+) -> Result<Vec<(TenantId, String)>, sqlx::Error> {
+    Ok(sqlx::query!(
+        r#"select t.tenant_id, t.slug from tournaments t
+           where t.status = 'in_progress'
+             and exists(select 1 from match_games g
+                        where g.tournament_id = t.id and g.status = 'pending'
+                          and g.confirm_by <= $1)
+           order by t.id"#,
+        now
+    )
+    .fetch_all(db)
+    .await?
+    .into_iter()
+    .map(|r| (TenantId::new(r.tenant_id), r.slug))
+    .collect())
+}

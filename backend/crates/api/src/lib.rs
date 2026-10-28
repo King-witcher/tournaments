@@ -10,7 +10,9 @@ mod maps;
 mod matches;
 mod members;
 mod my_tournaments;
+pub mod outbox;
 mod participants;
+pub mod realtime;
 pub mod shared;
 mod tenants;
 mod tournaments;
@@ -20,6 +22,7 @@ use std::sync::Arc;
 use axum::{
     Json, Router,
     http::{HeaderValue, Method, header},
+    middleware,
     routing::get,
 };
 use sqlx::{PgPool, migrate::Migrator};
@@ -30,8 +33,13 @@ use utoipa_scalar::{Scalar, Servable};
 
 pub static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 
+/// As mensagens do WebSocket não aparecem em nenhuma rota HTTP: entram como
+/// componentes para o `gen:api` do front gerar os tipos.
 #[derive(OpenApi)]
-#[openapi(info(title = "Tournaments API"))]
+#[openapi(
+    info(title = "Tournaments API"),
+    components(schemas(realtime::ClientMessage, realtime::ServerMessage))
+)]
 struct ApiDoc;
 
 #[derive(Clone)]
@@ -40,11 +48,14 @@ pub struct AppState {
     pub redis: shared::Redis,
     pub discord: Arc<dyn auth::DiscordApi>,
     pub auth: Arc<auth::AuthSettings>,
+    /// Canal dos sockets e o despertador do despachante.
+    pub realtime: realtime::Realtime,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
 /// do front) e Scalar em `/docs`.
 pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
+    let realtime = state.realtime.clone();
     let (router, openapi) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .merge(health::router())
         .merge(auth::router())
@@ -57,6 +68,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(maps::router())
         .merge(matches::router())
         .merge(my_tournaments::router())
+        .merge(realtime::router())
         .with_state(state)
         .split_for_parts();
 
@@ -76,6 +88,10 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
     router
         .route("/openapi.json", get(move || async move { spec }))
         .merge(Scalar::with_url("/docs", openapi))
+        .layer(middleware::from_fn_with_state(
+            realtime,
+            realtime::wake_after_emit,
+        ))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
 }

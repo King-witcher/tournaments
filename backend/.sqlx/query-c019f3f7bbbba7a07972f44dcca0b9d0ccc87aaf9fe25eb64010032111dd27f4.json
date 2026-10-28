@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select user_id from tenant_members\n           where tenant_id = $1 and role in ('organizer', 'owner') and left_at is null\n           order by user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c019f3f7bbbba7a07972f44dcca0b9d0ccc87aaf9fe25eb64010032111dd27f4"
+}

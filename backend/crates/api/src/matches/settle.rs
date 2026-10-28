@@ -2,7 +2,8 @@
 //! decisão da série (ou de outros lados), fecha as séries que os mapas
 //! confirmados decidiram e dá os W.O. automáticos, repetindo até não sobrar
 //! nada (fechar uma série pode deixar pronta uma partida de quem desistiu);
-//! depois encerra ou reabre o torneio conforme a chave. Quem chama trava o
+//! depois encerra ou reabre o torneio conforme a chave e emite o que mudou
+//! (`changes`). Quem chama trava o
 //! torneio.
 
 use chrono::Utc;
@@ -10,6 +11,7 @@ use engine::{core::MatchState, series};
 use sqlx::PgConnection;
 
 use super::{
+    changes::{self, Snapshot},
     db::{self, MatchRef},
     games::{StoredGame, series_games},
     history::NewEvent,
@@ -43,15 +45,19 @@ pub async fn apply(
     }
 }
 
-/// `apply` e o status do torneio conforme a chave (encerra quando ela
-/// termina, reabre quando uma correção deixa partida por jogar).
+/// `apply`, o status do torneio conforme a chave (encerra quando ela termina,
+/// reabre quando uma correção deixa partida por jogar) e o que mudou desde
+/// `before` no outbox (`changes`). Devolve a fase e o status como ficaram.
 pub async fn settle(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     actor: Option<i64>,
-) -> Result<TournamentStatus, ApiError> {
+    before: &Snapshot,
+) -> Result<(Stage, TournamentStatus), ApiError> {
     let stage = apply(conn, tournament, actor).await?;
-    stage::sync_status(conn, tournament, &stage).await
+    let status = stage::sync_status(conn, tournament, &stage).await?;
+    changes::settled(conn, tournament, before, &stage, status).await?;
+    Ok((stage, status))
 }
 
 /// Anula os mapas `games` da partida `at`, com um evento por mapa.

@@ -7,12 +7,13 @@ edition = "2024"
 anyhow = "1.0.104"
 argon2 = "0.6.0"
 async-trait = "0.1.92"
-axum = "0.8.9"
+axum = { version = "0.8.9", features = ["ws"] }
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 base64 = "0.23.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
 engine = { path = "../engine" }
+futures-util = { version = "0.3.34", default-features = false, features = ["sink"] }
 rand = "0.10.3"
 redis = { version = "1.8.0", default-features = false, features = ["tokio-rustls-comp", "connection-manager", "tls-rustls-webpki-roots"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json", "form"] }
@@ -32,4 +33,5 @@ utoipa-scalar = { version = "0.4.0", features = ["axum"] }
 
 [dev-dependencies]
 http-body-util = "0.1.5"
+tokio-tungstenite = "0.29.0"
 tower = { version = "0.5.3", features = ["util"] }

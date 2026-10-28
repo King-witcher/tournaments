@@ -1,13 +1,17 @@
 //! SQL dos torneios: criar, editar e excluir aqui; leitura em `read`,
-//! mudanças de status em `status` e traduções em `translations`.
+//! mudanças de status em `status`, traduções em `translations`, os
+//! destinatários do tempo real em `audience` e o que o agendador procura em
+//! `scheduled`.
 
+mod audience;
 mod read;
+mod scheduled;
 mod status;
 mod translations;
 
 use chrono::{DateTime, Utc};
 use engine::formats as ef;
-use sqlx::{PgConnection, PgExecutor, PgPool, types::Json};
+use sqlx::{PgConnection, PgExecutor, types::Json};
 
 use super::{
     edit::Edit,
@@ -23,7 +27,9 @@ use crate::{
     tenants::TenantId,
 };
 
-pub use read::{find, find_for_update, list, slugs_for_member};
+pub use audience::{Audience, audience};
+pub use read::{current_status, find, find_for_update, list, slugs_for_member};
+pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use status::{mark_registration_reopened, publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 
@@ -83,8 +89,11 @@ pub async fn champion_pool<'e>(db: impl PgExecutor<'e>) -> Result<u32, ApiError>
 }
 
 /// Cria o torneio como rascunho, com as fases.
-pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Result<(), ApiError> {
-    let mut tx = db.begin().await?;
+pub async fn create(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    new: NewTournament<'_>,
+) -> Result<TournamentId, ApiError> {
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
@@ -106,12 +115,12 @@ pub async fn create(db: &PgPool, tenant: TenantId, new: NewTournament<'_>) -> Re
         new.schedule.check_in_minutes,
         new.contest_minutes
     )
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut *conn)
     .await?
     .ok_or(ApiError::conflict("tournament.slug_taken"))?;
-    insert_stages(&mut tx, TournamentId(id), &new.setup.stages).await?;
-    tx.commit().await?;
-    Ok(())
+    let id = TournamentId(id);
+    insert_stages(conn, id, &new.setup.stages).await?;
+    Ok(id)
 }
 
 async fn insert_stages(
@@ -187,12 +196,12 @@ pub async fn update(
 }
 
 /// Exclui o torneio se ainda for rascunho. `false` se não era.
-pub async fn delete_draft(db: &PgPool, id: TournamentId) -> Result<bool, sqlx::Error> {
+pub async fn delete_draft(conn: &mut PgConnection, id: TournamentId) -> Result<bool, sqlx::Error> {
     let result = sqlx::query!(
         "delete from tournaments where id = $1 and status = 'draft'",
         id.0
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(result.rows_affected() > 0)
 }

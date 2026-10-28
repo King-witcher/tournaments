@@ -8,7 +8,7 @@ use super::db;
 use crate::{
     shared::ApiError,
     tenants::TenantId,
-    tournaments::{StoredTournament, TournamentStatus, Visibility},
+    tournaments::{self, StoredTournament, TournamentStatus, Visibility},
 };
 
 /// Por onde a inscrição chega.
@@ -76,6 +76,7 @@ pub async fn register(
     if !db::insert(conn, tenant, tournament.id, user_id, invite_id, added_by).await? {
         return Err(ApiError::not_found("member.not_found"));
     }
+    tournaments::changed(conn, tournament.id).await?;
     Ok(true)
 }
 

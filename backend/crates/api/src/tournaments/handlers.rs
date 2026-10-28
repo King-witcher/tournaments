@@ -1,7 +1,7 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    contest,
+    changes, contest,
     db::{self, NewTournament},
     edit,
     schedule::Schedule,
@@ -61,15 +61,13 @@ pub async fn create_tournament(
         schedule,
         contest_minutes: body.contest_minutes,
     };
-    db::create(&state.db, member.tenant, new).await?;
-    let created = db::find(
-        &mut *state.db.acquire().await?,
-        member.tenant,
-        &body.slug,
-        Some(member.user.id),
-    )
-    .await?
-    .ok_or_else(ApiError::internal)?;
+    let mut tx = state.db.begin().await?;
+    let id = db::create(&mut tx, member.tenant, new).await?;
+    changes::changed(&mut tx, id).await?;
+    let created = db::find(&mut tx, member.tenant, &body.slug, Some(member.user.id))
+        .await?
+        .ok_or_else(ApiError::internal)?;
+    tx.commit().await?;
     Ok((StatusCode::CREATED, Json(created.into())))
 }
 
@@ -163,6 +161,7 @@ pub async fn update_tournament(
         setup.check(current.mode, pool, current.participants)?;
     }
     db::update(&mut tx, current.id, &edit).await?;
+    changes::changed(&mut tx, current.id).await?;
     let updated = db::find(&mut tx, member.tenant, &path.tournament, viewer)
         .await?
         .ok_or_else(ApiError::internal)?;
@@ -208,6 +207,7 @@ pub async fn publish_tournament(
         .setup
         .check(current.mode, pool, current.participants)?;
     db::publish(&mut tx, current.id).await?;
+    changes::changed(&mut tx, current.id).await?;
     let published = db::find(&mut tx, member.tenant, &path.tournament, viewer)
         .await?
         .ok_or_else(ApiError::internal)?;
@@ -236,16 +236,15 @@ pub async fn delete_tournament(
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<StatusCode, ApiError> {
-    let found = db::find(
-        &mut *state.db.acquire().await?,
-        member.tenant,
-        &path.tournament,
-        None,
-    )
-    .await?
-    .ok_or(NOT_FOUND)?;
-    if !db::delete_draft(&state.db, found.id).await? {
+    let mut tx = state.db.begin().await?;
+    let found = db::find(&mut tx, member.tenant, &path.tournament, None)
+        .await?
+        .ok_or(NOT_FOUND)?;
+    // Antes de excluir: os inscritos e o endereço ainda existem.
+    changes::changed(&mut tx, found.id).await?;
+    if !db::delete_draft(&mut tx, found.id).await? {
         return Err(ApiError::conflict("tournament.not_draft"));
     }
+    tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }

@@ -10,7 +10,7 @@ use super::db;
 use crate::{
     invites, lifecycle,
     shared::ApiError,
-    tenants::{Role, TenantId},
+    tenants::{self, Role, TenantId},
 };
 
 /// Quem `by` pode remover: o owner, qualquer um; o organizer, só players.
@@ -50,6 +50,7 @@ pub async fn depart(
     lifecycle::leave_tournaments(conn, tenant, user_id, by).await?;
     invites::revoke_created_by(conn, tenant, user_id).await?;
     db::deactivate(conn, tenant, user_id, by).await?;
+    tenants::access_lost(conn, tenant, user_id).await?;
     Ok(())
 }
 

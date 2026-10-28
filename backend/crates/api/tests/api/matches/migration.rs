@@ -12,9 +12,27 @@ use crate::common::*;
 /// A última migration antes do envio mapa a mapa.
 const BEFORE: i64 = 20261031010000;
 
+/// As rotas de hoje gravam no outbox, que só existe a partir da migration
+/// `20261104000000_realtime`: no schema antigo, uma tabela que aceita as mesmas
+/// gravações, que sai antes de as migrations novas criarem a de verdade.
+async fn outbox_stand_in(db: &PgPool, create: bool) {
+    let sql = if create {
+        "create table outbox (
+             id bigint generated always as identity,
+             xact xid8 not null default pg_current_xact_id(),
+             event jsonb not null
+         );
+         create unique index on outbox (xact, md5(event::text))"
+    } else {
+        "drop table outbox"
+    };
+    sqlx::raw_sql(sql).execute(db).await.unwrap();
+}
+
 #[sqlx::test(migrations = false)]
 async fn series_sent_whole_become_maps(db: PgPool) {
     api::MIGRATOR.run_to(BEFORE, &db).await.unwrap();
+    outbox_stand_in(&db, true).await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -88,6 +106,7 @@ async fn series_sent_whole_become_maps(db: PgPool) {
     .await
     .unwrap();
 
+    outbox_stand_in(&db, false).await;
     api::MIGRATOR.run(&db).await.unwrap();
 
     let maps = sqlx::query!(

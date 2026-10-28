@@ -1,4 +1,4 @@
-use sqlx::PgPool;
+use sqlx::{PgConnection, PgPool};
 
 use super::{MyTenant, Role, TenantId};
 use crate::shared::ApiError;
@@ -141,16 +141,15 @@ pub async fn create_with_owner(
 /// `member.not_found`, 409 `member.owner_limit_reached` `{max}` e 403
 /// `tenant.forbidden` se `from` deixou de ser o owner no meio do caminho.
 pub async fn transfer_ownership(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     from: i64,
     to: i64,
     max_owned: i64,
 ) -> Result<(), ApiError> {
-    let mut tx = db.begin().await?;
     // Trava o novo owner, como na criação: o limite dele vale até o commit.
     sqlx::query_scalar!("select id from users where id = $1 for update", to)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut *conn)
         .await?
         .ok_or(ApiError::not_found("member.not_found"))?;
     sqlx::query_scalar!(
@@ -160,14 +159,14 @@ pub async fn transfer_ownership(
         tenant.get(),
         to
     )
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut *conn)
     .await?
     .ok_or(ApiError::not_found("member.not_found"))?;
     let owned = sqlx::query_scalar!(
         r#"select count(*) as "count!" from tenant_members where user_id = $1 and role = 'owner'"#,
         to
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut *conn)
     .await?;
     if owned >= max_owned {
         return Err(
@@ -183,7 +182,7 @@ pub async fn transfer_ownership(
         tenant.get(),
         from
     )
-    .execute(&mut *tx)
+    .execute(&mut *conn)
     .await?;
     if demoted.rows_affected() == 0 {
         return Err(ApiError::forbidden("tenant.forbidden"));
@@ -193,9 +192,8 @@ pub async fn transfer_ownership(
         tenant.get(),
         to
     )
-    .execute(&mut *tx)
+    .execute(&mut *conn)
     .await?;
-    tx.commit().await?;
     Ok(())
 }
 
@@ -243,4 +241,23 @@ pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<My
         role: Role::from_db(&row.role)?,
         nickname: row.nickname,
     })
+}
+
+/// O slug do tenant, que vai nos eventos do tempo real.
+pub async fn slug_of(conn: &mut PgConnection, tenant: TenantId) -> Result<String, sqlx::Error> {
+    sqlx::query_scalar!("select slug from tenants where id = $1", tenant.get())
+        .fetch_one(conn)
+        .await
+}
+
+/// Organizers e owner ativos do tenant: quem recebe os avisos da organização.
+pub async fn staff(conn: &mut PgConnection, tenant: TenantId) -> Result<Vec<i64>, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select user_id from tenant_members
+           where tenant_id = $1 and role in ('organizer', 'owner') and left_at is null
+           order by user_id"#,
+        tenant.get()
+    )
+    .fetch_all(conn)
+    .await
 }

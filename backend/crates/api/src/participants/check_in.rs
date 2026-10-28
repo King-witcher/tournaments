@@ -50,6 +50,7 @@ pub async fn check_in(
     if !db::check_in(&mut tx, tournament.id, member.user.id, None).await? {
         return Err(ApiError::conflict("participant.not_registered"));
     }
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -78,6 +79,7 @@ pub async fn undo_check_in(
     let tournament = find_visible_for_update(&mut tx, &member, &path.tournament).await?;
     check_open(&tournament)?;
     db::undo_check_in(&mut tx, tournament.id, member.user.id).await?;
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -111,6 +113,7 @@ pub async fn check_in_participant(
     if !db::check_in(&mut tx, tournament.id, path.user_id, by).await? {
         return Err(PARTICIPANT_NOT_FOUND);
     }
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -143,6 +146,7 @@ pub async fn undo_check_in_participant(
     if !db::undo_check_in(&mut tx, tournament.id, path.user_id).await? {
         return Err(PARTICIPANT_NOT_FOUND);
     }
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }

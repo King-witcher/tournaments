@@ -6,8 +6,9 @@ use super::{
 };
 use crate::{
     AppState,
+    outbox::{self, Event},
     shared::{ApiError, ErrorBody, JsonBody, PathParams},
-    tenants::{MyTenant, Organizer, Owner, Role, TenantMember, validate_nickname},
+    tenants::{self, MyTenant, Organizer, Owner, Role, TenantMember, validate_nickname},
 };
 
 #[utoipa::path(
@@ -29,7 +30,10 @@ pub async fn update_my_membership(
     JsonBody(body): JsonBody<UpdateMyMembership>,
 ) -> Result<Json<MyTenant>, ApiError> {
     let nickname = validate_nickname(&body.nickname)?;
-    db::set_nickname(&state.db, member.tenant, member.user.id, &nickname).await?;
+    let mut tx = state.db.begin().await?;
+    db::set_nickname(&mut tx, member.tenant, member.user.id, &nickname).await?;
+    tenants::changed(&mut tx, member.tenant).await?;
+    tx.commit().await?;
     Ok(Json(MyTenant {
         nickname,
         ..member.into()
@@ -198,7 +202,12 @@ pub async fn set_member_role(
         return Err(ApiError::conflict("member.is_owner"));
     }
 
-    db::set_role(&state.db, owner.tenant, user_id, body.role.into()).await?;
+    let mut tx = state.db.begin().await?;
+    db::set_role(&mut tx, owner.tenant, user_id, body.role.into()).await?;
+    tenants::changed(&mut tx, owner.tenant).await?;
+    // Organizer vê rascunhos: "Seus torneios" dele pode mudar.
+    outbox::emit(&mut tx, Event::me([user_id])).await?;
+    tx.commit().await?;
 
     db::list(&state.db, owner.tenant, Some(user_id))
         .await?

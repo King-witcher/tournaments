@@ -12,7 +12,7 @@ use engine::{
 };
 use sqlx::PgConnection;
 
-use super::{db, games::StoredGame, result::StoredResult};
+use super::{changes, db, games::StoredGame, result::StoredResult};
 use crate::{
     participants::{self, Seeded},
     shared::ApiError,
@@ -139,7 +139,8 @@ pub async fn load(
 /// Gera a chave ao iniciar, no torneio travado, com `seeded` (os elegíveis na
 /// ordem dos seeds, que já ficaram gravados): confere de novo a configuração
 /// com o número real de participantes e o pool de campeões de agora, e monta
-/// a chave. Nada mais é gravado, porque ela sai do replay. Erros: os de
+/// a chave, avisando os lados das partidas que já nascem prontas. Nada mais
+/// é gravado, porque ela sai do replay. Erros: os de
 /// `Setup::check_entrants` (ex.: 422 `champions.pool_exhausted` `{required,
 /// available}`) e os de montar a chave.
 pub async fn start(
@@ -152,8 +153,9 @@ pub async fn start(
         .setup
         .check_entrants(tournament.mode, pool, seeded.len())?;
     let ef::StageFormat::Elimination(config) = config(tournament, FIRST_STAGE)?;
-    EliminationBracket::new(*config, seeded.to_vec())?;
-    Ok(())
+    let bracket = EliminationBracket::new(*config, seeded.to_vec())?;
+    let entrants = participants::seeded(conn, tournament.id).await?;
+    changes::started(conn, tournament, &bracket, &entrants).await
 }
 
 /// Descarta a chave ao desfazer o início: apaga séries, mapas e histórico.

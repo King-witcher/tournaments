@@ -1,16 +1,18 @@
 //! Leitura de torneios: a lista do tenant e um torneio pelo slug. As duas
 //! aplicam a abertura automática do check-in (`Schedule::check_in_due`) antes
-//! de devolver, então o status lido já é o que vale agora.
+//! de devolver, então o status lido já é o que vale agora. O agendador do
+//! tempo real abre pelo mesmo caminho (`current_status`) os que ninguém leu.
 
 use chrono::{DateTime, Utc};
 use engine::{champions as ec, formats as ef};
-use sqlx::{PgConnection, PgPool, types::Json};
+use sqlx::{Acquire, PgConnection, PgPool, types::Json};
 
 use super::{StoredTournament, TournamentId, status::open_due_check_in};
 use crate::{
     shared::{ApiError, Locale},
     tenants::TenantId,
     tournaments::{
+        changes,
         schedule::Schedule,
         setup::{Setup, TournamentMode},
         status::TournamentStatus,
@@ -20,20 +22,27 @@ use crate::{
     },
 };
 
-/// O status que vale agora: abre o check-in se a janela abriu (e grava).
-async fn current_status<'e>(
-    db: impl sqlx::PgExecutor<'e>,
+/// O status que vale em `now`: abre o check-in se a janela abriu e grava,
+/// junto com o aviso aos inscritos (numa transação própria, ou num savepoint
+/// da de quem chama).
+pub async fn current_status(
+    conn: &mut PgConnection,
     id: TournamentId,
     stored: TournamentStatus,
     schedule: &Schedule,
     reopened_at: Option<DateTime<Utc>>,
+    now: DateTime<Utc>,
 ) -> Result<TournamentStatus, sqlx::Error> {
-    if schedule.check_in_due(stored, reopened_at, Utc::now())
-        && open_due_check_in(db, id, schedule, reopened_at).await?
-    {
-        return Ok(TournamentStatus::CheckIn);
+    if !schedule.check_in_due(stored, reopened_at, now) {
+        return Ok(stored);
     }
-    Ok(stored)
+    let mut tx = conn.begin().await?;
+    if !open_due_check_in(&mut *tx, id, schedule, reopened_at).await? {
+        return Ok(stored);
+    }
+    changes::check_in_opened(&mut tx, id).await?;
+    tx.commit().await?;
+    Ok(TournamentStatus::CheckIn)
 }
 
 /// Torneios do tenant que `viewer` vê, do mais novo ao mais antigo. Com
@@ -45,6 +54,7 @@ pub async fn list(
     viewer: i64,
     see_all: bool,
 ) -> Result<Vec<TournamentSummary>, ApiError> {
+    let mut conn = db.acquire().await?;
     let rows = sqlx::query!(
         r#"select t.id, t.slug, t.locale, t.name, t.mode, t.status, t.visibility,
                   t.max_participants, t.starts_at, t.check_in_minutes,
@@ -72,7 +82,7 @@ pub async fn list(
         viewer,
         see_all
     )
-    .fetch_all(db)
+    .fetch_all(&mut *conn)
     .await?;
 
     let mut list = Vec::with_capacity(rows.len());
@@ -83,11 +93,12 @@ pub async fn list(
         };
         let stored = TournamentStatus::from_db(&r.status)?;
         let status = current_status(
-            db,
+            &mut conn,
             TournamentId(r.id),
             stored,
             &schedule,
             r.registration_reopened_at,
+            Utc::now(),
         )
         .await?;
         let translations = r
@@ -164,6 +175,7 @@ pub async fn find(
         stored,
         &schedule,
         row.registration_reopened_at,
+        Utc::now(),
     )
     .await?;
 

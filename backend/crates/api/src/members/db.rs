@@ -101,7 +101,7 @@ pub async fn deactivate(
 }
 
 pub async fn set_role(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     user_id: i64,
     role: Role,
@@ -113,13 +113,13 @@ pub async fn set_role(
         user_id,
         role.as_str()
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(())
 }
 
 pub async fn set_nickname(
-    db: &PgPool,
+    conn: &mut PgConnection,
     tenant: TenantId,
     user_id: i64,
     nickname: &str,
@@ -130,7 +130,7 @@ pub async fn set_nickname(
         user_id,
         nickname
     )
-    .execute(db)
+    .execute(conn)
     .await?;
     Ok(())
 }

@@ -7,12 +7,13 @@ use engine::core::{EngineError, MapId, Match, MatchState, ParticipantId};
 use sqlx::PgConnection;
 
 use super::{
+    changes::Snapshot,
     db::MatchRef,
     detail,
     games::StoredGame,
     result::Side,
     settle,
-    stage::{self, Stage},
+    stage::Stage,
     types::{GameInput, MatchDetail},
     view::Viewer,
 };
@@ -110,15 +111,19 @@ pub fn at<'a, R>(
 
 /// Depois de gravar: fecha as séries decididas, anula o que ficou depois da
 /// decisão, dá os W.O. automáticos, encerra ou reabre o torneio conforme a
-/// chave e devolve a partida `key` como ficou.
+/// chave, emite o que mudou desde `before` (a fase lida antes de gravar) e
+/// devolve a partida `key` como ficou.
 pub async fn respond<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     mut tournament: StoredTournament,
+    before: &Stage,
     key: &str,
 ) -> Result<MatchDetail, ApiError> {
-    let stage = settle::apply(conn, &tournament, Some(member.user.id)).await?;
-    tournament.status = stage::sync_status(conn, &tournament, &stage).await?;
+    let before = Snapshot::of(before);
+    let actor = Some(member.user.id);
+    let (stage, status) = settle::settle(conn, &tournament, actor, &before).await?;
+    tournament.status = status;
     let viewer = Viewer::new(member, &stage);
     let m = detail::find(&stage, key)?;
     detail::load(conn, &tournament, &stage, &viewer, m).await

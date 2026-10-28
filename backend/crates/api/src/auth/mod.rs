@@ -24,7 +24,7 @@ pub use current_user::CurrentUser;
 pub use discord::{DiscordApi, DiscordUser, HttpDiscord};
 /// Os testes criam sessões por aqui, sem passar pelo login.
 pub use kv::create_session;
-pub use session::AuthSettings;
+pub use session::{AuthSettings, current_session_id};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

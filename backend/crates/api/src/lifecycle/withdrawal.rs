@@ -54,6 +54,7 @@ pub async fn withdraw_participant(
         Some(true) => {}
     }
     matches::settle_withdrawals(&mut tx, &t).await?;
+    tournaments::changed(&mut tx, t.id).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -79,6 +80,7 @@ pub async fn leave_tournaments(
         }
         if t.status.participants_editable() {
             participants::unregister(conn, t.id, user_id).await?;
+            tournaments::changed_with(conn, t.id, &[user_id]).await?;
             continue;
         }
         let t = after_due(conn, t, viewer).await?;
@@ -86,6 +88,7 @@ pub async fn leave_tournaments(
             && participants::withdraw(conn, t.id, user_id, by).await? == Some(true)
         {
             matches::settle_withdrawals(conn, &t).await?;
+            tournaments::changed(conn, t.id).await?;
         }
     }
     Ok(())

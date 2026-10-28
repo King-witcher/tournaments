@@ -13,6 +13,7 @@ mod matches;
 mod members;
 mod my_tournaments;
 mod participants;
+mod realtime;
 mod schema;
 mod tenants;
 mod tournaments;

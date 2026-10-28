@@ -109,7 +109,7 @@ pub async fn put_game(
         }
         None => {}
     }
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -174,7 +174,7 @@ pub async fn set_result(
     let event = NewEvent::series(EventKind::Walkover, Some(member.user.id), Some(outcome))
         .with_comment(comment.as_deref());
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &path.key).await?;
+    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }

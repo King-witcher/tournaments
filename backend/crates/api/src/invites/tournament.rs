@@ -41,14 +41,17 @@ pub async fn create_tournament_invite(
         return Err(ApiError::conflict("tournament.registration_closed"));
     }
     let token = token::random_token();
+    let mut tx = state.db.begin().await?;
     let id = db::create_for_tournament(
-        &state.db,
+        &mut tx,
         member.tenant,
         found.id,
         &token::hash_token(&token),
         member.user.id,
     )
     .await?;
+    tournaments::changed(&mut tx, found.id).await?;
+    tx.commit().await?;
     Ok((
         StatusCode::CREATED,
         Json(CreatedTournamentInvite { id, token }),

@@ -11,7 +11,9 @@ use axum_extra::extract::CookieJar;
 use super::{
     CurrentUser,
     attempts::{check_password, confirm_password},
-    db, kv,
+    db,
+    handlers::sessions_ended,
+    kv,
     password::{hash_password, is_acceptable, validate_password},
     session::{SESSION_COOKIE, user_agent},
     types::{ChangePassword, Credentials, CurrentPassword, LoginMethods},
@@ -159,8 +161,9 @@ pub async fn change_password(
     if hash.is_some()
         && let Some(cookie) = jar.get(SESSION_COOKIE)
     {
-        kv::delete_other_sessions(&state.redis, user.id, &token::hash_token(cookie.value()))
-            .await?;
+        let keep = token::hash_token(cookie.value());
+        let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
+        sessions_ended(&state, user.id, &ended).await?;
     }
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }

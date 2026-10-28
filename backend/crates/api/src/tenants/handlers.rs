@@ -1,7 +1,7 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    MyTenant, Owner, Role, TenantMember, db,
+    MyTenant, Owner, Role, TenantMember, changes, db,
     nickname::default_nickname,
     slug::validate_slug,
     types::{CreateTenant, TransferOwnership},
@@ -115,14 +115,17 @@ pub async fn transfer_ownership(
     if body.user_id == owner.user.id {
         return Err(ApiError::conflict("member.is_owner"));
     }
+    let mut tx = state.db.begin().await?;
     db::transfer_ownership(
-        &state.db,
+        &mut tx,
         owner.tenant,
         owner.user.id,
         body.user_id,
         MAX_OWNED_TENANTS,
     )
     .await?;
+    changes::changed(&mut tx, owner.tenant).await?;
+    tx.commit().await?;
     Ok(Json(MyTenant {
         role: Role::Organizer,
         ..owner.into()

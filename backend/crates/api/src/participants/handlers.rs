@@ -97,7 +97,9 @@ pub async fn withdraw(
     if !tournament.status.registration_open() {
         return Err(ApiError::conflict("tournament.registration_closed"));
     }
-    db::delete(&mut tx, tournament.id, member.user.id).await?;
+    if db::delete(&mut tx, tournament.id, member.user.id).await? {
+        tournaments::changed_with(&mut tx, tournament.id, &[member.user.id]).await?;
+    }
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -175,6 +177,7 @@ pub async fn remove_participant(
     if !db::delete(&mut tx, tournament.id, path.user_id).await? {
         return Err(ApiError::not_found("participant.not_found"));
     }
+    tournaments::changed_with(&mut tx, tournament.id, &[path.user_id]).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }

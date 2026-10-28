@@ -7,14 +7,19 @@
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
 //! contestação de resultado (`contest`). As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
-//! em `matches` (por `sync_finished`).
+//! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
+//! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
+//! agendador do tempo real faz sozinho (abrir o check-in, avisar a hora de
+//! iniciar), em `scheduled`.
 
+mod changes;
 mod contest;
 mod db;
 mod edit;
 mod format;
 mod handlers;
 mod schedule;
+mod scheduled;
 mod setup;
 mod slug;
 mod status;
@@ -28,10 +33,12 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use changes::{changed, changed_with, check_in_opened};
 pub use db::{
-    StoredTournament, TournamentId, champion_pool, find, find_for_update, list,
+    Audience, StoredTournament, TournamentId, audience, champion_pool, find, find_for_update, list,
     mark_registration_reopened, set_status, slugs_for_member, sync_finished,
 };
+pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use status::TournamentStatus;
 pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath, TournamentSummary};
 pub use visibility::{Visibility, find_visible, find_visible_for_update};

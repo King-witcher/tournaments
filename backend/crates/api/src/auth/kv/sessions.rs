@@ -120,12 +120,14 @@ pub async fn user_sessions(redis: &Redis, user_id: i64) -> RedisResult<Vec<Store
     Ok(sessions)
 }
 
-/// Encerra a sessão com este hash; sem sessão, nada acontece.
-pub async fn delete_session(redis: &Redis, hash: &[u8; 32]) -> RedisResult<()> {
-    if let Some(user_id) = session_user(redis, hash).await? {
+/// Encerra a sessão com este hash e devolve o dono; sem sessão, nada
+/// acontece.
+pub async fn delete_session(redis: &Redis, hash: &[u8; 32]) -> RedisResult<Option<i64>> {
+    let user_id = session_user(redis, hash).await?;
+    if let Some(user_id) = user_id {
         delete_sessions(redis, user_id, &[token::hex(hash)]).await?;
     }
-    Ok(())
+    Ok(user_id)
 }
 
 /// Hashes (em hexadecimal) das sessões no índice da conta.
@@ -135,19 +137,21 @@ pub async fn session_hashes(redis: &Redis, user_id: i64) -> RedisResult<Vec<Stri
         .await
 }
 
-/// Encerra as sessões da conta, menos a de hash `keep`.
+/// Encerra as sessões da conta, menos a de hash `keep`, e devolve os hashes
+/// (em hexadecimal) das que encerrou.
 pub async fn delete_other_sessions(
     redis: &Redis,
     user_id: i64,
     keep: &[u8; 32],
-) -> RedisResult<()> {
+) -> RedisResult<Vec<String>> {
     let keep = token::hex(keep);
     let others: Vec<String> = session_hashes(redis, user_id)
         .await?
         .into_iter()
         .filter(|h| *h != keep)
         .collect();
-    delete_sessions(redis, user_id, &others).await
+    delete_sessions(redis, user_id, &others).await?;
+    Ok(others)
 }
 
 /// Encerra as sessões da conta com estes hashes (em hexadecimal).

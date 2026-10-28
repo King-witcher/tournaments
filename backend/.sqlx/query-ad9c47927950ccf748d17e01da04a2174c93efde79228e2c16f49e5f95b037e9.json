@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, event as \"event: Json<Value>\"\n           from outbox\n           order by id\n           limit $1\n           for update skip locked",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "outbox",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "event: Json<Value>",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "outbox",
+            "name": "event"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "ad9c47927950ccf748d17e01da04a2174c93efde79228e2c16f49e5f95b037e9"
+}

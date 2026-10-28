@@ -5,6 +5,7 @@ use api::{
     AppState, MIGRATOR,
     auth::{AuthSettings, HttpDiscord},
     config::Config,
+    realtime::{self, Realtime},
     shared::Redis,
 };
 use sqlx::postgres::PgPoolOptions;
@@ -64,7 +65,9 @@ async fn main() -> anyhow::Result<()> {
             cookie_domain: config.cookie_domain.clone(),
             cookie_secure: config.cookie_secure,
         }),
+        realtime: Realtime::new(),
     };
+    realtime::spawn(state.clone());
     let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;

@@ -73,6 +73,7 @@ pub async fn shuffle_seeding(
     let eligible = eligible(&mut tx, &tournament).await?;
     let order = draw(&mut tx, &tournament, eligible).await?;
     let seeded = in_order(&mut tx, &tournament, &order).await?;
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(Json(seeded))
 }
@@ -106,6 +107,7 @@ pub async fn put_seeding(
     let order = seed_order::manual_order(eligible(&mut tx, &tournament).await?, &body.user_ids)?;
     db::save_seeds(&mut tx, tournament.id, &seed_order::ids(&order)).await?;
     let seeded = in_order(&mut tx, &tournament, &order).await?;
+    tournaments::changed(&mut tx, tournament.id).await?;
     tx.commit().await?;
     Ok(Json(seeded))
 }

@@ -13,7 +13,8 @@ use crate::{AppState, auth::CurrentUser, shared::ApiError};
 
 /// Id interno de um tenant. Fora da criação, só sai do banco pelo extractor
 /// `TenantMember`, então quem recebe um `TenantId` já passou pela checagem de
-/// participação. Toda query de dado de tenant filtra por ele.
+/// participação. A exceção é o agendador do tempo real, que age pelo sistema
+/// nos torneios com algo vencido. Toda query de dado de tenant filtra por ele.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TenantId(i64);
 
@@ -133,8 +134,16 @@ impl<R: MinRole> FromRequestParts<AppState> for TenantMember<R> {
             tracing::error!("TenantMember usado em rota sem {{slug}}");
             return Err(ApiError::internal());
         };
+        Self::of(&state.db, user, slug).await
+    }
+}
 
-        let m = db::membership(&state.db, slug, user.id)
+impl<R: MinRole> TenantMember<R> {
+    /// `user` como membro do tenant `slug`, com as mesmas checagens e erros do
+    /// extractor: para quem confere o acesso fora de uma rota
+    /// `/tenants/{slug}/...` (a assinatura do WebSocket).
+    pub async fn of(db: &PgPool, user: CurrentUser, slug: &str) -> Result<Self, ApiError> {
+        let m = db::membership(db, slug, user.id)
             .await?
             .ok_or(ApiError::not_found("tenant.not_found"))?;
         if m.role < R::ROLE {
