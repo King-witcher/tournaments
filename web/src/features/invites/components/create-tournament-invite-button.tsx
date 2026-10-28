@@ -25,6 +25,8 @@ export function CreateTournamentInviteButton({ tenant, tournament }: Props) {
   return (
     <div className="flex flex-col items-start gap-2">
       <Button
+        variant="outline"
+        size="sm"
         disabled={pending}
         onClick={() =>
           run(

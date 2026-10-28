@@ -117,6 +117,8 @@ Motivos e cuidados:
 - A API devolve **códigos** (`match.already_reported`), nunca texto. Status, formatos e fases são enums no código, traduzidos no front.
 - Datas em UTC no banco, exibidas no fuso de quem vê.
 - Conteúdo do organizador: idioma original + traduções **opcionais** em `tournament_translations (tournament_id, locale, ...)`. Sem tradução, mostra o original.
+- **Trocar o idioma**: seletor no cabeçalho, que mantém a página; cada idioma aparece no próprio nome ("Español" também para quem lê em português).
+- **Espanhol**: a chave do torneio é sempre **llave** (llave de ganadores, llave de perdedores), mais comum na Argentina que "cuadro" (assumido; antes as duas palavras se misturavam).
 
 ## Formatos
 
@@ -180,6 +182,17 @@ Motivos e cuidados:
 - **Estado e forma também no banco**: data de início fora do rascunho; status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slug do tenant e slug, tenant e idioma original do torneio fixos; JSON de regras de campeões e de fase com a forma do `engine` (bans de 0 a 3, melhor de N ímpar); username no formato do cadastro, senha só como hash argon2id, tokens como SHA-256 de 32 bytes, avatar só por https, nome exibido não vazio, campeão com nome único.
 - Torneios publicados antes de existir a data de início ganharam a data de criação, e os que estavam na inscrição ficaram com a abertura automática do check-in suspensa (como numa reabertura), para não mudarem de status sozinhos.
 - **Fica fora do banco, de propósito**: ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra); validade de sessão e de convite posterior à criação e histórico imutável (os testes envelhecem essas datas direto no banco); o limite de 3 tenants por owner e o pool de campeões (regras da API, que mudam sem migration).
+
+## Interface
+
+Decididas na revisão de uso de 28/10 (todas assumidas, sem rodada de perguntas; design por utilidade, sem enfeite).
+
+- **Home**: sem login, diz o que fazer (entrar ou criar conta; link de convite leva ao cadastro). Logado, "Seus torneios" (inscrito e não encerrado, de todas as comunidades, em andamento primeiro) e depois "Minhas comunidades". "Seus torneios" é montado no front com uma busca de torneios por comunidade, até a API ter uma rota para isso. O status da API só aparece quando há problema.
+- **Página da comunidade**: torneios, membros, convites e, por último, "Você nesta comunidade" (apelido e sair, ou transferir a posse).
+- **Página do torneio**, de cima para baixo: para a organização, um quadro só com o estado, o próximo passo (publicar, abrir o check-in, iniciar, desfazer) e editar; depois a inscrição e o check-in de quem vê (inclusive o aviso de quem ficou fora da chave sem check-in); "Partidas que esperam você" (enviar, responder, resolver) com link; a chave, que ocupa a largura à direita da coluna de texto; descrição, formato, seeding, inscritos, links de inscrição e regras. Encerrado, "Editar" some (nada mais muda).
+- **Partida**: o código curto (C2.1) aparece logo abaixo do título, como no cartão da chave. As ferramentas da organização (lançar ou corrigir o placar, W.O.) ficam fechadas atrás de um botão; só "aceitar o placar enviado" fica à vista. O organizador que joga a partida vê o envio de jogador e, abaixo, o quadro fechado.
+- **Publicar pede confirmação**: publicado, o torneio não volta a rascunho nem pode ser excluído.
+- **Seeding**: o título diz quantos inscritos entram na chave (no check-in, quantos fizeram); sem seed nenhum, a lista avisa que a ordem mostrada não vale até salvar (iniciar assim sorteia).
 
 ## Notificações
 
