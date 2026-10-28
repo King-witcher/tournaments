@@ -739,5 +739,9 @@
   "Common": {
     "loading": "Cargando…",
     "no": "No"
+  },
+  "NotFound": {
+    "text": "Esta página no existe. Revisa la dirección o vuelve al inicio.",
+    "home": "Ir al inicio"
   }
 }
