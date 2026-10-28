@@ -9,12 +9,14 @@ import { buttonVariants } from "@/shared/ui/button";
 export function LoginButton() {
   const t = useTranslations("Auth");
   const pathname = usePathname();
-  const onAuthPage = pathname === "/login" || pathname === "/signup";
+  // Na própria página de login o botão só repetiria o formulário.
+  if (pathname === "/login") return null;
+  const onSignup = pathname === "/signup";
 
   return (
     <Link
       href={
-        onAuthPage
+        onSignup
           ? "/login"
           : { pathname: "/login", query: { return_to: pathname } }
       }

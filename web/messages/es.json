@@ -297,6 +297,7 @@
     "invites": {
       "title": "Enlaces de inscripción",
       "description": "Quien entra por el enlace queda como jugador de la comunidad y ya inscrito. El enlace sirve para varias personas y vale mientras la inscripción esté abierta.",
+      "full": "Los cupos se agotaron: los enlaces no inscriben a nadie más hasta que se libere un cupo (alguien sale o se amplían los cupos).",
       "create": "Generar enlace de inscripción",
       "empty": "No hay enlaces de inscripción.",
       "item": "Creado por {name} {created}",

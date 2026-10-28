@@ -297,6 +297,7 @@
     "invites": {
       "title": "Links de inscrição",
       "description": "Quem entra pelo link vira jogador da comunidade e já fica inscrito. O link serve para várias pessoas e vale enquanto a inscrição estiver aberta.",
+      "full": "As vagas acabaram: os links não inscrevem mais ninguém até abrir vaga (alguém sair ou as vagas aumentarem).",
       "create": "Gerar link de inscrição",
       "empty": "Nenhum link de inscrição.",
       "item": "Criado por {name} {created}",

@@ -71,7 +71,11 @@ export async function TournamentView({ tenant, slug }: Props) {
         organizer={organizer}
       />
       {organizer && invitesAllowed(tournament.status) && (
-        <TournamentInviteSection tenant={tenant} tournament={tournament.slug} />
+        <TournamentInviteSection
+          tenant={tenant}
+          tournament={tournament.slug}
+          full={tournament.participants >= tournament.max_participants}
+        />
       )}
       {texts.rules && <TournamentRules rules={texts.rules} />}
     </>
