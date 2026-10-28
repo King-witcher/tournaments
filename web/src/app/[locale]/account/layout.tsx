@@ -8,7 +8,7 @@ import { PageTabs } from "@/shared/ui/page-tabs";
 import { FormSkeleton, TabLoading, TabsSkeleton } from "@/shared/ui/skeleton";
 
 /**
- * A conta: o título e as abas Perfil, Logins, Senha e Avisos, cada uma uma
+ * A conta: o título e as abas Perfil, Logins, Senha, Sessões e Avisos, cada uma uma
  * sub-rota (as que buscam dado, com o próprio `loading.tsx`). Sem sessão, no
  * lugar das abas, o convite a entrar (que volta para cá).
  */
@@ -40,6 +40,7 @@ export default async function AccountLayout({
               { href: "/account", label: t("tabs.profile") },
               { href: "/account/logins", label: t("tabs.logins") },
               { href: "/account/password", label: t("tabs.password") },
+              { href: "/account/sessions", label: t("tabs.sessions") },
               {
                 href: "/account/notifications",
                 label: t("tabs.notifications"),

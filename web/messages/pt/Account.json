@@ -7,6 +7,7 @@
     "profile": "Perfil",
     "logins": "Logins",
     "password": "Senha",
+    "sessions": "Sessões",
     "notifications": "Avisos"
   },
   "name": {
@@ -66,5 +67,19 @@
     "doneTitle": "Email confirmado",
     "done": "Agora ele é o email da sua conta: se você esquecer a senha, o link para criar outra vai para ele.",
     "goToAccount": "Ir para a conta"
+  },
+  "sessions": {
+    "title": "Sessões abertas",
+    "description": "Os navegadores e aparelhos em que sua conta está aberta. Encerre os que você não reconhece ou não usa mais. Para sair desta sessão, use Sair no menu.",
+    "deviceHeader": "Navegador",
+    "sinceHeader": "Entrou em",
+    "device": "{browser} em {os}",
+    "unknownDevice": "Navegador desconhecido",
+    "current": "Esta sessão",
+    "end": "Encerrar",
+    "endConfirm": "Essa sessão deixa de valer e o navegador dela volta para a tela de entrada. Você pode entrar de novo quando quiser.",
+    "endOthers": "Encerrar as outras",
+    "endOthersConfirm": "Todas as outras sessões deixam de valer; só esta continua aberta.",
+    "onlyThis": "Sua conta está aberta só nesta sessão."
   }
 }
