@@ -57,6 +57,13 @@ Ordem de trabalho combinada. Decisões e motivos ficam em `decisions.md`; aqui f
   - API: `POST .../matches/{partida}/games/{n}/report`, `.../confirm`, `.../contest`, `PUT .../games/{n}` (organizador) e `PUT .../result` só com W.O.; `settle.rs` depois de toda mudança (anula, fecha a série, W.O. automático, status); `tasks.rs` (o que a partida e cada mapa esperam de quem vê). Testes de envio e confirmação mapa a mapa, fechamento na maioria, prazo de 10 minutos, confirmar na hora, contestação e resolução, mapa fora de ordem, repetido e depois da decisão, correções, W.O., regras do banco e a conversão (aplicando as migrations até a anterior, gravando dados na forma antiga e aplicando o resto).
   - Front: página da partida com o placar da série, uma linha por mapa e o envio do próximo na própria linha; chave com o placar dos mapas confirmados e a marca de mapa pendente ou contestado; `LocalTime` em `shared/ui`; textos e erros novos em pt e es.
 
+- **Revisão de uso, rodada 2a** (pedido do usuário; regras e motivos em "Princípios de interface" no `web/CLAUDE.md`, decisões em "Interface" no `decisions.md`):
+  - Carregamento: `loading.tsx` em todo segmento que busca dado e fallbacks com esqueleto (`PageSkeleton`, `LoadingSection`) no lugar do conteúdo; `Button` com `pending` (desabilita e mostra o indicador) em todo botão que chama a API.
+  - `ConfirmButton` no lugar de `window.confirm`, também em tirar do torneio, desmarcar check-in, cancelar a inscrição, revogar link e remover tradução.
+  - Links: `RowLink` nas listas (torneios, comunidades, seus torneios), links e botões-link sempre sublinhados, código da partida na cor de link no cartão da chave.
+  - Contraste e toque: cores `muted` e `link` com AA nos dois temas no lugar de `opacity`, borda de campo mais forte, 44px de altura no celular, contorno de foco em todo controle.
+  - Login pedido: "Entrar" e "Criar conta" lado a lado.
+
 ## Padrões assumidos (configuráveis, confirmar com o usuário quando surgir)
 
 - Melhor de N: um valor padrão + um para a decisiva (final na simples; grande final e reset na dupla). Ex.: md3 + md5.
