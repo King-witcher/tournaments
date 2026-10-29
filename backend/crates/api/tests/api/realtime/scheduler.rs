@@ -112,13 +112,19 @@ async fn reminds_the_start_once(db: PgPool) {
     let without_check_in = with(duel("copa"), json!({ "check_in_minutes": null }));
     create_tournament(&app, &ana, without_check_in.clone()).await;
     publish(&app, &ana, "copa").await;
-    // Rascunho com a data passada não é lembrado.
+    // Rascunho com a data passada não é lembrado, nem publicado sem data.
     create_tournament(
         &app,
         &ana,
-        with(without_check_in, json!({ "slug": "rascunho" })),
+        with(without_check_in.clone(), json!({ "slug": "rascunho" })),
     )
     .await;
+    let undated = with(
+        without_check_in,
+        json!({ "slug": "sem-data", "starts_at": null }),
+    );
+    create_tournament(&app, &ana, undated).await;
+    publish(&app, &ana, "sem-data").await;
     for slug in ["copa", "rascunho"] {
         starts_in(&db, slug, -1).await;
     }

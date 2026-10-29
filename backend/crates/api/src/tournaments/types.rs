@@ -92,7 +92,7 @@ pub struct CreateTournament {
     pub champion_rules: ChampionRules,
     /// Fases, na ordem. Por enquanto, exatamente uma.
     pub stages: Vec<StageFormat>,
-    /// Início previsto. O rascunho pode ficar sem; publicar exige.
+    /// Início previsto. Opcional: sem data o check-in não abre sozinho.
     #[serde(default)]
     pub starts_at: Option<DateTime<Utc>>,
     /// Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
@@ -114,7 +114,7 @@ pub struct CreateTournament {
     #[serde(default)]
     pub translations: Vec<CreateTranslation>,
     /// Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-    /// transação: exige `starts_at` (`tournament.starts_at_required`) e, se a
+    /// transação: e, se há `starts_at` e a
     /// janela de check-in já abriu, o torneio vem em `check_in`; senão, em
     /// `registration`. Qualquer erro e nada é gravado.
     #[serde(default)]
@@ -193,7 +193,7 @@ pub struct Tournament {
     pub checked_in: bool,
     pub champion_rules: ChampionRules,
     pub stages: Vec<StageFormat>,
-    /// Início previsto; `null` só no rascunho.
+    /// Início previsto; `null`: sem data.
     pub starts_at: Option<DateTime<Utc>>,
     /// Janela de check-in em minutos; `null`: sem check-in.
     pub check_in_minutes: Option<i32>,
@@ -224,7 +224,7 @@ pub struct TournamentSummary {
     pub registered: bool,
     /// Se quem vê fez check-in (no check-in, falso é o aviso de que falta).
     pub checked_in: bool,
-    /// Início previsto; `null` só no rascunho.
+    /// Início previsto; `null`: sem data.
     pub starts_at: Option<DateTime<Utc>>,
     /// Nome nas traduções que existem.
     pub translations: Vec<NameTranslation>,

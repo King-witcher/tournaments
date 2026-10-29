@@ -63,7 +63,7 @@ export function EditTournamentForm({ tenant, tournament }: Props) {
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!form.pending && form.check("save")) form.submit("save");
+        if (!form.pending && form.check()) form.submit("save");
       }}
     >
       <Stack gap={7}>
@@ -128,8 +128,7 @@ export function EditTournamentForm({ tenant, tournament }: Props) {
                   value={values.startsAt}
                   onChange={(startsAt) => onChange({ startsAt })}
                   error={errors.startsAt}
-                  isNew={false}
-                  published={tournament.status !== "draft"}
+                  checkInMinutes={values.checkInMinutes}
                   disabled={setupLocked}
                 />
                 <TournamentRegistrationFields

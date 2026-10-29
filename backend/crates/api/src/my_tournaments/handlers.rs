@@ -54,7 +54,7 @@ pub async fn my_tournaments(
     active.sort_by(|(_, x), (_, y)| {
         rank(x.status)
             .cmp(&rank(y.status))
-            .then(x.starts_at.cmp(&y.starts_at))
+            .then(nulls_last(x.starts_at).cmp(&nulls_last(y.starts_at)))
     });
     finished.sort_by_key(|(_, t)| std::cmp::Reverse(t.starts_at));
     finished.truncate(RECENT_FINISHED);
@@ -82,4 +82,11 @@ pub async fn my_tournaments(
         });
     }
     Ok(Json(out))
+}
+
+/// Chave de ordenação crescente que põe os sem data depois dos com data.
+fn nulls_last(
+    starts_at: Option<chrono::DateTime<chrono::Utc>>,
+) -> (bool, Option<chrono::DateTime<chrono::Utc>>) {
+    (starts_at.is_none(), starts_at)
 }

@@ -29,14 +29,13 @@ async fn tournaments_keep_state_and_shape(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
 
-    // Rascunho pode ficar sem data; publicado, não.
-    exec(&db, "update tournaments set starts_at = null")
-        .await
-        .unwrap();
-    assert_eq!(
-        rejected(exec(&db, "update tournaments set status = 'registration'").await),
-        rule(CHECK, "tournaments_starts_at_required")
-    );
+    // A data de início é opcional em qualquer status.
+    exec(
+        &db,
+        "update tournaments set starts_at = null, status = 'registration'",
+    )
+    .await
+    .unwrap();
     exec(&db, "update tournaments set starts_at = now()")
         .await
         .unwrap();

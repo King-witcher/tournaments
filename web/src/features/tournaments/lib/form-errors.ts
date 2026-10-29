@@ -40,7 +40,6 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "format.invalid_best_of": "bestOf",
   "tournament.bans_invalid": "bansPerGame",
   "champions.pool_exhausted": "noRepeat",
-  "tournament.starts_at_required": "startsAt",
   "tournament.check_in_minutes_invalid": "checkInMinutes",
   "tournament.contest_minutes_invalid": "contestMinutes",
 };

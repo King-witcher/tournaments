@@ -9,22 +9,21 @@ use crate::common::*;
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn publishing_needs_a_start_date(db: PgPool) {
+async fn the_start_date_is_optional_even_after_publishing(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     let created =
         create_tournament(&app, &ana, with(duel("copa"), json!({ "starts_at": null }))).await;
     assert_eq!(created["starts_at"], Value::Null);
     assert_eq!(created["check_in_minutes"], 30);
     assert_eq!(created["check_in_opens_at"], Value::Null);
-    assert_eq!(
-        post_empty(&app, &format!("{COPA}/publish"), &ana).await,
-        (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            err("tournament.starts_at_required")
-        )
-    );
+    // Sem data, publica: a inscrição abre e nada mais anda sozinho.
+    let (status, published) = post_empty(&app, &format!("{COPA}/publish"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{published}");
+    assert_eq!(published["status"], "registration");
+    assert_eq!(published["starts_at"], Value::Null);
+    assert_eq!(published["check_in_opens_at"], Value::Null);
 
-    // Com data (vinda em outro fuso, guardada em UTC), publica.
+    // Publicado, ganha data (vinda em outro fuso, guardada em UTC)...
     let (status, updated) = patch(
         &app,
         COPA,
@@ -35,16 +34,45 @@ async fn publishing_needs_a_start_date(db: PgPool) {
     assert_eq!(status, StatusCode::OK, "{updated}");
     assert_eq!(updated["starts_at"], "2099-01-01T20:00:00Z");
     assert_eq!(updated["check_in_opens_at"], "2099-01-01T19:30:00Z");
-    publish(&app, &ana, "copa").await;
 
-    // Publicado, a data não sai mais.
-    assert_eq!(
-        patch(&app, COPA, &ana, json!({ "starts_at": null })).await,
-        (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            err("tournament.starts_at_required")
-        )
-    );
+    // ... e perde de novo.
+    let (status, cleared) = patch(&app, COPA, &ana, json!({ "starts_at": null })).await;
+    assert_eq!(status, StatusCode::OK, "{cleared}");
+    assert_eq!(cleared["starts_at"], Value::Null);
+    assert_eq!(cleared["status"], "registration");
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn without_a_date_check_in_never_opens_by_itself(db: PgPool) {
+    let (app, ana, bia) = quake_br(&db).await;
+    create_tournament(&app, &ana, with(duel("copa"), json!({ "starts_at": null }))).await;
+    publish(&app, &ana, "copa").await;
+    let (_, seen) = get(&app, COPA, &bia).await;
+    assert_eq!(seen["status"], "registration");
+    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
+    assert_eq!(list[0]["status"], "registration");
+    assert_eq!(list[0]["starts_at"], Value::Null);
+
+    // O organizador abre o check-in; tirar a data depois não o fecha.
+    let (status, opened) = post_empty(&app, &format!("{COPA}/check-in/open"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{opened}");
+    assert_eq!(opened["status"], "check_in");
+    starts_in(&db, "copa", 10).await;
+    let (status, cleared) = patch(&app, COPA, &ana, json!({ "starts_at": null })).await;
+    assert_eq!(status, StatusCode::OK, "{cleared}");
+    assert_eq!(cleared["status"], "check_in");
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn clearing_the_date_with_check_in_open_keeps_it_open(db: PgPool) {
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    starts_in(&db, "copa", 10).await;
+    let (_, seen) = get(&app, COPA, &ana).await;
+    assert_eq!(seen["status"], "check_in");
+    let (_, cleared) = patch(&app, COPA, &ana, json!({ "starts_at": null })).await;
+    assert_eq!(cleared["status"], "check_in");
 }
 
 #[sqlx::test(migrations = "../../migrations")]

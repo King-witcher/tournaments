@@ -36,7 +36,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.starts_at_required (com `publish: true`), tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -55,9 +55,6 @@ pub async fn create_tournament(
     schedule.check()?;
     contest::check(body.contest_minutes)?;
     let translations = clean_translations(body.locale, body.translations)?;
-    if body.publish && body.starts_at.is_none() {
-        return Err(ApiError::invalid("tournament.starts_at_required"));
-    }
 
     let new = NewTournament {
         slug: &body.slug,
@@ -169,7 +166,7 @@ pub async fn get_tournament(
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug; tournament.starts_at_required (tirar a data fora do rascunho)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
     )
 )]
 pub async fn update_tournament(
@@ -218,12 +215,12 @@ pub async fn update_tournament(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se a janela de check-in já abriu, vem em check-in"),
+        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se há data e a janela de check-in já abriu, vem em check-in; sem data, em inscrição"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.starts_at_required, champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
     )
 )]
 pub async fn publish_tournament(
@@ -238,9 +235,6 @@ pub async fn publish_tournament(
         .ok_or(NOT_FOUND)?;
     if current.status != TournamentStatus::Draft {
         return Err(ApiError::conflict("tournament.not_draft"));
-    }
-    if current.schedule.starts_at.is_none() {
-        return Err(ApiError::invalid("tournament.starts_at_required"));
     }
     let pool = db::champion_pool(&mut *tx).await?;
     current

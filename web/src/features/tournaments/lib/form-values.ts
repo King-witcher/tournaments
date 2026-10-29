@@ -148,12 +148,26 @@ export function noRepeatChoices(current: NoRepeatChoice): NoRepeatChoice[] {
     : ["off", "match", "tournament"];
 }
 
-/** A janela de check-in, contada a partir do início, já abriu em `now`. */
-export function checkInOpensNow(values: TournamentValues, now: Date) {
-  if (values.startsAt === null || values.checkInMinutes === null) return false;
-  const opens =
-    new Date(values.startsAt).getTime() - values.checkInMinutes * 60_000;
-  return opens <= now.getTime();
+/**
+ * Se a data de início não deixa tempo para inscrição e check-in: `past` (já
+ * passou) ou `window` (a janela de check-in, contada a partir do início, já
+ * abriu em `now`). `null` sem data ou com tempo de sobra.
+ */
+export function startTiming(
+  startsAt: string | null,
+  checkInMinutes: number | null,
+  now: Date,
+): "past" | "window" | null {
+  if (startsAt === null) return null;
+  const start = new Date(startsAt).getTime();
+  if (start <= now.getTime()) return "past";
+  if (
+    checkInMinutes !== null &&
+    start - checkInMinutes * 60_000 <= now.getTime()
+  ) {
+    return "window";
+  }
+  return null;
 }
 
 /** Corpo da criação (duelo): rascunho, ou já publicado com `publish`. */

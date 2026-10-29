@@ -4,8 +4,7 @@
   "slug": "Dirección",
   "slugHint": "El enlace del torneo será {address}. Minúsculas, números y guion, de 3 a 32; no se puede cambiar después.",
   "startsAt": "Inicio",
-  "startsAtHint": "En tu zona horaria ({timeZone}). Obligatorio para publicar; cambia hasta que el torneo empiece.",
-  "startsAtHintNew": "En tu zona horaria ({timeZone}). Obligatorio para crear; el borrador puede quedar sin.",
+  "startsAtHint": "En tu zona horaria ({timeZone}). Opcional: sin fecha, el check-in no abre solo (lo abres cuando quieras). Cambia hasta que el torneo empiece.",
   "format": "Formato",
   "formatLocked": "El torneo ya empezó: el formato y los campeones ya no cambian.",
   "bracket": "Llave",
@@ -85,7 +84,7 @@
       "champions": "Campeones",
       "languages": "Idiomas"
     },
-    "checkInNow": "Por la fecha de inicio y el plazo de check-in, el check-in ya abrió: el torneo pasa directo al check-in, sin inscripciones. Para tener inscripciones, cambia la fecha o el plazo."
+    "noDate": "Sin fecha"
   },
   "tabs": {
     "label": "Partes del torneo",
@@ -97,5 +96,9 @@
     "title": "Editar torneo",
     "loading": "Cargando el torneo…",
     "loginRequired": "Inicia sesión para editar este torneo."
+  },
+  "startWarning": {
+    "past": "La fecha de inicio ya pasó. El check-in abre apenas el torneo se publique o se guarde, y los jugadores no tendrán tiempo de inscribirse. Elige una fecha futura o deja sin fecha.",
+    "window": "El check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes del inicio, es decir, abriría de inmediato: los jugadores no tendrán tiempo de inscribirse. Elige una fecha más lejana, reduce la ventana de check-in o deja sin fecha."
   }
 }

@@ -32,7 +32,8 @@
       "winner": "Próxima partida: {match} contra quien gane {source}",
       "loser": "Próxima partida: {match} contra quien pierda {source}",
       "unknown": "Próxima partida: {match}"
-    }
+    },
+    "noDate": "Sin fecha"
   },
   "tenants": {
     "title": "Mis comunidades",

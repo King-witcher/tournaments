@@ -17,7 +17,8 @@ pub const DEFAULT_CHECK_IN_MINUTES: i32 = 30;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Schedule {
-    /// Início previsto, em UTC. Só o rascunho fica sem.
+    /// Início previsto, em UTC. Opcional em qualquer status: sem data o check-in não abre sozinho
+    /// (o organizador abre) e não há aviso de hora de iniciar.
     pub starts_at: Option<DateTime<Utc>>,
     /// Minutos antes do início em que o check-in abre; `None`: sem check-in.
     pub check_in_minutes: Option<i32>,
@@ -77,9 +78,8 @@ impl Schedule {
 
     /// O PATCH da data e da janela (`Some(None)` limpa). `Some` só quando
     /// muda de fato, então reenviar os valores atuais passa em qualquer
-    /// status. Erros: 409 `tournament.schedule_locked` (depois de começar),
-    /// 422 `tournament.starts_at_required` (sem data fora do rascunho) e os
-    /// de `check`.
+    /// status. Erros: 409 `tournament.schedule_locked` (depois de começar) e
+    /// os de `check`.
     pub fn edit(
         self,
         status: TournamentStatus,
@@ -95,9 +95,6 @@ impl Schedule {
         }
         if !status.setup_editable() {
             return Err(ApiError::conflict("tournament.schedule_locked"));
-        }
-        if next.starts_at.is_none() && status != TournamentStatus::Draft {
-            return Err(ApiError::invalid("tournament.starts_at_required"));
         }
         next.check()?;
         Ok(Some(next))
@@ -193,13 +190,16 @@ mod tests {
                 ..s
             })
         );
-        assert_eq!(
-            s.edit(Draft, Some(None), None).unwrap(),
-            Some(Schedule {
-                starts_at: None,
-                ..s
-            })
-        );
+        // Tirar a data vale em qualquer status até começar.
+        for status in [Draft, Registration, CheckIn] {
+            assert_eq!(
+                s.edit(status, Some(None), None).unwrap(),
+                Some(Schedule {
+                    starts_at: None,
+                    ..s
+                })
+            );
+        }
     }
 
     #[test]
@@ -213,10 +213,6 @@ mod tests {
         assert_eq!(
             code(s.edit(Finished, None, Some(None))),
             "tournament.schedule_locked"
-        );
-        assert_eq!(
-            code(s.edit(Registration, Some(None), None)),
-            "tournament.starts_at_required"
         );
         let err = s.edit(Draft, None, Some(Some(4))).unwrap_err();
         assert_eq!(

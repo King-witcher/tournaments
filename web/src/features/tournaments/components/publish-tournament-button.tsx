@@ -18,36 +18,39 @@ type Props = {
   kind?: ButtonKind;
   /** O check-in já devia ter aberto: publicar pula as inscrições. */
   skipsRegistration?: boolean;
-  /** Por que ainda não dá para publicar (sem data de início). */
-  disabledReason?: string;
+  /** A data de início já passou: o aviso entra na confirmação. */
+  startPassed?: boolean;
 };
 
 /**
  * Rascunho → inscrição, com confirmação: publicado, o torneio não volta a
- * rascunho nem pode ser excluído. A API confere os campeões de novo (e exige a
- * data de início). Sem data, o botão fica desabilitado com o motivo embaixo.
+ * rascunho nem pode ser excluído. A API confere os campeões de novo. A data de início é
+ * opcional; se não deixa tempo para a inscrição, a confirmação avisa.
  */
 export function PublishTournamentButton({
   tenant,
   slug,
   kind = "primary",
   skipsRegistration = false,
-  disabledReason,
+  startPassed = false,
 }: Props) {
   const t = useTranslations("Tournament");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
 
   return (
-    <ActionWithNote note={disabledReason} error={error}>
+    <ActionWithNote error={error}>
       <ConfirmButton
         destructive={false}
         kind={kind}
         size="md"
         pending={pending}
-        disabled={disabledReason !== undefined}
         question={t(
-          skipsRegistration ? "publishConfirmCheckIn" : "publishConfirm",
+          skipsRegistration
+            ? "publishConfirmCheckIn"
+            : startPassed
+              ? "publishConfirmPast"
+              : "publishConfirm",
         )}
         onConfirm={() => {
           run(

@@ -1160,7 +1160,7 @@ export interface components {
             name: string;
             /**
              * @description Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-             *     transação: exige `starts_at` (`tournament.starts_at_required`) e, se a
+             *     transação: e, se há `starts_at` e a
              *     janela de check-in já abriu, o torneio vem em `check_in`; senão, em
              *     `registration`. Qualquer erro e nada é gravado.
              */
@@ -1176,7 +1176,7 @@ export interface components {
             stages: components["schemas"]["StageFormat"][];
             /**
              * Format: date-time
-             * @description Início previsto. O rascunho pode ficar sem; publicar exige.
+             * @description Início previsto. Opcional: sem data o check-in não abre sozinho.
              */
             starts_at?: string | null;
             /**
@@ -2030,7 +2030,7 @@ export interface components {
             stages: components["schemas"]["StageFormat"][];
             /**
              * Format: date-time
-             * @description Início previsto; `null` só no rascunho.
+             * @description Início previsto; `null`: sem data.
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
@@ -2105,7 +2105,7 @@ export interface components {
             slug: string;
             /**
              * Format: date-time
-             * @description Início previsto; `null` só no rascunho.
+             * @description Início previsto; `null`: sem data.
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
@@ -4227,7 +4227,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.starts_at_required (com `publish: true`), tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4403,7 +4403,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Os mesmos da criação, menos slug; tournament.starts_at_required (tirar a data fora do rascunho) */
+            /** @description Os mesmos da criação, menos slug */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -5640,7 +5640,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se a janela de check-in já abriu, vem em check-in */
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se há data e a janela de check-in já abriu, vem em check-in; sem data, em inscrição */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5685,7 +5685,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.starts_at_required, champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
+            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
             422: {
                 headers: {
                     [name: string]: unknown;

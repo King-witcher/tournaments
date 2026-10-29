@@ -213,20 +213,16 @@ export function useTournamentForm(
 
   /**
    * Confere antes de enviar: os campos (a validação nativa, com o grupo do
-   * primeiro recusado aberto) e, para publicar, a data de início. Recusado,
+   * primeiro recusado aberto). Recusado,
    * o foco vai para o campo.
    */
-  const check = (intent: SubmitIntent) => {
+  const check = () => {
     const form = formRef.current;
     if (!form) return false;
     const invalid = firstInvalid(form);
     if (invalid) {
       reveal(invalid);
       focusWhenShown(invalid, () => invalid.reportValidity());
-      return false;
-    }
-    if (intent === "publish" && values.startsAt === null) {
-      setChecked(fail("tournament.starts_at_required"));
       return false;
     }
     setChecked(undefined);

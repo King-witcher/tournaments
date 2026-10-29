@@ -23,22 +23,21 @@ type Props = {
  */
 export function NextStepButton({ tenant, tournament, now, kind }: Props) {
   const t = useTranslations("Lifecycle");
-  const tTournament = useTranslations("Tournament");
   const { status, slug } = tournament;
 
   if (status === "draft") {
     // Pela data e pela janela, o check-in já abriu: publicado agora, o
-    // torneio vai direto para o check-in, sem inscrições.
+    // torneio vai direto para o check-in, sem inscrições. Data passada sem
+    // check-in só avisa.
     const opensAt = tournament.check_in_opens_at;
+    const startsAt = tournament.starts_at;
     return (
       <PublishTournamentButton
         tenant={tenant}
         slug={slug}
         kind={kind}
         skipsRegistration={opensAt != null && new Date(opensAt) <= now}
-        disabledReason={
-          tournament.starts_at ? undefined : tTournament("publishNeedsDate")
-        }
+        startPassed={startsAt != null && new Date(startsAt) <= now}
       />
     );
   }

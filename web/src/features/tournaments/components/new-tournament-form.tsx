@@ -75,7 +75,7 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!form.pending && form.check("publish")) setReviewing(true);
+        if (!form.pending && form.check()) setReviewing(true);
       }}
     >
       <Stack gap={7}>
@@ -91,8 +91,7 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
             value={values.startsAt}
             onChange={(startsAt) => onChange({ startsAt })}
             error={errors.startsAt}
-            isNew
-            published={false}
+            checkInMinutes={values.checkInMinutes}
             disabled={false}
           />
         </FormSection>
@@ -153,7 +152,7 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
               kind="secondary"
               pending={form.pending && intent === "draft"}
               onClick={() => {
-                if (!form.pending && form.check("draft")) send("draft");
+                if (!form.pending && form.check()) send("draft");
               }}
             >
               {t("createDraft")}

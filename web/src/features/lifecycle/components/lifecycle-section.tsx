@@ -1,10 +1,9 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-
+import { StartDateWarning } from "@/features/tournaments/components/start-date-warning";
 import { TournamentProgress } from "@/features/tournaments/components/tournament-progress";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
 import styles from "./lifecycle-section.module.scss";
 import { NextStepButton } from "./next-step-button";
@@ -54,10 +53,12 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
     <Section title={t("title")}>
       <TournamentProgress tournament={tournament} />
       {hint && <p className={styles.hint}>{hint}</p>}
-      {status === "draft" && opened && (
-        <Notice kind="warning">
-          {tTournament("publishSkipsRegistration")}
-        </Notice>
+      {status === "draft" && (
+        <StartDateWarning
+          startsAt={tournament.starts_at ?? null}
+          checkInMinutes={tournament.check_in_minutes ?? null}
+          now={now}
+        />
       )}
       <NextStepButton
         tenant={tenant}

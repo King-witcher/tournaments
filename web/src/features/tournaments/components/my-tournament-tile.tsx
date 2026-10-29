@@ -39,11 +39,11 @@ export function MyTournamentTile({
       meta={
         <>
           {entry.tenant_name}
-          {tournament.starts_at && (
-            <>
-              {" · "}
-              <LocalDateTime value={tournament.starts_at} />
-            </>
+          {" · "}
+          {tournament.starts_at ? (
+            <LocalDateTime value={tournament.starts_at} />
+          ) : (
+            t("noDate")
           )}
         </>
       }

@@ -11,7 +11,7 @@
   "mode": {
     "duel": "Duelo"
   },
-  "noDate": "A definir",
+  "noDate": "Sem data",
   "participants": "{count}/{max}",
   "registered": "Você está inscrito",
   "checkInPending": "Falta seu check-in",

@@ -28,8 +28,7 @@
   "publish": "Publicar y abrir inscripciones",
   "publishToCheckIn": "Publicar y abrir el check-in",
   "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
-  "publishSkipsRegistration": "Por la fecha de inicio y la ventana de check-in, el check-in ya abrió: si lo publicas ahora, el torneo pasa directo al check-in, sin inscripciones (solo entra en la llave quien ya inscribiste). Para abrir las inscripciones, cambia la fecha en Editar antes de publicar, o usa \"Reabrir inscripciones\" después.",
-  "publishConfirmCheckIn": "¿Publicar el torneo directo en el check-in, sin inscripciones? La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
+  "publishConfirmCheckIn": "¿Publicar el torneo ya con el check-in abierto? Los jugadores no tendrán tiempo de inscribirse: solo entra en la llave quien ya inscribiste. La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar. Para tener inscripciones, cambia la fecha en Editar antes de publicar.",
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
   "setup": {
@@ -80,5 +79,5 @@
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",
   "noStartDate": "Sin fecha de inicio",
-  "publishNeedsDate": "Define la fecha de inicio (en Editar) para publicar."
+  "publishConfirmPast": "La fecha de inicio ya pasó. ¿Publicar igual? Las inscripciones se abren, pero el aviso de hora de iniciar sale enseguida y los jugadores tendrán poco tiempo para inscribirse. La comunidad pasa a ver el torneo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar."
 }

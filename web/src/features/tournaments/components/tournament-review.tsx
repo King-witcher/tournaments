@@ -3,11 +3,10 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { Notice } from "@/shared/ui/notice";
 import { StructuredList } from "@/shared/ui/structured-list";
 import type { TournamentFormState } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
-import { checkInOpensNow } from "../lib/form-values";
+import { StartDateWarning } from "./start-date-warning";
 
 type Props = { form: TournamentFormState };
 
@@ -21,8 +20,8 @@ type Row =
 
 /**
  * O que vai ser publicado, para conferir antes de "Criar": nome, início,
- * formato, inscrições, campeões e idiomas. Se pela data o check-in já abriu,
- * avisa que o torneio vai direto para ele, sem inscrições.
+ * formato, inscrições, campeões e idiomas, com o aviso da data de início
+ * quando ela não deixa tempo para inscrição e check-in.
  */
 export function TournamentReview({ form }: Props) {
   const t = useTranslations("TournamentForm.review");
@@ -34,7 +33,7 @@ export function TournamentReview({ form }: Props) {
     ...form.others.filter((l) => form.translationOf(l).enabled),
   ];
   // Só existe com o Modal aberto: o "agora" é o da revisão.
-  const skipsRegistration = checkInOpensNow(values, new Date());
+  const now = new Date();
   const rows: [Row, ReactNode][] = [
     ["name", values.name],
     [
@@ -42,7 +41,7 @@ export function TournamentReview({ form }: Props) {
       values.startsAt ? (
         <LocalDateTime key="startsAt" value={values.startsAt} />
       ) : (
-        ""
+        t("noDate")
       ),
     ],
     ["format", summary.format(values)],
@@ -61,7 +60,11 @@ export function TournamentReview({ form }: Props) {
           cells: [t(`labels.${key}`), value],
         }))}
       />
-      {skipsRegistration && <Notice kind="warning">{t("checkInNow")}</Notice>}
+      <StartDateWarning
+        startsAt={values.startsAt}
+        checkInMinutes={values.checkInMinutes}
+        now={now}
+      />
     </Stack>
   );
 }

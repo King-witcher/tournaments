@@ -53,25 +53,15 @@ async fn create_with_publish_inside_the_check_in_window_opens_check_in(db: PgPoo
 }
 
 #[sqlx::test(migrations = "../../migrations")]
-async fn create_with_publish_requires_starts_at_and_stores_nothing(db: PgPool) {
+async fn create_with_publish_without_a_date_stays_in_registration(db: PgPool) {
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
         json!({ "publish": true, "starts_at": null, "translations": [es("Copa de Octubre")] }),
     );
-    assert_eq!(
-        post(&app, URI, &ana, body.clone()).await,
-        (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            err("tournament.starts_at_required")
-        )
-    );
-    assert_nothing_created(&app, &ana, "copa").await;
-
-    // O mesmo slug ainda pode ser criado.
-    let again = with(body, json!({ "publish": false }));
-    let created = create_tournament(&app, &ana, again).await;
-    assert_eq!(created["status"], "draft");
+    let created = create_tournament(&app, &ana, body).await;
+    assert_eq!(created["status"], "registration");
+    assert_eq!(created["starts_at"], Value::Null);
 }
 
 #[sqlx::test(migrations = "../../migrations")]
