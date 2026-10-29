@@ -9,19 +9,11 @@ pub enum Provider {
 }
 
 impl Provider {
-    /// O nome no banco, nas rotas e no cookie do state.
+    /// O nome no banco e nas rotas.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Discord => "discord",
             Self::Google => "google",
-        }
-    }
-
-    pub fn parse(name: &str) -> Option<Self> {
-        match name {
-            "discord" => Some(Self::Discord),
-            "google" => Some(Self::Google),
-            _ => None,
         }
     }
 
@@ -40,13 +32,14 @@ impl Provider {
     }
 }
 
-/// Os códigos de erro de um provedor, `auth.<provedor>_<caso>`.
+/// Os códigos de erro de um provedor, `auth.<provedor>_<caso>`. O de quando
+/// a pessoa recusa a autorização (`auth.<provedor>_denied`) sai do front, que
+/// recebe a volta do provedor.
 pub struct ProviderCodes {
     /// 503: sem client id e secret, o login com ele fica desligado.
     pub not_configured: &'static str,
-    /// A pessoa recusou a autorização no provedor.
-    pub denied: &'static str,
-    /// O provedor não respondeu, recusou o code ou mandou o que não se lê.
+    /// 502: o provedor não respondeu, recusou o code (ou o verifier) ou
+    /// mandou o que não se lê.
     pub failed: &'static str,
     /// 409: a conta do provedor já é login de outra conta daqui.
     pub taken: &'static str,
@@ -58,7 +51,6 @@ pub struct ProviderCodes {
 
 const DISCORD: ProviderCodes = ProviderCodes {
     not_configured: "auth.discord_not_configured",
-    denied: "auth.discord_denied",
     failed: "auth.discord_failed",
     taken: "auth.discord_taken",
     already_linked: "auth.discord_already_linked",
@@ -67,7 +59,6 @@ const DISCORD: ProviderCodes = ProviderCodes {
 
 const GOOGLE: ProviderCodes = ProviderCodes {
     not_configured: "auth.google_not_configured",
-    denied: "auth.google_denied",
     failed: "auth.google_failed",
     taken: "auth.google_taken",
     already_linked: "auth.google_already_linked",

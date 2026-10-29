@@ -7,7 +7,9 @@ import type { ReactNode } from "react";
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import type { ButtonKind, ButtonSize } from "./button";
 
-type Common = {
+type Props = {
+  /** Destino, com o prefixo de idioma posto pelo `Link` do i18n. */
+  href: Href;
   children: ReactNode;
   kind?: ButtonKind;
   size?: ButtonSize;
@@ -15,49 +17,27 @@ type Common = {
   className?: string;
 };
 
-type Props = Common &
-  (
-    | {
-        /** Destino, com o prefixo de idioma posto pelo `Link` do i18n. */
-        href: Href;
-        external?: false;
-      }
-    | {
-        /** Endereço de fora das rotas do site (a API), usado como está. */
-        href: string;
-        /** Sem o `Link` do i18n: um `<a>` com o `href` cru. */
-        external: true;
-      }
-  );
-
 /**
  * Link com cara de botão (Carbon `Button` sobre o `Link` do i18n): para ação
- * que leva a outra página ("Criar comunidade", "Editar", "Entrar"). Com
- * `external`, o `href` é um endereço fora das rotas do site (o OAuth dos
- * provedores, na API) e vai cru, sem prefixo de idioma.
+ * que leva a outra página ("Criar comunidade", "Editar", "Entrar").
  */
 export function ButtonLink({
+  href,
   children,
   kind = "primary",
   size = "md",
   renderIcon,
   className,
-  ...destination
 }: Props) {
-  const shared = { kind, size, renderIcon, className };
-  if (destination.external) {
-    return (
-      <CarbonButton href={destination.href} {...shared}>
-        {children}
-      </CarbonButton>
-    );
-  }
   return (
     <CarbonButton
       as={IntlLink}
       // O Carbon tipa href como string; quem o recebe é o Link do i18n.
-      href={destination.href as string}
-      {...shared}
+      href={href as string}
+      kind={kind}
+      size={size}
+      renderIcon={renderIcon}
+      className={className}
     >
       {children}
     </CarbonButton>

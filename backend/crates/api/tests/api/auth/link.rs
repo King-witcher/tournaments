@@ -4,13 +4,12 @@ use axum::http::{Method, StatusCode};
 use serde_json::json;
 
 use super::{
-    app, body_text, discord_user, do_login, get, location, oauth_round_trip, send, set_email,
-    signup, start_oauth,
+    OTHER_VERIFIER, VERIFIER, app, authorize, discord_user, do_login, exchange, link_provider,
+    set_email, signup,
 };
-use crate::common::{self, User, WEB, call, err, post};
+use crate::common::{self, User, call, err, post};
 
 const PASSWORD: &str = "senha forte 1";
-const LINK: &str = "/auth/discord/link?return_to=/pt/account";
 
 #[tokio::test]
 async fn password_account_links_discord() {
@@ -18,11 +17,10 @@ async fn password_account_links_discord() {
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    let (session, res) = oauth_round_trip(&app, LINK, Some(&me.cookie)).await;
-    assert!(session.is_empty(), "ligar não cria sessão");
-    assert_eq!(location(&res), format!("{WEB}/pt/account"));
-
-    let (_, body) = common::get(&app, "/auth/logins", &me).await;
+    let (status, body) = authorize(&app, "discord", "link", Some(&me.cookie)).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = link_provider(&app, "discord", &me).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
         json!({ "discord": true, "google": false, "username": "Rapha", "email": "rapha@example.com" })
@@ -37,24 +35,14 @@ async fn password_account_links_discord() {
     );
 
     // Agora o Discord entra na mesma conta.
-    let (session, _) = do_login(&app, "/").await;
-    let (_, body) = common::get(
-        &app,
-        "/me",
-        &User {
-            id: me.id,
-            cookie: session,
-        },
-    )
-    .await;
+    let (_, body) = do_login(&app).await;
     assert_eq!(body["id"], me.id);
 
     // Já ligado: nem vai para o Discord.
-    let res = send(&app, get(LINK, Some(&me.cookie))).await;
-    assert_eq!(res.status(), StatusCode::CONFLICT);
+    let (status, body) = authorize(&app, "discord", "link", Some(&me.cookie)).await;
     assert_eq!(
-        body_text(res).await,
-        r#"{"error":"auth.discord_already_linked"}"#
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.discord_already_linked"))
     );
 }
 
@@ -62,78 +50,54 @@ async fn password_account_links_discord() {
 async fn link_requires_session() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
-    let res = send(&app, get(LINK, None)).await;
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+    let unauthenticated = (StatusCode::UNAUTHORIZED, err("auth.unauthenticated"));
+    let (status, body) = authorize(&app, "discord", "link", None).await;
+    assert_eq!((status, body), unauthenticated);
 
-    // A sessão também precisa estar no callback.
-    let me = signup(&app, &db, "Rapha", PASSWORD).await;
-    let (state_cookie, state) = start_oauth(&app, LINK, Some(&me.cookie)).await;
-    let res = send(
-        &app,
-        get(
-            &format!("/auth/discord/callback?code=abc&state={state}"),
-            Some(&state_cookie),
-        ),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/pt/account?auth_error=auth.unauthenticated")
-    );
+    // A sessão também precisa estar na troca do code.
+    let (status, body, _) = exchange(&app, "discord", "link", None, VERIFIER).await;
+    assert_eq!((status, body), unauthenticated);
 }
 
 #[tokio::test]
 async fn discord_of_another_account_is_refused() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
-    do_login(&app, "/").await;
+    do_login(&app).await;
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    let (_, res) = oauth_round_trip(
-        &app,
-        "/auth/discord/link?return_to=/es/account",
-        Some(&me.cookie),
-    )
-    .await;
+    let (status, body) = link_provider(&app, "discord", &me).await;
     assert_eq!(
-        location(&res),
-        format!("{WEB}/es/account?auth_error=auth.discord_taken")
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.discord_taken"))
     );
     let (_, body) = common::get(&app, "/auth/logins", &me).await;
     assert_eq!(body["discord"], false);
 }
 
 #[tokio::test]
-async fn link_errors_go_back_to_return_to() {
+async fn link_errors_link_nothing() {
     let (db, _lease) = crate::db::test_db().await;
+    let failed = (StatusCode::BAD_GATEWAY, err("auth.discord_failed"));
     let failing = app(db.clone(), None, true);
     let me = signup(&failing, &db, "Rapha", PASSWORD).await;
-    let (_, res) = oauth_round_trip(&failing, LINK, Some(&me.cookie)).await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/pt/account?auth_error=auth.discord_failed")
-    );
+    let (status, body) = link_provider(&failing, "discord", &me).await;
+    assert_eq!((status, body), failed);
 
-    let (state_cookie, _) = start_oauth(&failing, LINK, Some(&me.cookie)).await;
-    let res = send(
-        &failing,
-        get(
-            "/auth/discord/callback?error=access_denied",
-            Some(&format!("{state_cookie}; {}", me.cookie)),
-        ),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/pt/account?auth_error=auth.discord_denied")
-    );
+    // O code de outra aba não liga, mesmo com a sessão.
+    let app = app(db.clone(), Some(discord_user(None)), true);
+    let (status, body, _) =
+        exchange(&app, "discord", "link", Some(&me.cookie), OTHER_VERIFIER).await;
+    assert_eq!((status, body), failed);
+    let (_, body) = common::get(&app, "/auth/logins", &me).await;
+    assert_eq!(body["discord"], false);
 }
 
 #[tokio::test]
 async fn unlink_needs_password() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
-    let (session, _) = do_login(&app, "/").await;
+    let (session, _) = do_login(&app).await;
     let id = sqlx::query_scalar!("select id from users")
         .fetch_one(&db)
         .await
@@ -192,15 +156,6 @@ async fn unlink_needs_password() {
     );
 
     // Desligado, o mesmo Discord cria outra conta.
-    let (session, _) = do_login(&app, "/").await;
-    let (_, body) = common::get(
-        &app,
-        "/me",
-        &User {
-            id,
-            cookie: session,
-        },
-    )
-    .await;
+    let (_, body) = do_login(&app).await;
     assert_ne!(body["id"], id);
 }

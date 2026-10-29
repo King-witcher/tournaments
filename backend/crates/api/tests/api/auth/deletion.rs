@@ -11,9 +11,7 @@ use chrono::{Duration, Utc};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
-use super::{
-    add_discord, app, discord_user, do_login, email_of, location, send_json, signup, skip_cooldown,
-};
+use super::{add_discord, app, discord_user, do_login, email_of, send_json, signup, skip_cooldown};
 use crate::common::{self, *};
 use crate::matches::{COPA, bracket, copa, detail, single, start};
 use crate::realtime::{outbox, tenant};
@@ -136,14 +134,10 @@ async fn signing_in_again_cancels_the_deletion() {
     let (_, body, _) = send_json(&app, Method::POST, "/auth/login", None, login).await;
     assert_eq!(body["deletion_cancelled"], false);
 
-    // Pelo Discord, o login que cancelou leva à conta, que avisa.
-    let (_, first) = do_login(&app, "/pt/torneios").await;
-    assert_eq!(location(&first), format!("{WEB}/pt/torneios"));
-    let quaker: i64 =
-        sqlx::query_scalar!("select user_id from user_identities where provider_user_id = '123'")
-            .fetch_one(&db)
-            .await
-            .unwrap();
+    // Pelo Discord também, e o front leva à conta, que avisa.
+    let (_, first) = do_login(&app).await;
+    assert_eq!(first["deletion_cancelled"], false);
+    let quaker = first["id"].as_i64().unwrap();
     sqlx::query!(
         "update users set deletion_due_at = now() + interval '7 days' where id = $1",
         quaker
@@ -151,12 +145,8 @@ async fn signing_in_again_cancels_the_deletion() {
     .execute(&db)
     .await
     .unwrap();
-    let (session, res) = do_login(&app, "/pt/torneios").await;
-    assert!(!session.is_empty());
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/account?account_deletion=cancelled")
-    );
+    let (_, body) = do_login(&app).await;
+    assert_eq!(body["deletion_cancelled"], true);
     assert_eq!(due(&db, quaker).await, None);
 }
 

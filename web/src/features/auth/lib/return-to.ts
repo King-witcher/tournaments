@@ -1,6 +1,7 @@
 /**
  * Caminho interno (sem idioma) para voltar depois do login, vindo de
- * `?return_to=`. Qualquer outra coisa vira "/", como a API faz no Discord.
+ * `?return_to=` (ou do fluxo do OAuth guardado na aba). Qualquer outra coisa
+ * vira "/": nada de voltar para fora do site.
  */
 export function safeReturnTo(raw: string | string[] | undefined) {
   if (typeof raw !== "string") return "/";

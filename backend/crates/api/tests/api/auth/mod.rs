@@ -1,6 +1,6 @@
 //! Testes de `auth`, um arquivo por assunto. Aqui ficam o Discord e o Google
-//! falsos e os helpers que leem redirect e cookies, que os outros domínios
-//! não precisam.
+//! falsos, o OAuth com o PKCE de teste e os helpers que leem cookies, que os
+//! outros domínios não precisam.
 
 mod deletion;
 mod discord;
@@ -39,8 +39,16 @@ use tower::ServiceExt;
 
 use crate::common::{User, WEB, app_from, link_token, mailbox, redis, state};
 
-const REDIRECT: &str = "http://localhost:4000/auth/discord/callback";
-const GOOGLE_REDIRECT: &str = "http://localhost:4000/auth/google/callback";
+/// Os provedores voltam para a página de callback do front.
+const REDIRECT: &str = "http://localhost:4001/auth/discord/callback";
+const GOOGLE_REDIRECT: &str = "http://localhost:4001/auth/google/callback";
+
+/// O par do apêndice B da RFC 7636: o verifier e o challenge S256 dele.
+const VERIFIER: &str = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+const CHALLENGE: &str = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+/// Outro verifier bem formado, que não é o do `CHALLENGE`.
+const OTHER_VERIFIER: &str = "outro-verifier-de-outra-aba-com-43-caracter";
+const STATE: &str = "state-da-aba-com-mais-de-128-bits";
 
 struct FakeGoogle {
     user: Option<GoogleUser>,
@@ -48,8 +56,15 @@ struct FakeGoogle {
 
 #[async_trait]
 impl GoogleApi for FakeGoogle {
-    async fn fetch_user(&self, _code: &str, redirect_uri: &str) -> anyhow::Result<GoogleUser> {
+    async fn fetch_user(
+        &self,
+        _code: &str,
+        code_verifier: &str,
+        redirect_uri: &str,
+    ) -> anyhow::Result<GoogleUser> {
         assert_eq!(redirect_uri, GOOGLE_REDIRECT);
+        // Como o Google: o code só sai com o verifier do challenge.
+        anyhow::ensure!(code_verifier == VERIFIER, "verifier de outro challenge");
         self.user
             .clone()
             .ok_or_else(|| anyhow::anyhow!("falha simulada"))
@@ -62,8 +77,15 @@ struct FakeDiscord {
 
 #[async_trait]
 impl DiscordApi for FakeDiscord {
-    async fn exchange_code(&self, code: &str, redirect_uri: &str) -> anyhow::Result<String> {
+    async fn exchange_code(
+        &self,
+        code: &str,
+        code_verifier: &str,
+        redirect_uri: &str,
+    ) -> anyhow::Result<String> {
         assert_eq!(redirect_uri, REDIRECT);
+        // Como o Discord: o code só sai com o verifier do challenge.
+        anyhow::ensure!(code_verifier == VERIFIER, "verifier de outro challenge");
         anyhow::ensure!(self.user.is_some(), "falha simulada");
         Ok(format!("token-{code}"))
     }
@@ -137,10 +159,6 @@ fn get(uri: &str, cookie: Option<&str>) -> Request<Body> {
     b.body(Body::empty()).unwrap()
 }
 
-fn location(res: &Response<Body>) -> String {
-    res.headers()[header::LOCATION].to_str().unwrap().to_owned()
-}
-
 /// Set-Cookie completo (com atributos) do cookie de nome `name`.
 fn set_cookie(res: &Response<Body>, name: &str) -> Option<String> {
     res.headers()
@@ -165,6 +183,17 @@ async fn body_text(res: Response<Body>) -> String {
     String::from_utf8(res.into_body().collect().await.unwrap().to_bytes().to_vec()).unwrap()
 }
 
+fn json_request(method: Method, uri: &str, cookie: Option<&str>, body: Value) -> Request<Body> {
+    let mut req = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::CONTENT_TYPE, "application/json");
+    if let Some(c) = cookie {
+        req = req.header(header::COOKIE, c);
+    }
+    req.body(Body::from(body.to_string())).unwrap()
+}
+
 /// Requisição JSON que também devolve o cookie `session=..` criado, se houver.
 async fn send_json(
     app: &Router,
@@ -173,14 +202,7 @@ async fn send_json(
     cookie: Option<&str>,
     body: Value,
 ) -> (StatusCode, Value, Option<String>) {
-    let mut req = Request::builder()
-        .method(method)
-        .uri(uri)
-        .header(header::CONTENT_TYPE, "application/json");
-    if let Some(c) = cookie {
-        req = req.header(header::COOKIE, c);
-    }
-    let res = send(app, req.body(Body::from(body.to_string())).unwrap()).await;
+    let res = send(app, json_request(method, uri, cookie, body)).await;
     let status = res.status();
     let session = set_cookie(&res, "session").map(|c| pair(&c));
     let text = body_text(res).await;
@@ -259,69 +281,57 @@ async fn skip_cooldown(db: &PgPool, address: &str) {
     redis.query::<()>(&Cmd::del(key)).await.unwrap();
 }
 
-/// Abre o OAuth em `start` (login ou link) e devolve o cookie `oauth_state=..`
-/// e o state que foi para o provedor.
-async fn start_oauth(app: &Router, start: &str, session: Option<&str>) -> (String, String) {
-    let res = send(app, get(start, session)).await;
-    assert_eq!(res.status(), StatusCode::SEE_OTHER, "{start}");
-    let state_cookie = pair(&set_cookie(&res, "oauth_state").unwrap());
-    let state = location(&res)
-        .split("state=")
-        .nth(1)
-        .unwrap()
-        .split('&')
-        .next()
-        .unwrap()
-        .to_owned();
-    (state_cookie, state)
-}
-
-/// Abre o OAuth em `start` (`/auth/{provedor}/...`) e volta pelo callback do
-/// mesmo provedor, com a mesma sessão. Devolve o cookie `session=..` criado
-/// (vazio se nenhum) e a resposta do callback.
-async fn oauth_round_trip(
+/// Abre o OAuth de `provider` (`discord` ou `google`) para `intent` (`login`
+/// ou `link`), com o state e o challenge de teste. Devolve status e corpo (a
+/// URL da autorização).
+async fn authorize(
     app: &Router,
-    start: &str,
+    provider: &str,
+    intent: &str,
     session: Option<&str>,
-) -> (String, Response<Body>) {
-    let provider = start.split('/').nth(2).unwrap();
-    let (state_cookie, state) = start_oauth(app, start, session).await;
-    let cookies = match session {
-        Some(s) => format!("{state_cookie}; {s}"),
-        None => state_cookie,
-    };
-    let res = send(
-        app,
-        get(
-            &format!("/auth/{provider}/callback?code=abc&state={state}"),
-            Some(&cookies),
-        ),
-    )
-    .await;
-    let session = set_cookie(&res, "session")
-        .map(|c| pair(&c))
-        .unwrap_or_default();
-    (session, res)
+) -> (StatusCode, Value) {
+    let body = json!({ "intent": intent, "state": STATE, "code_challenge": CHALLENGE });
+    let uri = format!("/auth/{provider}/authorize");
+    let (status, body, _) = send_json(app, Method::POST, &uri, session, body).await;
+    (status, body)
 }
 
-/// Login com Discord voltando para `return_to`.
-async fn do_login(app: &Router, return_to: &str) -> (String, Response<Body>) {
-    oauth_round_trip(
-        app,
-        &format!("/auth/discord/login?return_to={return_to}"),
-        None,
-    )
-    .await
+/// O que o callback do front faz: manda o code com `verifier` para entrar
+/// (`action` = `login`) ou ligar (`link`) com `provider`. Devolve status,
+/// corpo e o cookie `session=..` criado, se houver.
+async fn exchange(
+    app: &Router,
+    provider: &str,
+    action: &str,
+    session: Option<&str>,
+    verifier: &str,
+) -> (StatusCode, Value, Option<String>) {
+    let body = json!({ "code": "abc", "code_verifier": verifier });
+    let uri = format!("/auth/{provider}/{action}");
+    send_json(app, Method::POST, &uri, session, body).await
 }
 
-/// Login com Google voltando para `/`, já como `User` (o id vem do `/me`).
+/// Entra com o Discord; devolve o cookie `session=..` e o corpo.
+async fn do_login(app: &Router) -> (String, Value) {
+    let (status, body, session) = exchange(app, "discord", "login", None, VERIFIER).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    (session.unwrap(), body)
+}
+
+/// Liga `provider` à conta de `who`; devolve status e corpo.
+async fn link_provider(app: &Router, provider: &str, who: &User) -> (StatusCode, Value) {
+    let (status, body, session) =
+        exchange(app, provider, "link", Some(&who.cookie), VERIFIER).await;
+    assert_eq!(session, None, "ligar não cria sessão");
+    (status, body)
+}
+
+/// Entra com o Google, já como `User`.
 async fn google_login(app: &Router) -> User {
-    let (session, res) = oauth_round_trip(app, "/auth/google/login", None).await;
-    assert_eq!(location(&res), format!("{WEB}/"));
-    let res = send(app, get("/me", Some(&session))).await;
-    let me: Value = serde_json::from_str(&body_text(res).await).unwrap();
+    let (status, body, session) = exchange(app, "google", "login", None, VERIFIER).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     User {
-        id: me["id"].as_i64().unwrap(),
-        cookie: session,
+        id: body["id"].as_i64().unwrap(),
+        cookie: session.unwrap(),
     }
 }

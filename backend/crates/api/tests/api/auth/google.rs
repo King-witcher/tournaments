@@ -5,51 +5,57 @@ use axum::http::{Method, StatusCode};
 use serde_json::json;
 
 use super::{
-    body_text, discord_user, do_login, get, google_login, google_user, location, oauth_round_trip,
-    providers_app, send, set_cookie, set_email, signup, start_oauth,
+    CHALLENGE, OTHER_VERIFIER, STATE, VERIFIER, authorize, discord_user, do_login, exchange,
+    google_login, google_user, link_provider, providers_app, set_email, signup,
 };
-use crate::common::{self, User, WEB, call, err, mailbox};
+use crate::common::{self, User, call, err, mailbox};
 
 const PASSWORD: &str = "senha forte 1";
-const LINK: &str = "/auth/google/link?return_to=/pt/account/logins";
 
 #[tokio::test]
-async fn login_without_config_is_503() {
+async fn without_config_is_503() {
     let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db, None, None, false);
-    let res = send(&app, get("/auth/google/login", None)).await;
-    assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let (status, body) = authorize(&app, "google", "login", None).await;
     assert_eq!(
-        body_text(res).await,
-        r#"{"error":"auth.google_not_configured"}"#
+        (status, body),
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            err("auth.google_not_configured")
+        )
     );
 }
 
 #[tokio::test]
-async fn login_redirects_to_google_asking_only_id_and_name() {
+async fn authorize_asks_only_id_and_name() {
     let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db, None, None, true);
-    let res = send(&app, get("/auth/google/login?return_to=/pt/algo", None)).await;
-    assert_eq!(res.status(), StatusCode::SEE_OTHER);
-    let cookie = set_cookie(&res, "oauth_state").unwrap();
-    assert!(cookie.contains(".google.login."), "{cookie}");
+    let (status, body) = authorize(&app, "google", "login", None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
 
-    let url = location(&res);
+    let url = body["url"].as_str().unwrap();
     assert!(
         url.starts_with("https://accounts.google.com/o/oauth2/v2/auth?"),
         "{url}"
     );
-    assert!(url.contains("response_type=code"));
-    assert!(url.contains("client_id=google-client"));
-    // Nada de email: o da conta daqui só entra confirmado pelo link.
-    assert!(url.contains("scope=openid+profile&"), "{url}");
+    for part in [
+        "response_type=code",
+        "client_id=google-client",
+        // Nada de email: o da conta daqui só entra confirmado pelo link.
+        "scope=openid+profile&",
+        &format!("state={STATE}"),
+        &format!("code_challenge={CHALLENGE}"),
+        "code_challenge_method=S256",
+        "prompt=select_account",
+        "redirect_uri=http%3A%2F%2Flocalhost%3A4001%2Fauth%2Fgoogle%2Fcallback",
+    ] {
+        assert!(url.contains(part), "{url} sem {part}");
+    }
     assert!(!url.contains("email"), "{url}");
-    assert!(url.contains("prompt=select_account"));
-    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fgoogle%2Fcallback"));
 }
 
 #[tokio::test]
-async fn callback_creates_account_with_the_google_name() {
+async fn login_creates_account_with_the_google_name() {
     let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana Souza")), true);
     let me = google_login(&app).await;
@@ -94,42 +100,17 @@ async fn callback_creates_account_with_the_google_name() {
 }
 
 #[tokio::test]
-async fn callback_errors_redirect_with_google_codes() {
+async fn login_errors_use_google_codes() {
     let (db, _lease) = crate::db::test_db().await;
+    let failed = (StatusCode::BAD_GATEWAY, err("auth.google_failed"));
     let failing = providers_app(db.clone(), None, None, true);
-    let (session, res) = oauth_round_trip(&failing, "/auth/google/login", None).await;
-    assert!(session.is_empty());
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.google_failed")
-    );
+    let (status, body, session) = exchange(&failing, "google", "login", None, VERIFIER).await;
+    assert_eq!((status, body), failed);
+    assert_eq!(session, None);
 
-    let (cookie, _) = start_oauth(&failing, "/auth/google/login", None).await;
-    let res = send(
-        &failing,
-        get("/auth/google/callback?error=access_denied", Some(&cookie)),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.google_denied")
-    );
-
-    // O state aberto para o Discord não serve no callback do Google.
     let app = providers_app(db.clone(), None, Some(google_user("Ana")), true);
-    let (cookie, state) = start_oauth(&app, "/auth/discord/login", None).await;
-    let res = send(
-        &app,
-        get(
-            &format!("/auth/google/callback?code=abc&state={state}"),
-            Some(&cookie),
-        ),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.state_mismatch")
-    );
+    let (status, body, _) = exchange(&app, "google", "login", None, OTHER_VERIFIER).await;
+    assert_eq!((status, body), failed, "o verifier de outro challenge");
     let users = sqlx::query_scalar!("select count(*) from users")
         .fetch_one(&db)
         .await
@@ -146,7 +127,7 @@ async fn discord_account_links_google_and_drops_discord() {
         Some(google_user("Ana")),
         true,
     );
-    let (session, _) = do_login(&app, "/").await;
+    let (session, _) = do_login(&app).await;
     let id = sqlx::query_scalar!("select id from users")
         .fetch_one(&db)
         .await
@@ -157,9 +138,14 @@ async fn discord_account_links_google_and_drops_discord() {
     };
     set_email(&db, id, "quaker@example.com").await;
 
-    let (session, res) = oauth_round_trip(&app, LINK, Some(&me.cookie)).await;
-    assert!(session.is_empty(), "ligar não cria sessão");
-    assert_eq!(location(&res), format!("{WEB}/pt/account/logins"));
+    let (status, body) = authorize(&app, "google", "link", Some(&me.cookie)).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = link_provider(&app, "google", &me).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(
+        body,
+        json!({ "discord": true, "google": true, "username": null, "email": "quaker@example.com" })
+    );
     let notice = mailbox(&db).next().await;
     assert!(
         notice.subject.contains("conta Google"),
@@ -170,11 +156,6 @@ async fn discord_account_links_google_and_drops_discord() {
         notice.text.contains("Ana"),
         "o nome no Google: {}",
         notice.text
-    );
-    let (_, body) = common::get(&app, "/auth/logins", &me).await;
-    assert_eq!(
-        body,
-        json!({ "discord": true, "google": true, "username": null, "email": "quaker@example.com" })
     );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", id)
         .fetch_one(&db)
@@ -191,11 +172,10 @@ async fn discord_account_links_google_and_drops_discord() {
     );
 
     // Já ligado: nem vai para o Google.
-    let res = send(&app, get(LINK, Some(&me.cookie))).await;
-    assert_eq!(res.status(), StatusCode::CONFLICT);
+    let (status, body) = authorize(&app, "google", "link", Some(&me.cookie)).await;
     assert_eq!(
-        body_text(res).await,
-        r#"{"error":"auth.google_already_linked"}"#
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.google_already_linked"))
     );
 
     // Sem senha, desligar não pede nada: sobra o outro provedor.
@@ -234,10 +214,10 @@ async fn google_of_another_account_is_refused() {
     google_login(&app).await;
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    let (_, res) = oauth_round_trip(&app, LINK, Some(&me.cookie)).await;
+    let (status, body) = link_provider(&app, "google", &me).await;
     assert_eq!(
-        location(&res),
-        format!("{WEB}/pt/account/logins?auth_error=auth.google_taken")
+        (status, body),
+        (StatusCode::CONFLICT, err("auth.google_taken"))
     );
     let (_, body) = common::get(&app, "/auth/logins", &me).await;
     assert_eq!(body["google"], false);
@@ -248,7 +228,8 @@ async fn password_account_with_google() {
     let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana")), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
-    oauth_round_trip(&app, LINK, Some(&me.cookie)).await;
+    let (status, body) = link_provider(&app, "google", &me).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
 
     // Com senha, desligar pede a atual, e sem ela é como errada.
     let unlink =

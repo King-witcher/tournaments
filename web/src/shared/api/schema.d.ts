@@ -20,16 +20,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/discord/callback": {
+    "/auth/discord/authorize": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["discord_callback"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["discord_authorize"];
         delete?: never;
         options?: never;
         head?: never;
@@ -43,9 +43,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["discord_link"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["discord_link"];
         delete?: never;
         options?: never;
         head?: never;
@@ -59,9 +59,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["discord_login"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["discord_login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -116,16 +116,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/google/callback": {
+    "/auth/google/authorize": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["google_callback"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["google_authorize"];
         delete?: never;
         options?: never;
         head?: never;
@@ -139,9 +139,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["google_link"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["google_link"];
         delete?: never;
         options?: never;
         head?: never;
@@ -155,9 +155,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["google_login"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["google_login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2258,6 +2258,41 @@ export interface components {
                 tournament: string;
             };
         };
+        /** @description O code que o provedor mandou ao callback do front, com o verifier da aba. */
+        OAuthCode: {
+            code: string;
+            /**
+             * @description O verifier do challenge que foi na autorização: 43 a 128 caracteres de
+             *     `A-Z a-z 0-9 - . _ ~`.
+             */
+            code_verifier: string;
+        };
+        /**
+         * @description Para que o OAuth de um provedor é aberto.
+         * @enum {string}
+         */
+        OAuthIntent: "login" | "link";
+        /** @description A autorização no provedor, para onde o navegador vai. */
+        OAuthRedirect: {
+            url: string;
+        };
+        /**
+         * @description Abrir o OAuth de um provedor, com o que o navegador gerou e guardou na
+         *     aba (a API não guarda nada).
+         */
+        OAuthStart: {
+            /**
+             * @description `BASE64URL(SHA-256(code_verifier))`, sem `=` (43 caracteres): o
+             *     método é sempre `S256`.
+             */
+            code_challenge: string;
+            intent: components["schemas"]["OAuthIntent"];
+            /**
+             * @description O que o provedor devolve ao callback, para o front conferir que a volta
+             *     é do fluxo desta aba: 22 a 128 caracteres de `A-Z a-z 0-9 - . _ ~`.
+             */
+            state: string;
+        };
         /**
          * @description O que espera a organização nas comunidades em que quem vê é organizer ou
          *     owner ativo. Para quem não organiza nenhuma, as listas vêm vazias.
@@ -3236,46 +3271,87 @@ export interface operations {
             };
         };
     };
-    discord_callback: {
+    discord_authorize: {
         parameters: {
-            query?: {
-                code?: string | null;
-                state?: string | null;
-                error?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthStart"];
+            };
+        };
         responses: {
-            /** @description Entra (cria a sessão) ou liga o Discord e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
-            303: {
+            /** @description A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error) */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OAuthRedirect"];
+                };
+            };
+            /** @description auth.unauthenticated (ligar sem sessão) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_already_linked (ligar numa conta que já tem um) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body (também state ou challenge fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
         };
     };
     discord_link: {
         parameters: {
-            query?: {
-                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
-                return_to?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthCode"];
+            };
+        };
         responses: {
-            /** @description Redireciona para o Discord; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>) */
-            303: {
+            /** @description Discord ligado à conta logada; o avatar passa a ser o dele */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
             };
             /** @description auth.unauthenticated */
             401: {
@@ -3286,8 +3362,26 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.discord_already_linked */
+            /** @description auth.discord_taken (é login de outra conta), auth.discord_already_linked */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body (também code vazio ou verifier fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_failed */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3308,22 +3402,43 @@ export interface operations {
     };
     discord_login: {
         parameters: {
-            query?: {
-                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
-                return_to?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthCode"];
+            };
+        };
         responses: {
-            /** @description Redireciona para o Discord e grava o cookie oauth_state */
-            303: {
+            /** @description Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["SignedIn"];
+                };
+            };
+            /** @description request.invalid_body (também code vazio ou verifier fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
             /** @description auth.discord_not_configured */
             503: {
@@ -3570,46 +3685,87 @@ export interface operations {
             };
         };
     };
-    google_callback: {
+    google_authorize: {
         parameters: {
-            query?: {
-                code?: string | null;
-                state?: string | null;
-                error?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthStart"];
+            };
+        };
         responses: {
-            /** @description Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
-            303: {
+            /** @description A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error) */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OAuthRedirect"];
+                };
+            };
+            /** @description auth.unauthenticated (ligar sem sessão) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_already_linked (ligar numa conta que já tem uma) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body (também state ou challenge fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
         };
     };
     google_link: {
         parameters: {
-            query?: {
-                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
-                return_to?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthCode"];
+            };
+        };
         responses: {
-            /** @description Redireciona para o Google; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>) */
-            303: {
+            /** @description Conta Google ligada à conta logada */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
             };
             /** @description auth.unauthenticated */
             401: {
@@ -3620,8 +3776,26 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.google_already_linked */
+            /** @description auth.google_taken (é login de outra conta), auth.google_already_linked */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body (também code vazio ou verifier fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_failed */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3642,22 +3816,43 @@ export interface operations {
     };
     google_login: {
         parameters: {
-            query?: {
-                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
-                return_to?: string | null;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthCode"];
+            };
+        };
         responses: {
-            /** @description Redireciona para o Google (escopos openid e profile) e grava o cookie oauth_state */
-            303: {
+            /** @description Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["SignedIn"];
+                };
+            };
+            /** @description request.invalid_body (também code vazio ou verifier fora do formato) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_failed (o Google não respondeu ou recusou o code, por exemplo com outro verifier) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
             /** @description auth.google_not_configured */
             503: {

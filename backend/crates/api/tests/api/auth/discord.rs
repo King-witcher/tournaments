@@ -1,107 +1,127 @@
-//! Entrar com Discord, `/me` e sair.
+//! Entrar com Discord (com PKCE), `/me` e sair.
 
 use std::time::Duration;
 
 use axum::{
     body::Body,
-    http::{Request, StatusCode, header},
+    http::{Method, Request, StatusCode, header},
 };
 use redis::Cmd;
+use serde_json::json;
 
 use super::{
-    app, body_text, discord_user, do_login, get, location, pair, send, session_key, set_cookie,
+    CHALLENGE, OTHER_VERIFIER, STATE, VERIFIER, app, authorize, body_text, discord_user, do_login,
+    exchange, get, json_request, pair, send, send_json, session_key, set_cookie,
 };
-use crate::common::{WEB, redis};
+use crate::common::{err, redis};
 
 #[tokio::test]
-async fn login_without_config_is_503() {
+async fn without_config_is_503() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db, None, false);
-    let res = send(&app, get("/auth/discord/login", None)).await;
-    assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let (status, body) = authorize(&app, "discord", "login", None).await;
     assert_eq!(
-        body_text(res).await,
-        r#"{"error":"auth.discord_not_configured"}"#
+        (status, body),
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            err("auth.discord_not_configured")
+        )
+    );
+    let (status, body, _) = exchange(&app, "discord", "login", None, VERIFIER).await;
+    assert_eq!(
+        (status, body),
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            err("auth.discord_not_configured")
+        )
     );
 }
 
 #[tokio::test]
-async fn login_redirects_to_discord() {
+async fn authorize_returns_the_discord_url_with_the_challenge() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db, None, true);
-    let res = send(&app, get("/auth/discord/login?return_to=/pt/algo", None)).await;
-    assert_eq!(res.status(), StatusCode::SEE_OTHER);
+    let body = json!({ "intent": "login", "state": STATE, "code_challenge": CHALLENGE });
+    let res = send(
+        &app,
+        json_request(Method::POST, "/auth/discord/authorize", None, body),
+    )
+    .await;
+    assert_eq!(res.status(), StatusCode::OK);
+    assert!(
+        res.headers().get(header::SET_COOKIE).is_none(),
+        "a API não guarda nada do fluxo"
+    );
 
-    let cookie = set_cookie(&res, "oauth_state").unwrap();
-    for attr in ["HttpOnly", "SameSite=Lax", "Path=/auth", "Max-Age=600"] {
-        assert!(cookie.contains(attr), "{cookie} sem {attr}");
-    }
-    let state = pair(&cookie)
-        .strip_prefix("oauth_state=")
-        .unwrap()
-        .split('.')
-        .next()
-        .unwrap()
-        .to_owned();
-    assert_eq!(state.len(), 43); // 32 bytes em base64url
-
-    let url = location(&res);
+    let body: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
+    let url = body["url"].as_str().unwrap();
     assert!(
         url.starts_with("https://discord.com/oauth2/authorize?"),
         "{url}"
     );
-    assert!(url.contains("response_type=code"));
-    assert!(url.contains("client_id=client-1"));
-    assert!(url.contains("scope=identify"));
-    assert!(url.contains(&format!("state={state}")));
-    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fdiscord%2Fcallback"));
+    for part in [
+        "response_type=code",
+        "client_id=client-1",
+        "scope=identify",
+        &format!("state={STATE}"),
+        &format!("code_challenge={CHALLENGE}"),
+        "code_challenge_method=S256",
+        // A página de callback do front.
+        "redirect_uri=http%3A%2F%2Flocalhost%3A4001%2Fauth%2Fdiscord%2Fcallback",
+    ] {
+        assert!(url.contains(part), "{url} sem {part}");
+    }
 }
 
 #[tokio::test]
-async fn callback_errors_redirect_with_code() {
+async fn malformed_pkce_is_refused() {
     let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone(), Some(discord_user(None)), true);
+    let refused = (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        err("request.invalid_body"),
+    );
+    for (state, challenge) in [
+        ("curto", CHALLENGE),
+        (STATE, &CHALLENGE[..42]),
+        (STATE, "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-c="),
+    ] {
+        let body = json!({ "intent": "login", "state": state, "code_challenge": challenge });
+        let (status, body, _) =
+            send_json(&app, Method::POST, "/auth/discord/authorize", None, body).await;
+        assert_eq!((status, body), refused, "{state} {challenge}");
+    }
+    let body = json!({ "intent": "entrar", "state": STATE, "code_challenge": CHALLENGE });
+    let (status, _, _) = send_json(&app, Method::POST, "/auth/discord/authorize", None, body).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+
+    for verifier in [
+        &VERIFIER[..42],
+        "verifier com espaço e mais de quarenta e três",
+    ] {
+        let (status, body, _) = exchange(&app, "discord", "login", None, verifier).await;
+        assert_eq!((status, body), refused, "{verifier}");
+    }
+    let body = json!({ "code": "", "code_verifier": VERIFIER });
+    let (status, body, _) = send_json(&app, Method::POST, "/auth/discord/login", None, body).await;
+    assert_eq!((status, body), refused);
+}
+
+#[tokio::test]
+async fn login_errors_create_nothing() {
+    let (db, _lease) = crate::db::test_db().await;
+    let failed = (StatusCode::BAD_GATEWAY, err("auth.discord_failed"));
+
+    // O code que saiu para outra aba (outro challenge) não serve.
     let ok_app = app(db.clone(), Some(discord_user(None)), true);
-    let res = send(&ok_app, get("/auth/discord/login", None)).await;
-    let cookie = pair(&set_cookie(&res, "oauth_state").unwrap());
-
-    let res = send(
-        &ok_app,
-        get("/auth/discord/callback?code=abc&state=outro", Some(&cookie)),
-    )
-    .await;
-    assert_eq!(res.status(), StatusCode::SEE_OTHER);
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.state_mismatch")
-    );
-
-    let res = send(
-        &ok_app,
-        get("/auth/discord/callback?code=abc&state=x", None),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.state_mismatch")
-    );
-
-    let res = send(
-        &ok_app,
-        get("/auth/discord/callback?error=access_denied", Some(&cookie)),
-    )
-    .await;
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.discord_denied")
-    );
+    let (status, body, session) = exchange(&ok_app, "discord", "login", None, OTHER_VERIFIER).await;
+    assert_eq!((status, body), failed);
+    assert_eq!(session, None);
 
     let failing = app(db.clone(), None, true);
-    let (session, res) = do_login(&failing, "/").await;
-    assert!(session.is_empty());
-    assert_eq!(
-        location(&res),
-        format!("{WEB}/?auth_error=auth.discord_failed")
-    );
+    let (status, body, session) = exchange(&failing, "discord", "login", None, VERIFIER).await;
+    assert_eq!((status, body), failed);
+    assert_eq!(session, None);
     let n = sqlx::query_scalar!("select count(*) from users")
         .fetch_one(&db)
         .await
@@ -110,25 +130,30 @@ async fn callback_errors_redirect_with_code() {
 }
 
 #[tokio::test]
-async fn callback_creates_user_identity_and_session() {
+async fn login_creates_user_identity_and_session() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(Some("hash1"))), true);
-    let (session, res) = do_login(&app, "/pt/algo").await;
-
-    assert_eq!(res.status(), StatusCode::SEE_OTHER);
-    assert_eq!(location(&res), format!("{WEB}/pt/algo"));
-
+    let body = json!({ "code": "abc", "code_verifier": VERIFIER });
+    let res = send(
+        &app,
+        json_request(Method::POST, "/auth/discord/login", None, body),
+    )
+    .await;
+    assert_eq!(res.status(), StatusCode::OK);
     let cookie = set_cookie(&res, "session").unwrap();
     for attr in ["HttpOnly", "SameSite=Lax", "Path=/", "Max-Age=2592000"] {
         assert!(cookie.contains(attr), "{cookie} sem {attr}");
     }
-    let cleared = set_cookie(&res, "oauth_state").unwrap();
-    assert!(cleared.starts_with("oauth_state=;") && cleared.contains("Max-Age=0"));
+    let session = pair(&cookie);
+    let body: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
+    assert_eq!(body["display_name"], "Quaker Global");
+    assert_eq!(body["deletion_cancelled"], false);
 
     let user = sqlx::query!("select id, display_name, avatar_url from users")
         .fetch_one(&db)
         .await
         .unwrap();
+    assert_eq!(body["id"], user.id);
     assert_eq!(user.display_name, "Quaker Global");
     assert_eq!(
         user.avatar_url.as_deref(),
@@ -160,9 +185,9 @@ async fn callback_creates_user_identity_and_session() {
 async fn second_login_reuses_user_and_updates_avatar() {
     let (db, _lease) = crate::db::test_db().await;
     let first = app(db.clone(), Some(discord_user(Some("old"))), true);
-    do_login(&first, "/").await;
+    do_login(&first).await;
     let second = app(db.clone(), Some(discord_user(Some("new"))), true);
-    let (session, _) = do_login(&second, "/").await;
+    let (session, _) = do_login(&second).await;
 
     let users = sqlx::query!("select avatar_url from users")
         .fetch_all(&db)
@@ -184,16 +209,6 @@ async fn second_login_reuses_user_and_updates_avatar() {
 }
 
 #[tokio::test]
-async fn open_redirect_is_blocked() {
-    let (db, _lease) = crate::db::test_db().await;
-    let app = app(db, Some(discord_user(None)), true);
-    for bad in ["//evil.com", "/%5Cevil.com", "https://evil.com", "evil"] {
-        let (_, res) = do_login(&app, bad).await;
-        assert_eq!(location(&res), format!("{WEB}/"), "return_to={bad}");
-    }
-}
-
-#[tokio::test]
 async fn me_requires_valid_session() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
@@ -202,7 +217,7 @@ async fn me_requires_valid_session() {
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
     assert_eq!(body_text(res).await, r#"{"error":"auth.unauthenticated"}"#);
 
-    let (session, _) = do_login(&app, "/").await;
+    let (session, _) = do_login(&app).await;
     let res = send(&app, get("/me", Some(&session))).await;
     assert_eq!(res.status(), StatusCode::OK);
     let json: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
@@ -226,7 +241,7 @@ async fn me_requires_valid_session() {
 async fn logout_removes_session() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
-    let (session, _) = do_login(&app, "/").await;
+    let (session, _) = do_login(&app).await;
 
     let post = |cookie: Option<&str>| {
         let mut b = Request::post("/auth/logout");

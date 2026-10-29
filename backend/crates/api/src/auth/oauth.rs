@@ -1,99 +1,107 @@
-//! Rotas dos provedores externos (Discord e Google): entrar, ligar à conta
-//! logada, o callback das duas e desligar. As de cada provedor só passam o
-//! dele para o fluxo comum, aqui embaixo; o que muda entre eles (URL de
-//! autorização, leitura do usuário) fica em `discord.rs` e `google.rs`.
+//! Rotas dos provedores externos (Discord e Google), com PKCE gerado no
+//! navegador: o front gera o state e o code verifier e guarda os dois na aba;
+//! `authorize` devolve a URL do provedor com o state e o challenge; o provedor
+//! volta para a página de callback do front, que confere o state e manda aqui
+//! o code com o verifier, para entrar (`login`) ou ligar à conta logada
+//! (`link`). O provedor confere o verifier contra o challenge na troca, então
+//! o code só serve a quem abriu o fluxo; a API não guarda nada entre as duas
+//! pontas. As rotas de cada provedor só passam o dele para o fluxo comum,
+//! aqui embaixo; o que muda entre eles (URL de autorização, leitura do
+//! usuário) fica em `discord.rs` e `google.rs`.
 
 use axum::{
     Json,
-    extract::{Query, State},
+    extract::State,
     http::{HeaderMap, StatusCode},
-    response::Redirect,
 };
 use axum_extra::extract::CookieJar;
 
 use super::{
     CurrentUser,
     attempts::confirm_password_if_set,
+    credentials::start_session,
     db::{self, ExternalLogin},
-    deletion::CANCELLED_PATH,
     discord,
     emails::Notice,
-    google, kv,
+    google,
     notify::notify,
+    pkce,
     provider::Provider,
-    session::{
-        AuthSettings, OAuthFlow, OAuthIntent, SESSION_COOKIE, STATE_COOKIE, sanitize_return_to,
-        user_agent, with_auth_error,
+    types::{
+        LoginMethods, OAuthCode, OAuthIntent, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin,
     },
-    types::{CallbackQuery, LoginMethods, LoginQuery, UnlinkLogin},
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody, token},
+    shared::{ApiError, ErrorBody, JsonBody},
 };
 
+/// Tamanho máximo do code que o front repassa (os dos provedores têm menos
+/// de 100 caracteres).
+const CODE_MAX: usize = 512;
+
 #[utoipa::path(
-    get,
+    post,
+    path = "/auth/discord/authorize",
+    tag = "auth",
+    request_body = OAuthStart,
+    responses(
+        (status = OK, body = OAuthRedirect, description = "A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error)"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.discord_already_linked (ligar numa conta que já tem um)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
+    )
+)]
+pub async fn discord_authorize(
+    State(state): State<AppState>,
+    user: Option<CurrentUser>,
+    JsonBody(body): JsonBody<OAuthStart>,
+) -> Result<Json<OAuthRedirect>, ApiError> {
+    authorize(&state, user, Provider::Discord, body).await
+}
+
+#[utoipa::path(
+    post,
     path = "/auth/discord/login",
     tag = "auth",
-    params(LoginQuery),
+    request_body = OAuthCode,
     responses(
-        (status = SEE_OTHER, description = "Redireciona para o Discord e grava o cookie oauth_state"),
+        (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
     )
 )]
 pub async fn discord_login(
     State(state): State<AppState>,
-    Query(q): Query<LoginQuery>,
+    headers: HeaderMap,
     jar: CookieJar,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    let return_to = q.return_to.as_deref();
-    authorize(
-        &state.auth,
-        jar,
-        Provider::Discord,
-        OAuthIntent::Login,
-        return_to,
-    )
+    JsonBody(body): JsonBody<OAuthCode>,
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+    login(&state, Provider::Discord, &headers, jar, body).await
 }
 
 #[utoipa::path(
-    get,
+    post,
     path = "/auth/discord/link",
     tag = "auth",
-    params(LoginQuery),
+    request_body = OAuthCode,
     responses(
-        (status = SEE_OTHER, description = "Redireciona para o Discord; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>)"),
+        (status = OK, body = LoginMethods, description = "Discord ligado à conta logada; o avatar passa a ser o dele"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.discord_already_linked"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.discord_taken (é login de outra conta), auth.discord_already_linked"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
     )
 )]
 pub async fn discord_link(
     State(state): State<AppState>,
     user: CurrentUser,
-    Query(q): Query<LoginQuery>,
-    jar: CookieJar,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    link(&state, &user, Provider::Discord, q, jar).await
-}
-
-#[utoipa::path(
-    get,
-    path = "/auth/discord/callback",
-    tag = "auth",
-    params(CallbackQuery),
-    responses(
-        (status = SEE_OTHER, description = "Entra (cria a sessão) ou liga o Discord e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
-    )
-)]
-pub async fn discord_callback(
-    State(state): State<AppState>,
-    Query(q): Query<CallbackQuery>,
-    headers: HeaderMap,
-    jar: CookieJar,
-) -> (CookieJar, Redirect) {
-    callback(&state, Provider::Discord, q, &headers, jar).await
+    JsonBody(body): JsonBody<OAuthCode>,
+) -> Result<Json<LoginMethods>, ApiError> {
+    link(&state, &user, Provider::Discord, body).await
 }
 
 #[utoipa::path(
@@ -119,67 +127,67 @@ pub async fn unlink_discord(
 }
 
 #[utoipa::path(
-    get,
+    post,
+    path = "/auth/google/authorize",
+    tag = "auth",
+    request_body = OAuthStart,
+    responses(
+        (status = OK, body = OAuthRedirect, description = "A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error)"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.google_already_linked (ligar numa conta que já tem uma)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
+    )
+)]
+pub async fn google_authorize(
+    State(state): State<AppState>,
+    user: Option<CurrentUser>,
+    JsonBody(body): JsonBody<OAuthStart>,
+) -> Result<Json<OAuthRedirect>, ApiError> {
+    authorize(&state, user, Provider::Google, body).await
+}
+
+#[utoipa::path(
+    post,
     path = "/auth/google/login",
     tag = "auth",
-    params(LoginQuery),
+    request_body = OAuthCode,
     responses(
-        (status = SEE_OTHER, description = "Redireciona para o Google (escopos openid e profile) e grava o cookie oauth_state"),
+        (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, com o nome do Google, se ele ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "auth.google_failed (o Google não respondeu ou recusou o code, por exemplo com outro verifier)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
     )
 )]
 pub async fn google_login(
     State(state): State<AppState>,
-    Query(q): Query<LoginQuery>,
+    headers: HeaderMap,
     jar: CookieJar,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    let return_to = q.return_to.as_deref();
-    authorize(
-        &state.auth,
-        jar,
-        Provider::Google,
-        OAuthIntent::Login,
-        return_to,
-    )
+    JsonBody(body): JsonBody<OAuthCode>,
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+    login(&state, Provider::Google, &headers, jar, body).await
 }
 
 #[utoipa::path(
-    get,
+    post,
     path = "/auth/google/link",
     tag = "auth",
-    params(LoginQuery),
+    request_body = OAuthCode,
     responses(
-        (status = SEE_OTHER, description = "Redireciona para o Google; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>)"),
+        (status = OK, body = LoginMethods, description = "Conta Google ligada à conta logada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.google_already_linked"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.google_taken (é login de outra conta), auth.google_already_linked"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "auth.google_failed"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
     )
 )]
 pub async fn google_link(
     State(state): State<AppState>,
     user: CurrentUser,
-    Query(q): Query<LoginQuery>,
-    jar: CookieJar,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    link(&state, &user, Provider::Google, q, jar).await
-}
-
-#[utoipa::path(
-    get,
-    path = "/auth/google/callback",
-    tag = "auth",
-    params(CallbackQuery),
-    responses(
-        (status = SEE_OTHER, description = "Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
-    )
-)]
-pub async fn google_callback(
-    State(state): State<AppState>,
-    Query(q): Query<CallbackQuery>,
-    headers: HeaderMap,
-    jar: CookieJar,
-) -> (CookieJar, Redirect) {
-    callback(&state, Provider::Google, q, &headers, jar).await
+    JsonBody(body): JsonBody<OAuthCode>,
+) -> Result<Json<LoginMethods>, ApiError> {
+    link(&state, &user, Provider::Google, body).await
 }
 
 #[utoipa::path(
@@ -204,196 +212,106 @@ pub async fn unlink_google(
     unlink(&state, &user, Provider::Google, body).await
 }
 
-/// Redirect para a autorização do provedor, com o state no cookie.
-fn authorize(
-    auth: &AuthSettings,
-    jar: CookieJar,
+/// A URL de autorização do provedor, com o state e o challenge do navegador.
+/// Para ligar, confere antes a sessão e se a conta já tem um dele: aí a
+/// pessoa nem sai do site.
+async fn authorize(
+    state: &AppState,
+    user: Option<CurrentUser>,
     provider: Provider,
-    intent: OAuthIntent,
-    return_to: Option<&str>,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    let Some(client) = auth.client(provider) else {
-        return Err(ApiError::new(
-            StatusCode::SERVICE_UNAVAILABLE,
-            provider.codes().not_configured,
-        ));
-    };
+    body: OAuthStart,
+) -> Result<Json<OAuthRedirect>, ApiError> {
+    let codes = provider.codes();
+    let client = state.auth.client(provider).ok_or(ApiError::new(
+        StatusCode::SERVICE_UNAVAILABLE,
+        codes.not_configured,
+    ))?;
+    if !pkce::is_state(&body.state) || !pkce::is_challenge(&body.code_challenge) {
+        return Err(ApiError::invalid("request.invalid_body"));
+    }
+    if body.intent == OAuthIntent::Link {
+        let user = user.ok_or(ApiError::unauthenticated())?;
+        let methods = db::login_methods(&state.db, user.id).await?;
+        let linked = match provider {
+            Provider::Discord => methods.discord,
+            Provider::Google => methods.google,
+        };
+        if linked {
+            return Err(ApiError::conflict(codes.already_linked));
+        }
+    }
 
-    let flow = OAuthFlow {
-        state: token::random_secret(),
-        provider,
-        intent,
-        return_to: sanitize_return_to(return_to),
-    };
     let url = match provider {
-        Provider::Discord => discord::authorize_url(client, &flow.state),
-        Provider::Google => google::authorize_url(client, &flow.state),
+        Provider::Discord => discord::authorize_url(client, &body.state, &body.code_challenge),
+        Provider::Google => google::authorize_url(client, &body.state, &body.code_challenge),
     };
-    Ok((
-        jar.add(auth.state_cookie(flow.encode())),
-        Redirect::to(url.as_str()),
-    ))
+    Ok(Json(OAuthRedirect { url: url.into() }))
 }
 
-/// Ligar o provedor à conta logada: a que já tem um dele nem sai do site.
+/// Entra pela conta do provedor, criando a conta daqui se é a primeira vez,
+/// com a sessão no cookie, como no login com senha (que também cancela a
+/// exclusão agendada).
+async fn login(
+    state: &AppState,
+    provider: Provider,
+    headers: &HeaderMap,
+    jar: CookieJar,
+    body: OAuthCode,
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
+    let login = fetch_login(state, provider, &body).await?;
+    let user_id = db::upsert_external_user(&state.db, &login).await?;
+    start_session(state, headers, jar, user_id).await
+}
+
+/// Liga a conta do provedor à conta logada e avisa por email.
 async fn link(
     state: &AppState,
     user: &CurrentUser,
     provider: Provider,
-    q: LoginQuery,
-    jar: CookieJar,
-) -> Result<(CookieJar, Redirect), ApiError> {
-    let methods = db::login_methods(&state.db, user.id).await?;
-    let linked = match provider {
-        Provider::Discord => methods.discord,
-        Provider::Google => methods.google,
-    };
-    if linked {
-        return Err(ApiError::conflict(provider.codes().already_linked));
+    body: OAuthCode,
+) -> Result<Json<LoginMethods>, ApiError> {
+    let login = fetch_login(state, provider, &body).await?;
+    if db::link_external(&state.db, user.id, &login).await? {
+        let notice = match provider {
+            Provider::Discord => Notice::DiscordLinked {
+                discord: login.account,
+            },
+            Provider::Google => Notice::GoogleLinked {
+                google: login.account,
+            },
+        };
+        notify(state, user.id, notice);
     }
-    let return_to = q.return_to.as_deref();
-    authorize(&state.auth, jar, provider, OAuthIntent::Link, return_to)
+    Ok(Json(db::login_methods(&state.db, user.id).await?))
 }
 
-async fn callback(
-    state: &AppState,
-    provider: Provider,
-    q: CallbackQuery,
-    headers: &HeaderMap,
-    jar: CookieJar,
-) -> (CookieJar, Redirect) {
-    let auth = &state.auth;
-    let flow = jar
-        .get(STATE_COOKIE)
-        .and_then(|c| OAuthFlow::decode(c.value()));
-    let session = jar
-        .get(SESSION_COOKIE)
-        .map(|c| token::hash_token(c.value()));
-    let jar = jar.remove(auth.clear_state_cookie());
-    let return_to = flow.as_ref().map_or("/", |f| f.return_to.as_str());
-
-    let agent = user_agent(headers);
-    let done = complete_callback(
-        state,
-        provider,
-        &q,
-        flow.as_ref(),
-        session,
-        agent.as_deref(),
-    )
-    .await;
-    match done {
-        Ok(Some(entered)) => (
-            jar.add(auth.session_cookie(entered.token)),
-            // A conta, que diz que a exclusão foi cancelada.
-            auth.web_redirect(if entered.deletion_cancelled {
-                CANCELLED_PATH
-            } else {
-                return_to
-            }),
-        ),
-        Ok(None) => (jar, auth.web_redirect(return_to)),
-        Err(code) => {
-            let back = match &flow {
-                Some(f) if f.intent == OAuthIntent::Link => return_to,
-                _ => "/",
-            };
-            (jar, auth.web_redirect(&with_auth_error(back, code)))
-        }
-    }
-}
-
-/// A sessão nova do login por um provedor.
-struct Entered {
-    token: String,
-    /// Entrar cancelou a exclusão da conta, que estava agendada.
-    deletion_cancelled: bool,
-}
-
-/// Confere o state e conclui: entrar devolve a sessão nova; ligar, `None`.
-/// Erro sai como código.
-async fn complete_callback(
-    state: &AppState,
-    provider: Provider,
-    q: &CallbackQuery,
-    flow: Option<&OAuthFlow>,
-    session: Option<[u8; 32]>,
-    user_agent: Option<&str>,
-) -> Result<Option<Entered>, &'static str> {
-    let codes = provider.codes();
-    if q.error.is_some() {
-        return Err(codes.denied);
-    }
-    let (Some(flow), Some(query_state)) = (flow, q.state.as_deref()) else {
-        return Err("auth.state_mismatch");
-    };
-    if flow.provider != provider
-        || !token::constant_time_eq(flow.state.as_bytes(), query_state.as_bytes())
-    {
-        return Err("auth.state_mismatch");
-    }
-    let code = q.code.as_deref().ok_or(codes.failed)?;
-
-    match flow.intent {
-        OAuthIntent::Login => {
-            let login = fetch_login(state, provider, code).await?;
-            let result = async {
-                let user_id = db::upsert_external_user(&state.db, &login).await?;
-                let token = kv::create_session(&state.redis, user_id, user_agent).await?;
-                let deletion_cancelled = db::cancel_deletion(&state.db, user_id).await?;
-                anyhow::Ok(Entered {
-                    token,
-                    deletion_cancelled,
-                })
-            }
-            .await;
-            result.map(Some).map_err(|err| {
-                tracing::error!(error = %err, provider = provider.as_str(), "login pelo provedor falhou");
-                codes.failed
-            })
-        }
-        OAuthIntent::Link => {
-            // O state prova que o pedido saiu deste navegador; a sessão diz
-            // de quem é a conta.
-            let user = match session {
-                Some(hash) => CurrentUser::of_session(state, &hash)
-                    .await
-                    .map_err(|err| err.code)?,
-                None => None,
-            }
-            .ok_or("auth.unauthenticated")?;
-            let login = fetch_login(state, provider, code).await?;
-            let linked = db::link_external(&state.db, user.id, &login)
-                .await
-                .map_err(|err| err.code)?;
-            if linked {
-                let notice = match provider {
-                    Provider::Discord => Notice::DiscordLinked {
-                        discord: login.account,
-                    },
-                    Provider::Google => Notice::GoogleLinked {
-                        google: login.account,
-                    },
-                };
-                notify(state, user.id, notice);
-            }
-            Ok(None)
-        }
-    }
-}
-
-/// Troca o code no provedor e diz quem entrou.
+/// Troca o code, com o verifier, no provedor e diz quem entrou.
 async fn fetch_login(
     state: &AppState,
     provider: Provider,
-    code: &str,
-) -> Result<ExternalLogin, &'static str> {
-    let failed = provider.codes().failed;
-    let redirect_uri = &state.auth.client(provider).ok_or(failed)?.redirect_uri;
+    body: &OAuthCode,
+) -> Result<ExternalLogin, ApiError> {
+    let codes = provider.codes();
+    let client = state.auth.client(provider).ok_or(ApiError::new(
+        StatusCode::SERVICE_UNAVAILABLE,
+        codes.not_configured,
+    ))?;
+    let OAuthCode {
+        code,
+        code_verifier: verifier,
+    } = body;
+    if code.is_empty() || code.len() > CODE_MAX || !pkce::is_verifier(verifier) {
+        return Err(ApiError::invalid("request.invalid_body"));
+    }
+
+    let redirect_uri = &client.redirect_uri;
     let result = match provider {
         Provider::Discord => {
             async {
-                let access_token = state.discord.exchange_code(code, redirect_uri).await?;
+                let access_token = state
+                    .discord
+                    .exchange_code(code, verifier, redirect_uri)
+                    .await?;
                 let user = state.discord.fetch_user(&access_token).await?;
                 anyhow::Ok(ExternalLogin {
                     provider,
@@ -407,7 +325,10 @@ async fn fetch_login(
         }
         Provider::Google => {
             async {
-                let user = state.google.fetch_user(code, redirect_uri).await?;
+                let user = state
+                    .google
+                    .fetch_user(code, verifier, redirect_uri)
+                    .await?;
                 let display_name = user.display_name();
                 anyhow::Ok(ExternalLogin {
                     provider,
@@ -421,8 +342,8 @@ async fn fetch_login(
         }
     };
     result.map_err(|err| {
-        tracing::error!(error = ?err, provider = provider.as_str(), "provedor falhou no callback");
-        failed
+        tracing::error!(error = ?err, provider = provider.as_str(), "provedor falhou na troca do code");
+        ApiError::new(StatusCode::BAD_GATEWAY, codes.failed)
     })
 }
 

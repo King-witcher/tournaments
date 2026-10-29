@@ -1,7 +1,7 @@
 //! Excluir a conta. O pedido agenda a exclusão para daqui a 7 dias, encerra
 //! todas as sessões (também a do pedido) e manda a data por email; entrar de
-//! novo antes cancela (`credentials::start_session` e o login pelo Discord ou
-//! pelo Google, em `oauth.rs`). Na data, o agendador tira a conta das
+//! novo antes cancela (`credentials::start_session`, também a do login pelo
+//! Discord ou pelo Google). Na data, o agendador tira a conta das
 //! comunidades (`members`) e a anonimiza (`db::anonymize`): os torneios
 //! jogados continuam inteiros, com o marcador de conta excluída no lugar do
 //! nome.
@@ -24,10 +24,6 @@ use crate::{
 
 /// Dias entre o pedido e a exclusão da conta.
 const DELETION_DAYS: i32 = 7;
-
-/// Para onde o login que cancelou a exclusão leva (o front avisa; sem o
-/// idioma, que o proxy do front põe).
-pub(super) const CANCELLED_PATH: &str = "/account?account_deletion=cancelled";
 
 #[utoipa::path(
     post,

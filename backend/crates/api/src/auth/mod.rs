@@ -2,8 +2,9 @@
 //! cookie e o extractor `CurrentUser`. A conta pode ter os três logins, ligar
 //! e desligar cada um, mas nunca fica sem nenhum, e com senha tem sempre email
 //! (a recuperação; o banco também confere). Os provedores (`provider.rs`)
-//! dividem o fluxo de `oauth.rs`; o que é de cada um fica em `discord.rs` e
-//! `google.rs`. O cadastro com senha exige email e só cria a conta quando o
+//! dividem o fluxo de `oauth.rs`, com PKCE gerado no navegador (o formato do
+//! state, do verifier e do challenge em `pkce.rs`); o que é de cada um fica em
+//! `discord.rs` e `google.rs`. O cadastro com senha exige email e só cria a conta quando o
 //! link chega (`signup.rs`); a recuperação de senha (`recovery.rs`) e a troca
 //! de email (`email_change.rs`) também vão por link, com os textos em
 //! `emails/`. Toda mudança de login ou de email manda um aviso ao email da
@@ -27,6 +28,7 @@ mod kv;
 mod notify;
 mod oauth;
 mod password;
+mod pkce;
 mod provider;
 mod recovery;
 mod session;
@@ -52,13 +54,13 @@ pub use session::{AuthSettings, OAuthClient, current_session_id};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
+        .routes(routes!(oauth::discord_authorize))
         .routes(routes!(oauth::discord_login))
         .routes(routes!(oauth::discord_link))
-        .routes(routes!(oauth::discord_callback))
         .routes(routes!(oauth::unlink_discord))
+        .routes(routes!(oauth::google_authorize))
         .routes(routes!(oauth::google_login))
         .routes(routes!(oauth::google_link))
-        .routes(routes!(oauth::google_callback))
         .routes(routes!(oauth::unlink_google))
         .routes(routes!(signup::signup))
         .routes(routes!(signup::confirm_signup))

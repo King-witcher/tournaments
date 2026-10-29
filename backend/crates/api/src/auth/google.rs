@@ -1,5 +1,5 @@
-//! Login com o Google (OpenID Connect): o code vira o id token, que diz quem
-//! entrou. Os escopos são só `openid profile`: o id da conta Google e o nome,
+//! Login com o Google (OpenID Connect, com PKCE): o code, com o verifier,
+//! vira o id token, que diz quem entrou. Os escopos são só `openid profile`: o id da conta Google e o nome,
 //! sem email (o da conta daqui é confirmado por link) e sem usar a foto.
 
 use anyhow::{Context, ensure};
@@ -40,7 +40,7 @@ impl GoogleUser {
 
 /// URL de autorização do Google. `select_account` mostra a escolha da conta
 /// mesmo com uma só logada, para quem vincula ver qual vai.
-pub fn authorize_url(client: &OAuthClient, state: &str) -> reqwest::Url {
+pub fn authorize_url(client: &OAuthClient, state: &str, code_challenge: &str) -> reqwest::Url {
     let mut url =
         reqwest::Url::parse("https://accounts.google.com/o/oauth2/v2/auth").expect("url fixa");
     url.query_pairs_mut()
@@ -48,6 +48,8 @@ pub fn authorize_url(client: &OAuthClient, state: &str) -> reqwest::Url {
         .append_pair("client_id", &client.client_id)
         .append_pair("scope", "openid profile")
         .append_pair("state", state)
+        .append_pair("code_challenge", code_challenge)
+        .append_pair("code_challenge_method", "S256")
         .append_pair("redirect_uri", &client.redirect_uri)
         .append_pair("prompt", "select_account");
     url
@@ -56,8 +58,14 @@ pub fn authorize_url(client: &OAuthClient, state: &str) -> reqwest::Url {
 /// Acesso ao Google, atrás de uma trait para os testes não usarem a internet.
 #[async_trait]
 pub trait GoogleApi: Send + Sync {
-    /// Troca o `code` do OAuth2 pelo id token e lê dele quem entrou.
-    async fn fetch_user(&self, code: &str, redirect_uri: &str) -> anyhow::Result<GoogleUser>;
+    /// Troca o `code` do OAuth2 pelo id token e lê dele quem entrou. O Google
+    /// confere o `code_verifier` contra o challenge da autorização.
+    async fn fetch_user(
+        &self,
+        code: &str,
+        code_verifier: &str,
+        redirect_uri: &str,
+    ) -> anyhow::Result<GoogleUser>;
 }
 
 pub struct HttpGoogle {
@@ -86,13 +94,19 @@ struct TokenResponse {
 
 #[async_trait]
 impl GoogleApi for HttpGoogle {
-    async fn fetch_user(&self, code: &str, redirect_uri: &str) -> anyhow::Result<GoogleUser> {
+    async fn fetch_user(
+        &self,
+        code: &str,
+        code_verifier: &str,
+        redirect_uri: &str,
+    ) -> anyhow::Result<GoogleUser> {
         let res: TokenResponse = self
             .client
             .post("https://oauth2.googleapis.com/token")
             .form(&[
                 ("grant_type", "authorization_code"),
                 ("code", code),
+                ("code_verifier", code_verifier),
                 ("redirect_uri", redirect_uri),
                 ("client_id", &self.client_id),
                 ("client_secret", &self.client_secret),

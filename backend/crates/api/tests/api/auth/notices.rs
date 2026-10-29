@@ -9,7 +9,7 @@ use axum::{
 use serde_json::json;
 use sqlx::PgPool;
 
-use super::{add_discord, app, discord_user, oauth_round_trip, send_json, set_email, signup};
+use super::{add_discord, app, discord_user, link_provider, send_json, set_email, signup};
 use crate::common::{
     self, User, app_from, call, link_token, mailbox, patch, post, put, state, user,
 };
@@ -116,12 +116,8 @@ async fn discord_link_and_unlink() {
     let app = app(db.clone(), Some(discord_user(None)), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    oauth_round_trip(
-        &app,
-        "/auth/discord/link?return_to=/pt/account",
-        Some(&me.cookie),
-    )
-    .await;
+    let (status, body) = link_provider(&app, "discord", &me).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     let text = expect_notice(
         &db,
         "rapha@example.com",

@@ -48,9 +48,11 @@ cp web/.env.example web/.env.local
 cd web && bun install
 ```
 
-Para o login, crie uma aplicação em https://discord.com/developers/applications, adicione o redirect `http://localhost:4000/auth/discord/callback` em **OAuth2 → Redirects** e coloque `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` no `backend/.env`. Sem eles, tudo funciona menos o login com Discord (o login com nome de usuário e senha não depende dele).
+Os provedores de login voltam para a página de callback do front, `{WEB_ORIGIN}/auth/{discord|google}/callback` (sem idioma), que é o redirect a registrar em cada um; a API monta o endereço a partir do `WEB_ORIGIN`.
 
-O login com Google usa um client OAuth do Google Cloud (tipo "Aplicativo da Web", escopos `openid` e `profile`), com `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REDIRECT_URI` (padrão `http://localhost:4000/auth/google/callback`). Sem os dois primeiros, o login com Google responde 503. O client atual só tem o redirect de produção: localmente, com as variáveis, o Google recusa o redirect; para testar aqui, acrescente o de localhost aos redirects autorizados do client (ou crie um só para dev). Em produção, as três variáveis no Render, com o redirect da API de lá.
+Para o login, crie uma aplicação em https://discord.com/developers/applications, adicione o redirect `http://localhost:4001/auth/discord/callback` em **OAuth2 → Redirects** e coloque `DISCORD_CLIENT_ID` e `DISCORD_CLIENT_SECRET` no `backend/.env`. Sem eles, tudo funciona menos o login com Discord (o login com nome de usuário e senha não depende dele).
+
+O login com Google usa um client OAuth do Google Cloud (tipo "Aplicativo da Web", escopos `openid` e `profile`), com `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`. Sem eles, o login com Google responde 503. O client atual só tem o redirect de produção: localmente, com as variáveis, o Google recusa o redirect; para testar aqui, acrescente `http://localhost:4001/auth/google/callback` aos redirects autorizados do client (ou crie um só para dev). Em produção, as duas variáveis no Render, e o redirect do front de lá no client.
 
 Os emails (confirmação do cadastro, recuperação de senha, troca de email) saem pelo Resend. Localmente, sem `RESEND_API_KEY` e `EMAIL_FROM`, a API só escreve cada email no log, com o link, e o fluxo funciona copiando o link de lá. Para mandar de verdade, crie uma API key com permissão só de envio no painel do Resend (domínio já verificado) e ponha as duas variáveis no `backend/.env`; em produção, no Render (lá, com `COOKIE_SECURE=true`, a API não sobe sem elas).
 

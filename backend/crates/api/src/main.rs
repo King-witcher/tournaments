@@ -54,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
         .context("falha ao aplicar migrations")?;
 
     let web_origin = config.web_origin.parse().context("WEB_ORIGIN inválido")?;
+    let web = config.web_origin.trim_end_matches('/');
     let push = web_push(&config)?;
     let state = AppState {
         db,
@@ -71,15 +72,15 @@ async fn main() -> anyhow::Result<()> {
                 "Discord",
                 config.discord_client_id.as_deref(),
                 config.discord_client_secret.as_deref(),
-                &config.discord_redirect_uri,
+                web,
             ),
             google: oauth_client(
                 "Google",
                 config.google_client_id.as_deref(),
                 config.google_client_secret.as_deref(),
-                &config.google_redirect_uri,
+                web,
             ),
-            web_origin: config.web_origin.trim_end_matches('/').to_owned(),
+            web_origin: web.to_owned(),
             cookie_domain: config.cookie_domain.clone(),
             cookie_secure: config.cookie_secure,
         }),
@@ -102,21 +103,23 @@ async fn main() -> anyhow::Result<()> {
 }
 
 /// O app do provedor `name`, se o client id e o secret existem; sem os dois,
-/// o login com ele responde 503.
+/// o login com ele responde 503. Ele volta para a página de callback do front
+/// em `web` (`/auth/{provedor}/callback`), o redirect a registrar no provedor.
 fn oauth_client(
     name: &str,
     client_id: Option<&str>,
     client_secret: Option<&str>,
-    redirect_uri: &str,
+    web: &str,
 ) -> Option<OAuthClient> {
     let (Some(client_id), Some(_)) = (client_id, client_secret) else {
         let env = name.to_ascii_uppercase();
         tracing::warn!("{env}_CLIENT_ID/SECRET ausentes: login com {name} desligado");
         return None;
     };
+    let provider = name.to_ascii_lowercase();
     Some(OAuthClient {
         client_id: client_id.to_owned(),
-        redirect_uri: redirect_uri.to_owned(),
+        redirect_uri: format!("{web}/auth/{provider}/callback"),
     })
 }
 

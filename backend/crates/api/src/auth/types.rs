@@ -1,20 +1,45 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 
 use crate::{auth::CurrentUser, shared::Locale};
 
-#[derive(Deserialize, IntoParams)]
-pub struct LoginQuery {
-    /// Caminho interno para voltar depois do login (ex.: `/pt/torneios`).
-    pub return_to: Option<String>,
+/// Para que o OAuth de um provedor é aberto.
+#[derive(Deserialize, ToSchema, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum OAuthIntent {
+    /// Entrar (ou criar a conta) com o provedor.
+    Login,
+    /// Ligar o provedor à conta logada.
+    Link,
 }
 
-#[derive(Deserialize, IntoParams)]
-pub struct CallbackQuery {
-    pub code: Option<String>,
-    pub state: Option<String>,
-    pub error: Option<String>,
+/// Abrir o OAuth de um provedor, com o que o navegador gerou e guardou na
+/// aba (a API não guarda nada).
+#[derive(Deserialize, ToSchema)]
+pub struct OAuthStart {
+    pub intent: OAuthIntent,
+    /// O que o provedor devolve ao callback, para o front conferir que a volta
+    /// é do fluxo desta aba: 22 a 128 caracteres de `A-Z a-z 0-9 - . _ ~`.
+    pub state: String,
+    /// `BASE64URL(SHA-256(code_verifier))`, sem `=` (43 caracteres): o
+    /// método é sempre `S256`.
+    pub code_challenge: String,
+}
+
+/// A autorização no provedor, para onde o navegador vai.
+#[derive(Serialize, ToSchema)]
+pub struct OAuthRedirect {
+    pub url: String,
+}
+
+/// O code que o provedor mandou ao callback do front, com o verifier da aba.
+#[derive(Deserialize, ToSchema)]
+pub struct OAuthCode {
+    pub code: String,
+    /// O verifier do challenge que foi na autorização: 43 a 128 caracteres de
+    /// `A-Z a-z 0-9 - . _ ~`.
+    pub code_verifier: String,
 }
 
 /// O que o próprio usuário muda na conta.

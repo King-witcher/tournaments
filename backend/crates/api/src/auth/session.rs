@@ -1,20 +1,16 @@
-//! Cookies da sessão e do state do OAuth, e a configuração que eles usam.
+//! O cookie da sessão e a configuração de auth (provedores, origem do front,
+//! atributos do cookie).
 
-use axum::{
-    http::{HeaderMap, header},
-    response::Redirect,
-};
+use axum::http::{HeaderMap, header};
 use axum_extra::extract::{
     CookieJar,
     cookie::{Cookie, SameSite},
 };
-use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
 use super::provider::Provider;
 use crate::shared::token;
 
 pub const SESSION_COOKIE: &str = "session";
-pub const STATE_COOKIE: &str = "oauth_state";
 pub const SESSION_DAYS: i64 = 30;
 
 /// Caracteres do hash (em hexadecimal) que identificam a sessão na lista e
@@ -43,6 +39,9 @@ pub fn current_session_id(jar: &CookieJar) -> Option<String> {
 #[derive(Clone, Debug)]
 pub struct OAuthClient {
     pub client_id: String,
+    /// A página de callback do front, `{WEB_ORIGIN}/auth/{provedor}/callback`
+    /// (sem idioma: o proxy do front põe), que precisa estar registrada no
+    /// provedor.
     pub redirect_uri: String,
 }
 
@@ -87,102 +86,6 @@ impl AuthSettings {
         }
         cookie.build()
     }
-
-    pub fn state_cookie(&self, value: String) -> Cookie<'static> {
-        Cookie::build((STATE_COOKIE, value))
-            .http_only(true)
-            .same_site(SameSite::Lax)
-            .path("/auth")
-            .secure(self.cookie_secure)
-            .max_age(time::Duration::seconds(600))
-            .build()
-    }
-
-    pub fn clear_state_cookie(&self) -> Cookie<'static> {
-        Cookie::build((STATE_COOKIE, "")).path("/auth").build()
-    }
-
-    pub fn web_redirect(&self, path: &str) -> Redirect {
-        Redirect::to(&format!("{}{}", self.web_origin, path))
-    }
-}
-
-/// Para que o OAuth foi aberto.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum OAuthIntent {
-    /// Entrar (ou criar a conta) com o provedor.
-    Login,
-    /// Ligar o provedor à conta logada.
-    Link,
-}
-
-/// O que o cookie `oauth_state` guarda entre o redirect e o callback.
-#[derive(Debug, PartialEq, Eq)]
-pub struct OAuthFlow {
-    pub state: String,
-    /// Só o callback deste provedor aceita o state.
-    pub provider: Provider,
-    pub intent: OAuthIntent,
-    pub return_to: String,
-}
-
-impl OAuthFlow {
-    /// `{state}.{provedor}.{login|link}.{return_to em base64url}`. Nem o
-    /// state nem o base64url têm '.', então ele separa os campos.
-    pub fn encode(&self) -> String {
-        let intent = match self.intent {
-            OAuthIntent::Login => "login",
-            OAuthIntent::Link => "link",
-        };
-        let return_to = URL_SAFE_NO_PAD.encode(&self.return_to);
-        let provider = self.provider.as_str();
-        format!("{}.{provider}.{intent}.{return_to}", self.state)
-    }
-
-    /// Lê o cookie; `return_to` passa de novo por [`sanitize_return_to`].
-    pub fn decode(value: &str) -> Option<Self> {
-        let mut parts = value.split('.');
-        let (Some(state), Some(provider), Some(intent), Some(return_to), None) = (
-            parts.next(),
-            parts.next(),
-            parts.next(),
-            parts.next(),
-            parts.next(),
-        ) else {
-            return None;
-        };
-        let provider = Provider::parse(provider)?;
-        let intent = match intent {
-            "login" => OAuthIntent::Login,
-            "link" => OAuthIntent::Link,
-            _ => return None,
-        };
-        let return_to = URL_SAFE_NO_PAD
-            .decode(return_to)
-            .ok()
-            .and_then(|b| String::from_utf8(b).ok());
-        Some(Self {
-            state: state.to_owned(),
-            provider,
-            intent,
-            return_to: sanitize_return_to(return_to.as_deref()),
-        })
-    }
-}
-
-/// Só caminhos internos; qualquer outra coisa vira `/` (evita open redirect).
-pub fn sanitize_return_to(raw: Option<&str>) -> String {
-    match raw {
-        Some(p)
-            if p.starts_with('/')
-                && !p.starts_with("//")
-                && !p.starts_with("/\\")
-                && !p.chars().any(char::is_control) =>
-        {
-            p.to_owned()
-        }
-        _ => "/".to_owned(),
-    }
 }
 
 /// Tamanho máximo do `User-Agent` guardado com a sessão.
@@ -202,49 +105,9 @@ pub fn user_agent(headers: &HeaderMap) -> Option<String> {
     (!agent.is_empty()).then_some(agent)
 }
 
-/// `path` com `auth_error=<código>` na query, para o front mostrar o erro.
-pub fn with_auth_error(path: &str, code: &str) -> String {
-    let separator = if path.contains('?') { '&' } else { '?' };
-    format!("{path}{separator}auth_error={code}")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn oauth_flow_round_trips() {
-        for provider in [Provider::Discord, Provider::Google] {
-            for intent in [OAuthIntent::Login, OAuthIntent::Link] {
-                let flow = OAuthFlow {
-                    state: "abc_-123".into(),
-                    provider,
-                    intent,
-                    return_to: "/pt/account?x=1.2".into(),
-                };
-                assert_eq!(OAuthFlow::decode(&flow.encode()), Some(flow));
-            }
-        }
-    }
-
-    #[test]
-    fn oauth_flow_rejects_bad_cookies() {
-        let return_to = URL_SAFE_NO_PAD.encode("/pt");
-        for bad in [
-            String::new(),
-            "abc".into(),
-            format!("abc.{return_to}"),
-            // O formato de antes do provedor no cookie.
-            format!("abc.login.{return_to}"),
-            format!("abc.discord.other.{return_to}"),
-            format!("abc.github.login.{return_to}"),
-            format!("abc.google.login.{return_to}.extra"),
-        ] {
-            assert_eq!(OAuthFlow::decode(&bad), None, "{bad}");
-        }
-        let evil = format!("abc.discord.link.{}", URL_SAFE_NO_PAD.encode("//evil.com"));
-        assert_eq!(OAuthFlow::decode(&evil).unwrap().return_to, "/");
-    }
 
     #[test]
     fn user_agent_is_trimmed_and_capped() {
@@ -261,11 +124,5 @@ mod tests {
         );
         let long = "a".repeat(USER_AGENT_MAX + 10);
         assert_eq!(user_agent(&headers(&long)).unwrap().len(), USER_AGENT_MAX);
-    }
-
-    #[test]
-    fn auth_error_goes_in_the_query() {
-        assert_eq!(with_auth_error("/", "x.y"), "/?auth_error=x.y");
-        assert_eq!(with_auth_error("/pt?a=1", "x.y"), "/pt?a=1&auth_error=x.y");
     }
 }
