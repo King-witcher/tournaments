@@ -2,6 +2,8 @@ use std::net::SocketAddr;
 
 use anyhow::Context;
 
+use crate::shared::StorageConfig;
+
 pub struct Config {
     pub database_url: String,
     /// Redis das sessões e do limite de tentativas (Upstash: `rediss://...`).
@@ -35,6 +37,9 @@ pub struct Config {
     pub email_from: Option<String>,
     /// Teto de emails por dia, abaixo do plano do provedor.
     pub email_daily_limit: u32,
+    /// Bucket dos prints do placar (`S3_*`); `None` sem bucket nem chaves:
+    /// os prints ficam desligados.
+    pub storage: Option<StorageConfig>,
 }
 
 impl Config {
@@ -75,7 +80,29 @@ impl Config {
                 Some(limit) => limit.parse().context("EMAIL_DAILY_LIMIT inválido")?,
                 None => crate::mail::DEFAULT_DAILY_LIMIT,
             },
+            storage: storage_from_env()?,
         })
+    }
+}
+
+/// O bucket, se `S3_BUCKET`, `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY`
+/// existem. Só parte delas é engano de configuração: a API não sobe.
+fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
+    let bucket = env_opt("S3_BUCKET");
+    let key = env_opt("S3_ACCESS_KEY_ID");
+    let secret = env_opt("S3_SECRET_ACCESS_KEY");
+    match (bucket, key, secret) {
+        (None, None, None) => Ok(None),
+        (Some(bucket), Some(access_key_id), Some(secret_access_key)) => Ok(Some(StorageConfig {
+            endpoint: env_opt("S3_ENDPOINT"),
+            region: env_or("S3_REGION", "us-east-1"),
+            bucket,
+            access_key_id,
+            secret_access_key,
+        })),
+        _ => anyhow::bail!(
+            "S3_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem prints)"
+        ),
     }
 }
 

@@ -86,6 +86,13 @@
   @include games-grid.actions;
 }
 
+// Os prints do mapa (feature `prints`), embaixo, no lugar das ações.
+.prints {
+  padding-block-start: spacing.$spacing-03;
+
+  @include games-grid.actions;
+}
+
 .srOnly {
   @include visually-hidden;
 }

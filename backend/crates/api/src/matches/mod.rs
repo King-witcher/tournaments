@@ -22,7 +22,8 @@
 //! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`. O
 //! veto de mapas e campeões de cada partida, entre ela ficar pronta e o envio
 //! de cada mapa, fica em `veto` (o relógio dos passos, `veto_clock`, é do
-//! `realtime`).
+//! `realtime`). O domínio `prints` lê a partida por `slots`; com print
+//! obrigatório, o envio do jogador exige um print anexado (`evidence`).
 
 mod actions;
 mod announce;
@@ -30,6 +31,7 @@ mod changes;
 mod db;
 mod detail;
 mod due;
+mod evidence;
 mod games;
 mod handlers;
 mod history;
@@ -41,6 +43,7 @@ mod replay;
 mod report;
 mod result;
 mod settle;
+mod slots;
 mod stage;
 mod tasks;
 mod types;
@@ -54,6 +57,7 @@ use crate::AppState;
 
 pub use due::{apply_due_confirmations, confirm_all_due};
 pub use mine::{Place, place, place_of};
+pub use slots::{MatchGames, games as match_games, lock_games as lock_match_games};
 pub use stage::{discard, start};
 pub use types::NextMatch;
 pub use veto::clock as veto_clock;

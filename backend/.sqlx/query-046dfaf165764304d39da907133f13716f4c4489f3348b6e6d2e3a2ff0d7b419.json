@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.visibility, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
+  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.visibility, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.prints_required, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
   "describe": {
     "columns": [
       {
@@ -214,6 +214,17 @@
       },
       {
         "ordinal": 19,
+        "name": "prints_required",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "prints_required"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -224,19 +235,19 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 21,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 21,
+        "ordinal": 22,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 22,
+        "ordinal": 23,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -270,10 +281,11 @@
       false,
       false,
       false,
+      false,
       null,
       null,
       null
     ]
   },
-  "hash": "22532b9c6df68c13118768dbe2d7d18410492b9383b9a70128a282b338965c74"
+  "hash": "046dfaf165764304d39da907133f13716f4c4489f3348b6e6d2e3a2ff0d7b419"
 }

@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { GamePrints } from "@/features/prints/components/game-prints";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { LocalTime } from "@/shared/ui/local-time";
@@ -111,6 +112,12 @@ export function GameRow({
           )}
         </div>
       )}
+      <GamePrints
+        target={target}
+        number={g.number}
+        focusId={gameRowId(g.number)}
+        className={styles.prints}
+      />
     </li>
   );
 }

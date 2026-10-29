@@ -15,6 +15,7 @@ mod my_tournaments;
 mod organizing;
 pub mod outbox;
 mod participants;
+pub mod prints;
 pub mod push;
 mod ratings;
 pub mod realtime;
@@ -58,6 +59,9 @@ pub struct AppState {
     pub realtime: realtime::Realtime,
     /// `None`: sem chaves VAPID, o Web Push fica desligado.
     pub push: Option<Arc<dyn push::WebPush>>,
+    /// Bucket dos prints do placar; `None` sem as variáveis `S3_*` (os prints
+    /// ficam desligados).
+    pub storage: Option<shared::Storage>,
     /// Envio de email (Resend; sem chave, só o log).
     pub mail: mail::Mail,
     /// Webhooks do Discord das comunidades (a fila é esvaziada por `discord::spawn`).
@@ -82,6 +86,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(matches::router())
         .merge(my_tournaments::router())
         .merge(organizing::router())
+        .merge(prints::router())
         .merge(push::router())
         .merge(ratings::router())
         .merge(realtime::router())

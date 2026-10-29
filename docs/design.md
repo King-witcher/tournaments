@@ -107,7 +107,7 @@ Organização, antes do início. Página inteira: título com quantos entram na 
 
 ### Partida `/[tenant]/[tournament]/matches/[match]`
 
-Breadcrumb (… › Torneio › Chave). Cabeçalho: código (C2.1), os dois lados com avatar e o placar da série em tipo grande, `Tag` de estado, prazo com contagem. Depois, **os mapas**: uma linha por mapa (`StructuredList`: nº, mapa, vencedor, frags, `Tag` do estado, frase do estado, ações). O próximo mapa é a última linha, com o formulário aberto para quem joga. Organização: `Accordion` fechada "Organização" (confirmar agora, corrigir, anular, W.O.) e "Histórico" fechado no fim. As regras de texto da rodada de contestação (`decisions.md`, "Interface") continuam.
+Breadcrumb (… › Torneio › Chave). Cabeçalho: código (C2.1), os dois lados com avatar e o placar da série em tipo grande, `Tag` de estado, prazo com contagem. Depois, **os mapas**: uma linha por mapa (`StructuredList`: nº, mapa, vencedor, frags, `Tag` do estado, frase do estado, ações). O próximo mapa é a última linha, com o formulário aberto para quem joga. Em cada mapa, embaixo, os prints do placar (`features/prints`): miniaturas que abrem a imagem em tamanho real, quem anexou, "Remover" para quem pode e "Anexar print" (arquivo, câmera no celular ou colar com o botão selecionado); no próximo mapa, o anexo vem antes do formulário e, com print obrigatório, diz isso. Organização: `Accordion` fechada "Organização" (confirmar agora, corrigir, anular, W.O.) e "Histórico" fechado no fim. As regras de texto da rodada de contestação (`decisions.md`, "Interface") continuam.
 
 ### Não encontrado e erro
 

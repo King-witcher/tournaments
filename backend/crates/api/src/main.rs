@@ -9,7 +9,7 @@ use api::{
     mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
-    shared::Redis,
+    shared::{Redis, Storage},
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
@@ -24,9 +24,10 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let config = Config::from_env()?;
-    // Antes das migrations, como o Redis abaixo: um deploy sem o Resend
-    // configurado falha sem mexer no banco.
+    // Antes das migrations, como o Redis abaixo: um deploy sem o Resend (ou com
+    // o bucket mal configurado) falha sem mexer no banco.
     let mail = Mail::new(mailer(&config)?, config.email_daily_limit);
+    let storage = storage(&config)?;
 
     let db = PgPoolOptions::new()
         .max_connections(5)
@@ -84,6 +85,7 @@ async fn main() -> anyhow::Result<()> {
         }),
         realtime: Realtime::new(),
         push,
+        storage,
         mail,
         webhooks: Webhooks::new(),
     };
@@ -131,6 +133,17 @@ fn web_push(config: &Config) -> anyhow::Result<Option<Arc<dyn WebPush>>> {
         .clone()
         .unwrap_or_else(|| config.web_origin.trim_end_matches('/').to_owned());
     Ok(Some(Arc::new(HttpWebPush::new(public, private, subject)?)))
+}
+
+/// O bucket dos prints, com as variáveis `S3_*`; sem elas, desligado.
+fn storage(config: &Config) -> anyhow::Result<Option<Storage>> {
+    let Some(storage) = &config.storage else {
+        tracing::warn!(
+            "S3_BUCKET/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY ausentes: prints desligados"
+        );
+        return Ok(None);
+    };
+    Ok(Some(Storage::new(storage.clone())?))
 }
 
 /// Resend com a chave e o remetente. Sem os dois, os emails vão para o log, o

@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { GamePrints } from "@/features/prints/components/game-prints";
 import type { components } from "@/shared/api/schema";
 import { Accordion } from "@/shared/ui/accordion";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
@@ -26,8 +27,9 @@ type Props = {
 
 /**
  * A última linha da lista: o próximo mapa. Para quem joga, o formulário de
- * envio aberto (com veto, só depois do veto do mapa, e no mapa que ele deu);
- * para os outros, "aguardando envio" e, para a organização, o
+ * envio aberto (com veto, só depois do veto do mapa, e no mapa que ele deu),
+ * com os prints do mapa antes dele (o anexo, quando o print é obrigatório);
+ * para os outros, os prints e "aguardando envio" e, para a organização, o
  * lançamento fechado num bloco (é exceção).
  */
 export function NextGameRow({
@@ -55,19 +57,31 @@ export function NextGameRow({
       </span>
       <div className={styles.body}>
         {plays && veto && !veto.reportable ? (
+          // O veto vem antes: sem ele, nem se sabe o mapa do print.
           <p className={styles.awaiting}>{t("vetoFirst", { number })}</p>
-        ) : plays ? (
-          <GameForm
-            target={target}
-            number={number}
-            mode="report"
-            names={names}
-            maps={maps}
-            fixedMap={veto?.map ?? undefined}
-            submitLabel={tForm("submit", { number })}
-          />
         ) : (
-          <p className={styles.awaiting}>{t("awaiting")}</p>
+          <>
+            {/* Antes do envio: com print obrigatório, ele vem primeiro. */}
+            <GamePrints
+              target={target}
+              number={number}
+              reporting={plays}
+              focusId={gameRowId(number)}
+            />
+            {plays ? (
+              <GameForm
+                target={target}
+                number={number}
+                mode="report"
+                names={names}
+                maps={maps}
+                fixedMap={veto?.map ?? undefined}
+                submitLabel={tForm("submit", { number })}
+              />
+            ) : (
+              <p className={styles.awaiting}>{t("awaiting")}</p>
+            )}
+          </>
         )}
         {/* A chave reinicia o bloco (fechado) a cada mapa novo. */}
         {enters && (

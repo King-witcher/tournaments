@@ -1,9 +1,10 @@
 //! SQL da chave: leitura das séries decididas, confirmação por tempo dos
 //! mapas e descarte aqui; escritas da série em `writes`, mapas em `games`,
-//! histórico em `events`.
+//! histórico em `events`, o que a chave lê dos prints em `prints`.
 
 mod events;
 mod games;
+mod prints;
 mod writes;
 
 use chrono::{DateTime, Utc};
@@ -14,6 +15,7 @@ use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
 pub use games::{NewGame, confirm_game, contest_game, games, insert_report, put_game, void_games};
+pub use prints::has_print;
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
 /// Uma partida no banco: tenant, torneio, fase e identificador.

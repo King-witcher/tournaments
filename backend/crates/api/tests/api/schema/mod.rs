@@ -4,15 +4,16 @@
 //! automático (`withdrawal`), a coerência e a forma dos dados (`checks`), o
 //! tempo real (`realtime`: outbox, inscrições de push), o rating (`ratings`:
 //! forma, marcas de desatualizado, exclusão), a exclusão agendada de conta e
-//! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`) e o
-//! veto (`veto`: histórico, pool de mapas). As de resultados e histórico ficam
-//! em `matches::schema`.
+//! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`), o
+//! veto (`veto`: histórico, pool de mapas) e os prints (`prints`). As de
+//! resultados e histórico ficam em `matches::schema`.
 
 mod checks;
 mod deletion;
 mod discord;
 mod inactive;
 mod owner;
+mod prints;
 mod ratings;
 mod realtime;
 mod scheduled_deletion;

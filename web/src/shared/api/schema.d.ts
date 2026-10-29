@@ -452,6 +452,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/prints/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_print_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/push/key": {
         parameters: {
             query?: never;
@@ -884,6 +900,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/prints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/prints/{print}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/prints/{print}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/replay": {
         parameters: {
             query?: never;
@@ -910,6 +974,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/prints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1483,6 +1563,11 @@ export interface components {
              */
             name: string;
             /**
+             * @description O envio do jogador exige print do placar (`prints`). Só liga com o
+             *     bucket configurado (`GET /prints/settings`). Ausente: `false`.
+             */
+            prints_required?: boolean;
+            /**
              * @description Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
              *     transação: e, se há `starts_at` e a
              *     janela de check-in já abriu, o torneio vem em `check_in`; senão, em
@@ -1688,6 +1773,14 @@ export interface components {
             map?: string | null;
             winner: components["schemas"]["Side"];
         };
+        GamePrints: {
+            /** @description Quem vê pode anexar mais um print a este mapa agora. */
+            can_attach: boolean;
+            /** Format: int32 */
+            number: number;
+            /** @description Do mais antigo ao mais novo. */
+            prints: components["schemas"]["Print"][];
+        };
         /**
          * @description pendente (esperando o adversário) → confirmado, ou → contestado
          *     (esperando o organizador) → confirmado.
@@ -1697,6 +1790,12 @@ export interface components {
         Health: {
             database: components["schemas"]["ServiceStatus"];
         };
+        /**
+         * @description Tipo da imagem. O front converte para WebP; o Safari, que não gera WebP
+         *     no canvas, manda JPEG.
+         * @enum {string}
+         */
+        ImageType: "image/webp" | "image/jpeg";
         /** @description Convite ativo (nem revogado nem expirado). */
         Invite: {
             /** Format: date-time */
@@ -1861,6 +1960,19 @@ export interface components {
             kind: components["schemas"]["EventKind"];
             outcome?: components["schemas"]["EventOutcome"] | null;
         };
+        /** @description Os prints de uma partida, mapa a mapa. */
+        MatchPrints: {
+            /** @description O bucket está configurado (sem ele, `games` vem vazio). */
+            enabled: boolean;
+            /** @description Os mapas enviados e, por último, o próximo (enquanto a série aceita). */
+            games: components["schemas"]["GamePrints"][];
+            /** Format: int32 */
+            max_bytes: number;
+            /** Format: int32 */
+            max_per_game: number;
+            /** @description O envio do jogador exige um print anexado ao mapa. */
+            required: boolean;
+        };
         /** @description A série decidida. */
         MatchResult: {
             /**
@@ -2011,6 +2123,16 @@ export interface components {
              * @example Rating de outra liga
              */
             reason: string;
+        };
+        /** @description O arquivo que o navegador vai mandar. */
+        NewUpload: {
+            content_type: components["schemas"]["ImageType"];
+            /**
+             * Format: int32
+             * @description Tamanho exato, em bytes (o bucket recusa outro).
+             * @example 245000
+             */
+            size: number;
         };
         /** @description A próxima partida de quem vê num torneio em andamento. */
         NextMatch: {
@@ -2203,6 +2325,60 @@ export interface components {
             tenant_slug: string;
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
+        };
+        Print: {
+            /** Format: date-time */
+            attached_at: string;
+            /** @description Quem vê pode remover este print. */
+            can_remove: boolean;
+            content_type: components["schemas"]["ImageType"];
+            /** Format: int64 */
+            id: number;
+            uploaded_by?: components["schemas"]["PrintAuthor"] | null;
+            /**
+             * @description Endereço assinado da imagem, que expira (em pelo menos uma hora); a
+             *     mesma na mesma hora, para o navegador usar o cache.
+             */
+            url: string;
+        };
+        PrintAuthor: {
+            /** @description Apelido na comunidade. */
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
+        };
+        /** @description O que o front precisa saber dos prints antes de mostrar qualquer coisa. */
+        PrintSettings: {
+            content_types: components["schemas"]["ImageType"][];
+            /**
+             * @description O bucket está configurado. Sem ele, os prints somem da interface e o
+             *     print obrigatório não liga.
+             */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description Tamanho máximo de um print, em bytes.
+             * @example 2097152
+             */
+            max_bytes: number;
+            /**
+             * Format: int32
+             * @description Prints por mapa.
+             * @example 3
+             */
+            max_per_game: number;
+        };
+        /**
+         * @description Para onde mandar o arquivo: `PUT url` com o `Content-Type` dado, antes de
+         *     `expires_at`. Depois, `POST .../prints/{id}/attach`.
+         */
+        PrintUpload: {
+            content_type: components["schemas"]["ImageType"];
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: int64 */
+            id: number;
+            url: string;
         };
         PushKey: {
             /**
@@ -2616,6 +2792,11 @@ export interface components {
              * @description Inscritos agora.
              */
             participants: number;
+            /**
+             * @description O envio do jogador exige print do placar (sem o bucket configurado,
+             *     fica gravado e não vale).
+             */
+            prints_required: boolean;
             /** @description Se quem vê está inscrito. */
             registered: boolean;
             rules: string;
@@ -2779,6 +2960,11 @@ export interface components {
             /** Format: int32 */
             max_participants?: number | null;
             name?: string | null;
+            /**
+             * @description Print obrigatório; muda até o torneio encerrar e vale para os envios
+             *     seguintes. Ligar exige o bucket configurado.
+             */
+            prints_required?: boolean | null;
             rules?: string | null;
             stages?: components["schemas"]["StageFormat"][] | null;
             /**
@@ -4414,6 +4600,26 @@ export interface operations {
             };
         };
     };
+    get_print_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Se há prints nesta API (o bucket está configurado) e os limites de cada arquivo. Pública, sem sessão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintSettings"];
+                };
+            };
+        };
+    };
     get_key: {
         parameters: {
             query?: never;
@@ -5898,7 +6104,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.prints_unavailable (print obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6065,7 +6271,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos, visibilidade, janela de contestação ou print obrigatório), tournament.setup_locked (vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -6668,6 +6874,252 @@ export interface operations {
             };
         };
     };
+    create_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+                /** @description Número do mapa na série: um enviado ou o próximo */
+                game: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar o arquivo direto ao bucket (PUT com o Content-Type dado e exatamente `size` bytes, em 10 minutos); depois, registrar com `.../prints/{id}/attach`. Anexam os dois jogadores (até o mapa confirmar) e organizer ou owner, com o torneio em andamento */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.forbidden (não joga a partida nem organiza) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, prints.game_unavailable (mapa que nem foi enviado nem é o próximo), prints.game_confirmed (jogador, mapa já confirmado), prints.limit_reached {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/webp e image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.too_many_uploads {max} (uploads pedidos e não registrados na última hora) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.not_configured (a API está sem o bucket) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+                /** @description Número do mapa na série */
+                game: number;
+                /** @description O `id` do print */
+                print: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Print removido (o arquivo sai do bucket na rotina diária). Quem anexou remove o próprio enquanto o mapa não confirmou; organizer e owner, qualquer um */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.forbidden (print de outra pessoa) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, prints.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.game_confirmed (o próprio print, com o mapa já confirmado) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+                /** @description Número do mapa na série */
+                game: number;
+                /** @description O `id` do upload */
+                print: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket (tipo e tamanho pedidos) e anexado ao mapa: aparece para todos e conta para o print obrigatório */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Print"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, prints.not_found (upload de outra pessoa, de outro mapa, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.upload_missing (o arquivo não chegou ao bucket), tournament.not_in_progress, prints.game_unavailable, prints.game_confirmed, prints.limit_reached {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.upload_invalid (chegou outro tipo ou tamanho: o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description prints.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     replay: {
         parameters: {
             query?: never;
@@ -6804,7 +7256,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou) */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou), match.print_required (o torneio exige print e o mapa não tem nenhum anexado) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -6815,6 +7267,51 @@ export interface operations {
             };
             /** @description match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os prints de cada mapa enviado e do próximo, com o que quem vê pode fazer. Sem o bucket configurado, `enabled` falso e nenhum mapa */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchPrints"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

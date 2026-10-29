@@ -108,7 +108,8 @@
     "map_unknown": "Um dos mapas do pool não existe (ou saiu do jogo).",
     "map_pool_repeated": "Mapa repetido no pool.",
     "map_pool_too_small": "O pool precisa de pelo menos {min} mapas: um para cada mapa da série mais longa.",
-    "map_pool_too_large": "O pool aceita no máximo {max} mapas."
+    "map_pool_too_large": "O pool aceita no máximo {max} mapas.",
+    "prints_unavailable": "Os prints estão desligados neste servidor: não dá para exigir print do placar."
   },
   "participant": {
     "already_registered": "Esse membro já está inscrito.",
@@ -156,7 +157,8 @@
     "map_required": "Escolha o mapa jogado.",
     "frags_disagree": "Os frags do mapa {game} não batem com quem venceu.",
     "veto_pending": "O veto deste mapa ainda não acabou.",
-    "map_mismatch": "Envie o mapa que saiu do veto."
+    "map_mismatch": "Envie o mapa que saiu do veto.",
+    "print_required": "Este torneio exige um print do placar: anexe um ao mapa antes de enviar."
   },
   "push": {
     "not_configured": "As notificações com o site fechado estão desligadas por enquanto.",
@@ -193,5 +195,17 @@
     "undo_requested": "Já há um pedido para desfazer esperando resposta.",
     "no_undo_request": "Não há pedido para desfazer.",
     "own_request": "Quem pediu para desfazer não responde: espere o adversário."
+  },
+  "prints": {
+    "not_configured": "Os prints estão desligados neste servidor.",
+    "forbidden": "Só os jogadores da partida e a organização anexam prints, e cada jogador só remove o próprio.",
+    "game_unavailable": "Este mapa ainda não recebe print: anexe a um mapa enviado ou ao próximo.",
+    "game_confirmed": "O mapa já foi confirmado: os prints dele não mudam mais (a organização ainda pode).",
+    "limit_reached": "Cada mapa aceita até {max} prints.",
+    "size_invalid": "A imagem passa do tamanho máximo.",
+    "too_many_uploads": "Muitos envios sem concluir na última hora (no máximo {max}). Espere um pouco e tente de novo.",
+    "not_found": "Este print não existe mais. Recarregue a página.",
+    "upload_missing": "A imagem não chegou ao armazenamento. Tente anexar de novo.",
+    "upload_invalid": "A imagem que chegou não é a que foi pedida. Tente anexar de novo."
   }
 }

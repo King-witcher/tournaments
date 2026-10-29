@@ -108,7 +108,8 @@
     "map_unknown": "Uno de los mapas del pool no existe (o salió del juego).",
     "map_pool_repeated": "Mapa repetido en el pool.",
     "map_pool_too_small": "El pool necesita al menos {min} mapas: uno por cada mapa de la serie más larga.",
-    "map_pool_too_large": "El pool acepta como máximo {max} mapas."
+    "map_pool_too_large": "El pool acepta como máximo {max} mapas.",
+    "prints_unavailable": "Las capturas están desactivadas en este servidor: no se puede exigir captura del marcador."
   },
   "participant": {
     "already_registered": "Ese miembro ya está inscrito.",
@@ -156,7 +157,8 @@
     "map_required": "Elige el mapa jugado.",
     "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó.",
     "veto_pending": "El veto de este mapa todavía no terminó.",
-    "map_mismatch": "Envía el mapa que salió del veto."
+    "map_mismatch": "Envía el mapa que salió del veto.",
+    "print_required": "Este torneo exige una captura del marcador: adjunta una al mapa antes de enviar."
   },
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
@@ -193,5 +195,17 @@
     "undo_requested": "Ya hay un pedido para deshacer esperando respuesta.",
     "no_undo_request": "No hay pedido para deshacer.",
     "own_request": "Quien pidió deshacer no responde: espera al rival."
+  },
+  "prints": {
+    "not_configured": "Las capturas están desactivadas en este servidor.",
+    "forbidden": "Solo los jugadores de la partida y la organización adjuntan capturas, y cada jugador solo quita la suya.",
+    "game_unavailable": "Este mapa todavía no recibe capturas: adjunta a un mapa enviado o al próximo.",
+    "game_confirmed": "El mapa ya fue confirmado: sus capturas ya no cambian (la organización todavía puede).",
+    "limit_reached": "Cada mapa acepta hasta {max} capturas.",
+    "size_invalid": "La imagen supera el tamaño máximo.",
+    "too_many_uploads": "Demasiados envíos sin terminar en la última hora (como máximo {max}). Espera un poco e inténtalo de nuevo.",
+    "not_found": "Esta captura ya no existe. Recarga la página.",
+    "upload_missing": "La imagen no llegó al almacenamiento. Intenta adjuntarla de nuevo.",
+    "upload_invalid": "La imagen que llegó no es la que se pidió. Intenta adjuntarla de nuevo."
   }
 }

@@ -14,10 +14,15 @@ chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
 engine = { path = "../engine" }
 futures-util = { version = "0.3.34", default-features = false, features = ["sink"] }
+# O relógio das assinaturas do rusty-s3 (que já depende dele).
+jiff = { version = "0.2", default-features = false, features = ["std"] }
 rand = "0.10.3"
 redis = { version = "1.8.0", default-features = false, features = ["tokio-rustls-comp", "connection-manager", "tls-rustls-webpki-roots"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json", "form"] }
 rustls = { version = "0.23.46", default-features = false, features = ["aws_lc_rs", "std", "tls12"] }
+# Só assina as requisições do S3 (o HTTP é o reqwest), com o aws-lc-rs que o
+# rustls já traz.
+rusty-s3 = { version = "0.11.0", default-features = false, features = ["aws-lc-rs", "full"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 sha2 = "0.11.1"

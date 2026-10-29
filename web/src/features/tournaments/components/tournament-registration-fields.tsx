@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { PrintsRequiredField } from "@/features/prints/components/prints-required-field";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { NumberInput } from "@/shared/ui/number-input";
 import { RadioGroup } from "@/shared/ui/radio-group";
@@ -17,13 +18,14 @@ type Props = {
   errors: FieldErrors;
   /** O torneio já começou: vagas e check-in ficam travados. */
   setupLocked: boolean;
-  /** Encerrado: nem a visibilidade nem a janela de contestação mudam. */
+  /** Encerrado: nem a visibilidade, nem a janela de contestação, nem o print obrigatório mudam. */
   finished: boolean;
 };
 
 /**
- * Inscrições e prazos: vagas, visibilidade, janela de check-in e janela de
- * contestação. Todos têm padrão; a data de início fica fora, junto do nome.
+ * Inscrições e prazos: vagas, visibilidade, janela de check-in, janela de
+ * contestação e print obrigatório (só com prints na API). Todos têm padrão; a
+ * data de início fica fora, junto do nome.
  */
 export function TournamentRegistrationFields({
   values,
@@ -79,6 +81,11 @@ export function TournamentRegistrationFields({
         value={values.contestMinutes}
         onChange={(contestMinutes) => onChange({ contestMinutes })}
         error={errors.contestMinutes}
+        disabled={finished}
+      />
+      <PrintsRequiredField
+        checked={values.printsRequired}
+        onChange={(printsRequired) => onChange({ printsRequired })}
         disabled={finished}
       />
     </>

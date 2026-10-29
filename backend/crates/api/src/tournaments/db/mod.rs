@@ -64,6 +64,8 @@ pub struct StoredTournament {
     pub counts_for_rating: bool,
     /// O pool de mapas (`setup.veto.pool`) com slug e nome, na ordem.
     pub map_pool: Vec<PoolMap>,
+    /// O envio do jogador exige print do placar (vale com o bucket configurado).
+    pub prints_required: bool,
     pub translations: Vec<TournamentTranslation>,
     /// Inscritos agora.
     pub participants: i64,
@@ -84,6 +86,7 @@ pub struct NewTournament<'a> {
     pub schedule: Schedule,
     pub contest_minutes: i32,
     pub counts_for_rating: bool,
+    pub prints_required: bool,
 }
 
 /// Campeões ativos: o pool de todo torneio, por enquanto.
@@ -104,8 +107,8 @@ pub async fn create(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
-                counts_for_rating, map_mode, champion_phase, veto_seconds)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                counts_for_rating, map_mode, champion_phase, veto_seconds, prints_required)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -124,7 +127,8 @@ pub async fn create(
         new.counts_for_rating,
         new.setup.veto.map_mode.as_str(),
         new.setup.veto.champion_phase,
-        new.setup.veto.step_seconds
+        new.setup.veto.step_seconds,
+        new.prints_required
     )
     .fetch_optional(&mut *conn)
     .await?
@@ -234,6 +238,22 @@ pub async fn update(
     .execute(&mut *conn)
     .await?;
     insert_stages(conn, id, &setup.stages).await
+}
+
+/// Liga ou desliga o print obrigatório.
+pub async fn set_prints_required(
+    conn: &mut PgConnection,
+    id: TournamentId,
+    required: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "update tournaments set prints_required = $2, updated_at = now() where id = $1",
+        id.0,
+        required
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
 }
 
 /// Exclui o torneio se ainda for rascunho. `false` se não era.
