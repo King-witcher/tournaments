@@ -4,3 +4,8 @@ DATABASE_URL = "postgres://tournaments@localhost:5432/tournaments"
 # Cada teste sqlx::test cria um banco. Com uma thread por núcleo, a criação em
 # paralelo no Postgres local estoura o tempo de conexão (PoolTimedOut).
 RUST_TEST_THREADS = "4"
+
+# O rust-lld (vem com o rustup) liga mais rápido e com bem menos memória que o
+# link.exe do MSVC. Só no Windows; o build do Render (Linux) não muda.
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"

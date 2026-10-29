@@ -30,7 +30,7 @@ Backend (em `backend/`):
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
 - Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão e rodar `cargo run -p migrate` **antes** de compilar código com `query!` que use a tabela nova (as macros conferem o SQL contra o banco local na compilação). Não há sqlx-cli; não instale globalmente.
 - `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/`, os dados das queries para compilar sem banco (`SQLX_OFFLINE=true`, como no Render). Rode e faça commit do `.sqlx/` sempre que criar ou mudar um `query!`, senão o deploy falha.
-- `.cargo/config.toml` define o `DATABASE_URL` do banco local para as macros.
+- `.cargo/config.toml` define o `DATABASE_URL` do banco local para as macros e, no Windows, o linker `rust-lld`.
 
 Frontend (em `web/`), sempre com Bun (nada de npm/pnpm):
 - `bun run dev`, `bun run build`
@@ -65,8 +65,8 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 
 ## Armadilhas (Windows)
 
-- Enquanto a API roda, `target\debug\api.exe` fica travado e `cargo build`/`cargo test` falham com "Access denied". Peça para o usuário parar a API, ou compile com `CARGO_TARGET_DIR` temporário. Com o watcher (`bun scripts/dev.ts`), cada arquivo que você salva reinicia a API do usuário, e uma API sem reinício continua rodando código velho: depois de mudar schema ou rotas, confira se ela foi reiniciada.
+- Enquanto a API roda, `target\debug\api.exe` fica travado e `cargo build`/`cargo test` falham com "Access denied". Peça para o usuário parar a API, ou compile com o `CARGO_TARGET_DIR` alternativo, sempre o mesmo: `%LOCALAPPDATA%\Temp\claude\target-api`, para todas as sessões e worktrees. Não crie um por sessão no scratchpad: cada um compila do zero e ocupa 3 a 5 GB. Se der "Access denied" nele, é outra sessão rodando a API de lá; use `target-api-2`, também fixo. Com o watcher (`bun scripts/dev.ts`), cada arquivo que você salva reinicia a API do usuário, e uma API sem reinício continua rodando código velho: depois de mudar schema ou rotas, confira se ela foi reiniciada.
 - O usuário costuma deixar a API (4000) e o `bun run dev` (4001) rodando. Nunca encerre processos que você não iniciou; confira o dono com `Get-NetTCPConnection -LocalPort <porta>` e o horário de início.
 - Só um `next dev` por pasta. Para testar o front com o do usuário rodando: `bun run build` e `bunx next start -p 4003`.
 - Parar uma tarefa em segundo plano pode deixar o processo filho (`api.exe`, `node`) vivo. Depois de parar, confira as portas e encerre só o que for seu.
-- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:4002` a partir do `CARGO_TARGET_DIR` temporário e rode, em `web/`, `bunx openapi-typescript http://localhost:4002/openapi.json -o src/shared/api/schema.d.ts`.
+- Para regenerar os tipos com a API do usuário rodando código antigo: suba outra instância com `API_ADDR=127.0.0.1:4002` a partir do `CARGO_TARGET_DIR` alternativo e rode, em `web/`, `bunx openapi-typescript http://localhost:4002/openapi.json -o src/shared/api/schema.d.ts`.

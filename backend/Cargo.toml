@@ -2,6 +2,15 @@
 members = ["crates/*"]
 resolver = "3"
 
+# Debug completo grava gigas de PDB no Windows e satura o disco com vários
+# worktrees compilando juntos. Nosso código guarda só as linhas (backtrace com
+# arquivo:linha); as dependências, nada.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
 # Sem otimização, cada hash argon2 leva segundos no dev e nos testes.
 [profile.dev.package.argon2]
 opt-level = 3
