@@ -19,11 +19,16 @@ type Props = {
   tournament: string;
   /** Membros da comunidade que ainda não estão inscritos. */
   candidates: Candidate[];
+  /** Por que não dá para inscrever agora (sem vaga, todos inscritos). */
+  blocked?: string;
 };
 
 /**
  * "Inscrever alguém", na barra da tabela de inscritos (organizer e owner, em
- * torneio público ou privado): abre o `FormModal` com a escolha do membro. Ao
+ * torneio público ou privado, até começar): abre o `FormModal` com a escolha
+ * do membro. Sem vaga ou sem membro a inscrever, o botão continua lá e o
+ * Modal diz por que não dá e o que fazer (a barra da tabela não tem altura
+ * para um motivo embaixo do botão). Ao
  * fechar sem inscrever, o foco volta ao botão; inscrito, a tabela recarrega e
  * o foco vai para ela.
  */
@@ -31,6 +36,7 @@ export function AddParticipantButton({
   tenant,
   tournament,
   candidates,
+  blocked,
 }: Props) {
   const t = useTranslations("Participants");
   const router = useRouter();
@@ -47,6 +53,7 @@ export function AddParticipantButton({
           tenant={tenant}
           tournament={tournament}
           candidates={candidates}
+          blocked={blocked}
           trigger={trigger}
           onClose={() => setOpen(false)}
           onDone={() => {
@@ -65,6 +72,7 @@ function AddParticipantModal({
   tenant,
   tournament,
   candidates,
+  blocked,
   trigger,
   onClose,
   onDone,
@@ -82,7 +90,7 @@ function AddParticipantModal({
       title={t("add.title")}
       submitLabel={t("add.submit")}
       pending={pending}
-      submitDisabled={!userId}
+      submitDisabled={blocked !== undefined || !userId}
       error={error}
       returnFocusTo={trigger}
       onClose={onClose}
@@ -97,19 +105,25 @@ function AddParticipantModal({
         )
       }
     >
-      <p>{t("add.hint")}</p>
-      <Select
-        labelText={t("add.member")}
-        value={userId}
-        onChange={(event) => setUserId(event.target.value)}
-      >
-        <option value="">{t("add.choose")}</option>
-        {candidates.map((c) => (
-          <option key={c.userId} value={c.userId}>
-            {c.nickname}
-          </option>
-        ))}
-      </Select>
+      {blocked !== undefined ? (
+        <p>{blocked}</p>
+      ) : (
+        <>
+          <p>{t("add.hint")}</p>
+          <Select
+            labelText={t("add.member")}
+            value={userId}
+            onChange={(event) => setUserId(event.target.value)}
+          >
+            <option value="">{t("add.choose")}</option>
+            {candidates.map((c) => (
+              <option key={c.userId} value={c.userId}>
+                {c.nickname}
+              </option>
+            ))}
+          </Select>
+        </>
+      )}
     </FormModal>
   );
 }

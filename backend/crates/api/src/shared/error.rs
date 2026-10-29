@@ -15,9 +15,18 @@ pub struct ErrorBody {
     pub error: &'static str,
     /// Números que a mensagem traduzida mostra, quando o código tem
     /// (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+    /// Alguns códigos trazem também um texto (ex.: `locale`, o idioma da
+    /// tradução com erro).
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    #[schema(value_type = Option<HashMap<String, i64>>)]
-    pub params: BTreeMap<&'static str, i64>,
+    pub params: BTreeMap<&'static str, ParamValue>,
+}
+
+/// Valor de um parâmetro do erro: número ou texto curto.
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ParamValue {
+    Number(i64),
+    Text(&'static str),
 }
 
 #[derive(Debug)]
@@ -25,6 +34,8 @@ pub struct ApiError {
     pub status: StatusCode,
     pub code: &'static str,
     pub params: Vec<(&'static str, i64)>,
+    /// Parâmetros de texto (ver `ParamValue::Text`).
+    pub text_params: Vec<(&'static str, &'static str)>,
 }
 
 impl ApiError {
@@ -33,12 +44,19 @@ impl ApiError {
             status,
             code,
             params: Vec::new(),
+            text_params: Vec::new(),
         }
     }
 
     /// Acrescenta números à resposta, para o front interpolar na tradução.
     pub fn with_params<const N: usize>(mut self, params: [(&'static str, i64); N]) -> Self {
         self.params.extend(params);
+        self
+    }
+
+    /// Acrescenta um parâmetro de texto à resposta.
+    pub fn with_text_param(mut self, key: &'static str, value: &'static str) -> Self {
+        self.text_params.push((key, value));
         self
     }
 
@@ -77,7 +95,16 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let body = ErrorBody {
             error: self.code,
-            params: self.params.into_iter().collect(),
+            params: self
+                .params
+                .into_iter()
+                .map(|(k, v)| (k, ParamValue::Number(v)))
+                .chain(
+                    self.text_params
+                        .into_iter()
+                        .map(|(k, v)| (k, ParamValue::Text(v))),
+                )
+                .collect(),
         };
         (self.status, Json(body)).into_response()
     }

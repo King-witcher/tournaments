@@ -1,4 +1,23 @@
 /**
+ * Leva o foco a um controle que acabou de ser mostrado (o acordeão ou a aba
+ * dele abriu agora e o navegador ainda não o desenhou): tenta a cada quadro,
+ * por pouco tempo, até ele ficar visível. `then` roda depois do foco (ex.:
+ * `reportValidity`, que só mostra a mensagem num controle visível).
+ */
+export function focusWhenShown(element: HTMLElement, then?: () => void) {
+  const until = performance.now() + 1000;
+  const tick = () => {
+    if (element.checkVisibility()) {
+      element.focus();
+      then?.();
+      return;
+    }
+    if (performance.now() < until) requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+/**
  * Depois de uma ação cujo controle some quando a página recarrega os dados
  * (o "Confirmar" de um mapa que ficou confirmado), leva o foco para o
  * elemento `id` se ele caiu no `body`. Tenta a cada quadro por alguns

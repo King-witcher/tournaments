@@ -56,7 +56,7 @@ Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email).
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email).
 
 ### Convite `/invite/[token]`
 
@@ -85,17 +85,19 @@ A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `jo
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-Um formulário, coluna estreita, `FormGroup` por seção: Identificação (nome, slug, visibilidade), Formato (tipo, eliminação, melhor de, mapas, campeões), Inscrições e datas (máximo, início, check-in, contestação), Textos (descrição e regras em pt, tradução es). Na edição, o aviso dos campos travados antes da seção travada. Rodapé com Salvar/Cancelar; excluir rascunho fica no `OverflowMenu` do `PageHeader` do torneio, não aqui.
+**Novo**: uma página, coluna estreita. À vista: Torneio (nome, endereço com a prévia do link, início) e Formato (chave em `RadioGroup`, reset da grande final, séries). Fechados num `Accordion`, com o resumo dos valores no título: Campeões (bans, repetir campeão) e Inscrições e prazos (vagas, visibilidade, check-in, contestação). Por último, Descrição e regras em abas `contained` por idioma (original primeiro; as outras "sem tradução" até "Adicionar tradução"). Rodapé: Cancelar (ghost), Criar como rascunho, Criar; "Criar" abre o Modal com a revisão.
+
+**Editar**: abas Geral (nome, descrição e regras por idioma), Formato (chave, séries, campeões) e Inscrições e prazos (início, vagas, visibilidade, check-in, contestação), um Salvar para todas. Depois de começar, o aviso dos campos travados no topo da aba deles. Excluir rascunho fica no ⋯ do `PageHeader` do torneio, não aqui.
 
 ### Torneio `/[tenant]/[tournament]`
 
 `PageHeader`: breadcrumb (Início › Comunidade), nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" / "Cancelar inscrição" (esta no ⋯); organização o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Reabrir inscrições", "Desfazer início", "Excluir rascunho". Abaixo, o `Tile` "Sua situação" (quem joga). Abas:
 
-- **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (Markdown); resumo do formato (`StructuredList`).
+- **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (texto simples, `UserText`); resumo do formato (`StructuredList`).
 - **Chave** (`/bracket`, a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e, abaixo, a classificação.
   - Cada lado do cartão: seed, avatar, apelido e placar. Linhas curvas, na cor da borda dos cartões, ligam cada partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas `contained`: **Chave principal**, com a grande final à direita da final, e **Repescagem** (a chave de quem perdeu uma vez), para a página não descer uma chave embaixo da outra; abre na aba da partida de quem vê. Quem muda de aba fica só com o texto ("Perdedor de C2.1").
 - **Inscritos** (`/participants`): `DataTable` (seed, apelido com avatar, estado: inscrito / check-in feito / desistiu / saiu, inscrito em), busca, paginação; organização: "Inscrever alguém" na barra e, por linha, marcar/desmarcar check-in, tirar, marcar desistência.
-- **Regras** (`/rules`): Markdown. Sem regras, a aba não aparece.
+- **Regras** (`/rules`): texto simples (`UserText`). Organização: "Editar regras" (ou "Escrever regras") abre o campo ali mesmo; para ela a aba aparece também sem regras. Para os outros, sem regras, a aba não aparece.
 - **Organização** (`/manage`, organização): o quadro de estado com o próximo passo e o motivo quando não dá (mínimo de inscritos, check-in aberto); resumo do seeding (definido ou "será sorteado") com o link "Editar seeding"; links de inscrição (tabela, gerar, revogar); W.O. e correções ficam na partida.
 
 ### Seeding `/[tenant]/[tournament]/seeding`

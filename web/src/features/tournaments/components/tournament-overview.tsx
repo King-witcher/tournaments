@@ -3,8 +3,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { PendingMatches } from "@/features/matches/components/pending-matches";
 import { loadBracket } from "@/features/matches/server";
-import { Markdown } from "@/shared/ui/markdown";
 import { Section } from "@/shared/ui/section";
+import { UserText } from "@/shared/ui/user-text";
 import { localizedTexts } from "../lib/localize";
 import { hasStarted } from "../lib/status";
 import { loadTournament } from "../server";
@@ -47,7 +47,7 @@ export async function TournamentOverview({ tenant, slug }: Props) {
       <div className={description ? styles.columns : styles.single}>
         {description && (
           <Section title={t("description")}>
-            <Markdown>{description}</Markdown>
+            <UserText>{description}</UserText>
           </Section>
         )}
         <TournamentSetupSummary tournament={tournament} />

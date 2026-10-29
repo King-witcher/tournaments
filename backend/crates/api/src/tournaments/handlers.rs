@@ -9,12 +9,15 @@ use super::{
     slug::validate_slug,
     status::TournamentStatus,
     texts::Texts,
-    types::{CreateTournament, Tournament, TournamentPath, TournamentSummary, UpdateTournament},
+    types::{
+        CreateTournament, CreateTranslation, Tournament, TournamentPath, TournamentSummary,
+        UpdateTournament,
+    },
     visibility::find_visible,
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody, PathParams},
+    shared::{ApiError, ErrorBody, JsonBody, Locale, PathParams},
     tenants::{Organizer, Role, TenantMember},
 };
 
@@ -27,12 +30,12 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
     params(("slug" = String, Path, description = "Slug do tenant")),
     request_body = CreateTournament,
     responses(
-        (status = CREATED, body = Tournament, description = "Torneio criado como rascunho"),
+        (status = CREATED, body = Tournament, description = "Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta, ou em check-in se a janela já abriu) com `publish: true`. Tudo numa transação só"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.starts_at_required (com `publish: true`), tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -50,6 +53,10 @@ pub async fn create_tournament(
     };
     schedule.check()?;
     contest::check(body.contest_minutes)?;
+    let translations = clean_translations(body.locale, body.translations)?;
+    if body.publish && body.starts_at.is_none() {
+        return Err(ApiError::invalid("tournament.starts_at_required"));
+    }
 
     let new = NewTournament {
         slug: &body.slug,
@@ -63,12 +70,39 @@ pub async fn create_tournament(
     };
     let mut tx = state.db.begin().await?;
     let id = db::create(&mut tx, member.tenant, new).await?;
+    for (locale, texts) in &translations {
+        db::put_translation(&mut tx, id, *locale, texts).await?;
+    }
+    if body.publish {
+        db::publish(&mut tx, id).await?;
+    }
     changes::changed(&mut tx, id).await?;
     let created = db::find(&mut tx, member.tenant, &body.slug, Some(member.user.id))
         .await?
         .ok_or_else(ApiError::internal)?;
     tx.commit().await?;
     Ok((StatusCode::CREATED, Json(created.into())))
+}
+
+/// Limpa as traduções da criação com as regras do PUT. Erro de texto ou de
+/// idioma sai com `params.locale` da tradução.
+fn clean_translations(
+    original: Locale,
+    list: Vec<CreateTranslation>,
+) -> Result<Vec<(Locale, Texts)>, ApiError> {
+    let mut cleaned: Vec<(Locale, Texts)> = Vec::with_capacity(list.len());
+    for t in list {
+        let at = |e: ApiError| e.with_text_param("locale", t.locale.as_str());
+        if t.locale == original {
+            return Err(at(ApiError::invalid("tournament.translation_same_locale")));
+        }
+        if cleaned.iter().any(|(l, _)| *l == t.locale) {
+            return Err(ApiError::invalid("request.invalid_body"));
+        }
+        let texts = Texts::clean(&t.name, &t.description, &t.rules).map_err(at)?;
+        cleaned.push((t.locale, texts));
+    }
+    Ok(cleaned)
 }
 
 #[utoipa::path(

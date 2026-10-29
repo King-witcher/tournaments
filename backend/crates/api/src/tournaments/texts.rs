@@ -1,4 +1,4 @@
-//! Textos do organizador (nome, descrição e regras em Markdown), no original
+//! Textos do organizador (nome, descrição e regras em texto simples), no original
 //! e nas traduções. Os limites são os mesmos dos checks das tabelas.
 
 use crate::shared::{

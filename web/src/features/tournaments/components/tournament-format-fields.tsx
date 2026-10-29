@@ -2,15 +2,13 @@ import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { Checkbox } from "@/shared/ui/checkbox";
-import { FormSection } from "@/shared/ui/form-section";
+import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
-import type { NoRepeatChoice, TournamentValues } from "../lib/form-values";
-import styles from "./tournament-setup-fields.module.scss";
+import type { TournamentValues } from "../lib/form-values";
+import styles from "./tournament-format-fields.module.scss";
 
 const BEST_OF = [1, 3, 5, 7, 9];
-const BANS = [0, 1, 2, 3];
-const NO_REPEAT: NoRepeatChoice[] = ["off", "match", "stage", "tournament"];
 
 type Props = {
   values: TournamentValues;
@@ -20,8 +18,8 @@ type Props = {
   disabled: boolean;
 };
 
-/** Formato: chave, séries e regras de campeões. */
-export function TournamentSetupFields({
+/** A chave (as duas opções à vista), o reset da grande final e as séries. */
+export function TournamentFormatFields({
   values,
   onChange,
   errors,
@@ -33,19 +31,19 @@ export function TournamentSetupFields({
   ));
 
   return (
-    <FormSection legend={t("setup")}>
-      <Select
-        labelText={t("bracket")}
+    <>
+      <RadioGroup
+        legendText={t("bracket")}
         name="bracket"
+        orientation="horizontal"
         value={values.bracket}
         disabled={disabled}
-        onChange={(e) =>
-          onChange({ bracket: e.target.value as TournamentValues["bracket"] })
-        }
-      >
-        <SelectItem value="double" text={t("brackets.double")} />
-        <SelectItem value="single" text={t("brackets.single")} />
-      </Select>
+        options={[
+          { value: "double", label: t("brackets.double") },
+          { value: "single", label: t("brackets.single") },
+        ]}
+        onChange={(bracket) => onChange({ bracket })}
+      />
       {values.bracket === "double" && (
         <Checkbox
           labelText={t("grandFinalReset")}
@@ -77,39 +75,6 @@ export function TournamentSetupFields({
           {bestOfItems}
         </Select>
       </div>
-      <Select
-        labelText={t("bansPerGame")}
-        name="bansPerGame"
-        value={values.bansPerGame}
-        disabled={disabled}
-        invalid={errors.bansPerGame !== undefined}
-        invalidText={errors.bansPerGame}
-        onChange={(e) => onChange({ bansPerGame: Number(e.target.value) })}
-      >
-        {BANS.map((n) => (
-          <SelectItem key={n} value={n} text={t("bansOption", { count: n })} />
-        ))}
-      </Select>
-      <Select
-        labelText={t("noRepeat")}
-        helperText={t("noRepeatHint")}
-        name="noRepeat"
-        value={values.noRepeat}
-        disabled={disabled}
-        invalid={errors.noRepeat !== undefined}
-        invalidText={errors.noRepeat}
-        onChange={(e) =>
-          onChange({ noRepeat: e.target.value as NoRepeatChoice })
-        }
-      >
-        {NO_REPEAT.map((choice) => (
-          <SelectItem
-            key={choice}
-            value={choice}
-            text={t(`noRepeatOptions.${choice}`)}
-          />
-        ))}
-      </Select>
-    </FormSection>
+    </>
   );
 }

@@ -58,8 +58,14 @@ export async function ParticipantTable({ tenant, slug }: Props) {
   const candidates = members
     .filter((m) => !registered.has(m.user_id))
     .map((m) => ({ userId: m.user_id, nickname: m.nickname }));
-  const canAdd =
-    canManage && candidates.length > 0 && participants.length < max;
+  // O botão fica à vista enquanto a organização pode inscrever; sem vaga ou
+  // sem ninguém da comunidade de fora, desabilitado com o motivo.
+  const addBlocked =
+    participants.length >= max
+      ? t("add.full")
+      : candidates.length === 0
+        ? t("add.noCandidates")
+        : undefined;
   // Antes de abrir, todos estão sem check-in; depois de reabrir a inscrição,
   // os que já fizeram continuam marcados.
   const showCheckIn =
@@ -134,15 +140,16 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           ]}
           rows={rows}
           toolbar={
-            canAdd ? (
+            canManage ? (
               <AddParticipantButton
                 tenant={tenant}
                 tournament={slug}
                 candidates={candidates}
+                blocked={addBlocked}
               />
             ) : undefined
           }
-          empty={{ text: canAdd ? t("emptyOrganizer") : t("empty") }}
+          empty={{ text: canManage ? t("emptyOrganizer") : t("empty") }}
         />
       </Section>
     </div>

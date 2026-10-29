@@ -1,43 +1,46 @@
 {
-  "identity": "Identificación",
+  "tournament": "Torneo",
   "name": "Nombre",
   "slug": "Dirección",
   "slugHint": "El enlace del torneo será {address}. Minúsculas, números y guion, de 3 a 32; no se puede cambiar después.",
-  "visibility": "Visibilidad",
-  "visibilityOptions": {
-    "public": "Pública",
-    "private": "Privada"
-  },
-  "visibilityHint": "Pública: toda la comunidad lo ve y se inscribe. Privada: solo lo ven los inscritos y los organizadores, y entra quien un organizador inscriba o quien use un enlace de inscripción. Se puede cambiar hasta que el torneo termine.",
-  "setupLocked": "El torneo ya empezó: formato, cupos, campeones, fecha y check-in ya no cambian.",
-  "setup": "Formato",
+  "startsAt": "Inicio",
+  "startsAtHint": "En tu zona horaria ({timeZone}). Obligatorio para publicar; cambia hasta que el torneo empiece.",
+  "startsAtHintNew": "En tu zona horaria ({timeZone}). Obligatorio para crear; el borrador puede quedar sin.",
+  "format": "Formato",
+  "formatLocked": "El torneo ya empezó: el formato y los campeones ya no cambian.",
   "bracket": "Llave",
   "brackets": {
     "single": "Eliminación simple",
     "double": "Eliminación doble"
   },
   "grandFinalReset": "Gran final con reset: si gana quien viene del repechaje, se juega otra serie",
-  "bestOf": "Partidas",
+  "bestOf": "Series",
   "finalsBestOf": {
     "single": "Final",
     "double": "Gran final"
   },
   "bestOfOption": "Al mejor de {count}",
+  "champions": "Campeones",
   "bansPerGame": "Bans de campeón por mapa",
   "bansOption": "{count, plural, =0 {Sin bans} one {# ban} other {# bans}}",
-  "noRepeat": "No repetir campeón",
+  "noRepeat": "Repetir campeón",
   "noRepeatOptions": {
     "off": "Se puede repetir",
-    "match": "Dentro de cada partida",
-    "stage": "En toda la fase",
-    "tournament": "En todo el torneo"
+    "match": "No se repite en la serie",
+    "stage": "No se repite en la fase",
+    "tournament": "No se repite en el torneo"
   },
-  "noRepeatHint": "La regla se verifica en el peor caso de mapas para la cantidad de cupos. Si faltan campeones, el torneo no se guarda.",
-  "schedule": "Inscripciones y fechas",
+  "noRepeatHint": "Cada jugador usa un campeón por mapa. En la serie, quien jugó un mapa con un campeón no lo usa en los otros mapas de la misma partida (al mejor de 3 o de 5); en el torneo, no lo usa en ningún otro mapa. La regla se verifica en el peor caso de mapas para la cantidad de cupos: si faltan campeones, el torneo no se guarda.",
+  "registration": "Inscripciones y plazos",
+  "registrationLocked": "El torneo ya empezó: el inicio, los cupos y el check-in ya no cambian.",
   "maxParticipants": "Cupos",
   "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
-  "startsAt": "Inicio",
-  "startsAtHint": "En tu zona horaria ({timeZone}). Obligatorio para publicar; cambia hasta que el torneo empiece.",
+  "visibility": "Visibilidad",
+  "visibilityOptions": {
+    "public": "Pública",
+    "private": "Privada"
+  },
+  "visibilityHint": "Pública: toda la comunidad lo ve y se inscribe. Privada: solo lo ven los inscritos y los organizadores, y entra quien un organizador inscriba o quien use un enlace de inscripción. Se puede cambiar hasta que el torneo termine.",
   "checkIn": "Check-in",
   "checkInOff": "Sin check-in",
   "checkInOption": "Abre {minutes} min antes del inicio",
@@ -45,20 +48,51 @@
   "contest": "Plazo para impugnar",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos.",
-  "texts": "Textos",
-  "textsIn": "Textos: {language}",
-  "locale": "Idioma de los textos",
-  "localeHint": "Las traducciones a otros idiomas son opcionales y se agregan al editar. El idioma original no cambia después.",
+  "summary": {
+    "slots": "{count, plural, one {# cupo} other {# cupos}}",
+    "checkIn": "check-in {window} antes",
+    "noCheckIn": "sin check-in",
+    "contest": "{window} para impugnar"
+  },
+  "texts": "Descripción y reglas",
+  "textsHint": "Opcionales. Cada idioma en una pestaña: quien usa el sitio en un idioma sin traducción ve el original.",
+  "languages": "Idiomas de los textos",
+  "original": "Original",
+  "translated": "Traducción",
+  "untranslated": "Sin traducción",
   "description": "Descripción",
   "rules": "Reglas",
-  "markdownHint": "Acepta Markdown: **negrita**, listas con -, enlaces.",
+  "plainTextHint": "Texto simple: se mantienen los saltos de línea.",
   "translation": {
-    "title": "Traducción: {language}",
-    "hint": "Opcional; se guarda junto con el resto. Si la descripción o las reglas quedan vacías, se muestran las del idioma original.",
+    "off": "Sin traducción: quien usa el sitio en {language} ve el nombre, la descripción y las reglas del original ({original}).",
+    "add": "Agregar traducción",
     "remove": "Quitar traducción",
-    "removeConfirm": "¿Quitar esta traducción? El texto traducido se borra y quien lee en este idioma pasa a ver el original."
+    "hint": "El nombre es obligatorio; si la descripción o las reglas quedan vacías, se muestran las del original.",
+    "willDelete": "La traducción guardada se va a borrar cuando guardes. Para conservarla, agrégala de nuevo antes de guardar."
   },
-  "create": "Crear borrador",
+  "create": "Crear",
+  "createDraft": "Crear como borrador",
+  "review": {
+    "title": "Crear y publicar",
+    "question": "Revisa antes de publicar. Las inscripciones abren en el momento y la comunidad pasa a ver el torneo (el privado, solo inscritos y organizadores). Una vez publicado, no vuelve a borrador ni se puede eliminar; para revisarlo con calma, créalo como borrador.",
+    "confirm": "Crear y publicar",
+    "label": "Resumen del torneo",
+    "labels": {
+      "name": "Nombre",
+      "startsAt": "Inicio",
+      "format": "Formato",
+      "registration": "Inscripciones",
+      "champions": "Campeones",
+      "languages": "Idiomas"
+    },
+    "checkInNow": "Por la fecha de inicio y el plazo de check-in, el check-in ya abrió: el torneo pasa directo al check-in, sin inscripciones. Para tener inscripciones, cambia la fecha o el plazo."
+  },
+  "tabs": {
+    "label": "Partes del torneo",
+    "general": "General",
+    "format": "Formato",
+    "registration": "Inscripciones y plazos"
+  },
   "edit": {
     "title": "Editar torneo",
     "loading": "Cargando el torneo…",

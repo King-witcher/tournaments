@@ -1,7 +1,9 @@
 //! Testes de `tournaments`; data de início e janela de check-in em
-//! `schedule`, janela de contestação em `contest`.
+//! `schedule`, janela de contestação em `contest`, criação com traduções e
+//! publicação em `create`.
 
 mod contest;
+mod create;
 mod schedule;
 
 use axum::http::StatusCode;

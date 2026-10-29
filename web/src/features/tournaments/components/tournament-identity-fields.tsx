@@ -1,11 +1,8 @@
-import { SelectItem } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { slugify } from "@/shared/lib/slugify";
-import { FormSection } from "@/shared/ui/form-section";
-import { Select } from "@/shared/ui/select";
 import { TextInput } from "@/shared/ui/text-input";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
@@ -17,13 +14,11 @@ type Props = {
   errors: FieldErrors;
   /** Na criação aparece o endereço, que depois não muda. */
   isNew: boolean;
-  /** O torneio já encerrou: a visibilidade não muda mais. */
-  finished: boolean;
 };
 
 /**
- * Identificação: nome, endereço (só na criação, com a prévia do link) e
- * visibilidade. O endereço acompanha o nome até a pessoa editá-lo.
+ * O nome no idioma original e, na criação, o endereço com a prévia do link.
+ * O endereço acompanha o nome até a pessoa editá-lo.
  */
 export function TournamentIdentityFields({
   tenant,
@@ -31,7 +26,6 @@ export function TournamentIdentityFields({
   onChange,
   errors,
   isNew,
-  finished,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const locale = useLocale();
@@ -42,7 +36,7 @@ export function TournamentIdentityFields({
   const address = `${host}/${locale}/${tenant}/${values.slug || "…"}`;
 
   return (
-    <FormSection legend={t("identity")}>
+    <>
       <TextInput
         labelText={t("name")}
         name="name"
@@ -80,21 +74,6 @@ export function TournamentIdentityFields({
           }}
         />
       )}
-      <Select
-        labelText={t("visibility")}
-        helperText={t("visibilityHint")}
-        name="visibility"
-        value={values.visibility}
-        disabled={finished}
-        onChange={(e) =>
-          onChange({
-            visibility: e.target.value as TournamentValues["visibility"],
-          })
-        }
-      >
-        <SelectItem value="public" text={t("visibilityOptions.public")} />
-        <SelectItem value="private" text={t("visibilityOptions.private")} />
-      </Select>
-    </FormSection>
+    </>
   );
 }

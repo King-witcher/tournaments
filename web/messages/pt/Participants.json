@@ -25,7 +25,9 @@
     "hint": "Vale em torneio público ou privado. Durante o check-in, quem você inscreve entra sem check-in.",
     "member": "Membro",
     "choose": "Escolha um membro…",
-    "submit": "Inscrever"
+    "submit": "Inscrever",
+    "full": "As vagas acabaram: aumente as vagas em Editar para inscrever mais alguém.",
+    "noCandidates": "Todos os membros da comunidade já estão inscritos. Para trazer gente de fora, gere um link de inscrição na aba Organização."
   },
   "remove": "Tirar do torneio",
   "removeConfirm": "Tirar {name} do torneio? A inscrição é apagada e a vaga fica livre; {name} pode se inscrever de novo enquanto as inscrições estiverem abertas.",

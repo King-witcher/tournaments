@@ -18,6 +18,13 @@
   "progress": "Ciclo del torneo",
   "description": "Descripción",
   "noRules": "Este torneo no tiene reglas escritas. Si tienes dudas, pregúntale a la organización.",
+  "rulesEditor": {
+    "edit": "Editar reglas",
+    "write": "Escribir reglas",
+    "empty": "Este torneo todavía no tiene reglas escritas. Escribe lo que vale (mapas, horarios, conducta, qué hacer si alguien se cae): quien juega las lee en esta pestaña.",
+    "labelOriginal": "Reglas ({language}, original)",
+    "labelTranslation": "Reglas ({language}, traducción)"
+  },
   "publish": "Publicar y abrir inscripciones",
   "publishToCheckIn": "Publicar y abrir el check-in",
   "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
@@ -47,7 +54,7 @@
     "bans": "{count, plural, =0 {sin bans} one {# ban por mapa} other {# bans por mapa}}",
     "noRepeat": {
       "off": "se puede repetir campeón",
-      "match": "sin repetir campeón en la misma partida",
+      "match": "sin repetir campeón en la serie",
       "stage": "sin repetir campeón en la fase",
       "tournament": "sin repetir campeón en el torneo"
     },

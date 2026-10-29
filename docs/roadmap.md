@@ -13,13 +13,11 @@ Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::tes
 ## Depois
 
 - Outros formatos: FFA por pontos/frags, 2v2/3v3 com formação de times, round robin, suíço.
-- CI no GitHub Actions conferindo que o `.sqlx/` está em dia (`SQLX_OFFLINE=true cargo check`).
 
 ## Pendências
 
 O que ficou de fora de incrementos já feitos, com o que falta.
 
-- **Sessões abertas na conta**: a API lista e encerra (`/auth/sessions`); falta a seção na conta (navegador, desde quando, "esta sessão", encerrar uma ou as outras).
 - **Conferir a limpeza da `shared/ui` no navegador** (só passou por tipo, lint e build): `FormModal` de "inscrever alguém" (foco, Enter, foco de volta), `PassiveModal` do link de inscrição, anular mapa com nota, `FormActions` lado a lado, `RadioGroup` do mapa a 390px, listas vazias com a ação na barra, foco no campo recusado (apelido, comunidade).
 - **Foco depois das ações da organização nas listas** (inscrever, tirar, check-in, desistência, seeding, convites e links): o item some ou muda de lugar, e o alvo certo é a lista.
 - **Publicar com o check-in já aberto** leva direto ao check-in (hoje com aviso). A alternativa, publicar suspender a abertura automática, muda a API: decidir com o usuário.
@@ -38,11 +36,12 @@ O que ficou de fora de incrementos já feitos, com o que falta.
 
 O que existe hoje, uma linha por área. Ao terminar um incremento, ajuste a linha da área (ou crie uma); o detalhe vai no commit e as regras no `decisions.md`.
 
+- **CI** (`.github/workflows/ci.yml`): backend (fmt, clippy com `SQLX_OFFLINE=true`, migrations, testes, `.sqlx/` igual ao que as queries geram) e web (lint, build), só o lado que mudou em pull request e os dois em push na `main`.
 - **Base**: workspace Rust (`engine`, `api`, `migrate`), Next 16 com next-intl (pt, es), Bun, Biome, recarga automática da API, código por domínio dos dois lados.
-- **Contas**: login com Discord e com username e senha, vincular e desvincular, nome exibido; cadastro com senha só com email confirmado pelo link (forma canônica, sem descartáveis), recuperação de senha e troca de email por link (Resend); senha só com email (o banco confere) e remover o email da conta sem senha; sessões, tentativas de senha, cadastros por confirmar e links no Redis, com rotas para listar e encerrar sessões.
+- **Contas**: login com Discord e com username e senha, vincular e desvincular, nome exibido; cadastro com senha só com email confirmado pelo link (forma canônica, sem descartáveis), recuperação de senha e troca de email por link (Resend); senha só com email (o banco confere) e remover o email da conta sem senha; sessões, tentativas de senha, cadastros por confirmar e links no Redis, com rotas e aba Sessões na conta (navegador e sistema, desde quando, a atual marcada, encerrar uma ou as outras).
 - **Comunidades**: criar (até 3 como owner), convites, papéis, apelido, sair, remover, transferir a posse; membro inativo mantém o histórico; página da pessoa com os torneios dela na comunidade.
 - **Duelo de ponta a ponta**: rascunho, traduções, visibilidade, inscrição (botão, organizador, link), check-in com abertura automática, seeding (sorteio com seed, ordem manual), iniciar e desfazer; eliminação simples e dupla; resultado mapa a mapa com confirmação por tempo, contestação, correção, anulação e W.O.; desistência com W.O. automático; encerramento com classificação.
 - **"Seus torneios"** na home (`GET /me/tournaments`): situação de quem vê e a próxima partida.
 - **Tempo real e avisos** (regras em "Tempo real e avisos" no `decisions.md`): `GET /ws` com assinatura por comunidade e torneio e acesso conferido; eventos no `outbox` na transação de quem muda, despachados depois do commit; agendador de 10 s (confirmação por tempo, abertura do check-in, hora de iniciar); páginas recarregam sozinhas (juntando avisos, sem recarregar aba escondida); avisos de check-in, partida pronta, mapa enviado, contestação e hora de iniciar, como toast com som na página e Web Push com o site fechado (service worker traduzido, manifest, aba "Notificações" na conta, convite no tile "Sua situação").
 - **Banco** que recusa estado inválido e órfãos (checks, FKs compostas, triggers no commit), com testes por SQL direto em `tests/api/schema/`.
-- **Interface** no Carbon Design System (alvo em `docs/design.md`): `shared/ui` própria, abas por sub-rota, tema claro/escuro, revisões de uso (carregamento, foco, contraste, celular).
+- **Interface** no Carbon Design System (alvo em `docs/design.md`): `shared/ui` própria, abas por sub-rota, tema claro/escuro, revisões de uso (carregamento, foco, contraste, celular); formulário de torneio com grupos fechados, revisão antes de publicar, abas na edição e por idioma; regras em texto simples, editáveis na própria aba.

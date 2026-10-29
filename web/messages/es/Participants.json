@@ -25,7 +25,9 @@
     "hint": "Vale en torneo público o privado. Durante el check-in, quien inscribas entra sin check-in.",
     "member": "Miembro",
     "choose": "Elige un miembro…",
-    "submit": "Inscribir"
+    "submit": "Inscribir",
+    "full": "Los cupos se agotaron: amplía los cupos en Editar para inscribir a alguien más.",
+    "noCandidates": "Todos los miembros de la comunidad ya están inscritos. Para sumar gente de afuera, genera un enlace de inscripción en la pestaña Organización."
   },
   "remove": "Quitar del torneo",
   "removeConfirm": "¿Quitar a {name} del torneo? La inscripción se borra y el cupo queda libre; {name} puede volver a inscribirse mientras las inscripciones estén abiertas.",

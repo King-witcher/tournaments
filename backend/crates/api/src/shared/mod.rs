@@ -13,6 +13,6 @@ pub mod text;
 pub mod token;
 
 pub use self::redis::Redis;
-pub use error::{ApiError, ErrorBody};
+pub use error::{ApiError, ErrorBody, ParamValue};
 pub use extract::{JsonBody, PathParams, nullable};
 pub use locale::Locale;

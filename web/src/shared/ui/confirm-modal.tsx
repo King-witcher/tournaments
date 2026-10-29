@@ -24,6 +24,11 @@ export type ConfirmModalProps = {
   extra?: ReactNode;
   /** Mantém o primário travado (ex.: falta preencher o `extra`). */
   confirmDisabled?: boolean;
+  /**
+   * O que vai valer, para conferir antes de confirmar (o resumo do torneio
+   * antes de publicar), depois da pergunta. Com ele, o Modal é mais largo.
+   */
+  details?: ReactNode;
 };
 
 /**
@@ -50,6 +55,7 @@ function OpenConfirmModal({
   slug,
   extra,
   confirmDisabled,
+  details,
 }: ConfirmModalProps) {
   const t = useTranslations("Common");
   const prefix = usePrefix();
@@ -74,7 +80,7 @@ function OpenConfirmModal({
   return (
     <Modal
       open
-      size="sm"
+      size={details === undefined ? "sm" : "md"}
       danger={destructive}
       modalHeading={title}
       primaryButtonText={confirmLabel}
@@ -91,7 +97,7 @@ function OpenConfirmModal({
         if (!blocked) onConfirm();
       }}
     >
-      {extra === undefined ? (
+      {extra === undefined && details === undefined ? (
         <>
           <p>{children}</p>
           {slugField}
@@ -99,6 +105,7 @@ function OpenConfirmModal({
       ) : (
         <Stack gap={5}>
           <p>{children}</p>
+          {details}
           {extra}
           {slugField}
         </Stack>

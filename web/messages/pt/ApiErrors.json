@@ -28,7 +28,8 @@
     "email_unchanged": "Esse já é o email da sua conta.",
     "email_required": "Para criar nome de usuário e senha, cadastre e confirme antes um email na conta: é por ele que você recupera a senha se esquecer.",
     "no_email": "Sua conta não tem email.",
-    "password_needs_email": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Remova antes a senha."
+    "password_needs_email": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Remova antes a senha.",
+    "session_not_found": "Essa sessão já foi encerrada."
   },
   "email": {
     "invalid": "Email inválido. Antes do @, use só letras, números, ponto, _ ou - (no Gmail, só letras, números e ponto); depois, um domínio como gmail.com.",

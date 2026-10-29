@@ -1,11 +1,8 @@
 import { useTranslations } from "next-intl";
 
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
-import { useIsClient } from "@/shared/hooks/use-is-client";
-import { browserTimeZone } from "@/shared/lib/datetime-local";
-import { DateTimeInput } from "@/shared/ui/date-time-input";
-import { FormSection } from "@/shared/ui/form-section";
 import { NumberInput } from "@/shared/ui/number-input";
+import { RadioGroup } from "@/shared/ui/radio-group";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
 import { TournamentCheckInField } from "./tournament-check-in-field";
@@ -18,32 +15,28 @@ type Props = {
   values: TournamentValues;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: vagas, data e check-in ficam travados. */
+  /** O torneio já começou: vagas e check-in ficam travados. */
   setupLocked: boolean;
-  /** Publicado: a data não pode ficar vazia. */
-  published: boolean;
-  /** Encerrado: nem a janela de contestação muda. */
+  /** Encerrado: nem a visibilidade nem a janela de contestação mudam. */
   finished: boolean;
 };
 
 /**
- * Inscrições e datas: vagas, início (no fuso de quem preenche), janela de
- * check-in e janela de contestação.
+ * Inscrições e prazos: vagas, visibilidade, janela de check-in e janela de
+ * contestação. Todos têm padrão; a data de início fica fora, junto do nome.
  */
-export function TournamentScheduleFields({
+export function TournamentRegistrationFields({
   values,
   onChange,
   errors,
   setupLocked,
-  published,
   finished,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const errorMessage = useApiErrorMessage();
-  const isClient = useIsClient();
 
   return (
-    <FormSection legend={t("schedule")}>
+    <>
       <NumberInput
         labelText={t("maxParticipants")}
         helperText={t("maxParticipantsHint")}
@@ -63,18 +56,18 @@ export function TournamentScheduleFields({
         }
         onChange={(maxParticipants) => onChange({ maxParticipants })}
       />
-      <DateTimeInput
-        labelText={t("startsAt")}
-        helperText={t("startsAtHint", {
-          timeZone: isClient ? browserTimeZone() : "…",
-        })}
-        name="startsAt"
-        value={values.startsAt}
-        required={published}
-        disabled={setupLocked}
-        invalid={errors.startsAt !== undefined}
-        invalidText={errors.startsAt}
-        onChange={(startsAt) => onChange({ startsAt })}
+      <RadioGroup
+        legendText={t("visibility")}
+        helperText={t("visibilityHint")}
+        name="visibility"
+        orientation="horizontal"
+        value={values.visibility}
+        disabled={finished}
+        options={[
+          { value: "public", label: t("visibilityOptions.public") },
+          { value: "private", label: t("visibilityOptions.private") },
+        ]}
+        onChange={(visibility) => onChange({ visibility })}
       />
       <TournamentCheckInField
         value={values.checkInMinutes}
@@ -88,6 +81,6 @@ export function TournamentScheduleFields({
         error={errors.contestMinutes}
         disabled={finished}
       />
-    </FormSection>
+    </>
   );
 }
