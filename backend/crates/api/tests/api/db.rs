@@ -38,7 +38,7 @@ const SEED_SCHEMA: &str = "test_seed";
 /// Um banco migrado e vazio, só deste teste enquanto o `Lease` existir:
 /// `let (db, _lease) = crate::db::test_db().await;`.
 pub async fn test_db() -> (PgPool, Lease) {
-    LazyLock::force(&SUITE_LOCK);
+    lock_suite();
     let slots = &*SLOTS;
     let permit = slots.permits.acquire().await.expect("semáforo aberto");
     let slot = slots
@@ -166,6 +166,11 @@ static SUITE_LOCK: LazyLock<File> = LazyLock::new(|| {
     }
     file
 });
+
+/// Espera a vez desta suíte na máquina (`SUITE_LOCK`), se ainda não tem.
+pub fn lock_suite() {
+    LazyLock::force(&SUITE_LOCK);
+}
 
 fn main_options() -> PgConnectOptions {
     std::env::var("DATABASE_URL")

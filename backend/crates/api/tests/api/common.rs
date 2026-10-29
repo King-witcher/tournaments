@@ -23,7 +23,7 @@ use axum::{
     http::{HeaderValue, Method, Request, StatusCode, header},
 };
 use http_body_util::BodyExt;
-use redis::Commands;
+use redis::{Commands, ScanOptions};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tokio::sync::Notify;
@@ -31,16 +31,16 @@ use tower::ServiceExt;
 
 pub const WEB: &str = "http://localhost:4001";
 
-/// Chaves de execução anterior que já podem sair do Redis local: as sessões
-/// duram 30 dias, e um teste nunca passa de uma hora.
-const OLD_RUN_MS: i64 = 60 * 60 * 1000;
+/// Na frente de toda chave dos testes no Redis.
+const TEST_PREFIX: &str = "test:";
 
-/// Prefixo das chaves desta execução. Ao montar, apaga as de execuções com
-/// mais de uma hora; as de uma execução em andamento (outro worktree) ficam.
-static RUN_PREFIX: LazyLock<String> = LazyLock::new(|| {
-    let now = chrono::Utc::now().timestamp_millis();
-    sweep_runs_before(now - OLD_RUN_MS);
-    format!("test:{now}:")
+/// O Redis só guarda as chaves da última execução: antes do primeiro teste
+/// montar o Redis, as das anteriores saem (com o TTL de produção, as sessões
+/// ficariam 30 dias). Com o lock da suíte, nenhuma outra está rodando, então
+/// tudo que começa com `test:` é de execução que já acabou.
+static SWEPT: LazyLock<()> = LazyLock::new(|| {
+    crate::db::lock_suite();
+    sweep();
 });
 
 /// `REDIS_URL` ou o Redis local, no database 1 (o do projeto).
@@ -48,20 +48,18 @@ fn redis_url() -> String {
     std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379/1".into())
 }
 
-fn sweep_runs_before(before: i64) {
+fn sweep() {
     let mut conn = redis::Client::open(redis_url())
         .and_then(|c| c.get_connection())
         .expect("os testes precisam do Redis (REDIS_URL ou redis://127.0.0.1:6379/1)");
+    // Mil por página: o padrão do SCAN, 10, é uma ida e volta a cada 10 chaves.
+    let scan = ScanOptions::default()
+        .with_pattern(format!("{TEST_PREFIX}*"))
+        .with_count(1000);
     let old: Vec<String> = conn
-        .scan_match::<_, String>("test:*")
+        .scan_options::<String>(scan)
         .unwrap()
         .map(Result::unwrap)
-        .filter(|key| {
-            key.split(':')
-                .nth(1)
-                .and_then(|run| run.parse::<i64>().ok())
-                .is_some_and(|run| run < before)
-        })
         .collect();
     for keys in old.chunks(500) {
         let _: () = conn.del(keys).unwrap();
@@ -69,11 +67,12 @@ fn sweep_runs_before(before: i64) {
 }
 
 /// Redis do teste: cada teste (o banco e o empréstimo dele, `db::test_key`)
-/// ganha um prefixo nesta execução, então o app e os helpers do mesmo teste
-/// veem as mesmas chaves, e um teste não vê as do outro.
+/// ganha um prefixo, então o app e os helpers do mesmo teste veem as mesmas
+/// chaves, e um teste não vê as do outro.
 pub fn redis(db: &PgPool) -> Redis {
+    LazyLock::force(&SWEPT);
     let key = crate::db::test_key(db);
-    Redis::open(&redis_url(), &format!("{}{key}:", *RUN_PREFIX)).unwrap()
+    Redis::open(&redis_url(), &format!("{TEST_PREFIX}{key}:")).unwrap()
 }
 
 /// Teto de emails por dia do app de teste.

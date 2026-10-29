@@ -36,7 +36,7 @@ As três primeiras liberam o usuário sem senha só no próprio banco e nos de t
 
 ## Redis local
 
-Sessões e tentativas de senha ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`); os outros databases do servidor ficam para outros projetos. Dentro do 1, a API põe `REDIS_PREFIX` (padrão `tournaments:`) na frente de toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database (ou o de `REDIS_URL`), com um prefixo `test:` por execução e por teste; as chaves de execuções com mais de uma hora saem na execução seguinte.
+Sessões e tentativas de senha ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`); os outros databases do servidor ficam para outros projetos. Dentro do 1, a API põe `REDIS_PREFIX` (padrão `tournaments:`) na frente de toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database (ou o de `REDIS_URL`), com um prefixo `test:` por teste; a execução seguinte apaga as chaves da anterior antes de começar.
 
 ## Rodando
 
