@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select slug, name, duel_pool from maps where active order by duel_pool desc, name",
+  "query": "select slug, name, duel_pool,\n                  (duel_pool and id in (select id from maps where active and duel_pool\n                                        order by id limit $1)) as \"default_pool!\"\n           from maps where active order by duel_pool desc, name",
   "describe": {
     "columns": [
       {
@@ -35,16 +35,25 @@
             "name": "duel_pool"
           }
         }
+      },
+      {
+        "ordinal": 3,
+        "name": "default_pool!",
+        "type_info": "Bool",
+        "origin": "Expression"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Int8"
+      ]
     },
     "nullable": [
       false,
       false,
-      false
+      false,
+      null
     ]
   },
-  "hash": "2ff56de84c9c4ae462362f2005e8dc0ca7323f0512da8f9d86a3f938dac8a8c7"
+  "hash": "b856be72168937d6aef3329a5d09adfb021c72bf0b2267a4fc4cd10e363b5b32"
 }

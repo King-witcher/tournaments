@@ -15,6 +15,7 @@ use super::{
         MapRef, MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome,
         Standing, TournamentBracket, ViewerTask,
     },
+    veto,
 };
 use crate::{
     participants::Seeded,
@@ -148,7 +149,8 @@ pub fn summary(
         pending_maps: count(GameStatus::Pending),
         contested_maps: count(GameStatus::Contested),
         yours: mine.is_some(),
-        task: tasks::match_task(status, m, &games, mine, viewer),
+        task: tasks::match_task(status, stage, m, mine, viewer),
+        veto: veto::status(stage, m),
     }
 }
 

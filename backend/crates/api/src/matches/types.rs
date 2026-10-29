@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use super::{
     games::GameStatus,
     result::{Confirmation, Side},
+    veto::{VetoStatus, VetoView},
 };
 use crate::tournaments::{StageFormat, TournamentStatus};
 
@@ -83,6 +84,10 @@ pub enum ViewerTask {
     AwaitOrganizer,
     /// Organizer ou owner: resolver um mapa contestado.
     Resolve,
+    /// Clicar em "Pronto" para o veto começar.
+    Ready,
+    /// Fazer o passo do veto que está na vez dele.
+    Veto,
 }
 
 /// A próxima partida de quem vê num torneio em andamento.
@@ -101,6 +106,9 @@ pub struct NextMatch {
     pub opponent_from: Option<SideSource>,
     /// O que a partida espera de quem vê; `null` se nada.
     pub task: Option<ViewerTask>,
+    /// Onde o veto da partida pronta está; `null` sem veto no torneio ou fora
+    /// da partida pronta.
+    pub veto: Option<VetoStatus>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -127,6 +135,9 @@ pub struct BracketMatch {
     /// Quem vê joga a partida.
     pub yours: bool,
     pub task: Option<ViewerTask>,
+    /// Onde o veto da partida pronta está; `null` sem veto no torneio ou fora
+    /// da partida pronta.
+    pub veto: Option<VetoStatus>,
 }
 
 /// Um lado da partida.
@@ -197,6 +208,9 @@ pub struct MatchDetail {
     pub history: Vec<MatchEvent>,
     /// Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.).
     pub can_manage: bool,
+    /// O veto de mapas e campeões; `null` sem veto no torneio, antes de a
+    /// partida ficar pronta e na partida decidida sem veto.
+    pub veto: Option<VetoView>,
 }
 
 /// Um mapa da série.

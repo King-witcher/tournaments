@@ -31,7 +31,8 @@ function append(arrived: Notice[]) {
  * dos componentes de cliente, o foco e o que está sendo digitado) quando muda
  * algo que ela mostra, ao perder o acesso à comunidade dela e ao reconectar
  * depois de uma queda (o que mudou no meio se perdeu). Os avisos de ~1,5 s
- * viram uma recarga; com a aba escondida, recarrega ao voltar.
+ * (0,5 s numa página ao vivo, como o veto) viram uma recarga; com a aba
+ * escondida, recarrega ao voltar.
  *
  * Aviso para a pessoa (`notify`) com a aba visível: o toast e o som (se não
  * foi desligado). Com a aba escondida, `useMissedNotices`: o título da aba,
@@ -72,9 +73,10 @@ export function LiveConnection() {
     const scheduler = createRefreshScheduler(refresh);
     const offMessage = hub.client.onMessage((message) => {
       if (message.type === "notify") show(message);
-      else if (hub.affectsPage(message)) scheduler.request();
+      else if (hub.affectsPage(message))
+        scheduler.request(hub.affectsLive(message));
     });
-    const offReconnect = hub.client.onReconnect(scheduler.request);
+    const offReconnect = hub.client.onReconnect(() => scheduler.request());
     hub.client.connect();
     return () => {
       offMessage();

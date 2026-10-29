@@ -392,3 +392,40 @@ async fn the_address_never_shows_up_in_the_api_surface() {
     let (_, body) = put(&s.app, URI, &s.ana, bad).await;
     assert!(!body.to_string().contains(TOKEN));
 }
+
+#[tokio::test]
+async fn the_veto_notices_reach_the_channel() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["match.opponent_ready", "match.veto_started"]).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    link_discord(&db, &p[1], "444555666").await;
+    let veto = json!({ "veto": { "map_mode": "veto", "champion_phase": false } });
+    start(
+        &s.app,
+        &s.ana,
+        copa(with(single(1, 1), veto)),
+        &[&p[0], &p[1]],
+    )
+    .await;
+    assert_eq!(pump(&s, Utc::now()).await, 0);
+
+    // P1 fica pronto: o canal chama quem falta.
+    let ready = format!("{COPA}/matches/wb-1-1/veto/ready");
+    assert_eq!(post_empty(&s.app, &ready, &p[0]).await.0, StatusCode::OK);
+    assert_eq!(pump(&s, Utc::now()).await, 1);
+    // P2 também: o veto começa, uma mensagem para os dois lados.
+    assert_eq!(post_empty(&s.app, &ready, &p[1]).await.0, StatusCode::OK);
+    assert_eq!(pump(&s, Utc::now()).await, 1);
+    let link = "http://localhost:4001/pt/quake-br/copa/matches/wb-1-1";
+    assert_eq!(
+        s.fake.texts(),
+        [
+            format!(
+                "<@444555666>: P1 está pronto para o veto da partida wb-1-1 de **Copa de Outubro** e espera você.\n{link}"
+            ),
+            format!(
+                "O veto da partida wb-1-1 de **Copa de Outubro** começou: P1 vs <@444555666>\n{link}"
+            ),
+        ]
+    );
+}

@@ -15,16 +15,19 @@ import { MatchHistory } from "./match-history";
 import { MatchScoreboard } from "./match-scoreboard";
 import { OrganizerPanel } from "./organizer-panel";
 import { PendingMatches } from "./pending-matches";
+import { VetoHistory } from "./veto-history";
+import { VetoSection } from "./veto-section";
 
 type Props = { tenant: string; slug: string; matchKey: string };
 
 /**
  * Página da partida, de cima para baixo: o cabeçalho (trilha até a chave,
- * código e lados, estado), o placar da série, os mapas um por linha (enviar
+ * código e lados, estado), o placar da série, o veto (com o torneio que tem
+ * veto: "Pronto", mapas, campeões), os mapas um por linha (enviar
  * o próximo, confirmar ou contestar; para a organização, confirmar na hora,
  * resolver, corrigir e anular), o aviso de correção recusada, as outras
  * partidas que esperam quem vê e, fechados no fim, o W.O. da organização e
- * o histórico. Lê a sessão: fica em `<Suspense>`.
+ * o histórico (o da partida e o do veto). Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
   const [t, tNav, locale, loaded, found, bracket] = await Promise.all([
@@ -69,6 +72,11 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         detail={detail}
       />
       <MatchScoreboard tenant={tenant} detail={detail} />
+      <VetoSection
+        target={target}
+        detail={detail}
+        rule={tournament.champion_rules.no_repeat?.scope ?? null}
+      />
       <MatchGamesPanel
         target={target}
         detail={detail}
@@ -102,6 +110,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
           />
         )}
         <MatchHistory detail={detail} />
+        {detail.veto && <VetoHistory veto={detail.veto} names={names} />}
       </Accordion>
     </>
   );

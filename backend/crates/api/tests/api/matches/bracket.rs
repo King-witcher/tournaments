@@ -119,7 +119,8 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     // md1 em todas, sem repetir no torneio, 1 ban: com 3 participantes, o
-    // pior caso são 2 mapas, então precisa de 3 campeões.
+    // pior caso são 2 mapas e 2 bans (1 de cada lado), então precisa de 4
+    // campeões.
     let body = copa(with(
         single(1, 1),
         json!({
@@ -142,7 +143,7 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
         post_empty(&app, &format!("{COPA}/start"), &ana).await,
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "champions.pool_exhausted", "params": { "required": 3, "available": 2 } })
+            json!({ "error": "champions.pool_exhausted", "params": { "required": 4, "available": 2 } })
         )
     );
     // Nada mudou: nem status nem seeds.

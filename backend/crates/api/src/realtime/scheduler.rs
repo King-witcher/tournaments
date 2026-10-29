@@ -1,11 +1,12 @@
 //! O agendador: a cada 10 s, numa instância só (advisory lock do Postgres),
 //! abre o check-in que chegou na hora, avisa a hora de iniciar, confirma os
-//! mapas com a janela vencida e executa as exclusões de comunidade e de conta
-//! que venceram, cada torneio, comunidade ou conta na própria transação e
-//! emitindo pelo outbox, e recalcula o rating das comunidades marcadas (por
-//! último, para pegar as confirmações e as desistências desta passada);
-//! depois acorda o despachante. Aplicar ao ler e agir continua, para quem
-//! chega antes do agendador ver o estado certo.
+//! mapas com a janela vencida, sorteia os passos de veto vencidos (rede de
+//! segurança do relógio preciso, `clock`) e executa as exclusões de comunidade
+//! e de conta que venceram, cada torneio, comunidade ou conta na própria
+//! transação e emitindo pelo outbox, e recalcula o rating das comunidades
+//! marcadas (por último, para pegar as confirmações e as desistências desta
+//! passada); depois acorda o despachante. Aplicar ao ler e agir continua, para
+//! quem chega antes do agendador ver o estado certo.
 
 use std::time::Duration;
 
@@ -25,6 +26,8 @@ pub struct Tick {
     pub reminded: usize,
     /// Mapas confirmados por tempo.
     pub confirmed: u64,
+    /// Passos de veto sorteados pelo fim do tempo.
+    pub vetoed: u64,
     /// Comunidades excluídas.
     pub deleted_tenants: usize,
     /// Contas excluídas (anonimizadas).
@@ -44,6 +47,7 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             opened: tournaments::open_due_check_ins(&state.db, now).await?,
             reminded: tournaments::remind_due_starts(&state.db, now).await?,
             confirmed: matches::confirm_all_due(&state.db, now).await?,
+            vetoed: matches::veto_clock(&state.db, now).await?.0,
             deleted_tenants: tenants::delete_due(&state.db, now).await?,
             deleted_accounts: members::delete_due_accounts(state, now).await?,
             rated: ratings::refresh_stale(&state.db).await?,

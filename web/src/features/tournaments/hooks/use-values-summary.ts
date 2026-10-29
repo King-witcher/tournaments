@@ -1,7 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
-
+import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
-import type { TournamentValues } from "../lib/form-values";
+import { poolOf, type TournamentValues } from "../lib/form-values";
 
 /**
  * O resumo dos valores do formulário, uma linha por grupo: o que aparece no
@@ -45,6 +45,17 @@ export function useValuesSummary() {
       line([
         tSetup("bans", { count: v.bansPerGame }),
         tSetup(`noRepeat.${v.noRepeat}`),
+      ]),
+    veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
+      line([
+        tForm(`veto.mapModes.${v.mapMode}`),
+        v.mapMode === "off"
+          ? undefined
+          : t("maps", { count: poolOf(v, maps).length }),
+        v.championPhase ? t("championPhase") : t("noChampionPhase"),
+        v.mapMode !== "off" || v.championPhase
+          ? t("seconds", { seconds: v.vetoSeconds })
+          : undefined,
       ]),
   };
 }

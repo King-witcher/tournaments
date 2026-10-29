@@ -3,9 +3,10 @@
 //! tenant (`owner`), o membro inativo (`inactive`), a desistência e o W.O.
 //! automático (`withdrawal`), a coerência e a forma dos dados (`checks`), o
 //! tempo real (`realtime`: outbox, inscrições de push), o rating (`ratings`:
-//! forma, marcas de desatualizado, exclusão) e a exclusão agendada de conta e
-//! de comunidade (`scheduled_deletion`). As de resultados e
-//! histórico ficam em `matches::schema`.
+//! forma, marcas de desatualizado, exclusão), a exclusão agendada de conta e
+//! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`) e o
+//! veto (`veto`: histórico, pool de mapas). As de resultados e histórico ficam
+//! em `matches::schema`.
 
 mod checks;
 mod deletion;
@@ -15,6 +16,7 @@ mod owner;
 mod ratings;
 mod realtime;
 mod scheduled_deletion;
+mod veto;
 mod withdrawal;
 
 use axum::{Router, http::StatusCode};

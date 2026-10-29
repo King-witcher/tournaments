@@ -327,7 +327,9 @@ pub fn duel(slug: &str) -> Value {
             "best_of": 3,
             "finals_best_of": 5
         }],
-        "starts_at": FAR_START
+        "starts_at": FAR_START,
+        // Sem veto: os testes de envio jogam direto. Os do veto ligam.
+        "veto": { "map_mode": "off", "champion_phase": false }
     })
 }
 

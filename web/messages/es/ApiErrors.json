@@ -103,7 +103,12 @@
     "not_published": "Publica el torneo antes.",
     "already_started": "El torneo ya empezó.",
     "not_enough_eligible": "Para iniciar se necesitan al menos {min} participantes en la llave (con check-in, si lo hay); ahora hay {eligible}.",
-    "contest_minutes_invalid": "El plazo para impugnar tiene que estar entre {min} y {max} minutos."
+    "contest_minutes_invalid": "El plazo para impugnar tiene que estar entre {min} y {max} minutos.",
+    "veto_seconds_invalid": "El tiempo de cada paso del veto tiene que estar entre {min} y {max} segundos.",
+    "map_unknown": "Uno de los mapas del pool no existe (o salió del juego).",
+    "map_pool_repeated": "Mapa repetido en el pool.",
+    "map_pool_too_small": "El pool necesita al menos {min} mapas: uno por cada mapa de la serie más larga.",
+    "map_pool_too_large": "El pool acepta como máximo {max} mapas."
   },
   "participant": {
     "already_registered": "Ese miembro ya está inscrito.",
@@ -149,7 +154,9 @@
     "game_not_found": "Este mapa no fue enviado.",
     "game_not_last": "Solo se puede anular el último mapa de la serie: anula antes el mapa {last}.",
     "map_required": "Elige el mapa jugado.",
-    "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó."
+    "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó.",
+    "veto_pending": "El veto de este mapa todavía no terminó.",
+    "map_mismatch": "Envía el mapa que salió del veto."
   },
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
@@ -173,5 +180,18 @@
     "rate_limited": "Discord pidió esperar. Inténtalo de nuevo en {retry_after, plural, one {# segundo} other {# segundos}}.",
     "unreachable": "No fue posible hablar con Discord. Inténtalo de nuevo.",
     "rejected": "Discord rechazó el mensaje de prueba. Revisa los permisos del webhook."
+  },
+  "veto": {
+    "off": "Este torneo no tiene veto.",
+    "already_begun": "El veto ya empezó.",
+    "not_begun": "El veto todavía no empezó.",
+    "finished": "El veto de este mapa ya terminó.",
+    "not_your_turn": "No es tu turno en el veto.",
+    "option_invalid": "Esa elección no está disponible ahora.",
+    "champion_forbidden": "Ya usaste ese campeón (regla de no repetición).",
+    "nothing_to_undo": "No hay paso para deshacer en este mapa.",
+    "undo_requested": "Ya hay un pedido para deshacer esperando respuesta.",
+    "no_undo_request": "No hay pedido para deshacer.",
+    "own_request": "Quien pidió deshacer no responde: espera al rival."
   }
 }

@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { loadMaps } from "@/features/matches/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
@@ -72,7 +73,11 @@ export async function EditTournamentView({ tenant, slug }: Props) {
           {await apiErrorMessage(blocked)}
         </PageError>
       ) : (
-        <EditTournamentForm tenant={tenant} tournament={tournament} />
+        <EditTournamentForm
+          tenant={tenant}
+          tournament={tournament}
+          maps={await loadMaps()}
+        />
       )}
     </>
   );

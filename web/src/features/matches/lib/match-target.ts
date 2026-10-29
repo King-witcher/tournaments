@@ -41,3 +41,6 @@ export const gameRowId = (number: number) => `game-${number}`;
 
 /** Id do placar da série: o foco vai para ele depois do W.O., que fecha o bloco da organização. */
 export const SCORE_ID = "match-score";
+
+/** Id do bloco do veto: o foco vai para ele depois de um passo (o botão some). */
+export const VETO_ID = "match-veto";

@@ -73,6 +73,13 @@ export function MatchGamesPanel({
               maps={maps}
               plays={detail.viewer_side != null}
               enters={detail.can_manage && detail.viewer_side == null}
+              veto={
+                detail.veto && {
+                  reportable: detail.veto.reportable,
+                  map:
+                    detail.veto.games.find((g) => g.game === next)?.map ?? null,
+                }
+              }
             />
           )}
         </ol>

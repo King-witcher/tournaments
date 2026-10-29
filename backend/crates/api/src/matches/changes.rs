@@ -6,7 +6,8 @@
 //! avisa o torneio inteiro; se os mapas contestados mudam, a home da
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para a organização) saem de quem
-//! envia e de quem contesta.
+//! envia e de quem contesta; os do veto (adversário pronto, veto começou), de
+//! quem fica pronto ou força o começo.
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -62,12 +63,14 @@ fn contested(stage: &Stage) -> BTreeSet<i64> {
         .collect()
 }
 
-/// O que se vê de uma partida: estado na chave, mapas e série decidida.
+/// O que se vê de uma partida: estado na chave, mapas, série decidida e o
+/// veto (quantos eventos e o último).
 #[derive(PartialEq)]
 struct Mark {
     state: MatchState,
     games: Vec<GameMark>,
     result: Option<ResultMark>,
+    veto: (usize, Option<i64>),
 }
 
 type GameMark = (
@@ -93,10 +96,14 @@ impl Mark {
         let result = stage
             .result(m.id)
             .map(|r| (r.id, r.winner, r.score, r.confirmed_via));
+        let veto = stage
+            .veto_of(m.id)
+            .map_or((0, None), |v| (v.rows.len(), v.rows.last().map(|r| r.id)));
         Self {
             state: m.state,
             games,
             result,
+            veto,
         }
     }
 }
@@ -266,4 +273,57 @@ pub async fn game_contested(
     };
     let to = staff.into_iter().filter(|u| *u != by);
     outbox::emit(conn, Event::notice(to, notice)).await
+}
+
+/// O veto da partida `key` começou: aviso para os dois lados, com o apelido
+/// do outro.
+pub async fn veto_started(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    stage: &Stage,
+    key: &str,
+    (a, b): (ParticipantId, ParticipantId),
+) -> Result<(), ApiError> {
+    let audience = tournaments::audience(conn, tournament.id).await?;
+    let (Some(a), Some(b)) = (stage.entrant(a), stage.entrant(b)) else {
+        return Ok(());
+    };
+    for (to, opponent) in [(a, b), (b, a)] {
+        let notice = Notice {
+            kind: NoticeKind::VetoStarted {
+                tournament: audience.name.clone(),
+                match_key: key.to_owned(),
+                opponent: opponent.nickname.clone(),
+            },
+            path: match_path(&audience, key),
+        };
+        outbox::emit(conn, Event::notice([to.user_id], notice)).await?;
+    }
+    Ok(())
+}
+
+/// `opponent` (apelido) está pronto para o veto da partida `key`: aviso
+/// para `to`, o outro lado.
+pub async fn opponent_ready(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    stage: &Stage,
+    key: &str,
+    to: ParticipantId,
+    opponent: &str,
+) -> Result<(), ApiError> {
+    let Some(to) = stage.entrant(to) else {
+        return Ok(());
+    };
+    let audience = tournaments::audience(conn, tournament.id).await?;
+    let notice = Notice {
+        kind: NoticeKind::OpponentReady {
+            tournament: audience.name.clone(),
+            match_key: key.to_owned(),
+            opponent: opponent.to_owned(),
+        },
+        path: match_path(&audience, key),
+    };
+    outbox::emit(conn, Event::notice([to.user_id], notice)).await?;
+    Ok(())
 }

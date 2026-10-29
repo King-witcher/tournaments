@@ -55,7 +55,8 @@
       "pending": "Aguardando",
       "contested": "Contestado",
       "confirmed": "Confirmado"
-    }
+    },
+    "vetoFirst": "O mapa {number} pode ser enviado quando o veto dele acabar."
   },
   "respond": {
     "confirm": "Confirmar",
@@ -132,7 +133,8 @@
     "save": "Salvar mapa {number}",
     "chooseWinner": "Escolha quem venceu o mapa.",
     "chooseTheMap": "Escolha o mapa jogado.",
-    "comment": "Nota no histórico (opcional)"
+    "comment": "Nota no histórico (opcional)",
+    "vetoedMap": "Mapa jogado: {map} (saiu do veto)."
   },
   "gameOrganizer": {
     "confirmNow": "Confirmar agora",
@@ -144,5 +146,106 @@
     "note": "Nota no histórico (opcional)",
     "correct": "Corrigir",
     "correctHint": "A chave é refeita. Se a série mudar e isso contradiz uma partida decidida depois desta, a correção é recusada; mapas que passem a vir depois da decisão são anulados."
+  },
+  "veto": {
+    "title": "Veto",
+    "mode": {
+      "veto": "Veto de mapas: banir e escolher, alternando, antes do primeiro mapa; o que sobra é o decisivo.",
+      "vote": "Votação: a cada mapa, cada um vota num dos 3 sorteados; votos diferentes, sorteio entre os dois.",
+      "random": "Mapa sorteado: o mapa de cada jogo é sorteado quando ele começa.",
+      "off": "Mapa combinado entre os jogadores."
+    },
+    "waitingReady": "O veto começa quando os dois clicarem em “Pronto”.",
+    "isReady": "{name} está pronto.",
+    "notReady": "{name} ainda não está pronto.",
+    "readyButton": "Pronto",
+    "youAreReady": "Você está pronto. Esperando {name}.",
+    "forceStart": "Começar o veto agora",
+    "forceStartQuestion": "Começar o veto sem esperar os dois clicarem em “Pronto”? Cada passo tem tempo: quem não escolher a tempo leva uma escolha sorteada.",
+    "yourTurn": "Sua vez: {action}.",
+    "theirTurn": "Vez de {name}: {action}.",
+    "bothVote": "Os dois votam no mapa do jogo {game}.",
+    "votedWaiting": "Você votou. Esperando o voto de {name}.",
+    "action": {
+      "ban_map": "banir um mapa",
+      "pick_map": "escolher um mapa",
+      "vote_map": "votar no mapa do jogo {game}",
+      "ban_champion": "banir um campeão no mapa {game}",
+      "pick_champion": "escolher o campeão do mapa {game}",
+      "vote_champion": "votar"
+    },
+    "deadline": "Tempo: <time></time>. Se acabar, a escolha é sorteada.",
+    "done": "Veto do mapa {game} concluído: joguem e enviem o mapa.",
+    "maps": {
+      "title": "Mapas",
+      "banned": "Banido por {name}",
+      "picked": "Jogo {game}: escolhido por {name}",
+      "decider": "Jogo {game}: decisivo (o que sobrou)",
+      "available": "Disponível",
+      "ban": "Banir",
+      "pick": "Escolher",
+      "banMap": "Banir {map}",
+      "pickMap": "Escolher {map}"
+    },
+    "vote": {
+      "title": "Votação do mapa do jogo {game}",
+      "hint": "Votos iguais, é esse; diferentes, sorteio entre os dois.",
+      "votes": "Voto de {names}",
+      "noVotes": "Sem votos",
+      "vote": "Votar",
+      "voteFor": "Votar em {map}",
+      "result": "Mapa do jogo: {map}."
+    },
+    "champions": {
+      "title": "Campeões do mapa {game}",
+      "banHint": "O ban tira o campeão dos dois neste mapa.",
+      "pickHint": "Os dois veem a escolha do outro.",
+      "banned": "banido por {name}",
+      "banChampion": "Banir {champion}",
+      "pickChampion": "Escolher {champion}",
+      "usedBy": {
+        "match": "{name} já usou nesta série",
+        "stage": "{name} já usou nesta fase",
+        "tournament": "{name} já usou neste torneio"
+      },
+      "usedByYou": {
+        "match": "você já usou nesta série",
+        "stage": "você já usou nesta fase",
+        "tournament": "você já usou neste torneio"
+      }
+    },
+    "undo": {
+      "request": "Pedir para desfazer o último passo",
+      "waiting": "Você pediu para desfazer o último passo. Esperando {name}.",
+      "asked": "{name} pediu para desfazer o último passo.",
+      "accept": "Aceitar",
+      "decline": "Recusar",
+      "organizer": "Desfazer o último passo",
+      "organizerQuestion": "Desfazer o último passo do veto (inclusive o sorteado pelo fim do tempo)? A vez volta para quem o fez, com o tempo inteiro."
+    },
+    "games": {
+      "title": "Decidido no veto",
+      "game": "Jogo {game}",
+      "map": "{map}",
+      "mapPicked": "{map} (escolha de {name})",
+      "bans": "bans: {list}",
+      "pick": "{name}: {champion}"
+    },
+    "history": {
+      "title": "Histórico do veto",
+      "game": "Mapa {game}",
+      "timeout": "sorteado pelo fim do tempo",
+      "kinds": {
+        "ready": "{name} ficou pronto",
+        "begin": "{forced, select, yes {{actor} começou o veto} other {O veto começou}}",
+        "game": "O jogo {game} começou",
+        "ban": "{name} baniu {map}{champion}",
+        "pick": "{name} escolheu {map}{champion}",
+        "vote": "{name} votou em {map}",
+        "undo": "{actor} desfez o último passo",
+        "undo_request": "{name} pediu para desfazer o último passo",
+        "undo_declined": "{name} recusou desfazer"
+      }
+    }
   }
 }

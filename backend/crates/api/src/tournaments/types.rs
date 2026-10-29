@@ -3,8 +3,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{
-    contest::DEFAULT_CONTEST_MINUTES, schedule::DEFAULT_CHECK_IN_MINUTES, setup::TournamentMode,
-    status::TournamentStatus, visibility::Visibility,
+    contest::DEFAULT_CONTEST_MINUTES,
+    schedule::DEFAULT_CHECK_IN_MINUTES,
+    setup::TournamentMode,
+    status::TournamentStatus,
+    veto::{VetoInput, VetoSettings},
+    visibility::Visibility,
 };
 use crate::shared::{Locale, nullable};
 
@@ -106,6 +110,11 @@ pub struct CreateTournament {
     #[serde(default = "default_contest_minutes")]
     #[schema(required = false, default = 5, example = 5)]
     pub contest_minutes: i32,
+    /// Veto das partidas: modo do mapa, pool, campeões e tempo por passo.
+    /// Ausente (ou campo ausente): o padrão (veto, os 7 primeiros mapas do
+    /// pool de duelo, campeões ligados, 30 s).
+    #[serde(default)]
+    pub veto: Option<VetoInput>,
     /// Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
     /// original. Erro de texto numa delas (`tournament.name_invalid`,
     /// `tournament.description_invalid`, `tournament.rules_invalid`) e
@@ -181,6 +190,9 @@ pub struct UpdateTournament {
     pub contest_minutes: Option<i32>,
     /// Se conta para o rating; muda até o torneio começar.
     pub counts_for_rating: Option<bool>,
+    /// Veto das partidas, até o torneio começar; campo ausente não muda.
+    #[serde(default)]
+    pub veto: Option<VetoInput>,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o
@@ -217,6 +229,7 @@ pub struct Tournament {
     pub contest_minutes: i32,
     /// Se os mapas do torneio contam para o rating da comunidade.
     pub counts_for_rating: bool,
+    pub veto: VetoSettings,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
 }

@@ -15,8 +15,8 @@ use super::{
     history::NewEvent,
     outcome,
     result::{Confirmation, Side},
-    stage,
     types::{ContestReport, EventKind, GameInput, GamePath, MatchDetail},
+    veto,
 };
 use crate::{
     AppState,
@@ -43,8 +43,8 @@ const OWN_REPORT: ApiError = ApiError::forbidden("match.own_report");
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player (quem envia não joga a partida)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.map_required, match.map_unknown, match.map_repeated, match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body"),
     )
 )]
 pub async fn report(
@@ -54,8 +54,7 @@ pub async fn report(
     JsonBody(body): JsonBody<GameInput>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     let sides = actions::ready(m)?;
@@ -67,6 +66,7 @@ pub async fn report(
     let index = actions::game_index(path.game, games.len())?;
     let maps = actions::map_ids(&mut tx, &body).await?;
     let new: NewGame = outcome::game(path.game, sides, &body, &maps, true)?;
+    veto::check_report(&stage, m, path.game, new.map)?;
     let candidate = series::SeriesGame {
         winner: body.winner.into(),
         status: series::GameStatus::Pending,
@@ -130,8 +130,7 @@ pub async fn confirm(
     PathParams(path): PathParams<GamePath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);
     let g = actions::game(&games, path.game)?;
@@ -188,8 +187,7 @@ pub async fn contest(
     JsonBody(body): JsonBody<ContestReport>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);

@@ -63,7 +63,11 @@
     "slots": "{count, plural, one {# vaga} other {# vagas}}",
     "checkIn": "check-in {window} antes",
     "noCheckIn": "sem check-in",
-    "contest": "{window} para contestar"
+    "contest": "{window} para contestar",
+    "maps": "{count, plural, one {# mapa} other {# mapas}}",
+    "championPhase": "ban/pick de campeões",
+    "noChampionPhase": "sem ban/pick de campeões",
+    "seconds": "{seconds} s por passo"
   },
   "description": "Descrição",
   "rules": "Regras adicionais",
@@ -87,7 +91,8 @@
       "format": "Formato",
       "registration": "Inscrições",
       "champions": "Campeões",
-      "languages": "Idiomas"
+      "languages": "Idiomas",
+      "veto": "Veto"
     },
     "noDate": "Sem data"
   },
@@ -105,5 +110,28 @@
   "startWarning": {
     "past": "A data de início já passou. O check-in abre assim que o torneio for publicado ou salvo, e os jogadores não terão tempo de se inscrever. Escolha uma data futura ou deixe sem data.",
     "window": "O check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes do início, ou seja, já abriria na hora: os jogadores não terão tempo de se inscrever. Escolha uma data mais distante, diminua a janela de check-in ou deixe sem data."
+  },
+  "veto": {
+    "title": "Veto",
+    "mapMode": "Mapa de cada jogo",
+    "mapModes": {
+      "veto": "Veto de mapas",
+      "vote": "Votação a cada mapa",
+      "random": "Sorteio a cada mapa",
+      "off": "Combinado entre os jogadores"
+    },
+    "mapModeHint": {
+      "veto": "Antes do primeiro mapa, os dois banem e escolhem alternando (o seed melhor começa); o que sobra é o decisivo.",
+      "vote": "A cada mapa, 3 mapas do pool sorteados (sem os já jogados); cada um vota num; votos diferentes, sorteio entre os dois.",
+      "random": "O mapa de cada jogo é sorteado do pool quando ele começa, sem repetir na série.",
+      "off": "Os jogadores combinam o mapa fora do site e enviam como sempre."
+    },
+    "mapPool": "Pool de mapas",
+    "mapPoolHint": "{count, plural, one {# mapa escolhido} other {# mapas escolhidos}}; a série mais longa pede pelo menos {min}.",
+    "championPhase": "Ban/pick de campeões a cada mapa",
+    "championPhaseHint": "Ban de um, ban do outro (conforme os bans por mapa), pick de um, pick do outro, abertos. Vale com qualquer modo de mapa e aplica a regra de não repetição.",
+    "seconds": "Tempo de cada passo",
+    "secondsHint": "Se o tempo acabar, a escolha é sorteada (a organização pode desfazer).",
+    "secondsOption": "{seconds} s"
   }
 }

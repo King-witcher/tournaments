@@ -14,6 +14,8 @@ export type TournamentField = keyof Pick<
   | "startsAt"
   | "checkInMinutes"
   | "contestMinutes"
+  | "mapPool"
+  | "vetoSeconds"
 >;
 
 /** Os erros de cada campo, já traduzidos. */
@@ -42,6 +44,11 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "champions.pool_exhausted": "noRepeat",
   "tournament.check_in_minutes_invalid": "checkInMinutes",
   "tournament.contest_minutes_invalid": "contestMinutes",
+  "tournament.map_unknown": "mapPool",
+  "tournament.map_pool_repeated": "mapPool",
+  "tournament.map_pool_too_small": "mapPool",
+  "tournament.map_pool_too_large": "mapPool",
+  "tournament.veto_seconds_invalid": "vetoSeconds",
 };
 
 /** O campo do torneio que o erro aponta, ou `undefined` se é do formulário. */

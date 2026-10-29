@@ -1,7 +1,8 @@
 //! Depois de toda mudança na chave: anula os mapas que ficaram depois da
 //! decisão da série (ou de outros lados), fecha as séries que os mapas
 //! confirmados decidiram e dá os W.O. automáticos, repetindo até não sobrar
-//! nada (fechar uma série pode deixar pronta uma partida de quem desistiu);
+//! nada (fechar uma série pode deixar pronta uma partida de quem desistiu),
+//! e começa o jogo seguinte do veto de cada partida (`veto::advance`);
 //! depois encerra ou reabre o torneio conforme a chave e emite o que mudou
 //! (`changes`). Quem chama trava o
 //! torneio.
@@ -19,7 +20,7 @@ use super::{
     result::played_or_walkover,
     stage::{self, Stage},
     types::EventKind,
-    withdrawals,
+    veto, withdrawals,
 };
 use crate::{
     shared::ApiError,
@@ -39,6 +40,9 @@ pub async fn apply(
             continue;
         }
         if withdrawals::give(conn, tournament, &stage).await? {
+            continue;
+        }
+        if veto::advance(conn, tournament, &stage).await? {
             continue;
         }
         return Ok(stage);

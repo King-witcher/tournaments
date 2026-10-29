@@ -3,12 +3,30 @@ import type { Status } from "@/shared/ui/status-tag";
 
 type Schemas = components["schemas"];
 
-/** O que pede uma ação de quem vê (enviar, responder, resolver). */
+/** O que pede uma ação de quem vê (enviar, responder, resolver, o veto). */
 export const ACTIONABLE: Schemas["ViewerTask"][] = [
   "report",
   "respond",
   "resolve",
+  "ready",
+  "veto",
 ];
+
+/**
+ * A chave do texto (em `Bracket.task`) do que a partida espera de quem vê:
+ * esperar o adversário vira, com veto, esperar ele ficar pronto ou o veto em
+ * andamento.
+ */
+export function taskKey(
+  task: Schemas["ViewerTask"],
+  veto: Schemas["VetoStatus"] | null | undefined,
+) {
+  if (task === "await_opponent" && veto === "waiting_ready")
+    return "await_ready";
+  if (task === "await_opponent" && veto === "in_progress")
+    return "veto_in_progress";
+  return task;
+}
 
 /**
  * Cor da etiqueta do que a partida espera de quem vê. A ação que falta a
@@ -22,6 +40,8 @@ export const TASK_STATUS: Record<Schemas["ViewerTask"], Status> = {
   resolve: "contested",
   await_opponent: "waiting",
   await_organizer: "waiting",
+  ready: "check_in",
+  veto: "check_in",
 };
 
 /** Cor da etiqueta de um mapa da série. */

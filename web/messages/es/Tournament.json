@@ -79,7 +79,8 @@
       "slots": "Cupos",
       "champions": "Campeones",
       "checkIn": "Check-in",
-      "contest": "Plazo para impugnar"
+      "contest": "Plazo para impugnar",
+      "veto": "Veto"
     },
     "bracket": {
       "single": "Eliminación simple",

@@ -3,12 +3,15 @@
 //! despachante que tira os eventos do outbox, publica e manda os Web Push
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
 //! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
-//! exclusões de comunidade e de conta, rating das comunidades marcadas).
+//! sorteio dos passos de veto vencidos, exclusões de comunidade e de conta,
+//! rating das comunidades marcadas) e o relógio dos passos do veto (`clock`),
+//! que dorme até o próximo prazo.
 //! Fica acima de todos os domínios: confere o acesso como na leitura
 //! (`tenants`, `tournaments`) e o agendador chama `tournaments`, `matches`,
 //! `tenants`, `members` e `ratings`.
 //! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos.
 
+mod clock;
 mod connection;
 mod db;
 mod dispatcher;
@@ -31,8 +34,8 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(socket::ws))
 }
 
-/// Sobe o despachante e o agendador (o `main`; os testes chamam
-/// `dispatch_once` e `tick` direto).
+/// Sobe o despachante, o agendador e o relógio do veto (o `main`; os testes
+/// chamam `dispatch_once` e `tick` direto).
 pub fn spawn(state: AppState) {
     let dispatcher = state.clone();
     tokio::spawn(async move {
@@ -41,6 +44,7 @@ pub fn spawn(state: AppState) {
             dispatcher.realtime.woken().await;
         }
     });
+    tokio::spawn(clock::run(state.clone()));
     tokio::spawn(async move {
         let mut every = tokio::time::interval(scheduler::EVERY);
         every.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);

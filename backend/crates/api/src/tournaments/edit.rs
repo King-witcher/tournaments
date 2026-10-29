@@ -9,6 +9,7 @@ use super::{
     status::TournamentStatus,
     texts::{self, Texts},
     types::UpdateTournament,
+    veto::VetoSetup,
     visibility::Visibility,
 };
 use crate::shared::ApiError;
@@ -31,21 +32,36 @@ pub struct Edit {
     pub status: Option<TournamentStatus>,
 }
 
+/// O torneio como está gravado, que o PATCH muda.
+pub struct Current<'a> {
+    pub status: TournamentStatus,
+    pub texts: &'a Texts,
+    pub setup: &'a Setup,
+    pub schedule: Schedule,
+    pub contest_minutes: i32,
+    pub counts_for_rating: bool,
+}
+
 /// Erros: 409 `tournament.finished` (texto, visibilidade ou janela de
 /// contestação depois de encerrar), 409 `tournament.setup_locked`
-/// (configuração ou "conta para o rating" depois de começar), os de `Schedule::edit`, o de
+/// (configuração, inclusive o veto (`veto`, já resolvido), ou "conta para o
+/// rating" depois de começar), os de `Schedule::edit`, o de
 /// `contest::check` e os de validação dos textos. Mandar a configuração igual
 /// à atual não conta como mudança, então o front pode reenviar o formulário
 /// inteiro.
 pub fn apply(
-    status: TournamentStatus,
-    current_texts: &Texts,
-    current_setup: &Setup,
-    current_schedule: Schedule,
-    current_contest_minutes: i32,
-    current_counts_for_rating: bool,
+    current: Current<'_>,
+    veto: Option<VetoSetup>,
     patch: UpdateTournament,
 ) -> Result<Edit, ApiError> {
+    let Current {
+        status,
+        texts: current_texts,
+        setup: current_setup,
+        schedule: current_schedule,
+        contest_minutes: current_contest_minutes,
+        counts_for_rating: current_counts_for_rating,
+    } = current;
     let touches_texts = patch.name.is_some()
         || patch.description.is_some()
         || patch.rules.is_some()
@@ -79,6 +95,7 @@ pub fn apply(
             Some(stages) => stages.into_iter().map(Into::into).collect(),
             None => current_setup.stages.clone(),
         },
+        veto: veto.unwrap_or_else(|| current_setup.veto.clone()),
     };
     let setup = (setup != *current_setup).then_some(setup);
     if setup.is_some() && !status.setup_editable() {
@@ -143,7 +160,12 @@ mod tests {
     }
 
     fn setup() -> Setup {
-        Setup::from_dto(16, rules(), vec![stage(Bracket::Single, false)])
+        Setup::from_dto(
+            16,
+            rules(),
+            vec![stage(Bracket::Single, false)],
+            VetoSetup::off(),
+        )
     }
 
     fn schedule() -> Schedule {
@@ -166,11 +188,20 @@ mod tests {
             check_in_minutes: None,
             contest_minutes: None,
             counts_for_rating: None,
+            veto: None,
         }
     }
 
     fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
-        apply(status, &texts(), &setup(), schedule(), 5, true, patch)
+        let current = Current {
+            status,
+            texts: &texts(),
+            setup: &setup(),
+            schedule: schedule(),
+            contest_minutes: 5,
+            counts_for_rating: true,
+        };
+        apply(current, None, patch)
     }
 
     #[test]

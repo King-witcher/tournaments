@@ -13,6 +13,9 @@ src/
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
   rating/         mod.rs (RatingSystem, Event, replay: o histórico na ordem dada → rating final
                   e o efeito de cada evento), elo.rs (Elo com K que decai com os jogos), tests/
+  veto/           veto de mapas e ban/pick de campeões de uma série: mod.rs (regras, Veto,
+                  replay, vez, opções), sequence.rs (ordem dos passos), draw.rs (sorteios
+                  pela seed), tests/
   formats/
     mod.rs        StageFormat (o JSON gravado em tournament_stages.config)
     elimination/  mod.rs (config, estado, replay), build.rs (topologia), resolve.rs (estados), tests/

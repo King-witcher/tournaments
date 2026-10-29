@@ -56,8 +56,7 @@ pub async fn put_game(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     let m = detail::find(&stage, &path.key)?;
     let sides = playable(m.state)?;
     let games = stage.games_of(m.id);
@@ -141,8 +140,7 @@ pub async fn set_result(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     let m = detail::find(&stage, &path.key)?;
     let sides = playable(m.state)?;
     let ResultInput::Walkover { winner } = body.result;

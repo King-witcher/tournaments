@@ -20,22 +20,28 @@ import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
 import { TournamentTranslations } from "./tournament-translations";
+import { TournamentVetoFields } from "./tournament-veto-fields";
 
 type Schemas = components["schemas"];
 
 const TABS = ["general", "format", "registration"] as const;
 type EditTab = (typeof TABS)[number];
 
-type Props = { tenant: string; tournament: Schemas["Tournament"] };
+type Props = {
+  tenant: string;
+  tournament: Schemas["Tournament"];
+  /** Os mapas ativos, para o pool do veto. */
+  maps: Schemas["Map"][];
+};
 
 /**
  * Editar torneio, uma aba por assunto: Geral (nome, descrição, regras
- * adicionais e outros idiomas), Formato (chave, séries, campeões) e
+ * adicionais e outros idiomas), Formato (chave, séries, campeões, veto) e
  * Inscrições e prazos (início, vagas, visibilidade, check-in, contestação).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
  * de começar, o motivo dos campos travados vem no topo da aba deles.
  */
-export function EditTournamentForm({ tenant, tournament }: Props) {
+export function EditTournamentForm({ tenant, tournament, maps }: Props) {
   const t = useTranslations("TournamentForm");
   const [tab, setTab] = useState<EditTab>("general");
   const form = useTournamentForm(tenant, tournament, {
@@ -113,6 +119,15 @@ export function EditTournamentForm({ tenant, tournament }: Props) {
                     values={values}
                     onChange={onChange}
                     errors={errors}
+                    disabled={setupLocked}
+                  />
+                </FormSection>
+                <FormSection legend={t("veto.title")}>
+                  <TournamentVetoFields
+                    values={values}
+                    onChange={onChange}
+                    errors={errors}
+                    maps={maps}
                     disabled={setupLocked}
                   />
                 </FormSection>

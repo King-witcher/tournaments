@@ -18,6 +18,14 @@
       "game_contested": {
         "title": "Mapa impugnado",
         "body": "{tournament}: {player} impugnó el mapa {game}. Resuélvelo en la partida."
+      },
+      "opponent_ready": {
+        "title": "{opponent} está listo",
+        "body": "{tournament}: haz clic en “Listo” para que empiece el veto."
+      },
+      "veto_started": {
+        "title": "Empezó el veto",
+        "body": "{tournament}: veto contra {opponent}. Cada paso tiene tiempo: al terminar, la elección se sortea."
       }
     },
     "tournament": {

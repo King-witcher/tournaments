@@ -35,6 +35,8 @@ type Props = {
   maps: components["schemas"]["Map"][];
   /** Valores para começar (o mapa enviado, ao resolver ou corrigir). */
   initial?: GameValues;
+  /** O mapa que o veto deu: o envio fica preso a ele, sem a escolha. */
+  fixedMap?: components["schemas"]["MapRef"];
   submitLabel: string;
   /** Depois de salvar (fecha o formulário de quem abriu). */
   onDone?: () => void;
@@ -59,6 +61,7 @@ export function GameForm(props: Props) {
     names,
     maps,
     initial,
+    fixedMap,
     submitLabel,
     onDone,
     onCancel,
@@ -79,12 +82,14 @@ export function GameForm(props: Props) {
 
   const [errors, submit, pending] = useActionState<Errors>(async () => {
     const { winner } = game;
+    // O mapa do veto vale sempre (o formulário segue montado de um mapa para o próximo).
+    const map = fixedMap?.slug ?? game.map;
     const missing = {
       winner: winner ? undefined : t("chooseWinner"),
-      map: game.map || mapOptional ? undefined : t("chooseTheMap"),
+      map: map || mapOptional ? undefined : t("chooseTheMap"),
     };
     if (!winner || missing.map) return missing;
-    const body = gameInput({ ...game, winner });
+    const body = gameInput({ ...game, map, winner });
     const params = gameParams(target, number);
     const result =
       mode === "report"
@@ -145,12 +150,18 @@ export function GameForm(props: Props) {
           invalid={errors?.winner !== undefined}
           invalidText={errors?.winner}
         />
-        <MapSelect
-          maps={maps}
-          value={game.map}
-          onChange={(map) => setGame({ ...game, map })}
-          invalidText={errors?.map}
-        />
+        {fixedMap ? (
+          <p className={styles.fixedMap}>
+            {t("vetoedMap", { map: fixedMap.name })}
+          </p>
+        ) : (
+          <MapSelect
+            maps={maps}
+            value={game.map}
+            onChange={(map) => setGame({ ...game, map })}
+            invalidText={errors?.map}
+          />
+        )}
         <FormGroup legendText={t("frags")}>
           <div className={styles.frags}>
             {frags("a")}

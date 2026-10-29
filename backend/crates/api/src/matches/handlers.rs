@@ -1,7 +1,7 @@
 use axum::{Json, extract::State};
 
 use super::{
-    detail, due, stage,
+    detail, due,
     types::{MatchDetail, MatchPath, TournamentBracket},
     view::{self, Viewer},
 };
@@ -32,8 +32,7 @@ pub async fn get_bracket(
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<TournamentBracket>, ApiError> {
     let mut conn = state.db.acquire().await?;
-    let tournament = due::find_current(&mut conn, &member, &path.tournament).await?;
-    let stage = stage::load(&mut conn, &tournament).await?;
+    let (tournament, stage) = due::current(&mut conn, &member, &path.tournament).await?;
     let viewer = Viewer::new(&member, &stage);
     Ok(Json(view::bracket(&tournament, &stage, &viewer)?))
 }
@@ -59,8 +58,7 @@ pub async fn get_match(
     PathParams(path): PathParams<MatchPath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut conn = state.db.acquire().await?;
-    let tournament = due::find_current(&mut conn, &member, &path.tournament).await?;
-    let stage = stage::load(&mut conn, &tournament).await?;
+    let (tournament, stage) = due::current(&mut conn, &member, &path.tournament).await?;
     let viewer = Viewer::new(&member, &stage);
     let m = detail::find(&stage, &path.key)?;
     Ok(Json(

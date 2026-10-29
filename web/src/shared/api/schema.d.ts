@@ -932,6 +932,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/begin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_begin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_ready"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_step"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_undo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/undo-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_undo_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/undo-request/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_undo_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/participants": {
         parameters: {
             query?: never;
@@ -1237,6 +1333,7 @@ export interface components {
             round: number;
             state: components["schemas"]["MatchState"];
             task?: components["schemas"]["ViewerTask"] | null;
+            veto?: components["schemas"]["VetoStatus"] | null;
             /** @description Quem vê joga a partida. */
             yours: boolean;
         };
@@ -1245,6 +1342,10 @@ export interface components {
          * @enum {string}
          */
         BracketPart: "winners" | "losers" | "grand_final";
+        ChampionRef: {
+            name: string;
+            slug: string;
+        };
         ChampionRules: {
             /**
              * Format: int32
@@ -1410,6 +1511,7 @@ export interface components {
              *     idioma dela; idioma repetido dá `request.invalid_body`.
              */
             translations?: components["schemas"]["CreateTranslation"][];
+            veto?: components["schemas"]["VetoInput"] | null;
             /** @description Padrão `public`. Muda depois, até o torneio encerrar. */
             visibility?: components["schemas"]["Visibility"];
         };
@@ -1499,7 +1601,7 @@ export interface components {
             error: string;
             /**
              * @description Números que a mensagem traduzida mostra, quando o código tem
-             *     (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+             *     (ex.: `champions.pool_exhausted` → `{"required": 33, "available": 17}`).
              *     Alguns códigos trazem também um texto (ex.: `locale`, o idioma da
              *     tradução com erro).
              */
@@ -1697,6 +1799,8 @@ export interface components {
             username?: string | null;
         };
         Map: {
+            /** @description Está no pool padrão de um torneio novo (`duel_pool`). */
+            default_pool: boolean;
             /** @description Faz parte do pool de duelo. */
             duel_pool: boolean;
             /**
@@ -1707,6 +1811,11 @@ export interface components {
             /** @example blood-covenant */
             slug: string;
         };
+        /**
+         * @description Como sai o mapa de cada jogo da série.
+         * @enum {string}
+         */
+        MapMode: "veto" | "vote" | "random" | "off";
         MapRef: {
             name: string;
             slug: string;
@@ -1736,6 +1845,7 @@ export interface components {
             part_rounds: number;
             status: components["schemas"]["TournamentStatus"];
             summary: components["schemas"]["BracketMatch"];
+            veto?: components["schemas"]["VetoView"] | null;
             viewer_side?: components["schemas"]["Side"] | null;
         };
         MatchEvent: {
@@ -1917,6 +2027,7 @@ export interface components {
              */
             state: components["schemas"]["MatchState"];
             task?: components["schemas"]["ViewerTask"] | null;
+            veto?: components["schemas"]["VetoStatus"] | null;
         };
         NoRepeatRule: {
             scope: components["schemas"]["NoRepeatScope"];
@@ -1993,6 +2104,24 @@ export interface components {
                 match: string;
                 /** @description Quem contestou. */
                 player: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.opponent_ready";
+            /** @description O adversário está pronto para o veto e espera quem recebe. */
+            params: {
+                match: string;
+                opponent: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.veto_started";
+            /** @description O veto da partida começou (para os dois). */
+            params: {
+                match: string;
+                opponent: string;
                 tournament: string;
             };
         } | {
@@ -2499,6 +2628,7 @@ export interface components {
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["TournamentTranslation"][];
+            veto: components["schemas"]["VetoSettings"];
             visibility: components["schemas"]["Visibility"];
         };
         /** @description A chave da fase em jogo, refeita dos resultados confirmados. */
@@ -2601,6 +2731,10 @@ export interface components {
              */
             user_id: number;
         };
+        /** @description A resposta ao pedido de desfazer do adversário. */
+        UndoAnswer: {
+            accept: boolean;
+        };
         /** @description Desligar um provedor (Discord ou Google) da conta. */
         UnlinkLogin: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
@@ -2652,13 +2786,167 @@ export interface components {
              * @description `null` tira a data, o que só vale no rascunho.
              */
             starts_at?: string | null;
+            veto?: components["schemas"]["VetoInput"] | null;
             visibility?: components["schemas"]["Visibility"] | null;
+        };
+        /** @enum {string} */
+        VetoAction: "ban" | "pick" | "vote";
+        VetoBan: {
+            champion: components["schemas"]["ChampionRef"];
+            side: components["schemas"]["Side"];
+        };
+        /** @description Um campeão do torneio no jogo em andamento, com o que o tira das opções. */
+        VetoChampion: {
+            banned_by?: components["schemas"]["Side"] | null;
+            name: string;
+            slug: string;
+            /**
+             * @description A regra de não repetição o tira de cada lado (já usado na série ou,
+             *     pelo escopo da regra, em outra partida).
+             */
+            used_by_a: boolean;
+            used_by_b: boolean;
+        };
+        /** @description Um passo: um mapa ou um campeão, pelo slug. */
+        VetoChoice: {
+            champion?: string | null;
+            map?: string | null;
+        };
+        /** @description Um evento do histórico do veto. */
+        VetoEvent: {
+            /** @description Apelido de quem agiu; `null` no que acontece sozinho. */
+            actor?: string | null;
+            /** Format: date-time */
+            at: string;
+            champion?: components["schemas"]["ChampionRef"] | null;
+            /** Format: int32 */
+            game?: number | null;
+            kind: components["schemas"]["VetoEventKind"];
+            map?: components["schemas"]["MapRef"] | null;
+            side?: components["schemas"]["Side"] | null;
+            /** @description Escolha sorteada pelo fim do tempo. */
+            timeout: boolean;
+        };
+        /** @enum {string} */
+        VetoEventKind: "ready" | "begin" | "game" | "ban" | "pick" | "vote" | "undo" | "undo_request" | "undo_declined";
+        /** @description O veto de um jogo da série. */
+        VetoGame: {
+            bans: components["schemas"]["VetoBan"][];
+            /** Format: int32 */
+            game: number;
+            map?: components["schemas"]["MapRef"] | null;
+            /** @description Votação: os mapas oferecidos e o voto de cada lado. */
+            offered: components["schemas"]["MapRef"][];
+            pick_a?: components["schemas"]["ChampionRef"] | null;
+            pick_b?: components["schemas"]["ChampionRef"] | null;
+            picked_by?: components["schemas"]["Side"] | null;
+            starter?: components["schemas"]["Side"] | null;
+            vote_a?: string | null;
+            vote_b?: string | null;
+        };
+        /**
+         * @description A configuração do veto que chega: o que vier no lugar do atual (na
+         *     criação, do padrão).
+         */
+        VetoInput: {
+            /**
+             * @description Ban/pick de campeões a cada mapa, com os bans de `champion_rules`.
+             *     Padrão ligado; vale com qualquer modo de mapa.
+             */
+            champion_phase?: boolean | null;
+            map_mode?: components["schemas"]["MapMode"] | null;
+            /**
+             * @description Slugs dos mapas (`GET /maps`, ativos), na ordem, sem repetir; fora do
+             *     modo `off`, pelo menos um por jogo da série mais longa. Padrão: os 7
+             *     primeiros do pool de duelo. Vale para o veto, a votação e o sorteio.
+             */
+            map_pool?: string[] | null;
+            /**
+             * Format: int32
+             * @description Segundos de cada passo, de 10 a 300 (padrão 30); no fim, a escolha é
+             *     sorteada.
+             */
+            step_seconds?: number | null;
+        };
+        /** @description Um passo do veto de mapas (modo veto). */
+        VetoMapStep: {
+            action: components["schemas"]["VetoAction"];
+            map: components["schemas"]["MapRef"];
+            side: components["schemas"]["Side"];
+        };
+        /** @description A configuração do veto na resposta. */
+        VetoSettings: {
+            champion_phase: boolean;
+            map_mode: components["schemas"]["MapMode"];
+            /** @description Slugs do pool, na ordem. */
+            map_pool: string[];
+            /** Format: int32 */
+            step_seconds: number;
+        };
+        /**
+         * @description Onde o veto da partida está (só na partida pronta de um torneio com veto).
+         * @enum {string}
+         */
+        VetoStatus: "waiting_ready" | "in_progress" | "done";
+        /** @enum {string} */
+        VetoTarget: "map" | "champion";
+        /** @description O passo esperado agora. */
+        VetoTurn: {
+            action: components["schemas"]["VetoAction"];
+            /** @description Quem age: um lado, ou os dois na votação enquanto nenhum votou. */
+            sides: components["schemas"]["Side"][];
+            target: components["schemas"]["VetoTarget"];
+        };
+        /** @description O veto da partida. */
+        VetoView: {
+            /** @description Há passo para desfazer no jogo em andamento. */
+            can_undo: boolean;
+            champion_phase: boolean;
+            /** @description Os campeões do torneio no jogo em andamento (com a fase de campeões). */
+            champions: components["schemas"]["VetoChampion"][];
+            /**
+             * Format: date-time
+             * @description Até quando o passo esperado pode ser feito; depois, é sorteado.
+             */
+            deadline?: string | null;
+            /**
+             * Format: int32
+             * @description O jogo em andamento.
+             */
+            game?: number | null;
+            games: components["schemas"]["VetoGame"][];
+            /** @description Do mais antigo ao mais novo. */
+            history: components["schemas"]["VetoEvent"][];
+            map_mode: components["schemas"]["MapMode"];
+            /** @description Modo veto: os passos do veto de mapas, na ordem. */
+            map_steps: components["schemas"]["VetoMapStep"][];
+            /**
+             * @description O que quem vê pode escolher agora (slugs de mapas ou de campeões);
+             *     vazio se não é a vez dele.
+             */
+            options: string[];
+            /** @description O pool de mapas do torneio, na ordem. */
+            pool: components["schemas"]["MapRef"][];
+            ready_a: boolean;
+            ready_b: boolean;
+            /** @description Modo veto: os mapas que ainda não saíram. */
+            remaining: components["schemas"]["MapRef"][];
+            /** @description Os jogadores podem enviar o próximo mapa (o veto dele acabou). */
+            reportable: boolean;
+            status: components["schemas"]["VetoStatus"];
+            /**
+             * Format: int32
+             * @description Segundos de cada passo.
+             */
+            step_seconds: number;
+            turn?: components["schemas"]["VetoTurn"] | null;
+            undo_request?: components["schemas"]["Side"] | null;
         };
         /**
          * @description O que a partida (ou um mapa dela) espera de quem vê.
          * @enum {string}
          */
-        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve";
+        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto";
         /** @enum {string} */
         Visibility: "public" | "private";
         /** @description O webhook como a API devolve ao owner: sem o endereço nem o token. */
@@ -3917,7 +4205,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Mapas ativos: os do pool de duelo primeiro, depois os outros, por nome */
+            /** @description Mapas ativos: os do pool de duelo primeiro, depois os outros, por nome; `default_pool` marca o pool padrão de um torneio novo */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5610,7 +5898,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -5777,7 +6065,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões, fases ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -6516,7 +6804,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next} */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -6525,7 +6813,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.map_required, match.map_unknown, match.map_repeated, match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body */
+            /** @description match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6602,6 +6890,410 @@ export interface operations {
                 };
             };
             /** @description match.comment_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_begin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O organizador começa o veto sem esperar os dois prontos (aviso `match.veto_started` para os dois) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.already_begun */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_ready: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O jogador está pronto. Com os dois prontos, o veto começa (aviso `match.veto_started` para os dois); senão, o adversário recebe `match.opponent_ready`. Repetir não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off (torneio sem veto), veto.already_begun */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_step: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VetoChoice"];
+            };
+        };
+        responses: {
+            /** @description O passo de quem está na vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez). Quando o veto do jogo acaba, o mapa pode ser enviado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto do jogo já acabou), veto.not_your_turn */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto.option_invalid (mapa ou campeão fora das opções, já banido ou escolhido, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_undo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O organizador desfaz o último passo do jogo em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.nothing_to_undo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_undo_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Um jogador pede para desfazer o último passo do jogo em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.nothing_to_undo, veto.undo_requested (já há um pedido esperando resposta) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_undo_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UndoAnswer"];
+            };
+        };
+        responses: {
+            /** @description O adversário de quem pediu aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player, veto.own_request (quem pediu não responde) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.no_undo_request */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

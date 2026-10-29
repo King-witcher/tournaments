@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { ACTIONABLE } from "../lib/status";
+import { ACTIONABLE, taskKey } from "../lib/status";
 
 type Props = {
   next: components["schemas"]["NextMatch"];
@@ -27,7 +27,7 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
     : from
       ? t(from.outcome, { match, source: code(from.match_key) })
       : t("unknown", { match });
-  const task = next.task && tTask(next.task);
+  const task = next.task && tTask(taskKey(next.task, next.veto));
   const urgent =
     next.task !== undefined &&
     next.task !== null &&

@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+}
+
+// A vez de quem vê: o que ele precisa fazer agora, em destaque.
+.yours {
+  @include type.type-style("heading-02");
+}
+
+.ready {
+  @include type.type-style("body-01");
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+  align-items: center;
+}
+
+.note {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

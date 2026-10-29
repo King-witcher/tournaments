@@ -18,6 +18,14 @@
       "game_contested": {
         "title": "Mapa contestado",
         "body": "{tournament}: {player} contestou o mapa {game}. Resolva na partida."
+      },
+      "opponent_ready": {
+        "title": "{opponent} está pronto",
+        "body": "{tournament}: clique em “Pronto” para o veto começar."
+      },
+      "veto_started": {
+        "title": "O veto começou",
+        "body": "{tournament}: veto contra {opponent}. Cada passo tem tempo: no fim, a escolha é sorteada."
       }
     },
     "tournament": {

@@ -4,6 +4,7 @@ import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
+import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
@@ -25,23 +26,32 @@ import { TournamentReview } from "./tournament-review";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
 import { TournamentTranslations } from "./tournament-translations";
+import { TournamentVetoFields } from "./tournament-veto-fields";
 
 /** Os grupos que começam fechados: têm padrão bom e o resumo no título. */
-type Group = "champions" | "registration";
+type Group = "champions" | "veto" | "registration";
 
 /**
  * Criar torneio, numa página só: à vista o que se decide sempre (nome,
  * endereço, início, descrição, chave e séries); fechados, com o resumo no
- * título, os grupos que já vêm com padrão (campeões, inscrições e prazos);
- * depois as regras adicionais e, por último, "Outros idiomas". "Criar"
- * confere e mostra a revisão antes de criar já publicado; "Criar como
+ * título, os grupos que já vêm com padrão (campeões, veto, inscrições e
+ * prazos); depois as regras adicionais e, por último, "Outros idiomas".
+ * "Criar" confere e mostra a revisão antes de criar já publicado; "Criar como
  * rascunho" cria sem publicar (e sem exigir a data).
  */
-export function NewTournamentForm({ tenant }: { tenant: string }) {
+export function NewTournamentForm({
+  tenant,
+  maps,
+}: {
+  tenant: string;
+  /** Os mapas ativos, para o pool do veto. */
+  maps: components["schemas"]["Map"][];
+}) {
   const t = useTranslations("TournamentForm");
   const summary = useValuesSummary();
   const [open, setOpen] = useState<Record<Group, boolean>>({
     champions: false,
+    veto: false,
     registration: false,
   });
   const [reviewing, setReviewing] = useState(false);
@@ -50,7 +60,11 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
   const form = useTournamentForm(tenant, undefined, {
     reveal: (control) => {
       const group = groupOf(control);
-      if (group === "champions" || group === "registration") {
+      if (
+        group === "champions" ||
+        group === "veto" ||
+        group === "registration"
+      ) {
         setOpen((o) => ({ ...o, [group]: true }));
       }
     },
@@ -120,6 +134,21 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
             />
           </FormAccordionItem>
           <FormAccordionItem
+            title={t("veto.title")}
+            summary={summary.veto(values, maps)}
+            group="veto"
+            open={open.veto}
+            onToggle={toggle("veto")}
+          >
+            <TournamentVetoFields
+              values={values}
+              onChange={onChange}
+              errors={errors}
+              maps={maps}
+              disabled={false}
+            />
+          </FormAccordionItem>
+          <FormAccordionItem
             title={t("registration")}
             summary={summary.registration(values)}
             group="registration"
@@ -174,7 +203,7 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
         title={t("review.title")}
         confirmLabel={t("review.confirm")}
         destructive={false}
-        details={<TournamentReview form={form} />}
+        details={<TournamentReview form={form} maps={maps} />}
       >
         {t("review.question")}
       </ConfirmModal>

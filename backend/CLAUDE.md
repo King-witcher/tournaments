@@ -26,7 +26,7 @@ crates/api/src/
   tournaments/    torneio, traduções, fases, quem vê, agenda e check-in automático
   participants/   inscrição, check-in, seeding
   lifecycle/      transições depois de publicar (check-in, reabrir, iniciar, desfazer) e desistência
-  matches/        chave e resultados, mapa a mapa
+  matches/        chave e resultados, mapa a mapa, e o veto de mapas e campeões (veto/)
   my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
   organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
   ratings/        ranking Elo por comunidade: cache refeito do zero quando os triggers marcam o tenant (agendador, leitura e as rotas daqui); lê mapas e torneios direto no banco, sem chamar matches
@@ -39,7 +39,7 @@ crates/api/src/
 
 O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//!` do `mod.rs` dele: leia antes de mexer, e atualize-o quando acrescentar um arquivo ou uma responsabilidade ao domínio.
 
-Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `media` (prints no S3).
+Domínios previstos pelo roadmap: `media` (prints no S3). O veto (mapas e campeões) fica em `matches/veto/`: depende da fase refeita e do `settle` da chave.
 
 ### Tempo real: mudou estado visível, `emit` na mesma transação
 

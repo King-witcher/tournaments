@@ -10,7 +10,6 @@ use super::{
     actions, db, detail, due,
     games::GameStatus,
     history::NewEvent,
-    stage,
     types::{EventKind, GamePath, MatchDetail, ReplayGame},
 };
 use crate::{
@@ -47,8 +46,7 @@ pub async fn replay(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let tournament = due::lock_current(&mut tx, &member, &path.tournament).await?;
-    let stage = stage::load(&mut tx, &tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     actions::ready(m)?;

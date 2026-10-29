@@ -47,7 +47,11 @@
     "respond": "Confirme ou conteste o mapa",
     "await_opponent": "Aguardando o adversário",
     "await_organizer": "Aguardando a organização",
-    "resolve": "Resolver contestação"
+    "resolve": "Resolver contestação",
+    "ready": "Clique em “Pronto” para o veto",
+    "veto": "Sua vez no veto",
+    "await_ready": "Aguardando o adversário ficar pronto",
+    "veto_in_progress": "Veto em andamento"
   },
   "yours": "Sua partida",
   "departure": {

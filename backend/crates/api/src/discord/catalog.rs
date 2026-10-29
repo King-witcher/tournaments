@@ -3,7 +3,7 @@
 //! em `auth/emails.rs`): a mensagem sai da API direto para outro serviço, sem
 //! passar pelo front, que só traduz o que a pessoa lê no site.
 //!
-//! Um aviso novo (o veto, por exemplo) entra aqui com uma linha em
+//! Um aviso novo (como os do veto) entra aqui com uma linha em
 //! `CATALOG`: o código é o do `Notice` ou do `Announce` do outbox, e o texto
 //! usa os parâmetros dele entre chaves. O resto (fila, ritmo, interruptor da
 //! comunidade, menções) vale para todos. O texto também ganha, sem constar
@@ -90,6 +90,25 @@ pub const CATALOG: &[Spec] = &[
             To::Players,
             "Partida pronta em **{tournament}** ({match}): {to}\n{link}",
             "Partida lista en **{tournament}** ({match}): {to}\n{link}",
+        )
+    },
+    spec(
+        "match.opponent_ready",
+        true,
+        To::Players,
+        "{to}: {opponent} está pronto para o veto da partida {match} de **{tournament}** e espera você.\n{link}",
+        "{to}: {opponent} está listo para el veto de la partida {match} de **{tournament}** y te espera.\n{link}",
+    ),
+    // Desligado numa configuração nova: quem clicou em "Pronto" já está na
+    // página; serve mais para o começo forçado pela organização.
+    Spec {
+        merge: true,
+        ..spec(
+            "match.veto_started",
+            false,
+            To::Players,
+            "O veto da partida {match} de **{tournament}** começou: {to}\n{link}",
+            "Empezó el veto de la partida {match} de **{tournament}**: {to}\n{link}",
         )
     },
     spec(

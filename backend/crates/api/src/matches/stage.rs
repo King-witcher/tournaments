@@ -1,22 +1,30 @@
 //! A fase em jogo: configuração (`tournament_stages`), participantes (pelo
 //! seed) e séries decididas → chave, sempre por `replay`. Nada do estado do
-//! `engine` é gravado. Os mapas das séries vêm junto.
+//! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
+//! refeito por replay) vêm junto.
 //!
 //! Só existe a primeira fase. Outras fases entrariam aqui: cada uma com a
 //! classificação da anterior como participantes, montada quando a anterior
 //! termina, e os resultados já separados por `stage`.
 
 use engine::{
+    champions::NoRepeatRule,
     core::{EngineError, MatchId, MatchState, ParticipantId},
     formats::{self as ef, elimination::EliminationBracket},
+    veto::VetoRules,
 };
 use sqlx::PgConnection;
 
-use super::{changes, db, games::StoredGame, result::StoredResult};
+use super::{
+    changes, db,
+    games::StoredGame,
+    result::StoredResult,
+    veto::{self, Champion, MatchVeto, VetoRow},
+};
 use crate::{
     participants::{self, Seeded},
     shared::ApiError,
-    tournaments::{self, StoredTournament, TournamentStatus},
+    tournaments::{self, PoolMap, StoredTournament, TournamentStatus},
 };
 
 /// A primeira (e por enquanto única) fase.
@@ -32,6 +40,16 @@ pub struct Stage {
     /// Os mapas enviados da fase, por partida e na ordem.
     pub games: Vec<StoredGame>,
     pub bracket: EliminationBracket,
+    /// O veto das partidas: as regras do torneio, o tempo de cada passo, a
+    /// regra de não repetição, os campeões do torneio (só com a fase de
+    /// campeões), o pool de mapas e o veto refeito de cada partida que tem
+    /// algum evento.
+    pub veto_rules: VetoRules,
+    pub veto_seconds: i32,
+    pub no_repeat: Option<NoRepeatRule>,
+    pub champions: Vec<Champion>,
+    pub map_pool: Vec<PoolMap>,
+    pub vetoes: Vec<MatchVeto>,
 }
 
 impl Stage {
@@ -53,6 +71,11 @@ impl Stage {
     /// Os mapas da partida `id`, na ordem.
     pub fn games_of(&self, id: MatchId) -> Vec<&StoredGame> {
         self.games.iter().filter(|g| g.match_id == id).collect()
+    }
+
+    /// O veto da partida `id`, se tem algum evento.
+    pub fn veto_of(&self, id: MatchId) -> Option<&MatchVeto> {
+        self.vetoes.iter().find(|v| v.match_id == id)
     }
 }
 
@@ -116,6 +139,16 @@ pub async fn load(
     let results = db::results(conn, tournament.id, number).await?;
     let games = db::games(conn, tournament.id, number).await?;
     let format = *config(tournament, number)?;
+    let veto_rows = veto::events(conn, tournament.id, number).await?;
+    let veto_rules = tournament
+        .setup
+        .veto
+        .rules(tournament.setup.champion_rules.bans_per_game);
+    let champions = if veto_rules.champion_phase {
+        veto::champions(conn).await?
+    } else {
+        Vec::new()
+    };
     let bracket = replay(&format, &entrants, &results).map_err(|err| {
         let id = tournament.id.get();
         match err {
@@ -126,6 +159,7 @@ pub async fn load(
         }
         ApiError::internal()
     })?;
+    let vetoes = vetoes(&bracket, &veto_rules, veto_rows)?;
     Ok(Stage {
         number,
         format,
@@ -133,7 +167,39 @@ pub async fn load(
         results,
         games,
         bracket,
+        veto_rules,
+        veto_seconds: tournament.setup.veto.step_seconds,
+        no_repeat: tournament.setup.champion_rules.no_repeat,
+        champions,
+        map_pool: tournament.map_pool.clone(),
+        vetoes,
     })
+}
+
+/// O veto de cada partida refeito das linhas `rows` (por partida, na ordem).
+fn vetoes(
+    bracket: &EliminationBracket,
+    rules: &VetoRules,
+    rows: Vec<VetoRow>,
+) -> Result<Vec<MatchVeto>, ApiError> {
+    let mut by_match: Vec<(MatchId, Vec<VetoRow>)> = Vec::new();
+    for row in rows {
+        match by_match.last_mut() {
+            Some((id, group)) if *id == row.match_id => group.push(row),
+            _ => by_match.push((row.match_id, vec![row])),
+        }
+    }
+    by_match
+        .into_iter()
+        .map(|(id, rows)| {
+            let best_of = bracket
+                .get(id)
+                .map(|m| m.best_of)
+                .ok_or_else(ApiError::internal)?;
+            let sides = rows[0].sides;
+            MatchVeto::replay(rules.clone(), best_of, id, sides, rows)
+        })
+        .collect()
 }
 
 /// Gera a chave ao iniciar, no torneio travado, com `seeded` (os elegíveis na

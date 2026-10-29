@@ -9,6 +9,7 @@ use super::{
     stage::Stage,
     tasks,
     types::MatchDetail,
+    veto,
     view::{self, Viewer},
 };
 use crate::{shared::ApiError, tournaments::StoredTournament};
@@ -64,6 +65,7 @@ pub async fn load(
             .map(|e| view::event(stage, e))
             .collect::<Result<_, _>>()?,
         can_manage: viewer.organizer,
+        veto: veto::view(stage, m, mine),
         summary,
     })
 }

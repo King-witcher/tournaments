@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { loadMaps } from "@/features/matches/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { PageError } from "@/shared/ui/page-error";
@@ -55,7 +56,7 @@ export async function NewTournamentView({ tenant }: { tenant: string }) {
           {await apiErrorMessage("tenant.forbidden")}
         </PageError>
       ) : (
-        <NewTournamentForm tenant={tenant} />
+        <NewTournamentForm tenant={tenant} maps={await loadMaps()} />
       )}
     </>
   );

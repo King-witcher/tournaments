@@ -1,7 +1,7 @@
-//! Erros do `engine` como `ApiError`: um código estável por variante e os
+//! Erros do `engine` (da chave e do veto) como `ApiError`: um código estável por variante e os
 //! números que a mensagem traduzida mostra.
 
-use engine::core::EngineError;
+use engine::{core::EngineError, veto::VetoError};
 
 use super::ApiError;
 
@@ -49,6 +49,26 @@ impl From<EngineError> for ApiError {
                 ("required", i64::from(required)),
                 ("available", i64::from(available)),
             ]),
+        }
+    }
+}
+
+impl From<VetoError> for ApiError {
+    fn from(err: VetoError) -> Self {
+        use VetoError as E;
+        match err {
+            E::NotBegun => Self::conflict("veto.not_begun"),
+            E::AlreadyBegun => Self::conflict("veto.already_begun"),
+            E::Finished => Self::conflict("veto.finished"),
+            E::NotYourTurn => Self::conflict("veto.not_your_turn"),
+            E::NothingToUndo => Self::conflict("veto.nothing_to_undo"),
+            E::OptionInvalid | E::WrongAction => Self::invalid("veto.option_invalid"),
+            E::ChampionForbidden => Self::invalid("veto.champion_forbidden"),
+            E::PoolTooSmall { best_of, .. } => Self::invalid("tournament.map_pool_too_small")
+                .with_params([("min", i64::from(best_of))]),
+            E::PoolRepeated(_) => Self::invalid("tournament.map_pool_repeated"),
+            // Só o histórico gravado erra assim: ver `MatchVeto::replay`.
+            E::GameOutOfOrder { .. } => Self::internal(),
         }
     }
 }

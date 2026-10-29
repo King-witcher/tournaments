@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select m.id, m.slug, m.name\n           from tournament_maps p\n           join maps m on m.id = p.map_id\n           where p.tournament_id = $1\n           order by p.position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8dbf0bbaee9f0ee7d6213468ec8d8185099d5d431967342eb66dcc5a960080a5"
+}

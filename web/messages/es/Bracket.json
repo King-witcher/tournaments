@@ -47,7 +47,11 @@
     "respond": "Confirma o impugna el mapa",
     "await_opponent": "Esperando al rival",
     "await_organizer": "Esperando a la organización",
-    "resolve": "Resolver impugnación"
+    "resolve": "Resolver impugnación",
+    "ready": "Haz clic en “Listo” para el veto",
+    "veto": "Tu turno en el veto",
+    "await_ready": "Esperando a que el rival esté listo",
+    "veto_in_progress": "Veto en curso"
   },
   "yours": "Tu partida",
   "departure": {

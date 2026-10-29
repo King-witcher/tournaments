@@ -5,7 +5,8 @@
 //! quem vê cada torneio (`visibility`), que `participants`, `invites` e
 //! `matches` usam, e guarda a data de início e a janela de check-in
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
-//! contestação de resultado (`contest`). As transições manuais depois de
+//! contestação de resultado (`contest`) e a configuração do veto das partidas
+//! (`veto`: modo do mapa, pool, campeões, tempo por passo). As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
 //! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
 //! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
@@ -26,6 +27,7 @@ mod status;
 mod texts;
 mod translations;
 mod types;
+mod veto;
 mod view;
 mod visibility;
 
@@ -41,6 +43,7 @@ pub use db::{
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use status::TournamentStatus;
 pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath, TournamentSummary};
+pub use veto::{DEFAULT_POOL_SIZE, MapMode, PoolMap};
 pub use visibility::{Visibility, find_visible, find_visible_for_update};
 
 pub fn router() -> OpenApiRouter<AppState> {

@@ -92,8 +92,8 @@ pub async fn confirm_due(
     Ok(done.rows_affected())
 }
 
-/// Apaga séries, mapas e histórico do torneio (desfazer o início). Devolve
-/// quantas partidas tinham resultado ou mapa.
+/// Apaga séries, mapas, histórico e vetos do torneio (desfazer o início).
+/// Devolve quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -109,6 +109,9 @@ pub async fn discard(
     .fetch_one(&mut *conn)
     .await?;
     let id = tournament.get();
+    sqlx::query!("delete from match_veto_events where tournament_id = $1", id)
+        .execute(&mut *conn)
+        .await?;
     sqlx::query!("delete from match_events where tournament_id = $1", id)
         .execute(&mut *conn)
         .await?;

@@ -118,6 +118,22 @@ pub enum NoticeKind {
         /// Quem contestou.
         player: String,
     },
+    /// O adversário está pronto para o veto e espera quem recebe.
+    #[serde(rename = "match.opponent_ready")]
+    OpponentReady {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        opponent: String,
+    },
+    /// O veto da partida começou (para os dois).
+    #[serde(rename = "match.veto_started")]
+    VetoStarted {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        opponent: String,
+    },
     /// O início marcado chegou e o torneio não foi iniciado (para organizers e
     /// owner, uma vez).
     #[serde(rename = "tournament.start_due")]

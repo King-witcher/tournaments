@@ -1,6 +1,6 @@
 //! O canal em memória do tempo real: o despachante publica cada evento do
-//! outbox e cada socket recebe todos e filtra os seus (`Connection`). E o
-//! sinal que acorda o despachante.
+//! outbox e cada socket recebe todos e filtra os seus (`Connection`). E os
+//! sinais que acordam o despachante e o relógio do veto.
 
 use std::sync::Arc;
 
@@ -23,6 +23,8 @@ pub struct Realtime(Arc<Inner>);
 struct Inner {
     events: broadcast::Sender<Arc<Event>>,
     wake: Notify,
+    /// Acorda o relógio do veto: pode haver prazo novo.
+    clock: Notify,
 }
 
 impl Default for Realtime {
@@ -37,17 +39,29 @@ impl Realtime {
         Self(Arc::new(Inner {
             events,
             wake: Notify::new(),
+            clock: Notify::new(),
         }))
     }
 
     /// Acorda o despachante: há evento novo no outbox. Sem ninguém esperando,
-    /// o aviso fica guardado para a próxima espera.
+    /// o aviso fica guardado para a próxima espera. Acorda também o relógio do
+    /// veto: o que mudou pode ter criado um prazo (um passo, um jogo novo).
     pub fn wake(&self) {
+        self.0.wake.notify_one();
+        self.0.clock.notify_one();
+    }
+
+    /// Só o despachante (o relógio, depois de gravar, não se acorda de novo).
+    pub(super) fn wake_dispatcher(&self) {
         self.0.wake.notify_one();
     }
 
     pub(super) async fn woken(&self) {
         self.0.wake.notified().await;
+    }
+
+    pub(super) async fn clock_woken(&self) {
+        self.0.clock.notified().await;
     }
 
     /// Os eventos publicados daqui em diante.

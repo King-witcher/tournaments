@@ -19,7 +19,10 @@
 //! com os avisos de partida pronta, mapa enviado e contestado. A desistência,
 //! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
 //! chave e a próxima partida dele, para `/me/tournaments`, saem de `place`
-//! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`.
+//! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`. O
+//! veto de mapas e campeões de cada partida, entre ela ficar pronta e o envio
+//! de cada mapa, fica em `veto` (o relógio dos passos, `veto_clock`, é do
+//! `realtime`).
 
 mod actions;
 mod announce;
@@ -41,6 +44,7 @@ mod settle;
 mod stage;
 mod tasks;
 mod types;
+mod veto;
 mod view;
 mod withdrawals;
 
@@ -52,6 +56,7 @@ pub use due::{apply_due_confirmations, confirm_all_due};
 pub use mine::{Place, place, place_of};
 pub use stage::{discard, start};
 pub use types::NextMatch;
+pub use veto::clock as veto_clock;
 pub use withdrawals::settle as settle_withdrawals;
 
 pub fn router() -> OpenApiRouter<AppState> {
@@ -64,4 +69,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
         .routes(routes!(replay::replay))
+        .routes(routes!(veto::handlers::veto_ready))
+        .routes(routes!(veto::handlers::veto_begin))
+        .routes(routes!(veto::handlers::veto_step))
+        .routes(routes!(veto::handlers::veto_undo))
+        .routes(routes!(veto::handlers::veto_undo_request))
+        .routes(routes!(veto::handlers::veto_undo_answer))
 }

@@ -1,0 +1,192 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,\n                  e.played_map_id, e.champion_id, e.seed, e.timeout, e.actor,\n                  coalesce(m.nickname, u.display_name) as actor_name, e.created_at\n           from match_veto_events e\n           left join users u on u.id = e.actor\n           left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor\n           where e.tournament_id = $1 and e.stage = $2\n           order by e.match_key, e.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "side_a",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "side_a"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "side_b",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "side_b"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "game",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "game"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "side"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "played_map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "played_map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "champion_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "champion_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "seed",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "seed"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "timeout",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "timeout"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "actor",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "actor"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "actor_name",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      null,
+      false
+    ]
+  },
+  "hash": "774f38e82e435426f37c3fdc46280be9db00bf6a90257794b884bd6ecace11a9"
+}

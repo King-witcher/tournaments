@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournament_maps (tournament_id, map_id, position)\n           select $1, map_id, position::smallint\n           from unnest($2::bigint[]) with ordinality as p(map_id, position)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "132be906cd7445e0792ce41035d7c058aad2db8d6196c462d9dd7cea383d0f22"
+}

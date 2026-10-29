@@ -7,7 +7,10 @@ use engine::{champions as ec, formats as ef, tournament::TournamentSetup};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::types::{ChampionRules, StageFormat};
+use super::{
+    types::{ChampionRules, StageFormat},
+    veto::VetoSetup,
+};
 use crate::shared::ApiError;
 
 /// Vagas aceitas.
@@ -57,19 +60,35 @@ pub struct Setup {
     pub max_participants: i32,
     pub champion_rules: ec::ChampionRules,
     pub stages: Vec<ef::StageFormat>,
+    pub veto: VetoSetup,
 }
 
 impl Setup {
-    pub fn from_dto(max_participants: i32, rules: ChampionRules, stages: Vec<StageFormat>) -> Self {
+    pub fn from_dto(
+        max_participants: i32,
+        rules: ChampionRules,
+        stages: Vec<StageFormat>,
+        veto: VetoSetup,
+    ) -> Self {
         Self {
             max_participants,
             champion_rules: rules.into(),
             stages: stages.into_iter().map(Into::into).collect(),
+            veto,
         }
     }
 
-    /// Limites do site (vagas, bans, número de fases), vagas que caibam os
-    /// `registered` já inscritos e depois a checagem do `engine`: formato
+    /// A série mais longa das fases (para o pool de mapas).
+    pub fn longest_series(&self) -> u8 {
+        self.stages
+            .iter()
+            .map(ef::StageFormat::longest_series)
+            .max()
+            .unwrap_or(1)
+    }
+
+    /// Limites do site (vagas, bans, número de fases, veto), vagas que caibam
+    /// os `registered` já inscritos e depois a checagem do `engine`: formato
     /// válido e pool de campeões suficiente no pior caso.
     pub fn check(
         &self,
@@ -99,6 +118,7 @@ impl Setup {
             return Err(ApiError::invalid("tournament.stage_count_invalid")
                 .with_params([("max", MAX_STAGES as i64)]));
         }
+        self.veto.check(self.longest_series())?;
         self.check_entrants(mode, champion_pool, self.max_participants as usize)
     }
 
@@ -150,7 +170,7 @@ mod tests {
                 scope,
             }),
         };
-        Setup::from_dto(slots, rules, stages)
+        Setup::from_dto(slots, rules, stages, VetoSetup::off())
     }
 
     type Params = Vec<(&'static str, i64)>;
@@ -220,7 +240,7 @@ mod tests {
             )),
             Err((
                 "champions.pool_exhausted",
-                vec![("required", 32), ("available", 17)]
+                vec![("required", 33), ("available", 17)]
             ))
         );
         assert_eq!(

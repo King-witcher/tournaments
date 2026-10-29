@@ -12,9 +12,10 @@ use sqlx::PgConnection;
 use super::{
     due, key,
     result::Side,
-    stage::{self, Stage},
+    stage::Stage,
     tasks,
     types::{MatchState, NextMatch, SideSource, SourceOutcome},
+    veto,
     view::{self, Viewer},
 };
 use crate::{
@@ -53,8 +54,7 @@ pub async fn place<R>(
     member: &TenantMember<R>,
     slug: &str,
 ) -> Result<BracketPlace, ApiError> {
-    let tournament = due::find_current(conn, member, slug).await?;
-    let stage = stage::load(conn, &tournament).await?;
+    let (tournament, stage) = due::current(conn, member, slug).await?;
     let viewer = Viewer::new(member, &stage);
     let place = locate(&stage, viewer.participant);
     let next = match place {
@@ -76,8 +76,7 @@ pub async fn place_of<R>(
     slug: &str,
     user_id: i64,
 ) -> Result<BracketPlace, ApiError> {
-    let tournament = due::find_current(conn, member, slug).await?;
-    let stage = stage::load(conn, &tournament).await?;
+    let (tournament, stage) = due::current(conn, member, slug).await?;
     let place = locate(&stage, stage.participant_of(user_id));
     Ok(BracketPlace {
         tournament,
@@ -149,6 +148,7 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
             }),
             _ => None,
         },
-        task: tasks::match_task(status, m, &stage.games_of(m.id), Some(side), viewer),
+        task: tasks::match_task(status, stage, m, Some(side), viewer),
+        veto: veto::status(stage, m),
     })
 }

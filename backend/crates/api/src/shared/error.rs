@@ -14,7 +14,7 @@ pub struct ErrorBody {
     #[schema(example = "auth.unauthenticated")]
     pub error: &'static str,
     /// Números que a mensagem traduzida mostra, quando o código tem
-    /// (ex.: `champions.pool_exhausted` → `{"required": 32, "available": 17}`).
+    /// (ex.: `champions.pool_exhausted` → `{"required": 33, "available": 17}`).
     /// Alguns códigos trazem também um texto (ex.: `locale`, o idioma da
     /// tradução com erro).
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]

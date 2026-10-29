@@ -10,7 +10,7 @@ mod status;
 mod translations;
 
 use chrono::{DateTime, Utc};
-use engine::formats as ef;
+use engine::{core::MapId, formats as ef};
 use sqlx::{PgConnection, PgExecutor, types::Json};
 
 use super::{
@@ -20,6 +20,7 @@ use super::{
     status::TournamentStatus,
     texts::Texts,
     types::TournamentTranslation,
+    veto::PoolMap,
     visibility::Visibility,
 };
 use crate::{
@@ -61,6 +62,8 @@ pub struct StoredTournament {
     pub contest_minutes: i32,
     /// Se os mapas contam para o rating da comunidade.
     pub counts_for_rating: bool,
+    /// O pool de mapas (`setup.veto.pool`) com slug e nome, na ordem.
+    pub map_pool: Vec<PoolMap>,
     pub translations: Vec<TournamentTranslation>,
     /// Inscritos agora.
     pub participants: i64,
@@ -101,8 +104,8 @@ pub async fn create(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
-                counts_for_rating)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                counts_for_rating, map_mode, champion_phase, veto_seconds)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -118,14 +121,36 @@ pub async fn create(
         new.schedule.starts_at,
         new.schedule.check_in_minutes,
         new.contest_minutes,
-        new.counts_for_rating
+        new.counts_for_rating,
+        new.setup.veto.map_mode.as_str(),
+        new.setup.veto.champion_phase,
+        new.setup.veto.step_seconds
     )
     .fetch_optional(&mut *conn)
     .await?
     .ok_or(ApiError::conflict("tournament.slug_taken"))?;
     let id = TournamentId(id);
     insert_stages(conn, id, &new.setup.stages).await?;
+    insert_map_pool(conn, id, &new.setup.veto.pool).await?;
     Ok(id)
+}
+
+async fn insert_map_pool(
+    conn: &mut PgConnection,
+    id: TournamentId,
+    pool: &[MapId],
+) -> Result<(), sqlx::Error> {
+    let ids: Vec<i64> = pool.iter().map(|m| m.0).collect();
+    sqlx::query!(
+        r#"insert into tournament_maps (tournament_id, map_id, position)
+           select $1, map_id, position::smallint
+           from unnest($2::bigint[]) with ordinality as p(map_id, position)"#,
+        id.0,
+        &ids
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
 }
 
 async fn insert_stages(
@@ -147,7 +172,7 @@ async fn insert_stages(
 }
 
 /// Grava o PATCH: os textos e, quando vieram, a visibilidade, a configuração
-/// (vagas, campeões e fases), a data e a janela de check-in, a janela de
+/// (vagas, campeões, fases e veto), a data e a janela de check-in, a janela de
 /// contestação e o status.
 pub async fn update(
     conn: &mut PgConnection,
@@ -185,13 +210,23 @@ pub async fn update(
         return Ok(());
     };
     sqlx::query!(
-        "update tournaments set max_participants = $2, champion_rules = $3 where id = $1",
+        r#"update tournaments
+           set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,
+               veto_seconds = $6
+           where id = $1"#,
         id.0,
         setup.max_participants,
-        Json(setup.champion_rules) as _
+        Json(setup.champion_rules) as _,
+        setup.veto.map_mode.as_str(),
+        setup.veto.champion_phase,
+        setup.veto.step_seconds
     )
     .execute(&mut *conn)
     .await?;
+    sqlx::query!("delete from tournament_maps where tournament_id = $1", id.0)
+        .execute(&mut *conn)
+        .await?;
+    insert_map_pool(conn, id, &setup.veto.pool).await?;
     sqlx::query!(
         "delete from tournament_stages where tournament_id = $1",
         id.0

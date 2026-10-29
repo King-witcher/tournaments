@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from match_veto_events where tournament_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fb1f8f5723c2f2080c1536d5436d90d1db5ac0d265fa27db2a350a3e9c8b1a39"
+}

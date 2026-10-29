@@ -1,16 +1,19 @@
 //! O que uma partida, e cada mapa dela, espera de quem vê: enviar o próximo
-//! mapa, responder ao mapa do adversário, esperar, ou (organizador) resolver
-//! uma contestação. Só com o torneio em andamento e a partida pronta.
+//! mapa, responder ao mapa do adversário, o veto ("Pronto" ou o passo da
+//! vez), esperar, ou (organizador) resolver uma contestação. Só com o torneio em andamento e a partida pronta.
 
 use engine::{
     core::{Match, MatchState},
     series,
+    veto::Turn,
 };
 
 use super::{
     games::{GameStatus, StoredGame, series_games},
     result::Side,
+    stage::Stage,
     types::ViewerTask,
+    veto,
     view::Viewer,
 };
 use crate::tournaments::TournamentStatus;
@@ -52,16 +55,53 @@ pub fn game_task(
     }
 }
 
-/// O que a partida espera de quem vê, pela ordem de urgência: resolver
-/// (organizador), responder a um mapa, enviar o próximo, esperar o
-/// organizador, esperar o adversário.
-pub fn match_task(
+/// O que o veto do próximo mapa espera de quem joga (do lado `mine`):
+/// "Pronto" antes de começar, o passo da vez dele ou esperar o adversário.
+/// `None` sem veto no torneio, ou com o veto do próximo mapa concluído.
+fn veto_task(
     status: TournamentStatus,
+    stage: &Stage,
     m: &Match,
     games: &[&StoredGame],
+    mine: Side,
+) -> Option<ViewerTask> {
+    if !stage.veto_rules.has_phases() {
+        return None;
+    }
+    let next = next_game(status, m, games)?;
+    let Some(mv) = stage.veto_of(m.id).filter(|v| v.state.begun()) else {
+        let ready = stage.veto_of(m.id).map(|v| v.ready()).unwrap_or_default();
+        let me = usize::from(mine == Side::B);
+        return Some(if ready[me] {
+            ViewerTask::AwaitOpponent
+        } else {
+            ViewerTask::Ready
+        });
+    };
+    match mv.state.turn() {
+        Turn::Act { game, sides, .. } if i16::from(game) == next => {
+            Some(if sides.contains(&veto::ev_side(mine)) {
+                ViewerTask::Veto
+            } else {
+                ViewerTask::AwaitOpponent
+            })
+        }
+        _ => None,
+    }
+}
+
+/// O que a partida espera de quem vê, pela ordem de urgência: resolver
+/// (organizador), responder a um mapa, o veto ("Pronto" ou o passo da vez),
+/// enviar o próximo, esperar o organizador, esperar o adversário.
+pub fn match_task(
+    status: TournamentStatus,
+    stage: &Stage,
+    m: &Match,
     mine: Option<Side>,
     viewer: &Viewer,
 ) -> Option<ViewerTask> {
+    let games = stage.games_of(m.id);
+    let games = games.as_slice();
     let tasks: Vec<ViewerTask> = games
         .iter()
         .filter_map(|g| game_task(status, m, g, mine, viewer))
@@ -70,9 +110,11 @@ pub fn match_task(
     if has(ViewerTask::Resolve) {
         return Some(ViewerTask::Resolve);
     }
-    mine?;
+    let side = mine?;
     if has(ViewerTask::Respond) {
         Some(ViewerTask::Respond)
+    } else if let Some(task) = veto_task(status, stage, m, games, side) {
+        Some(task)
     } else if next_game(status, m, games).is_some() {
         Some(ViewerTask::Report)
     } else if has(ViewerTask::AwaitOrganizer) {

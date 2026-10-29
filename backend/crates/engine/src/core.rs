@@ -13,6 +13,12 @@ pub struct ParticipantId(pub i64);
 #[serde(transparent)]
 pub struct MapId(pub i64);
 
+/// Campeão do jogo: o id interno da tabela de campeões (`champions.id` na
+/// API).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ChampionId(pub i64);
+
 /// Em qual parte da chave a partida está.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

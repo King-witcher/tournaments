@@ -18,17 +18,19 @@ type Props = {
 };
 
 /**
- * O formato, em rótulo e valor curto: chave, séries, vagas e regras de
- * campeões da fase única, as janelas de check-in e de contestação e se conta
- * para o rating da comunidade. Os termos que quem joga pode não conhecer têm
- * um (i) com a explicação (a da chave e a dos campeões são as mesmas frases da
- * aba Regras). Embaixo, o link para a aba Regras, onde está tudo por extenso.
+ * O formato, em rótulo e valor curto: chave, séries, vagas, regras de
+ * campeões e o veto da fase única, as janelas de check-in e de contestação e
+ * se conta para o rating da comunidade. Os termos que quem joga pode não
+ * conhecer têm um (i) com a explicação (a da chave e a dos campeões são as
+ * mesmas frases da aba Regras). Embaixo, o link para a aba Regras, onde está
+ * tudo por extenso.
  */
 export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const t = useTranslations("Tournament.setup");
   const tRules = useTranslations("Tournament.autoRules");
   const locale = useLocale();
   const tRating = useTranslations("Ratings.tournament");
+  const tForm = useTranslations("TournamentForm");
   const formatMinutes = useFormatMinutes();
   const [stage] = tournament.stages;
   const bracket = bracketKind(stage);
@@ -47,6 +49,17 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
     <InfoTip term={t(`labels.${key}`)} label={t(`tips.${key}`)}>
       {text}
     </InfoTip>
+  );
+  // O veto numa linha: modo do mapa, mapas no pool, campeões e tempo.
+  const v = tournament.veto;
+  const vetoText = value(
+    tForm(`veto.mapModes.${v.map_mode}`),
+    v.map_mode !== "off" && tForm("summary.maps", { count: v.map_pool.length }),
+    v.champion_phase
+      ? tForm("summary.championPhase")
+      : tForm("summary.noChampionPhase"),
+    (v.map_mode !== "off" || v.champion_phase) &&
+      tForm("summary.seconds", { seconds: v.step_seconds }),
   );
   const championsText = [
     bans > 0 && tRules("champions.bans", { count: bans }),
@@ -84,6 +97,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
         t(`noRepeat.${repeat}`),
       ),
     },
+    { key: "veto", label: t("labels.veto"), value: vetoText },
     {
       key: "checkIn",
       label: tip(

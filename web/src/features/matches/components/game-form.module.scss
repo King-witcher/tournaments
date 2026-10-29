@@ -1,4 +1,5 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
 
 // Na largura de um formulário, mesmo na linha larga do mapa.
 .form {
@@ -10,4 +11,9 @@
   display: grid;
   gap: spacing.$spacing-05;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+// O mapa que o veto deu: texto, não campo (não há o que escolher).
+.fixedMap {
+  @include type.type-style("body-01");
 }

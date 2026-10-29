@@ -39,7 +39,7 @@ impl TournamentSetup<'_> {
             worst.push(stage.worst_case_games(self.max_participants)?);
         }
         let Some(rule) = self.champions.no_repeat else {
-            let required = self.champions.bans_per_game + 1;
+            let required = champions::required_without_rule(self.champions.bans_per_game);
             return if required > self.champion_pool {
                 Err(EngineError::ChampionPoolExhausted {
                     required,
@@ -160,9 +160,9 @@ mod tests {
     }
 
     #[test]
-    fn without_rule_each_side_needs_bans_plus_one() {
+    fn without_rule_each_map_needs_both_bans_plus_one() {
         let s = [double(3, 5)];
-        assert_eq!(setup(8, rules(3, None), 3, &s), exhausted(4, 3));
+        assert_eq!(setup(8, rules(3, None), 6, &s), exhausted(7, 6));
         assert_eq!(setup(8, rules(1, None), 17, &s), Ok(()));
     }
 
@@ -170,7 +170,7 @@ mod tests {
     fn tournament_scope_uses_worst_case_games() {
         let s = [double(3, 5)];
         let r = rules(1, Some(NoRepeatScope::Tournament));
-        assert_eq!(setup(16, r, 17, &s), exhausted(32, 17));
+        assert_eq!(setup(16, r, 17, &s), exhausted(33, 17));
     }
 
     #[test]
@@ -178,7 +178,7 @@ mod tests {
         let s = [double(3, 5)];
         let r = rules(1, Some(NoRepeatScope::Match));
         assert_eq!(setup(16, r, 17, &s), Ok(()));
-        assert_eq!(setup(16, r, 5, &s), exhausted(6, 5));
+        assert_eq!(setup(16, r, 5, &s), exhausted(7, 5));
     }
 
     #[test]

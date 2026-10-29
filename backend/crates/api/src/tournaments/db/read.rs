@@ -4,7 +4,7 @@
 //! tempo real abre pelo mesmo caminho (`current_status`) os que ninguém leu.
 
 use chrono::{DateTime, Utc};
-use engine::{champions as ec, formats as ef};
+use engine::{champions as ec, core::MapId, formats as ef};
 use sqlx::{Acquire, PgConnection, PgPool, types::Json};
 
 use super::{StoredTournament, TournamentId, status::open_due_check_in};
@@ -18,6 +18,7 @@ use crate::{
         status::TournamentStatus,
         texts::Texts,
         types::{NameTranslation, TournamentSummary, TournamentTranslation},
+        veto::{MapMode, PoolMap, VetoSetup},
         visibility::Visibility,
     },
 };
@@ -145,7 +146,7 @@ pub async fn find(
                   t.visibility, t.max_participants,
                   t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
                   t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,
-                  t.counts_for_rating, t.created_at,
+                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds, t.created_at,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
@@ -188,6 +189,23 @@ pub async fn find(
     )
     .fetch_all(&mut *conn)
     .await?;
+    let map_pool: Vec<PoolMap> = sqlx::query!(
+        r#"select m.id, m.slug, m.name
+           from tournament_maps p
+           join maps m on m.id = p.map_id
+           where p.tournament_id = $1
+           order by p.position"#,
+        row.id
+    )
+    .fetch_all(&mut *conn)
+    .await?
+    .into_iter()
+    .map(|m| PoolMap {
+        id: MapId(m.id),
+        slug: m.slug,
+        name: m.name,
+    })
+    .collect();
     let translations = sqlx::query!(
         r#"select locale, name, description, rules
            from tournament_translations
@@ -225,10 +243,17 @@ pub async fn find(
             max_participants: row.max_participants,
             champion_rules: row.champion_rules.0,
             stages: stages.into_iter().map(|s| s.0).collect(),
+            veto: VetoSetup {
+                map_mode: MapMode::from_db(&row.map_mode)?,
+                pool: map_pool.iter().map(|m| m.id).collect(),
+                champion_phase: row.champion_phase,
+                step_seconds: row.veto_seconds,
+            },
         },
         schedule,
         contest_minutes: row.contest_minutes,
         counts_for_rating: row.counts_for_rating,
+        map_pool,
         translations,
         participants: row.participants,
         registered: row.registered,

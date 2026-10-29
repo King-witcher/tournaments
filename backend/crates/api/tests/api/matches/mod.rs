@@ -1,8 +1,9 @@
 //! Testes de `matches`: a chave (`bracket`), envio e confirmação mapa a mapa
 //! (`results`), contestação e organizador (`organizer`), mapa anulado para
 //! ser jogado de novo (`replay`), correções e fim (`corrections`), as regras
-//! do banco para mapas, séries e histórico (`schema`). Helpers para montar um
-//! torneio iniciado com jogadores em ordem de seed.
+//! do banco para mapas, séries e histórico (`schema`) e o veto de mapas e
+//! campeões (`veto`). Helpers para montar um torneio iniciado com jogadores em
+//! ordem de seed.
 
 mod bracket;
 mod corrections;
@@ -10,6 +11,7 @@ mod organizer;
 mod replay;
 mod results;
 mod schema;
+mod veto;
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};

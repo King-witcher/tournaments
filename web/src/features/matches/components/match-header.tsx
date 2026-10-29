@@ -4,7 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { MATCH_STATE_STATUS, TASK_STATUS } from "../lib/status";
+import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
 
 type Props = {
   tenant: string;
@@ -65,7 +65,7 @@ export function MatchHeader({
           </StatusTag>
           {s.task && (
             <StatusTag status={TASK_STATUS[s.task]}>
-              {tBracket(`task.${s.task}`)}
+              {tBracket(`task.${taskKey(s.task, s.veto)}`)}
             </StatusTag>
           )}
         </>

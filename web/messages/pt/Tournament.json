@@ -79,7 +79,8 @@
       "slots": "Vagas",
       "champions": "Campeões",
       "checkIn": "Check-in",
-      "contest": "Prazo para contestar"
+      "contest": "Prazo para contestar",
+      "veto": "Veto"
     },
     "bracket": {
       "single": "Eliminação simples",

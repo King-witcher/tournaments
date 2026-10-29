@@ -36,4 +36,12 @@ export class RealtimeHub {
     }
     return false;
   }
+
+  /** Se `message` muda algo que uma página acompanha ao vivo (`fast`). */
+  affectsLive(message: ServerMessage): boolean {
+    for (const interest of this.interests) {
+      if (interest.fast && affects(interest, message)) return true;
+    }
+    return false;
+  }
 }

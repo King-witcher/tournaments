@@ -10,6 +10,8 @@ export type Interest = {
   tournament?: string;
   match?: string;
   me?: boolean;
+  /** Acompanha algo ao vivo (o veto, com passos de 30 s): recarrega com a janela curta. */
+  fast?: boolean;
 };
 
 /**

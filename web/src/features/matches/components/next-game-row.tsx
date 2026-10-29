@@ -17,11 +17,17 @@ type Props = {
   plays: boolean;
   /** Organizer ou owner que não joga: lança, já confirmado. */
   enters: boolean;
+  /**
+   * Com veto no torneio: se o veto deste mapa acabou (o jogador só envia
+   * depois) e o mapa que ele deu (o envio fica preso a ele).
+   */
+  veto?: { reportable: boolean; map: Schemas["MapRef"] | null } | null;
 };
 
 /**
  * A última linha da lista: o próximo mapa. Para quem joga, o formulário de
- * envio aberto; para os outros, "aguardando envio" e, para a organização, o
+ * envio aberto (com veto, só depois do veto do mapa, e no mapa que ele deu);
+ * para os outros, "aguardando envio" e, para a organização, o
  * lançamento fechado num bloco (é exceção).
  */
 export function NextGameRow({
@@ -31,6 +37,7 @@ export function NextGameRow({
   maps,
   plays,
   enters,
+  veto,
 }: Props) {
   const t = useTranslations("Match.games");
   const tForm = useTranslations("Match.form");
@@ -47,13 +54,16 @@ export function NextGameRow({
         })}
       </span>
       <div className={styles.body}>
-        {plays ? (
+        {plays && veto && !veto.reportable ? (
+          <p className={styles.awaiting}>{t("vetoFirst", { number })}</p>
+        ) : plays ? (
           <GameForm
             target={target}
             number={number}
             mode="report"
             names={names}
             maps={maps}
+            fixedMap={veto?.map ?? undefined}
             submitLabel={tForm("submit", { number })}
           />
         ) : (

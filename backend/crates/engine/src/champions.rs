@@ -36,7 +36,8 @@ pub struct NoRepeatRule {
 /// Regras de campeões de um torneio (guardadas em JSON no torneio).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChampionRules {
-    /// Bans que o adversário aplica contra um lado, por mapa.
+    /// Bans de cada lado por mapa. O ban tira o campeão dos dois lados
+    /// naquele mapa (veto): cada mapa perde `2 * bans_per_game` campeões.
     pub bans_per_game: u32,
     /// `None`: sem regra de não repetição.
     pub no_repeat: Option<NoRepeatRule>,
@@ -47,7 +48,7 @@ pub struct ChampionRules {
 pub struct ChampionBudget {
     /// Campeões disponíveis no torneio.
     pub pool_size: u32,
-    /// Bans que o adversário aplica contra um lado, por mapa.
+    /// Bans de cada lado por mapa (valem para os dois lados).
     pub bans_per_game: u32,
     /// Jogadores por lado (1 no duelo).
     pub team_size: u32,
@@ -61,13 +62,20 @@ pub struct ChampionBudget {
 ///
 /// No último mapa do escopo, quem escolhe já gastou um campeão por mapa
 /// anterior (por jogador ou pelo time todo) e ainda enfrenta os bans daquele
-/// mapa; precisa sobrar ao menos um campeão para cada escolha.
+/// mapa, os dele e os do adversário (o ban vale para os dois lados); precisa
+/// sobrar ao menos um campeão para cada escolha.
 pub fn required_pool(rule: NoRepeatRule, budget: ChampionBudget) -> u32 {
     let picks_per_game = match rule.who {
         NoRepeatWho::Player => 1,
         NoRepeatWho::Team => budget.team_size,
     };
-    budget.games_in_scope * picks_per_game + budget.bans_per_game
+    budget.games_in_scope * picks_per_game + 2 * budget.bans_per_game
+}
+
+/// Campeões necessários sem a regra de não repetição: os bans dos dois lados
+/// e um para escolher.
+pub fn required_without_rule(bans_per_game: u32) -> u32 {
+    2 * bans_per_game + 1
 }
 
 pub fn check_budget(rule: NoRepeatRule, budget: ChampionBudget) -> Result<(), EngineError> {
@@ -108,7 +116,7 @@ mod tests {
 
     #[test]
     fn bans_add_to_the_requirement() {
-        assert_eq!(required_pool(TOURNAMENT_PLAYER, budget(17, 2, 1, 9)), 11);
+        assert_eq!(required_pool(TOURNAMENT_PLAYER, budget(17, 2, 1, 9)), 13);
     }
 
     #[test]
@@ -117,7 +125,7 @@ mod tests {
             who: NoRepeatWho::Team,
             scope: NoRepeatScope::Tournament,
         };
-        assert_eq!(required_pool(rule, budget(17, 1, 2, 6)), 13);
+        assert_eq!(required_pool(rule, budget(17, 1, 2, 6)), 14);
     }
 
     #[test]

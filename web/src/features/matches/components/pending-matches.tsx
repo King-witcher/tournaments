@@ -4,7 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { ACTIONABLE } from "../lib/status";
+import { ACTIONABLE, taskKey } from "../lib/status";
 import styles from "./pending-matches.module.scss";
 
 type Schemas = components["schemas"];
@@ -44,7 +44,7 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
                 match: code(m.key),
                 a: name(m.a),
                 b: name(m.b),
-                task: m.task ? t(`task.${m.task}`) : "",
+                task: m.task ? t(`task.${taskKey(m.task, m.veto)}`) : "",
               })}
             </Link>
           </li>

@@ -27,13 +27,15 @@
     },
     "match": {
       "ready": "Partida lista",
+      "opponent_ready": "Rival listo para el veto",
+      "veto_started": "Empezó el veto",
       "game_contested": "Mapa impugnado, para la organización",
       "series_decided": "Resultado de cada serie (muchos mensajes)"
     }
   },
   "mention": {
     "label": "Mencionar con @ a quien vinculó Discord a su cuenta",
-    "hint": "Vale para la partida lista y para los avisos de la organización. Quien no lo vinculó aparece por su apodo."
+    "hint": "Vale para los avisos de la partida (lista, rival listo, veto) y para los de la organización. Quien no lo vinculó aparece por su apodo."
   },
   "saved": "Configuración guardada.",
   "test": "Enviar prueba",

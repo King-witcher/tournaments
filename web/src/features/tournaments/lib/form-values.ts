@@ -29,6 +29,14 @@ export type TournamentValues = {
   contestMinutes: number;
   /** Os mapas contam para o rating da comunidade (muda até começar). */
   countsForRating: boolean;
+  /** Como sai o mapa de cada jogo. */
+  mapMode: Schemas["MapMode"];
+  /** Slugs do pool de mapas; `null` na criação: o padrão da API. */
+  mapPool: string[] | null;
+  /** Ban/pick de campeões a cada mapa. */
+  championPhase: boolean;
+  /** Segundos de cada passo do veto. */
+  vetoSeconds: number;
 };
 
 /** Os textos de uma tradução. */
@@ -58,7 +66,8 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
 
 /**
  * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
- * vagas, 1 ban, check-in de 30 min, 10 min para contestar.
+ * vagas, 1 ban, check-in de 30 min, 10 min para contestar, veto de mapas no
+ * pool padrão com ban/pick de campeões e 30 s por passo.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -79,6 +88,10 @@ export function defaultValues(locale: Locale): TournamentValues {
     checkInMinutes: 30,
     contestMinutes: 10,
     countsForRating: true,
+    mapMode: "veto",
+    mapPool: null,
+    championPhase: true,
+    vetoSeconds: 30,
   };
 }
 
@@ -106,8 +119,23 @@ export function valuesFrom(
     checkInMinutes: tournament.check_in_minutes ?? null,
     contestMinutes: tournament.contest_minutes,
     countsForRating: tournament.counts_for_rating,
+    mapMode: tournament.veto.map_mode,
+    mapPool: tournament.veto.map_pool,
+    championPhase: tournament.veto.champion_phase,
+    vetoSeconds: tournament.veto.step_seconds,
   };
 }
+
+/** O pool do formulário: o escolhido, ou o padrão (`default_pool`) enquanto não mexeram. */
+export function poolOf(values: TournamentValues, maps: Schemas["Map"][]) {
+  return (
+    values.mapPool ?? maps.filter((m) => m.default_pool).map((m) => m.slug)
+  );
+}
+
+/** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
+export const longestSeries = (values: TournamentValues) =>
+  Math.max(values.bestOf, values.finalsBestOf);
 
 /** A tradução de `locale` que o torneio já tem (ligada), ou uma vazia. */
 export function translationFrom(
@@ -233,10 +261,17 @@ function scheduleBody(values: TournamentValues) {
   };
 }
 
-/** Vagas, regra de campeões, fases e "conta para o rating" no formato da API. */
+/** Vagas, regra de campeões, fases, veto e "conta para o rating" no formato da API. */
 function setupBody(values: TournamentValues) {
   return {
     counts_for_rating: values.countsForRating,
+    veto: {
+      map_mode: values.mapMode,
+      // Sem mexer, na criação, vale o pool padrão da API.
+      map_pool: values.mapPool ?? undefined,
+      champion_phase: values.championPhase,
+      step_seconds: values.vetoSeconds,
+    },
     // Vazio não passa do `required` do campo; se passar, a API recusa e o
     // erro aparece no campo.
     max_participants: values.maxParticipants ?? 0,

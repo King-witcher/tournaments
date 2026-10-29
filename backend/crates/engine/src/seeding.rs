@@ -27,7 +27,7 @@ pub fn random_order(participants: &[ParticipantId], seed: u64) -> Vec<Participan
 }
 
 /// Inteiro uniforme em `0..n`: descarta o resto que favoreceria os menores.
-fn below(rng: &mut ChaCha8Rng, n: u64) -> u64 {
+pub(crate) fn below(rng: &mut ChaCha8Rng, n: u64) -> u64 {
     let limit = u64::MAX - u64::MAX % n;
     loop {
         let x = rng.next_u64();

@@ -101,7 +101,8 @@ async fn champion_pool_check_blocks_with_numbers() {
     let (app, ana, _) = quake_br(&db).await;
     let no_repeat = |scope: &str| json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": scope } } });
 
-    // Dupla de 16, md3/md5: 7 * 3 + 2 * 5 = 31 mapas no pior caso, + 1 ban.
+    // Dupla de 16, md3/md5: 7 * 3 + 2 * 5 = 31 mapas no pior caso, + 1 ban de
+    // cada lado.
     let (status, body) = post(
         &app,
         "/tenants/quake-br/tournaments",
@@ -112,10 +113,10 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 32, "available": 17 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 33, "available": 17 } })
     );
 
-    // Com 4 vagas, simples md3/md5: 3 + 5 + 1 ban = 9 cabe nos 17.
+    // Com 4 vagas, simples md3/md5: 3 + 5 + 2 bans = 10 cabe nos 17.
     let small = with(duel("copinha"), no_repeat("tournament"));
     let small = with(
         small,
@@ -127,7 +128,8 @@ async fn champion_pool_check_blocks_with_numbers() {
     let created = create_tournament(&app, &ana, small).await;
     assert_eq!(created["stages"][0]["grand_final_reset"], false);
 
-    // Aumentar as vagas refaz a checagem: com 32 vagas são 3 * 4 + 5 + 1 = 18.
+    // Aumentar as vagas refaz a checagem: com 32 vagas são 3 * 4 + 5 + 2 = 19
+    // (um ban de cada lado).
     let (status, body) = patch(
         &app,
         "/tenants/quake-br/tournaments/copinha",
@@ -138,7 +140,7 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 18, "available": 17 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 19, "available": 17 } })
     );
 
     // Campeão que sai do jogo diminui o pool; publicar checa de novo.
@@ -151,7 +153,7 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 9, "available": 8 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 10, "available": 8 } })
     );
 }
 
