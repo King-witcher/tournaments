@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// Lado a lado, como as duas opções do "ou"; onde os dois não cabem na
+// linha (o celular), o segundo desce para baixo do primeiro.
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-04;
+}
