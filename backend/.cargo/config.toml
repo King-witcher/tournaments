@@ -1,9 +1,9 @@
 # Banco local sem senha, usado pelas macros sqlx::query! na compilação.
 [env]
 DATABASE_URL = "postgres://tournaments@localhost:5432/tournaments"
-# Testes ao mesmo tempo: os de rota dividem 4 bancos (TEST_DATABASES em
+# Testes ao mesmo tempo: os de rota dividem 8 bancos (TEST_DATABASES em
 # crates/api/tests/api/db.rs), e um a mais só esperaria um banco livre.
-RUST_TEST_THREADS = "4"
+RUST_TEST_THREADS = "8"
 
 # O rust-lld (vem com o rustup) liga mais rápido e com bem menos memória que o
 # link.exe do MSVC. Só no Windows; o build do Render (Linux) não muda.

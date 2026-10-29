@@ -1,10 +1,11 @@
 //! O banco de cada teste. Cada banco principal (`DATABASE_URL`) tem poucos
-//! bancos de teste (`TEST_DATABASES`, padrão 4), criados e migrados uma vez e
+//! bancos de teste (`TEST_DATABASES`, padrão 8), criados e migrados uma vez e
 //! mantidos entre execuções; antes de cada teste, o que o anterior gravou
-//! sai. Criar e apagar um banco por teste, como faz o `sqlx::test`, custava
-//! um checkpoint do Postgres a cada teste, e com outras suítes rodando cada
-//! teste esperava minutos. Pelo mesmo motivo, uma suíte espera a de outra
-//! sessão terminar (lock de arquivo na pasta temporária).
+//! sai (por `delete`; ver `reset_sql`). Criar e apagar um banco por teste,
+//! como faz o `sqlx::test`, custava um checkpoint do Postgres a cada teste, e
+//! com outras suítes rodando cada teste esperava minutos. Uma suíte espera a
+//! de outra sessão terminar (lock de arquivo na pasta temporária): dez suítes
+//! juntas levaram o mesmo que dez em fila, e cada uma só via o fim no final.
 
 use std::{
     collections::HashMap,
@@ -23,7 +24,9 @@ use sqlx::{
 use tokio::sync::{OnceCell, Semaphore, SemaphorePermit};
 
 /// Bancos de teste, e testes de banco ao mesmo tempo, sem `TEST_DATABASES`.
-const DEFAULT_DATABASES: usize = 4;
+/// Com 8 a suíte leva metade do tempo de 4; 16 ganha pouco e passaria das
+/// 100 conexões do Postgres com o pool cheio (8 por teste).
+const DEFAULT_DATABASES: usize = 8;
 
 /// Conexões do pool de cada teste (o app e as consultas do teste dividem).
 const CONNECTIONS: u32 = 8;
@@ -282,6 +285,14 @@ async fn reset(options: &PgConnectOptions) {
     conn.close().await.ok();
 }
 
+/// `delete`, não `truncate`: o truncate troca os arquivos de cada tabela no
+/// disco, e no Windows (com o antivírus olhando a pasta do Postgres) isso
+/// custava de 0,1 s a 9 s por teste conforme a carga da máquina, e piorava com
+/// mais testes ao mesmo tempo; o delete de tabelas quase vazias fica na
+/// memória. FKs e triggers continuam valendo: comunidades e usuários saem
+/// primeiro, e a cascata deles leva quase todo o resto; cada tabela sai numa
+/// subtransação, e a que recusar (ou que um trigger encheu de novo) é tentada
+/// na volta seguinte. As sequências voltam ao 1, como no `restart identity`.
 async fn reset_sql(conn: &mut PgConnection) -> String {
     let tables: Vec<(String, bool)> = sqlx::query_as(
         "select t.tablename::text, s.tablename is not null
@@ -294,12 +305,71 @@ async fn reset_sql(conn: &mut PgConnection) -> String {
     .fetch_all(&mut *conn)
     .await
     .unwrap();
-    let empty: Vec<String> = tables
+    let mut empty: Vec<String> = tables
         .iter()
         .filter(|(_, seeded)| !seeded)
-        .map(|(t, _)| format!(r#""{t}""#))
+        .map(|(t, _)| t.clone())
         .collect();
-    let mut sql = format!("truncate table {} restart identity;", empty.join(", "));
+    empty.sort_by_key(|t| match t.as_str() {
+        "tenants" => 0,
+        "users" => 1,
+        _ => 2,
+    });
+    let sequences: Vec<String> = sqlx::query_scalar(
+        "select s.oid::regclass::text
+         from pg_class s
+         join pg_depend d on d.classid = 'pg_class'::regclass and d.objid = s.oid
+           and d.deptype in ('a', 'i')
+         join pg_class t on t.oid = d.refobjid
+         where s.relkind = 'S' and t.relnamespace = 'public'::regnamespace
+           and t.relname::text = any($1)
+         order by 1",
+    )
+    .bind(&empty)
+    .fetch_all(&mut *conn)
+    .await
+    .unwrap();
+    let literals = |names: &[String]| {
+        names
+            .iter()
+            .map(|n| format!("'{n}'"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let mut sql = format!(
+        r#"do $$
+        declare
+            tables text[] := array[{tables}]::text[];
+            sequences text[] := array[{sequences}]::text[];
+            t text;
+            filled boolean;
+            any_filled boolean;
+            last_error text;
+        begin
+            for pass in 1..10 loop
+                any_filled := false;
+                foreach t in array tables loop
+                    execute format('select exists (select 1 from %I)', t) into filled;
+                    continue when not filled;
+                    any_filled := true;
+                    begin
+                        execute format('delete from %I', t);
+                    exception when others then
+                        last_error := t || ': ' || sqlerrm;
+                    end;
+                end loop;
+                if not any_filled then
+                    foreach t in array sequences loop
+                        perform setval(t::regclass, 1, false);
+                    end loop;
+                    return;
+                end if;
+            end loop;
+            raise exception 'banco de teste com linhas depois de 10 voltas (%)', last_error;
+        end $$;"#,
+        tables = literals(&empty),
+        sequences = literals(&sequences),
+    );
     for (table, _) in tables.iter().filter(|(_, seeded)| *seeded) {
         sql.push_str(&format!(
             r#"delete from "{table}"; insert into "{table}" overriding system value select * from {SEED_SCHEMA}."{table}";"#

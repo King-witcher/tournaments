@@ -26,7 +26,7 @@ Backend (em `backend/`):
 - `bun scripts/dev.ts`: API com recarga automática (para, aplica migrations, recompila e sobe a cada `.rs`/`.sql`/`Cargo.toml`/`.env` salvo; respeita `CARGO_TARGET_DIR` e `API_ADDR`)
 - `cargo run -p api`: sobe a API em http://localhost:4000 (docs Scalar em `/docs`, OpenAPI em `/openapi.json`) e aplica as migrations
 - `cargo test -p engine`: testes dos motores (rápidos, sem banco)
-- `cargo test`: tudo, inclusive testes de API (precisam do Postgres e do Redis locais; dividem 4 bancos reaproveitados, e uma suíte de outra sessão espera esta terminar)
+- `cargo test`: tudo, inclusive testes de API (precisam do Postgres e do Redis locais; dividem 8 bancos reaproveitados, e uma suíte de outra sessão espera esta terminar)
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`
 - Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão e rodar `cargo run -p migrate` **antes** de compilar código com `query!` que use a tabela nova (as macros conferem o SQL contra o banco local na compilação). Não há sqlx-cli; não instale globalmente.
 - `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/`, os dados das queries para compilar sem banco (`SQLX_OFFLINE=true`, como no Render). Rode e faça commit do `.sqlx/` sempre que criar ou mudar um `query!`, senão o deploy falha.

@@ -20,7 +20,7 @@ REVOKE ALL ON DATABASE tournaments FROM PUBLIC;
 GRANT CONNECT, TEMPORARY ON DATABASE tournaments TO tournaments;
 ```
 
-`CREATEDB` existe só para os testes: eles criam até 4 bancos `_sqlx_test_<banco>_t<n>` (`backend/crates/api/tests/api/db.rs`), mantidos entre execuções e esvaziados antes de cada teste.
+`CREATEDB` existe só para os testes: eles criam até 8 bancos `_sqlx_test_<banco>_t<n>` (`backend/crates/api/tests/api/db.rs`), mantidos entre execuções e esvaziados antes de cada teste.
 
 No `pg_hba.conf`, **antes** das linhas `all all`, e depois `SELECT pg_reload_conf();`:
 
