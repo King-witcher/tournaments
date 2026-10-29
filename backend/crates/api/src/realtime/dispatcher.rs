@@ -1,10 +1,12 @@
 //! O despachante: lê o outbox em ordem, publica cada evento no canal dos
 //! sockets, manda os Web Push dos avisos e apaga o que saiu, tudo numa
-//! transação (outra instância pula as linhas travadas). Roda quando acordado:
-//! depois de cada requisição que emitiu e a cada passada do agendador.
+//! transação (outra instância pula as linhas travadas). Os avisos que a
+//! comunidade quer no Discord entram na fila dele nessa transação (o envio é
+//! da tarefa do `discord`). Roda quando acordado: depois de cada requisição
+//! que emitiu e a cada passada do agendador.
 
 use crate::{
-    AppState,
+    AppState, discord,
     outbox::{self, Event},
     push,
     shared::ApiError,
@@ -16,12 +18,14 @@ const BATCH: i64 = 200;
 /// Uma passada: publica e apaga até `BATCH` eventos. Devolve quantos saíram
 /// (os ilegíveis também saem, com log).
 pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
+    let mut queued = false;
     let mut tx = state.db.begin().await?;
     let batch = outbox::claim(&mut tx, BATCH).await?;
     for stored in &batch {
         let Some(event) = &stored.event else {
             continue;
         };
+        queued |= enqueue_discord(&mut tx, event).await?;
         if let (Event::Notice { users, notice }, Some(sender)) = (event, &state.push) {
             push::deliver(&mut tx, sender.as_ref(), users, notice).await?;
         }
@@ -30,6 +34,9 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
     let ids: Vec<i64> = batch.iter().map(|s| s.id).collect();
     outbox::remove(&mut tx, &ids).await?;
     tx.commit().await?;
+    if queued {
+        state.webhooks.wake();
+    }
     Ok(batch.len())
 }
 
@@ -43,6 +50,23 @@ pub(super) async fn drain(state: &AppState) {
                 tracing::error!(code = e.code, "despachante do outbox falhou");
                 return;
             }
+        }
+    }
+}
+
+/// Põe o evento na fila do Discord, num savepoint: a falha dele fica no log e
+/// não derruba a transação (e com ela o push e o tempo real do lote inteiro).
+async fn enqueue_discord(tx: &mut sqlx::PgConnection, event: &Event) -> Result<bool, sqlx::Error> {
+    let mut savepoint = sqlx::Connection::begin(tx).await?;
+    match discord::enqueue(&mut savepoint, event).await {
+        Ok(queued) => {
+            savepoint.commit().await?;
+            Ok(queued)
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "aviso do Discord não entrou na fila");
+            savepoint.rollback().await?;
+            Ok(false)
         }
     }
 }

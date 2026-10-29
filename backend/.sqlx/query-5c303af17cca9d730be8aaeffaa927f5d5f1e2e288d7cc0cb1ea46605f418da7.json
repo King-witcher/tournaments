@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select webhook_id, token, events, mention_players, locale,\n                  broken_at is not null as \"broken!\"\n           from discord_webhooks where tenant_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "webhook_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "webhook_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "token"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "events",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "events"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "mention_players",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "mention_players"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "locale",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "locale"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "broken!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "5c303af17cca9d730be8aaeffaa927f5d5f1e2e288d7cc0cb1ea46605f418da7"
+}

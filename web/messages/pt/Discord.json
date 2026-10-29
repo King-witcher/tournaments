@@ -1,0 +1,43 @@
+{
+  "title": "Avisos no Discord",
+  "description": "O site posta no canal de um servidor do Discord quando algo acontece nos torneios da comunidade. No Discord, abra Configurações do servidor, Integrações, Webhooks, crie um webhook para o canal e cole o endereço dele aqui.",
+  "loading": "Carregando os avisos do Discord…",
+  "current": "Webhook {id}",
+  "broken": {
+    "title": "O Discord não reconhece mais este webhook",
+    "body": "Ele foi apagado ou o endereço mudou, e nenhum aviso está saindo. Cole o endereço de outro webhook."
+  },
+  "url": {
+    "label": "Endereço do webhook",
+    "newLabel": "Endereço do novo webhook",
+    "hint": "Começa com https://discord.com/api/webhooks/. Quem tem este endereço posta no canal: não o compartilhe. Depois de salvo, ele não aparece mais aqui."
+  },
+  "replace": "Trocar o webhook",
+  "keep": "Manter o webhook",
+  "language": "Idioma das mensagens",
+  "events": {
+    "legend": "Avisos que o site posta",
+    "check_in": {
+      "opened": "Check-in aberto"
+    },
+    "tournament": {
+      "started": "Torneio iniciado, com o link da chave",
+      "start_due": "Hora de iniciar, para a organização",
+      "finished": "Torneio encerrado, com o pódio"
+    },
+    "match": {
+      "ready": "Partida pronta",
+      "game_contested": "Mapa contestado, para a organização",
+      "series_decided": "Resultado de cada série (muitas mensagens)"
+    }
+  },
+  "mention": {
+    "label": "Mencionar com @ quem vinculou o Discord à conta",
+    "hint": "Vale para a partida pronta e para os avisos da organização. Quem não vinculou aparece pelo apelido."
+  },
+  "saved": "Configuração salva.",
+  "test": "Enviar teste",
+  "tested": "Mensagem de teste enviada ao canal.",
+  "remove": "Remover webhook",
+  "removeConfirm": "Remover o webhook? Os avisos param de sair e as mensagens que esperam na fila são descartadas. O webhook no Discord continua existindo."
+}

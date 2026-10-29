@@ -22,6 +22,7 @@
 //! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`.
 
 mod actions;
+mod announce;
 mod changes;
 mod db;
 mod detail;

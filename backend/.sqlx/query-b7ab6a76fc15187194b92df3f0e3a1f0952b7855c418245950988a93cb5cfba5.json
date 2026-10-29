@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update discord_webhooks set broken_at = null where tenant_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b7ab6a76fc15187194b92df3f0e3a1f0952b7855c418245950988a93cb5cfba5"
+}

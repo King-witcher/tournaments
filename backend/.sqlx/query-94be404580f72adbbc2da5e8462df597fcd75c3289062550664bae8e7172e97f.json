@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select tr.name from tournaments t\n           join tournament_translations tr on tr.tournament_id = t.id and tr.locale = $3\n           where t.tenant_id = $1 and t.slug = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_translations",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "94be404580f72adbbc2da5e8462df597fcd75c3289062550664bae8e7172e97f"
+}

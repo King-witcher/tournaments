@@ -30,6 +30,9 @@ pub enum Event {
     SessionsEnded { user: i64, sessions: Vec<String> },
     /// Aviso para pessoas, pelo WebSocket e pelo Web Push.
     Notice { users: Vec<i64>, notice: Notice },
+    /// Aviso só para o canal do Discord da comunidade (ninguém o recebe no
+    /// site nem no Web Push).
+    Announce { announce: Announce },
 }
 
 impl Event {
@@ -119,6 +122,50 @@ pub enum NoticeKind {
     /// owner, uma vez).
     #[serde(rename = "tournament.start_due")]
     StartDue { tournament: String },
+}
+
+/// Aviso que só vai para o canal do Discord da comunidade: o torneio começou,
+/// terminou ou uma série foi decidida. Mesma forma de `Notice` (código,
+/// parâmetros, caminho), mas fora do OpenAPI e do front: nenhuma pessoa o
+/// recebe. O caminho começa pelo slug da comunidade e o do torneio.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Announce {
+    #[serde(flatten)]
+    pub kind: AnnounceKind,
+    pub path: String,
+}
+
+/// Quem ficou em cada lugar do pódio.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Placement {
+    pub rank: u32,
+    /// Apelido na comunidade.
+    pub player: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(tag = "code", content = "params")]
+pub enum AnnounceKind {
+    /// A chave foi gerada.
+    #[serde(rename = "tournament.started")]
+    TournamentStarted { tournament: String },
+    /// A última partida acabou; `podium` na ordem da classificação.
+    #[serde(rename = "tournament.finished")]
+    TournamentFinished {
+        tournament: String,
+        podium: Vec<Placement>,
+    },
+    /// Uma série foi decidida (ou corrigida); `score` em mapas ganhos, se
+    /// houve placar.
+    #[serde(rename = "match.series_decided")]
+    SeriesDecided {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        winner: String,
+        loser: String,
+        score: Option<String>,
+    },
 }
 
 #[cfg(test)]

@@ -56,6 +56,8 @@ Os emails (confirmação do cadastro, recuperação de senha, troca de email) sa
 
 Para os avisos fora do site (Web Push), gere as chaves VAPID com `bun scripts/vapid-keys.ts` (em `backend/`, sem instalar nada) e cole as duas linhas que ele imprime (`VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`) no `backend/.env`; `VAPID_SUBJECT` (um `mailto:` ou `https:`) é opcional e, sem ele, vai a origem do front. Sem as chaves, tudo funciona e os avisos só chegam com o site aberto, pelo WebSocket. Em produção, as mesmas variáveis no Render: trocar o par depois faz cada navegador precisar ativar os avisos de novo.
 
+Os avisos da comunidade no Discord não precisam de variável de ambiente nem de bot: o owner cria um webhook no canal e cola o endereço nas configurações da comunidade. No Discord: **Configurações do servidor → Integrações → Webhooks → Novo webhook**, escolha o canal, copie a URL do webhook (`https://discord.com/api/webhooks/…`). No site: aba **Configurações** da comunidade (só o owner a vê), seção "Avisos no Discord"; cole a URL, escolha os avisos e o idioma e use "Enviar teste". A URL é uma credencial: fica só no banco, a API nunca a devolve nem a escreve no log, e quem a perde apaga o webhook no Discord e cola outro.
+
 Depois, em um terminal, a API com recarga automática: a cada `.rs`, `.sql`, `Cargo.toml` ou `.env` salvo, ela para, aplica as migrations, recompila e sobe de novo. Se a compilação falhar, espera a próxima mudança.
 
 ```sh

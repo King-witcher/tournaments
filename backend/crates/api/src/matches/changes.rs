@@ -17,7 +17,7 @@ use engine::{
 };
 use sqlx::PgConnection;
 
-use super::{games::GameStatus, key, result::Confirmation, stage::Stage};
+use super::{announce, games::GameStatus, key, result::Confirmation, stage::Stage};
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
     participants::Seeded,
@@ -153,10 +153,17 @@ pub async fn settled(
         {
             match_ready(conn, &audience, &after.entrants, &key, pair).await?;
         }
+        let decided = |mark: &Mark| mark.result.as_ref().map(|r| (r.1, r.2));
+        if decided(&now).is_some() && was.map(decided) != Some(decided(&now)) {
+            announce::series_decided(conn, &audience, after, m).await?;
+        }
     }
     outbox::emit(conn, Event::me(players)).await?;
     if status != tournament.status {
         tournaments::changed(conn, tournament.id).await?;
+        if status == TournamentStatus::Finished {
+            announce::finished(conn, &audience, after).await?;
+        }
     }
     // Contestou, resolveu, corrigiu, anulou, deu W.O.: a lista de mapas
     // contestados da home da organização mudou.
@@ -179,6 +186,7 @@ pub async fn started(
             match_ready(conn, &audience, entrants, &key::format(m.id), pair).await?;
         }
     }
+    announce::started(conn, &audience).await?;
     Ok(())
 }
 

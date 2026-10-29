@@ -95,3 +95,27 @@ pub async fn forget_user(conn: &mut PgConnection, user_id: i64) -> Result<(), sq
         .await?;
     Ok(())
 }
+
+/// O nome do torneio `slug` da comunidade `tenant` em cada idioma em que ele
+/// tem tradução.
+pub async fn translated_names(
+    conn: &mut PgConnection,
+    tenant: &str,
+    slug: &str,
+) -> Result<Vec<(Locale, String)>, sqlx::Error> {
+    let rows = sqlx::query!(
+        r#"select tr.locale, tr.name
+           from tournaments t
+           join tenants te on te.id = t.tenant_id
+           join tournament_translations tr on tr.tournament_id = t.id
+           where te.slug = $1 and t.slug = $2"#,
+        tenant,
+        slug
+    )
+    .fetch_all(conn)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .filter_map(|r| Some((Locale::from_db(&r.locale).ok()?, r.name)))
+        .collect())
+}

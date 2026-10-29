@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select tm.nickname,\n                  (select i.provider_user_id from user_identities i\n                   where i.user_id = tm.user_id and i.provider = 'discord') as discord_id\n           from unnest($2::bigint[]) with ordinality as u(id, n)\n           join tenant_members tm on tm.user_id = u.id and tm.tenant_id = $1\n           order by u.n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "discord_id",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "19242e738128c990c0d92f1013e6ed6555e78c27308f4672cd76c6de891673fb"
+}

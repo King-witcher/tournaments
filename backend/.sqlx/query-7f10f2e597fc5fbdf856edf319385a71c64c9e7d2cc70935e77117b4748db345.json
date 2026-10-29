@@ -1,0 +1,149 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with next as (\n               select m.id from discord_messages m\n               join discord_webhooks w on w.tenant_id = m.tenant_id\n               where m.not_before <= $1 and w.broken_at is null\n                 and (w.retry_at is null or w.retry_at <= $1)\n               order by m.id\n               limit 1\n               for update of m skip locked\n           )\n           update discord_messages m\n           set not_before = $1::timestamptz + make_interval(secs => $2), attempts = m.attempts + 1\n           from next, discord_webhooks w\n           where m.id = next.id and w.tenant_id = m.tenant_id\n           returning m.id as \"id!\", m.tenant_id as \"tenant_id!\", m.code as \"code!\",\n                     m.params as \"params!\", m.path as \"path!\", m.users as \"users!\",\n                     m.attempts as \"attempts!\", w.webhook_id as \"webhook_id!\",\n                     w.token as \"token!\", w.locale as \"locale!\",\n                     w.mention_players as \"mention_players!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "code!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "code"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "params!",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "params"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "path!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "path"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "users!",
+        "type_info": "Int8Array",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "users"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "attempts!",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "discord_messages",
+            "name": "attempts"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "webhook_id!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "webhook_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "token!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "token"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "locale!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "locale"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "mention_players!",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "discord_webhooks",
+            "name": "mention_players"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "7f10f2e597fc5fbdf856edf319385a71c64c9e7d2cc70935e77117b4748db345"
+}

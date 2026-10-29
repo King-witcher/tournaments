@@ -163,5 +163,15 @@
     "k_max_invalid": "El K del primer mapa tiene que ser de {min} a {max}.",
     "k_decay_invalid": "El decaimiento tiene que ser de {min} a {max} mapas.",
     "k_order_invalid": "El K mínimo no puede pasar del K del primer mapa."
+  },
+  "discord": {
+    "url_invalid": "Esa no es una dirección de webhook de Discord. Empieza con https://discord.com/api/webhooks/.",
+    "url_required": "Pega la dirección del webhook del canal.",
+    "event_unknown": "Ese aviso no existe.",
+    "not_configured": "Esta comunidad aún no tiene un webhook de Discord.",
+    "webhook_gone": "Discord ya no reconoce este webhook. Pega la dirección de otro.",
+    "rate_limited": "Discord pidió esperar. Inténtalo de nuevo en {retry_after, plural, one {# segundo} other {# segundos}}.",
+    "unreachable": "No fue posible hablar con Discord. Inténtalo de nuevo.",
+    "rejected": "Discord rechazó el mensaje de prueba. Revisa los permisos del webhook."
   }
 }

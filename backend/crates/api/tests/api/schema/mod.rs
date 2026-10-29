@@ -9,6 +9,7 @@
 
 mod checks;
 mod deletion;
+mod discord;
 mod inactive;
 mod owner;
 mod ratings;

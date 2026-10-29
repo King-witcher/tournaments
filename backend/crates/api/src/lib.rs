@@ -3,6 +3,7 @@
 
 pub mod auth;
 pub mod config;
+pub mod discord;
 mod health;
 mod invites;
 mod lifecycle;
@@ -59,6 +60,8 @@ pub struct AppState {
     pub push: Option<Arc<dyn push::WebPush>>,
     /// Envio de email (Resend; sem chave, só o log).
     pub mail: mail::Mail,
+    /// Webhooks do Discord das comunidades (a fila é esvaziada por `discord::spawn`).
+    pub webhooks: discord::Webhooks,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
@@ -69,6 +72,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(health::router())
         .merge(auth::router())
         .merge(tenants::router())
+        .merge(discord::router())
         .merge(members::router())
         .merge(invites::router())
         .merge(tournaments::router())

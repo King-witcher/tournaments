@@ -11,6 +11,7 @@ use std::{
 use api::{
     AppState,
     auth::{AuthSettings, HttpDiscord, HttpGoogle, create_session},
+    discord::Webhooks,
     mail::{Email, Mail, Mailer},
     realtime::Realtime,
     shared::Redis,
@@ -152,6 +153,7 @@ pub fn state(db: PgPool) -> AppState {
         }),
         realtime: Realtime::new(),
         push: None,
+        webhooks: Webhooks::new(),
     }
 }
 

@@ -5,6 +5,7 @@ use api::{
     AppState, MIGRATOR,
     auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient},
     config::Config,
+    discord::{self, Webhooks},
     mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
@@ -84,8 +85,10 @@ async fn main() -> anyhow::Result<()> {
         realtime: Realtime::new(),
         push,
         mail,
+        webhooks: Webhooks::new(),
     };
     realtime::spawn(state.clone());
+    discord::spawn(state.clone());
     let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;

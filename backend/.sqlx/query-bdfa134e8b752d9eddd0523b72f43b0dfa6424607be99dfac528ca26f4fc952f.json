@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from discord_messages where created_at < $1::timestamptz - make_interval(secs => $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bdfa134e8b752d9eddd0523b72f43b0dfa6424607be99dfac528ca26f4fc952f"
+}

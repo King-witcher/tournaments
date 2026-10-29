@@ -5,6 +5,7 @@
 mod auth;
 mod common;
 mod db;
+mod discord;
 mod docs;
 mod health;
 mod invites;

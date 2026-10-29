@@ -210,3 +210,55 @@ async fn the_dispatcher_pushes_notices() {
         ]
     );
 }
+
+#[tokio::test]
+async fn the_push_carries_the_name_in_the_language_of_the_subscription() {
+    let (db, _lease) = crate::db::test_db().await;
+    let fake = Arc::new(FakePush::default());
+    let state = api::AppState {
+        push: Some(fake.clone()),
+        ..state(db.clone())
+    };
+    let app = app_from(state.clone());
+    let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
+    create(&app, &ana, "quake-br").await;
+    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
+    for (endpoint, locale) in [
+        ("https://a.push.example/pt", "pt"),
+        ("https://a.push.example/es", "es"),
+    ] {
+        let body = subscription_in(endpoint, locale);
+        assert_eq!(
+            put(&app, "/push/subscriptions", &bia, body).await.0,
+            StatusCode::NO_CONTENT
+        );
+    }
+    let es = json!({ "locale": "es", "name": "Copa de Octubre", "description": "", "rules": "" });
+    let body = with(duel("copa"), json!({ "translations": [es] }));
+    create_tournament(&app, &ana, body).await;
+    publish(&app, &ana, "copa").await;
+    register(&app, "copa", &[&bia]).await;
+    post_empty(&app, &format!("{COPA}/check-in/open"), &ana).await;
+    realtime::dispatch_once(&state).await.unwrap();
+
+    let names: Vec<(String, Value)> = fake
+        .sent
+        .lock()
+        .unwrap()
+        .iter()
+        .map(|(endpoint, payload)| (endpoint.clone(), payload["params"]["tournament"].clone()))
+        .collect();
+    assert_eq!(
+        names,
+        [
+            (
+                "https://a.push.example/pt".to_owned(),
+                json!("Copa de Outubro")
+            ),
+            (
+                "https://a.push.example/es".to_owned(),
+                json!("Copa de Octubre")
+            ),
+        ]
+    );
+}

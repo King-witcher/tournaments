@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from discord_webhooks where tenant_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b538ed639f80f09fe75b34dc131eeed7b9ea0bdb3a60c086c3d4a95b6d026bd"
+}

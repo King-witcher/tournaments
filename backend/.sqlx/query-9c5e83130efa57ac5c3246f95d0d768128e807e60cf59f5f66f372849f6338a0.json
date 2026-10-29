@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update discord_webhooks set retry_at = $2 where tenant_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9c5e83130efa57ac5c3246f95d0d768128e807e60cf59f5f66f372849f6338a0"
+}

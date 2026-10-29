@@ -532,6 +532,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/discord": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_discord"];
+        put: operations["put_discord"];
+        post?: never;
+        delete: operations["delete_discord"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/discord/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test_discord"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/invites": {
         parameters: {
             query?: never;
@@ -1143,6 +1175,18 @@ export interface components {
          * @enum {string}
          */
         AssignableRole: "organizer" | "player";
+        /** @description Um aviso que a comunidade pode ligar. */
+        AvailableEvent: {
+            /**
+             * @description O aviso se dirige a pessoas (a partida pronta, a organização), então
+             *     "mencionar" faz diferença nele.
+             */
+            addressed: boolean;
+            /** @example match.ready */
+            code: string;
+            /** @description Vem ligado numa configuração nova. */
+            default_on: boolean;
+        };
         /** @enum {string} */
         Bracket: "single" | "double";
         BracketEntrant: {
@@ -1435,6 +1479,11 @@ export interface components {
         };
         DeleteSubscription: {
             endpoint: string;
+        };
+        DiscordSettings: {
+            /** @description Os avisos que existem, na ordem em que aparecem. */
+            available: components["schemas"]["AvailableEvent"][];
+            webhook?: components["schemas"]["WebhookSettings"] | null;
         };
         /** @description Para onde o link foi (ou iria, se a conta já existe). */
         EmailSent: {
@@ -2033,6 +2082,18 @@ export interface components {
              */
             public_key: string;
         };
+        PutDiscord: {
+            /** @description Códigos dos avisos ligados. */
+            events: string[];
+            locale: components["schemas"]["Locale"];
+            mention_players: boolean;
+            /**
+             * @description `https://discord.com/api/webhooks/{id}/{token}` (também `discordapp.com`,
+             *     `ptb.` e `canary.`). Sem ele, mantém o webhook atual e muda só o resto;
+             *     com ele, troca o webhook (e tira a marca de quebrado).
+             */
+            url?: string | null;
+        };
         /**
          * @description A inscrição do navegador, como `PushSubscription.toJSON()` entrega (sem o
          *     `expirationTime`), e o idioma dos avisos.
@@ -2600,6 +2661,28 @@ export interface components {
         ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve";
         /** @enum {string} */
         Visibility: "public" | "private";
+        /** @description O webhook como a API devolve ao owner: sem o endereço nem o token. */
+        WebhookSettings: {
+            /**
+             * @description O Discord disse que o webhook não existe mais: nada é enviado até o
+             *     owner colar outro endereço.
+             */
+            broken: boolean;
+            /** @description Códigos dos avisos ligados (`check_in.opened`, `match.ready`...). */
+            events: string[];
+            /** @description Idioma das mensagens. */
+            locale: components["schemas"]["Locale"];
+            /**
+             * @description Mencionar (`@`) quem vinculou o Discord à conta nos avisos que se
+             *     dirigem a pessoas.
+             */
+            mention_players: boolean;
+            /**
+             * @description O id do webhook (a parte pública do endereço), para reconhecer qual é.
+             * @example 1234567890123456789
+             */
+            webhook_id: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -4404,6 +4487,242 @@ export interface operations {
             };
             /** @description tenant.deletion_not_scheduled */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_discord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os avisos que existem e o webhook da comunidade (`null` sem ele). O endereço e o token nunca saem */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscordSettings"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_discord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutDiscord"];
+            };
+        };
+        responses: {
+            /** @description Configuração gravada. Com `url`, o webhook é trocado (e deixa de estar quebrado); sem ela, só os avisos, o idioma e as menções mudam */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscordSettings"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description discord.url_invalid (só https://discord.com/api/webhooks/{id}/{token}), discord.url_required (não há webhook e a `url` não veio), discord.event_unknown, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_discord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook removido, com as mensagens que esperavam (também se não havia) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    test_discord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A mensagem de teste chegou ao canal */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, discord.not_configured */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description discord.webhook_gone (o Discord não conhece o webhook: a configuração fica marcada como quebrada) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description discord.rate_limited {retry_after} (segundos) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description discord.unreachable (rede ou erro do Discord), discord.rejected (o Discord recusou a mensagem) */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

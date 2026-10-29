@@ -31,6 +31,7 @@ crates/api/src/
   organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
   ratings/        ranking Elo por comunidade: cache refeito do zero quando os triggers marcam o tenant (agendador, leitura e as rotas daqui); lê mapas e torneios direto no banco, sem chamar matches
   push/           Web Push: inscrições dos navegadores e envio
+  discord/        avisos da comunidade no Discord por webhook: configuração do owner, fila e envio
   realtime/       WebSocket, despachante do outbox, agendador
   health.rs       domínios pequenos, um arquivo cada
   maps.rs
@@ -42,7 +43,7 @@ Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `media
 
 ### Tempo real: mudou estado visível, `emit` na mesma transação
 
-Toda função que muda algo que uma página mostra emite no outbox, na transação dela, antes do commit: `tournaments::changed(conn, id)` (dados, status, inscrições, check-in, seeding; `changed_with` também avisa quem saiu dos inscritos), `tenants::changed` (membros, papéis, apelidos, convites), `tenants::access_lost` (quem saiu), e a chave emite sozinha pelo `settle` (passe a fase lida antes de gravar para `actions::respond`). Emita na função de domínio que faz a transição, não só no handler, para valer também quando outra função a chama (`lifecycle::leave_tournaments`). Escrita de uma linha só que hoje recebe `&PgPool` passa a receber `&mut PgConnection`, e o handler abre a transação. Aviso para pessoas é `outbox::Event::notice` com código e parâmetros, nunca texto. O despachante acorda sozinho depois da requisição que emitiu; fora de requisição (socket, tarefa), acorde com `state.realtime.wake()`.
+Toda função que muda algo que uma página mostra emite no outbox, na transação dela, antes do commit: `tournaments::changed(conn, id)` (dados, status, inscrições, check-in, seeding; `changed_with` também avisa quem saiu dos inscritos), `tenants::changed` (membros, papéis, apelidos, convites), `tenants::access_lost` (quem saiu), e a chave emite sozinha pelo `settle` (passe a fase lida antes de gravar para `actions::respond`). Emita na função de domínio que faz a transição, não só no handler, para valer também quando outra função a chama (`lifecycle::leave_tournaments`). Escrita de uma linha só que hoje recebe `&PgPool` passa a receber `&mut PgConnection`, e o handler abre a transação. Aviso para pessoas é `outbox::Event::notice` com código e parâmetros, nunca texto. O que só vai para o canal do Discord da comunidade (torneio iniciado, encerrado, série decidida) é `Event::Announce`; todo `Notice` e `Announce` também vira mensagem no Discord se o código está no `CATALOG` de `discord/catalog.rs` (aviso novo para pessoas: uma linha lá e a chave no `Discord.json` do front). O despachante acorda sozinho depois da requisição que emitiu; fora de requisição (socket, tarefa), acorde com `state.realtime.wake()`.
 
 ### O que é um domínio
 
@@ -65,7 +66,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 
 ### Dependências
 
-- `shared` ← `outbox` e `mail` ← `auth` ← `tenants` ← demais domínios ← `realtime`. Nunca ao contrário, nunca em ciclo.
+- `shared` ← `outbox` e `mail` ← `auth` ← `tenants` ← demais domínios ← `discord` ← `realtime`. Nunca ao contrário, nunca em ciclo.
 - Um domínio usa outro só pelo que o `mod.rs` dele exporta (`crate::tenants::{TenantMember, my_tenant}`).
 - Query que mais de um domínio precisa fica no domínio dono do conceito e sai pelo `mod.rs` (ex.: `tenants::my_tenant`, usado por `invites`). Só vai para `shared` o que não tem conceito de domínio nenhum.
 
