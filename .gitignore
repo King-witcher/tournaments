@@ -25,3 +25,5 @@ Thumbs.db
 gitignore/
 ignore.*
 *.ignore
+
+.VSCodeCounter
