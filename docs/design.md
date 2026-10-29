@@ -56,7 +56,7 @@ Coluna estreita, `Tile` com o formulário (usuário/senha) e os botões do Disco
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord, Google e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email). Discord e Google, cada um no seu bloco: vincular, ou desvincular se sobrar outro jeito de entrar (só com o botão e a confirmação na conta sem senha; com senha, pedindo a atual); sem outro, o motivo no lugar.
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta": o prazo de 7 dias, que entrar de novo cancela, o que acontece na data e, para quem é dono de comunidade, o motivo de não dar com o link para as configurações de cada uma; com senha, pede a atual antes do Modal; depois, a página de entrar com a data), **Logins** (email, Discord, Google e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email). Discord e Google, cada um no seu bloco: vincular, ou desvincular se sobrar outro jeito de entrar (só com o botão e a confirmação na conta sem senha; com senha, pedindo a atual); sem outro, o motivo no lugar.
 
 ### Convite `/invite/[token]`
 
@@ -74,7 +74,7 @@ Formulário curto (nome, slug com prévia do endereço).
 - **Ranking** (`/[tenant]/ranking`, todos): `DataTable` (posição, membro com avatar, rating com `Tag` "provisório", mapas, V–D, último mapa) com busca; a linha abre a página da pessoa; a descrição diz como o rating funciona (inicial, provisório).
 - **Membros** (`/[tenant]/members`): `DataTable` (membro com avatar, papel, desde e, para a organização, "Entrou por": o começo do link e o torneio, se era de inscrição), busca; a linha abre a página da pessoa; owner: trocar papel e remover no `OverflowMenu`.
 - **Convites** (`/[tenant]/invites`, organização): `DataTable` dos links (o começo do link, `…/invite/7Fq2…`, criado por, validade, quantos entraram), "Gerar link" primário, copiar e revogar por linha (a confirmação diz qual link).
-- **Configurações** (`/[tenant]/settings`): seu apelido; owner: o rating da comunidade (rating inicial e K do Elo; salvar recalcula todos); "Sair da comunidade"; owner: transferir a posse (Modal com slug).
+- **Configurações** (`/[tenant]/settings`): seu apelido; owner: o rating da comunidade (rating inicial e K do Elo; salvar recalcula todos); "Sair da comunidade"; owner: transferir a posse (Modal com slug) e "Excluir comunidade" (Modal com slug; agendada, a data e "Cancelar exclusão", e a transferência some). Com a exclusão agendada, todas as abas têm no topo o aviso com a data (só leitura).
 
 `members`, `invites` e `settings` entram na lista de slugs reservados de torneio na API (`tournaments/slug.rs`), como `new` já está.
 

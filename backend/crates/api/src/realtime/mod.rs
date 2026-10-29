@@ -2,9 +2,11 @@
 //! memória por onde os eventos chegam aos sockets (`Realtime`, em `hub`), o
 //! despachante que tira os eventos do outbox, publica e manda os Web Push
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
-//! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo).
+//! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
+//! exclusões de comunidade e de conta, rating das comunidades marcadas).
 //! Fica acima de todos os domínios: confere o acesso como na leitura
-//! (`tenants`, `tournaments`) e o agendador chama `tournaments` e `matches`.
+//! (`tenants`, `tournaments`) e o agendador chama `tournaments`, `matches`,
+//! `tenants`, `members` e `ratings`.
 //! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos.
 
 mod connection;

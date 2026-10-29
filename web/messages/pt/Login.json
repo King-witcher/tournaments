@@ -19,5 +19,7 @@
     "text": "Escolha a senha nova. Ao salvar, você entra na conta e as outras sessões dela são encerradas.",
     "submit": "Salvar e entrar",
     "requestAgain": "Pedir outro link"
-  }
+  },
+  "deletionScheduledTitle": "Exclusão da conta agendada",
+  "deletionScheduled": "Sua conta vai ser excluída em <date></date>, e você saiu de todos os aparelhos. Para cancelar, entre de novo antes disso."
 }

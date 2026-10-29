@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/type";
+
+// O que acontece na data é corpo de texto (`body-01`), não o tamanho que o
+// navegador dá a um parágrafo solto.
+.consequences {
+  @include type.type-style("body-01");
+}

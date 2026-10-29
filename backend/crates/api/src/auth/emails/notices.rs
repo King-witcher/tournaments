@@ -1,6 +1,9 @@
 //! Os avisos do que mudou no acesso à conta: o que aconteceu, "se foi você,
 //! nada a fazer" e, em destaque, o que fazer se não foi, com o botão para o
-//! primeiro passo.
+//! primeiro passo. E o aviso da exclusão da conta agendada, com a data e como
+//! cancelar.
+
+use chrono::{DateTime, Utc};
 
 use super::{compose, page};
 use crate::{
@@ -119,6 +122,58 @@ pub fn notice(web: &str, locale: Locale, to: &str, notice: &Notice) -> Email {
             url: page(web, locale, path),
         },
         note: Some(why.into()),
+    };
+    compose(web, locale, to, content)
+}
+
+/// A exclusão da conta foi agendada: a data (em UTC: a API não sabe o fuso de
+/// quem lê) e que entrar de novo antes cancela. O botão leva ao login.
+pub fn account_deletion_scheduled(
+    web: &str,
+    locale: Locale,
+    to: &str,
+    due: DateTime<Utc>,
+) -> Email {
+    let url = page(web, locale, "/login");
+    let when = due.format("%d/%m/%Y %H:%M");
+    let content = match locale {
+        Locale::Pt => Content {
+            title: "Exclusão da conta agendada".into(),
+            paragraphs: vec![
+                format!(
+                    "Sua conta vai ser excluída em {when} (UTC), e todas as sessões dela foram encerradas."
+                ),
+                "Para cancelar, entre de novo no site antes disso, pelo botão abaixo.".into(),
+            ],
+            alert: Some(Alert {
+                title: "Não foi você que pediu?".into(),
+                text: "Entre agora: a exclusão é cancelada.".into(),
+            }),
+            action: Action {
+                label: "Entrar".into(),
+                url,
+            },
+            note: None,
+        },
+        Locale::Es => Content {
+            title: "Eliminación de la cuenta programada".into(),
+            paragraphs: vec![
+                format!(
+                    "Tu cuenta se va a eliminar el {when} (UTC), y se cerraron todas sus sesiones."
+                ),
+                "Para cancelar, vuelve a entrar al sitio antes de esa fecha, con el botón de abajo."
+                    .into(),
+            ],
+            alert: Some(Alert {
+                title: "¿No fuiste tú quien lo pidió?".into(),
+                text: "Entra ahora: la eliminación se cancela.".into(),
+            }),
+            action: Action {
+                label: "Entrar".into(),
+                url,
+            },
+            note: None,
+        },
     };
     compose(web, locale, to, content)
 }

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id from tournaments\n           where status in ('registration', 'check_in') and starts_at <= $1\n             and (start_reminded_at is null or start_reminded_at < starts_at)\n             and not exists (select 1 from tenants n\n                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)\n           order by id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6cfb1da09ae8a794a7e7feb2dde5086d7a22f96b26582d369cb38ba57a2514f4"
+}

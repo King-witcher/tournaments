@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select nickname, left_at is not null as \"left!\" from tenant_members where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "left!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "323e6e28985f9244bc92c1d8e2f1f9fd0d033de247ecf18735cd71e49e6c1020"
+}

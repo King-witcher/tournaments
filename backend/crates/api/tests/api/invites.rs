@@ -35,7 +35,7 @@ async fn invite_link_adds_a_player() {
     assert_eq!(preview["expires_at"], created["expires_at"]);
 
     let joined = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia" },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null },
         "tournament": null
     });
     assert_eq!(join(&app, &bia, token).await, joined);
@@ -239,7 +239,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
 
     publish(&app, &ana, "copa").await;
     let accepted = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Caio" },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Caio", "deletion_scheduled_for": null },
         "tournament": "copa"
     });
     assert_eq!(join(&app, &caio, &token).await, accepted);

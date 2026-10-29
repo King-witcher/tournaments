@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set start_reminded_at = $2\n           where id = $1 and status in ('registration', 'check_in') and starts_at <= $2\n             and (start_reminded_at is null or start_reminded_at < starts_at)\n             and not exists (select 1 from tenants n\n                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)\n           returning tenant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "tenant_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dbb68b234a0bad32b8a71e434e8d10eebc79862d1390740a84f4ccd7d15ff8e4"
+}

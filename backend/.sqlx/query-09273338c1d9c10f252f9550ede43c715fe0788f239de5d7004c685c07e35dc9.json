@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenant_members set nickname = '' where user_id = $1\n           returning tenant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "tenant_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "09273338c1d9c10f252f9550ede43c715fe0788f239de5d7004c685c07e35dc9"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select deletion_due_at is not null as \"deleting!\" from users where id = $1 for update",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "deleting!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "01460eaa65e0517c9638ed47e156e46a6b8aa1dec3ef55f5492561fa57de5c5c"
+}

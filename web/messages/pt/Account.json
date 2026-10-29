@@ -94,5 +94,18 @@
     "endOthers": "Encerrar as outras",
     "endOthersConfirm": "Todas as outras sessões deixam de valer; só esta continua aberta.",
     "onlyThis": "Sua conta está aberta só nesta sessão."
+  },
+  "deletion": {
+    "title": "Excluir conta",
+    "description": "A conta é excluída 7 dias depois do pedido, e todas as sessões dela são encerradas na hora. Se você entrar de novo antes disso, a exclusão é cancelada.",
+    "consequences": "Na data, você sai de todas as comunidades: desiste dos torneios em andamento (suas partidas pendentes viram W.O.), sai das inscrições dos que não começaram, e os convites que você criou são revogados. Nos torneios que você jogou, seu nome dá lugar a “Conta excluída”. Nome, avatar, email e logins saem da conta, e o nome de usuário e o email ficam livres.",
+    "ownerTitle": "Você é dono de uma comunidade",
+    "owner": "Antes de excluir a conta, transfira a posse ou exclua cada comunidade de que você é dono:",
+    "ownerLink": "{name}: configurações",
+    "submit": "Excluir conta",
+    "passwordHint": "Para excluir, confirme sua senha.",
+    "confirm": "Agendar a exclusão da sua conta para daqui a 7 dias? Você sai de todos os aparelhos agora. Se entrar de novo antes da data, a exclusão é cancelada; se não, ela não tem volta.",
+    "cancelledTitle": "Exclusão cancelada",
+    "cancelled": "Você entrou de novo, e a exclusão da conta foi cancelada. Nada mudou na conta."
   }
 }

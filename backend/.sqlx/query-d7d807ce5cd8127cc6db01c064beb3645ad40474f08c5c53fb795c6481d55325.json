@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select tenant_id from tenant_members\n           where user_id = $1 and left_at is null\n           order by tenant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "tenant_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d7d807ce5cd8127cc6db01c064beb3645ad40474f08c5c53fb795c6481d55325"
+}

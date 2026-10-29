@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tenants set deletion_due_at = null, deletion_requested_by = null\n           where id = $1 and deletion_due_at is not null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f60a2f53c84efd54029d2df76210cf3addf9d553a885688f3d62653af1ae024d"
+}

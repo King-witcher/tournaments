@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into push_subscriptions (user_id, endpoint, p256dh, auth, locale)\n           values ($1, 'https://push.example.com/rapha', $2, $3, 'pt')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "84b82fcff22a284b56592b4043901d7409ac6c045991ec966b729eb2b819f560"
+}

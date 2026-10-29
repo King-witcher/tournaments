@@ -112,6 +112,7 @@ pub async fn revoke_invite(
     responses(
         (status = OK, body = InvitePreview, description = "Convite válido (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled (a comunidade vai ser excluída)"),
         (status = GONE, body = ErrorBody, description = "invite.expired, invite.revoked"),
     )
 )]
@@ -171,7 +172,7 @@ async fn viewer(
         (status = OK, body = AcceptedInvite, description = "Entrou como player (quem já era membro mantém papel e apelido; quem tinha saído volta como player, com o apelido e o histórico de antes) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed, tournament.full {max}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída)"),
         (status = GONE, body = ErrorBody, description = "invite.expired, invite.revoked"),
     )
 )]
@@ -205,7 +206,8 @@ pub async fn accept_invite(
     }))
 }
 
-/// Convite pelo token: inexistente → 404, revogado ou expirado → 410.
+/// Convite pelo token: inexistente → 404, revogado ou expirado → 410, de
+/// comunidade com a exclusão agendada → 409.
 async fn find_valid_invite(conn: &mut PgConnection, token: &str) -> Result<StoredInvite, ApiError> {
     let invite = db::find_by_token_hash(conn, &token::hash_token(token))
         .await?
@@ -215,6 +217,10 @@ async fn find_valid_invite(conn: &mut PgConnection, token: &str) -> Result<Store
     }
     if invite.expired {
         return Err(ApiError::gone("invite.expired"));
+    }
+    // A comunidade é só leitura até ser excluída.
+    if invite.tenant_deleting {
+        return Err(ApiError::conflict("tenant.deletion_scheduled"));
     }
     Ok(invite)
 }

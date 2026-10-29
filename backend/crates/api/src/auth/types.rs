@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::shared::Locale;
+use crate::{auth::CurrentUser, shared::Locale};
 
 #[derive(Deserialize, IntoParams)]
 pub struct LoginQuery {
@@ -123,6 +123,29 @@ pub struct SessionInfo {
     pub user_agent: Option<String>,
     /// É a sessão desta requisição.
     pub current: bool,
+}
+
+/// Pedido de exclusão da conta logada.
+#[derive(Deserialize, ToSchema)]
+pub struct ScheduleAccountDeletion {
+    /// Senha atual: obrigatória se a conta tem senha.
+    pub current_password: Option<String>,
+}
+
+/// A exclusão agendada da conta.
+#[derive(Serialize, ToSchema)]
+pub struct AccountDeletion {
+    /// Quando a conta é anonimizada, se ninguém entrar nela antes.
+    pub scheduled_for: DateTime<Utc>,
+}
+
+/// Quem acabou de entrar (login, cadastro confirmado, senha nova pelo link).
+#[derive(Serialize, ToSchema)]
+pub struct SignedIn {
+    #[serde(flatten)]
+    pub user: CurrentUser,
+    /// Entrar cancelou a exclusão da conta, que estava agendada.
+    pub deletion_cancelled: bool,
 }
 
 /// `{id}` de `/auth/sessions/{id}`.

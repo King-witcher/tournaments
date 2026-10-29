@@ -94,5 +94,18 @@
     "endOthers": "Cerrar las otras",
     "endOthersConfirm": "Todas las otras sesiones dejan de valer; solo esta sigue abierta.",
     "onlyThis": "Tu cuenta está abierta solo en esta sesión."
+  },
+  "deletion": {
+    "title": "Eliminar la cuenta",
+    "description": "La cuenta se elimina 7 días después del pedido, y todas sus sesiones se cierran en el momento. Si vuelves a entrar antes, la eliminación se cancela.",
+    "consequences": "En la fecha, sales de todas las comunidades: abandonas los torneos en curso (tus partidas pendientes pasan a W.O.), sales de las inscripciones de los que no empezaron, y las invitaciones que creaste se revocan. En los torneos que jugaste, tu nombre pasa a “Cuenta eliminada”. Nombre, avatar, email y accesos se borran de la cuenta, y el nombre de usuario y el email quedan libres.",
+    "ownerTitle": "Eres dueño de una comunidad",
+    "owner": "Antes de eliminar la cuenta, transfiere la propiedad o elimina cada comunidad de la que eres dueño:",
+    "ownerLink": "{name}: configuración",
+    "submit": "Eliminar cuenta",
+    "passwordHint": "Para eliminarla, confirma tu contraseña.",
+    "confirm": "¿Programar la eliminación de tu cuenta para dentro de 7 días? Sales de todos los dispositivos ahora. Si vuelves a entrar antes de la fecha, la eliminación se cancela; si no, no tiene vuelta atrás.",
+    "cancelledTitle": "Eliminación cancelada",
+    "cancelled": "Volviste a entrar y la eliminación de la cuenta se canceló. Nada cambió en la cuenta."
   }
 }

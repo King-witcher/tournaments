@@ -70,7 +70,8 @@ pub async fn mark_registration_reopened(
 
 /// Inscrição → check-in pela abertura automática, só se nada mudou desde a
 /// leitura (`schedule` e `reopened_at` são os lidos): uma reabertura ou uma
-/// mudança de data no meio do caminho vence. `false` se não mudou.
+/// mudança de data no meio do caminho vence; na comunidade com a exclusão
+/// agendada (só leitura), não abre. `false` se não mudou.
 pub(super) async fn open_due_check_in<'e>(
     db: impl PgExecutor<'e>,
     id: TournamentId,
@@ -82,7 +83,9 @@ pub(super) async fn open_due_check_in<'e>(
            where id = $1 and status = 'registration'
              and starts_at is not distinct from $2
              and check_in_minutes is not distinct from $3
-             and registration_reopened_at is not distinct from $4"#,
+             and registration_reopened_at is not distinct from $4
+             and not exists (select 1 from tenants n
+                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)"#,
         id.get(),
         schedule.starts_at,
         schedule.check_in_minutes,

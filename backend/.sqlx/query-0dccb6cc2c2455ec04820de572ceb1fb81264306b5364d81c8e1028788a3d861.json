@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update users set deletion_due_at = now() + interval '7 days' where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0dccb6cc2c2455ec04820de572ceb1fb81264306b5364d81c8e1028788a3d861"
+}

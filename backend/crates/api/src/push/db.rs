@@ -86,3 +86,12 @@ pub async fn mark_used(conn: &mut PgConnection, ids: &[i64]) -> Result<(), sqlx:
     .await?;
     Ok(())
 }
+
+/// Tira todas as inscrições de `user_id` (a conta excluída não recebe mais
+/// aviso).
+pub async fn forget_user(conn: &mut PgConnection, user_id: i64) -> Result<(), sqlx::Error> {
+    sqlx::query!("delete from push_subscriptions where user_id = $1", user_id)
+        .execute(conn)
+        .await?;
+    Ok(())
+}

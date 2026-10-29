@@ -8,7 +8,9 @@ use crate::{
     AppState,
     outbox::{self, Event},
     shared::{ApiError, ErrorBody, JsonBody, PathParams},
-    tenants::{self, MyTenant, Organizer, Owner, Role, TenantMember, validate_nickname},
+    tenants::{
+        self, DuringDeletion, MyTenant, Organizer, Owner, Role, TenantMember, validate_nickname,
+    },
 };
 
 #[utoipa::path(
@@ -46,7 +48,7 @@ pub async fn update_my_membership(
     tag = "tenants",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes"),
+        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "member.owner_must_transfer (o owner transfere a posse antes)"),
@@ -54,7 +56,7 @@ pub async fn update_my_membership(
 )]
 pub async fn leave_tenant(
     State(state): State<AppState>,
-    member: TenantMember,
+    DuringDeletion(member): DuringDeletion,
 ) -> Result<StatusCode, ApiError> {
     let mut tx = state.db.begin().await?;
     departure::depart(

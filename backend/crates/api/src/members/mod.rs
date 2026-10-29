@@ -4,8 +4,11 @@
 //! (`departure`). Sair ou ser removido deixa o membro inativo, com o
 //! histórico; mexe nos torneios (`lifecycle`) e nos convites (`invites`) dele,
 //! e o perfil junta `tournaments`, `participants`, `matches` e a situação de
-//! `my_tournaments`, então este domínio fica acima deles.
+//! `my_tournaments`, então este domínio fica acima deles. A exclusão de conta
+//! vencida (`account_deletion`, chamada pelo agendador) tira a conta de todas
+//! as comunidades do mesmo jeito e pede a `auth` que a anonimize.
 
+mod account_deletion;
 mod db;
 mod departure;
 mod handlers;
@@ -15,6 +18,8 @@ mod types;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
+
+pub use account_deletion::delete_due_accounts;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

@@ -10,13 +10,12 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use super::{
-    CurrentUser,
     credentials::start_session,
     db::{self, NewPasswordUser},
     emails::{self, LINK_TTL_SECS},
     kv::{self, PendingSignup},
     password::{hash_password, validate_password, verify_password},
-    types::{EmailSent, LinkToken, Signup},
+    types::{EmailSent, LinkToken, SignedIn, Signup},
     username::validate_username,
 };
 use crate::{
@@ -108,7 +107,7 @@ async fn claim_username(
     tag = "auth",
     request_body = LinkToken,
     responses(
-        (status = CREATED, body = CurrentUser, description = "Conta criada, já com a sessão no cookie. O nome exibido é o username"),
+        (status = CREATED, body = SignedIn, description = "Conta criada, já com a sessão no cookie. O nome exibido é o username"),
         (status = GONE, body = ErrorBody, description = "auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.username_taken, auth.email_taken (outra conta pegou desde o pedido)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
@@ -119,7 +118,7 @@ pub async fn confirm_signup(
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<LinkToken>,
-) -> Result<(StatusCode, CookieJar, Json<CurrentUser>), ApiError> {
+) -> Result<(StatusCode, CookieJar, Json<SignedIn>), ApiError> {
     let pending = kv::take_signup(&state.redis, &body.token)
         .await?
         .ok_or(ApiError::gone("auth.link_expired"))?;

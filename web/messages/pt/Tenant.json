@@ -74,5 +74,19 @@
     "copied": "Copiado!",
     "revoke": "Revogar",
     "revokeConfirm": "Revogar {has, select, yes {o link {link}} other {este link}}? Quem ainda não usou não consegue mais entrar por ele; dá para gerar outro depois."
+  },
+  "deletion": {
+    "title": "Excluir comunidade",
+    "description": "A comunidade é excluída 7 dias depois do pedido, com os torneios, as inscrições, os resultados e os convites. Até lá ela fica só leitura (ninguém muda nada nela), e você pode cancelar. Com um torneio em andamento, encerre o torneio ou desfaça o início antes.",
+    "submit": "Excluir comunidade",
+    "confirm": "Agendar a exclusão da comunidade para daqui a 7 dias? Até lá ela fica só leitura para todos; na data, é apagada com tudo o que tem dentro, sem volta.",
+    "scheduledTitle": "Exclusão agendada",
+    "scheduled": "A comunidade vai ser excluída em <date></date>, com tudo o que tem dentro. Até lá, ela fica só leitura.",
+    "cancel": "Cancelar exclusão"
+  },
+  "deletionNotice": {
+    "title": "Comunidade em exclusão",
+    "text": "Esta comunidade vai ser excluída em <date></date>, com os torneios e tudo o que tem dentro. Até lá, ela fica só leitura.",
+    "ownerHint": "Para cancelar, use a aba Configurações."
   }
 }

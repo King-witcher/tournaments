@@ -55,6 +55,7 @@ pub async fn create_tenant(
             name,
             role: Role::Owner,
             nickname,
+            deletion_scheduled_for: None,
         }),
     ))
 }
@@ -101,7 +102,7 @@ pub async fn get_tenant(member: TenantMember) -> Json<MyTenant> {
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo)"),
-        (status = CONFLICT, body = ErrorBody, description = "member.is_owner (já é o owner), member.owner_limit_reached {max}"),
+        (status = CONFLICT, body = ErrorBody, description = "member.is_owner (já é o owner), member.owner_limit_reached {max}, member.deletion_scheduled (o membro pediu a exclusão da conta), tenant.deletion_scheduled"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body"),
     )
 )]

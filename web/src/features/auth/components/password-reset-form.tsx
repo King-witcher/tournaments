@@ -21,6 +21,7 @@ import { PasswordInput } from "@/shared/ui/password-input";
 import { useEnterAccount } from "../hooks/use-enter-account";
 import { useLinkToken } from "../hooks/use-link-token";
 import { type AuthField, errorField } from "../lib/auth-field";
+import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 
 /** Para onde vai quem trocou a senha: a aba Senha, com o aviso de feito. */
 const AFTER_RESET = "/account/password?password_reset=1";
@@ -28,9 +29,10 @@ const AFTER_RESET = "/account/password?password_reset=1";
 /**
  * O link do email de recuperação (`#token`): a senha nova e a repetida. Salvar
  * troca a senha, encerra todas as sessões da conta e entra numa nova, indo
- * para a aba Senha com o aviso (`PasswordResetDone`). Senha fora do formato
- * não gasta o link (o erro vai no campo); link vencido ou sem token, o motivo
- * e o caminho para pedir outro.
+ * para a aba Senha com o aviso (`PasswordResetDone`); se a exclusão da
+ * conta estava agendada, entrar a cancela, e vai para a conta, que avisa.
+ * Senha fora do formato não gasta o link (o erro vai no campo); link vencido
+ * ou sem token, o motivo e o caminho para pedir outro.
  */
 export function PasswordResetForm() {
   const t = useTranslations("Login.reset");
@@ -63,7 +65,7 @@ export function PasswordResetForm() {
         };
       }
       setLeaving(true);
-      enter(AFTER_RESET);
+      enter(outcome.data.deletion_cancelled ? DELETION_CANCELLED : AFTER_RESET);
       return {};
     },
     {},

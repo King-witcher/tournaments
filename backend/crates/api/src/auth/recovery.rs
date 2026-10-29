@@ -9,7 +9,6 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use super::{
-    CurrentUser,
     credentials::start_session,
     db::{self, AccountContact},
     emails::{self, LINK_TTL_SECS, Notice},
@@ -17,7 +16,7 @@ use super::{
     kv,
     notify::notify,
     password::{hash_password, validate_password},
-    types::{PasswordReset, PasswordResetRequest},
+    types::{PasswordReset, PasswordResetRequest, SignedIn},
     username::{username_key, validate_username},
 };
 use crate::{
@@ -93,7 +92,7 @@ async fn send_reset_link(state: &AppState, contact: AccountContact) -> Result<()
     tag = "auth",
     request_body = PasswordReset,
     responses(
-        (status = OK, body = CurrentUser, description = "Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie)"),
+        (status = OK, body = SignedIn, description = "Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie); se a exclusão da conta estava agendada, entrar a cancelou"),
         (status = GONE, body = ErrorBody, description = "auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.no_password (a senha foi removida depois do pedido)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.password_invalid, request.invalid_body"),
@@ -104,7 +103,7 @@ pub async fn reset_password(
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<PasswordReset>,
-) -> Result<(CookieJar, Json<CurrentUser>), ApiError> {
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
     // Antes de gastar o link: senha fora do formato não o consome.
     validate_password(&body.password)?;
     let user_id = kv::take_password_reset(&state.redis, &body.token)

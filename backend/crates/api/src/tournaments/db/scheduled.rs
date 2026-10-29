@@ -1,6 +1,7 @@
 //! SQL do que o agendador do tempo real faz nos torneios sem ninguém pedir:
 //! achar os que têm o check-in para abrir e marcar o aviso de hora de
 //! iniciar. A abertura em si é a mesma da leitura (`read::current_status`).
+//! Na comunidade com a exclusão agendada (só leitura), nenhum dos dois.
 
 use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
@@ -29,6 +30,8 @@ pub async fn due_check_ins(db: &PgPool, now: DateTime<Utc>) -> Result<Vec<DueChe
            from tournaments
            where status = 'registration'
              and starts_at - make_interval(mins => check_in_minutes) <= $1
+             and not exists (select 1 from tenants n
+                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)
            order by id"#,
         now
     )
@@ -59,6 +62,8 @@ pub async fn starts_to_remind(
         r#"select id from tournaments
            where status in ('registration', 'check_in') and starts_at <= $1
              and (start_reminded_at is null or start_reminded_at < starts_at)
+             and not exists (select 1 from tenants n
+                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)
            order by id"#,
         now
     )
@@ -80,6 +85,8 @@ pub async fn mark_start_reminded(
         r#"update tournaments set start_reminded_at = $2
            where id = $1 and status in ('registration', 'check_in') and starts_at <= $2
              and (start_reminded_at is null or start_reminded_at < starts_at)
+             and not exists (select 1 from tenants n
+                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)
            returning tenant_id"#,
         id.get(),
         now

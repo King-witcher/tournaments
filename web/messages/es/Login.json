@@ -19,5 +19,7 @@
     "text": "Elige la contraseña nueva. Al guardarla, entras en la cuenta y sus otras sesiones se cierran.",
     "submit": "Guardar y entrar",
     "requestAgain": "Pedir otro enlace"
-  }
+  },
+  "deletionScheduledTitle": "Eliminación de la cuenta programada",
+  "deletionScheduled": "Tu cuenta se eliminará el <date></date>, y saliste de todos los dispositivos. Para cancelar, vuelve a entrar antes de esa fecha."
 }

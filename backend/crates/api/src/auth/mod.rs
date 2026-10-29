@@ -9,11 +9,15 @@
 //! `emails/`. Toda mudança de login ou de email manda um aviso ao email da
 //! conta (`notify.rs`). Sessões, erros de senha, cadastros por confirmar e
 //! links ficam no Redis (`kv/`); contas, logins e email, no banco (`db/`).
+//! Excluir a conta (`deletion.rs`) agenda para 7 dias, e entrar de novo antes
+//! (pela senha ou por qualquer provedor) cancela; na data, `members` a tira
+//! das comunidades e daqui sai a anonimização.
 
 mod attempts;
 mod credentials;
 mod current_user;
 mod db;
+mod deletion;
 mod discord;
 mod email_change;
 mod emails;
@@ -35,6 +39,11 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use current_user::CurrentUser;
+pub use db::{
+    anonymize as anonymize_account, due_deletions as due_account_deletions,
+    lock_due_deletion as lock_due_account_deletion,
+};
+pub use deletion::end_all_sessions;
 pub use discord::{DiscordApi, DiscordUser, HttpDiscord};
 pub use google::{GoogleApi, GoogleUser, HttpGoogle};
 /// Os testes criam sessões por aqui, sem passar pelo login.
@@ -71,4 +80,5 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::logout))
         .routes(routes!(handlers::sessions, handlers::end_other_sessions))
         .routes(routes!(handlers::end_session))
+        .routes(routes!(deletion::schedule_account_deletion))
 }

@@ -404,6 +404,22 @@ export interface paths {
         patch: operations["update_me"];
         trace?: never;
     };
+    "/me/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["schedule_account_deletion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/organizing": {
         parameters: {
             query?: never;
@@ -495,6 +511,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["schedule_tenant_deletion"];
+        delete: operations["cancel_tenant_deletion"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1085,6 +1117,14 @@ export interface components {
             tenant: components["schemas"]["MyTenant"];
             /** @description Slug do torneio em que ficou inscrita, no link de inscrição. */
             tournament?: string | null;
+        };
+        /** @description A exclusão agendada da conta. */
+        AccountDeletion: {
+            /**
+             * Format: date-time
+             * @description Quando a conta é anonimizada, se ninguém entrar nela antes.
+             */
+            scheduled_for: string;
         };
         AddParticipant: {
             /**
@@ -1773,6 +1813,14 @@ export interface components {
         };
         /** @description Um tenant do ponto de vista do usuário logado. */
         MyTenant: {
+            /**
+             * Format: date-time
+             * @description Quando a comunidade vai ser excluída, com tudo o que tem dentro. Até
+             *     lá ela é só leitura: toda escrita responde 409
+             *     `tenant.deletion_scheduled`, menos cancelar a exclusão (o owner) e
+             *     sair. Nulo: nenhuma exclusão agendada.
+             */
+            deletion_scheduled_for?: string | null;
             name: string;
             /** @description Apelido do usuário neste tenant. */
             nickname: string;
@@ -2160,6 +2208,18 @@ export interface components {
          * @enum {string}
          */
         Role: "player" | "organizer" | "owner";
+        /** @description Pedido de exclusão da conta logada. */
+        ScheduleAccountDeletion: {
+            /** @description Senha atual: obrigatória se a conta tem senha. */
+            current_password?: string | null;
+        };
+        ScheduleTenantDeletion: {
+            /**
+             * @description O slug do tenant, digitado para confirmar.
+             * @example quake-br
+             */
+            confirm_slug: string;
+        };
         SeedingOrder: {
             /** @description Todos os elegíveis, cada um uma vez, do seed 1 em diante. */
             user_ids: number[];
@@ -2232,6 +2292,11 @@ export interface components {
         SideSource: {
             match_key: string;
             outcome: components["schemas"]["SourceOutcome"];
+        };
+        /** @description Quem acabou de entrar (login, cadastro confirmado, senha nova pelo link). */
+        SignedIn: components["schemas"]["CurrentUser"] & {
+            /** @description Entrar cancelou a exclusão da conta, que estava agendada. */
+            deletion_cancelled: boolean;
         };
         /** @description Cadastro com senha: a conta só é criada quando o link do email é aberto. */
         Signup: {
@@ -2626,7 +2691,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Entra (cria a sessão) ou liga o Discord e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
+            /** @description Entra (cria a sessão) ou liga o Discord e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -2960,7 +3025,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
+            /** @description Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -3060,13 +3125,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sessão criada no cookie */
+            /** @description Sessão criada no cookie. Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CurrentUser"];
+                    "application/json": components["schemas"]["SignedIn"];
                 };
             };
             /** @description auth.invalid_credentials (username ou senha errados) */
@@ -3378,13 +3443,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie) */
+            /** @description Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie); se a exclusão da conta estava agendada, entrar a cancelou */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CurrentUser"];
+                    "application/json": components["schemas"]["SignedIn"];
                 };
             };
             /** @description auth.no_password (a senha foi removida depois do pedido) */
@@ -3590,7 +3655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CurrentUser"];
+                    "application/json": components["schemas"]["SignedIn"];
                 };
             };
             /** @description auth.username_taken, auth.email_taken (outra conta pegou desde o pedido) */
@@ -3681,6 +3746,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description tenant.deletion_scheduled (a comunidade vai ser excluída) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
             /** @description invite.expired, invite.revoked */
             410: {
                 headers: {
@@ -3731,7 +3805,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.registration_closed, tournament.full {max} */
+            /** @description tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3833,6 +3907,75 @@ export interface operations {
             };
             /** @description auth.display_name_invalid, request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    schedule_account_deletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleAccountDeletion"];
+            };
+        };
+        responses: {
+            /** @description Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o username, o Discord e o Google ficam livres */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDeletion"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.owns_tenants (owner de alguma comunidade: transfere a posse ou exclui a comunidade antes) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4139,6 +4282,137 @@ export interface operations {
             };
         };
     };
+    schedule_tenant_deletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleTenantDeletion"];
+            };
+        };
+        responses: {
+            /** @description Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os convites e links de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTenant"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled (já agendada), tenant.tournament_in_progress (o owner encerra o torneio ou desfaz o início antes) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cancel_tenant_deletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exclusão cancelada: a comunidade volta a aceitar escritas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTenant"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_not_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     list_invites: {
         parameters: {
             query?: never;
@@ -4310,7 +4584,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes */
+            /** @description Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -7163,7 +7437,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description member.is_owner (já é o owner), member.owner_limit_reached {max} */
+            /** @description member.is_owner (já é o owner), member.owner_limit_reached {max}, member.deletion_scheduled (o membro pediu a exclusão da conta), tenant.deletion_scheduled */
             409: {
                 headers: {
                     [name: string]: unknown;

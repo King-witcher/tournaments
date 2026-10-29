@@ -13,12 +13,15 @@ import { Link } from "@/shared/ui/link";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
 import { useEnterAccount } from "../hooks/use-enter-account";
+import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 
 /**
  * Nome de usuário e senha; entrando, vai para `returnTo`. O erro (senha
  * errada, tentativas demais) é do formulário todo: dizer qual campo errou
- * revelaria quem tem conta. Embaixo do botão, o link para recuperar a senha
- * (depois dele na ordem do Tab, para não ficar entre a senha e o "Entrar").
+ * revelaria quem tem conta. Entrar numa conta com a exclusão agendada a
+ * cancela e leva à conta, que avisa. Embaixo do botão, o link para
+ * recuperar a senha (depois dele na ordem do Tab, para não ficar entre a
+ * senha e o "Entrar").
  */
 export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
@@ -32,7 +35,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
       api.POST("/auth/login", { body: { username, password } }),
     );
     if (!result.ok) return errorMessage(result.code, result.params);
-    enter(returnTo);
+    enter(result.data.deletion_cancelled ? DELETION_CANCELLED : returnTo);
     return undefined;
   }, undefined);
 

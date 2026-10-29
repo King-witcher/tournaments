@@ -15,6 +15,7 @@ use super::{
     CurrentUser,
     attempts::confirm_password_if_set,
     db::{self, ExternalLogin},
+    deletion::CANCELLED_PATH,
     discord,
     emails::Notice,
     google, kv,
@@ -83,7 +84,7 @@ pub async fn discord_link(
     tag = "auth",
     params(CallbackQuery),
     responses(
-        (status = SEE_OTHER, description = "Entra (cria a sessão) ou liga o Discord e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
+        (status = SEE_OTHER, description = "Entra (cria a sessão) ou liga o Discord e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
     )
 )]
 pub async fn discord_callback(
@@ -169,7 +170,7 @@ pub async fn google_link(
     tag = "auth",
     params(CallbackQuery),
     responses(
-        (status = SEE_OTHER, description = "Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
+        (status = SEE_OTHER, description = "Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Entrar numa conta com a exclusão agendada a cancela e leva para /account?account_deletion=cancelled, no lugar de return_to. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código>"),
     )
 )]
 pub async fn google_callback(
@@ -282,9 +283,14 @@ async fn callback(
     )
     .await;
     match done {
-        Ok(Some(session_token)) => (
-            jar.add(auth.session_cookie(session_token)),
-            auth.web_redirect(return_to),
+        Ok(Some(entered)) => (
+            jar.add(auth.session_cookie(entered.token)),
+            // A conta, que diz que a exclusão foi cancelada.
+            auth.web_redirect(if entered.deletion_cancelled {
+                CANCELLED_PATH
+            } else {
+                return_to
+            }),
         ),
         Ok(None) => (jar, auth.web_redirect(return_to)),
         Err(code) => {
@@ -297,8 +303,15 @@ async fn callback(
     }
 }
 
-/// Confere o state e conclui: entrar devolve o token da sessão nova; ligar,
-/// `None`. Erro sai como código.
+/// A sessão nova do login por um provedor.
+struct Entered {
+    token: String,
+    /// Entrar cancelou a exclusão da conta, que estava agendada.
+    deletion_cancelled: bool,
+}
+
+/// Confere o state e conclui: entrar devolve a sessão nova; ligar, `None`.
+/// Erro sai como código.
 async fn complete_callback(
     state: &AppState,
     provider: Provider,
@@ -306,7 +319,7 @@ async fn complete_callback(
     flow: Option<&OAuthFlow>,
     session: Option<[u8; 32]>,
     user_agent: Option<&str>,
-) -> Result<Option<String>, &'static str> {
+) -> Result<Option<Entered>, &'static str> {
     let codes = provider.codes();
     if q.error.is_some() {
         return Err(codes.denied);
@@ -326,7 +339,12 @@ async fn complete_callback(
             let login = fetch_login(state, provider, code).await?;
             let result = async {
                 let user_id = db::upsert_external_user(&state.db, &login).await?;
-                anyhow::Ok(kv::create_session(&state.redis, user_id, user_agent).await?)
+                let token = kv::create_session(&state.redis, user_id, user_agent).await?;
+                let deletion_cancelled = db::cancel_deletion(&state.db, user_id).await?;
+                anyhow::Ok(Entered {
+                    token,
+                    deletion_cancelled,
+                })
             }
             .await;
             result.map(Some).map_err(|err| {

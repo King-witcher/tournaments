@@ -4,6 +4,7 @@ use axum::{
     extract::{FromRequestParts, RawPathParams},
     http::request::Parts,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
@@ -87,7 +88,10 @@ impl MinRole for Owner {
 /// - sem sessão: 401 `auth.unauthenticated`;
 /// - tenant inexistente ou usuário de fora: 404 `tenant.not_found` (não revela
 ///   se o tenant existe);
-/// - papel abaixo de `R`: 403 `tenant.forbidden`.
+/// - papel abaixo de `R`: 403 `tenant.forbidden`;
+/// - tenant com a exclusão agendada, em método que não é de leitura: 409
+///   `tenant.deletion_scheduled` (até a exclusão, a comunidade é só leitura;
+///   a rota que vale mesmo assim recebe `DuringDeletion`).
 pub struct TenantMember<R = Player> {
     pub tenant: TenantId,
     pub slug: String,
@@ -95,8 +99,14 @@ pub struct TenantMember<R = Player> {
     pub user: CurrentUser,
     pub role: Role,
     pub nickname: String,
+    /// Quando a comunidade vai ser excluída (nulo: nenhuma exclusão agendada).
+    pub deletion_scheduled_for: Option<DateTime<Utc>>,
     min_role: PhantomData<R>,
 }
+
+/// `TenantMember` que passa também na comunidade com a exclusão agendada, em
+/// qualquer método: só para o que a exclusão não impede (cancelá-la, sair).
+pub struct DuringDeletion<R = Player>(pub TenantMember<R>);
 
 impl TenantMember {
     /// Todas as participações ativas de `user`, na ordem em que entrou, para
@@ -113,6 +123,7 @@ impl TenantMember {
                 user: user.clone(),
                 role: m.role,
                 nickname: m.nickname,
+                deletion_scheduled_for: m.deletion_scheduled_for,
                 min_role: PhantomData,
             })
             .collect())
@@ -126,6 +137,30 @@ impl<R: MinRole> FromRequestParts<AppState> for TenantMember<R> {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
+        let member = Self::from_path(parts, state).await?;
+        // Só leitura até a exclusão: vale para toda rota de escrita de todos
+        // os domínios, sem elas precisarem conferir.
+        if member.deletion_scheduled_for.is_some() && !parts.method.is_safe() {
+            return Err(ApiError::conflict("tenant.deletion_scheduled"));
+        }
+        Ok(member)
+    }
+}
+
+impl<R: MinRole> FromRequestParts<AppState> for DuringDeletion<R> {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        TenantMember::from_path(parts, state).await.map(Self)
+    }
+}
+
+impl<R: MinRole> TenantMember<R> {
+    /// O membro do tenant do `{slug}` da rota, sem olhar a exclusão agendada.
+    async fn from_path(parts: &mut Parts, state: &AppState) -> Result<Self, ApiError> {
         let user = CurrentUser::from_request_parts(parts, state).await?;
         let params = RawPathParams::from_request_parts(parts, state)
             .await
@@ -156,6 +191,7 @@ impl<R: MinRole> TenantMember<R> {
             user,
             role: m.role,
             nickname: m.nickname,
+            deletion_scheduled_for: m.deletion_scheduled_for,
             min_role: PhantomData,
         })
     }

@@ -2,6 +2,7 @@
 //! falsos e os helpers que leem redirect e cookies, que os outros domínios
 //! não precisam.
 
+mod deletion;
 mod discord;
 mod email;
 mod google;

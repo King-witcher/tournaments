@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update users set deletion_due_at = null where id = $1 and deletion_due_at is not null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "990516d1a8828fb4a1665f5e9331fe1ecb26a352e49dfab023061bfdb7d79e47"
+}

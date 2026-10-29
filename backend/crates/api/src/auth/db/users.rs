@@ -4,12 +4,12 @@ use sqlx::PgPool;
 
 use crate::auth::CurrentUser;
 
-/// Usuário de id `id`; `None` se a conta não existe mais (a sessão dela, no
-/// Redis, fica sem efeito até expirar).
+/// Usuário de id `id`; `None` se a conta não existe mais ou foi excluída (a
+/// sessão dela, no Redis, fica sem efeito até expirar).
 pub async fn find_user(db: &PgPool, id: i64) -> Result<Option<CurrentUser>, sqlx::Error> {
     sqlx::query_as!(
         CurrentUser,
-        "select id, display_name, avatar_url, locale from users where id = $1",
+        "select id, display_name, avatar_url, locale from users where id = $1 and deleted_at is null",
         id
     )
     .fetch_optional(db)

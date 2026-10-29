@@ -147,6 +147,8 @@ pub struct StoredInvite {
     pub expires_at: Option<DateTime<Utc>>,
     pub revoked: bool,
     pub expired: bool,
+    /// A comunidade tem a exclusão agendada: ninguém entra até lá.
+    pub tenant_deleting: bool,
 }
 
 pub async fn find_by_token_hash(
@@ -157,7 +159,8 @@ pub async fn find_by_token_hash(
         r#"select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as "tournament_slug?",
                   i.expires_at,
                   i.revoked_at is not null as "revoked!",
-                  coalesce(i.expires_at <= now(), false) as "expired!"
+                  coalesce(i.expires_at <= now(), false) as "expired!",
+                  t.deletion_due_at is not null as "tenant_deleting!"
            from tenant_invites i
            join tenants t on t.id = i.tenant_id
            left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id
@@ -176,6 +179,7 @@ pub async fn find_by_token_hash(
         expires_at: r.expires_at,
         revoked: r.revoked,
         expired: r.expired,
+        tenant_deleting: r.tenant_deleting,
     }))
 }
 

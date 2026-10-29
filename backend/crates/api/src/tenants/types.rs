@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -22,6 +23,13 @@ pub struct TransferOwnership {
     pub confirm_slug: String,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct ScheduleTenantDeletion {
+    /// O slug do tenant, digitado para confirmar.
+    #[schema(example = "quake-br")]
+    pub confirm_slug: String,
+}
+
 /// Um tenant do ponto de vista do usuário logado.
 #[derive(Serialize, ToSchema)]
 pub struct MyTenant {
@@ -30,6 +38,11 @@ pub struct MyTenant {
     pub role: Role,
     /// Apelido do usuário neste tenant.
     pub nickname: String,
+    /// Quando a comunidade vai ser excluída, com tudo o que tem dentro. Até
+    /// lá ela é só leitura: toda escrita responde 409
+    /// `tenant.deletion_scheduled`, menos cancelar a exclusão (o owner) e
+    /// sair. Nulo: nenhuma exclusão agendada.
+    pub deletion_scheduled_for: Option<DateTime<Utc>>,
 }
 
 impl<R> From<TenantMember<R>> for MyTenant {
@@ -39,6 +52,7 @@ impl<R> From<TenantMember<R>> for MyTenant {
             name: m.name,
             role: m.role,
             nickname: m.nickname,
+            deletion_scheduled_for: m.deletion_scheduled_for,
         }
     }
 }

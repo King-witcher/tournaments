@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-
+import { shownNickname } from "@/features/members/lib/nickname";
 import {
   hasStarted,
   participantsEditable,
@@ -36,8 +36,9 @@ export async function ParticipantTable({ tenant, slug }: Props) {
   const started = hasStarted(status);
   const canManage = organizer && participantsEditable(status);
   const api = await serverApi();
-  const [t, participants, members] = await Promise.all([
+  const [t, tMember, participants, members] = await Promise.all([
     getTranslations("Participants"),
+    getTranslations("Member"),
     getParticipants(tenant, slug).then((list) => list ?? []),
     canManage
       ? api
@@ -83,17 +84,18 @@ export async function ParticipantTable({ tenant, slug }: Props) {
     const withdraw =
       organizer && status === "in_progress" && p.seed != null && !p.withdrawn;
     const hasActions = checkIn !== undefined || canManage || withdraw;
+    const nickname = shownNickname(p.nickname, tMember("deletedAccount"));
     return {
       id: String(p.user_id),
-      search: p.nickname,
+      search: nickname,
       // Quem saiu da comunidade não tem mais página nela.
       href: p.left ? undefined : `/${tenant}/members/${p.user_id}`,
       cells: {
         seed: p.seed != null ? t("seed", { seed: p.seed }) : "",
         name: (
           <span className={styles.name}>
-            <Avatar src={p.avatar_url} name={p.nickname} />
-            {p.nickname}
+            <Avatar src={p.avatar_url} name={nickname} />
+            {nickname}
           </span>
         ),
         state: (
@@ -110,7 +112,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           tenant={tenant}
           tournament={slug}
           userId={p.user_id}
-          nickname={p.nickname}
+          nickname={nickname}
           checkIn={checkIn}
           remove={canManage}
           withdraw={withdraw}

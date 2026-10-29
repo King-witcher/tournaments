@@ -1,6 +1,7 @@
 //! Testes de `tenants`: criar, listar e ver aqui; transferir a posse em
-//! `transfer`.
+//! `transfer`; excluir em `deletion`.
 
+mod deletion;
 mod transfer;
 
 use axum::http::{Method, StatusCode};
@@ -44,8 +45,13 @@ async fn create_makes_the_user_owner() {
     )
     .await;
     assert_eq!(status, StatusCode::CREATED);
-    let expected =
-        json!({ "slug": "quake-br", "name": "Quake BR", "role": "owner", "nickname": "Ana" });
+    let expected = json!({
+        "slug": "quake-br",
+        "name": "Quake BR",
+        "role": "owner",
+        "nickname": "Ana",
+        "deletion_scheduled_for": null
+    });
     assert_eq!(body, expected);
 
     assert_eq!(get(&app, "/tenants", &ana).await.1, json!([expected]));

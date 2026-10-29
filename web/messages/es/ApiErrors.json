@@ -34,6 +34,7 @@
     "email_unchanged": "Ese ya es el email de tu cuenta.",
     "email_required": "Para crear nombre de usuario y contraseña, registra y confirma antes un email en la cuenta: es con él que recuperas la contraseña si la olvidas.",
     "no_email": "Tu cuenta no tiene email.",
+    "owns_tenants": "Eres dueño de una comunidad: transfiere la propiedad o elimina la comunidad antes de eliminar la cuenta.",
     "password_needs_email": "Con nombre de usuario y contraseña en la cuenta, el email no sale: es con él que recuperas la contraseña. Quita antes la contraseña.",
     "session_not_found": "Esa sesión ya se cerró."
   },
@@ -51,7 +52,10 @@
     "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
     "slug_reserved": "Esa dirección está reservada. Elige otra.",
     "name_invalid": "El nombre debe tener de 1 a 64 caracteres.",
-    "confirmation_mismatch": "La dirección escrita no coincide con la de la comunidad."
+    "confirmation_mismatch": "La dirección escrita no coincide con la de la comunidad.",
+    "deletion_scheduled": "Esta comunidad se va a eliminar y, hasta entonces, nada cambia en ella.",
+    "deletion_not_scheduled": "La eliminación de esta comunidad no está programada.",
+    "tournament_in_progress": "Hay un torneo en curso: termínalo o deshaz el inicio antes de eliminar la comunidad."
   },
   "invite": {
     "not_found": "Invitación no encontrada. Revisa el enlace.",
@@ -64,7 +68,8 @@
     "owner_must_transfer": "El dueño no sale de la comunidad: transfiere la propiedad antes.",
     "remove_self": "Para salir de la comunidad, usa \"Salir de la comunidad\".",
     "owner_limit_reached": "Ese miembro ya es dueño del máximo de {max} comunidades.",
-    "nickname_invalid": "El apodo debe tener de 1 a 32 caracteres."
+    "nickname_invalid": "El apodo debe tener de 1 a 32 caracteres.",
+    "deletion_scheduled": "Ese miembro pidió eliminar su cuenta y no puede recibir la propiedad."
   },
   "tournament": {
     "not_found": "Torneo no encontrado.",

@@ -5,6 +5,7 @@
   "backToMembers": "Ver os membros",
   "since": "Membro desde <date></date>",
   "editNickname": "Editar apelido",
+  "deletedAccount": "Conta excluída",
   "tournaments": {
     "title": "Torneios nesta comunidade",
     "tournament": "Torneio",

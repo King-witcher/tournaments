@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select deletion_due_at from users where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "deletion_due_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "deletion_due_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "f71a93b5571db43088745bf9e6029fe6aa6e2b364e0e2fb297b63e0590131a66"
+}

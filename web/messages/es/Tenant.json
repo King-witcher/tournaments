@@ -74,5 +74,19 @@
     "copied": "¡Copiado!",
     "revoke": "Revocar",
     "revokeConfirm": "¿Revocar {has, select, yes {el enlace {link}} other {este enlace}}? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
+  },
+  "deletion": {
+    "title": "Eliminar la comunidad",
+    "description": "La comunidad se elimina 7 días después del pedido, con los torneos, las inscripciones, los resultados y las invitaciones. Hasta entonces queda en solo lectura (nadie cambia nada en ella), y puedes cancelar. Con un torneo en curso, termínalo o deshaz el inicio antes.",
+    "submit": "Eliminar comunidad",
+    "confirm": "¿Programar la eliminación de la comunidad para dentro de 7 días? Hasta entonces queda en solo lectura para todos; en la fecha, se borra con todo lo que tiene dentro, sin vuelta atrás.",
+    "scheduledTitle": "Eliminación programada",
+    "scheduled": "La comunidad se eliminará el <date></date>, con todo lo que tiene dentro. Hasta entonces, queda en solo lectura.",
+    "cancel": "Cancelar la eliminación"
+  },
+  "deletionNotice": {
+    "title": "Comunidad en eliminación",
+    "text": "Esta comunidad se eliminará el <date></date>, con los torneos y todo lo que tiene dentro. Hasta entonces, queda en solo lectura.",
+    "ownerHint": "Para cancelar, usa la pestaña Configuración."
   }
 }

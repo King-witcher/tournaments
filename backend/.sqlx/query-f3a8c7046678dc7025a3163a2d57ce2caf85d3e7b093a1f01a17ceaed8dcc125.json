@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, status, starts_at, check_in_minutes, registration_reopened_at\n           from tournaments\n           where status = 'registration'\n             and starts_at - make_interval(mins => check_in_minutes) <= $1\n           order by id",
+  "query": "select id, status, starts_at, check_in_minutes, registration_reopened_at\n           from tournaments\n           where status = 'registration'\n             and starts_at - make_interval(mins => check_in_minutes) <= $1\n             and not exists (select 1 from tenants n\n                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)\n           order by id",
   "describe": {
     "columns": [
       {
@@ -72,5 +72,5 @@
       true
     ]
   },
-  "hash": "b5305b653e3152b086ad0074a23266a8b767e72ae558a9a36f90ffd0e796f191"
+  "hash": "f3a8c7046678dc7025a3163a2d57ce2caf85d3e7b093a1f01a17ceaed8dcc125"
 }

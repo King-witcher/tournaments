@@ -1,9 +1,10 @@
 //! Regras do banco para o schema inteiro, gravando o estado inválido direto
 //! por SQL: o que cada exclusão apaga ou recusa (`deletion`), o owner de cada
 //! tenant (`owner`), o membro inativo (`inactive`), a desistência e o W.O.
-//! automático (`withdrawal`), a coerência e a forma dos dados (`checks`) e o
-//! tempo real (`realtime`: outbox, inscrições de push) e o rating (`ratings`:
-//! forma, marcas de desatualizado, exclusão). As de resultados e
+//! automático (`withdrawal`), a coerência e a forma dos dados (`checks`), o
+//! tempo real (`realtime`: outbox, inscrições de push), o rating (`ratings`:
+//! forma, marcas de desatualizado, exclusão) e a exclusão agendada de conta e
+//! de comunidade (`scheduled_deletion`). As de resultados e
 //! histórico ficam em `matches::schema`.
 
 mod checks;
@@ -12,6 +13,7 @@ mod inactive;
 mod owner;
 mod ratings;
 mod realtime;
+mod scheduled_deletion;
 mod withdrawal;
 
 use axum::{Router, http::StatusCode};

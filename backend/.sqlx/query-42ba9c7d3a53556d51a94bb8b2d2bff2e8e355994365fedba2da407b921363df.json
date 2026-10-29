@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id from tournaments\n           where status in ('registration', 'check_in') and starts_at <= $1\n             and (start_reminded_at is null or start_reminded_at < starts_at)\n           order by id",
+  "query": "select id from users where id = $1 and deletion_due_at <= $2 for update",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tournaments",
+            "table": "users",
             "name": "id"
           }
         }
@@ -17,6 +17,7 @@
     ],
     "parameters": {
       "Left": [
+        "Int8",
         "Timestamptz"
       ]
     },
@@ -24,5 +25,5 @@
       false
     ]
   },
-  "hash": "2eb162c4ce78b3f81d1b68d86a2521b01b6c80cc9a4edca3c9848f1e7f166b82"
+  "hash": "42ba9c7d3a53556d51a94bb8b2d2bff2e8e355994365fedba2da407b921363df"
 }

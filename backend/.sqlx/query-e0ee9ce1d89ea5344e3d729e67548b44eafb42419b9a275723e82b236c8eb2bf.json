@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set status = 'check_in', updated_at = now()\n           where id = $1 and status = 'registration'\n             and starts_at is not distinct from $2\n             and check_in_minutes is not distinct from $3\n             and registration_reopened_at is not distinct from $4\n             and not exists (select 1 from tenants n\n                             where n.id = tournaments.tenant_id and n.deletion_due_at is not null)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz",
+        "Int4",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e0ee9ce1d89ea5344e3d729e67548b44eafb42419b9a275723e82b236c8eb2bf"
+}

@@ -34,6 +34,7 @@
     "email_unchanged": "Esse já é o email da sua conta.",
     "email_required": "Para criar nome de usuário e senha, cadastre e confirme antes um email na conta: é por ele que você recupera a senha se esquecer.",
     "no_email": "Sua conta não tem email.",
+    "owns_tenants": "Você é dono de uma comunidade: transfira a posse ou exclua a comunidade antes de excluir a conta.",
     "password_needs_email": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Remova antes a senha.",
     "session_not_found": "Essa sessão já foi encerrada."
   },
@@ -51,7 +52,10 @@
     "slug_invalid": "Use de 3 a 32 letras minúsculas, números ou hífens, sem hífen no começo, no fim ou repetido.",
     "slug_reserved": "Esse endereço é reservado. Escolha outro.",
     "name_invalid": "O nome precisa ter de 1 a 64 caracteres.",
-    "confirmation_mismatch": "O endereço digitado não confere com o da comunidade."
+    "confirmation_mismatch": "O endereço digitado não confere com o da comunidade.",
+    "deletion_scheduled": "Esta comunidade vai ser excluída e, até lá, nada muda nela.",
+    "deletion_not_scheduled": "A exclusão desta comunidade não está agendada.",
+    "tournament_in_progress": "Há um torneio em andamento: encerre o torneio ou desfaça o início antes de excluir a comunidade."
   },
   "invite": {
     "not_found": "Convite não encontrado. Confira o link.",
@@ -64,7 +68,8 @@
     "owner_must_transfer": "O dono não sai da comunidade: transfira a posse antes.",
     "remove_self": "Para sair da comunidade, use \"Sair da comunidade\".",
     "owner_limit_reached": "Esse membro já é dono do máximo de {max} comunidades.",
-    "nickname_invalid": "O apelido precisa ter de 1 a 32 caracteres."
+    "nickname_invalid": "O apelido precisa ter de 1 a 32 caracteres.",
+    "deletion_scheduled": "Esse membro pediu a exclusão da conta e não pode receber a posse."
   },
   "tournament": {
     "not_found": "Torneio não encontrado.",

@@ -143,3 +143,40 @@ pub async fn set_nickname(
     .await?;
     Ok(())
 }
+
+/// Comunidades em que `user_id` é membro ativo, para a exclusão da conta (o
+/// agendador age pelo sistema).
+pub async fn active_tenants(
+    conn: &mut PgConnection,
+    user_id: i64,
+) -> Result<Vec<TenantId>, sqlx::Error> {
+    Ok(sqlx::query_scalar!(
+        r#"select tenant_id from tenant_members
+           where user_id = $1 and left_at is null
+           order by tenant_id"#,
+        user_id
+    )
+    .fetch_all(conn)
+    .await?
+    .into_iter()
+    .map(TenantId::new)
+    .collect())
+}
+
+/// Troca os apelidos de `user_id`, em toda comunidade em que ele já esteve,
+/// pelo marcador de conta excluída (o vazio), e devolve essas comunidades.
+pub async fn forget_nicknames(
+    conn: &mut PgConnection,
+    user_id: i64,
+) -> Result<Vec<TenantId>, sqlx::Error> {
+    Ok(sqlx::query_scalar!(
+        r#"update tenant_members set nickname = '' where user_id = $1
+           returning tenant_id"#,
+        user_id
+    )
+    .fetch_all(conn)
+    .await?
+    .into_iter()
+    .map(TenantId::new)
+    .collect())
+}

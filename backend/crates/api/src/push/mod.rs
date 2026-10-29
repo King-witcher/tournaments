@@ -5,7 +5,8 @@
 //! aviso com o idioma da inscrição (`{code, params, path, locale}`). O envio fica
 //! atrás da trait `WebPush` (`HttpWebPush` com o `web-push-native` e o
 //! `reqwest`); sem as chaves VAPID, o push fica desligado e os avisos só
-//! chegam pelo WebSocket.
+//! chegam pelo WebSocket. A conta excluída perde as inscrições
+//! (`forget_user`).
 
 mod db;
 mod delivery;
@@ -18,6 +19,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use db::forget_user;
 pub use delivery::deliver;
 pub use sender::{HttpWebPush, Sent, Target, WebPush};
 

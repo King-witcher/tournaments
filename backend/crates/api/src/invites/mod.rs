@@ -2,7 +2,9 @@
 //! a prévia sem login e aceita para entrar como player. O link de inscrição
 //! de um torneio (`tournament`) é um convite do tenant que também inscreve.
 //! Quem tinha saído do tenant volta por qualquer convite (`join_as_player`);
-//! quem sai tem os convites que criou revogados (`revoke_created_by`).
+//! quem sai tem os convites que criou revogados (`revoke_created_by`). Na
+//! comunidade com a exclusão agendada, nenhum convite vale (prévia e aceite
+//! respondem `tenant.deletion_scheduled`).
 
 mod db;
 mod handlers;

@@ -18,7 +18,7 @@ use super::{
     notify::notify,
     password::{hash_password, is_acceptable, validate_password},
     session::{SESSION_COOKIE, user_agent},
-    types::{ChangePassword, Credentials, CurrentPassword, LoginMethods},
+    types::{ChangePassword, Credentials, CurrentPassword, LoginMethods, SignedIn},
     username::validate_username,
 };
 use crate::{
@@ -32,7 +32,7 @@ use crate::{
     tag = "auth",
     request_body = Credentials,
     responses(
-        (status = OK, body = CurrentUser, description = "Sessão criada no cookie"),
+        (status = OK, body = SignedIn, description = "Sessão criada no cookie. Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.invalid_credentials (username ou senha errados)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
@@ -43,7 +43,7 @@ pub async fn login(
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<Credentials>,
-) -> Result<(CookieJar, Json<CurrentUser>), ApiError> {
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
     let invalid = ApiError::new(StatusCode::UNAUTHORIZED, "auth.invalid_credentials");
     // Fora do formato, a conta não pode existir: nem conta tentativa.
     let Ok(username) = validate_username(&body.username) else {
@@ -64,16 +64,22 @@ pub async fn login(
 }
 
 /// Sessão nova para `user_id`, no cookie, e o usuário para a resposta.
+/// Entrar cancela a exclusão da conta, se estava agendada.
 pub(super) async fn start_session(
     state: &AppState,
     headers: &HeaderMap,
     jar: CookieJar,
     user_id: i64,
-) -> Result<(CookieJar, Json<CurrentUser>), ApiError> {
+) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
     let agent = user_agent(headers);
     let token = kv::create_session(&state.redis, user_id, agent.as_deref()).await?;
+    let deletion_cancelled = db::cancel_deletion(&state.db, user_id).await?;
     let user = db::user_by_id(&state.db, user_id).await?;
-    Ok((jar.add(state.auth.session_cookie(token)), Json(user)))
+    let signed_in = SignedIn {
+        user,
+        deletion_cancelled,
+    };
+    Ok((jar.add(state.auth.session_cookie(token)), Json(signed_in)))
 }
 
 #[utoipa::path(
