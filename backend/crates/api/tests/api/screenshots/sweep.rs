@@ -4,13 +4,19 @@
 
 use api::{realtime, screenshots};
 use axum::http::StatusCode;
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde_json::json;
 use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 use crate::matches::{confirm, game as map, report};
+
+/// Depois de vencer a URL de upload de tudo o que o teste pediu (10 minutos)
+/// e da folga do relógio do bucket (5).
+fn after_uploads() -> DateTime<Utc> {
+    Utc::now() + Duration::minutes(16)
+}
 
 async fn status_of(db: &PgPool) -> String {
     sqlx::query_scalar("select status from tournaments")
@@ -72,6 +78,12 @@ async fn abandoned_uploads_leave_after_a_day() {
     // O anexado fica, no banco e no bucket.
     assert_eq!(stored(&db).await, [object_key_of(&db, &kept).await]);
     assert_eq!(c.s3.keys().len(), 1);
+    // A contagem de uploads das horas passadas sai.
+    let counts: i64 = sqlx::query_scalar("select count(*) from screenshot_upload_counts")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(counts, 0);
 }
 
 async fn object_key_of(db: &PgPool, screenshot: &Value) -> String {
@@ -92,7 +104,7 @@ async fn the_scheduler_runs_it_once_a_day() {
     assert_eq!(status, StatusCode::NO_CONTENT);
     assert_eq!(queued(&db).await.len(), 1);
 
-    let now = Utc::now();
+    let now = after_uploads();
     realtime::tick(&c.state, now).await.unwrap();
     assert!(queued(&db).await.is_empty());
     assert!(c.s3.keys().is_empty());
@@ -132,7 +144,9 @@ async fn what_the_bucket_does_not_delete_waits_in_the_queue() {
     }
     c.s3.refuse_to_delete(&keys[0]);
     let storage = c.state.storage.as_ref().unwrap();
-    let done = screenshots::sweep(&db, storage, Utc::now()).await.unwrap();
+    let done = screenshots::sweep(&db, storage, after_uploads())
+        .await
+        .unwrap();
     assert_eq!((done.deleted, done.drained), (1, false));
     assert_eq!(queued(&db).await, [keys[0].clone()]);
     assert_eq!(
@@ -140,8 +154,32 @@ async fn what_the_bucket_does_not_delete_waits_in_the_queue() {
         [keys[0].clone()]
     );
     // A passada fica marcada: o bucket não leva outra tentativa a cada 10 s.
-    let again = screenshots::sweep_due(&c.state, Utc::now()).await.unwrap();
+    let again = screenshots::sweep_due(&c.state, after_uploads())
+        .await
+        .unwrap();
     assert_eq!(again, None);
+}
+
+#[tokio::test]
+async fn an_object_leaves_the_bucket_only_after_its_upload_url_expires() {
+    let (db, _lease) = crate::db::test_db().await;
+    let c = cup(&db, 3, json!({})).await;
+    let (_, screenshot) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
+    let key = object_key(&db, &screenshot["id"]).await;
+    let uri = format!("{}/{}", screenshots_uri(FINAL, 1), screenshot["id"]);
+    assert_eq!(delete(&c.app, &uri, &c.p1).await.0, StatusCode::NO_CONTENT);
+    // Apagado com a URL valendo, o mesmo PUT gravaria o objeto de novo, sem
+    // linha nem fila: ele espera.
+    let storage = c.state.storage.as_ref().unwrap();
+    let early = screenshots::sweep(&db, storage, Utc::now()).await.unwrap();
+    assert_eq!((early.deleted, early.drained), (0, true));
+    assert_eq!(queued(&db).await, std::slice::from_ref(&key));
+    assert!(c.s3.keys().contains(&key));
+    let later = screenshots::sweep(&db, storage, after_uploads())
+        .await
+        .unwrap();
+    assert_eq!((later.deleted, later.drained), (1, true));
+    assert!(c.s3.keys().is_empty());
 }
 
 #[tokio::test]

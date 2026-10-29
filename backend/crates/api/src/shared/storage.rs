@@ -7,7 +7,9 @@
 //!   assinados. O navegador põe o `Content-Length` do arquivo sozinho, e
 //!   assinatura que não confere é recusada pelo bucket: assim o tamanho fica
 //!   limitado no próprio bucket também no R2, que não aceita o POST com
-//!   policy.
+//!   policy. `If-None-Match: *`, também assinado, faz o bucket gravar só onde
+//!   não há objeto: a URL serve uma vez, e o arquivo conferido depois não é
+//!   trocado por outro do mesmo tamanho enquanto ela vale.
 //! - **Leitura** (`get_url`): assinada no começo da hora e válida por duas,
 //!   então a mesma página recarregada na mesma hora recebe a mesma URL (o
 //!   navegador usa o cache) e toda URL entregue vale pelo menos uma hora.
@@ -90,7 +92,8 @@ impl Storage {
 
     /// URL para o navegador mandar `key` por PUT, válida por `expires` a
     /// partir de `now`. A requisição precisa levar `Content-Type:
-    /// content_type` e ter exatamente `size` bytes.
+    /// content_type` e `If-None-Match: *` e ter exatamente `size` bytes; o
+    /// bucket só grava se `key` ainda não existe.
     pub fn put_url(
         &self,
         key: &str,
@@ -104,6 +107,7 @@ impl Storage {
         let headers = action.headers_mut();
         headers.insert("content-length", size.to_string());
         headers.insert("content-type", content_type.to_owned());
+        headers.insert("if-none-match", "*");
         action.sign_with_time(expires, &timestamp(now))
     }
 
@@ -229,7 +233,7 @@ mod tests {
         assert_eq!(url.path(), "/screenshots/1/2/abc.webp");
         assert_eq!(
             query(&url, "X-Amz-SignedHeaders").as_deref(),
-            Some("content-length;content-type;host")
+            Some("content-length;content-type;host;if-none-match")
         );
         assert_eq!(query(&url, "X-Amz-Expires").as_deref(), Some("600"));
         assert_eq!(

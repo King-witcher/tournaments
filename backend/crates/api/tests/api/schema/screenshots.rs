@@ -1,7 +1,8 @@
-//! Screenshots do placar: nome do objeto com o dono, até 3 por mapa, só em
-//! torneio iniciado, sem mudar de mapa nem de objeto; todo screenshot apagado,
-//! por qualquer caminho, deixa o objeto na fila de exclusão; e o torneio guarda
-//! quando encerrou.
+//! Screenshots do placar: nome do objeto com o dono, um anexado por pessoa em
+//! cada mapa, só em torneio iniciado, sem mudar de mapa nem de objeto; todo
+//! screenshot apagado, por qualquer caminho, deixa o objeto na fila de
+//! exclusão; a contagem de uploads por hora; e o torneio guarda quando
+//! encerrou.
 
 use sqlx::PgPool;
 
@@ -34,6 +35,7 @@ fn named(start: &str, token: &str, ext: &str) -> String {
     format!("{start}-{token}.{ext}")
 }
 
+/// Um screenshot sem autor (a conta que não existe mais).
 fn insert(
     tenant: i64,
     tournament: i64,
@@ -42,11 +44,25 @@ fn insert(
     kind: &str,
     attached: bool,
 ) -> String {
+    insert_by(tenant, tournament, number, object, kind, attached, None)
+}
+
+fn insert_by(
+    tenant: i64,
+    tournament: i64,
+    number: i16,
+    object: &str,
+    kind: &str,
+    attached: bool,
+    by: Option<i64>,
+) -> String {
     let attached_at = if attached { "now()" } else { "null" };
+    let by = by.map_or("null".to_owned(), |id| id.to_string());
     format!(
         "insert into match_screenshots (tenant_id, tournament_id, stage, match_key, number, object_key,
-             content_type, size, attached_at)
-         values ({tenant}, {tournament}, 1, 'wb-1-1', {number}, '{object}', '{kind}', 100, {attached_at})"
+             content_type, size, uploaded_by, upload_expires_at, attached_at)
+         values ({tenant}, {tournament}, 1, 'wb-1-1', {number}, '{object}', '{kind}', 100, {by},
+                 now() + interval '10 minutes', {attached_at})"
     )
 }
 
@@ -101,51 +117,73 @@ async fn the_object_name_has_its_owner() {
 }
 
 #[tokio::test]
-async fn three_attached_per_map() {
+async fn one_attached_per_person_per_map() {
     let (db, _lease) = crate::db::test_db().await;
     let (t, id) = started(&db).await;
-    for i in 0..3 {
-        exec(
-            &db,
-            &insert(t, id, 1, &key(1, &token(i), "webp"), "image/webp", true),
-        )
+    let users: Vec<i64> = sqlx::query_scalar("select user_id from tenant_members order by user_id")
+        .fetch_all(&db)
         .await
         .unwrap();
+    let (ana, p1) = (users[0], users[1]);
+    let webp = "image/webp";
+    let attached = |i: usize, n: i16, by: i64| {
+        insert_by(t, id, n, &key(n, &token(i), "webp"), webp, true, Some(by))
+    };
+    let one_each = rule(UNIQUE, "match_screenshots_one_per_person");
+    exec(&db, &attached(0, 1, ana)).await.unwrap();
+    exec(&db, &attached(1, 1, p1)).await.unwrap();
+    // O pendente da mesma pessoa não conta; anexá-lo, sim.
+    let pending = insert_by(t, id, 1, &key(1, &token(2), "webp"), webp, false, Some(p1));
+    exec(&db, &pending).await.unwrap();
+    assert_eq!(rejected(exec(&db, &attached(3, 1, p1)).await), one_each);
+    let attach = "update match_screenshots set attached_at = now() where attached_at is null";
+    assert_eq!(rejected(exec(&db, attach).await), one_each);
+    // Sem autor, não conta.
+    for i in 4..6 {
+        let orphan = insert(t, id, 1, &key(1, &token(i), "webp"), webp, true);
+        exec(&db, &orphan).await.unwrap();
     }
-    // Pendente não conta; anexar o quarto, sim.
-    exec(
-        &db,
-        &insert(t, id, 1, &key(1, &token(3), "webp"), "image/webp", false),
-    )
-    .await
-    .unwrap();
+    // Em outro mapa, de novo.
+    exec(&db, &attached(6, 2, p1)).await.unwrap();
+}
+
+#[tokio::test]
+async fn upload_counts_go_by_the_hour_and_leave_with_the_user() {
+    let (db, _lease) = crate::db::test_db().await;
+    let ana = user(&db, "Ana").await.id;
+    let row = |hour: &str, uploads: i32| {
+        format!(
+            "insert into screenshot_upload_counts (user_id, hour, uploads)
+             values ({ana}, '{hour}', {uploads})"
+        )
+    };
+    for bad in [
+        row("2026-10-29T12:30:00Z", 1),
+        row("2026-10-29T12:00:01Z", 1),
+        row("2026-10-29T12:00:00Z", 0),
+    ] {
+        assert_eq!(rejected(exec(&db, &bad).await).0, CHECK, "{bad}");
+    }
+    exec(&db, &row("2026-10-29T12:00:00Z", 3)).await.unwrap();
+    // A hora é a de UTC, qualquer que seja o fuso da sessão (em Kolkata, a
+    // hora local começa às :30 de UTC).
+    let mut tx = db.begin().await.unwrap();
+    sqlx::query("set local time zone 'Asia/Kolkata'")
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    sqlx::query(sqlx::AssertSqlSafe(row("2026-10-29T13:00:00Z", 1)))
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    exec(&db, &format!("delete from users where id = {ana}"))
+        .await
+        .unwrap();
     assert_eq!(
-        rejected(
-            exec(
-                &db,
-                &insert(t, id, 1, &key(1, &token(4), "webp"), "image/webp", true)
-            )
-            .await
-        ),
-        rule(CHECK, "match_screenshots_limit")
+        count(&db, "select count(*) from screenshot_upload_counts").await,
+        0
     );
-    assert_eq!(
-        rejected(
-            exec(
-                &db,
-                "update match_screenshots set attached_at = now() where attached_at is null"
-            )
-            .await
-        ),
-        rule(CHECK, "match_screenshots_limit")
-    );
-    // Em outro mapa, de novo três.
-    exec(
-        &db,
-        &insert(t, id, 2, &key(2, &token(5), "webp"), "image/webp", true),
-    )
-    .await
-    .unwrap();
 }
 
 #[tokio::test]

@@ -97,13 +97,13 @@ No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida
      {
        "AllowedOrigins": ["https://seu-front.exemplo"],
        "AllowedMethods": ["PUT"],
-       "AllowedHeaders": ["content-type"],
+       "AllowedHeaders": ["content-type", "if-none-match"],
        "MaxAgeSeconds": 3600
      }
    ]
    ```
 
-   As imagens aparecem em `<img>`, que não precisa de CORS.
+   O `if-none-match` é o que faz cada URL de upload gravar uma vez só (sem ele no CORS, todo envio falha). As imagens aparecem em `<img>`, que não precisa de CORS.
 3. **Usuário IAM** só para a API, com uma access key e esta política (troque `NOME-DO-BUCKET`):
 
    ```json

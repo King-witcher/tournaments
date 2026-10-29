@@ -88,6 +88,7 @@ pub async fn put_to_bucket(upload: &Value, content_type: &str, body: Vec<u8>) ->
     let res = reqwest::Client::new()
         .put(upload["url"].as_str().unwrap())
         .header("content-type", content_type)
+        .header("if-none-match", "*")
         .body(body)
         .send()
         .await

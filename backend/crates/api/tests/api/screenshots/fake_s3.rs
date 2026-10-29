@@ -3,7 +3,8 @@
 //! GET da imagem). Guarda os objetos em memória e confere cada URL como o S3:
 //! assinatura SigV4 refeita com as mesmas chaves e os cabeçalhos assinados
 //! com os valores que chegaram (um PUT com outro tamanho ou outro tipo é
-//! recusado), validade, e o `Content-MD5` do DeleteObjects.
+//! recusado), validade, o `If-None-Match: *` do PUT (412 com o objeto já
+//! gravado) e o `Content-MD5` do DeleteObjects.
 
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
@@ -119,6 +120,13 @@ async fn handle(State(bucket): State<Arc<Mutex<Bucket>>>, req: Request) -> Respo
     let mut bucket = bucket.lock().unwrap();
     match parts.method {
         Method::PUT => {
+            let only_new = parts
+                .headers
+                .get(header::IF_NONE_MATCH)
+                .is_some_and(|v| v == "*");
+            if only_new && bucket.objects.contains_key(path) {
+                return StatusCode::PRECONDITION_FAILED.into_response();
+            }
             let content_type = parts
                 .headers
                 .get(header::CONTENT_TYPE)

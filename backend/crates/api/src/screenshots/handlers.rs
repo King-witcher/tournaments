@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use axum::{Json, extract::State, http::StatusCode};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
 use super::{
@@ -25,17 +25,19 @@ use crate::{
 
 /// Tamanho máximo de um screenshot (o mesmo check está na tabela).
 pub const MAX_BYTES: u32 = 2 * 1024 * 1024;
-/// Screenshots anexados por mapa (o mesmo limite está no banco).
-pub const MAX_PER_GAME: u8 = 3;
+/// Screenshots anexados por pessoa em cada mapa (o mesmo limite está no banco,
+/// num índice único): um jogador não ocupa a vaga do adversário.
+pub const MAX_PER_PERSON: u8 = 1;
 /// Validade da URL de upload.
 const UPLOAD_EXPIRES: Duration = Duration::from_secs(10 * 60);
-/// Uploads pedidos e não registrados por pessoa numa comunidade, por hora:
-/// o que passa disso é abuso do bucket, não screenshot de partida.
-const MAX_PENDING_PER_HOUR: i64 = 10;
+/// URLs de upload que uma pessoa pede numa hora, em todas as comunidades,
+/// registradas ou não, removidas ou não: o que passa disso é abuso do bucket,
+/// não screenshot de partida.
+const MAX_UPLOADS_PER_HOUR: i32 = 30;
 
 const LIMITS: Limits = Limits {
     max_bytes: MAX_BYTES,
-    max_per_game: MAX_PER_GAME,
+    max_per_person: MAX_PER_PERSON,
 };
 const NOT_CONFIGURED: ApiError = ApiError::new(
     StatusCode::SERVICE_UNAVAILABLE,
@@ -63,8 +65,8 @@ fn game_ref(m: &MatchGames, number: i16) -> GameRef<'_> {
     }
 }
 
-/// Os erros de `policy::attach` e 409 `screenshots.limit_reached` `{max}` com o
-/// mapa cheio.
+/// Os erros de `policy::attach` e 409 `screenshots.limit_reached` `{max}` com
+/// quem age já tendo o máximo dele anexado ao mapa.
 async fn check_attach(
     conn: &mut PgConnection,
     m: &MatchGames,
@@ -73,9 +75,30 @@ async fn check_attach(
 ) -> Result<(), ApiError> {
     let slot = Slot::of(m, number);
     policy::attach(m.tournament.status, m.plays(actor.user_id), actor, slot)?;
-    if db::attached_count(conn, &game_ref(m, number)).await? >= i64::from(MAX_PER_GAME) {
+    let mine = db::attached_by(conn, &game_ref(m, number), actor.user_id).await?;
+    if mine >= i64::from(MAX_PER_PERSON) {
         return Err(ApiError::conflict("screenshots.limit_reached")
-            .with_params([("max", i64::from(MAX_PER_GAME))]));
+            .with_params([("max", i64::from(MAX_PER_PERSON))]));
+    }
+    Ok(())
+}
+
+/// Conta o upload de `user` na hora de `now`. Erro: 429
+/// `screenshots.too_many_uploads` `{max}` com a hora já cheia (o recusado não
+/// conta: sai com a transação).
+async fn count_upload(
+    conn: &mut PgConnection,
+    user: i64,
+    now: DateTime<Utc>,
+) -> Result<(), ApiError> {
+    let second = now.timestamp();
+    let hour = DateTime::from_timestamp(second - second.rem_euclid(3600), 0).unwrap_or(now);
+    if db::count_upload(conn, user, hour).await? > MAX_UPLOADS_PER_HOUR {
+        return Err(ApiError::new(
+            StatusCode::TOO_MANY_REQUESTS,
+            "screenshots.too_many_uploads",
+        )
+        .with_params([("max", i64::from(MAX_UPLOADS_PER_HOUR))]));
     }
     Ok(())
 }
@@ -92,7 +115,7 @@ pub async fn get_screenshot_settings(State(state): State<AppState>) -> Json<Scre
     Json(ScreenshotSettings {
         enabled: state.storage.is_some(),
         max_bytes: MAX_BYTES,
-        max_per_game: MAX_PER_GAME,
+        max_per_person: MAX_PER_PERSON,
         content_types: ImageType::ALL.to_vec(),
     })
 }
@@ -141,13 +164,13 @@ pub async fn list(
     ),
     request_body = NewUpload,
     responses(
-        (status = CREATED, body = ScreenshotUpload, description = "URL para o navegador mandar o arquivo direto ao bucket (PUT com o Content-Type dado e exatamente `size` bytes, em 10 minutos); depois, registrar com `.../screenshots/{id}/attach`. Anexam os dois jogadores (até o mapa confirmar) e organizer ou owner, com o torneio em andamento"),
+        (status = CREATED, body = ScreenshotUpload, description = "URL para o navegador mandar o arquivo direto ao bucket (PUT com o Content-Type dado, `If-None-Match: *` e exatamente `size` bytes, uma vez, em 10 minutos); depois, registrar com `.../screenshots/{id}/attach`. Anexam os dois jogadores (até o mapa confirmar) e organizer ou owner, com o torneio em andamento, um de cada pessoa por mapa"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "screenshots.forbidden (não joga a partida nem organiza)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, screenshots.game_unavailable (mapa que nem foi enviado nem é o próximo), screenshots.game_confirmed (jogador, mapa já confirmado), screenshots.limit_reached {max}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, screenshots.game_unavailable (mapa que nem foi enviado nem é o próximo), screenshots.game_confirmed (jogador, mapa já confirmado), screenshots.limit_reached {max} (quem pede já tem o máximo dele anexado ao mapa)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "screenshots.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/webp e image/jpeg)"),
-        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "screenshots.too_many_uploads {max} (uploads pedidos e não registrados na última hora)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "screenshots.too_many_uploads {max} (uploads pedidos nesta hora, em todas as comunidades, registrados, removidos ou não)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "screenshots.not_configured (a API está sem o bucket)"),
     )
 )]
@@ -162,20 +185,12 @@ pub async fn create_upload(
         return Err(ApiError::invalid("screenshots.size_invalid")
             .with_params([("max", i64::from(MAX_BYTES))]));
     }
+    let now = Utc::now();
     let mut tx = state.db.begin().await?;
     let m = matches::lock_match_games(&mut tx, &member, &path.tournament, &path.key).await?;
     let actor = actor(&member);
     check_attach(&mut tx, &m, actor, path.game).await?;
-    let hour_ago = Utc::now() - chrono::Duration::hours(1);
-    if db::pending_since(&mut tx, member.tenant, actor.user_id, hour_ago).await?
-        >= MAX_PENDING_PER_HOUR
-    {
-        return Err(ApiError::new(
-            StatusCode::TOO_MANY_REQUESTS,
-            "screenshots.too_many_uploads",
-        )
-        .with_params([("max", MAX_PENDING_PER_HOUR)]));
-    }
+    count_upload(&mut tx, actor.user_id, now).await?;
     let kind = body.content_type;
     let place = object::Place {
         tenant: &member.slug,
@@ -185,15 +200,16 @@ pub async fn create_upload(
     };
     let key = object::new_key(&place, kind);
     let at = game_ref(&m, path.game);
-    let id = db::insert_upload(&mut tx, &at, &key, kind, body.size, actor.user_id).await?;
+    let expires_at = now + UPLOAD_EXPIRES;
+    let user = actor.user_id;
+    let id = db::insert_upload(&mut tx, &at, &key, kind, body.size, user, expires_at).await?;
     tx.commit().await?;
-    let now = Utc::now();
     let url = storage.put_url(&key, kind.mime(), body.size.into(), UPLOAD_EXPIRES, now);
     let upload = ScreenshotUpload {
         id,
         url: url.into(),
         content_type: kind,
-        expires_at: now + UPLOAD_EXPIRES,
+        expires_at,
     };
     Ok((StatusCode::CREATED, Json(upload)))
 }

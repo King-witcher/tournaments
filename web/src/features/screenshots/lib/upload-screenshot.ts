@@ -13,8 +13,9 @@ export type UploadOutcome =
 
 /**
  * O caminho inteiro de um screenshot: converte no navegador, pede a URL de
- * upload à API, manda o arquivo direto ao bucket (PUT, com o tipo que a URL
- * assinou) e registra o screenshot na API, que confere o que chegou.
+ * upload à API, manda o arquivo direto ao bucket (PUT, com o tipo e o
+ * `If-None-Match: *` que a URL assinou: o bucket grava uma vez só) e registra
+ * o screenshot na API, que confere o que chegou.
  */
 export async function uploadScreenshot(
   target: ScreenshotTarget,
@@ -38,7 +39,10 @@ export async function uploadScreenshot(
   if (!upload.ok) return upload;
   const sent = await fetch(upload.data.url, {
     method: "PUT",
-    headers: { "Content-Type": upload.data.content_type },
+    headers: {
+      "Content-Type": upload.data.content_type,
+      "If-None-Match": "*",
+    },
     body: encoded.blob,
   }).catch(() => undefined);
   if (!sent?.ok) return { ok: false, local: "uploadFailed" };

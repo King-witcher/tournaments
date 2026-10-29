@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select object_key from screenshot_deletions order by queued_at, object_key limit $1",
+  "query": "select object_key from screenshot_deletions\n           where upload_expires_at < $2\n           order by queued_at, object_key limit $1",
   "describe": {
     "columns": [
       {
@@ -17,12 +17,13 @@
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Int8",
+        "Timestamptz"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "cd6294159bf34337b7bbdae586efd11c5613a019915a52fdf4ae2b602d9ec292"
+  "hash": "2be2881919b67864345c34a0b5175068e2bf0aa3f29803af3de6d914e5a38ca6"
 }

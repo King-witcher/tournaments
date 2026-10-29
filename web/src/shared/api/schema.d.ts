@@ -1990,7 +1990,7 @@ export interface components {
             /** Format: int32 */
             max_bytes: number;
             /** Format: int32 */
-            max_per_game: number;
+            max_per_person: number;
             /** @description O envio do jogador exige um screenshot anexado ao mapa. */
             required: boolean;
         };
@@ -2605,14 +2605,16 @@ export interface components {
             max_bytes: number;
             /**
              * Format: int32
-             * @description Screenshots por mapa.
-             * @example 3
+             * @description Screenshots que cada pessoa anexa a um mapa.
+             * @example 1
              */
-            max_per_game: number;
+            max_per_person: number;
         };
         /**
-         * @description Para onde mandar o arquivo: `PUT url` com o `Content-Type` dado, antes de
-         *     `expires_at`. Depois, `POST .../screenshots/{id}/attach`.
+         * @description Para onde mandar o arquivo: `PUT url` com o `Content-Type` dado e
+         *     `If-None-Match: *`, antes de `expires_at`. Os dois cabeçalhos estão na
+         *     assinatura, e o bucket grava só uma vez: um segundo PUT na mesma URL recebe
+         *     412. Depois, `POST .../screenshots/{id}/attach`.
          */
         ScreenshotUpload: {
             content_type: components["schemas"]["ImageType"];
@@ -7248,7 +7250,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description URL para o navegador mandar o arquivo direto ao bucket (PUT com o Content-Type dado e exatamente `size` bytes, em 10 minutos); depois, registrar com `.../screenshots/{id}/attach`. Anexam os dois jogadores (até o mapa confirmar) e organizer ou owner, com o torneio em andamento */
+            /** @description URL para o navegador mandar o arquivo direto ao bucket (PUT com o Content-Type dado, `If-None-Match: *` e exatamente `size` bytes, uma vez, em 10 minutos); depois, registrar com `.../screenshots/{id}/attach`. Anexam os dois jogadores (até o mapa confirmar) e organizer ou owner, com o torneio em andamento, um de cada pessoa por mapa */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -7284,7 +7286,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, screenshots.game_unavailable (mapa que nem foi enviado nem é o próximo), screenshots.game_confirmed (jogador, mapa já confirmado), screenshots.limit_reached {max} */
+            /** @description tournament.not_in_progress, screenshots.game_unavailable (mapa que nem foi enviado nem é o próximo), screenshots.game_confirmed (jogador, mapa já confirmado), screenshots.limit_reached {max} (quem pede já tem o máximo dele anexado ao mapa) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7302,7 +7304,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description screenshots.too_many_uploads {max} (uploads pedidos e não registrados na última hora) */
+            /** @description screenshots.too_many_uploads {max} (uploads pedidos nesta hora, em todas as comunidades, registrados, removidos ou não) */
             429: {
                 headers: {
                     [name: string]: unknown;

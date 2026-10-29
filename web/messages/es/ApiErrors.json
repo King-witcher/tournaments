@@ -201,9 +201,9 @@
     "forbidden": "Solo los jugadores de la partida y la organización adjuntan capturas de pantalla, y cada jugador solo quita la suya.",
     "game_unavailable": "Este mapa todavía no recibe capturas de pantalla: adjunta a un mapa enviado o al próximo.",
     "game_confirmed": "El mapa ya fue confirmado: sus capturas de pantalla ya no cambian (la organización todavía puede).",
-    "limit_reached": "Cada mapa acepta hasta {max} capturas de pantalla.",
+    "limit_reached": "Cada persona adjunta {max, plural, one {una captura de pantalla} other {hasta # capturas de pantalla}} por mapa. Para cambiar la tuya, quítala y adjunta otra.",
     "size_invalid": "La imagen supera el tamaño máximo.",
-    "too_many_uploads": "Demasiados envíos sin terminar en la última hora (como máximo {max}). Espera un poco e inténtalo de nuevo.",
+    "too_many_uploads": "Demasiadas capturas de pantalla enviadas en esta hora (como máximo {max}, las quitadas también cuentan). Inténtalo de nuevo en la próxima hora.",
     "not_found": "Esta captura de pantalla ya no existe. Recarga la página.",
     "upload_missing": "La imagen no llegó al almacenamiento. Intenta adjuntarla de nuevo.",
     "upload_invalid": "La imagen que llegó no es la que se pidió. Intenta adjuntarla de nuevo."

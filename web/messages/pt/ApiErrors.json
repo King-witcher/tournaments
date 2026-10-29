@@ -201,9 +201,9 @@
     "forbidden": "Só os jogadores da partida e a organização anexam capturas de tela, e cada jogador só remove a própria.",
     "game_unavailable": "Este mapa ainda não recebe captura de tela: anexe a um mapa enviado ou ao próximo.",
     "game_confirmed": "O mapa já foi confirmado: as capturas de tela dele não mudam mais (a organização ainda pode).",
-    "limit_reached": "Cada mapa aceita até {max} capturas de tela.",
+    "limit_reached": "Cada pessoa anexa {max, plural, one {uma captura de tela} other {até # capturas de tela}} por mapa. Para trocar a sua, remova e anexe outra.",
     "size_invalid": "A imagem passa do tamanho máximo.",
-    "too_many_uploads": "Muitos envios sem concluir na última hora (no máximo {max}). Espere um pouco e tente de novo.",
+    "too_many_uploads": "Muitas capturas de tela enviadas nesta hora (no máximo {max}, removidas também contam). Tente de novo na próxima hora.",
     "not_found": "Esta captura de tela não existe mais. Recarregue a página.",
     "upload_missing": "A imagem não chegou ao armazenamento. Tente anexar de novo.",
     "upload_invalid": "A imagem que chegou não é a que foi pedida. Tente anexar de novo."

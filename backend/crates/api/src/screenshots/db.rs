@@ -1,5 +1,6 @@
-//! SQL dos screenshots (`match_screenshots`) e da fila do que sai do bucket
-//! (`screenshot_deletions`, preenchida pelo banco a cada screenshot apagado).
+//! SQL dos screenshots (`match_screenshots`), da fila do que sai do bucket
+//! (`screenshot_deletions`, preenchida pelo banco a cada screenshot apagado) e
+//! da contagem de uploads por pessoa (`screenshot_upload_counts`).
 
 use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
@@ -55,41 +56,50 @@ fn image_type(value: &str) -> Result<ImageType, ApiError> {
     })
 }
 
-/// Screenshots anexados ao mapa.
-pub async fn attached_count(conn: &mut PgConnection, at: &GameRef<'_>) -> Result<i64, sqlx::Error> {
+/// Screenshots de `user` anexados ao mapa.
+pub async fn attached_by(
+    conn: &mut PgConnection,
+    at: &GameRef<'_>,
+    user: i64,
+) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"select count(*) as "n!" from match_screenshots
            where tenant_id = $1 and tournament_id = $2 and stage = $3 and match_key = $4
-             and number = $5 and attached_at is not null"#,
+             and number = $5 and uploaded_by = $6 and attached_at is not null"#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
         at.key,
-        at.number
+        at.number,
+        user
     )
     .fetch_one(conn)
     .await
 }
 
-/// Uploads de `user` no tenant pedidos desde `since` e ainda não registrados.
-pub async fn pending_since(
+/// Conta mais um upload pedido por `user` na hora que começa em `hour` e
+/// devolve quantos ele pediu nela, este incluído. A linha da hora fica travada
+/// até o fim da transação, então os pedidos da mesma pessoa contam um de cada
+/// vez (e o recusado, desfeito com a transação, não conta).
+pub async fn count_upload(
     conn: &mut PgConnection,
-    tenant: TenantId,
     user: i64,
-    since: DateTime<Utc>,
-) -> Result<i64, sqlx::Error> {
+    hour: DateTime<Utc>,
+) -> Result<i32, sqlx::Error> {
     sqlx::query_scalar!(
-        r#"select count(*) as "n!" from match_screenshots
-           where tenant_id = $1 and uploaded_by = $2 and attached_at is null and created_at >= $3"#,
-        tenant.get(),
+        r#"insert into screenshot_upload_counts (user_id, hour, uploads) values ($1, $2, 1)
+           on conflict (user_id, hour)
+               do update set uploads = screenshot_upload_counts.uploads + 1
+           returning uploads"#,
         user,
-        since
+        hour
     )
     .fetch_one(conn)
     .await
 }
 
-/// O upload pedido por `user` para o mapa: a linha que o registro completa.
+/// O upload pedido por `user` para o mapa, com a URL valendo até
+/// `upload_expires_at`: a linha que o registro completa.
 pub async fn insert_upload(
     conn: &mut PgConnection,
     at: &GameRef<'_>,
@@ -97,12 +107,13 @@ pub async fn insert_upload(
     kind: ImageType,
     size: u32,
     user: i64,
+    upload_expires_at: DateTime<Utc>,
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"insert into match_screenshots
                (tenant_id, tournament_id, stage, match_key, number, object_key, content_type,
-                size, uploaded_by)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                size, uploaded_by, upload_expires_at)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            returning id"#,
         at.tenant.get(),
         at.tournament.get(),
@@ -112,7 +123,8 @@ pub async fn insert_upload(
         object_key,
         kind.mime(),
         i32::try_from(size).unwrap_or(i32::MAX),
-        user
+        user,
+        upload_expires_at
     )
     .fetch_one(conn)
     .await
@@ -261,11 +273,30 @@ pub async fn delete_pending_before(db: &PgPool, before: DateTime<Utc>) -> Result
     Ok(done.rows_affected())
 }
 
-/// Até `limit` objetos da fila de exclusão, os mais antigos primeiro.
-pub async fn queued(db: &PgPool, limit: usize) -> Result<Vec<String>, sqlx::Error> {
+/// Apaga as contagens de upload das horas que começaram antes de `before`.
+pub async fn delete_counts_before(db: &PgPool, before: DateTime<Utc>) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "delete from screenshot_upload_counts where hour < $1",
+        before
+    )
+    .execute(db)
+    .await?;
+    Ok(())
+}
+
+/// Até `limit` objetos da fila de exclusão cuja URL de upload venceu antes de
+/// `now`, os mais antigos primeiro.
+pub async fn queued(
+    db: &PgPool,
+    limit: usize,
+    now: DateTime<Utc>,
+) -> Result<Vec<String>, sqlx::Error> {
     sqlx::query_scalar!(
-        "select object_key from screenshot_deletions order by queued_at, object_key limit $1",
-        i64::try_from(limit).unwrap_or(i64::MAX)
+        r#"select object_key from screenshot_deletions
+           where upload_expires_at < $2
+           order by queued_at, object_key limit $1"#,
+        i64::try_from(limit).unwrap_or(i64::MAX),
+        now
     )
     .fetch_all(db)
     .await

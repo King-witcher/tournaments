@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into screenshot_upload_counts (user_id, hour, uploads) values ($1, $2, 1)\n           on conflict (user_id, hour)\n               do update set uploads = screenshot_upload_counts.uploads + 1\n           returning uploads",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uploads",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "screenshot_upload_counts",
+            "name": "uploads"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fbbfee25602099f50ca503425e1c937a7cb654ab564ea618ca75d57d66ae82c2"
+}

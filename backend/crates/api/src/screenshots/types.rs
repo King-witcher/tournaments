@@ -13,9 +13,9 @@ pub struct ScreenshotSettings {
     /// Tamanho máximo de um screenshot, em bytes.
     #[schema(example = 2097152)]
     pub max_bytes: u32,
-    /// Screenshots por mapa.
-    #[schema(example = 3)]
-    pub max_per_game: u8,
+    /// Screenshots que cada pessoa anexa a um mapa.
+    #[schema(example = 1)]
+    pub max_per_person: u8,
     pub content_types: Vec<ImageType>,
 }
 
@@ -27,7 +27,7 @@ pub struct MatchScreenshots {
     /// O envio do jogador exige um screenshot anexado ao mapa.
     pub required: bool,
     pub max_bytes: u32,
-    pub max_per_game: u8,
+    pub max_per_person: u8,
     /// Os mapas enviados e, por último, o próximo (enquanto a série aceita).
     pub games: Vec<GameScreenshots>,
 }
@@ -71,8 +71,10 @@ pub struct NewUpload {
     pub size: u32,
 }
 
-/// Para onde mandar o arquivo: `PUT url` com o `Content-Type` dado, antes de
-/// `expires_at`. Depois, `POST .../screenshots/{id}/attach`.
+/// Para onde mandar o arquivo: `PUT url` com o `Content-Type` dado e
+/// `If-None-Match: *`, antes de `expires_at`. Os dois cabeçalhos estão na
+/// assinatura, e o bucket grava só uma vez: um segundo PUT na mesma URL recebe
+/// 412. Depois, `POST .../screenshots/{id}/attach`.
 #[derive(Serialize, ToSchema)]
 pub struct ScreenshotUpload {
     pub id: i64,

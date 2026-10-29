@@ -20,7 +20,6 @@ async fn the_uploader_removes_until_the_map_confirms_and_staff_always() {
     let c = cup(&db, 3, json!({})).await;
     let (_, mine) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
     let (_, theirs) = attach_screenshot(&c.app, &c.p2, FINAL, 1).await;
-    let (_, kept) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
     let key = object_key(&db, &mine["id"]).await;
 
     let (status, body) = remove(&c, &c.p1, 1, &theirs["id"]).await;
@@ -36,6 +35,9 @@ async fn the_uploader_removes_until_the_map_confirms_and_staff_always() {
     assert_eq!(status, StatusCode::NO_CONTENT);
     assert!(outbox(&db).await.contains(&tournament("copa", Some(FINAL))));
     assert_eq!(queued(&db).await, [key]);
+    // Removido o dele, anexa outro.
+    let (status, kept) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
+    assert_eq!(status, StatusCode::OK, "{kept}");
 
     let (status, _) = report(&c.app, &c.p1, FINAL, 1, map("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK);
@@ -85,7 +87,7 @@ async fn undoing_the_start_discards_every_screenshot() {
     assert_eq!(status, StatusCode::OK);
     // O do próximo mapa, ainda não enviado, também sai.
     let (_, next) = attach_screenshot(&c.app, &c.p2, FINAL, 2).await;
-    let (_, pending) = request_upload(&c.app, &c.p2, FINAL, 2, "image/webp", 10).await;
+    let (_, pending) = request_upload(&c.app, &c.p1, FINAL, 2, "image/webp", 10).await;
     let mut keys = vec![
         object_key(&db, &sent["id"]).await,
         object_key(&db, &next["id"]).await,

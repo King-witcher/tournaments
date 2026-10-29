@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select count(*) as \"n!\" from match_screenshots\n           where tenant_id = $1 and tournament_id = $2 and stage = $3 and match_key = $4\n             and number = $5 and attached_at is not null",
+  "query": "select count(*) as \"n!\" from match_screenshots\n           where tenant_id = $1 and tournament_id = $2 and stage = $3 and match_key = $4\n             and number = $5 and uploaded_by = $6 and attached_at is not null",
   "describe": {
     "columns": [
       {
@@ -16,12 +16,13 @@
         "Int8",
         "Int2",
         "Text",
-        "Int2"
+        "Int2",
+        "Int8"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "5c837aca2df6b33b16c1a7bdf687a06fa9c1dc5a85bc4e37cf19809e8a50a80a"
+  "hash": "5eccb67d862c9bad344463349750362276d8987fb0e9475f4ad51481c9f845c7"
 }

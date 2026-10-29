@@ -14,7 +14,7 @@ use crate::{matches::MatchGames, shared::Storage};
 #[derive(Clone, Copy)]
 pub struct Limits {
     pub max_bytes: u32,
-    pub max_per_game: u8,
+    pub max_per_person: u8,
 }
 
 /// Sem o bucket: nada de screenshots.
@@ -23,7 +23,7 @@ pub fn disabled(limits: Limits) -> MatchScreenshots {
         enabled: false,
         required: false,
         max_bytes: limits.max_bytes,
-        max_per_game: limits.max_per_game,
+        max_per_person: limits.max_per_person,
         games: Vec::new(),
     }
 }
@@ -42,12 +42,15 @@ pub fn match_screenshots(
     let games = numbers
         .map(|number| {
             let slot = Slot::of(m, number);
-            let screenshots: Vec<Screenshot> = rows
-                .iter()
-                .filter(|r| r.number == number)
+            let of_game = rows.iter().filter(|r| r.number == number);
+            let mine = of_game
+                .clone()
+                .filter(|r| r.uploaded_by == Some(actor.user_id))
+                .count();
+            let screenshots: Vec<Screenshot> = of_game
                 .map(|r| screenshot(r, storage, actor, slot, now))
                 .collect();
-            let room = screenshots.len() < usize::from(limits.max_per_game);
+            let room = mine < usize::from(limits.max_per_person);
             let allowed = policy::attach(t.status, m.plays(actor.user_id), actor, slot).is_ok();
             GameScreenshots {
                 number,
@@ -60,7 +63,7 @@ pub fn match_screenshots(
         enabled: true,
         required: t.screenshots_required,
         max_bytes: limits.max_bytes,
-        max_per_game: limits.max_per_game,
+        max_per_person: limits.max_per_person,
         games,
     }
 }

@@ -4,6 +4,9 @@
 //! pedidos e nunca registrados, e depois esvazia a fila de exclusão
 //! (`screenshot_deletions`, que o banco preenche a cada screenshot apagado, por
 //! qualquer caminho) apagando os objetos do bucket, até mil por requisição.
+//! Objeto cuja URL de upload ainda vale fica para a passada do dia seguinte:
+//! apagado antes, o mesmo PUT o gravaria de novo, fora do banco e da fila. As
+//! contagens de upload das horas passadas também saem.
 
 use chrono::{DateTime, Duration, Utc};
 use sqlx::PgPool;
@@ -21,6 +24,9 @@ const KEEP_AFTER_FINISH: Duration = Duration::days(30);
 /// Upload pedido e não registrado depois disso não vai mais ser (a URL vale
 /// 10 minutos).
 const PENDING_FOR: Duration = Duration::days(1);
+/// Folga depois do vencimento da URL de upload antes de apagar o objeto: o
+/// bucket confere a validade pelo relógio dele.
+const CLOCK_MARGIN: Duration = Duration::minutes(5);
 /// Requisições de exclusão por passada: com mais na fila, a próxima passada
 /// (10 s depois) continua, sem segurar o agendador.
 const BATCHES_PER_PASS: usize = 5;
@@ -34,7 +40,8 @@ pub struct Sweep {
     pub abandoned: u64,
     /// Objetos apagados do bucket.
     pub deleted: usize,
-    /// A fila ficou vazia (senão, a passada seguinte continua).
+    /// A fila ficou sem nada que já desse para apagar (senão, a passada
+    /// seguinte continua).
     pub drained: bool,
 }
 
@@ -63,9 +70,10 @@ pub async fn sweep(db: &PgPool, storage: &Storage, now: DateTime<Utc>) -> Result
         abandoned: db::delete_pending_before(db, now - PENDING_FOR).await?,
         ..Sweep::default()
     };
+    db::delete_counts_before(db, now - Duration::hours(1)).await?;
     let mut finished = false;
     for _ in 0..BATCHES_PER_PASS {
-        let keys = db::queued(db, DELETE_BATCH).await?;
+        let keys = db::queued(db, DELETE_BATCH, now - CLOCK_MARGIN).await?;
         if keys.is_empty() {
             done.drained = true;
             finished = true;

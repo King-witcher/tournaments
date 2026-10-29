@@ -38,7 +38,7 @@ async fn settings_say_whether_there_is_a_bucket() {
         json!({
             "enabled": true,
             "max_bytes": 2_097_152,
-            "max_per_game": 3,
+            "max_per_person": 1,
             "content_types": ["image/webp", "image/jpeg"]
         })
     );
@@ -149,17 +149,23 @@ async fn players_and_staff_attach_to_sent_maps_and_the_next() {
     }
     let (status, _) = confirm(&c.app, &c.p2, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK);
-    // Confirmado, o jogador não anexa mais; a organização sim.
+    // Confirmado, o jogador não anexa mais; a organização sim (trocando o
+    // dela: um de cada pessoa).
     let (status, body) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("screenshots.game_confirmed"))
     );
+    let list = listing(&c.app, &c.ana, FINAL).await;
+    let staff = &game(&list, 1)["screenshots"][0];
+    assert_eq!(staff["uploaded_by"]["nickname"], "Ana");
+    let uri = format!("{}/{}", screenshots_uri(FINAL, 1), staff["id"]);
+    assert_eq!(delete(&c.app, &uri, &c.ana).await.0, StatusCode::NO_CONTENT);
     let (status, body) = attach_screenshot(&c.app, &c.ana, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let list = listing(&c.app, &c.p1, FINAL).await;
     assert_eq!(game(&list, 1)["can_attach"], false);
-    assert_eq!(game(&list, 1)["screenshots"].as_array().unwrap().len(), 3);
+    assert_eq!(game(&list, 1)["screenshots"].as_array().unwrap().len(), 2);
 }
 
 #[tokio::test]
@@ -183,6 +189,12 @@ async fn the_bucket_and_the_api_check_the_upload() {
     // Só quem pediu registra.
     let sent = put_to_bucket(&upload, "image/webp", vec![7; 1000]).await;
     assert_eq!(sent, StatusCode::OK);
+    // A URL grava uma vez: o arquivo conferido não é trocado por outro do
+    // mesmo tamanho enquanto ela vale.
+    let again = put_to_bucket(&upload, "image/webp", vec![8; 1000]).await;
+    assert_eq!(again, StatusCode::PRECONDITION_FAILED);
+    let key = object_key(&db, &upload["id"]).await;
+    assert_eq!(c.s3.object(&key).unwrap().body, vec![7; 1000]);
     let (status, body) = attach(&c.app, &c.p2, FINAL, 1, &upload["id"]).await;
     assert_eq!(
         (status, body),
@@ -200,11 +212,11 @@ async fn the_bucket_and_the_api_check_the_upload() {
     assert_eq!(status, StatusCode::NOT_FOUND);
 
     // O que chegou diferente do pedido (por outro caminho) é descartado.
-    let (_, upload) = request_upload(&c.app, &c.p1, FINAL, 1, "image/jpeg", 500).await;
+    let (_, upload) = request_upload(&c.app, &c.p2, FINAL, 1, "image/jpeg", 500).await;
     let key = object_key(&db, &upload["id"]).await;
     assert!(key.ends_with(".jpg"), "{key}");
     c.s3.put(&key, "image/jpeg", vec![1; 400]);
-    let (status, body) = attach(&c.app, &c.p1, FINAL, 1, &upload["id"]).await;
+    let (status, body) = attach(&c.app, &c.p2, FINAL, 1, &upload["id"]).await;
     assert_eq!(
         (status, body),
         (
@@ -231,38 +243,61 @@ async fn sizes_and_limits() {
     let (status, _) = request_upload(&c.app, &c.p1, FINAL, 1, "image/png", 10).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
 
-    // Três por mapa.
+    // Um de cada pessoa por mapa: o do adversário não tira a vaga de ninguém.
+    let limit = json!({ "error": "screenshots.limit_reached", "params": { "max": 1 } });
+    let (_, early) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
+    assert_eq!(
+        put_to_bucket(&early, "image/webp", vec![1; 10]).await,
+        StatusCode::OK
+    );
     for who in [&c.p1, &c.p2, &c.ana] {
         let (status, body) = attach_screenshot(&c.app, who, FINAL, 1).await;
         assert_eq!(status, StatusCode::OK, "{body}");
     }
     let (status, body) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
-    assert_eq!(status, StatusCode::CONFLICT);
-    assert_eq!(
-        body,
-        json!({ "error": "screenshots.limit_reached", "params": { "max": 3 } })
-    );
-    assert_eq!(
-        game(&listing(&c.app, &c.p1, FINAL).await, 1)["can_attach"],
-        false
-    );
+    assert_eq!((status, body), (StatusCode::CONFLICT, limit.clone()));
+    // O pedido antes de anexar o primeiro também não registra o segundo.
+    let (status, body) = attach(&c.app, &c.p1, FINAL, 1, &early["id"]).await;
+    assert_eq!((status, body), (StatusCode::CONFLICT, limit));
+    for who in [&c.p1, &c.ana] {
+        let list = listing(&c.app, who, FINAL).await;
+        assert_eq!(game(&list, 1)["can_attach"], false);
+        assert_eq!(game(&list, 1)["screenshots"].as_array().unwrap().len(), 3);
+    }
+    // Em outro mapa, de novo.
+    let (status, _) = report(&c.app, &c.p1, FINAL, 1, map("a", "awoken")).await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, body) = attach_screenshot(&c.app, &c.p1, FINAL, 2).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
 }
 
 #[tokio::test]
-async fn abandoned_uploads_are_limited() {
+async fn uploads_per_hour_are_limited_even_when_removed() {
     let (db, _lease) = crate::db::test_db().await;
     let c = cup(&db, 3, json!({})).await;
-    for _ in 0..10 {
-        let (status, _) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
-        assert_eq!(status, StatusCode::CREATED);
+    // Pedir, mandar e remover não devolve o pedido à conta da hora.
+    for i in 0..30 {
+        let (status, upload) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
+        assert_eq!(status, StatusCode::CREATED, "{i}: {upload}");
+        if i % 2 == 0 {
+            let uri = format!("{}/{}", screenshots_uri(FINAL, 1), upload["id"]);
+            assert_eq!(delete(&c.app, &uri, &c.p1).await.0, StatusCode::NO_CONTENT);
+        }
     }
     let (status, body) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
     assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
     assert_eq!(
         body,
-        json!({ "error": "screenshots.too_many_uploads", "params": { "max": 10 } })
+        json!({ "error": "screenshots.too_many_uploads", "params": { "max": 30 } })
     );
-    // Os pendentes não aparecem nem contam para os três do mapa.
+    // O recusado não conta.
+    let counted: Vec<i32> = sqlx::query_scalar("select uploads from screenshot_upload_counts")
+        .fetch_all(&db)
+        .await
+        .unwrap();
+    assert_eq!(counted, [30]);
+    // A conta é de cada pessoa, e os pendentes não aparecem nem tiram a vaga
+    // de ninguém no mapa.
     let list = listing(&c.app, &c.p2, FINAL).await;
     assert_eq!(game(&list, 1)["screenshots"], json!([]));
     let (status, _) = attach_screenshot(&c.app, &c.p2, FINAL, 1).await;

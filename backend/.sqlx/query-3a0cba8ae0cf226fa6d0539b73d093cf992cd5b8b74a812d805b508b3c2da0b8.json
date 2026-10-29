@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from screenshot_upload_counts where hour < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3a0cba8ae0cf226fa6d0539b73d093cf992cd5b8b74a812d805b508b3c2da0b8"
+}
