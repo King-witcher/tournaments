@@ -78,7 +78,7 @@ export interface paths {
         get?: never;
         put: operations["change_email"];
         post?: never;
-        delete?: never;
+        delete: operations["remove_email"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1404,8 +1404,8 @@ export interface components {
         LoginMethods: {
             discord: boolean;
             /**
-             * @description Email confirmado, na forma canônica. Sem ele, a senha esquecida não
-             *     tem recuperação e o Discord não pode sair.
+             * @description Email confirmado, na forma canônica. Toda conta com senha tem (é por
+             *     ele que a senha esquecida volta); só a conta sem senha fica sem.
              */
             email?: string | null;
             /** @description Username do login com senha, se a conta tem senha. */
@@ -2146,7 +2146,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.last_login (a conta não tem senha), auth.email_required (a conta não tem email para recuperar a senha), auth.discord_not_linked */
+            /** @description auth.last_login (a conta não tem senha), auth.discord_not_linked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2353,6 +2353,44 @@ export interface operations {
             };
         };
     };
+    remove_email: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Email tirado da conta; o link de troca que estava valendo deixa de valer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.no_email, auth.password_needs_email (a conta tem senha, que só se recupera por ele) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     confirm_email: {
         parameters: {
             query?: never;
@@ -2531,7 +2569,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.password_exists, auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
+            /** @description auth.password_exists, auth.email_required (a conta não tem email, que recuperaria a senha), auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
             409: {
                 headers: {
                     [name: string]: unknown;

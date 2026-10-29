@@ -8,7 +8,7 @@
     "logins": "Logins",
     "password": "Senha",
     "sessions": "Sessões",
-    "notifications": "Avisos"
+    "notifications": "Notificações"
   },
   "name": {
     "title": "Nome exibido",
@@ -25,8 +25,7 @@
     "unlinkHint": "Para desvincular, confirme sua senha. O avatar do Discord sai junto.",
     "unlink": "Desvincular o Discord",
     "unlinkConfirm": "Você deixa de entrar com o Discord e o avatar dele sai da sua conta. Você continua entrando com nome de usuário e senha, e pode vincular de novo depois.",
-    "needsPassword": "Para desvincular o Discord, crie antes um nome de usuário e senha: a conta precisa de pelo menos um jeito de entrar.",
-    "needsEmail": "Para desvincular o Discord, cadastre e confirme antes um email (na seção Email): sem ele, quem esquece a senha perde a conta."
+    "needsPassword": "Para desvincular o Discord, crie antes um nome de usuário e senha: a conta precisa de pelo menos um jeito de entrar."
   },
   "password": {
     "title": "Nome de usuário e senha",
@@ -43,22 +42,26 @@
     "removeHint": "Para remover, confirme sua senha. Você continua entrando com o Discord.",
     "removeConfirm": "Você deixa de entrar com nome de usuário e senha e passa a entrar só com o Discord. Dá para criar outros depois.",
     "needsDiscord": "Para remover a senha, vincule antes o Discord: a conta precisa de pelo menos um jeito de entrar.",
+    "needsEmail": "Para criar nome de usuário e senha, cadastre antes um email (na seção Email, acima) e abra o link que vamos mandar para ele: é por ele que você recupera a senha se esquecer.",
     "resetDoneTitle": "Senha trocada",
     "resetDone": "Você entrou com a senha nova, e as outras sessões da conta foram encerradas."
   },
   "email": {
     "title": "Email",
-    "current": "Seu email: {email}. Se você esquecer a senha, o link para criar outra vai para ele.",
-    "none": "Sua conta não tem email. Com um email confirmado, você recupera a senha se criar uma.",
-    "missingTitle": "Sua conta não tem email",
-    "missing": "Se você esquecer a senha, não há como recuperá-la por email, e o Discord não pode ser desvinculado. Cadastre um email abaixo e abra o link que vamos mandar para ele.",
+    "recovers": "Se você esquecer a senha, o link para criar outra vai para ele.",
+    "optional": "Com ele, você pode criar nome de usuário e senha: é para ele que vai o link se você esquecer a senha.",
+    "none": "Sua conta não tem email. Ele é necessário para criar nome de usuário e senha, porque é por ele que você recupera a senha se esquecer.",
     "label": "Email",
-    "newLabel": "Email novo",
-    "hint": "Vamos mandar um link para ele. O email da conta só muda quando você abrir o link.",
+    "hint": "Vamos mandar um link para ele. O email só entra na conta quando você abrir o link.",
+    "changeHint": "Para trocar, edite o campo: vamos mandar um link para o email novo, e o da conta só muda quando você abrir o link.",
     "add": "Cadastrar email",
     "change": "Trocar email",
     "sentTitle": "Confira seu email",
-    "sent": "Enviamos um link para {email}. O email da conta só muda quando você abrir o link, que vale 1 hora. Não chegou? Confira a caixa de spam."
+    "sent": "Enviamos um link para {email}. O email só entra na conta quando você abrir o link, que vale 1 hora. Não chegou? Confira a caixa de spam.",
+    "sentChange": "Enviamos um link para {email}. Até você abrir o link, que vale 1 hora, o email da conta continua {current}. Não chegou? Confira a caixa de spam.",
+    "remove": "Remover email",
+    "removeConfirm": "O email sai da sua conta, e um link de troca que ainda não foi aberto deixa de valer. Para criar nome de usuário e senha depois, você vai precisar cadastrar um email de novo.",
+    "removeBlocked": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Para remover o email, remova antes a senha."
   },
   "emailConfirm": {
     "title": "Confirmar email",

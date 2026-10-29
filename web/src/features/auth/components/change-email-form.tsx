@@ -14,47 +14,60 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
-import { Button } from "@/shared/ui/button";
+import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";
 import { type AuthField, errorField } from "../lib/auth-field";
+import { RemoveEmailButton } from "./remove-email-button";
 
 type Props = {
-  /** O email confirmado de agora, se houver (o rótulo vira "Email novo"). */
+  /** O email confirmado de agora, se houver: vem no campo, para editar. */
   current?: string;
-  /** A conta tem senha: a API pede a atual para trocar o email. */
+  /** A conta tem senha: a API pede a atual para trocar o email, e ele não sai. */
   hasPassword: boolean;
 };
 
 /**
- * Para onde foi o link, na forma canônica que a API devolveu, e o que foi
- * digitado, para o aviso sumir quando o campo é editado de novo.
+ * Para onde foi o link, na forma canônica que a API devolveu, e o email que
+ * foi enviado, para o aviso e o erro sumirem quando o campo muda (inclusive
+ * pelo "Cancelar").
  */
 type Result = FormResult<AuthField> & { sentTo?: string; typed?: string };
 
 /**
- * Cadastra ou troca o email da conta. A API manda um link ao endereço novo, e
- * o email só muda quando ele é aberto (`/email/confirm`); até lá fica o de
- * antes, por isso não há refresh. Com senha na conta, pede a atual. O erro de
- * um campo (email inválido ou de outra conta, senha errada) vai nele, que
- * recebe o foco.
+ * Cadastra, troca ou remove o email da conta. O campo vem com o de agora; a
+ * API manda um link ao endereço novo, e o email só muda quando ele é aberto
+ * (`/email/confirm`), por isso não há refresh. Com senha na conta, a atual
+ * aparece quando o campo muda. "Cancelar" volta o campo ao de agora. O erro
+ * de um campo (email inválido, igual ao de agora ou de outra conta, senha
+ * errada) vai nele, que recebe o foco.
  */
 export function ChangeEmailForm({ current, hasPassword }: Props) {
   const t = useTranslations("Account.email");
   const tAccount = useTranslations("Account");
   const errorMessage = useApiErrorMessage();
   const prefix = useId();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(current ?? "");
   const [password, setPassword] = useState("");
+  // O email gravado é minúsculo: mudar só a caixa não é trocar.
+  const changed = email.trim().toLowerCase() !== (current ?? "");
+  const askPassword = hasPassword && changed;
 
   const [result, submit, pending] = useActionState<Result>(async () => {
+    if (!changed) {
+      return {
+        error: errorMessage("auth.email_unchanged"),
+        field: "email",
+        typed: email,
+      };
+    }
     const outcome = await callApi(
       api.PUT("/auth/email", {
         body: {
           email,
-          current_password: hasPassword ? password : undefined,
+          current_password: askPassword ? password : undefined,
         },
       }),
     );
@@ -62,14 +75,18 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
       return {
         error: errorMessage(outcome.code, outcome.params),
         field: errorField(outcome.code),
+        typed: email,
       };
     }
     setPassword("");
     return { sentTo: outcome.data.email, typed: email };
   }, {});
   useFocusInvalid(prefix, result);
-  const general = formError(result);
-  const sent = !pending && result.typed === email ? result.sentTo : undefined;
+  // O resultado vale para o email enviado; com o campo mudado, sai.
+  const shown: Result = !pending && result.typed === email ? result : {};
+  const general = formError(shown);
+  const sent = shown.sentTo;
+  const editing = Boolean(current) && changed && !sent;
 
   return (
     <Form action={submit}>
@@ -77,16 +94,16 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
         <TextInput
           id={fieldId(prefix, "email")}
           type="email"
-          labelText={current ? t("newLabel") : t("label")}
-          helperText={t("hint")}
+          labelText={t("label")}
+          helperText={current ? t("changeHint") : t("hint")}
           required
           autoComplete="email"
           maxLength={254}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          {...invalidProps(result, "email")}
+          {...invalidProps(shown, "email")}
         />
-        {hasPassword && (
+        {askPassword && (
           <PasswordInput
             id={fieldId(prefix, "current")}
             labelText={tAccount("currentPassword")}
@@ -94,18 +111,30 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            {...invalidProps(result, "current")}
+            {...invalidProps(shown, "current")}
           />
         )}
         {general && <FormError>{general}</FormError>}
         {sent && (
           <Notice kind="success" title={t("sentTitle")}>
-            {t("sent", { email: sent })}
+            {current
+              ? t("sentChange", { email: sent, current })
+              : t("sent", { email: sent })}
           </Notice>
         )}
-        <Button type="submit" pending={pending}>
-          {current ? t("change") : t("add")}
-        </Button>
+        <FormActions
+          submitLabel={current ? t("change") : t("add")}
+          pending={pending}
+          onCancel={
+            editing
+              ? () => {
+                  setEmail(current ?? "");
+                  setPassword("");
+                }
+              : undefined
+          }
+          extra={current && <RemoveEmailButton blocked={hasPassword} />}
+        />
       </Stack>
     </Form>
   );

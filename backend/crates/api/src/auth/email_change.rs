@@ -1,5 +1,6 @@
-//! Email da conta logada: pôr ou trocar. O email novo só vale depois que o
-//! link mandado para ele é aberto; até lá, fica o de antes.
+//! Email da conta logada: pôr, trocar ou tirar. O email novo só vale depois
+//! que o link mandado para ele é aberto; até lá, fica o de antes. Só a conta
+//! sem senha fica sem email.
 
 use axum::{Json, extract::State, http::StatusCode};
 
@@ -9,7 +10,7 @@ use super::{
     db,
     emails::{self, LINK_TTL_SECS},
     kv,
-    types::{ChangeEmail, EmailSent, LinkToken},
+    types::{ChangeEmail, EmailSent, LinkToken, LoginMethods},
 };
 use crate::{
     AppState, mail,
@@ -63,6 +64,25 @@ pub async fn change_email(
         &token,
     ));
     Ok((StatusCode::ACCEPTED, Json(EmailSent { email })))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/auth/email",
+    tag = "auth",
+    responses(
+        (status = OK, body = LoginMethods, description = "Email tirado da conta; o link de troca que estava valendo deixa de valer"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.no_email, auth.password_needs_email (a conta tem senha, que só se recupera por ele)"),
+    )
+)]
+pub async fn remove_email(
+    State(state): State<AppState>,
+    user: CurrentUser,
+) -> Result<Json<LoginMethods>, ApiError> {
+    db::remove_email(&state.db, user.id).await?;
+    kv::cancel_email_change(&state.redis, user.id).await?;
+    Ok(Json(db::login_methods(&state.db, user.id).await?))
 }
 
 #[utoipa::path(

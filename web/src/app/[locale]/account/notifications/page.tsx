@@ -6,8 +6,8 @@ import { SoundSettings } from "@/features/realtime/components/sound-settings";
 import { Section } from "@/shared/ui/section";
 
 /**
- * Aba Avisos da conta: os avisos com o site fechado (Web Push) e o som dos
- * avisos com o site aberto, os dois deste navegador. Não busca dado no
+ * Aba Notificações da conta: as notificações com o site fechado (Web Push) e
+ * o som delas com o site aberto, os dois deste navegador. Não busca dado no
  * servidor (o estado é do navegador), por isso sem `loading.tsx`.
  */
 export default async function AccountNotificationsPage() {

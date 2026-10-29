@@ -82,7 +82,7 @@ pub(super) async fn start_session(
     responses(
         (status = CREATED, body = LoginMethods, description = "Username e senha criados para a conta logada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.username_taken (por uma conta ou por um cadastro esperando confirmação)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.email_required (a conta não tem email, que recuperaria a senha), auth.username_taken (por uma conta ou por um cadastro esperando confirmação)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, request.invalid_body"),
     )
 )]

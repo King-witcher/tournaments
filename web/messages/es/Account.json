@@ -8,7 +8,7 @@
     "logins": "Accesos",
     "password": "Contraseña",
     "sessions": "Sesiones",
-    "notifications": "Avisos"
+    "notifications": "Notificaciones"
   },
   "name": {
     "title": "Nombre visible",
@@ -25,8 +25,7 @@
     "unlinkHint": "Para desvincularlo, confirma tu contraseña. El avatar de Discord se va con él.",
     "unlink": "Desvincular Discord",
     "unlinkConfirm": "Dejas de entrar con Discord y su avatar sale de tu cuenta. Sigues entrando con nombre de usuario y contraseña, y puedes vincularlo de nuevo después.",
-    "needsPassword": "Para desvincular Discord, crea antes un nombre de usuario y contraseña: la cuenta necesita al menos una forma de entrar.",
-    "needsEmail": "Para desvincular Discord, registra y confirma antes un email (en la sección Email): sin él, quien olvida la contraseña pierde la cuenta."
+    "needsPassword": "Para desvincular Discord, crea antes un nombre de usuario y contraseña: la cuenta necesita al menos una forma de entrar."
   },
   "password": {
     "title": "Nombre de usuario y contraseña",
@@ -43,22 +42,26 @@
     "removeHint": "Para quitarlos, confirma tu contraseña. Sigues entrando con Discord.",
     "removeConfirm": "Dejas de entrar con nombre de usuario y contraseña y pasas a entrar solo con Discord. Puedes crear otros después.",
     "needsDiscord": "Para quitar la contraseña, vincula antes tu Discord: la cuenta necesita al menos una forma de entrar.",
+    "needsEmail": "Para crear nombre de usuario y contraseña, registra antes un email (en la sección Email, arriba) y abre el enlace que te vamos a enviar: es con él que recuperas la contraseña si la olvidas.",
     "resetDoneTitle": "Contraseña cambiada",
     "resetDone": "Entraste con la contraseña nueva, y las otras sesiones de la cuenta se cerraron."
   },
   "email": {
     "title": "Email",
-    "current": "Tu email: {email}. Si olvidas la contraseña, el enlace para crear otra va a él.",
-    "none": "Tu cuenta no tiene email. Con un email confirmado, recuperas la contraseña si creas una.",
-    "missingTitle": "Tu cuenta no tiene email",
-    "missing": "Si olvidas la contraseña, no hay cómo recuperarla por email, y Discord no se puede desvincular. Registra un email abajo y abre el enlace que te vamos a enviar.",
+    "recovers": "Si olvidas la contraseña, el enlace para crear otra va a él.",
+    "optional": "Con él, puedes crear nombre de usuario y contraseña: es a él que va el enlace si olvidas la contraseña.",
+    "none": "Tu cuenta no tiene email. Es necesario para crear nombre de usuario y contraseña, porque es con él que recuperas la contraseña si la olvidas.",
     "label": "Email",
-    "newLabel": "Email nuevo",
-    "hint": "Te enviaremos un enlace. El email de la cuenta solo cambia cuando abres el enlace.",
+    "hint": "Te enviaremos un enlace. El email solo entra en la cuenta cuando abres el enlace.",
+    "changeHint": "Para cambiarlo, edita el campo: te enviaremos un enlace al email nuevo, y el de la cuenta solo cambia cuando abres el enlace.",
     "add": "Registrar email",
     "change": "Cambiar email",
     "sentTitle": "Revisa tu email",
-    "sent": "Enviamos un enlace a {email}. El email de la cuenta solo cambia cuando abres el enlace, que vale 1 hora. ¿No llegó? Revisa la carpeta de spam."
+    "sent": "Enviamos un enlace a {email}. El email solo entra en la cuenta cuando abres el enlace, que vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
+    "sentChange": "Enviamos un enlace a {email}. Hasta que abras el enlace, que vale 1 hora, el email de la cuenta sigue siendo {current}. ¿No llegó? Revisa la carpeta de spam.",
+    "remove": "Quitar email",
+    "removeConfirm": "El email sale de tu cuenta, y un enlace de cambio que todavía no se abrió deja de valer. Para crear nombre de usuario y contraseña después, vas a tener que registrar un email de nuevo.",
+    "removeBlocked": "Con nombre de usuario y contraseña en la cuenta, el email no sale: es con él que recuperas la contraseña. Para quitar el email, quita antes la contraseña."
   },
   "emailConfirm": {
     "title": "Confirmar email",

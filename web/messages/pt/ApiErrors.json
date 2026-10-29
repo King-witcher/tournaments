@@ -26,7 +26,9 @@
     "link_expired": "Este link não vale mais: passou de 1 hora, já foi usado ou foi trocado por um mais novo.",
     "email_taken": "Esse email já é de outra conta.",
     "email_unchanged": "Esse já é o email da sua conta.",
-    "email_required": "Para desvincular o Discord, cadastre e confirme antes um email na conta: sem ele, quem esquece a senha perde a conta.",
+    "email_required": "Para criar nome de usuário e senha, cadastre e confirme antes um email na conta: é por ele que você recupera a senha se esquecer.",
+    "no_email": "Sua conta não tem email.",
+    "password_needs_email": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Remova antes a senha.",
     "session_not_found": "Essa sessão já foi encerrada."
   },
   "email": {
@@ -140,7 +142,7 @@
     "frags_disagree": "Os frags do mapa {game} não batem com quem venceu."
   },
   "push": {
-    "not_configured": "Os avisos com o site fechado estão desligados por enquanto.",
-    "subscription_invalid": "Este navegador mandou uma inscrição de avisos que não dá para usar. Tente de novo ou use outro navegador."
+    "not_configured": "As notificações com o site fechado estão desligadas por enquanto.",
+    "subscription_invalid": "Este navegador mandou uma inscrição de notificações que não dá para usar. Tente de novo ou use outro navegador."
   }
 }

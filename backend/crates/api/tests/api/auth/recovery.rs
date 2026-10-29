@@ -101,22 +101,11 @@ async fn email_finds_the_account_in_any_spelling(db: PgPool) {
 #[sqlx::test(migrations = "../../migrations")]
 async fn same_answer_when_no_link_can_go(db: PgPool) {
     let app = app(db.clone());
-    // Conta com senha de antes do email ser exigido.
-    let old = user(&db, "Antiga").await;
-    sqlx::query!(
-        "insert into password_credentials (user_id, username, password_hash)
-         values ($1, 'antiga', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
-        old.id
-    )
-    .execute(&db)
-    .await
-    .unwrap();
-    // Conta só com Discord, mas com email.
+    // Conta só com Discord, mas com email: não há senha para recuperar.
     let discord = user(&db, "Discord").await;
     set_email(&db, discord.id, "discord@outlook.com").await;
 
     for login in [
-        "antiga",
         "ninguem",
         "x",
         "ninguem@outlook.com",

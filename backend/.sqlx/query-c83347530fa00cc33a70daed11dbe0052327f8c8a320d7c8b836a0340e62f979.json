@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select email is not null as \"email!\" from users where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c83347530fa00cc33a70daed11dbe0052327f8c8a320d7c8b836a0340e62f979"
+}
