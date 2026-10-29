@@ -96,9 +96,12 @@ async fn an_anonymized_account_keeps_only_the_row() {
         "insert into password_credentials (user_id, username, password_hash) values ({{bia}}, 'bia', '{}')",
         "$argon2id$v=19$m=19456,t=2,p=1$x$y"
     ));
+    // A conta excluída não tem email, e a senha sem email já é recusada antes
+    // (os triggers disparam em ordem alfabética); `password_credentials_user_deleted`
+    // fica de segunda barreira.
     assert_eq!(
         rejected(exec(&db, &password).await),
-        rule(CHECK, "password_credentials_user_deleted")
+        rule(CHECK, "password_credentials_email_required")
     );
     let push = bia_sql(&format!(
         "insert into push_subscriptions (user_id, endpoint, p256dh, auth, locale)
