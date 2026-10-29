@@ -4,7 +4,6 @@
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{COPA, bracket, copa, single, start};
@@ -50,8 +49,9 @@ async fn assert_outside(app: &Router, who: &User) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_owner_removes_organizers_and_players(db: PgPool) {
+#[tokio::test]
+async fn the_owner_removes_organizers_and_players() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
 
@@ -87,8 +87,9 @@ async fn the_owner_removes_organizers_and_players(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizers_remove_only_players(db: PgPool) {
+#[tokio::test]
+async fn organizers_remove_only_players() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let oto = organizer(&app, &db, &ana, "Oto").await;
@@ -123,8 +124,9 @@ async fn organizers_remove_only_players(db: PgPool) {
     assert_outside(&app, &bia).await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn members_leave_but_the_owner_transfers_first(db: PgPool) {
+#[tokio::test]
+async fn members_leave_but_the_owner_transfers_first() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
 
@@ -152,8 +154,9 @@ async fn members_leave_but_the_owner_transfers_first(db: PgPool) {
     assert_eq!(removed_by, None);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn leaving_drops_open_registrations_and_revokes_invites(db: PgPool) {
+#[tokio::test]
+async fn leaving_drops_open_registrations_and_revokes_invites() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     // Em andamento, com a Olga na chave.
@@ -220,8 +223,9 @@ async fn leaving_drops_open_registrations_and_revokes_invites(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn undoing_the_start_drops_who_left(db: PgPool) {
+#[tokio::test]
+async fn undoing_the_start_drops_who_left() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     start(&app, &ana, copa(single(3, 3)), &[&ana, &bia, &caio]).await;
@@ -239,8 +243,9 @@ async fn undoing_the_start_drops_who_left(db: PgPool) {
     assert_eq!(ids, [&json!(ana.id), &json!(caio.id)]);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn coming_back_by_invite_reactivates_as_player(db: PgPool) {
+#[tokio::test]
+async fn coming_back_by_invite_reactivates_as_player() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let (status, _) = patch(

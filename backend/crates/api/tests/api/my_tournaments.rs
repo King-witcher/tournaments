@@ -6,7 +6,6 @@ use axum::{
     http::{Method, StatusCode},
 };
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{COPA, bracket, confirm, copa, find, game, play, report, single, start};
@@ -35,8 +34,9 @@ fn situations(list: &Value) -> Vec<(String, String)> {
         .collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn requires_login(db: PgPool) {
+#[tokio::test]
+async fn requires_login() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db);
     let (status, body) = call(&app, Method::GET, "/me/tournaments", None, None).await;
     assert_eq!(
@@ -45,8 +45,9 @@ async fn requires_login(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn situation_before_the_bracket(db: PgPool) {
+#[tokio::test]
+async fn situation_before_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     // Torneio em que Bia não está: fica de fora.
@@ -111,8 +112,9 @@ async fn side_of(app: &Router, who: &User, key: &str) -> &'static str {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn next_match_and_placement(db: PgPool) {
+#[tokio::test]
+async fn next_match_and_placement() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p: Vec<User> = crate::matches::players(&app, &db, &ana, 4).await;
     start(

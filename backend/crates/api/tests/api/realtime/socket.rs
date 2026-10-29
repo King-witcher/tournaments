@@ -40,8 +40,9 @@ async fn handshake(db: &PgPool, cookie: Option<&str>, origin: Option<&str>) -> (
     (status, serde_json::from_slice(&body).unwrap())
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn session_and_origin_come_first(db: PgPool) {
+#[tokio::test]
+async fn session_and_origin_come_first() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     assert_eq!(
         handshake(&db, None, Some(WEB)).await,
@@ -115,8 +116,9 @@ fn subscribed(tenant: &str, tournament: Option<&str>) -> Value {
     json!({ "type": "subscribed", "tenant": tenant, "tournament": tournament })
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn subscriptions_follow_read_access(db: PgPool) {
+#[tokio::test]
+async fn subscriptions_follow_read_access() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
@@ -172,8 +174,9 @@ async fn subscriptions_follow_read_access(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn changes_reach_the_subscribers_until_access_is_lost(db: PgPool) {
+#[tokio::test]
+async fn changes_reach_the_subscribers_until_access_is_lost() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
@@ -228,8 +231,9 @@ async fn changes_reach_the_subscribers_until_access_is_lost(db: PgPool) {
     silent(&mut socket).await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn notices_and_ended_sessions(db: PgPool) {
+#[tokio::test]
+async fn notices_and_ended_sessions() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);

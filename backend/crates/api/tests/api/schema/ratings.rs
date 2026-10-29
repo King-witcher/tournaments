@@ -18,8 +18,9 @@ async fn clean(db: &PgPool) {
     exec(db, "delete from rating_dirty").await.unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn shape_of_settings_adjustments_and_cache(db: PgPool) {
+#[tokio::test]
+async fn shape_of_settings_adjustments_and_cache() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let (t, p1, p2) = (cup.tenant, cup.p1.id, cup.p2.id);
     let adjustment = |modality: &str, user: i64, delta: i32, reason: &str| {
@@ -113,8 +114,9 @@ async fn shape_of_settings_adjustments_and_cache(db: PgPool) {
         .unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_what_changes_the_rating_marks_the_tenant(db: PgPool) {
+#[tokio::test]
+async fn only_what_changes_the_rating_marks_the_tenant() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     // Mapa enviado (pendente): ainda não conta.
     let (status, body) = report(&f.app, &f.p1, "wb-1-1", 1, game("a", "awoken")).await;
@@ -147,8 +149,9 @@ async fn only_what_changes_the_rating_marks_the_tenant(db: PgPool) {
     assert_eq!(dirty(&db).await, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_tenant_takes_everything_with_it(db: PgPool) {
+#[tokio::test]
+async fn the_tenant_takes_everything_with_it() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let (status, body) = post(
         &cup.app,
@@ -195,8 +198,9 @@ async fn the_tenant_takes_everything_with_it(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn deleting_the_tenant_with_maps_and_marks(db: PgPool) {
+#[tokio::test]
+async fn deleting_the_tenant_with_maps_and_marks() {
+    let (db, _lease) = crate::db::test_db().await;
     // A cascata apaga os mapas confirmados depois do tenant: o trigger não
     // tenta marcar um tenant que não existe mais.
     finished_cup(&db).await;

@@ -6,15 +6,15 @@ use api::realtime;
 use axum::http::StatusCode;
 use chrono::Utc;
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 use crate::matches::{COPA, confirm, game, play, report, set_game};
 use crate::realtime::{clear, outbox, tenant};
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_correction_changes_the_past(db: PgPool) {
+#[tokio::test]
+async fn a_correction_changes_the_past() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     assert_eq!(table(&ranking(&f.app, &f.bia).await)[0].1, 1569);
@@ -31,8 +31,9 @@ async fn a_correction_changes_the_past(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn undoing_the_start_takes_the_maps_out(db: PgPool) {
+#[tokio::test]
+async fn undoing_the_start_takes_the_maps_out() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let (status, body) = report(&f.app, &f.p1, "wb-1-1", 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -44,8 +45,9 @@ async fn undoing_the_start_takes_the_maps_out(db: PgPool) {
     assert_eq!(ranking(&f.app, &f.bia).await["players"], json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_scheduler_recomputes_and_emits_once(db: PgPool) {
+#[tokio::test]
+async fn the_scheduler_recomputes_and_emits_once() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
@@ -62,8 +64,9 @@ async fn the_scheduler_recomputes_and_emits_once(db: PgPool) {
     assert!(outbox(&db).await.is_empty());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reading_recomputes_what_the_scheduler_did_not_see_yet(db: PgPool) {
+#[tokio::test]
+async fn reading_recomputes_what_the_scheduler_did_not_see_yet() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     clear(&db).await;
@@ -75,8 +78,9 @@ async fn reading_recomputes_what_the_scheduler_did_not_see_yet(db: PgPool) {
     assert!(outbox(&db).await.is_empty());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_change_that_keeps_the_ranking_emits_nothing(db: PgPool) {
+#[tokio::test]
+async fn a_change_that_keeps_the_ranking_emits_nothing() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     ranking(&f.app, &f.bia).await;

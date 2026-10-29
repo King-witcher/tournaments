@@ -3,14 +3,14 @@
 
 use api::{outbox::Event, realtime};
 use axum::http::StatusCode;
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 use crate::matches::COPA;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn publishes_in_order_and_deletes(db: PgPool) {
+#[tokio::test]
+async fn publishes_in_order_and_deletes() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
@@ -43,8 +43,9 @@ async fn publishes_in_order_and_deletes(db: PgPool) {
     assert_eq!(realtime::dispatch_once(&state).await.unwrap(), 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn unreadable_events_are_dropped(db: PgPool) {
+#[tokio::test]
+async fn unreadable_events_are_dropped() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     sqlx::query(r#"insert into outbox (event) values ('{"kind": "tenant"}')"#)
         .execute(&db)

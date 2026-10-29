@@ -24,8 +24,9 @@ async fn tournament_id(db: &PgPool, slug: &str) -> i64 {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournaments_keep_state_and_shape(db: PgPool) {
+#[tokio::test]
+async fn tournaments_keep_state_and_shape() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
 
@@ -107,8 +108,9 @@ async fn tournaments_keep_state_and_shape(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn every_tournament_has_a_stage(db: PgPool) {
+#[tokio::test]
+async fn every_tournament_has_a_stage() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let no_stage = rule(CHECK, "tournament_stages_required");
@@ -155,8 +157,9 @@ async fn every_tournament_has_a_stage(db: PgPool) {
     exec(&db, "delete from tournaments").await.unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn translations_are_never_in_the_original_locale(db: PgPool) {
+#[tokio::test]
+async fn translations_are_never_in_the_original_locale() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let tournament = tournament_id(&db, "copa").await;
@@ -178,8 +181,9 @@ async fn translations_are_never_in_the_original_locale(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn participants_fit_and_stay_inside_tenant_and_tournament(db: PgPool) {
+#[tokio::test]
+async fn participants_fit_and_stay_inside_tenant_and_tournament() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let cleo = member(&app, &db, &ana, "Cleo").await;
     let dani = member(&app, &db, &ana, "Dani").await;
@@ -276,8 +280,9 @@ async fn participants_fit_and_stay_inside_tenant_and_tournament(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn logins_and_secrets_keep_their_format(db: PgPool) {
+#[tokio::test]
+async fn logins_and_secrets_keep_their_format() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     let email =
         |id: i64, address: &str| format!("update users set email = '{address}' where id = {id}");
@@ -386,8 +391,9 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_needs_the_account_email(db: PgPool) {
+#[tokio::test]
+async fn password_needs_the_account_email() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
     let password = format!(
@@ -419,8 +425,9 @@ async fn password_needs_the_account_email(db: PgPool) {
     exec(&db, &email("null")).await.unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn invite_tokens_are_hashes(db: PgPool) {
+#[tokio::test]
+async fn invite_tokens_are_hashes() {
+    let (db, _lease) = crate::db::test_db().await;
     let (_, ana, _) = quake_br(&db).await;
     let tenant = tenant_id(&db, "quake-br").await;
     let result = sqlx::query(

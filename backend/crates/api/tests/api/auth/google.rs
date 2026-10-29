@@ -3,7 +3,6 @@
 
 use axum::http::{Method, StatusCode};
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::{
     body_text, discord_user, do_login, get, google_login, google_user, location, oauth_round_trip,
@@ -14,8 +13,9 @@ use crate::common::{self, User, WEB, call, err, mailbox};
 const PASSWORD: &str = "senha forte 1";
 const LINK: &str = "/auth/google/link?return_to=/pt/account/logins";
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn login_without_config_is_503(db: PgPool) {
+#[tokio::test]
+async fn login_without_config_is_503() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db, None, None, false);
     let res = send(&app, get("/auth/google/login", None)).await;
     assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
@@ -25,8 +25,9 @@ async fn login_without_config_is_503(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn login_redirects_to_google_asking_only_id_and_name(db: PgPool) {
+#[tokio::test]
+async fn login_redirects_to_google_asking_only_id_and_name() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db, None, None, true);
     let res = send(&app, get("/auth/google/login?return_to=/pt/algo", None)).await;
     assert_eq!(res.status(), StatusCode::SEE_OTHER);
@@ -47,8 +48,9 @@ async fn login_redirects_to_google_asking_only_id_and_name(db: PgPool) {
     assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fgoogle%2Fcallback"));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn callback_creates_account_with_the_google_name(db: PgPool) {
+#[tokio::test]
+async fn callback_creates_account_with_the_google_name() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana Souza")), true);
     let me = google_login(&app).await;
 
@@ -91,8 +93,9 @@ async fn callback_creates_account_with_the_google_name(db: PgPool) {
     assert_eq!(name, "Aninha");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn callback_errors_redirect_with_google_codes(db: PgPool) {
+#[tokio::test]
+async fn callback_errors_redirect_with_google_codes() {
+    let (db, _lease) = crate::db::test_db().await;
     let failing = providers_app(db.clone(), None, None, true);
     let (session, res) = oauth_round_trip(&failing, "/auth/google/login", None).await;
     assert!(session.is_empty());
@@ -134,8 +137,9 @@ async fn callback_errors_redirect_with_google_codes(db: PgPool) {
     assert_eq!(users, Some(0));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn discord_account_links_google_and_drops_discord(db: PgPool) {
+#[tokio::test]
+async fn discord_account_links_google_and_drops_discord() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(
         db.clone(),
         Some(discord_user(Some("av"))),
@@ -223,8 +227,9 @@ async fn discord_account_links_google_and_drops_discord(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn google_of_another_account_is_refused(db: PgPool) {
+#[tokio::test]
+async fn google_of_another_account_is_refused() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana")), true);
     google_login(&app).await;
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
@@ -238,8 +243,9 @@ async fn google_of_another_account_is_refused(db: PgPool) {
     assert_eq!(body["google"], false);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_account_with_google(db: PgPool) {
+#[tokio::test]
+async fn password_account_with_google() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = providers_app(db.clone(), None, Some(google_user("Ana")), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
     oauth_round_trip(&app, LINK, Some(&me.cookie)).await;

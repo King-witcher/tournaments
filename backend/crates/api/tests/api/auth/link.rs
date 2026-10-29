@@ -2,7 +2,6 @@
 
 use axum::http::{Method, StatusCode};
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::{
     app, body_text, discord_user, do_login, get, location, oauth_round_trip, send, set_email,
@@ -13,8 +12,9 @@ use crate::common::{self, User, WEB, call, err, post};
 const PASSWORD: &str = "senha forte 1";
 const LINK: &str = "/auth/discord/link?return_to=/pt/account";
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_account_links_discord(db: PgPool) {
+#[tokio::test]
+async fn password_account_links_discord() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
@@ -58,8 +58,9 @@ async fn password_account_links_discord(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn link_requires_session(db: PgPool) {
+#[tokio::test]
+async fn link_requires_session() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     let res = send(&app, get(LINK, None)).await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
@@ -81,8 +82,9 @@ async fn link_requires_session(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn discord_of_another_account_is_refused(db: PgPool) {
+#[tokio::test]
+async fn discord_of_another_account_is_refused() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     do_login(&app, "/").await;
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
@@ -101,8 +103,9 @@ async fn discord_of_another_account_is_refused(db: PgPool) {
     assert_eq!(body["discord"], false);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn link_errors_go_back_to_return_to(db: PgPool) {
+#[tokio::test]
+async fn link_errors_go_back_to_return_to() {
+    let (db, _lease) = crate::db::test_db().await;
     let failing = app(db.clone(), None, true);
     let me = signup(&failing, &db, "Rapha", PASSWORD).await;
     let (_, res) = oauth_round_trip(&failing, LINK, Some(&me.cookie)).await;
@@ -126,8 +129,9 @@ async fn link_errors_go_back_to_return_to(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn unlink_needs_password(db: PgPool) {
+#[tokio::test]
+async fn unlink_needs_password() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(Some("av"))), true);
     let (session, _) = do_login(&app, "/").await;
     let id = sqlx::query_scalar!("select id from users")

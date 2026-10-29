@@ -3,7 +3,6 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
@@ -13,8 +12,9 @@ fn adjustments_uri(user: i64) -> String {
     format!("{RATINGS}/{user}/adjustments")
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizer_adjusts_with_a_reason(db: PgPool) {
+#[tokio::test]
+async fn organizer_adjusts_with_a_reason() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let olga = organizer(&f.app, &db, &f.ana, "Olga").await;
     let (status, created) = post(
@@ -47,8 +47,9 @@ async fn organizer_adjusts_with_a_reason(db: PgPool) {
     assert_eq!(list[0]["reason"], "Rating da liga antiga");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn adjustment_goes_in_by_time(db: PgPool) {
+#[tokio::test]
+async fn adjustment_goes_in_by_time() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     let (status, body) = post(
@@ -69,8 +70,9 @@ async fn adjustment_goes_in_by_time(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn who_can_adjust_and_what(db: PgPool) {
+#[tokio::test]
+async fn who_can_adjust_and_what() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let ok = json!({ "delta": 10, "reason": "x" });
     let (status, body) = post(&f.app, &adjustments_uri(f.p1.id), &f.bia, ok.clone()).await;

@@ -87,8 +87,9 @@ fn all_zero(rows: &[(&'static str, i64)]) -> Vec<(&'static str, i64)> {
     rows.iter().map(|&(t, _)| (t, 0)).collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn deleting_a_tenant_deletes_everything_inside(db: PgPool) {
+#[tokio::test]
+async fn deleting_a_tenant_deletes_everything_inside() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     // Outro tenant, com torneio, não é tocado.
     let zeca = user(&db, "Zeca").await;
@@ -121,8 +122,9 @@ async fn deleting_a_tenant_deletes_everything_inside(db: PgPool) {
     assert_eq!(count(&db, "select count(*) from users").await, 7);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn deleting_a_tournament_deletes_everything_inside(db: PgPool) {
+#[tokio::test]
+async fn deleting_a_tournament_deletes_everything_inside() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     // Outro torneio do tenant, com inscrito.
     create_tournament(&cup.app, &cup.ana, duel("outra")).await;
@@ -162,8 +164,9 @@ async fn deleting_a_tournament_deletes_everything_inside(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn started_participants_and_stages_only_leave_with_the_tournament(db: PgPool) {
+#[tokio::test]
+async fn started_participants_and_stages_only_leave_with_the_tournament() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let p1 = cup.p1.id;
     let started_delete = rule(FOREIGN_KEY, "participants_started_delete");
@@ -236,8 +239,9 @@ async fn started_participants_and_stages_only_leave_with_the_tournament(db: PgPo
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn owners_and_started_participants_cannot_be_deleted(db: PgPool) {
+#[tokio::test]
+async fn owners_and_started_participants_cannot_be_deleted() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let delete_user = |id: i64| format!("delete from users where id = {id}");
 
@@ -260,8 +264,9 @@ async fn owners_and_started_participants_cannot_be_deleted(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn deleting_an_author_keeps_what_they_did(db: PgPool) {
+#[tokio::test]
+async fn deleting_an_author_keeps_what_they_did() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let olga = cup.olga.id;
     exec(&db, &format!("delete from users where id = {olga}"))
@@ -340,8 +345,9 @@ async fn deleting_an_author_keeps_what_they_did(db: PgPool) {
     assert_eq!(count(&db, &members).await, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn deleting_a_user_takes_logins_and_registrations(db: PgPool) {
+#[tokio::test]
+async fn deleting_a_user_takes_logins_and_registrations() {
+    let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let bia = cup.bia.id;
     sqlx::query(

@@ -3,7 +3,6 @@
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
@@ -24,8 +23,9 @@ async fn replay(
     .await
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_contested_map_is_voided_and_played_again(db: PgPool) {
+#[tokio::test]
+async fn a_contested_map_is_voided_and_played_again() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     // Quatro jogadores: o torneio segue depois da wb-1-1 (seed 1 × seed 4).
@@ -90,8 +90,9 @@ async fn a_contested_map_is_voided_and_played_again(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_the_last_map_without_confirmation_is_voided(db: PgPool) {
+#[tokio::test]
+async fn only_the_last_map_without_confirmation_is_voided() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;

@@ -35,8 +35,9 @@ async fn users(db: &PgPool) -> i64 {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn account_is_created_only_by_the_link(db: PgPool) {
+#[tokio::test]
+async fn account_is_created_only_by_the_link() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let (status, body) = start(&app, " Rapha ", "Joao.Silva+quake@GoogleMail.com").await;
     assert_eq!(status, StatusCode::ACCEPTED, "{body}");
@@ -83,8 +84,9 @@ async fn account_is_created_only_by_the_link(db: PgPool) {
     assert_eq!(users(&db).await, 1);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn signup_uses_the_locale_and_refuses_bad_input(db: PgPool) {
+#[tokio::test]
+async fn signup_uses_the_locale_and_refuses_bad_input() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let body = json!({ "username": "Rapha", "password": PASSWORD, "email": "r@outlook.com", "locale": "es" });
     let (status, _, _) = send_json(&app, Method::POST, "/auth/signup", None, body).await;
@@ -115,8 +117,9 @@ async fn signup_uses_the_locale_and_refuses_bad_input(db: PgPool) {
     mailbox(&db).assert_empty().await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn username_is_taken_by_accounts_and_pending_signups(db: PgPool) {
+#[tokio::test]
+async fn username_is_taken_by_accounts_and_pending_signups() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
     let (status, body) = start(&app, "RAPHA", "outro@outlook.com").await;
@@ -157,8 +160,9 @@ async fn username_is_taken_by_accounts_and_pending_signups(db: PgPool) {
     assert_eq!(get(&app, "/me", &me).await.1["display_name"], "Bia");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn asking_again_replaces_the_pending_signup(db: PgPool) {
+#[tokio::test]
+async fn asking_again_replaces_the_pending_signup() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     assert_eq!(
         start(&app, "Bia", "bia@outlook.com").await.0,
@@ -194,8 +198,9 @@ async fn asking_again_replaces_the_pending_signup(db: PgPool) {
     assert_eq!(get(&app, "/me", &me).await.1["display_name"], "Bia2");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn email_in_use_warns_its_owner_without_revealing_it(db: PgPool) {
+#[tokio::test]
+async fn email_in_use_warns_its_owner_without_revealing_it() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let owner = signup(&app, &db, "Dona", PASSWORD).await;
     set_email(&db, owner.id, "dona@outlook.com").await;
@@ -245,8 +250,9 @@ async fn email_in_use_warns_its_owner_without_revealing_it(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn daily_limit_stops_sending(db: PgPool) {
+#[tokio::test]
+async fn daily_limit_stops_sending() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app_from(AppState {
         mail: Mail::new(mailbox(&db), 2),
         ..state(db.clone())
@@ -264,8 +270,9 @@ async fn daily_limit_stops_sending(db: PgPool) {
     mailbox(&db).assert_empty().await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn confirm_refuses_email_taken_in_between(db: PgPool) {
+#[tokio::test]
+async fn confirm_refuses_email_taken_in_between() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     assert_eq!(
         start(&app, "Bia", "bia@outlook.com").await.0,

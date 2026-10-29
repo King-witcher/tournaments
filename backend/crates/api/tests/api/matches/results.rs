@@ -4,13 +4,13 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority(db: PgPool) {
+#[tokio::test]
+async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -124,8 +124,9 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority(db:
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reporting_rules(db: PgPool) {
+#[tokio::test]
+async fn reporting_rules() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -232,8 +233,9 @@ async fn reporting_rules(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn unanswered_maps_confirm_when_the_ten_minute_window_ends(db: PgPool) {
+#[tokio::test]
+async fn unanswered_maps_confirm_when_the_ten_minute_window_ends() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;

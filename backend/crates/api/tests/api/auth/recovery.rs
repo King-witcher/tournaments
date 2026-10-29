@@ -5,7 +5,6 @@ use axum::{
     http::{Method, StatusCode},
 };
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::{send_json, session_count, set_email, signup, skip_cooldown};
 use crate::common::{User, app, err, get, link_token, mailbox, user};
@@ -39,8 +38,9 @@ async fn login(app: &Router, username: &str, password: &str) -> StatusCode {
         .0
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn link_sets_a_new_password_and_ends_every_session(db: PgPool) {
+#[tokio::test]
+async fn link_sets_a_new_password_and_ends_every_session() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
     assert_eq!(login(&app, "rapha", PASSWORD).await, StatusCode::OK);
@@ -83,8 +83,9 @@ async fn link_sets_a_new_password_and_ends_every_session(db: PgPool) {
     assert_eq!((status, body), (StatusCode::GONE, err("auth.link_expired")));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn email_finds_the_account_in_any_spelling(db: PgPool) {
+#[tokio::test]
+async fn email_finds_the_account_in_any_spelling() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     // Conta com o email gravado direto: o cadastro não deixa espera nele.
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
@@ -98,8 +99,9 @@ async fn email_finds_the_account_in_any_spelling(db: PgPool) {
     assert_eq!(email.to, "joaosilva@gmail.com");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn same_answer_when_no_link_can_go(db: PgPool) {
+#[tokio::test]
+async fn same_answer_when_no_link_can_go() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     // Conta só com Discord, mas com email: não há senha para recuperar.
     let discord = user(&db, "Discord").await;
@@ -117,8 +119,9 @@ async fn same_answer_when_no_link_can_go(db: PgPool) {
     mailbox(&db).assert_empty().await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_new_request_replaces_the_link_and_limits_stay_quiet(db: PgPool) {
+#[tokio::test]
+async fn a_new_request_replaces_the_link_and_limits_stay_quiet() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
     // O email do cadastro acabou de sair: o pedido fica sem envio, calado.

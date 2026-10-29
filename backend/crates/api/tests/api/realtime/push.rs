@@ -64,8 +64,9 @@ async fn owners(db: &PgPool) -> Vec<(String, i64, String)> {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_key_needs_vapid(db: PgPool) {
+#[tokio::test]
+async fn the_key_needs_vapid() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     assert_eq!(
         get(&app(db.clone()), "/push/key", &ana).await,
@@ -81,8 +82,9 @@ async fn the_key_needs_vapid(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_browser_belongs_to_whoever_subscribed_last(db: PgPool) {
+#[tokio::test]
+async fn a_browser_belongs_to_whoever_subscribed_last() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
     let endpoint = "https://fcm.googleapis.com/fcm/send/abc";
@@ -134,8 +136,9 @@ async fn a_browser_belongs_to_whoever_subscribed_last(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_dispatcher_pushes_notices(db: PgPool) {
+#[tokio::test]
+async fn the_dispatcher_pushes_notices() {
+    let (db, _lease) = crate::db::test_db().await;
     let fake = Arc::new(FakePush::default());
     let state = api::AppState {
         push: Some(fake.clone()),

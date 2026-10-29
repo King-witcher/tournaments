@@ -30,8 +30,9 @@ async fn owners(db: &PgPool) -> Vec<i64> {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_owner_hands_over_and_becomes_organizer(db: PgPool) {
+#[tokio::test]
+async fn the_owner_hands_over_and_becomes_organizer() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
 
     let (status, body) = transfer(&app, &ana, &bia, "quake-br").await;
@@ -62,8 +63,9 @@ async fn the_owner_hands_over_and_becomes_organizer(db: PgPool) {
     assert_eq!(owners(&db).await, [bia.id]);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_transfer_needs_the_slug_and_an_active_member(db: PgPool) {
+#[tokio::test]
+async fn the_transfer_needs_the_slug_and_an_active_member() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let caio = member(&app, &db, &ana, "Caio").await;
@@ -102,8 +104,9 @@ async fn the_transfer_needs_the_slug_and_an_active_member(db: PgPool) {
     assert_eq!(owners(&db).await, [olga.id]);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_new_owner_stays_within_the_limit(db: PgPool) {
+#[tokio::test]
+async fn the_new_owner_stays_within_the_limit() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     for slug in ["bia-1", "bia-2", "bia-3"] {
         create(&app, &bia, slug).await;

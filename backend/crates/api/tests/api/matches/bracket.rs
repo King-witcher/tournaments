@@ -3,13 +3,13 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_generates_the_bracket_in_seed_order(db: PgPool) {
+#[tokio::test]
+async fn start_generates_the_bracket_in_seed_order() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(&app, &ana, copa(json!({})), &[&p[0], &p[1], &p[2], &p[3]]).await;
@@ -87,8 +87,9 @@ async fn start_generates_the_bracket_in_seed_order(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn byes_advance_without_playing(db: PgPool) {
+#[tokio::test]
+async fn byes_advance_without_playing() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     start(&app, &ana, copa(single(3, 5)), &[&p[0], &p[1], &p[2]]).await;
@@ -112,8 +113,9 @@ async fn byes_advance_without_playing(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_rechecks_the_champion_pool_with_the_real_entrants(db: PgPool) {
+#[tokio::test]
+async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     // md1 em todas, sem repetir no torneio, 1 ban: com 3 participantes, o
@@ -154,8 +156,9 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants(db: PgPool) {
     assert_eq!(seeded, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn bracket_follows_the_tournament_visibility(db: PgPool) {
+#[tokio::test]
+async fn bracket_follows_the_tournament_visibility() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     create_tournament(&app, &ana, copa(json!({ "visibility": "private" }))).await;
@@ -191,19 +194,5 @@ async fn bracket_follows_the_tournament_visibility(db: PgPool) {
             .unwrap()
             .len(),
         2
-    );
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn undo_start_drops_the_bracket(db: PgPool) {
-    let (app, ana, _) = quake_br(&db).await;
-    let p = players(&app, &db, &ana, 2).await;
-    start(&app, &ana, copa(json!({})), &[&p[0], &p[1]]).await;
-    let (status, undone) = delete(&app, &format!("{COPA}/start"), &ana).await;
-    assert_eq!(status, StatusCode::OK, "{undone}");
-    assert_eq!(undone["status"], "registration");
-    assert_eq!(
-        get(&app, &format!("{COPA}/bracket"), &p[0]).await,
-        (StatusCode::NOT_FOUND, err("bracket.not_found"))
     );
 }

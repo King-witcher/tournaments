@@ -3,12 +3,12 @@ use axum::{
     http::{Method, StatusCode},
 };
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn invite_link_adds_a_player(db: PgPool) {
+#[tokio::test]
+async fn invite_link_adds_a_player() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -66,8 +66,9 @@ async fn invite_link_adds_a_player(db: PgPool) {
     assert!(invites[0].get("token").is_none());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_organizers_and_owner_manage_invites(db: PgPool) {
+#[tokio::test]
+async fn only_organizers_and_owner_manage_invites() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -119,8 +120,9 @@ async fn only_organizers_and_owner_manage_invites(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn expired_revoked_and_unknown_invites(db: PgPool) {
+#[tokio::test]
+async fn expired_revoked_and_unknown_invites() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -163,8 +165,9 @@ async fn expired_revoked_and_unknown_invites(db: PgPool) {
     assert_eq!(get(&app, "/tenants", &bia).await.1, json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn invite_ids_do_not_cross_tenants(db: PgPool) {
+#[tokio::test]
+async fn invite_ids_do_not_cross_tenants() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let eve = user(&db, "Eve").await;
@@ -199,8 +202,9 @@ async fn preview(app: &Router, token: &str) -> (StatusCode, Value) {
     call(app, Method::GET, &format!("/invites/{token}"), None, None).await
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournament_link_joins_the_tenant_and_registers(db: PgPool) {
+#[tokio::test]
+async fn tournament_link_joins_the_tenant_and_registers() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
     let private = with(duel("copa"), json!({ "visibility": "private" }));
@@ -273,8 +277,9 @@ async fn tournament_link_joins_the_tenant_and_registers(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournament_link_needs_a_free_slot(db: PgPool) {
+#[tokio::test]
+async fn tournament_link_needs_a_free_slot() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
     create_tournament(
@@ -303,8 +308,9 @@ async fn tournament_link_needs_a_free_slot(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournament_links_only_before_the_start(db: PgPool) {
+#[tokio::test]
+async fn tournament_links_only_before_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let links = format!("{COPA}/invites");
@@ -345,8 +351,9 @@ async fn viewer(app: &Router, token: &str, who: &User) -> Value {
     body["viewer"].clone()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn preview_knows_who_opens_it(db: PgPool) {
+#[tokio::test]
+async fn preview_knows_who_opens_it() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
     let token = invite(&app, &ana, "quake-br").await;
@@ -389,8 +396,9 @@ async fn preview_knows_who_opens_it(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn lists_show_the_first_characters_of_each_token(db: PgPool) {
+#[tokio::test]
+async fn lists_show_the_first_characters_of_each_token() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let community = invite(&app, &ana, "quake-br").await;

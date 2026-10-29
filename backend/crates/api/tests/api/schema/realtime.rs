@@ -2,8 +2,6 @@
 //! inscrições de Web Push (que saem com o usuário) e a marca do aviso de hora
 //! de iniciar.
 
-use sqlx::PgPool;
-
 use super::*;
 use crate::common::*;
 
@@ -11,8 +9,9 @@ const P256DH: &str =
     "BLn9b-VR0ca83knDNZ32dCHGyjJp-1riX9ZTN40MqV8K_LpQmLqxC_DoHvqvFXO_nGdAB4W9dogZb_sM-uV4JbY";
 const AUTH: &str = "_ordMnz7uTCmrpBTeUV4Bw";
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn outbox_shape_and_once_per_transaction(db: PgPool) {
+#[tokio::test]
+async fn outbox_shape_and_once_per_transaction() {
+    let (db, _lease) = crate::db::test_db().await;
     for bad in [
         r#"'{"kind": "outro"}'"#,
         r#"'{"tenant": "x"}'"#,
@@ -47,8 +46,9 @@ async fn outbox_shape_and_once_per_transaction(db: PgPool) {
     assert_eq!(count(&db, "select count(*) from outbox").await, 2);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn push_subscriptions_keep_their_format(db: PgPool) {
+#[tokio::test]
+async fn push_subscriptions_keep_their_format() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     let insert = |endpoint: &str, p256dh: &str, auth: &str, locale: &str| {
         format!(
@@ -98,8 +98,9 @@ async fn push_subscriptions_keep_their_format(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_published_tournaments_are_reminded(db: PgPool) {
+#[tokio::test]
+async fn only_published_tournaments_are_reminded() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(

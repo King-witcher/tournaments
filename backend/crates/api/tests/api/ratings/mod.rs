@@ -74,8 +74,9 @@ pub async fn member_rating(app: &Router, who: &User, of: i64) -> Value {
     body
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn each_confirmed_map_is_a_game(db: PgPool) {
+#[tokio::test]
+async fn each_confirmed_map_is_a_game() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let empty = ranking(&f.app, &f.bia).await;
     assert_eq!(empty["initial"], 1500);
@@ -99,8 +100,9 @@ async fn each_confirmed_map_is_a_game(db: PgPool) {
     assert!(r["players"][0]["last_game_at"].is_string());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_waiting_or_contested_do_not_count(db: PgPool) {
+#[tokio::test]
+async fn maps_waiting_or_contested_do_not_count() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let (status, body) = report(&f.app, &f.p1, "wb-1-1", 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -110,8 +112,9 @@ async fn maps_waiting_or_contested_do_not_count(db: PgPool) {
     assert_eq!(ranking(&f.app, &f.bia).await["players"], json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn walkover_does_not_count_but_the_maps_before_it_do(db: PgPool) {
+#[tokio::test]
+async fn walkover_does_not_count_but_the_maps_before_it_do() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let (status, body) = report(&f.app, &f.p1, "wb-1-1", 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -129,8 +132,9 @@ async fn walkover_does_not_count_but_the_maps_before_it_do(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournament_that_does_not_count(db: PgPool) {
+#[tokio::test]
+async fn tournament_that_does_not_count() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({ "counts_for_rating": false })).await;
     let (status, t) = get(&f.app, COPA, &f.bia).await;
     assert_eq!(status, StatusCode::OK, "{t}");
@@ -145,8 +149,9 @@ async fn tournament_that_does_not_count(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn counts_for_rating_changes_until_the_start(db: PgPool) {
+#[tokio::test]
+async fn counts_for_rating_changes_until_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(created["counts_for_rating"], true);
@@ -156,8 +161,9 @@ async fn counts_for_rating_changes_until_the_start(db: PgPool) {
     assert_eq!(body["counts_for_rating"], false);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn member_rating_with_the_last_maps(db: PgPool) {
+#[tokio::test]
+async fn member_rating_with_the_last_maps() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     let r = member_rating(&f.app, &f.bia, f.p2.id).await;
@@ -193,8 +199,9 @@ async fn member_rating_with_the_last_maps(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_of_a_private_tournament_only_for_who_sees_it(db: PgPool) {
+#[tokio::test]
+async fn maps_of_a_private_tournament_only_for_who_sees_it() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     let (status, body) = patch(&f.app, COPA, &f.ana, json!({ "visibility": "private" })).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -209,8 +216,9 @@ async fn maps_of_a_private_tournament_only_for_who_sees_it(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn who_left_leaves_the_ranking(db: PgPool) {
+#[tokio::test]
+async fn who_left_leaves_the_ranking() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     let (status, body) = delete(&f.app, "/tenants/quake-br/me", &f.p2).await;
@@ -229,8 +237,9 @@ async fn who_left_leaves_the_ranking(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_members_see_the_ranking(db: PgPool) {
+#[tokio::test]
+async fn only_members_see_the_ranking() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, _, _) = quake_br(&db).await;
     let outsider = user(&db, "Zé").await;
     let (status, body) = get(&app, RATINGS, &outsider).await;

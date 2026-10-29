@@ -25,8 +25,9 @@ fn pairs(list: &[(&str, &str)]) -> Vec<(String, String)> {
         .collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn ownership_moves_inside_one_transaction(db: PgPool) {
+#[tokio::test]
+async fn ownership_moves_inside_one_transaction() {
+    let (db, _lease) = crate::db::test_db().await;
     let (_app, ana, bia) = quake_br(&db).await;
     let set_role = |id: i64, role: &'static str| {
         sqlx::query("update tenant_members set role = $2 where user_id = $1")
@@ -73,8 +74,9 @@ async fn ownership_moves_inside_one_transaction(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_tenant_is_born_with_its_owner(db: PgPool) {
+#[tokio::test]
+async fn a_tenant_is_born_with_its_owner() {
+    let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
     let new_tenant =
         "insert into tenants (slug, name) values ('quake-br', 'Quake BR') returning id";

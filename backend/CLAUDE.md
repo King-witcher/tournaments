@@ -91,6 +91,8 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 ### Testes de rota
 
 - Em `crates/api/tests/api/`, num binário só: `main.rs` declara os módulos. Arquivo solto em `tests/` vira outro binário, que linka a crate inteira de novo.
+- Teste que usa o banco: `#[tokio::test]` e, na primeira linha, `let (db, _lease) = crate::db::test_db().await;` (nunca `#[sqlx::test]`, que cria e apaga um banco por teste e custava um checkpoint do Postgres a cada um). O `test_db` (`db.rs`) empresta um de poucos bancos (`TEST_DATABASES`, padrão 4), migrados uma vez e mantidos entre execuções, já esvaziado (`truncate ... restart identity`; campeões e mapas voltam ao que as migrations gravam); o `_lease` segura o banco até o fim do teste. Uma suíte por vez na máquina (lock de arquivo): a de outra sessão espera, com aviso no stderr.
+- Antes de escrever um teste, veja se outro já cobre o caso: um teste novo é um caminho, regra, código de erro ou constraint que nenhum outro exercita, não a mesma verificação com outros dados.
 - Um arquivo por domínio, com o nome do módulo em `src/`. Helpers comuns (app, usuário com sessão, `redis(&db)` com o prefixo do teste, `get`/`post`/..., `create`/`invite`/`join`) em `common.rs`; helper de um domínio só fica no arquivo dele.
 - Filtrar: `cargo test -p api invites::`.
 - Regras do banco, por SQL direto: `schema/` para o schema inteiro (exclusões, owner, checks), `matches/schema.rs` para resultados e histórico.

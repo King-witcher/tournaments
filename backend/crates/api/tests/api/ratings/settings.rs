@@ -3,7 +3,6 @@
 
 use axum::http::StatusCode;
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
@@ -15,8 +14,9 @@ fn elo(initial: i32, k_min: i32, k_max: i32, k_decay: i32) -> serde_json::Value 
     json!({ "initial": initial, "k_min": k_min, "k_max": k_max, "k_decay": k_decay })
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn defaults_and_who_changes(db: PgPool) {
+#[tokio::test]
+async fn defaults_and_who_changes() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let (status, body) = get(&app, SETTINGS, &bia).await;
     assert_eq!((status, body), (StatusCode::OK, elo(1500, 32, 80, 10)));
@@ -35,8 +35,9 @@ async fn defaults_and_who_changes(db: PgPool) {
     assert_eq!(ranking(&app, &bia).await["initial"], 1200);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn invalid_settings(db: PgPool) {
+#[tokio::test]
+async fn invalid_settings() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let cases = [
         (
@@ -68,8 +69,9 @@ async fn invalid_settings(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn changing_settings_recomputes_the_history(db: PgPool) {
+#[tokio::test]
+async fn changing_settings_recomputes_the_history() {
+    let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;
     play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
     assert_eq!(table(&ranking(&f.app, &f.bia).await)[0].1, 1569);

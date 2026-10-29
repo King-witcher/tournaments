@@ -67,13 +67,12 @@ fn sweep_runs_before(before: i64) {
     }
 }
 
-/// Redis do teste: cada banco do `sqlx::test` ganha um prefixo nesta execução,
-/// então o app e os helpers do mesmo teste veem as mesmas chaves, e um teste
-/// não vê as do outro.
+/// Redis do teste: cada teste (o banco e o empréstimo dele, `db::test_key`)
+/// ganha um prefixo nesta execução, então o app e os helpers do mesmo teste
+/// veem as mesmas chaves, e um teste não vê as do outro.
 pub fn redis(db: &PgPool) -> Redis {
-    let options = db.connect_options();
-    let database = options.get_database().unwrap_or("postgres");
-    Redis::open(&redis_url(), &format!("{}{database}:", *RUN_PREFIX)).unwrap()
+    let key = crate::db::test_key(db);
+    Redis::open(&redis_url(), &format!("{}{key}:", *RUN_PREFIX)).unwrap()
 }
 
 /// Teto de emails por dia do app de teste.
@@ -119,13 +118,12 @@ impl Mailbox {
     }
 }
 
-/// Caixa de emails do app de teste deste banco: o app e os helpers do mesmo
-/// teste veem a mesma.
+/// Caixa de emails do app de teste deste teste: o app e os helpers do mesmo
+/// teste veem a mesma, e o próximo teste no mesmo banco começa com outra.
 pub fn mailbox(db: &PgPool) -> Arc<Mailbox> {
     static BOXES: LazyLock<Mutex<HashMap<String, Arc<Mailbox>>>> = LazyLock::new(Default::default);
-    let options = db.connect_options();
-    let database = options.get_database().unwrap_or("postgres").to_owned();
-    BOXES.lock().unwrap().entry(database).or_default().clone()
+    let key = crate::db::test_key(db);
+    BOXES.lock().unwrap().entry(key).or_default().clone()
 }
 
 /// Token do link de um email (o que vem depois do `#`).

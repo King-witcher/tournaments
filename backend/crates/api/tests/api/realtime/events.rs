@@ -4,7 +4,6 @@
 
 use axum::http::StatusCode;
 use serde_json::json;
-use sqlx::PgPool;
 
 use api::auth::create_session;
 
@@ -12,8 +11,9 @@ use super::*;
 use crate::common::*;
 use crate::matches::{COPA, copa, game, players, report, single, start};
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tournaments_and_registrations(db: PgPool) {
+#[tokio::test]
+async fn tournaments_and_registrations() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     clear(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
@@ -47,8 +47,9 @@ async fn tournaments_and_registrations(db: PgPool) {
     assert_eq!(outbox(&db).await, Vec::<serde_json::Value>::new());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_same_event_goes_once_per_transaction(db: PgPool) {
+#[tokio::test]
+async fn the_same_event_goes_once_per_transaction() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = format!("{COPA}/participants");
@@ -69,8 +70,9 @@ async fn the_same_event_goes_once_per_transaction(db: PgPool) {
     assert_eq!(notices(&events)[0].0, "check_in.opened");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn matches_say_which_match_changed(db: PgPool) {
+#[tokio::test]
+async fn matches_say_which_match_changed() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -100,8 +102,9 @@ async fn matches_say_which_match_changed(db: PgPool) {
     assert_eq!(events.len(), 3);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn members_and_invites(db: PgPool) {
+#[tokio::test]
+async fn members_and_invites() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     clear(&db).await;
     invite(&app, &ana, "quake-br").await;
@@ -137,8 +140,9 @@ async fn members_and_invites(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn ended_sessions(db: PgPool) {
+#[tokio::test]
+async fn ended_sessions() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let other = create_session(&redis(&db), ana.id, None).await.unwrap();

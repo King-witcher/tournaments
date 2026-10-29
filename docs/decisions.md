@@ -368,7 +368,7 @@ Como ficou o backend (28/10; o que não estava acima é decisão minha, fácil d
 - Privado agora, público depois: nenhum segredo no código (`.env.example` versionado), histórico limpo desde o primeiro commit.
 - GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês).
 - CI (`.github/workflows/ci.yml`): em pull request roda só o lado cujos arquivos mudaram (`dorny/paths-filter`), em push na `main` os dois; execução antiga do mesmo ref é cancelada. A conferência do `.sqlx/` regrava as queries num diretório à parte e compara (`diff -r`) com o versionado, reaproveitando as dependências já compiladas (cerca de 1 min), em vez de rodar `sqlx-prepare.ts`, que compilaria tudo de novo num `target` próprio. Só `.sqlx/` sobrando ou diferente seria invisível ao clippy offline, por isso a conferência existe.
-- Banco de dev: cluster Postgres local (sqlx confere queries na compilação; `sqlx::test` cria um banco por teste). Usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos bancos de teste.
+- Banco de dev: cluster Postgres local (sqlx confere queries na compilação; os testes de rota dividem 4 bancos `_sqlx_test_*`, criados uma vez e esvaziados antes de cada teste; ver "Testes"). Usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos bancos de teste.
 
 ## Organização do código
 
@@ -379,6 +379,14 @@ Regras completas em `backend/CLAUDE.md` e `web/CLAUDE.md`, que o Claude Code car
 - **Testes de rota num binário só** (`tests/api/`), um arquivo por domínio: no Windows cada binário de teste demora para linkar.
 - **Front sem shadcn por enquanto**: primitivos próprios em `src/shared/ui` (Button, Input, Field, Alert, Avatar, Page), com os nomes de variante do shadcn, para ele entrar no mesmo lugar depois sem mudar quem usa.
 - Componente ou arquivo que cresce demais ou acumula funções é quebrado; os sinais estão nos dois `CLAUDE.md`.
+
+## Testes
+
+Desde 2026-10-29, pedido do usuário depois de uma suíte levar perto de uma hora com outras sessões rodando ("7 minutos rodando teste é uma eternidade"; um cluster Postgres separado para os testes foi recusado):
+
+- **Bancos reaproveitados** (`crates/api/tests/api/db.rs`): no lugar do `sqlx::test`, que criava e apagava um banco por teste, cada banco principal tem 4 bancos de teste (`TEST_DATABASES`), `_sqlx_test_<banco>_t<n>`, migrados uma vez e mantidos entre execuções; são recriados só quando as migrations aplicadas não batem com as do código. Antes de cada teste, `truncate ... restart identity` em todas as tabelas, e as linhas que as migrations gravam (campeões, mapas) voltam de uma cópia feita depois de migrar. O custo era o `drop database`, que força um checkpoint no servidor inteiro: um banco vazio levou 107 s para sair com três suítes rodando. Um banco só para todos os testes foi descartado: os testes contam com o banco vazio e rodam em paralelo, e uma transação por teste desfeita no fim não serve porque os handlers fazem commit das próprias transações. A suíte inteira passou de perto de uma hora para uns 40 s.
+- **Uma suíte por vez na máquina**: o binário de teste pega um lock de arquivo na pasta temporária (`tournaments-api-tests.lock`) e o segura até sair; a suíte de outra sessão ou worktree espera, com um aviso no stderr. Duas suítes juntas no mesmo Postgres se atrasam mais do que uma depois da outra.
+- **Testes que não cobrem nada novo saem**: um teste só fica se exercita um caminho, regra, código de erro ou constraint que nenhum outro exercita. Saíram a criação de rascunho (já em `draft_is_only_for_organizers_until_published`), "desfazer o início tira a chave" (o 404 da chave depende só do status, já testado) e o teste da conversão das séries antigas para mapas (`matches/migration.rs`), que conferia migrations já aplicadas em produção, que não mudam mais, e era o único a precisar de um banco sem migrations. Juntar testes pequenos num só ficou de fora: com os bancos reaproveitados, um teste a mais custa milissegundos, e o teste separado diz melhor o que quebrou.
 
 ## Em aberto
 

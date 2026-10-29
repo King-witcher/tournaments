@@ -6,7 +6,6 @@ mod seeding;
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 
@@ -26,8 +25,9 @@ async fn participants(app: &Router, who: &User) -> Value {
     list
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn members_register_themselves_in_public_tournaments(db: PgPool) {
+#[tokio::test]
+async fn members_register_themselves_in_public_tournaments() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let registration = format!("{COPA}/registration");
@@ -68,8 +68,9 @@ async fn members_register_themselves_in_public_tournaments(db: PgPool) {
     assert_eq!(participants(&app, &bia).await, json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn registration_closes_when_full(db: PgPool) {
+#[tokio::test]
+async fn registration_closes_when_full() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
     join(&app, &caio, &invite(&app, &ana, "quake-br").await).await;
@@ -113,8 +114,9 @@ async fn registration_closes_when_full(db: PgPool) {
     assert_eq!(nicknames(&participants(&app, &ana).await), ["Ana", "Caio"]);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn private_needs_an_invite_or_the_organizer(db: PgPool) {
+#[tokio::test]
+async fn private_needs_an_invite_or_the_organizer() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let private = with(duel("copa"), json!({ "visibility": "private" }));
     create_tournament(&app, &ana, private).await;
@@ -167,8 +169,9 @@ async fn private_needs_an_invite_or_the_organizer(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizers_change_participants_until_the_start(db: PgPool) {
+#[tokio::test]
+async fn organizers_change_participants_until_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let add = format!("{COPA}/participants");

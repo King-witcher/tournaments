@@ -19,8 +19,9 @@ async fn status_of(db: &PgPool, slug: &str) -> String {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn confirms_due_maps_and_moves_the_bracket(db: PgPool) {
+#[tokio::test]
+async fn confirms_due_maps_and_moves_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
@@ -61,8 +62,9 @@ async fn confirms_due_maps_and_moves_the_bracket(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn opens_the_check_in_on_time(db: PgPool) {
+#[tokio::test]
+async fn opens_the_check_in_on_time() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
@@ -101,8 +103,9 @@ async fn opens_the_check_in_on_time(db: PgPool) {
     assert_eq!(status_of(&db, "copa").await, "registration");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reminds_the_start_once(db: PgPool) {
+#[tokio::test]
+async fn reminds_the_start_once() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
@@ -153,8 +156,9 @@ async fn reminds_the_start_once(db: PgPool) {
     assert_eq!(tick.reminded, 1);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn one_pass_at_a_time(db: PgPool) {
+#[tokio::test]
+async fn one_pass_at_a_time() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     // Outra instância numa passada (o mesmo advisory lock).
     let mut other = db.begin().await.unwrap();

@@ -7,7 +7,6 @@ use axum::{
     http::{Method, StatusCode},
 };
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{bracket, copa, find, play, players, single, start};
@@ -62,8 +61,9 @@ async fn win(app: &Router, winner: &User, loser: &User, key: &str) {
     play(app, winner, loser, key, a, b).await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_member_sees_another_members_tournaments(db: PgPool) {
+#[tokio::test]
+async fn a_member_sees_another_members_tournaments() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
 
@@ -155,8 +155,9 @@ async fn a_member_sees_another_members_tournaments(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn outsiders_do_not_see_profiles(db: PgPool) {
+#[tokio::test]
+async fn outsiders_do_not_see_profiles() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, _, bia) = quake_br(&db).await;
     let eve = user(&db, "Eve").await;
     create(&app, &eve, "da-eve").await;
@@ -171,8 +172,9 @@ async fn outsiders_do_not_see_profiles(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_active_members_have_a_profile(db: PgPool) {
+#[tokio::test]
+async fn only_active_members_have_a_profile() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     let dani = member(&app, &db, &ana, "Dani").await;
@@ -203,8 +205,9 @@ async fn only_active_members_have_a_profile(db: PgPool) {
     assert_eq!(get(&app, &uri(&dani), &ana).await, not_found);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn players_see_only_what_the_tournament_list_shows(db: PgPool) {
+#[tokio::test]
+async fn players_see_only_what_the_tournament_list_shows() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
 

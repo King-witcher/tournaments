@@ -4,7 +4,7 @@ O que fazer e em que ordem. Regras e motivos ficam em `decisions.md`; o detalhe 
 
 ## Próximo
 
-Um incremento por vez, cada um com migration, rotas (OpenAPI), testes `sqlx::test`, tipos regenerados no front e tela mínima.
+Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
 
 1. **Veto** de mapas e pick/ban de campeões ao vivo, com a regra de não repetição. Entra entre a partida ficar pronta e o envio: o pool por torneio sai de `maps`, e o envio de cada mapa passa a seguir o veto. Partida de quem desistiu não chega ao veto: vira W.O. ao ficar pronta. O aviso "veto começou" entra no `outbox` como os outros.
 2. **Prints do placar** (S3 genérico, URL assinada, WebP, apagar 30 dias após o fim).
@@ -38,6 +38,7 @@ O que ficou de fora de incrementos já feitos, com o que falta.
 O que existe hoje, uma linha por área. Ao terminar um incremento, ajuste a linha da área (ou crie uma); o detalhe vai no commit e as regras no `decisions.md`.
 
 - **CI** (`.github/workflows/ci.yml`): backend (fmt, clippy com `SQLX_OFFLINE=true`, migrations, testes, `.sqlx/` igual ao que as queries geram) e web (lint, build), só o lado que mudou em pull request e os dois em push na `main`.
+- **Testes**: de rota com 4 bancos reaproveitados entre execuções, esvaziados antes de cada teste (`tests/api/db.rs`), e uma suíte por vez na máquina; a suíte inteira roda em uns 40 s.
 - **Base**: workspace Rust (`engine`, `api`, `migrate`), Next 16 com next-intl (pt, es), Bun, Biome, recarga automática da API, código por domínio dos dois lados.
 - **Contas**: login com Discord, com Google (só o id e o nome) e com username e senha, vincular e desvincular (cada um sai se sobrar outro), nome exibido; cadastro com senha só com email confirmado pelo link (forma canônica, sem descartáveis), recuperação de senha e troca de email por link (Resend), emails no visual do Carbon e aviso por email de toda mudança de senha, username, Discord, Google e email; senha só com email (o banco confere) e remover o email da conta sem senha; sessões, tentativas de senha, cadastros por confirmar e links no Redis, com rotas e aba Sessões na conta (navegador e sistema, desde quando, a atual marcada, encerrar uma ou as outras).
 - **Comunidades**: criar (até 3 como owner), convites (com o começo do link na lista e, para a organização, por qual link cada membro entrou), papéis, apelido, sair, remover, transferir a posse; membro inativo mantém o histórico; página da pessoa com os torneios dela na comunidade.

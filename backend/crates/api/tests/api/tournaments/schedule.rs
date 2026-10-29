@@ -2,14 +2,14 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_start_date_is_optional_even_after_publishing(db: PgPool) {
+#[tokio::test]
+async fn the_start_date_is_optional_even_after_publishing() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let created =
         create_tournament(&app, &ana, with(duel("copa"), json!({ "starts_at": null }))).await;
@@ -42,8 +42,9 @@ async fn the_start_date_is_optional_even_after_publishing(db: PgPool) {
     assert_eq!(cleared["status"], "registration");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn without_a_date_check_in_never_opens_by_itself(db: PgPool) {
+#[tokio::test]
+async fn without_a_date_check_in_never_opens_by_itself() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, with(duel("copa"), json!({ "starts_at": null }))).await;
     publish(&app, &ana, "copa").await;
@@ -63,8 +64,9 @@ async fn without_a_date_check_in_never_opens_by_itself(db: PgPool) {
     assert_eq!(cleared["status"], "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn clearing_the_date_with_check_in_open_keeps_it_open(db: PgPool) {
+#[tokio::test]
+async fn clearing_the_date_with_check_in_open_keeps_it_open() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -75,8 +77,9 @@ async fn clearing_the_date_with_check_in_open_keeps_it_open(db: PgPool) {
     assert_eq!(cleared["status"], "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn check_in_window_is_validated(db: PgPool) {
+#[tokio::test]
+async fn check_in_window_is_validated() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     assert_eq!(
         post(
@@ -104,8 +107,9 @@ async fn check_in_window_is_validated(db: PgPool) {
     assert_eq!(on["check_in_opens_at"], "2099-01-01T19:00:00Z");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_date_and_window_change_only_before_the_start(db: PgPool) {
+#[tokio::test]
+async fn start_date_and_window_change_only_before_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -141,8 +145,9 @@ async fn start_date_and_window_change_only_before_the_start(db: PgPool) {
     assert_eq!(same["name"], "Copa");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn check_in_opens_by_itself_when_the_window_opens(db: PgPool) {
+#[tokio::test]
+async fn check_in_opens_by_itself_when_the_window_opens() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -174,8 +179,9 @@ async fn check_in_opens_by_itself_when_the_window_opens(db: PgPool) {
     assert_eq!(published["status"], "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn without_check_in_registration_stays_open_until_the_start(db: PgPool) {
+#[tokio::test]
+async fn without_check_in_registration_stays_open_until_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(
         &app,
@@ -189,8 +195,9 @@ async fn without_check_in_registration_stays_open_until_the_start(db: PgPool) {
     assert_eq!(seen["status"], "registration");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn turning_check_in_off_during_check_in_reopens_registration(db: PgPool) {
+#[tokio::test]
+async fn turning_check_in_off_during_check_in_reopens_registration() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;

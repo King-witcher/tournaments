@@ -5,14 +5,14 @@
 
 use axum::http::StatusCode;
 use serde_json::json;
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 use crate::matches::{COPA, confirm, contest, copa, game, players, report, single, start};
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn check_in_opened_goes_to_the_registered(db: PgPool) {
+#[tokio::test]
+async fn check_in_opened_goes_to_the_registered() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let cris = member(&app, &db, &ana, "Cris").await;
     member(&app, &db, &ana, "Fora").await;
@@ -34,8 +34,9 @@ async fn check_in_opened_goes_to_the_registered(db: PgPool) {
     assert_eq!(events.last().unwrap()["notice"]["path"], "/quake-br/copa");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn starting_tells_both_sides_of_each_ready_match(db: PgPool) {
+#[tokio::test]
+async fn starting_tells_both_sides_of_each_ready_match() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -66,8 +67,9 @@ async fn starting_tells_both_sides_of_each_ready_match(db: PgPool) {
     assert_eq!(path, "/quake-br/copa/matches/wb-1-1");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reported_and_contested_maps(db: PgPool) {
+#[tokio::test]
+async fn reported_and_contested_maps() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let p = players(&app, &db, &ana, 2).await;
@@ -102,8 +104,9 @@ async fn reported_and_contested_maps(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_next_match_is_ready_when_both_sides_arrive(db: PgPool) {
+#[tokio::test]
+async fn the_next_match_is_ready_when_both_sides_arrive() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -144,8 +147,9 @@ async fn the_next_match_is_ready_when_both_sides_arrive(db: PgPool) {
     assert!(events.contains(&me(&ids(&[&p[0], &p[1], &p[2]]))));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn no_ready_notice_for_a_walkover(db: PgPool) {
+#[tokio::test]
+async fn no_ready_notice_for_a_walkover() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(

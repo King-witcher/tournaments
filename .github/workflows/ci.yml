@@ -66,7 +66,8 @@ jobs:
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # O usuário do serviço é superusuário: o sqlx::test cria os bancos dele.
+      # O usuário do serviço é superusuário: os testes criam os bancos deles
+      # (crates/api/tests/api/db.rs).
       DATABASE_URL: postgres://tournaments@localhost:5432/tournaments
       REDIS_URL: redis://127.0.0.1:6379/0
       RUST_TEST_THREADS: "4"

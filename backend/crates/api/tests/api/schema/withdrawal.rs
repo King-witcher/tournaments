@@ -2,8 +2,6 @@
 //! se desfaz, e o desistente sai da inscrição se o torneio volta a não ter
 //! começado. O W.O. automático só vale contra quem desistiu ou saiu.
 
-use sqlx::PgPool;
-
 use super::*;
 use crate::common::*;
 use crate::matches::{copa, single, start};
@@ -15,8 +13,9 @@ fn withdraw_sql(user: &User) -> String {
     )
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn withdrawals_only_happen_in_progress_and_stay(db: PgPool) {
+#[tokio::test]
+async fn withdrawals_only_happen_in_progress_and_stay() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     let dani = member(&app, &db, &ana, "Dani").await;
@@ -76,8 +75,9 @@ async fn withdrawals_only_happen_in_progress_and_stay(db: PgPool) {
         .unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn withdrawn_seed_is_required(db: PgPool) {
+#[tokio::test]
+async fn withdrawn_seed_is_required() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     // Caio se inscreve, mas o seeding deixa só Ana e Bia na chave.
@@ -99,8 +99,9 @@ async fn withdrawn_seed_is_required(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn automatic_walkovers_need_a_withdrawn_loser(db: PgPool) {
+#[tokio::test]
+async fn automatic_walkovers_need_a_withdrawn_loser() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     start(&app, &ana, copa(single(3, 3)), &[&ana, &bia]).await;
     let ids = sqlx::query!(

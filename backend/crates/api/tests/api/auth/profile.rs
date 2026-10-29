@@ -2,12 +2,12 @@
 
 use axum::http::{Method, StatusCode};
 use serde_json::json;
-use sqlx::PgPool;
 
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn changes_the_display_name(db: PgPool) {
+#[tokio::test]
+async fn changes_the_display_name() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
 
     let (status, me) = patch(&app, "/me", &ana, json!({ "display_name": "  Ana QC  " })).await;

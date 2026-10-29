@@ -1,10 +1,10 @@
 use axum::http::{Method, StatusCode};
-use sqlx::PgPool;
 
 use crate::common::{app, call};
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_list_the_duel_pool_first(db: PgPool) {
+#[tokio::test]
+async fn maps_list_the_duel_pool_first() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db);
     let (status, maps) = call(&app, Method::GET, "/maps", None, None).await;
     assert_eq!(status, StatusCode::OK);

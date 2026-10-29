@@ -2,7 +2,6 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 
@@ -19,16 +18,9 @@ async fn assert_nothing_created(app: &axum::Router, ana: &User, slug: &str) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_without_the_new_fields_is_a_draft(db: PgPool) {
-    let (app, ana, _) = quake_br(&db).await;
-    let created = create_tournament(&app, &ana, duel("copa")).await;
-    assert_eq!(created["status"], "draft");
-    assert_eq!(created["translations"], json!([]));
-}
-
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_with_publish_opens_registration(db: PgPool) {
+#[tokio::test]
+async fn create_with_publish_opens_registration() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let created =
         create_tournament(&app, &ana, with(duel("copa"), json!({ "publish": true }))).await;
@@ -38,8 +30,9 @@ async fn create_with_publish_opens_registration(db: PgPool) {
     assert_eq!(seen["status"], "registration");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_with_publish_inside_the_check_in_window_opens_check_in(db: PgPool) {
+#[tokio::test]
+async fn create_with_publish_inside_the_check_in_window_opens_check_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let soon = (chrono::Utc::now() + chrono::Duration::minutes(10)).to_rfc3339();
     let body = with(
@@ -52,8 +45,9 @@ async fn create_with_publish_inside_the_check_in_window_opens_check_in(db: PgPoo
     assert_eq!(seen["status"], "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_with_publish_without_a_date_stays_in_registration(db: PgPool) {
+#[tokio::test]
+async fn create_with_publish_without_a_date_stays_in_registration() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
@@ -64,8 +58,9 @@ async fn create_with_publish_without_a_date_stays_in_registration(db: PgPool) {
     assert_eq!(created["starts_at"], Value::Null);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_stores_the_translations(db: PgPool) {
+#[tokio::test]
+async fn create_stores_the_translations() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
@@ -83,8 +78,9 @@ async fn create_stores_the_translations(db: PgPool) {
     assert_eq!(seen["translations"], expected);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn translation_in_the_original_locale_is_refused(db: PgPool) {
+#[tokio::test]
+async fn translation_in_the_original_locale_is_refused() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let pt = json!({ "locale": "pt", "name": "Copa" });
     let body = with(duel("copa"), json!({ "translations": [pt] }));
@@ -98,8 +94,9 @@ async fn translation_in_the_original_locale_is_refused(db: PgPool) {
     assert_nothing_created(&app, &ana, "copa").await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn translation_text_errors_carry_the_locale(db: PgPool) {
+#[tokio::test]
+async fn translation_text_errors_carry_the_locale() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let body = with(duel("copa"), json!({ "translations": [es("  ")] }));
     assert_eq!(
@@ -121,8 +118,9 @@ async fn translation_text_errors_carry_the_locale(db: PgPool) {
     assert_nothing_created(&app, &ana, "copa").await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_same_translation_locale_twice_is_refused(db: PgPool) {
+#[tokio::test]
+async fn the_same_translation_locale_twice_is_refused() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),

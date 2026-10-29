@@ -7,7 +7,6 @@ use axum::{
 };
 use redis::Cmd;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::{add_discord, send_json, session_count, set_email, signup};
 use crate::common::{User, app, call, err, get, patch, post, redis, user};
@@ -40,8 +39,9 @@ async fn remove(app: &Router, uri: &str, who: &User, current: &str) -> (StatusCo
     .await
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn login_ignores_username_case(db: PgPool) {
+#[tokio::test]
+async fn login_ignores_username_case() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
 
@@ -64,8 +64,9 @@ async fn login_ignores_username_case(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn wrong_passwords_block_the_username(db: PgPool) {
+#[tokio::test]
+async fn wrong_passwords_block_the_username() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
     for _ in 0..5 {
@@ -116,8 +117,9 @@ async fn wrong_passwords_block_the_username(db: PgPool) {
     assert!(!left);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn discord_account_adds_username_and_password(db: PgPool) {
+#[tokio::test]
+async fn discord_account_adds_username_and_password() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = user(&db, "Quaker").await;
     add_discord(&db, me.id).await;
@@ -190,8 +192,9 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
+#[tokio::test]
+async fn change_password_needs_current_and_ends_other_sessions() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
     let other_session = User {
@@ -260,8 +263,9 @@ async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
     assert_eq!(session_count(&app, &me).await, 2);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_is_removed_only_with_discord_left(db: PgPool) {
+#[tokio::test]
+async fn password_is_removed_only_with_discord_left() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 

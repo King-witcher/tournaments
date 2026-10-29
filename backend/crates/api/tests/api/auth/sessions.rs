@@ -7,7 +7,6 @@ use axum::{
 };
 use chrono::{DateTime, TimeDelta};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::{body_text, pair, send, set_cookie, signup};
 use crate::common::{User, app, call, delete, err, get, user};
@@ -43,8 +42,9 @@ async fn me_status(app: &Router, who: &User) -> StatusCode {
     get(app, "/me", who).await.0
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn sessions_are_listed_newest_first_with_the_browser(db: PgPool) {
+#[tokio::test]
+async fn sessions_are_listed_newest_first_with_the_browser() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
     let pc = login_from(&app, "rapha", "Firefox/140").await;
@@ -79,8 +79,9 @@ async fn sessions_are_listed_newest_first_with_the_browser(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn sessions_end_one_by_one_or_all_others(db: PgPool) {
+#[tokio::test]
+async fn sessions_end_one_by_one_or_all_others() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let first = signup(&app, &db, "Rapha", PASSWORD).await;
     let pc = login_from(&app, "rapha", "Firefox/140").await;
@@ -130,8 +131,9 @@ async fn sessions_end_one_by_one_or_all_others(db: PgPool) {
     assert_eq!(me_status(&app, &pc).await, StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn session_of_a_deleted_account_lets_no_one_in(db: PgPool) {
+#[tokio::test]
+async fn session_of_a_deleted_account_lets_no_one_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let gone = user(&db, "Some").await;
     assert_eq!(me_status(&app, &gone).await, StatusCode::OK);

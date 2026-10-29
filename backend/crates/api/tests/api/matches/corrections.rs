@@ -3,13 +3,13 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn corrections_that_contradict_a_later_match_are_refused(db: PgPool) {
+#[tokio::test]
+async fn corrections_that_contradict_a_later_match_are_refused() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -50,8 +50,9 @@ async fn corrections_that_contradict_a_later_match_are_refused(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_valid_correction_rebuilds_the_bracket(db: PgPool) {
+#[tokio::test]
+async fn a_valid_correction_rebuilds_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -100,8 +101,9 @@ async fn a_valid_correction_rebuilds_the_bracket(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_tournament_finishes_and_reopens_with_the_bracket(db: PgPool) {
+#[tokio::test]
+async fn the_tournament_finishes_and_reopens_with_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     // Dupla com reset: wb-1-1, a grande final (md5) e o reset.
@@ -144,8 +146,9 @@ async fn the_tournament_finishes_and_reopens_with_the_bracket(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn undo_start_discards_maps_results_and_history(db: PgPool) {
+#[tokio::test]
+async fn undo_start_discards_maps_results_and_history() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(

@@ -2,7 +2,6 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::{COPA, participants};
 use crate::common::*;
@@ -21,8 +20,9 @@ fn check_ins(list: &Value) -> Vec<(&str, bool)> {
         .collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn participants_check_in_only_during_check_in(db: PgPool) {
+#[tokio::test]
+async fn participants_check_in_only_during_check_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     create_tournament(&app, &ana, duel("copa")).await;
@@ -73,8 +73,9 @@ async fn participants_check_in_only_during_check_in(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizers_check_anyone_in(db: PgPool) {
+#[tokio::test]
+async fn organizers_check_anyone_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     create_tournament(&app, &ana, duel("copa")).await;

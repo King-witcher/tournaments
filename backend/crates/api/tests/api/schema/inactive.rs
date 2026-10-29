@@ -2,8 +2,6 @@
 //! convite aberto e sem inscrição em torneio que não começou; o owner não
 //! fica inativo.
 
-use sqlx::PgPool;
-
 use super::*;
 use crate::common::*;
 use crate::matches::{copa, single, start};
@@ -15,8 +13,9 @@ fn leave_sql(user: &User) -> String {
     )
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn inactive_members_keep_their_row_and_their_rules(db: PgPool) {
+#[tokio::test]
+async fn inactive_members_keep_their_row_and_their_rules() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let revoke_all = "update tenant_invites set revoked_at = now()";
@@ -89,8 +88,9 @@ async fn inactive_members_keep_their_row_and_their_rules(db: PgPool) {
     assert_eq!(count(&db, &sql).await, 1);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn inactive_members_are_only_registered_in_started_tournaments(db: PgPool) {
+#[tokio::test]
+async fn inactive_members_are_only_registered_in_started_tournaments() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     create_tournament(&app, &ana, duel("aberta")).await;

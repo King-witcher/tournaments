@@ -3,13 +3,13 @@
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_contested_map_waits_for_the_organizer_without_holding_the_next(db: PgPool) {
+#[tokio::test]
+async fn a_contested_map_waits_for_the_organizer_without_holding_the_next() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -113,8 +113,9 @@ async fn a_contested_map_waits_for_the_organizer_without_holding_the_next(db: Pg
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_after_the_decision_are_voided_and_organizers_confirm_right_away(db: PgPool) {
+#[tokio::test]
+async fn maps_after_the_decision_are_voided_and_organizers_confirm_right_away() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
@@ -161,8 +162,9 @@ async fn maps_after_the_decision_are_voided_and_organizers_confirm_right_away(db
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn an_organizer_who_plays_can_resolve_their_own_map(db: PgPool) {
+#[tokio::test]
+async fn an_organizer_who_plays_can_resolve_their_own_map() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     start(&app, &ana, copa(single(1, 1)), &[&ana, &bia]).await;
 
@@ -188,8 +190,9 @@ async fn an_organizer_who_plays_can_resolve_their_own_map(db: PgPool) {
     assert_eq!(resolved["status"], "finished");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizers_enter_maps_and_walkovers(db: PgPool) {
+#[tokio::test]
+async fn organizers_enter_maps_and_walkovers() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(

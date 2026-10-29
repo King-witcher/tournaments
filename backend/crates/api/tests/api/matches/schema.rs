@@ -96,8 +96,9 @@ async fn insert_series(
     .await
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_must_be_valid(db: PgPool) {
+#[tokio::test]
+async fn maps_must_be_valid() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
@@ -244,8 +245,9 @@ async fn maps_must_be_valid(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_decided_series_agrees_with_its_maps(db: PgPool) {
+#[tokio::test]
+async fn the_decided_series_agrees_with_its_maps() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
@@ -313,8 +315,9 @@ async fn the_decided_series_agrees_with_its_maps(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn maps_stay_inside_their_tournament(db: PgPool) {
+#[tokio::test]
+async fn maps_stay_inside_their_tournament() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
@@ -348,8 +351,9 @@ async fn maps_stay_inside_their_tournament(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn events_reject_invalid_rows(db: PgPool) {
+#[tokio::test]
+async fn events_reject_invalid_rows() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;

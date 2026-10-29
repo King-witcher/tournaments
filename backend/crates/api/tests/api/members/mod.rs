@@ -6,12 +6,12 @@ mod profile;
 
 use axum::http::StatusCode;
 use serde_json::json;
-use sqlx::PgPool;
 
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn owner_promotes_and_demotes(db: PgPool) {
+#[tokio::test]
+async fn owner_promotes_and_demotes() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -68,8 +68,9 @@ async fn owner_promotes_and_demotes(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn member_edits_own_nickname(db: PgPool) {
+#[tokio::test]
+async fn member_edits_own_nickname() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -117,8 +118,9 @@ async fn member_edits_own_nickname(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn organizers_see_which_link_each_member_came_by(db: PgPool) {
+#[tokio::test]
+async fn organizers_see_which_link_each_member_came_by() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let caio = user(&db, "Caio").await;

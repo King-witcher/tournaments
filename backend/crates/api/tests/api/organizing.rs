@@ -40,8 +40,9 @@ async fn published(app: &Router, db: &PgPool, ana: &User, slug: &str, who: &[&Us
     starts_in(db, slug, minutes).await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn requires_login(db: PgPool) {
+#[tokio::test]
+async fn requires_login() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db);
     let (status, body) = call(&app, Method::GET, "/me/organizing", None, None).await;
     assert_eq!(
@@ -50,8 +51,9 @@ async fn requires_login(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn contested_maps_wait_for_the_organization(db: PgPool) {
+#[tokio::test]
+async fn contested_maps_wait_for_the_organization() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let p = players(&app, &db, &ana, 2).await;
@@ -99,8 +101,9 @@ async fn contested_maps_wait_for_the_organization(db: PgPool) {
     assert_eq!(organizing(&app, &ana).await, empty());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_due_with_the_check_ins(db: PgPool) {
+#[tokio::test]
+async fn start_due_with_the_check_ins() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     // Começa daqui a uma hora: não espera nada ainda.
@@ -153,8 +156,9 @@ async fn start_due_with_the_check_ins(db: PgPool) {
     assert_eq!(found["start_due"][0]["tournament"]["slug"], "livre");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_communities_organized_now(db: PgPool) {
+#[tokio::test]
+async fn only_communities_organized_now() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     published(&app, &db, &ana, "copa", &[], -5).await;
@@ -197,8 +201,9 @@ async fn only_communities_organized_now(db: PgPool) {
     assert_eq!(organizing(&app, &olga).await, empty());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn contests_reach_the_organization_home(db: PgPool) {
+#[tokio::test]
+async fn contests_reach_the_organization_home() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
     let p = players(&app, &db, &ana, 2).await;
@@ -240,8 +245,9 @@ async fn contests_reach_the_organization_home(db: PgPool) {
     assert!(has_me(&db, &staff).await);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_start_reaches_the_organization_home(db: PgPool) {
+#[tokio::test]
+async fn the_start_reaches_the_organization_home() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
@@ -301,8 +307,9 @@ async fn the_start_reaches_the_organization_home(db: PgPool) {
     assert!(!has_me(&db, &staff).await);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_new_owner_reloads_the_home(db: PgPool) {
+#[tokio::test]
+async fn a_new_owner_reloads_the_home() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     clear(&db).await;
     let body = json!({ "user_id": bia.id, "confirm_slug": "quake-br" });

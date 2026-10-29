@@ -40,8 +40,9 @@ async fn copa_in_check_in(db: &PgPool) -> (Router, User, User, User, User) {
     (app, ana, bia, caio, duda)
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn manual_order_is_kept(db: PgPool) {
+#[tokio::test]
+async fn manual_order_is_kept() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia, caio, duda) = copa_in_check_in(&db).await;
     // Sem seed ainda: os elegíveis na ordem de inscrição, sem Caio.
     assert_eq!(
@@ -91,8 +92,9 @@ async fn manual_order_is_kept(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn draw_is_saved_and_reproducible(db: PgPool) {
+#[tokio::test]
+async fn draw_is_saved_and_reproducible() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, ..) = copa_in_check_in(&db).await;
     let (status, drawn) = post_empty(&app, &format!("{COPA}/seeding/shuffle"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{drawn}");
@@ -129,8 +131,9 @@ async fn draw_is_saved_and_reproducible(db: PgPool) {
     assert_eq!(nicknames(&drawn).len(), 3);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn players_do_not_see_or_change_the_seeding(db: PgPool) {
+#[tokio::test]
+async fn players_do_not_see_or_change_the_seeding() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, _, bia, ..) = copa_in_check_in(&db).await;
     let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
     assert_eq!(get(&app, &format!("{COPA}/seeding"), &bia).await, forbidden);

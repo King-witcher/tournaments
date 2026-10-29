@@ -6,7 +6,6 @@ use axum::{
     http::{Method, StatusCode},
 };
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use super::{add_discord, send_json, set_email, signup};
 use crate::common::{User, app, call, delete, err, get, link_token, mailbox, put, user};
@@ -23,8 +22,9 @@ async fn email_of(app: &Router, who: &User) -> Value {
     get(app, "/auth/logins", who).await.1["email"].clone()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn new_email_counts_only_after_the_link(db: PgPool) {
+#[tokio::test]
+async fn new_email_counts_only_after_the_link() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
@@ -53,8 +53,9 @@ async fn new_email_counts_only_after_the_link(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_accounts_confirm_with_the_current_password(db: PgPool) {
+#[tokio::test]
+async fn password_accounts_confirm_with_the_current_password() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
     for change in [
@@ -94,8 +95,9 @@ async fn password_accounts_confirm_with_the_current_password(db: PgPool) {
     mailbox(&db).assert_empty().await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn discord_account_sets_email_without_password(db: PgPool) {
+#[tokio::test]
+async fn discord_account_sets_email_without_password() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = user(&db, "Quaker").await;
     add_discord(&db, me.id).await;
@@ -148,8 +150,9 @@ async fn discord_account_sets_email_without_password(db: PgPool) {
     assert_eq!(unauthenticated.0, StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_accounts_without_password_remove_the_email(db: PgPool) {
+#[tokio::test]
+async fn only_accounts_without_password_remove_the_email() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     // Com senha, o email é o que a recupera.
     let rapha = signup(&app, &db, "Rapha", PASSWORD).await;

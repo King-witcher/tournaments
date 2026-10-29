@@ -5,12 +5,12 @@ mod transfer;
 
 use axum::http::{Method, StatusCode};
 use serde_json::json;
-use sqlx::PgPool;
 
 use crate::common::*;
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn tenant_routes_require_login(db: PgPool) {
+#[tokio::test]
+async fn tenant_routes_require_login() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db);
     for (method, uri) in [
         (Method::POST, "/tenants"),
@@ -30,8 +30,9 @@ async fn tenant_routes_require_login(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_makes_the_user_owner(db: PgPool) {
+#[tokio::test]
+async fn create_makes_the_user_owner() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
 
@@ -62,8 +63,9 @@ async fn create_makes_the_user_owner(db: PgPool) {
     assert_eq!(members[0]["display_name"], "Ana");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_validates_name_and_slug(db: PgPool) {
+#[tokio::test]
+async fn create_validates_name_and_slug() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
 
@@ -111,8 +113,9 @@ async fn create_validates_name_and_slug(db: PgPool) {
     assert_eq!(get(&app, "/tenants", &ana).await.1, json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn slug_is_unique(db: PgPool) {
+#[tokio::test]
+async fn slug_is_unique() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -132,8 +135,9 @@ async fn slug_is_unique(db: PgPool) {
     assert_eq!(get(&app, "/tenants", &bia).await.1, json!([]));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn owner_limit_counts_only_owned_tenants(db: PgPool) {
+#[tokio::test]
+async fn owner_limit_counts_only_owned_tenants() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
@@ -168,8 +172,9 @@ async fn owner_limit_counts_only_owned_tenants(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn outsiders_get_404(db: PgPool) {
+#[tokio::test]
+async fn outsiders_get_404() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
     let eve = user(&db, "Eve").await;

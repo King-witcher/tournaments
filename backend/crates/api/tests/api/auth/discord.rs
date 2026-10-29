@@ -7,15 +7,15 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use redis::Cmd;
-use sqlx::PgPool;
 
 use super::{
     app, body_text, discord_user, do_login, get, location, pair, send, session_key, set_cookie,
 };
 use crate::common::{WEB, redis};
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn login_without_config_is_503(db: PgPool) {
+#[tokio::test]
+async fn login_without_config_is_503() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db, None, false);
     let res = send(&app, get("/auth/discord/login", None)).await;
     assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
@@ -25,8 +25,9 @@ async fn login_without_config_is_503(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn login_redirects_to_discord(db: PgPool) {
+#[tokio::test]
+async fn login_redirects_to_discord() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db, None, true);
     let res = send(&app, get("/auth/discord/login?return_to=/pt/algo", None)).await;
     assert_eq!(res.status(), StatusCode::SEE_OTHER);
@@ -56,8 +57,9 @@ async fn login_redirects_to_discord(db: PgPool) {
     assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A4000%2Fauth%2Fdiscord%2Fcallback"));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn callback_errors_redirect_with_code(db: PgPool) {
+#[tokio::test]
+async fn callback_errors_redirect_with_code() {
+    let (db, _lease) = crate::db::test_db().await;
     let ok_app = app(db.clone(), Some(discord_user(None)), true);
     let res = send(&ok_app, get("/auth/discord/login", None)).await;
     let cookie = pair(&set_cookie(&res, "oauth_state").unwrap());
@@ -107,8 +109,9 @@ async fn callback_errors_redirect_with_code(db: PgPool) {
     assert_eq!(n, Some(0));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn callback_creates_user_identity_and_session(db: PgPool) {
+#[tokio::test]
+async fn callback_creates_user_identity_and_session() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(Some("hash1"))), true);
     let (session, res) = do_login(&app, "/pt/algo").await;
 
@@ -153,8 +156,9 @@ async fn callback_creates_user_identity_and_session(db: PgPool) {
     assert!(!by_token);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn second_login_reuses_user_and_updates_avatar(db: PgPool) {
+#[tokio::test]
+async fn second_login_reuses_user_and_updates_avatar() {
+    let (db, _lease) = crate::db::test_db().await;
     let first = app(db.clone(), Some(discord_user(Some("old"))), true);
     do_login(&first, "/").await;
     let second = app(db.clone(), Some(discord_user(Some("new"))), true);
@@ -179,8 +183,9 @@ async fn second_login_reuses_user_and_updates_avatar(db: PgPool) {
     assert_eq!(sessions.as_array().unwrap().len(), 2);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn open_redirect_is_blocked(db: PgPool) {
+#[tokio::test]
+async fn open_redirect_is_blocked() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db, Some(discord_user(None)), true);
     for bad in ["//evil.com", "/%5Cevil.com", "https://evil.com", "evil"] {
         let (_, res) = do_login(&app, bad).await;
@@ -188,8 +193,9 @@ async fn open_redirect_is_blocked(db: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn me_requires_valid_session(db: PgPool) {
+#[tokio::test]
+async fn me_requires_valid_session() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
 
     let res = send(&app, get("/me", None)).await;
@@ -216,8 +222,9 @@ async fn me_requires_valid_session(db: PgPool) {
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn logout_removes_session(db: PgPool) {
+#[tokio::test]
+async fn logout_removes_session() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     let (session, _) = do_login(&app, "/").await;
 

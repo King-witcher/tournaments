@@ -40,8 +40,9 @@ async fn seeds(db: &PgPool) -> Vec<(i64, Option<i32>)> {
         .collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_keeps_the_checked_in_in_seed_order(db: PgPool) {
+#[tokio::test]
+async fn start_keeps_the_checked_in_in_seed_order() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     let duda = member(&app, &db, &ana, "Duda").await;
@@ -94,8 +95,9 @@ async fn start_keeps_the_checked_in_in_seed_order(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_without_seeds_draws_them(db: PgPool) {
+#[tokio::test]
+async fn start_without_seeds_draws_them() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -115,8 +117,9 @@ async fn start_without_seeds_draws_them(db: PgPool) {
     assert!(seed.is_some());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn start_needs_the_check_in_and_two_eligible(db: PgPool) {
+#[tokio::test]
+async fn start_needs_the_check_in_and_two_eligible() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(
@@ -143,8 +146,9 @@ async fn start_needs_the_check_in_and_two_eligible(db: PgPool) {
     assert_eq!(seen["status"], "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn undo_start_goes_back_to_check_in(db: PgPool) {
+#[tokio::test]
+async fn undo_start_goes_back_to_check_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -168,8 +172,9 @@ async fn undo_start_goes_back_to_check_in(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn without_check_in_registration_goes_straight_to_in_progress(db: PgPool) {
+#[tokio::test]
+async fn without_check_in_registration_goes_straight_to_in_progress() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let no_check_in = with(duel("copa"), json!({ "check_in_minutes": null }));
     create_tournament(&app, &ana, no_check_in).await;
@@ -192,8 +197,9 @@ async fn without_check_in_registration_goes_straight_to_in_progress(db: PgPool) 
     assert_eq!(undone["status"], "registration");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reopening_registration_holds_the_automatic_check_in(db: PgPool) {
+#[tokio::test]
+async fn reopening_registration_holds_the_automatic_check_in() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
@@ -235,8 +241,9 @@ async fn reopening_registration_holds_the_automatic_check_in(db: PgPool) {
     assert_eq!(ok(&app, &ana, "check-in/open").await, "check_in");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn players_do_not_drive_the_lifecycle(db: PgPool) {
+#[tokio::test]
+async fn players_do_not_drive_the_lifecycle() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;

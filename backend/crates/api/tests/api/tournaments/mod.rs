@@ -8,7 +8,6 @@ mod schedule;
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 
@@ -20,8 +19,9 @@ fn slugs(list: &Value) -> Vec<&str> {
         .collect()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn draft_is_only_for_organizers_until_published(db: PgPool) {
+#[tokio::test]
+async fn draft_is_only_for_organizers_until_published() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(created["status"], "draft");
@@ -63,8 +63,9 @@ async fn draft_is_only_for_organizers_until_published(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn stage_and_champion_rules_are_stored_as_engine_json(db: PgPool) {
+#[tokio::test]
+async fn stage_and_champion_rules_are_stored_as_engine_json() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
@@ -94,8 +95,9 @@ async fn stage_and_champion_rules_are_stored_as_engine_json(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn champion_pool_check_blocks_with_numbers(db: PgPool) {
+#[tokio::test]
+async fn champion_pool_check_blocks_with_numbers() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let no_repeat = |scope: &str| json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": scope } } });
 
@@ -153,8 +155,9 @@ async fn champion_pool_check_blocks_with_numbers(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn create_validates_the_input(db: PgPool) {
+#[tokio::test]
+async fn create_validates_the_input() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let invalid = |code: &str| (StatusCode::UNPROCESSABLE_ENTITY, err(code));
     let with_params = |code: &str, params: Value| {
@@ -229,8 +232,9 @@ async fn create_validates_the_input(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn what_can_change_depends_on_the_status(db: PgPool) {
+#[tokio::test]
+async fn what_can_change_depends_on_the_status() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
@@ -296,8 +300,9 @@ async fn what_can_change_depends_on_the_status(db: PgPool) {
     assert_eq!(seen["rules"], "Novas regras");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_drafts_are_deleted(db: PgPool) {
+#[tokio::test]
+async fn only_drafts_are_deleted() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
@@ -320,8 +325,9 @@ async fn only_drafts_are_deleted(db: PgPool) {
     assert_eq!(stages, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn translations(db: PgPool) {
+#[tokio::test]
+async fn translations() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
     let uri = "/tenants/quake-br/tournaments/copa";
@@ -392,8 +398,9 @@ async fn translations(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn private_is_only_for_participants_and_organizers(db: PgPool) {
+#[tokio::test]
+async fn private_is_only_for_participants_and_organizers() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let private = with(duel("copa"), json!({ "visibility": "private" }));
     let created = create_tournament(&app, &ana, private).await;
@@ -449,8 +456,9 @@ async fn private_is_only_for_participants_and_organizers(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn slots_never_drop_below_the_registered(db: PgPool) {
+#[tokio::test]
+async fn slots_never_drop_below_the_registered() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
     join(&app, &caio, &invite(&app, &ana, "quake-br").await).await;

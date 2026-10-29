@@ -40,8 +40,9 @@ async fn expect_notice(db: &PgPool, to: &str, subject: &str, path: &str) -> Stri
     email.text
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn password_and_username_changes(db: PgPool) {
+#[tokio::test]
+async fn password_and_username_changes() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
     add_discord(&db, me.id).await;
@@ -92,8 +93,9 @@ async fn password_and_username_changes(db: PgPool) {
     .await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn creating_a_password(db: PgPool) {
+#[tokio::test]
+async fn creating_a_password() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let me = user(&db, "Quaker").await;
     add_discord(&db, me.id).await;
@@ -108,8 +110,9 @@ async fn creating_a_password(db: PgPool) {
     assert!(text.contains("Quaker"), "{text}");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn discord_link_and_unlink(db: PgPool) {
+#[tokio::test]
+async fn discord_link_and_unlink() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
@@ -138,8 +141,9 @@ async fn discord_link_and_unlink(db: PgPool) {
     .await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn email_change_warns_the_old_address(db: PgPool) {
+#[tokio::test]
+async fn email_change_warns_the_old_address() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
@@ -166,8 +170,9 @@ async fn email_change_warns_the_old_address(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn first_email_and_email_removal(db: PgPool) {
+#[tokio::test]
+async fn first_email_and_email_removal() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let me = user(&db, "Quaker").await;
     add_discord(&db, me.id).await;
@@ -192,8 +197,9 @@ async fn first_email_and_email_removal(db: PgPool) {
     .await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn reset_by_link_right_after_the_link(db: PgPool) {
+#[tokio::test]
+async fn reset_by_link_right_after_the_link() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
     sqlx::query!("update users set locale = 'es'")
@@ -225,8 +231,9 @@ async fn reset_by_link_right_after_the_link(db: PgPool) {
     .await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn daily_limit_drops_notices(db: PgPool) {
+#[tokio::test]
+async fn daily_limit_drops_notices() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app_from(AppState {
         mail: Mail::new(mailbox(&db), 1),
         ..state(db.clone())

@@ -4,7 +4,6 @@
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{
@@ -53,8 +52,9 @@ async fn auto_walkover(app: &Router, viewer: &User, key: &str) -> (Vec<String>, 
     (history, last["outcome"]["winner"].clone())
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_organizer_marks_a_withdrawal_and_the_ready_match_is_a_walkover(db: PgPool) {
+#[tokio::test]
+async fn the_organizer_marks_a_withdrawal_and_the_ready_match_is_a_walkover() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -102,8 +102,9 @@ async fn the_organizer_marks_a_withdrawal_and_the_ready_match_is_a_walkover(db: 
     assert_eq!(find(&b, "wb-2-1")["state"], "ready");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn a_pending_report_gives_way_to_the_walkover(db: PgPool) {
+#[tokio::test]
+async fn a_pending_report_gives_way_to_the_walkover() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -146,8 +147,9 @@ async fn a_pending_report_gives_way_to_the_walkover(db: PgPool) {
     assert_eq!(d["games"].as_array().unwrap().len(), 1);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn leaving_mid_tournament_walks_over_now_and_later(db: PgPool) {
+#[tokio::test]
+async fn leaving_mid_tournament_walks_over_now_and_later() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     // Eliminação dupla: quem perde na chave de cima cai na de baixo.
@@ -180,8 +182,9 @@ async fn leaving_mid_tournament_walks_over_now_and_later(db: PgPool) {
     assert_eq!(b["status"], "in_progress");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn with_both_sides_out_the_better_seed_advances(db: PgPool) {
+#[tokio::test]
+async fn with_both_sides_out_the_better_seed_advances() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(&app, &ana, copa(json!({})), &[&p[0], &p[1], &p[2], &p[3]]).await;
@@ -197,8 +200,9 @@ async fn with_both_sides_out_the_better_seed_advances(db: PgPool) {
     assert_eq!(winner, p[1].id);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn walkovers_follow_confirmations_by_deadline(db: PgPool) {
+#[tokio::test]
+async fn walkovers_follow_confirmations_by_deadline() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
     start(
@@ -232,8 +236,9 @@ async fn walkovers_follow_confirmations_by_deadline(db: PgPool) {
     assert_eq!(b["standings"][0]["user_id"], p[1].id);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_bracket_entrants_of_tournaments_in_progress_withdraw(db: PgPool) {
+#[tokio::test]
+async fn only_bracket_entrants_of_tournaments_in_progress_withdraw() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     // Com check-in: P3 se inscreve e não faz, fica fora da chave.
@@ -280,8 +285,9 @@ async fn only_bracket_entrants_of_tournaments_in_progress_withdraw(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn undoing_the_start_drops_the_withdrawn(db: PgPool) {
+#[tokio::test]
+async fn undoing_the_start_drops_the_withdrawn() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1], &p[2]]).await;

@@ -20,8 +20,9 @@ async fn fetch(db: PgPool, uri: &str) -> (StatusCode, Vec<u8>) {
 }
 
 /// O `gen:api` do front lê daqui.
-#[sqlx::test(migrations = "../../migrations")]
-async fn openapi_json_is_served(db: PgPool) {
+#[tokio::test]
+async fn openapi_json_is_served() {
+    let (db, _lease) = crate::db::test_db().await;
     let (status, body) = fetch(db, "/openapi.json").await;
 
     assert_eq!(status, StatusCode::OK);
@@ -30,8 +31,9 @@ async fn openapi_json_is_served(db: PgPool) {
     assert!(spec["paths"]["/health"].is_object());
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn docs_serve_scalar(db: PgPool) {
+#[tokio::test]
+async fn docs_serve_scalar() {
+    let (db, _lease) = crate::db::test_db().await;
     let (status, body) = fetch(db, "/docs").await;
 
     assert_eq!(status, StatusCode::OK);

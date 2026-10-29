@@ -2,14 +2,14 @@
 
 use axum::http::StatusCode;
 use serde_json::json;
-use sqlx::PgPool;
 
 use crate::common::*;
 
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn contest_window_defaults_to_ten_and_changes_until_finished(db: PgPool) {
+#[tokio::test]
+async fn contest_window_defaults_to_ten_and_changes_until_finished() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(created["contest_minutes"], 10);
