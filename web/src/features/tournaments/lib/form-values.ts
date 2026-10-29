@@ -37,8 +37,8 @@ export type TournamentValues = {
   championPhase: boolean;
   /** Segundos de cada passo do veto. */
   vetoSeconds: number;
-  /** O envio do jogador exige print do placar (o campo só aparece com prints na API). */
-  printsRequired: boolean;
+  /** O envio do jogador exige screenshot do placar (o campo só aparece com screenshots na API). */
+  screenshotsRequired: boolean;
 };
 
 /** Os textos de uma tradução. */
@@ -94,7 +94,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     mapPool: null,
     championPhase: true,
     vetoSeconds: 30,
-    printsRequired: false,
+    screenshotsRequired: false,
   };
 }
 
@@ -126,7 +126,7 @@ export function valuesFrom(
     mapPool: tournament.veto.map_pool,
     championPhase: tournament.veto.champion_phase,
     vetoSeconds: tournament.veto.step_seconds,
-    printsRequired: tournament.prints_required,
+    screenshotsRequired: tournament.screenshots_required,
   };
 }
 
@@ -246,7 +246,7 @@ export function updateBody(values: TournamentValues, setupLocked: boolean) {
   };
 }
 
-/** O que muda até o torneio encerrar: textos, visibilidade, janela de contestação e print obrigatório. */
+/** O que muda até o torneio encerrar: textos, visibilidade, janela de contestação e screenshot obrigatório. */
 function textsBody(values: TournamentValues) {
   return {
     name: values.name,
@@ -254,7 +254,7 @@ function textsBody(values: TournamentValues) {
     rules: values.rules,
     visibility: values.visibility,
     contest_minutes: values.contestMinutes,
-    prints_required: values.printsRequired,
+    screenshots_required: values.screenshotsRequired,
   };
 }
 

@@ -2,7 +2,7 @@ import { Accordion } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
-import { loadMatchPrints } from "@/features/prints/server";
+import { loadMatchScreenshots } from "@/features/screenshots/server";
 import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedTexts } from "@/features/tournaments/lib/localize";
 import { loadTournament } from "@/features/tournaments/server";
@@ -31,8 +31,9 @@ type Props = { tenant: string; slug: string; matchKey: string };
  * o histórico (o da partida e o do veto). Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
-  // Os prints de cada mapa (GamePrints) saem deste pedido: junto dos outros.
-  void loadMatchPrints(tenant, slug, matchKey);
+  // Os screenshots de cada mapa (GameScreenshots) saem deste pedido: junto dos
+  // outros.
+  void loadMatchScreenshots(tenant, slug, matchKey);
   const [t, tNav, locale, loaded, found, bracket] = await Promise.all([
     getTranslations("Match"),
     getTranslations("Nav"),

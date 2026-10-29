@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists(select 1 from match_screenshots\n                         where tenant_id = $1 and tournament_id = $2 and stage = $3\n                           and match_key = $4 and number = $5 and attached_at is not null)\n           as \"exists!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "64769b0da26182e391f8b15034041d3c867fa58ff83c750ed8dcba4e6c8042f2"
+}

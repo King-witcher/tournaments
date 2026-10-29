@@ -1,0 +1,103 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select p.id, p.number, p.object_key, p.content_type, p.uploaded_by,\n                  m.nickname as \"nickname?\", p.attached_at as \"attached_at!\"\n           from match_screenshots p\n           left join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.uploaded_by\n           where p.tenant_id = $1 and p.tournament_id = $2 and p.stage = $3 and p.match_key = $4\n             and p.attached_at is not null\n           order by p.number, p.attached_at, p.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "object_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "object_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "content_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "content_type"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "uploaded_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "uploaded_by"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "nickname?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "attached_at!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "attached_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "e2feb07f4d2184551276039a00e8832645123594f71743b3e061eb39e3c89e27"
+}

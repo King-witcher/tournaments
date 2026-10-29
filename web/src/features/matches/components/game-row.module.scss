@@ -86,8 +86,8 @@
   @include games-grid.actions;
 }
 
-// Os prints do mapa (feature `prints`), embaixo, no lugar das ações.
-.prints {
+// Os screenshots do mapa (feature `screenshots`), embaixo, no lugar das ações.
+.screenshots {
   padding-block-start: spacing.$spacing-03;
 
   @include games-grid.actions;

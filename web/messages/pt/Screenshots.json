@@ -1,0 +1,22 @@
+{
+  "attach": "Anexar captura de tela",
+  "attachTo": "Anexar captura de tela ao mapa {number}",
+  "hint": "Imagem do placar. No computador, também dá para colar com o botão selecionado (Ctrl+V).",
+  "requiredHint": "Este torneio exige uma captura de tela do placar: anexe antes de enviar o mapa. No computador, também dá para colar com o botão selecionado (Ctrl+V).",
+  "open": "Captura de tela {index} do mapa {number}, de {name}, em tamanho real",
+  "openNoAuthor": "Captura de tela {index} do mapa {number}, em tamanho real",
+  "by": "de {name}",
+  "remove": "Remover",
+  "removeTitle": "Remover a captura de tela {index} do mapa {number}",
+  "removeQuestion": "A captura de tela sai do mapa para todos. Não dá para desfazer.",
+  "errors": {
+    "notImage": "Escolha ou cole uma imagem (PNG, JPEG ou WebP).",
+    "unreadable": "Não deu para ler essa imagem. Tente outro arquivo.",
+    "tooLarge": "Mesmo convertida, a imagem passa do tamanho máximo. Recorte só o placar e tente de novo.",
+    "uploadFailed": "O envio da imagem falhou. Confira a conexão e tente de novo."
+  },
+  "field": {
+    "label": "Exigir captura de tela do placar",
+    "hint": "O jogador só envia um mapa com uma captura de tela do placar anexada. A organização lança e corrige sem captura de tela."
+  }
+}

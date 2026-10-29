@@ -43,7 +43,7 @@ const OWN_REPORT: ApiError = ApiError::forbidden("match.own_report");
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player (quem envia não joga a partida)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou), match.print_required (o torneio exige print e o mapa não tem nenhum anexado)"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou), match.screenshot_required (o torneio exige screenshot e o mapa não tem nenhum anexado)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body"),
     )
 )]

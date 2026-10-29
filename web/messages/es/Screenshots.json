@@ -1,0 +1,22 @@
+{
+  "attach": "Adjuntar captura de pantalla",
+  "attachTo": "Adjuntar captura de pantalla al mapa {number}",
+  "hint": "Imagen del marcador. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
+  "requiredHint": "Este torneo exige una captura de pantalla del marcador: adjúntala antes de enviar el mapa. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
+  "open": "Captura de pantalla {index} del mapa {number}, de {name}, en tamaño real",
+  "openNoAuthor": "Captura de pantalla {index} del mapa {number}, en tamaño real",
+  "by": "de {name}",
+  "remove": "Quitar",
+  "removeTitle": "Quitar la captura de pantalla {index} del mapa {number}",
+  "removeQuestion": "La captura de pantalla sale del mapa para todos. No se puede deshacer.",
+  "errors": {
+    "notImage": "Elige o pega una imagen (PNG, JPEG o WebP).",
+    "unreadable": "No se pudo leer esa imagen. Prueba con otro archivo.",
+    "tooLarge": "Incluso convertida, la imagen supera el tamaño máximo. Recorta solo el marcador e inténtalo de nuevo.",
+    "uploadFailed": "El envío de la imagen falló. Revisa la conexión e inténtalo de nuevo."
+  },
+  "field": {
+    "label": "Exigir captura de pantalla del marcador",
+    "hint": "El jugador solo envía un mapa con una captura de pantalla del marcador adjunta. La organización carga y corrige sin captura de pantalla."
+  }
+}

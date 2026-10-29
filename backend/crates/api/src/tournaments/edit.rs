@@ -189,7 +189,7 @@ mod tests {
             contest_minutes: None,
             counts_for_rating: None,
             veto: None,
-            prints_required: None,
+            screenshots_required: None,
         }
     }
 

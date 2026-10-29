@@ -30,7 +30,7 @@ impl From<StoredTournament> for Tournament {
                 champion_phase: t.setup.veto.champion_phase,
                 step_seconds: t.setup.veto.step_seconds,
             },
-            prints_required: t.prints_required,
+            screenshots_required: t.screenshots_required,
             translations: t.translations,
             created_at: t.created_at,
         }

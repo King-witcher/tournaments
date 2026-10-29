@@ -22,8 +22,9 @@
 //! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`. O
 //! veto de mapas e campeões de cada partida, entre ela ficar pronta e o envio
 //! de cada mapa, fica em `veto` (o relógio dos passos, `veto_clock`, é do
-//! `realtime`). O domínio `prints` lê a partida por `slots`; com print
-//! obrigatório, o envio do jogador exige um print anexado (`evidence`).
+//! `realtime`). O domínio `screenshots` lê a partida por `slots`; com
+//! screenshot obrigatório, o envio do jogador exige um screenshot anexado
+//! (`evidence`).
 
 mod actions;
 mod announce;

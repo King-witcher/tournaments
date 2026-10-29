@@ -6,8 +6,8 @@
 //! `matches` usam, e guarda a data de início e a janela de check-in
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
 //! contestação de resultado (`contest`), a configuração do veto das partidas
-//! (`veto`: modo do mapa, pool, campeões, tempo por passo) e o print
-//! obrigatório (`prints`). As transições manuais depois de
+//! (`veto`: modo do mapa, pool, campeões, tempo por passo) e o screenshot
+//! obrigatório (`screenshots`). As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
 //! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
 //! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
@@ -20,9 +20,9 @@ mod db;
 mod edit;
 mod format;
 mod handlers;
-mod prints;
 mod schedule;
 mod scheduled;
+mod screenshots;
 mod setup;
 mod slug;
 mod status;

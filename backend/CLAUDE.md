@@ -26,16 +26,17 @@ crates/api/src/
   tournaments/    torneio, traduções, fases, quem vê, agenda e check-in automático
   participants/   inscrição, check-in, seeding
   lifecycle/      transições depois de publicar (check-in, reabrir, iniciar, desfazer) e desistência
-  matches/        chave e resultados, mapa a mapa, e o veto de mapas e campeões (veto/); com print
-                  obrigatório, o envio exige o print (evidence.rs); slots.rs, a partida para prints
+  matches/        chave e resultados, mapa a mapa, e o veto de mapas e campeões (veto/); com
+                  screenshot obrigatório, o envio exige o screenshot (evidence.rs); slots.rs, a
+                  partida para screenshots
   my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
   organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
   ratings/        ranking Elo por comunidade: cache refeito do zero quando os triggers marcam o tenant (agendador, leitura e as rotas daqui); lê mapas e torneios direto no banco, sem chamar matches
-  prints/         prints do placar por mapa no bucket: PUT assinado conferido por HEAD, quem anexa
+  screenshots/    screenshots do placar por mapa no bucket: PUT assinado conferido por HEAD, quem anexa
                   e remove, URL assinada para ver, rotina diária de exclusão. Fica acima de matches
   push/           Web Push: inscrições dos navegadores e envio
   discord/        avisos da comunidade no Discord por webhook: configuração do owner, fila e envio
-  realtime/       WebSocket, despachante do outbox, agendador (com a rotina diária dos prints)
+  realtime/       WebSocket, despachante do outbox, agendador (com a rotina diária dos screenshots)
   health.rs       domínios pequenos, um arquivo cada
   maps.rs
 ```

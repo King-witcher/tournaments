@@ -135,11 +135,11 @@ fn web_push(config: &Config) -> anyhow::Result<Option<Arc<dyn WebPush>>> {
     Ok(Some(Arc::new(HttpWebPush::new(public, private, subject)?)))
 }
 
-/// O bucket dos prints, com as variáveis `S3_*`; sem elas, desligado.
+/// O bucket dos screenshots, com as variáveis `S3_*`; sem elas, desligado.
 fn storage(config: &Config) -> anyhow::Result<Option<Storage>> {
     let Some(storage) = &config.storage else {
         tracing::warn!(
-            "S3_BUCKET/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY ausentes: prints desligados"
+            "S3_BUCKET/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY ausentes: screenshots desligados"
         );
         return Ok(None);
     };

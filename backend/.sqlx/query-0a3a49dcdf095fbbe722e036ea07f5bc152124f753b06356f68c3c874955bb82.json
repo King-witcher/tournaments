@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from match_screenshots p\n           using tournaments t\n           where t.id = p.tournament_id and t.status = 'finished' and t.finished_at < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0a3a49dcdf095fbbe722e036ea07f5bc152124f753b06356f68c3c874955bb82"
+}

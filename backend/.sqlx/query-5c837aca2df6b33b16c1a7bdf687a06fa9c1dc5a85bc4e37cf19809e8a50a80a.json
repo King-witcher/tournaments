@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from match_screenshots\n           where tenant_id = $1 and tournament_id = $2 and stage = $3 and match_key = $4\n             and number = $5 and attached_at is not null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "5c837aca2df6b33b16c1a7bdf687a06fa9c1dc5a85bc4e37cf19809e8a50a80a"
+}

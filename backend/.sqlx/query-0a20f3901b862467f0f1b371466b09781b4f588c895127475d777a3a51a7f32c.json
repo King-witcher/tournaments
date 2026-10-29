@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_screenshots set attached_at = now()\n           where id = $1 and attached_at is null\n           returning attached_at as \"attached_at!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "attached_at!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_screenshots",
+            "name": "attached_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "0a20f3901b862467f0f1b371466b09781b4f588c895127475d777a3a51a7f32c"
+}

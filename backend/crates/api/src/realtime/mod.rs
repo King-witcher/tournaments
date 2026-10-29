@@ -4,11 +4,11 @@
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
 //! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
 //! sorteio dos passos de veto vencidos, exclusões de comunidade e de conta,
-//! a rotina diária dos prints, rating das comunidades marcadas) e o relógio
-//! dos passos do veto (`clock`), que dorme até o próximo prazo.
+//! a rotina diária dos screenshots, rating das comunidades marcadas) e o
+//! relógio dos passos do veto (`clock`), que dorme até o próximo prazo.
 //! Fica acima de todos os domínios: confere o acesso como na leitura
 //! (`tenants`, `tournaments`) e o agendador chama `tournaments`, `matches`,
-//! `tenants`, `members`, `prints` e `ratings`.
+//! `tenants`, `members`, `screenshots` e `ratings`.
 //! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos.
 
 mod clock;

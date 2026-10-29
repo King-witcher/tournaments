@@ -133,10 +133,11 @@ pub struct CreateTournament {
     #[serde(default = "default_counts_for_rating")]
     #[schema(required = false, default = true)]
     pub counts_for_rating: bool,
-    /// O envio do jogador exige print do placar (`prints`). Só liga com o
-    /// bucket configurado (`GET /prints/settings`). Ausente: `false`.
+    /// O envio do jogador exige screenshot do placar (`screenshots`). Só liga
+    /// com o bucket configurado (`GET /screenshots/settings`). Ausente:
+    /// `false`.
     #[serde(default)]
-    pub prints_required: bool,
+    pub screenshots_required: bool,
 }
 
 /// Tradução enviada junto com a criação do torneio.
@@ -197,9 +198,9 @@ pub struct UpdateTournament {
     /// Veto das partidas, até o torneio começar; campo ausente não muda.
     #[serde(default)]
     pub veto: Option<VetoInput>,
-    /// Print obrigatório; muda até o torneio encerrar e vale para os envios
-    /// seguintes. Ligar exige o bucket configurado.
-    pub prints_required: Option<bool>,
+    /// Screenshot obrigatório; muda até o torneio encerrar e vale para os
+    /// envios seguintes. Ligar exige o bucket configurado.
+    pub screenshots_required: Option<bool>,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o
@@ -237,9 +238,9 @@ pub struct Tournament {
     /// Se os mapas do torneio contam para o rating da comunidade.
     pub counts_for_rating: bool,
     pub veto: VetoSettings,
-    /// O envio do jogador exige print do placar (sem o bucket configurado,
+    /// O envio do jogador exige screenshot do placar (sem o bucket configurado,
     /// fica gravado e não vale).
-    pub prints_required: bool,
+    pub screenshots_required: bool,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
 }

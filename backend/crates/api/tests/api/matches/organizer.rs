@@ -87,8 +87,15 @@ async fn a_contested_map_waits_for_the_organizer_without_holding_the_next() {
         (StatusCode::FORBIDDEN, err("tenant.forbidden"))
     );
     // Ana resolve com o mapa para P1: 2 x 1 nos três mapas.
-    let (status, resolved) =
-        set_game(&app, &ana, k, 1, game("a", "awoken"), Some("Vi o print")).await;
+    let (status, resolved) = set_game(
+        &app,
+        &ana,
+        k,
+        1,
+        game("a", "awoken"),
+        Some("Vi o screenshot"),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK, "{resolved}");
     let result = &resolved["summary"]["result"];
     assert_eq!(
@@ -103,7 +110,7 @@ async fn a_contested_map_waits_for_the_organizer_without_holding_the_next() {
             &resolution["actor"]["user_id"],
             &resolution["comment"]
         ),
-        (&json!(1), &json!(ana.id), &json!("Vi o print"))
+        (&json!(1), &json!(ana.id), &json!("Vi o screenshot"))
     );
     assert_eq!(resolved["games"][0]["confirmed_via"], "organizer");
     assert_eq!(kinds(&resolved).last().unwrap(), "decided");

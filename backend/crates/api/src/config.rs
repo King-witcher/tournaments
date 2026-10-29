@@ -37,8 +37,8 @@ pub struct Config {
     pub email_from: Option<String>,
     /// Teto de emails por dia, abaixo do plano do provedor.
     pub email_daily_limit: u32,
-    /// Bucket dos prints do placar (`S3_*`); `None` sem bucket nem chaves:
-    /// os prints ficam desligados.
+    /// Bucket dos screenshots do placar (`S3_*`); `None` sem bucket nem chaves:
+    /// os screenshots ficam desligados.
     pub storage: Option<StorageConfig>,
 }
 
@@ -101,7 +101,7 @@ fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
             secret_access_key,
         })),
         _ => anyhow::bail!(
-            "S3_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem prints)"
+            "S3_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem screenshots)"
         ),
     }
 }

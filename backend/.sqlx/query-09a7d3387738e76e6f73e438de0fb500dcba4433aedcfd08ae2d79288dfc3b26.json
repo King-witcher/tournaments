@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into screenshot_sweeps (swept_at) values ($1)\n           on conflict (singleton) do update set swept_at = excluded.swept_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "09a7d3387738e76e6f73e438de0fb500dcba4433aedcfd08ae2d79288dfc3b26"
+}

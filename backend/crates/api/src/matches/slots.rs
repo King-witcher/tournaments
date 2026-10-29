@@ -1,6 +1,6 @@
-//! Uma partida vista de fora da chave, para o domínio `prints`: quem joga, os
-//! mapas enviados (número e se já confirmou) e o próximo, que ainda não foi
-//! enviado mas já recebe print (o jogador anexa antes de enviar). As
+//! Uma partida vista de fora da chave, para o domínio `screenshots`: quem joga,
+//! os mapas enviados (número e se já confirmou) e o próximo, que ainda não foi
+//! enviado mas já recebe screenshot (o jogador anexa antes de enviar). As
 //! confirmações por tempo vencidas valem antes, como em toda leitura.
 
 use engine::core::{Match, MatchState};

@@ -3,19 +3,21 @@
 //! mapas com a janela vencida, sorteia os passos de veto vencidos (rede de
 //! segurança do relógio preciso, `clock`) e executa as exclusões de comunidade
 //! e de conta que venceram, cada torneio, comunidade ou conta na própria
-//! transação e emitindo pelo outbox; uma vez por dia roda a rotina dos prints
-//! (depois das exclusões, para já levar do bucket os prints das comunidades
-//! excluídas), e recalcula o rating das comunidades marcadas (por último, para
-//! pegar as confirmações e as desistências desta passada); depois acorda o
-//! despachante. Aplicar ao ler e agir continua, para quem chega antes do
-//! agendador ver o estado certo.
+//! transação e emitindo pelo outbox; uma vez por dia roda a rotina dos
+//! screenshots (depois das exclusões, para já levar do bucket os screenshots
+//! das comunidades excluídas), e recalcula o rating das comunidades marcadas
+//! (por último, para pegar as confirmações e as desistências desta passada);
+//! depois acorda o despachante. Aplicar ao ler e agir continua, para quem chega
+//! antes do agendador ver o estado certo.
 
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 
 use super::db;
-use crate::{AppState, matches, members, prints, ratings, shared::ApiError, tenants, tournaments};
+use crate::{
+    AppState, matches, members, ratings, screenshots, shared::ApiError, tenants, tournaments,
+};
 
 pub const EVERY: Duration = Duration::from_secs(10);
 
@@ -34,7 +36,7 @@ pub struct Tick {
     pub deleted_tenants: usize,
     /// Contas excluídas (anonimizadas).
     pub deleted_accounts: usize,
-    /// A rotina diária dos prints rodou nesta passada.
+    /// A rotina diária dos screenshots rodou nesta passada.
     pub swept: bool,
     /// Comunidades com o rating recalculado e diferente.
     pub rated: usize,
@@ -54,7 +56,7 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             vetoed: matches::veto_clock(&state.db, now).await?.0,
             deleted_tenants: tenants::delete_due(&state.db, now).await?,
             deleted_accounts: members::delete_due_accounts(state, now).await?,
-            swept: sweep_prints(state, now).await,
+            swept: sweep_screenshots(state, now).await,
             rated: ratings::refresh_stale(&state.db).await?,
         })
     }
@@ -64,13 +66,13 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
     pass.map(Some)
 }
 
-/// A rotina diária dos prints, se é a hora; o erro fica no log e não para o
-/// resto da passada.
-async fn sweep_prints(state: &AppState, now: DateTime<Utc>) -> bool {
-    match prints::sweep_due(state, now).await {
+/// A rotina diária dos screenshots, se é a hora; o erro fica no log e não para
+/// o resto da passada.
+async fn sweep_screenshots(state: &AppState, now: DateTime<Utc>) -> bool {
+    match screenshots::sweep_due(state, now).await {
         Ok(done) => done.is_some(),
         Err(e) => {
-            tracing::error!(code = e.code, "rotina dos prints falhou");
+            tracing::error!(code = e.code, "rotina dos screenshots falhou");
             false
         }
     }

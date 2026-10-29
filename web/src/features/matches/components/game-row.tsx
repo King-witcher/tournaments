@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { GamePrints } from "@/features/prints/components/game-prints";
+import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { LocalTime } from "@/shared/ui/local-time";
@@ -112,11 +112,11 @@ export function GameRow({
           )}
         </div>
       )}
-      <GamePrints
+      <GameScreenshots
         target={target}
         number={g.number}
         focusId={gameRowId(g.number)}
-        className={styles.prints}
+        className={styles.screenshots}
       />
     </li>
   );

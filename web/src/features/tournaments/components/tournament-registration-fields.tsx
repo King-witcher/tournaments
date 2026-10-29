@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-import { PrintsRequiredField } from "@/features/prints/components/prints-required-field";
+import { ScreenshotsRequiredField } from "@/features/screenshots/components/screenshots-required-field";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { NumberInput } from "@/shared/ui/number-input";
 import { RadioGroup } from "@/shared/ui/radio-group";
@@ -18,14 +18,14 @@ type Props = {
   errors: FieldErrors;
   /** O torneio já começou: vagas e check-in ficam travados. */
   setupLocked: boolean;
-  /** Encerrado: nem a visibilidade, nem a janela de contestação, nem o print obrigatório mudam. */
+  /** Encerrado: nem a visibilidade, nem a janela de contestação, nem o screenshot obrigatório mudam. */
   finished: boolean;
 };
 
 /**
  * Inscrições e prazos: vagas, visibilidade, janela de check-in, janela de
- * contestação e print obrigatório (só com prints na API). Todos têm padrão; a
- * data de início fica fora, junto do nome.
+ * contestação e screenshot obrigatório (só com screenshots na API). Todos têm
+ * padrão; a data de início fica fora, junto do nome.
  */
 export function TournamentRegistrationFields({
   values,
@@ -83,9 +83,9 @@ export function TournamentRegistrationFields({
         error={errors.contestMinutes}
         disabled={finished}
       />
-      <PrintsRequiredField
-        checked={values.printsRequired}
-        onChange={(printsRequired) => onChange({ printsRequired })}
+      <ScreenshotsRequiredField
+        checked={values.screenshotsRequired}
+        onChange={(screenshotsRequired) => onChange({ screenshotsRequired })}
         disabled={finished}
       />
     </>

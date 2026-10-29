@@ -195,7 +195,7 @@ mod tests {
         Storage::new(StorageConfig {
             endpoint: endpoint.map(str::to_owned),
             region: "us-east-1".into(),
-            bucket: "prints".into(),
+            bucket: "screenshots".into(),
             access_key_id: "AKIAIOSFODNN7EXAMPLE".into(),
             secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".into(),
         })
@@ -216,14 +216,17 @@ mod tests {
     fn the_upload_signs_type_and_size() {
         let s = storage(None);
         let url = s.put_url(
-            "prints/1/2/abc.webp",
+            "screenshots/1/2/abc.webp",
             "image/webp",
             1234,
             Duration::from_secs(600),
             at("2026-10-28T12:34:56Z"),
         );
-        assert_eq!(url.host_str(), Some("prints.s3.us-east-1.amazonaws.com"));
-        assert_eq!(url.path(), "/prints/1/2/abc.webp");
+        assert_eq!(
+            url.host_str(),
+            Some("screenshots.s3.us-east-1.amazonaws.com")
+        );
+        assert_eq!(url.path(), "/screenshots/1/2/abc.webp");
         assert_eq!(
             query(&url, "X-Amz-SignedHeaders").as_deref(),
             Some("content-length;content-type;host")
@@ -236,7 +239,7 @@ mod tests {
         // Outro tamanho é outra assinatura: o bucket recusa o envio que não
         // bate com o pedido.
         let other = s.put_url(
-            "prints/1/2/abc.webp",
+            "screenshots/1/2/abc.webp",
             "image/webp",
             1235,
             Duration::from_secs(600),
@@ -251,7 +254,7 @@ mod tests {
     #[test]
     fn the_read_url_holds_for_the_hour() {
         let s = storage(Some("http://127.0.0.1:9000"));
-        let key = "prints/1/2/abc.webp";
+        let key = "screenshots/1/2/abc.webp";
         let first = s.get_url(key, at("2026-10-28T12:00:01Z"));
         let later = s.get_url(key, at("2026-10-28T12:59:59Z"));
         let next = s.get_url(key, at("2026-10-28T13:00:00Z"));
@@ -259,7 +262,7 @@ mod tests {
         assert_ne!(first, next);
         assert_eq!(
             first.as_str().split('?').next(),
-            Some("http://127.0.0.1:9000/prints/prints/1/2/abc.webp")
+            Some("http://127.0.0.1:9000/screenshots/screenshots/1/2/abc.webp")
         );
         assert_eq!(
             query(&first, "X-Amz-Date").as_deref(),

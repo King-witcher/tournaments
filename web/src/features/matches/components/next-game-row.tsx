@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-import { GamePrints } from "@/features/prints/components/game-prints";
+import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
 import { Accordion } from "@/shared/ui/accordion";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
@@ -28,9 +28,9 @@ type Props = {
 /**
  * A última linha da lista: o próximo mapa. Para quem joga, o formulário de
  * envio aberto (com veto, só depois do veto do mapa, e no mapa que ele deu),
- * com os prints do mapa antes dele (o anexo, quando o print é obrigatório);
- * para os outros, os prints e "aguardando envio" e, para a organização, o
- * lançamento fechado num bloco (é exceção).
+ * com os screenshots do mapa antes dele (o anexo, quando o screenshot é
+ * obrigatório); para os outros, os screenshots e "aguardando envio" e, para a
+ * organização, o lançamento fechado num bloco (é exceção).
  */
 export function NextGameRow({
   target,
@@ -57,12 +57,12 @@ export function NextGameRow({
       </span>
       <div className={styles.body}>
         {plays && veto && !veto.reportable ? (
-          // O veto vem antes: sem ele, nem se sabe o mapa do print.
+          // O veto vem antes: sem ele, nem se sabe o mapa do screenshot.
           <p className={styles.awaiting}>{t("vetoFirst", { number })}</p>
         ) : (
           <>
-            {/* Antes do envio: com print obrigatório, ele vem primeiro. */}
-            <GamePrints
+            {/* Antes do envio: com screenshot obrigatório, ele vem primeiro. */}
+            <GameScreenshots
               target={target}
               number={number}
               reporting={plays}

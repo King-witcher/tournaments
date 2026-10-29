@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from screenshot_deletions where object_key = any($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "724333f7e8a8970d98a2af45c8f087fb2d9cf147306585c0256c8f1bb2bf4cee"
+}
