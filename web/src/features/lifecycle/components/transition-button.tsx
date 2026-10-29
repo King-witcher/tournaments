@@ -23,6 +23,11 @@ type Props = {
   kind?: ButtonKind;
   /** Sem como dar certo agora: o botão fica desabilitado com este motivo embaixo. */
   disabledReason?: string;
+  /**
+   * O que vai impedir a ação, sem travar o botão (a API confere e responde
+   * com o código): embaixo dele, como o motivo.
+   */
+  note?: string;
 };
 
 function call(transition: Transition, tenant: string, slug: string) {
@@ -53,6 +58,7 @@ export function TransitionButton({
   confirm,
   kind = "primary",
   disabledReason,
+  note,
 }: Props) {
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -67,7 +73,7 @@ export function TransitionButton({
     );
 
   return (
-    <ActionWithNote note={disabledReason} error={error}>
+    <ActionWithNote note={disabledReason ?? note} error={error}>
       {confirm ? (
         <ConfirmButton
           destructive={false}

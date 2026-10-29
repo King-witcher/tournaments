@@ -96,3 +96,11 @@
 .srOnly {
   @include visually-hidden;
 }
+
+// TDM: quem jogou o mapa, embaixo do resultado.
+.lineup {
+  @include type.type-style("helper-text-01");
+
+  display: block;
+  color: theme.$text-secondary;
+}

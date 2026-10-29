@@ -5,8 +5,8 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
-import type { TournamentValues } from "../lib/form-values";
-import { FORMAT_MAX_ENTRANTS } from "../lib/format";
+import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
+import { slotLimits, teamsIn } from "../lib/format";
 import styles from "./tournament-format-fields.module.scss";
 
 const BEST_OF = [1, 3, 5, 7, 9];
@@ -42,7 +42,8 @@ type Props = {
 /**
  * O formato (as quatro opções à vista, com a dica do escolhido), o reset da
  * grande final na dupla, as séries (e a final, na eliminação) e as rodadas
- * do suíço.
+ * do suíço. No TDM, o teto do formato aparece em jogadores (como as vagas) e
+ * as rodadas contam times.
  */
 export function TournamentFormatFields({
   values,
@@ -56,9 +57,12 @@ export function TournamentFormatFields({
   const bestOfItems = BEST_OF.map((n) => (
     <SelectItem key={n} value={n} text={t("bestOfOption", { count: n })} />
   ));
-  // Rodadas que fazem sentido com as vagas: no máximo N − 1.
-  const slots = values.maxParticipants ?? 2;
-  const roundsMax = Math.max(1, Math.min(MAX_SWISS_ROUNDS, slots - 1));
+  const tdm = isTdm(values);
+  const size = teamSizeOf(values);
+  // Rodadas que fazem sentido com as vagas: no máximo N − 1, com N os lados
+  // da chave (no TDM, os times que as vagas comportam).
+  const { teams } = teamsIn(values.maxParticipants ?? 2, size);
+  const roundsMax = Math.max(1, Math.min(MAX_SWISS_ROUNDS, teams - 1));
   const roundOptions = Array.from({ length: roundsMax }, (_, i) => i + 1);
   if (values.swissRounds !== null && values.swissRounds > roundsMax) {
     roundOptions.push(values.swissRounds);
@@ -69,7 +73,7 @@ export function TournamentFormatFields({
       <RadioGroup
         legendText={t("stageFormat")}
         helperText={t(`stageFormatHints.${choice}`, {
-          max: FORMAT_MAX_ENTRANTS[values.stageFormat] ?? 0,
+          max: slotLimits(values.stageFormat, size).max,
         })}
         name="stageFormat"
         orientation="horizontal"
@@ -117,7 +121,7 @@ export function TournamentFormatFields({
         {values.stageFormat === "swiss" && (
           <Select
             labelText={t("swissRounds")}
-            helperText={t("swissRoundsHint")}
+            helperText={t(tdm ? "swissRoundsHintTdm" : "swissRoundsHint")}
             name="swissRounds"
             value={values.swissRounds ?? "auto"}
             disabled={disabled}
@@ -130,7 +134,10 @@ export function TournamentFormatFields({
               })
             }
           >
-            <SelectItem value="auto" text={t("swissRoundsAuto")} />
+            <SelectItem
+              value="auto"
+              text={t(tdm ? "swissRoundsAutoTdm" : "swissRoundsAuto")}
+            />
             {roundOptions.map((n) => (
               <SelectItem
                 key={n}

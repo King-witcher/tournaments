@@ -72,7 +72,11 @@ export async function TournamentList({ slug }: { slug: string }) {
           search: `${name} ${tournament.name}`,
           cells: {
             name,
-            format: t(`mode.${tournament.mode}`),
+            // O mesmo texto do `useModeLabel` ("Duelo", "TDM 2v2").
+            format:
+              tournament.mode === "tdm"
+                ? t("modeTeams", { size: tournament.team_size })
+                : t(`mode.${tournament.mode}`),
             status: (
               <span className={styles.tags}>
                 <StatusTag status={tournament.status}>

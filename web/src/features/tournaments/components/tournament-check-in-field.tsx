@@ -13,6 +13,8 @@ type Props = {
   error?: string;
   /** O torneio já começou: não muda mais. */
   disabled: boolean;
+  /** TDM: o check-in decide quem entra num time, não na chave. */
+  teams?: boolean;
 };
 
 /** Janela de check-in: quanto antes do início ele abre, ou sem check-in. */
@@ -21,6 +23,7 @@ export function TournamentCheckInField({
   onChange,
   error,
   disabled,
+  teams = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
   // Uma janela que veio da API fora das opções continua aparecendo.
@@ -32,7 +35,11 @@ export function TournamentCheckInField({
   return (
     <Select
       labelText={t("checkIn")}
-      helperText={t(value === null ? "checkInOffHint" : "checkInHint")}
+      helperText={
+        teams
+          ? t(value === null ? "checkInOffHintTdm" : "checkInHintTdm")
+          : t(value === null ? "checkInOffHint" : "checkInHint")
+      }
       name="checkInMinutes"
       value={value ?? "off"}
       disabled={disabled}

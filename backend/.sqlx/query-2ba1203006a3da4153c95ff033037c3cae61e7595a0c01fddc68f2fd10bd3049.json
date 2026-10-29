@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select p.user_id from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           where p.tournament_id = $1 and p.team_id = $2 and p.user_id <> $3\n             and (not $4 or m.left_at is null)\n           order by p.registered_at, p.user_id\n           limit 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2ba1203006a3da4153c95ff033037c3cae61e7595a0c01fddc68f2fd10bd3049"
+}

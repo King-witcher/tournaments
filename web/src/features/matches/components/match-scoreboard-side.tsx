@@ -1,5 +1,7 @@
 import { useTranslations } from "next-intl";
 
+import { MemberLink } from "@/features/members/components/member-link";
+import { shownNickname } from "@/features/members/lib/nickname";
 import { TeamName } from "@/features/teams/components/team-name";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
@@ -25,8 +27,8 @@ type Props = {
 
 /**
  * Um lado no placar da partida: avatar, nome do time (no duelo, o apelido
- * como link para a pessoa), seed e a marca de quem saiu; sem time, de onde
- * ele vem.
+ * como link para a pessoa), seed e a marca de quem saiu; no TDM, os
+ * jogadores, com o capitão marcado; sem time, de onde ele vem.
  */
 export function MatchScoreboardSide({
   tenant,
@@ -37,6 +39,7 @@ export function MatchScoreboardSide({
   alignEnd = false,
 }: Props) {
   const t = useTranslations("Match");
+  const tMember = useTranslations("Member");
   const name = useTeamName();
   const { placeholder } = useMatchLabels(single);
 
@@ -65,6 +68,32 @@ export function MatchScoreboardSide({
             {t("seed", { seed: team.seed ?? "" })}
             <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />
           </span>
+          {team.members.length > 1 && (
+            <ul
+              className={styles.members}
+              aria-label={t("members", { name: name(team) })}
+            >
+              {team.members.map((m) => {
+                const nick = shownNickname(
+                  m.nickname,
+                  tMember("deletedAccount"),
+                );
+                return (
+                  <li key={m.user_id}>
+                    {m.left || !m.nickname ? (
+                      nick
+                    ) : (
+                      <MemberLink tenant={tenant} userId={m.user_id} inline>
+                        {nick}
+                      </MemberLink>
+                    )}
+                    {m.user_id === team.captain && ` (${t("captain")})`}
+                    {m.left && <DepartureTag withdrawn={false} left={true} />}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </>
       ) : (
         <span className={styles.placeholder}>{placeholder(side)}</span>

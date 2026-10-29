@@ -4,7 +4,7 @@
 use std::borrow::Cow;
 
 use engine::{
-    core::{ChampionId, MapId, Match, MatchState},
+    core::{ChampionId, MapId, Match, MatchState, PlayerId},
     veto::{self as ev, Turn, Veto},
 };
 
@@ -13,7 +13,8 @@ use super::{
     state::{Kind, MatchVeto, VetoRow, api_side, ev_side},
     types::{
         ChampionRef, VetoAction, VetoBan, VetoChampion, VetoEvent, VetoEventKind, VetoGame,
-        VetoMapStep, VetoStatus, VetoTarget, VetoTurn, VetoView,
+        VetoGaveWay, VetoMapStep, VetoPlayer, VetoStatus, VetoTarget, VetoTeamPick, VetoTurn,
+        VetoView,
     },
 };
 use crate::matches::{result::Side, stage::Stage, types::MapRef};
@@ -26,7 +27,7 @@ pub fn status(stage: &Stage, m: &Match) -> Option<VetoStatus> {
     }
     Some(match stage.veto_of(m.id).map(|v| v.state.turn()) {
         None | Some(Turn::NotBegun) => VetoStatus::WaitingReady,
-        Some(Turn::Act { .. }) => VetoStatus::InProgress,
+        Some(Turn::Act { .. } | Turn::RostersUnknown { .. }) => VetoStatus::InProgress,
         Some(Turn::Done { .. }) => VetoStatus::Done,
     })
 }
@@ -62,13 +63,32 @@ const fn action(a: ev::Action) -> VetoAction {
         ev::Action::Ban => VetoAction::Ban,
         ev::Action::Pick => VetoAction::Pick,
         ev::Action::Vote => VetoAction::Vote,
+        ev::Action::TeamPick => VetoAction::TeamPick,
     }
 }
 
-/// O veto da partida `m` (pronta ou decidida) para quem vê, do lado `mine`
-/// se joga. `None` sem fase de veto no torneio, antes de a partida ficar
-/// pronta e na partida decidida sem veto.
-pub fn view(stage: &Stage, m: &Match, mine: Option<Side>) -> Option<VetoView> {
+/// O apelido de `player` (TDM): de quem está num time da chave, ou de quem
+/// escolheu no veto e depois saiu do time.
+fn nickname(stage: &Stage, mv: Option<&MatchVeto>, player: PlayerId) -> String {
+    stage
+        .entrants
+        .iter()
+        .flat_map(|t| &t.members)
+        .find(|m| m.user_id == player.0)
+        .map(|m| m.nickname.clone())
+        .or_else(|| {
+            mv?.rows
+                .iter()
+                .find(|r| r.player == Some(player.0))
+                .and_then(|r| r.player_name.clone())
+        })
+        .unwrap_or_default()
+}
+
+/// O veto da partida `m` (pronta ou decidida) para quem vê (`me`), do lado
+/// `mine` se joga. `None` sem fase de veto no torneio, antes de a partida
+/// ficar pronta e na partida decidida sem veto.
+pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Option<VetoView> {
     let mv = stage.veto_of(m.id);
     let ready_match = matches!(m.state, MatchState::Ready { .. });
     if !stage.veto_rules.has_phases() || !(ready_match || mv.is_some()) {
@@ -81,8 +101,35 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>) -> Option<VetoView> {
     let ctx = mv.map(|mv| Ctx::of(stage, mv));
     let turn = state.turn();
     let ready = mv.map(MatchVeto::ready).unwrap_or_default();
-    let options = match (&ctx, mine) {
-        (Some(ctx), Some(side)) if ready_match => state
+    let team_pick = matches!(
+        turn,
+        Turn::Act {
+            action: ev::Action::TeamPick,
+            ..
+        }
+    );
+    let captain = |side: Side| {
+        let team = match side {
+            Side::A => mv.map(|v| v.sides.0),
+            Side::B => mv.map(|v| v.sides.1),
+        };
+        team.and_then(|t| stage.captain(t))
+            .is_some_and(|c| Some(c) == me)
+    };
+    // Na escolha simultânea, as opções são de cada jogador.
+    let team_options = match (&ctx, mine, me) {
+        (Some(ctx), Some(side), Some(me)) if ready_match && team_pick => {
+            Some(state.team_options(ev_side(side), PlayerId(me), &ctx.engine()))
+        }
+        _ => None,
+    };
+    let options = match (&team_options, &ctx, mine) {
+        (Some(t), _, _) => t
+            .champions
+            .iter()
+            .map(|id| champion_ref(stage, *id).slug)
+            .collect(),
+        (None, Some(ctx), Some(side)) if ready_match && captain(side) => state
             .options(ev_side(side), &ctx.engine())
             .into_iter()
             .map(|c| match c {
@@ -92,15 +139,28 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>) -> Option<VetoView> {
             .collect(),
         _ => Vec::new(),
     };
+    let missing = match (ready_match, state.game()) {
+        (true, Some(g)) => state
+            .missing(g)
+            .into_iter()
+            .map(|(side, p)| VetoPlayer {
+                side: api_side(side),
+                user_id: p.0,
+                nickname: nickname(stage, mv, p),
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
     let status = match turn {
         Turn::NotBegun => VetoStatus::WaitingReady,
-        Turn::Act { .. } => VetoStatus::InProgress,
+        Turn::Act { .. } | Turn::RostersUnknown { .. } => VetoStatus::InProgress,
         Turn::Done { .. } => VetoStatus::Done,
     };
     Some(VetoView {
         map_mode: stage_mode(stage),
         champion_phase: stage.veto_rules.champion_phase,
         step_seconds: stage.veto_seconds,
+        team_pick_seconds: stage.veto_rules.teams().then_some(stage.team_pick_seconds),
         pool: stage
             .map_pool
             .iter()
@@ -128,7 +188,7 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>) -> Option<VetoView> {
         },
         deadline: mv
             .filter(|_| ready_match)
-            .and_then(|mv| mv.deadline(stage.veto_seconds)),
+            .and_then(|mv| mv.deadline(stage.veto_seconds, stage.team_pick_seconds)),
         map_steps: state
             .map_steps()
             .iter()
@@ -151,10 +211,15 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>) -> Option<VetoView> {
             Vec::new()
         },
         games: (1..=state.game().unwrap_or(0))
-            .map(|g| game(stage, &state, g))
+            .map(|g| game(stage, mv, &state, g))
             .collect(),
         options,
-        champions: champions(stage, &state, ctx.as_ref()),
+        gave_way: team_options.and_then(|t| t.gave_way).map(|g| match g {
+            ev::GaveWay::Rule => VetoGaveWay::Rule,
+            ev::GaveWay::Team => VetoGaveWay::Team,
+        }),
+        missing,
+        champions: champions(stage, &state, ctx.as_ref(), mine.zip(me)),
         undo_request: mv.and_then(MatchVeto::undo_request),
         can_undo: ready_match && state.can_undo(),
         reportable: ready_match && reportable(stage, m, &state),
@@ -184,7 +249,7 @@ fn stage_mode(stage: &Stage) -> crate::tournaments::MapMode {
     }
 }
 
-fn game(stage: &Stage, state: &Veto, g: u8) -> VetoGame {
+fn game(stage: &Stage, mv: Option<&MatchVeto>, state: &Veto, g: u8) -> VetoGame {
     let picks = state.picks(g);
     let votes = state.votes(g);
     let slug = |m: Option<MapId>| m.map(|id| map_ref(stage, id).slug);
@@ -214,12 +279,49 @@ fn game(stage: &Stage, state: &Veto, g: u8) -> VetoGame {
             .collect(),
         pick_a: picks[0].map(|c| champion_ref(stage, c)),
         pick_b: picks[1].map(|c| champion_ref(stage, c)),
+        team_picks: team_picks(stage, mv, state, g),
     }
 }
 
+/// TDM: a escolha de cada jogador no jogo `g`, com o sorteio do fim da
+/// janela marcado (pela linha gravada).
+fn team_picks(stage: &Stage, mv: Option<&MatchVeto>, state: &Veto, g: u8) -> Vec<VetoTeamPick> {
+    state
+        .team_picks(g)
+        .into_iter()
+        .filter_map(|a| {
+            let (ev::Choice::Champion(c), Some(player)) = (a.choice, a.player) else {
+                return None;
+            };
+            let timeout = mv
+                .and_then(|mv| {
+                    mv.rows.iter().rev().find(|r| {
+                        r.kind == Kind::Pick
+                            && r.game == Some(i16::from(g))
+                            && r.player == Some(player.0)
+                    })
+                })
+                .is_some_and(|r| r.timeout);
+            Some(VetoTeamPick {
+                side: api_side(a.side),
+                user_id: player.0,
+                nickname: nickname(stage, mv, player),
+                champion: champion_ref(stage, c),
+                timeout,
+            })
+        })
+        .collect()
+}
+
 /// Os campeões ativos no jogo em andamento: banidos neste mapa e tirados de
-/// cada lado pela regra.
-fn champions(stage: &Stage, state: &Veto, ctx: Option<&Ctx>) -> Vec<VetoChampion> {
+/// cada lado pela regra; no TDM, também de quem vê (`viewer`: o lado dele e
+/// o usuário), se ele joga.
+fn champions(
+    stage: &Stage,
+    state: &Veto,
+    ctx: Option<&Ctx>,
+    viewer: Option<(Side, i64)>,
+) -> Vec<VetoChampion> {
     let (Some(ctx), Some(g)) = (ctx, state.game()) else {
         return Vec::new();
     };
@@ -237,6 +339,12 @@ fn champions(stage: &Stage, state: &Veto, ctx: Option<&Ctx>) -> Vec<VetoChampion
         .collect();
     let used_a = state.forbidden(engine::series::Side::A, &ctx.engine());
     let used_b = state.forbidden(engine::series::Side::B, &ctx.engine());
+    let used_you = match viewer {
+        Some((side, me)) if stage.veto_rules.teams() => {
+            state.forbidden_for(ev_side(side), PlayerId(me), &ctx.engine())
+        }
+        _ => Default::default(),
+    };
     stage
         .champions
         .iter()
@@ -250,6 +358,7 @@ fn champions(stage: &Stage, state: &Veto, ctx: Option<&Ctx>) -> Vec<VetoChampion
                 .map(|(s, _)| api_side(s.side)),
             used_by_a: used_a.contains(&c.id),
             used_by_b: used_b.contains(&c.id),
+            used_by_you: used_you.contains(&c.id),
         })
         .collect()
 }
@@ -273,6 +382,7 @@ fn event(stage: &Stage, r: &VetoRow) -> VetoEvent {
         champion: r.champion.map(|id| champion_ref(stage, id)),
         timeout: r.timeout,
         actor: r.actor.and(r.actor_name.clone()),
+        player: r.player.map(|_| r.player_name.clone().unwrap_or_default()),
         at: r.created_at,
     }
 }

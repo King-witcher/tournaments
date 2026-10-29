@@ -57,7 +57,7 @@ pub async fn list(
 ) -> Result<Vec<TournamentSummary>, ApiError> {
     let mut conn = db.acquire().await?;
     let rows = sqlx::query!(
-        r#"select t.id, t.slug, t.locale, t.name, t.mode, t.status, t.visibility,
+        r#"select t.id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status, t.visibility,
                   t.max_participants, t.starts_at, t.check_in_minutes,
                   t.registration_reopened_at, t.created_at,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
@@ -118,6 +118,7 @@ pub async fn list(
             locale: Locale::from_db(&r.locale)?,
             name: r.name,
             mode: TournamentMode::from_db(&r.mode)?,
+            team_size: i32::from(r.team_size),
             status,
             visibility: Visibility::from_db(&r.visibility)?,
             max_participants: r.max_participants,
@@ -147,7 +148,7 @@ pub async fn find(
                   t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
                   t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
-                  t.screenshots_required, t.created_at,
+                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
@@ -237,10 +238,11 @@ pub async fn find(
             description: row.description,
             rules: row.rules,
         },
-        mode: TournamentMode::from_db(&row.mode)?,
         status,
         visibility: Visibility::from_db(&row.visibility)?,
         setup: Setup {
+            mode: TournamentMode::from_db(&row.mode)?,
+            team_size: i32::from(row.team_size),
             max_participants: row.max_participants,
             champion_rules: row.champion_rules.0,
             stages: stages.into_iter().map(|s| s.0).collect(),
@@ -249,6 +251,7 @@ pub async fn find(
                 pool: map_pool.iter().map(|m| m.id).collect(),
                 champion_phase: row.champion_phase,
                 step_seconds: row.veto_seconds,
+                team_pick_seconds: row.team_pick_seconds,
             },
         },
         schedule,

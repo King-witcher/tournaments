@@ -315,22 +315,43 @@ pub async fn drop_stale(
 pub struct Person {
     pub nickname: String,
     pub discord_id: Option<String>,
+    /// O time dele no torneio do aviso, quando o time tem mais de um
+    /// jogador (TDM); no duelo, `None`.
+    pub team: Option<PersonTeam>,
 }
 
+/// O time de uma pessoa no TDM, para juntar os jogadores no texto.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PersonTeam {
+    pub id: i64,
+    pub name: Option<String>,
+    /// Apelido do capitão (o nome do time sem nome é "Time de {capitão}").
+    pub captain: String,
+}
+
+/// As pessoas `users`, na ordem, com o time de cada uma no torneio
+/// `tournament` (o slug do caminho do aviso) quando ele é TDM.
 pub async fn people(
     db: &PgPool,
     tenant: TenantId,
     users: &[i64],
+    tournament: Option<&str>,
 ) -> Result<Vec<Person>, sqlx::Error> {
     let rows = sqlx::query!(
         r#"select tm.nickname,
                   (select i.provider_user_id from user_identities i
-                   where i.user_id = tm.user_id and i.provider = 'discord') as discord_id
+                   where i.user_id = tm.user_id and i.provider = 'discord') as discord_id,
+                  t.id as "team_id?", t.name as "team_name?", cm.nickname as "captain?"
            from unnest($2::bigint[]) with ordinality as u(id, n)
            join tenant_members tm on tm.user_id = u.id and tm.tenant_id = $1
+           left join tournaments tr on tr.tenant_id = $1 and tr.slug = $3 and tr.mode = 'tdm'
+           left join participants p on p.tournament_id = tr.id and p.user_id = u.id
+           left join teams t on t.tournament_id = tr.id and t.id = p.team_id
+           left join tenant_members cm on cm.tenant_id = $1 and cm.user_id = t.captain
            order by u.n"#,
         tenant.get(),
-        users
+        users,
+        tournament
     )
     .fetch_all(db)
     .await?;
@@ -339,6 +360,11 @@ pub async fn people(
         .map(|r| Person {
             nickname: r.nickname,
             discord_id: r.discord_id,
+            team: r.team_id.map(|id| PersonTeam {
+                id,
+                name: r.team_name,
+                captain: r.captain.unwrap_or_default(),
+            }),
         })
         .collect())
 }

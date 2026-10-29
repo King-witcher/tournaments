@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+}
+
+// As contas são o que se procura ao abrir a página: corpo em tamanho de
+// título de bloco.
+.counts {
+  @include type.type-style("heading-02");
+}
+
+// A regra é explicação: corpo na cor secundária.
+.rule {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-02 spacing.$spacing-06;
+}

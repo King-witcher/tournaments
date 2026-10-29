@@ -9,8 +9,10 @@
     "participants": "Inscritos"
   },
   "mode": {
-    "duel": "Duelo"
+    "duel": "Duelo",
+    "tdm": "TDM"
   },
+  "modeTeams": "TDM {size}v{size}",
   "noDate": "Sem data",
   "participants": "{count}/{max}",
   "registered": "Você está inscrito",

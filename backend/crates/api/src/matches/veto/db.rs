@@ -49,11 +49,13 @@ pub async fn events(
 ) -> Result<Vec<VetoRow>, ApiError> {
     let rows = sqlx::query!(
         r#"select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,
-                  e.played_map_id, e.champion_id, e.seed, e.timeout, e.actor,
-                  coalesce(m.nickname, u.display_name) as actor_name, e.created_at
+                  e.played_map_id, e.champion_id, e.player_id, e.seed, e.timeout, e.actor,
+                  coalesce(m.nickname, u.display_name) as actor_name,
+                  pm.nickname as "player_name?", e.created_at
            from match_veto_events e
            left join users u on u.id = e.actor
            left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor
+           left join tenant_members pm on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id
            where e.tournament_id = $1 and e.stage = $2
            order by e.match_key, e.id"#,
         tournament.get(),
@@ -74,6 +76,8 @@ pub async fn events(
                 map: r.map_id.map(MapId),
                 played_map: r.played_map_id.map(MapId),
                 champion: r.champion_id.map(ChampionId),
+                player: r.player_id,
+                player_name: r.player_name,
                 seed: r.seed,
                 timeout: r.timeout,
                 actor: r.actor,
@@ -92,6 +96,8 @@ pub struct NewVetoEvent {
     pub map: Option<MapId>,
     pub played_map: Option<MapId>,
     pub champion: Option<ChampionId>,
+    /// TDM: o jogador da escolha simultânea.
+    pub player: Option<i64>,
     pub seed: Option<i64>,
     pub timeout: bool,
     pub actor: Option<i64>,
@@ -113,6 +119,7 @@ impl NewVetoEvent {
             map: None,
             played_map: None,
             champion: None,
+            player: None,
             seed: None,
             timeout: false,
             actor,
@@ -131,9 +138,9 @@ pub async fn insert(
     sqlx::query!(
         r#"insert into match_veto_events
                (tenant_id, tournament_id, stage, match_key, side_a, side_b, kind, game, side,
-                map_id, played_map_id, champion_id, seed, timeout, actor, created_at)
+                map_id, played_map_id, champion_id, seed, timeout, actor, created_at, player_id)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                   coalesce($16, now()))"#,
+                   coalesce($16, now()), $17)"#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
@@ -149,7 +156,8 @@ pub async fn insert(
         event.seed,
         event.timeout,
         event.actor,
-        event.at
+        event.at,
+        event.player
     )
     .execute(conn)
     .await?;

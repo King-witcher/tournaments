@@ -1,15 +1,17 @@
 //! O tempo de cada passo do veto. Vencido o prazo, o `engine` sorteia a
 //! escolha de quem deixou o tempo acabar (`random_choice`, pela seed da
 //! série), gravada como `timeout` e com a hora do prazo: o passo seguinte
-//! conta dali, como se alguém tivesse esperado. A API aplica ao ler a
-//! partida ou a chave e antes de cada ação (`any_due`, `apply_due`), e o
-//! relógio do `realtime` aplica nos torneios que ninguém leu (`clock`),
-//! dormindo até o próximo prazo.
+//! conta dali, como se alguém tivesse esperado. Na escolha simultânea dos
+//! times, a janela é uma só (`team_pick_seconds`) e, no fim, cada um que não
+//! escolheu recebe um campeão sorteado (`random_team_choice`), um de cada
+//! vez, na ordem do elenco. A API aplica ao ler a partida ou a chave e antes
+//! de cada ação (`any_due`, `apply_due`), e o relógio do `realtime` aplica
+//! nos torneios que ninguém leu (`clock`), dormindo até o próximo prazo.
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::MatchState,
-    veto::{Choice, Event, Turn},
+    veto::{Action, Choice, Event, Turn, Veto},
 };
 use sqlx::{PgConnection, PgPool};
 
@@ -39,7 +41,22 @@ fn waiting<'a>(
                 .get(mv.match_id)
                 .is_some_and(|m| matches!(m.state, MatchState::Ready { .. }))
         })
-        .filter_map(|mv| Some((mv, mv.deadline(stage.veto_seconds)?)))
+        .filter_map(|mv| {
+            let deadline = mv.deadline(stage.veto_seconds, stage.team_pick_seconds)?;
+            Some((mv, deadline))
+        })
+}
+
+/// Quanto dura a vez de `state`: a janela da escolha simultânea ou um passo.
+fn seconds_of(stage: &stage::Stage, state: &Veto) -> chrono::Duration {
+    let seconds = match state.turn() {
+        Turn::Act {
+            action: Action::TeamPick,
+            ..
+        } => stage.team_pick_seconds,
+        _ => stage.veto_seconds,
+    };
+    chrono::Duration::seconds(i64::from(seconds))
 }
 
 /// O próximo prazo de veto da fase.
@@ -61,7 +78,6 @@ pub async fn apply_due(
     stage: &stage::Stage,
     now: DateTime<Utc>,
 ) -> Result<u64, ApiError> {
-    let seconds = chrono::Duration::seconds(i64::from(stage.veto_seconds));
     let mut written = 0;
     let due: Vec<(&MatchVeto, DateTime<Utc>)> = waiting(tournament.status, stage)
         .filter(|(_, d)| *d <= now)
@@ -87,6 +103,49 @@ pub async fn apply_due(
             else {
                 break;
             };
+            if action == Action::TeamPick {
+                for (side, player) in state.missing(game) {
+                    let Some(champion) = state.random_team_choice(side, player, &ctx.engine())
+                    else {
+                        continue;
+                    };
+                    let event = Event::TeamPick {
+                        side,
+                        player,
+                        champion,
+                    };
+                    state.apply(event, Some(&ctx.engine())).map_err(|e| {
+                        tracing::error!(%e, key, "sorteio da escolha simultânea recusado");
+                        ApiError::internal()
+                    })?;
+                    let row = NewVetoEvent {
+                        champion: Some(champion),
+                        player: Some(player.0),
+                        timeout: true,
+                        at: Some(deadline),
+                        ..NewVetoEvent::new(
+                            Kind::Pick,
+                            Some(i16::from(game)),
+                            Some(api_side(side)),
+                            None,
+                        )
+                    };
+                    db::insert(conn, &at, mv.sides, &row).await?;
+                    written += 1;
+                }
+                if matches!(
+                    state.turn(),
+                    Turn::Act {
+                        action: Action::TeamPick,
+                        ..
+                    }
+                ) {
+                    // Ninguém mais tem opção: não há o que sortear.
+                    break;
+                }
+                deadline += seconds_of(stage, &state);
+                continue;
+            }
             for side in sides {
                 let Some(choice) = state.random_choice(side, &ctx.engine()) else {
                     break;
@@ -119,7 +178,7 @@ pub async fn apply_due(
                 db::insert(conn, &at, mv.sides, &row).await?;
                 written += 1;
             }
-            deadline += seconds;
+            deadline += seconds_of(stage, &state);
         }
     }
     Ok(written)

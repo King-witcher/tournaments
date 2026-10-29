@@ -136,6 +136,15 @@ pub enum NoticeKind {
     },
     /// O início marcado chegou e o torneio não foi iniciado (para organizers e
     /// owner, uma vez).
+    /// TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
+    /// jogadores dos dois times).
+    #[serde(rename = "match.team_pick_open")]
+    TeamPickOpen {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        game: i16,
+    },
     #[serde(rename = "tournament.start_due")]
     StartDue { tournament: String },
 }

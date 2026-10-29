@@ -1,0 +1,34 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+// Uma coluna no celular; do lg para cima, os times em 2/3 e os reservas em
+// 1/3. O minmax(0, …) deixa um nome longo quebrar em vez de alargar a coluna.
+.board {
+  display: grid;
+  gap: spacing.$spacing-07;
+  grid-template-columns: minmax(0, 1fr);
+
+  @include breakpoint.breakpoint(lg) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.main,
+.side {
+  min-inline-size: 0;
+}
+
+// Na edição, os reservas ficam à vista enquanto a lista dos times rola (para
+// arrastar até eles), logo abaixo do cabeçalho fixo do site (48px), e rolam
+// por dentro se forem mais altos que a tela.
+.sticky {
+  @include breakpoint.breakpoint(lg) {
+    position: sticky;
+    inset-block-start: calc(#{spacing.$spacing-09} + #{spacing.$spacing-05});
+    max-block-size: calc(
+      100vh - #{spacing.$spacing-09} - #{spacing.$spacing-07}
+    );
+    overflow-y: auto;
+  }
+}

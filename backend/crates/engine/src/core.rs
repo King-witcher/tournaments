@@ -8,6 +8,11 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct ParticipantId(pub i64);
 
+/// Uma pessoa: o usuário (`users.id` na API). Joga por um time (no duelo, o
+/// time de um jogador), tem rating e, no TDM, escolhe o próprio campeão.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PlayerId(pub i64);
+
 /// Mapa do jogo: o id interno da tabela de mapas (`maps.id` na API).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -174,6 +179,10 @@ pub struct Placement {
 pub enum EngineError {
     #[error("precisa de pelo menos {min} participantes, recebeu {got}")]
     NotEnoughParticipants { min: usize, got: usize },
+    /// Nos times: as vagas (em jogadores) não formam dois times; `min` é
+    /// `2 × tamanho`.
+    #[error("precisa de pelo menos {min} jogadores (dois times), recebeu {got}")]
+    NotEnoughPlayers { min: usize, got: usize },
     #[error("aceita no máximo {max} participantes, recebeu {got}")]
     TooManyParticipants { max: usize, got: usize },
     #[error("participante repetido: {0:?}")]

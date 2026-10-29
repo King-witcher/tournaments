@@ -56,7 +56,8 @@
       "contested": "Impugnado",
       "confirmed": "Confirmado"
     },
-    "vetoFirst": "El mapa {number} se puede enviar cuando termine su veto."
+    "vetoFirst": "El mapa {number} se puede enviar cuando termine su veto.",
+    "lineup": "Jugaron: {a} contra {b}"
   },
   "respond": {
     "confirm": "Confirmar",
@@ -172,7 +173,9 @@
       "vote_map": "votar el mapa del juego {game}",
       "ban_champion": "banear un campeón en el mapa {game}",
       "pick_champion": "elegir el campeón del mapa {game}",
-      "vote_champion": "votar"
+      "vote_champion": "votar",
+      "team_pick_map": "elegir el campeón del mapa {game}",
+      "team_pick_champion": "elegir el campeón del mapa {game}"
     },
     "deadline": "Tiempo: <time></time>. Si se termina, la elección se sortea.",
     "done": "Veto del mapa {game} terminado: jueguen y envíen el mapa.",
@@ -212,6 +215,22 @@
         "match": "ya lo usaste en esta serie",
         "stage": "ya lo usaste en esta fase",
         "tournament": "ya lo usaste en este torneo"
+      },
+      "teamPickHint": "Los campeones que un compañero ya eligió en este mapa no aparecen para ti.",
+      "pickedBy": "elegido por {name}",
+      "usedByYourTeam": {
+        "match": "tu equipo ya lo usó en esta serie",
+        "stage": "tu equipo ya lo usó en esta fase",
+        "tournament": "tu equipo ya lo usó en este torneo"
+      },
+      "usedByPlayerOf": {
+        "match": "un jugador de {name} ya lo usó en esta serie",
+        "stage": "un jugador de {name} ya lo usó en esta fase",
+        "tournament": "un jugador de {name} ya lo usó en este torneo"
+      },
+      "gaveWay": {
+        "rule": "Con la regla de no repetición no te quedaba ningún campeón en este mapa: la regla cedió, y los que quita volvieron a tus opciones (marcados abajo).",
+        "team": "No te quedaba ningún campeón sin repetir el de un compañero en este mapa: vale cualquier campeón sin ban, incluso el que ya eligió un compañero."
       }
     },
     "undo": {
@@ -229,7 +248,8 @@
       "map": "{map}",
       "mapPicked": "{map} (elección de {name})",
       "bans": "bans: {list}",
-      "pick": "{name}: {champion}"
+      "pick": "{name}: {champion}",
+      "teamPicks": "{name}: {list}"
     },
     "history": {
       "title": "Historial del veto",
@@ -246,7 +266,21 @@
         "undo_request": "{name} pidió deshacer el último paso",
         "undo_declined": "{name} rechazó deshacer"
       }
+    },
+    "captainReadies": "Quien hace clic en “Listo” es el capitán de tu equipo.",
+    "captainTurn": "Turno de tu equipo: el capitán va a {action}.",
+    "teamPick": "Elección de campeones del mapa {game}: todos eligen al mismo tiempo y ven las elecciones de los demás.",
+    "teamPickYours": "Elige tu campeón del mapa {game}. La elección es definitiva.",
+    "teamPickPicked": "Ya elegiste. Esperando a los demás.",
+    "missing": "Faltan: {names}.",
+    "teamDeadline": "Tiempo: <time></time>. Quien no elija recibe un campeón sorteado.",
+    "teamPicks": {
+      "title": "Elecciones del mapa {game}",
+      "choosing": "eligiendo…",
+      "drawn": "{champion} (sorteado)"
     }
   },
-  "labelTable": "Ronda {round} de {total} · partida {index}"
+  "labelTable": "Ronda {round} de {total} · partida {index}",
+  "captain": "capitán",
+  "members": "Jugadores de {name}"
 }

@@ -16,7 +16,10 @@ use super::result::{ResultRow, StoredResult};
 use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
-pub use games::{NewGame, confirm_game, contest_game, games, insert_report, put_game, void_games};
+pub use games::{
+    LineupRow, NewGame, confirm_game, contest_game, games, insert_report, lineups, put_game,
+    void_games,
+};
 pub use pairings::{insert_round, pairings};
 pub use screenshots::has_screenshot;
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};

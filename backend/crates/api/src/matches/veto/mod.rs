@@ -28,8 +28,8 @@ mod types;
 mod view;
 
 use engine::{
-    champions::NoRepeatScope,
-    core::{ChampionId, Match, MatchState},
+    champions::{NoRepeatScope, NoRepeatWho},
+    core::{ChampionId, Match, MatchState, PlayerId},
     veto::{self as ev, Turn},
 };
 
@@ -46,35 +46,50 @@ use crate::shared::ApiError;
 /// O que as opções de campeão precisam de fora da série.
 pub struct Ctx {
     champions: Vec<ChampionId>,
-    no_repeat: bool,
+    no_repeat: Option<NoRepeatWho>,
     used: [Vec<ChampionId>; 2],
+    used_by: Vec<(PlayerId, ChampionId)>,
 }
 
 impl Ctx {
     /// Para a partida do veto `mv`: os campeões do torneio e, com a regra de
     /// não repetição na fase ou no torneio, o que cada lado escolheu nas
     /// outras partidas da fase em jogos que foram enviados (só há uma fase).
+    /// No TDM, pela regra do time, o que o time escolheu; pela do jogador, o
+    /// que cada jogador escolheu (por quem ele jogava, inclusive outro time).
     pub fn of(stage: &Stage, mv: &MatchVeto) -> Self {
         let rule = stage.no_repeat;
         let mut used: [Vec<ChampionId>; 2] = [Vec::new(), Vec::new()];
+        let mut used_by: Vec<(PlayerId, ChampionId)> = Vec::new();
         if let Some(rule) = rule
             && rule.scope != NoRepeatScope::Match
         {
             for other in stage.vetoes.iter().filter(|v| v.match_id != mv.match_id) {
                 let played = stage.games_of(other.match_id);
+                let others = [other.sides.0, other.sides.1];
                 for game in 1..=other.state.game().unwrap_or(0) {
                     if !played.iter().any(|g| g.number == i16::from(game)) {
                         continue;
                     }
-                    let picks = other.state.picks(game);
-                    let others = [other.sides.0, other.sides.1];
-                    for (i, p) in others.iter().enumerate() {
-                        let Some(c) = picks[i] else { continue };
-                        if *p == mv.sides.0 {
+                    let mut push = |team, c| {
+                        if team == mv.sides.0 {
                             used[0].push(c);
-                        } else if *p == mv.sides.1 {
+                        } else if team == mv.sides.1 {
                             used[1].push(c);
                         }
+                    };
+                    let picks = other.state.picks(game);
+                    for (i, team) in others.iter().enumerate() {
+                        if let Some(c) = picks[i] {
+                            push(*team, c);
+                        }
+                    }
+                    for a in other.state.team_picks(game) {
+                        let (ev::Choice::Champion(c), Some(player)) = (a.choice, a.player) else {
+                            continue;
+                        };
+                        push(others[usize::from(a.side == engine::series::Side::B)], c);
+                        used_by.push((player, c));
                     }
                 }
             }
@@ -86,8 +101,9 @@ impl Ctx {
                 .filter(|c| c.active)
                 .map(|c| c.id)
                 .collect(),
-            no_repeat: rule.is_some(),
+            no_repeat: rule.map(|r| r.who),
             used,
+            used_by,
         }
     }
 
@@ -96,6 +112,7 @@ impl Ctx {
             champions: &self.champions,
             no_repeat: self.no_repeat,
             used: [&self.used[0], &self.used[1]],
+            used_by: &self.used_by,
         }
     }
 }
@@ -119,7 +136,7 @@ pub fn check_report(
     let current = i16::from(mv.state.game().ok_or(PENDING)?);
     let done = match mv.state.turn() {
         Turn::Done { .. } => true,
-        Turn::Act { .. } | Turn::NotBegun => false,
+        Turn::Act { .. } | Turn::NotBegun | Turn::RostersUnknown { .. } => false,
     };
     if game > current || (game == current && !done) {
         return Err(PENDING);

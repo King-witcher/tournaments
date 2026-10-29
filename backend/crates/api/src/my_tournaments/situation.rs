@@ -18,8 +18,11 @@ impl Situation {
     }
 
     /// A situação pelo lugar na chave, com a colocação quando já se definiu.
-    pub const fn in_bracket(place: Place) -> (Self, Option<MyPlacement>) {
+    /// No TDM (`teams`), fora da chave é estar sem time (reserva ou
+    /// substituído): iniciar exige todo time completo e com check-in.
+    pub const fn in_bracket(place: Place, teams: bool) -> (Self, Option<MyPlacement>) {
         match place {
+            Place::Missed if teams => (Self::Reserve, None),
             Place::Missed => (Self::MissedCheckIn, None),
             Place::Playing => (Self::Playing, None),
             Place::Withdrawn(None) => (Self::Withdrawn, None),
@@ -64,10 +67,14 @@ mod tests {
     #[test]
     fn in_the_bracket() {
         let of = |place| {
-            let (situation, placement) = Situation::in_bracket(place);
+            let (situation, placement) = Situation::in_bracket(place, false);
             (situation, placement.map(|p| (p.rank, p.tied)))
         };
         assert_eq!(of(Place::Missed), (Situation::MissedCheckIn, None));
+        assert_eq!(
+            Situation::in_bracket(Place::Missed, true).0,
+            Situation::Reserve
+        );
         assert_eq!(of(Place::Playing), (Situation::Playing, None));
         assert_eq!(of(Place::Withdrawn(None)), (Situation::Withdrawn, None));
         assert_eq!(

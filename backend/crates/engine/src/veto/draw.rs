@@ -20,6 +20,8 @@ pub enum Purpose {
     Draw = 3,
     /// A escolha de quem deixou o tempo do passo acabar.
     Timeout = 4,
+    /// Nos times, o campeão de quem não escolheu na escolha simultânea.
+    TeamTimeout = 5,
 }
 
 fn rng(seed: u64, purpose: Purpose, game: u8, index: u32) -> ChaCha8Rng {

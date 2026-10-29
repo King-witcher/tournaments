@@ -5,6 +5,9 @@ type Locale = Schemas["Locale"];
 
 export type NoRepeatChoice = "off" | Schemas["NoRepeatScope"];
 
+/** Tamanhos de time do TDM (2v2, 3v3, 4v4). */
+export const TEAM_SIZES = [2, 3, 4];
+
 /** Campos do formulário de torneio (criação e edição), no idioma original. */
 export type TournamentValues = {
   name: string;
@@ -15,6 +18,13 @@ export type TournamentValues = {
   visibility: Schemas["Visibility"];
   /** `null` com o campo vazio (o `required` do campo não deixa enviar assim). */
   maxParticipants: number | null;
+  /** Duelo ou TDM. */
+  mode: Schemas["TournamentMode"];
+  /**
+   * Jogadores por time no TDM. No duelo o valor fica guardado (voltar ao TDM
+   * antes de salvar o devolve), mas vale 1: use `teamSizeOf`.
+   */
+  teamSize: number;
   /** O formato da fase única: eliminação, round robin ou suíço. */
   stageFormat: Schemas["StageFormat"]["format"];
   /** Na eliminação: simples ou dupla. */
@@ -27,6 +37,10 @@ export type TournamentValues = {
   swissRounds: number | null;
   bansPerGame: number;
   noRepeat: NoRepeatChoice;
+  /** TDM: quem não repete, cada jogador ou o time inteiro (no duelo, o jogador). */
+  noRepeatWho: Schemas["NoRepeatWho"];
+  /** TDM: dois do mesmo time podem escolher o mesmo campeão no mesmo mapa. */
+  teamDuplicates: boolean;
   /** Início em ISO (UTC); `null` sem data, só no rascunho. */
   startsAt: string | null;
   /** Janela de check-in em minutos; `null` sem check-in. */
@@ -43,6 +57,8 @@ export type TournamentValues = {
   championPhase: boolean;
   /** Segundos de cada passo do veto. */
   vetoSeconds: number;
+  /** TDM: segundos da escolha simultânea de campeões. */
+  teamPickSeconds: number;
   /** O envio do jogador exige screenshot do placar (o campo só aparece com screenshots na API). */
   screenshotsRequired: boolean;
 };
@@ -75,7 +91,9 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
 /**
  * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
  * vagas, 1 ban, check-in de 30 min, 10 min para contestar, veto de mapas no
- * pool padrão com ban/pick de campeões e 30 s por passo.
+ * pool padrão com ban/pick de campeões e 30 s por passo. Trocado para o TDM:
+ * times de 2, a regra de não repetição por jogador, sem campeão igual no
+ * time e 60 s para a escolha simultânea.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -86,6 +104,8 @@ export function defaultValues(locale: Locale): TournamentValues {
     rules: "",
     visibility: "public",
     maxParticipants: 16,
+    mode: "duel",
+    teamSize: 1,
     stageFormat: "elimination",
     bracket: "double",
     grandFinalReset: false,
@@ -94,6 +114,8 @@ export function defaultValues(locale: Locale): TournamentValues {
     swissRounds: null,
     bansPerGame: 1,
     noRepeat: "off",
+    noRepeatWho: "player",
+    teamDuplicates: false,
     startsAt: null,
     checkInMinutes: 30,
     contestMinutes: 10,
@@ -102,6 +124,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     mapPool: null,
     championPhase: true,
     vetoSeconds: 30,
+    teamPickSeconds: 60,
     screenshotsRequired: false,
   };
 }
@@ -120,6 +143,8 @@ export function valuesFrom(
     rules: tournament.rules,
     visibility: tournament.visibility,
     maxParticipants: tournament.max_participants,
+    mode: tournament.mode,
+    teamSize: tournament.team_size,
     stageFormat: stage.format,
     // Fora da eliminação, os campos dela ficam no padrão, para quem trocar
     // de formato no formulário.
@@ -131,6 +156,8 @@ export function valuesFrom(
     swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
     bansPerGame: rules.bans_per_game,
     noRepeat: rules.no_repeat?.scope ?? "off",
+    noRepeatWho: rules.no_repeat?.who ?? "player",
+    teamDuplicates: rules.team_duplicates ?? false,
     startsAt: tournament.starts_at ?? null,
     checkInMinutes: tournament.check_in_minutes ?? null,
     contestMinutes: tournament.contest_minutes,
@@ -139,9 +166,19 @@ export function valuesFrom(
     mapPool: tournament.veto.map_pool,
     championPhase: tournament.veto.champion_phase,
     vetoSeconds: tournament.veto.step_seconds,
+    teamPickSeconds: tournament.veto.team_pick_seconds,
     screenshotsRequired: tournament.screenshots_required,
   };
 }
+
+/** É TDM: times, capitão e escolha simultânea de campeões. */
+export const isTdm = (values: Pick<TournamentValues, "mode">) =>
+  values.mode === "tdm";
+
+/** Jogadores por time que valem: 1 no duelo. */
+export const teamSizeOf = (
+  values: Pick<TournamentValues, "mode" | "teamSize">,
+) => (isTdm(values) ? values.teamSize : 1);
 
 /** O pool do formulário: o escolhido, ou o padrão (`default_pool`) enquanto não mexeram. */
 export function poolOf(values: TournamentValues, maps: Schemas["Map"][]) {
@@ -221,7 +258,7 @@ export function startTiming(
   return null;
 }
 
-/** Corpo da criação (duelo): rascunho, ou já publicado com `publish`. */
+/** Corpo da criação: rascunho, ou já publicado com `publish`. */
 export function createBody(
   values: TournamentValues,
   translations: Translations,
@@ -233,7 +270,6 @@ export function createBody(
     ...scheduleBody(values),
     slug: values.slug,
     locale: values.locale,
-    mode: "duel" as const,
     translations: Object.entries(translations).flatMap(([locale, draft]) =>
       draft?.enabled
         ? [
@@ -281,9 +317,16 @@ function scheduleBody(values: TournamentValues) {
   };
 }
 
-/** Vagas, regra de campeões, fases, veto e "conta para o rating" no formato da API. */
+/**
+ * Modalidade, vagas, regra de campeões, fases, veto e "conta para o rating"
+ * no formato da API. No duelo, o que é só do TDM vai com o valor do duelo
+ * (time de 1, regra por jogador, sem campeão igual no time).
+ */
 function setupBody(values: TournamentValues) {
+  const tdm = isTdm(values);
   return {
+    mode: values.mode,
+    team_size: teamSizeOf(values),
     counts_for_rating: values.countsForRating,
     veto: {
       map_mode: values.mapMode,
@@ -291,6 +334,7 @@ function setupBody(values: TournamentValues) {
       map_pool: values.mapPool ?? undefined,
       champion_phase: values.championPhase,
       step_seconds: values.vetoSeconds,
+      team_pick_seconds: values.teamPickSeconds,
     },
     // Vazio não passa do `required` do campo; se passar, a API recusa e o
     // erro aparece no campo.
@@ -300,7 +344,11 @@ function setupBody(values: TournamentValues) {
       no_repeat:
         values.noRepeat === "off"
           ? null
-          : { who: "player" as const, scope: values.noRepeat },
+          : {
+              who: tdm ? values.noRepeatWho : ("player" as const),
+              scope: values.noRepeat,
+            },
+      team_duplicates: tdm && values.teamDuplicates,
     },
     stages: [stageBody(values)],
   };

@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// A borda separa um grupo de jogadores do outro (os blocos ficam lado a lado
+// numa grade); o fundo de camada os destaca do fundo da página.
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+  padding: spacing.$spacing-05;
+  border: 1px solid theme.$border-subtle-01;
+  background: theme.$layer-01;
+}
+
+// Área que só recebe um jogador arrastado: o tracejado diz que é para soltar.
+.dashed {
+  border-style: dashed;
+  border-color: theme.$border-strong-01;
+  background: transparent;
+}
+
+// Onde o jogador arrastado vai cair se for solto agora: o fundo e a borda de
+// seleção do tema, nos dois temas.
+.highlight {
+  border-style: solid;
+  border-color: theme.$border-interactive;
+  background: theme.$layer-selected-01;
+}

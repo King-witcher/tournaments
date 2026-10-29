@@ -52,7 +52,8 @@
     "withdrawn": "Abandonó",
     "champion": "1.er puesto: ganaste",
     "rank": "{rank}.º",
-    "range": "{from}.º–{to}.º"
+    "range": "{from}.º–{to}.º",
+    "reserve": "Suplente: sin equipo"
   },
   "checkIn": {
     "opensAt": "El check-in abre <date></date>. Vuelve desde ese momento para confirmar tu presencia: sin check-in, quedas fuera de la llave.",
@@ -99,7 +100,14 @@
       "unavailable": "No se pudo cargar el orden ahora. Recarga la página.",
       "started": "La llave ya se armó; el orden usado está en la pestaña Inscritos.",
       "atCheckIn": "El orden se define en el check-in, con quien confirmó su presencia.",
-      "atRegistration": "El orden se define después de publicar, con la inscripción abierta."
-    }
+      "atRegistration": "El orden se define después de publicar, con la inscripción abierta.",
+      "countTeams": "{count, plural, =0 {Ningún equipo entra} one {# equipo entra} other {# equipos entran}} en la llave.",
+      "emptyTeams": "Todavía no hay equipos completos: arma los equipos primero."
+    },
+    "titleTeams": "Orden de la llave: {count, plural, one {entra # equipo} other {entran # equipos}}",
+    "emptyTeams": "Todavía no hay equipos completos: solo entran en el orden los equipos con {size} jugadores. Arma los equipos primero.",
+    "emptyTeamsCheckIn": "Todavía no hay equipos completos: solo entran en el orden los equipos con {size} jugadores, todos con check-in. Arma los equipos primero.",
+    "teamsLeftOut": "{count, plural, one {# equipo queda fuera del orden porque está incompleto} other {# equipos quedan fuera del orden porque están incompletos}}. El torneo solo empieza cuando todos estén completos.",
+    "teamsLeftOutCheckIn": "{count, plural, one {# equipo queda fuera del orden porque está incompleto o con alguien sin check-in} other {# equipos quedan fuera del orden porque están incompletos o con alguien sin check-in}}. El torneo solo empieza cuando todos estén completos."
   }
 }

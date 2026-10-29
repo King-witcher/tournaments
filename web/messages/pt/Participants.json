@@ -52,7 +52,8 @@
     "withdrawn": "Desistiu",
     "champion": "1º lugar: você venceu",
     "rank": "{rank}º",
-    "range": "{from}º–{to}º"
+    "range": "{from}º–{to}º",
+    "reserve": "Reserva: sem time"
   },
   "checkIn": {
     "opensAt": "O check-in abre <date></date>. Volte a partir daí para confirmar presença: sem check-in, você fica fora da chave.",
@@ -99,7 +100,14 @@
       "unavailable": "Não foi possível carregar a ordem agora. Recarregue a página.",
       "started": "A chave já foi montada; a ordem usada está na aba Inscritos.",
       "atCheckIn": "A ordem se define no check-in, com quem confirmou presença.",
-      "atRegistration": "A ordem se define depois de publicar, com a inscrição aberta."
-    }
+      "atRegistration": "A ordem se define depois de publicar, com a inscrição aberta.",
+      "countTeams": "{count, plural, =0 {Nenhum time entra} one {# time entra} other {# times entram}} na chave.",
+      "emptyTeams": "Nenhum time completo ainda: forme os times primeiro."
+    },
+    "titleTeams": "Ordem da chave: {count, plural, one {# time entra} other {# times entram}}",
+    "emptyTeams": "Nenhum time completo ainda: só entram na ordem os times com {size} jogadores. Forme os times primeiro.",
+    "emptyTeamsCheckIn": "Nenhum time completo ainda: só entram na ordem os times com {size} jogadores, todos com check-in. Forme os times primeiro.",
+    "teamsLeftOut": "{count, plural, one {# time fica fora da ordem porque está incompleto} other {# times ficam fora da ordem porque estão incompletos}}. O torneio só começa quando todos estiverem completos.",
+    "teamsLeftOutCheckIn": "{count, plural, one {# time fica fora da ordem porque está incompleto ou com alguém sem check-in} other {# times ficam fora da ordem porque estão incompletos ou com alguém sem check-in}}. O torneio só começa quando todos estiverem completos."
   }
 }

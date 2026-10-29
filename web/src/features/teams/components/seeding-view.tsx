@@ -15,6 +15,7 @@ import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { getSeeding } from "../server";
 import { SeedingEditor } from "./seeding-editor";
+import { SeedingTeamsNotice } from "./seeding-teams-notice";
 import styles from "./seeding-view.module.scss";
 
 type Props = { tenant: string; slug: string };
@@ -23,14 +24,17 @@ type Props = { tenant: string; slug: string };
  * A página do seeding, para organizer e owner, na revisão antes de iniciar:
  * quantos entram na chave, a explicação e a lista de times com a posição (e o
  * rating: a média dos jogadores; no duelo, o do jogador) de cada um,
- * "Sortear", "Ordenar por rating" e "Salvar". Fora da revisão (ou para quem
- * joga), o aviso e o caminho de volta. Lê a sessão, então fica em `<Suspense>`.
+ * "Sortear", "Ordenar por rating" e "Salvar". No TDM, só os times completos
+ * entram, e o aviso dos incompletos leva à formação. Fora da revisão (ou para
+ * quem joga), o aviso e o caminho de volta. Lê a sessão, então fica em
+ * `<Suspense>`.
  */
 export async function SeedingView({ tenant, slug }: Props) {
-  const [t, tNav, tTournament, locale, loaded] = await Promise.all([
+  const [t, tNav, tTournament, tTeam, locale, loaded] = await Promise.all([
     getTranslations("Participants.seeding"),
     getTranslations("Nav"),
     getTranslations("Tournament"),
+    getTranslations("Team"),
     getLocale(),
     loadTournament(tenant, slug),
   ]);
@@ -87,29 +91,48 @@ export async function SeedingView({ tenant, slug }: Props) {
     const rating = teamRating(team.members, players, ranking?.initial ?? 0);
     if (rating !== undefined) ratings.set(team.id, rating);
   }
+  // No TDM, a ordem é de times; os incompletos ficam fora e a formação, em
+  // outra página.
+  const teams = tournament.mode === "tdm";
+  const size = tournament.team_size;
   return (
     <>
       <PageHeader
         breadcrumbs={breadcrumbs}
-        title={t("title", {
-          count: order.length,
-          total: tournament.participants,
-        })}
+        title={
+          teams
+            ? t("titleTeams", { count: order.length })
+            : t("title", {
+                count: order.length,
+                total: tournament.participants,
+              })
+        }
       >
         <Stack gap={3} className={styles.hint}>
           <p>{t("what")}</p>
           <p>{t("hint")}</p>
         </Stack>
       </PageHeader>
+      {teams && <SeedingTeamsNotice tenant={tenant} tournament={tournament} />}
       {order.length === 0 ? (
         <EmptyState
           action={
-            <ButtonLink href={manage} kind="tertiary">
-              {t("backToManage")}
-            </ButtonLink>
+            teams ? (
+              <ButtonLink href={`${path}/teams`} kind="tertiary">
+                {tTeam("form")}
+              </ButtonLink>
+            ) : (
+              <ButtonLink href={manage} kind="tertiary">
+                {t("backToManage")}
+              </ButtonLink>
+            )
           }
         >
-          {hasCheckIn ? t("empty") : t("emptyNoCheckIn")}
+          {teams
+            ? t(hasCheckIn ? "emptyTeamsCheckIn" : "emptyTeams", { size })
+            : hasCheckIn
+              ? t("empty")
+              : t("emptyNoCheckIn")}
         </EmptyState>
       ) : (
         <SeedingEditor

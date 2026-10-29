@@ -70,6 +70,43 @@
     "withdrawal": {
       "round_robin": "Quem sai do torneio perde por W.O. as partidas que faltavam, e os pontos que já fez continuam na tabela.",
       "swiss": "Quem sai do torneio não é mais pareado, e os pontos que já fez continuam na tabela."
+    },
+    "tdm": {
+      "noCheckIn": "Não há check-in: quando a organização inicia o torneio, os times formados entram na chave.",
+      "checkInDo": "Faça o check-in na página do torneio para confirmar que vai jogar: quem não fizer não entra em nenhum time.",
+      "formation": "O torneio é em times de {size} jogadores (TDM {size}v{size}). A inscrição é individual: antes de iniciar, a organização forma os times, por sorteio, por sorteio equilibrado pelo rating da comunidade ou à mão, e define o capitão de cada um.",
+      "reserves": "Quem sobra fica de reserva (por padrão, os últimos a se inscrever) e pode entrar no lugar de alguém durante o torneio.",
+      "start": "O torneio só começa com todos os times completos e com o check-in de todos os jogadores.",
+      "startNoCheckIn": "O torneio só começa com todos os times completos.",
+      "captain": "O capitão age pelo time no veto: clica em “Pronto”, faz as escolhas do time e pede ou responde o pedido de desfazer um passo.",
+      "swiss": "O formato é suíço, com o número de rodadas pelos times: 3 com até 8, 4 com até 16, 5 com até 32.",
+      "swissRounds": "O formato é suíço, em {rounds, plural, one {# rodada} other {# rodadas}} (no máximo uma a menos que os times).",
+      "roundRobinRule": "As partidas ficam abertas desde o início: as rodadas só organizam, e seu time joga cada uma quando combinar com o adversário. Com número ímpar de times, cada um folga uma rodada.",
+      "bans": "{count, plural, one {Antes de cada mapa, os capitães banem # campeão cada um, alternando; o banido fica fora desse mapa para os dois times.} other {Antes de cada mapa, os capitães banem # campeões cada um, alternando; os banidos ficam fora desse mapa para os dois times.}}",
+      "pick": "Depois dos bans, todos os jogadores escolhem o campeão ao mesmo tempo, numa janela de {window}, vendo as escolhas dos outros. Quem não escolher a tempo recebe um campeão sorteado entre os que poderia escolher.",
+      "duplicates": {
+        "off": "Dois jogadores do mesmo time não usam o mesmo campeão no mesmo mapa; entre os times, pode.",
+        "on": "Jogadores do mesmo time podem usar o mesmo campeão no mesmo mapa, e os dois times também."
+      },
+      "repeat": {
+        "off": "De um mapa para outro, os campeões podem se repetir.",
+        "player": {
+          "match": "Numa mesma partida, cada jogador não repete campeão: use um diferente em cada mapa.",
+          "stage": "Nesta fase do torneio, cada jogador não repete campeão: use um diferente em cada mapa que jogar.",
+          "tournament": "No torneio todo, cada jogador não repete campeão: use um diferente em cada mapa que jogar."
+        },
+        "team": {
+          "match": "Numa mesma partida, o time não repete campeão: o que alguém do time usou num mapa ninguém do time usa nos seguintes.",
+          "stage": "Nesta fase do torneio, o time não repete campeão: o que alguém do time usou num mapa ninguém do time usa de novo.",
+          "tournament": "No torneio todo, o time não repete campeão: o que alguém do time usou num mapa ninguém do time usa de novo."
+        }
+      },
+      "report": "Depois de cada mapa, qualquer jogador de um dos times envia o resultado na página da partida: quem venceu e o mapa jogado.",
+      "confirm": "Qualquer jogador do outro time tem {window} para confirmar ou contestar. Sem resposta, o resultado vale; se contestarem, a organização decide.",
+      "walkover": "Se o outro time não aparecer, ou se o seu time precisar sair do torneio, avise a organização: o time que não joga perde por W.O.",
+      "substitution": "Durante o torneio, a organização pode trocar um jogador por um reserva ou por outro membro da comunidade; a troca vale a partir do próximo mapa enviado.",
+      "shortHanded": "Quem sai da comunidade deixa o time desfalcado, e ele continua jogando com menos; o time só sai do torneio se desistir ou se não sobrar ninguém dele.",
+      "rating": "Cada mapa conta no rating da comunidade de quem o jogou, pela média de rating de cada time."
     }
   },
   "extraRules": "Regras adicionais",
@@ -97,7 +134,8 @@
       "contest": "Prazo para contestar",
       "veto": "Veto",
       "format": "Formato",
-      "rounds": "Rodadas"
+      "rounds": "Rodadas",
+      "mode": "Modalidade"
     },
     "bracket": {
       "single": "Eliminação simples",
@@ -128,17 +166,30 @@
       "noCheckInText": "No check-in, os inscritos confirmam perto do início que vão jogar. Este torneio não tem check-in: todos os inscritos entram na chave.",
       "contest": "O que é o prazo para contestar?",
       "contestText": "Depois de cada mapa, um jogador envia o resultado e o outro tem esse prazo para confirmar ou contestar. Sem resposta, o resultado vale; se ele contestar, a organização decide.",
-      "format": "Como funciona o formato?"
+      "format": "Como funciona o formato?",
+      "mode": "Como funcionam os times?",
+      "checkInTextTdm": "No check-in, você confirma na página do torneio que vai jogar. Só quem faz check-in entra num time.",
+      "noCheckInTextTdm": "No check-in, os inscritos confirmam perto do início que vão jogar. Este torneio não tem check-in: qualquer inscrito pode entrar num time.",
+      "contestTextTdm": "Depois de cada mapa, um jogador de um time envia o resultado e qualquer um do outro time tem esse prazo para confirmar ou contestar. Sem resposta, o resultado vale; se contestarem, a organização decide."
     },
     "seeRules": "Ver as regras",
     "rounds": {
       "auto": "rodadas pelos inscritos",
-      "fixed": "{count, plural, one {# rodada} other {# rodadas}}"
+      "fixed": "{count, plural, one {# rodada} other {# rodadas}}",
+      "autoTeams": "rodadas pelos times"
     },
     "roundsValue": {
       "auto": "Automáticas: 3 com até 8 inscritos, 4 com até 16, 5 com até 32",
-      "fixed": "{count} (no máximo uma a menos que os inscritos)"
-    }
+      "fixed": "{count} (no máximo uma a menos que os inscritos)",
+      "autoTeams": "Automáticas: 3 com até 8 times, 4 com até 16, 5 com até 32",
+      "fixedTeams": "{count} (no máximo uma a menos que os times)"
+    },
+    "noRepeatWho": "{rule}, {who, select, team {por time} other {por jogador}}",
+    "duplicates": {
+      "off": "sem campeão igual no time",
+      "on": "campeão igual no time permitido"
+    },
+    "slotsTeams": "{slots} ({teams, plural, one {# time} other {# times}} de {size})"
   },
   "invites": {
     "title": "Links de inscrição",

@@ -16,6 +16,10 @@ use crate::{maps, shared::ApiError};
 pub const DEFAULT_STEP_SECONDS: i32 = 30;
 /// Tempo aceito, em segundos (o mesmo check está na tabela).
 const STEP_SECONDS: RangeInclusive<i32> = 10..=300;
+/// Janela da escolha simultânea de campeões do TDM quando a criação não diz.
+pub const DEFAULT_TEAM_PICK_SECONDS: i32 = 60;
+/// Janela aceita, em segundos (o mesmo check está na tabela).
+const TEAM_PICK_SECONDS: RangeInclusive<i32> = 15..=300;
 /// Mapas no pool padrão: os primeiros do pool de duelo.
 pub const DEFAULT_POOL_SIZE: i64 = 7;
 /// Teto do pool (a tabela aceita até 64 posições).
@@ -90,6 +94,11 @@ pub struct VetoInput {
     /// sorteada.
     #[serde(default)]
     pub step_seconds: Option<i32>,
+    /// TDM: segundos da escolha simultânea de campeões (todos do mapa numa
+    /// janela só, depois dos bans), de 15 a 300 (padrão 60); no fim, quem
+    /// não escolheu recebe um sorteado.
+    #[serde(default)]
+    pub team_pick_seconds: Option<i32>,
 }
 
 /// A configuração do veto como fica gravada.
@@ -100,6 +109,8 @@ pub struct VetoSetup {
     pub pool: Vec<MapId>,
     pub champion_phase: bool,
     pub step_seconds: i32,
+    /// TDM: segundos da escolha simultânea de campeões.
+    pub team_pick_seconds: i32,
 }
 
 /// A configuração do veto na resposta.
@@ -110,6 +121,8 @@ pub struct VetoSettings {
     pub map_pool: Vec<String>,
     pub champion_phase: bool,
     pub step_seconds: i32,
+    /// TDM: segundos da escolha simultânea de campeões.
+    pub team_pick_seconds: i32,
 }
 
 /// Um mapa do pool do torneio.
@@ -129,22 +142,32 @@ impl VetoSetup {
             pool: Vec::new(),
             champion_phase: false,
             step_seconds: DEFAULT_STEP_SECONDS,
+            team_pick_seconds: DEFAULT_TEAM_PICK_SECONDS,
         }
     }
 
-    /// As regras do `engine` para as séries do torneio.
-    pub fn rules(&self, bans_per_game: u32) -> ev::VetoRules {
+    /// As regras do `engine` para as séries do torneio (`Setup::veto_rules`).
+    pub fn rules(
+        &self,
+        bans_per_game: u32,
+        team_size: u32,
+        team_duplicates: bool,
+    ) -> ev::VetoRules {
         ev::VetoRules {
             map_mode: self.map_mode.into(),
             pool: self.pool.clone(),
             champion_phase: self.champion_phase,
             champion_bans: u8::try_from(bans_per_game).unwrap_or(u8::MAX),
+            team_size: u8::try_from(team_size).unwrap_or(1),
+            team_duplicates,
         }
     }
 
-    /// Tempo do passo, pool sem mapa repetido e com mapas para a série mais
-    /// longa (`longest`). Erros: 422 `tournament.veto_seconds_invalid` `{min,
-    /// max}`, `tournament.map_pool_repeated`, `tournament.map_pool_too_small`
+    /// Tempo do passo e da escolha simultânea, pool sem mapa repetido e com
+    /// mapas para a série mais longa (`longest`). Erros: 422
+    /// `tournament.veto_seconds_invalid` `{min, max}`,
+    /// `tournament.team_pick_seconds_invalid` `{min, max}`,
+    /// `tournament.map_pool_repeated`, `tournament.map_pool_too_small`
     /// `{min}`, `tournament.map_pool_too_large` `{max}`.
     pub fn check(&self, longest: u8) -> Result<(), ApiError> {
         if !STEP_SECONDS.contains(&self.step_seconds) {
@@ -155,11 +178,19 @@ impl VetoSetup {
                 ]),
             );
         }
+        if !TEAM_PICK_SECONDS.contains(&self.team_pick_seconds) {
+            return Err(
+                ApiError::invalid("tournament.team_pick_seconds_invalid").with_params([
+                    ("min", i64::from(*TEAM_PICK_SECONDS.start())),
+                    ("max", i64::from(*TEAM_PICK_SECONDS.end())),
+                ]),
+            );
+        }
         if self.pool.len() > MAX_POOL {
             return Err(ApiError::invalid("tournament.map_pool_too_large")
                 .with_params([("max", MAX_POOL as i64)]));
         }
-        match self.rules(0).validate(longest) {
+        match self.rules(0, 1, false).validate(longest) {
             Ok(()) => Ok(()),
             Err(ev::VetoError::PoolRepeated(_)) => {
                 Err(ApiError::invalid("tournament.map_pool_repeated"))
@@ -203,6 +234,10 @@ pub async fn resolve(
             .step_seconds
             .or(current.map(|c| c.step_seconds))
             .unwrap_or(DEFAULT_STEP_SECONDS),
+        team_pick_seconds: input
+            .team_pick_seconds
+            .or(current.map(|c| c.team_pick_seconds))
+            .unwrap_or(DEFAULT_TEAM_PICK_SECONDS),
     })
 }
 
@@ -216,6 +251,7 @@ mod tests {
             pool: (1..=maps).map(MapId).collect(),
             champion_phase: true,
             step_seconds: seconds,
+            team_pick_seconds: DEFAULT_TEAM_PICK_SECONDS,
         }
     }
 
@@ -231,6 +267,15 @@ mod tests {
             (
                 "tournament.veto_seconds_invalid",
                 vec![("min", 10), ("max", 300)]
+            )
+        );
+        let mut slow = setup(MapMode::Veto, 7, 30);
+        slow.team_pick_seconds = 301;
+        assert_eq!(
+            code(slow.check(5)),
+            (
+                "tournament.team_pick_seconds_invalid",
+                vec![("min", 15), ("max", 300)]
             )
         );
         assert_eq!(

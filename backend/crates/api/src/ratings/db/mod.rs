@@ -226,3 +226,21 @@ pub async fn insert_adjustment(
     .fetch_one(conn)
     .await
 }
+
+/// O rating gravado no cache de cada um de `users` que já tem.
+pub async fn ratings_of(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    users: &[i64],
+) -> Result<std::collections::HashMap<i64, i32>, sqlx::Error> {
+    Ok(sqlx::query!(
+        "select user_id, rating from ratings where tenant_id = $1 and user_id = any($2)",
+        tenant.get(),
+        users
+    )
+    .fetch_all(conn)
+    .await?
+    .into_iter()
+    .map(|r| (r.user_id, r.rating))
+    .collect())
+}

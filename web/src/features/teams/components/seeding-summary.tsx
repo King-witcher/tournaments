@@ -40,12 +40,16 @@ export async function SeedingSummary({ tenant, tournament }: Props) {
 
   const order = await getSeeding(tenant, tournament.slug);
   const count = order?.length ?? 0;
+  // No TDM, a ordem é de times (os completos), não de inscritos.
+  const teams = tournament.mode === "tdm";
   const text = !order
     ? t("summary.unavailable")
     : count === 0
-      ? hasCheckIn
-        ? t("empty")
-        : t("emptyNoCheckIn")
+      ? teams
+        ? t("summary.emptyTeams")
+        : hasCheckIn
+          ? t("empty")
+          : t("emptyNoCheckIn")
       : order.every((p) => p.seed == null)
         ? t("summary.random")
         : order.some((p) => p.seed == null)
@@ -70,7 +74,11 @@ export async function SeedingSummary({ tenant, tournament }: Props) {
     >
       <p className={styles.text}>
         {order &&
-          `${t("summary.count", { count, total: tournament.participants })} `}
+          `${
+            teams
+              ? t("summary.countTeams", { count })
+              : t("summary.count", { count, total: tournament.participants })
+          } `}
         {text}
       </p>
     </Section>

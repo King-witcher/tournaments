@@ -22,6 +22,22 @@ export async function getTeamName() {
 }
 
 /**
+ * A formação dos times (os times, os reservas e quem fez check-in), uma
+ * busca por requisição: a página dos times, a aba Inscritos, o resumo da aba
+ * Organização, o "Iniciar" e o seeding dividem o resultado. `undefined` se a
+ * API falhar. Lê a sessão: quem usa fica em `<Suspense>`.
+ */
+export const getFormation = cache(async (tenant: string, slug: string) => {
+  const api = await serverApi();
+  return api
+    .GET("/tenants/{slug}/tournaments/{tournament}/teams", {
+      params: { path: { slug: tenant, tournament: slug } },
+    })
+    .then(({ data }) => data)
+    .catch(() => undefined);
+});
+
+/**
  * Os times elegíveis na ordem que vale ao iniciar (seed, depois quem não
  * tem), para o resumo da aba Organização e a página do seeding; `undefined`
  * se a API falhar. Lê a sessão: quem usa fica em `<Suspense>`.

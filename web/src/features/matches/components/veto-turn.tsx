@@ -21,17 +21,27 @@ type Props = {
   names: { a: string; b: string };
   /** O lado de quem vê, se joga. */
   mine: Schemas["Side"] | null;
+  /** Quem vê é o capitão do time dele (no duelo, sempre que joga). */
+  captain: boolean;
   canManage: boolean;
 };
 
 /**
  * O que o veto espera agora, numa frase: antes de começar, quem está pronto
- * (com "Pronto" para quem joga e "Começar agora" para a organização); depois,
- * de quem é a vez e o tempo que falta (no fim, a escolha é sorteada: a
- * página recarrega para mostrar o sorteio); concluído, que o mapa pode ser
- * enviado.
+ * (com "Pronto" para o capitão de cada lado e "Começar agora" para a
+ * organização); depois, de quem é a vez e o tempo que falta (no fim, a
+ * escolha é sorteada: a página recarrega para mostrar o sorteio); na
+ * escolha simultânea do TDM, quem falta e o tempo da janela; concluído, que
+ * o mapa pode ser enviado.
  */
-export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
+export function VetoTurn({
+  target,
+  veto,
+  names,
+  mine,
+  captain,
+  canManage,
+}: Props) {
   const t = useTranslations("Match.veto");
   const router = useRouter();
   const action = useVetoAction(target);
@@ -51,10 +61,13 @@ export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
           ))}
         </ul>
         <div className={styles.buttons}>
-          {mine && !ready[mine] && (
+          {mine && !ready[mine] && captain && (
             <Button pending={action.pending} onClick={action.ready}>
               {t("readyButton")}
             </Button>
+          )}
+          {mine && !ready[mine] && !captain && (
+            <p className={styles.note}>{t("captainReadies")}</p>
           )}
           {mine && ready[mine] && (
             <p className={styles.note}>
@@ -83,13 +96,48 @@ export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
   }
 
   const turn = veto.turn;
+  const deadline = veto.deadline && (
+    <Countdown
+      until={veto.deadline}
+      // O sorteio é feito pela API: recarrega para mostrar.
+      onExpire={() => setTimeout(() => router.refresh(), 1000)}
+    />
+  );
+  if (turn.action === "team_pick") {
+    const yours = veto.options.length > 0;
+    const waiting =
+      mine != null && !yours && veto.missing.some((p) => p.side === mine);
+    return (
+      <div className={styles.turn}>
+        <p className={yours ? styles.yours : undefined}>
+          {yours ? t("teamPickYours", { game }) : t("teamPick", { game })}
+        </p>
+        {waiting && <p className={styles.note}>{t("teamPickPicked")}</p>}
+        {veto.missing.length > 0 && (
+          <p className={styles.note}>
+            {t("missing", {
+              names: veto.missing.map((p) => p.nickname).join(", "),
+            })}
+          </p>
+        )}
+        {deadline && (
+          <p className={styles.note}>
+            {t.rich("teamDeadline", { time: () => deadline })}
+          </p>
+        )}
+      </div>
+    );
+  }
   const what = t(`action.${turnKey(turn)}`, { game });
-  const mineToAct = mine != null && turn.sides.includes(mine);
+  const ourTurn = mine != null && turn.sides.includes(mine);
+  const mineToAct = ourTurn && captain;
   let sentence: string;
-  if (turn.sides.length === 2) {
+  if (turn.sides.length === 2 && !(ourTurn && !captain)) {
     sentence = t("bothVote", { game });
   } else if (mineToAct) {
     sentence = t("yourTurn", { action: what });
+  } else if (ourTurn) {
+    sentence = t("captainTurn", { action: what });
   } else if (turn.action === "vote" && mine) {
     sentence = t("votedWaiting", { name: names[turn.sides[0]] });
   } else {
@@ -98,17 +146,9 @@ export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
   return (
     <div className={styles.turn}>
       <p className={mineToAct ? styles.yours : undefined}>{sentence}</p>
-      {veto.deadline && (
+      {deadline && (
         <p className={styles.note}>
-          {t.rich("deadline", {
-            time: () => (
-              <Countdown
-                until={veto.deadline ?? ""}
-                // O sorteio é feito pela API: recarrega para mostrar.
-                onExpire={() => setTimeout(() => router.refresh(), 1000)}
-              />
-            ),
-          })}
+          {t.rich("deadline", { time: () => deadline })}
         </p>
       )}
     </div>

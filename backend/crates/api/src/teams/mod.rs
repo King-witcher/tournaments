@@ -9,11 +9,15 @@
 //! último jogador do time sai da comunidade). A rota da desistência fica em
 //! `lifecycle`, que dá os W.O. pela chave.
 //!
-//! A formação de times (TDM) entra aqui: criar e desfazer times, nome e
-//! capitão, e quem joga cada mapa (hoje o banco grava a escalação com os
-//! jogadores do time no momento do mapa).
+//! No TDM (times de 2 a 4): a formação antes do início (`formation`: ver os
+//! times e os reservas, criar time, pôr e tirar jogadores; o sorteio, que lê
+//! o rating, fica em `lifecycle` com `draw_teams`), o nome e o capitão e a
+//! substituição durante o torneio (`roster`). A escalação de cada mapa (quem
+//! está no time e na comunidade no envio) é gravada pelo banco.
 
 mod db;
+mod formation;
+mod roster;
 mod seed_order;
 mod seeding;
 mod team;
@@ -23,13 +27,21 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::{by_ids, seeded, withdraw, withdraw_departing};
+pub use db::{
+    by_ids, clear as clear_teams, create as create_team, of_user, players, save_teams_seed, seeded,
+    withdraw, withdraw_departing,
+};
+pub use formation::{editable as formation_editable, formation};
 pub use seeding::finalize as finalize_seeding;
 pub use team::StoredTeam;
-pub use types::{Team, TeamPath};
+pub use types::{DrawMethod, DrawTeams, Team, TeamFormation, TeamMember, TeamPath};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(seeding::get_seeding, seeding::put_seeding))
         .routes(routes!(seeding::shuffle_seeding))
+        .routes(routes!(formation::get_teams, formation::create_team))
+        .routes(routes!(formation::put_member, formation::delete_member))
+        .routes(routes!(roster::update_team))
+        .routes(routes!(roster::substitute))
 }

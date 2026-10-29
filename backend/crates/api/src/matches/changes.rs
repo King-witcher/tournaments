@@ -12,7 +12,10 @@
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para a organização) saem de quem
 //! envia e de quem contesta; os do veto (adversário pronto, veto começou), de
-//! quem fica pronto ou força o começo.
+//! quem fica pronto ou força o começo. A abertura da escolha simultânea de
+//! campeões do TDM (`match.team_pick_open`, para os jogadores dos dois
+//! times) sai daqui, porque ela abre por qualquer caminho (o último ban, o
+//! tempo esgotado, o jogo seguinte, o desfazer).
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -20,6 +23,7 @@ use chrono::{DateTime, Utc};
 use engine::{
     core::{MapId, Match, MatchId, MatchState, ParticipantId},
     formats::{self as ef, StageBracket},
+    veto::{Action, Turn},
 };
 use sqlx::PgConnection;
 
@@ -69,13 +73,15 @@ fn contested(stage: &Stage) -> BTreeSet<i64> {
 }
 
 /// O que se vê de uma partida: estado na chave, mapas, série decidida e o
-/// veto (quantos eventos e o último).
+/// veto (quantos eventos e o último, e o jogo com a escolha simultânea do
+/// TDM aberta).
 #[derive(PartialEq)]
 struct Mark {
     state: MatchState,
     games: Vec<GameMark>,
     result: Option<ResultMark>,
     veto: (usize, Option<i64>),
+    team_pick: Option<u8>,
 }
 
 type GameMark = (
@@ -104,11 +110,23 @@ impl Mark {
         let veto = stage
             .veto_of(m.id)
             .map_or((0, None), |v| (v.rows.len(), v.rows.last().map(|r| r.id)));
+        let team_pick = stage
+            .veto_of(m.id)
+            .filter(|_| matches!(m.state, MatchState::Ready { .. }))
+            .and_then(|v| match v.state.turn() {
+                Turn::Act {
+                    game,
+                    action: Action::TeamPick,
+                    ..
+                } => Some(game),
+                _ => None,
+            });
         Self {
             state: m.state,
             games,
             result,
             veto,
+            team_pick,
         }
     }
 }
@@ -159,6 +177,11 @@ pub async fn settled(
                     .filter_map(|p| after.entrant(*p))
                     .flat_map(StoredTeam::user_ids),
             );
+        }
+        if let (Some(game), Some((a, b))) = (now.team_pick, ready(m.state))
+            && was.and_then(|w| w.team_pick) != Some(game)
+        {
+            team_pick_open(conn, &audience, after, &key, (a, b), game).await?;
         }
         let decided = |mark: &Mark| mark.result.as_ref().map(|r| (r.1, r.2));
         if decided(&now).is_some() && was.map(decided) != Some(decided(&now)) {
@@ -292,6 +315,31 @@ async fn match_ready(
         outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
     }
     Ok(())
+}
+
+/// TDM: a escolha simultânea de campeões do mapa `game` abriu: aviso para os
+/// jogadores dos dois times que estão na comunidade (todos escolhem).
+async fn team_pick_open(
+    conn: &mut PgConnection,
+    audience: &Audience,
+    stage: &Stage,
+    key: &str,
+    (a, b): (ParticipantId, ParticipantId),
+    game: u8,
+) -> Result<(), sqlx::Error> {
+    let players = [a, b]
+        .into_iter()
+        .filter_map(|p| stage.entrant(p))
+        .flat_map(|t| t.members.iter().filter(|m| !m.left).map(|m| m.user_id));
+    let notice = Notice {
+        kind: NoticeKind::TeamPickOpen {
+            tournament: audience.name.clone(),
+            match_key: key.to_owned(),
+            game: i16::from(game),
+        },
+        path: match_path(audience, key),
+    };
+    outbox::emit(conn, Event::notice(players, notice)).await
 }
 
 fn match_path(audience: &Audience, key: &str) -> String {

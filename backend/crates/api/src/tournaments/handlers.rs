@@ -38,7 +38,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -51,12 +51,14 @@ pub async fn create_tournament(
     let mut conn = state.db.acquire().await?;
     let veto = veto::resolve(&mut conn, body.veto.unwrap_or_default(), None).await?;
     let setup = Setup::from_dto(
+        body.mode,
+        body.team_size,
         body.max_participants,
         body.champion_rules,
         body.stages,
         veto,
     );
-    setup.check(body.mode, db::champion_pool(&mut *conn).await?, 0)?;
+    setup.check(db::champion_pool(&mut *conn).await?, 0)?;
     drop(conn);
     let schedule = Schedule {
         starts_at: body.starts_at,
@@ -71,7 +73,6 @@ pub async fn create_tournament(
         slug: &body.slug,
         locale: body.locale,
         texts: &texts,
-        mode: body.mode,
         visibility: body.visibility,
         setup: &setup,
         schedule,
@@ -178,7 +179,7 @@ pub async fn get_tournament(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade, janela de contestação ou screenshot obrigatório), tournament.setup_locked (vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
     )
 )]
@@ -214,7 +215,7 @@ pub async fn update_tournament(
     let edit = edit::apply(stored, veto, body)?;
     if let Some(setup) = &edit.setup {
         let pool = db::champion_pool(&mut *tx).await?;
-        setup.check(current.mode, pool, current.participants)?;
+        setup.check(pool, current.participants)?;
     }
     db::update(&mut tx, current.id, &edit).await?;
     if let Some(required) = screenshots_required {
@@ -264,9 +265,7 @@ pub async fn publish_tournament(
         return Err(ApiError::conflict("tournament.not_draft"));
     }
     let pool = db::champion_pool(&mut *tx).await?;
-    current
-        .setup
-        .check(current.mode, pool, current.participants)?;
+    current.setup.check(pool, current.participants)?;
     db::publish(&mut tx, current.id).await?;
     changes::changed(&mut tx, current.id).await?;
     let published = db::find(&mut tx, member.tenant, &path.tournament, viewer)

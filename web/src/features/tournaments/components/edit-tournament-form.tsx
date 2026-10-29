@@ -16,6 +16,7 @@ import { TournamentChampionFields } from "./tournament-champion-fields";
 import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
+import { TournamentModeFields } from "./tournament-mode-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
@@ -36,8 +37,9 @@ type Props = {
 
 /**
  * Editar torneio, uma aba por assunto: Geral (nome, descrição, regras
- * adicionais e outros idiomas), Formato (chave, séries, campeões, veto) e
- * Inscrições e prazos (início, vagas, visibilidade, check-in, contestação).
+ * adicionais e outros idiomas), Formato (modalidade, chave, séries, campeões,
+ * veto) e Inscrições e prazos (início, vagas, visibilidade, check-in,
+ * contestação).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
  * de começar, o motivo dos campos travados vem no topo da aba deles.
  */
@@ -107,6 +109,13 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                   <Notice kind="info">{t("formatLocked")}</Notice>
                 )}
                 <FormSection legend={t("format")}>
+                  <TournamentModeFields
+                    values={values}
+                    onChange={onChange}
+                    errors={errors}
+                    disabled={setupLocked}
+                    saved={tournament}
+                  />
                   <TournamentFormatFields
                     values={values}
                     onChange={onChange}

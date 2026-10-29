@@ -23,10 +23,12 @@
       "playing": "Na chave",
       "eliminated": "Terminou em {place}",
       "withdrawn": "Desistiu",
-      "champion": "1º lugar"
+      "champion": "1º lugar",
+      "reserve": "Reserva: sem time"
     },
     "empty": "{name} ainda não jogou aqui: não há inscrição em nenhum torneio desta comunidade que você vê.",
     "emptyYou": "Você ainda não jogou aqui. Os torneios com inscrição aberta ficam na aba Torneios.",
-    "browse": "Ver os torneios"
+    "browse": "Ver os torneios",
+    "withTeam": "{tournament} · time: {team}"
   }
 }

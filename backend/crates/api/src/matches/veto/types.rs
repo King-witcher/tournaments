@@ -27,6 +27,9 @@ pub enum VetoAction {
     Ban,
     Pick,
     Vote,
+    /// TDM: todos escolhem o próprio campeão ao mesmo tempo, numa janela só
+    /// (`team_pick_seconds`).
+    TeamPick,
 }
 
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,8 +44,30 @@ pub enum VetoTarget {
 pub struct VetoTurn {
     pub action: VetoAction,
     pub target: VetoTarget,
-    /// Quem age: um lado, ou os dois na votação enquanto nenhum votou.
+    /// Quem age: um lado (nos times, pelo capitão), ou os dois na votação
+    /// enquanto nenhum votou e na escolha simultânea enquanto falta alguém
+    /// de cada um.
     pub sides: Vec<Side>,
+}
+
+/// TDM: um jogador na escolha simultânea de campeões.
+#[derive(Serialize, ToSchema)]
+pub struct VetoPlayer {
+    pub side: Side,
+    pub user_id: i64,
+    /// Apelido; vazio quando a conta foi excluída.
+    pub nickname: String,
+}
+
+/// TDM: a escolha de um jogador num mapa.
+#[derive(Serialize, ToSchema)]
+pub struct VetoTeamPick {
+    pub side: Side,
+    pub user_id: i64,
+    pub nickname: String,
+    pub champion: ChampionRef,
+    /// Sorteado pelo fim da janela.
+    pub timeout: bool,
 }
 
 #[derive(Serialize, ToSchema, Clone)]
@@ -80,8 +105,11 @@ pub struct VetoGame {
     /// Quem começa os campeões.
     pub starter: Option<Side>,
     pub bans: Vec<VetoBan>,
+    /// Duelo: o campeão de cada lado.
     pub pick_a: Option<ChampionRef>,
     pub pick_b: Option<ChampionRef>,
+    /// TDM: o campeão de cada jogador, na ordem em que escolheram.
+    pub team_picks: Vec<VetoTeamPick>,
 }
 
 /// Um campeão do torneio no jogo em andamento, com o que o tira das opções.
@@ -93,8 +121,25 @@ pub struct VetoChampion {
     pub banned_by: Option<Side>,
     /// A regra de não repetição o tira de cada lado (já usado na série ou,
     /// pelo escopo da regra, em outra partida).
+    /// Nos times, pela regra do jogador, o que ela tira de algum do elenco.
     pub used_by_a: bool,
     pub used_by_b: bool,
+    /// TDM: a regra tira de quem vê, se ele joga (pela do jogador, o que ele
+    /// mesmo usou; pela do time, o que o time usou).
+    pub used_by_you: bool,
+}
+
+/// TDM: o que cedeu para quem vê ter campeão na escolha simultânea (cada um
+/// cede sozinho, na hora em que escolhe).
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoGaveWay {
+    /// A regra de não repetição: com ela, não sobrava nenhum; as opções
+    /// trazem os que ela tira (`used_by_you`).
+    Rule,
+    /// Também o "sem repetir no time": nem sem a regra sobrava um que os
+    /// colegas não escolheram no mapa; quem vê pode repetir o de um colega.
+    Team,
 }
 
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -131,6 +176,8 @@ pub struct VetoEvent {
     pub timeout: bool,
     /// Apelido de quem agiu; `null` no que acontece sozinho.
     pub actor: Option<String>,
+    /// TDM: na escolha simultânea, o apelido do jogador (também no sorteado).
+    pub player: Option<String>,
     pub at: DateTime<Utc>,
 }
 
@@ -141,6 +188,8 @@ pub struct VetoView {
     pub champion_phase: bool,
     /// Segundos de cada passo.
     pub step_seconds: i32,
+    /// TDM: segundos da escolha simultânea de campeões; `null` no duelo.
+    pub team_pick_seconds: Option<i32>,
     /// O pool de mapas do torneio, na ordem.
     pub pool: Vec<MapRef>,
     pub status: VetoStatus,
@@ -157,8 +206,16 @@ pub struct VetoView {
     pub remaining: Vec<MapRef>,
     pub games: Vec<VetoGame>,
     /// O que quem vê pode escolher agora (slugs de mapas ou de campeões);
-    /// vazio se não é a vez dele.
+    /// vazio se não é a vez dele (nos times, o passo do lado é do capitão; na
+    /// escolha simultânea, cada um tem as suas, sem o que um colega já
+    /// escolheu no mapa).
     pub options: Vec<String>,
+    /// TDM: as opções de quem vê vieram com algo cedido (a tela avisa);
+    /// `null` se nada cedeu ou se não é a vez dele.
+    pub gave_way: Option<VetoGaveWay>,
+    /// TDM: quem ainda não escolheu na escolha simultânea do jogo em
+    /// andamento.
+    pub missing: Vec<VetoPlayer>,
     /// Os campeões do torneio no jogo em andamento (com a fase de campeões).
     pub champions: Vec<VetoChampion>,
     /// O lado que pediu para desfazer o último passo, esperando o outro.

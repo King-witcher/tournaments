@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into teams (tenant_id, tournament_id, captain)\n           values ($1, $2, $3)\n           returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1ba36a989a8d8f47ea9ad0b0cd5b566e31dce883ff4bbfcb792ae8eaaea26dea"
+}

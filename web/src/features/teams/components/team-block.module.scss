@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Nome e estado à esquerda, as ações na ponta direita; o que não cabe desce.
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-03;
+}
+
+// Título de bloco (heading-02); nome longo quebra em vez de alargar a grade.
+.name {
+  @include type.type-style("heading-02");
+
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+// O seed é referência, não o nome: na cor secundária.
+.seed {
+  margin-inline-end: spacing.$spacing-03;
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  margin-inline-start: auto;
+}

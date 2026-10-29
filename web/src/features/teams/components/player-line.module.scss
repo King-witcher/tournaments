@@ -1,0 +1,56 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+
+// Avatar e apelido, as marcas e o menu numa linha; no celular, o que não cabe
+// desce sem rolagem lateral. A linha fina separa um jogador do outro.
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-03;
+  min-block-size: spacing.$spacing-08;
+  padding-block: spacing.$spacing-02;
+  border-block-start: 1px solid theme.$border-subtle-01;
+
+  &:first-child {
+    border-block-start: 0;
+  }
+}
+
+// A linha se arrasta (a formação, no computador): o cursor diz isso.
+.draggable {
+  cursor: grab;
+}
+
+// A alça: no celular o arrastar não funciona, e o menu ⋯ faz o mesmo.
+.handle {
+  flex-shrink: 0;
+  fill: theme.$icon-secondary;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.name {
+  @include type.type-style("body-compact-01");
+
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+// O menu vai para a ponta direita da linha.
+.actions {
+  margin-inline-start: auto;
+}

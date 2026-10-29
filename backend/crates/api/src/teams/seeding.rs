@@ -116,14 +116,27 @@ pub async fn put_seeding(
 /// ordem gravada, os elegíveis sem seed vão para o fim (na ordem de criação)
 /// e, se nenhum tem seed, sorteia (e grava a seed). Os seeds viram 1..N entre
 /// os elegíveis, e os outros times ficam sem. Devolve a ordem que entra na
-/// chave. 409 `tournament.not_enough_eligible` `{min, eligible}` com menos de
-/// `min` elegíveis.
+/// chave. Erros (409): `tournament.teams_incomplete` `{teams}` no TDM com
+/// algum time incompleto ou com alguém sem check-in (os outros elegíveis
+/// ficam de reserva, mas todo time formado precisa estar completo);
+/// `tournament.not_enough_eligible` `{min, eligible}` com menos de `min`
+/// elegíveis.
 pub async fn finalize(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     min: usize,
 ) -> Result<Vec<ParticipantId>, ApiError> {
-    let eligible = eligible(conn, tournament).await?;
+    let entrants = db::entrants(conn, tournament.id).await?;
+    let (has_check_in, size) = (
+        tournament.schedule.has_check_in(),
+        tournament.setup.team_size,
+    );
+    let incomplete = seed_order::incomplete(&entrants, has_check_in, size);
+    if tournament.setup.teams() && incomplete > 0 {
+        return Err(ApiError::conflict("tournament.teams_incomplete")
+            .with_params([("teams", incomplete as i64)]));
+    }
+    let eligible = seed_order::eligible(entrants, has_check_in, size);
     if eligible.len() < min {
         return Err(ApiError::conflict("tournament.not_enough_eligible")
             .with_params([("min", min as i64), ("eligible", eligible.len() as i64)]));
@@ -162,6 +175,7 @@ async fn eligible(
     Ok(seed_order::eligible(
         entrants,
         tournament.schedule.has_check_in(),
+        tournament.setup.team_size,
     ))
 }
 

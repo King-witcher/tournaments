@@ -25,7 +25,8 @@
       "playing": "En la llave",
       "eliminated": "Terminó en {place}",
       "withdrawn": "Abandonó",
-      "champion": "1.er puesto: ganaste"
+      "champion": "1.er puesto: ganaste",
+      "reserve": "Suplente: sin equipo"
     },
     "next": {
       "against": "Próxima partida: {match} contra {opponent}",
@@ -33,7 +34,8 @@
       "loser": "Próxima partida: {match} contra quien pierda {source}",
       "unknown": "Próxima partida: {match}"
     },
-    "noDate": "Sin fecha"
+    "noDate": "Sin fecha",
+    "team": "Equipo: {team}"
   },
   "tenants": {
     "title": "Mis comunidades",

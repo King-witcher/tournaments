@@ -91,7 +91,11 @@ async fn stage_and_champion_rules_are_stored_as_engine_json() {
         .unwrap();
     assert_eq!(
         rules,
-        json!({ "bans_per_game": 1, "no_repeat": { "who": "player", "scope": "match" } })
+        json!({
+            "bans_per_game": 1,
+            "no_repeat": { "who": "player", "scope": "match" },
+            "team_duplicates": false
+        })
     );
 }
 

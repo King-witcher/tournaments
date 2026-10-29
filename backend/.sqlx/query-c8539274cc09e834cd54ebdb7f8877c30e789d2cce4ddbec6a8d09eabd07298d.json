@@ -1,0 +1,73 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select tm.nickname,\n                  (select i.provider_user_id from user_identities i\n                   where i.user_id = tm.user_id and i.provider = 'discord') as discord_id,\n                  t.id as \"team_id?\", t.name as \"team_name?\", cm.nickname as \"captain?\"\n           from unnest($2::bigint[]) with ordinality as u(id, n)\n           join tenant_members tm on tm.user_id = u.id and tm.tenant_id = $1\n           left join tournaments tr on tr.tenant_id = $1 and tr.slug = $3 and tr.mode = 'tdm'\n           left join participants p on p.tournament_id = tr.id and p.user_id = u.id\n           left join teams t on t.tournament_id = tr.id and t.id = p.team_id\n           left join tenant_members cm on cm.tenant_id = $1 and cm.user_id = t.captain\n           order by u.n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "discord_id",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "team_id?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "team_name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "captain?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c8539274cc09e834cd54ebdb7f8877c30e789d2cce4ddbec6a8d09eabd07298d"
+}

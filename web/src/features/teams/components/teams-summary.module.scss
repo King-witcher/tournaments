@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+// Uma frase sobre os times, em coluna de leitura (40rem).
+.text {
+  @include type.type-style("body-01");
+
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+}

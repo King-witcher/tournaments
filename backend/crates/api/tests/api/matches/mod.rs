@@ -13,6 +13,7 @@ mod results;
 mod round_robin;
 mod schema;
 mod swiss;
+mod tdm;
 mod veto;
 
 use axum::{Router, http::StatusCode};

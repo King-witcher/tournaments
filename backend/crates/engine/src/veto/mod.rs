@@ -14,18 +14,28 @@
 //!   repetir) e `Off` (os jogadores combinam fora).
 //! - **Campeões**, por mapa, se a fase está ligada: `champion_sequence`
 //!   (ban de um lado, ban do outro, tantas vezes quantos os bans por mapa;
-//!   pick de um, pick do outro), alternado e aberto. O ban vale para os dois
+//!   pick de um, pick do outro), alternado e aberto. Nos times (TDM,
+//!   `team_size` > 1), os bans são os mesmos (pelo capitão, na API) e no
+//!   lugar dos dois picks há uma **escolha simultânea** (`Action::TeamPick`,
+//!   `team.rs`): cada jogador do elenco de cada lado (`set_rosters`, quem
+//!   está no time agora) escolhe o próprio campeão, sem vez, e o jogo
+//!   acaba quando todos escolheram ou quando foi enviado (sem o elenco
+//!   informado, a vez é `Turn::RostersUnknown`). O ban vale para os dois
 //!   naquele mapa. Começa quem não escolheu o mapa; no decisivo, quem começou
 //!   o veto (o seed melhor); fora do modo veto, o seed melhor no primeiro
 //!   jogo e, nos seguintes, quem perdeu o anterior (gravado no evento
 //!   `Game`, para a correção de um resultado não mudar o veto já feito).
 //! - **Não repetição** (`Context::no_repeat`): o pick exclui os campeões que
 //!   o lado já usou nos jogos anteriores da série e os de fora dela que a API
-//!   passa (`Context::used`, do escopo da regra). Se não sobrar nenhum, a
+//!   passa (`Context::used`, do escopo da regra). Nos times, pela regra do
+//!   jogador, o que ele mesmo usou (`Context::used_by` de fora da série);
+//!   pela do time, o que qualquer um do time usou; e, sem repetir no time
+//!   (`team_duplicates` falso), o que um colega já escolheu no mapa. Se não sobrar nenhum, a
 //!   regra cede (qualquer campeão sem ban), para o veto nunca travar. Um ban
 //!   também não pode deixar quem bane sem campeão para escolher: com tão
 //!   poucos que os bans que o adversário ainda tem os esgotariam, quem bane
-//!   só bane os que ele mesmo não poderia escolher (`Veto::options`).
+//!   só bane os que ele mesmo não poderia escolher (`Veto::options`; nos
+//!   times, conta o que sobra para cada jogador do elenco).
 //! - Os passos do jogo em andamento se desfazem do último para o primeiro
 //!   (`Event::Undo`); jogo que já passou não se desfaz.
 //! - Os sorteios (mapas oferecidos, desempate, mapa aleatório e a escolha de
@@ -33,10 +43,12 @@
 //!   começo: o mesmo histórico dá sempre o mesmo resultado.
 //! - No `replay`, a regra de não repetição e o pool de campeões não são
 //!   conferidos de novo (valeram quando o passo foi gravado); a vez, o tipo
-//!   do passo e o que já saiu, sim.
+//!   do passo e o que já saiu, sim. Na escolha simultânea, o elenco também
+//!   não: quem escolheu num jogo pode ter saído do time depois.
 
 mod draw;
 mod sequence;
+mod team;
 #[cfg(test)]
 mod tests;
 
@@ -44,11 +56,13 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::{ChampionId, MapId};
+use crate::champions::NoRepeatWho;
+use crate::core::{ChampionId, MapId, PlayerId};
 use crate::series::Side;
 use draw::Purpose;
 
 pub use sequence::{Action, champion_sequence, map_sequence};
+pub use team::{GaveWay, Rosters, TeamOptions};
 
 /// Mapas oferecidos em cada votação (como no próprio Quake Champions).
 pub const VOTE_OPTIONS: usize = 3;
@@ -73,12 +87,22 @@ pub struct VetoRules {
     pub champion_phase: bool,
     /// Bans de campeão de cada lado por mapa.
     pub champion_bans: u8,
+    /// Jogadores por lado: 1 no duelo; nos times, a escolha de campeões é
+    /// simultânea, um por jogador.
+    pub team_size: u8,
+    /// Nos times: dois do mesmo time podem ter o mesmo campeão no mapa.
+    pub team_duplicates: bool,
 }
 
 impl VetoRules {
     /// Há alguma fase antes dos jogos (mapa ou campeões).
     pub fn has_phases(&self) -> bool {
         self.map_mode != MapMode::Off || self.champion_phase
+    }
+
+    /// Nos times, a escolha de campeões é simultânea.
+    pub const fn teams(&self) -> bool {
+        self.team_size > 1
     }
 
     /// O pool aguenta séries de até `longest` mapas: sem mapa repetido e,
@@ -131,6 +155,13 @@ pub enum Event {
         action: Action,
         choice: Choice,
     },
+    /// Nos times: `player`, do lado `side`, escolhe o próprio campeão na
+    /// escolha simultânea do jogo em andamento.
+    TeamPick {
+        side: Side,
+        player: PlayerId,
+        champion: ChampionId,
+    },
     /// Desfaz o último passo do jogo em andamento.
     Undo,
 }
@@ -141,6 +172,8 @@ pub struct Applied {
     pub side: Side,
     pub action: Action,
     pub choice: Choice,
+    /// Na escolha simultânea dos times, o jogador.
+    pub player: Option<PlayerId>,
 }
 
 /// Sobre o que é o passo esperado.
@@ -157,7 +190,8 @@ pub enum Turn {
     /// Ainda não começou.
     NotBegun,
     /// O jogo `game` espera `action` sobre `target` de `sides` (os dois na
-    /// votação, enquanto nenhum votou).
+    /// votação, enquanto nenhum votou; na escolha simultânea dos times, os
+    /// lados em que falta alguém: `Veto::missing`).
     Act {
         game: u8,
         action: Action,
@@ -166,6 +200,11 @@ pub enum Turn {
     },
     /// O veto do jogo `game` acabou: espera o envio dele.
     Done { game: u8 },
+    /// Nos times, o jogo `game` chegou à escolha simultânea, mas o elenco de
+    /// agora não foi informado (`Veto::set_rosters`): sem ele, não se sabe
+    /// quem falta nem se o jogo já foi enviado. O `replay` sozinho para
+    /// aqui; a API sempre informa.
+    RostersUnknown { game: u8 },
 }
 
 /// O que as opções de campeão precisam saber de fora da série.
@@ -173,11 +212,15 @@ pub enum Turn {
 pub struct Context<'a> {
     /// Os campeões do torneio, na ordem em que aparecem.
     pub champions: &'a [ChampionId],
-    /// A regra de não repetição vale.
-    pub no_repeat: bool,
+    /// A regra de não repetição, quando vale (no duelo, `Player` e `Team`
+    /// dão no mesmo).
+    pub no_repeat: Option<NoRepeatWho>,
     /// O que cada lado (`[a, b]`) já usou fora desta série, no escopo da
-    /// regra (vazio no escopo da partida).
+    /// regra (vazio no escopo da partida). Nos times, pela regra do time.
     pub used: [&'a [ChampionId]; 2],
+    /// Nos times, pela regra do jogador: o que cada um já usou fora desta
+    /// série, no escopo da regra.
+    pub used_by: &'a [(PlayerId, ChampionId)],
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
@@ -204,6 +247,14 @@ pub enum VetoError {
     ChampionForbidden,
     #[error("nada para desfazer neste jogo")]
     NothingToUndo,
+    #[error("este jogador já escolheu o campeão deste mapa")]
+    AlreadyPicked,
+    #[error("o elenco de agora não foi informado")]
+    RostersUnknown,
+    #[error("jogador repetido no elenco: {0:?}")]
+    RosterRepeated(PlayerId),
+    #[error("elenco com {got} jogadores, o máximo é {max}")]
+    RosterTooLarge { max: u8, got: usize },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -267,6 +318,18 @@ pub struct Veto {
     games: Vec<GameVeto>,
     /// Eventos aplicados: separa os sorteios de tempo esgotado.
     events: u32,
+    /// Nos times, o que só a API sabe agora (`set_rosters`): quem escolhe
+    /// campeão por lado e o que já foi enviado. `None` até ser informado.
+    rosters: Option<Rosters>,
+}
+
+/// Onde o jogo em andamento está, sem olhar o elenco.
+enum Phase {
+    /// Fora da escolha simultânea: a vez é esta.
+    Turn(Turn),
+    /// Nos times, o jogo chegou à escolha simultânea (o veto de mapa dele e
+    /// os bans acabaram): quem falta depende do elenco.
+    TeamPick(u8),
 }
 
 impl Veto {
@@ -277,7 +340,31 @@ impl Veto {
             begin: None,
             games: Vec::new(),
             events: 0,
+            rosters: None,
         }
+    }
+
+    /// Informa o que o histórico não diz (ver `Rosters`). Vale para o jogo
+    /// em andamento; o `replay` não depende dele. Erros: `RosterRepeated` (o
+    /// mesmo jogador duas vezes, num lado ou nos dois) e `RosterTooLarge`
+    /// (mais que `team_size` num lado).
+    pub fn set_rosters(&mut self, rosters: Rosters) -> Result<(), VetoError> {
+        let mut seen = HashSet::new();
+        for side in &rosters.players {
+            if side.len() > usize::from(self.rules.team_size) {
+                return Err(VetoError::RosterTooLarge {
+                    max: self.rules.team_size,
+                    got: side.len(),
+                });
+            }
+            for p in side {
+                if !seen.insert(*p) {
+                    return Err(VetoError::RosterRepeated(*p));
+                }
+            }
+        }
+        self.rosters = Some(rosters);
+        Ok(())
     }
 
     /// Refaz o veto aplicando `events` em ordem, sem conferir a regra de não
@@ -295,10 +382,12 @@ impl Veto {
     }
 
     /// Aplica um evento. Com `ctx`, um passo de campeão também passa pela
-    /// regra de não repetição e pelo pool (`options`). Erros: `AlreadyBegun`,
+    /// regra de não repetição e pelo pool (`options`, `team_options`), e a
+    /// escolha simultânea, pelo elenco. Erros: `AlreadyBegun`,
     /// `PoolTooSmall` (no começo), `NotBegun`, `GameOutOfOrder`, `Finished`,
-    /// `NotYourTurn`, `WrongAction`, `OptionInvalid`, `ChampionForbidden` e
-    /// `NothingToUndo`.
+    /// `NotYourTurn`, `WrongAction`, `OptionInvalid`, `ChampionForbidden`,
+    /// `AlreadyPicked`, `RostersUnknown` (escolha simultânea com `ctx` sem o
+    /// elenco informado) e `NothingToUndo`.
     pub fn apply(&mut self, event: Event, ctx: Option<&Context>) -> Result<(), VetoError> {
         match event {
             Event::Begin { seed, first } => {
@@ -344,6 +433,11 @@ impl Veto {
                 action,
                 choice,
             } => self.step(side, action, choice, ctx)?,
+            Event::TeamPick {
+                side,
+                player,
+                champion,
+            } => self.team_step(side, player, champion, ctx)?,
             Event::Undo => {
                 let game = self.games.last_mut().ok_or(VetoError::NotBegun)?;
                 game.steps.pop().ok_or(VetoError::NothingToUndo)?;
@@ -360,9 +454,15 @@ impl Veto {
         choice: Choice,
         ctx: Option<&Context>,
     ) -> Result<(), VetoError> {
+        if action == Action::TeamPick {
+            // A escolha simultânea é por jogador: `Event::TeamPick`.
+            return Err(VetoError::WrongAction);
+        }
         let (game, expected, target, sides) = match self.turn() {
             Turn::NotBegun => return Err(VetoError::NotBegun),
             Turn::Done { .. } => return Err(VetoError::Finished),
+            // O jogo está na escolha simultânea, que é por jogador.
+            Turn::RostersUnknown { .. } => return Err(VetoError::WrongAction),
             Turn::Act {
                 game,
                 action,
@@ -408,6 +508,7 @@ impl Veto {
             side,
             action,
             choice,
+            player: None,
         });
         Ok(())
     }
@@ -444,8 +545,16 @@ impl Veto {
     }
 
     pub fn turn(&self) -> Turn {
+        match self.phase() {
+            Phase::Turn(turn) => turn,
+            Phase::TeamPick(game) => self.team_turn(game),
+        }
+    }
+
+    /// A vez sem o elenco: na escolha simultânea dos times, só o jogo.
+    fn phase(&self) -> Phase {
         let (Some(begin), Some(current)) = (self.begin, self.games.last()) else {
-            return Turn::NotBegun;
+            return Phase::Turn(Turn::NotBegun);
         };
         let game = current.number;
         let (maps, champions) = current.split();
@@ -453,12 +562,12 @@ impl Veto {
             MapMode::Veto if game == 1 => {
                 let sequence = self.map_sequence();
                 if let Some(&action) = sequence.get(maps.len()) {
-                    return Turn::Act {
+                    return Phase::Turn(Turn::Act {
                         game,
                         action,
                         target: Target::Map,
                         sides: vec![alternate(begin.first, maps.len())],
-                    };
+                    });
                 }
             }
             MapMode::Vote if self.offered(game).len() > 1 => {
@@ -467,27 +576,33 @@ impl Veto {
                     .filter(|s| !maps.iter().any(|m| m.side == *s))
                     .collect();
                 if !missing.is_empty() {
-                    return Turn::Act {
+                    return Phase::Turn(Turn::Act {
                         game,
                         action: Action::Vote,
                         target: Target::Map,
                         sides: missing,
-                    };
+                    });
                 }
             }
             _ => {}
         }
+        if !self.rules.champion_phase {
+            return Phase::Turn(Turn::Done { game });
+        }
+        let starter = self.starter(game).unwrap_or(begin.first);
+        if self.rules.teams() && champions.len() >= self.champion_bans() {
+            return Phase::TeamPick(game);
+        }
         let sequence = self.champion_sequence();
         let Some(&action) = sequence.get(champions.len()) else {
-            return Turn::Done { game };
+            return Phase::Turn(Turn::Done { game });
         };
-        let starter = self.starter(game).unwrap_or(begin.first);
-        Turn::Act {
+        Phase::Turn(Turn::Act {
             game,
             action,
             target: Target::Champion,
             sides: vec![alternate(starter, champions.len())],
-        }
+        })
     }
 
     fn map_sequence(&self) -> Vec<Action> {
@@ -500,6 +615,11 @@ impl Veto {
         } else {
             Vec::new()
         }
+    }
+
+    /// Passos de ban de campeão por mapa (os dois lados).
+    fn champion_bans(&self) -> usize {
+        usize::from(self.rules.champion_bans) * 2
     }
 
     /// Há passo para desfazer no jogo em andamento.
@@ -743,8 +863,11 @@ impl Veto {
     /// andamento: os de fora da série (`ctx.used`) e os que ele escolheu nos
     /// jogos anteriores dela.
     pub fn forbidden(&self, side: Side, ctx: &Context) -> HashSet<ChampionId> {
-        if !ctx.no_repeat {
+        if ctx.no_repeat.is_none() {
             return HashSet::new();
+        }
+        if self.rules.teams() {
+            return self.team_forbidden(side, ctx);
         }
         let current = self.game().unwrap_or(0);
         let mut used: HashSet<ChampionId> = ctx.used[index(side)].iter().copied().collect();
@@ -752,10 +875,16 @@ impl Veto {
         used
     }
 
-    /// O que `side` pode escolher agora (vazio se não é a vez dele): no veto
-    /// de mapas, os que sobraram; na votação, os oferecidos; nos campeões, os
-    /// sem ban, menos os da regra no pick e com a proteção do ban (ver o
-    /// `//!`).
+    /// O que `side` pode escolher agora (vazio se não é a vez dele, e na
+    /// escolha simultânea dos times, que é por jogador: `team_options`): no
+    /// veto de mapas, os que sobraram; na votação, os oferecidos; nos
+    /// campeões, os sem ban, menos os da regra no pick e com a proteção do
+    /// ban (ver o `//!`): quem bane precisa que sobrem, depois dos bans que
+    /// o adversário ainda tem, `picks_needed` campeões que ele pode escolher.
+    /// Nos times, conta o que sobra para cada jogador do elenco (pela regra
+    /// do jogador, cada um tem o seu): se algum ficaria sem, o ban fica nos
+    /// que nenhum desses pode escolher; se não há nenhum assim, a proteção
+    /// cede, como a regra.
     pub fn options(&self, side: Side, ctx: &Context) -> Vec<Choice> {
         let Turn::Act {
             game,
@@ -791,6 +920,7 @@ impl Veto {
             .filter(|c| !forbidden.contains(c))
             .collect();
         let chosen = match action {
+            Action::TeamPick => Vec::new(),
             Action::Pick if pickable.is_empty() => unbanned,
             Action::Pick | Action::Vote => pickable,
             Action::Ban => {
@@ -803,13 +933,17 @@ impl Veto {
                     .skip(done + 1)
                     .filter(|(i, a)| **a == Action::Ban && alternate(starter, *i) != side)
                     .count();
-                if pickable.len() >= opponent_bans + 2 {
+                let needed = opponent_bans + 1 + self.picks_needed(side);
+                let pickers = self.pickable_sets(side, &unbanned, ctx);
+                let at_risk: Vec<&HashSet<ChampionId>> =
+                    pickers.iter().filter(|s| s.len() < needed).collect();
+                if at_risk.is_empty() {
                     unbanned
                 } else {
                     let safe: Vec<ChampionId> = unbanned
                         .iter()
                         .copied()
-                        .filter(|c| !pickable.contains(c))
+                        .filter(|c| at_risk.iter().all(|s| !s.contains(c)))
                         .collect();
                     if safe.is_empty() { unbanned } else { safe }
                 }

@@ -72,7 +72,8 @@ export function mapsToWin(bestOf: number) {
 
 /**
  * O teto de participantes de cada formato no `engine` (round robin 32, suíço
- * 128); a eliminação vai até as vagas do site.
+ * 128), em lados da chave (no TDM, times); a eliminação vai até as vagas do
+ * site.
  */
 export const FORMAT_MAX_ENTRANTS: Partial<
   Record<Schemas["StageFormat"]["format"], number>
@@ -80,3 +81,37 @@ export const FORMAT_MAX_ENTRANTS: Partial<
   round_robin: 32,
   swiss: 128,
 };
+
+/** Os limites de vagas da API, em jogadores (no TDM, o mínimo é de dois times). */
+export const SLOTS = { min: 2, max: 1024 };
+
+/**
+ * As vagas que o formato aceita, em jogadores: de dois times até o teto do
+ * formato vezes o tamanho do time (sem teto, o do site).
+ */
+export function slotLimits(
+  format: Schemas["StageFormat"]["format"],
+  teamSize: number,
+) {
+  const formatMax = FORMAT_MAX_ENTRANTS[format];
+  return {
+    min: Math.max(SLOTS.min, 2 * teamSize),
+    max:
+      formatMax === undefined
+        ? SLOTS.max
+        : Math.min(SLOTS.max, formatMax * teamSize),
+    /** O teto é o do formato (o erro do campo é outro). */
+    capped: formatMax !== undefined,
+  };
+}
+
+/**
+ * Times que as vagas comportam (a conta da API: as vagas divididas pelo
+ * tamanho, sem fração) e os jogadores que sobram, de reserva.
+ */
+export function teamsIn(slots: number, teamSize: number) {
+  return {
+    teams: Math.floor(slots / teamSize),
+    reserves: slots % teamSize,
+  };
+}

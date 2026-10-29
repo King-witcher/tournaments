@@ -21,6 +21,7 @@ import { TournamentChampionFields } from "./tournament-champion-fields";
 import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
+import { TournamentModeFields } from "./tournament-mode-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentReview } from "./tournament-review";
 import { TournamentRulesSection } from "./tournament-rules-section";
@@ -33,9 +34,10 @@ type Group = "champions" | "veto" | "registration";
 
 /**
  * Criar torneio, numa página só: à vista o que se decide sempre (nome,
- * endereço, início, descrição, chave e séries); fechados, com o resumo no
- * título, os grupos que já vêm com padrão (campeões, veto, inscrições e
- * prazos); depois as regras adicionais e, por último, "Outros idiomas".
+ * endereço, início, descrição, modalidade, chave e séries); fechados, com o
+ * resumo no título, os grupos que já vêm com padrão (campeões, veto,
+ * inscrições e prazos); depois as regras adicionais e, por último, "Outros
+ * idiomas".
  * "Criar" confere e mostra a revisão antes de criar já publicado; "Criar como
  * rascunho" cria sem publicar (e sem exigir a data).
  */
@@ -111,6 +113,12 @@ export function NewTournamentForm({
           />
         </FormSection>
         <FormSection legend={t("format")}>
+          <TournamentModeFields
+            values={values}
+            onChange={onChange}
+            errors={errors}
+            disabled={false}
+          />
           <TournamentFormatFields
             values={values}
             onChange={onChange}

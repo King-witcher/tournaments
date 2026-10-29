@@ -6,8 +6,10 @@ use crate::{
     auth::CurrentUser,
     matches,
     shared::{ApiError, ErrorBody},
+    teams::{self, Team},
+    tenants::TenantId,
     tenants::{Role, TenantMember},
-    tournaments::{self, TournamentStatus, TournamentSummary},
+    tournaments::{self, TournamentMode, TournamentStatus, TournamentSummary},
 };
 
 /// Encerrados que entram na lista: os de início mais recente. Cada um refaz
@@ -68,10 +70,12 @@ pub async fn my_tournaments(
             None => {
                 let place = matches::place(&mut conn, member, &tournament.slug).await?;
                 tournament.status = place.tournament.status;
-                let (situation, placement) = Situation::in_bracket(place.place);
+                let teams = tournament.mode == TournamentMode::Tdm;
+                let (situation, placement) = Situation::in_bracket(place.place, teams);
                 (situation, placement, place.next)
             }
         };
+        let team = team_of(&mut conn, member.tenant, &tournament, user.id).await?;
         out.push(MyTournament {
             tenant_slug: member.slug.clone(),
             tenant_name: member.name.clone(),
@@ -79,9 +83,25 @@ pub async fn my_tournaments(
             situation,
             placement,
             next_match,
+            team,
         });
     }
     Ok(Json(out))
+}
+
+/// TDM: o time de `user_id` no torneio (no duelo, `None`: o time de um não
+/// aparece).
+pub async fn team_of(
+    conn: &mut sqlx::PgConnection,
+    tenant: TenantId,
+    tournament: &TournamentSummary,
+    user_id: i64,
+) -> Result<Option<Team>, ApiError> {
+    if tournament.mode != TournamentMode::Tdm {
+        return Ok(None);
+    }
+    let team = teams::of_user(conn, tenant, &tournament.slug, user_id).await?;
+    Ok(team.map(|t| t.view()))
 }
 
 /// Chave de ordenação crescente que põe os sem data depois dos com data.

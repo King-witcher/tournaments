@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { IconButton } from "@/shared/ui/icon-button";
@@ -61,7 +62,9 @@ export function SeedingRow({
   onMoveTo,
 }: Props) {
   const t = useTranslations("Participants.seeding");
+  const tMember = useTranslations("Member");
   const name = useTeamName()(team);
+  const solo = soloMember(team);
   const input = useRef<HTMLInputElement>(null);
 
   // O campo é recriado na posição nova (key): devolve o foco a ele.
@@ -82,8 +85,20 @@ export function SeedingRow({
         onMoveTo={onMoveTo}
       />
       <span className={styles.name}>
-        <Avatar src={soloMember(team)?.avatar_url} name={name} />
-        {name}
+        <Avatar src={solo?.avatar_url} name={name} />
+        <span className={styles.label}>
+          {name}
+          {/* No TDM, quem está no time, para reconhecer o "Time de {capitão}". */}
+          {!solo && (
+            <span className={styles.members}>
+              {team.members
+                .map((m) =>
+                  shownNickname(m.nickname, tMember("deletedAccount")),
+                )
+                .join(", ")}
+            </span>
+          )}
+        </span>
       </span>
       {ratingText && <span className={styles.rating}>{ratingText}</span>}
       {showNoSeed && team.seed == null && (

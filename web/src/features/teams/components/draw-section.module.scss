@@ -1,0 +1,23 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+
+// Os dois jeitos de sortear lado a lado no computador, um embaixo do outro no
+// celular.
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-05 spacing.$spacing-07;
+
+  @include breakpoint.breakpoint-down(md) {
+    flex-direction: column;
+  }
+}
+
+// Por que não dá para sortear agora: dica, na cor secundária.
+.reason {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

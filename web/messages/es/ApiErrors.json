@@ -110,7 +110,11 @@
     "map_pool_repeated": "Mapa repetido en el pool.",
     "map_pool_too_small": "El pool necesita al menos {min} mapas: uno por cada mapa de la serie más larga.",
     "map_pool_too_large": "El pool acepta como máximo {max} mapas.",
-    "screenshots_unavailable": "Las capturas de pantalla están desactivadas en este servidor: no se puede exigir captura de pantalla del marcador."
+    "screenshots_unavailable": "Las capturas de pantalla están desactivadas en este servidor: no se puede exigir captura de pantalla del marcador.",
+    "team_size_invalid": "El equipo debe tener de {min} a {max} jugadores.",
+    "team_pick_seconds_invalid": "El tiempo de la elección de campeones debe estar entre {min} y {max} segundos.",
+    "teams_incomplete": "{teams, plural, one {Un equipo está incompleto} other {# equipos están incompletos}} o con alguien sin check-in. Ajusta los equipos (cambia por un suplente) antes de iniciar.",
+    "not_tdm": "Esto solo vale en torneos de TDM."
   },
   "participant": {
     "already_registered": "Ese miembro ya está inscrito.",
@@ -121,6 +125,7 @@
   "format": {
     "invalid_best_of": "Al mejor de {best_of} no vale: usa un número impar (1, 3, 5...).",
     "not_enough_participants": "Se necesitan al menos {min} participantes.",
+    "not_enough_players": "Se necesitan al menos {min} jugadores (dos equipos).",
     "too_many_participants": "Este formato admite hasta {max} participantes: reduce los cupos a {max} o menos.",
     "duplicate_participant": "Participante repetido.",
     "no_stages": "El torneo necesita al menos una fase.",
@@ -160,7 +165,8 @@
     "frags_disagree": "Los frags del mapa {game} no coinciden con quién ganó.",
     "veto_pending": "El veto de este mapa todavía no terminó.",
     "map_mismatch": "Envía el mapa que salió del veto.",
-    "screenshot_required": "Este torneo exige una captura de pantalla del marcador: adjunta una al mapa antes de enviar."
+    "screenshot_required": "Este torneo exige una captura de pantalla del marcador: adjunta una al mapa antes de enviar.",
+    "not_captain": "Solo el capitán del equipo puede hacer esto."
   },
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
@@ -196,7 +202,8 @@
     "nothing_to_undo": "No hay paso para deshacer en este mapa.",
     "undo_requested": "Ya hay un pedido para deshacer esperando respuesta.",
     "no_undo_request": "No hay pedido para deshacer.",
-    "own_request": "Quien pidió deshacer no responde: espera al rival."
+    "own_request": "Quien pidió deshacer no responde: espera al rival.",
+    "already_picked": "Ya elegiste el campeón de este mapa."
   },
   "screenshots": {
     "not_configured": "Las capturas de pantalla están desactivadas en este servidor.",
@@ -209,5 +216,17 @@
     "not_found": "Esta captura de pantalla ya no existe. Recarga la página.",
     "upload_missing": "La imagen no llegó al almacenamiento. Intenta adjuntarla de nuevo.",
     "upload_invalid": "La imagen que llegó no es la que se pidió. Intenta adjuntarla de nuevo."
+  },
+  "team": {
+    "not_found": "Equipo no encontrado.",
+    "not_in_bracket": "Ese equipo quedó fuera de la llave.",
+    "full": "El equipo ya tiene {max} jugadores.",
+    "name_taken": "Ya existe un equipo con ese nombre en este torneo.",
+    "name_invalid": "El nombre del equipo debe tener de 1 a {max} caracteres, en una línea.",
+    "not_captain": "Solo el capitán del equipo (o la organización) puede hacer esto.",
+    "captain_invalid": "El capitán debe ser un jugador del equipo.",
+    "member_invalid": "Quien sale debe ser del equipo, y quien entra, otra persona.",
+    "player_in_team": "Esa persona ya juega en un equipo de este torneo.",
+    "withdrawn": "Ese equipo se retiró del torneo."
   }
 }

@@ -14,6 +14,9 @@ impl From<EngineError> for ApiError {
                 Self::invalid("format.not_enough_participants")
                     .with_params([("min", min as i64), ("got", got as i64)])
             }
+            // Nos times: as vagas (jogadores) não formam dois times.
+            E::NotEnoughPlayers { min, got } => Self::invalid("format.not_enough_players")
+                .with_params([("min", min as i64), ("got", got as i64)]),
             E::TooManyParticipants { max, got } => Self::invalid("format.too_many_participants")
                 .with_params([("max", max as i64), ("got", got as i64)]),
             E::DuplicateParticipant(_) => Self::invalid("format.duplicate_participant"),
@@ -66,13 +69,18 @@ impl From<VetoError> for ApiError {
             E::Finished => Self::conflict("veto.finished"),
             E::NotYourTurn => Self::conflict("veto.not_your_turn"),
             E::NothingToUndo => Self::conflict("veto.nothing_to_undo"),
+            E::AlreadyPicked => Self::conflict("veto.already_picked"),
             E::OptionInvalid | E::WrongAction => Self::invalid("veto.option_invalid"),
             E::ChampionForbidden => Self::invalid("veto.champion_forbidden"),
             E::PoolTooSmall { best_of, .. } => Self::invalid("tournament.map_pool_too_small")
                 .with_params([("min", i64::from(best_of))]),
             E::PoolRepeated(_) => Self::invalid("tournament.map_pool_repeated"),
-            // Só o histórico gravado erra assim: ver `MatchVeto::replay`.
-            E::GameOutOfOrder { .. } => Self::internal(),
+            // Só o histórico gravado e o elenco que a fase monta erram assim:
+            // ver `MatchVeto::replay`.
+            E::GameOutOfOrder { .. }
+            | E::RostersUnknown
+            | E::RosterRepeated(_)
+            | E::RosterTooLarge { .. } => Self::internal(),
         }
     }
 }

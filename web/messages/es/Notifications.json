@@ -26,6 +26,10 @@
       "veto_started": {
         "title": "Empezó el veto",
         "body": "{tournament}: veto contra {opponent}. Cada paso tiene tiempo: al terminar, la elección se sortea."
+      },
+      "team_pick_open": {
+        "title": "Elige tu campeón",
+        "body": "{tournament}: la elección de campeones del mapa {game} se abrió. Todos eligen al mismo tiempo; quien no elija a tiempo recibe uno sorteado."
       }
     },
     "tournament": {

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set teams_seed = $2 where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "609c248a84f7ea9b102d2c3800cb1e381e235b7a3291bed884aeff679707e99b"
+}

@@ -10,9 +10,9 @@
 
 use engine::{
     champions::NoRepeatRule,
-    core::{EngineError, MatchId, MatchState, ParticipantId, SeriesFrags, StageReport},
+    core::{EngineError, MatchId, MatchState, ParticipantId, PlayerId, SeriesFrags, StageReport},
     formats::{self as ef, StageBracket, StageHistory, swiss::SwissRound},
-    veto::VetoRules,
+    veto::{Rosters, VetoRules},
 };
 use sqlx::PgConnection;
 
@@ -51,6 +51,8 @@ pub struct Stage {
     /// algum evento.
     pub veto_rules: VetoRules,
     pub veto_seconds: i32,
+    /// TDM: a janela da escolha simultânea de campeões.
+    pub team_pick_seconds: i32,
     pub no_repeat: Option<NoRepeatRule>,
     pub champions: Vec<Champion>,
     pub map_pool: Vec<PoolMap>,
@@ -98,6 +100,27 @@ impl Stage {
             rounds: &self.rounds,
         }
     }
+
+    /// O capitão do time `id` da chave.
+    pub fn captain(&self, id: ParticipantId) -> Option<i64> {
+        self.entrant(id).map(|t| t.captain)
+    }
+}
+
+/// Quem escolhe campeão pelo time `id` no TDM: os jogadores dele que estão
+/// na comunidade, o capitão primeiro e depois na ordem de inscrição.
+fn roster(entrants: &[StoredTeam], id: ParticipantId) -> Vec<PlayerId> {
+    entrants
+        .iter()
+        .find(|e| e.id == id.0)
+        .map(|t| {
+            t.members
+                .iter()
+                .filter(|m| !m.left)
+                .map(|m| PlayerId(m.user_id))
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Por que o histórico não fecha numa partida.
@@ -209,10 +232,7 @@ pub async fn load(
         _ => Vec::new(),
     };
     let veto_rows = veto::events(conn, tournament.id, number).await?;
-    let veto_rules = tournament
-        .setup
-        .veto
-        .rules(tournament.setup.champion_rules.bans_per_game);
+    let veto_rules = tournament.setup.veto_rules();
     let champions = if veto_rules.champion_phase {
         veto::champions(conn).await?
     } else {
@@ -234,7 +254,7 @@ pub async fn load(
         }
         ApiError::internal()
     })?;
-    let vetoes = vetoes(&bracket, &veto_rules, veto_rows)?;
+    let vetoes = vetoes(&bracket, &veto_rules, veto_rows, &entrants, &games)?;
     Ok(Stage {
         number,
         format,
@@ -245,6 +265,7 @@ pub async fn load(
         bracket,
         veto_rules,
         veto_seconds: tournament.setup.veto.step_seconds,
+        team_pick_seconds: tournament.setup.veto.team_pick_seconds,
         no_repeat: tournament.setup.champion_rules.no_repeat,
         champions,
         map_pool: tournament.map_pool.clone(),
@@ -252,11 +273,16 @@ pub async fn load(
     })
 }
 
-/// O veto de cada partida refeito das linhas `rows` (por partida, na ordem).
+/// O veto de cada partida refeito das linhas `rows` (por partida, na ordem),
+/// com o elenco de cada lado (TDM) dos times `entrants`, os mapas enviados
+/// dela (`games`) e se a série acabou: a escolha simultânea de um mapa
+/// enviado não reabre com quem entrou no time depois.
 fn vetoes(
     bracket: &StageBracket,
     rules: &VetoRules,
     rows: Vec<VetoRow>,
+    entrants: &[StoredTeam],
+    games: &[StoredGame],
 ) -> Result<Vec<MatchVeto>, ApiError> {
     let mut by_match: Vec<(MatchId, Vec<VetoRow>)> = Vec::new();
     for row in rows {
@@ -268,12 +294,16 @@ fn vetoes(
     by_match
         .into_iter()
         .map(|(id, rows)| {
-            let best_of = bracket
-                .get(id)
-                .map(|m| m.best_of)
-                .ok_or_else(ApiError::internal)?;
+            let m = bracket.get(id).ok_or_else(ApiError::internal)?;
             let sides = rows[0].sides;
-            MatchVeto::replay(rules.clone(), best_of, id, sides, rows)
+            let sent = games.iter().filter(|g| g.match_id == id).count();
+            let rosters = Rosters {
+                players: [roster(entrants, sides.0), roster(entrants, sides.1)],
+                sent: u8::try_from(sent).unwrap_or(u8::MAX),
+                finished: matches!(m.state, MatchState::Completed { .. }),
+            };
+            let best_of = m.best_of;
+            MatchVeto::replay(rules.clone(), best_of, id, sides, rosters, rows)
         })
         .collect()
 }
@@ -291,9 +321,9 @@ pub async fn start(
     seeded: &[ParticipantId],
 ) -> Result<(), ApiError> {
     let pool = tournaments::champion_pool(&mut *conn).await?;
-    tournament
-        .setup
-        .check_entrants(tournament.mode, pool, seeded.len())?;
+    // Os times que entram estão completos (`teams::finalize_seeding`).
+    let players = seeded.len() * tournament.setup.team_size() as usize;
+    tournament.setup.check_entrants(pool, players)?;
     let format = *config(tournament, FIRST_STAGE)?;
     let at = (tournament.tenant, tournament.id, FIRST_STAGE);
     let bracket = rounds::first(conn, at, format, seeded).await?;

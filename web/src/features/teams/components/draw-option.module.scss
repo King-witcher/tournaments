@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O botão e, logo abaixo, a frase do que ele faz, numa coluna estreita.
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  max-inline-size: calc(#{spacing.$spacing-13} * 2);
+}
+
+// A frase é dica: tipo de dica, na cor secundária.
+.hint {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

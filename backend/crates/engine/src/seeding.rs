@@ -14,10 +14,29 @@ use crate::core::ParticipantId;
 /// índice por rejeição, sem viés. Mudar qualquer passo muda os sorteios já
 /// salvos: o teste `draw_is_pinned` fixa o resultado.
 pub fn random_order(participants: &[ParticipantId], seed: u64) -> Vec<ParticipantId> {
-    let mut order = participants.to_vec();
+    shuffle(participants, seed, Purpose::Seeding)
+}
+
+/// Para que é um embaralhamento: o byte 8 da chave do ChaCha8 (o seeding da
+/// chave fica com 0, a chave de antes), para dois sorteios com a mesma
+/// `seed` nunca saírem iguais.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Purpose {
+    /// A ordem dos seeds da chave (`random_order`).
+    Seeding = 0,
+    /// A formação dos times do TDM (`teams`).
+    Teams = 1,
+}
+
+/// O embaralhamento de `random_order` para qualquer id ordenável e qualquer
+/// propósito (os times usam com os jogadores): ordena, depois Fisher–Yates
+/// com ChaCha8 sobre a `seed` e o propósito.
+pub(crate) fn shuffle<T: Ord + Copy>(items: &[T], seed: u64, purpose: Purpose) -> Vec<T> {
+    let mut order = items.to_vec();
     order.sort_unstable();
     let mut key = [0u8; 32];
     key[..8].copy_from_slice(&seed.to_le_bytes());
+    key[8] = purpose as u8;
     let mut rng = ChaCha8Rng::from_seed(key);
     for i in (1..order.len()).rev() {
         let j = below(&mut rng, i as u64 + 1) as usize;

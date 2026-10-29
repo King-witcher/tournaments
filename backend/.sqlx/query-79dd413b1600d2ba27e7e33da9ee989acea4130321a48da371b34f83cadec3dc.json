@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select team_id from participants where tournament_id = $1 and user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "team_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "team_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "79dd413b1600d2ba27e7e33da9ee989acea4130321a48da371b34f83cadec3dc"
+}

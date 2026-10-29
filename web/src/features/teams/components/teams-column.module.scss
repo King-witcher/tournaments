@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+// Uma coluna no celular, duas do md para cima. Os blocos de uma linha não
+// esticam até o mais alto (start): um time de 2 não fica com buraco.
+.grid {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

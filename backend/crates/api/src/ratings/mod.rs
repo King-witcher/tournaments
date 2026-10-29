@@ -19,7 +19,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use refresh::refresh_stale;
+pub use refresh::{current, refresh_stale};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

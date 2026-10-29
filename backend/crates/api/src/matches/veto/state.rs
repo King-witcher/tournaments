@@ -4,8 +4,8 @@
 
 use chrono::{DateTime, Utc};
 use engine::{
-    core::{ChampionId, MapId, MatchId, ParticipantId},
-    veto::{self as ev, Event, Turn, Veto},
+    core::{ChampionId, MapId, MatchId, ParticipantId, PlayerId},
+    veto::{self as ev, Action, Event, Rosters, Turn, Veto},
 };
 
 use crate::{
@@ -25,6 +25,9 @@ pub struct VetoRow {
     pub map: Option<MapId>,
     pub played_map: Option<MapId>,
     pub champion: Option<ChampionId>,
+    /// TDM: na escolha simultânea, quem escolheu o campeão (e o apelido).
+    pub player: Option<i64>,
+    pub player_name: Option<String>,
     pub seed: Option<i64>,
     pub timeout: bool,
     pub actor: Option<i64>,
@@ -82,7 +85,7 @@ impl Kind {
     pub const fn of(action: ev::Action) -> Self {
         match action {
             ev::Action::Ban => Self::Ban,
-            ev::Action::Pick => Self::Pick,
+            ev::Action::Pick | ev::Action::TeamPick => Self::Pick,
             ev::Action::Vote => Self::Vote,
         }
     }
@@ -97,6 +100,12 @@ impl Kind {
 }
 
 impl VetoRow {
+    /// Reinicia o relógio do passo: a escolha simultânea dos times não
+    /// reinicia (a janela é uma só para todos).
+    const fn resets_clock(&self) -> bool {
+        self.kind.clock() && self.player.is_none()
+    }
+
     /// O evento do `engine`; `None` nos que só a API usa (pronto, pedido e
     /// recusa de desfazer).
     fn event(&self) -> Result<Option<Event>, ApiError> {
@@ -136,6 +145,13 @@ impl VetoRow {
             (None, Some(c)) => ev::Choice::Champion(c),
             _ => return Err(unknown("choice", "?")),
         };
+        if let (Some(player), ev::Choice::Champion(champion)) = (self.player, choice) {
+            return Ok(Some(Event::TeamPick {
+                side: side()?,
+                player: PlayerId(player),
+                champion,
+            }));
+        }
         Ok(Some(Event::Step {
             side: side()?,
             action,
@@ -182,13 +198,16 @@ pub struct MatchVeto {
 }
 
 impl MatchVeto {
-    /// Refaz o veto de `rows` (os da partida, na ordem). Erro interno se o
-    /// histórico não fecha.
+    /// Refaz o veto de `rows` (os da partida, na ordem), com o que o
+    /// histórico não diz nos times (`rosters`: quem escolhe campeão de cada
+    /// lado agora, quantos mapas foram enviados e se a série acabou). Erro
+    /// interno se o histórico não fecha ou o elenco não vale.
     pub fn replay(
         rules: ev::VetoRules,
         best_of: u8,
         match_id: MatchId,
         sides: (ParticipantId, ParticipantId),
+        rosters: Rosters,
         rows: Vec<VetoRow>,
     ) -> Result<Self, ApiError> {
         let mut events = Vec::with_capacity(rows.len());
@@ -197,8 +216,12 @@ impl MatchVeto {
                 events.push(e);
             }
         }
-        let state = Veto::replay(rules, best_of, events).map_err(|e| {
+        let mut state = Veto::replay(rules, best_of, events).map_err(|e| {
             tracing::error!(%e, ?match_id, "histórico do veto não fecha");
+            ApiError::internal()
+        })?;
+        state.set_rosters(rosters).map_err(|e| {
+            tracing::error!(%e, ?match_id, "elenco do veto recusado");
             ApiError::internal()
         })?;
         Ok(Self {
@@ -234,22 +257,28 @@ impl MatchVeto {
         pending.filter(|_| self.state.can_undo())
     }
 
-    /// Quando começou o passo em andamento: o último evento que reinicia o
-    /// relógio.
+    /// Quando começou o passo em andamento (ou a escolha simultânea dos
+    /// times): o último evento que reinicia o relógio.
     pub fn clock(&self) -> Option<DateTime<Utc>> {
         self.rows
             .iter()
             .rev()
-            .find(|r| r.kind.clock())
+            .find(|r| r.resets_clock())
             .map(|r| r.created_at)
     }
 
     /// Até quando o passo em andamento pode ser feito, com `seconds` por
-    /// passo; `None` sem passo esperando.
-    pub fn deadline(&self, seconds: i32) -> Option<DateTime<Utc>> {
-        match self.state.turn() {
-            Turn::Act { .. } => Some(self.clock()? + chrono::Duration::seconds(i64::from(seconds))),
-            _ => None,
-        }
+    /// passo e `team_seconds` para a escolha simultânea dos times; `None`
+    /// sem passo esperando.
+    pub fn deadline(&self, seconds: i32, team_seconds: i32) -> Option<DateTime<Utc>> {
+        let seconds = match self.state.turn() {
+            Turn::Act {
+                action: Action::TeamPick,
+                ..
+            } => team_seconds,
+            Turn::Act { .. } => seconds,
+            _ => return None,
+        };
+        Some(self.clock()? + chrono::Duration::seconds(i64::from(seconds)))
     }
 }

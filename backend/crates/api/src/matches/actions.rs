@@ -65,6 +65,26 @@ pub fn side_of<R>(
     }
 }
 
+/// O lado de quem age, se ele é o capitão do time de um dos lados (no duelo,
+/// o próprio jogador): o veto de mapas, os bans de campeão, o "Pronto" e o
+/// pedido de desfazer são do capitão. 403 `match.not_player` se não joga a
+/// partida, `match.not_captain` se joga mas não é o capitão.
+pub fn captain_side_of<R>(
+    stage: &Stage,
+    member: &TenantMember<R>,
+    sides: (ParticipantId, ParticipantId),
+) -> Result<Side, ApiError> {
+    let side = side_of(stage, member, sides).ok_or(ApiError::forbidden("match.not_player"))?;
+    let team = match side {
+        Side::A => sides.0,
+        Side::B => sides.1,
+    };
+    if stage.captain(team) != Some(member.user.id) {
+        return Err(ApiError::forbidden("match.not_captain"));
+    }
+    Ok(side)
+}
+
 /// 422 `match.comment_invalid` fora de 1 a 280 caracteres numa linha.
 pub fn comment(raw: &str) -> Result<String, ApiError> {
     clean_text(raw, MAX_COMMENT, "match.comment_invalid")

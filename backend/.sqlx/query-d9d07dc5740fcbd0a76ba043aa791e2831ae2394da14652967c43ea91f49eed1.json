@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.seed, bool_and(p.checked_in_at is not null) as \"checked_in!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           where t.tournament_id = $1\n           group by t.id\n           order by t.created_at, t.id",
+  "query": "select t.id, t.seed, bool_and(p.checked_in_at is not null) as \"checked_in!\",\n                  count(*) as \"players!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           where t.tournament_id = $1\n           group by t.id\n           order by t.created_at, t.id",
   "describe": {
     "columns": [
       {
@@ -30,6 +30,12 @@
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "players!",
+        "type_info": "Int8",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -40,8 +46,9 @@
     "nullable": [
       false,
       true,
+      null,
       null
     ]
   },
-  "hash": "d4b59500220d888e221d08ee58f04c744ff573d848076516f1c9e0ad50cdcc08"
+  "hash": "d9d07dc5740fcbd0a76ba043aa791e2831ae2394da14652967c43ea91f49eed1"
 }

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams set name = $3 where tournament_id = $1 and id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f065d3b3e50577b766979267c8877a80e03e8dc01e51ead4e998ca59ae2df550"
+}

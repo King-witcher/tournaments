@@ -21,5 +21,6 @@ mod ratings;
 mod realtime;
 mod schema;
 mod screenshots;
+mod teams;
 mod tenants;
 mod tournaments;

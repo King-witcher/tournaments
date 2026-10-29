@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into match_veto_events\n               (tenant_id, tournament_id, stage, match_key, side_a, side_b, kind, game, side,\n                map_id, played_map_id, champion_id, seed, timeout, actor, created_at, player_id)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,\n                   coalesce($16, now()), $17)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int8",
+        "Text",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Bool",
+        "Int8",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "60ebf0d14730644dc96447111e3fae94adac7b3b73a7b432bf58c070b96da0b7"
+}

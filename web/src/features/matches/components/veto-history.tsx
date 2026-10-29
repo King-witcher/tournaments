@@ -28,7 +28,13 @@ export function VetoHistory({ veto, names }: Props) {
     <AccordionItem title={t("title")}>
       <ol className={styles.events}>
         {veto.history.map((e, i) => {
-          const who = e.side ? names[e.side] : "";
+          // TDM: na escolha simultânea, o jogador (também no sorteado).
+          const who =
+            e.player != null
+              ? shownNickname(e.player, tMember("deletedAccount"))
+              : e.side
+                ? names[e.side]
+                : "";
           const text = t(`kinds.${e.kind}`, {
             name: who,
             actor:

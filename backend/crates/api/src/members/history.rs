@@ -12,11 +12,11 @@ use sqlx::PgPool;
 use super::types::MemberTournament;
 use crate::{
     matches,
-    my_tournaments::Situation,
+    my_tournaments::{self, Situation},
     participants,
     shared::ApiError,
     tenants::{Role, TenantMember},
-    tournaments::{self, TournamentSummary},
+    tournaments::{self, TournamentMode, TournamentSummary},
 };
 
 /// Os torneios em que `user_id` está inscrito, como `viewer` os vê, do mais
@@ -50,13 +50,16 @@ pub async fn of<R>(
             None => {
                 let place = matches::place_of(&mut conn, viewer, &tournament.slug, user_id).await?;
                 tournament.status = place.tournament.status;
-                Situation::in_bracket(place.place)
+                let teams = tournament.mode == TournamentMode::Tdm;
+                Situation::in_bracket(place.place, teams)
             }
         };
+        let team = my_tournaments::team_of(&mut conn, viewer.tenant, &tournament, user_id).await?;
         out.push(MemberTournament {
             tournament,
             situation,
             placement,
+            team,
         });
     }
     Ok(out)

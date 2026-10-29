@@ -29,6 +29,8 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
   const hasCheckIn = tournament.check_in_minutes != null;
   const opensAt = tournament.check_in_opens_at;
   const opened = opensAt != null && new Date(opensAt) <= now;
+  // No TDM, quem entra na chave são os times, não os inscritos.
+  const teams = tournament.mode === "tdm";
 
   let hint: ReactNode = null;
   if (status === "draft") {
@@ -40,9 +42,9 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
       : opensAt &&
         t.rich("opensAt", { date: () => <LocalDateTime value={opensAt} /> });
   } else if (status === "registration") {
-    hint = t("noCheckIn");
+    hint = t(teams ? "noCheckInTdm" : "noCheckIn");
   } else if (status === "check_in") {
-    hint = t("checkInOpen");
+    hint = t(teams ? "checkInOpenTdm" : "checkInOpen");
   } else if (status === "in_progress") {
     hint = t("inProgress");
   } else if (status === "finished") {

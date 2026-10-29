@@ -84,7 +84,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
       <VetoSection
         target={target}
         detail={detail}
-        rule={tournament.champion_rules.no_repeat?.scope ?? null}
+        rule={tournament.champion_rules.no_repeat ?? null}
       />
       <MatchGamesPanel
         target={target}

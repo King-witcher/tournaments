@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+
+// A mesma grade dos times (uma coluna no celular, duas do md para cima).
+.grid {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-columns: minmax(0, 1fr);
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Um time de quatro: o título e quatro linhas de jogador.
+.team {
+  @include skeleton;
+
+  display: block;
+  block-size: calc(#{spacing.$spacing-13} + #{spacing.$spacing-09});
+}
+
+.reserves {
+  @include skeleton;
+
+  display: block;
+  block-size: spacing.$spacing-13;
+}

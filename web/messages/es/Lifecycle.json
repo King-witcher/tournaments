@@ -18,5 +18,11 @@
   "undoStart": "Deshacer inicio",
   "undoStartConfirm": "¿Deshacer el inicio? El torneo vuelve al check-in, con inscritos, check-ins y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
   "undoStartConfirmNoCheckIn": "¿Deshacer el inicio? El torneo vuelve a las inscripciones, con inscritos y seeds como estaban. Quien abandonó o salió de la comunidad sale de las inscripciones.",
-  "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún mapa.} one {Se borrarán los mapas y el resultado de # partida, con el historial de las partidas.} other {Se borrarán los mapas y los resultados de # partidas, con el historial de las partidas.}}"
+  "undoStartResults": "{count, plural, =0 {Todavía no se envió ningún mapa.} one {Se borrarán los mapas y el resultado de # partida, con el historial de las partidas.} other {Se borrarán los mapas y los resultados de # partidas, con el historial de las partidas.}}",
+  "noCheckInTdm": "Sin check-in: al iniciar, los equipos armados entran en la llave y los suplentes quedan afuera.",
+  "checkInOpenTdm": "Check-in abierto: al iniciar, entran en la llave los equipos completos, con el check-in de todos. Quien no hizo check-in sigue inscrito, sin equipo.",
+  "startConfirmTeams": "¿Iniciar el torneo? {teams, plural, =0 {Ningún equipo entra} one {# equipo entra} other {# equipos entran}} en la llave y {reserves, plural, =0 {nadie queda como suplente} one {# jugador queda como suplente} other {# jugadores quedan como suplentes}}. Las inscripciones, los check-ins y los equipos se congelan; después, solo sustituciones.",
+  "teamsIncomplete": "{count, plural, one {# equipo está incompleto} other {# equipos están incompletos}}: completa los equipos (o pasa a los jugadores a suplentes) antes de iniciar.",
+  "teamsIncompleteCheckIn": "{count, plural, one {# equipo está incompleto o con alguien sin check-in} other {# equipos están incompletos o con alguien sin check-in}}: ajusta los equipos antes de iniciar.",
+  "notEnoughTeams": "Para iniciar, se necesitan al menos {min} equipos completos; {count, plural, =0 {todavía no hay ninguno} one {solo hay #} other {solo hay #}}."
 }

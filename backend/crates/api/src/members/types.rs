@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 use crate::{
     my_tournaments::{MyPlacement, Situation},
+    teams::Team,
     tenants::Role,
     tournaments::TournamentSummary,
 };
@@ -61,6 +62,8 @@ pub struct MemberTournament {
     /// Colocação do membro, se foi eliminado, desistiu ou venceu, quando já
     /// se definiu.
     pub placement: Option<MyPlacement>,
+    /// TDM: o time do membro (`null` no duelo e sem time).
+    pub team: Option<Team>,
 }
 
 #[derive(Deserialize, ToSchema)]

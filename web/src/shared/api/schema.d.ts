@@ -1252,6 +1252,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_teams"];
+        put?: never;
+        post: operations["create_team"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/teams/draw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["draw_teams"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/teams/{team}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update_team"];
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/teams/{team}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["put_member"];
+        post?: never;
+        delete: operations["delete_member"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/teams/{team}/substitution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["substitute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/teams/{team}/withdrawal": {
         parameters: {
             query?: never;
@@ -1421,6 +1501,11 @@ export interface components {
              */
             bans_per_game: number;
             no_repeat?: components["schemas"]["NoRepeatRule"] | null;
+            /**
+             * @description TDM: dois jogadores do mesmo time podem escolher o mesmo campeão no
+             *     mesmo mapa. Ausente: não (entre times, o espelho vale sempre).
+             */
+            team_duplicates?: boolean;
         };
         ChangeEmail: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
@@ -1539,10 +1624,16 @@ export interface components {
             locale: components["schemas"]["Locale"];
             /**
              * Format: int32
-             * @description Vagas, de 2 a 1024. A checagem de campeões usa o pior caso com esse número.
+             * @description Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
+             *     checagem de campeões usa o pior caso com esse número (no TDM, com os
+             *     times que ele comporta).
              * @example 16
              */
             max_participants: number;
+            /**
+             * @description Duelo ou TDM. Muda até o torneio começar; com inscritos, refaz os
+             *     times (no duelo, cada um num time de um; no TDM, todos sem time).
+             */
             mode: components["schemas"]["TournamentMode"];
             /**
              * @description 1 a 80 caracteres.
@@ -1576,6 +1667,12 @@ export interface components {
              * @description Início previsto. Opcional: sem data o check-in não abre sozinho.
              */
             starts_at?: string | null;
+            /**
+             * Format: int32
+             * @description Jogadores por time: 1 no duelo; de 2 a 4 no TDM. Ausente: 1 no duelo,
+             *     2 no TDM.
+             */
+            team_size?: number | null;
             /**
              * @description Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
              *     original. Erro de texto numa delas (`tournament.name_invalid`,
@@ -1660,6 +1757,14 @@ export interface components {
             available: components["schemas"]["AvailableEvent"][];
             webhook?: components["schemas"]["WebhookSettings"] | null;
         };
+        /**
+         * @description Como sortear os times.
+         * @enum {string}
+         */
+        DrawMethod: "random" | "balanced";
+        DrawTeams: {
+            method: components["schemas"]["DrawMethod"];
+        };
         /** @description Para onde o link foi (ou iria, se a conta já existe). */
         EmailSent: {
             /**
@@ -1706,6 +1811,18 @@ export interface components {
              */
             winner_maps?: number | null;
         };
+        /** @description Um inscrito sem time. */
+        FormationPlayer: {
+            avatar_url?: string | null;
+            /** @description Saiu da comunidade (ou foi removido). */
+            left: boolean;
+            /** @description Apelido no tenant; vazio quando a conta foi excluída. */
+            nickname: string;
+            /** Format: date-time */
+            registered_at: string;
+            /** Format: int64 */
+            user_id: number;
+        };
         /** @description Um mapa da série. */
         GameDetail: {
             /**
@@ -1728,6 +1845,12 @@ export interface components {
             contest_comment?: string | null;
             /** Format: date-time */
             contested_at?: string | null;
+            /**
+             * @description Quem jogou o mapa por cada lado (no duelo, o jogador; nos times, quem
+             *     estava no time e na comunidade quando o mapa foi enviado).
+             */
+            lineup_a: components["schemas"]["TeamMember"][];
+            lineup_b: components["schemas"]["TeamMember"][];
             map?: components["schemas"]["MapRef"] | null;
             /** Format: int32 */
             number: number;
@@ -1929,6 +2052,12 @@ export interface components {
             status: components["schemas"]["TournamentStatus"];
             summary: components["schemas"]["BracketMatch"];
             veto?: components["schemas"]["VetoView"] | null;
+            /**
+             * @description Quem vê joga a partida e é o capitão do time dele (no duelo, sempre
+             *     que joga): o "Pronto", o veto do lado (mapas e bans) e o pedido de
+             *     desfazer são dele.
+             */
+            viewer_captain: boolean;
             viewer_side?: components["schemas"]["Side"] | null;
         };
         MatchEvent: {
@@ -2053,6 +2182,7 @@ export interface components {
             placement?: components["schemas"]["MyPlacement"] | null;
             /** @description A situação do membro no torneio. */
             situation: components["schemas"]["Situation"];
+            team?: components["schemas"]["Team"] | null;
             /**
              * @description Como na lista da comunidade: `registered` e `checked_in` são de quem
              *     vê, não do membro.
@@ -2087,6 +2217,7 @@ export interface components {
             next_match?: components["schemas"]["NextMatch"] | null;
             placement?: components["schemas"]["MyPlacement"] | null;
             situation: components["schemas"]["Situation"];
+            team?: components["schemas"]["Team"] | null;
             tenant_name: string;
             tenant_slug: string;
             tournament: components["schemas"]["TournamentSummary"];
@@ -2107,6 +2238,14 @@ export interface components {
              * @example Rating de outra liga
              */
             reason: string;
+        };
+        /** @description Um time novo com um jogador, que vira o capitão. */
+        NewTeam: {
+            /**
+             * Format: int64
+             * @description Um inscrito (sai do time em que estava).
+             */
+            user_id: number;
         };
         /** @description O arquivo que o navegador vai mandar. */
         NewUpload: {
@@ -2144,7 +2283,8 @@ export interface components {
          */
         NoRepeatScope: "match" | "stage" | "tournament";
         /**
-         * @description Quem não pode repetir campeão. No duelo os dois dão no mesmo.
+         * @description Quem não pode repetir campeão: cada jogador os próprios, ou o time
+         *     inteiro (o que um usou sai de todos). No duelo os dois dão no mesmo.
          * @enum {string}
          */
         NoRepeatWho: "player" | "team";
@@ -2231,11 +2371,22 @@ export interface components {
             };
         } | {
             /** @enum {string} */
-            code: "tournament.start_due";
+            code: "match.team_pick_open";
             /**
              * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
              *     owner, uma vez).
+             *     TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
+             *     jogadores dos dois times).
              */
+            params: {
+                /** Format: int32 */
+                game: number;
+                match: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tournament.start_due";
             params: {
                 tournament: string;
             };
@@ -2715,7 +2866,7 @@ export interface components {
          *     membro, no perfil dele na comunidade.
          * @enum {string}
          */
-        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "playing" | "eliminated" | "withdrawn" | "champion";
+        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "reserve" | "playing" | "eliminated" | "withdrawn" | "champion";
         /** @enum {string} */
         SourceOutcome: "winner" | "loser";
         /** @description Formato de uma fase. */
@@ -2805,6 +2956,21 @@ export interface components {
             auth: string;
             /** @description Chave pública ECDH do navegador (base64url). */
             p256dh: string;
+        };
+        /** @description Troca de um jogador do time durante o torneio. */
+        Substitution: {
+            /**
+             * Format: int64
+             * @description Quem entra: um reserva (inscrito sem time) ou outro membro ativo da
+             *     comunidade, que fica inscrito já no time.
+             */
+            in: number;
+            /**
+             * Format: int64
+             * @description Quem sai: um jogador do time (pode ter saído da comunidade). Fica
+             *     inscrito, sem time.
+             */
+            out: number;
         };
         /**
          * @description Critério de ordem da tabela, na ordem em que valem: pontos, Buchholz (só
@@ -2904,6 +3070,31 @@ export interface components {
              */
             withdrawn: boolean;
         };
+        /**
+         * @description A formação dos times de um torneio: os times e quem está sem time (os
+         *     reservas). No duelo, cada inscrito é um time de um e não há reservas.
+         */
+        TeamFormation: {
+            /** @description `user_id` de quem fez check-in, entre todos os inscritos. */
+            checked_in: number[];
+            /**
+             * @description O torneio tem check-in: só quem fez entra num time que vai para a
+             *     chave.
+             */
+            has_check_in: boolean;
+            /**
+             * @description Os inscritos sem time, na ordem de inscrição (no TDM em andamento,
+             *     também quem foi substituído).
+             */
+            reserves: components["schemas"]["FormationPlayer"][];
+            /**
+             * Format: int32
+             * @description Jogadores por time (1 no duelo).
+             */
+            team_size: number;
+            /** @description Os times, pelo seed e, sem seed, na ordem de criação. */
+            teams: components["schemas"]["Team"][];
+        };
         /** @description Um jogador de um time. */
         TeamMember: {
             avatar_url?: string | null;
@@ -2952,7 +3143,10 @@ export interface components {
             created_at: string;
             description: string;
             locale: components["schemas"]["Locale"];
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Vagas, em jogadores.
+             */
             max_participants: number;
             mode: components["schemas"]["TournamentMode"];
             name: string;
@@ -2977,6 +3171,11 @@ export interface components {
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
+            /**
+             * Format: int32
+             * @description Jogadores por time (1 no duelo).
+             */
+            team_size: number;
             translations: components["schemas"]["TournamentTranslation"][];
             veto: components["schemas"]["VetoSettings"];
             visibility: components["schemas"]["Visibility"];
@@ -3041,8 +3240,11 @@ export interface components {
              */
             uses: number;
         };
-        /** @enum {string} */
-        TournamentMode: "duel";
+        /**
+         * @description A modalidade: duelo (um contra um) ou TDM (times de 2 a 4, `team_size`).
+         * @enum {string}
+         */
+        TournamentMode: "duel" | "tdm";
         /**
          * @description rascunho → inscrição → check-in → em andamento → encerrado.
          * @enum {string}
@@ -3073,6 +3275,11 @@ export interface components {
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
+            /**
+             * Format: int32
+             * @description Jogadores por time (1 no duelo).
+             */
+            team_size: number;
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
             visibility: components["schemas"]["Visibility"];
@@ -3118,6 +3325,21 @@ export interface components {
             /** @description 1 a 32 caracteres; espaços nas pontas são removidos. */
             nickname: string;
         };
+        /** @description Campos ausentes não mudam. */
+        UpdateTeam: {
+            /**
+             * Format: int64
+             * @description `user_id` do novo capitão, um jogador do time. Só o organizador, até
+             *     o torneio encerrar.
+             */
+            captain?: number | null;
+            /**
+             * @description 1 a 40 caracteres, único no torneio sem diferenciar maiúsculas;
+             *     `null` (ou vazio) tira o nome (a tela mostra "Time de {capitão}").
+             *     O organizador e o capitão, até o torneio encerrar.
+             */
+            name?: string | null;
+        };
         /**
          * @description Campos ausentes não mudam. Textos e visibilidade podem mudar até o
          *     torneio encerrar; vagas, regra de campeões, fases, data de início e
@@ -3143,6 +3365,7 @@ export interface components {
             description?: string | null;
             /** Format: int32 */
             max_participants?: number | null;
+            mode?: components["schemas"]["TournamentMode"] | null;
             name?: string | null;
             rules?: string | null;
             /**
@@ -3156,11 +3379,17 @@ export interface components {
              * @description `null` tira a data, o que só vale no rascunho.
              */
             starts_at?: string | null;
+            /**
+             * Format: int32
+             * @description Ausente com o modo trocado: o padrão do modo novo (1 no duelo, 2 no
+             *     TDM).
+             */
+            team_size?: number | null;
             veto?: components["schemas"]["VetoInput"] | null;
             visibility?: components["schemas"]["Visibility"] | null;
         };
         /** @enum {string} */
-        VetoAction: "ban" | "pick" | "vote";
+        VetoAction: "ban" | "pick" | "vote" | "team_pick";
         VetoBan: {
             champion: components["schemas"]["ChampionRef"];
             side: components["schemas"]["Side"];
@@ -3173,9 +3402,15 @@ export interface components {
             /**
              * @description A regra de não repetição o tira de cada lado (já usado na série ou,
              *     pelo escopo da regra, em outra partida).
+             *     Nos times, pela regra do jogador, o que ela tira de algum do elenco.
              */
             used_by_a: boolean;
             used_by_b: boolean;
+            /**
+             * @description TDM: a regra tira de quem vê, se ele joga (pela do jogador, o que ele
+             *     mesmo usou; pela do time, o que o time usou).
+             */
+            used_by_you: boolean;
         };
         /** @description Um passo: um mapa ou um campeão, pelo slug. */
         VetoChoice: {
@@ -3193,6 +3428,8 @@ export interface components {
             game?: number | null;
             kind: components["schemas"]["VetoEventKind"];
             map?: components["schemas"]["MapRef"] | null;
+            /** @description TDM: na escolha simultânea, o apelido do jogador (também no sorteado). */
+            player?: string | null;
             side?: components["schemas"]["Side"] | null;
             /** @description Escolha sorteada pelo fim do tempo. */
             timeout: boolean;
@@ -3211,9 +3448,17 @@ export interface components {
             pick_b?: components["schemas"]["ChampionRef"] | null;
             picked_by?: components["schemas"]["Side"] | null;
             starter?: components["schemas"]["Side"] | null;
+            /** @description TDM: o campeão de cada jogador, na ordem em que escolheram. */
+            team_picks: components["schemas"]["VetoTeamPick"][];
             vote_a?: string | null;
             vote_b?: string | null;
         };
+        /**
+         * @description TDM: o que cedeu para quem vê ter campeão na escolha simultânea (cada um
+         *     cede sozinho, na hora em que escolhe).
+         * @enum {string}
+         */
+        VetoGaveWay: "rule" | "team";
         /**
          * @description A configuração do veto que chega: o que vier no lugar do atual (na
          *     criação, do padrão).
@@ -3237,12 +3482,27 @@ export interface components {
              *     sorteada.
              */
             step_seconds?: number | null;
+            /**
+             * Format: int32
+             * @description TDM: segundos da escolha simultânea de campeões (todos do mapa numa
+             *     janela só, depois dos bans), de 15 a 300 (padrão 60); no fim, quem
+             *     não escolheu recebe um sorteado.
+             */
+            team_pick_seconds?: number | null;
         };
         /** @description Um passo do veto de mapas (modo veto). */
         VetoMapStep: {
             action: components["schemas"]["VetoAction"];
             map: components["schemas"]["MapRef"];
             side: components["schemas"]["Side"];
+        };
+        /** @description TDM: um jogador na escolha simultânea de campeões. */
+        VetoPlayer: {
+            /** @description Apelido; vazio quando a conta foi excluída. */
+            nickname: string;
+            side: components["schemas"]["Side"];
+            /** Format: int64 */
+            user_id: number;
         };
         /** @description A configuração do veto na resposta. */
         VetoSettings: {
@@ -3252,6 +3512,11 @@ export interface components {
             map_pool: string[];
             /** Format: int32 */
             step_seconds: number;
+            /**
+             * Format: int32
+             * @description TDM: segundos da escolha simultânea de campeões.
+             */
+            team_pick_seconds: number;
         };
         /**
          * @description Onde o veto da partida está (só na partida pronta de um torneio com veto).
@@ -3260,10 +3525,24 @@ export interface components {
         VetoStatus: "waiting_ready" | "in_progress" | "done";
         /** @enum {string} */
         VetoTarget: "map" | "champion";
+        /** @description TDM: a escolha de um jogador num mapa. */
+        VetoTeamPick: {
+            champion: components["schemas"]["ChampionRef"];
+            nickname: string;
+            side: components["schemas"]["Side"];
+            /** @description Sorteado pelo fim da janela. */
+            timeout: boolean;
+            /** Format: int64 */
+            user_id: number;
+        };
         /** @description O passo esperado agora. */
         VetoTurn: {
             action: components["schemas"]["VetoAction"];
-            /** @description Quem age: um lado, ou os dois na votação enquanto nenhum votou. */
+            /**
+             * @description Quem age: um lado (nos times, pelo capitão), ou os dois na votação
+             *     enquanto nenhum votou e na escolha simultânea enquanto falta alguém
+             *     de cada um.
+             */
             sides: components["schemas"]["Side"][];
             target: components["schemas"]["VetoTarget"];
         };
@@ -3285,14 +3564,22 @@ export interface components {
              */
             game?: number | null;
             games: components["schemas"]["VetoGame"][];
+            gave_way?: components["schemas"]["VetoGaveWay"] | null;
             /** @description Do mais antigo ao mais novo. */
             history: components["schemas"]["VetoEvent"][];
             map_mode: components["schemas"]["MapMode"];
             /** @description Modo veto: os passos do veto de mapas, na ordem. */
             map_steps: components["schemas"]["VetoMapStep"][];
             /**
+             * @description TDM: quem ainda não escolheu na escolha simultânea do jogo em
+             *     andamento.
+             */
+            missing: components["schemas"]["VetoPlayer"][];
+            /**
              * @description O que quem vê pode escolher agora (slugs de mapas ou de campeões);
-             *     vazio se não é a vez dele.
+             *     vazio se não é a vez dele (nos times, o passo do lado é do capitão; na
+             *     escolha simultânea, cada um tem as suas, sem o que um colega já
+             *     escolheu no mapa).
              */
             options: string[];
             /** @description O pool de mapas do torneio, na ordem. */
@@ -3309,6 +3596,11 @@ export interface components {
              * @description Segundos de cada passo.
              */
             step_seconds: number;
+            /**
+             * Format: int32
+             * @description TDM: segundos da escolha simultânea de campeões; `null` no duelo.
+             */
+            team_pick_seconds?: number | null;
             turn?: components["schemas"]["VetoTurn"] | null;
             undo_request?: components["schemas"]["Side"] | null;
         };
@@ -3316,7 +3608,7 @@ export interface components {
          * @description O que a partida (ou um mapa dela) espera de quem vê.
          * @enum {string}
          */
-        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto";
+        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto" | "await_captain";
         /** @enum {string} */
         Visibility: "public" | "private";
         /** @description O webhook como a API devolve ao owner: sem o endereço nem o token. */
@@ -6502,7 +6794,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.max_participants_invalid {min, max}, tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -6669,7 +6961,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos, visibilidade, janela de contestação ou screenshot obrigatório), tournament.setup_locked (vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos, visibilidade, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7892,7 +8184,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player */
+            /** @description match.not_player, match.not_captain (nos times, só o capitão) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7941,7 +8233,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O passo de quem está na vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez). Quando o veto do jogo acaba, o mapa pode ser enviado */
+            /** @description O passo de quem está na vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez). Nos times, o passo do lado é do capitão; na escolha simultânea (`team_pick`), cada jogador escolhe o próprio campeão, uma vez por mapa. Quando o veto do jogo acaba, o mapa pode ser enviado */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7959,7 +8251,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player */
+            /** @description match.not_player, match.not_captain (nos times, o passo do lado é do capitão) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7977,7 +8269,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto do jogo já acabou), veto.not_your_turn */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto do jogo já acabou), veto.not_your_turn (na escolha simultânea: quem saiu da comunidade), veto.already_picked (já escolheu neste mapa) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7986,7 +8278,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description veto.option_invalid (mapa ou campeão fora das opções, já banido ou escolhido, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body */
+            /** @description veto.option_invalid (mapa ou campeão fora das opções, já banido ou escolhido por um colega, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8076,7 +8368,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Um jogador pede para desfazer o último passo do jogo em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
+            /** @description Um jogador (nos times, o capitão) pede para desfazer o último passo do jogo em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8094,7 +8386,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player */
+            /** @description match.not_player, match.not_captain */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8143,7 +8435,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O adversário de quem pediu aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer */
+            /** @description O adversário de quem pediu (nos times, o capitão) aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8161,7 +8453,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, veto.own_request (quem pediu não responde) */
+            /** @description match.not_player, match.not_captain, veto.own_request (quem pediu não responde) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -9057,6 +9349,515 @@ export interface operations {
             };
             /** @description tournament.not_in_progress */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_teams: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os times do torneio com os jogadores e os inscritos sem time (reservas). No duelo, cada inscrito é um time de um */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_team: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewTeam"];
+            };
+        };
+        responses: {
+            /** @description Time novo com o inscrito como capitão (ele sai do time em que estava; o time que fica vazio some) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.participants_locked (já começou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    draw_teams: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DrawTeams"];
+            };
+        };
+        responses: {
+            /** @description Times refeitos por sorteio com os elegíveis (check-in feito; sem check-in no torneio, todos), na ordem de inscrição: os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time. `random`: embaralhados, capitão sorteado; `balanced`: zigue-zague pelo rating da comunidade (inicial para quem não tem; empates pela seed), capitão o de maior rating. A seed fica no torneio; os seeds da chave somem com os times antigos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.participants_locked (já começou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_team: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do time */
+                team: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTeam"];
+            };
+        };
+        responses: {
+            /** @description Nome e capitão gravados (o mesmo valor não muda nada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description team.not_captain (o nome é do organizador e do capitão), tenant.forbidden (o capitão é só do organizador) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.finished, team.name_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description team.name_invalid {max}, team.captain_invalid (não é jogador do time), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do time */
+                team: number;
+                /** @description O inscrito */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O inscrito entra no time (sai do que estava; o capitão que sai passa a capitania ao jogador inscrito há mais tempo; o time que fica vazio some). Já estar no time não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found, participant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.participants_locked, team.full {max} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do time */
+                team: number;
+                /** @description O jogador */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O jogador sai do time e fica de reserva (o capitão passa a capitania; o time que fica vazio some) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found, participant.not_found (não está nesse time) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.participants_locked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    substitute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do time */
+                team: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Substitution"];
+            };
+        };
+        responses: {
+            /** @description Com o torneio em andamento, `out` sai do time (fica inscrito, sem time) e `in` entra: um reserva ou outro membro ativo da comunidade, que fica inscrito já no time. Vale a partir do próximo mapa enviado (a escalação de cada mapa é gravada no envio) e, no veto em andamento, na escolha simultânea de campeões. Se `out` era o capitão, a capitania passa ao jogador do time inscrito há mais tempo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamFormation"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found, member.not_found (quem entra não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_tdm, tournament.not_in_progress, team.not_in_bracket, team.withdrawn (desistiu), team.player_in_team (quem entra já joga num time) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description team.member_invalid (quem sai não é do time, ou é o mesmo que entra), request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

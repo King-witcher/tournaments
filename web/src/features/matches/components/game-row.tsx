@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
@@ -40,6 +41,7 @@ export function GameRow({
   last,
 }: Props) {
   const t = useTranslations("Match.games");
+  const tMember = useTranslations("Member");
   const other = (side: "a" | "b") => (side === "a" ? "b" : "a");
   const deadline = g.confirm_by;
   const winner = names[g.winner];
@@ -63,6 +65,16 @@ export function GameRow({
     status = t(`confirmed.${g.confirmed_via}`);
   }
   const responds = g.task === "respond";
+  // TDM: quem jogou o mapa por lado (no duelo, o próprio jogador: não
+  // aparece).
+  const nicks = (list: Schemas["TeamMember"][]) =>
+    list
+      .map((m) => shownNickname(m.nickname, tMember("deletedAccount")))
+      .join(", ");
+  const lineup =
+    g.lineup_a.length > 1 || g.lineup_b.length > 1
+      ? t("lineup", { a: nicks(g.lineup_a), b: nicks(g.lineup_b) })
+      : null;
 
   return (
     // tabIndex -1: recebe o foco depois de confirmar, contestar ou resolver o
@@ -85,6 +97,7 @@ export function GameRow({
         {settled || !g.reported_side
           ? t("won", { name: winner })
           : t("claim", { reporter: names[g.reported_side], winner })}
+        {lineup && <span className={styles.lineup}>{lineup}</span>}
       </span>
       <span className={styles.frags}>
         {g.a_frags != null &&

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.mode, t.status, t.visibility,\n                  t.max_participants, t.starts_at, t.check_in_minutes,\n                  t.registration_reopened_at, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = $1\n             and ($3 or (t.status <> 'draft'\n                         and (t.visibility = 'public'\n                              or exists(select 1 from participants p\n                                        where p.tournament_id = t.id and p.user_id = $2))))\n           group by t.id\n           order by t.created_at desc, t.id desc",
+  "query": "select t.id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status, t.visibility,\n                  t.max_participants, t.starts_at, t.check_in_minutes,\n                  t.registration_reopened_at, t.created_at,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = $1\n             and ($3 or (t.status <> 'draft'\n                         and (t.visibility = 'public'\n                              or exists(select 1 from participants p\n                                        where p.tournament_id = t.id and p.user_id = $2))))\n           group by t.id\n           order by t.created_at desc, t.id desc",
   "describe": {
     "columns": [
       {
@@ -60,6 +60,17 @@
       },
       {
         "ordinal": 5,
+        "name": "team_size",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "team_size"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "status",
         "type_info": "Text",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "visibility",
         "type_info": "Text",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "max_participants",
         "type_info": "Int4",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "starts_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "check_in_minutes",
         "type_info": "Int4",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "registration_reopened_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +136,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -136,31 +147,31 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "translation_locales!",
         "type_info": "TextArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "translation_names!",
         "type_info": "TextArray",
         "origin": "Expression"
@@ -182,6 +193,7 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       true,
@@ -193,5 +205,5 @@
       null
     ]
   },
-  "hash": "f3dbae91574d2636f6d31ddae77c89c2e3cc92d2b1cea49b384e6238ec6387c2"
+  "hash": "e7caabe9a06efb455f8b6edffdea64ef15caeee9d4593010e3ffe7e7ac1b9a10"
 }

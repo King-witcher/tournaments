@@ -74,6 +74,7 @@ impl From<ChampionRules> for ec::ChampionRules {
                     NoRepeatScope::Tournament => ec::NoRepeatScope::Tournament,
                 },
             }),
+            team_duplicates: rules.team_duplicates,
         }
     }
 }
@@ -94,6 +95,7 @@ impl From<ec::ChampionRules> for ChampionRules {
                     ec::NoRepeatScope::Tournament => NoRepeatScope::Tournament,
                 },
             }),
+            team_duplicates: rules.team_duplicates,
         }
     }
 }
@@ -147,6 +149,7 @@ mod tests {
                 who: NoRepeatWho::Player,
                 scope: NoRepeatScope::Tournament,
             }),
+            team_duplicates: true,
         };
         assert_eq!(ChampionRules::from(ec::ChampionRules::from(dto)), dto);
     }

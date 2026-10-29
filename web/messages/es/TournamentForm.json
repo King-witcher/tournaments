@@ -7,6 +7,19 @@
   "startsAtHint": "En tu zona horaria ({timeZone}). Opcional: sin fecha, el check-in no abre solo (lo abres cuando quieras). Cambia hasta que el torneo empiece.",
   "format": "Formato",
   "formatLocked": "El torneo ya empezó: el formato y los campeones ya no cambian.",
+  "mode": "Modalidad",
+  "modeHints": {
+    "duel": "Uno contra uno: cada inscrito juega por su cuenta.",
+    "tdm": "Equipos contra equipos. La inscripción es individual: antes de iniciar, la organización arma los equipos (por sorteo, equilibrados por rating o a mano), y quien sobra queda como suplente."
+  },
+  "teamSize": "Jugadores por equipo",
+  "teamSizeOption": "{size}v{size}",
+  "teamSizeHint": "Cada equipo tiene {size} jugadores. El torneo solo empieza con todos los equipos completos.",
+  "teamsReset": {
+    "fromDuel": "Al guardar, {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}: arma los equipos en la pestaña Organización antes de iniciar.",
+    "toDuel": "Al guardar, los equipos se deshacen y {count, plural, one {el inscrito juega} other {cada uno de los # inscritos juega}} por su cuenta.",
+    "resize": "Al guardar, los equipos armados se deshacen y {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}: arma equipos de {size} de nuevo en la pestaña Organización."
+  },
   "grandFinalReset": "Reset de gran final",
   "grandFinalResetHint": "Si quien llega por el repechaje gana la gran final, los dos juegan una serie más, porque solo entonces los dos tienen una derrota.",
   "bestOf": "Series",
@@ -18,6 +31,7 @@
   "champions": "Campeones",
   "bansPerGame": "Bans de campeón por mapa",
   "bansOption": "{count, plural, =0 {Sin bans} one {# ban} other {# bans}}",
+  "bansPerGameHintTdm": "{count, plural, =0 {Nadie banea campeones.} one {El capitán de cada equipo banea # campeón por mapa, alternando; el baneado queda fuera del mapa para los dos equipos.} other {El capitán de cada equipo banea # campeones por mapa, alternando; los baneados quedan fuera del mapa para los dos equipos.}}",
   "noRepeat": "Repetir campeón",
   "noRepeatOptions": {
     "off": "Se puede repetir",
@@ -31,12 +45,29 @@
     "stage": "No se pueden repetir campeones en la fase.",
     "tournament": "No se pueden repetir campeones en todo el torneo (limita la cantidad de cupos)."
   },
+  "noRepeatWho": "Quién no repite",
+  "noRepeatWhoOptions": {
+    "player": "Cada jugador",
+    "team": "El equipo"
+  },
+  "noRepeatWhoHints": {
+    "player": "Cada jugador no repite los campeones que él mismo usó; puede usar uno que ya usó un compañero.",
+    "team": "Un campeón que usó alguien del equipo nadie del equipo lo vuelve a usar. Pide muchos más campeones del pool, por eso limita las series, los cupos y los bans."
+  },
+  "teamDuplicates": "Dos del mismo equipo pueden elegir el mismo campeón en el mismo mapa",
+  "teamDuplicatesHints": {
+    "off": "Cada jugador del equipo elige un campeón distinto al de sus compañeros en el mapa. Entre equipos, el mismo campeón puede aparecer en los dos lados.",
+    "on": "Los compañeros de equipo pueden usar el mismo campeón en el mismo mapa. Entre equipos, también."
+  },
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó: el inicio, los cupos y el check-in ya no cambian.",
   "countsForRating": "Cuenta para el rating de la comunidad",
   "countsForRatingHint": "Cada mapa confirmado entra en el ranking (el W.O. no). Desmárcalo para un torneo de práctica o de diversión.",
   "maxParticipants": "Cupos",
   "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
+  "maxParticipantsTdm": "Cupos (jugadores)",
+  "maxParticipantsHintTdm": "Cuentan jugadores, de {min} a {max}. La inscripción se cierra cuando se llenan.",
+  "slotsTeams": "{slots} cupos = {teams, plural, one {# equipo} other {# equipos}} de {size}{reserves, plural, =0 {} one { y # suplente} other { y # suplentes}}.",
   "visibility": "Visibilidad",
   "visibilityOptions": {
     "public": "Pública",
@@ -51,18 +82,27 @@
   "checkInOption": "Abre {minutes} min antes del inicio",
   "checkInOffHint": "Entran en la llave todos los inscritos.",
   "checkInHint": "El check-in es la confirmación de presencia: cerca del inicio, cada inscrito confirma en el sitio que va a jugar, y solo quien confirma entra en la llave.",
+  "checkInOffHintTdm": "Todos los inscritos pueden entrar en un equipo.",
+  "checkInHintTdm": "El check-in es la confirmación de presencia: cerca del inicio, cada inscrito confirma en el sitio que va a jugar, y solo quien confirma entra en un equipo.",
   "contest": "Plazo para impugnar",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos.",
   "summary": {
     "slots": "{count, plural, one {# cupo} other {# cupos}}",
+    "slotsTeams": "{count, plural, one {# cupo} other {# cupos}} ({teams, plural, one {# equipo} other {# equipos}} de {size})",
     "checkIn": "check-in {window} antes",
     "noCheckIn": "sin check-in",
     "contest": "{window} para impugnar",
     "maps": "{count, plural, one {# mapa} other {# mapas}}",
     "championPhase": "ban/pick de campeones",
     "noChampionPhase": "sin ban/pick de campeones",
-    "seconds": "{seconds} s por paso"
+    "seconds": "{time} por paso",
+    "teamPick": "{time} para elegir campeón"
+  },
+  "duration": {
+    "seconds": "{seconds} s",
+    "minutes": "{minutes} min",
+    "minutesSeconds": "{minutes} min {seconds} s"
   },
   "description": "Descripción",
   "rules": "Reglas adicionales",
@@ -121,13 +161,22 @@
       "random": "El mapa de cada juego se sortea del pool cuando empieza, sin repetir en la serie.",
       "off": "Los jugadores acuerdan el mapa fuera del sitio y lo envían como siempre."
     },
+    "mapModeHintTdm": {
+      "veto": "Antes del primer mapa, los capitanes banean y eligen alternando (empieza el mejor seed); el que queda es el decisivo.",
+      "vote": "En cada mapa, 3 mapas del pool sorteados (sin los ya jugados); cada capitán vota uno; votos distintos, sorteo entre los dos.",
+      "random": "El mapa de cada juego se sortea del pool cuando empieza, sin repetir en la serie.",
+      "off": "Los equipos acuerdan el mapa fuera del sitio y lo envían como siempre."
+    },
     "mapPool": "Pool de mapas",
     "mapPoolHint": "{count, plural, one {# mapa elegido} other {# mapas elegidos}}; la serie más larga pide al menos {min}.",
     "championPhase": "Ban/pick de campeones en cada mapa",
     "championPhaseHint": "Ban de uno, ban del otro (según los bans por mapa), pick de uno, pick del otro, abiertos. Vale con cualquier modo de mapa y aplica la regla de no repetición.",
+    "championPhaseHintTdm": "Los capitanes banean alternando (según los bans por mapa); después, todos eligen su campeón al mismo tiempo, viendo las elecciones de los demás. Vale con cualquier modo de mapa y aplica las reglas de campeones.",
     "seconds": "Tiempo de cada paso",
     "secondsHint": "Si se termina el tiempo, la elección se sortea (la organización puede deshacerla).",
-    "secondsOption": "{seconds} s"
+    "secondsHintTdm": "Vale para cada paso del capitán (mapas y bans). Si se termina el tiempo, la elección se sortea (la organización puede deshacerla).",
+    "teamPickSeconds": "Tiempo de la elección de campeones",
+    "teamPickSecondsHint": "Después de los bans, todos eligen su campeón al mismo tiempo en esta ventana; a quien no elija le toca uno sorteado entre los que podía elegir."
   },
   "stageFormat": "Sistema",
   "stageFormats": {
@@ -144,6 +193,8 @@
   },
   "swissRounds": "Rondas",
   "swissRoundsHint": "El máximo es una menos que los inscritos: con menos gente, vale ese. Automático: 3 con hasta 8 inscritos, 4 con hasta 16, 5 con hasta 32.",
+  "swissRoundsHintTdm": "El máximo es una menos que los equipos: con menos equipos, vale ese. Automático: 3 con hasta 8 equipos, 4 con hasta 16, 5 con hasta 32.",
   "swissRoundsAuto": "Automático (según los inscritos)",
+  "swissRoundsAutoTdm": "Automático (según los equipos)",
   "swissRoundsOption": "{count, plural, one {# ronda} other {# rondas}}"
 }

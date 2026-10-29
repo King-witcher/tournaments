@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
+import { useModeLabel } from "../hooks/use-mode-label";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 import { formatKind } from "../lib/format";
 import { localizedName } from "../lib/localize";
@@ -24,8 +25,9 @@ type Props = {
 
 /**
  * O topo da página do torneio: a trilha até a comunidade, o nome no idioma
- * de quem vê, o estado (e "Privado"), a linha formato · melhor de · início ·
- * inscritos e as ações de quem vê, com o raro e o destrutivo no ⋯.
+ * de quem vê, o estado (e "Privado"), a linha modalidade · formato · melhor
+ * de · início · inscritos e as ações de quem vê, com o raro e o destrutivo
+ * no ⋯.
  */
 export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const t = useTranslations("Tournament");
@@ -33,6 +35,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const tStatus = useTranslations("TournamentStatus");
   const tVisibility = useTranslations("Visibility");
   const locale = useLocale();
+  const modeLabel = useModeLabel();
   const organizer = me.role !== "player";
   const [stage] = tournament.stages;
   const kind = formatKind(stage);
@@ -68,6 +71,8 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
       }
       meta={
         <>
+          {modeLabel(tournament.mode, tournament.team_size)}
+          {" · "}
           {t(`setup.bracket.${kind}`)}
           {" · "}
           {t("meta.bestOf", { bestOf: stage.best_of })}

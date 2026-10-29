@@ -27,9 +27,9 @@ pub async fn message(state: &AppState, job: &Job) -> Result<Option<Value>, sqlx:
     let people = if spec.to == To::Nobody || job.users.is_empty() {
         Vec::new()
     } else {
-        db::people(&state.db, job.tenant, &job.users).await?
+        db::people(&state.db, job.tenant, &job.users, tournament).await?
     };
-    let to = addressed(spec.to, &people, job.mention_players);
+    let to = addressed(spec.to, &people, job.mention_players, job.locale);
 
     let mut extra = vec![
         ("link", link(&state.auth.web_origin, job.locale, &job.path)),
@@ -82,27 +82,66 @@ struct Addressed {
 
 /// Quem a mensagem procura. Menciona quem vinculou o Discord, se
 /// `mention`; os jogadores sem menção entram pelo apelido, a organização
-/// só por menção.
-fn addressed(to: To, people: &[Person], mention: bool) -> Addressed {
+/// só por menção. No TDM, os jogadores de cada time vêm juntos, depois do
+/// nome do time (sem nome, "Time de {capitão}" no idioma da configuração);
+/// os times, separados por " vs ".
+fn addressed(to: To, people: &[Person], mention: bool, locale: Locale) -> Addressed {
     let mut mentioned = Vec::new();
-    let mut parts = Vec::new();
+    // Cada grupo: o time (no TDM) e as partes de quem é dele.
+    let mut groups: Vec<(Option<&db::PersonTeam>, Vec<String>)> = Vec::new();
     for person in people {
         let id = person
             .discord_id
             .as_deref()
             .filter(|id| mention && !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()));
-        if let Some(id) = id {
-            parts.push(format!("<@{id}>"));
+        let part = if let Some(id) = id {
             mentioned.push(id.to_owned());
+            format!("<@{id}>")
         } else if to == To::Players {
-            parts.push(escape(&person.nickname));
+            escape(&person.nickname)
+        } else {
+            continue;
+        };
+        let team = person.team.as_ref().filter(|_| to == To::Players);
+        match groups
+            .iter_mut()
+            .find(|(t, _)| team.is_some() && t.map(|t| t.id) == team.map(|t| t.id))
+        {
+            Some((_, parts)) => parts.push(part),
+            None => groups.push((team, vec![part])),
         }
     }
     mentioned.truncate(100);
-    let separator = if to == To::Players { " vs " } else { " " };
-    Addressed {
-        text: parts.join(separator),
-        mentioned,
+    let text = if to == To::Players {
+        groups
+            .iter()
+            .map(|(team, parts)| match team {
+                Some(team) => format!("**{}**: {}", team_name(team, locale), parts.join(" ")),
+                None => parts.join(" "),
+            })
+            .collect::<Vec<_>>()
+            .join(" vs ")
+    } else {
+        groups
+            .into_iter()
+            .flat_map(|(_, parts)| parts)
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    Addressed { text, mentioned }
+}
+
+/// O nome de um time no texto: o dele ou "Time de {capitão}".
+fn team_name(team: &db::PersonTeam, locale: Locale) -> String {
+    match &team.name {
+        Some(name) => escape(name),
+        None => {
+            let of = match locale {
+                Locale::Pt => "Time de",
+                Locale::Es => "Equipo de",
+            };
+            format!("{of} {}", escape(&team.captain))
+        }
     }
 }
 
@@ -116,31 +155,64 @@ mod tests {
         Person {
             nickname: nickname.into(),
             discord_id: discord_id.map(Into::into),
+            team: None,
         }
     }
+
+    const PT: Locale = Locale::Pt;
 
     #[test]
     fn players_are_mentioned_or_named() {
         let people = [person("Ana", Some("111")), person("Bia", None)];
-        let on = addressed(To::Players, &people, true);
+        let on = addressed(To::Players, &people, true, PT);
         assert_eq!(on.text, "<@111> vs Bia");
         assert_eq!(on.mentioned, ["111"]);
-        let off = addressed(To::Players, &people, false);
+        let off = addressed(To::Players, &people, false, PT);
         assert_eq!(off.text, "Ana vs Bia");
         assert!(off.mentioned.is_empty());
     }
 
     #[test]
+    fn teams_come_together_under_their_names() {
+        let team = |id, name: Option<&str>, captain: &str| {
+            Some(db::PersonTeam {
+                id,
+                name: name.map(Into::into),
+                captain: captain.into(),
+            })
+        };
+        let in_team = |nickname, discord, t: &Option<db::PersonTeam>| Person {
+            team: t.clone(),
+            ..person(nickname, discord)
+        };
+        let (a, b) = (team(1, Some("Os Bons"), "Ana"), team(2, None, "Caio"));
+        let people = [
+            in_team("Ana", Some("111"), &a),
+            in_team("Caio", None, &b),
+            in_team("Bia", None, &a),
+            in_team("Duda", Some("444"), &b),
+        ];
+        let got = addressed(To::Players, &people, true, PT);
+        assert_eq!(
+            got.text,
+            "**Os Bons**: <@111> Bia vs **Time de Caio**: Caio <@444>"
+        );
+        assert_eq!(got.mentioned, ["111", "444"]);
+        let es = addressed(To::Players, &people, false, Locale::Es).text;
+        assert!(es.ends_with("**Equipo de Caio**: Caio Duda"), "{es}");
+    }
+
+    #[test]
     fn staff_is_only_mentioned() {
         let people = [person("Ana", Some("111")), person("Bia", None)];
-        assert_eq!(addressed(To::Staff, &people, true).text, "<@111>");
-        assert_eq!(addressed(To::Staff, &people, false).text, "");
+        assert_eq!(addressed(To::Staff, &people, true, PT).text, "<@111>");
+        assert_eq!(addressed(To::Staff, &people, false, PT).text, "");
     }
 
     #[test]
     fn a_discord_id_that_is_not_a_number_is_never_mentioned() {
         let people = [person("Ana", Some("1> @everyone <@2"))];
-        let got = addressed(To::Players, &people, true);
+        let got = addressed(To::Players, &people, true, PT);
         assert_eq!(got.text, "Ana");
         assert!(got.mentioned.is_empty());
     }

@@ -13,24 +13,31 @@ use super::{
 };
 use crate::shared::ApiError;
 
-/// Vagas aceitas.
+/// Vagas aceitas (no TDM, o mínimo é o de dois times).
 const PARTICIPANTS: RangeInclusive<i32> = 2..=1024;
 /// Bans de campeão por mapa.
 const MAX_BANS_PER_GAME: u32 = 3;
 /// Fases por torneio. Ainda não há regra de classificação entre fases nem
 /// interface para mais de uma.
 const MAX_STAGES: usize = 1;
+/// Jogadores por time no TDM.
+const TDM_TEAM_SIZES: RangeInclusive<i32> = 2..=4;
+/// Times na chave, no mínimo.
+const MIN_SIDES: i32 = 2;
 
+/// A modalidade: duelo (um contra um) ou TDM (times de 2 a 4, `team_size`).
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TournamentMode {
     Duel,
+    Tdm,
 }
 
 impl TournamentMode {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Duel => "duel",
+            Self::Tdm => "tdm",
         }
     }
 
@@ -38,6 +45,7 @@ impl TournamentMode {
     pub fn from_db(value: &str) -> Result<Self, ApiError> {
         match value {
             "duel" => Ok(Self::Duel),
+            "tdm" => Ok(Self::Tdm),
             other => {
                 tracing::error!(mode = other, "modalidade desconhecida no banco");
                 Err(ApiError::internal())
@@ -45,18 +53,32 @@ impl TournamentMode {
         }
     }
 
-    /// Jogadores por lado.
-    pub const fn team_size(self) -> u32 {
+    /// Jogadores por time aceitos.
+    pub const fn team_sizes(self) -> RangeInclusive<i32> {
+        match self {
+            Self::Duel => 1..=1,
+            Self::Tdm => TDM_TEAM_SIZES,
+        }
+    }
+
+    /// O tamanho quando a criação (ou a troca de modo) não diz: 1 no duelo,
+    /// 2 no TDM.
+    pub const fn default_team_size(self) -> i32 {
         match self {
             Self::Duel => 1,
+            Self::Tdm => 2,
         }
     }
 }
 
-/// Vagas, regra de campeões e fases, nos tipos do `engine` (os que ficam
-/// gravados).
+/// Modalidade, vagas, regra de campeões, fases e veto, nos tipos do `engine`
+/// (os que ficam gravados).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Setup {
+    pub mode: TournamentMode,
+    /// Jogadores por time: 1 no duelo, de 2 a 4 no TDM.
+    pub team_size: i32,
+    /// Vagas, em jogadores (a inscrição é individual).
     pub max_participants: i32,
     pub champion_rules: ec::ChampionRules,
     pub stages: Vec<ef::StageFormat>,
@@ -65,17 +87,31 @@ pub struct Setup {
 
 impl Setup {
     pub fn from_dto(
+        mode: TournamentMode,
+        team_size: Option<i32>,
         max_participants: i32,
         rules: ChampionRules,
         stages: Vec<StageFormat>,
         veto: VetoSetup,
     ) -> Self {
         Self {
+            mode,
+            team_size: team_size.unwrap_or(mode.default_team_size()),
             max_participants,
             champion_rules: rules.into(),
             stages: stages.into_iter().map(Into::into).collect(),
             veto,
         }
+    }
+
+    /// Jogadores por time, para o `engine` (validado em `check`).
+    pub fn team_size(&self) -> u32 {
+        u32::try_from(self.team_size).unwrap_or(1)
+    }
+
+    /// É TDM (times de mais de um).
+    pub fn teams(&self) -> bool {
+        self.mode == TournamentMode::Tdm
     }
 
     /// A série mais longa das fases (para o pool de mapas).
@@ -87,19 +123,34 @@ impl Setup {
             .unwrap_or(1)
     }
 
-    /// Limites do site (vagas, bans, número de fases, veto), vagas que caibam
-    /// os `registered` já inscritos e depois a checagem do `engine`: formato
-    /// válido e pool de campeões suficiente no pior caso.
-    pub fn check(
-        &self,
-        mode: TournamentMode,
-        champion_pool: u32,
-        registered: i64,
-    ) -> Result<(), ApiError> {
-        if !PARTICIPANTS.contains(&self.max_participants) {
+    /// As regras do veto das séries do torneio.
+    pub fn veto_rules(&self) -> engine::veto::VetoRules {
+        self.veto.rules(
+            self.champion_rules.bans_per_game,
+            self.team_size(),
+            self.champion_rules.team_duplicates,
+        )
+    }
+
+    /// Limites do site (tamanho do time, vagas, bans, número de fases,
+    /// veto), vagas que caibam os `registered` já inscritos e depois a
+    /// checagem do `engine`: formato válido e pool de campeões suficiente no
+    /// pior caso, com os times que as vagas comportam.
+    pub fn check(&self, champion_pool: u32, registered: i64) -> Result<(), ApiError> {
+        let sizes = self.mode.team_sizes();
+        if !sizes.contains(&self.team_size) {
+            return Err(
+                ApiError::invalid("tournament.team_size_invalid").with_params([
+                    ("min", i64::from(*sizes.start())),
+                    ("max", i64::from(*sizes.end())),
+                ]),
+            );
+        }
+        let min = (MIN_SIDES * self.team_size).max(*PARTICIPANTS.start());
+        if self.max_participants < min || self.max_participants > *PARTICIPANTS.end() {
             return Err(
                 ApiError::invalid("tournament.max_participants_invalid").with_params([
-                    ("min", i64::from(*PARTICIPANTS.start())),
+                    ("min", i64::from(min)),
                     ("max", i64::from(*PARTICIPANTS.end())),
                 ]),
             );
@@ -119,21 +170,37 @@ impl Setup {
                 .with_params([("max", MAX_STAGES as i64)]));
         }
         self.veto.check(self.longest_series())?;
-        self.check_entrants(mode, champion_pool, self.max_participants as usize)
+        let slots = usize::try_from(self.max_participants).unwrap_or(0);
+        self.check_entrants(champion_pool, slots)
+            .map_err(|e| self.in_players(e))
     }
 
-    /// A checagem do `engine` com `entrants` participantes, que ao iniciar são
-    /// os que entram na chave (com o pool de campeões de agora, que pode ter
-    /// mudado desde a criação).
-    pub fn check_entrants(
-        &self,
-        mode: TournamentMode,
-        champion_pool: u32,
-        entrants: usize,
-    ) -> Result<(), ApiError> {
+    /// O teto do formato vem do `engine` em lados (times); nas vagas, que
+    /// contam jogadores, ele vale vezes o tamanho do time.
+    fn in_players(&self, mut err: ApiError) -> ApiError {
+        if err.code == "format.too_many_participants" {
+            let size = i64::from(self.team_size.max(1));
+            err.params = err
+                .params
+                .into_iter()
+                .map(|(name, value)| match name {
+                    "max" => (name, value * size),
+                    "got" => (name, i64::from(self.max_participants)),
+                    _ => (name, value),
+                })
+                .collect();
+        }
+        err
+    }
+
+    /// A checagem do `engine` com `players` jogadores: as vagas na criação e
+    /// na edição; ao iniciar, os dos times que entram na chave, todos
+    /// completos (com o pool de campeões de agora, que pode ter mudado desde
+    /// a criação). Os lados são os times que eles formam, `⌊players/tamanho⌋`.
+    pub fn check_entrants(&self, champion_pool: u32, players: usize) -> Result<(), ApiError> {
         TournamentSetup {
-            team_size: mode.team_size(),
-            max_participants: entrants,
+            team_size: self.team_size(),
+            slots: players,
             champions: self.champion_rules,
             champion_pool,
             stages: &self.stages,
@@ -169,22 +236,37 @@ mod tests {
                 who: NoRepeatWho::Player,
                 scope,
             }),
+            team_duplicates: false,
         };
-        Setup::from_dto(slots, rules, stages, VetoSetup::off())
+        Setup::from_dto(
+            TournamentMode::Duel,
+            None,
+            slots,
+            rules,
+            stages,
+            VetoSetup::off(),
+        )
+    }
+
+    fn tdm(size: i32, slots: i32) -> Setup {
+        Setup {
+            mode: TournamentMode::Tdm,
+            team_size: size,
+            ..setup(slots, 1, None, vec![double(3)])
+        }
     }
 
     type Params = Vec<(&'static str, i64)>;
 
     fn check(s: Setup) -> Result<(), (&'static str, Params)> {
-        s.check(TournamentMode::Duel, 17, 0)
-            .map_err(|e| (e.code, e.params))
+        s.check(17, 0).map_err(|e| (e.code, e.params))
     }
 
     #[test]
     fn slots_fit_who_is_registered() {
         let s = || setup(8, 1, None, vec![double(3)]);
-        assert!(s().check(TournamentMode::Duel, 17, 8).is_ok());
-        let err = s().check(TournamentMode::Duel, 17, 9).unwrap_err();
+        assert!(s().check(17, 8).is_ok());
+        let err = s().check(17, 9).unwrap_err();
         assert_eq!(
             (err.code, err.params),
             (
@@ -222,6 +304,64 @@ mod tests {
         assert_eq!(
             check(setup(8, 1, None, vec![double(3), double(3)])),
             err("tournament.stage_count_invalid", &[("max", 1)])
+        );
+    }
+
+    #[test]
+    fn team_size_and_slots_follow_the_mode() {
+        let err = |code, params: &[(&'static str, i64)]| Err((code, params.to_vec()));
+        assert_eq!(check(tdm(2, 4)), Ok(()));
+        assert_eq!(
+            check(tdm(5, 16)),
+            err("tournament.team_size_invalid", &[("min", 2), ("max", 4)])
+        );
+        assert_eq!(
+            check(tdm(1, 16)),
+            err("tournament.team_size_invalid", &[("min", 2), ("max", 4)])
+        );
+        let duel = Setup {
+            team_size: 2,
+            ..setup(8, 1, None, vec![double(3)])
+        };
+        assert_eq!(
+            check(duel),
+            err("tournament.team_size_invalid", &[("min", 1), ("max", 1)])
+        );
+        // Vagas para dois times, no mínimo.
+        assert_eq!(
+            check(tdm(3, 5)),
+            err(
+                "tournament.max_participants_invalid",
+                &[("min", 6), ("max", 1024)]
+            )
+        );
+    }
+
+    #[test]
+    fn the_format_cap_counts_players_in_teams() {
+        let rr = |slots| Setup {
+            stages: vec![StageFormat::RoundRobin { best_of: 3 }.into()],
+            ..tdm(2, slots)
+        };
+        // 32 times de 2 no round robin.
+        assert_eq!(check(rr(64)), Ok(()));
+        assert_eq!(
+            check(rr(66)),
+            Err((
+                "format.too_many_participants",
+                vec![("max", 64), ("got", 66)]
+            ))
+        );
+    }
+
+    #[test]
+    fn the_engine_counts_players_below_two_teams() {
+        // A checagem do site recusa antes (`max_participants_invalid`); a do
+        // `engine`, chamada com os jogadores, fala em jogadores, não em lados.
+        let err = tdm(4, 16).check_entrants(17, 7).unwrap_err();
+        assert_eq!(
+            (err.code, err.params),
+            ("format.not_enough_players", vec![("min", 8), ("got", 7)])
         );
     }
 

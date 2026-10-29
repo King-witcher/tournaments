@@ -70,6 +70,43 @@
     "withdrawal": {
       "round_robin": "Quien deja el torneo pierde por W.O. las partidas que le faltaban, y los puntos que ya hizo siguen en la tabla.",
       "swiss": "Quien deja el torneo ya no es emparejado, y los puntos que ya hizo siguen en la tabla."
+    },
+    "tdm": {
+      "noCheckIn": "No hay check-in: cuando la organización inicia el torneo, los equipos armados entran en la llave.",
+      "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar: quien no lo haga no entra en ningún equipo.",
+      "formation": "El torneo es por equipos de {size} jugadores (TDM {size}v{size}). La inscripción es individual: antes de iniciar, la organización arma los equipos, por sorteo, por sorteo equilibrado según el rating de la comunidad o a mano, y define el capitán de cada uno.",
+      "reserves": "Quien sobra queda como suplente (por defecto, los últimos en inscribirse) y puede entrar en lugar de alguien durante el torneo.",
+      "start": "El torneo solo empieza con todos los equipos completos y con el check-in de todos los jugadores.",
+      "startNoCheckIn": "El torneo solo empieza con todos los equipos completos.",
+      "captain": "El capitán actúa por el equipo en el veto: hace clic en “Listo”, hace las elecciones del equipo y pide o responde la solicitud de deshacer un paso.",
+      "swiss": "El formato es suizo, con el número de rondas según los equipos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
+      "swissRounds": "El formato es suizo, en {rounds, plural, one {# ronda} other {# rondas}} (como máximo una menos que los equipos).",
+      "roundRobinRule": "Las partidas quedan abiertas desde el inicio: las rondas solo ordenan, y tu equipo juega cada una cuando lo acuerde con el rival. Con un número impar de equipos, cada uno descansa una ronda.",
+      "bans": "{count, plural, one {Antes de cada mapa, los capitanes banean # campeón cada uno, alternando; el baneado queda fuera de ese mapa para los dos equipos.} other {Antes de cada mapa, los capitanes banean # campeones cada uno, alternando; los baneados quedan fuera de ese mapa para los dos equipos.}}",
+      "pick": "Después de los bans, todos los jugadores eligen su campeón al mismo tiempo, en una ventana de {window}, viendo las elecciones de los demás. A quien no elija a tiempo le toca un campeón sorteado entre los que podía elegir.",
+      "duplicates": {
+        "off": "Dos jugadores del mismo equipo no usan el mismo campeón en el mismo mapa; entre equipos, sí se puede.",
+        "on": "Los jugadores del mismo equipo pueden usar el mismo campeón en el mismo mapa, y los dos equipos también."
+      },
+      "repeat": {
+        "off": "De un mapa a otro, los campeones se pueden repetir.",
+        "player": {
+          "match": "En una misma partida, cada jugador no repite campeón: usa uno distinto en cada mapa.",
+          "stage": "En esta fase del torneo, cada jugador no repite campeón: usa uno distinto en cada mapa que juegues.",
+          "tournament": "En todo el torneo, cada jugador no repite campeón: usa uno distinto en cada mapa que juegues."
+        },
+        "team": {
+          "match": "En una misma partida, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo usa en los siguientes.",
+          "stage": "En esta fase del torneo, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo vuelve a usar.",
+          "tournament": "En todo el torneo, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo vuelve a usar."
+        }
+      },
+      "report": "Después de cada mapa, cualquier jugador de uno de los equipos envía el resultado en la página de la partida: quién ganó y el mapa jugado.",
+      "confirm": "Cualquier jugador del otro equipo tiene {window} para confirmar o impugnar. Sin respuesta, el resultado vale; si lo impugnan, decide la organización.",
+      "walkover": "Si el otro equipo no aparece, o si tu equipo necesita dejar el torneo, avísale a la organización: el equipo que no juega pierde por W.O.",
+      "substitution": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad; el cambio vale a partir del próximo mapa enviado.",
+      "shortHanded": "Quien sale de la comunidad deja al equipo incompleto, y este sigue jugando con menos; el equipo solo sale del torneo si se retira o si no queda nadie de él.",
+      "rating": "Cada mapa cuenta en el rating de la comunidad de quien lo jugó, según el promedio de rating de cada equipo."
     }
   },
   "extraRules": "Reglas adicionales",
@@ -97,7 +134,8 @@
       "contest": "Plazo para impugnar",
       "veto": "Veto",
       "format": "Formato",
-      "rounds": "Rondas"
+      "rounds": "Rondas",
+      "mode": "Modalidad"
     },
     "bracket": {
       "single": "Eliminación simple",
@@ -128,17 +166,30 @@
       "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: todos los inscritos entran en la llave.",
       "contest": "¿Qué es el plazo para impugnar?",
       "contestText": "Después de cada mapa, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
-      "format": "¿Cómo funciona el formato?"
+      "format": "¿Cómo funciona el formato?",
+      "mode": "¿Cómo funcionan los equipos?",
+      "checkInTextTdm": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en un equipo.",
+      "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: cualquier inscrito puede entrar en un equipo.",
+      "contestTextTdm": "Después de cada mapa, un jugador de un equipo envía el resultado y cualquiera del otro equipo tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugnan, decide la organización."
     },
     "seeRules": "Ver las reglas",
     "rounds": {
       "auto": "rondas según los inscritos",
-      "fixed": "{count, plural, one {# ronda} other {# rondas}}"
+      "fixed": "{count, plural, one {# ronda} other {# rondas}}",
+      "autoTeams": "rondas según los equipos"
     },
     "roundsValue": {
       "auto": "Automáticas: 3 con hasta 8 inscritos, 4 con hasta 16, 5 con hasta 32",
-      "fixed": "{count} (como máximo una menos que los inscritos)"
-    }
+      "fixed": "{count} (como máximo una menos que los inscritos)",
+      "autoTeams": "Automáticas: 3 con hasta 8 equipos, 4 con hasta 16, 5 con hasta 32",
+      "fixedTeams": "{count} (como máximo una menos que los equipos)"
+    },
+    "noRepeatWho": "{rule}, {who, select, team {por equipo} other {por jugador}}",
+    "duplicates": {
+      "off": "sin campeón repetido en el equipo",
+      "on": "campeón repetido en el equipo permitido"
+    },
+    "slotsTeams": "{slots} ({teams, plural, one {# equipo} other {# equipos}} de {size})"
   },
   "invites": {
     "title": "Enlaces de inscripción",

@@ -1,0 +1,85 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select gp.game_id, gp.side, gp.user_id, m.nickname, u.avatar_url,\n                  m.left_at is not null as \"left!\"\n           from match_game_players gp\n           join match_games g on g.id = gp.game_id\n           join tenant_members m on m.tenant_id = gp.tenant_id and m.user_id = gp.user_id\n           join users u on u.id = gp.user_id\n           where g.tournament_id = $1 and g.stage = $2 and g.match_key = $3\n           order by gp.game_id, gp.side, m.nickname, gp.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "game_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "side"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "nickname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "avatar_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_url"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "left!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "43c336f65942c1da976e93136b93f37dc1cdda18a6fff867ed28f4c5f2820546"
+}

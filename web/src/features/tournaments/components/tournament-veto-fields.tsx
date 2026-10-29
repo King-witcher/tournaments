@@ -1,12 +1,15 @@
 import { FormGroup, SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { ErrorText } from "@/shared/ui/error-text";
 import { Select } from "@/shared/ui/select";
+import { useFormatSeconds } from "../hooks/use-format-seconds";
 import type { FieldErrors } from "../lib/form-errors";
 import {
+  isTdm,
   longestSeries,
   poolOf,
   type TournamentValues,
@@ -17,6 +20,8 @@ type Schemas = components["schemas"];
 
 const MODES: Schemas["MapMode"][] = ["veto", "vote", "random", "off"];
 const SECONDS = [15, 20, 30, 45, 60, 90, 120];
+/** A janela da escolha simultânea do TDM (a API aceita de 15 a 300). */
+const TEAM_PICK_SECONDS = [15, 30, 45, 60, 90, 120, 180, 300];
 
 type Props = {
   values: TournamentValues;
@@ -31,15 +36,14 @@ type Props = {
 /**
  * O veto das partidas: como sai o mapa de cada jogo, o pool de mapas (fora
  * do modo desligado; vale para o veto, a votação e o sorteio), o ban/pick
- * de campeões e o tempo de cada passo.
+ * de campeões e o tempo de cada passo. No TDM, as dicas dizem que o capitão
+ * age pelo time e, com a fase de campeões, há o tempo da escolha simultânea.
  */
 export function TournamentVetoFields(props: Props) {
   const { values, onChange, errors, maps, disabled } = props;
   const t = useTranslations("TournamentForm.veto");
+  const tdm = isTdm(values);
   const pool = poolOf(values, maps);
-  const seconds = SECONDS.includes(values.vetoSeconds)
-    ? SECONDS
-    : [...SECONDS, values.vetoSeconds].sort((a, b) => a - b);
   const toggle = (slug: string, on: boolean) =>
     onChange({
       mapPool: on
@@ -53,7 +57,11 @@ export function TournamentVetoFields(props: Props) {
     <>
       <Select
         labelText={t("mapMode")}
-        helperText={t(`mapModeHint.${values.mapMode}`)}
+        helperText={t(
+          tdm
+            ? `mapModeHintTdm.${values.mapMode}`
+            : `mapModeHint.${values.mapMode}`,
+        )}
         name="mapMode"
         value={values.mapMode}
         disabled={disabled}
@@ -94,32 +102,77 @@ export function TournamentVetoFields(props: Props) {
       )}
       <Checkbox
         labelText={t("championPhase")}
-        helperText={t("championPhaseHint")}
+        helperText={t(tdm ? "championPhaseHintTdm" : "championPhaseHint")}
         name="championPhase"
         checked={values.championPhase}
         disabled={disabled}
         onChange={(championPhase) => onChange({ championPhase })}
       />
       {(values.mapMode !== "off" || values.championPhase) && (
-        <Select
+        <SecondsSelect
           labelText={t("seconds")}
-          helperText={t("secondsHint")}
+          helperText={t(tdm ? "secondsHintTdm" : "secondsHint")}
           name="vetoSeconds"
+          options={SECONDS}
           value={values.vetoSeconds}
+          error={errors.vetoSeconds}
           disabled={disabled}
-          invalid={errors.vetoSeconds !== undefined}
-          invalidText={errors.vetoSeconds}
-          onChange={(e) => onChange({ vetoSeconds: Number(e.target.value) })}
-        >
-          {seconds.map((s) => (
-            <SelectItem
-              key={s}
-              value={s}
-              text={t("secondsOption", { seconds: s })}
-            />
-          ))}
-        </Select>
+          onChange={(vetoSeconds) => onChange({ vetoSeconds })}
+        />
+      )}
+      {tdm && values.championPhase && (
+        <SecondsSelect
+          labelText={t("teamPickSeconds")}
+          helperText={t("teamPickSecondsHint")}
+          name="teamPickSeconds"
+          options={TEAM_PICK_SECONDS}
+          value={values.teamPickSeconds}
+          error={errors.teamPickSeconds}
+          disabled={disabled}
+          onChange={(teamPickSeconds) => onChange({ teamPickSeconds })}
+        />
       )}
     </>
+  );
+}
+
+type SecondsProps = {
+  labelText: ReactNode;
+  helperText: ReactNode;
+  name: string;
+  options: number[];
+  value: number;
+  error?: string;
+  disabled: boolean;
+  onChange: (seconds: number) => void;
+};
+
+/**
+ * Um tempo do veto, em segundos (em minutos a partir de um). Um valor que
+ * veio da API fora das opções continua aparecendo.
+ */
+function SecondsSelect({
+  options,
+  value,
+  error,
+  onChange,
+  ...props
+}: SecondsProps) {
+  const formatSeconds = useFormatSeconds();
+  const all = options.includes(value)
+    ? options
+    : [...options, value].sort((a, b) => a - b);
+  return (
+    <Select
+      {...props}
+      value={value}
+      invalid={error !== undefined}
+      invalidText={error}
+      onChange={(e) => onChange(Number(e.target.value))}
+    >
+      {all.map((s) => (
+        <SelectItem key={s} value={s} text={formatSeconds(s)} />
+      ))}
+    </Select>
   );
 }

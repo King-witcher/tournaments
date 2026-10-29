@@ -9,13 +9,14 @@ src/
   series/         melhor de N: mod.rs (tamanho e placar, validate_score), games.rs (a série
                   mapa a mapa: próximo mapa, troca, onde a série fecha e o que fica depois dela)
   seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
-  champions.rs    ChampionRules e o orçamento da regra de não repetição
+  teams.rs        formação dos times do TDM: reservas, sorteio aleatório e balanceado (zigue-zague)
+  champions.rs    ChampionRules e o orçamento do pool (bans, regra de não repetição, times)
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
   rating/         mod.rs (RatingSystem, Event, replay: o histórico na ordem dada → rating final
                   e o efeito de cada evento), elo.rs (Elo com K que decai com os jogos), tests/
   veto/           veto de mapas e ban/pick de campeões de uma série: mod.rs (regras, Veto,
                   replay, vez, opções), sequence.rs (ordem dos passos), draw.rs (sorteios
-                  pela seed), tests/
+                  pela seed), team.rs (a escolha simultânea de campeões nos times), tests/
   formats/
     mod.rs        StageFormat (o JSON gravado em tournament_stages.config)
     stage.rs      StageBracket: a fase de qualquer formato (o que a API usa) e StageHistory

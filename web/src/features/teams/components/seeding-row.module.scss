@@ -31,6 +31,20 @@
   overflow-wrap: anywhere;
 }
 
+// O nome e, no TDM, os jogadores do time embaixo.
+.label {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+// Os jogadores são referência, não o nome: menores e na cor secundária.
+.members {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}
+
 // O rating é a referência para ordenar, não o nome: menor e na cor
 // secundária, com algarismos da mesma largura para alinhar.
 .rating {

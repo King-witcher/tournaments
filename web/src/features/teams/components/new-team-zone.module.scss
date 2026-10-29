@@ -1,0 +1,21 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+
+// Alta como um time de dois, para ser um alvo fácil de soltar; some no
+// celular, onde não se arrasta. A classe dobrada vence o `display` do bloco.
+.zone.zone {
+  justify-content: center;
+  min-block-size: spacing.$spacing-12;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.text {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+}

@@ -7,7 +7,8 @@
 //! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`), o
 //! veto (`veto`: histórico, pool de mapas), os screenshots (`screenshots`) e
 //! os times (`teams`: o time de um jogador do duelo, capitão, escalação de
-//! cada mapa) e os pareamentos do suíço (`pairings`). As de resultados e
+//! cada mapa), os pareamentos do suíço (`pairings`) e o TDM (`tdm`: modo e
+//! tamanho, formação, substituto, escolha simultânea). As de resultados e
 //! histórico ficam em `matches::schema`.
 
 mod checks;
@@ -20,6 +21,7 @@ mod ratings;
 mod realtime;
 mod scheduled_deletion;
 mod screenshots;
+mod tdm;
 mod teams;
 mod veto;
 mod withdrawal;

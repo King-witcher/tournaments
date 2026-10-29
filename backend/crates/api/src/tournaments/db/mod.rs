@@ -14,14 +14,8 @@ use engine::{core::MapId, formats as ef};
 use sqlx::{PgConnection, PgExecutor, types::Json};
 
 use super::{
-    edit::Edit,
-    schedule::Schedule,
-    setup::{Setup, TournamentMode},
-    status::TournamentStatus,
-    texts::Texts,
-    types::TournamentTranslation,
-    veto::PoolMap,
-    visibility::Visibility,
+    edit::Edit, schedule::Schedule, setup::Setup, status::TournamentStatus, texts::Texts,
+    types::TournamentTranslation, veto::PoolMap, visibility::Visibility,
 };
 use crate::{
     shared::{ApiError, Locale},
@@ -52,7 +46,6 @@ pub struct StoredTournament {
     pub slug: String,
     pub locale: Locale,
     pub texts: Texts,
-    pub mode: TournamentMode,
     /// O que vale agora: `find` já abriu o check-in se a janela abriu.
     pub status: TournamentStatus,
     pub visibility: Visibility,
@@ -81,7 +74,6 @@ pub struct NewTournament<'a> {
     pub slug: &'a str,
     pub locale: Locale,
     pub texts: &'a Texts,
-    pub mode: TournamentMode,
     pub visibility: Visibility,
     pub setup: &'a Setup,
     pub schedule: Schedule,
@@ -108,8 +100,10 @@ pub async fn create(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
-                counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
+                team_size, team_pick_seconds)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+                   $19, $20)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -118,7 +112,7 @@ pub async fn create(
         new.texts.name,
         new.texts.description,
         new.texts.rules,
-        new.mode.as_str(),
+        new.setup.mode.as_str(),
         new.visibility.as_str(),
         new.setup.max_participants,
         Json(new.setup.champion_rules) as _,
@@ -129,7 +123,9 @@ pub async fn create(
         new.setup.veto.map_mode.as_str(),
         new.setup.veto.champion_phase,
         new.setup.veto.step_seconds,
-        new.screenshots_required
+        new.screenshots_required,
+        new.setup.team_size as i16,
+        new.setup.veto.team_pick_seconds
     )
     .fetch_optional(&mut *conn)
     .await?
@@ -177,8 +173,9 @@ async fn insert_stages(
 }
 
 /// Grava o PATCH: os textos e, quando vieram, a visibilidade, a configuração
-/// (vagas, campeões, fases e veto), a data e a janela de check-in, a janela de
-/// contestação e o status.
+/// (modo, vagas, campeões, fases e veto), a data e a janela de check-in, a
+/// janela de contestação e o status. Trocar o modo ou o tamanho refaz os
+/// times no banco (trigger `tournaments_mode_teams`).
 pub async fn update(
     conn: &mut PgConnection,
     id: TournamentId,
@@ -217,14 +214,17 @@ pub async fn update(
     sqlx::query!(
         r#"update tournaments
            set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,
-               veto_seconds = $6
+               veto_seconds = $6, mode = $7, team_size = $8, team_pick_seconds = $9
            where id = $1"#,
         id.0,
         setup.max_participants,
         Json(setup.champion_rules) as _,
         setup.veto.map_mode.as_str(),
         setup.veto.champion_phase,
-        setup.veto.step_seconds
+        setup.veto.step_seconds,
+        setup.mode.as_str(),
+        setup.team_size as i16,
+        setup.veto.team_pick_seconds
     )
     .execute(&mut *conn)
     .await?;

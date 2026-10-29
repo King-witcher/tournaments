@@ -16,16 +16,35 @@ pub struct Entrant {
     pub seed: Option<i32>,
     /// Todos os jogadores do time fizeram check-in (no duelo, o único).
     pub checked_in: bool,
+    /// Jogadores no time.
+    pub players: i64,
 }
 
-/// Quem entra no seeding e na chave: os times com o check-in de todos os
-/// jogadores feito ou, se o torneio não tem check-in, todos. Mantém a ordem
-/// de `entrants`.
-pub fn eligible(entrants: Vec<Entrant>, has_check_in: bool) -> Vec<Entrant> {
+impl Entrant {
+    /// Entra na chave: completo (`team_size` jogadores; no duelo, sempre) e
+    /// com o check-in de todos feito (ou o torneio sem check-in).
+    fn ready(&self, has_check_in: bool, team_size: i32) -> bool {
+        (self.checked_in || !has_check_in) && self.players == i64::from(team_size)
+    }
+}
+
+/// Quem entra no seeding e na chave: os times completos com o check-in de
+/// todos os jogadores feito ou, se o torneio não tem check-in, todos os
+/// completos. Mantém a ordem de `entrants`.
+pub fn eligible(entrants: Vec<Entrant>, has_check_in: bool, team_size: i32) -> Vec<Entrant> {
     entrants
         .into_iter()
-        .filter(|e| e.checked_in || !has_check_in)
+        .filter(|e| e.ready(has_check_in, team_size))
         .collect()
+}
+
+/// Nos times (TDM), quantos não entrariam na chave: incompletos ou com
+/// alguém sem check-in. Iniciar exige zero (o organizador ajusta antes).
+pub fn incomplete(entrants: &[Entrant], has_check_in: bool, team_size: i32) -> usize {
+    entrants
+        .iter()
+        .filter(|e| !e.ready(has_check_in, team_size))
+        .count()
 }
 
 /// A ordem que vale ao iniciar: primeiro os que têm seed, pelo seed; depois
@@ -87,6 +106,7 @@ mod tests {
             id: n,
             seed,
             checked_in,
+            players: 1,
         }
     }
 
@@ -97,8 +117,20 @@ mod tests {
             entrant(2, None, false),
             entrant(3, None, true),
         ];
-        assert_eq!(ids(&eligible(all.clone(), true)), [1, 3]);
-        assert_eq!(ids(&eligible(all, false)), [1, 2, 3]);
+        assert_eq!(ids(&eligible(all.clone(), true, 1)), [1, 3]);
+        assert_eq!(ids(&eligible(all, false, 1)), [1, 2, 3]);
+    }
+
+    #[test]
+    fn teams_need_every_player() {
+        let team = |n, players, checked_in| Entrant {
+            players,
+            ..entrant(n, None, checked_in)
+        };
+        let all = vec![team(1, 2, true), team(2, 1, true), team(3, 2, false)];
+        assert_eq!(ids(&eligible(all.clone(), true, 2)), [1]);
+        assert_eq!(incomplete(&all, true, 2), 2);
+        assert_eq!(incomplete(&all, false, 2), 1);
     }
 
     #[test]

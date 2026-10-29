@@ -14,6 +14,7 @@ export const SITUATION_STATUS: Record<
   check_in_pending: "check_in",
   checked_in: "confirmed",
   missed_check_in: "cancelled",
+  reserve: "neutral",
   playing: "in_progress",
   eliminated: "finished",
   withdrawn: "cancelled",

@@ -1,4 +1,8 @@
+mod formation;
+
 use sqlx::PgConnection;
+
+pub use formation::*;
 
 use super::{
     seed_order::Entrant,
@@ -106,14 +110,15 @@ pub async fn by_ids(
 }
 
 /// Os times para o seeding, na ordem de criação (no duelo, a de inscrição),
-/// com o check-in de todos os jogadores.
+/// com o check-in de todos os jogadores e quantos são.
 pub async fn entrants(
     conn: &mut PgConnection,
     tournament: TournamentId,
 ) -> Result<Vec<Entrant>, sqlx::Error> {
     sqlx::query_as!(
         Entrant,
-        r#"select t.id, t.seed, bool_and(p.checked_in_at is not null) as "checked_in!"
+        r#"select t.id, t.seed, bool_and(p.checked_in_at is not null) as "checked_in!",
+                  count(*) as "players!"
            from teams t
            join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id
            where t.tournament_id = $1
@@ -204,8 +209,8 @@ pub async fn withdraw(
 
 /// `user_id` está saindo da comunidade (`by`: quem removeu; `None`, saiu
 /// sozinho): o time dele desiste se está na chave e nenhum outro jogador dele
-/// continua na comunidade (no duelo, sempre). Devolve se o time dele está na
-/// chave.
+/// continua na comunidade (no duelo, sempre); se ele era o capitão e alguém
+/// fica, a capitania passa adiante. Devolve se o time dele está na chave.
 pub async fn withdraw_departing(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -230,8 +235,35 @@ pub async fn withdraw_departing(
     let Some(team) = team.filter(|t| t.seeded) else {
         return Ok(false);
     };
+    // Nos times, o capitão que sai passa a capitania ao jogador do time
+    // inscrito há mais tempo que continua na comunidade.
+    hand_over(conn, tournament, team.id, user_id, true).await?;
     if team.last {
         withdraw(conn, tournament, team.id, by).await?;
     }
     Ok(true)
+}
+
+/// O time de `user_id` no torneio `slug` do tenant, com os jogadores; `None`
+/// sem inscrição ou sem time.
+pub async fn of_user(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    slug: &str,
+    user_id: i64,
+) -> Result<Option<StoredTeam>, sqlx::Error> {
+    let team = sqlx::query_scalar!(
+        r#"select p.team_id as "team_id!" from participants p
+           join tournaments t on t.id = p.tournament_id
+           where t.tenant_id = $1 and t.slug = $2 and p.user_id = $3 and p.team_id is not null"#,
+        tenant.get(),
+        slug,
+        user_id
+    )
+    .fetch_optional(&mut *conn)
+    .await?;
+    let Some(team) = team else {
+        return Ok(None);
+    };
+    Ok(by_ids(conn, tenant, &[team]).await?.into_iter().next())
 }

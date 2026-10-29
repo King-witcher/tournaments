@@ -1,11 +1,20 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
-import { poolOf, type TournamentValues } from "../lib/form-values";
+import {
+  isTdm,
+  poolOf,
+  type TournamentValues,
+  teamSizeOf,
+} from "../lib/form-values";
+import { teamsIn } from "../lib/format";
+import { useFormatSeconds } from "./use-format-seconds";
+import { useModeLabel } from "./use-mode-label";
 
 /**
  * O resumo dos valores do formulário, uma linha por grupo: o que aparece no
- * título dos grupos fechados e na revisão antes de publicar. Usa os mesmos
+ * título dos grupos fechados e na revisão antes de publicar (e, a partir de
+ * um torneio salvo, no resumo do formato da página dele). Usa os mesmos
  * textos do resumo do formato na página do torneio.
  */
 export function useValuesSummary() {
@@ -14,7 +23,9 @@ export function useValuesSummary() {
   const tSetup = useTranslations("Tournament.setup");
   const locale = useLocale();
   const formatMinutes = useFormatMinutes();
-  const line = (parts: (string | undefined)[]) => {
+  const formatSeconds = useFormatSeconds();
+  const modeLabel = useModeLabel();
+  const line = (parts: (string | false | undefined)[]) => {
     const text = parts.filter(Boolean).join(" · ");
     return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
   };
@@ -28,6 +39,7 @@ export function useValuesSummary() {
             ? "doubleReset"
             : v.bracket;
       return line([
+        modeLabel(v.mode, teamSizeOf(v)),
         tSetup(`bracket.${kind}`),
         v.stageFormat === "elimination"
           ? tSetup(`series.${v.bracket}`, {
@@ -37,37 +49,51 @@ export function useValuesSummary() {
           : tSetup("series.table", { bestOf: v.bestOf }),
         v.stageFormat === "swiss"
           ? v.swissRounds === null
-            ? tSetup("rounds.auto")
+            ? tSetup(isTdm(v) ? "rounds.autoTeams" : "rounds.auto")
             : tSetup("rounds.fixed", { count: v.swissRounds })
           : undefined,
       ]);
     },
-    registration: (v: TournamentValues) =>
-      line([
+    registration: (v: TournamentValues) => {
+      const slots = v.maxParticipants;
+      const size = teamSizeOf(v);
+      return line([
         tForm(`visibilityOptions.${v.visibility}`),
-        v.maxParticipants === null
-          ? undefined
-          : t("slots", { count: v.maxParticipants }),
+        slots !== null &&
+          (isTdm(v)
+            ? t("slotsTeams", {
+                count: slots,
+                size,
+                teams: teamsIn(slots, size).teams,
+              })
+            : t("slots", { count: slots })),
         v.checkInMinutes === null
           ? t("noCheckIn")
           : t("checkIn", { window: formatMinutes(v.checkInMinutes) }),
         t("contest", { window: formatMinutes(v.contestMinutes) }),
-      ]),
-    champions: (v: TournamentValues) =>
-      line([
+      ]);
+    },
+    champions: (v: TournamentValues) => {
+      const repeat = tSetup(`noRepeat.${v.noRepeat}`);
+      const tdm = isTdm(v);
+      return line([
         tSetup("bans", { count: v.bansPerGame }),
-        tSetup(`noRepeat.${v.noRepeat}`),
-      ]),
+        tdm && v.noRepeat !== "off"
+          ? tSetup("noRepeatWho", { rule: repeat, who: v.noRepeatWho })
+          : repeat,
+        tdm && tSetup(v.teamDuplicates ? "duplicates.on" : "duplicates.off"),
+      ]);
+    },
     veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
-        v.mapMode === "off"
-          ? undefined
-          : t("maps", { count: poolOf(v, maps).length }),
+        v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
         v.championPhase ? t("championPhase") : t("noChampionPhase"),
-        v.mapMode !== "off" || v.championPhase
-          ? t("seconds", { seconds: v.vetoSeconds })
-          : undefined,
+        (v.mapMode !== "off" || v.championPhase) &&
+          t("seconds", { time: formatSeconds(v.vetoSeconds) }),
+        isTdm(v) &&
+          v.championPhase &&
+          t("teamPick", { time: formatSeconds(v.teamPickSeconds) }),
       ]),
   };
 }

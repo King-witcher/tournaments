@@ -71,19 +71,28 @@ fn champion_rules_json_is_stable() {
             who: NoRepeatWho::Player,
             scope: NoRepeatScope::Tournament,
         }),
+        team_duplicates: false,
     };
-    let json = r#"{"bans_per_game":1,"no_repeat":{"who":"player","scope":"tournament"}}"#;
+    let json = r#"{"bans_per_game":1,"no_repeat":{"who":"player","scope":"tournament"},"team_duplicates":false}"#;
     assert_eq!(serde_json::to_string(&with).unwrap(), json);
     assert_eq!(serde_json::from_str::<ChampionRules>(json).unwrap(), with);
     let without = ChampionRules {
         bans_per_game: 0,
         no_repeat: None,
+        team_duplicates: true,
     };
-    let json = r#"{"bans_per_game":0,"no_repeat":null}"#;
+    let json = r#"{"bans_per_game":0,"no_repeat":null,"team_duplicates":true}"#;
     assert_eq!(serde_json::to_string(&without).unwrap(), json);
     assert_eq!(
         serde_json::from_str::<ChampionRules>(json).unwrap(),
         without
+    );
+    // Gravado antes do TDM, sem o campo: não repete no time.
+    let old = r#"{"bans_per_game":0,"no_repeat":null}"#;
+    assert!(
+        !serde_json::from_str::<ChampionRules>(old)
+            .unwrap()
+            .team_duplicates
     );
 }
 

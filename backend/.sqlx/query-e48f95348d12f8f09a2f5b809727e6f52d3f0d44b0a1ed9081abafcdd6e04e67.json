@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments\n           set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,\n               veto_seconds = $6, mode = $7, team_size = $8, team_pick_seconds = $9\n           where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4",
+        "Jsonb",
+        "Text",
+        "Bool",
+        "Int4",
+        "Text",
+        "Int2",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e48f95348d12f8f09a2f5b809727e6f52d3f0d44b0a1ed9081abafcdd6e04e67"
+}

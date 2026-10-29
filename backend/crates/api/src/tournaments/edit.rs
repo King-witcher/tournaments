@@ -84,7 +84,16 @@ pub fn apply(
         },
     };
 
+    let mode = patch.mode.unwrap_or(current_setup.mode);
+    let team_size = match (patch.team_size, patch.mode) {
+        (Some(size), _) => size,
+        // Trocou de modo sem dizer o tamanho: o padrão do modo novo.
+        (None, Some(new)) if new != current_setup.mode => new.default_team_size(),
+        (None, _) => current_setup.team_size,
+    };
     let setup = Setup {
+        mode,
+        team_size,
         max_participants: patch
             .max_participants
             .unwrap_or(current_setup.max_participants),
@@ -133,7 +142,10 @@ pub fn apply(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tournaments::types::{Bracket, ChampionRules, StageFormat};
+    use crate::tournaments::{
+        setup::TournamentMode,
+        types::{Bracket, ChampionRules, StageFormat},
+    };
 
     fn texts() -> Texts {
         Texts {
@@ -156,11 +168,14 @@ mod tests {
         ChampionRules {
             bans_per_game: 1,
             no_repeat: None,
+            team_duplicates: false,
         }
     }
 
     fn setup() -> Setup {
         Setup::from_dto(
+            TournamentMode::Duel,
+            None,
             16,
             rules(),
             vec![stage(Bracket::Single, false)],
@@ -177,6 +192,8 @@ mod tests {
 
     fn patch() -> UpdateTournament {
         UpdateTournament {
+            mode: None,
+            team_size: None,
             name: None,
             description: None,
             rules: None,
@@ -289,6 +306,33 @@ mod tests {
         let edit = run(TournamentStatus::Finished, p(true)).unwrap();
         assert_eq!(edit.counts_for_rating, None);
         let err = run(TournamentStatus::InProgress, p(false)).unwrap_err();
+        assert_eq!(err.code, "tournament.setup_locked");
+    }
+
+    #[test]
+    fn switching_mode_takes_its_default_team_size() {
+        let p = |mode, team_size| UpdateTournament {
+            mode: Some(mode),
+            team_size,
+            ..patch()
+        };
+        let setup = run(TournamentStatus::Registration, p(TournamentMode::Tdm, None))
+            .unwrap()
+            .setup
+            .unwrap();
+        assert_eq!((setup.mode, setup.team_size), (TournamentMode::Tdm, 2));
+        let setup = run(
+            TournamentStatus::Registration,
+            p(TournamentMode::Tdm, Some(4)),
+        )
+        .unwrap()
+        .setup
+        .unwrap();
+        assert_eq!(setup.team_size, 4);
+        // O mesmo modo não é mudança; depois de começar, o novo é recusado.
+        let edit = run(TournamentStatus::InProgress, p(TournamentMode::Duel, None)).unwrap();
+        assert!(edit.setup.is_none());
+        let err = run(TournamentStatus::InProgress, p(TournamentMode::Tdm, None)).unwrap_err();
         assert_eq!(err.code, "tournament.setup_locked");
     }
 

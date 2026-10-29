@@ -6,6 +6,8 @@
 //! membro antes de ler (`fresh`), e as rotas de ajuste e configuração, na
 //! própria transação (`refresh`).
 
+use std::collections::HashMap;
+
 use engine::rating::{self as er, Elo};
 use sqlx::{PgConnection, PgPool};
 
@@ -86,4 +88,21 @@ pub async fn refresh_stale(db: &PgPool) -> Result<usize, ApiError> {
         }
     }
     Ok(changed)
+}
+
+/// O rating de cada um de `users` na comunidade agora (o inicial do Elo para
+/// quem ainda não tem), recalculando antes, na transação de `conn`, se há
+/// marca. Para o sorteio balanceado dos times.
+pub async fn current(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    users: &[i64],
+) -> Result<HashMap<i64, i32>, ApiError> {
+    refresh(conn, tenant).await?;
+    let initial = elo(conn, tenant).await?.config().initial;
+    let rated = db::ratings_of(conn, tenant, users).await?;
+    Ok(users
+        .iter()
+        .map(|u| (*u, rated.get(u).copied().unwrap_or(initial)))
+        .collect())
 }

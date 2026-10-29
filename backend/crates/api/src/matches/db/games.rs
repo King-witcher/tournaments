@@ -179,3 +179,39 @@ pub async fn void_games(conn: &mut PgConnection, ids: &[i64]) -> Result<(), sqlx
         .await?;
     Ok(())
 }
+
+/// Um jogador da escalação de um mapa.
+pub struct LineupRow {
+    pub game_id: i64,
+    pub side: String,
+    pub user_id: i64,
+    pub nickname: String,
+    pub avatar_url: Option<String>,
+    pub left: bool,
+}
+
+/// A escalação de cada mapa da partida `key` da fase `stage` (quem jogou por
+/// lado), por mapa e lado.
+pub async fn lineups(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    stage: i16,
+    key: &str,
+) -> Result<Vec<LineupRow>, sqlx::Error> {
+    sqlx::query_as!(
+        LineupRow,
+        r#"select gp.game_id, gp.side, gp.user_id, m.nickname, u.avatar_url,
+                  m.left_at is not null as "left!"
+           from match_game_players gp
+           join match_games g on g.id = gp.game_id
+           join tenant_members m on m.tenant_id = gp.tenant_id and m.user_id = gp.user_id
+           join users u on u.id = gp.user_id
+           where g.tournament_id = $1 and g.stage = $2 and g.match_key = $3
+           order by gp.game_id, gp.side, m.nickname, gp.user_id"#,
+        tournament.get(),
+        stage,
+        key
+    )
+    .fetch_all(conn)
+    .await
+}

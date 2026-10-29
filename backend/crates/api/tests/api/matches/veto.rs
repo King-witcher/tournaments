@@ -476,7 +476,8 @@ async fn the_tournament_keeps_the_veto_settings() {
             "map_pool": ["awoken", "blood-covenant", "blood-run", "corrupted-keep",
                          "deep-embrace", "exile", "insomnia"],
             "champion_phase": true,
-            "step_seconds": 30
+            "step_seconds": 30,
+            "team_pick_seconds": 60
         })
     );
     let tournament = "/tenants/quake-br/tournaments/copa";

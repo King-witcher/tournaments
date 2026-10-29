@@ -34,6 +34,7 @@ pub async fn load(
     let games = stage.games_of(m.id);
     let mine = view::viewer_side(stage, m, viewer);
     let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;
+    let lineups = db::lineups(conn, tournament.id, stage.number, &summary.key).await?;
     let team = |id: Option<i64>| {
         id.and_then(|id| stage.entrant(ParticipantId(id)))
             .map(StoredTeam::view)
@@ -57,17 +58,18 @@ pub async fn load(
             .iter()
             .map(|g| {
                 let task = tasks::game_task(tournament.status, m, g, mine, viewer);
-                view::game(g, task)
+                view::game(g, task, &lineups)
             })
             .collect(),
         next_game: tasks::next_game(tournament.status, m, &games),
         viewer_side: mine,
+        viewer_captain: mine.is_some() && viewer.captain,
         history: events
             .into_iter()
             .map(|e| view::event(stage, e))
             .collect::<Result<_, _>>()?,
         can_manage: viewer.organizer,
-        veto: veto::view(stage, m, mine),
+        veto: veto::view(stage, m, mine, Some(viewer.user_id)),
         summary,
     })
 }

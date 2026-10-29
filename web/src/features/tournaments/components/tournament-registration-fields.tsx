@@ -1,17 +1,12 @@
 import { useTranslations } from "next-intl";
 
 import { ScreenshotsRequiredField } from "@/features/screenshots/components/screenshots-required-field";
-import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
-import { NumberInput } from "@/shared/ui/number-input";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import type { FieldErrors } from "../lib/form-errors";
-import type { TournamentValues } from "../lib/form-values";
-import { FORMAT_MAX_ENTRANTS } from "../lib/format";
+import { isTdm, type TournamentValues } from "../lib/form-values";
 import { TournamentCheckInField } from "./tournament-check-in-field";
 import { TournamentContestField } from "./tournament-contest-field";
-
-/** Os limites de vagas da API. */
-const SLOTS = { min: 2, max: 1024 };
+import { TournamentSlotsField } from "./tournament-slots-field";
 
 type Props = {
   values: TournamentValues;
@@ -36,32 +31,14 @@ export function TournamentRegistrationFields({
   finished,
 }: Props) {
   const t = useTranslations("TournamentForm");
-  const errorMessage = useApiErrorMessage();
-  // Round robin e suíço têm teto próprio, abaixo do do site.
-  const formatMax = FORMAT_MAX_ENTRANTS[values.stageFormat];
 
   return (
     <>
-      <NumberInput
-        labelText={t("maxParticipants")}
-        helperText={t("maxParticipantsHint")}
-        name="maxParticipants"
-        required
-        allowEmpty
-        disableWheel
-        min={SLOTS.min}
-        max={formatMax ?? SLOTS.max}
-        value={values.maxParticipants}
-        disabled={setupLocked}
-        invalid={errors.maxParticipants !== undefined}
-        // Fora dos limites o próprio campo fica inválido, com o texto da API.
-        invalidText={
-          errors.maxParticipants ??
-          (formatMax !== undefined && (values.maxParticipants ?? 0) > formatMax
-            ? errorMessage("format.too_many_participants", { max: formatMax })
-            : errorMessage("tournament.max_participants_invalid", SLOTS))
-        }
+      <TournamentSlotsField
+        values={values}
         onChange={(maxParticipants) => onChange({ maxParticipants })}
+        error={errors.maxParticipants}
+        disabled={setupLocked}
       />
       <RadioGroup
         legendText={t("visibility")}
@@ -81,6 +58,7 @@ export function TournamentRegistrationFields({
         onChange={(checkInMinutes) => onChange({ checkInMinutes })}
         error={errors.checkInMinutes}
         disabled={setupLocked}
+        teams={isTdm(values)}
       />
       <TournamentContestField
         value={values.contestMinutes}

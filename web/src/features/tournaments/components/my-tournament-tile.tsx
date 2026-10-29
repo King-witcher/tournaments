@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { NextMatchLink } from "@/features/matches/components/next-match-link";
 import { SITUATION_STATUS } from "@/features/participants/lib/situation";
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { LinkTile } from "@/shared/ui/link-tile";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -12,7 +13,8 @@ type Schemas = components["schemas"];
 
 /**
  * Um torneio de quem vê, como tile: nome, comunidade e início, a situação
- * dele e, se ainda joga, a próxima partida (link à parte, embaixo).
+ * dele (no TDM, com o time) e, se ainda joga, a próxima partida (link à
+ * parte, embaixo).
  */
 export function MyTournamentTile({
   entry,
@@ -21,6 +23,7 @@ export function MyTournamentTile({
 }) {
   const t = useTranslations("Home.tournaments");
   const locale = useLocale();
+  const teamName = useTeamName();
   const { tournament, placement } = entry;
   const path = `/${entry.tenant_slug}/${tournament.slug}`;
   const place = placement
@@ -45,6 +48,7 @@ export function MyTournamentTile({
           ) : (
             t("noDate")
           )}
+          {entry.team && ` · ${t("team", { team: teamName(entry.team) })}`}
         </>
       }
       tags={

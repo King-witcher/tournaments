@@ -7,7 +7,7 @@ use engine::{
 };
 
 use super::{
-    db::EventRow,
+    db::{EventRow, LineupRow},
     games::{GameStatus, StoredGame, confirmed_wins},
     key,
     result::{Side, StoredResult},
@@ -22,21 +22,27 @@ use super::{
 };
 use crate::{
     shared::ApiError,
-    teams::StoredTeam,
+    teams::{StoredTeam, TeamMember},
     tenants::{Role, TenantMember},
     tournaments::{StoredTournament, TournamentStatus},
 };
 
 /// Quem vê: o participante dele na chave, se joga, e se organiza.
 pub struct Viewer {
+    pub user_id: i64,
     pub participant: Option<ParticipantId>,
+    /// Capitão do time dele (no duelo, sempre): o veto do lado é dele.
+    pub captain: bool,
     pub organizer: bool,
 }
 
 impl Viewer {
     pub fn new<R>(member: &TenantMember<R>, stage: &Stage) -> Self {
+        let participant = stage.participant_of(member.user.id);
         Self {
-            participant: stage.participant_of(member.user.id),
+            user_id: member.user.id,
+            participant,
+            captain: participant.and_then(|p| stage.captain(p)) == Some(member.user.id),
             organizer: member.role >= Role::Organizer,
         }
     }
@@ -218,8 +224,24 @@ fn match_result(r: &StoredResult) -> MatchResult {
     }
 }
 
-pub fn game(g: &StoredGame, task: Option<ViewerTask>) -> GameDetail {
+/// O mapa `g` como a página da partida mostra, com a escalação de cada lado
+/// (`lineup`: as linhas do mapa).
+pub fn game(g: &StoredGame, task: Option<ViewerTask>, lineup: &[LineupRow]) -> GameDetail {
+    let side = |s: &str| -> Vec<TeamMember> {
+        lineup
+            .iter()
+            .filter(|r| r.game_id == g.id && r.side == s)
+            .map(|r| TeamMember {
+                user_id: r.user_id,
+                nickname: r.nickname.clone(),
+                avatar_url: r.avatar_url.clone(),
+                left: r.left,
+            })
+            .collect()
+    };
     GameDetail {
+        lineup_a: side("a"),
+        lineup_b: side("b"),
         number: g.number,
         winner: g.winner_side(),
         map: g.map.as_ref().map(|m| MapRef {

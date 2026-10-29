@@ -17,7 +17,12 @@ type Props = {
 export function VetoGames({ veto, names }: Props) {
   const t = useTranslations("Match.veto.games");
   const games = veto.games.filter(
-    (g) => g.map || g.pick_a || g.pick_b || g.bans.length > 0,
+    (g) =>
+      g.map ||
+      g.pick_a ||
+      g.pick_b ||
+      g.bans.length > 0 ||
+      g.team_picks.length > 0,
   );
   if (games.length === 0) return null;
 
@@ -44,6 +49,15 @@ export function VetoGames({ veto, names }: Props) {
               return pick
                 ? t("pick", { name: names[s], champion: pick.name })
                 : null;
+            }),
+            // TDM: o campeão de cada jogador, por time.
+            ...(["a", "b"] as const).map((s) => {
+              const mine = g.team_picks.filter((p) => p.side === s);
+              if (mine.length === 0) return null;
+              const list = mine
+                .map((p) => `${p.nickname} (${p.champion.name})`)
+                .join(", ");
+              return t("teamPicks", { name: names[s], list });
             }),
           ].filter(Boolean);
           return (

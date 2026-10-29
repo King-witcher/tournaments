@@ -16,6 +16,9 @@ pub enum Action {
     Pick,
     /// Vota num dos mapas oferecidos (modo votação).
     Vote,
+    /// Nos times: cada jogador escolhe o próprio campeão do mapa, todos ao
+    /// mesmo tempo (a escolha simultânea, depois dos bans).
+    TeamPick,
 }
 
 /// Os passos do veto de mapas de uma melhor de `best_of` com um pool de
@@ -39,8 +42,9 @@ pub fn map_sequence(pool: usize, best_of: u8) -> Result<Vec<Action>, VetoError> 
     Ok(steps)
 }
 
-/// Os passos de campeões de um mapa: `bans` rodadas de um ban de cada lado e
-/// depois um pick de cada lado.
+/// Os passos de campeões de um mapa no duelo: `bans` rodadas de um ban de
+/// cada lado e depois um pick de cada lado. Nos times, os bans são os mesmos
+/// e os picks dão lugar à escolha simultânea (`Action::TeamPick`).
 pub fn champion_sequence(bans: u8) -> Vec<Action> {
     let mut steps = vec![Action::Ban; usize::from(bans) * 2];
     steps.extend([Action::Pick, Action::Pick]);

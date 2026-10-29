@@ -24,7 +24,8 @@ type Props = { tenant: string; slug: string };
  * apelido (link para a pessoa na comunidade), estado e data de inscrição,
  * com busca e paginação. Para a organização, "Inscrever alguém" na barra e,
  * por linha, marcar ou desmarcar o check-in, tirar do torneio (até começar)
- * e marcar a desistência (em andamento). Fica em `<Suspense>`.
+ * e, no duelo, marcar a desistência (em andamento; no TDM, ela é do time e
+ * fica no ⋯ dele). Fica em `<Suspense>`.
  */
 export async function ParticipantTable({ tenant, slug }: Props) {
   const loaded = await loadTournament(tenant, slug);
@@ -81,9 +82,14 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           ? ("unmark" as const)
           : ("mark" as const)
         : undefined;
-    // A desistência é do time dele (no duelo, o time de um jogador).
+    // A desistência é do time dele (no duelo, o time de um jogador). No TDM,
+    // fica no ⋯ do time, na seção dos times: aqui pareceria ser só dele.
     const withdrawTeam =
-      organizer && status === "in_progress" && p.seed != null && !p.withdrawn
+      organizer &&
+      tournament.mode !== "tdm" &&
+      status === "in_progress" &&
+      p.seed != null &&
+      !p.withdrawn
         ? (p.team_id ?? null)
         : null;
     const hasActions =

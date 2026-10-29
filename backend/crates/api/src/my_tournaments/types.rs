@@ -1,7 +1,7 @@
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::{matches::NextMatch, tournaments::TournamentSummary};
+use crate::{matches::NextMatch, teams::Team, tournaments::TournamentSummary};
 
 /// Um torneio em que quem vê está inscrito.
 #[derive(Serialize, ToSchema)]
@@ -15,6 +15,8 @@ pub struct MyTournament {
     pub placement: Option<MyPlacement>,
     /// Só de quem ainda joga, com o torneio em andamento.
     pub next_match: Option<NextMatch>,
+    /// TDM: o time de quem vê (`null` no duelo e sem time).
+    pub team: Option<Team>,
 }
 
 /// A situação de um inscrito no torneio: quem vê, em `/me/tournaments`; o
@@ -29,6 +31,8 @@ pub enum Situation {
     CheckedIn,
     /// O torneio começou sem ele na chave (não fez check-in).
     MissedCheckIn,
+    /// TDM: o torneio começou com ele sem time (de reserva, ou substituído).
+    Reserve,
     /// Na chave e ainda vivo (no round robin e no suíço, até a fase terminar).
     Playing,
     /// Terminou, com a colocação: eliminado, ou na tabela final do round robin

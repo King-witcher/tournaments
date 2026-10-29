@@ -10,6 +10,7 @@ import styles from "./veto-board.module.scss";
 import { VetoChampionBoard } from "./veto-champion-board";
 import { VetoGames } from "./veto-games";
 import { VetoMapBoard } from "./veto-map-board";
+import { VetoTeamPicks } from "./veto-team-picks";
 import { VetoTurn } from "./veto-turn";
 import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
@@ -20,7 +21,7 @@ type Props = {
   target: MatchTarget;
   detail: Schemas["MatchDetail"];
   /** A regra de não repetição do torneio (para explicar o que ela tira). */
-  rule: Schemas["NoRepeatScope"] | null;
+  rule: Schemas["NoRepeatRule"] | null;
 };
 
 /**
@@ -37,6 +38,8 @@ export function VetoSection({ target, detail, rule }: Props) {
   const s = detail.summary;
   const live = s.state === "ready";
   const mine = detail.viewer_side ?? null;
+  const captain = detail.viewer_captain;
+  const teams = veto.team_pick_seconds != null;
   const game = currentGame(veto);
   const current = veto.games.find((g) => g.game === game);
   const begun = veto.status !== "waiting_ready";
@@ -59,6 +62,7 @@ export function VetoSection({ target, detail, rule }: Props) {
             veto={veto}
             names={names}
             mine={mine}
+            captain={captain}
             canManage={detail.can_manage}
           />
         )}
@@ -67,7 +71,7 @@ export function VetoSection({ target, detail, rule }: Props) {
             target={target}
             veto={veto}
             names={names}
-            mine={mine}
+            mine={captain ? mine : null}
             canManage={detail.can_manage}
           />
         )}
@@ -96,6 +100,9 @@ export function VetoSection({ target, detail, rule }: Props) {
             mine={mine}
             rule={rule}
           />
+        )}
+        {live && begun && teams && current && (
+          <VetoTeamPicks game={current} veto={veto} names={names} />
         )}
         <VetoGames veto={veto} names={names} />
       </div>

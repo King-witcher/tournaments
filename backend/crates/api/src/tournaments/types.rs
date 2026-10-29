@@ -63,6 +63,10 @@ pub struct ChampionRules {
     pub bans_per_game: u8,
     /// Regra de não repetição; `null` desliga.
     pub no_repeat: Option<NoRepeatRule>,
+    /// TDM: dois jogadores do mesmo time podem escolher o mesmo campeão no
+    /// mesmo mapa. Ausente: não (entre times, o espelho vale sempre).
+    #[serde(default)]
+    pub team_duplicates: bool,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,7 +75,8 @@ pub struct NoRepeatRule {
     pub scope: NoRepeatScope,
 }
 
-/// Quem não pode repetir campeão. No duelo os dois dão no mesmo.
+/// Quem não pode repetir campeão: cada jogador os próprios, ou o time
+/// inteiro (o que um usou sai de todos). No duelo os dois dão no mesmo.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum NoRepeatWho {
@@ -104,11 +109,19 @@ pub struct CreateTournament {
     /// Texto simples; as quebras de linha são preservadas. Até 20000 caracteres.
     #[serde(default)]
     pub rules: String,
+    /// Duelo ou TDM. Muda até o torneio começar; com inscritos, refaz os
+    /// times (no duelo, cada um num time de um; no TDM, todos sem time).
     pub mode: TournamentMode,
+    /// Jogadores por time: 1 no duelo; de 2 a 4 no TDM. Ausente: 1 no duelo,
+    /// 2 no TDM.
+    #[serde(default)]
+    pub team_size: Option<i32>,
     /// Padrão `public`. Muda depois, até o torneio encerrar.
     #[serde(default)]
     pub visibility: Visibility,
-    /// Vagas, de 2 a 1024. A checagem de campeões usa o pior caso com esse número.
+    /// Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
+    /// checagem de campeões usa o pior caso com esse número (no TDM, com os
+    /// times que ele comporta).
     #[schema(example = 16)]
     pub max_participants: i32,
     pub champion_rules: ChampionRules,
@@ -192,6 +205,13 @@ fn default_counts_for_rating() -> bool {
 /// inscritos).
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTournament {
+    /// Até o torneio começar. Trocar de modo (ou de tamanho) com inscritos
+    /// refaz os times na mesma transação: no duelo, cada inscrito num time
+    /// de um; no TDM, todos sem time (a formação começa de novo).
+    pub mode: Option<TournamentMode>,
+    /// Ausente com o modo trocado: o padrão do modo novo (1 no duelo, 2 no
+    /// TDM).
+    pub team_size: Option<i32>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub rules: Option<String>,
@@ -231,8 +251,11 @@ pub struct Tournament {
     pub description: String,
     pub rules: String,
     pub mode: TournamentMode,
+    /// Jogadores por time (1 no duelo).
+    pub team_size: i32,
     pub status: TournamentStatus,
     pub visibility: Visibility,
+    /// Vagas, em jogadores.
     pub max_participants: i32,
     /// Inscritos agora.
     pub participants: i64,
@@ -270,6 +293,8 @@ pub struct TournamentSummary {
     pub locale: Locale,
     pub name: String,
     pub mode: TournamentMode,
+    /// Jogadores por time (1 no duelo).
+    pub team_size: i32,
     pub status: TournamentStatus,
     pub visibility: Visibility,
     pub max_participants: i32,

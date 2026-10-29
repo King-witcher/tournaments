@@ -4,8 +4,10 @@
 //! (`withdrawal`: a desistência do time marcada pelo organizador e o membro
 //! que sai da comunidade). Fica acima de `tournaments`, `participants`,
 //! `teams` e `matches` porque iniciar fecha o seeding e gera a chave, e a
-//! desistência dá W.O.
+//! desistência dá W.O. Também o sorteio dos times do TDM (`draw`), que lê o
+//! rating da comunidade.
 
+mod draw;
 mod handlers;
 mod transition;
 mod withdrawal;
@@ -22,4 +24,5 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::reopen_registration))
         .routes(routes!(handlers::start, handlers::undo_start))
         .routes(routes!(withdrawal::withdraw_team))
+        .routes(routes!(draw::draw_teams))
 }

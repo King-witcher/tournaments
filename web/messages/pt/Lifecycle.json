@@ -18,5 +18,11 @@
   "undoStart": "Desfazer início",
   "undoStartConfirm": "Desfazer o início? O torneio volta para o check-in, com inscritos, check-ins e seeds como estavam. Quem desistiu ou saiu da comunidade sai das inscrições.",
   "undoStartConfirmNoCheckIn": "Desfazer o início? O torneio volta para as inscrições, com inscritos e seeds como estavam. Quem desistiu ou saiu da comunidade sai das inscrições.",
-  "undoStartResults": "{count, plural, =0 {Nenhum mapa foi enviado ainda.} one {Os mapas e o resultado de # partida serão apagados, com o histórico das partidas.} other {Os mapas e os resultados de # partidas serão apagados, com o histórico das partidas.}}"
+  "undoStartResults": "{count, plural, =0 {Nenhum mapa foi enviado ainda.} one {Os mapas e o resultado de # partida serão apagados, com o histórico das partidas.} other {Os mapas e os resultados de # partidas serão apagados, com o histórico das partidas.}}",
+  "noCheckInTdm": "Sem check-in: ao iniciar, os times formados entram na chave e os reservas ficam de fora.",
+  "checkInOpenTdm": "Check-in aberto: ao iniciar, entram na chave os times completos, com o check-in de todos. Quem não fez check-in continua inscrito, sem time.",
+  "startConfirmTeams": "Iniciar o torneio? {teams, plural, =0 {Nenhum time entra} one {# time entra} other {# times entram}} na chave e {reserves, plural, =0 {ninguém fica de reserva} one {# jogador fica de reserva} other {# jogadores ficam de reserva}}. Inscrições, check-ins e times congelam; depois, só substituições.",
+  "teamsIncomplete": "{count, plural, one {# time está incompleto} other {# times estão incompletos}}: complete os times (ou passe os jogadores para a reserva) antes de iniciar.",
+  "teamsIncompleteCheckIn": "{count, plural, one {# time está incompleto ou com alguém sem check-in} other {# times estão incompletos ou com alguém sem check-in}}: ajuste os times antes de iniciar.",
+  "notEnoughTeams": "Para iniciar, são necessários pelo menos {min} times completos; {count, plural, =0 {ainda não há nenhum} one {só há #} other {só há #}}."
 }

@@ -27,10 +27,9 @@ use thiserror::Error;
 
 pub use elo::{Elo, EloConfig, EloConfigError};
 
-/// Uma pessoa no rating: o usuário (`users.id` na API). O rating é da pessoa
-/// na comunidade, não da inscrição nem do time num torneio.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct PlayerId(pub i64);
+/// Uma pessoa no rating (`core::PlayerId`). O rating é da pessoa na
+/// comunidade, não da inscrição nem do time num torneio.
+pub use crate::core::PlayerId;
 
 /// Com menos jogos que isto, o rating é provisório (ainda anda muito).
 pub const PROVISIONAL_GAMES: u32 = 10;
