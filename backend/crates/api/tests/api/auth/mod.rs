@@ -4,6 +4,7 @@
 mod discord;
 mod email;
 mod link;
+mod notices;
 mod password;
 mod profile;
 mod recovery;

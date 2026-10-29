@@ -8,8 +8,9 @@ use super::{
     CurrentUser,
     attempts::confirm_password,
     db,
-    emails::{self, LINK_TTL_SECS},
+    emails::{self, LINK_TTL_SECS, Notice},
     kv,
+    notify::notify,
     types::{ChangeEmail, EmailSent, LinkToken, LoginMethods},
 };
 use crate::{
@@ -80,8 +81,9 @@ pub async fn remove_email(
     State(state): State<AppState>,
     user: CurrentUser,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    db::remove_email(&state.db, user.id).await?;
+    let email = db::remove_email(&state.db, user.id).await?;
     kv::cancel_email_change(&state.redis, user.id).await?;
+    notify(&state, user.id, Notice::EmailRemoved { email });
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }
 
@@ -104,6 +106,15 @@ pub async fn confirm_email(
     let (user_id, email) = kv::take_email_change(&state.redis, &body.token)
         .await?
         .ok_or(ApiError::gone("auth.link_expired"))?;
-    db::set_email(&state.db, user_id, &email).await?;
+    let (before, has_password) = db::set_email(&state.db, user_id, &email).await?;
+    // Quem põe o primeiro email não tem a quem avisar.
+    if let Some(old) = before.filter(|old| *old != email) {
+        let notice = Notice::EmailChanged {
+            old,
+            new: email,
+            has_password,
+        };
+        notify(&state, user_id, notice);
+    }
     Ok(StatusCode::NO_CONTENT)
 }

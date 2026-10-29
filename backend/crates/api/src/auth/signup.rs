@@ -73,7 +73,7 @@ pub async fn signup(
                 locale,
             };
             let token = kv::store_signup(&state.redis, &pending, LINK_TTL_SECS).await?;
-            emails::signup_confirmation(web, locale, &email, &token)
+            emails::signup_confirmation(web, locale, &email, &pending.username, &token)
         }
     };
     ticket.send(message);

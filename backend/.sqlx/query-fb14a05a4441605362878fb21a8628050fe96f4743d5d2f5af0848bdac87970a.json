@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update users set locale = 'es'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "fb14a05a4441605362878fb21a8628050fe96f4743d5d2f5af0848bdac87970a"
+}

@@ -1,7 +1,8 @@
 //! Limites de envio, no Redis: `email_cooldown:{endereço}` existe por um tempo
 //! depois de cada envio para o endereço, e `email_sent:{AAAA-MM-DD}` conta os
 //! envios do dia (UTC) e expira dois dias depois. Juntos, seguram quem pede
-//! email sem parar para o mesmo endereço e o teto do plano do provedor.
+//! email sem parar para o mesmo endereço e o teto do plano do provedor. Os
+//! avisos (`reserve_today`) só contam no dia.
 
 use chrono::Utc;
 use redis::{Cmd, RedisResult};
@@ -46,7 +47,11 @@ pub async fn reserve(
             seconds: ttl.max(1),
         });
     }
+    reserve_today(redis, daily_limit).await
+}
 
+/// Reserva um envio só no teto do dia, sem a espera do endereço.
+pub async fn reserve_today(redis: &Redis, daily_limit: u32) -> RedisResult<Slot> {
     let day = redis.key(format_args!("email_sent:{}", Utc::now().format("%Y-%m-%d")));
     let (sent,): (u32,) = redis
         .query_pipe(

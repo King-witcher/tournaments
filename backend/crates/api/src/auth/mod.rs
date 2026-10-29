@@ -4,9 +4,10 @@
 //! recuperação; o banco também confere). O cadastro com senha exige email e
 //! só cria a conta quando o link chega (`signup.rs`); a recuperação de senha
 //! (`recovery.rs`) e a troca de email (`email_change.rs`) também vão por link,
-//! com os textos em `emails.rs`. Sessões, erros de senha, cadastros por
-//! confirmar e links ficam no Redis (`kv/`); contas, logins e email, no banco
-//! (`db/`).
+//! com os textos em `emails/`. Toda mudança de login ou de email manda um
+//! aviso ao email da conta (`notify.rs`). Sessões, erros de senha, cadastros
+//! por confirmar e links ficam no Redis (`kv/`); contas, logins e email, no
+//! banco (`db/`).
 
 mod attempts;
 mod credentials;
@@ -17,6 +18,7 @@ mod email_change;
 mod emails;
 mod handlers;
 mod kv;
+mod notify;
 mod oauth;
 mod password;
 mod recovery;

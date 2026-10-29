@@ -57,13 +57,13 @@ pub async fn upsert_discord_user(
 }
 
 /// Liga o Discord à conta e passa a usar o avatar dele. Ligar de novo o mesmo
-/// Discord só atualiza o avatar.
+/// Discord só atualiza o avatar. Devolve se ligou agora (falso no de novo).
 pub async fn link_discord(
     db: &PgPool,
     user_id: i64,
     discord_id: &str,
     avatar_url: Option<String>,
-) -> Result<(), ApiError> {
+) -> Result<bool, ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
     let owner = sqlx::query_scalar!(
@@ -73,6 +73,7 @@ pub async fn link_discord(
     .fetch_optional(&mut *tx)
     .await?;
 
+    let linked = owner.is_none();
     match owner {
         Some(id) if id == user_id => {}
         Some(_) => return Err(ApiError::conflict("auth.discord_taken")),
@@ -103,7 +104,7 @@ pub async fn link_discord(
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
-    Ok(())
+    Ok(linked)
 }
 
 /// Desliga o Discord e tira o avatar que vinha dele. Sem Discord → 409

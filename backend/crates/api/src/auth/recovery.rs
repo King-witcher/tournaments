@@ -12,9 +12,10 @@ use super::{
     CurrentUser,
     credentials::start_session,
     db::{self, AccountContact},
-    emails::{self, LINK_TTL_SECS},
+    emails::{self, LINK_TTL_SECS, Notice},
     handlers::sessions_ended,
     kv,
+    notify::notify,
     password::{hash_password, validate_password},
     types::{PasswordReset, PasswordResetRequest},
     username::{username_key, validate_username},
@@ -118,6 +119,8 @@ pub async fn reset_password(
     sessions_ended(&state, user_id, &ended).await?;
     if let Some(login) = db::password_login_of_user(&state.db, user_id).await? {
         kv::clear_password_failures(&state.redis, &username_key(&login.username)).await?;
+        let username = login.username;
+        notify(&state, user_id, Notice::PasswordReset { username });
     }
     start_session(&state, &headers, jar, user_id).await
 }

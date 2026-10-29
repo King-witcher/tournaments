@@ -12,8 +12,10 @@ use super::{
     CurrentUser,
     attempts::{check_password, confirm_password},
     db,
+    emails::Notice,
     handlers::sessions_ended,
     kv,
+    notify::notify,
     password::{hash_password, is_acceptable, validate_password},
     session::{SESSION_COOKIE, user_agent},
     types::{ChangePassword, Credentials, CurrentPassword, LoginMethods},
@@ -96,6 +98,7 @@ pub async fn create_password(
     refuse_reserved(&state, &username).await?;
     let hash = hash_password(body.password).await?;
     db::add_password(&state.db, user.id, &username, &hash).await?;
+    notify(&state, user.id, Notice::PasswordCreated { username });
     let methods = db::login_methods(&state.db, user.id).await?;
     Ok((StatusCode::CREATED, Json(methods)))
 }
@@ -145,7 +148,25 @@ pub async fn change_password(
         let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
         sessions_ended(&state, user.id, &ended).await?;
     }
-    Ok(Json(db::login_methods(&state.db, user.id).await?))
+    let methods = db::login_methods(&state.db, user.id).await?;
+    let renamed = username.is_some();
+    if let Some(notice) = change_notice(methods.username.clone(), renamed, hash.is_some()) {
+        notify(&state, user.id, notice);
+    }
+    Ok(Json(methods))
+}
+
+/// O aviso da troca de username e/ou senha (`username` é o de agora), se
+/// algo mudou.
+fn change_notice(username: Option<String>, renamed: bool, password: bool) -> Option<Notice> {
+    let username = username?;
+    if password {
+        Some(Notice::PasswordChanged { username, renamed })
+    } else if renamed {
+        Some(Notice::UsernameChanged { username })
+    } else {
+        None
+    }
 }
 
 #[utoipa::path(
@@ -169,6 +190,7 @@ pub async fn remove_password(
 ) -> Result<Json<LoginMethods>, ApiError> {
     confirm_password(&state, user.id, body.current_password, "auth.no_password").await?;
     db::remove_password(&state.db, user.id).await?;
+    notify(&state, user.id, Notice::PasswordRemoved);
     Ok(Json(db::login_methods(&state.db, user.id).await?))
 }
 

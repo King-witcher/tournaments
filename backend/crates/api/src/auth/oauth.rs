@@ -12,7 +12,10 @@ use axum_extra::extract::CookieJar;
 use super::{
     CurrentUser, DiscordUser,
     attempts::confirm_password,
-    db, kv,
+    db,
+    emails::Notice,
+    kv,
+    notify::notify,
     session::{
         AuthSettings, OAuthFlow, OAuthIntent, SESSION_COOKIE, STATE_COOKIE, sanitize_return_to,
         user_agent, with_auth_error,
@@ -188,9 +191,13 @@ async fn complete_callback(
             }
             .ok_or("auth.unauthenticated")?;
             let du = fetch_discord_user(state, code).await?;
-            db::link_discord(&state.db, user.id, &du.id, du.avatar_url())
+            let linked = db::link_discord(&state.db, user.id, &du.id, du.avatar_url())
                 .await
                 .map_err(|err| err.code)?;
+            if linked {
+                let discord = du.username;
+                notify(state, user.id, Notice::DiscordLinked { discord });
+            }
             Ok(None)
         }
     }
@@ -232,5 +239,9 @@ pub async fn unlink_discord(
 ) -> Result<Json<LoginMethods>, ApiError> {
     confirm_password(&state, user.id, body.current_password, "auth.last_login").await?;
     db::unlink_discord(&state.db, user.id).await?;
-    Ok(Json(db::login_methods(&state.db, user.id).await?))
+    let methods = db::login_methods(&state.db, user.id).await?;
+    if let Some(username) = methods.username.clone() {
+        notify(&state, user.id, Notice::DiscordUnlinked { username });
+    }
+    Ok(Json(methods))
 }

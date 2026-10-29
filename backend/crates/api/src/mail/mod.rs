@@ -1,12 +1,14 @@
 //! Email: a forma canônica do endereço (`normalize`, que também recusa
-//! domínios descartáveis e de apelidos), o envio atrás da trait `Mailer` e os
-//! limites de envio no Redis. Não tem rota nem texto: quem manda (`auth`)
-//! monta o email no idioma de quem recebe e chama `Mail::send`. Só depende
-//! de `shared`.
+//! domínios descartáveis e de apelidos), o layout no visual do site
+//! (`compose`), o envio atrás da trait `Mailer` e os limites de envio no
+//! Redis. Não tem rota, e do texto só o nome do site e o rodapé: quem manda
+//! (`auth`) escreve o email no idioma de quem recebe, reserva o envio e chama
+//! `Ticket::send`. Só depende de `shared`.
 
 mod address;
 mod disposable;
 mod kv;
+mod layout;
 mod sender;
 
 use std::sync::Arc;
@@ -16,6 +18,7 @@ use axum::http::StatusCode;
 use crate::shared::{ApiError, Redis};
 
 pub use address::normalize;
+pub use layout::{Action, Alert, Content, compose};
 pub use sender::{Email, LogMailer, Mailer, ResendMailer};
 
 /// Espera entre dois envios para o mesmo endereço.
@@ -77,6 +80,28 @@ impl Mail {
             Ok(ticket) => Ok(Some(ticket)),
             Err(err) if err.status == StatusCode::INTERNAL_SERVER_ERROR => Err(err),
             Err(_) => Ok(None),
+        }
+    }
+
+    /// Reserva um aviso (o que mudou na conta) para `to`: conta no teto do
+    /// dia, mas não espera nem marca a espera entre envios, que é dos links.
+    /// Assim o aviso logo depois de um link (a senha trocada pelo link de
+    /// recuperação) não se perde, e não atrasa o próximo link. Fora do teto,
+    /// `None`: o aviso só não sai.
+    pub async fn reserve_notice(
+        &self,
+        redis: &Redis,
+        to: &str,
+    ) -> Result<Option<Ticket>, ApiError> {
+        match kv::reserve_today(redis, self.daily_limit).await? {
+            kv::Slot::Granted => Ok(Some(Ticket {
+                mailer: self.mailer.clone(),
+                to: to.to_owned(),
+            })),
+            _ => {
+                tracing::warn!("teto diário de emails atingido; aviso não enviado");
+                Ok(None)
+            }
         }
     }
 }
