@@ -175,10 +175,10 @@ fn change_notice(username: Option<String>, renamed: bool, password: bool) -> Opt
     tag = "auth",
     request_body = CurrentPassword,
     responses(
-        (status = OK, body = LoginMethods, description = "Username e senha removidos; a conta fica só com o Discord"),
+        (status = OK, body = LoginMethods, description = "Username e senha removidos; a conta continua entrando pelo Discord ou pelo Google"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.no_password, auth.last_login (a conta não tem Discord)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.no_password, auth.last_login (a conta não tem Discord nem Google)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )

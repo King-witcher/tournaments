@@ -18,8 +18,8 @@ use crate::{
 };
 
 /// Tamanho máximo do nome exibido: o do apelido, que começa com ele (e o do
-/// nome do Discord).
-const DISPLAY_NAME_MAX: usize = 32;
+/// nome do Discord). O nome do Google é cortado nele.
+pub(super) const DISPLAY_NAME_MAX: usize = 32;
 
 #[utoipa::path(
     get,

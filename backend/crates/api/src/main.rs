@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use api::{
     AppState, MIGRATOR,
-    auth::{AuthSettings, HttpDiscord},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient},
     config::Config,
     mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
@@ -52,10 +52,6 @@ async fn main() -> anyhow::Result<()> {
         .context("falha ao aplicar migrations")?;
 
     let web_origin = config.web_origin.parse().context("WEB_ORIGIN inválido")?;
-    let configured = config.discord_client_id.is_some() && config.discord_client_secret.is_some();
-    if !configured {
-        tracing::warn!("DISCORD_CLIENT_ID/SECRET ausentes: login com Discord desligado");
-    }
     let push = web_push(&config)?;
     let state = AppState {
         db,
@@ -64,9 +60,23 @@ async fn main() -> anyhow::Result<()> {
             config.discord_client_id.clone().unwrap_or_default(),
             config.discord_client_secret.clone().unwrap_or_default(),
         )),
+        google: Arc::new(HttpGoogle::new(
+            config.google_client_id.clone().unwrap_or_default(),
+            config.google_client_secret.clone().unwrap_or_default(),
+        )),
         auth: Arc::new(AuthSettings {
-            discord_client_id: config.discord_client_id.clone().filter(|_| configured),
-            redirect_uri: config.discord_redirect_uri.clone(),
+            discord: oauth_client(
+                "Discord",
+                config.discord_client_id.as_deref(),
+                config.discord_client_secret.as_deref(),
+                &config.discord_redirect_uri,
+            ),
+            google: oauth_client(
+                "Google",
+                config.google_client_id.as_deref(),
+                config.google_client_secret.as_deref(),
+                &config.google_redirect_uri,
+            ),
             web_origin: config.web_origin.trim_end_matches('/').to_owned(),
             cookie_domain: config.cookie_domain.clone(),
             cookie_secure: config.cookie_secure,
@@ -84,6 +94,25 @@ async fn main() -> anyhow::Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await?;
     Ok(())
+}
+
+/// O app do provedor `name`, se o client id e o secret existem; sem os dois,
+/// o login com ele responde 503.
+fn oauth_client(
+    name: &str,
+    client_id: Option<&str>,
+    client_secret: Option<&str>,
+    redirect_uri: &str,
+) -> Option<OAuthClient> {
+    let (Some(client_id), Some(_)) = (client_id, client_secret) else {
+        let env = name.to_ascii_uppercase();
+        tracing::warn!("{env}_CLIENT_ID/SECRET ausentes: login com {name} desligado");
+        return None;
+    };
+    Some(OAuthClient {
+        client_id: client_id.to_owned(),
+        redirect_uri: redirect_uri.to_owned(),
+    })
 }
 
 /// Web Push com as chaves VAPID, se as duas existem (par que não confere

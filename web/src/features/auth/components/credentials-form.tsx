@@ -24,10 +24,10 @@ import { type AuthField, errorField } from "../lib/auth-field";
 import { LOGIN_SECTION } from "../lib/login-sections";
 
 /**
- * Dá nome de usuário e senha à conta logada (que entra pelo Discord e já tem
- * o email que recupera a senha: sem ele, o formulário nem aparece). Nome,
- * senha e a senha repetida. O erro de um campo (nome em uso, senhas
- * diferentes) vai nele, que recebe o foco; o resto, acima do botão. O
+ * Dá nome de usuário e senha à conta logada (que entra pelo Discord ou pelo
+ * Google e já tem o email que recupera a senha: sem ele, o formulário nem
+ * aparece). Nome, senha e a senha repetida. O erro de um campo (nome em uso,
+ * senhas diferentes) vai nele, que recebe o foco; o resto, acima do botão. O
  * cadastro com senha é o `SignupForm`.
  */
 export function CredentialsForm() {

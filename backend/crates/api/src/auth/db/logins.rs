@@ -1,51 +1,67 @@
-//! Formas de login da conta: o Discord (em `user_identities`, a tabela dos
-//! provedores externos) e a senha (`passwords.rs`). Ligar e desligar cada uma
+//! Formas de login da conta: os provedores externos (Discord e Google, em
+//! `user_identities`) e a senha (`passwords.rs`). Ligar e desligar cada uma
 //! sem que a conta fique sem nenhuma, nem sem como recuperar o acesso.
 
 use sqlx::{PgConnection, PgPool};
 
 use super::passwords::password_login_exists;
-use crate::{auth::types::LoginMethods, shared::ApiError};
+use crate::{
+    auth::{provider::Provider, types::LoginMethods},
+    shared::ApiError,
+};
 
-/// Acha o usuário pela identidade do Discord (atualizando o avatar) ou cria
-/// usuário e identidade. Devolve o id do usuário.
-pub async fn upsert_discord_user(
-    db: &PgPool,
-    discord_id: &str,
-    display_name: &str,
-    avatar_url: Option<String>,
-) -> Result<i64, sqlx::Error> {
+/// Quem um provedor diz que entrou.
+pub struct ExternalLogin {
+    pub provider: Provider,
+    /// O id da pessoa no provedor (`provider_user_id`).
+    pub id: String,
+    /// Nome exibido da conta, se o login a criar: entrar numa conta que já
+    /// existe não muda o nome.
+    pub display_name: String,
+    /// O avatar no provedor; só vale para o que `sets_avatar`.
+    pub avatar_url: Option<String>,
+    /// Como a pessoa se reconhece no provedor, para o aviso de vínculo: o
+    /// username no Discord, o nome no Google.
+    pub account: String,
+}
+
+/// Acha o usuário pela identidade do provedor (atualizando o avatar, se é o
+/// Discord) ou cria usuário e identidade. Devolve o id do usuário.
+pub async fn upsert_external_user(db: &PgPool, login: &ExternalLogin) -> Result<i64, sqlx::Error> {
+    let provider = login.provider.as_str();
+    let avatar_url = login
+        .avatar_url
+        .as_deref()
+        .filter(|_| login.provider.sets_avatar());
     let mut tx = db.begin().await?;
     let existing = sqlx::query_scalar!(
-        "select user_id from user_identities where provider = 'discord' and provider_user_id = $1",
-        discord_id
+        "select user_id from user_identities where provider = $1 and provider_user_id = $2",
+        provider,
+        login.id
     )
     .fetch_optional(&mut *tx)
     .await?;
 
     let user_id = match existing {
         Some(id) => {
-            sqlx::query!(
-                "update users set avatar_url = $1 where id = $2",
-                avatar_url,
-                id
-            )
-            .execute(&mut *tx)
-            .await?;
+            if login.provider.sets_avatar() {
+                set_avatar(&mut tx, id, avatar_url).await?;
+            }
             id
         }
         None => {
             let id = sqlx::query_scalar!(
                 "insert into users (display_name, avatar_url) values ($1, $2) returning id",
-                display_name,
+                login.display_name,
                 avatar_url
             )
             .fetch_one(&mut *tx)
             .await?;
             sqlx::query!(
-                "insert into user_identities (user_id, provider, provider_user_id) values ($1, 'discord', $2)",
+                "insert into user_identities (user_id, provider, provider_user_id) values ($1, $2, $3)",
                 id,
-                discord_id
+                provider,
+                login.id
             )
             .execute(&mut *tx)
             .await?;
@@ -56,19 +72,24 @@ pub async fn upsert_discord_user(
     Ok(user_id)
 }
 
-/// Liga o Discord à conta e passa a usar o avatar dele. Ligar de novo o mesmo
-/// Discord só atualiza o avatar. Devolve se ligou agora (falso no de novo).
-pub async fn link_discord(
+/// Liga o provedor à conta e, se é o Discord, passa a usar o avatar dele.
+/// Ligar de novo a mesma identidade só atualiza o avatar. Identidade de outra
+/// conta → 409 `taken`; a conta já com outra desse provedor → 409
+/// `already_linked` (os códigos do provedor). Devolve se ligou agora (falso
+/// no de novo).
+pub async fn link_external(
     db: &PgPool,
     user_id: i64,
-    discord_id: &str,
-    avatar_url: Option<String>,
+    login: &ExternalLogin,
 ) -> Result<bool, ApiError> {
+    let codes = login.provider.codes();
+    let provider = login.provider.as_str();
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
     let owner = sqlx::query_scalar!(
-        "select user_id from user_identities where provider = 'discord' and provider_user_id = $1",
-        discord_id
+        "select user_id from user_identities where provider = $1 and provider_user_id = $2",
+        provider,
+        login.id
     )
     .fetch_optional(&mut *tx)
     .await?;
@@ -76,58 +97,63 @@ pub async fn link_discord(
     let linked = owner.is_none();
     match owner {
         Some(id) if id == user_id => {}
-        Some(_) => return Err(ApiError::conflict("auth.discord_taken")),
+        Some(_) => return Err(ApiError::conflict(codes.taken)),
         None => {
-            if has_discord(&mut tx, user_id).await? {
-                return Err(ApiError::conflict("auth.discord_already_linked"));
+            if has_identity(&mut tx, user_id, login.provider).await? {
+                return Err(ApiError::conflict(codes.already_linked));
             }
-            // Conflito aqui só se outra conta ligou este Discord agora há pouco.
+            // Conflito aqui só se outra conta ligou a mesma identidade agora há pouco.
             sqlx::query_scalar!(
                 r#"insert into user_identities (user_id, provider, provider_user_id)
-                   values ($1, 'discord', $2)
+                   values ($1, $2, $3)
                    on conflict do nothing
                    returning user_id"#,
                 user_id,
-                discord_id
+                provider,
+                login.id
             )
             .fetch_optional(&mut *tx)
             .await?
-            .ok_or(ApiError::conflict("auth.discord_taken"))?;
+            .ok_or(ApiError::conflict(codes.taken))?;
         }
     }
 
-    sqlx::query!(
-        "update users set avatar_url = $1 where id = $2",
-        avatar_url,
-        user_id
-    )
-    .execute(&mut *tx)
-    .await?;
+    if login.provider.sets_avatar() {
+        set_avatar(&mut tx, user_id, login.avatar_url.as_deref()).await?;
+    }
     tx.commit().await?;
     Ok(linked)
 }
 
-/// Desliga o Discord e tira o avatar que vinha dele. Sem Discord → 409
-/// `auth.discord_not_linked`; sem senha → 409 `auth.last_login`. A senha que
-/// fica sempre tem o email da conta para recuperá-la (regra do banco).
-pub async fn unlink_discord(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
+/// Desliga o provedor e, se é o Discord, tira o avatar que vinha dele. Sem o
+/// provedor → 409 `not_linked` (o código dele); sem outro login (senha ou
+/// outro provedor) → 409 `auth.last_login`. A senha que fica sempre tem o
+/// email da conta para recuperá-la (regra do banco).
+pub async fn unlink_external(
+    db: &PgPool,
+    user_id: i64,
+    provider: Provider,
+) -> Result<(), ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
-    if !has_discord(&mut tx, user_id).await? {
-        return Err(ApiError::conflict("auth.discord_not_linked"));
+    if !has_identity(&mut tx, user_id, provider).await? {
+        return Err(ApiError::conflict(provider.codes().not_linked));
     }
-    if !password_login_exists(&mut tx, user_id).await? {
+    if !password_login_exists(&mut tx, user_id).await?
+        && !has_identity_except(&mut tx, user_id, Some(provider)).await?
+    {
         return Err(ApiError::conflict("auth.last_login"));
     }
     sqlx::query!(
-        "delete from user_identities where user_id = $1 and provider = 'discord'",
-        user_id
+        "delete from user_identities where user_id = $1 and provider = $2",
+        user_id,
+        provider.as_str()
     )
     .execute(&mut *tx)
     .await?;
-    sqlx::query!("update users set avatar_url = null where id = $1", user_id)
-        .execute(&mut *tx)
-        .await?;
+    if provider.sets_avatar() {
+        set_avatar(&mut tx, user_id, None).await?;
+    }
     tx.commit().await?;
     Ok(())
 }
@@ -138,6 +164,8 @@ pub async fn login_methods(db: &PgPool, user_id: i64) -> Result<LoginMethods, sq
         r#"select
              exists (select 1 from user_identities
                      where user_id = u.id and provider = 'discord') as "discord!",
+             exists (select 1 from user_identities
+                     where user_id = u.id and provider = 'google') as "google!",
              (select username from password_credentials where user_id = u.id) as username,
              u.email
            from users u
@@ -157,15 +185,48 @@ pub(super) async fn lock_user(conn: &mut PgConnection, user_id: i64) -> Result<(
     Ok(())
 }
 
-pub(super) async fn has_discord(
+async fn has_identity(
     conn: &mut PgConnection,
     user_id: i64,
+    provider: Provider,
 ) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar!(
         r#"select exists (select 1 from user_identities
-                          where user_id = $1 and provider = 'discord') as "exists!""#,
-        user_id
+                          where user_id = $1 and provider = $2) as "exists!""#,
+        user_id,
+        provider.as_str()
     )
     .fetch_one(conn)
     .await
+}
+
+/// A conta entra por algum provedor além de `except` (`None`: qualquer um).
+pub(super) async fn has_identity_except(
+    conn: &mut PgConnection,
+    user_id: i64,
+    except: Option<Provider>,
+) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select exists (select 1 from user_identities
+                          where user_id = $1 and provider is distinct from $2) as "exists!""#,
+        user_id,
+        except.map(Provider::as_str)
+    )
+    .fetch_one(conn)
+    .await
+}
+
+async fn set_avatar(
+    conn: &mut PgConnection,
+    user_id: i64,
+    avatar_url: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "update users set avatar_url = $1 where id = $2",
+        avatar_url,
+        user_id
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
 }

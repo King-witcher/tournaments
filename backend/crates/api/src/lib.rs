@@ -51,6 +51,7 @@ pub struct AppState {
     pub db: PgPool,
     pub redis: shared::Redis,
     pub discord: Arc<dyn auth::DiscordApi>,
+    pub google: Arc<dyn auth::GoogleApi>,
     pub auth: Arc<auth::AuthSettings>,
     /// Canal dos sockets e o despertador do despachante.
     pub realtime: realtime::Realtime,

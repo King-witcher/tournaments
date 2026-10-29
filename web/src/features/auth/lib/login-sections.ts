@@ -6,5 +6,6 @@
 export const LOGIN_SECTION = {
   email: "login-email",
   discord: "login-discord",
+  google: "login-google",
   password: "login-password",
 } as const;

@@ -1,8 +1,8 @@
 //! Senha conferida com limite de tentativas, no login e quando a conta logada
 //! mexe nos próprios logins. O limite é por username (exista a conta ou não),
 //! não por IP: não depende do proxy, mas quem erra de propósito bloqueia o
-//! login com senha do outro por um tempo (o Discord continua entrando). A
-//! contagem fica no Redis (`kv::password_blocked_until`).
+//! login com senha do outro por um tempo (Discord e Google continuam
+//! entrando). A contagem fica no Redis (`kv::password_blocked_until`).
 
 use axum::http::StatusCode;
 use chrono::{TimeDelta, Utc};
@@ -59,6 +59,29 @@ pub async fn confirm_password(
     let login = db::password_login_of_user(&state.db, user_id)
         .await?
         .ok_or(ApiError::conflict(missing))?;
+    confirm_login(state, login, current_password).await
+}
+
+/// Como [`confirm_password`], mas a conta sem senha passa sem conferir nada
+/// (quem tem só a sessão já pode tudo nela). Com senha, a atual que não veio
+/// conta como errada.
+pub async fn confirm_password_if_set(
+    state: &AppState,
+    user_id: i64,
+    current_password: Option<String>,
+) -> Result<(), ApiError> {
+    let Some(login) = db::password_login_of_user(&state.db, user_id).await? else {
+        return Ok(());
+    };
+    let current = current_password.ok_or(ApiError::forbidden("auth.wrong_password"))?;
+    confirm_login(state, login, current).await
+}
+
+async fn confirm_login(
+    state: &AppState,
+    login: db::PasswordLogin,
+    current_password: String,
+) -> Result<(), ApiError> {
     if check_password(
         &state.redis,
         &login.username,

@@ -48,15 +48,15 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Entrar `/login`, Criar conta `/signup`
 
-Coluna estreita, `Tile` com o formulário (usuário/senha) e o botão do Discord; "Você já entrou como X" quando há sessão. `return_to` continua. No cadastro, o email é obrigatório; depois do envio, o formulário dá lugar a "Confira seu email" (o endereço canônico, validade de 1 hora, "Reenviar o link", "Usar outro email"). Embaixo do "Entrar", o link "Esqueci a senha".
+Coluna estreita, `Tile` com o formulário (usuário/senha) e os botões do Discord e do Google, um embaixo do outro; "Você já entrou como X" quando há sessão. `return_to` continua. No cadastro, o email é obrigatório; depois do envio, o formulário dá lugar a "Confira seu email" (o endereço canônico, validade de 1 hora, "Reenviar o link", "Usar outro email"). Embaixo do "Entrar", o link "Esqueci a senha".
 
 ### Páginas dos links por email
 
-`/signup/confirm`, `/login/reset` e `/email/confirm` leem o token depois do `#`. Coluna estreita e um `Tile` com uma ação só: "Confirmar email e criar conta", a senha nova, "Confirmar email". Nunca confirmam sozinhas ao abrir (os verificadores de link dos provedores abririam a página). Link vencido ou incompleto: `Notice` de erro e o caminho (criar conta de novo, pedir outro link, ir para a conta). `/login/forgot`: um campo (nome de usuário ou email) e a resposta neutra, com o aviso de que conta sem email não se recupera por email e o botão do Discord.
+`/signup/confirm`, `/login/reset` e `/email/confirm` leem o token depois do `#`. Coluna estreita e um `Tile` com uma ação só: "Confirmar email e criar conta", a senha nova, "Confirmar email". Nunca confirmam sozinhas ao abrir (os verificadores de link dos provedores abririam a página). Link vencido ou incompleto: `Notice` de erro e o caminho (criar conta de novo, pedir outro link, ir para a conta). `/login/forgot`: um campo (nome de usuário ou email) e a resposta neutra, com o aviso de que conta sem email não se recupera por email e os botões do Discord e do Google.
 
 ### Conta `/account`
 
-`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email).
+`PageHeader` "Sua conta". Abas: **Perfil** (nome exibido), **Logins** (email, Discord, Google e senha), **Senha** (trocar), **Sessões** (onde a conta está aberta: a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som). Na aba Logins, o email vem primeiro: o campo já vem com o atual, para editar (a senha atual aparece quando ele muda, se a conta tem senha; "Cancelar" volta ao atual), e "Remover email" à esquerda dos botões, travado com o motivo se a conta tem senha. Sem email, o bloco da senha dá lugar ao motivo (criar a senha pede email). Discord e Google, cada um no seu bloco: vincular, ou desvincular se sobrar outro jeito de entrar (só com o botão e a confirmação na conta sem senha; com senha, pedindo a atual); sem outro, o motivo no lugar.
 
 ### Convite `/invite/[token]`
 

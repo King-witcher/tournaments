@@ -29,10 +29,10 @@ export const getCurrentUser = cache(async () => {
 });
 
 /**
- * As formas de login da conta logada (Discord e nome de usuário), buscadas
- * uma vez por requisição (as abas Logins e Senha da conta usam). Sem sessão,
- * `undefined`; a API recusando, o código do erro. Lê cookies: quem usa fica
- * em `<Suspense>`.
+ * As formas de login da conta logada (Discord, Google e nome de usuário),
+ * buscadas uma vez por requisição (as abas Logins e Senha da conta usam). Sem
+ * sessão, `undefined`; a API recusando, o código do erro. Lê cookies: quem
+ * usa fica em `<Suspense>`.
  */
 export const getLogins = cache(async () => {
   if (!(await hasSessionCookie())) return undefined;

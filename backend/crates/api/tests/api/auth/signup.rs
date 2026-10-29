@@ -60,7 +60,7 @@ async fn account_is_created_only_by_the_link(db: PgPool) {
     let (_, body) = get(&app, "/auth/logins", &me).await;
     assert_eq!(
         body,
-        json!({ "discord": false, "username": "Rapha", "email": "joaosilva@gmail.com" })
+        json!({ "discord": false, "google": false, "username": "Rapha", "email": "joaosilva@gmail.com" })
     );
 
     // O banco guarda o username como digitado e só o hash da senha.

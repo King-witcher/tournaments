@@ -51,7 +51,8 @@ pub fn signup_confirmation(
 
 /// Alguém tentou criar conta com um email que já é de uma conta: o dono fica
 /// sabendo (e lembra do username), sem a resposta do cadastro revelar nada.
-/// Conta com senha recebe o caminho da recuperação; só com Discord, o login.
+/// Conta com senha recebe o caminho da recuperação; só com Discord ou Google,
+/// o login.
 pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str>) -> Email {
     let url = page(
         web,
@@ -75,8 +76,8 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
         (Locale::Pt, None) => (
             "Você já tem uma conta",
             [
-                "Alguém tentou criar uma conta com este email, mas ele já é da sua conta, que entra pelo Discord.".to_owned(),
-                "Se foi você, é só entrar pelo Discord.".to_owned(),
+                "Alguém tentou criar uma conta com este email, mas ele já é da sua conta, que entra pelo Discord ou pelo Google.".to_owned(),
+                "Se foi você, é só entrar pelo que você vinculou.".to_owned(),
             ],
             "Entrar",
             "Se não foi você, ignore este email: nada muda na sua conta.",
@@ -93,8 +94,8 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
         (Locale::Es, None) => (
             "Ya tienes una cuenta",
             [
-                "Alguien intentó crear una cuenta con este email, pero ya es de tu cuenta, que entra con Discord.".to_owned(),
-                "Si fuiste tú, solo tienes que entrar con Discord.".to_owned(),
+                "Alguien intentó crear una cuenta con este email, pero ya es de tu cuenta, que entra con Discord o con Google.".to_owned(),
+                "Si fuiste tú, solo tienes que entrar con el que vinculaste.".to_owned(),
             ],
             "Entrar",
             "Si no fuiste tú, ignora este email: nada cambia en tu cuenta.",

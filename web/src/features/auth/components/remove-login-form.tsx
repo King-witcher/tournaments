@@ -13,10 +13,16 @@ import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { ErrorText } from "@/shared/ui/error-text";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { LOGIN_SECTION } from "../lib/login-sections";
+import type { Provider } from "../lib/providers";
 
 type Props = {
-  /** O nome de usuário e a senha (`password`) ou o Discord (`discord`). */
-  login: "password" | "discord";
+  /** O nome de usuário e a senha (`password`) ou um provedor. */
+  login: "password" | Provider;
+  /**
+   * A conta tem senha, e a API pede a atual para tirar qualquer login. Sem
+   * senha (só para provedor), o formulário é só o botão.
+   */
+  needsPassword?: boolean;
 };
 
 /** Erros que são da senha digitada (vão no campo); o resto vai embaixo do botão. */
@@ -26,12 +32,12 @@ const PASSWORD_ERRORS = new Set([
 ]);
 
 /**
- * Remove um login da conta. Pede a senha atual (a API confere) e, ao enviar,
- * o `ConfirmModal` diz o que a conta perde; só o "sim" chama a API. O foco
- * volta para onde estava ao fechar e, quando o login sai, vai para o bloco
- * dele (o formulário some no refresh).
+ * Remove um login da conta. Com senha na conta, pede a atual (a API confere)
+ * e, ao enviar, o `ConfirmModal` diz o que a conta perde; só o "sim" chama a
+ * API. O foco volta para onde estava ao fechar e, quando o login sai, vai
+ * para o bloco dele (o formulário some no refresh).
  */
-export function RemoveLoginForm({ login }: Props) {
+export function RemoveLoginForm({ login, needsPassword = true }: Props) {
   const t = useTranslations("Account");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -47,9 +53,9 @@ export function RemoveLoginForm({ login }: Props) {
           question: t("password.removeConfirm"),
         }
       : {
-          action: t("discord.unlink"),
-          hint: t("discord.unlinkHint"),
-          question: t("discord.unlinkConfirm"),
+          action: t(`${login}.unlink`),
+          hint: t(`${login}.unlinkHint`),
+          question: t(`${login}.unlinkConfirm`),
         };
 
   const close = () => {
@@ -59,19 +65,23 @@ export function RemoveLoginForm({ login }: Props) {
   };
 
   const remove = () => {
-    const body = { current_password: current };
+    const body = needsPassword ? { current_password: current } : {};
     const done = () => {
       setCurrent("");
       setPasswordError(false);
       router.refresh();
       focusIfLost(LOGIN_SECTION[login]);
     };
+    // Sem o campo, todo erro vai embaixo do botão.
     const failed = (code: string) =>
-      setPasswordError(PASSWORD_ERRORS.has(code));
+      setPasswordError(needsPassword && PASSWORD_ERRORS.has(code));
     if (login === "password") {
-      run(() => api.DELETE("/auth/password", { body }), done, failed);
-    } else {
+      const password = { current_password: current };
+      run(() => api.DELETE("/auth/password", { body: password }), done, failed);
+    } else if (login === "discord") {
       run(() => api.DELETE("/auth/discord", { body }), done, failed);
+    } else {
+      run(() => api.DELETE("/auth/google", { body }), done, failed);
     }
   };
 
@@ -86,16 +96,18 @@ export function RemoveLoginForm({ login }: Props) {
       }}
     >
       <Stack gap={5}>
-        <PasswordInput
-          labelText={t("currentPassword")}
-          helperText={text.hint}
-          required
-          autoComplete="current-password"
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          invalid={passwordError && error !== undefined}
-          invalidText={error}
-        />
+        {needsPassword && (
+          <PasswordInput
+            labelText={t("currentPassword")}
+            helperText={text.hint}
+            required
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            invalid={passwordError && error !== undefined}
+            invalidText={error}
+          />
+        )}
         <Button type="submit" kind="danger--tertiary" pending={pending}>
           {text.action}
         </Button>

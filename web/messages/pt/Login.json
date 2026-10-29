@@ -10,7 +10,7 @@
     "sentTitle": "Pedido recebido",
     "sent": "Se houver uma conta com senha e email confirmado para “{login}”, enviamos o link para o email dela. Ele vale 1 hora. Não chegou? Confira a caixa de spam.",
     "again": "Pedir outro link",
-    "noEmail": "Conta sem email cadastrado não tem recuperação por email. Se você vinculou o Discord a ela, entre com ele.",
+    "noEmail": "Conta sem email cadastrado não tem recuperação por email. Se você vinculou o Discord ou o Google a ela, entre por ele.",
     "remembered": "Lembrou a senha?",
     "backToLogin": "Entrar"
   },

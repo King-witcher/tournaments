@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into user_identities (user_id, provider, provider_user_id)\n                   values ($1, 'discord', $2)\n                   on conflict do nothing\n                   returning user_id",
+  "query": "select user_id from user_identities where provider = $1 and provider_user_id = $2",
   "describe": {
     "columns": [
       {
@@ -17,7 +17,7 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
+        "Text",
         "Text"
       ]
     },
@@ -25,5 +25,5 @@
       false
     ]
   },
-  "hash": "8f6d2e134f0ee558623f4d5371c7d2187616af2652d5053bca834b34ccad5fe0"
+  "hash": "06dba419c8c1bb4ad9e256c5368a83940be79dfcfc799d6ab7249d66e1a9b80b"
 }

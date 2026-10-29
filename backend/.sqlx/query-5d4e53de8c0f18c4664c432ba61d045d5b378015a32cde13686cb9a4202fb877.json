@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "update users set avatar_url = null where id = $1",
+  "query": "update users set display_name = 'Aninha' where id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -10,5 +10,5 @@
     },
     "nullable": []
   },
-  "hash": "95767983802d821b8737761a940d0ce967a8c9ef406f91c249cb168a1bf46f2a"
+  "hash": "5d4e53de8c0f18c4664c432ba61d045d5b378015a32cde13686cb9a4202fb877"
 }

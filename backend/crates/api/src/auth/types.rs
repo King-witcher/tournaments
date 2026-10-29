@@ -99,6 +99,13 @@ pub struct ChangePassword {
     pub password: Option<String>,
 }
 
+/// Desligar um provedor (Discord ou Google) da conta.
+#[derive(Deserialize, ToSchema)]
+pub struct UnlinkLogin {
+    /// Senha atual: obrigatória se a conta tem senha.
+    pub current_password: Option<String>,
+}
+
 #[derive(Deserialize, ToSchema)]
 pub struct CurrentPassword {
     pub current_password: String,
@@ -129,6 +136,7 @@ pub struct SessionPath {
 #[derive(Serialize, ToSchema)]
 pub struct LoginMethods {
     pub discord: bool,
+    pub google: bool,
     /// Username do login com senha, se a conta tem senha.
     pub username: Option<String>,
     /// Email confirmado, na forma canônica. Toda conta com senha tem (é por

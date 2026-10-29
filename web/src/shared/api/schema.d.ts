@@ -100,6 +100,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["unlink_google"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["google_callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["google_link"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["google_login"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -1539,6 +1603,7 @@ export interface components {
              *     ele que a senha esquecida volta); só a conta sem senha fica sem.
              */
             email?: string | null;
+            google: boolean;
             /** @description Username do login com senha, se a conta tem senha. */
             username?: string | null;
         };
@@ -2410,6 +2475,11 @@ export interface components {
              */
             user_id: number;
         };
+        /** @description Desligar um provedor (Discord ou Google) da conta. */
+        UnlinkLogin: {
+            /** @description Senha atual: obrigatória se a conta tem senha. */
+            current_password?: string | null;
+        };
         /** @description O que o próprio usuário muda na conta. */
         UpdateMe: {
             /**
@@ -2483,7 +2553,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CurrentPassword"];
+                "application/json": components["schemas"]["UnlinkLogin"];
             };
         };
         responses: {
@@ -2505,7 +2575,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.wrong_password */
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2514,7 +2584,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.last_login (a conta não tem senha), auth.discord_not_linked */
+            /** @description auth.last_login (a conta não tem senha nem Google), auth.discord_not_linked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -2808,6 +2878,175 @@ export interface operations {
             };
         };
     };
+    unlink_google: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlinkLogin"];
+            };
+        };
+        responses: {
+            /** @description Google desligado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginMethods"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.last_login (a conta não tem senha nem Discord), auth.google_not_linked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    google_callback: {
+        parameters: {
+            query?: {
+                code?: string | null;
+                state?: string | null;
+                error?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entra (cria a sessão, e a conta com o nome do Google) ou liga o Google e redireciona para o front. Erro ao entrar volta para /?auth_error=<código>; ao ligar, para return_to com ?auth_error=<código> */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    google_link: {
+        parameters: {
+            query?: {
+                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
+                return_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redireciona para o Google; o callback liga a conta e volta para return_to (em erro, com ?auth_error=<código>) */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_already_linked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.google_not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    google_login: {
+        parameters: {
+            query?: {
+                /** @description Caminho interno para voltar depois do login (ex.: `/pt/torneios`). */
+                return_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redireciona para o Google (escopos openid e profile) e grava o cookie oauth_state */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.google_not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -2970,7 +3209,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Username e senha removidos; a conta fica só com o Discord */
+            /** @description Username e senha removidos; a conta continua entrando pelo Discord ou pelo Google */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2997,7 +3236,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.no_password, auth.last_login (a conta não tem Discord) */
+            /** @description auth.no_password, auth.last_login (a conta não tem Discord nem Google) */
             409: {
                 headers: {
                     [name: string]: unknown;

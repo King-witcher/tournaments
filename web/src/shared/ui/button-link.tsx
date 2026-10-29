@@ -33,8 +33,8 @@ type Props = Common &
 /**
  * Link com cara de botão (Carbon `Button` sobre o `Link` do i18n): para ação
  * que leva a outra página ("Criar comunidade", "Editar", "Entrar"). Com
- * `external`, o `href` é um endereço fora das rotas do site (o OAuth do
- * Discord, na API) e vai cru, sem prefixo de idioma.
+ * `external`, o `href` é um endereço fora das rotas do site (o OAuth dos
+ * provedores, na API) e vai cru, sem prefixo de idioma.
  */
 export function ButtonLink({
   children,

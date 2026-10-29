@@ -1,0 +1,49 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select\n             exists (select 1 from user_identities\n                     where user_id = u.id and provider = 'discord') as \"discord!\",\n             exists (select 1 from user_identities\n                     where user_id = u.id and provider = 'google') as \"google!\",\n             (select username from password_credentials where user_id = u.id) as username,\n             u.email\n           from users u\n           where u.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "google!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "username",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "email"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      true
+    ]
+  },
+  "hash": "e7a3b683310ddb935f4051f632f5dd12951932981b0f05f2ce839074cb3093ff"
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select exists (select 1 from user_identities\n                          where user_id = $1 and provider = 'discord') as \"exists!\"",
+  "query": "select exists (select 1 from user_identities\n                          where user_id = $1 and provider = $2) as \"exists!\"",
   "describe": {
     "columns": [
       {
@@ -12,12 +12,13 @@
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Int8",
+        "Text"
       ]
     },
     "nullable": [
       null
     ]
   },
-  "hash": "2ab44d5b2e2e4661dd9dbc5c248af8cc108f4b5f1aa4955b127c34274a87d200"
+  "hash": "9065e9dcc833d92e158e45367cb9aef7accda50e1643b46e2654be5a1abe015b"
 }

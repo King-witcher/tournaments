@@ -10,8 +10,8 @@ import { ChangePasswordForm } from "./change-password-form";
 
 /**
  * A aba Senha da conta: trocar o nome de usuário e a senha. Sem senha (só
- * Discord), diz que não há o que trocar e leva à aba Logins, onde se cria.
- * Fica em `<Suspense>`.
+ * Discord ou Google), diz que não há o que trocar e leva à aba Logins, onde
+ * se cria. Fica em `<Suspense>`.
  */
 export async function ChangePasswordSection() {
   const [result, t] = await Promise.all([

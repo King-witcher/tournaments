@@ -18,7 +18,7 @@ crates/api/src/
   shared/         erro, extractors, tokens, texto, slug, idioma, Redis; não conhece nenhum domínio
   outbox/         eventos de mudança e avisos, gravados na transação de quem muda (emit)
   mail/           email sem domínio: forma canônica do endereço, layout, envio (Mailer) e limites
-  auth/           login (Discord, username e senha), sessão, CurrentUser; cadastro, recuperação
+  auth/           login (Discord, Google, username e senha), sessão, CurrentUser; cadastro, recuperação
                   de senha e troca de email por link; avisos por email do que muda no acesso
   tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
   members/        membros: listar, perfil, papel, apelido, sair, remover

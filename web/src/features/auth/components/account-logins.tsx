@@ -1,14 +1,16 @@
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Notice } from "@/shared/ui/notice";
+import { PROVIDERS } from "../lib/providers";
 import { getLogins } from "../server";
-import { DiscordLoginSection } from "./discord-login-section";
 import { EmailLoginSection } from "./email-login-section";
 import { PasswordLoginSection } from "./password-login-section";
+import { ProviderLoginSection } from "./provider-login-section";
 
 /**
  * A aba Logins da conta: o email (primeiro, porque a senha depende dele: só
- * se cria com email, e com senha ele não sai), o Discord e o nome de usuário
- * com senha, cada um para ligar ou remover. Fica em `<Suspense>`.
+ * se cria com email, e com senha ele não sai), o Discord, o Google e o nome
+ * de usuário com senha, cada um para ligar ou remover. A conta nunca fica
+ * sem jeito de entrar: cada um só sai se sobrar outro. Fica em `<Suspense>`.
  */
 export async function AccountLogins() {
   const result = await getLogins();
@@ -25,10 +27,21 @@ export async function AccountLogins() {
         email={logins.email ?? undefined}
         hasPassword={hasPassword}
       />
-      <DiscordLoginSection linked={logins.discord} hasPassword={hasPassword} />
+      {PROVIDERS.map((provider) => (
+        <ProviderLoginSection
+          key={provider}
+          provider={provider}
+          linked={logins[provider]}
+          hasPassword={hasPassword}
+          canUnlink={
+            hasPassword ||
+            PROVIDERS.some((other) => other !== provider && logins[other])
+          }
+        />
+      ))}
       <PasswordLoginSection
         username={logins.username ?? undefined}
-        discordLinked={logins.discord}
+        providerLinked={PROVIDERS.some((provider) => logins[provider])}
         hasEmail={Boolean(logins.email)}
       />
     </>

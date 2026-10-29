@@ -14,6 +14,9 @@ pub struct Config {
     pub discord_client_id: Option<String>,
     pub discord_client_secret: Option<String>,
     pub discord_redirect_uri: String,
+    pub google_client_id: Option<String>,
+    pub google_client_secret: Option<String>,
+    pub google_redirect_uri: String,
     /// Domínio do cookie de sessão (em produção, `.dominio`).
     pub cookie_domain: Option<String>,
     pub cookie_secure: bool,
@@ -49,6 +52,12 @@ impl Config {
             discord_redirect_uri: env_or(
                 "DISCORD_REDIRECT_URI",
                 "http://localhost:4000/auth/discord/callback",
+            ),
+            google_client_id: env_opt("GOOGLE_CLIENT_ID"),
+            google_client_secret: env_opt("GOOGLE_CLIENT_SECRET"),
+            google_redirect_uri: env_or(
+                "GOOGLE_REDIRECT_URI",
+                "http://localhost:4000/auth/google/callback",
             ),
             cookie_domain: env_opt("COOKIE_DOMAIN"),
             cookie_secure: matches!(

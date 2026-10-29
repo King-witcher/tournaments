@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select display_name from users where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "display_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "display_name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "af31e55dc45459d397da1ae5b2d1ee032df97ff87b3a7a1abe1cab4f2a139cdd"
+}

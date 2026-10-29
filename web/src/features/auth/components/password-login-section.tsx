@@ -6,17 +6,23 @@ import { LOGIN_SECTION } from "../lib/login-sections";
 import { CredentialsForm } from "./credentials-form";
 import { RemoveLoginForm } from "./remove-login-form";
 
-type Props = { username?: string; discordLinked: boolean; hasEmail: boolean };
+type Props = {
+  username?: string;
+  /** O Discord ou o Google está vinculado: sem senha, a conta ainda entra. */
+  providerLinked: boolean;
+  hasEmail: boolean;
+};
 
 /**
  * Nome de usuário e senha da conta: criar, se houver email (que recupera a
- * senha esquecida), ou remover, se o Discord estiver vinculado (trocar fica
- * na aba Senha). Sem um dos dois, o motivo no lugar do formulário. O bloco
- * recebe o foco quando o formulário some (`tabIndex={-1}`).
+ * senha esquecida), ou remover, se o Discord ou o Google estiver vinculado
+ * (trocar fica na aba Senha). Sem um dos dois, o motivo no lugar do
+ * formulário. O bloco recebe o foco quando o formulário some
+ * (`tabIndex={-1}`).
  */
 export async function PasswordLoginSection({
   username,
-  discordLinked,
+  providerLinked,
   hasEmail,
 }: Props) {
   const t = await getTranslations("Account.password");
@@ -33,10 +39,10 @@ export async function PasswordLoginSection({
           ) : (
             <Notice kind="info">{t("needsEmail")}</Notice>
           )
-        ) : discordLinked ? (
+        ) : providerLinked ? (
           <RemoveLoginForm login="password" />
         ) : (
-          <Notice kind="info">{t("needsDiscord")}</Notice>
+          <Notice kind="info">{t("needsProvider")}</Notice>
         )}
       </Section>
     </div>

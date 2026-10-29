@@ -324,6 +324,16 @@ async fn logins_and_secrets_keep_their_format(db: PgPool) {
         rejected(identity("password", "Ana_1").await),
         rule(CHECK, "user_identities_provider_check")
     );
+    // O `sub` do Google: até 255 caracteres ASCII visíveis.
+    let long_sub: &'static str = "1".repeat(256).leak();
+    for sub in ["com espaço", "ação", long_sub] {
+        assert_eq!(
+            rejected(identity("google", sub).await),
+            rule(CHECK, "user_identities_google_sub_format"),
+            "{sub}"
+        );
+    }
+    identity("google", "110248495921238986420").await.unwrap();
     password("Ana_1", argon).await.unwrap();
     let bia = user(&db, "Bia").await;
     exec(&db, &email(bia.id, "bia@outlook.com")).await.unwrap();

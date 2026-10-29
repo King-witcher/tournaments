@@ -5,7 +5,7 @@ use sqlx::{PgConnection, PgPool};
 
 use super::{
     emails::has_email,
-    logins::{has_discord, lock_user},
+    logins::{has_identity_except, lock_user},
 };
 use crate::{shared::ApiError, shared::Locale};
 
@@ -134,15 +134,15 @@ pub async fn update_password(
     }
 }
 
-/// Tira username e senha. Sem senha → 409 `auth.no_password`; sem Discord →
-/// 409 `auth.last_login`.
+/// Tira username e senha. Sem senha → 409 `auth.no_password`; sem Discord
+/// nem Google → 409 `auth.last_login`.
 pub async fn remove_password(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
     if !password_login_exists(&mut tx, user_id).await? {
         return Err(ApiError::conflict("auth.no_password"));
     }
-    if !has_discord(&mut tx, user_id).await? {
+    if !has_identity_except(&mut tx, user_id, None).await? {
         return Err(ApiError::conflict("auth.last_login"));
     }
     sqlx::query!(

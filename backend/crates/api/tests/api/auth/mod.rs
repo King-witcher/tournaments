@@ -1,8 +1,10 @@
-//! Testes de `auth`, um arquivo por assunto. Aqui ficam o Discord falso e os
-//! helpers que leem redirect e cookies, que os outros domínios não precisam.
+//! Testes de `auth`, um arquivo por assunto. Aqui ficam o Discord e o Google
+//! falsos e os helpers que leem redirect e cookies, que os outros domínios
+//! não precisam.
 
 mod discord;
 mod email;
+mod google;
 mod link;
 mod notices;
 mod password;
@@ -14,7 +16,8 @@ mod signup;
 use std::sync::Arc;
 
 use api::{
-    auth::{AuthSettings, DiscordApi, DiscordUser},
+    AppState,
+    auth::{AuthSettings, DiscordApi, DiscordUser, GoogleApi, GoogleUser, OAuthClient},
     mail::Email,
     shared::{
         Redis,
@@ -33,9 +36,24 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-use crate::common::{User, WEB, app_with, link_token, mailbox, redis};
+use crate::common::{User, WEB, app_from, link_token, mailbox, redis, state};
 
 const REDIRECT: &str = "http://localhost:4000/auth/discord/callback";
+const GOOGLE_REDIRECT: &str = "http://localhost:4000/auth/google/callback";
+
+struct FakeGoogle {
+    user: Option<GoogleUser>,
+}
+
+#[async_trait]
+impl GoogleApi for FakeGoogle {
+    async fn fetch_user(&self, _code: &str, redirect_uri: &str) -> anyhow::Result<GoogleUser> {
+        assert_eq!(redirect_uri, GOOGLE_REDIRECT);
+        self.user
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("falha simulada"))
+    }
+}
 
 struct FakeDiscord {
     user: Option<DiscordUser>,
@@ -64,19 +82,46 @@ fn discord_user(avatar: Option<&str>) -> DiscordUser {
     }
 }
 
-/// App cujo Discord responde com `user` (`None` simula falha).
+/// Usuário do Google de id (`sub`) `g-1`.
+fn google_user(name: &str) -> GoogleUser {
+    GoogleUser {
+        id: "g-1".into(),
+        name: Some(name.into()),
+    }
+}
+
+/// App cujo Discord responde com `user` (`None` simula falha); o Google, sem
+/// usuário, sempre falha.
 fn app(db: PgPool, user: Option<DiscordUser>, configured: bool) -> Router {
-    app_with(
-        db,
-        Arc::new(FakeDiscord { user }),
-        AuthSettings {
-            discord_client_id: configured.then(|| "client-1".to_owned()),
-            redirect_uri: REDIRECT.into(),
+    providers_app(db, user, None, configured)
+}
+
+/// App com os dois provedores: cada um responde com o usuário dado (`None`
+/// simula falha). `configured` liga os dois.
+fn providers_app(
+    db: PgPool,
+    discord: Option<DiscordUser>,
+    google: Option<GoogleUser>,
+    configured: bool,
+) -> Router {
+    let client = |client_id: &str, redirect_uri: &str| {
+        configured.then(|| OAuthClient {
+            client_id: client_id.into(),
+            redirect_uri: redirect_uri.into(),
+        })
+    };
+    app_from(AppState {
+        discord: Arc::new(FakeDiscord { user: discord }),
+        google: Arc::new(FakeGoogle { user: google }),
+        auth: Arc::new(AuthSettings {
+            discord: client("client-1", REDIRECT),
+            google: client("google-client", GOOGLE_REDIRECT),
             web_origin: WEB.into(),
             cookie_domain: None,
             cookie_secure: false,
-        },
-    )
+        }),
+        ..state(db)
+    })
 }
 
 async fn send(app: &Router, req: Request<Body>) -> Response<Body> {
@@ -214,7 +259,7 @@ async fn skip_cooldown(db: &PgPool, address: &str) {
 }
 
 /// Abre o OAuth em `start` (login ou link) e devolve o cookie `oauth_state=..`
-/// e o state que foi para o Discord.
+/// e o state que foi para o provedor.
 async fn start_oauth(app: &Router, start: &str, session: Option<&str>) -> (String, String) {
     let res = send(app, get(start, session)).await;
     assert_eq!(res.status(), StatusCode::SEE_OTHER, "{start}");
@@ -230,13 +275,15 @@ async fn start_oauth(app: &Router, start: &str, session: Option<&str>) -> (Strin
     (state_cookie, state)
 }
 
-/// Abre o OAuth em `start` e volta pelo callback, com a mesma sessão. Devolve
-/// o cookie `session=..` criado (vazio se nenhum) e a resposta do callback.
+/// Abre o OAuth em `start` (`/auth/{provedor}/...`) e volta pelo callback do
+/// mesmo provedor, com a mesma sessão. Devolve o cookie `session=..` criado
+/// (vazio se nenhum) e a resposta do callback.
 async fn oauth_round_trip(
     app: &Router,
     start: &str,
     session: Option<&str>,
 ) -> (String, Response<Body>) {
+    let provider = start.split('/').nth(2).unwrap();
     let (state_cookie, state) = start_oauth(app, start, session).await;
     let cookies = match session {
         Some(s) => format!("{state_cookie}; {s}"),
@@ -245,7 +292,7 @@ async fn oauth_round_trip(
     let res = send(
         app,
         get(
-            &format!("/auth/discord/callback?code=abc&state={state}"),
+            &format!("/auth/{provider}/callback?code=abc&state={state}"),
             Some(&cookies),
         ),
     )
@@ -264,4 +311,16 @@ async fn do_login(app: &Router, return_to: &str) -> (String, Response<Body>) {
         None,
     )
     .await
+}
+
+/// Login com Google voltando para `/`, já como `User` (o id vem do `/me`).
+async fn google_login(app: &Router) -> User {
+    let (session, res) = oauth_round_trip(app, "/auth/google/login", None).await;
+    assert_eq!(location(&res), format!("{WEB}/"));
+    let res = send(app, get("/me", Some(&session))).await;
+    let me: Value = serde_json::from_str(&body_text(res).await).unwrap();
+    User {
+        id: me["id"].as_i64().unwrap(),
+        cookie: session,
+    }
 }

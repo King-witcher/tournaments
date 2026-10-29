@@ -25,7 +25,7 @@ async fn password_account_links_discord(db: PgPool) {
     let (_, body) = common::get(&app, "/auth/logins", &me).await;
     assert_eq!(
         body,
-        json!({ "discord": true, "username": "Rapha", "email": "rapha@example.com" })
+        json!({ "discord": true, "google": false, "username": "Rapha", "email": "rapha@example.com" })
     );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", me.id)
         .fetch_one(&db)
@@ -173,7 +173,7 @@ async fn unlink_needs_password(db: PgPool) {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": false, "username": "quaker", "email": "quaker@example.com" })
+        json!({ "discord": false, "google": false, "username": "quaker", "email": "quaker@example.com" })
     );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", id)
         .fetch_one(&db)

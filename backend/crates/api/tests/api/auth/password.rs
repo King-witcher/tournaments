@@ -124,7 +124,7 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     let (_, body) = get(&app, "/auth/logins", &me).await;
     assert_eq!(
         body,
-        json!({ "discord": true, "username": null, "email": null })
+        json!({ "discord": true, "google": false, "username": null, "email": null })
     );
 
     // Sem email, a senha esquecida não teria volta.
@@ -139,7 +139,7 @@ async fn discord_account_adds_username_and_password(db: PgPool) {
     assert_eq!(status, StatusCode::CREATED, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "username": "quaker", "email": "quaker@example.com" })
+        json!({ "discord": true, "google": false, "username": "quaker", "email": "quaker@example.com" })
     );
 
     let (status, body) = post(
@@ -231,7 +231,7 @@ async fn change_password_needs_current_and_ends_other_sessions(db: PgPool) {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": false, "username": "Rapha2", "email": "rapha@example.com" })
+        json!({ "discord": false, "google": false, "username": "Rapha2", "email": "rapha@example.com" })
     );
     assert_eq!(get(&app, "/me", &me).await.0, StatusCode::OK);
     assert_eq!(
@@ -282,7 +282,7 @@ async fn password_is_removed_only_with_discord_left(db: PgPool) {
     // O email fica: recupera o acesso se a senha voltar.
     assert_eq!(
         body,
-        json!({ "discord": true, "username": null, "email": "rapha@example.com" })
+        json!({ "discord": true, "google": false, "username": null, "email": "rapha@example.com" })
     );
     assert_eq!(
         login(&app, "Rapha", PASSWORD).await.0,

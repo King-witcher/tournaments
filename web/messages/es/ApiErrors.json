@@ -13,6 +13,12 @@
     "discord_taken": "Ese Discord ya lo usa otra cuenta. Entra en ella y desvincúlalo antes.",
     "discord_already_linked": "Tu cuenta ya tiene un Discord vinculado.",
     "discord_not_linked": "Tu cuenta no tiene Discord vinculado.",
+    "google_not_configured": "El inicio de sesión con Google todavía no está configurado.",
+    "google_denied": "Autorización cancelada en Google.",
+    "google_failed": "No se pudo hablar con Google. Inténtalo de nuevo.",
+    "google_taken": "Esa cuenta de Google ya la usa otra cuenta de aquí. Entra en ella y desvincúlala antes.",
+    "google_already_linked": "Tu cuenta ya tiene una cuenta de Google vinculada.",
+    "google_not_linked": "Tu cuenta no tiene una cuenta de Google vinculada.",
     "invalid_credentials": "Nombre de usuario o contraseña incorrectos.",
     "too_many_attempts": "Demasiados intentos con contraseña incorrecta. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
     "username_invalid": "El nombre de usuario debe tener de 3 a 20 letras, números, _ . o -, sin espacios ni tildes.",
@@ -35,7 +41,7 @@
     "invalid": "Email inválido. Antes de la @, usa solo letras, números, punto, _ o - (en Gmail, solo letras, números y punto); después, un dominio como gmail.com.",
     "disposable": "No se aceptan emails temporales ni de alias (que solo reenvían a otra dirección). Usa tu email de siempre.",
     "too_soon": "Acabamos de enviar un email a esa dirección. Espera {seconds, plural, one {# segundo} other {# segundos}} para pedir otro.",
-    "unavailable": "El sitio llegó al límite de emails que puede enviar hoy. Inténtalo de nuevo más tarde o entra con Discord."
+    "unavailable": "El sitio llegó al límite de emails que puede enviar hoy. Inténtalo de nuevo más tarde o entra con Discord o Google."
   },
   "tenant": {
     "not_found": "Comunidad no encontrada, o no formas parte de ella.",

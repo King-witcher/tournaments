@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { safeReturnTo } from "../lib/return-to";
 import { AlreadySignedIn } from "./already-signed-in";
 import { AuthSwitch } from "./auth-switch";
-import { DiscordButton } from "./discord-button";
+import { OAuthButtons } from "./oauth-buttons";
 import { OrDivider } from "./or-divider";
 import { SignupForm } from "./signup-form";
 
@@ -13,14 +13,14 @@ type Props = {
 };
 
 /**
- * Criar conta com senha (ou entrar com Discord, que cria sozinho), voltando
- * para `?return_to=`: no `Tile`, o formulário (que, enviado, vira o "confira
- * seu email") e o Discord; o link para entrar embaixo. Fica em `<Suspense>`.
+ * Criar conta com senha (ou entrar com Discord ou Google, que criam
+ * sozinhos), voltando para `?return_to=`: no `Tile`, o formulário (que,
+ * enviado, vira o "confira seu email") e os provedores; o link para entrar
+ * embaixo. Fica em `<Suspense>`.
  */
 export async function SignupView({ searchParams }: Props) {
-  const [t, tAuth, params] = await Promise.all([
+  const [t, params] = await Promise.all([
     getTranslations("Signup"),
-    getTranslations("Auth"),
     searchParams,
   ]);
   const returnTo = safeReturnTo(params.return_to);
@@ -33,9 +33,7 @@ export async function SignupView({ searchParams }: Props) {
           <Stack gap={6}>
             <SignupForm returnTo={returnTo} />
             <OrDivider />
-            <DiscordButton action="login" returnTo={returnTo}>
-              {tAuth("discord")}
-            </DiscordButton>
+            <OAuthButtons returnTo={returnTo} />
           </Stack>
         </Layer>
       </Tile>

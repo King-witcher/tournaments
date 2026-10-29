@@ -1,6 +1,11 @@
+//! Login com o Discord (OAuth2, escopo `identify`): o code vira um access
+//! token, que lê o usuário. O avatar da conta vem daqui.
+
 use anyhow::Context;
 use async_trait::async_trait;
 use serde::Deserialize;
+
+use super::session::OAuthClient;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct DiscordUser {
@@ -22,6 +27,17 @@ impl DiscordUser {
             .as_ref()
             .map(|a| format!("https://cdn.discordapp.com/avatars/{}/{a}.png", self.id))
     }
+}
+
+pub fn authorize_url(client: &OAuthClient, state: &str) -> reqwest::Url {
+    let mut url = reqwest::Url::parse("https://discord.com/oauth2/authorize").expect("url fixa");
+    url.query_pairs_mut()
+        .append_pair("response_type", "code")
+        .append_pair("client_id", &client.client_id)
+        .append_pair("scope", "identify")
+        .append_pair("state", state)
+        .append_pair("redirect_uri", &client.redirect_uri);
+    url
 }
 
 /// Acesso ao Discord, atrás de uma trait para os testes não usarem a internet.

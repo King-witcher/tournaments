@@ -10,7 +10,7 @@ use std::{
 
 use api::{
     AppState,
-    auth::{AuthSettings, DiscordApi, HttpDiscord, create_session},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, create_session},
     mail::{Email, Mail, Mailer},
     realtime::Realtime,
     shared::Redis,
@@ -134,19 +134,20 @@ pub fn link_token(email: &Email) -> String {
     rest.split_whitespace().next().unwrap().to_owned()
 }
 
-/// Estado do app de teste: login do Discord desligado (os testes criam sessões
-/// direto no Redis), Web Push desligado, emails na `mailbox(&db)` e nenhuma
-/// tarefa em segundo plano (os testes do tempo real chamam o despachante e o
-/// agendador direto).
+/// Estado do app de teste: login do Discord e do Google desligado (os testes
+/// criam sessões direto no Redis), Web Push desligado, emails na
+/// `mailbox(&db)` e nenhuma tarefa em segundo plano (os testes do tempo real
+/// chamam o despachante e o agendador direto).
 pub fn state(db: PgPool) -> AppState {
     AppState {
         redis: redis(&db),
         mail: Mail::new(mailbox(&db), DAILY_EMAILS),
         db,
         discord: Arc::new(HttpDiscord::new(String::new(), String::new())),
+        google: Arc::new(HttpGoogle::new(String::new(), String::new())),
         auth: Arc::new(AuthSettings {
-            discord_client_id: None,
-            redirect_uri: String::new(),
+            discord: None,
+            google: None,
             web_origin: WEB.into(),
             cookie_domain: None,
             cookie_secure: false,
@@ -162,14 +163,6 @@ pub fn app(db: PgPool) -> Router {
 
 pub fn app_from(state: AppState) -> Router {
     api::app(state, HeaderValue::from_static(WEB))
-}
-
-pub fn app_with(db: PgPool, discord: Arc<dyn DiscordApi>, auth: AuthSettings) -> Router {
-    app_from(AppState {
-        discord,
-        auth: Arc::new(auth),
-        ..state(db)
-    })
 }
 
 pub struct User {

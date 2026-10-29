@@ -178,7 +178,7 @@ async fn only_accounts_without_password_remove_the_email(db: PgPool) {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "username": null, "email": null })
+        json!({ "discord": true, "google": false, "username": null, "email": null })
     );
     assert_eq!(
         confirm(&app, &link_token(&pending)).await,

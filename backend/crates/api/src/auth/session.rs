@@ -10,6 +10,7 @@ use axum_extra::extract::{
 };
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
+use super::provider::Provider;
 use crate::shared::token;
 
 pub const SESSION_COOKIE: &str = "session";
@@ -37,12 +38,21 @@ pub fn current_session_id(jar: &CookieJar) -> Option<String> {
     current_hash(jar).map(|h| session_id(&h))
 }
 
+/// O app registrado num provedor: o que vai na autorização e na troca do
+/// code. O secret fica no cliente HTTP do provedor.
+#[derive(Clone, Debug)]
+pub struct OAuthClient {
+    pub client_id: String,
+    pub redirect_uri: String,
+}
+
 /// Configuração de auth que os handlers precisam em tempo de execução.
 #[derive(Clone, Debug)]
 pub struct AuthSettings {
-    /// `None` desliga o login com Discord (503).
-    pub discord_client_id: Option<String>,
-    pub redirect_uri: String,
+    /// `None` desliga o login com o Discord (503).
+    pub discord: Option<OAuthClient>,
+    /// `None` desliga o login com o Google (503).
+    pub google: Option<OAuthClient>,
     /// Origem do front, sem barra final.
     pub web_origin: String,
     pub cookie_domain: Option<String>,
@@ -50,6 +60,13 @@ pub struct AuthSettings {
 }
 
 impl AuthSettings {
+    pub fn client(&self, provider: Provider) -> Option<&OAuthClient> {
+        match provider {
+            Provider::Discord => self.discord.as_ref(),
+            Provider::Google => self.google.as_ref(),
+        }
+    }
+
     pub fn session_cookie(&self, value: String) -> Cookie<'static> {
         let mut cookie = Cookie::build((SESSION_COOKIE, value))
             .http_only(true)
@@ -90,12 +107,12 @@ impl AuthSettings {
     }
 }
 
-/// Para que o OAuth do Discord foi aberto.
+/// Para que o OAuth foi aberto.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OAuthIntent {
-    /// Entrar (ou criar a conta) com o Discord.
+    /// Entrar (ou criar a conta) com o provedor.
     Login,
-    /// Ligar o Discord à conta logada.
+    /// Ligar o provedor à conta logada.
     Link,
 }
 
@@ -103,30 +120,38 @@ pub enum OAuthIntent {
 #[derive(Debug, PartialEq, Eq)]
 pub struct OAuthFlow {
     pub state: String,
+    /// Só o callback deste provedor aceita o state.
+    pub provider: Provider,
     pub intent: OAuthIntent,
     pub return_to: String,
 }
 
 impl OAuthFlow {
-    /// `{state}.{login|link}.{return_to em base64url}`. Nem o state nem o
-    /// base64url têm '.', então ele separa os campos.
+    /// `{state}.{provedor}.{login|link}.{return_to em base64url}`. Nem o
+    /// state nem o base64url têm '.', então ele separa os campos.
     pub fn encode(&self) -> String {
         let intent = match self.intent {
             OAuthIntent::Login => "login",
             OAuthIntent::Link => "link",
         };
         let return_to = URL_SAFE_NO_PAD.encode(&self.return_to);
-        format!("{}.{intent}.{return_to}", self.state)
+        let provider = self.provider.as_str();
+        format!("{}.{provider}.{intent}.{return_to}", self.state)
     }
 
     /// Lê o cookie; `return_to` passa de novo por [`sanitize_return_to`].
     pub fn decode(value: &str) -> Option<Self> {
         let mut parts = value.split('.');
-        let (Some(state), Some(intent), Some(return_to), None) =
-            (parts.next(), parts.next(), parts.next(), parts.next())
-        else {
+        let (Some(state), Some(provider), Some(intent), Some(return_to), None) = (
+            parts.next(),
+            parts.next(),
+            parts.next(),
+            parts.next(),
+            parts.next(),
+        ) else {
             return None;
         };
+        let provider = Provider::parse(provider)?;
         let intent = match intent {
             "login" => OAuthIntent::Login,
             "link" => OAuthIntent::Link,
@@ -138,6 +163,7 @@ impl OAuthFlow {
             .and_then(|b| String::from_utf8(b).ok());
         Some(Self {
             state: state.to_owned(),
+            provider,
             intent,
             return_to: sanitize_return_to(return_to.as_deref()),
         })
@@ -188,13 +214,16 @@ mod tests {
 
     #[test]
     fn oauth_flow_round_trips() {
-        for intent in [OAuthIntent::Login, OAuthIntent::Link] {
-            let flow = OAuthFlow {
-                state: "abc_-123".into(),
-                intent,
-                return_to: "/pt/account?x=1.2".into(),
-            };
-            assert_eq!(OAuthFlow::decode(&flow.encode()), Some(flow));
+        for provider in [Provider::Discord, Provider::Google] {
+            for intent in [OAuthIntent::Login, OAuthIntent::Link] {
+                let flow = OAuthFlow {
+                    state: "abc_-123".into(),
+                    provider,
+                    intent,
+                    return_to: "/pt/account?x=1.2".into(),
+                };
+                assert_eq!(OAuthFlow::decode(&flow.encode()), Some(flow));
+            }
         }
     }
 
@@ -205,12 +234,15 @@ mod tests {
             String::new(),
             "abc".into(),
             format!("abc.{return_to}"),
-            format!("abc.other.{return_to}"),
-            format!("abc.login.{return_to}.extra"),
+            // O formato de antes do provedor no cookie.
+            format!("abc.login.{return_to}"),
+            format!("abc.discord.other.{return_to}"),
+            format!("abc.github.login.{return_to}"),
+            format!("abc.google.login.{return_to}.extra"),
         ] {
             assert_eq!(OAuthFlow::decode(&bad), None, "{bad}");
         }
-        let evil = format!("abc.link.{}", URL_SAFE_NO_PAD.encode("//evil.com"));
+        let evil = format!("abc.discord.link.{}", URL_SAFE_NO_PAD.encode("//evil.com"));
         assert_eq!(OAuthFlow::decode(&evil).unwrap().return_to, "/");
     }
 
