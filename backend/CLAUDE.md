@@ -28,6 +28,7 @@ crates/api/src/
   lifecycle/      transições depois de publicar (check-in, reabrir, iniciar, desfazer) e desistência
   matches/        chave e resultados, mapa a mapa
   my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
+  organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
   push/           Web Push: inscrições dos navegadores e envio
   realtime/       WebSocket, despachante do outbox, agendador
   health.rs       domínios pequenos, um arquivo cada

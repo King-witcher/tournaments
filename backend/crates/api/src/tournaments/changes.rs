@@ -1,7 +1,8 @@
 //! O que o torneio emite no outbox: a mudança (a comunidade, por causa da
-//! lista; quem está na página do torneio; e "Seus torneios" dos inscritos) e
-//! os avisos de check-in aberto (inscritos) e de hora de iniciar (organizers e
-//! owner). As partidas emitem pelo `matches`, a partir da chave.
+//! lista; quem está na página do torneio; "Seus torneios" dos inscritos; e a
+//! home da organização enquanto ele espera ser iniciado) e os avisos de
+//! check-in aberto (inscritos) e de hora de iniciar (organizers e owner). As
+//! partidas emitem pelo `matches`, a partir da chave.
 
 use sqlx::PgConnection;
 
@@ -27,6 +28,12 @@ pub async fn changed_with(
     emit_changed(conn, &audience, also).await
 }
 
+/// A mudança. Com o início marcado já passado e o torneio por iniciar, a
+/// home da organização também recarrega: ele está na lista do que espera
+/// ela, com quantos fizeram check-in (`GET /me/organizing`). Quem tira o
+/// torneio dessa lista (iniciar, adiar) avisa por conta própria
+/// (`tenants::organizing_changed`), porque depois da mudança ele não está
+/// mais nela.
 async fn emit_changed(
     conn: &mut PgConnection,
     a: &Audience,
@@ -41,7 +48,11 @@ async fn emit_changed(
     };
     outbox::emit(conn, changed).await?;
     let me = a.participants.iter().chain(also).copied();
-    outbox::emit(conn, Event::me(me)).await
+    outbox::emit(conn, Event::me(me)).await?;
+    if a.start_due {
+        tenants::organizing_changed(conn, a.tenant_id).await?;
+    }
+    Ok(())
 }
 
 /// O check-in abriu (pelo organizador, pela hora ao ler ou pelo agendador):
@@ -59,7 +70,8 @@ pub async fn check_in_opened(conn: &mut PgConnection, id: TournamentId) -> Resul
 }
 
 /// O início marcado chegou sem o torneio iniciar: aviso para organizers e
-/// owner.
+/// owner, e a home deles, onde o torneio passa a estar no que espera a
+/// organização.
 pub async fn start_due(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -72,5 +84,6 @@ pub async fn start_due(
         kind: NoticeKind::StartDue { tournament: a.name },
         path,
     };
+    outbox::emit(conn, Event::me(staff.iter().copied())).await?;
     outbox::emit(conn, Event::notice(staff, notice)).await
 }

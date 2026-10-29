@@ -1,0 +1,16 @@
+{
+  "title": "Pendientes de la organización",
+  "contested": {
+    "tag": "Mapa impugnado",
+    "where": "{match}, mapa {game}",
+    "whereMap": "{match}, mapa {game} ({map})",
+    "by": "{player} lo impugnó <ago></ago>",
+    "byUnknown": "Impugnado <ago></ago>"
+  },
+  "startDue": {
+    "tag": "Hora de iniciar",
+    "startedAt": "Inicio programado para <date></date>",
+    "checkedIn": "{checkedIn} de {registered} hicieron check-in",
+    "registered": "{registered, plural, =0 {Ningún inscrito} one {# inscrito} other {# inscritos}}, sin check-in"
+  }
+}

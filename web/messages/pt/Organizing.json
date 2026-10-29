@@ -1,0 +1,16 @@
+{
+  "title": "Pendências da organização",
+  "contested": {
+    "tag": "Mapa contestado",
+    "where": "{match}, mapa {game}",
+    "whereMap": "{match}, mapa {game} ({map})",
+    "by": "{player} contestou <ago></ago>",
+    "byUnknown": "Contestado <ago></ago>"
+  },
+  "startDue": {
+    "tag": "Hora de iniciar",
+    "startedAt": "Início marcado para <date></date>",
+    "checkedIn": "{checkedIn} de {registered} fizeram check-in",
+    "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in"
+  }
+}

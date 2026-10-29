@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AnonymousIntro } from "@/features/auth/components/anonymous-intro";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { ApiStatus } from "@/features/health/components/api-status";
+import { OrganizingPending } from "@/features/organizing/components/organizing-pending";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { MyTenants } from "@/features/tenants/components/my-tenants";
 import { MyTournaments } from "@/features/tournaments/components/my-tournaments";
@@ -20,7 +21,8 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
         <AuthError searchParams={searchParams} />
       </Suspense>
       <PageHeader title={t("title")} meta={t("subtitle")} />
-      {/* "Seus torneios" e "Suas comunidades" recarregam sozinhos. */}
+      {/* As pendências da organização, "Seus torneios" e "Suas comunidades"
+          recarregam sozinhos. */}
       <LiveUpdates me />
       <Suspense fallback={null}>
         <ApiStatus />
@@ -36,6 +38,7 @@ export default async function Home({ searchParams }: PageProps<"/[locale]">) {
         }
       >
         <AnonymousIntro />
+        <OrganizingPending />
         <MyTournaments />
         <MyTenants />
       </Suspense>

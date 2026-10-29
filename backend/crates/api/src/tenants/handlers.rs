@@ -9,6 +9,7 @@ use super::{
 use crate::{
     AppState,
     auth::CurrentUser,
+    outbox::{self, Event},
     shared::{ApiError, ErrorBody, JsonBody, text::clean_text},
 };
 
@@ -125,6 +126,9 @@ pub async fn transfer_ownership(
     )
     .await?;
     changes::changed(&mut tx, owner.tenant).await?;
+    // A home do novo owner muda: o papel em "Minhas comunidades" e, se era
+    // player, o que espera a organização.
+    outbox::emit(&mut tx, Event::me([body.user_id])).await?;
     tx.commit().await?;
     Ok(Json(MyTenant {
         role: Role::Organizer,

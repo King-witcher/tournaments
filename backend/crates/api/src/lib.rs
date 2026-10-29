@@ -11,6 +11,7 @@ mod maps;
 mod matches;
 mod members;
 mod my_tournaments;
+mod organizing;
 pub mod outbox;
 mod participants;
 pub mod push;
@@ -74,6 +75,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(maps::router())
         .merge(matches::router())
         .merge(my_tournaments::router())
+        .merge(organizing::router())
         .merge(push::router())
         .merge(realtime::router())
         .with_state(state)

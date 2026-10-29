@@ -1,4 +1,5 @@
 use axum::{Json, extract::State, http::StatusCode};
+use chrono::Utc;
 
 use super::{
     changes, contest,
@@ -18,7 +19,7 @@ use super::{
 use crate::{
     AppState,
     shared::{ApiError, ErrorBody, JsonBody, Locale, PathParams},
-    tenants::{Organizer, Role, TenantMember},
+    tenants::{self, Organizer, Role, TenantMember},
 };
 
 const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
@@ -196,6 +197,11 @@ pub async fn update_tournament(
     }
     db::update(&mut tx, current.id, &edit).await?;
     changes::changed(&mut tx, current.id).await?;
+    if current.schedule.start_due(current.status, Utc::now()) {
+        // Adiado, sai do que espera a organização (se continua, o evento é o
+        // mesmo de `changed` e entra uma vez).
+        tenants::organizing_changed(&mut tx, member.tenant).await?;
+    }
     let updated = db::find(&mut tx, member.tenant, &path.tournament, viewer)
         .await?
         .ok_or_else(ApiError::internal)?;

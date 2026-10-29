@@ -44,7 +44,7 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 ### Início `/`
 
 - Sem sessão: título, uma frase do que o site faz, botões "Entrar" (primário) e "Criar conta" (secundário). Convite leva ao cadastro.
-- Com sessão: "Seus torneios" (tiles: nome, comunidade, situação, próxima partida como link separado) e "Minhas comunidades" (tiles + "Criar comunidade"). Encerrados numa `Accordion` fechada ("Encerrados", os 5 mais recentes).
+- Com sessão: "Pendências da organização" só para quem organiza e tem alguma (tiles: torneio, comunidade, o que espera, com `Tag`; mapa contestado leva à partida, hora de iniciar à aba Organização), "Seus torneios" (tiles: nome, comunidade, situação, próxima partida como link separado) e "Minhas comunidades" (tiles + "Criar comunidade"). Encerrados numa `Accordion` fechada ("Encerrados", os 5 mais recentes).
 
 ### Entrar `/login`, Criar conta `/signup`
 

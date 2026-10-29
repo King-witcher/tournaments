@@ -4,7 +4,8 @@
 //! de todo dado de tenant: `TenantId`, `Role`, o extractor `TenantMember` e
 //! as regras de apelido, que os outros domínios usam nas rotas
 //! `/tenants/{slug}/...`, e o que a comunidade emite no outbox (`changed`,
-//! `access_lost`; `staff` são os destinatários dos avisos da organização).
+//! `access_lost`, `organizing_changed`; `staff` são os destinatários dos
+//! avisos da organização).
 
 mod access;
 mod changes;
@@ -19,7 +20,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use access::{Organizer, Owner, Role, TenantId, TenantMember};
-pub use changes::{access_lost, changed};
+pub use changes::{access_lost, changed, organizing_changed};
 pub use db::{my_tenant, staff, standing};
 pub use nickname::{default_nickname, validate_nickname};
 pub use types::MyTenant;

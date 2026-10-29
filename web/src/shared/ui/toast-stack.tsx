@@ -79,20 +79,24 @@ function StackedToast({ item, paused, timeout, onClose }: ToastProps) {
     return () => clearTimeout(timer);
   }, [paused, timeout, item.id, onClose]);
   return (
-    <ToastNotification
-      kind="info"
-      role="status"
-      lowContrast
-      title={item.title}
-      subtitle={item.subtitle}
-      onClose={() => {
-        onClose(item.id);
-        return false;
-      }}
-      aria-label={t("close")}
-      statusIconDescription={t("notice.info")}
-    >
+    // O link fica fora do ToastNotification, colado embaixo: o Carbon recusa
+    // conteúdo interativo dentro dele (lança no efeito, também no build de
+    // produção, e a página cai).
+    <div className={styles.item}>
+      <ToastNotification
+        kind="info"
+        role="status"
+        lowContrast
+        title={item.title}
+        subtitle={item.subtitle}
+        onClose={() => {
+          onClose(item.id);
+          return false;
+        }}
+        aria-label={t("close")}
+        statusIconDescription={t("notice.info")}
+      />
       {item.action && <div className={styles.action}>{item.action}</div>}
-    </ToastNotification>
+    </div>
   );
 }

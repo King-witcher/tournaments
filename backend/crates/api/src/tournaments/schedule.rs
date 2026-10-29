@@ -64,6 +64,17 @@ impl Schedule {
             })
     }
 
+    /// O início marcado chegou em `now` com o torneio por iniciar (inscrição
+    /// ou check-in): ele espera a organização. É o critério do aviso
+    /// `tournament.start_due` (que sai uma vez) e de `GET /me/organizing`,
+    /// também nas queries deles (`starts_to_remind`, `audience`).
+    pub fn start_due(&self, status: TournamentStatus, now: DateTime<Utc>) -> bool {
+        matches!(
+            status,
+            TournamentStatus::Registration | TournamentStatus::CheckIn
+        ) && self.starts_at.is_some_and(|starts| starts <= now)
+    }
+
     /// O PATCH da data e da janela (`Some(None)` limpa). `Some` só quando
     /// muda de fato, então reenviar os valores atuais passa em qualquer
     /// status. Erros: 409 `tournament.schedule_locked` (depois de começar),
@@ -120,6 +131,22 @@ mod tests {
         for status in [Draft, CheckIn, InProgress, Finished] {
             assert!(!s.check_in_due(status, None, at(45)));
         }
+    }
+
+    #[test]
+    fn start_is_due_from_the_marked_time_until_it_starts() {
+        let s = schedule();
+        assert!(!s.start_due(CheckIn, at(59)));
+        assert!(s.start_due(CheckIn, at(60)));
+        assert!(s.start_due(Registration, at(90)));
+        for status in [Draft, InProgress, Finished] {
+            assert!(!s.start_due(status, at(90)));
+        }
+        let undated = Schedule {
+            starts_at: None,
+            ..schedule()
+        };
+        assert!(!undated.start_due(Registration, at(90)));
     }
 
     #[test]

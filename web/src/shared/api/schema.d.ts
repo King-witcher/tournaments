@@ -340,6 +340,22 @@ export interface paths {
         patch: operations["update_me"];
         trace?: never;
     };
+    "/me/organizing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["organizing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/tournaments": {
         parameters: {
             query?: never;
@@ -1073,6 +1089,28 @@ export interface components {
             /** @description O que está errado, de 1 a 280 caracteres. */
             comment: string;
         };
+        /**
+         * @description Um mapa contestado: resolve-se na página da partida
+         *     (`/{tenant}/{torneio}/matches/{key}`).
+         */
+        ContestedGame: {
+            /** Format: date-time */
+            contested_at: string;
+            /** @description Apelido de quem contestou; `null` se a conta não existe mais. */
+            contested_by?: string | null;
+            /**
+             * Format: int32
+             * @description Número do mapa na série.
+             */
+            game: number;
+            /** @description A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`. */
+            key: string;
+            /** @description Nome do mapa jogado; `null` em série antiga, sem detalhe por mapa. */
+            map?: string | null;
+            /** @description Eliminação simples (o código curto da partida não diz a chave). */
+            single: boolean;
+            tournament: components["schemas"]["PendingTournament"];
+        };
         CreateTenant: {
             /**
              * @description Nome exibido, 1 a 64 caracteres.
@@ -1674,6 +1712,22 @@ export interface components {
                 tournament: string;
             };
         };
+        /**
+         * @description O que espera a organização nas comunidades em que quem vê é organizer ou
+         *     owner ativo. Para quem não organiza nenhuma, as listas vêm vazias.
+         */
+        Organizing: {
+            /**
+             * @description Mapas contestados esperando a organização, do que espera há mais
+             *     tempo ao mais recente.
+             */
+            contested: components["schemas"]["ContestedGame"][];
+            /**
+             * @description Torneios na inscrição ou no check-in com o início marcado já passado,
+             *     do início mais antigo ao mais recente.
+             */
+            start_due: components["schemas"]["StartDue"][];
+        };
         /** @description Valor de um parâmetro do erro: número ou texto curto. */
         ParamValue: number | string;
         /** @description Inscrito num torneio. */
@@ -1716,6 +1770,16 @@ export interface components {
              * @example Rapha
              */
             login: string;
+        };
+        /** @description O torneio de um item: a comunidade, o endereço e o nome. */
+        PendingTournament: {
+            /** @description No idioma original. */
+            name: string;
+            slug: string;
+            tenant_name: string;
+            tenant_slug: string;
+            /** @description Nome nas traduções que existem. */
+            translations: components["schemas"]["NameTranslation"][];
         };
         PushKey: {
             /**
@@ -1889,6 +1953,30 @@ export interface components {
             tied: number;
             /** Format: int64 */
             user_id: number;
+        };
+        /**
+         * @description Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se na
+         *     aba Organização (`/{tenant}/{torneio}/manage`), iniciando ou mudando a
+         *     data.
+         */
+        StartDue: {
+            /**
+             * Format: int64
+             * @description Inscritos com check-in feito.
+             */
+            checked_in: number;
+            /** @description Com check-in, só quem fez entra na chave; sem, todos os inscritos. */
+            has_check_in: boolean;
+            /**
+             * Format: int64
+             * @description Inscritos.
+             */
+            registered: number;
+            /** Format: date-time */
+            starts_at: string;
+            /** @description `registration` ou `check_in`. */
+            status: components["schemas"]["TournamentStatus"];
+            tournament: components["schemas"]["PendingTournament"];
         };
         SubscriptionKeys: {
             /** @description Segredo de autenticação (base64url). */
@@ -3226,6 +3314,35 @@ export interface operations {
             };
             /** @description auth.display_name_invalid, request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    organizing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in. Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organizing"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

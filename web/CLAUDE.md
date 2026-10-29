@@ -109,7 +109,7 @@ Cada componente já cumpre os princípios abaixo (foco, `pending`, toque, celula
 - **Formulário**: `FormSection`, `TextInput`, `PasswordInput`, `TextArea`, `Select`, `NumberInput`, `DateTimeInput`, `Toggle`, `Checkbox`, `RadioGroup`, `FormError`, `FormActions`. Erro por campo: `FormResult`, `invalidProps`, `formError`, `fieldId` (`shared/lib/form-result.ts`) e `useFocusInvalid` (`shared/hooks/`).
 - **Listas**: `DataTable` (lista grande, com busca e paginação), `TileGrid` + `LinkTile` (as listas "minhas"), `StructuredList` (só leitura, em colunas).
 - **Estado e retorno**: `StatusTag`, `Notice`, `ErrorText`, `Toast` ("copiado"), `ToastStack` (avisos que chegam sozinhos), `ProgressSteps`, `Accordion`, os esqueletos de `skeleton.tsx`.
-- **Conteúdo**: `Avatar`, `UserText` (texto de usuário sem formatação, com as quebras de linha), `Countdown`, `LocalDateTime`, `LocalDate`, `LocalTime`.
+- **Conteúdo**: `Avatar`, `UserText` (texto de usuário sem formatação, com as quebras de linha), `Countdown`, `LocalDateTime`, `LocalDate`, `LocalTime`, `TimeAgo`.
 
 Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo de campos (com um grupo só, os campos direto num `Stack gap={6}`), erro de campo no `invalidText` (`invalidProps`), `FormError` acima dos botões e `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos. Modelo: `features/tenants/components/create-tenant-form.tsx`.
 

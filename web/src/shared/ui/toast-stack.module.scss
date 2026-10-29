@@ -1,4 +1,5 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/utilities/z-index";
 
 // Canto de baixo, acima do conteúdo, o mais novo embaixo (perto do canto).
@@ -20,7 +21,15 @@
   }
 }
 
-// O link fica numa linha só dele, depois da frase.
+// O aviso e, colado embaixo, o link para resolver, na largura do aviso.
+.item {
+  display: flex;
+  flex-direction: column;
+}
+
+// Faixa do link, separada do aviso pela borda, como o rodapé do `LinkTile`.
 .action {
-  margin-block: spacing.$spacing-03;
+  padding: spacing.$spacing-03 spacing.$spacing-05;
+  background-color: theme.$layer-01;
+  border-block-start: 1px solid theme.$border-subtle-01;
 }

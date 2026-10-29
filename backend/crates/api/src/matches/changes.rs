@@ -3,8 +3,10 @@
 //! avisa a página da partida e a chave, "Seus torneios" de quem joga nelas e,
 //! na que passou a ter os dois lados sem estar decidida, os dois (`match.ready`;
 //! a que vira W.O. na hora já chega decidida). Se o torneio encerra ou reabre,
-//! avisa o torneio inteiro. Os avisos de mapa enviado (para o adversário) e de
-//! contestação (para a organização) saem de quem envia e de quem contesta.
+//! avisa o torneio inteiro; se os mapas contestados mudam, a home da
+//! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
+//! (para o adversário) e de contestação (para a organização) saem de quem
+//! envia e de quem contesta.
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -38,6 +40,26 @@ impl Snapshot {
                 .collect(),
         )
     }
+
+    /// Os mapas contestados (pelo id).
+    fn contested(&self) -> BTreeSet<i64> {
+        let games = self.0.values().flat_map(|m| &m.games);
+        games
+            .filter(|g| g.2 == GameStatus::Contested)
+            .map(|g| g.0)
+            .collect()
+    }
+}
+
+/// Os mapas contestados da fase (pelo id): o que ela deixa esperando a
+/// organização.
+fn contested(stage: &Stage) -> BTreeSet<i64> {
+    stage
+        .games
+        .iter()
+        .filter(|g| g.status == GameStatus::Contested)
+        .map(|g| g.id)
+        .collect()
 }
 
 /// O que se vê de uma partida: estado na chave, mapas e série decidida.
@@ -135,6 +157,11 @@ pub async fn settled(
     outbox::emit(conn, Event::me(players)).await?;
     if status != tournament.status {
         tournaments::changed(conn, tournament.id).await?;
+    }
+    // Contestou, resolveu, corrigiu, anulou, deu W.O.: a lista de mapas
+    // contestados da home da organização mudou.
+    if before.contested() != contested(after) {
+        tenants::organizing_changed(conn, tournament.tenant).await?;
     }
     Ok(())
 }

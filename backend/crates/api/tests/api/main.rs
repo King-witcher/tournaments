@@ -12,6 +12,7 @@ mod maps;
 mod matches;
 mod members;
 mod my_tournaments;
+mod organizing;
 mod participants;
 mod realtime;
 mod schema;

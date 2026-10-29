@@ -13,12 +13,14 @@
 //!                         ◀─────────────────desfazer─────────────────────────────
 //! ```
 
+use chrono::Utc;
 use engine::core::ParticipantId;
 use sqlx::PgConnection;
 
 use crate::{
     matches, participants,
     shared::ApiError,
+    tenants,
     tournaments::{self, StoredTournament, TournamentStatus},
 };
 
@@ -71,13 +73,15 @@ impl Transition {
 
 /// Aplica `transition` ao torneio, que quem chama já travou
 /// (`find_for_update`), com o que ela faz junto, e emite a mudança (abrir o
-/// check-in também avisa os inscritos; iniciar, os lados das partidas prontas).
+/// check-in também avisa os inscritos; iniciar, os lados das partidas prontas;
+/// iniciar na hora de iniciar e desfazer, a home da organização).
 pub async fn apply(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     transition: Transition,
 ) -> Result<(), ApiError> {
     let to = transition.target(tournament.status, tournament.schedule.has_check_in())?;
+    let start_was_due = tournament.schedule.start_due(tournament.status, Utc::now());
     match transition {
         Transition::ReopenRegistration => {
             tournaments::mark_registration_reopened(conn, tournament.id).await?;
@@ -107,6 +111,17 @@ pub async fn apply(
         Transition::ReopenRegistration | Transition::Start => {
             tournaments::changed(conn, tournament.id).await?;
         }
+    }
+    // O que espera a organização: iniciar tira o torneio da hora de iniciar;
+    // desfazer apaga os mapas contestados (e ele pode voltar à hora de
+    // iniciar, que `changed` já avisa: o evento é o mesmo e entra uma vez).
+    let organizing = match transition {
+        Transition::Start => start_was_due,
+        Transition::UndoStart => true,
+        Transition::OpenCheckIn | Transition::ReopenRegistration => false,
+    };
+    if organizing {
+        tenants::organizing_changed(conn, tournament.tenant).await?;
     }
     Ok(())
 }
