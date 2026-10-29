@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
+import { useSideNames } from "../hooks/use-side-names";
 import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
 
 type Props = {
@@ -33,6 +34,7 @@ export function MatchHeader({
   const s = detail.summary;
   const single = detail.format.bracket === "single";
   const { code, roundTitle, placeholder } = useMatchLabels(single);
+  const names = useSideNames(detail);
   const round = roundTitle(s.part, s.round, detail.part_rounds);
   // A final, a grande final e o reset têm uma partida só: basta o nome.
   const alone = s.part === "grand_final" || s.round === detail.part_rounds;
@@ -47,7 +49,8 @@ export function MatchHeader({
           round,
           index: s.index,
         });
-  const side = (who: "a" | "b") => detail[who]?.nickname ?? placeholder(s[who]);
+  const side = (who: "a" | "b") =>
+    detail[who] ? names[who] : placeholder(s[who]);
 
   return (
     <PageHeader

@@ -165,7 +165,8 @@ async fn no_ready_notice_for_a_walkover() {
     ok(report(&app, &p[1], "wb-1-2", 1, game("a", "awoken")).await);
     ok(confirm(&app, &p[2], "wb-1-2", 1).await);
     // P2 venceu a semifinal e desistiu: a final vira W.O. assim que fica pronta.
-    let uri = format!("{COPA}/participants/{}/withdrawal", p[1].id);
+    let team = team_ids(&app, &ana, "copa", &[&p[1]]).await[0];
+    let uri = format!("{COPA}/teams/{team}/withdrawal");
     let (status, _) = post_empty(&app, &uri, &ana).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
 

@@ -7,7 +7,10 @@ use super::{
     result::{Confirmation, Side},
     veto::{VetoStatus, VetoView},
 };
-use crate::tournaments::{StageFormat, TournamentStatus};
+use crate::{
+    teams::Team,
+    tournaments::{StageFormat, TournamentStatus},
+};
 
 /// A chave da fase em jogo, refeita dos resultados confirmados.
 #[derive(Serialize, ToSchema)]
@@ -15,8 +18,8 @@ pub struct TournamentBracket {
     pub format: StageFormat,
     /// Status do torneio depois das confirmações por tempo.
     pub status: TournamentStatus,
-    /// Participantes na ordem dos seeds.
-    pub entrants: Vec<BracketEntrant>,
+    /// Os times da chave, na ordem dos seeds.
+    pub entrants: Vec<Team>,
     /// Todas as partidas, por parte da chave, rodada e índice.
     pub matches: Vec<BracketMatch>,
     /// Colocações já definidas (os eliminados e, no fim, campeão e vice).
@@ -27,19 +30,6 @@ pub struct TournamentBracket {
     /// Partidas com algum mapa enviado ou resultado, que desfazer o início
     /// apaga.
     pub results: i64,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct BracketEntrant {
-    pub user_id: i64,
-    /// Apelido no tenant.
-    pub nickname: String,
-    pub avatar_url: Option<String>,
-    pub seed: i32,
-    /// Desistiu: as partidas prontas dele viram W.O. para o adversário.
-    pub withdrawn: bool,
-    /// Saiu da comunidade (ou foi removido); continua na chave como histórico.
-    pub left: bool,
 }
 
 /// Parte da chave.
@@ -100,8 +90,8 @@ pub struct NextMatch {
     pub state: MatchState,
     /// Eliminação simples: o código da partida não tem a parte da chave.
     pub single: bool,
-    /// Apelido do adversário no tenant, quando já se sabe.
-    pub opponent: Option<String>,
+    /// O time adversário, quando já se sabe.
+    pub opponent: Option<Team>,
     /// De que partida sai o adversário, enquanto não se sabe.
     pub opponent_from: Option<SideSource>,
     /// O que a partida espera de quem vê; `null` se nada.
@@ -143,8 +133,8 @@ pub struct BracketMatch {
 /// Um lado da partida.
 #[derive(Serialize, ToSchema)]
 pub struct MatchSide {
-    /// Quem joga deste lado, quando já se sabe.
-    pub user_id: Option<i64>,
+    /// O time deste lado (um dos `entrants` da chave), quando já se sabe.
+    pub team_id: Option<i64>,
     /// Lado vazio: o outro avança sem jogar.
     pub bye: bool,
     /// De que partida vem quem ocupa o lado; `null` na primeira rodada.
@@ -181,7 +171,8 @@ pub struct MatchResult {
 
 #[derive(Serialize, ToSchema)]
 pub struct Standing {
-    pub user_id: i64,
+    /// O time (um dos `entrants` da chave).
+    pub team_id: i64,
     pub rank: u16,
     pub tied: u16,
 }
@@ -195,8 +186,9 @@ pub struct MatchDetail {
     /// semifinal...).
     pub part_rounds: u16,
     pub status: TournamentStatus,
-    pub a: Option<BracketEntrant>,
-    pub b: Option<BracketEntrant>,
+    /// Os times dos dois lados, quando já se sabe.
+    pub a: Option<Team>,
+    pub b: Option<Team>,
     /// Os mapas enviados, na ordem.
     pub games: Vec<GameDetail>,
     /// O próximo mapa que dá para enviar (série aberta, torneio em
@@ -302,11 +294,9 @@ pub struct EventActor {
 
 #[derive(Serialize, ToSchema)]
 pub struct EventOutcome {
-    /// `user_id` do vencedor.
-    pub winner: i64,
-    /// Apelido do vencedor (que pode não ser mais um dos lados, num envio
+    /// O time vencedor (que pode não ser mais um dos lados, num envio
     /// anulado).
-    pub winner_nickname: String,
+    pub winner: Team,
     pub walkover: bool,
     /// Mapas do vencedor e do perdedor da série; `null` no W.O. e nos
     /// eventos de um mapa.

@@ -1,44 +1,45 @@
-//! Quem deixa um torneio no meio do caminho. Num torneio em andamento, o
-//! inscrito desiste (o organizador marca, ou ele sai da comunidade): continua
-//! na chave e cada partida pronta com ele, agora ou depois, vira W.O. para o
-//! adversário (`matches::settle_withdrawals`). O membro que sai da comunidade
-//! também sai das inscrições dos torneios que não começaram; nos encerrados,
-//! a inscrição fica como está.
+//! Quem deixa um torneio no meio do caminho. Num torneio em andamento, o time
+//! desiste (o organizador marca, ou o último jogador dele sai da comunidade;
+//! no duelo, o próprio jogador): continua na chave e cada partida pronta com
+//! ele, agora ou depois, vira W.O. para o adversário
+//! (`matches::settle_withdrawals`). O membro que sai da comunidade também
+//! sai das inscrições dos torneios que não começaram; nos encerrados, a
+//! inscrição fica como está.
 
 use axum::{extract::State, http::StatusCode};
 use chrono::Utc;
 use sqlx::PgConnection;
 
 use crate::{
-    AppState, matches,
-    participants::{self, ParticipantPath},
+    AppState, matches, participants,
     shared::{ApiError, ErrorBody, PathParams},
+    teams::{self, TeamPath},
     tenants::{Organizer, TenantId, TenantMember},
     tournaments::{self, StoredTournament, TournamentStatus},
 };
 
 #[utoipa::path(
     post,
-    path = "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}/withdrawal",
+    path = "/tenants/{slug}/tournaments/{tournament}/teams/{team}/withdrawal",
     tag = "lifecycle",
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("user_id" = i64, Path, description = "Id do usuário inscrito"),
+        ("team" = i64, Path, description = "Id do time (no duelo, o `team_id` do inscrito)"),
     ),
     responses(
-        (status = NO_CONTENT, description = "Desistência marcada pelo organizador (também se já estava): o inscrito continua na chave e na comunidade, e cada partida pronta com ele, agora ou depois, vira W.O. automático para o adversário (com os dois lados fora, para o seed melhor). Envio pendente ou contestado dessas partidas dá lugar ao W.O. Não se desfaz; o organizador ainda pode corrigir resultados"),
+        (status = NO_CONTENT, description = "Desistência do time marcada pelo organizador (também se já estava): o time continua na chave e os jogadores na comunidade, e cada partida pronta com ele, agora ou depois, vira W.O. automático para o adversário (com os dois lados fora, para o seed melhor). Envio pendente ou contestado dessas partidas dá lugar ao W.O. Não se desfaz; o organizador ainda pode corrigir resultados"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, participant.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, participant.not_in_bracket (inscrito que ficou fora da chave)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, team.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, team.not_in_bracket (time que ficou fora da chave)"),
     )
 )]
-pub async fn withdraw_participant(
+pub async fn withdraw_team(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-    PathParams(path): PathParams<ParticipantPath>,
+    PathParams(path): PathParams<TeamPath>,
 ) -> Result<StatusCode, ApiError> {
     let mut tx = state.db.begin().await?;
     let locked = tournaments::find_for_update(&mut tx, member.tenant, &path.tournament, None)
@@ -48,9 +49,9 @@ pub async fn withdraw_participant(
     if t.status != TournamentStatus::InProgress {
         return Err(ApiError::conflict("tournament.not_in_progress"));
     }
-    match participants::withdraw(&mut tx, t.id, path.user_id, Some(member.user.id)).await? {
-        None => return Err(ApiError::not_found("participant.not_found")),
-        Some(false) => return Err(ApiError::conflict("participant.not_in_bracket")),
+    match teams::withdraw(&mut tx, t.id, path.team, Some(member.user.id)).await? {
+        None => return Err(ApiError::not_found("team.not_found")),
+        Some(false) => return Err(ApiError::conflict("team.not_in_bracket")),
         Some(true) => {}
     }
     matches::settle_withdrawals(&mut tx, &t).await?;
@@ -60,8 +61,9 @@ pub async fn withdraw_participant(
 }
 
 /// `user_id` deixa o tenant (`by`: quem removeu; `None`, saiu sozinho): sai
-/// das inscrições dos torneios que não começaram e desiste dos em andamento
-/// em que está na chave. Trava, na ordem dos ids, todo torneio que a saída
+/// das inscrições dos torneios que não começaram e, nos em andamento em que o
+/// time dele está na chave, o time desiste se ninguém mais dele fica na
+/// comunidade (no duelo, sempre). Trava, na ordem dos ids, todo torneio que a saída
 /// pode mudar (também os que não encerraram e em que ele não está, para uma
 /// inscrição dele no mesmo instante esperar e ver que ele saiu).
 pub async fn leave_tournaments(
@@ -85,7 +87,7 @@ pub async fn leave_tournaments(
         }
         let t = after_due(conn, t, viewer).await?;
         if t.status == TournamentStatus::InProgress
-            && participants::withdraw(conn, t.id, user_id, by).await? == Some(true)
+            && teams::withdraw_departing(conn, t.id, user_id, by).await?
         {
             matches::settle_withdrawals(conn, &t).await?;
             tournaments::changed(conn, t.id).await?;

@@ -9,7 +9,7 @@ use axum::{
 use serde_json::{Value, json};
 
 use crate::common::*;
-use crate::matches::{bracket, copa, find, play, players, single, start};
+use crate::matches::{bracket, copa, play, players, side_player, single, start};
 
 fn uri(of: &User) -> String {
     format!("/tenants/quake-br/members/{}", of.id)
@@ -53,7 +53,7 @@ async fn add(app: &Router, by: &User, slug: &str, who: &User) {
 
 /// `winner` vence `loser` na série `key` (md1) de `copa`.
 async fn win(app: &Router, winner: &User, loser: &User, key: &str) {
-    let (a, b) = if find(&bracket(app, winner).await, key)["a"]["user_id"] == winner.id {
+    let (a, b) = if side_player(&bracket(app, winner).await, key, "a") == winner.id {
         (1, 0)
     } else {
         (0, 1)

@@ -1,17 +1,20 @@
+import { TeamName } from "@/features/teams/components/team-name";
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
+import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Avatar } from "@/shared/ui/avatar";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import { DepartureTag } from "./departure-tag";
 import styles from "./match-card-side.module.scss";
-import { MemberLink } from "./member-link";
 
 type Schemas = components["schemas"];
 
 type Props = {
   tenant: string;
   side: Schemas["MatchSide"];
-  entrants: Map<number, Schemas["BracketEntrant"]>;
+  /** Os times da chave, pelo id. */
+  entrants: Map<number, Schemas["Team"]>;
   single: boolean;
   /** Placar deste lado, se há resultado. */
   score: string | null;
@@ -21,10 +24,11 @@ type Props = {
 };
 
 /**
- * Um lado no cartão da partida: seed, avatar e apelido (link para a pessoa,
- * por cima do link do cartão) ou de onde ele vem, a marca de quem saiu e o
- * placar. O avatar ajuda a achar alguém na chave grande antes de ler o
- * nome. `data-side` é onde chega a linha de quem vem da partida anterior.
+ * Um lado no cartão da partida: seed, avatar e nome do time (no duelo, o
+ * apelido como link para a pessoa, por cima do link do cartão) ou de onde
+ * ele vem, a marca de quem saiu e o placar. O avatar ajuda a achar alguém na
+ * chave grande antes de ler o nome. `data-side` é onde chega a linha de quem
+ * vem da partida anterior.
  */
 export function MatchCardSide({
   tenant,
@@ -36,27 +40,24 @@ export function MatchCardSide({
   tentative,
 }: Props) {
   const { placeholder } = useMatchLabels(single);
-  const entrant = side.user_id != null ? entrants.get(side.user_id) : undefined;
+  const name = useTeamName();
+  const team = side.team_id != null ? entrants.get(side.team_id) : undefined;
 
   return (
     <div className={cn(styles.side, winner && styles.winner)} data-side>
-      <span className={styles.seed}>{entrant?.seed}</span>
-      {entrant ? (
+      <span className={styles.seed}>{team?.seed}</span>
+      {team ? (
         <>
-          <Avatar src={entrant.avatar_url} name={entrant.nickname} />
-          <MemberLink
-            tenant={tenant}
-            userId={entrant.user_id}
-            className={styles.name}
-          >
-            <span className={styles.nameText}>{entrant.nickname}</span>
-          </MemberLink>
+          <Avatar src={soloMember(team)?.avatar_url} name={name(team)} />
+          <TeamName tenant={tenant} team={team} className={styles.name}>
+            {(shown) => <span className={styles.nameText}>{shown}</span>}
+          </TeamName>
         </>
       ) : (
         <span className={styles.placeholder}>{placeholder(side)}</span>
       )}
-      {entrant && (
-        <DepartureTag withdrawn={entrant.withdrawn} left={entrant.left} />
+      {team && (
+        <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />
       )}
       {score != null && (
         <span className={cn(styles.score, tentative && styles.tentative)}>

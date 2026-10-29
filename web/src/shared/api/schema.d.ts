@@ -1156,22 +1156,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}/withdrawal": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["withdraw_participant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/tenants/{slug}/tournaments/{tournament}/publish": {
         parameters: {
             query?: never;
@@ -1263,6 +1247,22 @@ export interface paths {
         put?: never;
         post: operations["start"];
         delete: operations["undo_start"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/teams/{team}/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["withdraw_team"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1365,19 +1365,6 @@ export interface components {
         };
         /** @enum {string} */
         Bracket: "single" | "double";
-        BracketEntrant: {
-            avatar_url?: string | null;
-            /** @description Saiu da comunidade (ou foi removido); continua na chave como histórico. */
-            left: boolean;
-            /** @description Apelido no tenant. */
-            nickname: string;
-            /** Format: int32 */
-            seed: number;
-            /** Format: int64 */
-            user_id: number;
-            /** @description Desistiu: as partidas prontas dele viram W.O. para o adversário. */
-            withdrawn: boolean;
-        };
         BracketMatch: {
             a: components["schemas"]["MatchSide"];
             /**
@@ -1708,21 +1695,16 @@ export interface components {
             loser_maps?: number | null;
             walkover: boolean;
             /**
-             * Format: int64
-             * @description `user_id` do vencedor.
+             * @description O time vencedor (que pode não ser mais um dos lados, num envio
+             *     anulado).
              */
-            winner: number;
+            winner: components["schemas"]["Team"];
             /**
              * Format: int32
              * @description Mapas do vencedor e do perdedor da série; `null` no W.O. e nos
              *     eventos de um mapa.
              */
             winner_maps?: number | null;
-            /**
-             * @description Apelido do vencedor (que pode não ser mais um dos lados, num envio
-             *     anulado).
-             */
-            winner_nickname: string;
         };
         /** @description Um mapa da série. */
         GameDetail: {
@@ -1922,8 +1904,8 @@ export interface components {
         };
         /** @description Uma partida com os lados, o detalhe por mapa e o histórico. */
         MatchDetail: {
-            a?: components["schemas"]["BracketEntrant"] | null;
-            b?: components["schemas"]["BracketEntrant"] | null;
+            a?: components["schemas"]["Team"] | null;
+            b?: components["schemas"]["Team"] | null;
             /** @description Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.). */
             can_manage: boolean;
             format: components["schemas"]["StageFormat"];
@@ -2001,9 +1983,9 @@ export interface components {
             from?: components["schemas"]["SideSource"] | null;
             /**
              * Format: int64
-             * @description Quem joga deste lado, quando já se sabe.
+             * @description O time deste lado (um dos `entrants` da chave), quando já se sabe.
              */
-            user_id?: number | null;
+            team_id?: number | null;
         };
         /**
          * @description Estado da partida na chave (só séries decididas contam).
@@ -2139,8 +2121,7 @@ export interface components {
         NextMatch: {
             /** @example wb-2-1 */
             key: string;
-            /** @description Apelido do adversário no tenant, quando já se sabe. */
-            opponent?: string | null;
+            opponent?: components["schemas"]["Team"] | null;
             opponent_from?: components["schemas"]["SideSource"] | null;
             /** @description Eliminação simples: o código da partida não tem a parte da chave. */
             single: boolean;
@@ -2320,13 +2301,14 @@ export interface components {
         Participant: {
             avatar_url?: string | null;
             /**
-             * @description Fez check-in. Com check-in no torneio, só quem fez entra no seeding e
-             *     na chave.
+             * @description Fez check-in. Com check-in no torneio, só o time em que todos fizeram
+             *     entra no seeding e na chave.
              */
             checked_in: boolean;
             /**
              * @description Saiu da comunidade (ou foi removido). Só fica inscrito assim em
-             *     torneio iniciado, como histórico; no em andamento, também desistiu.
+             *     torneio iniciado, como histórico; no em andamento, o time dele também
+             *     desistiu, se ninguém mais dele ficou.
              */
             left: boolean;
             /** @description Apelido no tenant. */
@@ -2335,13 +2317,22 @@ export interface components {
             registered_at: string;
             /**
              * Format: int32
-             * @description Posição no seeding (1 = melhor); `null` sem seed. Depois de iniciar,
-             *     1..N entre os elegíveis.
+             * @description Posição do time dele no seeding (1 = melhor); `null` sem seed. Depois
+             *     de iniciar, 1..N entre os times da chave.
              */
             seed?: number | null;
+            /**
+             * Format: int64
+             * @description O time do inscrito (no duelo, o time de um jogador, criado com a
+             *     inscrição); `null` sem time.
+             */
+            team_id?: number | null;
             /** Format: int64 */
             user_id: number;
-            /** @description Desistiu do torneio em andamento: as partidas dele viram W.O. */
+            /**
+             * @description O time dele desistiu do torneio em andamento: as partidas dele viram
+             *     W.O.
+             */
             withdrawn: boolean;
         };
         PasswordReset: {
@@ -2478,7 +2469,8 @@ export interface components {
             map?: string | null;
             /** @description A partida (`wb-1-3`). */
             match: string;
-            opponent: components["schemas"]["RatedOpponent"];
+            /** @description O time do outro lado do mapa (no duelo, o do adversário). */
+            opponent: components["schemas"]["Team"];
             /**
              * Format: int32
              * @description O rating depois dele.
@@ -2486,14 +2478,6 @@ export interface components {
             rating_after: number;
             tournament: components["schemas"]["RatedTournament"];
             won: boolean;
-        };
-        RatedOpponent: {
-            /** @description Falso se saiu da comunidade (a página dele não abre mais). */
-            active: boolean;
-            avatar_url?: string | null;
-            nickname: string;
-            /** Format: int64 */
-            user_id: number;
         };
         RatedTournament: {
             locale: components["schemas"]["Locale"];
@@ -2630,8 +2614,8 @@ export interface components {
             url: string;
         };
         SeedingOrder: {
-            /** @description Todos os elegíveis, cada um uma vez, do seed 1 em diante. */
-            user_ids: number[];
+            /** @description Todos os times elegíveis, cada um uma vez, do seed 1 em diante. */
+            team_ids: number[];
         };
         /** @description Da API para o navegador. */
         ServerMessage: (components["schemas"]["Changed"] & {
@@ -2759,10 +2743,13 @@ export interface components {
         Standing: {
             /** Format: int32 */
             rank: number;
+            /**
+             * Format: int64
+             * @description O time (um dos `entrants` da chave).
+             */
+            team_id: number;
             /** Format: int32 */
             tied: number;
-            /** Format: int64 */
-            user_id: number;
         };
         /**
          * @description Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se na
@@ -2793,6 +2780,53 @@ export interface components {
             auth: string;
             /** @description Chave pública ECDH do navegador (base64url). */
             p256dh: string;
+        };
+        /**
+         * @description Um time do torneio: quem ocupa um lado da chave. No duelo, o time de um
+         *     jogador, sem nome (a tela mostra o apelido dele).
+         */
+        Team: {
+            /**
+             * Format: int64
+             * @description `user_id` do capitão, um dos `members` (no duelo, o único).
+             */
+            captain: number;
+            /** Format: int64 */
+            id: number;
+            /** @description Os jogadores: o capitão primeiro, depois na ordem de inscrição. */
+            members: components["schemas"]["TeamMember"][];
+            /**
+             * @description Nome do time; `null` no duelo e nos times sem nome (a tela mostra o
+             *     apelido do único jogador, ou "Time de {capitão}").
+             */
+            name?: string | null;
+            /**
+             * Format: int32
+             * @description Posição no seeding (1 = melhor); `null` sem seed. Depois de iniciar,
+             *     1..N entre os times da chave.
+             */
+            seed?: number | null;
+            /**
+             * @description Desistiu do torneio em andamento: as partidas prontas dele viram W.O.
+             *     para o adversário.
+             */
+            withdrawn: boolean;
+        };
+        /** @description Um jogador de um time. */
+        TeamMember: {
+            avatar_url?: string | null;
+            /**
+             * @description Saiu da comunidade (ou foi removido); continua no time como histórico.
+             *     O time sem nenhum jogador na comunidade está fora do torneio.
+             */
+            left: boolean;
+            /**
+             * @description Apelido no tenant; vazio quando a conta foi excluída (a tela mostra
+             *     "Conta excluída").
+             */
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
         };
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
@@ -2862,8 +2896,8 @@ export interface components {
              * @description Janela de contestação de cada mapa, em minutos.
              */
             contest_minutes: number;
-            /** @description Participantes na ordem dos seeds. */
-            entrants: components["schemas"]["BracketEntrant"][];
+            /** @description Os times da chave, na ordem dos seeds. */
+            entrants: components["schemas"]["Team"][];
             format: components["schemas"]["StageFormat"];
             /** @description Todas as partidas, por parte da chave, rodada e índice. */
             matches: components["schemas"]["BracketMatch"][];
@@ -8385,76 +8419,6 @@ export interface operations {
             };
         };
     };
-    withdraw_participant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-                /** @description Id do usuário inscrito */
-                user_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Desistência marcada pelo organizador (também se já estava): o inscrito continua na chave e na comunidade, e cada partida pronta com ele, agora ou depois, vira W.O. automático para o adversário (com os dois lados fora, para o seed melhor). Envio pendente ou contestado dessas partidas dá lugar ao W.O. Não se desfaz; o organizador ainda pode corrigir resultados */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description request.invalid_path */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden (só organizer ou owner) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found, participant.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tournament.not_in_progress, participant.not_in_bracket (inscrito que ficou fora da chave) */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
     publish_tournament: {
         parameters: {
             query?: never;
@@ -8700,13 +8664,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Elegíveis (com check-in; sem check-in no torneio, todos os inscritos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de inscrição */
+            /** @description Times elegíveis (com o check-in de todos os jogadores; sem check-in no torneio, todos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de criação (no duelo, a de inscrição) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Participant"][];
+                    "application/json": components["schemas"]["Team"][];
                 };
             };
             /** @description auth.unauthenticated */
@@ -8762,7 +8726,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Participant"][];
+                    "application/json": components["schemas"]["Team"][];
                 };
             };
             /** @description auth.unauthenticated */
@@ -8801,7 +8765,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description seeding.order_invalid (não são exatamente os elegíveis, cada um uma vez), request.invalid_body */
+            /** @description seeding.order_invalid (não são exatamente os times elegíveis, cada um uma vez), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8826,13 +8790,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Elegíveis na ordem sorteada, já gravada como seeds 1..N; a seed do sorteio fica no torneio */
+            /** @description Times elegíveis na ordem sorteada, já gravada como seeds 1..N; a seed do sorteio fica no torneio */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Participant"][];
+                    "application/json": components["schemas"]["Team"][];
                 };
             };
             /** @description auth.unauthenticated */
@@ -8985,6 +8949,76 @@ export interface operations {
                 };
             };
             /** @description tournament.not_in_progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    withdraw_team: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Id do time (no duelo, o `team_id` do inscrito) */
+                team: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Desistência do time marcada pelo organizador (também se já estava): o time continua na chave e os jogadores na comunidade, e cada partida pronta com ele, agora ou depois, vira W.O. automático para o adversário (com os dois lados fora, para o seed melhor). Envio pendente ou contestado dessas partidas dá lugar ao W.O. Não se desfaz; o organizador ainda pode corrigir resultados */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, team.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, team.not_in_bracket (time que ficou fora da chave) */
             409: {
                 headers: {
                     [name: string]: unknown;

@@ -28,7 +28,7 @@ const DOUBLE: Part[][] = [["winners", "grand_final"], ["losers"]];
 export function BracketView({ tenant, tournament, bracket }: Props) {
   const t = useTranslations("Bracket");
   const single = bracket.format.bracket === "single";
-  const entrants = new Map(bracket.entrants.map((e) => [e.user_id, e]));
+  const entrants = new Map(bracket.entrants.map((e) => [e.id, e]));
   const grid = (parts: Part[]) => (
     <BracketGrid
       tenant={tenant}

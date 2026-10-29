@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { TournamentInviteSection } from "@/features/invites/components/tournament-invite-section";
 import { LifecycleSection } from "@/features/lifecycle/components/lifecycle-section";
-import { SeedingSummary } from "@/features/participants/components/seeding-summary";
+import { SeedingSummary } from "@/features/teams/components/seeding-summary";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Notice } from "@/shared/ui/notice";
 import { SectionSkeleton } from "@/shared/ui/skeleton";

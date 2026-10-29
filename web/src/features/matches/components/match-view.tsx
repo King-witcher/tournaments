@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { loadMatchScreenshots } from "@/features/screenshots/server";
+import { getTeamName } from "@/features/teams/server";
 import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedTexts } from "@/features/tournaments/lib/localize";
 import { loadTournament } from "@/features/tournaments/server";
@@ -60,7 +61,11 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
   const tournament = loaded.tournament;
   const s = detail.summary;
   const target = { tenant, slug, matchKey: s.key };
-  const names = { a: detail.a?.nickname ?? "", b: detail.b?.nickname ?? "" };
+  const teamName = await getTeamName();
+  const names = {
+    a: detail.a ? teamName(detail.a) : "",
+    b: detail.b ? teamName(detail.b) : "",
+  };
   const playable = s.state === "ready" || s.state === "completed";
   const needsMaps = detail.next_game != null || detail.can_manage;
   const maps = needsMaps ? await loadMaps() : [];

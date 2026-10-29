@@ -115,7 +115,7 @@ async fn a_contested_map_waits_for_the_organizer_without_holding_the_next() {
     assert_eq!(resolved["games"][0]["confirmed_via"], "organizer");
     assert_eq!(kinds(&resolved).last().unwrap(), "decided");
     assert_eq!(
-        find(&bracket(&app, &p[0]).await, "wb-2-1")["a"]["user_id"],
+        side_player(&bracket(&app, &p[0]).await, "wb-2-1", "a"),
         p[0].id
     );
 }
@@ -193,7 +193,7 @@ async fn an_organizer_who_plays_can_resolve_their_own_map() {
         ["reported:1", "contested:1", "resolved:1", "decided"]
     );
     assert_eq!(resolved["history"][2]["actor"]["user_id"], ana.id);
-    assert_eq!(resolved["history"][2]["outcome"]["winner"], ana.id);
+    assert_eq!(outcome(&resolved["history"][2])["winner"], ana.id);
     assert_eq!(resolved["status"], "finished");
 }
 
@@ -237,11 +237,14 @@ async fn organizers_enter_maps_and_walkovers() {
     assert_eq!(wo["games"], json!([]));
     assert_eq!(kinds(&wo), ["reported:1", "voided:1", "walkover"]);
     assert_eq!(
-        wo["history"][2]["outcome"],
+        outcome(&wo["history"][2]),
         json!({ "winner": p[3].id, "winner_nickname": "P4", "walkover": true, "winner_maps": null, "loser_maps": null })
     );
     let b = bracket(&app, &p[3]).await;
-    assert_eq!(sides(find(&b, "wb-2-1")), (json!(p[3].id), json!(p[2].id)));
+    assert_eq!(
+        sides(&b, find(&b, "wb-2-1")),
+        (json!(p[3].id), json!(p[2].id))
+    );
 
     // Não dá para lançar o que ainda não tem lados.
     let (status, _) = delete(&app, &format!("{COPA}/start"), &ana).await;

@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select seed from teams where tournament_id = $1 and id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seed",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "seed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "18a468b965e6edb21071c6928db2565c87cc959762b0c9f13ab51d02adf64ad2"
+}

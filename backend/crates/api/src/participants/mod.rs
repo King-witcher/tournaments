@@ -1,31 +1,26 @@
 //! Inscritos de um torneio: listar, o membro se inscrever ou sair (torneio
 //! público, com a inscrição aberta), o organizador inscrever ou tirar
-//! membros (público ou privado, até começar), o check-in (`check_in`) e o
-//! seeding (`seeding`). O link de convite de torneio fica em `invites`, que
-//! inscreve por `register`; iniciar o torneio fica em `lifecycle`, que fecha
-//! o seeding por `finalize_seeding`. A chave (`matches`) lê os participantes
-//! por `seeded`. Quem sai do tenant sai das inscrições abertas por
-//! `unregister`; quem desiste do torneio em andamento é marcado por
-//! `withdraw` (o W.O. fica em `matches`), e desfazer o início tira quem
-//! desistiu ou saiu por `delete_departed`. O perfil do membro (`members`) lê
-//! as inscrições dele por `registrations_of`.
+//! membros (público ou privado, até começar) e o check-in (`check_in`). A
+//! inscrição é individual, por `user_id`; quem ocupa a chave é o time do
+//! inscrito (`teams`, que no duelo o banco cria e apaga junto com a
+//! inscrição). O link de convite de torneio fica em `invites`, que inscreve
+//! por `register`. Quem sai do tenant sai das inscrições abertas por
+//! `unregister`, e desfazer o início tira quem desistiu (pelo time) ou saiu
+//! por `delete_departed`. O perfil do membro (`members`) lê as inscrições
+//! dele por `registrations_of`.
 
 mod check_in;
 mod db;
 mod handlers;
 mod registration;
-mod seed_order;
-mod seeding;
 mod types;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::{Seeded, delete as unregister, delete_departed, registrations_of, seeded, withdraw};
+pub use db::{delete as unregister, delete_departed, registrations_of};
 pub use registration::{Entry, register};
-pub use seeding::finalize as finalize_seeding;
-pub use types::ParticipantPath;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
@@ -40,6 +35,4 @@ pub fn router() -> OpenApiRouter<AppState> {
             check_in::check_in_participant,
             check_in::undo_check_in_participant
         ))
-        .routes(routes!(seeding::get_seeding, seeding::put_seeding))
-        .routes(routes!(seeding::shuffle_seeding))
 }

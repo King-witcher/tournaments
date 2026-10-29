@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import type { components } from "@/shared/api/schema";
 import { Section } from "@/shared/ui/section";
+import { useSideNames } from "../hooks/use-side-names";
 import { type MatchTarget, VETO_ID } from "../lib/match-target";
 import { currentGame } from "../lib/veto";
 import styles from "./veto-board.module.scss";
@@ -30,11 +31,11 @@ type Props = {
  */
 export function VetoSection({ target, detail, rule }: Props) {
   const t = useTranslations("Match.veto");
+  const names = useSideNames(detail);
   const veto = detail.veto;
   if (!veto) return null;
   const s = detail.summary;
   const live = s.state === "ready";
-  const names = { a: detail.a?.nickname ?? "", b: detail.b?.nickname ?? "" };
   const mine = detail.viewer_side ?? null;
   const game = currentGame(veto);
   const current = veto.games.find((g) => g.game === game);

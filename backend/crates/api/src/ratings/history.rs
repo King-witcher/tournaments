@@ -1,45 +1,29 @@
 //! O histórico que o rating reprocessa (mapas confirmados e ajustes, na
 //! ordem) e o cache que sai do `engine` (o rating de cada um e o efeito de
-//! cada evento), na forma das tabelas `ratings` e `rating_history`.
+//! cada evento), na forma das tabelas `ratings` e `rating_history`. Um
+//! ranking só por comunidade, para todos os modos: cada mapa entra com a
+//! escalação de cada lado (no duelo, um jogador de cada lado).
 
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
-use engine::rating::{Effect, Event, PlayerId, Replay};
-
-/// Modalidade de um rating. Só existe duelo; um rating por modalidade (FFA,
-/// times) entra aqui.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Modality {
-    Duel,
-}
-
-impl Modality {
-    /// `modality` nas tabelas do rating.
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Duel => "duel",
-        }
-    }
-
-    /// O `mode` dos torneios que contam para ela.
-    pub const fn tournament_mode(self) -> &'static str {
-        match self {
-            Self::Duel => "duel",
-        }
-    }
-}
+use engine::rating::{Change, Effect, Event, PlayerId, Replay};
 
 /// Um evento do histórico, com o que o liga ao banco.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SourceKind {
-    /// Um mapa confirmado (`match_games.id`), pelos usuários dos dois lados.
-    Game { id: i64, winner: i64, loser: i64 },
+    /// Um mapa confirmado (`match_games.id`), com os usuários que jogaram
+    /// por cada lado (`match_game_players`).
+    Game {
+        id: i64,
+        winners: Vec<i64>,
+        losers: Vec<i64>,
+    },
     /// Um ajuste (`rating_adjustments.id`).
     Adjustment { id: i64, user: i64, delta: i32 },
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Source {
     pub kind: SourceKind,
     /// Quando o mapa confirmou ou o ajuste foi feito.
@@ -48,12 +32,15 @@ pub struct Source {
 
 impl Source {
     fn event(&self) -> Event {
-        match self.kind {
-            SourceKind::Game { winner, loser, .. } => Event::Game {
-                winner: PlayerId(winner),
-                loser: PlayerId(loser),
+        let players = |users: &[i64]| users.iter().copied().map(PlayerId).collect();
+        match &self.kind {
+            SourceKind::Game {
+                winners, losers, ..
+            } => Event::Game {
+                winners: players(winners),
+                losers: players(losers),
             },
-            SourceKind::Adjustment { user, delta, .. } => Event::Adjustment {
+            &SourceKind::Adjustment { user, delta, .. } => Event::Adjustment {
                 player: PlayerId(user),
                 delta,
             },
@@ -86,22 +73,22 @@ pub struct RatingRow {
     pub last_game_at: Option<DateTime<Utc>>,
 }
 
-/// Uma linha de `rating_history`.
+/// Uma linha de `rating_history`. O adversário de um mapa sai da escalação
+/// dele (`match_game_players`), não daqui.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HistoryRow {
     pub user_id: i64,
     pub seq: i32,
     pub game_id: Option<i64>,
     pub adjustment_id: Option<i64>,
-    pub opponent_id: Option<i64>,
     pub won: Option<bool>,
     pub delta: i32,
     pub rating_after: i32,
     pub at: DateTime<Utc>,
 }
 
-/// O cache de um tenant numa modalidade, em ordem (`ratings` por usuário;
-/// `rating_history` por usuário e `seq`), para comparar com o gravado.
+/// O cache de um tenant, em ordem (`ratings` por usuário; `rating_history`
+/// por usuário e `seq`), para comparar com o gravado.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Cache {
     pub ratings: Vec<RatingRow>,
@@ -113,37 +100,39 @@ impl Cache {
     pub fn build(sources: &[Source], replay: &Replay) -> Self {
         let mut history = Vec::with_capacity(sources.len() * 2);
         for ((source, effect), seq) in sources.iter().zip(&replay.effects).zip(1..) {
-            let row = |user_id, change: engine::rating::Change| HistoryRow {
+            let row = |user_id, change: Change| HistoryRow {
                 user_id,
                 seq,
                 game_id: None,
                 adjustment_id: None,
-                opponent_id: None,
                 won: None,
                 delta: change.delta,
                 rating_after: change.after,
                 at: source.at,
             };
-            match (source.kind, *effect) {
+            match (&source.kind, effect) {
                 (
-                    SourceKind::Game { id, winner, loser },
+                    SourceKind::Game {
+                        id,
+                        winners,
+                        losers,
+                    },
                     Effect::Game {
-                        winner: w,
-                        loser: l,
+                        winners: w,
+                        losers: l,
                     },
                 ) => {
-                    for (user, opponent, won, change) in
-                        [(winner, loser, true, w), (loser, winner, false, l)]
-                    {
-                        history.push(HistoryRow {
-                            game_id: Some(id),
-                            opponent_id: Some(opponent),
-                            won: Some(won),
-                            ..row(user, change)
-                        });
+                    for (users, changes, won) in [(winners, w, true), (losers, l, false)] {
+                        for (&user, &change) in users.iter().zip(changes) {
+                            history.push(HistoryRow {
+                                game_id: Some(*id),
+                                won: Some(won),
+                                ..row(user, change)
+                            });
+                        }
                     }
                 }
-                (SourceKind::Adjustment { id, user, .. }, Effect::Adjustment(change)) => {
+                (&SourceKind::Adjustment { id, user, .. }, &Effect::Adjustment(change)) => {
                     history.push(HistoryRow {
                         adjustment_id: Some(id),
                         ..row(user, change)
@@ -190,7 +179,11 @@ mod tests {
 
     fn game(id: i64, winner: i64, loser: i64, minute: u32) -> Source {
         Source {
-            kind: SourceKind::Game { id, winner, loser },
+            kind: SourceKind::Game {
+                id,
+                winners: vec![winner],
+                losers: vec![loser],
+            },
             at: at(minute),
         }
     }
@@ -265,7 +258,36 @@ mod tests {
                 (8, 2, None, Some(5), None, 20),
             ]
         );
-        assert_eq!(cache.history[1].opponent_id, Some(7));
+    }
+
+    #[test]
+    fn cache_has_every_player_of_a_team_game() {
+        let mut sources = [Source {
+            kind: SourceKind::Game {
+                id: 41,
+                winners: vec![7, 9],
+                losers: vec![8, 10],
+            },
+            at: at(1),
+        }];
+        let elo = Elo::new(EloConfig::default()).unwrap();
+        let replay = replay(&elo, &events(&mut sources)).unwrap();
+        let cache = Cache::build(&sources, &replay);
+        let history: Vec<_> = cache
+            .history
+            .iter()
+            .map(|h| (h.user_id, h.won, h.delta))
+            .collect();
+        assert_eq!(
+            history,
+            [
+                (7, Some(true), 40),
+                (8, Some(false), -40),
+                (9, Some(true), 40),
+                (10, Some(false), -40),
+            ]
+        );
+        assert!(cache.ratings.iter().all(|r| r.games == 1));
     }
 
     #[test]

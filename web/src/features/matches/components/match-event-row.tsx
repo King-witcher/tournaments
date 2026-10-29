@@ -1,5 +1,7 @@
 import { useTranslations } from "next-intl";
 
+import { shownNickname } from "@/features/members/lib/nickname";
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import styles from "./match-event-row.module.scss";
@@ -12,20 +14,27 @@ type Props = { event: components["schemas"]["MatchEvent"] };
  */
 export function MatchEventRow({ event }: Props) {
   const t = useTranslations("Match.history");
+  const tMember = useTranslations("Member");
+  const teamName = useTeamName();
   const o = event.outcome;
+  const actor = shownNickname(
+    event.actor?.nickname ?? "",
+    tMember("deletedAccount"),
+  );
   const kind =
     event.kind === "voided" && !event.actor
       ? t("kinds.voided_auto")
-      : t(`kinds.${event.kind}`, { actor: event.actor?.nickname ?? "" });
+      : t(`kinds.${event.kind}`, { actor: event.actor ? actor : "" });
 
   let outcome: string | null = null;
+  const winner = o ? teamName(o.winner) : "";
   if (o && event.game != null) {
-    outcome = t("mapWinner", { winner: o.winner_nickname });
+    outcome = t("mapWinner", { winner });
   } else if (o?.walkover) {
-    outcome = t("walkover", { winner: o.winner_nickname });
+    outcome = t("walkover", { winner });
   } else if (o) {
     outcome = t("score", {
-      winner: o.winner_nickname,
+      winner,
       winnerMaps: o.winner_maps ?? 0,
       loserMaps: o.loser_maps ?? 0,
     });

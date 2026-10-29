@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select tm.id from teams tm join tournaments t on t.id = tm.tournament_id\n         where t.slug = 'outra'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f30659ddeb17e65b7f9f834d5df51bea8fa931df24ad87450d974e0ec6e0392e"
+}

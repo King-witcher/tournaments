@@ -65,7 +65,7 @@ async fn begin<R>(
     sides: (ParticipantId, ParticipantId),
     actor: Option<i64>,
 ) -> Result<(), ApiError> {
-    let seed_of = |p: ParticipantId| stage.entrant(p).map_or(i32::MAX, |e| e.seed);
+    let seed_of = |p: ParticipantId| stage.entrant(p).and_then(|e| e.seed).unwrap_or(i32::MAX);
     let first = if seed_of(sides.0) <= seed_of(sides.1) {
         Side::A
     } else {
@@ -129,19 +129,14 @@ pub async fn veto_ready(
             )
             .await?;
         } else {
-            let to = match side {
-                Side::A => sides.1,
-                Side::B => sides.0,
+            let (mine, to) = match side {
+                Side::A => sides,
+                Side::B => (sides.1, sides.0),
             };
-            changes::opponent_ready(
-                &mut tx,
-                &tournament,
-                &stage,
-                &path.key,
-                to,
-                &member.nickname,
-            )
-            .await?;
+            let name = stage
+                .entrant(mine)
+                .map_or_else(|| member.nickname.clone(), |t| t.display_name());
+            changes::opponent_ready(&mut tx, &tournament, &stage, &path.key, to, &name).await?;
         }
     }
     let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;

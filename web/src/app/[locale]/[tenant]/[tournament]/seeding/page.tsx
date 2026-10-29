@@ -1,8 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
-import { SeedingView } from "@/features/participants/components/seeding-view";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
+import { SeedingView } from "@/features/teams/components/seeding-view";
 import { Page } from "@/shared/ui/page";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 

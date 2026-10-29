@@ -119,7 +119,7 @@ fn empty_history() {
 fn self_game_is_refused() {
     assert_eq!(
         replay(&elo(), &[beats(A, B), beats(B, B)]),
-        Err(RatingError::SelfGame {
+        Err(RatingError::RepeatedPlayer {
             index: 1,
             player: B
         })
@@ -168,9 +168,10 @@ fn new_player_beating_a_veteran_in_a_full_replay() {
         .collect();
     events.push(beats(rookie, veteran));
     let replay = replay_of(&events);
-    let Some(&Effect::Game { winner, loser }) = replay.effects.last() else {
+    let Some(Effect::Game { winners, losers }) = replay.effects.last() else {
         panic!("o último evento é um jogo");
     };
+    let (winner, loser) = (winners[0], losers[0]);
     let before = loser.after - loser.delta;
     assert_eq!(
         (winner.delta, -loser.delta),
@@ -239,19 +240,24 @@ fn self_game_after_adjustments() {
     ];
     assert_eq!(
         replay(&elo(), &events),
-        Err(RatingError::SelfGame {
+        Err(RatingError::RepeatedPlayer {
             index: 1,
             player: A
         })
     );
 }
 
-/// Até 6 pessoas, jogos e ajustes misturados.
+/// Até 6 pessoas, jogos (duelos e entre times de até 3) e ajustes misturados.
 fn events() -> impl Strategy<Value = Vec<Event>> {
     let event = prop_oneof![
         4 => (0..6i64, 0..6i64)
             .prop_filter("dois lados", |(w, l)| w != l)
             .prop_map(|(w, l)| beats(PlayerId(w), PlayerId(l))),
+        2 => (Just((0..6i64).collect::<Vec<_>>()).prop_shuffle(), 1..=3usize, 1..=3usize)
+            .prop_map(|(people, w, l)| {
+                let ids: Vec<PlayerId> = people.into_iter().map(PlayerId).collect();
+                team_beats(&ids[..w], &ids[w..w + l])
+            }),
         1 => (0..6i64, prop_oneof![-MAX_ADJUSTMENT..0, 1..=MAX_ADJUSTMENT])
             .prop_map(|(p, delta)| Event::Adjustment { player: PlayerId(p), delta }),
     ];
@@ -267,16 +273,17 @@ proptest! {
             let mut rating = 1500;
             let mut games = 0;
             for (event, effect) in events.iter().zip(&replay.effects) {
-                let change = match (*event, *effect) {
-                    (Event::Game { winner, .. }, Effect::Game { winner: c, .. }) if winner == *player => {
+                let change = match (event, effect) {
+                    (Event::Game { winners, losers }, Effect::Game { winners: cw, losers: cl }) => {
+                        let at = |side: &[PlayerId]| side.iter().position(|p| p == player);
+                        let Some(c) = at(winners).map(|i| cw[i]).or_else(|| at(losers).map(|i| cl[i]))
+                        else {
+                            continue;
+                        };
                         games += 1;
                         c
                     }
-                    (Event::Game { loser, .. }, Effect::Game { loser: c, .. }) if loser == *player => {
-                        games += 1;
-                        c
-                    }
-                    (Event::Adjustment { player: p, .. }, Effect::Adjustment(c)) if p == *player => c,
+                    (&Event::Adjustment { player: p, .. }, &Effect::Adjustment(c)) if p == *player => c,
                     _ => continue,
                 };
                 rating += change.delta;

@@ -180,9 +180,11 @@ async fn member_rating_with_the_last_maps() {
     assert_eq!(games[0]["won"], false);
     assert_eq!(games[0]["delta"], -29);
     assert_eq!(games[0]["rating_after"], 1431);
-    assert_eq!(games[0]["opponent"]["user_id"], f.p1.id);
-    assert_eq!(games[0]["opponent"]["nickname"], "P1");
-    assert_eq!(games[0]["opponent"]["active"], true);
+    // O adversário é o time do outro lado; no duelo, de um jogador.
+    let opponent = &games[0]["opponent"]["members"][0];
+    assert_eq!(opponent["user_id"], f.p1.id);
+    assert_eq!(opponent["nickname"], "P1");
+    assert_eq!(opponent["left"], false);
     assert_eq!(games[0]["tournament"]["slug"], "copa");
     assert_eq!(games[1]["delta"], -40);
 
@@ -229,7 +231,7 @@ async fn who_left_leaves_the_ranking() {
         [(f.p1.id, 1569, 2, 2, 0, true)]
     );
     let r = member_rating(&f.app, &f.bia, f.p1.id).await;
-    assert_eq!(r["games"][0]["opponent"]["active"], false);
+    assert_eq!(r["games"][0]["opponent"]["members"][0]["left"], true);
     let (status, body) = get(&f.app, &format!("{RATINGS}/{}", f.p2.id), &f.bia).await;
     assert_eq!(
         (status, body),

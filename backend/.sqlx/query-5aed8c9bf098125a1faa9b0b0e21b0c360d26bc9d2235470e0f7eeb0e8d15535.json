@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from participants p\n           using tenant_members m\n           where m.tenant_id = p.tenant_id and m.user_id = p.user_id and p.tournament_id = $1\n             and (m.left_at is not null\n                  or exists(select 1 from teams t\n                            where t.tournament_id = p.tournament_id and t.id = p.team_id\n                              and t.withdrawn_at is not null))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5aed8c9bf098125a1faa9b0b0e21b0c360d26bc9d2235470e0f7eeb0e8d15535"
+}

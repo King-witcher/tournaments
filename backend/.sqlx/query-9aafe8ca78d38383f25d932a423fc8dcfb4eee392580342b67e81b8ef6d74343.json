@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams t set seed = o.seed::integer\n           from unnest($2::bigint[]) with ordinality as o(id, seed)\n           where t.tournament_id = $1 and t.id = o.id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9aafe8ca78d38383f25d932a423fc8dcfb4eee392580342b67e81b8ef6d74343"
+}

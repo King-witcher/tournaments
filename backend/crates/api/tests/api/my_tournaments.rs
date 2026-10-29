@@ -8,7 +8,9 @@ use axum::{
 use serde_json::{Value, json};
 
 use crate::common::*;
-use crate::matches::{COPA, bracket, confirm, copa, find, game, play, report, single, start};
+use crate::matches::{
+    COPA, bracket, confirm, copa, game, play, report, side_player, single, start,
+};
 
 async fn mine(app: &Router, who: &User) -> Value {
     let (status, body) = get(app, "/me/tournaments", who).await;
@@ -105,7 +107,7 @@ async fn situation_before_the_bracket() {
 /// O lado (`"a"` ou `"b"`) de `who` na partida `key`.
 async fn side_of(app: &Router, who: &User, key: &str) -> &'static str {
     let b = bracket(app, who).await;
-    if find(&b, key)["a"]["user_id"] == who.id {
+    if side_player(&b, key, "a") == who.id {
         "a"
     } else {
         "b"
@@ -132,7 +134,14 @@ async fn next_match_and_placement() {
     assert_eq!(next["key"], "wb-1-1");
     assert_eq!(next["state"], "ready");
     assert_eq!(next["single"], true);
-    assert_eq!(next["opponent"], "P4");
+    // O adversário é um time; no duelo, de um jogador, sem nome.
+    assert_eq!(
+        (
+            &next["opponent"]["name"],
+            &next["opponent"]["members"][0]["nickname"]
+        ),
+        (&Value::Null, &json!("P4"))
+    );
     assert_eq!(next["task"], "report");
 
     // Enviou: espera o adversário, que tem de responder.

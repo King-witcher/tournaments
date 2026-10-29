@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
-
+import { TeamName } from "@/features/teams/components/team-name";
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Link } from "@/shared/ui/link";
@@ -8,7 +9,6 @@ import { ACTIONABLE } from "../lib/status";
 import styles from "./match-card.module.scss";
 import { MatchCardSide } from "./match-card-side";
 import { MatchCardStatus } from "./match-card-status";
-import { MemberLink } from "./member-link";
 
 type Schemas = components["schemas"];
 
@@ -16,7 +16,8 @@ type Props = {
   tenant: string;
   match: Schemas["BracketMatch"];
   single: boolean;
-  entrants: Map<number, Schemas["BracketEntrant"]>;
+  /** Os times da chave, pelo id. */
+  entrants: Map<number, Schemas["Team"]>;
   href: string;
 };
 
@@ -47,20 +48,17 @@ function scores(
 export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const t = useTranslations("Bracket");
   const { code, placeholder } = useMatchLabels(single);
+  const teamName = useTeamName();
 
   if (m.state === "bye" || m.state === "not_needed") {
-    const who = entrants.get(m.a.user_id ?? m.b.user_id ?? -1);
+    const who = entrants.get(m.a.team_id ?? m.b.team_id ?? -1);
     return (
       <p className={styles.ghost}>
         {m.state === "not_needed"
           ? `${code(m.key)} · ${t("notNeeded")}`
           : who
             ? t.rich("advances", {
-                name: () => (
-                  <MemberLink tenant={tenant} userId={who.user_id} inline>
-                    {who.nickname}
-                  </MemberLink>
-                ),
+                name: () => <TeamName tenant={tenant} team={who} inline />,
               })
             : t("bye")}
       </p>
@@ -71,9 +69,10 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const confirmed = m.state === "completed";
   const winner = confirmed ? m.result?.winner : undefined;
   const actionable = m.task != null && ACTIONABLE.includes(m.task);
-  const name = (side: Schemas["MatchSide"]) =>
-    (side.user_id != null && entrants.get(side.user_id)?.nickname) ||
-    placeholder(side);
+  const name = (side: Schemas["MatchSide"]) => {
+    const team = side.team_id != null ? entrants.get(side.team_id) : undefined;
+    return team ? teamName(team) : placeholder(side);
+  };
 
   return (
     <div

@@ -31,13 +31,17 @@ async fn check_in(app: &Router, who: &User) {
 
 /// `(user_id, seed)` de cada inscrito, na ordem de inscrição.
 async fn seeds(db: &PgPool) -> Vec<(i64, Option<i32>)> {
-    sqlx::query!("select user_id, seed from participants order by registered_at, id")
-        .fetch_all(db)
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|r| (r.user_id, r.seed))
-        .collect()
+    sqlx::query!(
+        r#"select p.user_id, t.seed as "seed?" from participants p
+           left join teams t on t.tournament_id = p.tournament_id and t.id = p.team_id
+           order by p.registered_at, p.user_id"#
+    )
+    .fetch_all(db)
+    .await
+    .unwrap()
+    .into_iter()
+    .map(|r| (r.user_id, r.seed))
+    .collect()
 }
 
 #[tokio::test]
@@ -53,13 +57,7 @@ async fn start_keeps_the_checked_in_in_seed_order() {
     for who in [&ana, &bia, &duda] {
         check_in(&app, who).await;
     }
-    let (status, _) = put(
-        &app,
-        &format!("{COPA}/seeding"),
-        &ana,
-        json!({ "user_ids": [bia.id, duda.id, ana.id] }),
-    )
-    .await;
+    let (status, _) = seed(&app, &ana, "copa", &[&bia, &duda, &ana]).await;
     assert_eq!(status, StatusCode::OK);
     // Duda desiste depois do seeding; Caio nunca fez check-in.
     let (status, _) = delete(&app, &format!("{COPA}/check-in"), &duda).await;

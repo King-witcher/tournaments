@@ -25,6 +25,11 @@ async fn tenant_rows(db: &PgPool, tenant: i64) -> Vec<(&'static str, i64)> {
             "participants",
             "select count(*) from participants where tenant_id = $1",
         ),
+        ("teams", "select count(*) from teams where tenant_id = $1"),
+        (
+            "match_game_players",
+            "select count(*) from match_game_players where tenant_id = $1",
+        ),
         (
             "match_results",
             "select count(*) from match_results where tenant_id = $1",
@@ -63,6 +68,14 @@ async fn tournament_rows(db: &PgPool, tournament: i64) -> Vec<(&'static str, i64
         (
             "participants",
             "select count(*) from participants where tournament_id = $1",
+        ),
+        (
+            "teams",
+            "select count(*) from teams where tournament_id = $1",
+        ),
+        (
+            "match_game_players",
+            "select count(*) from match_game_players where tournament_id = $1",
         ),
         (
             "match_results",
@@ -178,19 +191,33 @@ async fn started_participants_and_stages_only_leave_with_the_tournament() {
     let leave = format!("delete from tenant_members where user_id = {p1}");
     assert_eq!(rejected(exec(&db, &leave).await), started_delete);
 
-    // Ninguém entra; seed e check-in não mudam.
+    // Ninguém entra; check-in não muda.
     let insert = format!(
         "insert into participants (tenant_id, tournament_id, user_id) values ({}, {}, {})",
         cup.tenant, cup.tournament, cup.bia.id
     );
     assert_eq!(rejected(exec(&db, &insert).await), frozen);
-    for change in [
-        "seed = 3",
-        "seed = null",
-        "checked_in_at = null, checked_in_by = null",
-    ] {
-        let sql = format!("update participants set {change} where user_id = {p1}");
-        assert_eq!(rejected(exec(&db, &sql).await), frozen, "{change}");
+    let sql = format!(
+        "update participants set checked_in_at = null, checked_in_by = null where user_id = {p1}"
+    );
+    assert_eq!(rejected(exec(&db, &sql).await), frozen);
+
+    // O time também: não sai, ninguém entra e o seed fica (nome e capitão
+    // ainda mudam, para os times).
+    let team = format!("(select team_id from participants where user_id = {p1})");
+    assert_eq!(
+        rejected(exec(&db, &format!("delete from teams where id = {team}")).await),
+        rule(FOREIGN_KEY, "teams_started_delete")
+    );
+    let team_frozen = rule(CHECK, "teams_started_frozen");
+    let insert = format!(
+        "insert into teams (tenant_id, tournament_id, captain) values ({}, {}, {p1})",
+        cup.tenant, cup.tournament
+    );
+    assert_eq!(rejected(exec(&db, &insert).await), team_frozen);
+    for change in ["seed = 3", "seed = null"] {
+        let sql = format!("update teams set {change} where id = {team}");
+        assert_eq!(rejected(exec(&db, &sql).await), team_frozen, "{change}");
     }
     // Inscrito não troca de membro nem de torneio, em status nenhum.
     let sql = format!(
@@ -228,15 +255,14 @@ async fn started_participants_and_stages_only_leave_with_the_tournament() {
     assert_eq!(exec(&db, &sql).await.unwrap(), 1);
     let sql = format!("delete from tenant_members where user_id = {}", cup.ze.id);
     assert_eq!(exec(&db, &sql).await.unwrap(), 1);
-    assert_eq!(
-        count(
-            &db,
-            "select count(*) from participants p join tournaments t on t.id = p.tournament_id
+    // No duelo, o time sai com a inscrição.
+    for table in ["participants", "teams"] {
+        let sql = format!(
+            "select count(*) from {table} x join tournaments t on t.id = x.tournament_id
              where t.slug = 'outra'"
-        )
-        .await,
-        0
-    );
+        );
+        assert_eq!(count(&db, &sql).await, 0, "{table}");
+    }
 }
 
 #[tokio::test]

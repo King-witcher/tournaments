@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/cn";
 import { Countdown } from "@/shared/ui/countdown";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { LocalTime } from "@/shared/ui/local-time";
+import { useSideNames } from "../hooks/use-side-names";
 import { SCORE_ID } from "../lib/match-target";
 import styles from "./match-scoreboard.module.scss";
 import { MatchScoreboardSide } from "./match-scoreboard-side";
@@ -25,6 +26,7 @@ type Props = {
 export function MatchScoreboard({ tenant, detail }: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
+  const names = useSideNames(detail);
   const { summary: s, a, b } = detail;
   const r = s.result;
   const single = detail.format.bracket === "single";
@@ -74,7 +76,6 @@ export function MatchScoreboard({ tenant, detail }: Props) {
     );
   }
 
-  const name = (who: "a" | "b") => detail[who]?.nickname ?? "";
   return (
     // tabIndex -1: recebe o foco depois do W.O., que fecha o bloco da
     // organização com o botão usado.
@@ -87,7 +88,7 @@ export function MatchScoreboard({ tenant, detail }: Props) {
       <div className={styles.sides}>
         <MatchScoreboardSide
           tenant={tenant}
-          entrant={a}
+          team={a}
           side={s.a}
           single={single}
           winner={decided && r?.winner === "a"}
@@ -96,8 +97,8 @@ export function MatchScoreboard({ tenant, detail }: Props) {
           {scoreA != null && scoreB != null && (
             <span className={styles.srOnly}>
               {t("score.sr", {
-                a: name("a"),
-                b: name("b"),
+                a: names.a,
+                b: names.b,
                 aScore: scoreA,
                 bScore: scoreB,
               })}
@@ -119,7 +120,7 @@ export function MatchScoreboard({ tenant, detail }: Props) {
         </p>
         <MatchScoreboardSide
           tenant={tenant}
-          entrant={b}
+          team={b}
           side={s.b}
           single={single}
           winner={decided && r?.winner === "b"}

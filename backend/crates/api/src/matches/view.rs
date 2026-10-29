@@ -11,15 +11,15 @@ use super::{
     stage::Stage,
     tasks,
     types::{
-        BracketEntrant, BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail,
-        MapRef, MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome,
-        Standing, TournamentBracket, ViewerTask,
+        BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail, MapRef,
+        MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome, Standing,
+        TournamentBracket, ViewerTask,
     },
     veto,
 };
 use crate::{
-    participants::Seeded,
     shared::ApiError,
+    teams::StoredTeam,
     tenants::{Role, TenantMember},
     tournaments::{StoredTournament, TournamentStatus},
 };
@@ -39,30 +39,19 @@ impl Viewer {
     }
 }
 
-pub fn entrant(e: &Seeded) -> BracketEntrant {
-    BracketEntrant {
-        user_id: e.user_id,
-        nickname: e.nickname.clone(),
-        avatar_url: e.avatar_url.clone(),
-        seed: e.seed,
-        withdrawn: e.withdrawn,
-        left: e.left,
-    }
-}
-
 pub fn bracket(
     tournament: &StoredTournament,
     stage: &Stage,
     viewer: &Viewer,
 ) -> Result<TournamentBracket, ApiError> {
-    let user = |p: ParticipantId| stage.entrant(p).map(|e| e.user_id);
+    let team = |p: ParticipantId| stage.entrant(p).map(|e| e.id);
     let standings = stage
         .bracket
         .standings()
         .into_iter()
         .map(|p| {
             Ok(Standing {
-                user_id: user(p.participant).ok_or_else(ApiError::internal)?,
+                team_id: team(p.participant).ok_or_else(ApiError::internal)?,
                 rank: p.rank,
                 tied: p.tied,
             })
@@ -83,7 +72,7 @@ pub fn bracket(
     Ok(TournamentBracket {
         format: stage.format.into(),
         status: tournament.status,
-        entrants: stage.entrants.iter().map(entrant).collect(),
+        entrants: stage.entrants.iter().map(StoredTeam::view).collect(),
         matches,
         standings,
         contest_minutes: tournament.contest_minutes,
@@ -162,8 +151,8 @@ fn side(stage: &Stage, slot: Slot, occupant: Occupant) -> MatchSide {
         })
     };
     MatchSide {
-        user_id: match occupant {
-            Occupant::Participant(p) => stage.entrant(p).map(|e| e.user_id),
+        team_id: match occupant {
+            Occupant::Participant(p) => stage.entrant(p).map(|e| e.id),
             _ => None,
         },
         bye: occupant == Occupant::Bye,
@@ -218,8 +207,7 @@ pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
                 .entrant(ParticipantId(winner))
                 .ok_or_else(ApiError::internal)?;
             Some(EventOutcome {
-                winner: entrant.user_id,
-                winner_nickname: entrant.nickname.clone(),
+                winner: entrant.view(),
                 walkover: e.game.is_none() && e.winner_maps.is_none(),
                 winner_maps: maps(e.winner_maps).map_err(|_| ApiError::internal())?,
                 loser_maps: maps(e.loser_maps).map_err(|_| ApiError::internal())?,

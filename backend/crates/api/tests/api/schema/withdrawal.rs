@@ -1,14 +1,17 @@
-//! Desistência: só com o torneio em andamento, só de quem está na chave, não
-//! se desfaz, e o desistente sai da inscrição se o torneio volta a não ter
-//! começado. O W.O. automático só vale contra quem desistiu ou saiu.
+//! Desistência, que é do time: só com o torneio em andamento, só de quem está
+//! na chave, não se desfaz, e o desistente sai da inscrição se o torneio
+//! volta a não ter começado. O W.O. automático só vale contra o time que
+//! desistiu ou não tem mais ninguém na comunidade.
 
 use super::*;
 use crate::common::*;
 use crate::matches::{copa, single, start};
 
+/// O time de `user` desiste (no duelo, o time de um jogador dele).
 fn withdraw_sql(user: &User) -> String {
     format!(
-        "update participants set withdrawn_at = now() where user_id = {}",
+        "update teams set withdrawn_at = now()
+         where id = (select team_id from participants where user_id = {})",
         user.id
     )
 }
@@ -26,37 +29,40 @@ async fn withdrawals_only_happen_in_progress_and_stay() {
     // Antes de começar, não.
     assert_eq!(
         rejected(exec(&db, &withdraw_sql(&bia)).await),
-        rule(CHECK, "participants_withdrawal_in_progress")
+        rule(CHECK, "teams_withdrawal_in_progress")
     );
     let (status, body) = post_empty(&app, "/tenants/quake-br/tournaments/copa/start", &ana).await;
     assert_eq!(status, axum::http::StatusCode::OK, "{body}");
 
     // Na chave e em andamento, sim; com autor só quem marcou.
     let by_without = format!(
-        "update participants set withdrawn_by = {} where user_id = {}",
+        "update teams set withdrawn_by = {}
+         where id = (select team_id from participants where user_id = {})",
         ana.id, caio.id
     );
     assert_eq!(
         rejected(exec(&db, &by_without).await),
-        rule(CHECK, "participants_withdrawn_by_check")
+        rule(CHECK, "teams_withdrawn_by_check")
     );
     exec(&db, &withdraw_sql(&bia)).await.unwrap();
     // Não se desfaz, nem muda de data.
     let undo = format!(
-        "update participants set withdrawn_at = null where user_id = {}",
+        "update teams set withdrawn_at = null
+         where id = (select team_id from participants where user_id = {})",
         bia.id
     );
     assert_eq!(
         rejected(exec(&db, &undo).await),
-        rule(CHECK, "participants_withdrawal_final")
+        rule(CHECK, "teams_withdrawal_final")
     );
     let again = format!(
-        "update participants set withdrawn_at = now() - interval '1 day' where user_id = {}",
+        "update teams set withdrawn_at = now() - interval '1 day'
+         where id = (select team_id from participants where user_id = {})",
         bia.id
     );
     assert_eq!(
         rejected(exec(&db, &again).await),
-        rule(CHECK, "participants_withdrawal_final")
+        rule(CHECK, "teams_withdrawal_final")
     );
 
     // O torneio só volta a não ter começado sem o desistente.
@@ -67,7 +73,7 @@ async fn withdrawals_only_happen_in_progress_and_stay() {
         .unwrap();
     assert_eq!(
         rejected(tx.commit().await),
-        rule(CHECK, "participants_withdrawn_started")
+        rule(CHECK, "teams_withdrawn_started")
     );
     // Encerrado, continua desistente.
     exec(&db, "update tournaments set status = 'finished'")
@@ -95,7 +101,7 @@ async fn withdrawn_seed_is_required() {
     assert_eq!(status, axum::http::StatusCode::OK);
     assert_eq!(
         rejected(exec(&db, &withdraw_sql(&caio)).await),
-        rule(CHECK, "participants_withdrawn_seeded")
+        rule(CHECK, "teams_withdrawn_seeded")
     );
 }
 
@@ -105,7 +111,7 @@ async fn automatic_walkovers_need_a_withdrawn_loser() {
     let (app, ana, bia) = quake_br(&db).await;
     start(&app, &ana, copa(single(3, 3)), &[&ana, &bia]).await;
     let ids = sqlx::query!(
-        "select p.tenant_id, p.tournament_id, p.id from participants p order by p.seed"
+        "select tenant_id, tournament_id, id from teams where seed is not null order by seed"
     )
     .fetch_all(&db)
     .await
@@ -127,6 +133,19 @@ async fn automatic_walkovers_need_a_withdrawn_loser() {
         rejected(exec(&db, &walkover(a, "", "")).await),
         rule(CHECK, "match_results_withdrawal_loser")
     );
+    // O time sem ninguém na comunidade também está fora.
+    let mut tx = db.begin().await.unwrap();
+    let left = format!(
+        "update tenant_members set left_at = now() where user_id = {}",
+        bia.id
+    );
+    for sql in [left, walkover(a, "", "")] {
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+    }
+    tx.rollback().await.unwrap();
     exec(&db, &withdraw_sql(&bia)).await.unwrap();
     // Contra quem desistiu, sim; o vencedor pode ser só quem ficou.
     assert_eq!(

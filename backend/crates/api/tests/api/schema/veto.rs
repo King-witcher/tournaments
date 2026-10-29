@@ -27,7 +27,7 @@ async fn started(db: &PgPool) -> (i64, i64, i64, i64) {
             .await
             .unwrap();
     let ids: Vec<i64> =
-        sqlx::query_scalar("select id from participants where tournament_id = $1 order by seed")
+        sqlx::query_scalar("select id from teams where tournament_id = $1 order by seed")
             .bind(row.0)
             .fetch_all(db)
             .await

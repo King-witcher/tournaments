@@ -2,8 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Participante de um torneio: um jogador (duelo) ou um time (2v2, 3v3). É o
-/// id interno da inscrição (`participants.id` na API, bigint).
+/// Quem ocupa um lado da chave: um time, em todos os modos (no duelo, um time
+/// de um jogador). É o id interno do time (`teams.id` na API, bigint).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ParticipantId(pub i64);

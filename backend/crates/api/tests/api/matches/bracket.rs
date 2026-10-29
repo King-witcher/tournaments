@@ -23,7 +23,12 @@ async fn start_generates_the_bracket_in_seed_order() {
         .as_array()
         .unwrap()
         .iter()
-        .map(|e| (e["user_id"].as_i64().unwrap(), e["seed"].as_i64().unwrap()))
+        .map(|e| {
+            (
+                e["members"][0]["user_id"].as_i64().unwrap(),
+                e["seed"].as_i64().unwrap(),
+            )
+        })
         .collect();
     assert_eq!(
         seeds,
@@ -44,7 +49,7 @@ async fn start_generates_the_bracket_in_seed_order() {
 
     // 1 x 4 e 2 x 3 na primeira rodada; o resto espera.
     let first = find(&b, "wb-1-1");
-    assert_eq!(sides(first), (json!(p[0].id), json!(p[3].id)));
+    assert_eq!(sides(&b, first), (json!(p[0].id), json!(p[3].id)));
     assert_eq!(
         (&first["state"], &first["best_of"], &first["result"]),
         (&json!("ready"), &json!(3), &Value::Null)
@@ -53,7 +58,10 @@ async fn start_generates_the_bracket_in_seed_order() {
         (&first["yours"], &first["task"]),
         (&json!(true), &json!("report"))
     );
-    assert_eq!(sides(find(&b, "wb-1-2")), (json!(p[1].id), json!(p[2].id)));
+    assert_eq!(
+        sides(&b, find(&b, "wb-1-2")),
+        (json!(p[1].id), json!(p[2].id))
+    );
     assert_eq!(find(&b, "wb-1-2")["task"], Value::Null);
     let final_ = find(&b, "wb-2-1");
     assert_eq!(final_["state"], "pending");
@@ -72,7 +80,12 @@ async fn start_generates_the_bracket_in_seed_order() {
 
     let (status, m) = get(&app, &format!("{COPA}/matches/wb-1-1"), &p[3]).await;
     assert_eq!(status, StatusCode::OK, "{m}");
-    assert_eq!(m["a"]["nickname"], "P1");
+    // No duelo, cada lado é um time de um jogador, sem nome.
+    assert_eq!(
+        (&m["a"]["name"], &m["a"]["members"][0]["nickname"]),
+        (&Value::Null, &json!("P1"))
+    );
+    assert_eq!(m["a"]["members"].as_array().unwrap().len(), 1);
     assert_eq!(m["b"]["seed"], 4);
     assert_eq!(
         (&m["games"], &m["history"], &m["can_manage"]),
@@ -106,7 +119,7 @@ async fn byes_advance_without_playing() {
     assert_eq!(
         (
             &final_["state"],
-            &final_["a"]["user_id"],
+            &player(&b, &final_["a"]["team_id"]),
             &final_["best_of"]
         ),
         (&json!("pending"), &json!(p[0].id), &json!(5))
@@ -150,7 +163,7 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
     let (_, seen) = get(&app, COPA, &ana).await;
     assert_eq!(seen["status"], "registration");
     let seeded =
-        sqlx::query_scalar!(r#"select count(*) as "n!" from participants where seed is not null"#)
+        sqlx::query_scalar!(r#"select count(*) as "n!" from teams where seed is not null"#)
             .fetch_one(&db)
             .await
             .unwrap();

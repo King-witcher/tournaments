@@ -20,6 +20,7 @@ mod ratings;
 pub mod realtime;
 pub mod screenshots;
 pub mod shared;
+mod teams;
 mod tenants;
 mod tournaments;
 
@@ -81,6 +82,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(invites::router())
         .merge(tournaments::router())
         .merge(participants::router())
+        .merge(teams::router())
         .merge(lifecycle::router())
         .merge(maps::router())
         .merge(matches::router())

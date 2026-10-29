@@ -6,14 +6,10 @@ mod cache;
 use engine::rating::{EloConfig, PROVISIONAL_GAMES};
 use sqlx::{PgConnection, PgExecutor, PgPool};
 
-use super::{
-    history::Modality,
-    types::{
-        AdjustmentAuthor, RankingEntry, RatedGame, RatedOpponent, RatedTournament, RatingAdjustment,
-    },
-};
+use super::types::{AdjustmentAuthor, RankingEntry, RatedGame, RatedTournament, RatingAdjustment};
 use crate::{
     shared::{ApiError, Locale},
+    teams,
     tenants::TenantId,
     tournaments::NameTranslation,
 };
@@ -60,11 +56,7 @@ pub async fn put_settings(
 }
 
 /// O ranking: os membros ativos com rating, do maior para o menor.
-pub async fn ranking(
-    db: &PgPool,
-    tenant: TenantId,
-    modality: Modality,
-) -> Result<Vec<RankingEntry>, sqlx::Error> {
+pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>, sqlx::Error> {
     let rows = sqlx::query!(
         r#"select rank() over (order by r.rating desc) as "position!", r.user_id, m.nickname,
                   u.display_name, u.avatar_url, r.rating, r.games, r.wins, r.losses,
@@ -72,10 +64,9 @@ pub async fn ranking(
            from ratings r
            join tenant_members m on m.tenant_id = r.tenant_id and m.user_id = r.user_id
            join users u on u.id = r.user_id
-           where r.tenant_id = $1 and r.modality = $2 and m.left_at is null
+           where r.tenant_id = $1 and m.left_at is null
            order by r.rating desc, r.games desc, m.nickname, r.user_id"#,
-        tenant.get(),
-        modality.as_str()
+        tenant.get()
     )
     .fetch_all(db)
     .await?;
@@ -100,16 +91,16 @@ pub async fn ranking(
 /// Até `limit` mapas que contaram para `user`, do mais recente, só dos
 /// torneios que `viewer` vê (`see_all`: organizer e owner veem todos; os
 /// outros, os públicos e os privados em que estão inscritos, como na lista da
-/// comunidade).
+/// comunidade). O adversário é o time do outro lado do mapa.
 pub async fn recent_games(
     db: &PgPool,
     tenant: TenantId,
-    modality: Modality,
     user: i64,
     viewer: i64,
     see_all: bool,
     limit: i64,
 ) -> Result<Vec<RatedGame>, ApiError> {
+    let mut conn = db.acquire().await?;
     let rows = sqlx::query!(
         r#"select g.match_key, g.number, mp.name as "map?", h.won as "won!", h.delta,
                   h.rating_after, h.at, t.slug, t.locale, t.name,
@@ -119,30 +110,29 @@ pub async fn recent_games(
                   coalesce((select array_agg(tr.name order by tr.locale)
                             from tournament_translations tr where tr.tournament_id = t.id),
                            '{}') as "translation_names!",
-                  o.user_id as opponent_id, o.nickname as opponent_nickname,
-                  ou.avatar_url as opponent_avatar, o.left_at is null as "opponent_active!"
+                  case gp.side when 'a' then g.side_b else g.side_a end as "opponent!"
            from rating_history h
            join match_games g on g.id = h.game_id and g.tenant_id = h.tenant_id
+           join match_game_players gp on gp.game_id = g.id and gp.user_id = h.user_id
            join tournaments t on t.id = g.tournament_id
            left join maps mp on mp.id = g.map_id
-           join tenant_members o on o.tenant_id = h.tenant_id and o.user_id = h.opponent_id
-           join users ou on ou.id = o.user_id
-           where h.tenant_id = $1 and h.modality = $2 and h.user_id = $3
-             and ($5 or (t.status <> 'draft'
+           where h.tenant_id = $1 and h.user_id = $2
+             and ($4 or (t.status <> 'draft'
                          and (t.visibility = 'public'
                               or exists(select 1 from participants p
-                                        where p.tournament_id = t.id and p.user_id = $4))))
+                                        where p.tournament_id = t.id and p.user_id = $3))))
            order by h.seq desc
-           limit $6"#,
+           limit $5"#,
         tenant.get(),
-        modality.as_str(),
         user,
         viewer,
         see_all,
         limit
     )
-    .fetch_all(db)
+    .fetch_all(&mut *conn)
     .await?;
+    let ids: Vec<i64> = rows.iter().map(|r| r.opponent).collect();
+    let opponents = teams::by_ids(&mut conn, tenant, &ids).await?;
 
     rows.into_iter()
         .map(|r| {
@@ -157,6 +147,10 @@ pub async fn recent_games(
                     })
                 })
                 .collect::<Result<_, ApiError>>()?;
+            let opponent = opponents
+                .iter()
+                .find(|t| t.id == r.opponent)
+                .ok_or_else(ApiError::internal)?;
             Ok(RatedGame {
                 tournament: RatedTournament {
                     slug: r.slug,
@@ -167,12 +161,7 @@ pub async fn recent_games(
                 match_key: r.match_key,
                 game: r.number,
                 map: r.map,
-                opponent: RatedOpponent {
-                    user_id: r.opponent_id,
-                    nickname: r.opponent_nickname,
-                    avatar_url: r.opponent_avatar,
-                    active: r.opponent_active,
-                },
+                opponent: opponent.view(),
                 won: r.won,
                 delta: r.delta,
                 rating_after: r.rating_after,
@@ -186,7 +175,6 @@ pub async fn recent_games(
 pub async fn adjustments(
     db: &PgPool,
     tenant: TenantId,
-    modality: Modality,
     user: i64,
 ) -> Result<Vec<RatingAdjustment>, sqlx::Error> {
     let rows = sqlx::query!(
@@ -194,10 +182,9 @@ pub async fn adjustments(
                   c.nickname as "created_by_nickname?"
            from rating_adjustments a
            left join tenant_members c on c.tenant_id = a.tenant_id and c.user_id = a.created_by
-           where a.tenant_id = $1 and a.modality = $2 and a.user_id = $3
+           where a.tenant_id = $1 and a.user_id = $2
            order by a.created_at desc, a.id desc"#,
         tenant.get(),
-        modality.as_str(),
         user
     )
     .fetch_all(db)
@@ -221,18 +208,16 @@ pub async fn adjustments(
 pub async fn insert_adjustment(
     conn: &mut PgConnection,
     tenant: TenantId,
-    modality: Modality,
     user: i64,
     delta: i32,
     reason: &str,
     by: i64,
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
-        r#"insert into rating_adjustments (tenant_id, modality, user_id, delta, reason, created_by)
-           values ($1, $2, $3, $4, $5, $6)
+        r#"insert into rating_adjustments (tenant_id, user_id, delta, reason, created_by)
+           values ($1, $2, $3, $4, $5)
            returning id"#,
         tenant.get(),
-        modality.as_str(),
         user,
         delta,
         reason,

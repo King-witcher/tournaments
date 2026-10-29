@@ -211,9 +211,10 @@ async fn leaving_drops_open_registrations_and_revokes_invites() {
         .unwrap();
     assert_eq!(mine["left"], true);
     let b = bracket(&app, &ana).await;
-    assert_eq!(b["entrants"][0]["user_id"], olga.id);
-    assert_eq!(b["entrants"][0]["left"], true);
-    assert_eq!(b["entrants"][1]["left"], false);
+    let player = |i: usize| &b["entrants"][i]["members"][0];
+    assert_eq!(player(0)["user_id"], olga.id);
+    assert_eq!(player(0)["left"], true);
+    assert_eq!(player(1)["left"], false);
 
     // Inativa, ninguém a inscreve.
     let uri = "/tenants/quake-br/tournaments/aberta/participants";

@@ -25,7 +25,9 @@ crates/api/src/
   members/        membros: listar, perfil, papel, apelido, sair, remover
   invites/        convites da comunidade e links de inscrição em torneio
   tournaments/    torneio, traduções, fases, quem vê, agenda e check-in automático
-  participants/   inscrição, check-in, seeding
+  participants/   inscrição (individual, por user_id) e check-in
+  teams/          times: quem ocupa um lado da chave em todos os modos (no duelo, o time de um
+                  jogador, criado pelo banco com a inscrição), seeding e desistência do time
   lifecycle/      transições depois de publicar (check-in, reabrir, iniciar, desfazer) e desistência
   matches/        chave e resultados, mapa a mapa, e o veto de mapas e campeões (veto/); com
                   screenshot obrigatório, o envio exige o screenshot (evidence.rs); slots.rs, a

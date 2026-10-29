@@ -5,8 +5,9 @@
 //! tempo real (`realtime`: outbox, inscrições de push), o rating (`ratings`:
 //! forma, marcas de desatualizado, exclusão), a exclusão agendada de conta e
 //! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`), o
-//! veto (`veto`: histórico, pool de mapas) e os screenshots (`screenshots`). As
-//! de resultados e histórico ficam em `matches::schema`.
+//! veto (`veto`: histórico, pool de mapas), os screenshots (`screenshots`) e
+//! os times (`teams`: o time de um jogador do duelo, capitão, escalação de
+//! cada mapa). As de resultados e histórico ficam em `matches::schema`.
 
 mod checks;
 mod deletion;
@@ -17,6 +18,7 @@ mod ratings;
 mod realtime;
 mod scheduled_deletion;
 mod screenshots;
+mod teams;
 mod veto;
 mod withdrawal;
 
@@ -127,13 +129,7 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
     .await
     .unwrap();
 
-    let (status, body) = put(
-        &app,
-        &format!("{COPA}/seeding"),
-        &ana,
-        json!({ "user_ids": [p1.id, p2.id] }),
-    )
-    .await;
+    let (status, body) = seed(&app, &ana, "copa", &[&p1, &p2]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");

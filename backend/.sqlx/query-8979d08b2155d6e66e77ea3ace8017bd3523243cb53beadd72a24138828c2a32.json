@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select g.id, g.confirmed_at as \"at!\",\n                  array_agg(p.user_id order by p.user_id)\n                      filter (where (p.side = 'a') = (g.winner = g.side_a)) as \"winners!\",\n                  array_agg(p.user_id order by p.user_id)\n                      filter (where (p.side = 'a') <> (g.winner = g.side_a)) as \"losers!\"\n           from match_games g\n           join tournaments t on t.id = g.tournament_id\n           join match_game_players p on p.game_id = g.id\n           where t.tenant_id = $1 and t.counts_for_rating and g.status = 'confirmed'\n           group by g.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "at!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "confirmed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "winners!",
+        "type_info": "Int8Array",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "losers!",
+        "type_info": "Int8Array",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "8979d08b2155d6e66e77ea3ace8017bd3523243cb53beadd72a24138828c2a32"
+}

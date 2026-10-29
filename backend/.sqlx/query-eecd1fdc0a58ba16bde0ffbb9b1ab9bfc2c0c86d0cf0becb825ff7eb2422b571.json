@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams set withdrawn_at = now(), withdrawn_by = $3\n                   where tournament_id = $1 and id = $2 and withdrawn_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "eecd1fdc0a58ba16bde0ffbb9b1ab9bfc2c0c86d0cf0becb825ff7eb2422b571"
+}

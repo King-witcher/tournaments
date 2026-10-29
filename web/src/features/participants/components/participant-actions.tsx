@@ -21,8 +21,11 @@ type Props = {
   checkIn?: "mark" | "unmark";
   /** Até começar: tirar do torneio. */
   remove: boolean;
-  /** Em andamento, para quem está na chave: marcar a desistência. */
-  withdraw: boolean;
+  /**
+   * Em andamento, para quem está na chave: marcar a desistência do time dele
+   * (no duelo, o time de um jogador); `null` sem a ação.
+   */
+  withdrawTeam: number | null;
 };
 
 /**
@@ -37,7 +40,7 @@ export function ParticipantActions({
   nickname,
   checkIn,
   remove,
-  withdraw,
+  withdrawTeam,
 }: Props) {
   const t = useTranslations("Participants");
   const router = useRouter();
@@ -83,7 +86,8 @@ export function ParticipantActions({
         ),
     });
   }
-  if (withdraw) {
+  if (withdrawTeam != null) {
+    const team = { slug: tenant, tournament, team: withdrawTeam };
     items.push({
       label: t("withdrawParticipant"),
       destructive: true,
@@ -92,8 +96,8 @@ export function ParticipantActions({
         run(
           () =>
             api.POST(
-              "/tenants/{slug}/tournaments/{tournament}/participants/{user_id}/withdrawal",
-              { params: { path } },
+              "/tenants/{slug}/tournaments/{tournament}/teams/{team}/withdrawal",
+              { params: { path: team } },
             ),
           done,
         ),

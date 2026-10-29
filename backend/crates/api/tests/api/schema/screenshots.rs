@@ -225,7 +225,7 @@ async fn every_deleted_screenshot_leaves_its_object_queued() {
     let (t, id) = started(&db).await;
     // Um mapa enviado com screenshot, e um screenshot no mapa 2, ainda não
     // enviado.
-    let (a, b): (i64, i64) = sqlx::query_as("select min(id), max(id) from participants")
+    let (a, b): (i64, i64) = sqlx::query_as("select min(id), max(id) from teams")
         .fetch_one(&db)
         .await
         .unwrap();

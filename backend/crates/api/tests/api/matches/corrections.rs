@@ -25,7 +25,7 @@ async fn corrections_that_contradict_a_later_match_are_refused() {
     let b = bracket(&app, &ana).await;
     assert_eq!(b["status"], "finished");
     assert_eq!(
-        b["standings"][0],
+        standings(&b)[0],
         json!({ "user_id": p[0].id, "rank": 1, "tied": 1 })
     );
 
@@ -90,10 +90,10 @@ async fn a_valid_correction_rebuilds_the_bracket() {
     assert_eq!(fixed["summary"]["result"]["b_wins"], 2);
     let b = bracket(&app, &ana).await;
     let final_ = find(&b, "wb-2-1");
-    assert_eq!(sides(final_), (json!(p[3].id), json!(p[1].id)));
+    assert_eq!(sides(&b, final_), (json!(p[3].id), json!(p[1].id)));
     assert_eq!(final_["task"], Value::Null);
     assert_eq!(
-        b["standings"],
+        standings(&b),
         json!([
             { "user_id": p[0].id, "rank": 3, "tied": 2 },
             { "user_id": p[2].id, "rank": 3, "tied": 2 }
@@ -137,7 +137,7 @@ async fn the_tournament_finishes_and_reopens_with_the_bracket() {
     play(&app, &p[1], &p[0], "gf-2-1", 3, 0).await;
     let b = bracket(&app, &p[0]).await;
     assert_eq!(b["status"], "finished");
-    assert_eq!(b["standings"][0]["user_id"], p[0].id);
+    assert_eq!(standings(&b)[0]["user_id"], p[0].id);
 
     // Agora a grande final não pode mais voltar atrás: o reset foi jogado.
     assert_eq!(

@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
@@ -26,14 +27,17 @@ type Props = {
 export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const t = useTranslations("Bracket");
   const { code } = useMatchLabels(bracket.format.bracket === "single");
-  const names = new Map(bracket.entrants.map((e) => [e.user_id, e.nickname]));
+  const teamName = useTeamName();
+  const teams = new Map(bracket.entrants.map((e) => [e.id, e]));
   const pending = bracket.matches.filter(
     (m) => m.key !== exclude && m.task && ACTIONABLE.includes(m.task),
   );
   if (pending.length === 0) return null;
 
-  const name = (side: Schemas["MatchSide"]) =>
-    (side.user_id != null && names.get(side.user_id)) || t("tbd");
+  const name = (side: Schemas["MatchSide"]) => {
+    const team = side.team_id != null ? teams.get(side.team_id) : undefined;
+    return team ? teamName(team) : t("tbd");
+  };
   return (
     <Section title={t("pending.title")}>
       <ul className={styles.list}>

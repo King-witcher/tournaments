@@ -48,14 +48,7 @@ pub async fn start(app: &Router, ana: &User, body: Value, players: &[&User]) {
     create_tournament(app, ana, body).await;
     publish(app, ana, "copa").await;
     register(app, "copa", players).await;
-    let order: Vec<i64> = players.iter().map(|p| p.id).collect();
-    let (status, seeded) = put(
-        app,
-        &format!("{COPA}/seeding"),
-        ana,
-        json!({ "user_ids": order }),
-    )
-    .await;
+    let (status, seeded) = seed(app, ana, "copa", players).await;
     assert_eq!(status, StatusCode::OK, "{seeded}");
     let (status, started) = post_empty(app, &format!("{COPA}/start"), ana).await;
     assert_eq!(status, StatusCode::OK, "{started}");
@@ -92,9 +85,54 @@ pub fn find<'a>(bracket: &'a Value, key: &str) -> &'a Value {
         .unwrap_or_else(|| panic!("sem a partida {key}"))
 }
 
-/// `(user_id de a, user_id de b)` da partida.
-pub fn sides(m: &Value) -> (Value, Value) {
-    (m["a"]["user_id"].clone(), m["b"]["user_id"].clone())
+/// O `user_id` do jogador do time `team` (um id ou `null`; no duelo, um
+/// jogador por time) entre os times da chave `b`; `null` sem time.
+pub fn player(b: &Value, team: &Value) -> Value {
+    b["entrants"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| !team.is_null() && e["id"] == *team)
+        .map_or(Value::Null, |e| e["members"][0]["user_id"].clone())
+}
+
+/// A classificação da chave `b` com o jogador de cada time (no duelo, um):
+/// `[{ user_id, rank, tied }]`.
+pub fn standings(b: &Value) -> Value {
+    b["standings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| json!({ "user_id": player(b, &s["team_id"]), "rank": s["rank"], "tied": s["tied"] }))
+        .collect()
+}
+
+/// O `outcome` de um evento do histórico com o jogador do time vencedor (no
+/// duelo, um): `{ winner, winner_nickname, walkover, winner_maps, loser_maps }`.
+pub fn outcome(event: &Value) -> Value {
+    let o = &event["outcome"];
+    if o.is_null() {
+        return Value::Null;
+    }
+    let w = &o["winner"]["members"][0];
+    json!({
+        "winner": w["user_id"],
+        "winner_nickname": w["nickname"],
+        "walkover": o["walkover"],
+        "winner_maps": o["winner_maps"],
+        "loser_maps": o["loser_maps"],
+    })
+}
+
+/// O `user_id` do jogador do lado `side` (`"a"` ou `"b"`) da partida `key` da
+/// chave `b`; `null` sem lado ainda.
+pub fn side_player(b: &Value, key: &str, side: &str) -> Value {
+    player(b, &find(b, key)[side]["team_id"])
+}
+
+/// `(user_id de a, user_id de b)` da partida `m` da chave `b`.
+pub fn sides(b: &Value, m: &Value) -> (Value, Value) {
+    (player(b, &m["a"]["team_id"]), player(b, &m["b"]["team_id"]))
 }
 
 fn game_uri(key: &str, game: u8, action: &str) -> String {

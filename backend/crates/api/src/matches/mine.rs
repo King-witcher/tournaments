@@ -20,6 +20,7 @@ use super::{
 };
 use crate::{
     shared::ApiError,
+    teams::StoredTeam,
     tenants::TenantMember,
     tournaments::{StoredTournament, TournamentStatus},
 };
@@ -134,7 +135,7 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
         },
         single: config.kind == EliminationKind::Single,
         opponent: match opponent {
-            Occupant::Participant(p) => stage.entrant(p).map(|e| e.nickname.clone()),
+            Occupant::Participant(p) => stage.entrant(p).map(StoredTeam::view),
             _ => None,
         },
         opponent_from: match (opponent, slot) {

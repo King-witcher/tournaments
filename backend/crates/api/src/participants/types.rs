@@ -10,16 +10,21 @@ pub struct Participant {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub registered_at: DateTime<Utc>,
-    /// Fez check-in. Com check-in no torneio, só quem fez entra no seeding e
-    /// na chave.
+    /// Fez check-in. Com check-in no torneio, só o time em que todos fizeram
+    /// entra no seeding e na chave.
     pub checked_in: bool,
-    /// Posição no seeding (1 = melhor); `null` sem seed. Depois de iniciar,
-    /// 1..N entre os elegíveis.
+    /// O time do inscrito (no duelo, o time de um jogador, criado com a
+    /// inscrição); `null` sem time.
+    pub team_id: Option<i64>,
+    /// Posição do time dele no seeding (1 = melhor); `null` sem seed. Depois
+    /// de iniciar, 1..N entre os times da chave.
     pub seed: Option<i32>,
-    /// Desistiu do torneio em andamento: as partidas dele viram W.O.
+    /// O time dele desistiu do torneio em andamento: as partidas dele viram
+    /// W.O.
     pub withdrawn: bool,
     /// Saiu da comunidade (ou foi removido). Só fica inscrito assim em
-    /// torneio iniciado, como histórico; no em andamento, também desistiu.
+    /// torneio iniciado, como histórico; no em andamento, o time dele também
+    /// desistiu, se ninguém mais dele ficou.
     pub left: bool,
 }
 
@@ -27,12 +32,6 @@ pub struct Participant {
 pub struct AddParticipant {
     /// Membro do tenant a inscrever.
     pub user_id: i64,
-}
-
-#[derive(Deserialize, ToSchema)]
-pub struct SeedingOrder {
-    /// Todos os elegíveis, cada um uma vez, do seed 1 em diante.
-    pub user_ids: Vec<i64>,
 }
 
 /// `{tournament}` e `{user_id}` de

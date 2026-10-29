@@ -1,9 +1,10 @@
-//! W.O. automático: toda partida pronta com um lado fora do torneio (desistiu
-//! ou saiu da comunidade) vira W.O. para o adversário, decidida e sem autor,
-//! com o evento `auto_walkover` no histórico. Aplicado depois de toda
-//! mudança que pode deixar partida pronta (`settle`), então nenhuma partida
-//! pronta fica parada esperando quem saiu. Os mapas confirmados da série
-//! ficam (foram jogados); os pendentes e contestados são anulados.
+//! W.O. automático: toda partida pronta com um time fora do torneio (desistiu
+//! ou nenhum jogador dele continua na comunidade) vira W.O. para o
+//! adversário, decidida e sem autor, com o evento `auto_walkover` no
+//! histórico. Aplicado depois de toda mudança que pode deixar partida pronta
+//! (`settle`), então nenhuma partida pronta fica parada esperando quem saiu.
+//! Os mapas confirmados da série ficam (foram jogados); os pendentes e
+//! contestados são anulados.
 
 use engine::core::{MatchId, MatchState, Outcome, ParticipantId};
 use sqlx::PgConnection;
@@ -34,7 +35,11 @@ struct Due {
 /// dois fora, o de seed melhor (que, na dupla, ainda pode cair na chave de
 /// baixo e levar outro W.O.).
 fn due(stage: &Stage) -> Vec<Due> {
-    let out = |p: ParticipantId| stage.entrant(p).map(|e| (e.out(), e.seed));
+    let out = |p: ParticipantId| {
+        stage
+            .entrant(p)
+            .map(|e| (e.out(), e.seed.unwrap_or(i32::MAX)))
+    };
     stage
         .bracket
         .matches()

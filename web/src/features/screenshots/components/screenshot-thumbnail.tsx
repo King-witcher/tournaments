@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import type { ScreenshotTarget } from "../lib/screenshot-target";
 import { RemoveScreenshotButton } from "./remove-screenshot-button";
@@ -25,7 +26,11 @@ export function ScreenshotThumbnail({
   focusId,
 }: Props) {
   const t = useTranslations("Screenshots");
-  const name = screenshot.uploaded_by?.nickname;
+  const tMember = useTranslations("Member");
+  const author = screenshot.uploaded_by;
+  const name = author
+    ? shownNickname(author.nickname, tMember("deletedAccount"))
+    : undefined;
   const number = target.number;
   const label = name
     ? t("open", { index, number, name })

@@ -1,7 +1,7 @@
 //! Uma partida com lados, mapas e histórico: o que a página da partida
 //! mostra e o que toda ação sobre ela devolve.
 
-use engine::core::Match;
+use engine::core::{Match, ParticipantId};
 use sqlx::PgConnection;
 
 use super::{
@@ -12,7 +12,7 @@ use super::{
     veto,
     view::{self, Viewer},
 };
-use crate::{shared::ApiError, tournaments::StoredTournament};
+use crate::{shared::ApiError, teams::StoredTeam, tournaments::StoredTournament};
 
 const NOT_FOUND: ApiError = ApiError::not_found("match.not_found");
 
@@ -34,13 +34,13 @@ pub async fn load(
     let games = stage.games_of(m.id);
     let mine = view::viewer_side(stage, m, viewer);
     let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;
-    let entrant = |user: Option<i64>| {
-        user.and_then(|u| stage.entrants.iter().find(|e| e.user_id == u))
-            .map(view::entrant)
+    let team = |id: Option<i64>| {
+        id.and_then(|id| stage.entrant(ParticipantId(id)))
+            .map(StoredTeam::view)
     };
     Ok(MatchDetail {
-        a: entrant(summary.a.user_id),
-        b: entrant(summary.b.user_id),
+        a: team(summary.a.team_id),
+        b: team(summary.b.team_id),
         format: stage.format.into(),
         part_rounds: stage
             .bracket

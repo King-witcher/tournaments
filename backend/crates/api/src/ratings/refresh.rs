@@ -11,7 +11,7 @@ use sqlx::{PgConnection, PgPool};
 
 use super::{
     db,
-    history::{self, Cache, Modality},
+    history::{self, Cache},
 };
 use crate::{shared::ApiError, tenants, tenants::TenantId};
 
@@ -27,18 +27,17 @@ pub async fn refresh(conn: &mut PgConnection, tenant: TenantId) -> Result<bool, 
         return Ok(false);
     }
     let elo = elo(conn, tenant).await?;
-    let modality = Modality::Duel;
-    let mut sources = db::sources(conn, tenant, modality).await?;
+    let mut sources = db::sources(conn, tenant).await?;
     let events = history::events(&mut sources);
     let replay = er::replay(&elo, &events).map_err(|e| {
         tracing::error!(tenant = tenant.get(), error = %e, "histórico de rating inválido");
         ApiError::internal()
     })?;
     let cache = Cache::build(&sources, &replay);
-    if db::read(conn, tenant, modality).await? == cache {
+    if db::read(conn, tenant).await? == cache {
         return Ok(false);
     }
-    db::write(conn, tenant, modality, &cache).await?;
+    db::write(conn, tenant, &cache).await?;
     tenants::changed(conn, tenant).await?;
     Ok(true)
 }

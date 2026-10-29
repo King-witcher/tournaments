@@ -21,8 +21,8 @@ use sqlx::PgConnection;
 use super::{announce, games::GameStatus, key, result::Confirmation, stage::Stage};
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
-    participants::Seeded,
     shared::ApiError,
+    teams::StoredTeam,
     tenants,
     tournaments::{self, Audience, StoredTournament, TournamentStatus},
 };
@@ -152,7 +152,7 @@ pub async fn settled(
                 [a, b]
                     .iter()
                     .filter_map(|p| after.entrant(*p))
-                    .map(|e| e.user_id),
+                    .flat_map(StoredTeam::user_ids),
             );
         }
         if let Some(pair) = ready(m.state)
@@ -185,7 +185,7 @@ pub async fn started(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     bracket: &EliminationBracket,
-    entrants: &[Seeded],
+    entrants: &[StoredTeam],
 ) -> Result<(), ApiError> {
     let audience = tournaments::audience(conn, tournament.id).await?;
     for m in bracket.matches() {
@@ -197,11 +197,11 @@ pub async fn started(
     Ok(())
 }
 
-/// `match.ready` para cada lado, com o apelido do outro.
+/// `match.ready` para os jogadores de cada lado, com o nome do outro.
 async fn match_ready(
     conn: &mut PgConnection,
     audience: &Audience,
-    entrants: &[Seeded],
+    entrants: &[StoredTeam],
     key: &str,
     (a, b): (ParticipantId, ParticipantId),
 ) -> Result<(), sqlx::Error> {
@@ -214,11 +214,11 @@ async fn match_ready(
             kind: NoticeKind::MatchReady {
                 tournament: audience.name.clone(),
                 match_key: key.to_owned(),
-                opponent: opponent.nickname.clone(),
+                opponent: opponent.display_name(),
             },
             path: match_path(audience, key),
         };
-        outbox::emit(conn, Event::notice([to.user_id], notice)).await?;
+        outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
     }
     Ok(())
 }
@@ -227,14 +227,14 @@ fn match_path(audience: &Audience, key: &str) -> String {
     format!("{}/matches/{key}", audience.path())
 }
 
-/// `from` enviou o mapa `game` da partida `key`: aviso para `to`, o
-/// adversário, com o prazo para confirmar ou contestar.
+/// O time `from` enviou o mapa `game` da partida `key`: aviso para os
+/// jogadores de `to`, o adversário, com o prazo para confirmar ou contestar.
 pub async fn game_reported(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     key: &str,
     game: i16,
-    (from, to): (&Seeded, &Seeded),
+    (from, to): (&StoredTeam, &StoredTeam),
     confirm_by: DateTime<Utc>,
 ) -> Result<(), sqlx::Error> {
     let audience = tournaments::audience(conn, tournament.id).await?;
@@ -243,12 +243,12 @@ pub async fn game_reported(
             tournament: audience.name.clone(),
             match_key: key.to_owned(),
             game,
-            opponent: from.nickname.clone(),
+            opponent: from.display_name(),
             confirm_by,
         },
         path: match_path(&audience, key),
     };
-    outbox::emit(conn, Event::notice([to.user_id], notice)).await
+    outbox::emit(conn, Event::notice(to.user_ids(), notice)).await
 }
 
 /// `player` (apelido; `by`, o usuário) contestou o mapa `game` da partida
@@ -275,8 +275,8 @@ pub async fn game_contested(
     outbox::emit(conn, Event::notice(to, notice)).await
 }
 
-/// O veto da partida `key` começou: aviso para os dois lados, com o apelido
-/// do outro.
+/// O veto da partida `key` começou: aviso para os jogadores dos dois lados,
+/// com o nome do outro.
 pub async fn veto_started(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -293,17 +293,17 @@ pub async fn veto_started(
             kind: NoticeKind::VetoStarted {
                 tournament: audience.name.clone(),
                 match_key: key.to_owned(),
-                opponent: opponent.nickname.clone(),
+                opponent: opponent.display_name(),
             },
             path: match_path(&audience, key),
         };
-        outbox::emit(conn, Event::notice([to.user_id], notice)).await?;
+        outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
     }
     Ok(())
 }
 
-/// `opponent` (apelido) está pronto para o veto da partida `key`: aviso
-/// para `to`, o outro lado.
+/// `opponent` (o nome do time) está pronto para o veto da partida `key`:
+/// aviso para os jogadores de `to`, o outro lado.
 pub async fn opponent_ready(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -324,6 +324,6 @@ pub async fn opponent_ready(
         },
         path: match_path(&audience, key),
     };
-    outbox::emit(conn, Event::notice([to.user_id], notice)).await?;
+    outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
     Ok(())
 }

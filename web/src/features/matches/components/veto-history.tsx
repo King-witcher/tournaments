@@ -1,6 +1,7 @@
 import { AccordionItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import rowStyles from "./match-event-row.module.scss";
@@ -20,6 +21,7 @@ type Props = {
  */
 export function VetoHistory({ veto, names }: Props) {
   const t = useTranslations("Match.veto.history");
+  const tMember = useTranslations("Member");
   if (veto.history.length === 0) return null;
 
   return (
@@ -29,11 +31,14 @@ export function VetoHistory({ veto, names }: Props) {
           const who = e.side ? names[e.side] : "";
           const text = t(`kinds.${e.kind}`, {
             name: who,
-            actor: e.actor ?? "",
+            actor:
+              e.actor != null
+                ? shownNickname(e.actor, tMember("deletedAccount"))
+                : "",
             map: e.map?.name ?? "",
             champion: e.champion?.name ?? "",
             game: e.game ?? 1,
-            forced: e.actor ? "yes" : "no",
+            forced: e.actor != null ? "yes" : "no",
           });
           const parts = [
             e.game != null && e.kind !== "game" && e.kind !== "begin"

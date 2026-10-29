@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.id, t.seed is not null as \"seeded!\",\n                  not exists(select 1 from participants o\n                             join tenant_members m\n                               on m.tenant_id = o.tenant_id and m.user_id = o.user_id\n                             where o.tournament_id = t.tournament_id and o.team_id = t.id\n                               and o.user_id <> $2 and m.left_at is null) as \"last!\"\n           from participants p\n           join teams t on t.tournament_id = p.tournament_id and t.id = p.team_id\n           where p.tournament_id = $1 and p.user_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "seeded!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "last!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "4df44219f6acc72e2ce253dad2d4b3c7dc0c6f3d9912b8a1154594da1fbfae28"
+}

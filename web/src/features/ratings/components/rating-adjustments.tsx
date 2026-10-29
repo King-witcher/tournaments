@@ -1,5 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -16,7 +17,12 @@ type Props = {
  */
 export function RatingAdjustments({ adjustments }: Props) {
   const t = useTranslations("Ratings.adjustments");
+  const tMember = useTranslations("Member");
   const locale = useLocale();
+  const author = (a: Props["adjustments"][number]) =>
+    a.created_by
+      ? shownNickname(a.created_by.nickname, tMember("deletedAccount"))
+      : t("unknownAuthor");
   return (
     <Section title={t("title")} description={t("description")}>
       <DataTable
@@ -29,12 +35,12 @@ export function RatingAdjustments({ adjustments }: Props) {
         ]}
         rows={adjustments.map((a) => ({
           id: String(a.id),
-          search: `${a.reason} ${a.created_by?.nickname ?? ""}`,
+          search: `${a.reason} ${author(a)}`,
           cells: {
             when: <LocalDateTime value={a.created_at} />,
             points: formatPoints(a.delta, locale),
             reason: a.reason,
-            by: a.created_by?.nickname ?? t("unknownAuthor"),
+            by: author(a),
           },
         }))}
         empty={{ text: t("empty") }}

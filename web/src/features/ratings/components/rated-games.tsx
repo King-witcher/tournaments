@@ -1,5 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
+import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
@@ -26,6 +28,7 @@ type Props = {
 export function RatedGames({ tenant, games }: Props) {
   const t = useTranslations("Ratings.games");
   const locale = useLocale();
+  const teamName = useTeamName();
 
   return (
     <Section
@@ -45,21 +48,20 @@ export function RatedGames({ tenant, games }: Props) {
         ]}
         rows={games.map((g) => {
           const name = localizedName(g.tournament, locale);
+          const opponent = teamName(g.opponent);
+          const solo = soloMember(g.opponent);
           return {
             id: `${g.tournament.slug}:${g.match}:${g.game}`,
             href: `/${tenant}/${g.tournament.slug}/matches/${g.match}`,
-            search: `${name} ${g.opponent.nickname} ${g.map ?? ""}`,
+            search: `${name} ${opponent} ${g.map ?? ""}`,
             cells: {
               tournament: name,
               opponent: (
                 <span className={styles.opponent}>
-                  <Avatar
-                    src={g.opponent.avatar_url}
-                    name={g.opponent.nickname}
-                  />
-                  {g.opponent.active
-                    ? g.opponent.nickname
-                    : `${g.opponent.nickname} (${t("left")})`}
+                  <Avatar src={solo?.avatar_url} name={opponent} />
+                  {teamLeft(g.opponent)
+                    ? `${opponent} (${t("left")})`
+                    : opponent}
                 </span>
               ),
               map: g.map

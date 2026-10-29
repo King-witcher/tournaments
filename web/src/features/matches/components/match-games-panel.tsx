@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import { Section } from "@/shared/ui/section";
+import { useSideNames } from "../hooks/use-side-names";
 import type { MatchTarget } from "../lib/match-target";
 import { GameRow } from "./game-row";
 import styles from "./match-games-panel.module.scss";
@@ -31,7 +32,7 @@ export function MatchGamesPanel({
   const t = useTranslations("Match.games");
   const formatMinutes = useFormatMinutes();
   const s = detail.summary;
-  const names = { a: detail.a?.nickname ?? "", b: detail.b?.nickname ?? "" };
+  const names = useSideNames(detail);
   const next = detail.next_game;
   const open = s.state === "ready";
   if (!open && detail.games.length === 0) return null;

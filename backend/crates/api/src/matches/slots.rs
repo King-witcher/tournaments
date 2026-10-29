@@ -7,7 +7,9 @@ use engine::core::{Match, MatchState};
 use sqlx::PgConnection;
 
 use super::{detail, due, games::GameStatus, key, stage, tasks};
-use crate::{shared::ApiError, tenants::TenantMember, tournaments::StoredTournament};
+use crate::{
+    shared::ApiError, teams::StoredTeam, tenants::TenantMember, tournaments::StoredTournament,
+};
 
 pub struct MatchGames {
     pub tournament: StoredTournament,
@@ -15,9 +17,9 @@ pub struct MatchGames {
     pub stage: i16,
     /// `wb-1-3`.
     pub key: String,
-    /// `user_id` dos dois lados, quando já se sabe quem joga (partida pronta
-    /// ou decidida).
-    pub players: Option<(i64, i64)>,
+    /// `user_id` dos jogadores dos dois times, quando já se sabe quem joga
+    /// (partida pronta ou decidida); vazio antes.
+    pub players: Vec<i64>,
     /// Os mapas enviados, na ordem.
     pub games: Vec<SlotGame>,
     /// O próximo mapa que dá para enviar; `None` com a série decidida ou o
@@ -37,10 +39,9 @@ impl MatchGames {
         self.games.iter().copied().find(|g| g.number == number)
     }
 
-    /// `user_id` joga a partida.
+    /// `user_id` joga a partida (é de um dos times).
     pub fn plays(&self, user_id: i64) -> bool {
-        self.players
-            .is_some_and(|(a, b)| a == user_id || b == user_id)
+        self.players.contains(&user_id)
     }
 }
 
@@ -74,12 +75,13 @@ async fn load(
     let stage = stage::load(conn, &tournament).await?;
     let m: &Match = detail::find(&stage, key)?;
     let players = match m.state {
-        MatchState::Ready { a, b } | MatchState::Completed { a, b, .. } => {
-            stage.entrant(a).zip(stage.entrant(b))
-        }
-        _ => None,
-    }
-    .map(|(a, b)| (a.user_id, b.user_id));
+        MatchState::Ready { a, b } | MatchState::Completed { a, b, .. } => [a, b]
+            .iter()
+            .filter_map(|p| stage.entrant(*p))
+            .flat_map(StoredTeam::user_ids)
+            .collect(),
+        _ => Vec::new(),
+    };
     let games = stage.games_of(m.id);
     Ok(MatchGames {
         stage: stage.number,

@@ -5,15 +5,23 @@ use engine::{core::ParticipantId, seeding::random_order};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
-use super::{COPA, nicknames};
+use super::COPA;
 use crate::common::*;
 
-/// `(apelido, seed)` na ordem do seeding.
+/// `(apelido, seed)` na ordem do seeding: no duelo, cada time é de um
+/// jogador, sem nome.
 fn seeds(list: &Value) -> Vec<(&str, Option<i64>)> {
     list.as_array()
         .unwrap()
         .iter()
-        .map(|p| (p["nickname"].as_str().unwrap(), p["seed"].as_i64()))
+        .map(|t| {
+            assert!(t["name"].is_null(), "{t}");
+            assert_eq!(t["members"].as_array().unwrap().len(), 1, "{t}");
+            (
+                t["members"][0]["nickname"].as_str().unwrap(),
+                t["seed"].as_i64(),
+            )
+        })
         .collect()
 }
 
@@ -51,27 +59,22 @@ async fn manual_order_is_kept() {
     );
 
     let uri = format!("{COPA}/seeding");
-    let (status, order) = put(
-        &app,
-        &uri,
-        &ana,
-        json!({ "user_ids": [duda.id, ana.id, bia.id] }),
-    )
-    .await;
+    let (status, order) = seed(&app, &ana, "copa", &[&duda, &ana, &bia]).await;
     assert_eq!(status, StatusCode::OK, "{order}");
     let expected = [("Duda", Some(1)), ("Ana", Some(2)), ("Bia", Some(3))];
     assert_eq!(seeds(&order), expected);
     assert_eq!(seeds(&seeding(&app, &ana).await), expected);
 
-    // Precisa ser exatamente os elegíveis, cada um uma vez.
+    // Precisa ser exatamente os times elegíveis, cada um uma vez.
+    let t = team_ids(&app, &ana, "copa", &[&duda, &ana, &bia, &caio]).await;
     for wrong in [
-        json!([duda.id, ana.id]),
-        json!([duda.id, ana.id, bia.id, caio.id]),
-        json!([duda.id, ana.id, ana.id]),
-        json!([duda.id, ana.id, caio.id]),
+        json!([t[0], t[1]]),
+        json!([t[0], t[1], t[2], t[3]]),
+        json!([t[0], t[1], t[1]]),
+        json!([t[0], t[1], t[3]]),
     ] {
         assert_eq!(
-            put(&app, &uri, &ana, json!({ "user_ids": wrong })).await,
+            put(&app, &uri, &ana, json!({ "team_ids": wrong })).await,
             (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 err("seeding.order_invalid")
@@ -112,23 +115,22 @@ async fn draw_is_saved_and_reproducible() {
         .unwrap()
         .unwrap();
     let eligible = sqlx::query_scalar!(
-        "select id from participants where checked_in_at is not null order by id"
+        "select team_id as \"team_id!\" from participants where checked_in_at is not null order by team_id"
     )
     .fetch_all(&db)
     .await
     .unwrap();
     let ids: Vec<ParticipantId> = eligible.into_iter().map(ParticipantId).collect();
-    let by_seed =
-        sqlx::query_scalar!("select id from participants where seed is not null order by seed")
-            .fetch_all(&db)
-            .await
-            .unwrap();
+    let by_seed = sqlx::query_scalar!("select id from teams where seed is not null order by seed")
+        .fetch_all(&db)
+        .await
+        .unwrap();
     let replayed: Vec<i64> = random_order(&ids, seed as u64)
         .into_iter()
         .map(|p| p.0)
         .collect();
     assert_eq!(replayed, by_seed);
-    assert_eq!(nicknames(&drawn).len(), 3);
+    assert_eq!(drawn.as_array().unwrap().len(), 3);
 }
 
 #[tokio::test]
@@ -142,7 +144,7 @@ async fn players_do_not_see_or_change_the_seeding() {
             &app,
             &format!("{COPA}/seeding"),
             &bia,
-            json!({ "user_ids": [] })
+            json!({ "team_ids": [] })
         )
         .await,
         forbidden

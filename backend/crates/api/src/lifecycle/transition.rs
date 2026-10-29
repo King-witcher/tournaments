@@ -20,7 +20,7 @@ use sqlx::PgConnection;
 use crate::{
     matches, participants,
     shared::ApiError,
-    tenants,
+    teams, tenants,
     tournaments::{self, StoredTournament, TournamentStatus},
 };
 
@@ -88,7 +88,7 @@ pub async fn apply(
         }
         Transition::Start => {
             let seeded: Vec<ParticipantId> =
-                participants::finalize_seeding(conn, tournament, MIN_TO_START).await?;
+                teams::finalize_seeding(conn, tournament, MIN_TO_START).await?;
             matches::start(conn, tournament, &seeded).await?;
         }
         Transition::UndoStart => {

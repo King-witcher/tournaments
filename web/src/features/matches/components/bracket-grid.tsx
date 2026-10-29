@@ -15,7 +15,8 @@ type Props = {
   parts: Schemas["BracketPart"][];
   matches: Schemas["BracketMatch"][];
   single: boolean;
-  entrants: Map<number, Schemas["BracketEntrant"]>;
+  /** Os times da chave, pelo id. */
+  entrants: Map<number, Schemas["Team"]>;
   /** Endereço das partidas, sem a chave da partida. */
   basePath: string;
 };

@@ -8,8 +8,8 @@ use super::*;
 use crate::common::*;
 use crate::schema::{CHECK, FOREIGN_KEY, UNIQUE, rejected, rule};
 
-/// `(tenant_id, tournament_id, [participante do seed 1, do seed 2])` do
-/// torneio `slug`.
+/// `(tenant_id, tournament_id, [time do seed 1, do seed 2])` do torneio
+/// `slug`.
 async fn ids(db: &PgPool, slug: &str) -> (i64, i64, Vec<i64>) {
     let t = sqlx::query!(
         "select tenant_id, id from tournaments where slug = $1",
@@ -19,7 +19,7 @@ async fn ids(db: &PgPool, slug: &str) -> (i64, i64, Vec<i64>) {
     .await
     .unwrap();
     let seeded = sqlx::query_scalar!(
-        "select id from participants where tournament_id = $1 and seed is not null order by seed",
+        "select id from teams where tournament_id = $1 and seed is not null order by seed",
         t.id
     )
     .fetch_all(db)
@@ -302,10 +302,10 @@ async fn the_decided_series_agrees_with_its_maps() {
         rule(CHECK, "match_results_maps_check")
     );
 
-    // Com mapas, o participante não sai (a chave depende dele).
+    // Com mapas, o time não sai (a chave depende dele).
     assert_eq!(
         rejected(
-            sqlx::query("delete from participants where id = $1")
+            sqlx::query("delete from teams where id = $1")
                 .bind(b)
                 .execute(&db)
                 .await
@@ -324,13 +324,13 @@ async fn maps_stay_inside_their_tournament() {
     let (tenant, tournament, seeded) = ids(&db, "copa").await;
     let a = seeded[0];
 
-    // Participante de outro torneio do mesmo tenant.
+    // Time de outro torneio do mesmo tenant.
     let outra = with(duel("outra"), json!({ "check_in_minutes": null }));
     create_tournament(&app, &ana, outra).await;
     publish(&app, &ana, "outra").await;
     register(&app, "outra", &[&p[0]]).await;
     let other = sqlx::query_scalar!(
-        "select p.id from participants p join tournaments t on t.id = p.tournament_id
+        "select tm.id from teams tm join tournaments t on t.id = tm.tournament_id
          where t.slug = 'outra'"
     )
     .fetch_one(&db)

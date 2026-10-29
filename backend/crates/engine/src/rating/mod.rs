@@ -3,10 +3,12 @@
 //! refaz tudo do zero (`replay`) quando o histórico muda, então corrigir um
 //! mapa antigo é reprocessar com o histórico corrigido.
 //!
-//! Um jogo é um mapa decidido (não a série; W.O. não entra). A ordem dos
-//! eventos é de quem chama (a API ordena pelo horário em que o mapa
-//! confirmou ou o ajuste foi feito, depois pelo id): `replay` só aplica, na
-//! ordem dada, e a mesma lista dá sempre o mesmo resultado.
+//! Um jogo é um mapa decidido (não a série; W.O. não entra), com a escalação
+//! de cada lado naquele mapa: quem jogou, um jogador de cada lado no duelo,
+//! mais nos times. Um ranking só para todos os modos. A ordem dos eventos é
+//! de quem chama (a API ordena pelo horário em que o mapa confirmou ou o
+//! ajuste foi feito, depois pelo id): `replay` só aplica, na ordem dada, e a
+//! mesma lista dá sempre o mesmo resultado.
 //!
 //! `RatingSystem` é o sistema; `Elo` (em `elo`) é o primeiro. Os ratings são
 //! inteiros e cada variação é arredondada no evento, para a soma das
@@ -19,14 +21,14 @@ mod elo;
 #[cfg(test)]
 mod tests;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use thiserror::Error;
 
 pub use elo::{Elo, EloConfig, EloConfigError};
 
 /// Uma pessoa no rating: o usuário (`users.id` na API). O rating é da pessoa
-/// na comunidade, não da inscrição num torneio.
+/// na comunidade, não da inscrição nem do time num torneio.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct PlayerId(pub i64);
 
@@ -36,6 +38,13 @@ pub const PROVISIONAL_GAMES: u32 = 10;
 /// Maior ajuste manual, para cima ou para baixo (o mesmo `check` está na
 /// tabela da API).
 pub const MAX_ADJUSTMENT: i32 = 1000;
+
+/// Um jogador num jogo: o estado dele e quantos jogos já tinha antes deste.
+#[derive(Clone, Copy, Debug)]
+pub struct Seat<'a, T> {
+    pub state: &'a T,
+    pub games: u32,
+}
 
 /// Um sistema de rating.
 pub trait RatingSystem {
@@ -49,26 +58,28 @@ pub trait RatingSystem {
     /// O rating exibido.
     fn rating(&self, state: &Self::State) -> i32;
 
-    /// Os estados do vencedor e do perdedor depois de um jogo entre os dois.
-    /// `winner_games` e `loser_games`: quantos jogos cada um já tinha antes
-    /// deste.
+    /// Os estados de cada jogador do lado vencedor e do perdedor depois de um
+    /// jogo, na ordem de `winners` e `losers` (nenhum dos dois vazio; no
+    /// duelo, um de cada lado).
     fn game(
         &self,
-        winner: &Self::State,
-        winner_games: u32,
-        loser: &Self::State,
-        loser_games: u32,
-    ) -> (Self::State, Self::State);
+        winners: &[Seat<'_, Self::State>],
+        losers: &[Seat<'_, Self::State>],
+    ) -> (Vec<Self::State>, Vec<Self::State>);
 
     /// O estado depois de um ajuste manual de `delta` pontos.
     fn adjust(&self, state: &Self::State, delta: i32) -> Self::State;
 }
 
 /// Um evento do histórico de rating.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Event {
-    /// Um mapa decidido.
-    Game { winner: PlayerId, loser: PlayerId },
+    /// Um mapa decidido, com a escalação de cada lado naquele mapa (quem
+    /// jogou; no duelo, um jogador de cada lado).
+    Game {
+        winners: Vec<PlayerId>,
+        losers: Vec<PlayerId>,
+    },
     /// Ajuste manual da organização: soma `delta` ao rating e não conta como
     /// jogo (o K de quem foi ajustado não muda). `delta` diferente de zero,
     /// até `MAX_ADJUSTMENT` para cada lado.
@@ -84,9 +95,13 @@ pub struct Change {
 }
 
 /// O efeito de um evento, na mesma posição dele na lista.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Effect {
-    Game { winner: Change, loser: Change },
+    /// Um por jogador, na ordem de `winners` e `losers` do evento.
+    Game {
+        winners: Vec<Change>,
+        losers: Vec<Change>,
+    },
     Adjustment(Change),
 }
 
@@ -118,10 +133,14 @@ pub struct Replay {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Error)]
 pub enum RatingError {
-    /// Um jogo de alguém contra si mesmo (a API nunca manda: os lados de um
-    /// mapa são inscrições diferentes, de pessoas diferentes).
-    #[error("o evento {index} é um jogo de {player:?} contra si mesmo")]
-    SelfGame { index: usize, player: PlayerId },
+    /// Um jogador que aparece mais de uma vez no mesmo jogo: contra si mesmo
+    /// ou repetido num lado (a API nunca manda: cada inscrito está num time
+    /// só, e a escalação de um mapa não repete ninguém).
+    #[error("o evento {index} tem {player:?} mais de uma vez")]
+    RepeatedPlayer { index: usize, player: PlayerId },
+    /// Um jogo com um lado sem ninguém.
+    #[error("o evento {index} é um jogo com um lado vazio")]
+    EmptySide { index: usize },
     /// Ajuste zero ou além de `MAX_ADJUSTMENT`.
     #[error("o ajuste do evento {index} está fora de ±{max} (ou é zero)")]
     AdjustmentOutOfRange { index: usize, max: i32 },
@@ -134,26 +153,30 @@ pub fn replay<S: RatingSystem>(system: &S, events: &[Event]) -> Result<Replay, R
     let mut effects = Vec::with_capacity(events.len());
 
     for (index, event) in events.iter().enumerate() {
-        let effect = match *event {
-            Event::Game { winner, loser } => {
-                if winner == loser {
-                    return Err(RatingError::SelfGame {
-                        index,
-                        player: winner,
-                    });
-                }
-                let w = Person::of(&people, winner, system);
-                let l = Person::of(&people, loser, system);
-                let (w_after, l_after) = system.game(&w.state, w.games, &l.state, l.games);
-                let effect = Effect::Game {
-                    winner: change(system, &w.state, &w_after),
-                    loser: change(system, &l.state, &l_after),
+        let effect = match event {
+            Event::Game { winners, losers } => {
+                check_lineups(index, winners, losers)?;
+                let before = |side: &[PlayerId]| -> Vec<Person<S::State>> {
+                    side.iter()
+                        .map(|p| Person::of(&people, *p, system))
+                        .collect()
                 };
-                people.insert(winner, w.after_game(w_after, true));
-                people.insert(loser, l.after_game(l_after, false));
+                let (w, l) = (before(winners), before(losers));
+                let (w_after, l_after) = system.game(&seats(&w), &seats(&l));
+                let effect = Effect::Game {
+                    winners: changes(system, &w, &w_after),
+                    losers: changes(system, &l, &l_after),
+                };
+                for (side, before, after, won) in
+                    [(winners, w, w_after, true), (losers, l, l_after, false)]
+                {
+                    for ((player, p), state) in side.iter().zip(before).zip(after) {
+                        people.insert(*player, p.after_game(state, won));
+                    }
+                }
                 effect
             }
-            Event::Adjustment { player, delta } => {
+            &Event::Adjustment { player, delta } => {
                 if delta == 0 || delta.unsigned_abs() > MAX_ADJUSTMENT.unsigned_abs() {
                     return Err(RatingError::AdjustmentOutOfRange {
                         index,
@@ -184,6 +207,22 @@ pub fn replay<S: RatingSystem>(system: &S, events: &[Event]) -> Result<Replay, R
         })
         .collect();
     Ok(Replay { standings, effects })
+}
+
+/// Cada lado com alguém e ninguém mais de uma vez no jogo.
+fn check_lineups(
+    index: usize,
+    winners: &[PlayerId],
+    losers: &[PlayerId],
+) -> Result<(), RatingError> {
+    if winners.is_empty() || losers.is_empty() {
+        return Err(RatingError::EmptySide { index });
+    }
+    let mut seen = BTreeSet::new();
+    match winners.iter().chain(losers).find(|p| !seen.insert(**p)) {
+        Some(&player) => Err(RatingError::RepeatedPlayer { index, player }),
+        None => Ok(()),
+    }
 }
 
 /// Uma pessoa durante o `replay`.
@@ -218,6 +257,29 @@ impl<T: Clone> Person<T> {
             losses: self.losses + u32::from(!won),
         }
     }
+}
+
+/// Os lugares de um lado no jogo, na ordem.
+fn seats<T>(side: &[Person<T>]) -> Vec<Seat<'_, T>> {
+    side.iter()
+        .map(|p| Seat {
+            state: &p.state,
+            games: p.games,
+        })
+        .collect()
+}
+
+/// A variação de cada jogador de um lado, na ordem.
+fn changes<S: RatingSystem>(
+    system: &S,
+    before: &[Person<S::State>],
+    after: &[S::State],
+) -> Vec<Change> {
+    before
+        .iter()
+        .zip(after)
+        .map(|(p, a)| change(system, &p.state, a))
+        .collect()
 }
 
 fn change<S: RatingSystem>(system: &S, before: &S::State, after: &S::State) -> Change {

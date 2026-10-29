@@ -36,7 +36,7 @@ pub async fn finished(
         .filter_map(|p| {
             Some(Placement {
                 rank: u32::from(p.rank),
-                player: stage.entrant(p.participant)?.nickname.clone(),
+                player: stage.entrant(p.participant)?.display_name(),
             })
         })
         .collect();
@@ -76,8 +76,8 @@ pub async fn series_decided(
     let kind = AnnounceKind::SeriesDecided {
         tournament: audience.name.clone(),
         match_key: key,
-        winner: winner.nickname.clone(),
-        loser: loser.nickname.clone(),
+        winner: winner.display_name(),
+        loser: loser.display_name(),
         score,
     };
     emit(conn, kind, path).await

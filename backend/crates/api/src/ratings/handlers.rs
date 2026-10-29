@@ -3,7 +3,6 @@ use engine::rating::{MAX_ADJUSTMENT, PROVISIONAL_GAMES};
 
 use super::{
     db,
-    history::Modality,
     refresh::{elo, fresh, refresh},
     settings,
     types::{MemberRating, NewAdjustment, Ranking, RatingAdjustment, RatingPath, RatingSettings},
@@ -39,7 +38,7 @@ pub async fn get_ranking(
         .await?
         .config()
         .initial;
-    let players = db::ranking(&state.db, member.tenant, Modality::Duel).await?;
+    let players = db::ranking(&state.db, member.tenant).await?;
     Ok(Json(Ranking {
         initial,
         provisional_games: PROVISIONAL_GAMES,
@@ -70,12 +69,11 @@ pub async fn get_member_rating(
     let user = path.user_id;
     active_member(&state, member.tenant, user).await?;
     fresh(&state.db, member.tenant).await?;
-    let modality = Modality::Duel;
     let initial = elo(&mut *state.db.acquire().await?, member.tenant)
         .await?
         .config()
         .initial;
-    let standing = db::ranking(&state.db, member.tenant, modality)
+    let standing = db::ranking(&state.db, member.tenant)
         .await?
         .into_iter()
         .find(|e| e.user_id == user);
@@ -83,14 +81,13 @@ pub async fn get_member_rating(
     let games = db::recent_games(
         &state.db,
         member.tenant,
-        modality,
         user,
         member.user.id,
         staff,
         RECENT_GAMES,
     )
     .await?;
-    let adjustments = db::adjustments(&state.db, member.tenant, modality, user).await?;
+    let adjustments = db::adjustments(&state.db, member.tenant, user).await?;
     Ok(Json(MemberRating {
         user_id: user,
         standing,
@@ -135,12 +132,10 @@ pub async fn create_adjustment(
     let user = path.user_id;
     active_member(&state, member.tenant, user).await?;
 
-    let modality = Modality::Duel;
     let mut tx = state.db.begin().await?;
     let id = db::insert_adjustment(
         &mut tx,
         member.tenant,
-        modality,
         user,
         body.delta,
         &reason,
@@ -150,7 +145,7 @@ pub async fn create_adjustment(
     refresh(&mut tx, member.tenant).await?;
     tx.commit().await?;
 
-    let created = db::adjustments(&state.db, member.tenant, modality, user)
+    let created = db::adjustments(&state.db, member.tenant, user)
         .await?
         .into_iter()
         .find(|a| a.id == id)

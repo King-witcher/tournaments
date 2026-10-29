@@ -1,5 +1,5 @@
-//! A fase em jogo: configuração (`tournament_stages`), participantes (pelo
-//! seed) e séries decididas → chave, sempre por `replay`. Nada do estado do
+//! A fase em jogo: configuração (`tournament_stages`), times (pelo seed) e
+//! séries decididas → chave, sempre por `replay`. Nada do estado do
 //! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
 //! refeito por replay) vêm junto.
 //!
@@ -22,8 +22,8 @@ use super::{
     veto::{self, Champion, MatchVeto, VetoRow},
 };
 use crate::{
-    participants::{self, Seeded},
     shared::ApiError,
+    teams::{self, StoredTeam},
     tournaments::{self, PoolMap, StoredTournament, TournamentStatus},
 };
 
@@ -33,8 +33,8 @@ pub const FIRST_STAGE: i16 = 1;
 pub struct Stage {
     pub number: i16,
     pub format: ef::StageFormat,
-    /// Na ordem dos seeds.
-    pub entrants: Vec<Seeded>,
+    /// Os times da chave, na ordem dos seeds.
+    pub entrants: Vec<StoredTeam>,
     /// As séries decididas da fase, na ordem do replay.
     pub results: Vec<StoredResult>,
     /// Os mapas enviados da fase, por partida e na ordem.
@@ -53,15 +53,20 @@ pub struct Stage {
 }
 
 impl Stage {
-    pub fn entrant(&self, id: ParticipantId) -> Option<&Seeded> {
+    /// O time `id` da chave.
+    pub fn entrant(&self, id: ParticipantId) -> Option<&StoredTeam> {
         self.entrants.iter().find(|e| e.id == id.0)
     }
 
+    /// O time da chave em que `user_id` joga. "Jogador da partida" é membro do
+    /// time de um dos lados: é por aqui que as ações dos jogadores (envio,
+    /// resposta, veto, screenshot) acham o lado de quem age. Nos times, o que
+    /// for só do capitão confere `StoredTeam::captain` depois.
     pub fn participant_of(&self, user_id: i64) -> Option<ParticipantId> {
         self.entrants
             .iter()
-            .find(|e| e.user_id == user_id)
-            .map(|e| ParticipantId(e.id))
+            .find(|e| e.has(user_id))
+            .map(StoredTeam::participant)
     }
 
     pub fn result(&self, id: MatchId) -> Option<&StoredResult> {
@@ -93,11 +98,11 @@ pub enum Contradiction {
 /// confere que cada um caiu na partida com os lados com que foi gravado.
 pub fn replay(
     stage: &ef::StageFormat,
-    entrants: &[Seeded],
+    entrants: &[StoredTeam],
     results: &[StoredResult],
 ) -> Result<EliminationBracket, Contradiction> {
     let ef::StageFormat::Elimination(config) = stage;
-    let seeded = entrants.iter().map(|e| ParticipantId(e.id)).collect();
+    let seeded = entrants.iter().map(StoredTeam::participant).collect();
     let mut confirmed: Vec<&StoredResult> = results.iter().collect();
     confirmed.sort_by_key(|r| r.position);
     let reports = confirmed.iter().map(|r| r.report());
@@ -135,7 +140,7 @@ pub async fn load(
         return Err(ApiError::not_found("bracket.not_found"));
     }
     let number = FIRST_STAGE;
-    let entrants = participants::seeded(conn, tournament.id).await?;
+    let entrants = teams::seeded(conn, tournament.id).await?;
     let results = db::results(conn, tournament.id, number).await?;
     let games = db::games(conn, tournament.id, number).await?;
     let format = *config(tournament, number)?;
@@ -220,7 +225,7 @@ pub async fn start(
         .check_entrants(tournament.mode, pool, seeded.len())?;
     let ef::StageFormat::Elimination(config) = config(tournament, FIRST_STAGE)?;
     let bracket = EliminationBracket::new(*config, seeded.to_vec())?;
-    let entrants = participants::seeded(conn, tournament.id).await?;
+    let entrants = teams::seeded(conn, tournament.id).await?;
     changes::started(conn, tournament, &bracket, &entrants).await
 }
 

@@ -65,13 +65,13 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
         (&m["state"], &m["a_maps"], &m["result"]),
         (&json!("ready"), &json!(1), &Value::Null)
     );
-    assert_eq!(find(&b, "wb-2-1")["a"]["user_id"], Value::Null);
+    assert_eq!(side_player(&b, "wb-2-1", "a"), Value::Null);
 
     // O mapa 2, enviado por P1 e confirmado por P4, fecha a série.
     let (status, _) = report(&app, &p[0], "wb-1-1", 2, game("a", "exile")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
-        find(&bracket(&app, &p[0]).await, "wb-2-1")["a"]["user_id"],
+        side_player(&bracket(&app, &p[0]).await, "wb-2-1", "a"),
         Value::Null
     );
     let (status, closed) = confirm(&app, &p[3], "wb-1-1", 2).await;
@@ -106,20 +106,20 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
     );
     let history = closed["history"].as_array().unwrap();
     assert_eq!(history[0]["actor"]["user_id"], p[3].id);
-    assert_eq!(history[0]["outcome"]["winner"], p[0].id);
+    assert_eq!(outcome(&history[0])["winner"], p[0].id);
     assert_eq!(
-        history[4]["outcome"],
+        outcome(&history[4]),
         json!({ "winner": p[0].id, "winner_nickname": "P1", "walkover": false, "winner_maps": 2, "loser_maps": 0 })
     );
 
     let b = bracket(&app, &p[0]).await;
     let final_ = find(&b, "wb-2-1");
     assert_eq!(
-        (&final_["a"]["user_id"], &final_["state"]),
+        (&player(&b, &final_["a"]["team_id"]), &final_["state"]),
         (&json!(p[0].id), &json!("pending"))
     );
     assert_eq!(
-        b["standings"],
+        standings(&b),
         json!([{ "user_id": p[3].id, "rank": 3, "tied": 2 }])
     );
 }

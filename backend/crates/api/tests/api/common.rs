@@ -389,3 +389,28 @@ pub async fn set_status(db: &PgPool, slug: &str, status: &str) {
     .await
     .unwrap();
 }
+
+/// O time de cada um de `who` no torneio `slug` de `quake-br` (no duelo, o
+/// time de um jogador que nasce com a inscrição), na mesma ordem, pela lista
+/// de inscritos que `by` vê.
+pub async fn team_ids(app: &Router, by: &User, slug: &str, who: &[&User]) -> Vec<i64> {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/participants");
+    let (status, list) = get(app, &uri, by).await;
+    assert_eq!(status, StatusCode::OK, "{list}");
+    let list = list.as_array().unwrap();
+    who.iter()
+        .map(|u| {
+            let p = list.iter().find(|p| p["user_id"] == u.id);
+            p.and_then(|p| p["team_id"].as_i64())
+                .unwrap_or_else(|| panic!("{} sem time em {slug}", u.id))
+        })
+        .collect()
+}
+
+/// Grava a ordem do seeding do torneio `slug` de `quake-br` com os times de
+/// `who`, nessa ordem (o primeiro é o seed 1). Devolve a resposta.
+pub async fn seed(app: &Router, by: &User, slug: &str, who: &[&User]) -> (StatusCode, Value) {
+    let order = team_ids(app, by, slug, who).await;
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/seeding");
+    put(app, &uri, by, json!({ "team_ids": order })).await
+}

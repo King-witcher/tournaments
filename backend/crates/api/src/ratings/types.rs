@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{shared::Locale, tournaments::NameTranslation};
+use crate::{shared::Locale, teams::Team, tournaments::NameTranslation};
 
 /// O ranking da comunidade.
 #[derive(Serialize, ToSchema)]
@@ -69,7 +69,8 @@ pub struct RatedGame {
     pub game: i16,
     /// Nome do mapa; `null` nas séries antigas enviadas sem o detalhe.
     pub map: Option<String>,
-    pub opponent: RatedOpponent,
+    /// O time do outro lado do mapa (no duelo, o do adversário).
+    pub opponent: Team,
     pub won: bool,
     /// Pontos ganhos (positivo) ou perdidos (negativo) neste mapa.
     pub delta: i32,
@@ -86,15 +87,6 @@ pub struct RatedTournament {
     /// No idioma original; as traduções ao lado.
     pub name: String,
     pub translations: Vec<NameTranslation>,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct RatedOpponent {
-    pub user_id: i64,
-    pub nickname: String,
-    pub avatar_url: Option<String>,
-    /// Falso se saiu da comunidade (a página dele não abre mais).
-    pub active: bool,
 }
 
 /// Um ajuste manual.

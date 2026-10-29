@@ -1,0 +1,112 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select user_id, seq, game_id, adjustment_id, won, delta, rating_after, at\n           from rating_history\n           where tenant_id = $1\n           order by user_id, seq",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "seq",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "seq"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "game_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "game_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "adjustment_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "adjustment_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "won",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "won"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "delta",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "delta"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "rating_after",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "rating_after"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "rating_history",
+            "name": "at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fad74fa86bece58770b2d53c3fe661f1c52e7542b5ca9b326700e63d98fd9d67"
+}

@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select user_id, rating, games, wins, losses, last_game_at from ratings\n           where tenant_id = $1\n           order by user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "rating",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "games",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "games"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "wins",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "wins"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "losses",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "losses"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "last_game_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "ratings",
+            "name": "last_game_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "0d1498c92b2f828cbf413289395b33ba4a61bb3ed216bea598b1c5e59a5a06e0"
+}

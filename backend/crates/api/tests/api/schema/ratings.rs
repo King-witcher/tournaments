@@ -23,29 +23,16 @@ async fn shape_of_settings_adjustments_and_cache() {
     let (db, _lease) = crate::db::test_db().await;
     let cup = finished_cup(&db).await;
     let (t, p1, p2) = (cup.tenant, cup.p1.id, cup.p2.id);
-    let adjustment = |modality: &str, user: i64, delta: i32, reason: &str| {
+    let adjustment = |user: i64, delta: i32, reason: &str| {
         format!(
-            "insert into rating_adjustments (tenant_id, modality, user_id, delta, reason)
-             values ({t}, '{modality}', {user}, {delta}, '{reason}')"
+            "insert into rating_adjustments (tenant_id, user_id, delta, reason)
+             values ({t}, {user}, {delta}, '{reason}')"
         )
     };
     for (sql, name) in [
-        (
-            adjustment("duel", p1, 0, "x"),
-            "rating_adjustments_delta_check",
-        ),
-        (
-            adjustment("duel", p1, 1001, "x"),
-            "rating_adjustments_delta_check",
-        ),
-        (
-            adjustment("duel", p1, 5, ""),
-            "rating_adjustments_reason_check",
-        ),
-        (
-            adjustment("ffa", p1, 5, "x"),
-            "rating_adjustments_modality_check",
-        ),
+        (adjustment(p1, 0, "x"), "rating_adjustments_delta_check"),
+        (adjustment(p1, 1001, "x"), "rating_adjustments_delta_check"),
+        (adjustment(p1, 5, ""), "rating_adjustments_reason_check"),
         (
             format!(
                 "insert into rating_settings (tenant_id, initial, k_min, k_max, k_decay)
@@ -63,40 +50,32 @@ async fn shape_of_settings_adjustments_and_cache() {
         (
             format!(
                 "insert into ratings
-                     (tenant_id, modality, user_id, rating, games, wins, losses, last_game_at)
-                 values ({t}, 'duel', {p1}, 1500, 2, 1, 0, now())"
+                     (tenant_id, user_id, rating, games, wins, losses, last_game_at)
+                 values ({t}, {p1}, 1500, 2, 1, 0, now())"
             ),
             "ratings_record",
         ),
         (
             format!(
                 "insert into ratings
-                     (tenant_id, modality, user_id, rating, games, wins, losses, last_game_at)
-                 values ({t}, 'duel', {p1}, 1500, 0, 0, 0, now())"
+                     (tenant_id, user_id, rating, games, wins, losses, last_game_at)
+                 values ({t}, {p1}, 1500, 0, 0, 0, now())"
             ),
             "ratings_last_game",
         ),
         (
             format!(
                 "insert into rating_history
-                     (tenant_id, modality, user_id, seq, delta, rating_after, at)
-                 values ({t}, 'duel', {p1}, 1, 5, 1505, now())"
+                     (tenant_id, user_id, seq, delta, rating_after, at)
+                 values ({t}, {p1}, 1, 5, 1505, now())"
             ),
             "rating_history_event",
         ),
         (
             format!(
-                "insert into rating_history (tenant_id, modality, user_id, seq, game_id,
-                                             opponent_id, won, delta, rating_after, at)
-                 values ({t}, 'duel', {p1}, 1, 1, {p1}, true, 5, 1505, now())"
-            ),
-            "rating_history_opponent",
-        ),
-        (
-            format!(
-                "insert into rating_history (tenant_id, modality, user_id, seq, game_id,
-                                             delta, rating_after, at)
-                 values ({t}, 'duel', {p1}, 1, 1, 5, 1505, now())"
+                "insert into rating_history (tenant_id, user_id, seq, game_id, delta,
+                                             rating_after, at)
+                 values ({t}, {p1}, 1, 1, 5, 1505, now())"
             ),
             "rating_history_game",
         ),
@@ -106,12 +85,10 @@ async fn shape_of_settings_adjustments_and_cache() {
     // Ajuste e cache só de membro do tenant.
     let outsider = user(&db, "Zé de fora").await;
     assert_eq!(
-        rejected(exec(&db, &adjustment("duel", outsider.id, 5, "x")).await),
+        rejected(exec(&db, &adjustment(outsider.id, 5, "x")).await),
         rule(FOREIGN_KEY, "rating_adjustments_tenant_id_user_id_fkey")
     );
-    exec(&db, &adjustment("duel", p2, -1000, "ok"))
-        .await
-        .unwrap();
+    exec(&db, &adjustment(p2, -1000, "ok")).await.unwrap();
 }
 
 #[tokio::test]

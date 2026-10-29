@@ -1,6 +1,6 @@
-//! Desistência num torneio em andamento (marcada pelo organizador ou porque o
-//! inscrito saiu da comunidade) e o W.O. automático nas partidas prontas com
-//! quem desistiu, agora e depois.
+//! Desistência do time num torneio em andamento (marcada pelo organizador ou
+//! porque o jogador saiu da comunidade; no duelo, o time é de um jogador) e o
+//! W.O. automático nas partidas prontas com quem desistiu, agora e depois.
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
@@ -10,9 +10,16 @@ use crate::matches::{
     COPA, age, bracket, copa, find, game, kinds, play, players, report, single, start,
 };
 
-async fn withdraw(app: &Router, by: &User, who: &User) -> (StatusCode, Value) {
-    let uri = format!("{COPA}/participants/{}/withdrawal", who.id);
+/// O organizador `by` marca a desistência do time `team`.
+async fn withdraw_team(app: &Router, by: &User, team: i64) -> (StatusCode, Value) {
+    let uri = format!("{COPA}/teams/{team}/withdrawal");
     post_empty(app, &uri, by).await
+}
+
+/// O organizador `by` marca a desistência do time de `who` (no duelo, o dele).
+async fn withdraw(app: &Router, by: &User, who: &User) -> (StatusCode, Value) {
+    let team = team_ids(app, by, "copa", &[who]).await[0];
+    withdraw_team(app, by, team).await
 }
 
 async fn ok(app: &Router, by: &User, who: &User) {
@@ -37,7 +44,8 @@ async fn participant(app: &Router, viewer: &User, who: &User) -> Value {
         .unwrap()
 }
 
-/// O W.O. automático de `key`: o histórico e o vencedor (`user_id`).
+/// O W.O. automático de `key`: o histórico e o vencedor (`user_id` do jogador
+/// do time).
 async fn auto_walkover(app: &Router, viewer: &User, key: &str) -> (Vec<String>, Value) {
     let d = detail(app, viewer, key).await;
     let result = &d["summary"]["result"];
@@ -49,7 +57,9 @@ async fn auto_walkover(app: &Router, viewer: &User, key: &str) -> (Vec<String>, 
     let last = d["history"].as_array().unwrap().last().unwrap().clone();
     assert_eq!(last["actor"], Value::Null, "{key}");
     let history = kinds(&d);
-    (history, last["outcome"]["winner"].clone())
+    let winner = &last["outcome"]["winner"];
+    assert_eq!(winner["members"].as_array().unwrap().len(), 1, "{key}");
+    (history, winner["members"][0]["user_id"].clone())
 }
 
 #[tokio::test]
@@ -93,7 +103,7 @@ async fn the_organizer_marks_a_withdrawal_and_the_ready_match_is_a_walkover() {
         .as_array()
         .unwrap()
         .iter()
-        .find(|e| e["user_id"] == p[3].id);
+        .find(|e| e["members"][0]["user_id"] == p[3].id);
     assert_eq!(entrant.unwrap()["withdrawn"], true);
 
     // O resto segue normal.
@@ -233,13 +243,14 @@ async fn walkovers_follow_confirmations_by_deadline() {
     assert_eq!(b["status"], "finished");
     let (_, winner) = auto_walkover(&app, &ana, "wb-2-1").await;
     assert_eq!(winner, p[1].id);
-    assert_eq!(b["standings"][0]["user_id"], p[1].id);
+    let champion = team_ids(&app, &ana, "copa", &[&p[1]]).await[0];
+    assert_eq!(b["standings"][0]["team_id"], champion);
 }
 
 #[tokio::test]
 async fn only_bracket_entrants_of_tournaments_in_progress_withdraw() {
     let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, bia) = quake_br(&db).await;
+    let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 3).await;
     // Com check-in: P3 se inscreve e não faz, fica fora da chave.
     create_tournament(&app, &ana, duel("copa")).await;
@@ -260,18 +271,16 @@ async fn only_bracket_entrants_of_tournaments_in_progress_withdraw() {
 
     assert_eq!(
         withdraw(&app, &ana, &p[2]).await,
-        (StatusCode::CONFLICT, err("participant.not_in_bracket"))
+        (StatusCode::CONFLICT, err("team.not_in_bracket"))
     );
+    // Time que não é do torneio.
     assert_eq!(
-        withdraw(&app, &ana, &bia).await,
-        (StatusCode::NOT_FOUND, err("participant.not_found"))
+        withdraw_team(&app, &ana, 999_999).await,
+        (StatusCode::NOT_FOUND, err("team.not_found"))
     );
-    let missing = format!(
-        "/tenants/quake-br/tournaments/nada/participants/{}/withdrawal",
-        bia.id
-    );
+    let missing = "/tenants/quake-br/tournaments/nada/teams/1/withdrawal";
     assert_eq!(
-        post_empty(&app, &missing, &ana).await,
+        post_empty(&app, missing, &ana).await,
         (StatusCode::NOT_FOUND, err("tournament.not_found"))
     );
 

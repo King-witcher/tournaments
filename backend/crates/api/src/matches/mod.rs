@@ -7,7 +7,7 @@
 //! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
 //! `series::games`), e só a série decidida entra na chave (`result`). A chave
 //! nunca é gravada: sai do `replay` do `engine` com a configuração da fase,
-//! os participantes pelo seed e as séries decididas, na ordem em que
+//! os times pelo seed e as séries decididas, na ordem em que
 //! passaram a valer (`stage`). Gerar e descartar a chave fica no início e no
 //! desfazer do `lifecycle` (`start`, `discard`). Depois de toda mudança,
 //! `settle` anula os mapas que ficaram depois da decisão, fecha as séries

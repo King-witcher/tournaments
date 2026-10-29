@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
@@ -20,10 +21,11 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
   const t = useTranslations("Home.tournaments.next");
   const tTask = useTranslations("Bracket.task");
   const { code } = useMatchLabels(next.single);
+  const teamName = useTeamName();
   const match = code(next.key);
   const from = next.opponent_from;
   const label = next.opponent
-    ? t("against", { match, opponent: next.opponent })
+    ? t("against", { match, opponent: teamName(next.opponent) })
     : from
       ? t(from.outcome, { match, source: code(from.match_key) })
       : t("unknown", { match });

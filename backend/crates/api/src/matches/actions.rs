@@ -47,7 +47,9 @@ pub fn ready(m: &Match) -> Result<(ParticipantId, ParticipantId), ApiError> {
     }
 }
 
-/// O lado de quem age entre `sides`, se ele joga a partida.
+/// O lado de quem age entre `sides`, se ele joga a partida (é jogador do time
+/// de um dos lados; ver `Stage::participant_of`). Nos times, a ação que for
+/// só do capitão confere aqui também `StoredTeam::captain`.
 pub fn side_of<R>(
     stage: &Stage,
     member: &TenantMember<R>,

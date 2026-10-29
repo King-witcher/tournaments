@@ -260,9 +260,15 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
     assert_eq!(d["summary"]["result"]["confirmed_via"], "withdrawal");
     let b = bracket(&app, &ana).await;
     let entrant = &b["entrants"][0];
+    let player = &entrant["members"][0];
     assert_eq!(
-        (&entrant["user_id"], &entrant["nickname"], &entrant["left"]),
-        (&json!(rapha.id), &json!(""), &json!(true))
+        (
+            &player["user_id"],
+            &player["nickname"],
+            &player["left"],
+            &entrant["withdrawn"]
+        ),
+        (&json!(rapha.id), &json!(""), &json!(true), &json!(true))
     );
     let (_, list) = common::get(&app, &format!("{COPA}/participants"), &ana).await;
     let mine = list

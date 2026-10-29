@@ -81,9 +81,13 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           ? ("unmark" as const)
           : ("mark" as const)
         : undefined;
-    const withdraw =
-      organizer && status === "in_progress" && p.seed != null && !p.withdrawn;
-    const hasActions = checkIn !== undefined || canManage || withdraw;
+    // A desistência é do time dele (no duelo, o time de um jogador).
+    const withdrawTeam =
+      organizer && status === "in_progress" && p.seed != null && !p.withdrawn
+        ? (p.team_id ?? null)
+        : null;
+    const hasActions =
+      checkIn !== undefined || canManage || withdrawTeam != null;
     const nickname = shownNickname(p.nickname, tMember("deletedAccount"));
     return {
       id: String(p.user_id),
@@ -115,7 +119,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           nickname={nickname}
           checkIn={checkIn}
           remove={canManage}
-          withdraw={withdraw}
+          withdrawTeam={withdrawTeam}
         />
       ) : undefined,
     };

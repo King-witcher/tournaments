@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
 
 use crate::{
-    ratings::history::{Cache, HistoryRow, Modality, RatingRow, Source, SourceKind},
+    ratings::history::{Cache, HistoryRow, RatingRow, Source, SourceKind},
     tenants::TenantId,
 };
 
@@ -55,33 +55,31 @@ pub async fn dirty_tenants(db: &PgPool) -> Result<Vec<TenantId>, sqlx::Error> {
     Ok(ids.into_iter().map(TenantId::new).collect())
 }
 
-/// O histórico do tenant na modalidade, sem ordem (`history::events`
-/// ordena): os mapas confirmados dos torneios que contam, pelo usuário de
+/// O histórico do tenant, sem ordem (`history::events` ordena): os mapas
+/// confirmados dos torneios que contam, de todos os modos, com quem jogou por
 /// cada lado, e os ajustes.
 pub async fn sources(
     conn: &mut PgConnection,
     tenant: TenantId,
-    modality: Modality,
 ) -> Result<Vec<Source>, sqlx::Error> {
     let games = sqlx::query!(
-        r#"select g.id, g.confirmed_at as "at!", w.user_id as winner, l.user_id as loser
+        r#"select g.id, g.confirmed_at as "at!",
+                  array_agg(p.user_id order by p.user_id)
+                      filter (where (p.side = 'a') = (g.winner = g.side_a)) as "winners!",
+                  array_agg(p.user_id order by p.user_id)
+                      filter (where (p.side = 'a') <> (g.winner = g.side_a)) as "losers!"
            from match_games g
            join tournaments t on t.id = g.tournament_id
-           join participants w on w.id = g.winner
-           join participants l
-             on l.id = case when g.winner = g.side_a then g.side_b else g.side_a end
-           where t.tenant_id = $1 and t.mode = $2 and t.counts_for_rating
-             and g.status = 'confirmed'"#,
-        tenant.get(),
-        modality.tournament_mode()
+           join match_game_players p on p.game_id = g.id
+           where t.tenant_id = $1 and t.counts_for_rating and g.status = 'confirmed'
+           group by g.id"#,
+        tenant.get()
     )
     .fetch_all(&mut *conn)
     .await?;
     let adjustments = sqlx::query!(
-        r#"select id, user_id, delta, created_at from rating_adjustments
-           where tenant_id = $1 and modality = $2"#,
-        tenant.get(),
-        modality.as_str()
+        "select id, user_id, delta, created_at from rating_adjustments where tenant_id = $1",
+        tenant.get()
     )
     .fetch_all(&mut *conn)
     .await?;
@@ -89,8 +87,8 @@ pub async fn sources(
     let games = games.into_iter().map(|g| Source {
         kind: SourceKind::Game {
             id: g.id,
-            winner: g.winner,
-            loser: g.loser,
+            winners: g.winners,
+            losers: g.losers,
         },
         at: g.at,
     });
@@ -106,29 +104,23 @@ pub async fn sources(
 }
 
 /// O cache gravado, na ordem de `Cache`.
-pub async fn read(
-    conn: &mut PgConnection,
-    tenant: TenantId,
-    modality: Modality,
-) -> Result<Cache, sqlx::Error> {
+pub async fn read(conn: &mut PgConnection, tenant: TenantId) -> Result<Cache, sqlx::Error> {
     let ratings = sqlx::query_as!(
         RatingRow,
         r#"select user_id, rating, games, wins, losses, last_game_at from ratings
-           where tenant_id = $1 and modality = $2
+           where tenant_id = $1
            order by user_id"#,
-        tenant.get(),
-        modality.as_str()
+        tenant.get()
     )
     .fetch_all(&mut *conn)
     .await?;
     let history = sqlx::query_as!(
         HistoryRow,
-        r#"select user_id, seq, game_id, adjustment_id, opponent_id, won, delta, rating_after, at
+        r#"select user_id, seq, game_id, adjustment_id, won, delta, rating_after, at
            from rating_history
-           where tenant_id = $1 and modality = $2
+           where tenant_id = $1
            order by user_id, seq"#,
-        tenant.get(),
-        modality.as_str()
+        tenant.get()
     )
     .fetch_all(&mut *conn)
     .await?;
@@ -139,33 +131,23 @@ pub async fn read(
 pub async fn write(
     conn: &mut PgConnection,
     tenant: TenantId,
-    modality: Modality,
     cache: &Cache,
 ) -> Result<(), sqlx::Error> {
-    let (tenant, modality) = (tenant.get(), modality.as_str());
-    sqlx::query!(
-        "delete from rating_history where tenant_id = $1 and modality = $2",
-        tenant,
-        modality
-    )
-    .execute(&mut *conn)
-    .await?;
-    sqlx::query!(
-        "delete from ratings where tenant_id = $1 and modality = $2",
-        tenant,
-        modality
-    )
-    .execute(&mut *conn)
-    .await?;
+    let tenant = tenant.get();
+    sqlx::query!("delete from rating_history where tenant_id = $1", tenant)
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query!("delete from ratings where tenant_id = $1", tenant)
+        .execute(&mut *conn)
+        .await?;
 
     let r = &cache.ratings;
     sqlx::query!(
         r#"insert into ratings
-               (tenant_id, modality, user_id, rating, games, wins, losses, last_game_at)
-           select $1, $2, * from unnest($3::bigint[], $4::int[], $5::int[], $6::int[], $7::int[],
-                                        $8::timestamptz[])"#,
+               (tenant_id, user_id, rating, games, wins, losses, last_game_at)
+           select $1, * from unnest($2::bigint[], $3::int[], $4::int[], $5::int[], $6::int[],
+                                    $7::timestamptz[])"#,
         tenant,
-        modality,
         &r.iter().map(|x| x.user_id).collect::<Vec<_>>(),
         &r.iter().map(|x| x.rating).collect::<Vec<_>>(),
         &r.iter().map(|x| x.games).collect::<Vec<_>>(),
@@ -179,18 +161,14 @@ pub async fn write(
     let h = &cache.history;
     sqlx::query!(
         r#"insert into rating_history
-               (tenant_id, modality, user_id, seq, game_id, adjustment_id, opponent_id, won,
-                delta, rating_after, at)
-           select $1, $2, * from unnest($3::bigint[], $4::int[], $5::bigint[], $6::bigint[],
-                                        $7::bigint[], $8::boolean[], $9::int[], $10::int[],
-                                        $11::timestamptz[])"#,
+               (tenant_id, user_id, seq, game_id, adjustment_id, won, delta, rating_after, at)
+           select $1, * from unnest($2::bigint[], $3::int[], $4::bigint[], $5::bigint[],
+                                    $6::boolean[], $7::int[], $8::int[], $9::timestamptz[])"#,
         tenant,
-        modality,
         &h.iter().map(|x| x.user_id).collect::<Vec<_>>(),
         &h.iter().map(|x| x.seq).collect::<Vec<_>>(),
         &h.iter().map(|x| x.game_id).collect::<Vec<_>>() as &[Option<i64>],
         &h.iter().map(|x| x.adjustment_id).collect::<Vec<_>>() as &[Option<i64>],
-        &h.iter().map(|x| x.opponent_id).collect::<Vec<_>>() as &[Option<i64>],
         &h.iter().map(|x| x.won).collect::<Vec<_>>() as &[Option<bool>],
         &h.iter().map(|x| x.delta).collect::<Vec<_>>(),
         &h.iter().map(|x| x.rating_after).collect::<Vec<_>>(),

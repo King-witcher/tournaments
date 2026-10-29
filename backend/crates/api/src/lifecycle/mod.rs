@@ -1,9 +1,10 @@
 //! Ciclo de vida do torneio depois de publicar: abrir o check-in antes da
 //! hora, reabrir a inscrição, iniciar e desfazer o início, todas por
 //! `transition::apply`, e quem deixa um torneio no meio do caminho
-//! (`withdrawal`: a desistência marcada pelo organizador e o membro que sai da
-//! comunidade). Fica acima de `tournaments`, `participants` e `matches`
-//! porque iniciar fecha o seeding e gera a chave, e a desistência dá W.O.
+//! (`withdrawal`: a desistência do time marcada pelo organizador e o membro
+//! que sai da comunidade). Fica acima de `tournaments`, `participants`,
+//! `teams` e `matches` porque iniciar fecha o seeding e gera a chave, e a
+//! desistência dá W.O.
 
 mod handlers;
 mod transition;
@@ -20,5 +21,5 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::open_check_in))
         .routes(routes!(handlers::reopen_registration))
         .routes(routes!(handlers::start, handlers::undo_start))
-        .routes(routes!(withdrawal::withdraw_participant))
+        .routes(routes!(withdrawal::withdraw_team))
 }
