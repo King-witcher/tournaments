@@ -39,14 +39,8 @@ pub async fn create_invite(
 ) -> Result<(StatusCode, Json<CreatedInvite>), ApiError> {
     let token = token::random_token();
     let mut tx = state.db.begin().await?;
-    let (id, expires_at) = db::create(
-        &mut tx,
-        member.tenant,
-        &token::hash_token(&token),
-        member.user.id,
-        INVITE_DAYS,
-    )
-    .await?;
+    let (id, expires_at) =
+        db::create(&mut tx, member.tenant, &token, member.user.id, INVITE_DAYS).await?;
     tenants::changed(&mut tx, member.tenant).await?;
     tx.commit().await?;
 

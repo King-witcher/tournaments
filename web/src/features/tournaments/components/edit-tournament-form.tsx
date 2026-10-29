@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Form,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from "@carbon/react";
+import { Form, Stack, Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -17,17 +9,19 @@ import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { FormSection } from "@/shared/ui/form-section";
 import { Notice } from "@/shared/ui/notice";
+import { TabList } from "@/shared/ui/tab-list";
 import { useTournamentForm } from "../hooks/use-tournament-form";
-import { containersOf } from "../lib/form-groups";
+import { groupOf } from "../lib/form-groups";
 import { TournamentChampionFields } from "./tournament-champion-fields";
+import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
+import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
-import { TournamentTextsTabs } from "./tournament-texts-tabs";
+import { TournamentTranslations } from "./tournament-translations";
 
 type Schemas = components["schemas"];
-type Locale = Schemas["Locale"];
 
 const TABS = ["general", "format", "registration"] as const;
 type EditTab = (typeof TABS)[number];
@@ -35,22 +29,19 @@ type EditTab = (typeof TABS)[number];
 type Props = { tenant: string; tournament: Schemas["Tournament"] };
 
 /**
- * Editar torneio, uma aba por assunto: Geral (nome, descrição e regras por
- * idioma), Formato (chave, séries, campeões) e Inscrições e prazos (início,
- * vagas, visibilidade, check-in, contestação). Um "Salvar" para todas as
- * abas; o campo recusado abre a aba (e o idioma) dele. Depois de começar, o
- * motivo dos campos travados vem no topo da aba deles.
+ * Editar torneio, uma aba por assunto: Geral (nome, descrição, regras
+ * adicionais e outros idiomas), Formato (chave, séries, campeões) e
+ * Inscrições e prazos (início, vagas, visibilidade, check-in, contestação).
+ * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
+ * de começar, o motivo dos campos travados vem no topo da aba deles.
  */
 export function EditTournamentForm({ tenant, tournament }: Props) {
   const t = useTranslations("TournamentForm");
   const [tab, setTab] = useState<EditTab>("general");
-  const [language, setLanguage] = useState<Locale>(tournament.locale);
   const form = useTournamentForm(tenant, tournament, {
     reveal: (control) => {
-      const where = containersOf(control);
-      const group = TABS.find((x) => x === where.group);
+      const group = TABS.find((x) => x === groupOf(control));
       if (group) setTab(group);
-      if (where.language) setLanguage(where.language as Locale);
     },
   });
   const { values, onChange, errors, setupLocked } = form;
@@ -79,21 +70,29 @@ export function EditTournamentForm({ tenant, tournament }: Props) {
           <TabPanels>
             <TabPanel>
               <Stack gap={7} data-group="general">
-                <TournamentIdentityFields
-                  tenant={tenant}
+                <FormSection legend={t("tournament")}>
+                  <TournamentIdentityFields
+                    tenant={tenant}
+                    values={values}
+                    onChange={onChange}
+                    errors={errors}
+                    isNew={false}
+                  />
+                  <TournamentDescriptionField
+                    values={values}
+                    onChange={onChange}
+                    errors={errors}
+                  />
+                </FormSection>
+                <TournamentRulesSection
                   values={values}
                   onChange={onChange}
                   errors={errors}
-                  isNew={false}
                 />
-                <FormSection legend={t("texts")} description={t("textsHint")}>
-                  <TournamentTextsTabs
-                    form={form}
-                    language={language}
-                    onLanguageChange={setLanguage}
-                    saved={tournament.translations.map((x) => x.locale)}
-                  />
-                </FormSection>
+                <TournamentTranslations
+                  form={form}
+                  saved={tournament.translations.map((x) => x.locale)}
+                />
               </Stack>
             </TabPanel>
             <TabPanel>

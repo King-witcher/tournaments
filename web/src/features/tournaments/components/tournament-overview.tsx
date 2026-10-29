@@ -16,8 +16,9 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A aba Visão geral: o ciclo do torneio, as partidas que esperam uma ação de
- * quem vê (a partir do início), a descrição e o resumo do formato, lado a
- * lado a partir do `lg`. O erro e o login já aparecem na casca; aqui, nada.
+ * quem vê (a partir do início), a descrição e o resumo do formato (com o
+ * link para a aba Regras), lado a lado a partir do `lg`. O erro e o login já
+ * aparecem na casca; aqui, nada.
  * Fica em `<Suspense>`.
  */
 export async function TournamentOverview({ tenant, slug }: Props) {
@@ -50,7 +51,10 @@ export async function TournamentOverview({ tenant, slug }: Props) {
             <UserText>{description}</UserText>
           </Section>
         )}
-        <TournamentSetupSummary tournament={tournament} />
+        <TournamentSetupSummary
+          tournament={tournament}
+          rulesHref={`/${tenant}/${slug}/rules`}
+        />
       </div>
     </Stack>
   );

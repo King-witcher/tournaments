@@ -30,8 +30,9 @@ type Props = {
 };
 
 /**
- * A aba Regras para a organização: o texto com "Editar regras" em cima (ou,
- * sem regras, o convite a escrever), que troca o texto por um campo com
+ * As regras adicionais na aba Regras, para a organização: o texto com
+ * "Editar regras adicionais" em cima (ou, sem texto, o convite a escrever o
+ * que o texto automático não cobre), que troca o texto por um campo com
  * Salvar e Cancelar ali mesmo. Muda o texto que a pessoa está lendo: o da
  * tradução no idioma dela, se tem, ou o original. Salvo, o editor fecha com
  * o texto novo e o foco volta ao botão.
@@ -44,7 +45,6 @@ export function RulesEditor({
   translation,
 }: Props) {
   const t = useTranslations("Tournament.rulesEditor");
-  const tForm = useTranslations("TournamentForm");
   const tLocales = useTranslations("Locales");
   const router = useRouter();
   const editId = useId();
@@ -120,7 +120,6 @@ export function RulesEditor({
           labelText={t(translation ? "labelTranslation" : "labelOriginal", {
             language: tLocales(locale),
           })}
-          helperText={tForm("plainTextHint")}
           rows={16}
           maxLength={20000}
           id={fieldId}

@@ -388,3 +388,22 @@ async fn preview_knows_who_opens_it(db: PgPool) {
         json!({ "membership": "member", "nickname": "Ana", "registered": true })
     );
 }
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn lists_show_the_first_characters_of_each_token(db: PgPool) {
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let community = invite(&app, &ana, "quake-br").await;
+    let link = copa_invite(&app, &ana).await;
+
+    let (_, invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
+    let hints: Vec<_> = invites
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i["hint"].as_str().unwrap().to_owned())
+        .collect();
+    assert!(hints.contains(&community[..4].to_owned()), "{hints:?}");
+    let (_, links) = get(&app, &format!("{COPA}/invites"), &ana).await;
+    assert_eq!(links[0]["hint"], link[..4]);
+}

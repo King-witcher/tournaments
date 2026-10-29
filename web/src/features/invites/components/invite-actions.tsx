@@ -15,6 +15,8 @@ type Props = {
   inviteId: number;
   /** Quem criou, para o leitor de tela saber de qual linha é o ⋯. */
   createdBy: string;
+  /** O começo do link (`…/invite/7Fq2…`), para a confirmação dizer qual; nulo nos antigos. */
+  hint: string | null;
   /** Para onde vai o foco quando a linha some (o link foi revogado). */
   focusId: string;
 };
@@ -23,7 +25,13 @@ type Props = {
  * O ⋯ da linha de um convite: revogar, com a confirmação. Copiar não dá: o
  * link só existe na hora em que é gerado.
  */
-export function InviteActions({ slug, inviteId, createdBy, focusId }: Props) {
+export function InviteActions({
+  slug,
+  inviteId,
+  createdBy,
+  hint,
+  focusId,
+}: Props) {
   const t = useTranslations("Tenant.invites");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -38,7 +46,12 @@ export function InviteActions({ slug, inviteId, createdBy, focusId }: Props) {
           {
             label: t("revoke"),
             destructive: true,
-            confirm: { question: t("revokeConfirm") },
+            confirm: {
+              question: t("revokeConfirm", {
+                has: hint ? "yes" : "no",
+                link: hint ?? "",
+              }),
+            },
             onSelect: () =>
               run(
                 () =>

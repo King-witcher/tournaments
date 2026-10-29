@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// O termo e o (i) juntos, com o ícone no meio da linha do texto.
+.term {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+}
+
+// No celular, o (i) de 16px é pequeno para o dedo: a área de toque cresce
+// para 48px em volta dele, sem mudar a altura da linha.
+.button {
+  @include breakpoint.breakpoint-down(md) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * #{spacing.$spacing-05});
+    }
+  }
+}
+
+// Num lugar que não quebra linha (o rótulo do StructuredList), a explicação
+// herdaria o nowrap e sairia numa linha só, vazando da caixa.
+.content {
+  white-space: normal;
+}

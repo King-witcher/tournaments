@@ -16,6 +16,10 @@
     "member": "Membro",
     "role": "Papel",
     "since": "Desde",
+    "joinedVia": "Entrou por",
+    "viaLink": "link {hint}",
+    "viaLegacyLink": "link de convite",
+    "viaTournament": "{via} · inscrição em {tournament}",
     "empty": "Ninguém na comunidade ainda. Gere um link na aba Convites para chamar quem vai jogar.",
     "actions": "Ações de {name}",
     "makeOrganizer": "Tornar organizador",
@@ -55,6 +59,7 @@
     "loading": "Carregando os convites…",
     "description": "Quem entra pelo link vira jogador. Cada link vale por 7 dias e serve para várias pessoas.",
     "create": "Gerar link de convite",
+    "linkColumn": "Link",
     "createdBy": "Criado por",
     "expires": "Expira",
     "uses": "Entraram",
@@ -67,6 +72,6 @@
     "copy": "Copiar o link",
     "copied": "Copiado!",
     "revoke": "Revogar",
-    "revokeConfirm": "Revogar este link? Quem ainda não usou não consegue mais entrar por ele; dá para gerar outro depois."
+    "revokeConfirm": "Revogar {has, select, yes {o link {link}} other {este link}}? Quem ainda não usou não consegue mais entrar por ele; dá para gerar outro depois."
   }
 }

@@ -32,7 +32,7 @@ export function TournamentCheckInField({
   return (
     <Select
       labelText={t("checkIn")}
-      helperText={t("checkInHint")}
+      helperText={t(value === null ? "checkInOffHint" : "checkInHint")}
       name="checkInMinutes"
       value={value ?? "off"}
       disabled={disabled}

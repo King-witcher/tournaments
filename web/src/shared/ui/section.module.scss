@@ -1,13 +1,23 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
+// Título à esquerda e ação à direita; a descrição sempre na linha de baixo,
+// na largura de leitura. Em grade, e não em flex com quebra: no flex, a
+// descrição com largura máxima cabia ao lado do título nas telas largas e
+// empurrava a ação para o meio. No celular, uma coluna: título, ação e
+// descrição, um embaixo do outro, cada um na largura do próprio conteúdo.
 .header {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  justify-items: start;
   gap: spacing.$spacing-03 spacing.$spacing-05;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .title {
@@ -17,7 +27,7 @@
 .description {
   @include type.type-style("body-01");
 
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   max-inline-size: 40rem;
   color: theme.$text-secondary;
 }

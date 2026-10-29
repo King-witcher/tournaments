@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Abaixo do md, sem as setas de rolagem (os dois `button` filhos diretos da
+// caixa das abas; as abas ficam dentro do `tablist`): a barra rola com o
+// dedo, e as setas aparecendo e sumindo mudavam a largura dela e faziam as
+// abas tremerem. Classe dobrada para vencer a do Carbon, que tem duas.
+.tabs.tabs > button {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}

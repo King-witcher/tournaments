@@ -7,6 +7,7 @@ import { DataTable } from "@/shared/ui/data-table";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
+import { inviteHint } from "../lib/invite-hint";
 import { CreateTournamentInviteButton } from "./create-tournament-invite-button";
 import { TournamentInviteActions } from "./tournament-invite-actions";
 
@@ -53,7 +54,13 @@ export async function TournamentInviteSection({ tenant, tournament }: Props) {
           label={t("title")}
           size="sm"
           columns={[
-            { key: "createdBy", header: t("columns.createdBy") },
+            // No celular: o link, as inscrições e revogar, sem rolar.
+            { key: "link", header: t("columns.link") },
+            {
+              key: "createdBy",
+              header: t("columns.createdBy"),
+              secondary: true,
+            },
             {
               key: "createdAt",
               header: t("columns.createdAt"),
@@ -63,14 +70,19 @@ export async function TournamentInviteSection({ tenant, tournament }: Props) {
           ]}
           rows={invites.map((invite) => ({
             id: String(invite.id),
-            search: invite.created_by,
+            search: `${inviteHint(invite.hint) ?? ""} ${invite.created_by}`,
             cells: {
+              link: inviteHint(invite.hint) ?? "—",
               createdBy: invite.created_by,
               createdAt: <LocalDateTime value={invite.created_at} />,
               uses: String(invite.uses),
             },
             actions: (
-              <TournamentInviteActions tenant={tenant} inviteId={invite.id} />
+              <TournamentInviteActions
+                tenant={tenant}
+                inviteId={invite.id}
+                hint={inviteHint(invite.hint)}
+              />
             ),
           }))}
           empty={{ text: t("empty") }}

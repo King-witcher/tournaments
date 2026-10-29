@@ -20,6 +20,15 @@ pub fn random_token() -> String {
     base58(u128::from_le_bytes(bytes))
 }
 
+/// Quantos caracteres do início do token ficam em claro (`token_hint`), só
+/// para reconhecer o link numa lista. Sobram ~105 bits de segredo.
+pub const TOKEN_HINT_LEN: usize = 4;
+
+/// Os primeiros `TOKEN_HINT_LEN` caracteres do token.
+pub fn hint(token: &str) -> &str {
+    &token[..TOKEN_HINT_LEN]
+}
+
 /// Segredo que só trafega entre máquinas (cookie de sessão, state do OAuth):
 /// 256 bits em base64url.
 pub fn random_secret() -> String {

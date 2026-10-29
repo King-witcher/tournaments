@@ -45,7 +45,7 @@ export function TournamentChampionFields({
       </Select>
       <Select
         labelText={t("noRepeat")}
-        helperText={t("noRepeatHint")}
+        helperText={t(`noRepeatHints.${values.noRepeat}`)}
         name="noRepeat"
         value={values.noRepeat}
         disabled={disabled}

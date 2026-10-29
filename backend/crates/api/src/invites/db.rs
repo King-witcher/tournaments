@@ -2,22 +2,24 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgExecutor, PgPool};
 
 use super::types::{Invite, TournamentInvite};
-use crate::{tenants::TenantId, tournaments::TournamentId};
+use crate::{shared::token, tenants::TenantId, tournaments::TournamentId};
 
-/// Grava o convite do tenant (só o hash do token) e devolve id e validade.
+/// Grava o convite do tenant (o hash do token e os primeiros caracteres, para
+/// reconhecê-lo) e devolve id e validade.
 pub async fn create(
     conn: &mut PgConnection,
     tenant: TenantId,
-    token_hash: &[u8; 32],
+    token: &str,
     created_by: i64,
     valid_days: i32,
 ) -> Result<(i64, DateTime<Utc>), sqlx::Error> {
     let row = sqlx::query!(
-        r#"insert into tenant_invites (tenant_id, token_hash, created_by, expires_at)
-           values ($1, $2, $3, now() + make_interval(days => $4))
+        r#"insert into tenant_invites (tenant_id, token_hash, token_hint, created_by, expires_at)
+           values ($1, $2, $3, $4, now() + make_interval(days => $5))
            returning id, expires_at as "expires_at!""#,
         tenant.get(),
-        &token_hash[..],
+        &token::hash_token(token)[..],
+        token::hint(token),
         created_by,
         valid_days
     )
@@ -32,16 +34,17 @@ pub async fn create_for_tournament(
     conn: &mut PgConnection,
     tenant: TenantId,
     tournament: TournamentId,
-    token_hash: &[u8; 32],
+    token: &str,
     created_by: i64,
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
-        r#"insert into tenant_invites (tenant_id, tournament_id, token_hash, created_by)
-           values ($1, $2, $3, $4)
+        r#"insert into tenant_invites (tenant_id, tournament_id, token_hash, token_hint, created_by)
+           values ($1, $2, $3, $4, $5)
            returning id"#,
         tenant.get(),
         tournament.get(),
-        &token_hash[..],
+        &token::hash_token(token)[..],
+        token::hint(token),
         created_by
     )
     .fetch_one(conn)
@@ -56,6 +59,7 @@ pub async fn list_active(db: &PgPool, tenant: TenantId) -> Result<Vec<Invite>, s
         r#"select i.id,
                   coalesce(m.nickname, u.display_name) as "created_by!",
                   i.created_at,
+                  i.token_hint as hint,
                   i.expires_at as "expires_at!",
                   (select count(*) from tenant_members j
                    where j.tenant_id = i.tenant_id and j.invite_id = i.id) as "uses!"
@@ -82,6 +86,7 @@ pub async fn list_for_tournament(
         r#"select i.id,
                   coalesce(m.nickname, u.display_name) as "created_by!",
                   i.created_at,
+                  i.token_hint as hint,
                   (select count(*) from participants p
                    where p.tenant_id = i.tenant_id and p.invite_id = i.id) as "uses!"
            from tenant_invites i

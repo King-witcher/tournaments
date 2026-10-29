@@ -4,7 +4,6 @@ import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
-import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
@@ -15,28 +14,28 @@ import {
   useTournamentForm,
 } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
-import { containersOf } from "../lib/form-groups";
+import { groupOf } from "../lib/form-groups";
 import { FormAccordionItem } from "./form-accordion-item";
 import { TournamentChampionFields } from "./tournament-champion-fields";
+import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentReview } from "./tournament-review";
+import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
-import { TournamentTextsTabs } from "./tournament-texts-tabs";
-
-type Locale = components["schemas"]["Locale"];
+import { TournamentTranslations } from "./tournament-translations";
 
 /** Os grupos que começam fechados: têm padrão bom e o resumo no título. */
 type Group = "champions" | "registration";
 
 /**
  * Criar torneio, numa página só: à vista o que se decide sempre (nome,
- * endereço, início, chave e séries); fechados, com o resumo no título, os
- * grupos que já vêm com padrão (campeões, inscrições e prazos); por último,
- * descrição e regras, uma aba por idioma. "Criar" confere e mostra a revisão
- * antes de criar já publicado; "Criar como rascunho" cria sem publicar (e
- * sem exigir a data).
+ * endereço, início, descrição, chave e séries); fechados, com o resumo no
+ * título, os grupos que já vêm com padrão (campeões, inscrições e prazos);
+ * depois as regras adicionais e, por último, "Outros idiomas". "Criar"
+ * confere e mostra a revisão antes de criar já publicado; "Criar como
+ * rascunho" cria sem publicar (e sem exigir a data).
  */
 export function NewTournamentForm({ tenant }: { tenant: string }) {
   const t = useTranslations("TournamentForm");
@@ -45,18 +44,15 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
     champions: false,
     registration: false,
   });
-  const [language, setLanguage] = useState<Locale>();
   const [reviewing, setReviewing] = useState(false);
   const [intent, setIntent] = useState<SubmitIntent>();
   const createRef = useRef<HTMLButtonElement>(null);
   const form = useTournamentForm(tenant, undefined, {
     reveal: (control) => {
-      const where = containersOf(control);
-      if (where.group === "champions" || where.group === "registration") {
-        const group: Group = where.group;
+      const group = groupOf(control);
+      if (group === "champions" || group === "registration") {
         setOpen((o) => ({ ...o, [group]: true }));
       }
-      if (where.language) setLanguage(where.language as Locale);
     },
   });
   const { values, onChange, errors } = form;
@@ -93,6 +89,11 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
             error={errors.startsAt}
             checkInMinutes={values.checkInMinutes}
             disabled={false}
+          />
+          <TournamentDescriptionField
+            values={values}
+            onChange={onChange}
+            errors={errors}
           />
         </FormSection>
         <FormSection legend={t("format")}>
@@ -134,13 +135,12 @@ export function NewTournamentForm({ tenant }: { tenant: string }) {
             />
           </FormAccordionItem>
         </Accordion>
-        <FormSection legend={t("texts")} description={t("textsHint")}>
-          <TournamentTextsTabs
-            form={form}
-            language={language ?? form.original}
-            onLanguageChange={setLanguage}
-          />
-        </FormSection>
+        <TournamentRulesSection
+          values={values}
+          onChange={onChange}
+          errors={errors}
+        />
+        <TournamentTranslations form={form} />
         {form.formError && <FormError>{form.formError}</FormError>}
         <FormActions
           submitLabel={t("create")}

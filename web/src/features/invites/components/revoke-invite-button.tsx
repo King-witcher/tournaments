@@ -29,7 +29,7 @@ export function RevokeInviteButton({
     <Stack gap={2}>
       <ConfirmButton
         pending={pending}
-        question={t("revokeConfirm")}
+        question={t("revokeConfirm", { has: "no", link: "" })}
         onConfirm={() =>
           run(
             () =>

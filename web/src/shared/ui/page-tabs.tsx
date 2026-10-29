@@ -1,10 +1,11 @@
 "use client";
 
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
+import { Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import type { ComponentType, ReactNode } from "react";
 
 import { Link as IntlLink, usePathname } from "@/i18n/navigation";
 import styles from "./page-tabs.module.scss";
+import { TabList } from "./tab-list";
 
 type PageTab = {
   /** Sub-rota da aba (sem o idioma), ex.: `/${tenant}/members`. */

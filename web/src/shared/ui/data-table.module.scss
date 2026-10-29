@@ -1,6 +1,16 @@
 @use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
 
+// A tabela nunca alarga a página: dentro dos `Stack` (grades), cada item
+// cresce até a largura mínima do conteúdo, e uma tabela mais larga que o
+// celular (apelido comprido, muitas colunas) empurrava a página toda para os
+// lados, e a barra de abas junto, que tremia. Sem a largura do conteúdo
+// contar para fora, a tabela fica na largura da coluna e rola por dentro
+// (`cds--data-table-content` já tem `overflow-x: auto`).
+.container {
+  contain: inline-size;
+}
+
 // Colunas marcadas como secundárias somem até o md: no celular ficam a
 // coluna principal, o estado e as ações, sem rolagem lateral.
 .table .secondary {
@@ -13,6 +23,14 @@
 // clique em qualquer lugar da linha leva ao mesmo lugar.
 .linkRow {
   cursor: pointer;
+}
+
+// O `position` prende à célula o "Ações" escondido do cabeçalho (absoluto):
+// sem ele, com a tabela rolando por dentro no celular, o texto escondido
+// ficava fora dela e alargava a página. Peso de três classes para vencer o
+// `th:last-of-type { position: static }` do Carbon.
+.table .actions.actions {
+  position: relative;
 }
 
 // A coluna das ações (⋯) só ocupa o que o botão precisa.

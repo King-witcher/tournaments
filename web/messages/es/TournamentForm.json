@@ -12,7 +12,8 @@
     "single": "Eliminación simple",
     "double": "Eliminación doble"
   },
-  "grandFinalReset": "Gran final con reset: si gana quien viene del repechaje, se juega otra serie",
+  "grandFinalReset": "Reset de gran final",
+  "grandFinalResetHint": "Si quien llega por el repechaje gana la gran final, los dos juegan una serie más, porque solo entonces los dos tienen una derrota.",
   "bestOf": "Series",
   "finalsBestOf": {
     "single": "Final",
@@ -29,7 +30,12 @@
     "stage": "No se repite en la fase",
     "tournament": "No se repite en el torneo"
   },
-  "noRepeatHint": "Cada jugador usa un campeón por mapa. En la serie, quien jugó un mapa con un campeón no lo usa en los otros mapas de la misma partida (al mejor de 3 o de 5); en el torneo, no lo usa en ningún otro mapa. La regla se verifica en el peor caso de mapas para la cantidad de cupos: si faltan campeones, el torneo no se guarda.",
+  "noRepeatHints": {
+    "off": "Se pueden repetir campeones cuando quieras.",
+    "match": "No se pueden repetir campeones en una serie.",
+    "stage": "No se pueden repetir campeones en la fase.",
+    "tournament": "No se pueden repetir campeones en todo el torneo (limita la cantidad de cupos)."
+  },
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó: el inicio, los cupos y el check-in ya no cambian.",
   "maxParticipants": "Cupos",
@@ -39,11 +45,15 @@
     "public": "Pública",
     "private": "Privada"
   },
-  "visibilityHint": "Pública: toda la comunidad lo ve y se inscribe. Privada: solo lo ven los inscritos y los organizadores, y entra quien un organizador inscriba o quien use un enlace de inscripción. Se puede cambiar hasta que el torneo termine.",
+  "visibilityHints": {
+    "public": "Toda la comunidad ve el torneo y puede inscribirse.",
+    "private": "Solo lo ven los inscritos y los organizadores. Entra quien un organizador inscriba o quien use un enlace de inscripción."
+  },
   "checkIn": "Check-in",
   "checkInOff": "Sin check-in",
   "checkInOption": "Abre {minutes} min antes del inicio",
-  "checkInHint": "Solo quien haga check-in entra en la llave; quien no lo haga sigue inscrito. Sin check-in, entran todos los inscritos.",
+  "checkInOffHint": "Entran en la llave todos los inscritos.",
+  "checkInHint": "El check-in es la confirmación de presencia: cerca del inicio, cada inscrito confirma en el sitio que va a jugar, y solo quien confirma entra en la llave.",
   "contest": "Plazo para impugnar",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos.",
@@ -53,22 +63,15 @@
     "noCheckIn": "sin check-in",
     "contest": "{window} para impugnar"
   },
-  "texts": "Descripción y reglas",
-  "textsHint": "Opcionales. Cada idioma en una pestaña: quien usa el sitio en un idioma sin traducción ve el original.",
-  "languages": "Idiomas de los textos",
-  "original": "Original",
-  "translated": "Traducción",
-  "untranslated": "Sin traducción",
   "description": "Descripción",
-  "rules": "Reglas",
-  "plainTextHint": "Texto simple: se mantienen los saltos de línea.",
-  "translation": {
-    "off": "Sin traducción: quien usa el sitio en {language} ve el nombre, la descripción y las reglas del original ({original}).",
-    "add": "Agregar traducción",
-    "remove": "Quitar traducción",
-    "hint": "El nombre es obligatorio; si la descripción o las reglas quedan vacías, se muestran las del original.",
-    "willDelete": "La traducción guardada se va a borrar cuando guardes. Para conservarla, agrégala de nuevo antes de guardar."
-  },
+  "rules": "Reglas adicionales",
+  "rulesHint": "Opcional. La pestaña Reglas ya explica el formato, el check-in y el envío de resultados; escribe aquí el resto (mapas, conducta, caída de conexión).",
+  "otherLanguages": "Otros idiomas",
+  "translationOff": "El nombre, la descripción y las reglas de arriba están en {original}. Quien usa el sitio en {language} los ve así.",
+  "translationHint": "Si la descripción o las reglas quedan vacías, se muestran las del original.",
+  "addLanguage": "Agregar {language}",
+  "removeLanguage": "Quitar {language}",
+  "willDelete": "La traducción guardada se va a borrar cuando guardes. Para conservarla, agrega el idioma de nuevo antes de guardar.",
   "create": "Crear",
   "createDraft": "Crear como borrador",
   "review": {

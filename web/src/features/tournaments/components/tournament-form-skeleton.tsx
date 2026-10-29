@@ -17,14 +17,14 @@ import {
 type Props = {
   /** O que está carregando, lido pelo leitor de tela. */
   label: string;
-  /** Edição: as abas, com a primeira (nome e textos) aberta. */
+  /** Edição: as abas, com a primeira (nome, descrição e regras) aberta. */
   edit?: boolean;
 };
 
 /**
  * A página do formulário de torneio carregando, na forma dela: na criação,
- * as seções à vista, os dois grupos fechados e os textos; na edição, as abas
- * com a primeira. Os botões no fim, como no `FormActions`.
+ * as seções à vista, os dois grupos fechados e as regras; na edição, as abas
+ * com a primeira (nome, descrição e regras). Os botões no fim, como no `FormActions`.
  */
 export function TournamentFormSkeleton({ label, edit = false }: Props) {
   return (
@@ -35,10 +35,11 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
           {edit ? (
             <>
               <TabsSkeleton />
-              <TextInputSkeleton />
               <FormSectionSkeleton>
-                <TabsSkeleton />
+                <TextInputSkeleton />
                 <TextAreaSkeleton />
+              </FormSectionSkeleton>
+              <FormSectionSkeleton>
                 <TextAreaSkeleton />
               </FormSectionSkeleton>
             </>
@@ -48,6 +49,7 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
                 <TextInputSkeleton />
                 <TextInputSkeleton />
                 <TextInputSkeleton />
+                <TextAreaSkeleton />
               </FormSectionSkeleton>
               <FormSectionSkeleton>
                 <RadioButtonSkeleton />
@@ -55,7 +57,6 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
               </FormSectionSkeleton>
               <AccordionSkeleton count={2} open={false} />
               <FormSectionSkeleton>
-                <TabsSkeleton />
                 <TextAreaSkeleton />
               </FormSectionSkeleton>
             </>

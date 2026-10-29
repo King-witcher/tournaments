@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into tenant_invites (tenant_id, tournament_id, token_hash, created_by)\n           values ($1, $2, $3, $4)\n           returning id",
+  "query": "insert into tenant_invites (tenant_id, tournament_id, token_hash, token_hint, created_by)\n           values ($1, $2, $3, $4, $5)\n           returning id",
   "describe": {
     "columns": [
       {
@@ -20,6 +20,7 @@
         "Int8",
         "Int8",
         "Bytea",
+        "Text",
         "Int8"
       ]
     },
@@ -27,5 +28,5 @@
       false
     ]
   },
-  "hash": "b17538eee0bac574067206401e0ea1215b6f5d714a6544911cd8a106b3a2ff6b"
+  "hash": "4a8352f3df3d20f35c7943b69324351e2d862566689cd475bba26f906f04c628"
 }

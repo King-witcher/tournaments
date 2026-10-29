@@ -71,8 +71,8 @@ Formulário curto (nome, slug com prévia do endereço).
 `PageHeader`: nome, `Tag` com seu papel, ação primária "Novo torneio" (organização). Abas por sub-rota:
 
 - **Torneios** (`/[tenant]`): `DataTable` (nome, formato, estado, início, inscritos). Jogador vê só os publicados.
-- **Membros** (`/[tenant]/members`): `DataTable` (membro com avatar, papel, desde), busca; a linha abre a página da pessoa; owner: trocar papel e remover no `OverflowMenu`.
-- **Convites** (`/[tenant]/invites`, organização): `DataTable` dos links (criado por, validade, estado), "Gerar link" primário, copiar e revogar por linha.
+- **Membros** (`/[tenant]/members`): `DataTable` (membro com avatar, papel, desde e, para a organização, "Entrou por": o começo do link e o torneio, se era de inscrição), busca; a linha abre a página da pessoa; owner: trocar papel e remover no `OverflowMenu`.
+- **Convites** (`/[tenant]/invites`, organização): `DataTable` dos links (o começo do link, `…/invite/7Fq2…`, criado por, validade, quantos entraram), "Gerar link" primário, copiar e revogar por linha (a confirmação diz qual link).
 - **Configurações** (`/[tenant]/settings`): seu apelido; "Sair da comunidade"; owner: transferir a posse (Modal com slug).
 
 `members`, `invites` e `settings` entram na lista de slugs reservados de torneio na API (`tournaments/slug.rs`), como `new` já está.
@@ -85,24 +85,24 @@ A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `jo
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-**Novo**: uma página, coluna estreita. À vista: Torneio (nome, endereço com a prévia do link, início) e Formato (chave em `RadioGroup`, reset da grande final, séries). Fechados num `Accordion`, com o resumo dos valores no título: Campeões (bans, repetir campeão) e Inscrições e prazos (vagas, visibilidade, check-in, contestação). Por último, Descrição e regras em abas `contained` por idioma (original primeiro; as outras "sem tradução" até "Adicionar tradução"). Rodapé: Cancelar (ghost), Criar como rascunho, Criar; "Criar" abre o Modal com a revisão.
+**Novo**: uma página, coluna estreita. À vista: Torneio (nome, endereço com a prévia do link, início) e Formato (chave em `RadioGroup`, reset de grande final, séries). Fechados num `Accordion`, com o resumo dos valores no título: Campeões (bans, repetir campeão) e Inscrições e prazos (vagas, visibilidade, check-in, contestação). A descrição fica na seção Torneio; depois do acordeão, Regras adicionais e, por último, Outros idiomas (um bloco por idioma, sem tradução até "Adicionar Espanhol"). A dica embaixo de cada escolha diz só o que a opção escolhida faz. Rodapé: Cancelar (ghost), Criar como rascunho, Criar; "Criar" abre o Modal com a revisão.
 
-**Editar**: abas Geral (nome, descrição e regras por idioma), Formato (chave, séries, campeões) e Inscrições e prazos (início, vagas, visibilidade, check-in, contestação), um Salvar para todas. Depois de começar, o aviso dos campos travados no topo da aba deles. Excluir rascunho fica no ⋯ do `PageHeader` do torneio, não aqui.
+**Editar**: abas Geral (nome, descrição, regras adicionais e outros idiomas), Formato (chave, séries, campeões) e Inscrições e prazos (início, vagas, visibilidade, check-in, contestação), um Salvar para todas. Depois de começar, o aviso dos campos travados no topo da aba deles. Excluir rascunho fica no ⋯ do `PageHeader` do torneio, não aqui.
 
 ### Torneio `/[tenant]/[tournament]`
 
 `PageHeader`: breadcrumb (Início › Comunidade), nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" / "Cancelar inscrição" (esta no ⋯); organização o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Reabrir inscrições", "Desfazer início", "Excluir rascunho". Abaixo, o `Tile` "Sua situação" (quem joga). Abas:
 
-- **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (texto simples, `UserText`); resumo do formato (`StructuredList`).
+- **Visão geral** (`/`): `ProgressIndicator` do ciclo; "Partidas que esperam você"; descrição (texto simples, `UserText`); resumo do formato (`StructuredList`, valores curtos, `InfoTip` ao lado dos termos que pedem explicação) e o link "Ver as regras".
 - **Chave** (`/bracket`, a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e, abaixo, a classificação.
   - Cada lado do cartão: seed, avatar, apelido e placar. Linhas curvas, na cor da borda dos cartões, ligam cada partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas `contained`: **Chave principal**, com a grande final à direita da final, e **Repescagem** (a chave de quem perdeu uma vez), para a página não descer uma chave embaixo da outra; abre na aba da partida de quem vê. Quem muda de aba fica só com o texto ("Perdedor de C2.1").
 - **Inscritos** (`/participants`): `DataTable` (seed, apelido com avatar, estado: inscrito / check-in feito / desistiu / saiu, inscrito em), busca, paginação; organização: "Inscrever alguém" na barra e, por linha, marcar/desmarcar check-in, tirar, marcar desistência.
-- **Regras** (`/rules`): texto simples (`UserText`). Organização: "Editar regras" (ou "Escrever regras") abre o campo ali mesmo; para ela a aba aparece também sem regras. Para os outros, sem regras, a aba não aparece.
-- **Organização** (`/manage`, organização): o quadro de estado com o próximo passo e o motivo quando não dá (mínimo de inscritos, check-in aberto); resumo do seeding (definido ou "será sorteado") com o link "Editar seeding"; links de inscrição (tabela, gerar, revogar); W.O. e correções ficam na partida.
+- **Regras** (`/rules`, sempre): "Como funciona", o texto gerado da configuração; embaixo, "Regras adicionais" da organização (texto simples, `UserText`), para quem joga só quando há. Organização: "Editar regras adicionais" (ou "Escrever regras adicionais") abre o campo ali mesmo.
+- **Organização** (`/manage`, organização): o quadro de estado com o próximo passo e o motivo quando não dá (mínimo de inscritos, check-in aberto); resumo da ordem da chave (o que ela decide; definida ou "será sorteada") com "Definir a ordem"; links de inscrição (tabela com o começo do link, gerar, revogar); W.O. e correções ficam na partida.
 
-### Seeding `/[tenant]/[tournament]/seeding`
+### Ordem da chave (seeding) `/[tenant]/[tournament]/seeding`
 
-Organização, antes do início. Página inteira: título com quantos entram na chave, aviso quando a ordem mostrada ainda não vale, a lista com campo de posição por linha (Enter leva para lá; setas para o ajuste fino), "Sortear" e "Salvar" no fim (`ButtonSet`). Volta para a aba Organização ao salvar.
+Organização, antes do início. Página inteira: título com quantos entram na chave, o que a ordem decide e como mexer nela, aviso quando a ordem mostrada ainda não vale, a lista com campo de posição por linha (Enter leva para lá; setas para o ajuste fino), "Sortear" e "Salvar" no fim (`ButtonSet`). Volta para a aba Organização ao salvar.
 
 ### Partida `/[tenant]/[tournament]/matches/[match]`
 

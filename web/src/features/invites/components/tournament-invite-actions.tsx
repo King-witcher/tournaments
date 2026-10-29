@@ -9,14 +9,19 @@ import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 
-type Props = { tenant: string; inviteId: number };
+type Props = {
+  tenant: string;
+  inviteId: number;
+  /** O começo do link (`…/invite/7Fq2…`), para a confirmação dizer qual; nulo nos antigos. */
+  hint: string | null;
+};
 
 /**
  * Revogar um link de inscrição, na linha dele (pede confirmação). É a mesma
  * rota do convite da comunidade. Revogado, a linha some e o foco vai para a
  * lista dos links.
  */
-export function TournamentInviteActions({ tenant, inviteId }: Props) {
+export function TournamentInviteActions({ tenant, inviteId, hint }: Props) {
   const t = useTranslations("Tournament.invites");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -26,7 +31,10 @@ export function TournamentInviteActions({ tenant, inviteId }: Props) {
       <ConfirmButton
         kind="danger--ghost"
         pending={pending}
-        question={t("revokeConfirm")}
+        question={t("revokeConfirm", {
+          has: hint ? "yes" : "no",
+          link: hint ?? "",
+        })}
         onConfirm={() =>
           run(
             () =>

@@ -6,6 +6,7 @@ import { serverApi } from "@/shared/api/server";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { PageError } from "@/shared/ui/page-error";
+import { inviteHint } from "../lib/invite-hint";
 import { CreateInviteButton } from "./create-invite-button";
 import { CreatedInviteProvider } from "./created-invite-provider";
 import { InviteActions } from "./invite-actions";
@@ -47,15 +48,18 @@ export async function InviteSection({ slug }: { slug: string }) {
           label={t("label")}
           description={t("description")}
           columns={[
-            { key: "createdBy", header: t("createdBy") },
+            // No celular: o link, a validade e revogar, sem rolar.
+            { key: "link", header: t("linkColumn") },
+            { key: "createdBy", header: t("createdBy"), secondary: true },
             { key: "expires", header: t("expires") },
             { key: "uses", header: t("uses"), secondary: true },
             { key: "createdAt", header: t("createdAt"), secondary: true },
           ]}
           rows={invites.map((invite) => ({
             id: String(invite.id),
-            search: invite.created_by,
+            search: `${inviteHint(invite.hint) ?? ""} ${invite.created_by}`,
             cells: {
+              link: inviteHint(invite.hint) ?? "—",
               createdBy: invite.created_by,
               expires: format.relativeTime(new Date(invite.expires_at), now),
               uses: t("usesCount", { count: invite.uses }),
@@ -66,6 +70,7 @@ export async function InviteSection({ slug }: { slug: string }) {
                 slug={slug}
                 inviteId={invite.id}
                 createdBy={invite.created_by}
+                hint={inviteHint(invite.hint)}
                 focusId={INVITES_ID}
               />
             ),

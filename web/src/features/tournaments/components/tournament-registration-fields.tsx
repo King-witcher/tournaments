@@ -58,7 +58,7 @@ export function TournamentRegistrationFields({
       />
       <RadioGroup
         legendText={t("visibility")}
-        helperText={t("visibilityHint")}
+        helperText={t(`visibilityHints.${values.visibility}`)}
         name="visibility"
         orientation="horizontal"
         value={values.visibility}

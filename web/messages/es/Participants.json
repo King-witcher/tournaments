@@ -69,14 +69,15 @@
     "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera de la llave si el torneo empieza así."
   },
   "seeding": {
-    "loading": "Cargando el seeding…",
-    "pageTitle": "Seeding",
-    "title": "Seeding: {count} de {total} inscritos entran en la llave",
-    "hint": "El orden de la llave: el 1 es el mejor seed. Escribe la posición de alguien para llevarlo directo allí, o usa las flechas. Quien entre después va al final. Si nadie tiene seed al iniciar, el orden se sortea.",
-    "listLabel": "Orden del seeding",
+    "loading": "Cargando el orden de la llave…",
+    "pageTitle": "Orden de la llave",
+    "title": "Orden de la llave: entran {count} de {total} inscritos",
+    "what": "Define quién enfrenta a quién: en la primera ronda, los de arriba juegan contra los de abajo (el 1.º contra el último, el 2.º contra el penúltimo…), y el 1.º y el 2.º quedan en lados opuestos, para cruzarse solo al final. Si falta gente para completar la llave, los primeros pasan la primera ronda sin jugar. Pon a los más fuertes arriba.",
+    "hint": "Escribe la posición de alguien para llevarlo directo allí, o usa las flechas. Quien entre después va al final. Si nadie tiene posición al iniciar, el orden se sortea.",
+    "listLabel": "Orden de la llave",
     "empty": "Nadie elegible todavía: solo entra quien haga check-in.",
     "emptyNoCheckIn": "Nadie inscrito todavía.",
-    "noSeed": "sin seed",
+    "noSeed": "sin posición",
     "noneSeeded": "Este orden todavía no vale: si inicias así, el orden de la llave se sortea. Guárdalo para usar este orden, o sortea ahora para ver el resultado antes.",
     "up": "Subir a {name}",
     "down": "Bajar a {name}",
@@ -85,19 +86,20 @@
     "shuffle": "Sortear",
     "shuffleConfirm": "Sortear ahora descarta el orden que cambiaste. ¿Continuar?",
     "position": "Posición de {name} (1 a {total})",
-    "closed": "El seeding se revisa en el check-in (o, en un torneo sin check-in, con la inscripción abierta), antes de iniciar.",
+    "closed": "El orden de la llave se define en el check-in (o, en un torneo sin check-in, con la inscripción abierta), antes de iniciar.",
     "backToManage": "Volver a la organización",
-    "edit": "Editar seeding",
+    "edit": "Definir el orden",
     "summary": {
-      "title": "Seeding",
+      "title": "Orden de la llave (seeding)",
+      "what": "Define quién enfrenta a quién en la primera ronda: los de arriba juegan contra los de abajo, y los dos primeros solo se cruzan al final.",
       "count": "{count} de {total} inscritos entran en la llave.",
       "random": "Todavía sin definir: si inicias así, el orden de la llave se sortea.",
       "partial": "Definido para parte de los inscritos; quien entró después va al final, en el orden de inscripción.",
       "set": "Definido: la llave sigue este orden al iniciar.",
       "unavailable": "No se pudo cargar el orden ahora. Recarga la página.",
-      "started": "La llave ya se armó con los seeds; el orden está en la pestaña Inscritos.",
-      "atCheckIn": "El seeding se revisa en el check-in, con quien confirmó su presencia.",
-      "atRegistration": "El seeding se revisa después de publicar, con la inscripción abierta."
+      "started": "La llave ya se armó; el orden usado está en la pestaña Inscritos.",
+      "atCheckIn": "El orden se define en el check-in, con quien confirmó su presencia.",
+      "atRegistration": "El orden se define después de publicar, con la inscripción abierta."
     }
   }
 }

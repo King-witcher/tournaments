@@ -16,6 +16,10 @@
     "member": "Miembro",
     "role": "Rol",
     "since": "Desde",
+    "joinedVia": "Entró por",
+    "viaLink": "enlace {hint}",
+    "viaLegacyLink": "enlace de invitación",
+    "viaTournament": "{via} · inscripción en {tournament}",
     "empty": "Todavía no hay nadie en la comunidad. Genera un enlace en la pestaña Invitaciones para llamar a quien va a jugar.",
     "actions": "Acciones de {name}",
     "makeOrganizer": "Hacer organizador",
@@ -55,6 +59,7 @@
     "loading": "Cargando las invitaciones…",
     "description": "Quien entra por el enlace queda como jugador. Cada enlace vale 7 días y sirve para varias personas.",
     "create": "Generar enlace de invitación",
+    "linkColumn": "Enlace",
     "createdBy": "Creado por",
     "expires": "Vence",
     "uses": "Entraron",
@@ -67,6 +72,6 @@
     "copy": "Copiar el enlace",
     "copied": "¡Copiado!",
     "revoke": "Revocar",
-    "revokeConfirm": "¿Revocar este enlace? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
+    "revokeConfirm": "¿Revocar {has, select, yes {el enlace {link}} other {este enlace}}? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
   }
 }

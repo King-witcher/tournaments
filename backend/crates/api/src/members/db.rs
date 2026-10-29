@@ -1,22 +1,27 @@
 use sqlx::{PgConnection, PgPool};
 
-use super::types::Member;
+use super::types::{JoinedVia, Member};
 use crate::{
     shared::ApiError,
     tenants::{Role, TenantId},
 };
 
 /// Membros ativos do tenant (ou só `only_user`), owner primeiro, depois
-/// organizers e players, cada grupo por apelido.
+/// organizers e players, cada grupo por apelido. `with_origin` preenche
+/// `joined_via` (só para quem organiza; para os outros fica nulo).
 pub async fn list(
     db: &PgPool,
     tenant: TenantId,
     only_user: Option<i64>,
+    with_origin: bool,
 ) -> Result<Vec<Member>, ApiError> {
     let rows = sqlx::query!(
-        r#"select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at
+        r#"select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at,
+                  i.id is not null as "has_invite!", i.token_hint, t.name as "tournament_name?"
            from tenant_members m
            join users u on u.id = m.user_id
+           left join tenant_invites i on i.tenant_id = m.tenant_id and i.id = m.invite_id
+           left join tournaments t on t.tenant_id = i.tenant_id and t.id = i.tournament_id
            where m.tenant_id = $1 and m.left_at is null
              and ($2::bigint is null or m.user_id = $2)
            order by case m.role when 'owner' then 0 when 'organizer' then 1 else 2 end,
@@ -36,6 +41,10 @@ pub async fn list(
                 avatar_url: r.avatar_url,
                 role: Role::from_db(&r.role)?,
                 joined_at: r.joined_at,
+                joined_via: (with_origin && r.has_invite).then_some(JoinedVia {
+                    hint: r.token_hint,
+                    tournament: r.tournament_name,
+                }),
             })
         })
         .collect()

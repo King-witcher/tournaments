@@ -114,7 +114,7 @@ pub async fn remove_member(
     tag = "tenants",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = OK, body = Vec<Member>, description = "Membros: owner, organizers e players, cada grupo por apelido"),
+        (status = OK, body = Vec<Member>, description = "Membros: owner, organizers e players, cada grupo por apelido. `joined_via` só vem para organizer e owner"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
     )
@@ -123,7 +123,14 @@ pub async fn list_members(
     State(state): State<AppState>,
     member: TenantMember,
 ) -> Result<Json<Vec<Member>>, ApiError> {
-    db::list(&state.db, member.tenant, None).await.map(Json)
+    db::list(
+        &state.db,
+        member.tenant,
+        None,
+        member.role >= Role::Organizer,
+    )
+    .await
+    .map(Json)
 }
 
 #[utoipa::path(
@@ -153,7 +160,8 @@ pub async fn get_member(
         avatar_url,
         role,
         joined_at,
-    } = db::list(&state.db, member.tenant, Some(path.user_id))
+        joined_via: _,
+    } = db::list(&state.db, member.tenant, Some(path.user_id), false)
         .await?
         .pop()
         .ok_or(ApiError::not_found("member.not_found"))?;
@@ -209,7 +217,7 @@ pub async fn set_member_role(
     outbox::emit(&mut tx, Event::me([user_id])).await?;
     tx.commit().await?;
 
-    db::list(&state.db, owner.tenant, Some(user_id))
+    db::list(&state.db, owner.tenant, Some(user_id), true)
         .await?
         .pop()
         .map(Json)

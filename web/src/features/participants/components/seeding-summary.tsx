@@ -13,10 +13,12 @@ type Props = {
 };
 
 /**
- * Na aba Organização, o resumo do seeding: quantos entram na chave e se a
- * ordem já foi definida ou será sorteada ao iniciar, com "Editar seeding"
- * (a página inteira) enquanto a ordem se revisa. Antes disso e depois de
- * iniciar, só diz quando ela vale. Fica em `<Suspense>`.
+ * Na aba Organização, o resumo da ordem da chave (o seeding): o que ela
+ * decide, quantos entram na chave e se a ordem já foi definida ou será
+ * sorteada ao iniciar, com "Definir a ordem" (a página inteira) enquanto ela
+ * se revisa. Antes disso e depois de iniciar, só diz quando ela vale. O nome
+ * "seeding" sozinho não diz nada a quem não organiza torneios. Fica em
+ * `<Suspense>`.
  */
 export async function SeedingSummary({ tenant, tournament }: Props) {
   const t = await getTranslations("Participants.seeding");
@@ -24,7 +26,7 @@ export async function SeedingSummary({ tenant, tournament }: Props) {
 
   if (!seedingOpen(tournament)) {
     return (
-      <Section title={t("summary.title")}>
+      <Section title={t("summary.title")} description={t("summary.what")}>
         <p className={styles.text}>
           {hasStarted(tournament.status)
             ? t("summary.started")
@@ -53,9 +55,7 @@ export async function SeedingSummary({ tenant, tournament }: Props) {
   return (
     <Section
       title={t("summary.title")}
-      description={
-        order && t("summary.count", { count, total: tournament.participants })
-      }
+      description={t("summary.what")}
       action={
         count > 0 && (
           <ButtonLink
@@ -68,7 +68,11 @@ export async function SeedingSummary({ tenant, tournament }: Props) {
         )
       }
     >
-      <p className={styles.text}>{text}</p>
+      <p className={styles.text}>
+        {order &&
+          `${t("summary.count", { count, total: tournament.participants })} `}
+        {text}
+      </p>
     </Section>
   );
 }

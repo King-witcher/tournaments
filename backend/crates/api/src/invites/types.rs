@@ -24,6 +24,9 @@ pub struct Invite {
     /// Apelido, neste tenant, de quem criou.
     pub created_by: String,
     pub created_at: DateTime<Utc>,
+    /// Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
+    /// links criados antes desta mudança.
+    pub hint: Option<String>,
     pub expires_at: DateTime<Utc>,
     /// Quantas pessoas entraram por este link.
     pub uses: i64,
@@ -46,6 +49,9 @@ pub struct TournamentInvite {
     /// Apelido, neste tenant, de quem criou.
     pub created_by: String,
     pub created_at: DateTime<Utc>,
+    /// Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
+    /// links criados antes desta mudança.
+    pub hint: Option<String>,
     /// Quantas pessoas se inscreveram por este link.
     pub uses: i64,
 }

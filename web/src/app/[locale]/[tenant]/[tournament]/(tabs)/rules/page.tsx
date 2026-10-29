@@ -13,7 +13,7 @@ export default async function RulesPage({
     <Suspense
       fallback={
         <TabLoading label={t("loading")}>
-          <SectionSkeleton rows={5} />
+          <SectionSkeleton rows={8} />
         </TabLoading>
       }
     >

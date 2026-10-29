@@ -12,7 +12,8 @@
     "single": "Eliminação simples",
     "double": "Eliminação dupla"
   },
-  "grandFinalReset": "Grande final com reset: se quem vem da repescagem vencer, joga-se mais uma série",
+  "grandFinalReset": "Reset de grande final",
+  "grandFinalResetHint": "Se quem chega pela repescagem vencer a grande final, os dois jogam mais uma série, porque só então os dois têm uma derrota.",
   "bestOf": "Séries",
   "finalsBestOf": {
     "single": "Final",
@@ -29,7 +30,12 @@
     "stage": "Não repete na fase",
     "tournament": "Não repete no torneio"
   },
-  "noRepeatHint": "Cada jogador usa um campeão por mapa. Na série, quem jogou um mapa com um campeão não o usa nos outros mapas da mesma partida (md3, md5); no torneio, não o usa em mais nenhum mapa. A regra é conferida no pior caso de mapas para o número de vagas: se faltar campeão, o torneio não é salvo.",
+  "noRepeatHints": {
+    "off": "Pode repetir campeões quando quiser.",
+    "match": "Não pode repetir campeões numa série.",
+    "stage": "Não pode repetir campeões na fase.",
+    "tournament": "Não pode repetir campeões em todo o torneio (limita a quantidade de vagas)."
+  },
   "registration": "Inscrições e prazos",
   "registrationLocked": "O torneio já começou: início, vagas e check-in não mudam mais.",
   "maxParticipants": "Vagas",
@@ -39,11 +45,15 @@
     "public": "Pública",
     "private": "Privada"
   },
-  "visibilityHint": "Pública: todos da comunidade veem e se inscrevem. Privada: só inscritos e organizadores veem, e entra quem um organizador inscrever ou quem usar um link de inscrição. Dá para mudar até o torneio encerrar.",
+  "visibilityHints": {
+    "public": "Todos da comunidade veem o torneio e podem se inscrever.",
+    "private": "Só inscritos e organizadores veem o torneio. Entra quem um organizador inscrever ou quem usar um link de inscrição."
+  },
   "checkIn": "Check-in",
   "checkInOff": "Sem check-in",
   "checkInOption": "Abre {minutes} min antes do início",
-  "checkInHint": "Só quem fizer check-in entra na chave; quem não fizer continua inscrito. Sem check-in, todos os inscritos entram.",
+  "checkInOffHint": "Todos os inscritos entram na chave.",
+  "checkInHint": "Check-in é a confirmação de presença: perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra na chave.",
   "contest": "Janela de contestação",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios.",
@@ -53,22 +63,15 @@
     "noCheckIn": "sem check-in",
     "contest": "{window} para contestar"
   },
-  "texts": "Descrição e regras",
-  "textsHint": "Opcionais. Cada idioma numa aba: quem usa o site num idioma sem tradução vê o original.",
-  "languages": "Idiomas dos textos",
-  "original": "Original",
-  "translated": "Tradução",
-  "untranslated": "Sem tradução",
   "description": "Descrição",
-  "rules": "Regras",
-  "plainTextHint": "Texto simples: as quebras de linha são mantidas.",
-  "translation": {
-    "off": "Sem tradução: quem usa o site em {language} vê o nome, a descrição e as regras do original ({original}).",
-    "add": "Adicionar tradução",
-    "remove": "Remover tradução",
-    "hint": "O nome é obrigatório; descrição ou regras em branco mostram as do original.",
-    "willDelete": "A tradução salva vai ser apagada quando você salvar. Para mantê-la, adicione de novo antes de salvar."
-  },
+  "rules": "Regras adicionais",
+  "rulesHint": "Opcional. A aba Regras já explica o formato, o check-in e o envio de resultados; escreva aqui o resto (mapas, conduta, queda de conexão).",
+  "otherLanguages": "Outros idiomas",
+  "translationOff": "Nome, descrição e regras acima estão em {original}. Quem usa o site em {language} os vê assim.",
+  "translationHint": "Descrição ou regras em branco mostram as do original.",
+  "addLanguage": "Adicionar {language}",
+  "removeLanguage": "Remover {language}",
+  "willDelete": "A tradução salva vai ser apagada quando você salvar. Para mantê-la, adicione o idioma de novo antes de salvar.",
   "create": "Criar",
   "createDraft": "Criar como rascunho",
   "review": {

@@ -1375,6 +1375,11 @@ export interface components {
             created_by: string;
             /** Format: date-time */
             expires_at: string;
+            /**
+             * @description Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
+             *     links criados antes desta mudança.
+             */
+            hint?: string | null;
             /** Format: int64 */
             id: number;
             /**
@@ -1428,6 +1433,19 @@ export interface components {
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
             translations: components["schemas"]["NameTranslation"][];
+        };
+        /** @description O link de convite pelo qual um membro entrou. */
+        JoinedVia: {
+            /**
+             * @description Os 4 primeiros caracteres do token do link; nulo nos links criados
+             *     antes de existir o `hint`.
+             */
+            hint?: string | null;
+            /**
+             * @description Nome (no idioma original) do torneio, quando o link era de inscrição;
+             *     nulo no convite da comunidade.
+             */
+            tournament?: string | null;
         };
         /** @description Token de um link mandado por email (cadastro, troca de email). */
         LinkToken: {
@@ -1546,6 +1564,7 @@ export interface components {
             display_name: string;
             /** Format: date-time */
             joined_at: string;
+            joined_via?: components["schemas"]["JoinedVia"] | null;
             nickname: string;
             role: components["schemas"]["Role"];
             /** Format: int64 */
@@ -2069,6 +2088,11 @@ export interface components {
             created_at: string;
             /** @description Apelido, neste tenant, de quem criou. */
             created_by: string;
+            /**
+             * @description Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
+             *     links criados antes desta mudança.
+             */
+            hint?: string | null;
             /** Format: int64 */
             id: number;
             /**
@@ -3893,7 +3917,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Membros: owner, organizers e players, cada grupo por apelido */
+            /** @description Membros: owner, organizers e players, cada grupo por apelido. `joined_via` só vem para organizer e owner */
             200: {
                 headers: {
                     [name: string]: unknown;

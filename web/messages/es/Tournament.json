@@ -17,13 +17,53 @@
   },
   "progress": "Ciclo del torneo",
   "description": "Descripción",
-  "noRules": "Este torneo no tiene reglas escritas. Si tienes dudas, pregúntale a la organización.",
+  "autoRules": {
+    "title": "Cómo funciona",
+    "generated": "Este texto sale del formato del torneo y cambia solo cuando lo editas.",
+    "registration": "La inscripción queda abierta hasta que abra el check-in, o hasta que se agoten los {max} cupos.",
+    "registrationNoCheckIn": "La inscripción queda abierta hasta que empiece el torneo, o hasta que se agoten los {max} cupos.",
+    "start": "El inicio está programado para <date></date>.",
+    "checkInAt": "El check-in abre {window} antes, a las <time></time>, y sigue hasta que la organización inicie el torneo.",
+    "checkIn": "El check-in abre {window} antes del inicio y sigue hasta que la organización inicie el torneo.",
+    "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar: quien no lo haga queda fuera de la llave.",
+    "noCheckIn": "No hay check-in: cuando la organización inicia el torneo, todos los inscritos entran en la llave.",
+    "bracket": {
+      "single": "La llave es de eliminación simple.",
+      "double": "La llave es de eliminación doble."
+    },
+    "bracketRule": {
+      "single": "Quien pierde una partida queda fuera del torneo.",
+      "double": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final: quien gane es el campeón.",
+      "doubleReset": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, los dos juegan la gran final otra vez, porque ahora cada uno perdió una vez."
+    },
+    "series": "{bestOf, plural, =1 {Las partidas son a un solo mapa.} other {Las partidas son al mejor de # mapas: gana quien se lleve {wins}.}}",
+    "finals": {
+      "single": "{bestOf, plural, =1 {La final es a un solo mapa.} other {La final es al mejor de # mapas: gana quien se lleve {wins}.}}",
+      "double": "{bestOf, plural, =1 {La gran final es a un solo mapa.} other {La gran final es al mejor de # mapas: gana quien se lleve {wins}.}}"
+    },
+    "maps": "El mismo mapa no se repite en una partida.",
+    "noBans": "No hay ban de campeones.",
+    "champions": {
+      "bans": "{count, plural, one {Antes de cada mapa, cada jugador banea # campeón del rival, que no puede usarlo en ese mapa.} other {Antes de cada mapa, cada jugador banea # campeones del rival, que no puede usarlos en ese mapa.}}",
+      "repeat": {
+        "off": "Puedes repetir campeones.",
+        "match": "En una misma partida no repites campeón: usa uno distinto en cada mapa.",
+        "stage": "En esta fase del torneo no repites campeón: usa uno distinto en cada mapa que juegues.",
+        "tournament": "En todo el torneo no repites campeón: usa uno distinto en cada mapa que juegues."
+      }
+    },
+    "report": "Después de cada mapa, uno de los dos envía el resultado en la página de la partida: quién ganó y el mapa jugado.",
+    "nextMap": "No hace falta esperar la confirmación para jugar el siguiente mapa.",
+    "confirm": "El otro jugador tiene {window} para confirmar o impugnar. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
+    "walkover": "Si tu rival no aparece, o si necesitas dejar el torneo, avísale a la organización: quien no juega pierde por W.O."
+  },
+  "extraRules": "Reglas adicionales",
   "rulesEditor": {
-    "edit": "Editar reglas",
-    "write": "Escribir reglas",
-    "empty": "Este torneo todavía no tiene reglas escritas. Escribe lo que vale (mapas, horarios, conducta, qué hacer si alguien se cae): quien juega las lee en esta pestaña.",
-    "labelOriginal": "Reglas ({language}, original)",
-    "labelTranslation": "Reglas ({language}, traducción)"
+    "edit": "Editar reglas adicionales",
+    "write": "Escribir reglas adicionales",
+    "empty": "Escribe lo que el texto de arriba no cubre: mapas, conducta, caídas de conexión.",
+    "labelOriginal": "Reglas adicionales ({language}, original)",
+    "labelTranslation": "Reglas adicionales ({language}, traducción)"
   },
   "publish": "Publicar y abrir inscripciones",
   "publishToCheckIn": "Publicar y abrir el check-in",
@@ -39,12 +79,12 @@
       "slots": "Cupos",
       "champions": "Campeones",
       "checkIn": "Check-in",
-      "contest": "Impugnación"
+      "contest": "Plazo para impugnar"
     },
     "bracket": {
       "single": "Eliminación simple",
       "double": "Eliminación doble",
-      "doubleReset": "Eliminación doble, gran final con reset"
+      "doubleReset": "Eliminación doble, con reset en la gran final"
     },
     "series": {
       "single": "Al mejor de {bestOf}; final al mejor de {finals}",
@@ -52,14 +92,23 @@
     },
     "bans": "{count, plural, =0 {sin bans} one {# ban por mapa} other {# bans por mapa}}",
     "noRepeat": {
-      "off": "se puede repetir campeón",
-      "match": "sin repetir campeón en la serie",
-      "stage": "sin repetir campeón en la fase",
-      "tournament": "sin repetir campeón en el torneo"
+      "off": "se pueden repetir",
+      "match": "único por serie",
+      "stage": "único en la fase",
+      "tournament": "único en el torneo"
     },
     "checkIn": "abre {window} antes del inicio",
-    "noCheckIn": "sin check-in: entran todos los inscritos",
-    "contest": "{window} para que el rival confirme o impugne"
+    "noCheckIn": "sin check-in",
+    "tips": {
+      "bracket": "¿Cómo funciona la llave?",
+      "champions": "¿Cómo funcionan las reglas de campeones?",
+      "checkIn": "¿Qué es el check-in?",
+      "checkInText": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en la llave.",
+      "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: todos los inscritos entran en la llave.",
+      "contest": "¿Qué es el plazo para impugnar?",
+      "contestText": "Después de cada mapa, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización."
+    },
+    "seeRules": "Ver las reglas"
   },
   "invites": {
     "title": "Enlaces de inscripción",
@@ -69,12 +118,13 @@
     "createdTitle": "Enlace de inscripción generado",
     "empty": "No hay enlaces de inscripción. Genera uno y envíalo a quien quieras inscribir, incluso a quien todavía no es de la comunidad.",
     "columns": {
+      "link": "Enlace",
       "createdBy": "Creado por",
       "createdAt": "Creado el",
       "uses": "Inscripciones"
     },
     "revoke": "Revocar",
-    "revokeConfirm": "¿Revocar este enlace de inscripción? Quien lo abra después ya no entra por él; quien ya se inscribió sigue inscrito. Puedes generar otro después."
+    "revokeConfirm": "¿Revocar {has, select, yes {el enlace de inscripción {link}} other {este enlace de inscripción}}? Quien lo abra después ya no entra por él; quien ya se inscribió sigue inscrito. Puedes generar otro después."
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",

@@ -47,6 +47,7 @@ export function TournamentFormatFields({
       {values.bracket === "double" && (
         <Checkbox
           labelText={t("grandFinalReset")}
+          helperText={t("grandFinalResetHint")}
           name="grandFinalReset"
           checked={values.grandFinalReset}
           disabled={disabled}

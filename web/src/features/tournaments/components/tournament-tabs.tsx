@@ -1,10 +1,9 @@
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { PageTabs } from "@/shared/ui/page-tabs";
-import { localizedTexts } from "../lib/localize";
-import { hasStarted, textsEditable } from "../lib/status";
+import { hasStarted } from "../lib/status";
 
 type Props = {
   tenant: string;
@@ -17,8 +16,9 @@ type Props = {
 
 /**
  * As abas do torneio, uma coisa por aba: Visão geral, Chave (a partir do
- * início), Inscritos, Regras (com regras, ou para a organização escrevê-las) e Organização (só para ela). O
- * que não se aplica não entra na lista.
+ * início), Inscritos, Regras (sempre: o texto que sai do formato vem antes
+ * das regras adicionais) e Organização (só para ela). O que não se aplica
+ * não entra na lista.
  */
 export function TournamentTabs({
   tenant,
@@ -27,7 +27,6 @@ export function TournamentTabs({
   children,
 }: Props) {
   const t = useTranslations("Tournament");
-  const locale = useLocale();
   const base = `/${tenant}/${tournament.slug}`;
   const tabs = [
     { href: base, label: t("tabs.overview") },
@@ -35,11 +34,7 @@ export function TournamentTabs({
       ? [{ href: `${base}/bracket`, label: t("tabs.bracket") }]
       : []),
     { href: `${base}/participants`, label: t("tabs.participants") },
-    // A organização vê a aba sem regras: é onde ela as escreve.
-    ...(localizedTexts(tournament, locale).rules ||
-    (organizer && textsEditable(tournament.status))
-      ? [{ href: `${base}/rules`, label: t("tabs.rules") }]
-      : []),
+    { href: `${base}/rules`, label: t("tabs.rules") },
     ...(organizer ? [{ href: `${base}/manage`, label: t("tabs.manage") }] : []),
   ];
 

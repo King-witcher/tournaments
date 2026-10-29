@@ -118,7 +118,11 @@ export function DataTable({
   };
 
   return (
-    <TableContainer title={title} description={description}>
+    <TableContainer
+      title={title}
+      description={description}
+      className={styles.container}
+    >
       {showBar && (
         <TableToolbar aria-label={label}>
           <TableToolbarContent>

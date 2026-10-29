@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/type";
+
+// Texto corrido, como as regras adicionais logo abaixo (UserText): o mesmo
+// tipo e a mesma coluna de leitura, para os dois se lerem como um texto só.
+.text {
+  @include type.type-style("body-02");
+
+  max-inline-size: 42rem;
+}

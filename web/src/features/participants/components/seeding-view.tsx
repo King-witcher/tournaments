@@ -1,3 +1,4 @@
+import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
@@ -84,7 +85,10 @@ export async function SeedingView({ tenant, slug }: Props) {
           total: tournament.participants,
         })}
       >
-        <p className={styles.hint}>{t("hint")}</p>
+        <Stack gap={3} className={styles.hint}>
+          <p>{t("what")}</p>
+          <p>{t("hint")}</p>
+        </Stack>
       </PageHeader>
       {order.length === 0 ? (
         <EmptyState

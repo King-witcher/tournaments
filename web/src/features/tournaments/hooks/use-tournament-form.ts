@@ -57,7 +57,7 @@ type Failure = {
 
 type Options = {
   /**
-   * Mostra o que esconde um controle (o acordeão, a aba, o idioma), para o
+   * Mostra o que esconde um controle (o acordeão ou a aba), para o
    * foco chegar a ele quando é recusado.
    */
   reveal: (control: HTMLElement) => void;
@@ -68,7 +68,7 @@ type Options = {
  * traduções ligadas e, em "Criar", já publicando (a API grava tudo ou nada).
  * Editar faz o PATCH e, depois, grava cada tradução que mudou (PUT) ou apaga
  * a que foi desligada, tudo no mesmo "Salvar". Deu certo, vai para a página
- * do torneio. O erro de um campo vai para ele, que é mostrado (acordeão, aba)
+ * do torneio. O erro de um campo vai para ele, que é mostrado (acordeão ou aba)
  * e recebe o foco; o resto é do formulário.
  */
 export function useTournamentForm(
@@ -80,7 +80,7 @@ export function useTournamentForm(
   const router = useRouter();
   const errorMessage = useApiErrorMessage();
   const formRef = useRef<HTMLFormElement>(null);
-  // Na criação, o original é o idioma da interface; a outra aba é a tradução.
+  // Na criação, o original é o idioma da interface; os outros são traduções.
   const original = tournament?.locale ?? uiLocale;
   const others = routing.locales.filter((l) => l !== original);
   const [values, setValues] = useState(() =>

@@ -69,14 +69,15 @@
     "unmarkConfirm": "Desmarcar o check-in de {name}? Sem check-in, {name} fica fora da chave se o torneio começar assim."
   },
   "seeding": {
-    "loading": "Carregando o seeding…",
-    "pageTitle": "Seeding",
-    "title": "Seeding: {count} de {total} inscritos entram na chave",
-    "hint": "A ordem da chave: o 1 é o melhor seed. Digite a posição de alguém para levá-lo direto para lá, ou use as setas. Quem entrar depois vai para o fim. Se ninguém tiver seed ao iniciar, a ordem é sorteada.",
-    "listLabel": "Ordem do seeding",
+    "loading": "Carregando a ordem da chave…",
+    "pageTitle": "Ordem da chave",
+    "title": "Ordem da chave: {count} de {total} inscritos entram",
+    "what": "Define quem enfrenta quem: na primeira rodada, os de cima pegam os de baixo (o 1º contra o último, o 2º contra o penúltimo…), e o 1º e o 2º ficam em lados opostos, para só se cruzarem no fim. Se faltar gente para fechar a chave, os primeiros passam a primeira rodada sem jogar. Ponha os mais fortes em cima.",
+    "hint": "Digite a posição de alguém para levá-lo direto para lá, ou use as setas. Quem entrar depois vai para o fim. Se ninguém tiver posição ao iniciar, a ordem é sorteada.",
+    "listLabel": "Ordem da chave",
     "empty": "Ninguém elegível ainda: só entra quem fizer check-in.",
     "emptyNoCheckIn": "Ninguém inscrito ainda.",
-    "noSeed": "sem seed",
+    "noSeed": "sem posição",
     "noneSeeded": "Esta ordem ainda não vale: se iniciar assim, a ordem da chave é sorteada. Salve para usar esta ordem, ou sorteie agora para ver o resultado antes.",
     "up": "Subir {name}",
     "down": "Descer {name}",
@@ -85,19 +86,20 @@
     "shuffle": "Sortear",
     "shuffleConfirm": "Sortear agora descarta a ordem que você mudou. Continuar?",
     "position": "Posição de {name} (1 a {total})",
-    "closed": "O seeding se revisa no check-in (ou, em torneio sem check-in, com a inscrição aberta), antes de iniciar.",
+    "closed": "A ordem da chave se define no check-in (ou, em torneio sem check-in, com a inscrição aberta), antes de iniciar.",
     "backToManage": "Voltar à organização",
-    "edit": "Editar seeding",
+    "edit": "Definir a ordem",
     "summary": {
-      "title": "Seeding",
+      "title": "Ordem da chave (seeding)",
+      "what": "Define quem enfrenta quem na primeira rodada: os de cima pegam os de baixo, e os dois primeiros só se cruzam no fim.",
       "count": "{count} de {total} inscritos entram na chave.",
       "random": "Ainda não definido: se iniciar assim, a ordem da chave é sorteada.",
       "partial": "Definido para parte dos inscritos; quem entrou depois vai para o fim, na ordem de inscrição.",
       "set": "Definido: a chave segue esta ordem ao iniciar.",
       "unavailable": "Não foi possível carregar a ordem agora. Recarregue a página.",
-      "started": "A chave já foi montada com os seeds; a ordem está na aba Inscritos.",
-      "atCheckIn": "O seeding se revisa no check-in, com quem confirmou presença.",
-      "atRegistration": "O seeding se revisa depois de publicar, com a inscrição aberta."
+      "started": "A chave já foi montada; a ordem usada está na aba Inscritos.",
+      "atCheckIn": "A ordem se define no check-in, com quem confirmou presença.",
+      "atRegistration": "A ordem se define depois de publicar, com a inscrição aberta."
     }
   }
 }
