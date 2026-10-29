@@ -2,7 +2,8 @@
   "internal": "Algo deu errado. Tente de novo.",
   "request": {
     "invalid_body": "Dados inválidos.",
-    "invalid_path": "Endereço inválido."
+    "invalid_path": "Endereço inválido.",
+    "cross_origin": "Pedido recusado: ele não veio deste site."
   },
   "auth": {
     "unauthenticated": "Sua sessão terminou. Recarregue a página para entrar de novo.",

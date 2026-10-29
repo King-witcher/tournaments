@@ -19,7 +19,7 @@ use crate::common::{err, redis};
 async fn without_config_is_503() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db, None, false);
-    let (status, body) = authorize(&app, "discord", "login", None).await;
+    let (status, body) = authorize(&app, "discord", "login", None, None).await;
     assert_eq!(
         (status, body),
         (

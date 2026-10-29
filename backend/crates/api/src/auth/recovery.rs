@@ -113,7 +113,10 @@ pub async fn reset_password(
     db::update_password(&state.db, user_id, None, Some(&hash)).await?;
 
     // Quem tinha a senha antiga pode estar logado: todas as sessões saem, e
-    // os erros de senha do username, que eram contra a antiga, também.
+    // os erros de senha do username, que eram contra a antiga, também. E o
+    // link de troca de email que ele tenha pedido: aberto, poria o email dele
+    // na conta, e a recuperação seguinte iria para lá.
+    kv::cancel_email_change(&state.redis, user_id).await?;
     let ended = kv::delete_all_sessions(&state.redis, user_id).await?;
     sessions_ended(&state, user_id, &ended).await?;
     if let Some(login) = db::password_login_of_user(&state.db, user_id).await? {

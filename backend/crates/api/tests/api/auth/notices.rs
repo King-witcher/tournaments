@@ -116,7 +116,7 @@ async fn discord_link_and_unlink() {
     let app = app(db.clone(), Some(discord_user(None)), true);
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    let (status, body) = link_provider(&app, "discord", &me).await;
+    let (status, body) = link_provider(&app, "discord", &me, Some(PASSWORD)).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let text = expect_notice(
         &db,

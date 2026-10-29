@@ -1,6 +1,7 @@
-//! Erros de senha recentes, para o limite de tentativas (`attempts.rs`):
-//! `password_failures:{username}` é um zset com o horário de cada erro (em
-//! milissegundos, como score) e expira junto com a janela.
+//! Tentativas de senha recentes, para o limite (`attempts.rs`):
+//! `password_failures:{username}` é um zset com o horário de cada tentativa
+//! (em milissegundos, como score) e expira junto com a janela. A tentativa
+//! entra antes da conferência e fica como erro; o acerto apaga o zset.
 
 use chrono::{DateTime, TimeDelta, Utc};
 use redis::{Cmd, RedisResult};
@@ -11,56 +12,43 @@ fn failures_key(redis: &Redis, username: &str) -> String {
     redis.key(format_args!("password_failures:{username}"))
 }
 
-/// Até quando `username` está bloqueado: com `max` erros na janela, até o
-/// mais antigo deles sair dela.
-pub async fn password_blocked_until(
+/// Conta uma tentativa de senha de `username`, antes de conferi-la, e esquece
+/// as que saíram da janela. Com `max` erros na janela, a tentativa não conta,
+/// e a resposta é até quando `username` está bloqueado: até o mais antigo dos
+/// `max` últimos sair dela. Contar antes de conferir, no mesmo MULTI que lê
+/// os erros, é o que segura as tentativas ao mesmo tempo: cada uma vê as
+/// outras, então não passam de `max` conferências na janela.
+pub async fn begin_password_attempt(
     redis: &Redis,
     username: &str,
     max: usize,
     window: TimeDelta,
 ) -> RedisResult<Option<DateTime<Utc>>> {
-    let since = Utc::now().timestamp_millis() - window.num_milliseconds();
-    let recent: Vec<(String, f64)> = redis
-        .query(&Cmd::zrevrangebyscore_limit_withscores(
-            failures_key(redis, username),
-            "+inf",
-            format!("({since}"),
-            0,
-            max as isize,
-        ))
-        .await?;
-    Ok(match recent.last() {
-        Some((_, oldest)) if recent.len() >= max => {
-            DateTime::from_timestamp_millis(*oldest as i64).map(|at| at + window)
-        }
-        _ => None,
-    })
-}
-
-/// Registra um erro de senha e esquece os que saíram da janela.
-pub async fn record_password_failure(
-    redis: &Redis,
-    username: &str,
-    window: TimeDelta,
-) -> RedisResult<()> {
     let key = failures_key(redis, username);
     let now = Utc::now().timestamp_millis();
-    // O membro do zset é único: dois erros no mesmo milissegundo contam dois.
-    let failure = format!("{now}-{}", token::random_token());
-    redis
+    // O membro do zset é único: duas tentativas no mesmo milissegundo contam duas.
+    let attempt = format!("{now}-{}", token::random_token());
+    let (recent,): (Vec<(String, f64)>,) = redis
         .query_pipe(
             redis::pipe()
                 .atomic()
-                .zadd(&key, failure, now)
-                .ignore()
                 .zrembyscore(&key, "-inf", now - window.num_milliseconds())
+                .ignore()
+                .zrevrange_withscores(&key, 0, max as isize - 1)
+                .zadd(&key, &attempt, now)
                 .ignore()
                 .pexpire(&key, window.num_milliseconds())
                 .ignore(),
         )
-        .await
+        .await?;
+    let Some((_, oldest)) = recent.last().filter(|_| recent.len() >= max) else {
+        return Ok(None);
+    };
+    redis.query::<()>(&Cmd::zrem(&key, &attempt)).await?;
+    Ok(DateTime::from_timestamp_millis(*oldest as i64).map(|at| at + window))
 }
 
+/// Zera a contagem, inclusive a tentativa que acabou de acertar.
 pub async fn clear_password_failures(redis: &Redis, username: &str) -> RedisResult<()> {
     redis
         .query(&Cmd::del(failures_key(redis, username)))

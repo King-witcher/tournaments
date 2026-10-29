@@ -94,7 +94,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .split_for_parts();
 
     let cors = CorsLayer::new()
-        .allow_origin(web_origin)
+        .allow_origin(web_origin.clone())
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -112,6 +112,10 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .layer(middleware::from_fn_with_state(
             realtime,
             realtime::wake_after_emit,
+        ))
+        .layer(middleware::from_fn_with_state(
+            web_origin,
+            shared::origin::refuse_cross_origin,
         ))
         .layer(cors)
         .layer(TraceLayer::new_for_http())

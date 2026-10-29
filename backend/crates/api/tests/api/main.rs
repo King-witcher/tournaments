@@ -15,6 +15,7 @@ mod matches;
 mod members;
 mod my_tournaments;
 mod organizing;
+mod origin;
 mod participants;
 mod ratings;
 mod realtime;

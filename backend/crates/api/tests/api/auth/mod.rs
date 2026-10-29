@@ -282,15 +282,22 @@ async fn skip_cooldown(db: &PgPool, address: &str) {
 }
 
 /// Abre o OAuth de `provider` (`discord` ou `google`) para `intent` (`login`
-/// ou `link`), com o state e o challenge de teste. Devolve status e corpo (a
-/// URL da autorização).
+/// ou `link`), com o state e o challenge de teste e, para ligar numa conta
+/// com senha, a atual (`password`). Devolve status e corpo (a URL da
+/// autorização).
 async fn authorize(
     app: &Router,
     provider: &str,
     intent: &str,
     session: Option<&str>,
+    password: Option<&str>,
 ) -> (StatusCode, Value) {
-    let body = json!({ "intent": intent, "state": STATE, "code_challenge": CHALLENGE });
+    let body = json!({
+        "intent": intent,
+        "state": STATE,
+        "code_challenge": CHALLENGE,
+        "current_password": password,
+    });
     let uri = format!("/auth/{provider}/authorize");
     let (status, body, _) = send_json(app, Method::POST, &uri, session, body).await;
     (status, body)
@@ -318,8 +325,16 @@ async fn do_login(app: &Router) -> (String, Value) {
     (session.unwrap(), body)
 }
 
-/// Liga `provider` à conta de `who`; devolve status e corpo.
-async fn link_provider(app: &Router, provider: &str, who: &User) -> (StatusCode, Value) {
+/// Liga `provider` à conta de `who`, como o front: abre o fluxo (com a senha
+/// atual, se a conta tem) e manda o code. Devolve status e corpo da troca.
+async fn link_provider(
+    app: &Router,
+    provider: &str,
+    who: &User,
+    password: Option<&str>,
+) -> (StatusCode, Value) {
+    let (status, body) = authorize(app, provider, "link", Some(&who.cookie), password).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body, session) =
         exchange(app, provider, "link", Some(&who.cookie), VERIFIER).await;
     assert_eq!(session, None, "ligar não cria sessão");

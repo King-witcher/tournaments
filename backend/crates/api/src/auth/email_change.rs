@@ -1,6 +1,7 @@
 //! Email da conta logada: pôr, trocar ou tirar. O email novo só vale depois
 //! que o link mandado para ele é aberto; até lá, fica o de antes. Só a conta
-//! sem senha fica sem email.
+//! sem senha fica sem email. O pedido não diz se o email já é de outra conta
+//! (o dono dela recebe um aviso no lugar do link).
 
 use axum::{Json, extract::State, http::StatusCode};
 
@@ -24,10 +25,10 @@ use crate::{
     tag = "auth",
     request_body = ChangeEmail,
     responses(
-        (status = ACCEPTED, body = EmailSent, description = "Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto"),
+        (status = ACCEPTED, body = EmailSent, description = "Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto. Se o email já é de outra conta, o dono dela recebe um aviso no lugar do link, e a resposta é a mesma, para não revelar quem tem conta"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.email_unchanged, auth.email_taken (é de outra conta)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.email_unchanged"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}, email.too_soon {seconds}"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "email.unavailable (teto de envios do dia)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "email.invalid, email.disposable, request.invalid_body"),
@@ -51,19 +52,23 @@ pub async fn change_email(
             .ok_or(ApiError::forbidden("auth.wrong_password"))?;
         confirm_password(&state, user.id, current, "auth.no_password").await?;
     }
-    if db::email_taken(&state.db, &email).await? {
-        return Err(ApiError::conflict("auth.email_taken"));
-    }
-
+    // Email de outra conta passa pelos mesmos limites e tem a mesma resposta:
+    // só o dono dela fica sabendo, como no cadastro.
+    let owner = db::contact_by_email(&state.db, &email).await?;
     let ticket = state.mail.reserve(&state.redis, &email).await?;
-    let token = kv::create_email_change(&state.redis, user.id, &email, LINK_TTL_SECS).await?;
-    let locale = Locale::from_db(&user.locale)?;
-    ticket.send(emails::email_change(
-        &state.auth.web_origin,
-        locale,
-        &email,
-        &token,
-    ));
+    let web = &state.auth.web_origin;
+    let message = match owner {
+        Some(owner) => {
+            let locale = Locale::from_db(&owner.locale)?;
+            emails::email_in_use(web, locale, &email, owner.username.as_deref())
+        }
+        None => {
+            let token =
+                kv::create_email_change(&state.redis, user.id, &email, LINK_TTL_SECS).await?;
+            emails::email_change(web, Locale::from_db(&user.locale)?, &email, &token)
+        }
+    };
+    ticket.send(message);
     Ok((StatusCode::ACCEPTED, Json(EmailSent { email })))
 }
 
@@ -107,6 +112,8 @@ pub async fn confirm_email(
         .await?
         .ok_or(ApiError::gone("auth.link_expired"))?;
     let (before, has_password) = db::set_email(&state.db, user_id, &email).await?;
+    // O link de recuperação que estava valendo foi para o email de antes.
+    kv::cancel_password_reset(&state.redis, user_id).await?;
     // Quem põe o primeiro email não tem a quem avisar.
     if let Some(old) = before.filter(|old| *old != email) {
         let notice = Notice::EmailChanged {

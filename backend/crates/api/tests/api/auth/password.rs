@@ -117,6 +117,29 @@ async fn wrong_passwords_block_the_username() {
     assert!(!left);
 }
 
+/// A tentativa conta antes da conferência: pedidos ao mesmo tempo não
+/// conferem mais senhas que o limite.
+#[tokio::test]
+async fn simultaneous_attempts_stay_within_the_limit() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    signup(&app, &db, "Rapha", PASSWORD).await;
+    let attempts: Vec<_> = (0..12)
+        .map(|_| {
+            let app = app.clone();
+            tokio::spawn(async move { login(&app, "rapha", "senha errada").await.0 })
+        })
+        .collect();
+    let mut checked = 0;
+    for attempt in attempts {
+        match attempt.await.unwrap() {
+            StatusCode::UNAUTHORIZED => checked += 1,
+            status => assert_eq!(status, StatusCode::TOO_MANY_REQUESTS),
+        }
+    }
+    assert_eq!(checked, 5);
+}
+
 #[tokio::test]
 async fn discord_account_adds_username_and_password() {
     let (db, _lease) = crate::db::test_db().await;

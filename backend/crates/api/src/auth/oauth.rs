@@ -4,10 +4,13 @@
 //! volta para a página de callback do front, que confere o state e manda aqui
 //! o code com o verifier, para entrar (`login`) ou ligar à conta logada
 //! (`link`). O provedor confere o verifier contra o challenge na troca, então
-//! o code só serve a quem abriu o fluxo; a API não guarda nada entre as duas
-//! pontas. As rotas de cada provedor só passam o dele para o fluxo comum,
-//! aqui embaixo; o que muda entre eles (URL de autorização, leitura do
-//! usuário) fica em `discord.rs` e `google.rs`.
+//! o code só serve a quem abriu o fluxo. Para entrar, a API não guarda nada
+//! entre as duas pontas. Para ligar, `authorize` pede a senha atual (se a
+//! conta tem: quem pegou a sessão não põe o próprio login nela) e guarda o
+//! challenge com a sessão (`kv::authorize_link`), e `link` só aceita o code
+//! com o verifier dele, nessa sessão. As rotas de cada provedor só passam o
+//! dele para o fluxo comum, aqui embaixo; o que muda entre eles (URL de
+//! autorização, leitura do usuário) fica em `discord.rs` e `google.rs`.
 
 use axum::{
     Json,
@@ -23,10 +26,11 @@ use super::{
     db::{self, ExternalLogin},
     discord,
     emails::Notice,
-    google,
+    google, kv,
     notify::notify,
     pkce,
     provider::Provider,
+    session::current_hash,
     types::{
         LoginMethods, OAuthCode, OAuthIntent, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin,
     },
@@ -40,15 +44,21 @@ use crate::{
 /// de 100 caracteres).
 const CODE_MAX: usize = 512;
 
+/// Prazo para voltar do provedor e ligar: o mesmo do fluxo guardado na aba
+/// (`features/auth/lib/oauth-flow.ts`, no front).
+const LINK_FLOW_SECS: u64 = 10 * 60;
+
 #[utoipa::path(
     post,
     path = "/auth/discord/authorize",
     tag = "auth",
     request_body = OAuthStart,
     responses(
-        (status = OK, body = OAuthRedirect, description = "A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error)"),
+        (status = OK, body = OAuthRedirect, description = "A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.discord_already_linked (ligar numa conta que já tem um)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
     )
@@ -56,9 +66,10 @@ const CODE_MAX: usize = 512;
 pub async fn discord_authorize(
     State(state): State<AppState>,
     user: Option<CurrentUser>,
+    jar: CookieJar,
     JsonBody(body): JsonBody<OAuthStart>,
 ) -> Result<Json<OAuthRedirect>, ApiError> {
-    authorize(&state, user, Provider::Discord, body).await
+    authorize(&state, user, &jar, Provider::Discord, body).await
 }
 
 #[utoipa::path(
@@ -90,6 +101,7 @@ pub async fn discord_login(
     responses(
         (status = OK, body = LoginMethods, description = "Discord ligado à conta logada; o avatar passa a ser o dele"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.state_mismatch (o verifier não é do fluxo que /auth/discord/authorize abriu para ligar nesta sessão nos últimos 10 minutos; a autorização vale uma vez)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.discord_taken (é login de outra conta), auth.discord_already_linked"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed"),
@@ -99,9 +111,10 @@ pub async fn discord_login(
 pub async fn discord_link(
     State(state): State<AppState>,
     user: CurrentUser,
+    jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    link(&state, &user, Provider::Discord, body).await
+    link(&state, &user, &jar, Provider::Discord, body).await
 }
 
 #[utoipa::path(
@@ -132,9 +145,11 @@ pub async fn unlink_discord(
     tag = "auth",
     request_body = OAuthStart,
     responses(
-        (status = OK, body = OAuthRedirect, description = "A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error)"),
+        (status = OK, body = OAuthRedirect, description = "A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.google_already_linked (ligar numa conta que já tem uma)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
     )
@@ -142,9 +157,10 @@ pub async fn unlink_discord(
 pub async fn google_authorize(
     State(state): State<AppState>,
     user: Option<CurrentUser>,
+    jar: CookieJar,
     JsonBody(body): JsonBody<OAuthStart>,
 ) -> Result<Json<OAuthRedirect>, ApiError> {
-    authorize(&state, user, Provider::Google, body).await
+    authorize(&state, user, &jar, Provider::Google, body).await
 }
 
 #[utoipa::path(
@@ -176,6 +192,7 @@ pub async fn google_login(
     responses(
         (status = OK, body = LoginMethods, description = "Conta Google ligada à conta logada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.state_mismatch (o verifier não é do fluxo que /auth/google/authorize abriu para ligar nesta sessão nos últimos 10 minutos; a autorização vale uma vez)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.google_taken (é login de outra conta), auth.google_already_linked"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.google_failed"),
@@ -185,9 +202,10 @@ pub async fn google_login(
 pub async fn google_link(
     State(state): State<AppState>,
     user: CurrentUser,
+    jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    link(&state, &user, Provider::Google, body).await
+    link(&state, &user, &jar, Provider::Google, body).await
 }
 
 #[utoipa::path(
@@ -213,11 +231,13 @@ pub async fn unlink_google(
 }
 
 /// A URL de autorização do provedor, com o state e o challenge do navegador.
-/// Para ligar, confere antes a sessão e se a conta já tem um dele: aí a
-/// pessoa nem sai do site.
+/// Para ligar, confere antes a sessão, se a conta já tem um dele (aí a
+/// pessoa nem sai do site) e a senha atual, se a conta tem, e autoriza esta
+/// sessão a ligar o code deste challenge.
 async fn authorize(
     state: &AppState,
     user: Option<CurrentUser>,
+    jar: &CookieJar,
     provider: Provider,
     body: OAuthStart,
 ) -> Result<Json<OAuthRedirect>, ApiError> {
@@ -231,6 +251,7 @@ async fn authorize(
     }
     if body.intent == OAuthIntent::Link {
         let user = user.ok_or(ApiError::unauthenticated())?;
+        let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
         let methods = db::login_methods(&state.db, user.id).await?;
         let linked = match provider {
             Provider::Discord => methods.discord,
@@ -239,6 +260,17 @@ async fn authorize(
         if linked {
             return Err(ApiError::conflict(codes.already_linked));
         }
+        // Com senha, quem pegou a sessão não põe o próprio login na conta
+        // (para entrar depois por ele, mesmo com a senha trocada).
+        confirm_password_if_set(state, user.id, body.current_password).await?;
+        kv::authorize_link(
+            &state.redis,
+            &session,
+            provider.as_str(),
+            &body.code_challenge,
+            LINK_FLOW_SECS,
+        )
+        .await?;
     }
 
     let url = match provider {
@@ -263,13 +295,21 @@ async fn login(
     start_session(state, headers, jar, user_id).await
 }
 
-/// Liga a conta do provedor à conta logada e avisa por email.
+/// Liga a conta do provedor à conta logada e avisa por email. Só o code do
+/// fluxo que `authorize` abriu para ligar nesta sessão (o verifier é o do
+/// challenge guardado), uma vez.
 async fn link(
     state: &AppState,
     user: &CurrentUser,
+    jar: &CookieJar,
     provider: Provider,
     body: OAuthCode,
 ) -> Result<Json<LoginMethods>, ApiError> {
+    let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
+    let challenge = pkce::challenge_of(&body.code_verifier);
+    if !kv::take_link_authorization(&state.redis, &session, provider.as_str(), &challenge).await? {
+        return Err(ApiError::forbidden("auth.state_mismatch"));
+    }
     let login = fetch_login(state, provider, &body).await?;
     if db::link_external(&state.db, user.id, &login).await? {
         let notice = match provider {

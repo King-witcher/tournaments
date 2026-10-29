@@ -2286,6 +2286,11 @@ export interface components {
              *     método é sempre `S256`.
              */
             code_challenge: string;
+            /**
+             * @description Senha atual, só para ligar (`intent` link): obrigatória se a conta tem
+             *     senha.
+             */
+            current_password?: string | null;
             intent: components["schemas"]["OAuthIntent"];
             /**
              * @description O que o provedor devolve ao callback, para o front conferir que a volta
@@ -3286,7 +3291,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error) */
+            /** @description A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3297,6 +3302,15 @@ export interface operations {
             };
             /** @description auth.unauthenticated (ligar sem sessão) */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3315,6 +3329,15 @@ export interface operations {
             };
             /** @description request.invalid_body (também state ou challenge fora do formato) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3357,6 +3380,15 @@ export interface operations {
             };
             /** @description auth.unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.state_mismatch (o verifier não é do fluxo que /auth/discord/authorize abriu para ligar nesta sessão nos últimos 10 minutos; a autorização vale uma vez) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3466,7 +3498,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto */
+            /** @description Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto. Se o email já é de outra conta, o dono dela recebe um aviso no lugar do link, e a resposta é a mesma, para não revelar quem tem conta */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -3493,7 +3525,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.email_unchanged, auth.email_taken (é de outra conta) */
+            /** @description auth.email_unchanged */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3700,7 +3732,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error) */
+            /** @description A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3711,6 +3743,15 @@ export interface operations {
             };
             /** @description auth.unauthenticated (ligar sem sessão) */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3729,6 +3770,15 @@ export interface operations {
             };
             /** @description request.invalid_body (também state ou challenge fora do formato) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.too_many_attempts {minutes} */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3771,6 +3821,15 @@ export interface operations {
             };
             /** @description auth.unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.state_mismatch (o verifier não é do fluxo que /auth/google/authorize abriu para ligar nesta sessão nos últimos 10 minutos; a autorização vale uma vez) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -14,7 +14,7 @@ use crate::{
     shared::Locale,
 };
 
-pub use links::{account_exists, email_change, password_reset, signup_confirmation};
+pub use links::{account_exists, email_change, email_in_use, password_reset, signup_confirmation};
 pub use notices::{Notice, account_deletion_scheduled, notice};
 
 /// Validade dos links mandados por email (cadastro, recuperação de senha,

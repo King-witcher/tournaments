@@ -2,7 +2,8 @@
   "internal": "Algo salió mal. Inténtalo de nuevo.",
   "request": {
     "invalid_body": "Datos inválidos.",
-    "invalid_path": "Dirección inválida."
+    "invalid_path": "Dirección inválida.",
+    "cross_origin": "Solicitud rechazada: no vino de este sitio."
   },
   "auth": {
     "unauthenticated": "Tu sesión terminó. Recarga la página para volver a iniciar sesión.",

@@ -4,8 +4,11 @@
 //! - `password_reset_user:{user_id}` e `email_change_user:{user_id}`: o hash
 //!   do último link da conta, para um pedido novo derrubar o anterior.
 //!
-//! Tudo expira com o link; abrir o link apaga a chave dele, e remover o email
-//! da conta apaga o de troca.
+//! Tudo expira com o link; abrir o link apaga a chave dele. O que muda o
+//! acesso derruba o link que mudaria de novo: remover o email, trocar a senha
+//! e a senha nova pelo link apagam o de troca de email (quem o pediu pode ser
+//! quem perdeu o acesso); trocar o email e trocar a senha apagam o de
+//! recuperação (ele foi para o email de antes, ou é da senha de antes).
 
 use std::collections::HashMap;
 
@@ -78,11 +81,20 @@ pub async fn take_email_change(redis: &Redis, link: &str) -> RedisResult<Option<
 
 /// Derruba o link de troca de email da conta, se houver um vivo.
 pub async fn cancel_email_change(redis: &Redis, user_id: i64) -> RedisResult<()> {
-    let last = user_key(redis, Kind::EmailChange, user_id);
+    cancel(redis, Kind::EmailChange, user_id).await
+}
+
+/// Derruba o link de recuperação de senha da conta, se houver um vivo.
+pub async fn cancel_password_reset(redis: &Redis, user_id: i64) -> RedisResult<()> {
+    cancel(redis, Kind::PasswordReset, user_id).await
+}
+
+async fn cancel(redis: &Redis, kind: Kind, user_id: i64) -> RedisResult<()> {
+    let last = user_key(redis, kind, user_id);
     let Some(hash) = redis.query::<Option<String>>(&Cmd::get(&last)).await? else {
         return Ok(());
     };
-    let key = link_key(redis, Kind::EmailChange, &hash);
+    let key = link_key(redis, kind, &hash);
     redis
         .query_pipe(
             redis::pipe()

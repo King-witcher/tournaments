@@ -15,15 +15,6 @@ pub struct AccountContact {
     pub locale: String,
 }
 
-pub async fn email_taken(db: &PgPool, email: &str) -> Result<bool, sqlx::Error> {
-    sqlx::query_scalar!(
-        r#"select exists (select 1 from users where email = $1) as "exists!""#,
-        email
-    )
-    .fetch_one(db)
-    .await
-}
-
 /// Grava o email confirmado e devolve o de antes (para o aviso), com a conta
 /// ter senha ou não. Em uso por outra conta → 409 `auth.email_taken`.
 pub async fn set_email(

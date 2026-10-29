@@ -7,7 +7,7 @@ use axum::{
 use serde_json::{Value, json};
 
 use super::{send_json, session_count, set_email, signup, skip_cooldown};
-use crate::common::{User, app, err, get, link_token, mailbox, user};
+use crate::common::{User, app, err, get, link_token, mailbox, patch, put, user};
 
 const PASSWORD: &str = "senha forte 1";
 const NEW_PASSWORD: &str = "senha nova 22";
@@ -117,6 +117,85 @@ async fn same_answer_when_no_link_can_go() {
         assert_eq!(request(&app, login).await, StatusCode::ACCEPTED, "{login}");
     }
     mailbox(&db).assert_empty().await;
+}
+
+async fn confirm_email(app: &Router, token: &str) -> StatusCode {
+    let body = json!({ "token": token });
+    send_json(app, Method::POST, "/auth/email/confirm", None, body)
+        .await
+        .0
+}
+
+#[tokio::test]
+async fn a_new_email_ends_the_reset_link() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
+    skip_cooldown(&db, "rapha@example.com").await;
+    assert_eq!(request(&app, "rapha").await, StatusCode::ACCEPTED);
+    let old_link = link_token(&mailbox(&db).next().await);
+
+    // O link foi para o email de antes, que pode ser de quem perdeu o acesso.
+    let change = json!({ "email": "novo@outlook.com", "current_password": PASSWORD });
+    assert_eq!(
+        put(&app, "/auth/email", &me, change).await.0,
+        StatusCode::ACCEPTED
+    );
+    let pending = link_token(&mailbox(&db).next().await);
+    assert_eq!(confirm_email(&app, &pending).await, StatusCode::NO_CONTENT);
+    let (status, body, _) = reset(&app, &old_link, NEW_PASSWORD).await;
+    assert_eq!((status, body), (StatusCode::GONE, err("auth.link_expired")));
+}
+
+#[tokio::test]
+async fn a_new_password_ends_the_pending_links() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
+    let change_email = |email: &str, current: &str| {
+        put(
+            &app,
+            "/auth/email",
+            &me,
+            json!({ "email": email, "current_password": current }),
+        )
+    };
+
+    // Trocada na conta: a troca de email e a recuperação pedidas antes caem.
+    assert_eq!(
+        change_email("novo@outlook.com", PASSWORD).await.0,
+        StatusCode::ACCEPTED
+    );
+    let pending = link_token(&mailbox(&db).next().await);
+    skip_cooldown(&db, "rapha@example.com").await;
+    assert_eq!(request(&app, "rapha").await, StatusCode::ACCEPTED);
+    let reset_link = link_token(&mailbox(&db).next().await);
+    let body = json!({ "current_password": PASSWORD, "password": NEW_PASSWORD });
+    let (status, body) = patch(&app, "/auth/password", &me, body).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    mailbox(&db).next().await; // o aviso da senha trocada
+    assert_eq!(confirm_email(&app, &pending).await, StatusCode::GONE);
+    let (status, _, _) = reset(&app, &reset_link, "outra senha 3").await;
+    assert_eq!(status, StatusCode::GONE);
+
+    // Trocada pelo link: a troca de email pedida antes cai.
+    assert_eq!(
+        change_email("outro@outlook.com", NEW_PASSWORD).await.0,
+        StatusCode::ACCEPTED
+    );
+    let pending = link_token(&mailbox(&db).next().await);
+    skip_cooldown(&db, "rapha@example.com").await;
+    assert_eq!(request(&app, "rapha").await, StatusCode::ACCEPTED);
+    let reset_link = link_token(&mailbox(&db).next().await);
+    let (status, _, session) = reset(&app, &reset_link, "outra senha 3").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(confirm_email(&app, &pending).await, StatusCode::GONE);
+    let fresh = User {
+        id: me.id,
+        cookie: session.unwrap(),
+    };
+    let (_, logins) = get(&app, "/auth/logins", &fresh).await;
+    assert_eq!(logins["email"], "rapha@example.com");
 }
 
 #[tokio::test]

@@ -24,6 +24,23 @@ const sassLoader = {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Nenhuma página abre dentro de um iframe (clickjacking: outro site
+  // esconderia a página e faria a pessoa clicar nela sem ver). O
+  // `frame-ancestors` é o atual; o `X-Frame-Options`, o dos navegadores
+  // antigos. O CSP só tem essa diretiva, então não mexe em script nenhum.
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   images: {
     // Avatares do Discord.
     remotePatterns: [

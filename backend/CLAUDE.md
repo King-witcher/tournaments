@@ -15,7 +15,8 @@ crates/api/src/
   lib.rs          AppState, MIGRATOR e app(), que junta o router() de cada domínio
   main.rs         lê config, conecta, migra, sobe
   config.rs       variáveis de ambiente
-  shared/         erro, extractors, tokens, texto, slug, idioma, Redis, Storage (o bucket S3 genérico); não conhece nenhum domínio
+  shared/         erro, extractors, tokens, texto, slug, idioma, Redis, Storage (o bucket S3 genérico), a recusa de
+                  escrita vinda de outra origem (origin.rs); não conhece nenhum domínio
   outbox/         eventos de mudança e avisos, gravados na transação de quem muda (emit)
   mail/           email sem domínio: forma canônica do endereço, layout, envio (Mailer) e limites
   auth/           login (Discord, Google, username e senha), sessão, CurrentUser; cadastro, recuperação

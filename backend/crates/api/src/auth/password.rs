@@ -1,6 +1,6 @@
 //! Senha: tamanho aceito e hash argon2id com os parâmetros padrão do crate (os
-//! que o OWASP recomenda). Hash e verificação gastam CPU de propósito, então
-//! rodam fora das threads do tokio.
+//! que o OWASP recomenda). Hash e verificação gastam CPU e memória de
+//! propósito, então rodam fora das threads do tokio, poucos de cada vez.
 
 use std::sync::LazyLock;
 
@@ -8,11 +8,18 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHasher, PasswordVerifier, phc::PasswordHash},
 };
+use tokio::sync::Semaphore;
 
 use crate::shared::ApiError;
 
 const MIN_LEN: usize = 8;
 const MAX_LEN: usize = 128;
+
+/// Hashes e verificações ao mesmo tempo. Cada um aloca 19 MiB (o `m_cost`
+/// padrão), e o Render free tem 512 MB: sem fila, logins em massa (até de
+/// usernames que não existem) derrubariam a API por falta de memória. O resto
+/// espera a vez sem thread nem memória.
+static HASHING: Semaphore = Semaphore::const_new(2);
 
 /// Hash de uma senha que ninguém tem, para a verificação de um username
 /// inexistente levar o mesmo tempo e não revelar que ele não existe.
@@ -67,7 +74,18 @@ fn verify_now(hash: &str, password: &str) -> bool {
 async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> T + Send + 'static,
 ) -> Result<T, ApiError> {
-    tokio::task::spawn_blocking(f).await.map_err(|err| {
+    let permit = HASHING.acquire().await.map_err(|err| {
+        tracing::error!(error = %err, "fila do hash de senha fechada");
+        ApiError::internal()
+    })?;
+    // A vaga vai com o hash: se a requisição cai no meio, ele continua
+    // rodando e só a solta no fim.
+    tokio::task::spawn_blocking(move || {
+        let _permit = permit;
+        f()
+    })
+    .await
+    .map_err(|err| {
         tracing::error!(error = %err, "hash de senha falhou");
         ApiError::internal()
     })

@@ -7,7 +7,7 @@ use axum::{
 };
 use serde_json::{Value, json};
 
-use super::{add_discord, send_json, set_email, signup};
+use super::{add_discord, send_json, set_email, signup, skip_cooldown};
 use crate::common::{User, app, call, delete, err, get, link_token, mailbox, put, user};
 
 const PASSWORD: &str = "senha forte 1";
@@ -69,18 +69,11 @@ async fn password_accounts_confirm_with_the_current_password() {
         );
     }
 
-    let other = user(&db, "Outra").await;
-    set_email(&db, other.id, "outra@outlook.com").await;
     for (address, status, code) in [
         (
             "Rapha+x@example.com",
             StatusCode::CONFLICT,
             "auth.email_unchanged",
-        ),
-        (
-            "outra@outlook.com",
-            StatusCode::CONFLICT,
-            "auth.email_taken",
         ),
         (
             "x@mailinator.com",
@@ -148,6 +141,45 @@ async fn discord_account_sets_email_without_password() {
     )
     .await;
     assert_eq!(unauthenticated.0, StatusCode::UNAUTHORIZED);
+}
+
+/// A conta sem senha troca o email só com a sessão: a resposta não pode dizer
+/// quem tem conta.
+#[tokio::test]
+async fn email_of_another_account_answers_the_same() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let other = signup(&app, &db, "Rapha", PASSWORD).await;
+    skip_cooldown(&db, "rapha@example.com").await;
+    let me = user(&db, "Quaker").await;
+    add_discord(&db, me.id).await;
+
+    let change = json!({ "email": "Rapha@Example.com" });
+    let (status, body) = put(&app, "/auth/email", &me, change.clone()).await;
+    assert_eq!(
+        (status, body),
+        (
+            StatusCode::ACCEPTED,
+            json!({ "email": "rapha@example.com" })
+        )
+    );
+    // O dono fica sabendo, e não sai link.
+    let notice = mailbox(&db).next().await;
+    assert_eq!(notice.to, "rapha@example.com");
+    assert!(notice.text.contains("já é da sua conta"), "{}", notice.text);
+    assert!(notice.text.contains("Rapha"), "{}", notice.text);
+    assert!(
+        !notice.text.contains("/email/confirm"),
+        "sem link: {}",
+        notice.text
+    );
+
+    // Pedir de novo esbarra na mesma espera de um email livre.
+    let (status, body) = put(&app, "/auth/email", &me, change).await;
+    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+    assert_eq!(body["error"], "email.too_soon");
+    assert_eq!(email_of(&app, &me).await, Value::Null);
+    assert_eq!(email_of(&app, &other).await, "rapha@example.com");
 }
 
 #[tokio::test]

@@ -147,12 +147,16 @@ pub async fn change_password(
         None => None,
     };
     db::update_password(&state.db, user.id, username.as_deref(), hash.as_deref()).await?;
-    if hash.is_some()
-        && let Some(cookie) = jar.get(SESSION_COOKIE)
-    {
-        let keep = token::hash_token(cookie.value());
-        let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
-        sessions_ended(&state, user.id, &ended).await?;
+    if hash.is_some() {
+        // Quem sabia a senha antiga sai, e os links que ele possa ter pedido
+        // (a recuperação, a troca de email) param de valer.
+        kv::cancel_password_reset(&state.redis, user.id).await?;
+        kv::cancel_email_change(&state.redis, user.id).await?;
+        if let Some(cookie) = jar.get(SESSION_COOKIE) {
+            let keep = token::hash_token(cookie.value());
+            let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
+            sessions_ended(&state, user.id, &ended).await?;
+        }
     }
     let methods = db::login_methods(&state.db, user.id).await?;
     let renamed = username.is_some();

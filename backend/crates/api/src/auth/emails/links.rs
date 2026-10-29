@@ -1,5 +1,6 @@
-//! Os emails com link: confirmar o cadastro, avisar que o email já tem conta,
-//! recuperar a senha e confirmar o email novo.
+//! Os emails com link: confirmar o cadastro, avisar que o email já tem conta
+//! (no cadastro e na troca de email de outra conta), recuperar a senha e
+//! confirmar o email novo.
 
 use super::{VALID_FOR, compose, page};
 use crate::{
@@ -108,6 +109,48 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
         action: Action {
             label: label.into(),
             url,
+        },
+        note: Some(note.into()),
+    };
+    compose(web, locale, to, content)
+}
+
+/// Alguém tentou pôr na própria conta um email que já é de outra: o dono fica
+/// sabendo, sem a resposta da troca revelar nada. O email continua com ele.
+pub fn email_in_use(web: &str, locale: Locale, to: &str, username: Option<&str>) -> Email {
+    let (title, paragraphs, label, note) = match locale {
+        Locale::Pt => (
+            "Este email já é da sua conta",
+            [
+                match username {
+                    Some(name) => format!("Alguém tentou pôr este email em outra conta daqui, mas ele já é da sua conta, de nome de usuário {name}, e continua nela."),
+                    None => "Alguém tentou pôr este email em outra conta daqui, mas ele já é da sua conta, que entra pelo Discord ou pelo Google, e continua nela.".to_owned(),
+                },
+                "Um email fica em uma conta só. Se foi você e quer usá-lo na outra, troque antes o email desta, na aba Logins.".to_owned(),
+            ],
+            "Entrar",
+            "Se não foi você, ignore este email: nada muda na sua conta.",
+        ),
+        Locale::Es => (
+            "Este email ya es de tu cuenta",
+            [
+                match username {
+                    Some(name) => format!("Alguien intentó poner este email en otra cuenta de aquí, pero ya es de tu cuenta, con nombre de usuario {name}, y sigue en ella."),
+                    None => "Alguien intentó poner este email en otra cuenta de aquí, pero ya es de tu cuenta, que entra con Discord o con Google, y sigue en ella.".to_owned(),
+                },
+                "Un email está en una sola cuenta. Si fuiste tú y quieres usarlo en la otra, cambia antes el email de esta, en la pestaña Accesos.".to_owned(),
+            ],
+            "Entrar",
+            "Si no fuiste tú, ignora este email: nada cambia en tu cuenta.",
+        ),
+    };
+    let content = Content {
+        title: title.into(),
+        paragraphs: paragraphs.into(),
+        alert: None,
+        action: Action {
+            label: label.into(),
+            url: page(web, locale, "/login"),
         },
         note: Some(note.into()),
     };

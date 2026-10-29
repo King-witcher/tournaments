@@ -25,6 +25,9 @@ pub struct OAuthStart {
     /// `BASE64URL(SHA-256(code_verifier))`, sem `=` (43 caracteres): o
     /// método é sempre `S256`.
     pub code_challenge: String,
+    /// Senha atual, só para ligar (`intent` link): obrigatória se a conta tem
+    /// senha.
+    pub current_password: Option<String>,
 }
 
 /// A autorização no provedor, para onde o navegador vai.
