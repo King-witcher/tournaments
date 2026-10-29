@@ -38,6 +38,8 @@
   },
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó: el inicio, los cupos y el check-in ya no cambian.",
+  "countsForRating": "Cuenta para el rating de la comunidad",
+  "countsForRatingHint": "Cada mapa confirmado entra en el ranking (el W.O. no). Desmárcalo para un torneo de práctica o de diversión.",
   "maxParticipants": "Cupos",
   "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
   "visibility": "Visibilidad",

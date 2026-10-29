@@ -19,7 +19,7 @@ type Props = {
 /**
  * O topo da comunidade e as abas, com a aba aberta dentro: nome, o papel de
  * quem vê e, para a organização, "Novo torneio". A aba Convites só aparece
- * para a organização. Sem sessão, o convite a entrar; sem acesso, o erro (e
+ * para a organização; o Ranking, para todos. Sem sessão, o convite a entrar; sem acesso, o erro (e
  * a aba nem é desenhada). Fica em `<Suspense>`.
  */
 export async function TenantFrame({ slug, children }: Props) {
@@ -45,6 +45,7 @@ export async function TenantFrame({ slug, children }: Props) {
   const organizer = tenant.role !== "player";
   const tabs = [
     { href: `/${slug}`, label: t("tabs.tournaments") },
+    { href: `/${slug}/ranking`, label: t("tabs.ranking") },
     { href: `/${slug}/members`, label: t("tabs.members") },
     ...(organizer
       ? [{ href: `/${slug}/invites`, label: t("tabs.invites") }]

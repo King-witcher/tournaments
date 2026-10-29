@@ -27,6 +27,8 @@ export type TournamentValues = {
   checkInMinutes: number | null;
   /** Janela de contestação de resultado, em minutos. */
   contestMinutes: number;
+  /** Os mapas contam para o rating da comunidade (muda até começar). */
+  countsForRating: boolean;
 };
 
 /** Os textos de uma tradução. */
@@ -76,6 +78,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     startsAt: null,
     checkInMinutes: 30,
     contestMinutes: 10,
+    countsForRating: true,
   };
 }
 
@@ -102,6 +105,7 @@ export function valuesFrom(
     startsAt: tournament.starts_at ?? null,
     checkInMinutes: tournament.check_in_minutes ?? null,
     contestMinutes: tournament.contest_minutes,
+    countsForRating: tournament.counts_for_rating,
   };
 }
 
@@ -229,9 +233,10 @@ function scheduleBody(values: TournamentValues) {
   };
 }
 
-/** Vagas, regra de campeões e fases no formato da API. */
+/** Vagas, regra de campeões, fases e "conta para o rating" no formato da API. */
 function setupBody(values: TournamentValues) {
   return {
+    counts_for_rating: values.countsForRating,
     // Vazio não passa do `required` do campo; se passar, a API recusa e o
     // erro aparece no campo.
     max_participants: values.maxParticipants ?? 0,

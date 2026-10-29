@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select initial, k_min, k_max, k_decay from rating_settings where tenant_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "initial",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_settings",
+            "name": "initial"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "k_min",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_settings",
+            "name": "k_min"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "k_max",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_settings",
+            "name": "k_max"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "k_decay",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rating_settings",
+            "name": "k_decay"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "53337fee1c00c2751b195a03c2564053de821eee6cca42460f092b94cf87df58"
+}

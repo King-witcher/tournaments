@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { getCurrentUser } from "@/features/auth/server";
+import { MemberRating } from "@/features/ratings/components/member-rating";
 import { getTenant } from "@/features/tenants/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
@@ -10,6 +12,7 @@ import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDate } from "@/shared/ui/local-date";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
+import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { StatusTag } from "@/shared/ui/status-tag";
 import styles from "./member-profile.module.scss";
 import { MemberTournaments } from "./member-tournaments";
@@ -30,7 +33,8 @@ function parseUserId(user: string) {
 
 /**
  * A pessoa na comunidade, só para membros: avatar, apelido, papel e desde
- * quando é membro (e, se for você, "Editar apelido"), e os torneios daqui em
+ * quando é membro (e, se for você, "Editar apelido"), o rating (com os
+ * últimos mapas e, para a organização, os ajustes) e os torneios daqui em
  * que se inscreveu. Quem não é (ou não é mais) membro: `member.not_found`.
  * Fica em `<Suspense>`.
  */
@@ -112,6 +116,14 @@ export async function MemberProfile({ tenant, user }: Props) {
           )
         }
       />
+      <Suspense fallback={<SectionSkeleton rows={4} />}>
+        <MemberRating
+          tenant={tenant}
+          userId={profile.user_id}
+          nickname={profile.nickname}
+          staff={loaded.tenant.role !== "player"}
+        />
+      </Suspense>
       <MemberTournaments tenant={tenant} profile={profile} isYou={isYou} />
     </>
   );

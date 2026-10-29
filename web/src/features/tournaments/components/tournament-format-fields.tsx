@@ -76,6 +76,14 @@ export function TournamentFormatFields({
           {bestOfItems}
         </Select>
       </div>
+      <Checkbox
+        labelText={t("countsForRating")}
+        helperText={t("countsForRatingHint")}
+        name="countsForRating"
+        checked={values.countsForRating}
+        disabled={disabled}
+        onChange={(countsForRating) => onChange({ countsForRating })}
+      />
     </>
   );
 }

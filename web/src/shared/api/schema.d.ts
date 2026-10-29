@@ -532,6 +532,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_ranking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/ratings/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_settings"];
+        put: operations["put_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/ratings/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_member_rating"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/ratings/{user_id}/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_adjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments": {
         parameters: {
             query?: never;
@@ -965,6 +1029,11 @@ export interface components {
              */
             user_id: number;
         };
+        AdjustmentAuthor: {
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
+        };
         /**
          * @description Papéis que o owner pode dar. A posse do tenant não muda por aqui.
          * @enum {string}
@@ -1142,6 +1211,12 @@ export interface components {
              * @example 5
              */
             contest_minutes: number;
+            /**
+             * @description Se os mapas do torneio contam para o rating da comunidade. Ausente:
+             *     sim. Muda até o torneio começar.
+             * @default true
+             */
+            counts_for_rating: boolean;
             /** @description Texto simples; as quebras de linha são preservadas. Até 2000 caracteres. */
             description?: string;
             /** @description Idioma original dos textos. Não muda depois. */
@@ -1588,6 +1663,31 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
+        /** @description O rating de um membro, com os últimos mapas que contaram. */
+        MemberRating: {
+            /**
+             * Format: int32
+             * @description Soma dos ajustes manuais da organização, já dentro do rating.
+             */
+            adjusted: number;
+            /**
+             * @description Os ajustes manuais, do mais recente ao mais antigo; só para organizer
+             *     e owner (`null` para player).
+             */
+            adjustments?: components["schemas"]["RatingAdjustment"][] | null;
+            /**
+             * @description Os últimos mapas que contaram, do mais recente ao mais antigo, só dos
+             *     torneios que quem vê vê na lista da comunidade.
+             */
+            games: components["schemas"]["RatedGame"][];
+            /** Format: int32 */
+            initial: number;
+            /** Format: int32 */
+            provisional_games: number;
+            standing?: components["schemas"]["RankingEntry"] | null;
+            /** Format: int64 */
+            user_id: number;
+        };
         /** @description Um torneio em que o membro se inscreveu. */
         MemberTournament: {
             placement?: components["schemas"]["MyPlacement"] | null;
@@ -1626,6 +1726,19 @@ export interface components {
         NameTranslation: {
             locale: components["schemas"]["Locale"];
             name: string;
+        };
+        NewAdjustment: {
+            /**
+             * Format: int32
+             * @description Pontos a somar (negativo tira), de -1000 a 1000, sem zero.
+             * @example 50
+             */
+            delta: number;
+            /**
+             * @description Motivo, de 1 a 280 caracteres; espaços nas pontas são removidos.
+             * @example Rating de outra liga
+             */
+            reason: string;
         };
         /** @description A próxima partida de quem vê num torneio em andamento. */
         NextMatch: {
@@ -1825,6 +1938,145 @@ export interface components {
             name: string;
             /** @description Texto simples; as quebras de linha são preservadas. Até 20000 caracteres; vazio usa o original. */
             rules?: string;
+        };
+        /** @description O ranking da comunidade. */
+        Ranking: {
+            /**
+             * Format: int32
+             * @description Rating de quem ainda não jogou.
+             * @example 1500
+             */
+            initial: number;
+            /**
+             * @description Os membros ativos com rating (algum mapa ou ajuste), do maior para o
+             *     menor; no empate, quem jogou mais e depois o apelido.
+             */
+            players: components["schemas"]["RankingEntry"][];
+            /**
+             * Format: int32
+             * @description Com menos jogos que isto, o rating é provisório.
+             * @example 10
+             */
+            provisional_games: number;
+        };
+        /** @description Uma pessoa no ranking. */
+        RankingEntry: {
+            avatar_url?: string | null;
+            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
+            display_name: string;
+            /**
+             * Format: int32
+             * @description Mapas que contaram.
+             */
+            games: number;
+            /**
+             * Format: date-time
+             * @description Quando confirmou o último mapa que contou; `null` sem mapa (só ajustes).
+             */
+            last_game_at?: string | null;
+            /** Format: int32 */
+            losses: number;
+            nickname: string;
+            /**
+             * Format: int64
+             * @description 1 é o maior rating; quem empata no rating divide a posição (1, 2, 2, 4).
+             */
+            position: number;
+            /** @description Menos de `provisional_games` mapas. */
+            provisional: boolean;
+            /** Format: int32 */
+            rating: number;
+            /** Format: int64 */
+            user_id: number;
+            /** Format: int32 */
+            wins: number;
+        };
+        /** @description Um mapa que contou para o rating de alguém. */
+        RatedGame: {
+            /**
+             * Format: date-time
+             * @description Quando o mapa confirmou.
+             */
+            at: string;
+            /**
+             * Format: int32
+             * @description Pontos ganhos (positivo) ou perdidos (negativo) neste mapa.
+             */
+            delta: number;
+            /**
+             * Format: int32
+             * @description Número do mapa na série.
+             */
+            game: number;
+            /** @description Nome do mapa; `null` nas séries antigas enviadas sem o detalhe. */
+            map?: string | null;
+            /** @description A partida (`wb-1-3`). */
+            match: string;
+            opponent: components["schemas"]["RatedOpponent"];
+            /**
+             * Format: int32
+             * @description O rating depois dele.
+             */
+            rating_after: number;
+            tournament: components["schemas"]["RatedTournament"];
+            won: boolean;
+        };
+        RatedOpponent: {
+            /** @description Falso se saiu da comunidade (a página dele não abre mais). */
+            active: boolean;
+            avatar_url?: string | null;
+            nickname: string;
+            /** Format: int64 */
+            user_id: number;
+        };
+        RatedTournament: {
+            locale: components["schemas"]["Locale"];
+            /** @description No idioma original; as traduções ao lado. */
+            name: string;
+            slug: string;
+            translations: components["schemas"]["NameTranslation"][];
+        };
+        /** @description Um ajuste manual. */
+        RatingAdjustment: {
+            /** Format: date-time */
+            created_at: string;
+            created_by?: components["schemas"]["AdjustmentAuthor"] | null;
+            /** Format: int32 */
+            delta: number;
+            /** Format: int64 */
+            id: number;
+            reason: string;
+        };
+        /**
+         * @description Os parâmetros do Elo da comunidade. Mudar recalcula todos os ratings com
+         *     o histórico inteiro.
+         */
+        RatingSettings: {
+            /**
+             * Format: int32
+             * @description Rating de quem ainda não jogou, de 100 a 3000.
+             * @example 1500
+             */
+            initial: number;
+            /**
+             * Format: int32
+             * @description Em quantos mapas a distância do K até o mínimo cai para ~37%, de 1 a
+             *     100: K = k_min + (k_max - k_min) · e^(-mapas / k_decay).
+             * @example 10
+             */
+            k_decay: number;
+            /**
+             * Format: int32
+             * @description K do primeiro mapa, de 1 a 200, não abaixo de `k_min`.
+             * @example 80
+             */
+            k_max: number;
+            /**
+             * Format: int32
+             * @description K de quem já jogou muito, de 1 a 100.
+             * @example 32
+             */
+            k_min: number;
         };
         /** @description Anular o último mapa para ser jogado de novo. */
         ReplayGame: {
@@ -2029,6 +2281,8 @@ export interface components {
              *     enviado.
              */
             contest_minutes: number;
+            /** @description Se os mapas do torneio contam para o rating da comunidade. */
+            counts_for_rating: boolean;
             /** Format: date-time */
             created_at: string;
             description: string;
@@ -2189,6 +2443,8 @@ export interface components {
              *     resultados enviados depois.
              */
             contest_minutes?: number | null;
+            /** @description Se conta para o rating; muda até o torneio começar. */
+            counts_for_rating?: boolean | null;
             description?: string | null;
             /** Format: int32 */
             max_participants?: number | null;
@@ -4149,6 +4405,277 @@ export interface operations {
             };
         };
     };
+    get_ranking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O ranking da comunidade: Elo por mapa confirmado dos torneios que contam, mais os ajustes da organização. Recalculado antes de ler se algo mudou */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ranking"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O Elo da comunidade (o padrão, se o owner nunca mudou) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingSettings"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    put_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RatingSettings"];
+            };
+        };
+        responses: {
+            /** @description Gravado (só o owner); todos os ratings já foram recalculados com o histórico inteiro */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingSettings"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description rating.initial_invalid {min, max}, rating.k_min_invalid {min, max}, rating.k_max_invalid {min, max}, rating.k_decay_invalid {min, max}, rating.k_order_invalid (K mínimo acima do máximo), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_member_rating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O rating do membro e os últimos 20 mapas que contaram (só dos torneios que quem vê vê); para organizer e owner, também os ajustes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberRating"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_adjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Id do usuário membro */
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewAdjustment"];
+            };
+        };
+        responses: {
+            /** @description Ajuste gravado, com quem fez e quando; o rating já foi recalculado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingAdjustment"];
+                };
+            };
+            /** @description request.invalid_path */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, member.not_found (não é membro ativo) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description rating.delta_invalid {max} (zero ou além de ±max), rating.reason_invalid {max}, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     list_tournaments: {
         parameters: {
             query?: never;
@@ -4418,7 +4945,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões, fases ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;

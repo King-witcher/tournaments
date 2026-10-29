@@ -65,6 +65,7 @@ pub async fn create_tournament(
         setup: &setup,
         schedule,
         contest_minutes: body.contest_minutes,
+        counts_for_rating: body.counts_for_rating,
     };
     let mut tx = state.db.begin().await?;
     let id = db::create(&mut tx, member.tenant, new).await?;
@@ -165,7 +166,7 @@ pub async fn get_tournament(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões ou fases depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade ou janela de contestação), tournament.setup_locked (vagas, campeões, fases ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
     )
 )]
@@ -186,6 +187,7 @@ pub async fn update_tournament(
         &current.setup,
         current.schedule,
         current.contest_minutes,
+        current.counts_for_rating,
         body,
     )?;
     if let Some(setup) = &edit.setup {

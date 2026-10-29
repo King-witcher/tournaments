@@ -59,6 +59,8 @@ pub struct StoredTournament {
     pub schedule: Schedule,
     /// Janela de contestação de resultado, em minutos.
     pub contest_minutes: i32,
+    /// Se os mapas contam para o rating da comunidade.
+    pub counts_for_rating: bool,
     pub translations: Vec<TournamentTranslation>,
     /// Inscritos agora.
     pub participants: i64,
@@ -78,6 +80,7 @@ pub struct NewTournament<'a> {
     pub setup: &'a Setup,
     pub schedule: Schedule,
     pub contest_minutes: i32,
+    pub counts_for_rating: bool,
 }
 
 /// Campeões ativos: o pool de todo torneio, por enquanto.
@@ -97,8 +100,9 @@ pub async fn create(
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, visibility,
-                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
+                counts_for_rating)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -113,7 +117,8 @@ pub async fn create(
         Json(new.setup.champion_rules) as _,
         new.schedule.starts_at,
         new.schedule.check_in_minutes,
-        new.contest_minutes
+        new.contest_minutes,
+        new.counts_for_rating
     )
     .fetch_optional(&mut *conn)
     .await?
@@ -153,7 +158,7 @@ pub async fn update(
         r#"update tournaments
            set name = $2, description = $3, rules = $4, visibility = coalesce($5, visibility),
                status = coalesce($6, status), contest_minutes = coalesce($7, contest_minutes),
-               updated_at = now()
+               counts_for_rating = coalesce($8, counts_for_rating), updated_at = now()
            where id = $1"#,
         id.0,
         edit.texts.name,
@@ -161,7 +166,8 @@ pub async fn update(
         edit.texts.rules,
         edit.visibility.map(Visibility::as_str),
         edit.status.map(TournamentStatus::as_str),
-        edit.contest_minutes
+        edit.contest_minutes,
+        edit.counts_for_rating
     )
     .execute(&mut *conn)
     .await?;

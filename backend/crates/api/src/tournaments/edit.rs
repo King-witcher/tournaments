@@ -24,6 +24,8 @@ pub struct Edit {
     pub schedule: Option<Schedule>,
     /// `Some` só quando a janela de contestação muda.
     pub contest_minutes: Option<i32>,
+    /// `Some` só quando "conta para o rating" muda.
+    pub counts_for_rating: Option<bool>,
     /// `Some` quando o status muda junto: desligar o check-in durante o
     /// check-in volta para a inscrição (sem check-in, esse status não existe).
     pub status: Option<TournamentStatus>,
@@ -31,7 +33,7 @@ pub struct Edit {
 
 /// Erros: 409 `tournament.finished` (texto, visibilidade ou janela de
 /// contestação depois de encerrar), 409 `tournament.setup_locked`
-/// (configuração depois de começar), os de `Schedule::edit`, o de
+/// (configuração ou "conta para o rating" depois de começar), os de `Schedule::edit`, o de
 /// `contest::check` e os de validação dos textos. Mandar a configuração igual
 /// à atual não conta como mudança, então o front pode reenviar o formulário
 /// inteiro.
@@ -41,6 +43,7 @@ pub fn apply(
     current_setup: &Setup,
     current_schedule: Schedule,
     current_contest_minutes: i32,
+    current_counts_for_rating: bool,
     patch: UpdateTournament,
 ) -> Result<Edit, ApiError> {
     let touches_texts = patch.name.is_some()
@@ -92,12 +95,19 @@ pub fn apply(
         }
         contest::check(minutes)?;
     }
+    let counts_for_rating = patch
+        .counts_for_rating
+        .filter(|&counts| counts != current_counts_for_rating);
+    if counts_for_rating.is_some() && !status.setup_editable() {
+        return Err(ApiError::conflict("tournament.setup_locked"));
+    }
     Ok(Edit {
         texts,
         visibility: patch.visibility,
         setup,
         schedule,
         contest_minutes,
+        counts_for_rating,
         status: (check_in_off && status == TournamentStatus::CheckIn)
             .then_some(TournamentStatus::Registration),
     })
@@ -155,11 +165,12 @@ mod tests {
             starts_at: None,
             check_in_minutes: None,
             contest_minutes: None,
+            counts_for_rating: None,
         }
     }
 
     fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
-        apply(status, &texts(), &setup(), schedule(), 5, patch)
+        apply(status, &texts(), &setup(), schedule(), 5, true, patch)
     }
 
     #[test]
@@ -232,6 +243,21 @@ mod tests {
         };
         let edit = run(TournamentStatus::InProgress, p).unwrap();
         assert!(edit.setup.is_none());
+    }
+
+    #[test]
+    fn counts_for_rating_locks_once_started() {
+        let p = |counts| UpdateTournament {
+            counts_for_rating: Some(counts),
+            ..patch()
+        };
+        let edit = run(TournamentStatus::CheckIn, p(false)).unwrap();
+        assert_eq!(edit.counts_for_rating, Some(false));
+        // O mesmo valor não é mudança, nem depois de começar.
+        let edit = run(TournamentStatus::Finished, p(true)).unwrap();
+        assert_eq!(edit.counts_for_rating, None);
+        let err = run(TournamentStatus::InProgress, p(false)).unwrap_err();
+        assert_eq!(err.code, "tournament.setup_locked");
     }
 
     #[test]

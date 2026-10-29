@@ -13,8 +13,10 @@ use crate::common::*;
 const BEFORE: i64 = 20261031010000;
 
 /// As rotas de hoje gravam no outbox, que só existe a partir da migration
-/// `20261104000000_realtime`: no schema antigo, uma tabela que aceita as mesmas
-/// gravações, que sai antes de as migrations novas criarem a de verdade.
+/// `20261104000000_realtime`, e em `tournaments.counts_for_rating`, de
+/// `20261111000000_ratings`: no schema antigo, uma tabela e uma coluna que
+/// aceitam as mesmas gravações, que saem antes de as migrations novas criarem
+/// as de verdade.
 async fn outbox_stand_in(db: &PgPool, create: bool) {
     let sql = if create {
         "create table outbox (
@@ -22,9 +24,11 @@ async fn outbox_stand_in(db: &PgPool, create: bool) {
              xact xid8 not null default pg_current_xact_id(),
              event jsonb not null
          );
-         create unique index on outbox (xact, md5(event::text))"
+         create unique index on outbox (xact, md5(event::text));
+         alter table tournaments add column counts_for_rating boolean not null default true"
     } else {
-        "drop table outbox"
+        "drop table outbox;
+         alter table tournaments drop column counts_for_rating"
     };
     sqlx::raw_sql(sql).execute(db).await.unwrap();
 }

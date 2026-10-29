@@ -143,5 +143,14 @@
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
     "subscription_invalid": "Este navegador envió una suscripción de notificaciones que no se puede usar. Inténtalo de nuevo o usa otro navegador."
+  },
+  "rating": {
+    "delta_invalid": "El ajuste tiene que ser de -{max} a {max} puntos, sin cero.",
+    "reason_invalid": "Escribe el motivo, en hasta {max} caracteres en una sola línea.",
+    "initial_invalid": "El rating inicial tiene que ser de {min} a {max}.",
+    "k_min_invalid": "El K mínimo tiene que ser de {min} a {max}.",
+    "k_max_invalid": "El K del primer mapa tiene que ser de {min} a {max}.",
+    "k_decay_invalid": "El decaimiento tiene que ser de {min} a {max} mapas.",
+    "k_order_invalid": "El K mínimo no puede pasar del K del primer mapa."
   }
 }

@@ -14,6 +14,7 @@ mod members;
 mod my_tournaments;
 mod organizing;
 mod participants;
+mod ratings;
 mod realtime;
 mod schema;
 mod tenants;

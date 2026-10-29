@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/spacing";
+
+// O avatar ao lado do apelido do adversário: quem já jogou com ele o
+// reconhece pela imagem.
+.opponent {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+// Algarismos da mesma largura: os pontos e os ratings ficam alinhados.
+.number {
+  font-variant-numeric: tabular-nums;
+}

@@ -11,6 +11,8 @@ src/
   seeding.rs      sorteio reproduzível pela seed (random_order, ChaCha8), tamanho e ordem da chave
   champions.rs    ChampionRules e o orçamento da regra de não repetição
   tournament.rs   TournamentSetup::validate: vagas, fases e campeões antes de gravar
+  rating/         mod.rs (RatingSystem, Event, replay: o histórico na ordem dada → rating final
+                  e o efeito de cada evento), elo.rs (Elo com K que decai com os jogos), tests/
   formats/
     mod.rs        StageFormat (o JSON gravado em tournament_stages.config)
     elimination/  mod.rs (config, estado, replay), build.rs (topologia), resolve.rs (estados), tests/

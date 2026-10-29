@@ -1,8 +1,11 @@
 import { Column, Grid, Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
+import { RatingSettingsSection } from "@/features/ratings/components/rating-settings-section";
 import { getTenant } from "@/features/tenants/server";
 import { Section } from "@/shared/ui/section";
+import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { LeaveTenantSection } from "./leave-tenant-section";
 import { NicknameForm } from "./nickname-form";
 import { TransferOwnershipSection } from "./transfer-ownership-section";
@@ -11,8 +14,9 @@ import { TransferOwnershipSection } from "./transfer-ownership-section";
 const MEMBERSHIP_ID = "membership";
 
 /**
- * A aba Configurações: o apelido de quem vê e, embaixo, sair da comunidade
- * (ou, para o owner, transferir a posse antes). Na coluna de formulário (8
+ * A aba Configurações: o apelido de quem vê, o rating da comunidade (só o
+ * owner) e, embaixo, sair da comunidade (ou, para o owner, transferir a posse
+ * antes). Na coluna de formulário (8
  * das 16 colunas a partir do `lg`). Fica em `<Suspense>`.
  */
 export async function MembershipSettings({ slug }: { slug: string }) {
@@ -31,6 +35,11 @@ export async function MembershipSettings({ slug }: { slug: string }) {
           <Section title={t("title")}>
             <NicknameForm slug={slug} nickname={tenant.nickname} />
           </Section>
+          {tenant.role === "owner" && (
+            <Suspense fallback={<SectionSkeleton rows={4} />}>
+              <RatingSettingsSection slug={slug} />
+            </Suspense>
+          )}
           <div id={MEMBERSHIP_ID} tabIndex={-1}>
             {tenant.role === "owner" ? (
               <TransferOwnershipSection slug={slug} focusId={MEMBERSHIP_ID} />

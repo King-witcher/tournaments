@@ -19,15 +19,16 @@ type Props = {
 
 /**
  * O formato, em rótulo e valor curto: chave, séries, vagas e regras de
- * campeões da fase única, e as janelas de check-in e de contestação. Os
- * termos que quem joga pode não conhecer têm um (i) com a explicação (a da
- * chave e a dos campeões são as mesmas frases da aba Regras). Embaixo, o
- * link para a aba Regras, onde está tudo por extenso.
+ * campeões da fase única, as janelas de check-in e de contestação e se conta
+ * para o rating da comunidade. Os termos que quem joga pode não conhecer têm
+ * um (i) com a explicação (a da chave e a dos campeões são as mesmas frases da
+ * aba Regras). Embaixo, o link para a aba Regras, onde está tudo por extenso.
  */
 export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const t = useTranslations("Tournament.setup");
   const tRules = useTranslations("Tournament.autoRules");
   const locale = useLocale();
+  const tRating = useTranslations("Ratings.tournament");
   const formatMinutes = useFormatMinutes();
   const [stage] = tournament.stages;
   const bracket = bracketKind(stage);
@@ -99,6 +100,13 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
       key: "contest",
       label: tip("contest", t("tips.contestText")),
       value: formatMinutes(tournament.contest_minutes),
+    },
+    {
+      key: "rating",
+      label: tRating("label"),
+      value: tournament.counts_for_rating
+        ? tRating("counts")
+        : tRating("doesNotCount"),
     },
   ];
 

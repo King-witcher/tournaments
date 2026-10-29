@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from rating_dirty where tenant_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fd21b6e1fec39e0af6884673e0add284d4ccb6cf04e1b36bfbebd6a4a3bccd3b"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select distinct tenant_id from rating_dirty order by tenant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rating_dirty",
+            "name": "tenant_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c36f71acc61cd8b9c8a875e3a9f0b89c90502236d2d1241de97a115c951ca7c2"
+}

@@ -145,7 +145,7 @@ pub async fn find(
                   t.visibility, t.max_participants,
                   t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
                   t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,
-                  t.created_at,
+                  t.counts_for_rating, t.created_at,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
@@ -228,6 +228,7 @@ pub async fn find(
         },
         schedule,
         contest_minutes: row.contest_minutes,
+        counts_for_rating: row.counts_for_rating,
         translations,
         participants: row.participants,
         registered: row.registered,

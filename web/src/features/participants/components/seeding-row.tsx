@@ -25,6 +25,8 @@ type Props = {
   participant: components["schemas"]["Participant"];
   /** Marca quem está sem seed (quando só alguns estão). */
   showNoSeed: boolean;
+  /** O rating na comunidade ("Rating 1569", "Sem rating"); sem nada quando ninguém da lista tem. */
+  ratingText?: string;
   disabled: boolean;
   /**
    * Muda a cada vez que ele é movido pelo campo com Enter: o foco volta para o
@@ -49,6 +51,7 @@ export function SeedingRow({
   total,
   participant: p,
   showNoSeed,
+  ratingText,
   disabled,
   focusToken,
   onUp,
@@ -79,6 +82,7 @@ export function SeedingRow({
         <Avatar src={p.avatar_url} name={p.nickname} />
         {p.nickname}
       </span>
+      {ratingText && <span className={styles.rating}>{ratingText}</span>}
       {showNoSeed && p.seed == null && (
         <StatusTag status="neutral" size="sm">
           {t("noSeed")}

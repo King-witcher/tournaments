@@ -119,6 +119,11 @@ pub struct CreateTournament {
     /// `registration`. Qualquer erro e nada é gravado.
     #[serde(default)]
     pub publish: bool,
+    /// Se os mapas do torneio contam para o rating da comunidade. Ausente:
+    /// sim. Muda até o torneio começar.
+    #[serde(default = "default_counts_for_rating")]
+    #[schema(required = false, default = true)]
+    pub counts_for_rating: bool,
 }
 
 /// Tradução enviada junto com a criação do torneio.
@@ -143,6 +148,10 @@ fn default_check_in_minutes() -> Option<i32> {
 
 fn default_contest_minutes() -> i32 {
     DEFAULT_CONTEST_MINUTES
+}
+
+fn default_counts_for_rating() -> bool {
+    true
 }
 
 /// Campos ausentes não mudam. Textos e visibilidade podem mudar até o
@@ -170,6 +179,8 @@ pub struct UpdateTournament {
     /// Janela de contestação; muda até o torneio encerrar e vale para os
     /// resultados enviados depois.
     pub contest_minutes: Option<i32>,
+    /// Se conta para o rating; muda até o torneio começar.
+    pub counts_for_rating: Option<bool>,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o
@@ -204,6 +215,8 @@ pub struct Tournament {
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
     /// enviado.
     pub contest_minutes: i32,
+    /// Se os mapas do torneio contam para o rating da comunidade.
+    pub counts_for_rating: bool,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
 }

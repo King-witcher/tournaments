@@ -11,6 +11,7 @@
 pub mod champions;
 pub mod core;
 pub mod formats;
+pub mod rating;
 pub mod seeding;
 pub mod series;
 pub mod tournament;

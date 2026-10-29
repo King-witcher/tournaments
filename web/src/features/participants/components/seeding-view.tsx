@@ -2,6 +2,7 @@ import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { getRanking } from "@/features/ratings/server";
 import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import { seedingOpen } from "@/features/tournaments/lib/status";
@@ -19,8 +20,8 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A página do seeding, para organizer e owner, na revisão antes de iniciar:
- * quantos entram na chave, a explicação e a lista com a posição de cada um,
- * "Sortear" e "Salvar". Fora da revisão (ou para quem joga), o aviso e o
+ * quantos entram na chave, a explicação e a lista com a posição (e o
+ * rating) de cada um, "Sortear", "Ordenar por rating" e "Salvar". Fora da revisão (ou para quem joga), o aviso e o
  * caminho de volta. Lê a sessão, então fica em `<Suspense>`.
  */
 export async function SeedingView({ tenant, slug }: Props) {
@@ -57,9 +58,9 @@ export async function SeedingView({ tenant, slug }: Props) {
       </>
     );
   }
-  const order = seedingOpen(tournament)
-    ? await getSeeding(tenant, slug)
-    : undefined;
+  const [order, ranking] = seedingOpen(tournament)
+    ? await Promise.all([getSeeding(tenant, slug), getRanking(tenant)])
+    : [undefined, undefined];
   if (!order) {
     // Fora da revisão (rascunho, inscrição com check-in, depois de iniciar)
     // ou a API falhou.
@@ -107,6 +108,9 @@ export async function SeedingView({ tenant, slug }: Props) {
           tenant={tenant}
           tournament={slug}
           initial={order}
+          ratings={
+            new Map(ranking?.players.map((p) => [p.user_id, p.rating]) ?? [])
+          }
         />
       )}
     </>

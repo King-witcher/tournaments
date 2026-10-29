@@ -2,13 +2,15 @@
 //! por SQL: o que cada exclusão apaga ou recusa (`deletion`), o owner de cada
 //! tenant (`owner`), o membro inativo (`inactive`), a desistência e o W.O.
 //! automático (`withdrawal`), a coerência e a forma dos dados (`checks`) e o
-//! tempo real (`realtime`: outbox, inscrições de push). As de resultados e
+//! tempo real (`realtime`: outbox, inscrições de push) e o rating (`ratings`:
+//! forma, marcas de desatualizado, exclusão). As de resultados e
 //! histórico ficam em `matches::schema`.
 
 mod checks;
 mod deletion;
 mod inactive;
 mod owner;
+mod ratings;
 mod realtime;
 mod withdrawal;
 

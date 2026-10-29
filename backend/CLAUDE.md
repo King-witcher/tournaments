@@ -29,6 +29,7 @@ crates/api/src/
   matches/        chave e resultados, mapa a mapa
   my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
   organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
+  ratings/        ranking Elo por comunidade: cache refeito do zero quando os triggers marcam o tenant (agendador, leitura e as rotas daqui); lê mapas e torneios direto no banco, sem chamar matches
   push/           Web Push: inscrições dos navegadores e envio
   realtime/       WebSocket, despachante do outbox, agendador
   health.rs       domínios pequenos, um arquivo cada
@@ -37,7 +38,7 @@ crates/api/src/
 
 O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//!` do `mod.rs` dele: leia antes de mexer, e atualize-o quando acrescentar um arquivo ou uma responsabilidade ao domínio.
 
-Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `media` (prints no S3), `ratings`.
+Domínios previstos pelo roadmap: `veto` (pick/ban de mapas e campeões), `media` (prints no S3).
 
 ### Tempo real: mudou estado visível, `emit` na mesma transação
 

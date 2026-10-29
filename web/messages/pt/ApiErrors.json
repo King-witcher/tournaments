@@ -143,5 +143,14 @@
   "push": {
     "not_configured": "As notificações com o site fechado estão desligadas por enquanto.",
     "subscription_invalid": "Este navegador mandou uma inscrição de notificações que não dá para usar. Tente de novo ou use outro navegador."
+  },
+  "rating": {
+    "delta_invalid": "O ajuste precisa ser de -{max} a {max} pontos, sem zero.",
+    "reason_invalid": "Escreva o motivo, em até {max} caracteres numa linha só.",
+    "initial_invalid": "O rating inicial precisa ser de {min} a {max}.",
+    "k_min_invalid": "O K mínimo precisa ser de {min} a {max}.",
+    "k_max_invalid": "O K do primeiro mapa precisa ser de {min} a {max}.",
+    "k_decay_invalid": "O decaimento precisa ser de {min} a {max} mapas.",
+    "k_order_invalid": "O K mínimo não pode passar do K do primeiro mapa."
   }
 }

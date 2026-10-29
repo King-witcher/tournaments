@@ -71,15 +71,16 @@ Formulário curto (nome, slug com prévia do endereço).
 `PageHeader`: nome, `Tag` com seu papel, ação primária "Novo torneio" (organização). Abas por sub-rota:
 
 - **Torneios** (`/[tenant]`): `DataTable` (nome, formato, estado, início, inscritos). Jogador vê só os publicados.
+- **Ranking** (`/[tenant]/ranking`, todos): `DataTable` (posição, membro com avatar, rating com `Tag` "provisório", mapas, V–D, último mapa) com busca; a linha abre a página da pessoa; a descrição diz como o rating funciona (inicial, provisório).
 - **Membros** (`/[tenant]/members`): `DataTable` (membro com avatar, papel, desde e, para a organização, "Entrou por": o começo do link e o torneio, se era de inscrição), busca; a linha abre a página da pessoa; owner: trocar papel e remover no `OverflowMenu`.
 - **Convites** (`/[tenant]/invites`, organização): `DataTable` dos links (o começo do link, `…/invite/7Fq2…`, criado por, validade, quantos entraram), "Gerar link" primário, copiar e revogar por linha (a confirmação diz qual link).
-- **Configurações** (`/[tenant]/settings`): seu apelido; "Sair da comunidade"; owner: transferir a posse (Modal com slug).
+- **Configurações** (`/[tenant]/settings`): seu apelido; owner: o rating da comunidade (rating inicial e K do Elo; salvar recalcula todos); "Sair da comunidade"; owner: transferir a posse (Modal com slug).
 
 `members`, `invites` e `settings` entram na lista de slugs reservados de torneio na API (`tournaments/slug.rs`), como `new` já está.
 
 ### Pessoa na comunidade `/[tenant]/members/[user]`
 
-Só para membros da comunidade (`GET /tenants/{slug}/members/{user_id}`). `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde"; se for você, ação "Editar apelido" (leva a Configurações). Depois, **Torneios nesta comunidade**: `DataTable` (torneio, estado, situação da pessoa com `Tag`, colocação) com os mesmos códigos de situação de "Seus torneios"; vazio: "ainda não jogou aqui". Rating entra nesta página quando existir. O apelido é link para cá em toda lista (inscritos, membros, chave, partida, classificação).
+Só para membros da comunidade (`GET /tenants/{slug}/members/{user_id}`). `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde"; se for você, ação "Editar apelido" (leva a Configurações). Depois, **Torneios nesta comunidade**: `DataTable` (torneio, estado, situação da pessoa com `Tag`, colocação) com os mesmos códigos de situação de "Seus torneios"; vazio: "ainda não jogou aqui". Entre o cabeçalho e os torneios, o **Rating** (`GET /tenants/{slug}/ratings/{user_id}`): o resumo em `StructuredList` (rating com "provisório", posição, mapas e V–D, último mapa, soma dos ajustes), com "Ajustar rating" (`FormModal`: pontos e motivo) para a organização; **Últimos mapas** (`DataTable`: torneio, adversário, mapa, resultado, ±, rating depois; a linha abre a partida); para a organização, **Ajustes manuais** (quando, pontos, motivo, por). O apelido é link para cá em toda lista (inscritos, membros, chave, partida, classificação).
 
 A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `joined_at` e `tournaments[]` com `tournament` (o `TournamentSummary` da lista da comunidade; `registered`/`checked_in` ali são de quem vê, não da pessoa), `situation` (os mesmos códigos de "Seus torneios") e `placement` (`{rank, tied}` ou nulo). Só os torneios que quem vê também veria na lista da comunidade, mais recentes primeiro, sem limite. `404 member.not_found` para quem não é (ou não é mais) membro.
 
@@ -102,7 +103,7 @@ A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `jo
 
 ### Ordem da chave (seeding) `/[tenant]/[tournament]/seeding`
 
-Organização, antes do início. Página inteira: título com quantos entram na chave, o que a ordem decide e como mexer nela, aviso quando a ordem mostrada ainda não vale, a lista com campo de posição por linha (Enter leva para lá; setas para o ajuste fino), "Sortear" e "Salvar" no fim (`ButtonSet`). Volta para a aba Organização ao salvar.
+Organização, antes do início. Página inteira: título com quantos entram na chave, o que a ordem decide e como mexer nela, aviso quando a ordem mostrada ainda não vale, a lista com campo de posição por linha (Enter leva para lá; setas para o ajuste fino) e o rating de cada um, "Sortear", "Ordenar por rating" (preenche a ordem na tela) e "Salvar" no fim (`ButtonSet`). Volta para a aba Organização ao salvar.
 
 ### Partida `/[tenant]/[tournament]/matches/[match]`
 

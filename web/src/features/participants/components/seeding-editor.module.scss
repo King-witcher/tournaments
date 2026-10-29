@@ -1,6 +1,15 @@
+@use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 
 // A lista em linhas separadas por um fio, como uma tabela sem cabeçalho.
 .list {
   border-block-start: 1px solid theme.$border-subtle-01;
+}
+
+// "Sortear" e "Ordenar por rating" juntos, na ponta oposta de "Salvar"; se
+// não couber, um desce.
+.fill {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
 }

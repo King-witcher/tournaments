@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+
+// O número e a marca de provisório na mesma linha; no celular, a marca desce
+// se não couber.
+.value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}
+
+// Algarismos da mesma largura: os ratings ficam alinhados na coluna.
+.number {
+  font-variant-numeric: tabular-nums;
+}

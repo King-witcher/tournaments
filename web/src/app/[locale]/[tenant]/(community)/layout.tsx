@@ -10,7 +10,7 @@ import {
 } from "@/shared/ui/skeleton";
 
 /**
- * A comunidade: o cabeçalho e as abas (Torneios, Membros, Convites,
+ * A comunidade: o cabeçalho e as abas (Torneios, Ranking, Membros, Convites,
  * Configurações), com a aba aberta dentro. Novo torneio e as páginas de
  * torneio ficam fora do grupo, sem as abas.
  */

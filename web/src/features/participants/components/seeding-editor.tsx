@@ -4,6 +4,7 @@ import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { sortByRating } from "@/features/ratings/lib/sort-by-rating";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
@@ -24,6 +25,8 @@ type Props = {
   tournament: string;
   /** Os elegíveis na ordem que vale agora. */
   initial: Participant[];
+  /** Rating de quem tem, por `user_id` (vazio sem ranking). */
+  ratings: ReadonlyMap<number, number>;
 };
 
 /** "Sortear" volta a existir depois do refresh: o foco vai para ele. */
@@ -32,11 +35,13 @@ const SHUFFLE_ID = "seeding-shuffle";
 /**
  * A ordem do seeding: digitar a posição (Enter ou sair do campo leva direto
  * para lá), subir e descer com as setas, sortear (pergunta antes quando a
- * ordem foi mudada, porque descarta a mudança) ou salvar e voltar para a aba
- * Organização.
+ * ordem foi mudada, porque descarta a mudança), ordenar por rating (preenche
+ * a ordem na tela: maior rating primeiro, quem não tem no fim) ou salvar e
+ * voltar para a aba Organização.
  */
-export function SeedingEditor({ tenant, tournament, initial }: Props) {
+export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const t = useTranslations("Participants.seeding");
+  const tRatings = useTranslations("Ratings.seeding");
   const router = useRouter();
   const save = useApiAction();
   const shuffle = useApiAction();
@@ -50,6 +55,14 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
   const noneSeeded = initial.every((p) => p.seed == null);
   // Ainda há quem não tem seed: salvar grava a ordem que aparece.
   const unsaved = changed || initial.some((p) => p.seed == null);
+  const anyRated = order.some((p) => ratings.has(p.user_id));
+
+  function ratingText(userId: number) {
+    const rating = ratings.get(userId);
+    return rating === undefined
+      ? tRatings("unrated")
+      : tRatings("rating", { rating });
+  }
 
   function move(index: number, delta: -1 | 1) {
     setOrder((current) => {
@@ -113,6 +126,7 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
               total={order.length}
               participant={p}
               showNoSeed={!noneSeeded}
+              ratingText={anyRated ? ratingText(p.user_id) : undefined}
               disabled={pending}
               onUp={i > 0 ? () => move(i, -1) : undefined}
               onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
@@ -131,27 +145,40 @@ export function SeedingEditor({ tenant, tournament, initial }: Props) {
           disabled={!unsaved}
           cancelHref={manage}
           extra={
-            changed ? (
-              <ConfirmButton
-                destructive={false}
-                kind="tertiary"
-                size="md"
-                pending={shuffle.pending}
-                question={t("shuffleConfirm")}
-                onConfirm={runShuffle}
-              >
-                {t("shuffle")}
-              </ConfirmButton>
-            ) : (
-              <Button
-                id={SHUFFLE_ID}
-                kind="tertiary"
-                pending={shuffle.pending}
-                onClick={runShuffle}
-              >
-                {t("shuffle")}
-              </Button>
-            )
+            <span className={styles.fill}>
+              {anyRated && (
+                <Button
+                  kind="ghost"
+                  disabled={pending}
+                  onClick={() =>
+                    setOrder((current) => sortByRating(current, ratings))
+                  }
+                >
+                  {tRatings("sort")}
+                </Button>
+              )}
+              {changed ? (
+                <ConfirmButton
+                  destructive={false}
+                  kind="tertiary"
+                  size="md"
+                  pending={shuffle.pending}
+                  question={t("shuffleConfirm")}
+                  onConfirm={runShuffle}
+                >
+                  {t("shuffle")}
+                </ConfirmButton>
+              ) : (
+                <Button
+                  id={SHUFFLE_ID}
+                  kind="tertiary"
+                  pending={shuffle.pending}
+                  onClick={runShuffle}
+                >
+                  {t("shuffle")}
+                </Button>
+              )}
+            </span>
           }
         />
       </Stack>
