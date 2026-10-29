@@ -59,7 +59,8 @@ export function bracketEdges(columns: Column[]): Edge[] {
 
 /**
  * Nome da rodada: na simples e no fim de cada chave, final, semifinal e
- * quartas; na grande final, a série e o reset; nas outras, o número.
+ * quartas; na grande final, a série e o reset; nas outras (e no round robin
+ * e no suíço, que não têm final), o número.
  */
 export type RoundName =
   | { kind: "final" | "semifinal" | "quarterfinal" | "grandFinal" | "reset" }
@@ -74,6 +75,8 @@ export function roundName(
   if (part === "grand_final") {
     return { kind: round === 1 ? "grandFinal" : "reset" };
   }
+  if (part === "round_robin" || part === "swiss")
+    return { kind: "round", round };
   const fromEnd = lastRound - round;
   if (fromEnd === 0) return { kind: "final" };
   if (single && fromEnd === 1) return { kind: "semifinal" };
@@ -81,10 +84,18 @@ export function roundName(
   return { kind: "round", round };
 }
 
-/** `wb-1-3` → parte, rodada e índice (o formato que a API gera). */
+/** O prefixo de cada parte no identificador da partida. */
+const PARTS: Record<string, Part> = {
+  wb: "winners",
+  lb: "losers",
+  gf: "grand_final",
+  rr: "round_robin",
+  sw: "swiss",
+};
+
+/** `wb-1-3`, `rr-2-1` → parte, rodada e índice (o formato que a API gera). */
 export function parseMatchKey(key: string) {
   const [prefix, round, index] = key.split("-");
-  const part: Part =
-    prefix === "lb" ? "losers" : prefix === "gf" ? "grand_final" : "winners";
+  const part: Part = PARTS[prefix] ?? "winners";
   return { part, round: Number(round), index: Number(index) };
 }

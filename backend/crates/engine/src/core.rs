@@ -29,10 +29,14 @@ pub enum BracketSide {
     Losers,
     /// Grande final da eliminação dupla: rodada 1 é a final, rodada 2 é o reset.
     GrandFinal,
+    /// Rodada do round robin.
+    RoundRobin,
+    /// Rodada do suíço.
+    Swiss,
 }
 
 /// Identificador estável e legível de uma partida ("chave de cima, rodada 2,
-/// partida 3"). Rodada e índice começam em 1.
+/// partida 3"; "suíço, rodada 4, partida 1"). Rodada e índice começam em 1.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct MatchId {
     pub side: BracketSide,
@@ -95,6 +99,35 @@ pub struct MatchReport {
     pub outcome: Outcome,
 }
 
+/// Frags somados de uma série jogada (os mapas que valem), do vencedor e do
+/// perdedor da série. Quem venceu a série pode ter feito menos frags.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SeriesFrags {
+    pub winner: u32,
+    pub loser: u32,
+}
+
+/// Resultado de uma série com os frags dela, como entra no histórico de uma
+/// fase (`formats::StageHistory`). Os frags só pesam nos formatos de tabela
+/// (último desempate antes do seed); a eliminação os ignora, e o W.O. também.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StageReport {
+    pub report: MatchReport,
+    /// `None` quando algum mapa da série veio sem frags (são opcionais no
+    /// envio): a série fica sem frags, em vez de contar 0.
+    pub frags: Option<SeriesFrags>,
+}
+
+impl From<MatchReport> for StageReport {
+    /// O resultado sem frags.
+    fn from(report: MatchReport) -> Self {
+        Self {
+            report,
+            frags: None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum MatchState {
@@ -103,7 +136,9 @@ pub enum MatchState {
     /// Os dois lados são conhecidos: a partida pode ser jogada.
     Ready { a: ParticipantId, b: ParticipantId },
     /// Pelo menos um lado é bye. `advanced` é quem avançou sem jogar; `None`
-    /// quando os dois lados são bye (a partida também propaga um bye).
+    /// quando os dois lados são bye (a partida também propaga um bye). Nos
+    /// formatos de tabela, `advanced` é quem não joga na rodada: a folga do
+    /// round robin (não vale ponto) ou o bye do suíço (vale vitória).
     Bye { advanced: Option<ParticipantId> },
     Completed {
         a: ParticipantId,
@@ -174,4 +209,12 @@ pub enum EngineError {
     ChampionPoolExhausted { required: u32, available: u32 },
     #[error("o torneio precisa de pelo menos uma fase")]
     NoStages,
+    #[error("número de rodadas {got} inválido: de 1 a {max}")]
+    InvalidRounds { max: u16, got: u16 },
+    /// O pareamento gravado não fecha com a fase: participante desconhecido
+    /// ou repetido na rodada, rodada sem partida ou além do total, pareamento
+    /// num formato que não pareia. Erro de consistência do histórico, não do
+    /// usuário.
+    #[error("pareamento gravado inválido na rodada {round}")]
+    InvalidPairing { round: u16 },
 }

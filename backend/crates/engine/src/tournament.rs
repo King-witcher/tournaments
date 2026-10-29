@@ -196,4 +196,23 @@ mod tests {
         assert_eq!(setup(16, tournament, wa + wb, &s), Ok(()));
         assert_eq!(setup(16, tournament, wb, &s), exhausted(wa + wb, wb));
     }
+
+    #[test]
+    fn table_formats_use_their_worst_case_and_limits() {
+        use crate::formats::{round_robin::RoundRobinConfig, swiss::SwissConfig};
+        let rr = [StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 })];
+        let swiss = [StageFormat::Swiss(SwissConfig {
+            best_of: 3,
+            rounds: None,
+        })];
+        let r = rules(0, Some(NoRepeatScope::Tournament));
+        // Round robin com 8: 7 séries md3; suíço com 16: 4 rodadas md3.
+        assert_eq!(setup(8, r, 21, &rr), Ok(()));
+        assert_eq!(setup(8, r, 17, &rr), exhausted(21, 17));
+        assert_eq!(setup(16, r, 12, &swiss), Ok(()));
+        assert_eq!(
+            setup(33, rules(0, None), 17, &rr),
+            Err(EngineError::TooManyParticipants { max: 32, got: 33 })
+        );
+    }
 }

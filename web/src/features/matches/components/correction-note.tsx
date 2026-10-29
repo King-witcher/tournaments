@@ -2,6 +2,7 @@ import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { Fragment } from "react";
 
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
@@ -26,7 +27,7 @@ type Props = {
  */
 export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
   const t = useTranslations("Match.correction");
-  const { code } = useMatchLabels(bracket.format.bracket === "single");
+  const { code } = useMatchLabels(isSingle(bracket.format));
   const later = bracket.matches.filter(
     (m) =>
       m.state === "completed" &&

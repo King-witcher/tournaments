@@ -29,12 +29,17 @@
     "noCheckIn": "No hay check-in: cuando la organización inicia el torneo, todos los inscritos entran en la llave.",
     "bracket": {
       "single": "La llave es de eliminación simple.",
-      "double": "La llave es de eliminación doble."
+      "double": "La llave es de eliminación doble.",
+      "round_robin": "El formato es round robin: todos juegan contra todos, una vez.",
+      "swiss": "El formato es suizo, con el número de rondas según los inscritos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
+      "swissRounds": "El formato es suizo, en {rounds, plural, one {# ronda} other {# rondas}} (como máximo una menos que los inscritos)."
     },
     "bracketRule": {
       "single": "Quien pierde una partida queda fuera del torneo.",
       "double": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final: quien gane es el campeón.",
-      "doubleReset": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, los dos juegan la gran final otra vez, porque ahora cada uno perdió una vez."
+      "doubleReset": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, los dos juegan la gran final otra vez, porque ahora cada uno perdió una vez.",
+      "round_robin": "Las partidas quedan abiertas desde el inicio: las rondas solo ordenan, y juegas cada una cuando lo acuerdes con tu rival. Con un número impar de inscritos, cada uno descansa una ronda.",
+      "swiss": "En la primera ronda, el orden de la llave arma los pares; en las siguientes, se enfrentan quienes tienen la misma puntuación, sin repetir rival. La ronda siguiente empieza cuando terminan todas las partidas de la anterior. Con un número impar, el peor ubicado que todavía no descansó recibe el bye, que vale victoria."
     },
     "series": "{bestOf, plural, =1 {Las partidas son a un solo mapa.} other {Las partidas son al mejor de # mapas: gana quien se lleve {wins}.}}",
     "finals": {
@@ -55,7 +60,17 @@
     "report": "Después de cada mapa, uno de los dos envía el resultado en la página de la partida: quién ganó y el mapa jugado.",
     "nextMap": "No hace falta esperar la confirmación para jugar el siguiente mapa.",
     "confirm": "El otro jugador tiene {window} para confirmar o impugnar. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
-    "walkover": "Si tu rival no aparece, o si necesitas dejar el torneo, avísale a la organización: quien no juega pierde por W.O."
+    "walkover": "Si tu rival no aparece, o si necesitas dejar el torneo, avísale a la organización: quien no juega pierde por W.O.",
+    "tableRule": {
+      "round_robin": "Cada partida ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el enfrentamiento directo, después la diferencia de mapas, la diferencia de frags y por último el orden de la llave.",
+      "swiss": "Cada partida ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el Buchholz (la suma de los puntos de tus rivales), después el enfrentamiento directo, la diferencia de mapas, la diferencia de frags y por último el orden de la llave."
+    },
+    "fragsTable": "Los frags de cada mapa son opcionales, pero cuentan en el desempate de la tabla: envíalos también.",
+    "walkoverTable": "El W.O. vale victoria por {wins} a 0 en mapas.",
+    "withdrawal": {
+      "round_robin": "Quien deja el torneo pierde por W.O. las partidas que le faltaban, y los puntos que ya hizo siguen en la tabla.",
+      "swiss": "Quien deja el torneo ya no es emparejado, y los puntos que ya hizo siguen en la tabla."
+    }
   },
   "extraRules": "Reglas adicionales",
   "rulesEditor": {
@@ -80,16 +95,21 @@
       "champions": "Campeones",
       "checkIn": "Check-in",
       "contest": "Plazo para impugnar",
-      "veto": "Veto"
+      "veto": "Veto",
+      "format": "Formato",
+      "rounds": "Rondas"
     },
     "bracket": {
       "single": "Eliminación simple",
       "double": "Eliminación doble",
-      "doubleReset": "Eliminación doble, con reset en la gran final"
+      "doubleReset": "Eliminación doble, con reset en la gran final",
+      "round_robin": "Round robin (todos contra todos)",
+      "swiss": "Suizo"
     },
     "series": {
       "single": "Al mejor de {bestOf}; final al mejor de {finals}",
-      "double": "Al mejor de {bestOf}; gran final al mejor de {finals}"
+      "double": "Al mejor de {bestOf}; gran final al mejor de {finals}",
+      "table": "Al mejor de {bestOf}"
     },
     "bans": "{count, plural, =0 {sin bans} one {# ban por mapa} other {# bans por mapa}}",
     "noRepeat": {
@@ -107,9 +127,18 @@
       "checkInText": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en la llave.",
       "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: todos los inscritos entran en la llave.",
       "contest": "¿Qué es el plazo para impugnar?",
-      "contestText": "Después de cada mapa, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización."
+      "contestText": "Después de cada mapa, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
+      "format": "¿Cómo funciona el formato?"
     },
-    "seeRules": "Ver las reglas"
+    "seeRules": "Ver las reglas",
+    "rounds": {
+      "auto": "rondas según los inscritos",
+      "fixed": "{count, plural, one {# ronda} other {# rondas}}"
+    },
+    "roundsValue": {
+      "auto": "Automáticas: 3 con hasta 8 inscritos, 4 con hasta 16, 5 con hasta 32",
+      "fixed": "{count} (como máximo una menos que los inscritos)"
+    }
   },
   "invites": {
     "title": "Enlaces de inscripción",

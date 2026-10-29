@@ -2,10 +2,10 @@
 //! decisão da série (ou de outros lados), fecha as séries que os mapas
 //! confirmados decidiram e dá os W.O. automáticos, repetindo até não sobrar
 //! nada (fechar uma série pode deixar pronta uma partida de quem desistiu),
-//! e começa o jogo seguinte do veto de cada partida (`veto::advance`);
-//! depois encerra ou reabre o torneio conforme a chave e emite o que mudou
-//! (`changes`). Quem chama trava o
-//! torneio.
+//! grava o pareamento da rodada seguinte do suíço quando a anterior termina
+//! (`rounds`) e começa o jogo seguinte do veto de cada partida
+//! (`veto::advance`); depois encerra ou reabre o torneio conforme a chave e
+//! emite o que mudou (`changes`). Quem chama trava o torneio.
 
 use chrono::Utc;
 use engine::{core::MatchState, series};
@@ -18,6 +18,7 @@ use super::{
     history::NewEvent,
     key,
     result::played_or_walkover,
+    rounds,
     stage::{self, Stage},
     types::EventKind,
     veto, withdrawals,
@@ -40,6 +41,9 @@ pub async fn apply(
             continue;
         }
         if withdrawals::give(conn, tournament, &stage).await? {
+            continue;
+        }
+        if rounds::pair_next(conn, tournament, &stage).await? {
             continue;
         }
         if veto::advance(conn, tournament, &stage).await? {

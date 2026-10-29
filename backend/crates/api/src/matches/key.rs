@@ -1,8 +1,8 @@
 //! Identificador de partida nas rotas e no banco: o `MatchId` do `engine`
 //! legível, `{lado}-{rodada}-{partida}` (`wb-1-3` na chave de cima, `lb-2-1`
-//! na de baixo, `gf-1-1` e `gf-2-1` na grande final e no reset). Na
-//! eliminação simples tudo é `wb`. Com mais de uma fase, a fase entra na
-//! rota antes da partida.
+//! na de baixo, `gf-1-1` e `gf-2-1` na grande final e no reset, `rr-3-2` no
+//! round robin, `sw-4-1` no suíço). Na eliminação simples tudo é `wb`. Com
+//! mais de uma fase, a fase entra na rota antes da partida.
 
 use engine::core::{BracketSide, MatchId};
 
@@ -11,6 +11,8 @@ pub fn format(id: MatchId) -> String {
         BracketSide::Winners => "wb",
         BracketSide::Losers => "lb",
         BracketSide::GrandFinal => "gf",
+        BracketSide::RoundRobin => "rr",
+        BracketSide::Swiss => "sw",
     };
     format!("{side}-{}-{}", id.round, id.index)
 }
@@ -23,6 +25,8 @@ pub fn parse(key: &str) -> Option<MatchId> {
         "wb" => BracketSide::Winners,
         "lb" => BracketSide::Losers,
         "gf" => BracketSide::GrandFinal,
+        "rr" => BracketSide::RoundRobin,
+        "sw" => BracketSide::Swiss,
         _ => return None,
     };
     let round = parts.next()?.parse().ok()?;
@@ -44,6 +48,8 @@ mod tests {
             (BracketSide::Winners, "wb-1-3"),
             (BracketSide::Losers, "lb-12-1"),
             (BracketSide::GrandFinal, "gf-2-1"),
+            (BracketSide::RoundRobin, "rr-31-16"),
+            (BracketSide::Swiss, "sw-4-1"),
         ] {
             let id = parse(key).unwrap();
             assert_eq!(id.side, side);
@@ -66,6 +72,8 @@ mod tests {
             "wb-1-1-1",
             "WB-1-1",
             "wb-70000-1",
+            "sw-0-1",
+            "RR-1-1",
         ] {
             assert_eq!(parse(bad), None, "{bad}");
         }

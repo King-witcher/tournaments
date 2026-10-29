@@ -30,7 +30,7 @@ pub async fn finished(
 ) -> Result<(), sqlx::Error> {
     let podium = stage
         .bracket
-        .standings()
+        .placements()
         .into_iter()
         .filter(|p| p.rank <= PODIUM)
         .filter_map(|p| {

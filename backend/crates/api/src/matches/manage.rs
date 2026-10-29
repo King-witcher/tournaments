@@ -35,7 +35,7 @@ use crate::{
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     request_body = SetGame,
@@ -120,7 +120,7 @@ pub async fn put_game(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
     ),
     request_body = SetResult,
     responses(
@@ -243,7 +243,7 @@ async fn void_stale(
         }
         Change::Remove => corrected.retain(|r| r.match_id != id),
     }
-    let bracket = stage::replay(&stage.format, &stage.entrants, &corrected)
+    let bracket = stage::replay(stage.format, &stage.history(&corrected))
         .map_err(|_| ApiError::conflict("match.correction_conflicts"))?;
     let mut open: Vec<MatchId> = stage
         .games

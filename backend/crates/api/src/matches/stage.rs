@@ -1,5 +1,6 @@
-//! A fase em jogo: configuração (`tournament_stages`), times (pelo seed) e
-//! séries decididas → chave, sempre por `replay`. Nada do estado do
+//! A fase em jogo: configuração (`tournament_stages`), times (pelo seed),
+//! séries decididas e, no suíço, os pareamentos gravados (`rounds`) → fase de
+//! qualquer formato (`StageBracket`), sempre por `replay`. Nada do estado do
 //! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
 //! refeito por replay) vêm junto.
 //!
@@ -9,8 +10,8 @@
 
 use engine::{
     champions::NoRepeatRule,
-    core::{EngineError, MatchId, MatchState, ParticipantId},
-    formats::{self as ef, elimination::EliminationBracket},
+    core::{EngineError, MatchId, MatchState, ParticipantId, SeriesFrags, StageReport},
+    formats::{self as ef, StageBracket, StageHistory, swiss::SwissRound},
     veto::VetoRules,
 };
 use sqlx::PgConnection;
@@ -19,6 +20,7 @@ use super::{
     changes, db,
     games::StoredGame,
     result::StoredResult,
+    rounds,
     veto::{self, Champion, MatchVeto, VetoRow},
 };
 use crate::{
@@ -39,7 +41,10 @@ pub struct Stage {
     pub results: Vec<StoredResult>,
     /// Os mapas enviados da fase, por partida e na ordem.
     pub games: Vec<StoredGame>,
-    pub bracket: EliminationBracket,
+    /// Suíço: os pareamentos gravados, da rodada 1 em diante; vazio nos
+    /// outros formatos.
+    pub rounds: Vec<SwissRound>,
+    pub bracket: StageBracket,
     /// O veto das partidas: as regras do torneio, o tempo de cada passo, a
     /// regra de não repetição, os campeões do torneio (só com a fase de
     /// campeões), o pool de mapas e o veto refeito de cada partida que tem
@@ -82,6 +87,17 @@ impl Stage {
     pub fn veto_of(&self, id: MatchId) -> Option<&MatchVeto> {
         self.vetoes.iter().find(|v| v.match_id == id)
     }
+
+    /// O que entra no replay, com outros resultados (a correção confere a
+    /// fase com a série corrigida antes de gravar).
+    pub fn history<'a>(&'a self, results: &'a [StoredResult]) -> History<'a> {
+        History {
+            entrants: &self.entrants,
+            results,
+            games: &self.games,
+            rounds: &self.rounds,
+        }
+    }
 }
 
 /// Por que o histórico não fecha numa partida.
@@ -94,20 +110,48 @@ pub enum Contradiction {
     SidesChanged(MatchId),
 }
 
-/// Refaz a chave com os resultados confirmados de `results`, na ordem, e
-/// confere que cada um caiu na partida com os lados com que foi gravado.
+/// O que entra no replay da fase, além da configuração.
+pub struct History<'a> {
+    /// Os times, na ordem dos seeds.
+    pub entrants: &'a [StoredTeam],
+    pub results: &'a [StoredResult],
+    /// Os mapas da fase, para os frags de cada série.
+    pub games: &'a [StoredGame],
+    /// Suíço: os pareamentos gravados.
+    pub rounds: &'a [SwissRound],
+}
+
+/// Refaz a fase com os resultados confirmados de `history`, na ordem (com os
+/// frags somados dos mapas de cada série), os pareamentos gravados e quem
+/// está fora (desistiu ou saiu da comunidade: o suíço não o pareia mais), e
+/// confere que cada resultado caiu na partida com os lados com que foi
+/// gravado.
 pub fn replay(
-    stage: &ef::StageFormat,
-    entrants: &[StoredTeam],
-    results: &[StoredResult],
-) -> Result<EliminationBracket, Contradiction> {
-    let ef::StageFormat::Elimination(config) = stage;
-    let seeded = entrants.iter().map(StoredTeam::participant).collect();
-    let mut confirmed: Vec<&StoredResult> = results.iter().collect();
+    format: ef::StageFormat,
+    history: &History<'_>,
+) -> Result<StageBracket, Contradiction> {
+    let seeded = history
+        .entrants
+        .iter()
+        .map(StoredTeam::participant)
+        .collect();
+    let mut confirmed: Vec<&StoredResult> = history.results.iter().collect();
     confirmed.sort_by_key(|r| r.position);
-    let reports = confirmed.iter().map(|r| r.report());
+    let reports = confirmed
+        .iter()
+        .map(|r| StageReport {
+            report: r.report(),
+            frags: frags(r, history.games),
+        })
+        .collect();
+    let out = history.entrants.iter().filter(|e| e.out());
+    let stage_history = StageHistory {
+        reports,
+        rounds: history.rounds.to_vec(),
+        out: out.map(StoredTeam::participant).collect(),
+    };
     let bracket =
-        EliminationBracket::replay(*config, seeded, reports).map_err(Contradiction::Engine)?;
+        StageBracket::replay(format, seeded, stage_history).map_err(Contradiction::Engine)?;
     for r in confirmed {
         match bracket.get(r.match_id).map(|m| m.state) {
             Some(MatchState::Completed { a, b, .. }) if (a, b) == (r.side_a, r.side_b) => {}
@@ -115,6 +159,22 @@ pub fn replay(
         }
     }
     Ok(bracket)
+}
+
+/// Os frags da série decidida `r`, somados dos mapas dela (do vencedor e do
+/// perdedor da série). `None` no W.O. (sem mapas que valham) e quando algum
+/// mapa veio sem frags: a série fica sem frags, em vez de contar 0.
+fn frags(r: &StoredResult, games: &[StoredGame]) -> Option<SeriesFrags> {
+    r.score?;
+    let mut sum: Option<SeriesFrags> = None;
+    for g in games.iter().filter(|g| g.match_id == r.match_id) {
+        let (a, b) = g.frags?;
+        let (won, lost) = if r.winner == g.side_a { (a, b) } else { (b, a) };
+        let total = sum.get_or_insert_default();
+        total.winner += u32::try_from(won).ok()?;
+        total.loser += u32::try_from(lost).ok()?;
+    }
+    sum
 }
 
 /// A configuração da fase `number`.
@@ -127,8 +187,8 @@ fn config(tournament: &StoredTournament, number: i16) -> Result<&ef::StageFormat
         .ok_or_else(ApiError::internal)
 }
 
-/// A fase em jogo, com a chave refeita. 404 `bracket.not_found` antes de o
-/// torneio começar.
+/// A fase em jogo, refeita. 404 `bracket.not_found` antes de o torneio
+/// começar.
 pub async fn load(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -144,6 +204,10 @@ pub async fn load(
     let results = db::results(conn, tournament.id, number).await?;
     let games = db::games(conn, tournament.id, number).await?;
     let format = *config(tournament, number)?;
+    let rounds = match format {
+        ef::StageFormat::Swiss(_) => db::pairings(conn, tournament.id, number).await?,
+        _ => Vec::new(),
+    };
     let veto_rows = veto::events(conn, tournament.id, number).await?;
     let veto_rules = tournament
         .setup
@@ -154,7 +218,13 @@ pub async fn load(
     } else {
         Vec::new()
     };
-    let bracket = replay(&format, &entrants, &results).map_err(|err| {
+    let history = History {
+        entrants: &entrants,
+        results: &results,
+        games: &games,
+        rounds: &rounds,
+    };
+    let bracket = replay(format, &history).map_err(|err| {
         let id = tournament.id.get();
         match err {
             Contradiction::Engine(e) => tracing::error!(%e, id, "histórico gravado não fecha"),
@@ -171,6 +241,7 @@ pub async fn load(
         entrants,
         results,
         games,
+        rounds,
         bracket,
         veto_rules,
         veto_seconds: tournament.setup.veto.step_seconds,
@@ -183,7 +254,7 @@ pub async fn load(
 
 /// O veto de cada partida refeito das linhas `rows` (por partida, na ordem).
 fn vetoes(
-    bracket: &EliminationBracket,
+    bracket: &StageBracket,
     rules: &VetoRules,
     rows: Vec<VetoRow>,
 ) -> Result<Vec<MatchVeto>, ApiError> {
@@ -207,13 +278,13 @@ fn vetoes(
         .collect()
 }
 
-/// Gera a chave ao iniciar, no torneio travado, com `seeded` (os elegíveis na
+/// Gera a fase ao iniciar, no torneio travado, com `seeded` (os elegíveis na
 /// ordem dos seeds, que já ficaram gravados): confere de novo a configuração
-/// com o número real de participantes e o pool de campeões de agora, e monta
-/// a chave, avisando os lados das partidas que já nascem prontas. Nada mais
-/// é gravado, porque ela sai do replay. Erros: os de
+/// com o número real de participantes e o pool de campeões de agora, monta a
+/// fase (no suíço, grava o pareamento da primeira rodada) e avisa os lados
+/// das partidas que já nascem prontas. O resto sai do replay. Erros: os de
 /// `Setup::check_entrants` (ex.: 422 `champions.pool_exhausted` `{required,
-/// available}`) e os de montar a chave.
+/// available}`) e os de montar a fase.
 pub async fn start(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -223,14 +294,15 @@ pub async fn start(
     tournament
         .setup
         .check_entrants(tournament.mode, pool, seeded.len())?;
-    let ef::StageFormat::Elimination(config) = config(tournament, FIRST_STAGE)?;
-    let bracket = EliminationBracket::new(*config, seeded.to_vec())?;
+    let format = *config(tournament, FIRST_STAGE)?;
+    let at = (tournament.tenant, tournament.id, FIRST_STAGE);
+    let bracket = rounds::first(conn, at, format, seeded).await?;
     let entrants = teams::seeded(conn, tournament.id).await?;
     changes::started(conn, tournament, &bracket, &entrants).await
 }
 
-/// Descarta a chave ao desfazer o início: apaga séries, mapas e histórico.
-/// Devolve quantas partidas tinham resultado ou mapa.
+/// Descarta a fase ao desfazer o início: apaga séries, mapas, histórico e
+/// pareamentos. Devolve quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -238,7 +310,7 @@ pub async fn discard(
     Ok(db::discard(conn, tournament.id).await?)
 }
 
-/// Encerra o torneio quando a chave termina e o reabre quando uma correção
+/// Encerra o torneio quando a fase termina e o reabre quando uma correção
 /// deixa partida por jogar. Devolve o status que vale.
 pub async fn sync_status(
     conn: &mut PgConnection,

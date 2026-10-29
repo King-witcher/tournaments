@@ -11,7 +11,9 @@
   "parts": {
     "winners": "Chave principal",
     "losers": "Repescagem",
-    "grand_final": "Grande final"
+    "grand_final": "Grande final",
+    "round_robin": "Round robin",
+    "swiss": "Suíço"
   },
   "rounds": {
     "final": "Final",
@@ -25,7 +27,9 @@
     "single": "{round}.{index}",
     "winners": "C{round}.{index}",
     "losers": "R{round}.{index}",
-    "grand_final": "GF{round}"
+    "grand_final": "GF{round}",
+    "round_robin": "{round}.{index}",
+    "swiss": "{round}.{index}"
   },
   "from": {
     "winner": "Vencedor de {match}",
@@ -72,5 +76,41 @@
     "champion": "Venceu o torneio",
     "eliminated": "Eliminação: <match></match> ({score})",
     "empty": "A classificação aparece aqui quando a última partida da chave for decidida."
+  },
+  "rest": "<name></name> folga nesta rodada",
+  "swissBye": "<name></name> recebe o bye (vale vitória)",
+  "matchesTitle": "Partidas",
+  "roundOf": "Rodada {round} de {total}",
+  "roundRobinHint": "Todas as partidas estão abertas: as rodadas só organizam, e cada uma é jogada quando os dois combinarem. Abra uma partida para enviar ou ver o resultado.",
+  "swissProgress": "Rodada {round} de {total}. Abra uma partida para enviar ou ver o resultado.",
+  "nextRound": "A rodada {round} de {total} é pareada quando todas as partidas da rodada {previous} terminarem: quem tem a mesma pontuação se enfrenta, sem repetir adversário.",
+  "table": {
+    "title": "Tabela",
+    "finalTitle": "Classificação",
+    "current": "A ordem de agora: vira a classificação quando a última partida terminar.",
+    "position": "Pos.",
+    "place": "{position}º",
+    "team": "Jogador",
+    "points": "Pontos",
+    "record": "V–D",
+    "recordValue": "{wins}–{losses}",
+    "recordByes": "{wins}–{losses} (+{byes} bye)",
+    "maps": "Mapas",
+    "frags": "Frags",
+    "diff": "{won}–{lost} ({diff})",
+    "incomplete": "{frags}, incompletos",
+    "buchholz": "Buchholz",
+    "notes": "Situação",
+    "empty": "Sem participantes.",
+    "tiebreaks": "Desempates",
+    "aheadBy": {
+      "buchholz": "{position}º ({name}) à frente do {next}º ({other}) pelo Buchholz.",
+      "head_to_head": "{position}º ({name}) à frente do {next}º ({other}) pelo confronto direto.",
+      "map_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de mapas.",
+      "frag_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de frags.",
+      "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave: empataram em todo o resto."
+    },
+    "noFrags": "sem frags",
+    "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um."
   }
 }

@@ -2,19 +2,24 @@
 //! cada partida com como estava antes (`Snapshot`) e, para as que mudaram,
 //! avisa a página da partida e a chave, "Seus torneios" de quem joga nelas e,
 //! na que passou a ter os dois lados sem estar decidida, os dois (`match.ready`;
-//! a que vira W.O. na hora já chega decidida). Se o torneio encerra ou reabre,
+//! a que vira W.O. na hora já chega decidida; no suíço, as partidas de cada
+//! rodada nova). No round robin, em que todas as partidas ficam prontas no
+//! início, `match.ready` vai para cada time só quando a próxima partida dele
+//! (a primeira pronta, pela ordem das rodadas) muda: a primeira no início e a
+//! seguinte quando ele termina uma série (`ready_notices`). Se o torneio
+//! encerra ou reabre,
 //! avisa o torneio inteiro; se os mapas contestados mudam, a home da
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para a organização) saem de quem
 //! envia e de quem contesta; os do veto (adversário pronto, veto começou), de
 //! quem fica pronto ou força o começo.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::{MapId, Match, MatchId, MatchState, ParticipantId},
-    formats::elimination::EliminationBracket,
+    formats::{self as ef, StageBracket},
 };
 use sqlx::PgConnection;
 
@@ -155,15 +160,21 @@ pub async fn settled(
                     .flat_map(StoredTeam::user_ids),
             );
         }
-        if let Some(pair) = ready(m.state)
-            && was.and_then(|w| ready(w.state)) != Some(pair)
-        {
-            match_ready(conn, &audience, &after.entrants, &key, pair).await?;
-        }
         let decided = |mark: &Mark| mark.result.as_ref().map(|r| (r.1, r.2));
         if decided(&now).is_some() && was.map(decided) != Some(decided(&now)) {
             announce::series_decided(conn, &audience, after, m).await?;
         }
+    }
+    for (id, pair, to) in ready_notices(Some(before), &after.bracket) {
+        match_ready(
+            conn,
+            &audience,
+            &after.entrants,
+            &key::format(id),
+            pair,
+            &to,
+        )
+        .await?;
     }
     outbox::emit(conn, Event::me(players)).await?;
     if status != tournament.status {
@@ -180,36 +191,96 @@ pub async fn settled(
     Ok(())
 }
 
-/// Ao iniciar: os dois lados de cada partida que já nasce pronta.
+/// Ao iniciar: os lados das partidas que já nascem prontas (no round robin,
+/// a primeira de cada time).
 pub async fn started(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
-    bracket: &EliminationBracket,
+    bracket: &StageBracket,
     entrants: &[StoredTeam],
 ) -> Result<(), ApiError> {
     let audience = tournaments::audience(conn, tournament.id).await?;
-    for m in bracket.matches() {
-        if let Some(pair) = ready(m.state) {
-            match_ready(conn, &audience, entrants, &key::format(m.id), pair).await?;
-        }
+    for (id, pair, to) in ready_notices(None, bracket) {
+        match_ready(conn, &audience, entrants, &key::format(id), pair, &to).await?;
     }
     announce::started(conn, &audience).await?;
     Ok(())
 }
 
-/// `match.ready` para os jogadores de cada lado, com o nome do outro.
+/// Quem recebe `match.ready` de qual partida (com os lados dela) depois de
+/// uma mudança de `before` (`None`: o início) para `after`. Na eliminação e
+/// no suíço, os dois lados da partida que passou a estar pronta com eles. No
+/// round robin, todas ficam prontas no início: cada time recebe só a próxima
+/// dele, quando ela muda (a primeira no início; a seguinte quando ele termina
+/// uma série; a reaberta por uma correção, se vem antes).
+fn ready_notices(
+    before: Option<&Snapshot>,
+    after: &StageBracket,
+) -> Vec<(MatchId, (ParticipantId, ParticipantId), Vec<ParticipantId>)> {
+    let was = |id: MatchId| before.and_then(|b| b.0.get(&id)).map(|m| m.state);
+    if !matches!(after.format(), ef::StageFormat::RoundRobin(_)) {
+        return after
+            .matches()
+            .iter()
+            .filter_map(|m| {
+                let pair = ready(m.state)?;
+                let fresh = was(m.id).and_then(ready) != Some(pair);
+                fresh.then(|| (m.id, pair, vec![pair.0, pair.1]))
+            })
+            .collect();
+    }
+    let old = next_ready(
+        before
+            .into_iter()
+            .flat_map(|b| b.0.iter().map(|(id, m)| (*id, m.state))),
+    );
+    let new = next_ready(after.matches().iter().map(|m| (m.id, m.state)));
+    let mut notices: Vec<(MatchId, (ParticipantId, ParticipantId), Vec<ParticipantId>)> =
+        Vec::new();
+    for (team, (id, pair)) in new {
+        if old.get(&team).map(|(id, _)| *id) == Some(id) {
+            continue;
+        }
+        match notices.iter_mut().find(|n| n.0 == id) {
+            Some(n) => n.2.push(team),
+            None => notices.push((id, pair, vec![team])),
+        }
+    }
+    notices
+}
+
+/// A próxima partida de cada time: a primeira pronta, pela ordem das rodadas.
+fn next_ready(
+    states: impl Iterator<Item = (MatchId, MatchState)>,
+) -> BTreeMap<ParticipantId, (MatchId, (ParticipantId, ParticipantId))> {
+    let mut ready: Vec<(MatchId, (ParticipantId, ParticipantId))> = states
+        .filter_map(|(id, state)| ready(state).map(|pair| (id, pair)))
+        .collect();
+    ready.sort_by_key(|(id, _)| *id);
+    let mut next = BTreeMap::new();
+    for (id, (a, b)) in ready {
+        next.entry(a).or_insert((id, (a, b)));
+        next.entry(b).or_insert((id, (a, b)));
+    }
+    next
+}
+
+/// `match.ready` da partida `key`, de lados `(a, b)`, para os jogadores dos
+/// times `to` (um ou os dois lados), com o nome do outro lado.
 async fn match_ready(
     conn: &mut PgConnection,
     audience: &Audience,
     entrants: &[StoredTeam],
     key: &str,
     (a, b): (ParticipantId, ParticipantId),
+    to: &[ParticipantId],
 ) -> Result<(), sqlx::Error> {
     let entrant = |p: ParticipantId| entrants.iter().find(|e| e.id == p.0);
-    let (Some(a), Some(b)) = (entrant(a), entrant(b)) else {
+    let (Some(team_a), Some(team_b)) = (entrant(a), entrant(b)) else {
         return Ok(());
     };
-    for (to, opponent) in [(a, b), (b, a)] {
+    let sides = [(a, team_a, team_b), (b, team_b, team_a)];
+    for (_, to, opponent) in sides.into_iter().filter(|(p, ..)| to.contains(p)) {
         let notice = Notice {
             kind: NoticeKind::MatchReady {
                 tournament: audience.name.clone(),

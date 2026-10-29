@@ -247,5 +247,6 @@
         "undo_declined": "{name} rechazó deshacer"
       }
     }
-  }
+  },
+  "labelTable": "Ronda {round} de {total} · partida {index}"
 }

@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Countdown } from "@/shared/ui/countdown";
@@ -29,7 +30,7 @@ export function MatchScoreboard({ tenant, detail }: Props) {
   const names = useSideNames(detail);
   const { summary: s, a, b } = detail;
   const r = s.result;
-  const single = detail.format.bracket === "single";
+  const single = isSingle(detail.format);
   const decided = s.state === "completed";
   const playing = s.state === "ready";
   const score = (side: "a" | "b") => {

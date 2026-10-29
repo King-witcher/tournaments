@@ -1,7 +1,10 @@
 //! Fase refeita → resposta da API, do ponto de vista de quem vê (as partidas
 //! dele e o que cada uma espera dele, em `tasks`).
 
-use engine::core::{self as ec, Match, Occupant, ParticipantId, Slot};
+use engine::{
+    core::{self as ec, Match, Occupant, ParticipantId, Slot},
+    formats::{self as ef, table::Criterion},
+};
 
 use super::{
     db::EventRow,
@@ -13,7 +16,7 @@ use super::{
     types::{
         BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail, MapRef,
         MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome, Standing,
-        TournamentBracket, ViewerTask,
+        TableCriterion, TableRow, TournamentBracket, ViewerTask,
     },
     veto,
 };
@@ -47,7 +50,7 @@ pub fn bracket(
     let team = |p: ParticipantId| stage.entrant(p).map(|e| e.id);
     let standings = stage
         .bracket
-        .standings()
+        .placements()
         .into_iter()
         .map(|p| {
             Ok(Standing {
@@ -69,14 +72,52 @@ pub fn bracket(
         .iter()
         .filter(|m| stage.result(m.id).is_some() || !stage.games_of(m.id).is_empty())
         .count();
+    let table = stage
+        .bracket
+        .table()
+        .map(|rows| rows.iter().map(|r| table_row(stage, r)).collect())
+        .transpose()?;
     Ok(TournamentBracket {
         format: stage.format.into(),
         status: tournament.status,
         entrants: stage.entrants.iter().map(StoredTeam::view).collect(),
         matches,
         standings,
+        table,
+        total_rounds: stage.bracket.total_rounds(),
         contest_minutes: tournament.contest_minutes,
         results: touched as i64,
+    })
+}
+
+fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiError> {
+    Ok(TableRow {
+        team_id: stage
+            .entrant(r.participant)
+            .map(|e| e.id)
+            .ok_or_else(ApiError::internal)?,
+        position: r.position,
+        points: r.points,
+        played: r.played,
+        wins: r.wins,
+        losses: r.losses,
+        byes: r.byes,
+        maps_won: r.maps_won,
+        maps_lost: r.maps_lost,
+        map_diff: r.map_diff,
+        frags_for: r.frags_for,
+        frags_against: r.frags_against,
+        frag_diff: r.frag_diff,
+        frags_complete: r.frags_complete,
+        buchholz: r.buchholz,
+        ahead_by: r.ahead_by.map(|c| match c {
+            Criterion::Points => TableCriterion::Points,
+            Criterion::Buchholz => TableCriterion::Buchholz,
+            Criterion::HeadToHead => TableCriterion::HeadToHead,
+            Criterion::MapDiff => TableCriterion::MapDiff,
+            Criterion::FragDiff => TableCriterion::FragDiff,
+            Criterion::Seed => TableCriterion::Seed,
+        }),
     })
 }
 
@@ -119,6 +160,8 @@ pub fn summary(
             ec::BracketSide::Winners => BracketPart::Winners,
             ec::BracketSide::Losers => BracketPart::Losers,
             ec::BracketSide::GrandFinal => BracketPart::GrandFinal,
+            ec::BracketSide::RoundRobin => BracketPart::RoundRobin,
+            ec::BracketSide::Swiss => BracketPart::Swiss,
         },
         round: m.id.round,
         index: m.id.index,

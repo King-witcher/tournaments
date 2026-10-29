@@ -7,13 +7,15 @@
 //! de comunidade (`scheduled_deletion`), os avisos no Discord (`discord`), o
 //! veto (`veto`: histórico, pool de mapas), os screenshots (`screenshots`) e
 //! os times (`teams`: o time de um jogador do duelo, capitão, escalação de
-//! cada mapa). As de resultados e histórico ficam em `matches::schema`.
+//! cada mapa) e os pareamentos do suíço (`pairings`). As de resultados e
+//! histórico ficam em `matches::schema`.
 
 mod checks;
 mod deletion;
 mod discord;
 mod inactive;
 mod owner;
+mod pairings;
 mod ratings;
 mod realtime;
 mod scheduled_deletion;

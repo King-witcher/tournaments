@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into stage_pairings\n                   (tenant_id, tournament_id, stage, round, number, side_a, side_b)\n               values ($1, $2, $3, $4, $5, $6, $7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int2",
+        "Int2",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c69dcc9c319948041775c3c2a9316c585148a2d1b2c3ee03dc98ebcbc901fe3a"
+}

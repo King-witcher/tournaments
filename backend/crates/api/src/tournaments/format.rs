@@ -3,7 +3,7 @@
 
 use engine::{
     champions as ec,
-    formats::{self as ef, elimination as el},
+    formats::{self as ef, elimination as el, round_robin::RoundRobinConfig, swiss::SwissConfig},
     series::SeriesLength,
 };
 
@@ -27,6 +27,8 @@ impl From<StageFormat> for ef::StageFormat {
                     finals: finals_best_of,
                 },
             }),
+            StageFormat::RoundRobin { best_of } => Self::RoundRobin(RoundRobinConfig { best_of }),
+            StageFormat::Swiss { best_of, rounds } => Self::Swiss(SwissConfig { best_of, rounds }),
         }
     }
 }
@@ -48,6 +50,11 @@ impl From<ef::StageFormat> for StageFormat {
                     finals_best_of: config.series.finals,
                 }
             }
+            ef::StageFormat::RoundRobin(c) => Self::RoundRobin { best_of: c.best_of },
+            ef::StageFormat::Swiss(c) => Self::Swiss {
+                best_of: c.best_of,
+                rounds: c.rounds,
+            },
         }
     }
 }
@@ -113,6 +120,23 @@ mod tests {
                 finals_best_of: 5,
             }
         );
+    }
+
+    #[test]
+    fn table_formats_round_trip() {
+        for dto in [
+            StageFormat::RoundRobin { best_of: 3 },
+            StageFormat::Swiss {
+                best_of: 1,
+                rounds: None,
+            },
+            StageFormat::Swiss {
+                best_of: 5,
+                rounds: Some(4),
+            },
+        ] {
+            assert_eq!(StageFormat::from(ef::StageFormat::from(dto)), dto);
+        }
     }
 
     #[test]

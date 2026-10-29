@@ -76,6 +76,11 @@ async fn tournaments_keep_state_and_shape() {
         json!({ "format": "elimination", "kind": { "kind": "double" },
                 "series": { "default": 3, "finals": 5 } }),
         json!({ "format": "swiss" }),
+        json!({ "format": "swiss", "best_of": 3, "rounds": 0 }),
+        json!({ "format": "swiss", "best_of": 3, "rounds": 128 }),
+        json!({ "format": "swiss", "best_of": 3, "rounds": "3" }),
+        json!({ "format": "round_robin", "best_of": 2 }),
+        json!({ "format": "round_robin" }),
     ] {
         let result = sqlx::query("update tournament_stages set config = $1")
             .bind(&config)
@@ -86,6 +91,17 @@ async fn tournaments_keep_state_and_shape() {
             rule(CHECK, "tournament_stages_config_shape"),
             "{config}"
         );
+    }
+    for config in [
+        json!({ "format": "round_robin", "best_of": 3 }),
+        json!({ "format": "swiss", "best_of": 1, "rounds": null }),
+        json!({ "format": "swiss", "best_of": 5, "rounds": 127 }),
+    ] {
+        sqlx::query("update tournament_stages set config = $1")
+            .bind(&config)
+            .execute(&db)
+            .await
+            .unwrap();
     }
     sqlx::query("update tournament_stages set config = $1")
         .bind(single(json!({ "default": 1, "finals": 3 })))

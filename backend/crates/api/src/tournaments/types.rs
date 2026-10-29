@@ -29,6 +29,24 @@ pub enum StageFormat {
         #[schema(example = 5)]
         finals_best_of: u8,
     },
+    /// Round robin simples, a fase inteira: cada par se enfrenta uma vez e a
+    /// classificação sai da tabela. Até 32 participantes.
+    RoundRobin {
+        /// Melhor de N de todas as partidas (ímpar).
+        #[schema(example = 3)]
+        best_of: u8,
+    },
+    /// Suíço, a fase inteira: rodadas fixas, pareamento por pontos sem
+    /// revanche, classificação pela tabela. Até 128 participantes.
+    Swiss {
+        /// Melhor de N de todas as partidas (ímpar).
+        #[schema(example = 3)]
+        best_of: u8,
+        /// Rodadas, de 1 a 127; `null` (ou ausente): ⌈log2 N⌉. Na fase, no
+        /// máximo N − 1 com os N do início.
+        #[serde(default)]
+        rounds: Option<u16>,
+    },
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]

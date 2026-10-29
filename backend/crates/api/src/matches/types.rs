@@ -20,11 +20,19 @@ pub struct TournamentBracket {
     pub status: TournamentStatus,
     /// Os times da chave, na ordem dos seeds.
     pub entrants: Vec<Team>,
-    /// Todas as partidas, por parte da chave, rodada e índice.
+    /// Todas as partidas, por parte da chave, rodada e índice. No suíço, só
+    /// as das rodadas já pareadas.
     pub matches: Vec<BracketMatch>,
-    /// Colocações já definidas (os eliminados e, no fim, campeão e vice).
-    /// Empatados dividem a faixa: `rank` 5 com `tied` 4 é 5º–8º.
+    /// Colocações já definidas. Na eliminação, os eliminados e, no fim,
+    /// campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
+    /// 5º–8º). No round robin e no suíço, todos, só no fim, sem empate.
     pub standings: Vec<Standing>,
+    /// Round robin e suíço: a tabela de agora, em ordem de posição (a final
+    /// quando a fase termina); `null` na eliminação.
+    pub table: Option<Vec<TableRow>>,
+    /// Round robin e suíço: o número de rodadas da fase (no suíço, as que vão
+    /// ser jogadas, não só as já pareadas); `null` na eliminação.
+    pub total_rounds: Option<u16>,
     /// Janela de contestação de cada mapa, em minutos.
     pub contest_minutes: i32,
     /// Partidas com algum mapa enviado ou resultado, que desfazer o início
@@ -42,6 +50,57 @@ pub enum BracketPart {
     Losers,
     /// Grande final (rodada 1) e reset (rodada 2).
     GrandFinal,
+    /// Rodada do round robin.
+    RoundRobin,
+    /// Rodada do suíço.
+    Swiss,
+}
+
+/// Uma linha da tabela do round robin ou do suíço.
+#[derive(Serialize, ToSchema)]
+pub struct TableRow {
+    /// O time (um dos `entrants` da chave).
+    pub team_id: i64,
+    /// De 1 a N, sem empate.
+    pub position: u16,
+    /// Séries vencidas (W.O. inclusive) e, no suíço, os byes.
+    pub points: u16,
+    /// Séries decididas (W.O. inclusive; bye e folga não).
+    pub played: u16,
+    pub wins: u16,
+    pub losses: u16,
+    /// Byes do suíço (cada um vale um ponto). No round robin, sempre 0: a
+    /// folga não vale ponto.
+    pub byes: u16,
+    /// Mapas das séries; o W.O. conta como vitória sem perder mapa (2 x 0 na
+    /// md3).
+    pub maps_won: u16,
+    pub maps_lost: u16,
+    pub map_diff: i32,
+    /// Frags das séries jogadas que vieram com frags (o W.O. não soma).
+    pub frags_for: u32,
+    pub frags_against: u32,
+    pub frag_diff: i64,
+    /// Toda série jogada veio com frags: só assim o saldo de frags desempata.
+    pub frags_complete: bool,
+    /// Só no suíço: a soma dos pontos dos adversários.
+    pub buchholz: Option<u32>,
+    /// O critério que pôs esta linha à frente da seguinte; `null` na última.
+    pub ahead_by: Option<TableCriterion>,
+}
+
+/// Critério de ordem da tabela, na ordem em que valem: pontos, Buchholz (só
+/// suíço), confronto direto, saldo de mapas, saldo de frags e, por último, o
+/// seed.
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TableCriterion {
+    Points,
+    Buchholz,
+    HeadToHead,
+    MapDiff,
+    FragDiff,
+    Seed,
 }
 
 /// Estado da partida na chave (só séries decididas contam).
@@ -103,7 +162,7 @@ pub struct NextMatch {
 
 #[derive(Serialize, ToSchema)]
 pub struct BracketMatch {
-    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`.
+    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`.
     #[schema(example = "wb-1-3")]
     pub key: String,
     pub part: BracketPart,
@@ -183,7 +242,8 @@ pub struct MatchDetail {
     pub summary: BracketMatch,
     pub format: StageFormat,
     /// Rodadas da parte da chave desta partida (para nomear final,
-    /// semifinal...).
+    /// semifinal...). No round robin e no suíço, as rodadas da fase (no
+    /// suíço, também as que ainda não foram pareadas).
     pub part_rounds: u16,
     pub status: TournamentStatus,
     /// Os times dos dois lados, quando já se sabe.

@@ -9,6 +9,7 @@ export type TournamentField = keyof Pick<
   | "rules"
   | "maxParticipants"
   | "bestOf"
+  | "swissRounds"
   | "bansPerGame"
   | "noRepeat"
   | "startsAt"
@@ -40,6 +41,8 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.max_participants_invalid": "maxParticipants",
   "tournament.max_participants_below_registered": "maxParticipants",
   "format.invalid_best_of": "bestOf",
+  "format.invalid_rounds": "swissRounds",
+  "format.too_many_participants": "maxParticipants",
   "tournament.bans_invalid": "bansPerGame",
   "champions.pool_exhausted": "noRepeat",
   "tournament.check_in_minutes_invalid": "checkInMinutes",

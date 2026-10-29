@@ -44,7 +44,6 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
     .await?
     .into_iter()
     .map(|r| {
-        let ef::StageFormat::Elimination(config) = r.config.0;
         Ok(ContestedGame {
             tournament: PendingTournament {
                 tenant_slug: r.tenant_slug,
@@ -54,7 +53,10 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                 translations: translations(r.translation_locales, r.translation_names)?,
             },
             key: r.match_key,
-            single: config.kind == EliminationKind::Single,
+            single: matches!(
+                r.config.0,
+                ef::StageFormat::Elimination(c) if c.kind == EliminationKind::Single
+            ),
             game: r.number,
             map: r.map,
             contested_by: r.contested_by,

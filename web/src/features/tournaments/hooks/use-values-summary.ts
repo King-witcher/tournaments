@@ -20,16 +20,28 @@ export function useValuesSummary() {
   };
 
   return {
-    format: (v: TournamentValues) =>
-      line([
-        tSetup(
-          `bracket.${v.bracket === "double" && v.grandFinalReset ? "doubleReset" : v.bracket}`,
-        ),
-        tSetup(`series.${v.bracket}`, {
-          bestOf: v.bestOf,
-          finals: v.finalsBestOf,
-        }),
-      ]),
+    format: (v: TournamentValues) => {
+      const kind =
+        v.stageFormat !== "elimination"
+          ? v.stageFormat
+          : v.bracket === "double" && v.grandFinalReset
+            ? "doubleReset"
+            : v.bracket;
+      return line([
+        tSetup(`bracket.${kind}`),
+        v.stageFormat === "elimination"
+          ? tSetup(`series.${v.bracket}`, {
+              bestOf: v.bestOf,
+              finals: v.finalsBestOf,
+            })
+          : tSetup("series.table", { bestOf: v.bestOf }),
+        v.stageFormat === "swiss"
+          ? v.swissRounds === null
+            ? tSetup("rounds.auto")
+            : tSetup("rounds.fixed", { count: v.swissRounds })
+          : undefined,
+      ]);
+    },
     registration: (v: TournamentValues) =>
       line([
         tForm(`visibilityOptions.${v.visibility}`),

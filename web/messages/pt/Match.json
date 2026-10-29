@@ -247,5 +247,6 @@
         "undo_declined": "{name} recusou desfazer"
       }
     }
-  }
+  },
+  "labelTable": "Rodada {round} de {total} · partida {index}"
 }

@@ -121,9 +121,10 @@
   "format": {
     "invalid_best_of": "Al mejor de {best_of} no vale: usa un número impar (1, 3, 5...).",
     "not_enough_participants": "Se necesitan al menos {min} participantes.",
-    "too_many_participants": "El máximo es de {max} participantes.",
+    "too_many_participants": "Este formato admite hasta {max} participantes: reduce los cupos a {max} o menos.",
     "duplicate_participant": "Participante repetido.",
-    "no_stages": "El torneo necesita al menos una fase."
+    "no_stages": "El torneo necesita al menos una fase.",
+    "invalid_rounds": "Las rondas van de 1 a {max}."
   },
   "champions": {
     "pool_exhausted": "En el peor caso se necesitan {required} campeones, pero el pool tiene {available}. Reduce los cupos, las series o los bans, o afloja la regla de no repetición."

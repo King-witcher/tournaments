@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { memberPath } from "@/features/members/lib/paths";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable } from "@/shared/ui/data-table";
@@ -32,7 +33,7 @@ type Props = {
 export function StandingsTable({ tenant, bracket, basePath }: Props) {
   const t = useTranslations("Bracket.standings");
   const tBracket = useTranslations("Bracket");
-  const { code } = useMatchLabels(bracket.format.bracket === "single");
+  const { code } = useMatchLabels(isSingle(bracket.format));
   const teamName = useTeamName();
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
   const standings = bracket.status === "finished" ? bracket.standings : [];

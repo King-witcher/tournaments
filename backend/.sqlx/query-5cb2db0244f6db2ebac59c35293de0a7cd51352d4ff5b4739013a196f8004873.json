@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select round, side_a, side_b from stage_pairings\n           where tournament_id = $1 and stage = $2\n           order by round, number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "round",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "stage_pairings",
+            "name": "round"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "side_a",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "stage_pairings",
+            "name": "side_a"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "side_b",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "stage_pairings",
+            "name": "side_b"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "5cb2db0244f6db2ebac59c35293de0a7cd51352d4ff5b4739013a196f8004873"
+}

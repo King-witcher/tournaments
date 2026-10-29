@@ -5,6 +5,7 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
+import { formatKind } from "../lib/format";
 import { localizedName } from "../lib/localize";
 import { hasStarted } from "../lib/status";
 import { TournamentActions } from "./tournament-actions";
@@ -34,10 +35,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const locale = useLocale();
   const organizer = me.role !== "player";
   const [stage] = tournament.stages;
-  const bracket =
-    stage.bracket === "double" && stage.grand_final_reset
-      ? "doubleReset"
-      : stage.bracket;
+  const kind = formatKind(stage);
   const startsAt = tournament.starts_at;
   // Data que já passou (começou, ou a organização ainda não iniciou): "início
   // marcado para", não "começa", que daria a entender que ainda vai começar.
@@ -70,7 +68,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
       }
       meta={
         <>
-          {t(`setup.bracket.${bracket}`)}
+          {t(`setup.bracket.${kind}`)}
           {" · "}
           {t("meta.bestOf", { bestOf: stage.best_of })}
           {" · "}

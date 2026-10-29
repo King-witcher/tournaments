@@ -42,14 +42,16 @@ pub async fn load(
         a: team(summary.a.team_id),
         b: team(summary.b.team_id),
         format: stage.format.into(),
-        part_rounds: stage
-            .bracket
-            .matches()
-            .iter()
-            .filter(|x| x.id.side == m.id.side)
-            .map(|x| x.id.round)
-            .max()
-            .unwrap_or(1),
+        part_rounds: stage.bracket.total_rounds().unwrap_or_else(|| {
+            stage
+                .bracket
+                .matches()
+                .iter()
+                .filter(|x| x.id.side == m.id.side)
+                .map(|x| x.id.round)
+                .max()
+                .unwrap_or(1)
+        }),
         status: tournament.status,
         games: games
             .iter()

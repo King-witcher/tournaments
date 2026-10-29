@@ -7,11 +7,6 @@
   "startsAtHint": "En tu zona horaria ({timeZone}). Opcional: sin fecha, el check-in no abre solo (lo abres cuando quieras). Cambia hasta que el torneo empiece.",
   "format": "Formato",
   "formatLocked": "El torneo ya empezó: el formato y los campeones ya no cambian.",
-  "bracket": "Llave",
-  "brackets": {
-    "single": "Eliminación simple",
-    "double": "Eliminación doble"
-  },
   "grandFinalReset": "Reset de gran final",
   "grandFinalResetHint": "Si quien llega por el repechaje gana la gran final, los dos juegan una serie más, porque solo entonces los dos tienen una derrota.",
   "bestOf": "Series",
@@ -133,5 +128,22 @@
     "seconds": "Tiempo de cada paso",
     "secondsHint": "Si se termina el tiempo, la elección se sortea (la organización puede deshacerla).",
     "secondsOption": "{seconds} s"
-  }
+  },
+  "stageFormat": "Sistema",
+  "stageFormats": {
+    "double": "Eliminación doble",
+    "single": "Eliminación simple",
+    "round_robin": "Round robin",
+    "swiss": "Suizo"
+  },
+  "stageFormatHints": {
+    "double": "Quien pierde pasa al repechaje; si pierde de nuevo, queda fuera.",
+    "single": "Quien pierde una partida queda fuera.",
+    "round_robin": "Todos juegan contra todos, una vez, y la clasificación sale de la tabla de puntos. Hasta {max} participantes.",
+    "swiss": "Rondas en las que se enfrentan quienes tienen la misma puntuación, sin repetir rival; la clasificación sale de la tabla de puntos. Hasta {max} participantes."
+  },
+  "swissRounds": "Rondas",
+  "swissRoundsHint": "El máximo es una menos que los inscritos: con menos gente, vale ese. Automático: 3 con hasta 8 inscritos, 4 con hasta 16, 5 con hasta 32.",
+  "swissRoundsAuto": "Automático (según los inscritos)",
+  "swissRoundsOption": "{count, plural, one {# ronda} other {# rondas}}"
 }

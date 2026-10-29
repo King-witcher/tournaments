@@ -7,7 +7,12 @@ import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { LocalTime } from "@/shared/ui/local-time";
 import { Section } from "@/shared/ui/section";
-import { bracketKind, mapsToWin, repeatScope } from "../lib/format";
+import {
+  finalsBestOf,
+  formatKind,
+  mapsToWin,
+  repeatScope,
+} from "../lib/format";
 import styles from "./tournament-auto-rules.module.scss";
 
 type Props = {
@@ -18,8 +23,9 @@ type Props = {
 
 /**
  * As regras que saem da configuração do torneio, para quem joga, na ordem em
- * que acontecem: inscrição, início e check-in, chave, séries, campeões, envio
- * e resposta do resultado e W.O. Frases curtas, na segunda pessoa; cada
+ * que acontecem: inscrição, início e check-in, chave (ou round robin, suíço,
+ * com a tabela e os desempates), séries, campeões, envio e resposta do
+ * resultado e W.O. Frases curtas, na segunda pessoa; cada
  * trecho segue a configuração (sem check-in, eliminação simples, sem bans...)
  * e muda sozinho quando ela muda, porque nada é gravado. O que ela não diz
  * (mapas, conduta, queda de conexão) fica nas regras adicionais.
@@ -32,9 +38,13 @@ export function TournamentAutoRules({ tournament, editable }: Props) {
   const { starts_at: startsAt, check_in_opens_at: opensAt } = tournament;
   const checkIn = tournament.check_in_minutes;
   const checkInWindow = checkIn == null ? "" : formatMinutes(checkIn);
-  const finals = stage.finals_best_of;
+  const kind = formatKind(stage);
+  const finals = finalsBestOf(stage) ?? stage.best_of;
   // Tudo de um mapa só: nada a dizer sobre repetir mapa nem sobre o seguinte.
   const severalMaps = Math.max(stage.best_of, finals) > 1;
+  // Round robin ou suíço: a tabela, os frags no desempate, o W.O. em mapas.
+  const table = stage.format === "elimination" ? null : stage.format;
+  const wins = mapsToWin(stage.best_of);
 
   const paragraphs: [string, ReactNode[]][] = [
     [
@@ -63,13 +73,22 @@ export function TournamentAutoRules({ tournament, editable }: Props) {
     ],
     [
       "bracket",
-      [t(`bracket.${stage.bracket}`), t(`bracketRule.${bracketKind(stage)}`)],
+      [
+        stage.format === "elimination"
+          ? t(`bracket.${stage.bracket}`)
+          : stage.format === "swiss" && stage.rounds != null
+            ? t("bracket.swissRounds", { rounds: stage.rounds })
+            : t(`bracket.${stage.format}`),
+        t(`bracketRule.${kind}`),
+      ],
     ],
+    ["table", table ? [t(`tableRule.${table}`)] : []],
     [
       "series",
       [
         t("series", { bestOf: stage.best_of, wins: mapsToWin(stage.best_of) }),
-        finals !== stage.best_of &&
+        stage.format === "elimination" &&
+          finals !== stage.best_of &&
           t(`finals.${stage.bracket}`, {
             bestOf: finals,
             wins: mapsToWin(finals),
@@ -84,12 +103,22 @@ export function TournamentAutoRules({ tournament, editable }: Props) {
         t(`champions.repeat.${repeatScope(tournament.champion_rules)}`),
       ],
     ],
-    ["report", [t("report"), severalMaps && t("nextMap")]],
+    [
+      "report",
+      [t("report"), severalMaps && t("nextMap"), table && t("fragsTable")],
+    ],
     [
       "confirm",
       [t("confirm", { window: formatMinutes(tournament.contest_minutes) })],
     ],
-    ["walkover", [t("walkover")]],
+    [
+      "walkover",
+      [
+        t("walkover"),
+        table && t("walkoverTable", { wins }),
+        table && t(`withdrawal.${table}`),
+      ],
+    ],
   ];
 
   return (
@@ -98,17 +127,19 @@ export function TournamentAutoRules({ tournament, editable }: Props) {
       description={editable ? t("generated") : undefined}
     >
       <Stack gap={5} className={styles.text}>
-        {paragraphs.map(([key, sentences]) => (
-          <p key={key}>
-            {sentences.filter(Boolean).map((sentence, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: frases fixas, na ordem.
-              <Fragment key={index}>
-                {index > 0 && " "}
-                {sentence}
-              </Fragment>
-            ))}
-          </p>
-        ))}
+        {paragraphs
+          .filter(([, sentences]) => sentences.some(Boolean))
+          .map(([key, sentences]) => (
+            <p key={key}>
+              {sentences.filter(Boolean).map((sentence, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: frases fixas, na ordem.
+                <Fragment key={index}>
+                  {index > 0 && " "}
+                  {sentence}
+                </Fragment>
+              ))}
+            </p>
+          ))}
       </Stack>
     </Section>
   );

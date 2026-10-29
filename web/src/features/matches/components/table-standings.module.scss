@@ -1,0 +1,45 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+// Apelido longo quebra em vez de empurrar a tabela para o lado no celular.
+.name {
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-03;
+}
+
+// Os desempates ficam fora da tabela, em texto corrido: no celular, as
+// colunas de saldo somem, e a explicação continua à vista.
+.tiebreaks {
+  margin-block-start: spacing.$spacing-05;
+}
+
+.tiebreaksTitle {
+  @include type.type-style("heading-compact-01");
+
+  margin-block-end: spacing.$spacing-03;
+}
+
+.tiebreakList {
+  @include type.type-style("body-01");
+
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  color: theme.$text-secondary;
+  list-style: disc;
+  padding-inline-start: spacing.$spacing-05;
+}

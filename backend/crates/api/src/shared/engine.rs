@@ -49,6 +49,10 @@ impl From<EngineError> for ApiError {
                 ("required", i64::from(required)),
                 ("available", i64::from(available)),
             ]),
+            E::InvalidRounds { max, got } => Self::invalid("format.invalid_rounds")
+                .with_params([("max", i64::from(max)), ("got", i64::from(got))]),
+            // Histórico gravado que não fecha: erro nosso, não do usuário.
+            E::InvalidPairing { .. } => Self::internal(),
         }
     }
 }

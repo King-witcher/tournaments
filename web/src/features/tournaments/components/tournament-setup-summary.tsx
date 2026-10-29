@@ -9,7 +9,7 @@ import { InfoTip } from "@/shared/ui/info-tip";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
 import { StructuredList } from "@/shared/ui/structured-list";
-import { bracketKind, repeatScope } from "../lib/format";
+import { formatKind, repeatScope } from "../lib/format";
 
 type Props = {
   tournament: components["schemas"]["Tournament"];
@@ -18,12 +18,12 @@ type Props = {
 };
 
 /**
- * O formato, em rótulo e valor curto: chave, séries, vagas, regras de
- * campeões e o veto da fase única, as janelas de check-in e de contestação e
- * se conta para o rating da comunidade. Os termos que quem joga pode não
- * conhecer têm um (i) com a explicação (a da chave e a dos campeões são as
- * mesmas frases da aba Regras). Embaixo, o link para a aba Regras, onde está
- * tudo por extenso.
+ * O formato, em rótulo e valor curto: chave (ou round robin, suíço), séries,
+ * rodadas do suíço, vagas, regras de campeões e o veto da fase única, as
+ * janelas de check-in e de contestação e se conta para o rating da
+ * comunidade. Os termos que quem joga pode não conhecer têm um (i) com a
+ * explicação (a da chave e a dos campeões são as mesmas frases da aba
+ * Regras). Embaixo, o link para a aba Regras, onde está tudo por extenso.
  */
 export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const t = useTranslations("Tournament.setup");
@@ -33,7 +33,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const tForm = useTranslations("TournamentForm");
   const formatMinutes = useFormatMinutes();
   const [stage] = tournament.stages;
-  const bracket = bracketKind(stage);
+  const kind = formatKind(stage);
   const bans = tournament.champion_rules.bans_per_game;
   const repeat = repeatScope(tournament.champion_rules);
   const checkIn = tournament.check_in_minutes;
@@ -43,7 +43,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
     return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
   };
   const tip = (
-    key: "bracket" | "champions" | "checkIn" | "contest",
+    key: "bracket" | "format" | "champions" | "checkIn" | "contest",
     text: string,
   ) => (
     <InfoTip term={t(`labels.${key}`)} label={t(`tips.${key}`)}>
@@ -69,17 +69,36 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const rows: { key: string; label: ReactNode; value: string }[] = [
     {
       key: "bracket",
-      label: tip("bracket", tRules(`bracketRule.${bracket}`)),
-      value: t(`bracket.${bracket}`),
+      // "Chave" só na eliminação; round robin e suíço são "Formato".
+      label: tip(
+        stage.format === "elimination" ? "bracket" : "format",
+        tRules(`bracketRule.${kind}`),
+      ),
+      value: t(`bracket.${kind}`),
     },
     {
       key: "series",
       label: t("labels.series"),
-      value: t(`series.${stage.bracket}`, {
-        bestOf: stage.best_of,
-        finals: stage.finals_best_of,
-      }),
+      value:
+        stage.format === "elimination"
+          ? t(`series.${stage.bracket}`, {
+              bestOf: stage.best_of,
+              finals: stage.finals_best_of,
+            })
+          : t("series.table", { bestOf: stage.best_of }),
     },
+    ...(stage.format === "swiss"
+      ? [
+          {
+            key: "rounds",
+            label: t("labels.rounds"),
+            value:
+              stage.rounds == null
+                ? t("roundsValue.auto")
+                : t("roundsValue.fixed", { count: stage.rounds }),
+          },
+        ]
+      : []),
     {
       key: "slots",
       label: t("labels.slots"),

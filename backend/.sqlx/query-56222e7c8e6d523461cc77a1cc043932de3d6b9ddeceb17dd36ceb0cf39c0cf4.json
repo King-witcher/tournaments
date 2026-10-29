@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from stage_pairings where tournament_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "56222e7c8e6d523461cc77a1cc043932de3d6b9ddeceb17dd36ceb0cf39c0cf4"
+}

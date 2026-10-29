@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { BracketGrid } from "./bracket-grid";
 import { BracketTabs } from "./bracket-tabs";
@@ -27,7 +28,7 @@ const DOUBLE: Part[][] = [["winners", "grand_final"], ["losers"]];
  */
 export function BracketView({ tenant, tournament, bracket }: Props) {
   const t = useTranslations("Bracket");
-  const single = bracket.format.bracket === "single";
+  const single = isSingle(bracket.format);
   const entrants = new Map(bracket.entrants.map((e) => [e.id, e]));
   const grid = (parts: Part[]) => (
     <BracketGrid

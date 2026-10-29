@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
@@ -26,7 +27,7 @@ type Props = {
  */
 export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const t = useTranslations("Bracket");
-  const { code } = useMatchLabels(bracket.format.bracket === "single");
+  const { code } = useMatchLabels(isSingle(bracket.format));
   const teamName = useTeamName();
   const teams = new Map(bracket.entrants.map((e) => [e.id, e]));
   const pending = bracket.matches.filter(

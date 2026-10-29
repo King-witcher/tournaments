@@ -44,7 +44,7 @@ pub async fn get_bracket(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
     ),
     responses(
         (status = OK, body = MatchDetail, description = "A partida, com lados, resultado, detalhe por mapa e histórico"),

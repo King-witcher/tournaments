@@ -6,6 +6,7 @@ import { NumberInput } from "@/shared/ui/number-input";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
+import { FORMAT_MAX_ENTRANTS } from "../lib/format";
 import { TournamentCheckInField } from "./tournament-check-in-field";
 import { TournamentContestField } from "./tournament-contest-field";
 
@@ -36,6 +37,8 @@ export function TournamentRegistrationFields({
 }: Props) {
   const t = useTranslations("TournamentForm");
   const errorMessage = useApiErrorMessage();
+  // Round robin e suíço têm teto próprio, abaixo do do site.
+  const formatMax = FORMAT_MAX_ENTRANTS[values.stageFormat];
 
   return (
     <>
@@ -47,14 +50,16 @@ export function TournamentRegistrationFields({
         allowEmpty
         disableWheel
         min={SLOTS.min}
-        max={SLOTS.max}
+        max={formatMax ?? SLOTS.max}
         value={values.maxParticipants}
         disabled={setupLocked}
         invalid={errors.maxParticipants !== undefined}
         // Fora dos limites o próprio campo fica inválido, com o texto da API.
         invalidText={
           errors.maxParticipants ??
-          errorMessage("tournament.max_participants_invalid", SLOTS)
+          (formatMax !== undefined && (values.maxParticipants ?? 0) > formatMax
+            ? errorMessage("format.too_many_participants", { max: formatMax })
+            : errorMessage("tournament.max_participants_invalid", SLOTS))
         }
         onChange={(maxParticipants) => onChange({ maxParticipants })}
       />

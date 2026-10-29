@@ -6,15 +6,18 @@
 //! Cada mapa da série é enviado e confirmado sozinho (`games`); a série
 //! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
 //! `series::games`), e só a série decidida entra na chave (`result`). A chave
-//! nunca é gravada: sai do `replay` do `engine` com a configuração da fase,
-//! os times pelo seed e as séries decididas, na ordem em que
-//! passaram a valer (`stage`). Gerar e descartar a chave fica no início e no
-//! desfazer do `lifecycle` (`start`, `discard`). Depois de toda mudança,
-//! `settle` anula os mapas que ficaram depois da decisão, fecha as séries
-//! decididas, dá os W.O. automáticos de quem desistiu ou saiu da comunidade
-//! (`withdrawals`) e encerra ou reabre o torneio conforme a chave. A
-//! confirmação por tempo é aplicada ao ler e agir (`due`), e o agendador do
-//! tempo real a aplica nos torneios que ninguém leu (`confirm_all_due`). O que
+//! (a fase de qualquer formato: eliminação, round robin ou suíço) nunca é
+//! gravada: sai do `replay` do `engine` com a configuração da fase, os times
+//! pelo seed, as séries decididas, na ordem em que passaram a valer, e, no
+//! suíço, os pareamentos de cada rodada, que ficam gravados (`stage`,
+//! `rounds`). Gerar e descartar a chave fica no início e no desfazer do
+//! `lifecycle` (`start`, `discard`). Depois de toda mudança, `settle` anula os
+//! mapas que ficaram depois da decisão, fecha as séries decididas, dá os W.O.
+//! automáticos de quem desistiu ou saiu da comunidade (`withdrawals`), grava
+//! o pareamento da rodada seguinte do suíço (`rounds`) e encerra ou reabre o
+//! torneio conforme a chave. A confirmação por tempo é aplicada ao ler e
+//! agir (`due`), e o agendador do tempo real a aplica nos torneios que
+//! ninguém leu (`confirm_all_due`). O que
 //! muda na chave vai para o outbox pelo `settle` e pelo início (`changes`),
 //! com os avisos de partida pronta, mapa enviado e contestado. A desistência,
 //! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
@@ -43,6 +46,7 @@ mod outcome;
 mod replay;
 mod report;
 mod result;
+mod rounds;
 mod settle;
 mod slots;
 mod stage;

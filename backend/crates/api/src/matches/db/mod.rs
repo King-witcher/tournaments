@@ -1,9 +1,11 @@
 //! SQL da chave: leitura das séries decididas, confirmação por tempo dos
 //! mapas e descarte aqui; escritas da série em `writes`, mapas em `games`,
-//! histórico em `events`, o que a chave lê dos screenshots em `screenshots`.
+//! histórico em `events`, o que a chave lê dos screenshots em `screenshots`,
+//! os pareamentos gravados do suíço em `pairings`.
 
 mod events;
 mod games;
+mod pairings;
 mod screenshots;
 mod writes;
 
@@ -15,6 +17,7 @@ use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
 pub use games::{NewGame, confirm_game, contest_game, games, insert_report, put_game, void_games};
+pub use pairings::{insert_round, pairings};
 pub use screenshots::has_screenshot;
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
@@ -94,8 +97,8 @@ pub async fn confirm_due(
     Ok(done.rows_affected())
 }
 
-/// Apaga séries, mapas, histórico e vetos do torneio (desfazer o início).
-/// Devolve quantas partidas tinham resultado ou mapa.
+/// Apaga séries, mapas, histórico, vetos e pareamentos do torneio (desfazer o
+/// início). Devolve quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -121,6 +124,9 @@ pub async fn discard(
         .execute(&mut *conn)
         .await?;
     sqlx::query!("delete from match_results where tournament_id = $1", id)
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query!("delete from stage_pairings where tournament_id = $1", id)
         .execute(&mut *conn)
         .await?;
     Ok(touched as u64)

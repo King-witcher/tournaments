@@ -52,12 +52,20 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
 
   if (m.state === "bye" || m.state === "not_needed") {
     const who = entrants.get(m.a.team_id ?? m.b.team_id ?? -1);
+    // Na chave, quem não tem adversário avança; no round robin, folga na
+    // rodada (sem ponto); no suíço, recebe o bye (vale vitória).
+    const rest =
+      m.part === "round_robin"
+        ? "rest"
+        : m.part === "swiss"
+          ? "swissBye"
+          : "advances";
     return (
       <p className={styles.ghost}>
         {m.state === "not_needed"
           ? `${code(m.key)} · ${t("notNeeded")}`
           : who
-            ? t.rich("advances", {
+            ? t.rich(rest, {
                 name: () => <TeamName tenant={tenant} team={who} inline />,
               })
             : t("bye")}

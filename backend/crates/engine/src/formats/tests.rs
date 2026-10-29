@@ -36,6 +36,34 @@ fn stage_format_json_is_stable() {
 }
 
 #[test]
+fn table_formats_json_is_stable() {
+    let cases = [
+        (
+            StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
+            r#"{"format":"round_robin","best_of":3}"#,
+        ),
+        (
+            StageFormat::Swiss(SwissConfig {
+                best_of: 1,
+                rounds: None,
+            }),
+            r#"{"format":"swiss","best_of":1,"rounds":null}"#,
+        ),
+        (
+            StageFormat::Swiss(SwissConfig {
+                best_of: 5,
+                rounds: Some(6),
+            }),
+            r#"{"format":"swiss","best_of":5,"rounds":6}"#,
+        ),
+    ];
+    for (f, json) in cases {
+        assert_eq!(serde_json::to_string(&f).unwrap(), json);
+        assert_eq!(serde_json::from_str::<StageFormat>(json).unwrap(), f);
+    }
+}
+
+#[test]
 fn champion_rules_json_is_stable() {
     let with = ChampionRules {
         bans_per_game: 1,
@@ -67,7 +95,9 @@ fn longest_series_is_the_max() {
 #[test]
 fn worst_case_matches_the_built_bracket() {
     for f in kinds() {
-        let StageFormat::Elimination(c) = f;
+        let StageFormat::Elimination(c) = f else {
+            unreachable!()
+        };
         for n in [2usize, 5, 8, 16] {
             let ids = (1..=n as i64).map(ParticipantId).collect();
             let expected = EliminationBracket::new(c, ids).unwrap().worst_case_games();
@@ -117,6 +147,87 @@ fn worst_case_games_is_monotonic_in_participants() {
                 assert!(pw <= w, "{f:?}: n={pn} -> {pw}, n={n} -> {w}");
             }
             prev = Some((n, w));
+        }
+    }
+}
+
+fn table_formats() -> [StageFormat; 3] {
+    [
+        StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
+        StageFormat::Swiss(SwissConfig {
+            best_of: 3,
+            rounds: None,
+        }),
+        StageFormat::Swiss(SwissConfig {
+            best_of: 1,
+            rounds: Some(9),
+        }),
+    ]
+}
+
+#[test]
+fn table_formats_validate_and_have_one_series_length() {
+    for f in table_formats() {
+        assert_eq!(f.validate(), Ok(()));
+    }
+    assert_eq!(table_formats()[0].longest_series(), 3);
+    assert_eq!(table_formats()[2].longest_series(), 1);
+    let even = StageFormat::RoundRobin(RoundRobinConfig { best_of: 2 });
+    assert_eq!(even.validate(), Err(EngineError::InvalidBestOf(2)));
+    let no_rounds = StageFormat::Swiss(SwissConfig {
+        best_of: 3,
+        rounds: Some(0),
+    });
+    assert_eq!(
+        no_rounds.validate(),
+        Err(EngineError::InvalidRounds { max: 127, got: 0 })
+    );
+    assert_eq!(
+        no_rounds.worst_case_games(8),
+        Err(EngineError::InvalidRounds { max: 127, got: 0 })
+    );
+}
+
+#[test]
+fn table_formats_worst_case() {
+    let [rr, swiss, long] = table_formats();
+    // Round robin: N − 1 séries; suíço: uma por rodada.
+    assert_eq!(rr.worst_case_games(8), Ok(21));
+    assert_eq!(swiss.worst_case_games(8), Ok(9));
+    assert_eq!(long.worst_case_games(8), Ok(7));
+    assert_eq!(long.worst_case_games(16), Ok(9));
+    assert_eq!(
+        rr.worst_case_games(33),
+        Err(EngineError::TooManyParticipants { max: 32, got: 33 })
+    );
+    assert_eq!(
+        swiss.worst_case_games(129),
+        Err(EngineError::TooManyParticipants { max: 128, got: 129 })
+    );
+    assert_eq!(
+        swiss.worst_case_games(usize::MAX),
+        Err(EngineError::TooManyParticipants {
+            max: 128,
+            got: usize::MAX
+        })
+    );
+    for f in table_formats() {
+        assert_eq!(
+            f.worst_case_games(1),
+            Err(EngineError::NotEnoughParticipants { min: 2, got: 1 })
+        );
+        let mut prev = 0;
+        let max = if matches!(f, StageFormat::RoundRobin(_)) {
+            32
+        } else {
+            128
+        };
+        for n in 2..=max {
+            let w = f.worst_case_games(n).unwrap();
+            assert!(prev <= w, "{f:?}: n={n}");
+            prev = w;
+            let seeded = (1..=n as i64).map(ParticipantId).collect();
+            assert_eq!(StageBracket::new(f, seeded).unwrap().worst_case_games(), w);
         }
     }
 }

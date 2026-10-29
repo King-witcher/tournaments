@@ -31,11 +31,12 @@ use crate::{
 pub enum Place {
     /// Inscrito sem seed: o torneio começou sem ele (não fez check-in).
     Missed,
-    /// Na chave e ainda vivo.
+    /// Na chave e ainda vivo (no round robin e no suíço, até a fase terminar:
+    /// a colocação sai da tabela final).
     Playing,
     /// Desistiu; com a colocação quando ela já se definiu.
     Withdrawn(Option<(u16, u16)>),
-    /// Eliminado, com a colocação.
+    /// Eliminado, ou fora do 1º lugar na tabela final, com a colocação.
     Eliminated(u16, u16),
     Champion,
 }
@@ -93,7 +94,7 @@ fn locate(stage: &Stage, participant: Option<ParticipantId>) -> Place {
     };
     let standing = stage
         .bracket
-        .standings()
+        .placements()
         .into_iter()
         .find(|p| p.participant == me)
         .map(|p| (p.rank, p.tied));
@@ -126,14 +127,16 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
         Side::A => (ob, m.b),
         Side::B => (oa, m.a),
     };
-    let ef::StageFormat::Elimination(config) = stage.format;
     Some(NextMatch {
         key: key::format(m.id),
         state: match m.state {
             ec::MatchState::Ready { .. } => MatchState::Ready,
             _ => MatchState::Pending,
         },
-        single: config.kind == EliminationKind::Single,
+        single: matches!(
+            stage.format,
+            ef::StageFormat::Elimination(c) if c.kind == EliminationKind::Single
+        ),
         opponent: match opponent {
             Occupant::Participant(p) => stage.entrant(p).map(StoredTeam::view),
             _ => None,

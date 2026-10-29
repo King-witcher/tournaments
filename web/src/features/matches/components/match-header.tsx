@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";
@@ -32,23 +33,30 @@ export function MatchHeader({
   const tBracket = useTranslations("Bracket");
   const tNav = useTranslations("Nav");
   const s = detail.summary;
-  const single = detail.format.bracket === "single";
+  const single = isSingle(detail.format);
   const { code, roundTitle, placeholder } = useMatchLabels(single);
   const names = useSideNames(detail);
   const round = roundTitle(s.part, s.round, detail.part_rounds);
   // A final, a grande final e o reset têm uma partida só: basta o nome.
   const alone = s.part === "grand_final" || s.round === detail.part_rounds;
-  const label = alone
-    ? single || s.part === "grand_final"
-      ? round
-      : t("labelPart", { part: tBracket(`parts.${s.part}`), round })
-    : single
-      ? t("labelSingle", { round, index: s.index })
-      : t("label", {
-          part: tBracket(`parts.${s.part}`),
-          round,
-          index: s.index,
-        });
+  const table = s.part === "round_robin" || s.part === "swiss";
+  const label = table
+    ? t("labelTable", {
+        round: s.round,
+        total: detail.part_rounds,
+        index: s.index,
+      })
+    : alone
+      ? single || s.part === "grand_final"
+        ? round
+        : t("labelPart", { part: tBracket(`parts.${s.part}`), round })
+      : single
+        ? t("labelSingle", { round, index: s.index })
+        : t("label", {
+            part: tBracket(`parts.${s.part}`),
+            round,
+            index: s.index,
+          });
   const side = (who: "a" | "b") =>
     detail[who] ? names[who] : placeholder(s[who]);
 

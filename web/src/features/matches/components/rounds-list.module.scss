@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.round {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+}
+
+.title {
+  @include type.type-style("heading-02");
+}
+
+// Os cartões da rodada lado a lado, na largura de um cartão da chave (cabem
+// o seed, o avatar, um apelido de uns 16 caracteres e o placar), quebrando
+// de linha; no celular, um embaixo do outro.
+.matches {
+  display: grid;
+  grid-template-columns: repeat(
+      auto-fill,
+      minmax(spacing.$spacing-13 + spacing.$spacing-11, 1fr)
+    );
+  gap: spacing.$spacing-05;
+}
+
+.next {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}

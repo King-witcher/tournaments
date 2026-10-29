@@ -1,16 +1,18 @@
 //! Testes de `matches`: a chave (`bracket`), envio e confirmação mapa a mapa
 //! (`results`), contestação e organizador (`organizer`), mapa anulado para
 //! ser jogado de novo (`replay`), correções e fim (`corrections`), as regras
-//! do banco para mapas, séries e histórico (`schema`) e o veto de mapas e
-//! campeões (`veto`). Helpers para montar um torneio iniciado com jogadores em
-//! ordem de seed.
+//! do banco para mapas, séries e histórico (`schema`), o veto de mapas e
+//! campeões (`veto`) e os formatos de tabela (`round_robin`, `swiss`).
+//! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod bracket;
 mod corrections;
 mod organizer;
 mod replay;
 mod results;
+mod round_robin;
 mod schema;
+mod swiss;
 mod veto;
 
 use axum::{Router, http::StatusCode};
@@ -40,6 +42,64 @@ pub fn single(best_of: u8, finals: u8) -> Value {
         "best_of": best_of,
         "finals_best_of": finals
     }] })
+}
+
+/// Uma fase de `format` (`round_robin` ou `swiss`) com `fields`.
+pub fn table(format: &str, fields: Value) -> Value {
+    json!({ "stages": [with(json!({ "format": format }), fields)] })
+}
+
+/// A série `key` vencida por `wins` x 0 pelo seed melhor entre os dois lados
+/// (o que vem antes em `p`, que está em ordem de seed): ele envia cada mapa e
+/// o outro confirma.
+pub async fn favorite_wins(app: &Router, p: &[User], key: &str, wins: u8) {
+    let b = bracket(app, &p[0]).await;
+    let (a, b) = sides(&b, find(&b, key));
+    let seed = |id: &Value| p.iter().position(|u| *id == u.id).unwrap();
+    let (winner, loser, side) = if seed(&a) < seed(&b) {
+        (&p[seed(&a)], &p[seed(&b)], "a")
+    } else {
+        (&p[seed(&b)], &p[seed(&a)], "b")
+    };
+    for n in 1..=wins {
+        let map = MAPS[usize::from(n - 1)];
+        let (status, body) = report(app, winner, key, n, game(side, map)).await;
+        assert_eq!(status, StatusCode::OK, "{key} {n}: {body}");
+        let (status, body) = confirm(app, loser, key, n).await;
+        assert_eq!(status, StatusCode::OK, "{key} {n}: {body}");
+    }
+}
+
+/// As chaves das partidas da chave `b` no estado `state`, em ordem.
+pub fn keys_in(b: &Value, state: &str) -> Vec<String> {
+    b["matches"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|m| m["state"] == state)
+        .map(|m| m["key"].as_str().unwrap().to_owned())
+        .collect()
+}
+
+/// A tabela da chave `b` com o jogador de cada time (no duelo, um):
+/// `[(user_id, pontos)]` em ordem de posição.
+pub fn table_points(b: &Value) -> Vec<(Value, i64)> {
+    b["table"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| (player(b, &r["team_id"]), r["points"].as_i64().unwrap()))
+        .collect()
+}
+
+/// A linha da tabela da chave `b` do jogador `who`.
+pub fn table_row<'a>(b: &'a Value, who: &User) -> &'a Value {
+    b["table"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| player(b, &r["team_id"]) == who.id)
+        .unwrap()
 }
 
 /// Cria e publica `body` em `quake-br`, inscreve `players` pelo botão nessa

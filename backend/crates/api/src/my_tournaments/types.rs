@@ -29,8 +29,10 @@ pub enum Situation {
     CheckedIn,
     /// O torneio começou sem ele na chave (não fez check-in).
     MissedCheckIn,
-    /// Na chave e ainda vivo.
+    /// Na chave e ainda vivo (no round robin e no suíço, até a fase terminar).
     Playing,
+    /// Terminou, com a colocação: eliminado, ou na tabela final do round robin
+    /// e do suíço.
     Eliminated,
     /// Desistiu (marcado pela organização).
     Withdrawn,

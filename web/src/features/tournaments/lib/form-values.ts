@@ -15,10 +15,16 @@ export type TournamentValues = {
   visibility: Schemas["Visibility"];
   /** `null` com o campo vazio (o `required` do campo não deixa enviar assim). */
   maxParticipants: number | null;
+  /** O formato da fase única: eliminação, round robin ou suíço. */
+  stageFormat: Schemas["StageFormat"]["format"];
+  /** Na eliminação: simples ou dupla. */
   bracket: Schemas["Bracket"];
   grandFinalReset: boolean;
   bestOf: number;
+  /** Na eliminação: o melhor de N da final (ou da grande final). */
   finalsBestOf: number;
+  /** No suíço: as rodadas; `null` é o automático (⌈log2 N⌉). */
+  swissRounds: number | null;
   bansPerGame: number;
   noRepeat: NoRepeatChoice;
   /** Início em ISO (UTC); `null` sem data, só no rascunho. */
@@ -80,10 +86,12 @@ export function defaultValues(locale: Locale): TournamentValues {
     rules: "",
     visibility: "public",
     maxParticipants: 16,
+    stageFormat: "elimination",
     bracket: "double",
     grandFinalReset: false,
     bestOf: 3,
     finalsBestOf: 5,
+    swissRounds: null,
     bansPerGame: 1,
     noRepeat: "off",
     startsAt: null,
@@ -112,10 +120,15 @@ export function valuesFrom(
     rules: tournament.rules,
     visibility: tournament.visibility,
     maxParticipants: tournament.max_participants,
-    bracket: stage.bracket,
-    grandFinalReset: stage.grand_final_reset ?? false,
+    stageFormat: stage.format,
+    // Fora da eliminação, os campos dela ficam no padrão, para quem trocar
+    // de formato no formulário.
+    bracket: stage.format === "elimination" ? stage.bracket : "double",
+    grandFinalReset:
+      stage.format === "elimination" && (stage.grand_final_reset ?? false),
     bestOf: stage.best_of,
-    finalsBestOf: stage.finals_best_of,
+    finalsBestOf: stage.format === "elimination" ? stage.finals_best_of : 5,
+    swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
     bansPerGame: rules.bans_per_game,
     noRepeat: rules.no_repeat?.scope ?? "off",
     startsAt: tournament.starts_at ?? null,
@@ -139,7 +152,9 @@ export function poolOf(values: TournamentValues, maps: Schemas["Map"][]) {
 
 /** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
 export const longestSeries = (values: TournamentValues) =>
-  Math.max(values.bestOf, values.finalsBestOf);
+  values.stageFormat === "elimination"
+    ? Math.max(values.bestOf, values.finalsBestOf)
+    : values.bestOf;
 
 /** A tradução de `locale` que o torneio já tem (ligada), ou uma vazia. */
 export function translationFrom(
@@ -287,15 +302,29 @@ function setupBody(values: TournamentValues) {
           ? null
           : { who: "player" as const, scope: values.noRepeat },
     },
-    stages: [
-      {
-        format: "elimination" as const,
+    stages: [stageBody(values)],
+  };
+}
+
+/** A fase única no formato da API. */
+function stageBody(values: TournamentValues): Schemas["StageFormat"] {
+  switch (values.stageFormat) {
+    case "round_robin":
+      return { format: "round_robin", best_of: values.bestOf };
+    case "swiss":
+      return {
+        format: "swiss",
+        best_of: values.bestOf,
+        rounds: values.swissRounds,
+      };
+    case "elimination":
+      return {
+        format: "elimination",
         bracket: values.bracket,
         grand_final_reset:
           values.bracket === "double" && values.grandFinalReset,
         best_of: values.bestOf,
         finals_best_of: values.finalsBestOf,
-      },
-    ],
-  };
+      };
+  }
 }

@@ -29,12 +29,17 @@
     "noCheckIn": "Não há check-in: quando a organização inicia o torneio, todos os inscritos entram na chave.",
     "bracket": {
       "single": "A chave é de eliminação simples.",
-      "double": "A chave é de eliminação dupla."
+      "double": "A chave é de eliminação dupla.",
+      "round_robin": "O formato é round robin: todos jogam contra todos, uma vez.",
+      "swiss": "O formato é suíço, com o número de rodadas pelos inscritos: 3 com até 8, 4 com até 16, 5 com até 32.",
+      "swissRounds": "O formato é suíço, em {rounds, plural, one {# rodada} other {# rodadas}} (no máximo uma a menos que os inscritos)."
     },
     "bracketRule": {
       "single": "Quem perde uma partida está fora do torneio.",
       "double": "Quem perde uma partida cai para a repescagem, e quem perde de novo está fora. Os vencedores da chave principal e da repescagem fazem a grande final: quem vencer é o campeão.",
-      "doubleReset": "Quem perde uma partida cai para a repescagem, e quem perde de novo está fora. Os vencedores da chave principal e da repescagem fazem a grande final. Se quem vem da repescagem vencer, os dois jogam a grande final de novo, porque agora cada um perdeu uma vez."
+      "doubleReset": "Quem perde uma partida cai para a repescagem, e quem perde de novo está fora. Os vencedores da chave principal e da repescagem fazem a grande final. Se quem vem da repescagem vencer, os dois jogam a grande final de novo, porque agora cada um perdeu uma vez.",
+      "round_robin": "As partidas ficam abertas desde o início: as rodadas só organizam, e você joga cada uma quando combinar com o adversário. Com número ímpar de inscritos, cada um folga uma rodada.",
+      "swiss": "Na primeira rodada, a ordem da chave forma os pares; nas seguintes, quem tem a mesma pontuação se enfrenta, sem repetir adversário. A rodada seguinte começa quando todas as partidas da anterior terminam. Com número ímpar, o pior colocado que ainda não folgou recebe o bye, que vale vitória."
     },
     "series": "{bestOf, plural, =1 {As partidas têm um mapa só.} other {As partidas são melhor de # mapas: vence quem ganhar {wins}.}}",
     "finals": {
@@ -55,7 +60,17 @@
     "report": "Depois de cada mapa, um dos dois envia o resultado na página da partida: quem venceu e o mapa jogado.",
     "nextMap": "Não precisa esperar a confirmação para jogar o próximo mapa.",
     "confirm": "O outro jogador tem {window} para confirmar ou contestar. Sem resposta, o resultado vale; se ele contestar, a organização decide.",
-    "walkover": "Se o adversário não aparecer, ou se você precisar sair do torneio, avise a organização: quem não joga perde por W.O."
+    "walkover": "Se o adversário não aparecer, ou se você precisar sair do torneio, avise a organização: quem não joga perde por W.O.",
+    "tableRule": {
+      "round_robin": "Cada partida vencida vale 1 ponto, e a classificação sai da tabela: mais pontos na frente; no empate, o confronto direto, depois o saldo de mapas, o saldo de frags e por último a ordem da chave.",
+      "swiss": "Cada partida vencida vale 1 ponto, e a classificação sai da tabela: mais pontos na frente; no empate, o Buchholz (a soma dos pontos dos seus adversários), depois o confronto direto, o saldo de mapas, o saldo de frags e por último a ordem da chave."
+    },
+    "fragsTable": "Os frags de cada mapa são opcionais, mas entram no desempate da tabela: envie-os também.",
+    "walkoverTable": "O W.O. vale vitória por {wins} a 0 nos mapas.",
+    "withdrawal": {
+      "round_robin": "Quem sai do torneio perde por W.O. as partidas que faltavam, e os pontos que já fez continuam na tabela.",
+      "swiss": "Quem sai do torneio não é mais pareado, e os pontos que já fez continuam na tabela."
+    }
   },
   "extraRules": "Regras adicionais",
   "rulesEditor": {
@@ -80,16 +95,21 @@
       "champions": "Campeões",
       "checkIn": "Check-in",
       "contest": "Prazo para contestar",
-      "veto": "Veto"
+      "veto": "Veto",
+      "format": "Formato",
+      "rounds": "Rodadas"
     },
     "bracket": {
       "single": "Eliminação simples",
       "double": "Eliminação dupla",
-      "doubleReset": "Eliminação dupla, com reset na grande final"
+      "doubleReset": "Eliminação dupla, com reset na grande final",
+      "round_robin": "Round robin (todos contra todos)",
+      "swiss": "Suíço"
     },
     "series": {
       "single": "Melhor de {bestOf}; final melhor de {finals}",
-      "double": "Melhor de {bestOf}; grande final melhor de {finals}"
+      "double": "Melhor de {bestOf}; grande final melhor de {finals}",
+      "table": "Melhor de {bestOf}"
     },
     "bans": "{count, plural, =0 {sem bans} one {# ban por mapa} other {# bans por mapa}}",
     "noRepeat": {
@@ -107,9 +127,18 @@
       "checkInText": "No check-in, você confirma na página do torneio que vai jogar. Só quem faz check-in entra na chave.",
       "noCheckInText": "No check-in, os inscritos confirmam perto do início que vão jogar. Este torneio não tem check-in: todos os inscritos entram na chave.",
       "contest": "O que é o prazo para contestar?",
-      "contestText": "Depois de cada mapa, um jogador envia o resultado e o outro tem esse prazo para confirmar ou contestar. Sem resposta, o resultado vale; se ele contestar, a organização decide."
+      "contestText": "Depois de cada mapa, um jogador envia o resultado e o outro tem esse prazo para confirmar ou contestar. Sem resposta, o resultado vale; se ele contestar, a organização decide.",
+      "format": "Como funciona o formato?"
     },
-    "seeRules": "Ver as regras"
+    "seeRules": "Ver as regras",
+    "rounds": {
+      "auto": "rodadas pelos inscritos",
+      "fixed": "{count, plural, one {# rodada} other {# rodadas}}"
+    },
+    "roundsValue": {
+      "auto": "Automáticas: 3 com até 8 inscritos, 4 com até 16, 5 com até 32",
+      "fixed": "{count} (no máximo uma a menos que os inscritos)"
+    }
   },
   "invites": {
     "title": "Links de inscrição",

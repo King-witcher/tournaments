@@ -8,6 +8,9 @@ const PART_ORDER: Record<Schemas["BracketPart"], number> = {
   winners: 0,
   losers: 1,
   grand_final: 2,
+  // Sem eliminação: a tabela classifica.
+  round_robin: 0,
+  swiss: 0,
 };
 
 const later = (a: Match, b: Match) =>
