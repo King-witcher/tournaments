@@ -23,8 +23,9 @@ async fn anonymize(db: &PgPool, who: &User) -> Result<(), sqlx::Error> {
     tx.commit().await
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn an_anonymized_account_keeps_only_the_row(db: PgPool) {
+#[tokio::test]
+async fn an_anonymized_account_keeps_only_the_row() {
+    let (db, _lease) = crate::db::test_db().await;
     let (_app, _ana, bia) = quake_br(&db).await;
     let bia_sql = |sql: &str| sql.replace("{bia}", &bia.id.to_string());
 
@@ -153,8 +154,9 @@ async fn an_anonymized_account_keeps_only_the_row(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_owner_does_not_schedule_and_the_scheduled_does_not_own(db: PgPool) {
+#[tokio::test]
+async fn the_owner_does_not_schedule_and_the_scheduled_does_not_own() {
+    let (db, _lease) = crate::db::test_db().await;
     let (_app, ana, bia) = quake_br(&db).await;
     let due = |who: &User| {
         format!(
@@ -184,8 +186,9 @@ async fn the_owner_does_not_schedule_and_the_scheduled_does_not_own(db: PgPool) 
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_the_owner_schedules_the_community_deletion(db: PgPool) {
+#[tokio::test]
+async fn only_the_owner_schedules_the_community_deletion() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, copa(single(3, 3))).await;
     let schedule = |by: i64| {

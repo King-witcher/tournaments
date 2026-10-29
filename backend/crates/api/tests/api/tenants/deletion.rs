@@ -9,7 +9,6 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde_json::{Value, json};
-use sqlx::PgPool;
 
 use crate::common::*;
 use crate::matches::{COPA, copa, single, start};
@@ -25,8 +24,9 @@ fn scheduled() -> (StatusCode, Value) {
     (StatusCode::CONFLICT, err("tenant.deletion_scheduled"))
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn only_the_owner_schedules_and_cancels(db: PgPool) {
+#[tokio::test]
+async fn only_the_owner_schedules_and_cancels() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
 
@@ -84,8 +84,9 @@ async fn only_the_owner_schedules_and_cancels(db: PgPool) {
     assert_eq!(status, StatusCode::OK);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_community_is_read_only_until_the_deletion(db: PgPool) {
+#[tokio::test]
+async fn the_community_is_read_only_until_the_deletion() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
     let token = invite(&app, &ana, "quake-br").await;
@@ -138,8 +139,9 @@ async fn the_community_is_read_only_until_the_deletion(db: PgPool) {
     assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_scheduler_waits_while_it_is_read_only(db: PgPool) {
+#[tokio::test]
+async fn the_scheduler_waits_while_it_is_read_only() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
@@ -170,8 +172,9 @@ async fn the_scheduler_waits_while_it_is_read_only(db: PgPool) {
     assert_eq!((tick.opened, tick.reminded), (1, 1));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn not_with_a_tournament_in_progress(db: PgPool) {
+#[tokio::test]
+async fn not_with_a_tournament_in_progress() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     start(&app, &ana, copa(single(3, 3)), &[&ana, &bia]).await;
     assert_eq!(
@@ -189,8 +192,9 @@ async fn not_with_a_tournament_in_progress(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn on_the_date_everything_inside_goes(db: PgPool) {
+#[tokio::test]
+async fn on_the_date_everything_inside_goes() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;

@@ -34,8 +34,9 @@ async fn due(db: &PgPool, user_id: i64) -> Option<chrono::DateTime<Utc>> {
         .unwrap()
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn scheduling_ends_every_session_and_emails_the_date(db: PgPool) {
+#[tokio::test]
+async fn scheduling_ends_every_session_and_emails_the_date() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), None, false);
     let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
     let token = create_session(&redis(&db), rapha.id, None).await.unwrap();
@@ -88,8 +89,9 @@ async fn scheduling_ends_every_session_and_emails_the_date(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_owner_transfers_or_deletes_the_community_first(db: PgPool) {
+#[tokio::test]
+async fn the_owner_transfers_or_deletes_the_community_first() {
+    let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     // Sem senha (só o Discord), não pede a atual.
     let (status, body, _) = schedule(&app, &ana, json!({})).await;
@@ -115,8 +117,9 @@ async fn the_owner_transfers_or_deletes_the_community_first(db: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn signing_in_again_cancels_the_deletion(db: PgPool) {
+#[tokio::test]
+async fn signing_in_again_cancels_the_deletion() {
+    let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
     let (status, body, _) = schedule(&app, &rapha, json!({ "current_password": PASSWORD })).await;
@@ -171,8 +174,9 @@ async fn subscribe_push(db: &PgPool, user_id: i64) {
     .unwrap();
 }
 
-#[sqlx::test(migrations = "../../migrations")]
-async fn the_due_deletion_anonymizes_and_keeps_the_history(db: PgPool) {
+#[tokio::test]
+async fn the_due_deletion_anonymizes_and_keeps_the_history() {
+    let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
     let ana = user(&db, "Ana").await;
