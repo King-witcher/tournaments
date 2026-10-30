@@ -141,7 +141,7 @@ Entrou em 2026-10-28 para a recuperação de senha. Respostas do usuário: qualq
 - **Visibilidade**: público (padrão) ou privado. O público aparece para todos os membros; o privado, só para os inscritos, organizers e owner, e para os outros membros some da lista e responde 404 `tournament.not_found`, como se não existisse. Muda até o torneio encerrar.
 - Organizer e owner criam e editam. **Criar já publica** (abre a inscrição; pedido do usuário em 28/10, para tirar um passo) ou, em "Criar como rascunho", gera um rascunho para publicar depois; só rascunho pode ser excluído. A criação recebe as traduções e o `publish` num POST só, numa transação: com erro, nada fica gravado (antes, criar e publicar em duas chamadas deixava o rascunho criado quando a publicação era recusada, e tentar de novo dava `tournament.slug_taken`). Erro de texto numa tradução volta com `params.locale`, o idioma dela.
 - **Vagas obrigatórias** (2 a 1024). A checagem de campeões na criação usa o pior caso para esse número (o pior caso não diminui com mais participantes; há teste disso no `engine`) e roda de novo ao gerar a chave com os inscritos reais. As vagas também fecham a inscrição quando lotam.
-- **Pool de campeões**: tabela global `champions` com os 17 atuais, e o pool do torneio é o conjunto ativo. Excluir campeões por torneio fica para depois.
+- **Pool de campeões**: tabela global `champions` com os 16 atuais (o Wrath, que não existe no jogo, saiu pela migration 20261127), e o pool do torneio é o conjunto ativo. Excluir campeões por torneio fica para depois.
 - Bans de campeão por mapa: de 0 a 3, padrão 1.
 - Não repetição na checagem: escopo partida (`match`, a série: entre os mapas de uma partida md3/md5) usa o maior melhor de N; fase, o pior caso da fase mais longa; torneio, a soma dos piores casos das fases. Sem a regra, basta sobrar um campeão depois dos bans.
 - Formato padrão no formulário de duelo: eliminação dupla **sem** reset (pedido do usuário em 28/10), md3 nas partidas e md5 na grande final.
@@ -320,7 +320,7 @@ Decidido pelo usuário em 28/10 (modo do mapa, sequências, "Pronto", cronômetr
 - **Banco**: `match_veto_events` com a forma de cada tipo em check, os mesmos lados em toda a partida, pronto só antes do começo e o resto depois, um começo e um pronto por lado e um início por jogo (índices únicos parciais), só acrescentado (não muda), FKs compostas pelo torneio (times, fase, mapa do pool do torneio); `tournament_maps` com mapas para a série mais longa fora do desligado (no commit) e, como a configuração do veto, congelado depois do início. Testes em `tests/api/schema/veto.rs`.
 - Pools de mapas e campeões são tabelas, não constantes. Campeão novo no jogo = linha nova.
 - Regra de não repetição **opcional**, configurável em dois eixos: quem (jogador | time) × escopo (partida | fase | torneio). Em times, o capitão faz o veto e cada jogador escolhe o próprio campeão (ver "TDM").
-- Validação na criação: pior caso de jogos por participante comparado com o pool menos os bans. Se faltar campeão, bloqueia com mensagem com números ("no pior caso são necessários 24 campeões; o pool tem 17").
+- Validação na criação: pior caso de jogos por participante comparado com o pool menos os bans. Se faltar campeão, bloqueia com mensagem com números ("no pior caso são necessários 24 campeões; o pool tem 16").
 
 ## Resultados
 

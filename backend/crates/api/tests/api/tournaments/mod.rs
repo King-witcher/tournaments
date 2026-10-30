@@ -117,10 +117,10 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 33, "available": 17 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 33, "available": 16 } })
     );
 
-    // Com 4 vagas, simples md3/md5: 3 + 5 + 2 bans = 10 cabe nos 17.
+    // Com 4 vagas, simples md3/md5: 3 + 5 + 2 bans = 10 cabe nos 16.
     let small = with(duel("copinha"), no_repeat("tournament"));
     let small = with(
         small,
@@ -144,7 +144,7 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 19, "available": 17 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 19, "available": 16 } })
     );
 
     // Campeão que sai do jogo diminui o pool; publicar checa de novo.
@@ -157,7 +157,7 @@ async fn champion_pool_check_blocks_with_numbers() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(
         body,
-        json!({ "error": "champions.pool_exhausted", "params": { "required": 10, "available": 8 } })
+        json!({ "error": "champions.pool_exhausted", "params": { "required": 10, "available": 7 } })
     );
 }
 
