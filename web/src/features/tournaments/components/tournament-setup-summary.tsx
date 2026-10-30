@@ -13,7 +13,7 @@ import { useModeLabel } from "../hooks/use-mode-label";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { valuesFrom } from "../lib/form-values";
-import { formatKind, repeatScope, teamsIn } from "../lib/format";
+import { formatKind, GAME_MINUTES, repeatScope, teamsIn } from "../lib/format";
 
 type Props = {
   tournament: components["schemas"]["Tournament"];
@@ -144,7 +144,9 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
       key: "contest",
       label: tip(
         "contest",
-        t(tdm ? "tips.contestTextTdm" : "tips.contestText"),
+        t(tdm ? "tips.contestTextTdm" : "tips.contestText", {
+          duration: formatMinutes(GAME_MINUTES),
+        }),
       ),
       value: formatMinutes(tournament.contest_minutes),
     },

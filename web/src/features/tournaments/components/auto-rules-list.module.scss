@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/spacing";
+
+// Itens de mais de uma frase: sem espaço entre eles, o fim de um e o começo
+// do outro se confundem.
+.list > li + li {
+  margin-block-start: spacing.$spacing-03;
+}

@@ -65,6 +65,13 @@ export function repeatScope(rules: Schemas["ChampionRules"]) {
   return rules.no_repeat?.scope ?? "off";
 }
 
+/**
+ * A duração prevista de uma partida, em minutos (a mesma da API): o prazo
+ * para confirmar ou contestar só começa a contar quando a partida completa
+ * isso, para um envio adiantado não passar sem resposta.
+ */
+export const GAME_MINUTES = 15;
+
 /** Mapas que vencem uma série melhor de N (N ímpar): 2 na md3, 3 na md5. */
 export function mapsToWin(bestOf: number) {
   return Math.floor(bestOf / 2) + 1;

@@ -6,6 +6,15 @@
     "hours": "{hours} h",
     "hoursMinutes": "{hours} h {minutes} min"
   },
+  "dayTime": {
+    "hour": "{hour}h",
+    "hourMinute": "{hour}h{minute}",
+    "at": "{hour, plural, =0 {à} =1 {à} other {às}} {time}",
+    "yesterday": "ontem {hour, plural, =0 {à} =1 {à} other {às}} {time}",
+    "today": "hoje {hour, plural, =0 {à} =1 {à} other {às}} {time}",
+    "tomorrow": "amanhã {hour, plural, =0 {à} =1 {à} other {às}} {time}",
+    "date": "no dia {date} {hour, plural, =0 {à} =1 {à} other {às}} {time}"
+  },
   "close": "Fechar",
   "cancel": "Cancelar",
   "save": "Salvar",

@@ -10,7 +10,7 @@ type Tournament = components["schemas"]["Tournament"];
  * As frases das regras que a aba Regras ("Como funciona") e os (i) do resumo
  * do formato dividem, para os dois dizerem o mesmo: a regra da chave, os
  * campeões e, no TDM, os times. No TDM, as frases dizem time e capitão onde o
- * duelo diz jogador.
+ * duelo diz jogador, e nunca falam de time no duelo.
  */
 export function useRuleSentences() {
   const t = useTranslations("Tournament.autoRules");
@@ -55,23 +55,14 @@ export function useRuleSentences() {
     },
 
     /**
-     * TDM: a formação dos times, os reservas, o que o início exige e o que
-     * o capitão faz (só com alguma fase de veto). Vazio no duelo.
+     * TDM: o tamanho dos times, quem forma, os reservas e as trocas durante
+     * o torneio. Vazio no duelo.
      */
     teams: (tournament: Tournament): string[] => {
       if (tournament.mode !== "tdm") return [];
-      const veto = tournament.veto;
       return [
-        t("tdm.formation", { size: tournament.team_size }),
-        t("tdm.reserves"),
-        t(
-          tournament.check_in_minutes == null
-            ? "tdm.startNoCheckIn"
-            : "tdm.start",
-        ),
-        ...(veto.map_mode !== "off" || veto.champion_phase
-          ? [t("tdm.captain")]
-          : []),
+        t("teams.formation", { size: tournament.team_size }),
+        t("teams.changes"),
       ];
     },
   };
