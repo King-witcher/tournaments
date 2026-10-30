@@ -18,7 +18,6 @@ import { getFormation } from "../server";
 import { FormationEditor } from "./formation-editor";
 import { FormationSummary } from "./formation-summary";
 import { TeamsSection } from "./teams-section";
-import styles from "./teams-view.module.scss";
 
 type Props = { tenant: string; slug: string };
 
@@ -53,13 +52,7 @@ export async function TeamsView({ tenant, slug }: Props) {
         { href: path, label: localizedName(tournament, locale) },
       ]}
       title={t("pageTitle")}
-    >
-      {tournament.mode === "tdm" && (
-        <p className={styles.hint}>
-          {t("what", { size: tournament.team_size })}
-        </p>
-      )}
-    </PageHeader>
+    />
   );
 
   const formation =

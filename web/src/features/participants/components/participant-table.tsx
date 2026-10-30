@@ -161,7 +161,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
               />
             ) : undefined
           }
-          empty={{ text: canManage ? t("emptyOrganizer") : t("empty") }}
+          empty={{ text: t("empty") }}
         />
       </Section>
     </div>

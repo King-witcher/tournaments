@@ -9,13 +9,22 @@
 //!   embaralhamento do seeding, ChaCha8, com um propósito próprio na chave:
 //!   a mesma `seed` não dá a ordem do seeding) e cortados em times na ordem;
 //!   o capitão é o primeiro de cada time, ou seja, sorteado.
-//! - **Balanceado**: zigue-zague pelo rating (1º, 2º, ..., k-ésimo time, e
-//!   de volta do k-ésimo ao 1º), do maior rating para o menor; os empates
-//!   (comuns: quem não tem rating entra com o inicial) saem na ordem
-//!   embaralhada pela `seed` (o mesmo embaralhamento do aleatório). O
-//!   capitão é o de maior rating do time (o primeiro que ele recebeu). A
-//!   diferença entre as somas de dois times nunca passa da diferença entre o
-//!   maior e o menor rating.
+//! - **Balanceado**: minimiza a variância das médias de rating dos times
+//!   (com os times do mesmo tamanho, a soma dos quadrados das somas; o desvio
+//!   padrão dos jogadores não serve de critério, porque não muda com a
+//!   divisão). Parte do zigue-zague pelo rating (1º, 2º, ..., k-ésimo time, e
+//!   de volta do k-ésimo ao 1º), do maior rating para o menor, e troca pares
+//!   de jogadores entre times, sempre a troca que mais reduz a variância,
+//!   até nenhuma reduzir. Recomeça `RESTARTS` vezes de uma divisão
+//!   embaralhada pela `seed` e fica com a melhor; no empate de variância,
+//!   a de menor diferença entre o maior e o menor time, e a que veio
+//!   primeiro (o zigue-zague antes). Os empates de rating (comuns: quem não
+//!   tem rating entra com o inicial) saem na ordem embaralhada pela `seed`
+//!   (o mesmo embaralhamento do aleatório). O capitão é o de maior rating do
+//!   time, e os times saem na ordem dos capitães. Nunca é pior que o
+//!   zigue-zague, e a diferença entre as somas de dois times nunca passa da
+//!   diferença entre o maior e o menor rating (se passasse, trocar o maior
+//!   do time mais forte pelo menor do mais fraco reduziria a variância).
 //! - Mesma entrada e mesma `seed`, mesmos times, em qualquer versão: os
 //!   testes fixam o resultado.
 //! - Erros: `InvalidTeamSize` (tamanho 0) e `DuplicatePlayer` (o mesmo
@@ -102,6 +111,72 @@ pub fn random(
     })
 }
 
+/// Quantas divisões embaralhadas o sorteio balanceado tenta além do
+/// zigue-zague.
+const RESTARTS: u64 = 8;
+
+/// Os times como posições na lista dos jogadores ordenada do maior rating
+/// para o menor; o primeiro de cada time é o capitão.
+type Split = Vec<Vec<usize>>;
+
+/// A qualidade de uma divisão, quanto menor melhor: a soma dos quadrados das
+/// somas de rating dos times (a variância das médias, a menos de uma
+/// constante, com os times do mesmo tamanho) e, no empate, a diferença entre
+/// o maior e o menor time.
+fn cost(split: &Split, rating: &[i64]) -> (i64, i64) {
+    let sums: Vec<i64> = split
+        .iter()
+        .map(|t| t.iter().map(|&i| rating[i]).sum())
+        .collect();
+    let spread = sums.iter().max().unwrap_or(&0) - sums.iter().min().unwrap_or(&0);
+    (sums.iter().map(|s| s * s).sum(), spread)
+}
+
+/// O zigue-zague: o 1º, 2º, ..., k-ésimo time e de volta do k-ésimo ao 1º.
+fn zigzag(players: usize, count: usize) -> Split {
+    let mut teams = vec![Vec::new(); count];
+    for i in 0..players {
+        let (round, pos) = (i / count, i % count);
+        let team = if round.is_multiple_of(2) {
+            pos
+        } else {
+            count - 1 - pos
+        };
+        teams[team].push(i);
+    }
+    teams
+}
+
+/// Troca o par de jogadores de dois times que mais reduz a variância, até
+/// nenhuma troca reduzir. Trocar `d` de rating do time A (soma `sa`) para o B
+/// (soma `sb`) muda a soma dos quadrados em `2d(d - (sa - sb))`: só vale
+/// quando é negativa, então termina (inteiros que só diminuem).
+fn improve(split: &mut Split, rating: &[i64]) {
+    loop {
+        let sums: Vec<i64> = split
+            .iter()
+            .map(|t| t.iter().map(|&i| rating[i]).sum())
+            .collect();
+        let mut best: Option<(i64, usize, usize, usize, usize)> = None;
+        for a in 0..split.len() {
+            for b in a + 1..split.len() {
+                for (x, &i) in split[a].iter().enumerate() {
+                    for (y, &j) in split[b].iter().enumerate() {
+                        let d = rating[i] - rating[j];
+                        let change = 2 * d * (d - (sums[a] - sums[b]));
+                        if change < 0 && best.is_none_or(|(c, ..)| change < c) {
+                            best = Some((change, a, b, x, y));
+                        }
+                    }
+                }
+            }
+        }
+        let Some((_, a, b, x, y)) = best else { return };
+        let (low, high) = split.split_at_mut(b);
+        std::mem::swap(&mut low[a][x], &mut high[0][y]);
+    }
+}
+
 /// Sorteio balanceado: `players` na ordem de inscrição, cada um com o rating
 /// (quem não tem, com o inicial).
 pub fn balanced(
@@ -117,22 +192,34 @@ pub fn balanced(
     // Estável: os empates ficam na ordem sorteada.
     order.sort_by_key(|p| std::cmp::Reverse(rating[p]));
     let count = order.len() / team_size;
-    let mut teams: Vec<FormedTeam> = (0..count)
-        .map(|_| FormedTeam {
-            players: Vec::with_capacity(team_size),
-        })
-        .collect();
-    for (i, p) in order.into_iter().enumerate() {
-        let (round, pos) = (i / count, i % count);
-        let team = if round.is_multiple_of(2) {
-            pos
-        } else {
-            count - 1 - pos
-        };
-        teams[team].players.push(p);
+    let by_rank: Vec<i64> = order.iter().map(|p| i64::from(rating[p])).collect();
+
+    let mut best = zigzag(order.len(), count);
+    improve(&mut best, &by_rank);
+    let ranks: Vec<usize> = (0..order.len()).collect();
+    for restart in 1..=RESTARTS {
+        let mut split: Split = shuffle(&ranks, seed.wrapping_add(restart), Purpose::Teams)
+            .chunks(team_size)
+            .map(<[usize]>::to_vec)
+            .collect();
+        improve(&mut split, &by_rank);
+        if cost(&split, &by_rank) < cost(&best, &by_rank) {
+            best = split;
+        }
     }
+
+    // O capitão é o de maior rating (a menor posição); os times, na ordem dos capitães.
+    for team in &mut best {
+        team.sort_unstable();
+    }
+    best.sort_unstable();
     Ok(Formation {
-        teams,
+        teams: best
+            .into_iter()
+            .map(|team| FormedTeam {
+                players: team.into_iter().map(|i| order[i]).collect(),
+            })
+            .collect(),
         reserves: reserves.into_iter().map(|(p, _)| p).collect(),
     })
 }
@@ -245,6 +332,62 @@ mod tests {
         );
     }
 
+    /// A soma de rating de cada time, na ordem dos times.
+    fn sums(f: &Formation, rated: &[(PlayerId, i32)]) -> Vec<i64> {
+        let of = |p: &PlayerId| i64::from(rated.iter().find(|(q, _)| q == p).unwrap().1);
+        f.teams
+            .iter()
+            .map(|t| t.players.iter().map(of).sum())
+            .collect()
+    }
+
+    fn squares(sums: &[i64]) -> i64 {
+        sums.iter().map(|s| s * s).sum()
+    }
+
+    #[test]
+    fn balanced_beats_the_snake_when_it_can() {
+        // O zigue-zague dá somas de 4700, 4600, 4100 e 4000. A média é 4350 e
+        // as somas são múltiplas de 100, então o melhor são duas de 4300 e
+        // duas de 4400, e as trocas chegam lá. Sorteios gravados dependem
+        // deste resultado.
+        let players = rated(&[
+            2400, 2300, 1800, 1700, 1600, 1500, 1400, 1300, 1000, 900, 800, 700,
+        ]);
+        let f = balanced(&players, 3, 7).unwrap();
+        assert_eq!(raw(&f), [[1, 9, 10], [2, 7, 12], [3, 4, 11], [5, 6, 8]]);
+        assert_eq!(sums(&f, &players), [4300, 4400, 4300, 4400]);
+        let snake = zigzag(12, 4);
+        let by_rank: Vec<i64> = players.iter().map(|(_, r)| i64::from(*r)).collect();
+        assert!(cost(&snake, &by_rank).0 > squares(&sums(&f, &players)));
+        assert_eq!(f.teams[0].captain(), PlayerId(1));
+    }
+
+    #[test]
+    fn the_reserves_do_not_count_in_the_balance() {
+        // 11 inscritos, times de 3: os dois últimos, com ratings extremos,
+        // ficam de reserva, e os 9 que jogam se equilibram entre si.
+        let mut ratings = vec![2000, 1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200];
+        ratings.extend([3000, 100]);
+        let players = rated(&ratings);
+        let f = balanced(&players, 3, 11).unwrap();
+        assert_eq!(f.reserves, [PlayerId(10), PlayerId(11)]);
+        assert_eq!(f.teams.len(), 3);
+        // A soma de todos é 14400: 4800 para cada, e as trocas chegam lá.
+        assert_eq!(sums(&f, &players), [4800, 4800, 4800]);
+    }
+
+    #[test]
+    fn the_same_seed_gives_the_same_teams() {
+        let players = rated(&[1500, 1500, 1800, 1200, 1500, 1700, 1500, 1300, 1500, 1600]);
+        for seed in [0, 5, 2026] {
+            assert_eq!(
+                balanced(&players, 3, seed).unwrap(),
+                balanced(&players, 3, seed).unwrap()
+            );
+        }
+    }
+
     #[test]
     fn teams_and_seeding_draw_differently_with_the_same_seed() {
         // O mesmo conjunto e a mesma seed: o seeding e os times não saem na
@@ -339,6 +482,28 @@ mod tests {
                 all.sort();
                 prop_assert_eq!(&all, &players);
             }
+        }
+
+        #[test]
+        fn balanced_is_never_worse_than_the_snake(
+            ratings in proptest::collection::vec(1000i32..2500, 2..40),
+            size in 1usize..=4,
+            seed in any::<u64>(),
+        ) {
+            let rated = rated(&ratings);
+            let f = balanced(&rated, size, seed).unwrap();
+            let playing = ratings.len() / size * size;
+            prop_assume!(playing > 0);
+            let mut by_rank: Vec<i64> =
+                ratings[..playing].iter().map(|r| i64::from(*r)).collect();
+            by_rank.sort_by(|a, b| b.cmp(a));
+            let snake = cost(&zigzag(playing, playing / size), &by_rank);
+            let sums = sums(&f, &rated);
+            let got = (
+                squares(&sums),
+                sums.iter().max().unwrap() - sums.iter().min().unwrap(),
+            );
+            prop_assert!(got <= snake, "{got:?} {snake:?}");
         }
 
         #[test]

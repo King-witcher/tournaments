@@ -1,0 +1,30 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Um bloco à parte e discreto: a borda fina o separa de "Sua situação" sem
+// competir com ela.
+.suggestion {
+  @include type.type-style("body-compact-01");
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-04 spacing.$spacing-05;
+  border: 1px solid theme.$border-subtle-01;
+  color: theme.$text-secondary;
+}
+
+// "Ativar" e "Agora não" lado a lado; no celular o segundo desce se não couber.
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}
+
+.hint {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

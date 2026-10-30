@@ -15,20 +15,19 @@ type Props = {
 
 /**
  * Na aba Organização do TDM, antes da ordem da chave: quantos times estão
- * completos e incompletos e quantos reservas, com "Formar times" (a página
+ * completos e incompletos e quantos reservas (a regra de iniciar já está no
+ * quadro do estado, ao lado do botão), com "Formar times" (a página
  * dos times). Depois de iniciar, onde os times estão e onde se substitui um
  * jogador. Fica em `<Suspense>`.
  */
 export async function TeamsSummary({ tenant, tournament }: Props) {
   const t = await getTranslations("Team");
   const path = `/${tenant}/${tournament.slug}`;
-  const what = t("manage.what", { size: tournament.team_size });
 
   if (hasStarted(tournament.status)) {
     return (
       <Section
         title={t("manage.title")}
-        description={what}
         action={
           <ButtonLink href={`${path}/participants`} kind="tertiary" size="sm">
             {t("manage.view")}
@@ -47,7 +46,6 @@ export async function TeamsSummary({ tenant, tournament }: Props) {
   return (
     <Section
       title={t("manage.title")}
-      description={what}
       action={
         <ButtonLink href={`${path}/teams`} kind="tertiary" size="sm">
           {t("form")}
@@ -56,10 +54,7 @@ export async function TeamsSummary({ tenant, tournament }: Props) {
     >
       <p className={styles.text}>
         {formation
-          ? `${t("summary.counts", formationCounts(formation, checkIn))} ${t(
-              checkIn ? "summary.ruleCheckIn" : "summary.rule",
-              { size: formation.team_size },
-            )}`
+          ? t("summary.counts", formationCounts(formation, checkIn))
           : t("manage.unavailable")}
       </p>
     </Section>

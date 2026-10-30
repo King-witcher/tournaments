@@ -193,11 +193,11 @@
   },
   "invites": {
     "title": "Links de inscrição",
-    "description": "Quem entra pelo link vira jogador da comunidade e já fica inscrito. O link serve para várias pessoas e vale enquanto a inscrição estiver aberta.",
-    "full": "As vagas acabaram. Os links não inscrevem mais ninguém até abrir vaga (alguém sair ou as vagas aumentarem).",
+    "description": "O link vale enquanto a inscrição estiver aberta.",
+    "full": "As vagas acabaram. Os links só inscrevem de novo quando abrir vaga.",
     "create": "Gerar link de inscrição",
     "createdTitle": "Link de inscrição gerado",
-    "empty": "Nenhum link de inscrição. Gere um e mande para quem você quer inscrever, inclusive quem ainda não é da comunidade.",
+    "empty": "Nenhum link de inscrição.",
     "columns": {
       "link": "Link",
       "createdBy": "Criado por",

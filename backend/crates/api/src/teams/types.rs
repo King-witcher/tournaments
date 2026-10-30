@@ -87,8 +87,9 @@ pub struct FormationPlayer {
 pub enum DrawMethod {
     /// Aleatório: os jogadores embaralhados pela seed; o capitão, sorteado.
     Random,
-    /// Balanceado: zigue-zague pelo rating da comunidade (o inicial para
-    /// quem não tem; empates pela seed); o capitão é o de maior rating.
+    /// Balanceado: times de rating médio o mais parecido possível, pelo rating
+    /// da comunidade (o inicial para quem não tem; empates pela seed); o
+    /// capitão é o de maior rating.
     Balanced,
 }
 

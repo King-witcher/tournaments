@@ -33,6 +33,9 @@ export function teamState(
   return "complete";
 }
 
+/** Quantos times completos o torneio precisa para começar. */
+export const MIN_TEAMS = 2;
+
 /** Quantos times estão completos, quantos não e quantos jogadores estão de reserva. */
 export function formationCounts(formation: Formation, checkIn: boolean) {
   const complete = formation.teams.filter(

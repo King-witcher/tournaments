@@ -2,16 +2,14 @@
   "teamOf": "Time de {captain}",
   "loading": "Carregando os times…",
   "pageTitle": "Times",
-  "what": "A inscrição é individual. Antes de iniciar, a organização forma os times de {size} jogadores e escolhe o capitão de cada um, que age pelo time no veto. Quem fica sem time é reserva e pode entrar no lugar de alguém durante o torneio.",
-  "howToEdit": "Sorteie e ajuste à mão. Arraste um jogador para outro time, para a reserva ou para “Novo time”, ou use o menu ⋯ dele.",
+  "howToEdit": "Arraste e solte jogadores para formar times.",
   "form": "Formar times",
   "backToManage": "Voltar à organização",
   "seeding": "Ordem da chave",
   "summary": {
     "counts": "{complete, plural, =0 {Nenhum time completo} one {# time completo} other {# times completos}}, {incomplete, plural, =0 {nenhum incompleto} one {# incompleto} other {# incompletos}} e {reserves, plural, =0 {nenhum reserva} one {# reserva} other {# reservas}}.",
     "started": "{teams, plural, one {# time} other {# times}} na chave e {reserves, plural, =0 {nenhum reserva} one {# reserva} other {# reservas}}.",
-    "rule": "Completo é o time com {size} jogadores. O torneio só começa sem time incompleto; os reservas ficam fora da chave.",
-    "ruleCheckIn": "Completo é o time com {size} jogadores, todos com check-in. O torneio só começa sem time incompleto; os reservas ficam fora da chave."
+    "rule": "O torneio começa com pelo menos {min} times completos."
   },
   "draw": {
     "title": "Sortear os times",
@@ -20,7 +18,7 @@
     "random": "Sortear",
     "randomHint": "Jogadores e capitães ao acaso.",
     "balanced": "Sortear balanceado",
-    "balancedHint": "Times equilibrados pelo rating da comunidade, em zigue-zague; o capitão é o de maior rating.",
+    "balancedHint": "Times com rating médio parecido, pelo rating da comunidade. O capitão é o de maior rating.",
     "confirm": "Sortear de novo desfaz todos os times de agora, com os nomes e os capitães, e a ordem da chave. Continuar?",
     "short": "O sorteio precisa de pelo menos {size} inscritos; {count, plural, =0 {ainda não há nenhum} one {só há #} other {só há #}}.",
     "shortCheckIn": "O sorteio usa só quem fez check-in e precisa de pelo menos {size}; {count, plural, =0 {ninguém fez ainda} one {só # fez} other {só # fizeram}}."
@@ -29,7 +27,7 @@
     "title": "Times ({count})",
     "empty": "Nenhum time ainda. Sorteie os times, ou crie um pelo menu ⋯ de um reserva.",
     "emptyReadOnly": "Os times ainda não foram formados.",
-    "newTeam": "Novo time: solte aqui um jogador para criar um time com ele como capitão."
+    "newTeam": "Solte aqui para criar um novo time"
   },
   "reserves": {
     "title": "Reservas ({count})",
@@ -97,7 +95,6 @@
   },
   "manage": {
     "title": "Times",
-    "what": "A inscrição é individual. Os times de {size} jogadores se formam antes de iniciar, por sorteio ou à mão.",
     "started": "Os times estão na aba Inscritos; lá a organização troca o capitão e substitui jogadores.",
     "unavailable": "Não foi possível carregar os times agora. Recarregue a página.",
     "view": "Ver os times"

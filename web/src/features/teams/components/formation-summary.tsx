@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { type Formation, formationCounts } from "../lib/formation";
+import { type Formation, formationCounts, MIN_TEAMS } from "../lib/formation";
 import styles from "./formation-summary.module.scss";
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 
 /**
  * O resumo da formação no topo: quantos times completos, incompletos e
- * reservas, o que é um time completo (a regra de iniciar) e os links da
+ * reservas, a regra de iniciar enquanto ela não se cumpre e os links da
  * organização. Depois de iniciar, quantos times estão na chave.
  */
 export function FormationSummary({
@@ -37,10 +37,8 @@ export function FormationSummary({
             })
           : t("counts", counts)}
       </p>
-      {!started && (
-        <p className={styles.rule}>
-          {t(checkIn ? "ruleCheckIn" : "rule", { size: formation.team_size })}
-        </p>
+      {!started && counts.complete < MIN_TEAMS && (
+        <p className={styles.rule}>{t("rule", { min: MIN_TEAMS })}</p>
       )}
       {links && <div className={styles.links}>{links}</div>}
     </div>

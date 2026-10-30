@@ -193,11 +193,11 @@
   },
   "invites": {
     "title": "Enlaces de inscripción",
-    "description": "Quien entra por el enlace queda como jugador de la comunidad y ya inscrito. El enlace sirve para varias personas y vale mientras la inscripción esté abierta.",
-    "full": "Los cupos se agotaron. Los enlaces no inscriben a nadie más hasta que se libere un cupo (alguien sale o se amplían los cupos).",
+    "description": "El enlace vale mientras la inscripción esté abierta.",
+    "full": "Los cupos se agotaron. Los enlaces solo inscriben de nuevo cuando se libere un cupo.",
     "create": "Generar enlace de inscripción",
     "createdTitle": "Enlace de inscripción generado",
-    "empty": "No hay enlaces de inscripción. Genera uno y envíalo a quien quieras inscribir, incluso a quien todavía no es de la comunidad.",
+    "empty": "Ningún enlace de inscripción.",
     "columns": {
       "link": "Enlace",
       "createdBy": "Creado por",

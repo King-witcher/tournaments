@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 
-import { PushPrompt } from "@/features/push/components/push-prompt";
 import { hasStarted } from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
 import { Countdown } from "@/shared/ui/countdown";
@@ -22,12 +21,13 @@ type Props = {
 };
 
 /**
- * "Sua situação" para quem joga: inscrito (e quando o check-in abre),
- * check-in que falta (até o início, com a contagem) ou feito e, depois de
- * iniciar, a situação na chave e a próxima partida. Para quem não está
- * inscrito, só o motivo de não haver botão de inscrição (privado, lotado,
- * inscrições fechadas). Nada a dizer, nada aparece. Para quem está inscrito e
- * ainda vai jogar, o convite a ativar os avisos (`PushPrompt`).
+ * "Sua situação" para quem joga: a situação uma vez, na etiqueta, e só o que
+ * a pessoa ainda precisa saber ou fazer (quando o check-in abre, o check-in
+ * que falta, com o prazo e a contagem) e, depois de iniciar, a situação na
+ * chave e a próxima partida. Para quem não está inscrito, só o motivo de não
+ * haver botão de inscrição (privado, lotado, inscrições fechadas). Nada a
+ * dizer, nada aparece. Para quem está inscrito e ainda vai jogar, a sugestão
+ * de ativar as notificações num bloco à parte (`suggestPush`).
  */
 export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
   const t = useTranslations("Participants");
@@ -70,16 +70,11 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
 
   if (status === "check_in") {
     if (tournament.checked_in) {
-      return (
-        <ParticipationTile tag={tag("checked_in")}>
-          <p>{t("checkIn.done")}</p>
-          <PushPrompt />
-        </ParticipationTile>
-      );
+      return <ParticipationTile tag={tag("checked_in")} suggestPush />;
     }
     const startsAt = tournament.starts_at;
     return (
-      <ParticipationTile tag={tag("check_in_pending")}>
+      <ParticipationTile tag={tag("check_in_pending")} suggestPush>
         <p>{t("checkIn.open")}</p>
         {startsAt && new Date(startsAt) > now && (
           <p>
@@ -89,7 +84,6 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
             })}
           </p>
         )}
-        <PushPrompt />
       </ParticipationTile>
     );
   }
@@ -107,10 +101,8 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
           date: () => <LocalDateTime value={opensAt} />,
         }));
   return (
-    <ParticipationTile tag={tag("registered")}>
-      <p>{t("registration.registered")}</p>
+    <ParticipationTile tag={tag("registered")} suggestPush>
       {checkInHint && <p>{checkInHint}</p>}
-      <PushPrompt />
     </ParticipationTile>
   );
 }

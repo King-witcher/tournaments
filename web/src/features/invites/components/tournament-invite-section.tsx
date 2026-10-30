@@ -17,7 +17,7 @@ type Props = {
 };
 
 /**
- * Na aba Organização, os links de inscrição do torneio (no rascunho e com a
+ * Na aba Inscritos, para a organização, os links de inscrição do torneio (no rascunho e com a
  * inscrição aberta): gerar (o link aparece uma vez, para copiar) e, por
  * linha, quem criou, quando, quantos entraram por ele e revogar. Fica em
  * `<Suspense>`.

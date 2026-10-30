@@ -2,16 +2,14 @@
   "teamOf": "Equipo de {captain}",
   "loading": "Cargando los equipos…",
   "pageTitle": "Equipos",
-  "what": "La inscripción es individual. Antes de iniciar, la organización arma los equipos de {size} jugadores y elige el capitán de cada uno, que actúa por el equipo en el veto. Quien queda sin equipo es suplente y puede entrar en lugar de alguien durante el torneo.",
-  "howToEdit": "Sortea y ajusta a mano. Arrastra a un jugador a otro equipo, a los suplentes o a “Nuevo equipo”, o usa su menú ⋯.",
+  "howToEdit": "Arrastra y suelta jugadores para formar equipos.",
   "form": "Armar equipos",
   "backToManage": "Volver a la organización",
   "seeding": "Orden de la llave",
   "summary": {
     "counts": "{complete, plural, =0 {Ningún equipo completo} one {# equipo completo} other {# equipos completos}}, {incomplete, plural, =0 {ninguno incompleto} one {# incompleto} other {# incompletos}} y {reserves, plural, =0 {ningún suplente} one {# suplente} other {# suplentes}}.",
     "started": "{teams, plural, one {# equipo} other {# equipos}} en la llave y {reserves, plural, =0 {ningún suplente} one {# suplente} other {# suplentes}}.",
-    "rule": "Completo es el equipo con {size} jugadores. El torneo solo empieza sin equipos incompletos; los suplentes quedan fuera de la llave.",
-    "ruleCheckIn": "Completo es el equipo con {size} jugadores, todos con check-in. El torneo solo empieza sin equipos incompletos; los suplentes quedan fuera de la llave."
+    "rule": "El torneo empieza con al menos {min} equipos completos."
   },
   "draw": {
     "title": "Sortear los equipos",
@@ -20,7 +18,7 @@
     "random": "Sortear",
     "randomHint": "Jugadores y capitanes al azar.",
     "balanced": "Sortear equilibrado",
-    "balancedHint": "Equipos equilibrados según el rating de la comunidad, en zigzag; el capitán es el de mayor rating.",
+    "balancedHint": "Equipos con rating promedio parecido, según el rating de la comunidad. El capitán es el de mayor rating.",
     "confirm": "Sortear de nuevo deshace todos los equipos actuales, con los nombres y los capitanes, y el orden de la llave. ¿Continuar?",
     "short": "El sorteo necesita al menos {size} inscritos; {count, plural, =0 {todavía no hay ninguno} one {solo hay #} other {solo hay #}}.",
     "shortCheckIn": "El sorteo usa solo a quienes hicieron check-in y necesita al menos {size}; {count, plural, =0 {nadie lo hizo todavía} one {solo # lo hizo} other {solo # lo hicieron}}."
@@ -29,7 +27,7 @@
     "title": "Equipos ({count})",
     "empty": "Todavía no hay equipos. Sortea los equipos, o crea uno desde el menú ⋯ de un suplente.",
     "emptyReadOnly": "Los equipos todavía no se armaron.",
-    "newTeam": "Nuevo equipo: suelta aquí a un jugador para crear un equipo con él como capitán."
+    "newTeam": "Suelta aquí para crear un nuevo equipo"
   },
   "reserves": {
     "title": "Suplentes ({count})",
@@ -97,7 +95,6 @@
   },
   "manage": {
     "title": "Equipos",
-    "what": "La inscripción es individual. Los equipos de {size} jugadores se arman antes de iniciar, por sorteo o a mano.",
     "started": "Los equipos están en la pestaña Inscritos; ahí la organización cambia el capitán y sustituye jugadores.",
     "unavailable": "No se pudieron cargar los equipos ahora. Recarga la página.",
     "view": "Ver los equipos"

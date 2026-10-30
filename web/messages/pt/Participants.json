@@ -2,7 +2,6 @@
   "loading": "Carregando os inscritos…",
   "title": "Inscritos ({count}/{max})",
   "empty": "Ninguém inscrito ainda.",
-  "emptyOrganizer": "Ninguém inscrito ainda. Inscreva um membro da comunidade ou gere um link de inscrição na aba Organização.",
   "columns": {
     "seed": "Ordem",
     "member": "Membro",
@@ -27,7 +26,7 @@
     "choose": "Escolha um membro…",
     "submit": "Inscrever",
     "full": "As vagas acabaram. Aumente as vagas em Editar para inscrever mais alguém.",
-    "noCandidates": "Todos os membros da comunidade já estão inscritos. Para trazer gente de fora, gere um link de inscrição na aba Organização."
+    "noCandidates": "Todos os membros da comunidade já estão inscritos."
   },
   "remove": "Tirar do torneio",
   "removeConfirm": "Tirar {name} do torneio? A inscrição é apagada e a vaga fica livre; {name} pode se inscrever de novo enquanto as inscrições estiverem abertas.",
@@ -37,7 +36,6 @@
     "register": "Inscrever-se",
     "withdraw": "Cancelar inscrição",
     "withdrawConfirm": "Cancelar sua inscrição? A vaga fica livre para outra pessoa. Para voltar, inscreva-se de novo enquanto houver vaga (em torneio privado, só pela organização ou por um link de inscrição).",
-    "registered": "Você está inscrito.",
     "full": "As vagas acabaram.",
     "privateHint": "Torneio privado. Só entra quem um organizador inscrever ou quem usar um link de inscrição."
   },
@@ -56,12 +54,11 @@
     "reserve": "Reserva, sem time"
   },
   "checkIn": {
-    "opensAt": "O check-in abre <date></date>. Volte a partir daí para confirmar presença. Sem check-in, você fica fora da chave.",
+    "opensAt": "O check-in abre <date></date>. Quem não fizer fica fora da chave.",
     "suspended": "A organização reabriu as inscrições; o check-in volta quando ela abrir.",
-    "open": "Check-in aberto até o início. Confirme presença para entrar na chave.",
+    "open": "Check-in aberto. Faça seu check-in para confirmar presença e entrar na chave.",
     "until": "Até <date></date> (faltam <countdown></countdown>).",
     "openNotRegistered": "Check-in aberto. As inscrições estão fechadas.",
-    "done": "Check-in feito. Você está na chave.",
     "missed": "Você não fez check-in antes do início e ficou fora da chave.",
     "do": "Fazer check-in",
     "undo": "Desfazer check-in",

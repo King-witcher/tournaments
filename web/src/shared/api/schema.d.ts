@@ -9625,7 +9625,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Times refeitos por sorteio com os elegíveis (check-in feito; sem check-in no torneio, todos), na ordem de inscrição: os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time. `random`: embaralhados, capitão sorteado; `balanced`: zigue-zague pelo rating da comunidade (inicial para quem não tem; empates pela seed), capitão o de maior rating. A seed fica no torneio; os seeds da chave somem com os times antigos */
+            /** @description Times refeitos por sorteio com os elegíveis (check-in feito; sem check-in no torneio, todos), na ordem de inscrição: os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time. `random`: embaralhados, capitão sorteado; `balanced`: times de rating médio o mais parecido possível, pelo rating da comunidade (inicial para quem não tem; empates pela seed), capitão o de maior rating. A seed fica no torneio; os seeds da chave somem com os times antigos */
             200: {
                 headers: {
                     [name: string]: unknown;

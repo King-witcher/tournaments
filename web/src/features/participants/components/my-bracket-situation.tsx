@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
 import { NextMatchLink } from "@/features/matches/components/next-match-link";
-import { PushPrompt } from "@/features/push/components/push-prompt";
 import { getMyTournamentEntry } from "@/features/tournaments/server";
 import type { components } from "@/shared/api/schema";
 import { StatusTag } from "@/shared/ui/status-tag";
@@ -18,7 +17,8 @@ type Props = {
  * partida como link), fora dela por não ter feito check-in, eliminado (com a
  * colocação), desistiu ou campeão. Lê "Seus torneios"; se a API falhar, cai
  * no que o torneio diz (fez ou não o check-in). Quem ainda joga vê o convite
- * a ativar os avisos (`PushPrompt`). Fica em `<Suspense>`.
+ * a ativar as notificações (`PushSuggestion`, abaixo do bloco). Fica em
+ * `<Suspense>`.
  */
 export async function MyBracketSituation({ tenant, tournament }: Props) {
   const [t, entry] = await Promise.all([
@@ -42,6 +42,7 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
 
   return (
     <ParticipationTile
+      suggestPush={situation === "playing"}
       tag={
         <StatusTag status={SITUATION_STATUS[situation]}>
           {t(`situation.${situation}`, { place })}
@@ -55,7 +56,6 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
           tournamentPath={`/${tenant}/${tournament.slug}`}
         />
       )}
-      {situation === "playing" && <PushPrompt />}
     </ParticipationTile>
   );
 }
