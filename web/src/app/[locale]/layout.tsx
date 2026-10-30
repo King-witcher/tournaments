@@ -3,7 +3,6 @@
 import "../globals.scss";
 
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -17,24 +16,12 @@ import { RealtimeSession } from "@/features/realtime/components/realtime-session
 import { TenantSwitcher } from "@/features/tenants/components/tenant-switcher";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
+import { plexMono, plexSans } from "@/shared/lib/fonts";
 import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
 import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
 import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
-
-// IBM Plex, a fonte do Carbon, servida pelo next/font (sem CDN). As
-// variáveis são lidas pelas famílias do Carbon em globals.scss.
-const plexSans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
-  subsets: ["latin"],
-});
-
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

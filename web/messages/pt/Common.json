@@ -44,5 +44,6 @@
   "toggle": {
     "on": "Ligado",
     "off": "Desligado"
-  }
+  },
+  "dangerZone": "Zona de perigo"
 }

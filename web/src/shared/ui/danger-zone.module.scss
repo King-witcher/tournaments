@@ -1,0 +1,31 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A borda e o título no vermelho de erro do tema são o aviso de que o que
+// há dentro não volta; o `text-error` dá contraste AA nos dois temas. As
+// ações dentro se separam por uma linha, e não por mais bordas vermelhas.
+.zone {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-06;
+  padding: spacing.$spacing-06 spacing.$spacing-05;
+  border: 1px solid theme.$support-error;
+}
+
+.title {
+  @include type.type-style("heading-03");
+
+  color: theme.$text-error;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-07;
+
+  > * + * {
+    padding-block-start: spacing.$spacing-07;
+    border-block-start: 1px solid theme.$border-subtle-01;
+  }
+}

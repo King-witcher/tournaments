@@ -23,6 +23,7 @@ export async function DeleteTenantSection({ tenant, focusId }: Props) {
 
   return (
     <Section
+      level={3}
       title={t("title")}
       description={due ? undefined : t("description")}
     >

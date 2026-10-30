@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { RatingSettingsSection } from "@/features/ratings/components/rating-settings-section";
 import { DeleteTenantSection } from "@/features/tenants/components/delete-tenant-section";
 import { getTenant } from "@/features/tenants/server";
+import { DangerZone } from "@/shared/ui/danger-zone";
 import { Section } from "@/shared/ui/section";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { LeaveTenantSection } from "./leave-tenant-section";
@@ -19,8 +20,8 @@ const DELETION_ID = "deletion";
 
 /**
  * A aba Configurações: o apelido de quem vê, o rating da comunidade (só o
- * owner) e, embaixo, sair da comunidade ou, para o owner, transferir a posse
- * (com a exclusão agendada, não) e excluir a comunidade. Na coluna de
+ * owner) e, no fim, a zona de perigo: sair da comunidade ou, para o owner,
+ * transferir a posse (com a exclusão agendada, não) e excluir a comunidade. Na coluna de
  * formulário (8 das 16 colunas a partir do `lg`). Fica em `<Suspense>`.
  */
 export async function MembershipSettings({ slug }: { slug: string }) {
@@ -45,20 +46,25 @@ export async function MembershipSettings({ slug }: { slug: string }) {
               <RatingSettingsSection slug={slug} />
             </Suspense>
           )}
-          {!(owner && tenant.deletion_scheduled_for) && (
-            <div id={MEMBERSHIP_ID} tabIndex={-1}>
-              {owner ? (
-                <TransferOwnershipSection slug={slug} focusId={MEMBERSHIP_ID} />
-              ) : (
-                <LeaveTenantSection slug={slug} />
-              )}
-            </div>
-          )}
-          {owner && (
-            <div id={DELETION_ID} tabIndex={-1}>
-              <DeleteTenantSection tenant={tenant} focusId={DELETION_ID} />
-            </div>
-          )}
+          <DangerZone>
+            {!(owner && tenant.deletion_scheduled_for) && (
+              <div id={MEMBERSHIP_ID} tabIndex={-1}>
+                {owner ? (
+                  <TransferOwnershipSection
+                    slug={slug}
+                    focusId={MEMBERSHIP_ID}
+                  />
+                ) : (
+                  <LeaveTenantSection slug={slug} />
+                )}
+              </div>
+            )}
+            {owner && (
+              <div id={DELETION_ID} tabIndex={-1}>
+                <DeleteTenantSection tenant={tenant} focusId={DELETION_ID} />
+              </div>
+            )}
+          </DangerZone>
         </Stack>
       </Column>
     </Grid>

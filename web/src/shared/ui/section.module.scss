@@ -24,6 +24,10 @@
   @include type.type-style("heading-03");
 }
 
+.subtitle {
+  @include type.type-style("heading-02");
+}
+
 .description {
   @include type.type-style("body-01");
 

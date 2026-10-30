@@ -26,7 +26,7 @@ export async function TransferOwnershipSection({ slug, focusId }: Props) {
     .map((m) => ({ userId: m.user_id, nickname: m.nickname }));
 
   return (
-    <Section title={t("title")} description={t("description")}>
+    <Section level={3} title={t("title")} description={t("description")}>
       {candidates.length === 0 ? (
         <EmptyState
           action={

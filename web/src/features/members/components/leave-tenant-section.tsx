@@ -8,7 +8,7 @@ export function LeaveTenantSection({ slug }: { slug: string }) {
   const t = useTranslations("Tenant.leave");
 
   return (
-    <Section title={t("title")} description={t("description")}>
+    <Section level={3} title={t("title")} description={t("description")}>
       <LeaveTenantButton slug={slug} />
     </Section>
   );

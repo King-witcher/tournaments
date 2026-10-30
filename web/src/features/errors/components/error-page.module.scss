@@ -1,0 +1,19 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A ação principal e o caminho de volta lado a lado; se não couberem
+// (celular), o segundo desce, sem rolagem lateral.
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}
+
+// Referência pequena para quem fala com o suporte, no tom do metadado.
+.reference {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+  overflow-wrap: anywhere;
+}

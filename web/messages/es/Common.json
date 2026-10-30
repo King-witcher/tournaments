@@ -44,5 +44,6 @@
   "toggle": {
     "on": "Activado",
     "off": "Desactivado"
-  }
+  },
+  "dangerZone": "Zona de peligro"
 }
