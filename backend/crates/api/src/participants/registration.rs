@@ -8,13 +8,13 @@ use super::db;
 use crate::{
     shared::ApiError,
     tenants::TenantId,
-    tournaments::{self, StoredTournament, TournamentStatus, Visibility},
+    tournaments::{self, Admission, StoredTournament, TournamentStatus},
 };
 
 /// Por onde a inscrição chega.
 #[derive(Debug, Clone, Copy)]
 pub enum Entry {
-    /// O próprio membro, pelo botão: só em torneio público.
+    /// O próprio membro, pelo botão: só com a inscrição aberta (`Admission::Open`).
     Member,
     /// Link de convite de torneio (o id do convite).
     Invite(i64),
@@ -22,16 +22,16 @@ pub enum Entry {
     Organizer(i64),
 }
 
-/// Status e visibilidade: 409 `tournament.private`,
+/// Status e tipo de inscrição: 409 `tournament.invite_only`,
 /// `tournament.registration_closed` ou `tournament.participants_locked`.
 pub fn check_open(
     status: TournamentStatus,
-    visibility: Visibility,
+    admission: Admission,
     entry: Entry,
 ) -> Result<(), ApiError> {
     match entry {
-        Entry::Member if visibility == Visibility::Private => {
-            Err(ApiError::conflict("tournament.private"))
+        Entry::Member if admission == Admission::InviteOnly => {
+            Err(ApiError::conflict("tournament.invite_only"))
         }
         Entry::Member | Entry::Invite(_) if !status.registration_open() => {
             Err(ApiError::conflict("tournament.registration_closed"))
@@ -53,7 +53,9 @@ pub fn check_capacity(registered: i64, max_participants: i32) -> Result<(), ApiE
 }
 
 /// Inscreve `user_id` no torneio, que quem chama já travou
-/// (`find_for_update`), então a contagem de inscritos vale até o commit.
+/// (`find_for_update`), então a contagem de inscritos vale até o commit. Com
+/// o torneio em check-in, o inscrito entra com o check-in feito (de quem
+/// inscreveu, se foi o organizador).
 /// Quem já estava inscrito continua, sem erro: devolve `false`. Membro
 /// inexistente: 404 `member.not_found`.
 pub async fn register(
@@ -66,14 +68,27 @@ pub async fn register(
     if db::is_registered(conn, tournament.id, user_id).await? {
         return Ok(false);
     }
-    check_open(tournament.status, tournament.visibility, entry)?;
+    check_open(tournament.status, tournament.admission, entry)?;
     check_capacity(tournament.participants, tournament.setup.max_participants)?;
     let (invite_id, added_by) = match entry {
         Entry::Member => (None, None),
         Entry::Invite(invite_id) => (Some(invite_id), None),
         Entry::Organizer(by) => (None, Some(by)),
     };
-    if !db::insert(conn, tenant, tournament.id, user_id, invite_id, added_by).await? {
+    // Durante o check-in a inscrição fica aberta, e quem entra já entra com o
+    // check-in feito (o banco exige: `participants_check_in_on_entry`).
+    let checked_in = tournament.status.check_in_open();
+    let entered = db::insert(
+        conn,
+        tenant,
+        tournament.id,
+        user_id,
+        invite_id,
+        added_by,
+        checked_in,
+    )
+    .await?;
+    if !entered {
         return Err(ApiError::not_found("member.not_found"));
     }
     tournaments::changed(conn, tournament.id).await?;
@@ -84,48 +99,54 @@ pub async fn register(
 mod tests {
     use super::*;
     use crate::tournaments::{
+        Admission::{InviteOnly, Open},
         TournamentStatus::{CheckIn, Draft, Finished, InProgress, Registration},
-        Visibility::{Private, Public},
     };
 
-    fn code(status: TournamentStatus, visibility: Visibility, entry: Entry) -> &'static str {
-        check_open(status, visibility, entry).map_or_else(|e| e.code, |()| "ok")
+    fn code(status: TournamentStatus, admission: Admission, entry: Entry) -> &'static str {
+        check_open(status, admission, entry).map_or_else(|e| e.code, |()| "ok")
     }
 
     #[test]
-    fn members_register_themselves_only_in_open_public_tournaments() {
-        assert_eq!(code(Registration, Public, Entry::Member), "ok");
-        assert_eq!(
-            code(Registration, Private, Entry::Member),
-            "tournament.private"
-        );
-        for status in [Draft, CheckIn, InProgress, Finished] {
+    fn members_register_themselves_until_the_start() {
+        for status in [Registration, CheckIn] {
+            assert_eq!(code(status, Open, Entry::Member), "ok");
             assert_eq!(
-                code(status, Public, Entry::Member),
+                code(status, InviteOnly, Entry::Member),
+                "tournament.invite_only"
+            );
+        }
+        for status in [Draft, InProgress, Finished] {
+            assert_eq!(
+                code(status, Open, Entry::Member),
                 "tournament.registration_closed"
             );
         }
     }
 
     #[test]
-    fn invite_links_need_open_registration_in_any_visibility() {
-        for visibility in [Public, Private] {
-            assert_eq!(code(Registration, visibility, Entry::Invite(1)), "ok");
-            assert_eq!(
-                code(Draft, visibility, Entry::Invite(1)),
-                "tournament.registration_closed"
-            );
+    fn invite_links_work_until_the_start_in_any_admission() {
+        for admission in [Open, InviteOnly] {
+            for status in [Registration, CheckIn] {
+                assert_eq!(code(status, admission, Entry::Invite(1)), "ok");
+            }
+            for status in [Draft, InProgress, Finished] {
+                assert_eq!(
+                    code(status, admission, Entry::Invite(1)),
+                    "tournament.registration_closed"
+                );
+            }
         }
     }
 
     #[test]
     fn organizers_add_until_the_tournament_starts() {
         for status in [Draft, Registration, CheckIn] {
-            assert_eq!(code(status, Private, Entry::Organizer(1)), "ok");
+            assert_eq!(code(status, InviteOnly, Entry::Organizer(1)), "ok");
         }
         for status in [InProgress, Finished] {
             assert_eq!(
-                code(status, Public, Entry::Organizer(1)),
+                code(status, Open, Entry::Organizer(1)),
                 "tournament.participants_locked"
             );
         }

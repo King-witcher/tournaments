@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.visibility, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.registration_reopened_at, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
+  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.admission, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
   "describe": {
     "columns": [
       {
@@ -93,12 +93,12 @@
       },
       {
         "ordinal": 8,
-        "name": "visibility",
+        "name": "admission",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "tournaments",
-            "name": "visibility"
+            "name": "admission"
           }
         }
       },
@@ -148,17 +148,6 @@
       },
       {
         "ordinal": 13,
-        "name": "registration_reopened_at",
-        "type_info": "Timestamptz",
-        "origin": {
-          "Table": {
-            "table": "tournaments",
-            "name": "registration_reopened_at"
-          }
-        }
-      },
-      {
-        "ordinal": 14,
         "name": "contest_minutes",
         "type_info": "Int4",
         "origin": {
@@ -169,7 +158,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 14,
         "name": "counts_for_rating",
         "type_info": "Bool",
         "origin": {
@@ -180,7 +169,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 15,
         "name": "map_mode",
         "type_info": "Text",
         "origin": {
@@ -191,7 +180,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 16,
         "name": "champion_phase",
         "type_info": "Bool",
         "origin": {
@@ -202,7 +191,7 @@
         }
       },
       {
-        "ordinal": 18,
+        "ordinal": 17,
         "name": "veto_seconds",
         "type_info": "Int4",
         "origin": {
@@ -213,7 +202,7 @@
         }
       },
       {
-        "ordinal": 19,
+        "ordinal": 18,
         "name": "screenshots_required",
         "type_info": "Bool",
         "origin": {
@@ -224,7 +213,7 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 19,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -235,7 +224,7 @@
         }
       },
       {
-        "ordinal": 21,
+        "ordinal": 20,
         "name": "team_size",
         "type_info": "Int2",
         "origin": {
@@ -246,7 +235,7 @@
         }
       },
       {
-        "ordinal": 22,
+        "ordinal": 21,
         "name": "team_pick_seconds",
         "type_info": "Int4",
         "origin": {
@@ -257,19 +246,19 @@
         }
       },
       {
-        "ordinal": 23,
+        "ordinal": 22,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 24,
+        "ordinal": 23,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 25,
+        "ordinal": 24,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -296,7 +285,6 @@
       false,
       true,
       true,
-      true,
       false,
       false,
       false,
@@ -311,5 +299,5 @@
       null
     ]
   },
-  "hash": "d1e1412eb0dc255adec012101fd5b54c2ae0fd3c1b52ce982daf56795963e038"
+  "hash": "3e4710a3d3e785302302db861fd46c0fe4aaec5635183777bb371eb2ff3876b1"
 }

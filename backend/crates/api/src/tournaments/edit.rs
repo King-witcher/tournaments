@@ -5,6 +5,7 @@
 use chrono::{DateTime, Utc};
 
 use super::{
+    admission::Admission,
     contest,
     schedule::Schedule,
     setup::Setup,
@@ -12,7 +13,6 @@ use super::{
     texts::{self, Texts},
     types::UpdateTournament,
     veto::VetoSetup,
-    visibility::Visibility,
 };
 use crate::shared::ApiError;
 
@@ -20,7 +20,7 @@ use crate::shared::ApiError;
 pub struct Edit {
     pub texts: Texts,
     /// `Some` quando veio no PATCH.
-    pub visibility: Option<Visibility>,
+    pub admission: Option<Admission>,
     /// `Some` só quando vagas, regra de campeões ou fases mudam de fato.
     pub setup: Option<Setup>,
     /// `Some` só quando a data de início ou a janela de check-in mudam.
@@ -46,8 +46,8 @@ pub struct Current<'a> {
     pub now: DateTime<Utc>,
 }
 
-/// Erros: 409 `tournament.finished` (texto, visibilidade ou janela de
-/// contestação depois de encerrar), 409 `tournament.setup_locked`
+/// Erros: 409 `tournament.finished` (texto, inscrição ou janela de contestação
+/// depois de encerrar), 409 `tournament.setup_locked`
 /// (configuração, inclusive o veto (`veto`, já resolvido), ou "conta para o
 /// rating" depois de começar), os de `Schedule::edit`, o de
 /// `contest::check` e os de validação dos textos. Mandar a configuração igual
@@ -70,7 +70,7 @@ pub fn apply(
     let touches_texts = patch.name.is_some()
         || patch.description.is_some()
         || patch.rules.is_some()
-        || patch.visibility.is_some();
+        || patch.admission.is_some();
     if touches_texts && !status.texts_editable() {
         return Err(ApiError::conflict("tournament.finished"));
     }
@@ -134,7 +134,7 @@ pub fn apply(
     }
     Ok(Edit {
         texts,
-        visibility: patch.visibility,
+        admission: patch.admission,
         setup,
         schedule,
         contest_minutes,
@@ -202,7 +202,7 @@ mod tests {
             name: None,
             description: None,
             rules: None,
-            visibility: None,
+            admission: None,
             max_participants: None,
             champion_rules: None,
             stages: None,
@@ -276,13 +276,13 @@ mod tests {
     }
 
     #[test]
-    fn visibility_changes_until_finished() {
+    fn admission_changes_until_finished() {
         let p = || UpdateTournament {
-            visibility: Some(Visibility::Private),
+            admission: Some(Admission::InviteOnly),
             ..patch()
         };
         let edit = run(TournamentStatus::InProgress, p()).unwrap();
-        assert_eq!(edit.visibility, Some(Visibility::Private));
+        assert_eq!(edit.admission, Some(Admission::InviteOnly));
         let err = run(TournamentStatus::Finished, p()).unwrap_err();
         assert_eq!(err.code, "tournament.finished");
     }

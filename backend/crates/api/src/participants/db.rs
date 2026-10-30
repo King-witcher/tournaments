@@ -72,8 +72,10 @@ pub async fn registrations_of(
 }
 
 /// Inscreve `user_id` se ele for membro ativo do tenant; `false` se não é.
-/// No duelo, o banco cria o time dele junto. Quem chama já conferiu que ele
-/// não está inscrito, com o torneio travado.
+/// No duelo, o banco cria o time dele junto. `invite_id` é o convite usado e
+/// `added_by`, o organizador que inscreveu. Com `checked_in`, o check-in já
+/// entra feito (pelo organizador, se foi ele quem inscreveu). Quem chama já
+/// conferiu que ele não está inscrito, com o torneio travado.
 pub async fn insert(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -81,17 +83,21 @@ pub async fn insert(
     user_id: i64,
     invite_id: Option<i64>,
     added_by: Option<i64>,
+    checked_in: bool,
 ) -> Result<bool, sqlx::Error> {
     let result = sqlx::query!(
-        r#"insert into participants (tenant_id, tournament_id, user_id, invite_id, added_by)
-           select $1::bigint, $2::bigint, $3::bigint, $4::bigint, $5::bigint
+        r#"insert into participants (tenant_id, tournament_id, user_id, invite_id, added_by,
+                                     checked_in_at, checked_in_by)
+           select $1::bigint, $2::bigint, $3::bigint, $4::bigint, $5::bigint,
+                  case when $6 then now() end, case when $6 then $5::bigint end
            from tenant_members
            where tenant_id = $1 and user_id = $3 and left_at is null"#,
         tenant.get(),
         tournament.get(),
         user_id,
         invite_id,
-        added_by
+        added_by,
+        checked_in
     )
     .execute(conn)
     .await?;

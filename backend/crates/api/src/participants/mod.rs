@@ -1,6 +1,7 @@
-//! Inscritos de um torneio: listar, o membro se inscrever ou sair (torneio
-//! público, com a inscrição aberta), o organizador inscrever ou tirar
-//! membros (público ou privado, até começar) e o check-in (`check_in`). A
+//! Inscritos de um torneio: listar, o membro se inscrever ou sair (com a
+//! inscrição aberta, até o início), o organizador inscrever ou tirar membros
+//! (com qualquer tipo de inscrição, até começar) e o check-in (`check_in`).
+//! Quem se inscreve durante o check-in já entra com o check-in feito. A
 //! inscrição é individual, por `user_id`; quem ocupa a chave é o time do
 //! inscrito (`teams`, que no duelo o banco cria e apaga junto com a
 //! inscrição). O link de convite de torneio fica em `invites`, que inscreve

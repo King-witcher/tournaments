@@ -1,5 +1,4 @@
-//! Transições depois de publicar: abrir o check-in, reabrir a inscrição,
-//! iniciar e desfazer o início; a desistência e o W.O. automático em
+//! Transições depois de publicar: abrir o check-in, iniciar e desfazer o início; a desistência e o W.O. automático em
 //! `withdrawal`.
 
 mod withdrawal;
@@ -12,7 +11,7 @@ use crate::common::*;
 
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
-/// Faz a transição `action` (`check-in/open`, `registration/reopen`, `start`).
+/// Faz a transição `action` (`check-in/open`, `start`).
 async fn transition(app: &Router, who: &User, action: &str) -> (StatusCode, Value) {
     post_empty(app, &format!("{COPA}/{action}"), who).await
 }
@@ -196,7 +195,7 @@ async fn without_check_in_registration_goes_straight_to_in_progress() {
 }
 
 #[tokio::test]
-async fn reopening_registration_holds_the_automatic_check_in() {
+async fn there_is_no_way_back_from_check_in_to_registration_but_turning_it_off() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
@@ -207,36 +206,23 @@ async fn reopening_registration_holds_the_automatic_check_in() {
     assert_eq!(seen["status"], "check_in");
     check_in(&app, &bia).await;
 
-    assert_eq!(ok(&app, &ana, "registration/reopen").await, "registration");
-    // A janela continua aberta, mas não reabre sozinha; o check-in feito fica.
-    starts_in(&db, "copa", 5).await;
+    // Adiar o início não fecha o check-in; desligá-lo volta para a inscrição
+    // e o check-in feito fica.
+    let (status, _) = patch(&app, COPA, &ana, json!({ "starts_at": FAR_START })).await;
+    assert_eq!(status, StatusCode::OK);
+    let (_, seen) = get(&app, COPA, &bia).await;
+    assert_eq!(seen["status"], "check_in");
+    let (status, seen) = patch(&app, COPA, &ana, json!({ "check_in_minutes": null })).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        (&seen["status"], &seen["checked_in"]),
+        (&json!("registration"), &json!(false))
+    );
     let (_, seen) = get(&app, COPA, &bia).await;
     assert_eq!(
         (&seen["status"], &seen["checked_in"]),
         (&json!("registration"), &json!(true))
     );
-    assert_eq!(
-        transition(&app, &ana, "registration/reopen").await,
-        (StatusCode::CONFLICT, err("tournament.not_check_in"))
-    );
-
-    // Adiar o início para uma abertura depois da reabertura reativa: passa
-    // uma hora (a reabertura fica para trás) e a nova janela abre.
-    let (status, _) = patch(&app, COPA, &ana, json!({ "starts_at": FAR_START })).await;
-    assert_eq!(status, StatusCode::OK);
-    sqlx::query!(
-        "update tournaments set registration_reopened_at = registration_reopened_at - interval '1 hour'"
-    )
-    .execute(&db)
-    .await
-    .unwrap();
-    starts_in(&db, "copa", 10).await;
-    let (_, seen) = get(&app, COPA, &bia).await;
-    assert_eq!(seen["status"], "check_in");
-
-    // Ou o organizador abre na mão, a qualquer hora.
-    ok(&app, &ana, "registration/reopen").await;
-    assert_eq!(ok(&app, &ana, "check-in/open").await, "check_in");
 }
 
 #[tokio::test]
@@ -246,7 +232,7 @@ async fn players_do_not_drive_the_lifecycle() {
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
     let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
-    for action in ["check-in/open", "registration/reopen", "start"] {
+    for action in ["check-in/open", "start"] {
         assert_eq!(transition(&app, &bia, action).await, forbidden, "{action}");
     }
     assert_eq!(

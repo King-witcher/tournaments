@@ -469,3 +469,44 @@ async fn invite_tokens_are_hashes() {
         rule(CHECK, "tenant_invites_token_hash_sha256")
     );
 }
+
+#[tokio::test]
+async fn admission_and_check_in_on_entry() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let tenant = tenant_id(&db, "quake-br").await;
+    let copa = tournament_id(&db, "copa").await;
+
+    // O tipo de inscrição só tem dois valores.
+    assert_eq!(
+        rejected(exec(&db, "update tournaments set admission = 'private'").await),
+        rule(CHECK, "tournaments_admission_check")
+    );
+
+    // Durante o check-in, quem entra já tem o check-in feito; fora dele, não.
+    let insert = |check_in: &str| {
+        format!(
+            "insert into participants (tenant_id, tournament_id, user_id, checked_in_at)
+             values ({tenant}, {copa}, {}, {check_in})",
+            bia.id
+        )
+    };
+    set_status(&db, "copa", "check_in").await;
+    assert_eq!(
+        rejected(exec(&db, &insert("null")).await),
+        rule(CHECK, "participants_check_in_on_entry")
+    );
+    assert_eq!(exec(&db, &insert("now()")).await.unwrap(), 1);
+    // Desfazer o check-in depois continua valendo.
+    assert_eq!(
+        exec(&db, "update participants set checked_in_at = null")
+            .await
+            .unwrap(),
+        1
+    );
+    exec(&db, "delete from participants").await.unwrap();
+    set_status(&db, "copa", "registration").await;
+    assert_eq!(exec(&db, &insert("null")).await.unwrap(), 1);
+}

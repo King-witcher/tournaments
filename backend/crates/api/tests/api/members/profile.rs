@@ -206,13 +206,13 @@ async fn only_active_members_have_a_profile() {
 }
 
 #[tokio::test]
-async fn players_see_only_what_the_tournament_list_shows() {
+async fn players_see_what_the_tournament_list_shows() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let caio = member(&app, &db, &ana, "Caio").await;
 
-    // Rascunho sem data, privado e público, criados nessa ordem; Caio inscrito
-    // nos três pelo organizador.
+    // Rascunho sem data, de inscrição fechada e de inscrição aberta, criados
+    // nessa ordem; Caio inscrito nos três pelo organizador.
     create_tournament(
         &app,
         &ana,
@@ -223,7 +223,7 @@ async fn players_see_only_what_the_tournament_list_shows() {
     create_tournament(
         &app,
         &ana,
-        with(duel("fechado"), json!({ "visibility": "private" })),
+        with(duel("fechado"), json!({ "admission": "invite_only" })),
     )
     .await;
     publish(&app, &ana, "fechado").await;
@@ -232,13 +232,14 @@ async fn players_see_only_what_the_tournament_list_shows() {
     publish(&app, &ana, "aberto").await;
     add(&app, &ana, "aberto", &caio).await;
 
-    // Bia, player, não vê o rascunho nem o privado em que não está.
-    assert_eq!(slugs(&profile(&app, &bia, &caio).await), ["aberto"]);
-    // Caio vê o privado em que está, mas não o rascunho.
-    assert_eq!(
-        slugs(&profile(&app, &caio, &caio).await),
-        ["aberto", "fechado"]
-    );
+    // Os jogadores veem os publicados, estejam ou não inscritos, mas não o
+    // rascunho.
+    for viewer in [&bia, &caio] {
+        assert_eq!(
+            slugs(&profile(&app, viewer, &caio).await),
+            ["aberto", "fechado"]
+        );
+    }
     // O owner vê todos: o sem data primeiro, depois, com o mesmo início, o
     // criado por último.
     let all = profile(&app, &ana, &caio).await;

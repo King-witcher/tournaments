@@ -70,14 +70,14 @@
   "maxParticipantsTdm": "Vagas (jogadores)",
   "maxParticipantsHintTdm": "Contam jogadores. A inscrição fecha quando lotar.",
   "slotsTeams": "{slots} vagas = {teams, plural, one {# time} other {# times}} de {size}{reserves, plural, =0 {} one { e # reserva} other { e # reservas}}.",
-  "visibility": "Visibilidade",
-  "visibilityOptions": {
-    "public": "Pública",
-    "private": "Privada"
+  "admission": "Inscrição",
+  "admissionOptions": {
+    "open": "Aberta",
+    "invite_only": "Só por link ou pela organização"
   },
-  "visibilityHints": {
-    "public": "Todos da comunidade veem o torneio e podem se inscrever.",
-    "private": "Só inscritos e organizadores veem o torneio. Entra quem um organizador inscrever ou quem usar um link de inscrição."
+  "admissionHints": {
+    "open": "Qualquer membro se inscreve, até o início.",
+    "invite_only": "Sem botão de inscrição. Entram os que a organização inscrever e quem usar o link de inscrição."
   },
   "checkIn": "Check-in",
   "checkInOff": "Sem check-in",
@@ -120,7 +120,7 @@
   "createDraft": "Criar como rascunho",
   "review": {
     "title": "Criar e publicar",
-    "question": "Confira antes de publicar. As inscrições abrem na hora e a comunidade passa a ver o torneio (o privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído; para revisar com calma, crie como rascunho.",
+    "question": "Confira antes de publicar. As inscrições abrem na hora e a comunidade passa a ver o torneio. Publicado, ele não volta a rascunho nem pode ser excluído; para revisar com calma, crie como rascunho.",
     "confirm": "Criar e publicar",
     "label": "Resumo do torneio",
     "labels": {

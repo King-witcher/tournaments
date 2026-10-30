@@ -24,11 +24,11 @@ use crate::{
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = CREATED, body = CreatedTournamentInvite, description = "Link multiuso de inscrição, público ou privado: quem aceita entra no tenant como player e fica inscrito. Vale enquanto a inscrição estiver aberta"),
+        (status = CREATED, body = CreatedTournamentInvite, description = "Link multiuso de inscrição, com qualquer tipo de inscrição: quem aceita entra no tenant como player e fica inscrito (com o check-in feito, se for durante o check-in). Vale até o início"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só no rascunho ou com a inscrição aberta)"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só no rascunho ou até o início)"),
     )
 )]
 pub async fn create_tournament_invite(

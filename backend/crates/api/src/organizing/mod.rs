@@ -9,7 +9,7 @@
 //! Só leitura, em duas queries (`db`) que leem direto as tabelas de
 //! `tournaments`, `participants` e `matches`: passar pelo domínio de cada um
 //! seria uma busca por torneio. Organizer e owner veem todos os torneios da
-//! comunidade (`visibility`), então o papel basta como filtro.
+//! comunidade (`visibility`: só o rascunho some para os outros), então o papel basta como filtro.
 //!
 //! Quem muda uma dessas listas emite "Seus torneios" (`me`) para a
 //! organização da comunidade (`tenants::organizing_changed`): a chave quando

@@ -135,24 +135,16 @@ async fn subscriptions_follow_read_access() {
     let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
     create(&app, &ana, "quake-br").await;
     join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
-    let private = |slug: &str| with(duel(slug), json!({ "visibility": "private" }));
-    for slug in ["secreta", "fechada"] {
-        create_tournament(&app, &ana, private(slug)).await;
-        publish(&app, &ana, slug).await;
-    }
-    let uri = "/tenants/quake-br/tournaments/secreta/participants";
-    let (status, _) = post(&app, uri, &ana, json!({ "user_id": bia.id })).await;
-    assert_eq!(status, StatusCode::CREATED);
-    // Torneio privado de outra comunidade.
+    // Inscrição fechada não esconde: quem não está inscrito assina. O rascunho
+    // some para o jogador.
+    let invite_only = with(duel("fechada"), json!({ "admission": "invite_only" }));
+    create_tournament(&app, &ana, invite_only).await;
+    publish(&app, &ana, "fechada").await;
+    create_tournament(&app, &ana, duel("rascunho")).await;
+    // Torneio de outra comunidade.
     let cris = user(&db, "Cris").await;
     create(&app, &cris, "quake-ar").await;
-    let (status, _) = post(
-        &app,
-        "/tenants/quake-ar/tournaments",
-        &cris,
-        with(duel("copa"), json!({ "visibility": "private" })),
-    )
-    .await;
+    let (status, _) = post(&app, "/tenants/quake-ar/tournaments", &cris, duel("copa")).await;
     assert_eq!(status, StatusCode::CREATED);
 
     let url = serve(state).await;
@@ -164,12 +156,12 @@ async fn subscriptions_follow_read_access() {
         error("tenant.not_found", "quake-ar", Some("copa"))
     );
     assert_eq!(
-        send(&mut socket, subscribe("quake-br", Some("fechada"))).await,
-        error("tournament.not_found", "quake-br", Some("fechada"))
+        send(&mut socket, subscribe("quake-br", Some("rascunho"))).await,
+        error("tournament.not_found", "quake-br", Some("rascunho"))
     );
     assert_eq!(
-        send(&mut socket, subscribe("quake-br", Some("secreta"))).await,
-        subscribed("quake-br", Some("secreta"))
+        send(&mut socket, subscribe("quake-br", Some("fechada"))).await,
+        subscribed("quake-br", Some("fechada"))
     );
     assert_eq!(
         send(&mut socket, json!({ "type": "dance" })).await,
@@ -178,10 +170,10 @@ async fn subscriptions_follow_read_access() {
     assert_eq!(
         send(
             &mut socket,
-            json!({ "type": "unsubscribe", "tenant": "quake-br", "tournament": "secreta" })
+            json!({ "type": "unsubscribe", "tenant": "quake-br", "tournament": "fechada" })
         )
         .await,
-        json!({ "type": "unsubscribed", "tenant": "quake-br", "tournament": "secreta" })
+        json!({ "type": "unsubscribed", "tenant": "quake-br", "tournament": "fechada" })
     );
 }
 

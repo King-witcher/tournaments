@@ -124,7 +124,11 @@ function localizedName(tournament: InvitedTournament, locale: string) {
 
 /** Por que o link de inscrição não aceita agora, se não aceita. */
 async function closedReason(tournament: InvitedTournament) {
-  if (tournament.status !== "registration") {
+  // A inscrição fica aberta até o início, também durante o check-in.
+  if (
+    tournament.status !== "registration" &&
+    tournament.status !== "check_in"
+  ) {
     return apiErrorMessage("tournament.registration_closed");
   }
   if (tournament.participants >= tournament.max_participants) {

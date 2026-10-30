@@ -16,7 +16,7 @@ type Props = {
 
 /**
  * Na aba Organização, o quadro do estado: o ciclo com o passo de agora, o
- * que vale neste passo (quando o check-in abre, se a abertura está suspensa,
+ * que vale neste passo (quando o check-in abre,
  * quem entra na chave) e o próximo passo como botão, com o motivo embaixo
  * quando ainda não dá (no rascunho, a data de início que ficou para trás).
  */
@@ -26,7 +26,6 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
   const { status } = tournament;
   const hasCheckIn = tournament.check_in_minutes != null;
   const opensAt = tournament.check_in_opens_at;
-  const opened = opensAt != null && new Date(opensAt) <= now;
   // No TDM, quem entra na chave são os times, não os inscritos.
   const teams = tournament.mode === "tdm";
 
@@ -34,11 +33,10 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
   if (status === "draft") {
     hint = tTournament("draftHint");
   } else if (status === "registration" && hasCheckIn) {
-    // Inscrição com a abertura já no passado: a organização reabriu.
-    hint = opened
-      ? t("suspended")
-      : opensAt &&
-        t.rich("opensAt", { date: () => <LocalDateTime value={opensAt} /> });
+    hint =
+      opensAt &&
+      new Date(opensAt) > now &&
+      t.rich("opensAt", { date: () => <LocalDateTime value={opensAt} /> });
   } else if (status === "registration") {
     hint = t(teams ? "noCheckInTdm" : "noCheckIn");
   } else if (status === "check_in") {

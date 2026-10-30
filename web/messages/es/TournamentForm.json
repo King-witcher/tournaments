@@ -70,14 +70,14 @@
   "maxParticipantsTdm": "Cupos (jugadores)",
   "maxParticipantsHintTdm": "Cuentan jugadores. La inscripción se cierra al llenarse.",
   "slotsTeams": "{slots} cupos = {teams, plural, one {# equipo} other {# equipos}} de {size}{reserves, plural, =0 {} one { y # suplente} other { y # suplentes}}.",
-  "visibility": "Visibilidad",
-  "visibilityOptions": {
-    "public": "Pública",
-    "private": "Privada"
+  "admission": "Inscripción",
+  "admissionOptions": {
+    "open": "Abierta",
+    "invite_only": "Solo por enlace o por la organización"
   },
-  "visibilityHints": {
-    "public": "Toda la comunidad ve el torneo y puede inscribirse.",
-    "private": "Solo lo ven los inscritos y los organizadores. Entra quien un organizador inscriba o quien use un enlace de inscripción."
+  "admissionHints": {
+    "open": "Cualquier miembro se inscribe, hasta el inicio.",
+    "invite_only": "Sin botón de inscripción. Entran quienes inscriba la organización y quienes usen el enlace de inscripción."
   },
   "checkIn": "Check-in",
   "checkInOff": "Sin check-in",
@@ -120,7 +120,7 @@
   "createDraft": "Crear como borrador",
   "review": {
     "title": "Crear y publicar",
-    "question": "Revisa antes de publicar. Las inscripciones abren en el momento y la comunidad pasa a ver el torneo (el privado, solo inscritos y organizadores). Una vez publicado, no vuelve a borrador ni se puede eliminar; para revisarlo con calma, créalo como borrador.",
+    "question": "Revisa antes de publicar. Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar; para revisarlo con calma, créalo como borrador.",
     "confirm": "Crear y publicar",
     "label": "Resumen del torneo",
     "labels": {

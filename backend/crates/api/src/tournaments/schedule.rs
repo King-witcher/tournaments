@@ -69,21 +69,12 @@ impl Schedule {
         Some(self.starts_at? - Duration::minutes(i64::from(self.check_in_minutes?)))
     }
 
-    /// Abertura automática: a inscrição vira check-in quando a janela abre,
-    /// a menos que o organizador tenha reaberto a inscrição depois dessa
-    /// abertura (`reopened_at`). Mudar a data ou a janela para uma abertura
-    /// posterior à reabertura reativa. Só anda para a frente: adiar o início
-    /// com o check-in aberto não o fecha (o organizador reabre a inscrição).
-    pub fn check_in_due(
-        &self,
-        status: TournamentStatus,
-        reopened_at: Option<DateTime<Utc>>,
-        now: DateTime<Utc>,
-    ) -> bool {
+    /// Abertura automática: a inscrição vira check-in quando a janela abre.
+    /// Só anda para a frente: adiar o início com o check-in aberto não o
+    /// fecha (desligar o check-in e ligar de novo, sim).
+    pub fn check_in_due(&self, status: TournamentStatus, now: DateTime<Utc>) -> bool {
         status == TournamentStatus::Registration
-            && self.check_in_opens_at().is_some_and(|opens| {
-                opens <= now && reopened_at.is_none_or(|reopened| reopened < opens)
-            })
+            && self.check_in_opens_at().is_some_and(|opens| opens <= now)
     }
 
     /// O início marcado chegou em `now` com o torneio por iniciar (inscrição
@@ -149,11 +140,11 @@ mod tests {
     fn check_in_opens_with_the_window() {
         let s = schedule();
         assert_eq!(s.check_in_opens_at(), Some(at(30)));
-        assert!(!s.check_in_due(Registration, None, at(29)));
-        assert!(s.check_in_due(Registration, None, at(30)));
-        assert!(s.check_in_due(Registration, None, at(90)));
+        assert!(!s.check_in_due(Registration, at(29)));
+        assert!(s.check_in_due(Registration, at(30)));
+        assert!(s.check_in_due(Registration, at(90)));
         for status in [Draft, CheckIn, InProgress, Finished] {
-            assert!(!s.check_in_due(status, None, at(45)));
+            assert!(!s.check_in_due(status, at(45)));
         }
     }
 
@@ -185,24 +176,8 @@ mod tests {
         };
         for s in [off, undated] {
             assert_eq!(s.check_in_opens_at(), None);
-            assert!(!s.check_in_due(Registration, None, at(90)));
+            assert!(!s.check_in_due(Registration, at(90)));
         }
-    }
-
-    #[test]
-    fn reopening_suspends_until_the_opening_moves_past_it() {
-        // Reaberta no minuto 40, com a janela aberta desde o 30.
-        let s = schedule();
-        assert!(!s.check_in_due(Registration, Some(at(40)), at(50)));
-        // Reaberta antes de a janela abrir: a automática continua valendo.
-        assert!(s.check_in_due(Registration, Some(at(20)), at(30)));
-        // Adiar o início para o minuto 90 abre no 60, depois da reabertura.
-        let later = Schedule {
-            starts_at: Some(at(90)),
-            ..s
-        };
-        assert!(!later.check_in_due(Registration, Some(at(40)), at(59)));
-        assert!(later.check_in_due(Registration, Some(at(40)), at(60)));
     }
 
     #[test]

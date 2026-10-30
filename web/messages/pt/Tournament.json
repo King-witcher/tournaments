@@ -118,7 +118,7 @@
     "labelTranslation": "Regras adicionais ({language}, tradução)"
   },
   "publish": "Publicar e abrir inscrições",
-  "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
+  "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo. Publicado, ele não volta a rascunho nem pode ser excluído.",
   "publishBlocked": {
     "past": "A data de início já passou. Mude-a em Editar para publicar.",
     "window": "O início está mais perto que a janela de check-in. Mude a data em Editar para publicar."

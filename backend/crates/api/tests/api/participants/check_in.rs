@@ -65,10 +65,57 @@ async fn participants_check_in_only_during_check_in() {
     assert_eq!(seen["checked_in"], false);
     let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
     assert_eq!(list[0]["checked_in"], false);
+}
 
-    // Durante o check-in a inscrição está fechada, e sair também.
+#[tokio::test]
+async fn registration_stays_open_during_check_in() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = member(&app, &db, &ana, "Caio").await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let registration = format!("{COPA}/registration");
+    post_empty(&app, &format!("{COPA}/check-in/open"), &ana).await;
+
+    // Quem se inscreve pelo botão já entra com o check-in feito, sem erro ao
+    // repetir, e pode sair.
+    for _ in 0..2 {
+        assert_eq!(
+            post_empty(&app, &registration, &bia).await,
+            (StatusCode::NO_CONTENT, Value::Null)
+        );
+    }
+    let (_, seen) = get(&app, COPA, &bia).await;
     assert_eq!(
-        delete(&app, &format!("{COPA}/registration"), &bia).await,
+        (&seen["status"], &seen["registered"], &seen["checked_in"]),
+        (&json!("check_in"), &json!(true), &json!(true))
+    );
+    let by = sqlx::query_scalar!("select checked_in_by from participants")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(by, None);
+    assert_eq!(
+        delete(&app, &registration, &bia).await,
+        (StatusCode::NO_CONTENT, Value::Null)
+    );
+    assert!(check_ins(&participants(&app, &ana).await).is_empty());
+
+    // Pela organização também: o check-in fica no nome dela.
+    let add = format!("{COPA}/participants");
+    let (status, added) = post(&app, &add, &ana, json!({ "user_id": caio.id })).await;
+    assert_eq!(status, StatusCode::CREATED, "{added}");
+    assert_eq!(added["checked_in"], true);
+    let by = sqlx::query_scalar!("select checked_in_by from participants")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(by, Some(ana.id));
+
+    // Depois de começar, a inscrição fecha.
+    set_status(&db, "copa", "in_progress").await;
+    assert_eq!(
+        post_empty(&app, &registration, &bia).await,
         (StatusCode::CONFLICT, err("tournament.registration_closed"))
     );
 }
@@ -115,14 +162,14 @@ async fn organizers_check_anyone_in() {
     .unwrap();
     assert_eq!(by, Some(ana.id));
 
-    // Inscrito pelo organizador durante o check-in entra sem check-in.
+    // Inscrito pela organização durante o check-in entra com o check-in feito.
     let add = format!("{COPA}/participants");
     let (status, added) = post(&app, &add, &ana, json!({ "user_id": caio.id })).await;
     assert_eq!(status, StatusCode::CREATED, "{added}");
-    assert_eq!(added["checked_in"], false);
+    assert_eq!(added["checked_in"], true);
     assert_eq!(
         check_ins(&participants(&app, &ana).await),
-        [("Ana", false), ("Bia", true), ("Caio", false)]
+        [("Ana", false), ("Bia", true), ("Caio", true)]
     );
 
     assert_eq!(
@@ -131,6 +178,6 @@ async fn organizers_check_anyone_in() {
     );
     assert_eq!(
         check_ins(&participants(&app, &ana).await),
-        [("Ana", false), ("Bia", false), ("Caio", false)]
+        [("Ana", false), ("Bia", false), ("Caio", true)]
     );
 }

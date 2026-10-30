@@ -26,7 +26,7 @@ async fn participants(app: &Router, who: &User) -> Value {
 }
 
 #[tokio::test]
-async fn members_register_themselves_in_public_tournaments() {
+async fn members_register_themselves_with_open_registration() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
@@ -115,28 +115,25 @@ async fn registration_closes_when_full() {
 }
 
 #[tokio::test]
-async fn private_needs_an_invite_or_the_organizer() {
+async fn invite_only_needs_a_link_or_the_organizer() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
-    let private = with(duel("copa"), json!({ "visibility": "private" }));
-    create_tournament(&app, &ana, private).await;
+    let invite_only = with(duel("copa"), json!({ "admission": "invite_only" }));
+    let created = create_tournament(&app, &ana, invite_only).await;
+    assert_eq!(created["admission"], "invite_only");
     publish(&app, &ana, "copa").await;
     let registration = format!("{COPA}/registration");
     let add = format!("{COPA}/participants");
 
-    assert_eq!(
-        post_empty(&app, &registration, &bia).await,
-        (StatusCode::NOT_FOUND, err("tournament.not_found"))
-    );
-    assert_eq!(
-        get(&app, &add, &bia).await,
-        (StatusCode::NOT_FOUND, err("tournament.not_found"))
-    );
-    // Organizer e owner veem, mas também não se inscrevem sozinhos.
-    assert_eq!(
-        post_empty(&app, &registration, &ana).await,
-        (StatusCode::CONFLICT, err("tournament.private"))
-    );
+    // Todos veem, mas sem botão: nem os jogadores nem a organização se
+    // inscrevem sozinhos.
+    assert_eq!(get(&app, COPA, &bia).await.0, StatusCode::OK);
+    for who in [&bia, &ana] {
+        assert_eq!(
+            post_empty(&app, &registration, who).await,
+            (StatusCode::CONFLICT, err("tournament.invite_only"))
+        );
+    }
 
     let (status, added) = post(&app, &add, &ana, json!({ "user_id": bia.id })).await;
     assert_eq!(status, StatusCode::CREATED, "{added}");
@@ -147,15 +144,12 @@ async fn private_needs_an_invite_or_the_organizer() {
         (StatusCode::CONFLICT, err("participant.already_registered"))
     );
     assert_eq!(nicknames(&participants(&app, &bia).await), ["Bia"]);
-    // Inscrita, a própria Bia pode sair; aí deixa de ver o torneio.
+    // Inscrita, a própria Bia pode sair; continua vendo o torneio.
     assert_eq!(
         delete(&app, &registration, &bia).await.0,
         StatusCode::NO_CONTENT
     );
-    assert_eq!(
-        get(&app, COPA, &bia).await,
-        (StatusCode::NOT_FOUND, err("tournament.not_found"))
-    );
+    assert_eq!(get(&app, COPA, &bia).await.0, StatusCode::OK);
 
     // Só membro do tenant entra, e só organizer ou owner inscreve outros.
     let eve = user(&db, "Eve").await;

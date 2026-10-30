@@ -405,59 +405,36 @@ async fn translations() {
 }
 
 #[tokio::test]
-async fn private_is_only_for_participants_and_organizers() {
+async fn invite_only_still_shows_to_every_member() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
-    let private = with(duel("copa"), json!({ "visibility": "private" }));
-    let created = create_tournament(&app, &ana, private).await;
-    assert_eq!(created["visibility"], "private");
+    let invite_only = with(duel("copa"), json!({ "admission": "invite_only" }));
+    let created = create_tournament(&app, &ana, invite_only).await;
+    assert_eq!(created["admission"], "invite_only");
     assert_eq!(created["participants"], 0);
     assert_eq!(created["registered"], false);
-    create_tournament(&app, &ana, duel("aberta")).await;
+    let open = create_tournament(&app, &ana, duel("aberta")).await;
+    assert_eq!(open["admission"], "open");
     publish(&app, &ana, "copa").await;
     publish(&app, &ana, "aberta").await;
     let uri = "/tenants/quake-br/tournaments/copa";
 
-    // Bia é membro, mas não está inscrita: para ela o privado não existe.
-    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
-    assert_eq!(slugs(&list), ["aberta"]);
-    assert_eq!(
-        get(&app, uri, &bia).await,
-        (StatusCode::NOT_FOUND, err("tournament.not_found"))
-    );
-    let (_, list) = get(&app, "/tenants/quake-br/tournaments", &ana).await;
-    assert_eq!(slugs(&list), ["aberta", "copa"]);
-
-    // Inscrita pelo organizador, passa a ver.
-    let (status, _) = post(
-        &app,
-        &format!("{uri}/participants"),
-        &ana,
-        json!({ "user_id": bia.id }),
-    )
-    .await;
-    assert_eq!(status, StatusCode::CREATED);
+    // Bia é membro e não está inscrita, e vê os dois.
     let (_, list) = get(&app, "/tenants/quake-br/tournaments", &bia).await;
     assert_eq!(slugs(&list), ["aberta", "copa"]);
-    assert_eq!(list[1]["registered"], true);
-    assert_eq!(list[1]["participants"], 1);
+    assert_eq!(list[1]["admission"], "invite_only");
+    assert_eq!(list[1]["registered"], false);
     let (status, seen) = get(&app, uri, &bia).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(seen["registered"], true);
+    assert_eq!(seen["admission"], "invite_only");
 
-    // Público, todos os membros veem. A visibilidade muda até encerrar.
-    let caio = user(&db, "Caio").await;
-    join(&app, &caio, &invite(&app, &ana, "quake-br").await).await;
-    assert_eq!(get(&app, uri, &caio).await.0, StatusCode::NOT_FOUND);
-    let (status, updated) = patch(&app, uri, &ana, json!({ "visibility": "public" })).await;
+    // O tipo de inscrição muda até encerrar.
+    let (status, updated) = patch(&app, uri, &ana, json!({ "admission": "open" })).await;
     assert_eq!(status, StatusCode::OK, "{updated}");
-    assert_eq!(updated["visibility"], "public");
-    let (status, seen) = get(&app, uri, &caio).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(seen["registered"], false);
+    assert_eq!(updated["admission"], "open");
     set_status(&db, "copa", "finished").await;
     assert_eq!(
-        patch(&app, uri, &ana, json!({ "visibility": "private" })).await,
+        patch(&app, uri, &ana, json!({ "admission": "invite_only" })).await,
         (StatusCode::CONFLICT, err("tournament.finished"))
     );
 }

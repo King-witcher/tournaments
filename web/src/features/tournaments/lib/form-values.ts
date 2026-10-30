@@ -15,7 +15,7 @@ export type TournamentValues = {
   locale: Locale;
   description: string;
   rules: string;
-  visibility: Schemas["Visibility"];
+  admission: Schemas["Admission"];
   /** `null` com o campo vazio (o `required` do campo não deixa enviar assim). */
   maxParticipants: number | null;
   /** Duelo ou TDM. */
@@ -102,7 +102,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     locale,
     description: "",
     rules: "",
-    visibility: "public",
+    admission: "open",
     maxParticipants: 16,
     mode: "duel",
     teamSize: 1,
@@ -141,7 +141,7 @@ export function valuesFrom(
     locale: tournament.locale,
     description: tournament.description,
     rules: tournament.rules,
-    visibility: tournament.visibility,
+    admission: tournament.admission,
     maxParticipants: tournament.max_participants,
     mode: tournament.mode,
     teamSize: tournament.team_size,
@@ -305,13 +305,13 @@ export function updateBody(values: TournamentValues, setupLocked: boolean) {
   };
 }
 
-/** O que muda até o torneio encerrar: textos, visibilidade, janela de contestação e captura de tela obrigatória. */
+/** O que muda até o torneio encerrar: textos, tipo de inscrição, janela de contestação e captura de tela obrigatória. */
 function textsBody(values: TournamentValues) {
   return {
     name: values.name,
     description: values.description,
     rules: values.rules,
-    visibility: values.visibility,
+    admission: values.admission,
     contest_minutes: values.contestMinutes,
     screenshots_required: values.screenshotsRequired,
   };

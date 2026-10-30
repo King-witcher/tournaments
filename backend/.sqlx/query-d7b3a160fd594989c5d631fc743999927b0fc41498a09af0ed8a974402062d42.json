@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select g.match_key, g.number, mp.name as \"map?\", h.won as \"won!\", h.delta,\n                  h.rating_after, h.at, t.slug, t.locale, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  case gp.side when 'a' then g.side_b else g.side_a end as \"opponent!\"\n           from rating_history h\n           join match_games g on g.id = h.game_id and g.tenant_id = h.tenant_id\n           join match_game_players gp on gp.game_id = g.id and gp.user_id = h.user_id\n           join tournaments t on t.id = g.tournament_id\n           left join maps mp on mp.id = g.map_id\n           where h.tenant_id = $1 and h.user_id = $2\n             and ($4 or (t.status <> 'draft'\n                         and (t.visibility = 'public'\n                              or exists(select 1 from participants p\n                                        where p.tournament_id = t.id and p.user_id = $3))))\n           order by h.seq desc\n           limit $5",
+  "query": "select g.match_key, g.number, mp.name as \"map?\", h.won as \"won!\", h.delta,\n                  h.rating_after, h.at, t.slug, t.locale, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  case gp.side when 'a' then g.side_b else g.side_a end as \"opponent!\"\n           from rating_history h\n           join match_games g on g.id = h.game_id and g.tenant_id = h.tenant_id\n           join match_game_players gp on gp.game_id = g.id and gp.user_id = h.user_id\n           join tournaments t on t.id = g.tournament_id\n           left join maps mp on mp.id = g.map_id\n           where h.tenant_id = $1 and h.user_id = $2\n           order by h.seq desc\n           limit $3",
   "describe": {
     "columns": [
       {
@@ -136,8 +136,6 @@
       "Left": [
         "Int8",
         "Int8",
-        "Int8",
-        "Bool",
         "Int8"
       ]
     },
@@ -157,5 +155,5 @@
       null
     ]
   },
-  "hash": "75f0620e5fdde8c61bcad3150d41e73af21d5826d82b84b8880bc65337670039"
+  "hash": "d7b3a160fd594989c5d631fc743999927b0fc41498a09af0ed8a974402062d42"
 }

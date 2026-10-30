@@ -15,8 +15,8 @@ use crate::{
 
 const PARTICIPANT_NOT_FOUND: ApiError = ApiError::not_found("participant.not_found");
 
-/// 409 `tournament.check_in_closed` fora do check-in (antes de abrir, com a
-/// inscrição reaberta ou depois de iniciar).
+/// 409 `tournament.check_in_closed` fora do check-in (antes de abrir ou
+/// depois de iniciar).
 fn check_open(tournament: &StoredTournament) -> Result<(), ApiError> {
     if !tournament.status.check_in_open() {
         return Err(ApiError::conflict("tournament.check_in_closed"));

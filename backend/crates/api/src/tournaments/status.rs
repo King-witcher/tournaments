@@ -54,14 +54,15 @@ impl TournamentStatus {
         matches!(self, Self::CheckIn)
     }
 
-    /// Textos, traduções e visibilidade mudam até o torneio encerrar.
+    /// Textos, traduções e o tipo de inscrição mudam até o torneio encerrar.
     pub const fn texts_editable(self) -> bool {
         !matches!(self, Self::Finished)
     }
 
-    /// O próprio membro se inscreve, sai ou entra por convite só aqui.
+    /// O próprio membro se inscreve, sai ou entra por convite aqui: a
+    /// inscrição fica aberta até o início, também durante o check-in.
     pub const fn registration_open(self) -> bool {
-        matches!(self, Self::Registration)
+        matches!(self, Self::Registration | Self::CheckIn)
     }
 
     /// O organizador inscreve e tira participantes até o torneio começar.
@@ -70,9 +71,9 @@ impl TournamentStatus {
     }
 
     /// Gerar link de inscrição: já no rascunho (para mandar antes de
-    /// publicar) e com a inscrição aberta.
+    /// publicar) e até o início.
     pub const fn invites_allowed(self) -> bool {
-        matches!(self, Self::Draft | Self::Registration)
+        matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
     }
 }
 
@@ -95,7 +96,7 @@ mod tests {
         );
         assert_eq!(
             allows(TournamentStatus::registration_open),
-            [false, true, false, false, false]
+            [false, true, true, false, false]
         );
         assert_eq!(
             allows(TournamentStatus::participants_editable),
@@ -103,7 +104,7 @@ mod tests {
         );
         assert_eq!(
             allows(TournamentStatus::invites_allowed),
-            [true, true, false, false, false]
+            [true, true, true, false, false]
         );
         assert_eq!(
             allows(TournamentStatus::check_in_open),

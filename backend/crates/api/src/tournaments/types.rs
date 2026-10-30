@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{
+    admission::Admission,
     contest::DEFAULT_CONTEST_MINUTES,
     schedule::DEFAULT_CHECK_IN_MINUTES,
     setup::TournamentMode,
     status::TournamentStatus,
     veto::{VetoInput, VetoSettings},
-    visibility::Visibility,
 };
 use crate::shared::{Locale, nullable};
 
@@ -116,9 +116,9 @@ pub struct CreateTournament {
     /// 2 no TDM.
     #[serde(default)]
     pub team_size: Option<i32>,
-    /// Padrão `public`. Muda depois, até o torneio encerrar.
+    /// Padrão `open`. Muda depois, até o torneio encerrar.
     #[serde(default)]
-    pub visibility: Visibility,
+    pub admission: Admission,
     /// Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
     /// checagem de campeões usa o pior caso com esse número (no TDM, com os
     /// times que ele comporta).
@@ -199,7 +199,7 @@ fn default_counts_for_rating() -> bool {
     true
 }
 
-/// Campos ausentes não mudam. Textos e visibilidade podem mudar até o
+/// Campos ausentes não mudam. Textos e inscrição podem mudar até o
 /// torneio encerrar; vagas, regra de campeões, fases, data de início e
 /// janela de check-in, até ele começar (e as vagas nunca abaixo do número de
 /// inscritos).
@@ -215,7 +215,7 @@ pub struct UpdateTournament {
     pub name: Option<String>,
     pub description: Option<String>,
     pub rules: Option<String>,
-    pub visibility: Option<Visibility>,
+    pub admission: Option<Admission>,
     pub max_participants: Option<i32>,
     pub champion_rules: Option<ChampionRules>,
     pub stages: Option<Vec<StageFormat>>,
@@ -254,7 +254,7 @@ pub struct Tournament {
     /// Jogadores por time (1 no duelo).
     pub team_size: i32,
     pub status: TournamentStatus,
-    pub visibility: Visibility,
+    pub admission: Admission,
     /// Vagas, em jogadores.
     pub max_participants: i32,
     /// Inscritos agora.
@@ -270,8 +270,6 @@ pub struct Tournament {
     /// Janela de check-in em minutos; `null`: sem check-in.
     pub check_in_minutes: Option<i32>,
     /// Quando o check-in abre (ou abriu) sozinho: o início menos a janela.
-    /// Com o status ainda em inscrição depois disso, o organizador reabriu a
-    /// inscrição e a abertura automática está suspensa.
     pub check_in_opens_at: Option<DateTime<Utc>>,
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
     /// enviado.
@@ -296,7 +294,7 @@ pub struct TournamentSummary {
     /// Jogadores por time (1 no duelo).
     pub team_size: i32,
     pub status: TournamentStatus,
-    pub visibility: Visibility,
+    pub admission: Admission,
     pub max_participants: i32,
     /// Inscritos agora.
     pub participants: i64,

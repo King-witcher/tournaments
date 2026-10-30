@@ -13,7 +13,7 @@ impl From<StoredTournament> for Tournament {
             mode: t.setup.mode,
             team_size: t.setup.team_size,
             status: t.status,
-            visibility: t.visibility,
+            admission: t.admission,
             max_participants: t.setup.max_participants,
             participants: t.participants,
             registered: t.registered,

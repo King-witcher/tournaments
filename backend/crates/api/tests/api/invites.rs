@@ -212,8 +212,8 @@ async fn tournament_link_joins_the_tenant_and_registers() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
-    let private = with(duel("copa"), json!({ "visibility": "private" }));
-    create_tournament(&app, &ana, private).await;
+    let invite_only = with(duel("copa"), json!({ "admission": "invite_only" }));
+    create_tournament(&app, &ana, invite_only).await;
 
     // Já no rascunho, para mandar antes de publicar.
     let token = copa_invite(&app, &ana).await;
@@ -331,6 +331,17 @@ async fn tournament_links_only_before_the_start() {
 
     publish(&app, &ana, "copa").await;
     let token = copa_invite(&app, &ana).await;
+    // Durante o check-in o link ainda vale, e quem entra já faz o check-in.
+    set_status(&db, "copa", "check_in").await;
+    let dani = user(&db, "Dani").await;
+    assert_eq!(join(&app, &dani, &token).await["tournament"], "copa");
+    let (_, seen) = get(&app, COPA, &dani).await;
+    assert_eq!(
+        (&seen["registered"], &seen["checked_in"]),
+        (&json!(true), &json!(true))
+    );
+    assert_eq!(post_empty(&app, &links, &ana).await.0, StatusCode::CREATED);
+
     set_status(&db, "copa", "in_progress").await;
     let closed = (StatusCode::CONFLICT, err("tournament.registration_closed"));
     assert_eq!(post_empty(&app, &links, &ana).await, closed);

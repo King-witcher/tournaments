@@ -1,3 +1,4 @@
+import { registrationOpen } from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
 import type { ButtonKind } from "@/shared/ui/button";
 import { CheckInButton } from "./check-in-button";
@@ -11,16 +12,16 @@ type Props = {
 
 /**
  * O que quem vê faz agora com a própria participação, no cabeçalho:
- * inscrever-se (inscrição aberta, torneio público, com vaga) ou fazer o
- * check-in (check-in aberto, inscrito, ainda não fez). O motivo de não poder
- * (privado, lotado) fica em "Sua situação".
+ * inscrever-se (inscrição aberta até o início, sem ser só por link, com vaga)
+ * ou fazer o check-in (check-in aberto, inscrito, ainda não fez). O motivo de
+ * não poder (só por link, lotado) fica em "Sua situação".
  */
 export function ParticipationAction({ tenant, tournament, kind }: Props) {
   const { status, registered, slug } = tournament;
   if (
-    status === "registration" &&
+    registrationOpen(status) &&
     !registered &&
-    tournament.visibility === "public" &&
+    tournament.admission === "open" &&
     tournament.participants < tournament.max_participants
   ) {
     return <RegistrationButton tenant={tenant} slug={slug} kind={kind} />;

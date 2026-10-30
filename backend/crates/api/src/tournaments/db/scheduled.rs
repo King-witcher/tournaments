@@ -19,14 +19,13 @@ pub struct DueCheckIn {
     pub id: TournamentId,
     pub status: TournamentStatus,
     pub schedule: Schedule,
-    pub reopened_at: Option<DateTime<Utc>>,
 }
 
-/// Torneios na inscrição com a janela aberta em `now` (a reabertura que
-/// suspende a abertura automática é conferida por `Schedule::check_in_due`).
+/// Torneios na inscrição com a janela aberta em `now` (`Schedule::check_in_due`
+/// confere de novo).
 pub async fn due_check_ins(db: &PgPool, now: DateTime<Utc>) -> Result<Vec<DueCheckIn>, ApiError> {
     sqlx::query!(
-        r#"select id, status, starts_at, check_in_minutes, registration_reopened_at
+        r#"select id, status, starts_at, check_in_minutes
            from tournaments
            where status = 'registration'
              and starts_at - make_interval(mins => check_in_minutes) <= $1
@@ -46,7 +45,6 @@ pub async fn due_check_ins(db: &PgPool, now: DateTime<Utc>) -> Result<Vec<DueChe
                 starts_at: r.starts_at,
                 check_in_minutes: r.check_in_minutes,
             },
-            reopened_at: r.registration_reopened_at,
         })
     })
     .collect()

@@ -202,23 +202,6 @@ async fn member_rating_with_the_last_maps() {
 }
 
 #[tokio::test]
-async fn maps_of_a_private_tournament_only_for_who_sees_it() {
-    let (db, _lease) = crate::db::test_db().await;
-    let f = final_md3(&db, json!({})).await;
-    let (status, body) = patch(&f.app, COPA, &f.ana, json!({ "visibility": "private" })).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    play(&f.app, &f.p1, &f.p2, "wb-1-1", 2, 0).await;
-    // Bia não vê o torneio: vê o rating, não os mapas.
-    let r = member_rating(&f.app, &f.bia, f.p1.id).await;
-    assert_eq!(r["standing"]["rating"], 1569);
-    assert_eq!(r["games"], json!([]));
-    for who in [&f.p2, &f.ana] {
-        let r = member_rating(&f.app, who, f.p1.id).await;
-        assert_eq!(r["games"].as_array().unwrap().len(), 2);
-    }
-}
-
-#[tokio::test]
 async fn who_left_leaves_the_ranking() {
     let (db, _lease) = crate::db::test_db().await;
     let f = final_md3(&db, json!({})).await;

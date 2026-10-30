@@ -12,12 +12,12 @@ type Props = {
   errors: FieldErrors;
   /** O torneio já começou: vagas e check-in ficam travados. */
   setupLocked: boolean;
-  /** Encerrado: a visibilidade não muda mais. */
+  /** Encerrado: o tipo de inscrição não muda mais. */
   finished: boolean;
 };
 
 /**
- * Inscrições e prazos: vagas, visibilidade e janela de check-in, todos com
+ * Inscrições e prazos: vagas, tipo de inscrição e janela de check-in, todos com
  * padrão. A data de início fica fora, junto do nome; a contestação e a captura
  * de tela, em Resultados.
  */
@@ -39,17 +39,17 @@ export function TournamentRegistrationFields({
         disabled={setupLocked}
       />
       <RadioGroup
-        legendText={t("visibility")}
-        helperText={t(`visibilityHints.${values.visibility}`)}
-        name="visibility"
+        legendText={t("admission")}
+        helperText={t(`admissionHints.${values.admission}`)}
+        name="admission"
         orientation="horizontal"
-        value={values.visibility}
+        value={values.admission}
         disabled={finished}
         options={[
-          { value: "public", label: t("visibilityOptions.public") },
-          { value: "private", label: t("visibilityOptions.private") },
+          { value: "open", label: t("admissionOptions.open") },
+          { value: "invite_only", label: t("admissionOptions.invite_only") },
         ]}
-        onChange={(visibility) => onChange({ visibility })}
+        onChange={(admission) => onChange({ admission })}
       />
       <TournamentCheckInField
         value={values.checkInMinutes}

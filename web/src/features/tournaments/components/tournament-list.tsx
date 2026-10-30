@@ -9,6 +9,7 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
+import { participantsEditable } from "../lib/status";
 import styles from "./tournament-list.module.scss";
 
 type Schemas = components["schemas"];
@@ -33,12 +34,12 @@ const ORDER: Schemas["TournamentStatus"][] = [
  */
 export async function TournamentList({ slug }: { slug: string }) {
   const api = await serverApi();
-  const [loaded, t, tStatus, tVisibility, locale, tournaments] =
+  const [loaded, t, tStatus, tAdmission, locale, tournaments] =
     await Promise.all([
       getTenant(slug),
       getTranslations("Tournaments"),
       getTranslations("TournamentStatus"),
-      getTranslations("Visibility"),
+      getTranslations("Admission"),
       getLocale(),
       api
         .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
@@ -91,11 +92,12 @@ export async function TournamentList({ slug }: { slug: string }) {
                     </StatusTag>
                   )
                 )}
-                {tournament.visibility === "private" && (
-                  <StatusTag status="neutral">
-                    {tVisibility("private")}
-                  </StatusTag>
-                )}
+                {tournament.admission === "invite_only" &&
+                  participantsEditable(tournament.status) && (
+                    <StatusTag status="neutral">
+                      {tAdmission("inviteOnly")}
+                    </StatusTag>
+                  )}
               </span>
             ),
             starts: tournament.starts_at ? (

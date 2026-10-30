@@ -9,7 +9,7 @@ export function setupEditable(status: Status) {
   );
 }
 
-/** Textos, traduções e visibilidade ainda mudam. */
+/** Textos, traduções e o tipo de inscrição ainda mudam. */
 export function textsEditable(status: Status) {
   return status !== "finished";
 }
@@ -19,9 +19,16 @@ export function participantsEditable(status: Status) {
   return setupEditable(status);
 }
 
-/** Dá para gerar link de inscrição: no rascunho e com a inscrição aberta. */
+/** Dá para gerar link de inscrição: no rascunho e até o início. */
 export function invitesAllowed(status: Status) {
-  return status === "draft" || status === "registration";
+  return (
+    status === "draft" || status === "registration" || status === "check_in"
+  );
+}
+
+/** A inscrição está aberta: até o início, também durante o check-in. */
+export function registrationOpen(status: Status) {
+  return status === "registration" || status === "check_in";
 }
 
 /** Já começou: a chave, as partidas e a classificação existem. */

@@ -21,7 +21,7 @@
   "add": {
     "open": "Inscrever alguém",
     "title": "Inscrever um membro",
-    "hint": "Vale em torneio público ou privado. Durante o check-in, quem você inscreve entra sem check-in.",
+    "hint": "Durante o check-in, quem você inscreve já entra com o check-in feito.",
     "member": "Membro",
     "choose": "Escolha um membro…",
     "submit": "Inscrever",
@@ -35,9 +35,9 @@
   "registration": {
     "register": "Inscrever-se",
     "withdraw": "Cancelar inscrição",
-    "withdrawConfirm": "Cancelar sua inscrição? A vaga fica livre para outra pessoa. Para voltar, inscreva-se de novo enquanto houver vaga (em torneio privado, só pela organização ou por um link de inscrição).",
+    "withdrawConfirm": "Cancelar sua inscrição? A vaga fica livre. Para voltar, inscreva-se de novo enquanto houver vaga (se a inscrição for só por link, use o link ou peça à organização).",
     "full": "As vagas acabaram.",
-    "privateHint": "Torneio privado. Só entra quem um organizador inscrever ou quem usar um link de inscrição."
+    "inviteOnly": "Inscrição só por link ou pela organização."
   },
   "situation": {
     "title": "Sua situação",
@@ -55,10 +55,8 @@
   },
   "checkIn": {
     "opensAt": "O check-in abre <date></date>. Quem não fizer fica fora da chave.",
-    "suspended": "A organização reabriu as inscrições; o check-in volta quando ela abrir.",
     "open": "Check-in aberto. Faça seu check-in para confirmar presença e entrar na chave.",
     "until": "Até <date></date> (faltam <countdown></countdown>).",
-    "openNotRegistered": "Check-in aberto. As inscrições estão fechadas.",
     "missed": "Você não fez check-in antes do início e ficou fora da chave.",
     "do": "Fazer check-in",
     "undo": "Desfazer check-in",

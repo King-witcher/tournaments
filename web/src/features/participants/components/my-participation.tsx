@@ -1,7 +1,10 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 
-import { hasStarted } from "@/features/tournaments/lib/status";
+import {
+  hasStarted,
+  registrationOpen,
+} from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
 import { Countdown } from "@/shared/ui/countdown";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -25,7 +28,7 @@ type Props = {
  * a pessoa ainda precisa saber ou fazer (quando o check-in abre, o check-in
  * que falta, com o prazo e a contagem) e, depois de iniciar, a situação na
  * chave e a próxima partida. Para quem não está inscrito, só o motivo de não
- * haver botão de inscrição (privado, lotado, inscrições fechadas). Nada a
+ * haver botão de inscrição (só por link, lotado). Nada a
  * dizer, nada aparece. Para quem está inscrito e ainda vai jogar, a sugestão
  * de ativar as notificações num bloco à parte (`suggestPush`).
  */
@@ -40,15 +43,12 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
 
   if (!tournament.registered) {
     if (organizer) return null;
-    const text =
-      status === "registration"
-        ? tournament.visibility === "private"
-          ? t("registration.privateHint")
-          : tournament.participants >= tournament.max_participants
-            ? t("registration.full")
-            : null
-        : status === "check_in"
-          ? t("checkIn.openNotRegistered")
+    const text = !registrationOpen(status)
+      ? null
+      : tournament.admission === "invite_only"
+        ? t("registration.inviteOnly")
+        : tournament.participants >= tournament.max_participants
+          ? t("registration.full")
           : null;
     return (
       text && (
@@ -94,12 +94,10 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
     status === "registration" &&
     tournament.check_in_minutes != null &&
     opensAt != null &&
-    // Com a abertura no passado e ainda em inscrição, a organização reabriu.
-    (new Date(opensAt) <= now
-      ? t("checkIn.suspended")
-      : t.rich("checkIn.opensAt", {
-          date: () => <LocalDateTime value={opensAt} />,
-        }));
+    new Date(opensAt) > now &&
+    t.rich("checkIn.opensAt", {
+      date: () => <LocalDateTime value={opensAt} />,
+    });
   return (
     <ParticipationTile tag={tag("registered")} suggestPush>
       {checkInHint && <p>{checkInHint}</p>}

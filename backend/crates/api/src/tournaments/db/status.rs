@@ -1,7 +1,6 @@
 //! Mudanças de status: publicar, a abertura automática do check-in e as
 //! transições manuais que o domínio `lifecycle` decide.
 
-use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgExecutor};
 
 use super::TournamentId;
@@ -53,43 +52,24 @@ pub async fn sync_finished(
     Ok(status)
 }
 
-/// Guarda quando o organizador reabriu a inscrição: a abertura automática
-/// não reabre a janela que já tinha aberto (`Schedule::check_in_due`).
-pub async fn mark_registration_reopened(
-    conn: &mut PgConnection,
-    id: TournamentId,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        "update tournaments set registration_reopened_at = now() where id = $1",
-        id.get()
-    )
-    .execute(conn)
-    .await?;
-    Ok(())
-}
-
 /// Inscrição → check-in pela abertura automática, só se nada mudou desde a
-/// leitura (`schedule` e `reopened_at` são os lidos): uma reabertura ou uma
-/// mudança de data no meio do caminho vence; na comunidade com a exclusão
+/// leitura (`schedule` é o lido): uma mudança de data no meio do caminho vence; na comunidade com a exclusão
 /// agendada (só leitura), não abre. `false` se não mudou.
 pub(super) async fn open_due_check_in<'e>(
     db: impl PgExecutor<'e>,
     id: TournamentId,
     schedule: &Schedule,
-    reopened_at: Option<DateTime<Utc>>,
 ) -> Result<bool, sqlx::Error> {
     let result = sqlx::query!(
         r#"update tournaments set status = 'check_in', updated_at = now()
            where id = $1 and status = 'registration'
              and starts_at is not distinct from $2
              and check_in_minutes is not distinct from $3
-             and registration_reopened_at is not distinct from $4
              and not exists (select 1 from tenants n
                              where n.id = tournaments.tenant_id and n.deletion_due_at is not null)"#,
         id.get(),
         schedule.starts_at,
-        schedule.check_in_minutes,
-        reopened_at
+        schedule.check_in_minutes
     )
     .execute(db)
     .await?;

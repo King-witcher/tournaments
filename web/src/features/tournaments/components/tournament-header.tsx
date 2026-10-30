@@ -8,7 +8,7 @@ import { useModeLabel } from "../hooks/use-mode-label";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 import { formatKind } from "../lib/format";
 import { localizedName } from "../lib/localize";
-import { hasStarted } from "../lib/status";
+import { hasStarted, participantsEditable } from "../lib/status";
 import { TournamentActions } from "./tournament-actions";
 import { TournamentOverflow } from "./tournament-overflow";
 
@@ -25,7 +25,7 @@ type Props = {
 
 /**
  * O topo da página do torneio: a trilha até a comunidade, o nome no idioma
- * de quem vê, o estado (e "Privado"), a linha modalidade · formato · melhor
+ * de quem vê, o estado (e "Só por link"), a linha modalidade · formato · melhor
  * de · início · inscritos e as ações de quem vê, com o raro e o destrutivo
  * no ⋯.
  */
@@ -33,7 +33,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const t = useTranslations("Tournament");
   const tNav = useTranslations("Nav");
   const tStatus = useTranslations("TournamentStatus");
-  const tVisibility = useTranslations("Visibility");
+  const tAdmission = useTranslations("Admission");
   const locale = useLocale();
   const modeLabel = useModeLabel();
   const organizer = me.role !== "player";
@@ -64,9 +64,10 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
           <StatusTag status={tournament.status}>
             {tStatus(tournament.status)}
           </StatusTag>
-          {tournament.visibility === "private" && (
-            <StatusTag status="neutral">{tVisibility("private")}</StatusTag>
-          )}
+          {tournament.admission === "invite_only" &&
+            participantsEditable(tournament.status) && (
+              <StatusTag status="neutral">{tAdmission("inviteOnly")}</StatusTag>
+            )}
         </>
       }
       meta={

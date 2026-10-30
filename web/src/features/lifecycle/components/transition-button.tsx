@@ -9,7 +9,7 @@ import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button, type ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 
-/** Reabrir inscrições e desfazer o início ficam no ⋯ do cabeçalho. */
+/** Desfazer o início fica no ⋯ do cabeçalho. */
 export type Transition = "open_check_in" | "start";
 
 type Props = {

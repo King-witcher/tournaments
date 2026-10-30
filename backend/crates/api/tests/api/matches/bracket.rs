@@ -1,5 +1,5 @@
-//! A chave nasce no início, segue a visibilidade do torneio e some ao
-//! desfazer o início.
+//! A chave nasce no início, aparece para todos os membros da comunidade e some
+//! ao desfazer o início.
 
 use axum::http::StatusCode;
 use serde_json::{Value, json};
@@ -171,11 +171,11 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
 }
 
 #[tokio::test]
-async fn bracket_follows_the_tournament_visibility() {
+async fn bracket_is_for_every_member_of_the_community() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
-    create_tournament(&app, &ana, copa(json!({ "visibility": "private" }))).await;
+    create_tournament(&app, &ana, copa(json!({ "admission": "invite_only" }))).await;
     publish(&app, &ana, "copa").await;
     let add = format!("{COPA}/participants");
     for who in &p {
@@ -189,12 +189,12 @@ async fn bracket_follows_the_tournament_visibility() {
     let (status, _) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK);
 
-    // Bia é da comunidade mas não está no privado.
-    let hidden = (StatusCode::NOT_FOUND, err("tournament.not_found"));
-    assert_eq!(get(&app, &format!("{COPA}/bracket"), &bia).await, hidden);
+    // Bia é da comunidade e não está inscrita, mas vê a chave e as partidas
+    // (a inscrição fechada só controla quem entra).
+    assert_eq!(bracket(&app, &bia).await["status"], "in_progress");
     assert_eq!(
-        get(&app, &format!("{COPA}/matches/wb-1-1"), &bia).await,
-        hidden
+        get(&app, &format!("{COPA}/matches/wb-1-1"), &bia).await.0,
+        StatusCode::OK
     );
     let outsider = user(&db, "Zé").await;
     assert_eq!(

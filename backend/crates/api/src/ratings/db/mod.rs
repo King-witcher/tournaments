@@ -88,16 +88,12 @@ pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>,
         .collect())
 }
 
-/// Até `limit` mapas que contaram para `user`, do mais recente, só dos
-/// torneios que `viewer` vê (`see_all`: organizer e owner veem todos; os
-/// outros, os públicos e os privados em que estão inscritos, como na lista da
-/// comunidade). O adversário é o time do outro lado do mapa.
+/// Até `limit` mapas que contaram para `user`, do mais recente. O adversário
+/// é o time do outro lado do mapa.
 pub async fn recent_games(
     db: &PgPool,
     tenant: TenantId,
     user: i64,
-    viewer: i64,
-    see_all: bool,
     limit: i64,
 ) -> Result<Vec<RatedGame>, ApiError> {
     let mut conn = db.acquire().await?;
@@ -117,16 +113,10 @@ pub async fn recent_games(
            join tournaments t on t.id = g.tournament_id
            left join maps mp on mp.id = g.map_id
            where h.tenant_id = $1 and h.user_id = $2
-             and ($4 or (t.status <> 'draft'
-                         and (t.visibility = 'public'
-                              or exists(select 1 from participants p
-                                        where p.tournament_id = t.id and p.user_id = $3))))
            order by h.seq desc
-           limit $5"#,
+           limit $3"#,
         tenant.get(),
         user,
-        viewer,
-        see_all,
         limit
     )
     .fetch_all(&mut *conn)

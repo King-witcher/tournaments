@@ -144,7 +144,7 @@ pub async fn list_members(
         ("user_id" = i64, Path, description = "Id do usuário membro"),
     ),
     responses(
-        (status = OK, body = MemberProfile, description = "O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho nem privado em que não está inscrito), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes"),
+        (status = OK, body = MemberProfile, description = "O membro na comunidade, com os torneios dela em que se inscreveu e que quem vê vê na lista da comunidade (player não vê rascunho), do início mais recente ao mais antigo (sem data, só rascunhos, primeiro; no empate, o criado por último), com a situação e a colocação dele. As confirmações por tempo vencidas são aplicadas antes"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo: nunca foi, saiu ou foi removido)"),

@@ -18,15 +18,8 @@ pub async fn open_due_check_ins(db: &PgPool, now: DateTime<Utc>) -> Result<usize
     for due in db::due_check_ins(db, now).await? {
         let open = async {
             let mut tx = db.begin().await?;
-            let status = db::current_status(
-                &mut tx,
-                due.id,
-                due.status,
-                &due.schedule,
-                due.reopened_at,
-                now,
-            )
-            .await?;
+            let status =
+                db::current_status(&mut tx, due.id, due.status, &due.schedule, now).await?;
             tx.commit().await?;
             Ok::<_, sqlx::Error>(status == TournamentStatus::CheckIn)
         };

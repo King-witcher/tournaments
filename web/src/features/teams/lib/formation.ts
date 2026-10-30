@@ -50,7 +50,8 @@ export function formationCounts(formation: Formation, checkIn: boolean) {
 
 /**
  * O check-in aparece e conta na formação: o torneio tem check-in, ainda não
- * começou e ele está aberto (ou já houve, depois de reabrir as inscrições).
+ * começou e ele está aberto (ou já houve, e o check-in foi desligado e ligado
+ * de novo).
  * Antes de abrir, todos estariam "sem check-in", o que não diz nada; depois
  * de iniciar, os times da chave já passaram pela regra.
  */

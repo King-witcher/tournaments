@@ -24,8 +24,8 @@ type Props = {
 };
 
 /**
- * "Inscrever alguém", na barra da tabela de inscritos (organizer e owner, em
- * torneio público ou privado, até começar): abre o `FormModal` com a escolha
+ * "Inscrever alguém", na barra da tabela de inscritos (organizer e owner, com
+ * qualquer tipo de inscrição, até começar): abre o `FormModal` com a escolha
  * do membro. Sem vaga ou sem membro a inscrever, o botão continua lá e o
  * Modal diz por que não dá e o que fazer (a barra da tabela não tem altura
  * para um motivo embaixo do botão). Ao

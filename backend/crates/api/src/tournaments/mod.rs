@@ -2,7 +2,8 @@
 //! excluir rascunho e traduzir os textos. Formato e regra de campeões passam
 //! pela checagem do `engine` ao criar, ao mudar e ao publicar (e, com os
 //! participantes reais, ao iniciar: `Setup::check_entrants`). Também decide
-//! quem vê cada torneio (`visibility`), que `participants`, `invites` e
+//! quem vê cada torneio (`visibility`: só o rascunho some para os
+//! jogadores) e quem pode se inscrever pelo botão (`admission`), que `participants`, `invites` e
 //! `matches` usam, e guarda a data de início e a janela de check-in
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
 //! contestação de resultado (`contest`), a configuração do veto das partidas
@@ -14,6 +15,7 @@
 //! agendador do tempo real faz sozinho (abrir o check-in, avisar a hora de
 //! iniciar), em `scheduled`.
 
+mod admission;
 mod changes;
 mod contest;
 mod db;
@@ -37,17 +39,18 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use admission::Admission;
 pub use changes::{changed, changed_with, check_in_opened};
 pub use db::{
     Audience, StoredTournament, TournamentId, audience, champion_pool, find, find_for_update, list,
-    mark_registration_reopened, set_status, slugs_for_member, sync_finished,
+    set_status, slugs_for_member, sync_finished,
 };
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;
 pub use status::TournamentStatus;
 pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath, TournamentSummary};
 pub use veto::{MapMode, PoolMap};
-pub use visibility::{Visibility, find_visible, find_visible_for_update};
+pub use visibility::{find_visible, find_visible_for_update};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

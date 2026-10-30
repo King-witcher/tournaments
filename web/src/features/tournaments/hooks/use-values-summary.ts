@@ -58,7 +58,7 @@ export function useValuesSummary() {
       const slots = v.maxParticipants;
       const size = teamSizeOf(v);
       return line([
-        tForm(`visibilityOptions.${v.visibility}`),
+        tForm(`admissionOptions.${v.admission}`),
         slots !== null &&
           (isTdm(v)
             ? t("slotsTeams", {

@@ -1,5 +1,6 @@
 import { loadBracket } from "@/features/matches/server";
 import type { components } from "@/shared/api/schema";
+import { registrationOpen } from "../lib/status";
 import { TournamentOverflowMenu } from "./tournament-overflow-menu";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
 /**
  * O ⋯ do cabeçalho, com o que é raro ou destrutivo e vale agora: desfazer o
  * próprio check-in, cancelar a própria inscrição e, para a organização,
- * reabrir inscrições, desfazer o início (com a conta dos resultados que ele
+ * desfazer o início (com a conta dos resultados que ele
  * apaga, lida da chave) e excluir o rascunho. Sem nada, não aparece.
  */
 export async function TournamentOverflow({
@@ -23,8 +24,7 @@ export async function TournamentOverflow({
   const { status, registered, checked_in: checkedIn } = tournament;
   const flags = {
     undoCheckIn: status === "check_in" && registered && checkedIn,
-    withdrawRegistration: status === "registration" && registered,
-    reopenRegistration: organizer && status === "check_in",
+    withdrawRegistration: registrationOpen(status) && registered,
     deleteDraft: organizer && status === "draft",
   };
   let undoStart: { results: number; hasCheckIn: boolean } | undefined;

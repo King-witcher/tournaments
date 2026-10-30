@@ -47,10 +47,10 @@ pub async fn list_participants(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = NO_CONTENT, description = "Inscrito (também se já estava)"),
+        (status = NO_CONTENT, description = "Inscrito (também se já estava); durante o check-in, já com o check-in feito"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.private (só por convite ou pelo organizador), tournament.registration_closed, tournament.full {max}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.invite_only (só pelo link ou pela organização), tournament.registration_closed, tournament.full {max}"),
     )
 )]
 pub async fn register(
@@ -84,7 +84,7 @@ pub async fn register(
         (status = NO_CONTENT, description = "Inscrição cancelada (também se não havia)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (depois disso, só o organizador tira)"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (depois de começar, só o organizador tira)"),
     )
 )]
 pub async fn withdraw(
@@ -114,7 +114,7 @@ pub async fn withdraw(
     ),
     request_body = AddParticipant,
     responses(
-        (status = CREATED, body = Participant, description = "Membro inscrito pelo organizador, em torneio público ou privado"),
+        (status = CREATED, body = Participant, description = "Membro inscrito pelo organizador, com qualquer tipo de inscrição; durante o check-in, já com o check-in feito"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, member.not_found"),

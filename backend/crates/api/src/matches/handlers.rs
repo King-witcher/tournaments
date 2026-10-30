@@ -23,7 +23,7 @@ use crate::{
     responses(
         (status = OK, body = TournamentBracket, description = "A chave, refeita dos resultados confirmados (as confirmações por tempo vencidas são aplicadas antes), com as partidas de quem vê e o que esperam dele"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found (inclusive privado para quem não vê), bracket.not_found (ainda não começou)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found (ainda não começou)"),
     )
 )]
 pub async fn get_bracket(

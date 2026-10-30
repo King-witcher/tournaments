@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into participants (tenant_id, tournament_id, user_id, invite_id, added_by,\n                                     checked_in_at, checked_in_by)\n           select $1::bigint, $2::bigint, $3::bigint, $4::bigint, $5::bigint,\n                  case when $6 then now() end, case when $6 then $5::bigint end\n           from tenant_members\n           where tenant_id = $1 and user_id = $3 and left_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d2b8a7beade120de4e3b434b69e88673319eda3699965c9ceb4ee05f16bea77d"
+}

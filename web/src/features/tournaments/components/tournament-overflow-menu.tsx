@@ -21,14 +21,13 @@ type Props = {
   undoCheckIn: boolean;
   /** Quem vê está inscrito, com a inscrição aberta: pode cancelar. */
   withdrawRegistration: boolean;
-  reopenRegistration: boolean;
   /** Em andamento: desfazer o início apaga `results` partidas com mapa ou resultado. */
   undoStart?: { results: number; hasCheckIn: boolean };
   deleteDraft: boolean;
 };
 
 /**
- * O menu ⋯ do cabeçalho do torneio. Cancelar a inscrição, reabrir e excluir
+ * O menu ⋯ do cabeçalho do torneio. Cancelar a inscrição e excluir
  * pedem confirmação; desfazer o início também, e pede o endereço do torneio
  * digitado quando há resultado a perder. Depois, o foco vai para "Sua
  * situação" (o que é de quem vê) ou para o título (o que é do ciclo).
@@ -38,7 +37,6 @@ export function TournamentOverflowMenu({
   slug,
   undoCheckIn,
   withdrawRegistration,
-  reopenRegistration,
   undoStart,
   deleteDraft,
 }: Props) {
@@ -85,21 +83,6 @@ export function TournamentOverflowMenu({
               { params },
             ),
           viewerDone,
-        ),
-    });
-  }
-  if (reopenRegistration) {
-    items.push({
-      label: tLifecycle("reopenRegistration"),
-      confirm: { question: tLifecycle("reopenConfirm") },
-      onSelect: () =>
-        run(
-          () =>
-            api.POST(
-              "/tenants/{slug}/tournaments/{tournament}/registration/reopen",
-              { params },
-            ),
-          lifecycleDone,
         ),
     });
   }

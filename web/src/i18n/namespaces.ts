@@ -12,6 +12,7 @@
 
 const pt = {
   Account: () => import("../../messages/pt/Account.json"),
+  Admission: () => import("../../messages/pt/Admission.json"),
   ApiErrors: () => import("../../messages/pt/ApiErrors.json"),
   Auth: () => import("../../messages/pt/Auth.json"),
   Bracket: () => import("../../messages/pt/Bracket.json"),
@@ -45,7 +46,6 @@ const pt = {
   TournamentForm: () => import("../../messages/pt/TournamentForm.json"),
   TournamentStatus: () => import("../../messages/pt/TournamentStatus.json"),
   Tournaments: () => import("../../messages/pt/Tournaments.json"),
-  Visibility: () => import("../../messages/pt/Visibility.json"),
 };
 
 /** O conteúdo de cada namespace, em português (a referência dos tipos). */
@@ -59,6 +59,7 @@ type Loaders = {
 
 const es: Loaders = {
   Account: () => import("../../messages/es/Account.json"),
+  Admission: () => import("../../messages/es/Admission.json"),
   ApiErrors: () => import("../../messages/es/ApiErrors.json"),
   Auth: () => import("../../messages/es/Auth.json"),
   Bracket: () => import("../../messages/es/Bracket.json"),
@@ -92,7 +93,6 @@ const es: Loaders = {
   TournamentForm: () => import("../../messages/es/TournamentForm.json"),
   TournamentStatus: () => import("../../messages/es/TournamentStatus.json"),
   Tournaments: () => import("../../messages/es/Tournaments.json"),
-  Visibility: () => import("../../messages/es/Visibility.json"),
 };
 
 const loaders: Record<"pt" | "es", Loaders> = { pt, es };

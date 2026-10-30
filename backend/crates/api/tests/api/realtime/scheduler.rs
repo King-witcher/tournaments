@@ -93,16 +93,6 @@ async fn opens_the_check_in_on_time() {
         (found[0].0.as_str(), &found[0].1),
         ("check_in.opened", &vec![bia.id])
     );
-
-    // Reaberta a inscrição depois de a janela abrir, a abertura automática
-    // fica suspensa, como ao ler.
-    let uri = "/tenants/quake-br/tournaments/copa/registration/reopen";
-    let (status, _) = post_empty(&app, uri, &ana).await;
-    assert_eq!(status, StatusCode::OK);
-    starts_in(&db, "copa", 20).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.opened, 0);
-    assert_eq!(status_of(&db, "copa").await, "registration");
 }
 
 #[tokio::test]

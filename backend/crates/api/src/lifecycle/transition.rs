@@ -8,10 +8,14 @@
 //!
 //! ```text
 //! com check-in: inscrição ──abrir check-in (ou a hora)──▶ check-in ──iniciar──▶ em andamento
-//!                         ◀───────reabrir inscrição──────          ◀──desfazer──
+//!                                                      ◀─────desfazer──────
 //! sem check-in: inscrição ──────────────────iniciar────────────────────────────▶ em andamento
 //!                         ◀─────────────────desfazer─────────────────────────────
 //! ```
+//!
+//! A inscrição fica aberta até o início, também durante o check-in; por isso
+//! não há transição de volta do check-in para a inscrição (desligar o check-in
+//! pela edição faz isso).
 
 use chrono::Utc;
 use engine::core::ParticipantId;
@@ -31,8 +35,6 @@ const MIN_TO_START: usize = 2;
 pub enum Transition {
     /// Inscrição → check-in, antes da hora da abertura automática.
     OpenCheckIn,
-    /// Check-in → inscrição. A abertura automática não reabre a mesma janela.
-    ReopenRegistration,
     /// Check-in (ou inscrição, sem check-in) → em andamento.
     Start,
     /// Em andamento → check-in (ou inscrição, sem check-in), para quando se
@@ -43,7 +45,7 @@ pub enum Transition {
 impl Transition {
     /// O status depois da transição, saindo de `from`. Erros (409):
     /// `tournament.not_registration`, `tournament.check_in_disabled`,
-    /// `tournament.not_check_in`, `tournament.not_published`,
+    /// `tournament.not_published`,
     /// `tournament.check_in_not_open`, `tournament.already_started` e
     /// `tournament.not_in_progress`.
     pub fn target(
@@ -57,8 +59,6 @@ impl Transition {
             (Self::OpenCheckIn, Registration) if has_check_in => Ok(CheckIn),
             (Self::OpenCheckIn, Registration) => Err(err("tournament.check_in_disabled")),
             (Self::OpenCheckIn, _) => Err(err("tournament.not_registration")),
-            (Self::ReopenRegistration, CheckIn) => Ok(Registration),
-            (Self::ReopenRegistration, _) => Err(err("tournament.not_check_in")),
             (Self::Start, CheckIn) => Ok(InProgress),
             (Self::Start, Registration) if !has_check_in => Ok(InProgress),
             (Self::Start, Registration) => Err(err("tournament.check_in_not_open")),
@@ -83,9 +83,6 @@ pub async fn apply(
     let to = transition.target(tournament.status, tournament.schedule.has_check_in())?;
     let start_was_due = tournament.schedule.start_due(tournament.status, Utc::now());
     match transition {
-        Transition::ReopenRegistration => {
-            tournaments::mark_registration_reopened(conn, tournament.id).await?;
-        }
         Transition::Start => {
             let seeded: Vec<ParticipantId> =
                 teams::finalize_seeding(conn, tournament, MIN_TO_START).await?;
@@ -108,7 +105,7 @@ pub async fn apply(
             // iniciado não sai).
             participants::delete_departed(conn, tournament.id).await?;
         }
-        Transition::ReopenRegistration | Transition::Start => {
+        Transition::Start => {
             tournaments::changed(conn, tournament.id).await?;
         }
     }
@@ -118,7 +115,7 @@ pub async fn apply(
     let organizing = match transition {
         Transition::Start => start_was_due,
         Transition::UndoStart => true,
-        Transition::OpenCheckIn | Transition::ReopenRegistration => false,
+        Transition::OpenCheckIn => false,
     };
     if organizing {
         tenants::organizing_changed(conn, tournament.tenant).await?;
@@ -148,15 +145,6 @@ mod tests {
         assert_eq!(
             targets(Transition::OpenCheckIn, false)[1],
             Err("tournament.check_in_disabled")
-        );
-    }
-
-    #[test]
-    fn reopen_registration() {
-        let not = Err("tournament.not_check_in");
-        assert_eq!(
-            targets(Transition::ReopenRegistration, true),
-            [not, not, Ok(Registration), not, not]
         );
     }
 

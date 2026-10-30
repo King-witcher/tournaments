@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments\n           set name = $2, description = $3, rules = $4, admission = coalesce($5, admission),\n               status = coalesce($6, status), contest_minutes = coalesce($7, contest_minutes),\n               counts_for_rating = coalesce($8, counts_for_rating), updated_at = now()\n           where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "97066a09057c3a06923ca5e3805f0a49ffd5ce2bb67e306230171c31e0601918"
+}

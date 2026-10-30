@@ -34,31 +34,6 @@ pub async fn open_check_in(
 
 #[utoipa::path(
     post,
-    path = "/tenants/{slug}/tournaments/{tournament}/registration/reopen",
-    tag = "lifecycle",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("tournament" = String, Path, description = "Slug do torneio"),
-    ),
-    responses(
-        (status = OK, body = Tournament, description = "Inscrição reaberta durante o check-in. Os check-ins feitos continuam. A abertura automática não reabre a mesma janela: o check-in volta pelo botão ou se a data de início ou a janela mudarem para uma abertura posterior"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_check_in"),
-    )
-)]
-pub async fn reopen_registration(
-    State(state): State<AppState>,
-    member: TenantMember<Organizer>,
-    PathParams(path): PathParams<TournamentPath>,
-) -> Result<Json<Tournament>, ApiError> {
-    let reopen = Transition::ReopenRegistration;
-    run(&state, &member, &path.tournament, reopen).await
-}
-
-#[utoipa::path(
-    post,
     path = "/tenants/{slug}/tournaments/{tournament}/start",
     tag = "lifecycle",
     params(

@@ -14,8 +14,8 @@ use engine::{core::MapId, formats as ef};
 use sqlx::{PgConnection, PgExecutor, types::Json};
 
 use super::{
-    edit::Edit, schedule::Schedule, setup::Setup, status::TournamentStatus, texts::Texts,
-    types::TournamentTranslation, veto::PoolMap, visibility::Visibility,
+    admission::Admission, edit::Edit, schedule::Schedule, setup::Setup, status::TournamentStatus,
+    texts::Texts, types::TournamentTranslation, veto::PoolMap,
 };
 use crate::{
     shared::{ApiError, Locale},
@@ -25,7 +25,7 @@ use crate::{
 pub use audience::{Audience, audience};
 pub use read::{current_status, find, find_for_update, list, slugs_for_member};
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
-pub use status::{mark_registration_reopened, publish, set_status, sync_finished};
+pub use status::{publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 
 /// Id interno de um torneio. Só sai do banco por `find`/`find_for_update`,
@@ -48,7 +48,7 @@ pub struct StoredTournament {
     pub texts: Texts,
     /// O que vale agora: `find` já abriu o check-in se a janela abriu.
     pub status: TournamentStatus,
-    pub visibility: Visibility,
+    pub admission: Admission,
     pub setup: Setup,
     pub schedule: Schedule,
     /// Janela de contestação de resultado, em minutos.
@@ -74,7 +74,7 @@ pub struct NewTournament<'a> {
     pub slug: &'a str,
     pub locale: Locale,
     pub texts: &'a Texts,
-    pub visibility: Visibility,
+    pub admission: Admission,
     pub setup: &'a Setup,
     pub schedule: Schedule,
     pub contest_minutes: i32,
@@ -98,7 +98,7 @@ pub async fn create(
 ) -> Result<TournamentId, ApiError> {
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
-               (tenant_id, slug, locale, name, description, rules, mode, visibility,
+               (tenant_id, slug, locale, name, description, rules, mode, admission,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
                 team_size, team_pick_seconds)
@@ -113,7 +113,7 @@ pub async fn create(
         new.texts.description,
         new.texts.rules,
         new.setup.mode.as_str(),
-        new.visibility.as_str(),
+        new.admission.as_str(),
         new.setup.max_participants,
         Json(new.setup.champion_rules) as _,
         new.schedule.starts_at,
@@ -172,7 +172,7 @@ async fn insert_stages(
     Ok(())
 }
 
-/// Grava o PATCH: os textos e, quando vieram, a visibilidade, a configuração
+/// Grava o PATCH: os textos e, quando vieram, a inscrição (`admission`), a configuração
 /// (modo, vagas, campeões, fases e veto), a data e a janela de check-in, a
 /// janela de contestação e o status. Trocar o modo ou o tamanho refaz os
 /// times no banco (trigger `tournaments_mode_teams`).
@@ -183,7 +183,7 @@ pub async fn update(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"update tournaments
-           set name = $2, description = $3, rules = $4, visibility = coalesce($5, visibility),
+           set name = $2, description = $3, rules = $4, admission = coalesce($5, admission),
                status = coalesce($6, status), contest_minutes = coalesce($7, contest_minutes),
                counts_for_rating = coalesce($8, counts_for_rating), updated_at = now()
            where id = $1"#,
@@ -191,7 +191,7 @@ pub async fn update(
         edit.texts.name,
         edit.texts.description,
         edit.texts.rules,
-        edit.visibility.map(Visibility::as_str),
+        edit.admission.map(Admission::as_str),
         edit.status.map(TournamentStatus::as_str),
         edit.contest_minutes,
         edit.counts_for_rating

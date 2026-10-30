@@ -68,8 +68,8 @@ export async function ParticipantTable({ tenant, slug }: Props) {
       : candidates.length === 0
         ? t("add.noCandidates")
         : undefined;
-  // Antes de abrir, todos estão sem check-in; depois de reabrir a inscrição,
-  // os que já fizeram continuam marcados.
+  // Antes de abrir, todos estão sem check-in; se o check-in foi desligado e ligado de
+  // novo, os que já fizeram continuam marcados.
   const showCheckIn =
     tournament.check_in_minutes != null &&
     (!["draft", "registration"].includes(status) ||

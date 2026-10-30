@@ -74,7 +74,7 @@ pub async fn create_tournament(
         slug: &body.slug,
         locale: body.locale,
         texts: &texts,
-        visibility: body.visibility,
+        admission: body.admission,
         setup: &setup,
         schedule,
         contest_minutes: body.contest_minutes,
@@ -124,7 +124,7 @@ fn clean_translations(
     tag = "tournaments",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = OK, body = Vec<TournamentSummary>, description = "Torneios do tenant, do mais novo ao mais antigo. Rascunhos e privados só para organizer e owner; privados também para os inscritos"),
+        (status = OK, body = Vec<TournamentSummary>, description = "Torneios do tenant, do mais novo ao mais antigo. Rascunhos só para organizer e owner"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
     )
@@ -154,7 +154,7 @@ pub async fn list_tournaments(
     responses(
         (status = OK, body = Tournament, description = "O torneio, com fases e traduções"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found (inexistente; para player, também rascunho ou privado sem inscrição)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found (inexistente; para player, também rascunho)"),
     )
 )]
 pub async fn get_tournament(
@@ -180,7 +180,7 @@ pub async fn get_tournament(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, visibilidade, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
     )
 )]
@@ -245,7 +245,7 @@ pub async fn update_tournament(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Sempre em inscrição: a data tem de deixar a janela de check-in pela frente (senão `tournament.starts_at_past` ou `tournament.starts_at_too_soon`)"),
+        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio. Sempre em inscrição: a data tem de deixar a janela de check-in pela frente (senão `tournament.starts_at_past` ou `tournament.starts_at_too_soon`)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
