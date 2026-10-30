@@ -68,6 +68,11 @@ pub struct InvitePreview {
     /// Endereço da comunidade (para quem já é membro ir direto a ela).
     pub tenant_slug: String,
     pub tenant_name: String,
+    /// O apelido do dono atual na comunidade (a comunidade não grava quem a
+    /// criou).
+    pub owner_name: String,
+    /// Membros ativos da comunidade.
+    pub member_count: i64,
     /// Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
     pub expires_at: Option<DateTime<Utc>>,
     /// Link de inscrição: aceitar também inscreve neste torneio.

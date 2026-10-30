@@ -18,6 +18,6 @@
   "registered": "Estás inscrito",
   "checkInPending": "Falta tu check-in",
   "create": "Crear torneo",
-  "empty": "Todavía no hay torneos. Crea uno. Empieza como borrador, que solo ve la organización, hasta que se publique.",
-  "emptyPlayer": "Todavía no hay torneos publicados. Cuando la organización publique uno, aparecerá aquí."
+  "empty": "Todavía no hay torneos.",
+  "emptyPlayer": "No hay torneos publicados."
 }

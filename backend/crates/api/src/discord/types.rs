@@ -52,3 +52,12 @@ pub struct PutDiscord {
     pub locale: Locale,
     pub mention_players: bool,
 }
+
+#[derive(Deserialize, ToSchema)]
+pub struct TestDiscord {
+    /// O endereço a testar, salvo ou não (a mesma validação do `PUT`; nunca
+    /// devolvido nem registrado). Sem ele, testa o webhook salvo.
+    pub url: Option<String>,
+    /// Idioma da mensagem de teste; sem ele, o salvo (ou `pt`, sem webhook).
+    pub locale: Option<Locale>,
+}

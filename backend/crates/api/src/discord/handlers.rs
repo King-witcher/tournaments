@@ -6,12 +6,12 @@ use super::{
     db::{self, Choices, Config},
     render,
     sender::Outcome,
-    types::{AvailableEvent, DiscordSettings, PutDiscord, WebhookSettings},
+    types::{AvailableEvent, DiscordSettings, PutDiscord, TestDiscord, WebhookSettings},
     url::WebhookUrl,
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody},
+    shared::{ApiError, ErrorBody, JsonBody, Locale},
     tenants::{Owner, TenantMember},
 };
 
@@ -93,18 +93,19 @@ pub async fn delete_discord(
     db::delete(&state.db, owner.tenant).await?;
     Ok(StatusCode::NO_CONTENT)
 }
-
 #[utoipa::path(
     post,
     path = "/tenants/{slug}/discord/test",
     tag = "discord",
     params(("slug" = String, Path, description = "Slug do tenant")),
+    request_body = TestDiscord,
     responses(
         (status = NO_CONTENT, description = "A mensagem de teste chegou ao canal"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, discord.not_configured"),
-        (status = CONFLICT, body = ErrorBody, description = "discord.webhook_gone (o Discord não conhece o webhook: a configuração fica marcada como quebrada)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, discord.not_configured (sem `url` e sem webhook salvo)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "discord.url_invalid (a `url` do corpo; só https://discord.com/api/webhooks/{id}/{token}), request.invalid_body"),
+        (status = CONFLICT, body = ErrorBody, description = "discord.webhook_gone (o Discord não conhece o webhook; se era o salvo, a configuração fica marcada como quebrada)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "discord.rate_limited {retry_after} (segundos)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "discord.unreachable (rede ou erro do Discord), discord.rejected (o Discord recusou a mensagem)"),
     )
@@ -112,28 +113,38 @@ pub async fn delete_discord(
 pub async fn test_discord(
     State(state): State<AppState>,
     owner: TenantMember<Owner>,
+    JsonBody(body): JsonBody<TestDiscord>,
 ) -> Result<StatusCode, ApiError> {
-    let config = db::get(&state.db, owner.tenant)
-        .await?
-        .ok_or(ApiError::not_found("discord.not_configured"))?;
-    let message = render::test_message(
-        &state.auth.web_origin,
-        &owner.slug,
-        &owner.name,
-        config.locale,
-    );
+    let config = db::get(&state.db, owner.tenant).await?;
+    // Com `url`, o teste é do endereço digitado (salvo ou não): nada do que
+    // acontece nele muda o webhook salvo.
+    let (id, token, locale, saved) = match body.url.as_deref() {
+        Some(text) => {
+            let url = WebhookUrl::parse(text).ok_or(ApiError::invalid("discord.url_invalid"))?;
+            let locale = body
+                .locale
+                .or(config.as_ref().map(|c| c.locale))
+                .unwrap_or(Locale::Pt);
+            (url.id, url.token, locale, false)
+        }
+        None => {
+            let c = config.ok_or(ApiError::not_found("discord.not_configured"))?;
+            (c.webhook_id, c.token, body.locale.unwrap_or(c.locale), true)
+        }
+    };
+    let message = render::test_message(&state.auth.web_origin, &owner.slug, &owner.name, locale);
     let now = Utc::now();
-    match state
-        .webhooks
-        .post(&config.webhook_id, &config.token, &message)
-        .await
-    {
+    match state.webhooks.post(&id, &token, &message).await {
         Outcome::Sent { .. } => {
-            db::clear_broken(&state.db, owner.tenant).await?;
+            if saved {
+                db::clear_broken(&state.db, owner.tenant).await?;
+            }
             Ok(StatusCode::NO_CONTENT)
         }
         Outcome::Gone => {
-            db::mark_broken(&state.db, owner.tenant, now).await?;
+            if saved {
+                db::mark_broken(&state.db, owner.tenant, now).await?;
+            }
             Err(ApiError::conflict("discord.webhook_gone"))
         }
         Outcome::RateLimited { retry_after } => {

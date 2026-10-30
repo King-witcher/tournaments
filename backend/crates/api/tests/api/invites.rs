@@ -33,6 +33,9 @@ async fn invite_link_adds_a_player() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(preview["tenant_name"], "Tenant quake-br");
     assert_eq!(preview["expires_at"], created["expires_at"]);
+    // Quem vai entrar vê quem é o dono e quantos já estão lá.
+    assert_eq!(preview["owner_name"], "Ana");
+    assert_eq!(preview["member_count"], 1);
 
     let joined = json!({
         "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null },
@@ -44,6 +47,8 @@ async fn invite_link_adds_a_player() {
     assert_eq!(join(&app, &bia, token).await, joined);
     // O owner aceitando o próprio link continua owner.
     assert_eq!(join(&app, &ana, token).await["tenant"]["role"], "owner");
+    let (_, after) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
+    assert_eq!(after["member_count"], 3);
 
     let (_, members) = get(&app, "/tenants/quake-br/members", &bia).await;
     let names: Vec<_> = members
@@ -219,6 +224,8 @@ async fn tournament_link_joins_the_tenant_and_registers() {
             json!({
                 "tenant_slug": "quake-br",
                 "tenant_name": "Tenant quake-br",
+                "owner_name": "Ana",
+                "member_count": 2,
                 "expires_at": null,
                 "tournament": {
                     "slug": "copa", "locale": "pt", "name": "Copa de Outubro", "translations": [],

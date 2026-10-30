@@ -8,7 +8,6 @@
   "spots": "Vagas",
   "tournamentSpots": "{count, plural, =0 {{max} vagas, nenhuma ocupada ainda} one {# inscrito de {max} vagas} other {# inscritos de {max} vagas}}",
   "startsAt": "Início previsto",
-  "expiresAt": "Vale até",
   "tournamentHint": "Aceitar também faz você entrar na comunidade {tenant} como jogador.",
   "loginRequired": "Entre ou crie uma conta para aceitar o convite.",
   "accept": "Entrar na comunidade",
@@ -19,5 +18,8 @@
   "goToTenant": "Ir para a comunidade",
   "goToTournament": "Ir para o torneio",
   "returning": "Você já fez parte de {tenant}. Ao voltar, entra como jogador e recupera o apelido \"{nickname}\" e o seu histórico de torneios.",
-  "memberRegisters": "Você já é membro de {tenant}. Aceitar só faz a sua inscrição."
+  "memberRegisters": "Você já é membro de {tenant}. Aceitar só faz a sua inscrição.",
+  "owner": "Criada por",
+  "members": "Membros",
+  "memberCount": "{count, plural, one {# membro} other {# membros}}"
 }

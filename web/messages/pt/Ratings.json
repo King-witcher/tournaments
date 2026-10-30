@@ -2,7 +2,6 @@
   "ranking": {
     "loading": "Carregando o ranking…",
     "label": "Ranking da comunidade",
-    "description": "Elo por partida confirmada nos torneios que contam (W.O. não conta). Todo mundo começa com {initial}; com menos de {count} partidas, o rating é provisório.",
     "position": "Posição",
     "member": "Membro",
     "rating": "Rating",
@@ -10,8 +9,7 @@
     "record": "V–D",
     "lastGame": "Última partida",
     "noGame": "—",
-    "empty": "Ninguém tem rating ainda. Ele aparece quando a primeira partida de um torneio que conta é confirmada.",
-    "browse": "Ver os torneios"
+    "empty": "Ninguém tem rating ainda. É preciso jogar pelo menos uma partida para ser classificado."
   },
   "provisional": "Provisório",
   "record": "{wins} V – {losses} D",
@@ -70,17 +68,19 @@
   },
   "settings": {
     "title": "Rating da comunidade",
-    "description": "Elo por partida. O K é quanto uma partida mexe no rating. Começa no máximo e cai até o mínimo conforme a pessoa joga.",
     "initial": "Rating inicial",
-    "initialHint": "De 100 a 3000. Quem nunca jogou começa com ele.",
-    "kMax": "K da primeira partida",
-    "kMaxHint": "De 1 a 200.",
-    "kMin": "K mínimo",
-    "kMinHint": "De 1 a 100, até o K da primeira partida. Igual a ele, o K é fixo.",
+    "kMax": "Fator K inicial",
+    "kMaxHint": "O fator K é quanto uma partida mexe no rating. Começa neste valor e cai exponencialmente até o mínimo conforme o rating se torna mais preciso. Entre jogadores de mesmo rating, a vitória vale metade do K.",
+    "kMin": "Fator K mínimo",
+    "kMinHint": "Se for igual ao fator K inicial, o K não cai.",
     "kDecay": "Queda do K, em partidas",
-    "kDecayHint": "De 1 a 100. Depois desse número de partidas, o K já fez cerca de 63% do caminho até o mínimo.",
-    "recompute": "Salvar recalcula o rating de todos com o histórico inteiro.",
-    "saved": "Salvo. Os ratings foram recalculados."
+    "kDecayHint": "Depois dessa quantidade de partidas, o K já caiu cerca de 63% do caminho até o mínimo.",
+    "saved": "Salvo. Os ratings foram recalculados.",
+    "recompute": {
+      "title": "Salvar e recalcular",
+      "text": "O histórico inteiro será recalculado com estes valores, e o rating de todos muda.",
+      "submit": "Salvar e recalcular"
+    }
   },
   "seeding": {
     "sort": "Ordenar por rating",

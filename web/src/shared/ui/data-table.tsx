@@ -52,8 +52,8 @@ type Props = {
   primaryColumn?: string;
   /** Ação da barra (ex.: "Gerar link", primária), à direita da busca; a barra fica no lugar também sem linhas. */
   toolbar?: ReactNode;
-  /** Sem nenhuma linha: o que falta e o próximo passo (a ação da barra, se houver, continua nela). */
-  empty: { text: ReactNode; action?: ReactNode };
+  /** Sem nenhuma linha: o que falta e o próximo passo (a ação da barra, se houver, continua nela). Sem ele, só a barra aparece (quando a ação dela basta). */
+  empty?: { text: ReactNode; action?: ReactNode };
   size?: "sm" | "md" | "lg";
 };
 
@@ -143,7 +143,7 @@ export function DataTable({
         </TableToolbar>
       )}
       {rows.length === 0 ? (
-        <EmptyState action={empty.action}>{empty.text}</EmptyState>
+        empty && <EmptyState action={empty.action}>{empty.text}</EmptyState>
       ) : (
         <Table aria-label={label} size={size} className={styles.table}>
           <TableHead>

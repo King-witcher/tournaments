@@ -16,7 +16,7 @@ export async function RatingSettingsSection({ slug }: { slug: string }) {
     getTranslations("Ratings.settings"),
   ]);
   return (
-    <Section title={t("title")} description={t("description")}>
+    <Section title={t("title")}>
       {settings ? (
         <RatingSettingsForm slug={slug} initial={settings} />
       ) : (

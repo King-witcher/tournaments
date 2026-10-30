@@ -4,7 +4,7 @@
 //! vinculou o Discord é mencionado, e o site posta lá. Nada de bot nem DM.
 //!
 //! - `handlers`/`types`: `GET`/`PUT`/`DELETE /tenants/{slug}/discord` e
-//!   `POST .../test`, só do owner. O endereço é credencial: vai para o banco
+//!   `POST .../test` (o endereço do corpo, salvo ou não, ou o salvo), só do owner. O endereço é credencial: vai para o banco
 //!   (`db`) separado em id e token e nunca volta pela API nem vai para o log.
 //! - `url`: a única forma de endereço aceita (só os hosts do Discord).
 //! - `catalog`: os avisos que existem (o código é o do `Notice`/`Announce` do

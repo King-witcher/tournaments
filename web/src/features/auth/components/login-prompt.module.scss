@@ -1,3 +1,5 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
@@ -6,4 +8,13 @@
 
   max-inline-size: 40rem;
   color: theme.$text-primary;
+}
+
+// Dois botões de 196px não cabem lado a lado nos 326px de um Tile no
+// celular: empilham, com o primário (entrar) em cima.
+.buttons {
+  @include breakpoint.breakpoint-down(md) {
+    flex-direction: column-reverse;
+    row-gap: spacing.$spacing-03;
+  }
 }

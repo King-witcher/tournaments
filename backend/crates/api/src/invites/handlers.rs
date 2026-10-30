@@ -138,6 +138,8 @@ pub async fn preview_invite(
     Ok(Json(InvitePreview {
         tenant_slug: invite.tenant_slug,
         tenant_name: invite.tenant_name,
+        owner_name: invite.owner_name,
+        member_count: invite.member_count,
         expires_at: invite.expires_at,
         tournament: found.map(invited).transpose()?,
         viewer,

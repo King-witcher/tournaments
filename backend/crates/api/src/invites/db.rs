@@ -141,6 +141,10 @@ pub struct StoredInvite {
     pub tenant: TenantId,
     pub tenant_slug: String,
     pub tenant_name: String,
+    /// O apelido do dono atual na comunidade (a comunidade não grava quem a criou).
+    pub owner_name: String,
+    /// Membros ativos.
+    pub member_count: i64,
     /// Slug do torneio, no link de inscrição.
     pub tournament: Option<String>,
     /// Nulo no link de inscrição.
@@ -160,7 +164,11 @@ pub async fn find_by_token_hash(
                   i.expires_at,
                   i.revoked_at is not null as "revoked!",
                   coalesce(i.expires_at <= now(), false) as "expired!",
-                  t.deletion_due_at is not null as "tenant_deleting!"
+                  t.deletion_due_at is not null as "tenant_deleting!",
+                  coalesce((select m.nickname from tenant_members m
+                            where m.tenant_id = t.id and m.role = 'owner'), '') as "owner_name!",
+                  (select count(*) from tenant_members m
+                   where m.tenant_id = t.id and m.left_at is null) as "member_count!"
            from tenant_invites i
            join tenants t on t.id = i.tenant_id
            left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id
@@ -175,6 +183,8 @@ pub async fn find_by_token_hash(
         tenant: TenantId::new(r.tenant_id),
         tenant_slug: r.tenant_slug,
         tenant_name: r.tenant_name,
+        owner_name: r.owner_name,
+        member_count: r.member_count,
         tournament: r.tournament_slug,
         expires_at: r.expires_at,
         revoked: r.revoked,

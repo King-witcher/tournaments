@@ -11,6 +11,7 @@ import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
@@ -24,6 +25,7 @@ import { ErrorText } from "@/shared/ui/error-text";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { FormSection } from "@/shared/ui/form-section";
+import { InfoTip } from "@/shared/ui/info-tip";
 import { Notice } from "@/shared/ui/notice";
 import { Select } from "@/shared/ui/select";
 import { TextInput } from "@/shared/ui/text-input";
@@ -35,6 +37,10 @@ type Locale = components["schemas"]["Locale"];
 const URL_ERRORS = ["discord.url_invalid", "discord.url_required"];
 
 const LOCALES: Locale[] = ["pt", "es"];
+
+/** O endereço que a API aceita (ver `discord/url.rs`), para o campo cobrar enquanto se digita. */
+const URL_PATTERN =
+  "s*https://(?:ptb.|canary.)?discord(?:app)?.com/api/webhooks/[0-9]{1,20}/[A-Za-z0-9_-]{20,100}s*";
 
 type Props = { slug: string; settings: Settings };
 
@@ -60,6 +66,7 @@ export function DiscordForm({ slug, settings }: Props) {
   const [locale, setLocale] = useState<Locale>(webhook?.locale ?? "pt");
   const [mention, setMention] = useState(webhook?.mention_players ?? true);
   const asksUrl = !webhook || webhook.broken || replacing;
+  const { ref, canSubmit } = useFormValidity();
 
   const [result, submit, pending] = useActionState<FormResult<"url">>(
     async () => {
@@ -90,6 +97,7 @@ export function DiscordForm({ slug, settings }: Props) {
   useFocusInvalid(prefix, result);
   const general = formError(result);
 
+  const urlOk = new RegExp(`^(?:${URL_PATTERN})$`, "u").test(url);
   const test = useApiAction();
   const [tested, setTested] = useState(false);
   const remove = useApiAction();
@@ -102,7 +110,7 @@ export function DiscordForm({ slug, settings }: Props) {
     setEvents((now) => (on ? [...now, code] : now.filter((c) => c !== code)));
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={7}>
         {webhook?.broken && (
           <Notice kind="error" title={t("broken.title")}>
@@ -131,15 +139,53 @@ export function DiscordForm({ slug, settings }: Props) {
             <TextInput
               id={fieldId(prefix, "url")}
               name="url"
-              labelText={webhook ? t("url.newLabel") : t("url.label")}
+              labelText={
+                <InfoTip
+                  term={webhook ? t("url.newLabel") : t("url.label")}
+                  label={t("url.tipLabel")}
+                >
+                  {t("url.tip")}
+                </InfoTip>
+              }
               helperText={t("url.hint")}
               required
+              pattern={URL_PATTERN}
+              patternMessage={t("url.invalid")}
               autoComplete="off"
               spellCheck={false}
               value={url}
-              onChange={(event) => setUrl(event.target.value)}
+              onChange={(event) => {
+                setUrl(event.target.value);
+                setTested(false);
+              }}
               {...invalidProps(result, "url")}
             />
+          )}
+          {/* O teste usa o endereço do campo, salvo ou não. */}
+          <div>
+            <Button
+              kind="tertiary"
+              pending={test.pending}
+              disabled={asksUrl && !urlOk}
+              onClick={() => {
+                setTested(false);
+                test.run(
+                  () =>
+                    api.POST("/tenants/{slug}/discord/test", {
+                      params: { path: { slug } },
+                      body: { url: asksUrl ? url.trim() : null, locale },
+                    }),
+                  () => setTested(true),
+                  () => router.refresh(),
+                );
+              }}
+            >
+              {t("test")}
+            </Button>
+          </div>
+          {test.error && <ErrorText>{test.error}</ErrorText>}
+          {tested && !test.error && (
+            <Notice kind="success">{t("tested")}</Notice>
           )}
         </Stack>
         <FormSection legend={t("events.legend")}>
@@ -175,28 +221,9 @@ export function DiscordForm({ slug, settings }: Props) {
         {result.saved && !pending && (
           <Notice kind="success">{t("saved")}</Notice>
         )}
-        <FormActions pending={pending} />
+        <FormActions pending={pending} disabled={!canSubmit} />
         {webhook && (
-          <Stack gap={3} orientation="horizontal">
-            {!webhook.broken && (
-              <Button
-                kind="tertiary"
-                pending={test.pending}
-                onClick={() => {
-                  setTested(false);
-                  test.run(
-                    () =>
-                      api.POST("/tenants/{slug}/discord/test", {
-                        params: { path: { slug } },
-                      }),
-                    () => setTested(true),
-                    () => router.refresh(),
-                  );
-                }}
-              >
-                {t("test")}
-              </Button>
-            )}
+          <div>
             <ConfirmButton
               size="md"
               pending={remove.pending}
@@ -219,11 +246,9 @@ export function DiscordForm({ slug, settings }: Props) {
             >
               {t("remove")}
             </ConfirmButton>
-          </Stack>
+          </div>
         )}
-        {test.error && <ErrorText>{test.error}</ErrorText>}
         {remove.error && <ErrorText>{remove.error}</ErrorText>}
-        {tested && !test.error && <Notice kind="success">{t("tested")}</Notice>}
       </Stack>
     </Form>
   );

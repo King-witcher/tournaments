@@ -35,18 +35,16 @@
   "nickname": {
     "title": "Seu apelido",
     "label": "Apelido nesta comunidade",
-    "hint": "É como você aparece aqui: nas inscrições, na chave e nas séries. De 1 a 32 caracteres.",
     "saved": "Apelido salvo."
   },
   "leave": {
     "title": "Sair da comunidade",
-    "description": "Você perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as séries pendentes. Os convites que você criou são revogados. Seu nome continua na chave dos torneios que você jogou, e você pode voltar por um convite, como jogador e com o mesmo apelido.",
     "submit": "Sair da comunidade",
-    "confirm": "Sair da comunidade? Nos torneios em andamento, suas séries pendentes viram W.O."
+    "confirm": "Você perde o acesso, sai das inscrições dos torneios que ainda não começaram e, nos torneios em andamento, perde por W.O. as séries pendentes. Os convites que você criou são revogados. Seu nome continua na chave dos torneios que você jogou, e você pode voltar por um convite, como jogador e com o mesmo apelido."
   },
   "transfer": {
     "title": "Transferir a posse",
-    "description": "O membro escolhido vira o dono e você vira organizador. Para sair da comunidade, o dono transfere a posse antes.",
+    "description": "O membro escolhido vira o dono e você vira organizador.",
     "member": "Novo dono",
     "choose": "Escolha um membro…",
     "chooseFirst": "Escolha quem vai receber a posse.",
@@ -58,7 +56,6 @@
   "invites": {
     "label": "Links de convite",
     "loading": "Carregando os convites…",
-    "description": "Quem entra pelo link vira jogador. Cada link vale por 7 dias e serve para várias pessoas.",
     "create": "Gerar link de convite",
     "linkColumn": "Link",
     "createdBy": "Criado por",
@@ -66,7 +63,6 @@
     "uses": "Entraram",
     "usesCount": "{count, plural, =0 {ninguém ainda} one {# pessoa} other {# pessoas}}",
     "createdAt": "Criado em",
-    "empty": "Nenhum convite ativo. Gere um link e mande para quem você quer chamar. Quem entra por ele vira jogador.",
     "actions": "Ações do convite de {name}",
     "link": "Link gerado",
     "createdHint": "Copie agora. Este link não aparece de novo.",
@@ -77,7 +73,7 @@
   },
   "deletion": {
     "title": "Excluir comunidade",
-    "description": "A comunidade é excluída 7 dias depois do pedido, com os torneios, as inscrições, os resultados e os convites. Até lá ela fica só leitura (ninguém muda nada nela), e você pode cancelar. Com um torneio em andamento, encerre o torneio ou desfaça o início antes.",
+    "description": "A comunidade é excluída 7 dias depois do pedido, com os torneios, as inscrições, os resultados e os convites. Até lá ela fica só leitura (ninguém muda nada nela), e você pode cancelar. Se algum torneio estiver em andamento, encerre ou desfaça o início antes.",
     "submit": "Excluir comunidade",
     "confirm": "Agendar a exclusão da comunidade para daqui a 7 dias? Até lá ela fica só leitura para todos; na data, é apagada com tudo o que tem dentro, sem volta.",
     "scheduledTitle": "Exclusão agendada",

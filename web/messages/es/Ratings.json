@@ -2,7 +2,6 @@
   "ranking": {
     "loading": "Cargando el ranking…",
     "label": "Ranking de la comunidad",
-    "description": "Elo por partida confirmada en los torneos que cuentan (el W.O. no cuenta). Todos empiezan con {initial}; con menos de {count} partidas, el rating es provisorio.",
     "position": "Posición",
     "member": "Miembro",
     "rating": "Rating",
@@ -10,8 +9,7 @@
     "record": "V–D",
     "lastGame": "Última partida",
     "noGame": "—",
-    "empty": "Nadie tiene rating todavía. Aparece cuando se confirma la primera partida de un torneo que cuenta.",
-    "browse": "Ver los torneos"
+    "empty": "Nadie tiene rating todavía. Hay que jugar al menos una partida para clasificar."
   },
   "provisional": "Provisorio",
   "record": "{wins} V – {losses} D",
@@ -70,17 +68,19 @@
   },
   "settings": {
     "title": "Rating de la comunidad",
-    "description": "Elo por partida. El K es cuánto mueve una partida el rating. Empieza en el máximo y baja hasta el mínimo a medida que la persona juega.",
     "initial": "Rating inicial",
-    "initialHint": "De 100 a 3000. Quien nunca jugó empieza con él.",
-    "kMax": "K de la primera partida",
-    "kMaxHint": "De 1 a 200.",
-    "kMin": "K mínimo",
-    "kMinHint": "De 1 a 100, hasta el K de la primera partida. Igual a él, el K es fijo.",
+    "kMax": "Factor K inicial",
+    "kMaxHint": "El factor K es cuánto mueve el rating una partida. Empieza en este valor y baja exponencialmente hasta el mínimo a medida que el rating se vuelve más preciso. Entre jugadores con el mismo rating, ganar vale la mitad del K.",
+    "kMin": "Factor K mínimo",
+    "kMinHint": "Si es igual al factor K inicial, el K no baja.",
     "kDecay": "Caída del K, en partidas",
-    "kDecayHint": "De 1 a 100. Después de esa cantidad de partidas, el K ya hizo cerca del 63% del camino hasta el mínimo.",
-    "recompute": "Guardar recalcula el rating de todos con el historial completo.",
-    "saved": "Guardado. Los ratings se recalcularon."
+    "kDecayHint": "Tras esa cantidad de partidas, el K ya bajó cerca del 63% del camino hasta el mínimo.",
+    "saved": "Guardado. Los ratings se recalcularon.",
+    "recompute": {
+      "title": "Guardar y recalcular",
+      "text": "Se recalculará todo el historial con estos valores, y el rating de todos cambia.",
+      "submit": "Guardar y recalcular"
+    }
   },
   "seeding": {
     "sort": "Ordenar por rating",

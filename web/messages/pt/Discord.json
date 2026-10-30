@@ -1,6 +1,6 @@
 {
   "title": "Avisos no Discord",
-  "description": "O site posta no canal de um servidor do Discord quando algo acontece nos torneios da comunidade. No Discord, abra Configurações do servidor, Integrações, Webhooks, crie um webhook para o canal e cole o endereço dele aqui.",
+  "description": "O site posta no canal de um servidor do Discord quando algo acontece nos torneios da comunidade.",
   "loading": "Carregando os avisos do Discord…",
   "current": "Webhook {id}",
   "broken": {
@@ -10,7 +10,10 @@
   "url": {
     "label": "Endereço do webhook",
     "newLabel": "Endereço do novo webhook",
-    "hint": "Começa com https://discord.com/api/webhooks/. Quem tem este endereço posta no canal. Não o compartilhe. Depois de salvo, ele não aparece mais aqui."
+    "hint": "Quem tem este endereço posta no canal. Não o compartilhe. Depois de salvo, ele não aparece mais aqui.",
+    "tipLabel": "Como criar o webhook",
+    "tip": "No Discord, abra Configurações do servidor, Integrações, Webhooks, crie um webhook para o canal e cole o endereço dele aqui.",
+    "invalid": "Use o endereço de um webhook do Discord."
   },
   "replace": "Trocar o webhook",
   "keep": "Manter o webhook",

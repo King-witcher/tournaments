@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as \"tournament_slug?\",\n                  i.expires_at,\n                  i.revoked_at is not null as \"revoked!\",\n                  coalesce(i.expires_at <= now(), false) as \"expired!\",\n                  t.deletion_due_at is not null as \"tenant_deleting!\"\n           from tenant_invites i\n           join tenants t on t.id = i.tenant_id\n           left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id\n           where i.token_hash = $1",
+  "query": "select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as \"tournament_slug?\",\n                  i.expires_at,\n                  i.revoked_at is not null as \"revoked!\",\n                  coalesce(i.expires_at <= now(), false) as \"expired!\",\n                  t.deletion_due_at is not null as \"tenant_deleting!\",\n                  coalesce((select m.nickname from tenant_members m\n                            where m.tenant_id = t.id and m.role = 'owner'), '') as \"owner_name!\",\n                  (select count(*) from tenant_members m\n                   where m.tenant_id = t.id and m.left_at is null) as \"member_count!\"\n           from tenant_invites i\n           join tenants t on t.id = i.tenant_id\n           left join tournaments tr on tr.tenant_id = i.tenant_id and tr.id = i.tournament_id\n           where i.token_hash = $1",
   "describe": {
     "columns": [
       {
@@ -86,6 +86,18 @@
         "name": "tenant_deleting!",
         "type_info": "Bool",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 9,
+        "name": "owner_name!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 10,
+        "name": "member_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -102,8 +114,10 @@
       true,
       null,
       null,
+      null,
+      null,
       null
     ]
   },
-  "hash": "cf27dd060962b4aa3d7238f655269cdcd108ba791d8df28139ab48b8bdb2d346"
+  "hash": "341b34a4d0dcb7571c84716f1df93325a97ae6829fe27b77c12a44221e040738"
 }

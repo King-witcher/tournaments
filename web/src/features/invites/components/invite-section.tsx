@@ -46,7 +46,6 @@ export async function InviteSection({ slug }: { slug: string }) {
       <div id={INVITES_ID} tabIndex={-1}>
         <DataTable
           label={t("label")}
-          description={t("description")}
           columns={[
             // No celular: o link, a validade e revogar, sem rolar.
             { key: "link", header: t("linkColumn") },
@@ -76,7 +75,6 @@ export async function InviteSection({ slug }: { slug: string }) {
             ),
           }))}
           toolbar={<CreateInviteButton slug={slug} />}
-          empty={{ text: t("empty") }}
         />
       </div>
     </CreatedInviteProvider>

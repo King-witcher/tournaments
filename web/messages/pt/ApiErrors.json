@@ -180,10 +180,10 @@
     "delta_invalid": "O ajuste precisa ser de -{max} a {max} pontos, sem zero.",
     "reason_invalid": "Escreva o motivo, em até {max} caracteres numa linha só.",
     "initial_invalid": "O rating inicial precisa ser de {min} a {max}.",
-    "k_min_invalid": "O K mínimo precisa ser de {min} a {max}.",
-    "k_max_invalid": "O K da primeira partida precisa ser de {min} a {max}.",
+    "k_min_invalid": "O fator K mínimo precisa ser de {min} a {max}.",
+    "k_max_invalid": "O fator K inicial precisa ser de {min} a {max}.",
     "k_decay_invalid": "A queda do K precisa ser de {min} a {max} partidas.",
-    "k_order_invalid": "O K mínimo não pode passar do K da primeira partida."
+    "k_order_invalid": "O fator K mínimo não pode passar do inicial."
   },
   "discord": {
     "url_invalid": "Esse não é um endereço de webhook do Discord. Ele começa com https://discord.com/api/webhooks/.",

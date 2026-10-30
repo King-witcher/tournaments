@@ -1949,6 +1949,16 @@ export interface components {
              * @description Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
              */
             expires_at?: string | null;
+            /**
+             * Format: int64
+             * @description Membros ativos da comunidade.
+             */
+            member_count: number;
+            /**
+             * @description O apelido do dono atual na comunidade (a comunidade não grava quem a
+             *     criou).
+             */
+            owner_name: string;
             tenant_name: string;
             /** @description Endereço da comunidade (para quem já é membro ir direto a ela). */
             tenant_slug: string;
@@ -3133,6 +3143,14 @@ export interface components {
             nickname: string;
             /** Format: int64 */
             user_id: number;
+        };
+        TestDiscord: {
+            locale?: components["schemas"]["Locale"] | null;
+            /**
+             * @description O endereço a testar, salvo ou não (a mesma validação do `PUT`; nunca
+             *     devolvido nem registrado). Sem ele, testa o webhook salvo.
+             */
+            url?: string | null;
         };
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
@@ -5952,7 +5970,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestDiscord"];
+            };
+        };
         responses: {
             /** @description A mensagem de teste chegou ao canal */
             204: {
@@ -5979,7 +6001,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, discord.not_configured */
+            /** @description tenant.not_found, discord.not_configured (sem `url` e sem webhook salvo) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -5988,8 +6010,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description discord.webhook_gone (o Discord não conhece o webhook: a configuração fica marcada como quebrada) */
+            /** @description discord.webhook_gone (o Discord não conhece o webhook; se era o salvo, a configuração fica marcada como quebrada) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description discord.url_invalid (a `url` do corpo; só https://discord.com/api/webhooks/{id}/{token}), request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

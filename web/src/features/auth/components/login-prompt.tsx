@@ -13,7 +13,7 @@ export function LoginPrompt({ message }: { message: string }) {
     <Stack gap={6}>
       <p className={styles.message}>{message}</p>
       {/* No ButtonSet do Carbon o primário fica à direita. */}
-      <ButtonSet>
+      <ButtonSet className={styles.buttons}>
         <SignupButton />
         <LoginButton />
       </ButtonSet>

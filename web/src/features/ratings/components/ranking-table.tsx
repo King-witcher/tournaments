@@ -3,7 +3,6 @@ import { getTranslations } from "next-intl/server";
 import { MemberName } from "@/features/members/components/member-name";
 import { getTenant } from "@/features/tenants/server";
 import { apiErrorMessage } from "@/shared/api/errors";
-import { ButtonLink } from "@/shared/ui/button-link";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDate } from "@/shared/ui/local-date";
 import { Notice } from "@/shared/ui/notice";
@@ -30,10 +29,6 @@ export async function RankingTable({ slug }: { slug: string }) {
   return (
     <DataTable
       label={t("ranking.label")}
-      description={t("ranking.description", {
-        initial: ranking.initial,
-        count: ranking.provisional_games,
-      })}
       primaryColumn="member"
       columns={[
         { key: "position", header: t("ranking.position") },
@@ -60,14 +55,7 @@ export async function RankingTable({ slug }: { slug: string }) {
           ),
         },
       }))}
-      empty={{
-        text: t("ranking.empty"),
-        action: (
-          <ButtonLink href={`/${slug}`} kind="tertiary">
-            {t("ranking.browse")}
-          </ButtonLink>
-        ),
-      }}
+      empty={{ text: t("ranking.empty") }}
     />
   );
 }

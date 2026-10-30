@@ -9,6 +9,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
@@ -39,6 +40,7 @@ export function NicknameForm({
   const router = useRouter();
   const prefix = useId();
   const [value, setValue] = useState(nickname);
+  const { ref, canSubmit } = useFormValidity();
 
   const [result, submit, pending] = useActionState<Result>(async () => {
     const outcome = await callApi(
@@ -62,12 +64,11 @@ export function NicknameForm({
   const saved = result.saved && !pending && result.savedNickname === value;
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "nickname")}
           labelText={t("label")}
-          helperText={t("hint")}
           name="nickname"
           required
           maxLength={32}
@@ -78,7 +79,7 @@ export function NicknameForm({
         />
         {general && <FormError>{general}</FormError>}
         {saved && <Notice kind="success">{t("saved")}</Notice>}
-        <FormActions pending={pending} />
+        <FormActions pending={pending} disabled={!canSubmit} />
       </Stack>
     </Form>
   );

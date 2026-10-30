@@ -5,7 +5,7 @@ use axum::http::{Method, StatusCode};
 use serde_json::json;
 
 use super::*;
-use crate::common::*;
+use crate::common::{self as common, *};
 
 #[tokio::test]
 async fn only_the_owner_reaches_it() {
@@ -17,7 +17,7 @@ async fn only_the_owner_reaches_it() {
         (Method::GET, URI.to_owned(), None),
         (Method::PUT, URI.to_owned(), Some(config(&["match.ready"]))),
         (Method::DELETE, URI.to_owned(), None),
-        (Method::POST, format!("{URI}/test"), None),
+        (Method::POST, format!("{URI}/test"), Some(json!({}))),
     ];
     for (method, uri, body) in calls {
         for (who, expected) in [
@@ -196,7 +196,7 @@ async fn removing_it_clears_the_queue() {
     // Sem webhook, apagar de novo e testar.
     assert_eq!(delete(&s.app, URI, &s.ana).await.0, StatusCode::NO_CONTENT);
     assert_eq!(
-        post_empty(&s.app, &format!("{URI}/test"), &s.ana).await,
+        common::post(&s.app, &format!("{URI}/test"), &s.ana, json!({})).await,
         (StatusCode::NOT_FOUND, err("discord.not_configured"))
     );
 }
@@ -205,7 +205,7 @@ async fn removing_it_clears_the_queue() {
 async fn the_test_message_reaches_the_channel_in_the_chosen_language() {
     let (db, _lease) = crate::db::test_db().await;
     let s = configured(&db, &["match.ready"]).await;
-    let (status, body) = post_empty(&s.app, &format!("{URI}/test"), &s.ana).await;
+    let (status, body) = common::post(&s.app, &format!("{URI}/test"), &s.ana, json!({})).await;
     assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
     let hits = s.fake.hits();
     assert_eq!(hits.len(), 1);
@@ -221,7 +221,7 @@ async fn the_test_message_reaches_the_channel_in_the_chosen_language() {
 
     let es = json!({ "events": [], "locale": "es", "mention_players": true });
     put(&s.app, URI, &s.ana, es).await;
-    post_empty(&s.app, &format!("{URI}/test"), &s.ana).await;
+    common::post(&s.app, &format!("{URI}/test"), &s.ana, json!({})).await;
     assert!(s.fake.texts()[1].starts_with("Prueba de **Tenant quake-br**"));
 }
 
@@ -233,18 +233,18 @@ async fn a_failing_test_says_why() {
     s.fake
         .reply(&[Reply::TooMany(2.5), Reply::Status(500), Reply::Status(400)]);
     assert_eq!(
-        post_empty(&s.app, &uri, &s.ana).await,
+        common::post(&s.app, &uri, &s.ana, json!({})).await,
         (
             StatusCode::TOO_MANY_REQUESTS,
             json!({ "error": "discord.rate_limited", "params": { "retry_after": 3 } })
         )
     );
     assert_eq!(
-        post_empty(&s.app, &uri, &s.ana).await,
+        common::post(&s.app, &uri, &s.ana, json!({})).await,
         (StatusCode::BAD_GATEWAY, err("discord.unreachable"))
     );
     assert_eq!(
-        post_empty(&s.app, &uri, &s.ana).await,
+        common::post(&s.app, &uri, &s.ana, json!({})).await,
         (StatusCode::BAD_GATEWAY, err("discord.rejected"))
     );
     // Nada disso quebra o webhook.
@@ -257,11 +257,73 @@ async fn a_deleted_webhook_is_marked_broken_until_another_is_pasted() {
     let s = configured(&db, &["match.ready"]).await;
     s.fake.reply(&[Reply::Status(404)]);
     assert_eq!(
-        post_empty(&s.app, &format!("{URI}/test"), &s.ana).await,
+        common::post(&s.app, &format!("{URI}/test"), &s.ana, json!({})).await,
         (StatusCode::CONFLICT, err("discord.webhook_gone"))
     );
     assert_eq!(get(&s.app, URI, &s.ana).await.1["webhook"]["broken"], true);
 
     let (_, body) = put(&s.app, URI, &s.ana, config(&["match.ready"])).await;
     assert_eq!(body["webhook"]["broken"], false);
+}
+
+#[tokio::test]
+async fn a_typed_address_is_tested_without_saving_it() {
+    let (db, _lease) = crate::db::test_db().await;
+    let fake = Fake::start().await;
+    let app = app_from(state_with(db.clone(), &fake));
+    let ana = user(&db, "Ana").await;
+    create(&app, &ana, "quake-br").await;
+    let uri = format!("{URI}/test");
+
+    // Sem webhook salvo e sem endereço: não há o que testar.
+    assert_eq!(
+        common::post(&app, &uri, &ana, json!({})).await,
+        (StatusCode::NOT_FOUND, err("discord.not_configured"))
+    );
+    // Só endereços do Discord, como ao salvar.
+    assert_eq!(
+        common::post(
+            &app,
+            &uri,
+            &ana,
+            json!({ "url": "https://example.com/api/webhooks/1/abc" })
+        )
+        .await,
+        (StatusCode::UNPROCESSABLE_ENTITY, err("discord.url_invalid"))
+    );
+    assert!(fake.hits().is_empty());
+
+    // O endereço digitado recebe a mensagem, no idioma pedido, e nada é gravado.
+    let (status, body) = common::post(
+        &app,
+        &uri,
+        &ana,
+        json!({ "url": webhook_url(), "locale": "es" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    let hits = fake.hits();
+    assert_eq!(hits[0].path, format!("/api/webhooks/{WEBHOOK}/{TOKEN}"));
+    assert!(fake.texts()[0].starts_with("Prueba de **Tenant quake-br**"));
+    assert_eq!(get(&app, URI, &ana).await.1["webhook"], json!(null));
+}
+
+#[tokio::test]
+async fn a_typed_address_that_is_gone_leaves_the_saved_one_alone() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["match.ready"]).await;
+    s.fake.reply(&[Reply::Status(404)]);
+    let other = format!("https://discord.com/api/webhooks/777/{TOKEN}");
+    assert_eq!(
+        common::post(
+            &s.app,
+            &format!("{URI}/test"),
+            &s.ana,
+            json!({ "url": other })
+        )
+        .await,
+        (StatusCode::CONFLICT, err("discord.webhook_gone"))
+    );
+    assert_eq!(s.fake.hits()[0].path, format!("/api/webhooks/777/{TOKEN}"));
+    assert_eq!(get(&s.app, URI, &s.ana).await.1["webhook"]["broken"], false);
 }
