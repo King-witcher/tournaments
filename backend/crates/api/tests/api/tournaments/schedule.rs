@@ -166,17 +166,113 @@ async fn check_in_opens_by_itself_when_the_window_opens() {
         .await
         .unwrap();
     assert_eq!(stored, "check_in");
+}
 
-    // Publicar com a janela já aberta já vem em check-in.
-    let late = with(
-        duel("tarde"),
-        json!({ "starts_at": "2000-01-01T20:00:00Z" }),
+#[tokio::test]
+async fn the_start_must_leave_the_check_in_window_ahead() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let at = |minutes: i64| (chrono::Utc::now() + chrono::Duration::minutes(minutes)).to_rfc3339();
+    let create = |slug: &str, patch: Value| {
+        post(
+            &app,
+            "/tenants/quake-br/tournaments",
+            &ana,
+            with(duel(slug), patch),
+        )
+    };
+    // Passada, ou dentro da janela de 30 minutos: recusa, rascunho ou não.
+    for publish in [false, true] {
+        let (status, body) =
+            create("copa", json!({ "starts_at": at(-5), "publish": publish })).await;
+        assert_eq!(
+            (status, body),
+            (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                err("tournament.starts_at_past")
+            )
+        );
+        let (status, body) =
+            create("copa", json!({ "starts_at": at(10), "publish": publish })).await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body,
+            json!({ "error": "tournament.starts_at_too_soon", "params": { "minutes": 30 } })
+        );
+    }
+    // Sem check-in, só não pode ser passada.
+    let (status, body) = create(
+        "copa",
+        json!({ "starts_at": at(1), "check_in_minutes": null }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    let (status, _) = create(
+        "outra",
+        json!({ "starts_at": at(-1), "check_in_minutes": null }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    // Com a antecedência da janela, passa.
+    let (status, body) = create("longe", json!({ "starts_at": at(40) })).await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+}
+
+#[tokio::test]
+async fn editing_checks_the_start_only_when_it_changes() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let at = |minutes: i64| (chrono::Utc::now() + chrono::Duration::minutes(minutes)).to_rfc3339();
+    // A data nova tem de deixar a janela pela frente.
+    assert_eq!(
+        patch(&app, COPA, &ana, json!({ "starts_at": at(-5) })).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("tournament.starts_at_past")
+        )
     );
-    create_tournament(&app, &ana, late).await;
-    let (status, published) =
-        post_empty(&app, "/tenants/quake-br/tournaments/tarde/publish", &ana).await;
+    let (status, body) = patch(&app, COPA, &ana, json!({ "starts_at": at(10) })).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["error"], "tournament.starts_at_too_soon");
+    // Com a data já passada (o torneio atrasou), editar outra coisa continua
+    // permitido, inclusive reenviar a mesma data.
+    starts_in(&db, "copa", -20).await;
+    let (_, seen) = get(&app, COPA, &ana).await;
+    let (status, body) = patch(
+        &app,
+        COPA,
+        &ana,
+        json!({ "name": "Copa 2", "starts_at": seen["starts_at"] }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["name"], "Copa 2");
+}
+
+#[tokio::test]
+async fn a_draft_whose_start_fell_behind_cannot_be_published() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let uri = format!("{COPA}/publish");
+    starts_in(&db, "copa", 10).await;
+    let (status, body) = post_empty(&app, &uri, &ana).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["error"], "tournament.starts_at_too_soon");
+    starts_in(&db, "copa", -10).await;
+    assert_eq!(
+        post_empty(&app, &uri, &ana).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("tournament.starts_at_past")
+        )
+    );
+    starts_in(&db, "copa", 60).await;
+    let (status, published) = post_empty(&app, &uri, &ana).await;
     assert_eq!(status, StatusCode::OK, "{published}");
-    assert_eq!(published["status"], "check_in");
+    assert_eq!(published["status"], "registration");
 }
 
 #[tokio::test]

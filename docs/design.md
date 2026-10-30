@@ -86,9 +86,9 @@ A rota já existe: devolve `nickname`, `display_name`, `avatar_url`, `role`, `jo
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-**Novo**: uma página, coluna estreita. À vista: Torneio (nome, endereço com a prévia do link, início) e Formato (chave em `RadioGroup`, reset de grande final, séries). Fechados num `Accordion`, com o resumo dos valores no título: Campeões (bans, repetir campeão) e Inscrições e prazos (vagas, visibilidade, check-in, contestação). A descrição fica na seção Torneio; depois do acordeão, Regras adicionais e, por último, Outros idiomas (um bloco por idioma, sem tradução até "Adicionar Espanhol"). A dica embaixo de cada escolha diz só o que a opção escolhida faz. Rodapé: Cancelar (ghost), Criar como rascunho, Criar; "Criar" abre o Modal com a revisão.
+**Novo**: uma página, coluna estreita. À vista: Torneio (nome, id com a prévia do link, início) e Formato (chave em `RadioGroup`, reset de grande final, séries). Fechados num `Accordion`, com o resumo dos valores no título: Campeões (bans, repetir campeão) Inscrições e prazos (vagas, visibilidade, check-in) e Resultados (contestação, captura de tela obrigatória). A descrição fica na seção Torneio; depois do acordeão, Regras adicionais e, por último, Outros idiomas (um bloco por idioma, sem tradução até "Adicionar Espanhol"). A dica embaixo de cada escolha diz só o que a opção escolhida faz. Rodapé: Cancelar (ghost), Criar como rascunho, Criar; "Criar" abre o Modal com a revisão.
 
-**Editar**: abas Geral (nome, descrição, regras adicionais e outros idiomas), Formato (chave, séries, campeões) e Inscrições e prazos (início, vagas, visibilidade, check-in, contestação), um Salvar para todas. Depois de começar, o aviso dos campos travados no topo da aba deles. Excluir rascunho fica no ⋯ do `PageHeader` do torneio, não aqui.
+**Editar**: abas Geral (nome, descrição, regras adicionais e outros idiomas), Formato (chave, séries, campeões), Inscrições e prazos (início, vagas, visibilidade, check-in) e Resultados (contestação, captura de tela obrigatória), um Salvar para todas. Depois de começar, o aviso dos campos travados no topo da aba deles. Excluir rascunho fica no ⋯ do `PageHeader` do torneio, não aqui.
 
 ### Torneio `/[tenant]/[tournament]`
 

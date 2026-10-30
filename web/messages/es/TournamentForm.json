@@ -1,20 +1,21 @@
 {
   "tournament": "Torneo",
   "name": "Nombre",
-  "slug": "Dirección",
-  "slugHint": "El enlace del torneo será {address}. Minúsculas, números y guion, de 3 a 32; no se puede cambiar después.",
+  "slug": "Id",
+  "slugHint": "El enlace del torneo será {address}. No cambia después.",
+  "slugInvalid": "No puede terminar con guion.",
   "startsAt": "Inicio",
-  "startsAtHint": "En tu zona horaria ({timeZone}). Opcional. Sin fecha, el check-in no abre solo (lo abres cuando quieras). Cambia hasta que el torneo empiece.",
+  "startsAtHint": "En tu zona horaria ({timeZone}).",
+  "startsAtCheckIn": "En tu zona horaria ({timeZone}). El check-in abre {opens}.",
+  "startError": {
+    "past": "La fecha de inicio ya pasó.",
+    "soon": "Usa un inicio a partir de {from}, para que el check-in abra antes."
+  },
   "format": "Formato",
   "formatLocked": "El torneo ya empezó. El formato y los campeones ya no cambian.",
   "mode": "Modalidad",
-  "modeHints": {
-    "duel": "Uno contra uno. Cada inscrito juega por su cuenta.",
-    "tdm": "Equipos contra equipos. La inscripción es individual. Antes de iniciar, la organización arma los equipos (por sorteo, equilibrados por rating o a mano), y quien sobra queda como suplente."
-  },
-  "teamSize": "Jugadores por equipo",
+  "teamSize": "Tamaño del equipo",
   "teamSizeOption": "{size}v{size}",
-  "teamSizeHint": "Cada equipo tiene {size} jugadores. El torneo solo empieza con todos los equipos completos.",
   "teamsReset": {
     "fromDuel": "Al guardar, {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}. Arma los equipos en la pestaña Organización antes de iniciar.",
     "toDuel": "Al guardar, los equipos se deshacen y {count, plural, one {el inscrito juega} other {cada uno de los # inscritos juega}} por su cuenta.",
@@ -61,12 +62,13 @@
   },
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó. El inicio, los cupos y el check-in ya no cambian.",
-  "countsForRating": "Cuenta para el rating de la comunidad",
-  "countsForRatingHint": "Cada partida confirmada entra en el ranking (el W.O. no). Desmárcalo para un torneo de práctica o de diversión.",
+  "results": "Resultados",
+  "countsForRating": "Modifica el rating",
+  "countsForRatingHint": "Cada partida actualiza el rating de los jugadores.",
   "maxParticipants": "Cupos",
-  "maxParticipantsHint": "De 2 a 1024. La inscripción se cierra cuando se llenan.",
+  "maxParticipantsHint": "La inscripción se cierra al llenarse.",
   "maxParticipantsTdm": "Cupos (jugadores)",
-  "maxParticipantsHintTdm": "Cuentan jugadores, de {min} a {max}. La inscripción se cierra cuando se llenan.",
+  "maxParticipantsHintTdm": "Cuentan jugadores. La inscripción se cierra al llenarse.",
   "slotsTeams": "{slots} cupos = {teams, plural, one {# equipo} other {# equipos}} de {size}{reserves, plural, =0 {} one { y # suplente} other { y # suplentes}}.",
   "visibility": "Visibilidad",
   "visibilityOptions": {
@@ -86,7 +88,7 @@
   "checkInHintTdm": "El check-in es la confirmación de presencia. Cerca del inicio, cada inscrito confirma en el sitio que va a jugar, y solo quien confirma entra en un equipo.",
   "contest": "Plazo para impugnar",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
-  "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el resultado enviado; sin respuesta, se confirma solo. Cambia hasta que el torneo termine y vale para los próximos envíos.",
+  "contestHint": "Tiempo que tiene el rival para confirmar o impugnar el marcador enviado. Sin respuesta, se confirma solo.",
   "summary": {
     "slots": "{count, plural, one {# cupo} other {# cupos}}",
     "slotsTeams": "{count, plural, one {# cupo} other {# cupos}} ({teams, plural, one {# equipo} other {# equipos}} de {size})",
@@ -97,7 +99,8 @@
     "championPhase": "ban/pick de campeones",
     "noChampionPhase": "sin ban/pick de campeones",
     "seconds": "{time} por paso",
-    "teamPick": "{time} para elegir campeón"
+    "teamPick": "{time} para elegir campeón",
+    "screenshotsRequired": "captura de pantalla obligatoria"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -127,7 +130,8 @@
       "registration": "Inscripciones",
       "champions": "Campeones",
       "languages": "Idiomas",
-      "veto": "Veto"
+      "veto": "Veto",
+      "results": "Resultados"
     },
     "noDate": "Sin fecha"
   },
@@ -135,16 +139,13 @@
     "label": "Partes del torneo",
     "general": "General",
     "format": "Formato",
-    "registration": "Inscripciones y plazos"
+    "registration": "Inscripciones y plazos",
+    "results": "Resultados"
   },
   "edit": {
     "title": "Editar torneo",
     "loading": "Cargando el torneo…",
     "loginRequired": "Inicia sesión para editar este torneo."
-  },
-  "startWarning": {
-    "past": "La fecha de inicio ya pasó. El check-in abre apenas el torneo se publique o se guarde, y los jugadores no tendrán tiempo de inscribirse. Elige una fecha futura o deja sin fecha.",
-    "window": "El check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes del inicio, es decir, abriría de inmediato. Los jugadores no tendrán tiempo de inscribirse. Elige una fecha más lejana, reduce la ventana de check-in o deja sin fecha."
   },
   "veto": {
     "title": "Veto",

@@ -18,6 +18,8 @@ type Props = Omit<
   filter?: (value: string) => string;
   /** O erro do `pattern`, curto e já traduzido ("Use de 3 a 20 letras, números, _ . ou -."). */
   patternMessage?: ReactNode;
+  /** Erro calculado fora, já traduzido: aparece na hora e bloqueia o envio (ver `useFieldCheck`). */
+  problem?: string;
 };
 
 /**
@@ -36,6 +38,7 @@ export function TextInput({
   required,
   filter,
   patternMessage,
+  problem,
   ...props
 }: Props) {
   const generated = useId();
@@ -44,6 +47,7 @@ export function TextInput({
     required,
     filter,
     patternMessage,
+    problem,
   });
   return (
     <CarbonTextInput

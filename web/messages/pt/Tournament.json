@@ -118,9 +118,11 @@
     "labelTranslation": "Regras adicionais ({language}, tradução)"
   },
   "publish": "Publicar e abrir inscrições",
-  "publishToCheckIn": "Publicar e abrir o check-in",
   "publishConfirm": "Publicar o torneio? As inscrições abrem e a comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído.",
-  "publishConfirmCheckIn": "Publicar o torneio já com o check-in aberto? Os jogadores não terão tempo de se inscrever. Só entra na chave quem você já inscreveu. A comunidade passa a vê-lo (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído. Para ter inscrições, mude a data em Editar antes de publicar.",
+  "publishBlocked": {
+    "past": "A data de início já passou. Mude-a em Editar para publicar.",
+    "window": "O início está mais perto que a janela de check-in. Mude a data em Editar para publicar."
+  },
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
   "setup": {
@@ -209,6 +211,5 @@
   },
   "startsAt": "Começa <date></date>",
   "startedAt": "Início marcado para <date></date>",
-  "noStartDate": "Sem data de início",
-  "publishConfirmPast": "A data de início já passou. Publicar assim mesmo? As inscrições abrem, mas o aviso de hora de iniciar sai logo e os jogadores terão pouco tempo para se inscrever. A comunidade passa a ver o torneio (no privado, só inscritos e organizadores). Publicado, ele não volta a rascunho nem pode ser excluído."
+  "noStartDate": "Sem data de início"
 }

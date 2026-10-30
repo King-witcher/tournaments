@@ -31,21 +31,6 @@ async fn create_with_publish_opens_registration() {
 }
 
 #[tokio::test]
-async fn create_with_publish_inside_the_check_in_window_opens_check_in() {
-    let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, _) = quake_br(&db).await;
-    let soon = (chrono::Utc::now() + chrono::Duration::minutes(10)).to_rfc3339();
-    let body = with(
-        duel("copa"),
-        json!({ "publish": true, "starts_at": soon, "check_in_minutes": 30 }),
-    );
-    let created = create_tournament(&app, &ana, body).await;
-    assert_eq!(created["status"], "check_in");
-    let (_, seen) = get(&app, &format!("{URI}/copa"), &ana).await;
-    assert_eq!(seen["status"], "check_in");
-}
-
-#[tokio::test]
 async fn create_with_publish_without_a_date_stays_in_registration() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;

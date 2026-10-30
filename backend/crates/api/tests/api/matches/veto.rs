@@ -157,17 +157,17 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
         (&p[1], "blood-covenant"),
         (&p[0], "blood-run"),
         (&p[1], "corrupted-keep"),
-        (&p[0], "deep-embrace"),
+        (&p[0], "molten-falls"),
     ] {
         ok_step(&app, who, map(slug)).await;
     }
-    let d = ok_step(&app, &p[1], map("exile")).await;
+    let d = ok_step(&app, &p[1], map("ruins-of-sarnath")).await;
     let games = &d["veto"]["games"];
     assert_eq!(games[0]["map"]["slug"], "blood-run");
     assert_eq!(games[0]["picked_by"], "a");
     assert_eq!(
         d["veto"]["remaining"],
-        json!([{ "slug": "insomnia", "name": "Insomnia" }])
+        json!([{ "slug": "vale-of-pnath", "name": "Vale of Pnath" }])
     );
     // A escolheu o mapa 1: B começa os campeões.
     assert_eq!(turn(&d), (json!("ban"), json!("champion"), json!(["b"])));
@@ -308,7 +308,7 @@ async fn a_player_asks_to_undo_and_the_opponent_answers() {
     assert_eq!(turn(&d).2, json!(["a"]));
     assert_eq!(d["veto"]["map_steps"], json!([]));
 
-    ok_step(&app, &p[0], map("exile")).await;
+    ok_step(&app, &p[0], map("ruins-of-sarnath")).await;
     post_empty(&app, &uri("undo-request"), &p[0]).await;
     let (_, d) = post(&app, &answer, &p[1], json!({ "accept": false })).await;
     assert!(d["veto"]["undo_request"].is_null());
@@ -430,7 +430,7 @@ async fn walkover_and_undoing_the_start_end_the_veto() {
     assert_eq!(d["veto"]["map_steps"].as_array().unwrap().len(), 1);
     assert!(d["veto"]["turn"].is_null());
     assert_eq!(
-        pick(&app, &p[3], map("exile")).await,
+        pick(&app, &p[3], map("ruins-of-sarnath")).await,
         (StatusCode::CONFLICT, err("match.series_decided"))
     );
     // Desfazer o início apaga o veto.
@@ -474,7 +474,7 @@ async fn the_tournament_keeps_the_veto_settings() {
         json!({
             "map_mode": "veto",
             "map_pool": ["awoken", "blood-covenant", "blood-run", "corrupted-keep",
-                         "deep-embrace", "exile", "insomnia"],
+                         "molten-falls", "ruins-of-sarnath", "vale-of-pnath"],
             "champion_phase": true,
             "step_seconds": 30,
             "team_pick_seconds": 60

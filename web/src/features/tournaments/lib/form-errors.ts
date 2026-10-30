@@ -52,6 +52,8 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.bans_invalid": "bansPerGame",
   "champions.pool_exhausted": "noRepeat",
   "tournament.check_in_minutes_invalid": "checkInMinutes",
+  "tournament.starts_at_past": "startsAt",
+  "tournament.starts_at_too_soon": "startsAt",
   "tournament.contest_minutes_invalid": "contestMinutes",
   "tournament.map_unknown": "mapPool",
   "tournament.map_pool_repeated": "mapPool",

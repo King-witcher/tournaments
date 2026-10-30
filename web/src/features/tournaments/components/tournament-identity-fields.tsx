@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
+import { slugChars } from "@/shared/lib/input-filters";
 import { slugify } from "@/shared/lib/slugify";
 import { TextInput } from "@/shared/ui/text-input";
 import type { FieldErrors } from "../lib/form-errors";
@@ -12,13 +13,13 @@ type Props = {
   values: TournamentValues;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** Na criação aparece o endereço, que depois não muda. */
+  /** Na criação aparece o id, que depois não muda. */
   isNew: boolean;
 };
 
 /**
- * O nome no idioma original e, na criação, o endereço com a prévia do link.
- * O endereço acompanha o nome até a pessoa editá-lo.
+ * O nome no idioma original e, na criação, o id com a prévia do link. O id
+ * acompanha o nome até a pessoa editá-lo.
  */
 export function TournamentIdentityFields({
   tenant,
@@ -62,6 +63,8 @@ export function TournamentIdentityFields({
           minLength={3}
           maxLength={32}
           pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          patternMessage={t("slugInvalid")}
+          filter={slugChars}
           autoCapitalize="none"
           autoComplete="off"
           spellCheck={false}
@@ -70,7 +73,7 @@ export function TournamentIdentityFields({
           invalidText={errors.slug}
           onChange={(e) => {
             setSlugEdited(true);
-            onChange({ slug: e.target.value.toLowerCase() });
+            onChange({ slug: e.target.value });
           }}
         />
       )}

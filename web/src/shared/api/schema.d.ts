@@ -5200,7 +5200,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Mapas ativos: os do pool de duelo primeiro, depois os outros, por nome; `default_pool` marca o pool padrão de um torneio novo */
+            /** @description Mapas ativos: os do pool de duelo primeiro (o pool padrão de um torneio novo, `default_pool`, na ordem dele, e depois os outros por nome), depois os demais por nome */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6881,7 +6881,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta, ou em check-in se a janela já abriu) com `publish: true`. Tudo numa transação só */
+            /** @description Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta) com `publish: true`. Tudo numa transação só */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -6926,7 +6926,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8964,7 +8964,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se há data e a janela de check-in já abriu, vem em check-in; sem data, em inscrição */
+            /** @description Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Sempre em inscrição: a data tem de deixar a janela de check-in pela frente (senão `tournament.starts_at_past` ou `tournament.starts_at_too_soon`) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9009,7 +9009,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação) */
+            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data do rascunho ficou para trás) */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -20,8 +20,6 @@ const STEP_SECONDS: RangeInclusive<i32> = 10..=300;
 pub const DEFAULT_TEAM_PICK_SECONDS: i32 = 60;
 /// Janela aceita, em segundos (o mesmo check está na tabela).
 const TEAM_PICK_SECONDS: RangeInclusive<i32> = 15..=300;
-/// Mapas no pool padrão: os primeiros do pool de duelo.
-pub const DEFAULT_POOL_SIZE: i64 = 7;
 /// Teto do pool (a tabela aceita até 64 posições).
 const MAX_POOL: usize = 32;
 
@@ -218,7 +216,7 @@ pub async fn resolve(
                 .ok_or(ApiError::invalid("tournament.map_unknown"))?
         }
         (None, Some(current)) => current.pool.clone(),
-        (None, None) => maps::duel_pool(conn, DEFAULT_POOL_SIZE).await?,
+        (None, None) => maps::default_pool(conn).await?,
     };
     Ok(VetoSetup {
         map_mode: input

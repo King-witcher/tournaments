@@ -55,12 +55,14 @@ async fn the_same_event_goes_once_per_transaction() {
     let uri = format!("{COPA}/participants");
     let (status, _) = post(&app, &uri, &ana, json!({ "user_id": bia.id })).await;
     assert_eq!(status, StatusCode::CREATED);
-    // Publicar com a janela de check-in já aberta: o torneio muda duas vezes
-    // na mesma transação (publicado e check-in aberto), e cada evento entra
-    // uma vez, com o aviso aos inscritos.
+    // A janela abre com o torneio já publicado; editar então muda o torneio
+    // duas vezes na mesma transação (a edição e o check-in aberto), e cada
+    // evento entra uma vez, com o aviso aos inscritos.
+    publish(&app, &ana, "copa").await;
     starts_in(&db, "copa", 10).await;
     clear(&db).await;
-    publish(&app, &ana, "copa").await;
+    let (status, body) = patch(&app, COPA, &ana, json!({ "name": "Copa 2" })).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     let events = outbox(&db).await;
     assert_eq!(
         events[..3],

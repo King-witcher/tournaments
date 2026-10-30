@@ -53,7 +53,6 @@ export function TournamentModeFields({
     <>
       <RadioGroup
         legendText={t("mode")}
-        helperText={t(`modeHints.${values.mode}`)}
         name="mode"
         orientation="horizontal"
         value={values.mode}
@@ -72,7 +71,6 @@ export function TournamentModeFields({
       {values.mode === "tdm" && (
         <Select
           labelText={t("teamSize")}
-          helperText={t("teamSizeHint", { size })}
           name="teamSize"
           value={values.teamSize}
           disabled={disabled}

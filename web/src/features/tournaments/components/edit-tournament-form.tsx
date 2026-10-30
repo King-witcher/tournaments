@@ -18,6 +18,7 @@ import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 import { TournamentModeFields } from "./tournament-mode-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
+import { TournamentResultsFields } from "./tournament-results-fields";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
 import { TournamentTranslations } from "./tournament-translations";
@@ -25,7 +26,7 @@ import { TournamentVetoFields } from "./tournament-veto-fields";
 
 type Schemas = components["schemas"];
 
-const TABS = ["general", "format", "registration"] as const;
+const TABS = ["general", "format", "registration", "results"] as const;
 type EditTab = (typeof TABS)[number];
 
 type Props = {
@@ -38,8 +39,8 @@ type Props = {
 /**
  * Editar torneio, uma aba por assunto: Geral (nome, descrição, regras
  * adicionais e outros idiomas), Formato (modalidade, chave, séries, campeões,
- * veto) e Inscrições e prazos (início, vagas, visibilidade, check-in,
- * contestação).
+ * veto), Inscrições e prazos (início, vagas, visibilidade, check-in) e
+ * Resultados (contestação, captura de tela).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
  * de começar, o motivo dos campos travados vem no topo da aba deles.
  */
@@ -153,6 +154,7 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                   error={errors.startsAt}
                   checkInMinutes={values.checkInMinutes}
                   disabled={setupLocked}
+                  saved={tournament.starts_at ?? null}
                 />
                 <TournamentRegistrationFields
                   values={values}
@@ -163,11 +165,22 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                 />
               </Stack>
             </TabPanel>
+            <TabPanel>
+              <Stack gap={6} data-group="results">
+                <TournamentResultsFields
+                  values={values}
+                  onChange={onChange}
+                  errors={errors}
+                  finished={false}
+                />
+              </Stack>
+            </TabPanel>
           </TabPanels>
         </Tabs>
         {form.formError && <FormError>{form.formError}</FormError>}
         <FormActions
           pending={form.pending}
+          disabled={!form.canSubmit}
           cancelHref={`/${tenant}/${tournament.slug}`}
         />
       </Stack>

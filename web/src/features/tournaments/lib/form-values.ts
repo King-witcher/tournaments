@@ -47,7 +47,7 @@ export type TournamentValues = {
   checkInMinutes: number | null;
   /** Janela de contestação de resultado, em minutos. */
   contestMinutes: number;
-  /** Os mapas contam para o rating da comunidade (muda até começar). */
+  /** Cada partida atualiza o rating dos jogadores (muda até começar). */
   countsForRating: boolean;
   /** Como sai o mapa de cada jogo. */
   mapMode: Schemas["MapMode"];
@@ -59,7 +59,7 @@ export type TournamentValues = {
   vetoSeconds: number;
   /** TDM: segundos da escolha simultânea de campeões. */
   teamPickSeconds: number;
-  /** O envio do jogador exige screenshot do placar (o campo só aparece com screenshots na API). */
+  /** O envio do jogador exige captura de tela do placar (o campo só aparece com capturas na API). */
   screenshotsRequired: boolean;
 };
 
@@ -239,7 +239,8 @@ export function noRepeatChoices(current: NoRepeatChoice): NoRepeatChoice[] {
 /**
  * Se a data de início não deixa tempo para inscrição e check-in: `past` (já
  * passou) ou `window` (a janela de check-in, contada a partir do início, já
- * abriu em `now`). `null` sem data ou com tempo de sobra.
+ * abriu em `now`). `null` sem data ou com tempo de sobra. É a mesma conta da
+ * API (`Schedule::check_start`).
  */
 export function startTiming(
   startsAt: string | null,
@@ -256,6 +257,13 @@ export function startTiming(
     return "window";
   }
   return null;
+}
+
+/** O primeiro minuto cheio em que o início passa em `startTiming`: a janela depois de `now`. */
+export function earliestStart(checkInMinutes: number, now: Date) {
+  const minute = 60_000;
+  const edge = now.getTime() + checkInMinutes * minute;
+  return new Date(Math.floor(edge / minute) * minute + minute);
 }
 
 /** Corpo da criação: rascunho, ou já publicado com `publish`. */
@@ -297,7 +305,7 @@ export function updateBody(values: TournamentValues, setupLocked: boolean) {
   };
 }
 
-/** O que muda até o torneio encerrar: textos, visibilidade, janela de contestação e screenshot obrigatório. */
+/** O que muda até o torneio encerrar: textos, visibilidade, janela de contestação e captura de tela obrigatória. */
 function textsBody(values: TournamentValues) {
   return {
     name: values.name,

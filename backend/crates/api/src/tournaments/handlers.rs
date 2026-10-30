@@ -33,12 +33,12 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
     params(("slug" = String, Path, description = "Slug do tenant")),
     request_body = CreateTournament,
     responses(
-        (status = CREATED, body = Tournament, description = "Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta, ou em check-in se a janela já abriu) com `publish: true`. Tudo numa transação só"),
+        (status = CREATED, body = Tournament, description = "Torneio criado com as traduções enviadas: rascunho, ou já publicado (inscrição aberta) com `publish: true`. Tudo numa transação só"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -65,6 +65,7 @@ pub async fn create_tournament(
         check_in_minutes: body.check_in_minutes,
     };
     schedule.check()?;
+    schedule.check_start(Utc::now())?;
     contest::check(body.contest_minutes)?;
     let translations = clean_translations(body.locale, body.translations)?;
     screenshots::check_new(body.screenshots_required, state.storage.is_some())?;
@@ -211,6 +212,7 @@ pub async fn update_tournament(
         schedule: current.schedule,
         contest_minutes: current.contest_minutes,
         counts_for_rating: current.counts_for_rating,
+        now: Utc::now(),
     };
     let edit = edit::apply(stored, veto, body)?;
     if let Some(setup) = &edit.setup {
@@ -243,12 +245,12 @@ pub async fn update_tournament(
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Se há data e a janela de check-in já abriu, vem em check-in; sem data, em inscrição"),
+        (status = OK, body = Tournament, description = "Rascunho publicado: a inscrição abre e os membros passam a ver o torneio (o privado, só os inscritos). Sempre em inscrição: a data tem de deixar a janela de check-in pela frente (senão `tournament.starts_at_past` ou `tournament.starts_at_too_soon`)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available} (o pool mudou desde a criação)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data do rascunho ficou para trás)"),
     )
 )]
 pub async fn publish_tournament(
@@ -264,6 +266,8 @@ pub async fn publish_tournament(
     if current.status != TournamentStatus::Draft {
         return Err(ApiError::conflict("tournament.not_draft"));
     }
+    // A data pode ter ficado para trás desde que o rascunho foi criado.
+    current.schedule.check_start(Utc::now())?;
     let pool = db::champion_pool(&mut *tx).await?;
     current.setup.check(pool, current.participants)?;
     db::publish(&mut tx, current.id).await?;

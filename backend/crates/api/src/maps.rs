@@ -36,17 +36,16 @@ pub struct Map {
     path = "/maps",
     tag = "maps",
     responses(
-        (status = OK, body = Vec<Map>, description = "Mapas ativos: os do pool de duelo primeiro, depois os outros, por nome; `default_pool` marca o pool padrão de um torneio novo"),
+        (status = OK, body = Vec<Map>, description = "Mapas ativos: os do pool de duelo primeiro (o pool padrão de um torneio novo, `default_pool`, na ordem dele, e depois os outros por nome), depois os demais por nome"),
     )
 )]
 pub async fn list_maps(State(state): State<AppState>) -> Result<Json<Vec<Map>>, ApiError> {
     let maps = sqlx::query_as!(
         Map,
         r#"select slug, name, duel_pool,
-                  (duel_pool and id in (select id from maps where active and duel_pool
-                                        order by id limit $1)) as "default_pool!"
-           from maps where active order by duel_pool desc, name"#,
-        crate::tournaments::DEFAULT_POOL_SIZE
+                  (default_position is not null) as "default_pool!"
+           from maps where active
+           order by duel_pool desc, default_position nulls last, name"#
     )
     .fetch_all(&state.db)
     .await?;
@@ -68,12 +67,11 @@ pub async fn active_ids(
     Ok(rows.into_iter().map(|r| (r.slug, MapId(r.id))).collect())
 }
 
-/// Os `n` primeiros mapas ativos do pool de duelo, na ordem da tabela: o pool
-/// padrão de um torneio.
-pub async fn duel_pool(conn: &mut PgConnection, n: i64) -> Result<Vec<MapId>, sqlx::Error> {
+/// Os mapas ativos do pool padrão de um torneio, na ordem de `default_position`.
+pub async fn default_pool(conn: &mut PgConnection) -> Result<Vec<MapId>, sqlx::Error> {
     Ok(sqlx::query_scalar!(
-        "select id from maps where active and duel_pool order by id limit $1",
-        n
+        "select id from maps where active and default_position is not null
+         order by default_position"
     )
     .fetch_all(conn)
     .await?

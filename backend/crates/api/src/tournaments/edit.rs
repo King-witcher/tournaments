@@ -2,6 +2,8 @@
 //! que o status ainda deixa mudar. A checagem de campeões fica para quem
 //! chama, com o pool lido na mesma transação.
 
+use chrono::{DateTime, Utc};
+
 use super::{
     contest,
     schedule::Schedule,
@@ -40,6 +42,8 @@ pub struct Current<'a> {
     pub schedule: Schedule,
     pub contest_minutes: i32,
     pub counts_for_rating: bool,
+    /// O relógio da requisição, para conferir a data de início nova.
+    pub now: DateTime<Utc>,
 }
 
 /// Erros: 409 `tournament.finished` (texto, visibilidade ou janela de
@@ -61,6 +65,7 @@ pub fn apply(
         schedule: current_schedule,
         contest_minutes: current_contest_minutes,
         counts_for_rating: current_counts_for_rating,
+        now,
     } = current;
     let touches_texts = patch.name.is_some()
         || patch.description.is_some()
@@ -110,7 +115,7 @@ pub fn apply(
     if setup.is_some() && !status.setup_editable() {
         return Err(ApiError::conflict("tournament.setup_locked"));
     }
-    let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes)?;
+    let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes, now)?;
     let check_in_off = schedule.is_some_and(|s| !s.has_check_in());
     let contest_minutes = patch
         .contest_minutes
@@ -218,6 +223,7 @@ mod tests {
             schedule: schedule(),
             contest_minutes: 5,
             counts_for_rating: true,
+            now: DateTime::from_timestamp(1_700_000_000, 0).unwrap(),
         };
         apply(current, None, patch)
     }

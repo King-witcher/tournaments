@@ -1,20 +1,21 @@
 {
   "tournament": "Torneio",
   "name": "Nome",
-  "slug": "Endereço",
-  "slugHint": "O link do torneio será {address}. Letras minúsculas, números e hífen, de 3 a 32; não dá para mudar depois.",
+  "slug": "Id",
+  "slugHint": "O link do torneio será {address}. Não muda depois.",
+  "slugInvalid": "Não pode terminar com hífen.",
   "startsAt": "Início",
-  "startsAtHint": "No seu fuso horário ({timeZone}). Opcional. Sem data, o check-in não abre sozinho (você o abre quando quiser). Muda até o torneio começar.",
+  "startsAtHint": "No seu fuso horário ({timeZone}).",
+  "startsAtCheckIn": "No seu fuso horário ({timeZone}). O check-in abre {opens}.",
+  "startError": {
+    "past": "A data de início já passou.",
+    "soon": "Use um início a partir de {from}, para o check-in abrir antes."
+  },
   "format": "Formato",
   "formatLocked": "O torneio já começou. Formato e campeões não mudam mais.",
   "mode": "Modalidade",
-  "modeHints": {
-    "duel": "Um contra um. Cada inscrito joga por si.",
-    "tdm": "Times contra times. A inscrição é individual. Antes de iniciar, a organização forma os times (por sorteio, equilibrados pelo rating ou à mão), e quem sobra fica de reserva."
-  },
-  "teamSize": "Jogadores por time",
+  "teamSize": "Tamanho do time",
   "teamSizeOption": "{size}v{size}",
-  "teamSizeHint": "Cada time tem {size} jogadores. O torneio só começa com todos os times completos.",
   "teamsReset": {
     "fromDuel": "Ao salvar, {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme os times na aba Organização antes de iniciar.",
     "toDuel": "Ao salvar, os times são desfeitos e {count, plural, one {o inscrito joga} other {cada um dos # inscritos joga}} por si.",
@@ -61,12 +62,13 @@
   },
   "registration": "Inscrições e prazos",
   "registrationLocked": "O torneio já começou. Início, vagas e check-in não mudam mais.",
-  "countsForRating": "Conta para o rating da comunidade",
-  "countsForRatingHint": "Cada partida confirmada entra no ranking (W.O. não). Desmarque para um torneio de treino ou de brincadeira.",
+  "results": "Resultados",
+  "countsForRating": "Modifica rating",
+  "countsForRatingHint": "Cada partida atualiza o rating dos jogadores.",
   "maxParticipants": "Vagas",
-  "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
+  "maxParticipantsHint": "A inscrição fecha quando lotar.",
   "maxParticipantsTdm": "Vagas (jogadores)",
-  "maxParticipantsHintTdm": "Contam jogadores, de {min} a {max}. A inscrição fecha quando lotar.",
+  "maxParticipantsHintTdm": "Contam jogadores. A inscrição fecha quando lotar.",
   "slotsTeams": "{slots} vagas = {teams, plural, one {# time} other {# times}} de {size}{reserves, plural, =0 {} one { e # reserva} other { e # reservas}}.",
   "visibility": "Visibilidade",
   "visibilityOptions": {
@@ -86,7 +88,7 @@
   "checkInHintTdm": "Check-in é a confirmação de presença. Perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra num time.",
   "contest": "Janela de contestação",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
-  "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios.",
+  "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado. Sem resposta, confirma sozinho.",
   "summary": {
     "slots": "{count, plural, one {# vaga} other {# vagas}}",
     "slotsTeams": "{count, plural, one {# vaga} other {# vagas}} ({teams, plural, one {# time} other {# times}} de {size})",
@@ -97,7 +99,8 @@
     "championPhase": "ban/pick de campeões",
     "noChampionPhase": "sem ban/pick de campeões",
     "seconds": "{time} por passo",
-    "teamPick": "{time} para escolher o campeão"
+    "teamPick": "{time} para escolher o campeão",
+    "screenshotsRequired": "captura de tela obrigatória"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -127,7 +130,8 @@
       "registration": "Inscrições",
       "champions": "Campeões",
       "languages": "Idiomas",
-      "veto": "Veto"
+      "veto": "Veto",
+      "results": "Resultados"
     },
     "noDate": "Sem data"
   },
@@ -135,16 +139,13 @@
     "label": "Partes do torneio",
     "general": "Geral",
     "format": "Formato",
-    "registration": "Inscrições e prazos"
+    "registration": "Inscrições e prazos",
+    "results": "Resultados"
   },
   "edit": {
     "title": "Editar torneio",
     "loading": "Carregando o torneio…",
     "loginRequired": "Entre para editar este torneio."
-  },
-  "startWarning": {
-    "past": "A data de início já passou. O check-in abre assim que o torneio for publicado ou salvo, e os jogadores não terão tempo de se inscrever. Escolha uma data futura ou deixe sem data.",
-    "window": "O check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes do início, ou seja, já abriria na hora. Os jogadores não terão tempo de se inscrever. Escolha uma data mais distante, diminua a janela de check-in ou deixe sem data."
   },
   "veto": {
     "title": "Veto",

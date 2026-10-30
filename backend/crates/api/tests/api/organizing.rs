@@ -167,8 +167,7 @@ async fn only_communities_organized_now() {
     let token = invite(&app, &bia, "argentina").await;
     join(&app, &ana, &token).await;
     join(&app, &olga, &token).await;
-    let liga =
-        json!({ "slug": "liga", "check_in_minutes": null, "starts_at": "2020-01-01T20:00:00Z" });
+    let liga = json!({ "slug": "liga", "check_in_minutes": null });
     let (status, body) = post(
         &app,
         "/tenants/argentina/tournaments",
@@ -180,6 +179,7 @@ async fn only_communities_organized_now() {
     let (status, body) =
         post_empty(&app, "/tenants/argentina/tournaments/liga/publish", &bia).await;
     assert_eq!(status, StatusCode::OK, "{body}");
+    starts_in(&db, "liga", -5).await;
 
     let slugs = |found: &Value| -> Vec<String> {
         let due = found["start_due"].as_array().unwrap();

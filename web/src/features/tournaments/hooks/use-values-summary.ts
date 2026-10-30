@@ -70,9 +70,14 @@ export function useValuesSummary() {
         v.checkInMinutes === null
           ? t("noCheckIn")
           : t("checkIn", { window: formatMinutes(v.checkInMinutes) }),
-        t("contest", { window: formatMinutes(v.contestMinutes) }),
       ]);
     },
+    /** `screenshots`: a API tem capturas de tela; sem elas, o campo não aparece e o valor não conta. */
+    results: (v: TournamentValues, screenshots: boolean) =>
+      line([
+        t("contest", { window: formatMinutes(v.contestMinutes) }),
+        screenshots && v.screenshotsRequired && t("screenshotsRequired"),
+      ]),
     champions: (v: TournamentValues) => {
       const repeat = tSetup(`noRepeat.${v.noRepeat}`);
       const tdm = isTdm(v);

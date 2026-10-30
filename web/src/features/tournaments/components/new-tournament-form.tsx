@@ -3,7 +3,7 @@
 import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
-
+import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
@@ -23,6 +23,7 @@ import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 import { TournamentModeFields } from "./tournament-mode-fields";
 import { TournamentRegistrationFields } from "./tournament-registration-fields";
+import { TournamentResultsFields } from "./tournament-results-fields";
 import { TournamentReview } from "./tournament-review";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentStartField } from "./tournament-start-field";
@@ -30,14 +31,14 @@ import { TournamentTranslations } from "./tournament-translations";
 import { TournamentVetoFields } from "./tournament-veto-fields";
 
 /** Os grupos que começam fechados: têm padrão bom e o resumo no título. */
-type Group = "champions" | "veto" | "registration";
+type Group = "champions" | "veto" | "registration" | "results";
 
 /**
- * Criar torneio, numa página só: à vista o que se decide sempre (nome,
- * endereço, início, descrição, modalidade, chave e séries); fechados, com o
- * resumo no título, os grupos que já vêm com padrão (campeões, veto,
- * inscrições e prazos); depois as regras adicionais e, por último, "Outros
- * idiomas".
+ * Criar torneio, numa página só: à vista o que se decide sempre (nome, id,
+ * início, descrição, modalidade, chave e séries); fechados, com o resumo no
+ * título, os grupos que já vêm com padrão (campeões, veto, inscrições e
+ * prazos, resultados); depois as regras adicionais e, por último, "Outros
+ * idiomas". Os botões só liberam com todos os campos válidos.
  * "Criar" confere e mostra a revisão antes de criar já publicado; "Criar como
  * rascunho" cria sem publicar (e sem exigir a data).
  */
@@ -51,10 +52,12 @@ export function NewTournamentForm({
 }) {
   const t = useTranslations("TournamentForm");
   const summary = useValuesSummary();
+  const screenshots = useScreenshotSettings()?.enabled ?? false;
   const [open, setOpen] = useState<Record<Group, boolean>>({
     champions: false,
     veto: false,
     registration: false,
+    results: false,
   });
   const [reviewing, setReviewing] = useState(false);
   const [intent, setIntent] = useState<SubmitIntent>();
@@ -65,7 +68,8 @@ export function NewTournamentForm({
       if (
         group === "champions" ||
         group === "veto" ||
-        group === "registration"
+        group === "registration" ||
+        group === "results"
       ) {
         setOpen((o) => ({ ...o, [group]: true }));
       }
@@ -171,6 +175,20 @@ export function NewTournamentForm({
               finished={false}
             />
           </FormAccordionItem>
+          <FormAccordionItem
+            title={t("results")}
+            summary={summary.results(values, screenshots)}
+            group="results"
+            open={open.results}
+            onToggle={toggle("results")}
+          >
+            <TournamentResultsFields
+              values={values}
+              onChange={onChange}
+              errors={errors}
+              finished={false}
+            />
+          </FormAccordionItem>
         </Accordion>
         <TournamentRulesSection
           values={values}
@@ -182,11 +200,13 @@ export function NewTournamentForm({
         <FormActions
           submitLabel={t("create")}
           submitRef={createRef}
+          disabled={!form.canSubmit}
           pending={form.pending && intent === "publish"}
           cancelHref={`/${tenant}`}
           alternative={
             <Button
               kind="secondary"
+              disabled={!form.canSubmit}
               pending={form.pending && intent === "draft"}
               onClick={() => {
                 if (!form.pending && form.check()) send("draft");

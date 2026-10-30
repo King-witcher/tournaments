@@ -118,9 +118,11 @@
     "labelTranslation": "Reglas adicionales ({language}, traducción)"
   },
   "publish": "Publicar y abrir inscripciones",
-  "publishToCheckIn": "Publicar y abrir el check-in",
   "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
-  "publishConfirmCheckIn": "¿Publicar el torneo ya con el check-in abierto? Los jugadores no tendrán tiempo de inscribirse. Solo entra en la llave quien ya inscribiste. La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar. Para tener inscripciones, cambia la fecha en Editar antes de publicar.",
+  "publishBlocked": {
+    "past": "La fecha de inicio ya pasó. Cámbiala en Editar para publicar.",
+    "window": "El inicio está más cerca que la ventana de check-in. Cambia la fecha en Editar para publicar."
+  },
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
   "setup": {
@@ -209,6 +211,5 @@
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",
-  "noStartDate": "Sin fecha de inicio",
-  "publishConfirmPast": "La fecha de inicio ya pasó. ¿Publicar igual? Las inscripciones se abren, pero el aviso de hora de iniciar sale enseguida y los jugadores tendrán poco tiempo para inscribirse. La comunidad pasa a ver el torneo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar."
+  "noStartDate": "Sin fecha de inicio"
 }

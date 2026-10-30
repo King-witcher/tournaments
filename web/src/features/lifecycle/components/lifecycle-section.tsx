@@ -1,6 +1,5 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { StartDateWarning } from "@/features/tournaments/components/start-date-warning";
 import { TournamentProgress } from "@/features/tournaments/components/tournament-progress";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -19,8 +18,7 @@ type Props = {
  * Na aba Organização, o quadro do estado: o ciclo com o passo de agora, o
  * que vale neste passo (quando o check-in abre, se a abertura está suspensa,
  * quem entra na chave) e o próximo passo como botão, com o motivo embaixo
- * quando ainda não dá. No rascunho, o aviso de quando publicar pula as
- * inscrições.
+ * quando ainda não dá (no rascunho, a data de início que ficou para trás).
  */
 export function LifecycleSection({ tenant, tournament, now }: Props) {
   const t = useTranslations("Lifecycle");
@@ -55,13 +53,6 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
     <Section title={t("title")}>
       <TournamentProgress tournament={tournament} />
       {hint && <p className={styles.hint}>{hint}</p>}
-      {status === "draft" && (
-        <StartDateWarning
-          startsAt={tournament.starts_at ?? null}
-          checkInMinutes={tournament.check_in_minutes ?? null}
-          now={now}
-        />
-      )}
       <NextStepButton
         tenant={tenant}
         tournament={tournament}

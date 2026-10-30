@@ -4,7 +4,6 @@ import {
   useActionState,
   useEffect,
   useEffectEvent,
-  useRef,
   useState,
 } from "react";
 
@@ -14,6 +13,7 @@ import { type ApiErrorParams, callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusWhenShown } from "@/shared/lib/focus";
 import {
   controlName,
@@ -79,7 +79,8 @@ export function useTournamentForm(
   const uiLocale = useLocale() as Locale;
   const router = useRouter();
   const errorMessage = useApiErrorMessage();
-  const formRef = useRef<HTMLFormElement>(null);
+  // `canSubmit`: todos os campos válidos (os de `shared/ui` declaram o que cobram).
+  const { ref: formRef, canSubmit } = useFormValidity();
   // Na criação, o original é o idioma da interface; os outros são traduções.
   const original = tournament?.locale ?? uiLocale;
   const others = routing.locales.filter((l) => l !== original);
@@ -231,6 +232,8 @@ export function useTournamentForm(
 
   return {
     formRef,
+    /** Nenhum campo recusa o que tem: o envio pode ser liberado. */
+    canSubmit,
     values,
     onChange: (patch: Partial<TournamentValues>) =>
       setValues((v) => ({ ...v, ...patch })),

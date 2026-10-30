@@ -39,6 +39,27 @@ impl Schedule {
         }
     }
 
+    /// A data de início deixa tempo para a inscrição e o check-in: está no
+    /// futuro e a janela de check-in (contada a partir dela) ainda não abriu
+    /// em `now`. Sem data, nada a conferir. Erros: 422
+    /// `tournament.starts_at_past` e `tournament.starts_at_too_soon` com
+    /// `minutes` (a janela, que é a antecedência mínima).
+    pub fn check_start(&self, now: DateTime<Utc>) -> Result<(), ApiError> {
+        let Some(starts_at) = self.starts_at else {
+            return Ok(());
+        };
+        if starts_at <= now {
+            return Err(ApiError::invalid("tournament.starts_at_past"));
+        }
+        match self.check_in_minutes {
+            Some(minutes) if starts_at - Duration::minutes(i64::from(minutes)) <= now => {
+                Err(ApiError::invalid("tournament.starts_at_too_soon")
+                    .with_params([("minutes", i64::from(minutes))]))
+            }
+            _ => Ok(()),
+        }
+    }
+
     pub const fn has_check_in(&self) -> bool {
         self.check_in_minutes.is_some()
     }
@@ -78,13 +99,16 @@ impl Schedule {
 
     /// O PATCH da data e da janela (`Some(None)` limpa). `Some` só quando
     /// muda de fato, então reenviar os valores atuais passa em qualquer
-    /// status. Erros: 409 `tournament.schedule_locked` (depois de começar) e
-    /// os de `check`.
+    /// status. A data só é conferida (`check_start` em `now`) quando muda:
+    /// editar outra coisa de um torneio cuja data já passou continua
+    /// permitido. Erros: 409 `tournament.schedule_locked` (depois de começar)
+    /// e os de `check` e `check_start`.
     pub fn edit(
         self,
         status: TournamentStatus,
         starts_at: Option<Option<DateTime<Utc>>>,
         check_in_minutes: Option<Option<i32>>,
+        now: DateTime<Utc>,
     ) -> Result<Option<Self>, ApiError> {
         let next = Self {
             starts_at: starts_at.unwrap_or(self.starts_at),
@@ -97,6 +121,9 @@ impl Schedule {
             return Err(ApiError::conflict("tournament.schedule_locked"));
         }
         next.check()?;
+        if next.starts_at != self.starts_at {
+            next.check_start(now)?;
+        }
         Ok(Some(next))
     }
 }
@@ -181,10 +208,11 @@ mod tests {
     #[test]
     fn edit_changes_only_what_came() {
         let s = schedule();
-        let same = s.edit(InProgress, Some(Some(at(60))), Some(Some(30)));
+        let now = at(-1000);
+        let same = s.edit(InProgress, Some(Some(at(60))), Some(Some(30)), now);
         assert_eq!(same.unwrap(), None);
         assert_eq!(
-            s.edit(CheckIn, None, Some(None)).unwrap(),
+            s.edit(CheckIn, None, Some(None), now).unwrap(),
             Some(Schedule {
                 check_in_minutes: None,
                 ..s
@@ -193,7 +221,7 @@ mod tests {
         // Tirar a data vale em qualquer status até começar.
         for status in [Draft, Registration, CheckIn] {
             assert_eq!(
-                s.edit(status, Some(None), None).unwrap(),
+                s.edit(status, Some(None), None, now).unwrap(),
                 Some(Schedule {
                     starts_at: None,
                     ..s
@@ -205,16 +233,17 @@ mod tests {
     #[test]
     fn edit_errors() {
         let s = schedule();
+        let now = at(-1000);
         let code = |r: Result<Option<Schedule>, ApiError>| r.unwrap_err().code;
         assert_eq!(
-            code(s.edit(InProgress, Some(Some(at(90))), None)),
+            code(s.edit(InProgress, Some(Some(at(90))), None, now)),
             "tournament.schedule_locked"
         );
         assert_eq!(
-            code(s.edit(Finished, None, Some(None))),
+            code(s.edit(Finished, None, Some(None), now)),
             "tournament.schedule_locked"
         );
-        let err = s.edit(Draft, None, Some(Some(4))).unwrap_err();
+        let err = s.edit(Draft, None, Some(Some(4)), now).unwrap_err();
         assert_eq!(
             (err.code, err.params),
             (
@@ -222,6 +251,54 @@ mod tests {
                 vec![("min", 5), ("max", 1440)]
             )
         );
-        assert!(s.edit(Draft, None, Some(Some(1440))).is_ok());
+        assert!(s.edit(Draft, None, Some(Some(1440)), now).is_ok());
+    }
+
+    #[test]
+    fn the_start_needs_the_check_in_window_ahead() {
+        let s = schedule();
+        let err = |now| s.check_start(now).unwrap_err();
+        // Começa no minuto 60, janela de 30: o limite é o minuto 30.
+        assert!(s.check_start(at(29)).is_ok());
+        let soon = err(at(30));
+        assert_eq!(
+            (soon.code, soon.params),
+            ("tournament.starts_at_too_soon", vec![("minutes", 30)])
+        );
+        assert_eq!(err(at(60)).code, "tournament.starts_at_past");
+        assert_eq!(err(at(90)).code, "tournament.starts_at_past");
+        // Sem check-in, só não pode ser passada; sem data, nada a conferir.
+        let off = Schedule {
+            check_in_minutes: None,
+            ..s
+        };
+        assert!(off.check_start(at(59)).is_ok());
+        assert_eq!(
+            off.check_start(at(60)).unwrap_err().code,
+            "tournament.starts_at_past"
+        );
+        let undated = Schedule {
+            starts_at: None,
+            ..s
+        };
+        assert!(undated.check_start(at(90)).is_ok());
+    }
+
+    #[test]
+    fn edit_checks_the_start_only_when_it_changes() {
+        let s = schedule();
+        let now = at(45);
+        // Mesma data (já dentro da janela): passa, mesmo mudando a janela.
+        let kept = s.edit(Registration, Some(Some(at(60))), Some(Some(15)), now);
+        assert!(kept.is_ok());
+        // Mover a data para dentro da janela ou para o passado: recusa.
+        let code = |start| {
+            s.edit(Registration, Some(Some(start)), None, now)
+                .unwrap_err()
+                .code
+        };
+        assert_eq!(code(at(70)), "tournament.starts_at_too_soon");
+        assert_eq!(code(at(40)), "tournament.starts_at_past");
+        assert!(s.edit(Registration, Some(Some(at(80))), None, now).is_ok());
     }
 }

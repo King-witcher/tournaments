@@ -35,7 +35,7 @@ export function TournamentSlotsField({
     ? [
         slots !== null &&
           t("slotsTeams", { slots, size, ...teamsIn(slots, size) }),
-        t("maxParticipantsHintTdm", { min: limits.min, max: limits.max }),
+        t("maxParticipantsHintTdm"),
       ]
         .filter(Boolean)
         .join(" ")

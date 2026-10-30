@@ -157,7 +157,7 @@ async fn everyone_picks_at_once_without_repeating_in_the_team() {
     let d = detail(&app, &p[1], KEY).await;
     assert_eq!(d["summary"]["task"], "veto");
     let options = d["veto"]["options"].as_array().unwrap();
-    assert_eq!(options.len(), 15);
+    assert_eq!(options.len(), 14);
     assert!(!options.contains(&json!("anarki")));
 
     // P2 escolhe antes do capitão; P1 não repete o campeão de P2.

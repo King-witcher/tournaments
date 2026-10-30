@@ -98,6 +98,8 @@
     "full": "As {max} vagas já foram preenchidas.",
     "max_participants_below_registered": "Já há {registered} inscritos. As vagas não podem ficar abaixo disso.",
     "check_in_minutes_invalid": "A janela de check-in precisa ficar entre {min} e {max} minutos.",
+    "starts_at_past": "A data de início já passou.",
+    "starts_at_too_soon": "O início precisa ficar pelo menos {minutes} min à frente, para o check-in abrir antes.",
     "schedule_locked": "O torneio já começou. Data de início e check-in não mudam mais.",
     "check_in_closed": "O check-in não está aberto.",
     "check_in_disabled": "Este torneio não tem check-in.",

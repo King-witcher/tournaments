@@ -46,7 +46,7 @@ pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;
 pub use status::TournamentStatus;
 pub use types::{NameTranslation, StageFormat, Tournament, TournamentPath, TournamentSummary};
-pub use veto::{DEFAULT_POOL_SIZE, MapMode, PoolMap};
+pub use veto::{MapMode, PoolMap};
 pub use visibility::{Visibility, find_visible, find_visible_for_update};
 
 pub fn router() -> OpenApiRouter<AppState> {

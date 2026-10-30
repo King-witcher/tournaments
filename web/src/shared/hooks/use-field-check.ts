@@ -24,6 +24,11 @@ type Options<E extends Element> = {
   patternMessage?: ReactNode;
   /** Tira do texto o que o campo não aceita, ao digitar ou colar. */
   filter?: (value: string) => string;
+  /**
+   * Erro que o chamador calcula (já traduzido), como uma data fora do prazo:
+   * aparece na hora, sem esperar a pessoa sair do campo, e bloqueia o envio.
+   */
+  problem?: string;
   /** Erro vindo de fora (o que a API devolveu): vale mais que o daqui. */
   invalid?: boolean;
   invalidText?: ReactNode;
@@ -60,7 +65,7 @@ export function useFieldCheck<E extends Element>(options: Options<E>) {
       type,
       sameAs,
     });
-    element.setCustomValidity(found ?? "");
+    element.setCustomValidity(found ?? options.problem ?? "");
     setProblem(found);
   });
 
@@ -97,9 +102,11 @@ export function useFieldCheck<E extends Element>(options: Options<E>) {
       setTouched(true);
       options.onBlur?.(event);
     },
-    invalid: Boolean(options.invalid || shown),
+    invalid: Boolean(options.invalid || shown || options.problem),
     invalidText: options.invalid
       ? options.invalidText
-      : shown && messages[shown],
+      : shown
+        ? messages[shown]
+        : options.problem,
   };
 }
