@@ -1,6 +1,7 @@
 //! Cadastro com username, senha e email. O pedido só guarda o cadastro no
-//! Redis e manda o link; a conta nasce quando o link é aberto, então cadastro
-//! que ninguém confirma não chega ao banco.
+//! Redis e manda o email com o link e o código; a conta nasce com o que vier
+//! primeiro (o link aberto ou o código digitado), então cadastro que ninguém
+//! confirma não chega ao banco.
 
 use axum::{
     Json,
@@ -13,15 +14,19 @@ use super::{
     credentials::start_session,
     db::{self, NewPasswordUser},
     emails::{self, LINK_TTL_SECS},
-    kv::{self, PendingSignup},
+    kv::{self, CodeCheck, PendingSignup},
     password::{hash_password, validate_password, verify_password},
-    types::{EmailSent, LinkToken, SignedIn, Signup},
+    types::{EmailSent, LinkToken, SignedIn, Signup, SignupCode},
     username::validate_username,
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody, Locale},
+    shared::{ApiError, ClientIp, ErrorBody, JsonBody, Locale, token},
 };
+
+/// Códigos errados que um cadastro aceita antes de o código morrer (o link
+/// continua valendo; pedir de novo manda outro código).
+const CODE_ATTEMPTS: u32 = 5;
 
 #[utoipa::path(
     post,
@@ -29,16 +34,17 @@ use crate::{
     tag = "auth",
     request_body = Signup,
     responses(
-        (status = ACCEPTED, body = EmailSent, description = "Link de confirmação enviado (vale 1 hora); a conta só é criada quando ele é aberto. Pedir de novo com o mesmo email troca o link; com o mesmo username e a mesma senha e outro email, troca o email (o link anterior para de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma"),
+        (status = ACCEPTED, body = EmailSent, description = "Email enviado com o link e um código de 6 dígitos (os dois valem 1 hora); a conta só é criada pelo link aberto ou pelo código digitado. Pedir de novo com o mesmo email troca o link e o código; com o mesmo username e a mesma senha e outro email, troca o email (os anteriores param de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma"),
         (status = CONFLICT, body = ErrorBody, description = "auth.username_taken (por uma conta ou pelo cadastro de outra pessoa esperando confirmação)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body"),
-        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.too_soon {seconds}"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.ip_limited {minutes} (pedidos de email deste IP, somados com a recuperação de senha), email.too_soon {seconds}"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "email.send_failed (o provedor de email falhou; nada fica guardado, e pedir de novo não espera os 60 s)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "email.unavailable (teto de envios do dia)"),
     )
 )]
 pub async fn signup(
     State(state): State<AppState>,
+    ip: ClientIp,
     JsonBody(body): JsonBody<Signup>,
 ) -> Result<(StatusCode, Json<EmailSent>), ApiError> {
     let username = validate_username(&body.username)?;
@@ -49,6 +55,9 @@ pub async fn signup(
     if db::username_taken(&state.db, &username).await? {
         return Err(ApiError::conflict("auth.username_taken"));
     }
+    // Antes do que gasta (o hash da senha, o envio), e igual para email novo
+    // e de uma conta.
+    state.mail.limit_ip(&state.redis, &ip).await?;
     // Daqui em diante, email novo e email de uma conta passam pelos mesmos
     // limites e pelo mesmo hash da senha: nem a resposta nem o tempo dizem
     // se o email já tem conta.
@@ -73,12 +82,19 @@ pub async fn signup(
                 password_hash,
                 locale,
             };
-            let token = kv::store_signup(&state.redis, &pending, LINK_TTL_SECS).await?;
-            emails::signup_confirmation(web, locale, &email, &pending.username, &token)
+            let secrets = kv::store_signup(&state.redis, &pending, LINK_TTL_SECS).await?;
+            emails::signup_confirmation(
+                web,
+                locale,
+                &email,
+                &pending.username,
+                &secrets.link,
+                &secrets.code,
+            )
         }
     };
     if let Err(err) = ticket.send(message).await {
-        // O link não chegou: o cadastro sai do Redis e o username fica livre,
+        // O email não chegou: o cadastro sai do Redis e o username fica livre,
         // para pedir de novo na hora (a reserva do envio já voltou).
         if new_signup {
             kv::drop_signup(&state.redis, &email).await?;
@@ -117,7 +133,7 @@ async fn claim_username(
     request_body = LinkToken,
     responses(
         (status = CREATED, body = SignedIn, description = "Conta criada, já com a sessão no cookie. O nome exibido é o username"),
-        (status = GONE, body = ErrorBody, description = "auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo)"),
+        (status = GONE, body = ErrorBody, description = "auth.link_expired (expirou, já foi usado, o código já criou a conta ou foi trocado por um mais novo)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.username_taken, auth.email_taken (outra conta pegou desde o pedido)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )
@@ -131,6 +147,50 @@ pub async fn confirm_signup(
     let pending = kv::take_signup(&state.redis, &body.token)
         .await?
         .ok_or(ApiError::gone("auth.link_expired"))?;
+    create_account(&state, &headers, jar, pending).await
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/signup/code",
+    tag = "auth",
+    request_body = SignupCode,
+    responses(
+        (status = CREATED, body = SignedIn, description = "Conta criada, já com a sessão no cookie, e o link do mesmo email para de valer"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.code_invalid {attempts_left} (código errado; com 0, ele morreu, e sobra o link ou pedir de novo), email.invalid, request.invalid_body (o código não tem 6 dígitos)"),
+        (status = GONE, body = ErrorBody, description = "auth.code_expired (sem cadastro esperando para o email: expirou, o link já criou a conta, foi trocado por um mais novo ou as tentativas acabaram)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.username_taken, auth.email_taken (outra conta pegou desde o pedido)"),
+    )
+)]
+pub async fn confirm_signup_code(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
+    JsonBody(body): JsonBody<SignupCode>,
+) -> Result<(StatusCode, CookieJar, Json<SignedIn>), ApiError> {
+    if !token::is_code(&body.code) {
+        return Err(ApiError::invalid("request.invalid_body"));
+    }
+    let email = state.mail.normalize(&body.email)?;
+    let check = kv::take_signup_by_code(&state.redis, &email, &body.code, CODE_ATTEMPTS).await?;
+    let pending = match check {
+        CodeCheck::Confirmed(pending) => pending,
+        CodeCheck::Wrong { attempts_left } => {
+            return Err(ApiError::invalid("auth.code_invalid")
+                .with_params([("attempts_left", i64::from(attempts_left))]));
+        }
+        CodeCheck::Expired => return Err(ApiError::gone("auth.code_expired")),
+    };
+    create_account(&state, &headers, jar, pending).await
+}
+
+/// Cria a conta do cadastro confirmado e entra nela.
+async fn create_account(
+    state: &AppState,
+    headers: &HeaderMap,
+    jar: CookieJar,
+    pending: PendingSignup,
+) -> Result<(StatusCode, CookieJar, Json<SignedIn>), ApiError> {
     let user = NewPasswordUser {
         username: &pending.username,
         email: &pending.email,
@@ -138,6 +198,6 @@ pub async fn confirm_signup(
         password_hash: &pending.password_hash,
     };
     let user_id = db::create_password_user(&state.db, user).await?;
-    let (jar, user) = start_session(&state, &headers, jar, user_id).await?;
+    let (jar, user) = start_session(state, headers, jar, user_id).await?;
     Ok((StatusCode::CREATED, jar, user))
 }

@@ -5,16 +5,19 @@
   "login": "Entrar",
   "sent": {
     "title": "Confira seu email",
-    "text": "Enviamos um link para {email}. A conta só é criada quando você abrir o link, que vale 1 hora. Não chegou? Confira a caixa de spam.",
-    "resend": "Reenviar o link",
-    "resent": "Link novo enviado. O anterior parou de valer.",
+    "text": "Enviamos um código e um link para {email}. Os dois valem 1 hora. Não chegou? Confira a caixa de spam.",
+    "resend": "Reenviar email",
+    "resent": "Email novo enviado. O código e o link anteriores pararam de valer.",
     "back": "Usar outro email"
+  },
+  "code": {
+    "label": "Código do email",
+    "incomplete": "Digite os 6 dígitos do código."
   },
   "confirm": {
     "title": "Confirmar email",
-    "text": "Falta um passo: confirme o email para criar a conta. Você entra nela em seguida.",
-    "submit": "Confirmar email e criar conta",
-    "signupAgain": "Criar conta de novo",
+    "creating": "Criando a sua conta…",
+    "signup": "Criar conta",
     "login": "Entrar"
   }
 }

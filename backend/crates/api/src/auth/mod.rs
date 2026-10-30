@@ -4,10 +4,12 @@
 //! (a recuperação; o banco também confere). Os provedores (`provider.rs`)
 //! dividem o fluxo de `oauth.rs`, com PKCE gerado no navegador (o formato do
 //! state, do verifier e do challenge em `pkce.rs`); o que é de cada um fica em
-//! `discord.rs` e `google.rs`. O cadastro com senha exige email e só cria a conta quando o
-//! link chega (`signup.rs`); a recuperação de senha (`recovery.rs`) e a troca
-//! de email (`email_change.rs`) também vão por link, com os textos em
-//! `emails/`. Toda mudança de login ou de email manda um aviso ao email da
+//! `discord.rs` e `google.rs`. O cadastro com senha exige email e só cria a
+//! conta quando o link é aberto ou o código do mesmo email é digitado
+//! (`signup.rs`); a recuperação de senha (`recovery.rs`) e a troca de email
+//! (`email_change.rs`) vão só por link, com os textos em `emails/`. O cadastro
+//! e a recuperação, que mandam email sem login, contam por IP
+//! (`Mail::limit_ip`). Toda mudança de login ou de email manda um aviso ao email da
 //! conta (`notify.rs`). Sessões, erros de senha, cadastros por confirmar e
 //! links ficam no Redis (`kv/`); contas, logins e email, no banco (`db/`).
 //! Excluir a conta (`deletion.rs`) agenda para 7 dias, e entrar de novo antes
@@ -64,6 +66,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(oauth::unlink_google))
         .routes(routes!(signup::signup))
         .routes(routes!(signup::confirm_signup))
+        .routes(routes!(signup::confirm_signup_code))
         .routes(routes!(credentials::login))
         .routes(routes!(
             credentials::create_password,

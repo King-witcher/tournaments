@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/signup/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_signup_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/signup/confirm": {
         parameters: {
             query?: never;
@@ -2854,6 +2870,19 @@ export interface components {
              */
             username: string;
         };
+        /** @description O código do email de cadastro, digitado no lugar de abrir o link. */
+        SignupCode: {
+            /**
+             * @description 6 dígitos.
+             * @example 042917
+             */
+            code: string;
+            /**
+             * @description O email do cadastro, como o pedido devolveu.
+             * @example rapha@gmail.com
+             */
+            email: string;
+        };
         /**
          * @description A situação de um inscrito no torneio: quem vê, em `/me/tournaments`; o
          *     membro, no perfil dele na comunidade.
@@ -4662,7 +4691,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio, para não revelar quem tem conta */
+            /** @description Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio do endereço, para não revelar quem tem conta */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -4671,6 +4700,15 @@ export interface operations {
             };
             /** @description request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com o cadastro; conta todo pedido, exista a conta ou não) */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4839,7 +4877,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Link de confirmação enviado (vale 1 hora); a conta só é criada quando ele é aberto. Pedir de novo com o mesmo email troca o link; com o mesmo username e a mesma senha e outro email, troca o email (o link anterior para de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma */
+            /** @description Email enviado com o link e um código de 6 dígitos (os dois valem 1 hora); a conta só é criada pelo link aberto ou pelo código digitado. Pedir de novo com o mesmo email troca o link e o código; com o mesmo username e a mesma senha e outro email, troca o email (os anteriores param de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -4866,7 +4904,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description email.too_soon {seconds} */
+            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com a recuperação de senha), email.too_soon {seconds} */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -4886,6 +4924,57 @@ export interface operations {
             };
             /** @description email.unavailable (teto de envios do dia) */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm_signup_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupCode"];
+            };
+        };
+        responses: {
+            /** @description Conta criada, já com a sessão no cookie, e o link do mesmo email para de valer */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedIn"];
+                };
+            };
+            /** @description auth.username_taken, auth.email_taken (outra conta pegou desde o pedido) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.code_expired (sem cadastro esperando para o email: expirou, o link já criou a conta, foi trocado por um mais novo ou as tentativas acabaram) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.code_invalid {attempts_left} (código errado; com 0, ele morreu, e sobra o link ou pedir de novo), email.invalid, request.invalid_body (o código não tem 6 dígitos) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4926,7 +5015,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
+            /** @description auth.link_expired (expirou, já foi usado, o código já criou a conta ou foi trocado por um mais novo) */
             410: {
                 headers: {
                     [name: string]: unknown;

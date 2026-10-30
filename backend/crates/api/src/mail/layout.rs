@@ -1,5 +1,6 @@
 //! O layout dos emails, no visual do site (Carbon): o cabeçalho com o nome do
 //! site, um bloco branco com título (`heading-04`), parágrafos (`body-02`), o
+//! código para digitar no site (grande, em fonte de largura fixa), o
 //! aviso em destaque (notificação de alerta, de contraste baixo), o botão
 //! primário e o rodapé (`helper-text-01`). Cores do tema `white` e, onde o
 //! leitor segue o modo escuro (Apple Mail, Outlook), do `g100`. Tabelas e
@@ -16,6 +17,9 @@ pub struct Content {
     /// Título do email e começo do assunto.
     pub title: String,
     pub paragraphs: Vec<String>,
+    /// Código para a pessoa digitar no site, em destaque depois dos
+    /// parágrafos (que dizem para que serve).
+    pub code: Option<String>,
     /// Aviso em destaque antes do botão ("Não foi você?").
     pub alert: Option<Alert>,
     pub action: Action,
@@ -35,6 +39,7 @@ pub struct Action {
 }
 
 const FONT: &str = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
+const MONO: &str = "'IBM Plex Mono',Menlo,Consolas,monospace";
 
 /// O modo escuro (`g100`) e as margens do celular. Os leitores que não
 /// entendem `<style>` ficam com o claro, que está inline.
@@ -44,6 +49,7 @@ const STYLE: &str = "body{margin:0;padding:0}\
 .bg{background:#161616!important}\
 .card{background:#262626!important;border-color:#393939!important}\
 .alert{background:#393939!important}\
+.code{background:#393939!important}\
 .fg{color:#f4f4f4!important}\
 .fg2{color:#c6c6c6!important}\
 .fg3{color:#a8a8a8!important}\
@@ -90,6 +96,9 @@ fn text(chrome: &Chrome, home: &str, to: &str, content: &Content) -> String {
     for p in &content.paragraphs {
         out += &format!("{p}\n\n");
     }
+    if let Some(code) = &content.code {
+        out += &format!("{code}\n\n");
+    }
     if let Some(alert) = &content.alert {
         out += &format!("{} {}\n\n", alert.title, alert.text);
     }
@@ -124,6 +133,17 @@ fn html(locale: Locale, chrome: &Chrome, home: &str, to: &str, content: &Content
         );
     }
     body += "</td></tr>";
+    // O código: grande, em fonte de largura fixa e espaçado, para ler e
+    // digitar sem confundir; um toque seleciona ele inteiro.
+    if let Some(code) = &content.code {
+        body += &format!(
+            "<tr><td {card}padding:0 32px\">\
+             <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr>\
+             <td class=\"code fg\" style=\"background:#f4f4f4;padding:12px 16px;font:600 32px/40px {MONO};\
+             letter-spacing:8px;color:#161616;-webkit-user-select:all;user-select:all\">{}</td></tr></table></td></tr>",
+            escape(code)
+        );
+    }
     if let Some(alert) = &content.alert {
         body += &format!(
             "<tr><td {card}padding:8px 32px 0\">\
@@ -138,7 +158,11 @@ fn html(locale: Locale, chrome: &Chrome, home: &str, to: &str, content: &Content
     // Botão primário, tamanho lg (48px): texto à esquerda e folga à direita.
     // 32px acima dele, contando a margem do último parágrafo quando é ele que
     // vem antes.
-    let above = if content.alert.is_some() { 32 } else { 16 };
+    let above = if content.alert.is_some() || content.code.is_some() {
+        32
+    } else {
+        16
+    };
     body += &format!(
         "<tr><td {card}padding:{above}px 32px 0\">\
          <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr>\
@@ -212,6 +236,7 @@ mod tests {
         Content {
             title: "Título <b>".into(),
             paragraphs: vec!["Primeiro & único.".into()],
+            code: alert.then(|| "042917".into()),
             alert: alert.then(|| Alert {
                 title: "Não foi você?".into(),
                 text: "Faça \"isto\".".into(),
@@ -240,6 +265,7 @@ mod tests {
         assert_eq!(email.subject, "Título <b> · Torneos QC");
         for part in [
             "Primeiro & único.",
+            "\n042917\n",
             "Não foi você?",
             "Vale 1 hora.",
             "a@b.com",
@@ -255,6 +281,7 @@ mod tests {
             2
         );
         assert!(email.html.contains("Este email se envió a a@b.com."));
+        assert!(email.html.contains(">042917</td>"));
     }
 
     #[test]
@@ -267,5 +294,6 @@ mod tests {
         );
         assert!(!email.html.contains("#fcf4d6"));
         assert!(!email.text.contains("Não foi você?"));
+        assert!(!email.html.contains("042917"));
     }
 }

@@ -5,8 +5,9 @@ import { AnonymousMenu } from "./anonymous-menu";
 import { UserMenuPanel } from "./user-menu-panel";
 
 /**
- * O lugar da pessoa no cabeçalho: logado, o avatar abre o painel com Conta e
- * Sair; sem sessão, Entrar e Criar conta. Lê a sessão: fica em `<Suspense>`.
+ * O lugar da pessoa no cabeçalho: logado, o avatar e o nome abrem o painel
+ * com Conta e Sair; sem sessão, Entrar e Criar conta. Lê a sessão: fica em
+ * `<Suspense>`.
  */
 export async function UserMenu() {
   const user = await getCurrentUser();

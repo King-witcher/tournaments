@@ -1,4 +1,5 @@
-//! Os emails com link: confirmar o cadastro, avisar que o email já tem conta
+//! Os emails com link: confirmar o cadastro (que leva também o código),
+//! avisar que o email já tem conta
 //! (no cadastro e na troca de email de outra conta), recuperar a senha e
 //! confirmar o email novo.
 
@@ -8,42 +9,46 @@ use crate::{
     shared::Locale,
 };
 
-/// Link de confirmação do cadastro com senha.
+/// Confirmação do cadastro com senha: o código, para digitar na página do
+/// cadastro, e o link, que cria a conta ao abrir. Vale o que vier primeiro.
 pub fn signup_confirmation(
     web: &str,
     locale: Locale,
     to: &str,
     username: &str,
     token: &str,
+    code: &str,
 ) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/signup/confirm"));
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme seu email".into(),
             paragraphs: vec![format!(
-                "Falta só confirmar este email para criar a sua conta, de nome de usuário {username}."
+                "Para criar a sua conta, de nome de usuário {username}, digite este código na página do cadastro ou use o botão abaixo."
             )],
+            code: Some(code.into()),
             alert: None,
             action: Action {
-                label: "Confirmar email e criar conta".into(),
+                label: "Criar conta".into(),
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR}. Se não foi você, ignore este email. A conta não é criada sem ele."
+                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email. A conta não é criada sem ele."
             )),
         },
         Locale::Es => Content {
             title: "Confirma tu email".into(),
             paragraphs: vec![format!(
-                "Solo falta confirmar este email para crear tu cuenta, con nombre de usuario {username}."
+                "Para crear tu cuenta, con nombre de usuario {username}, escribe este código en la página de registro o usa el botón de abajo."
             )],
+            code: Some(code.into()),
             alert: None,
             action: Action {
-                label: "Confirmar email y crear cuenta".into(),
+                label: "Crear cuenta".into(),
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email. La cuenta no se crea sin él."
+                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email. La cuenta no se crea sin él."
             )),
         },
     };
@@ -105,6 +110,7 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
     let content = Content {
         title: title.into(),
         paragraphs: paragraphs.into(),
+        code: None,
         alert: None,
         action: Action {
             label: label.into(),
@@ -147,6 +153,7 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str, username: Option<&str>)
     let content = Content {
         title: title.into(),
         paragraphs: paragraphs.into(),
+        code: None,
         alert: None,
         action: Action {
             label: label.into(),
@@ -166,6 +173,7 @@ pub fn password_reset(web: &str, locale: Locale, to: &str, username: &str, token
             paragraphs: vec![format!(
                 "Recebemos um pedido de senha nova para a sua conta, de nome de usuário {username}."
             )],
+            code: None,
             alert: None,
             action: Action {
                 label: "Criar senha nova".into(),
@@ -180,6 +188,7 @@ pub fn password_reset(web: &str, locale: Locale, to: &str, username: &str, token
             paragraphs: vec![format!(
                 "Recibimos un pedido de contraseña nueva para tu cuenta, con nombre de usuario {username}."
             )],
+            code: None,
             alert: None,
             action: Action {
                 label: "Crear contraseña nueva".into(),
@@ -202,6 +211,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
             paragraphs: vec![
                 "Este email foi indicado para a sua conta. Ele só passa a ser o email da conta quando você confirmar.".into(),
             ],
+            code: None,
             alert: None,
             action: Action {
                 label: "Confirmar email".into(),
@@ -216,6 +226,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
             paragraphs: vec![
                 "Este email se indicó para tu cuenta. Solo pasa a ser el email de la cuenta cuando lo confirmes.".into(),
             ],
+            code: None,
             alert: None,
             action: Action {
                 label: "Confirmar email".into(),

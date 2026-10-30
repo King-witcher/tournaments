@@ -21,7 +21,7 @@ use super::{
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody, Locale},
+    shared::{ApiError, ClientIp, ErrorBody, JsonBody, Locale},
 };
 
 #[utoipa::path(
@@ -30,14 +30,18 @@ use crate::{
     tag = "auth",
     request_body = PasswordResetRequest,
     responses(
-        (status = ACCEPTED, description = "Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio, para não revelar quem tem conta"),
+        (status = ACCEPTED, description = "Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio do endereço, para não revelar quem tem conta"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.ip_limited {minutes} (pedidos de email deste IP, somados com o cadastro; conta todo pedido, exista a conta ou não)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )
 )]
 pub async fn request_password_reset(
     State(state): State<AppState>,
+    ip: ClientIp,
     JsonBody(body): JsonBody<PasswordResetRequest>,
 ) -> Result<StatusCode, ApiError> {
+    // Todo pedido conta, antes de saber se a conta existe: o 429 não diz nada.
+    state.mail.limit_ip(&state.redis, &ip).await?;
     let login = body.login.trim();
     // Fora do formato, a conta não pode existir.
     let contact = if login.contains('@') {

@@ -1,5 +1,5 @@
 use anyhow::Context;
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use api::{
     AppState, MIGRATOR,
@@ -105,9 +105,14 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
     tracing::info!("API em http://{0} (docs em http://{0}/docs)", config.addr);
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // O endereço da conexão é o IP de quem pede quando não há proxy na frente
+    // (`shared::ClientIp`).
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
     Ok(())
 }
 

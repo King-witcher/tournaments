@@ -30,7 +30,9 @@
     "no_password": "Tu cuenta no tiene contraseña.",
     "wrong_password": "Contraseña actual incorrecta.",
     "last_login": "Es la única forma de entrar en tu cuenta. Agrega otra antes de quitar esta.",
-    "link_expired": "Este enlace ya no vale. Pasó más de 1 hora, ya se usó o fue reemplazado por uno más nuevo.",
+    "link_expired": "Enlace inválido o expirado.",
+    "code_invalid": "Código incorrecto. {attempts_left, plural, =0 {Ya no vale. Usa el enlace del email o reenvía el email.} one {Queda # intento.} other {Quedan # intentos.}}",
+    "code_expired": "Este código ya no vale. Usa el enlace del email o reenvía el email.",
     "email_taken": "Ese email ya es de otra cuenta.",
     "email_unchanged": "Ese ya es el email de tu cuenta.",
     "email_required": "Para crear nombre de usuario y contraseña, registra y confirma antes un email en la cuenta. Es con él que recuperas la contraseña si la olvidas.",
@@ -43,6 +45,7 @@
     "invalid": "Email inválido. Antes de la @, usa solo letras, números, punto, _ o - (en Gmail, solo letras, números y punto); después, un dominio como gmail.com.",
     "disposable": "No se aceptan emails temporales ni de alias (que solo reenvían a otra dirección). Usa tu email de siempre.",
     "too_soon": "Acabamos de enviar un email a esa dirección. Espera {seconds, plural, one {# segundo} other {# segundos}} para pedir otro.",
+    "ip_limited": "Demasiados pedidos de email desde tu red. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
     "unavailable": "El sitio llegó al límite de emails que puede enviar hoy. Inténtalo de nuevo más tarde o entra con Discord o Google.",
     "send_failed": "No pudimos enviar el email ahora. Inténtalo de nuevo en un rato."
   },

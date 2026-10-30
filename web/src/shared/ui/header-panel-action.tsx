@@ -13,12 +13,18 @@ import {
 } from "react";
 
 import { usePathname } from "@/i18n/navigation";
+import styles from "./header-panel-action.module.scss";
 
 type Props = {
   /** Nome da ação (leitor de tela e dica ao passar o mouse). */
   label: string;
   /** Ícone de 20px do `@carbon/icons-react` (ou o avatar). */
   icon: ReactNode;
+  /**
+   * Texto visível ao lado do ícone (o nome de quem está logado), cortado com
+   * reticências; o nome acessível continua o `label`.
+   */
+  text?: string;
   /** O conteúdo do painel; só existe enquanto ele está aberto. */
   children: ReactNode;
 };
@@ -31,7 +37,7 @@ type Props = {
  * (as comunidades), quando o primeiro item chega, se o foco ainda está no
  * botão.
  */
-export function HeaderPanelAction({ label, icon, children }: Props) {
+export function HeaderPanelAction({ label, icon, text, children }: Props) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -82,6 +88,8 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
   const triggerProps = {
     "aria-expanded": open,
     "aria-controls": panelId,
+    // A classe do invólucro da dica, que o IconButton por baixo aceita.
+    wrapperClasses: text ? styles.wrapper : undefined,
   } as object;
   const panelProps = {
     id: panelId,
@@ -112,6 +120,7 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
       <HeaderGlobalAction
         ref={trigger}
         aria-label={label}
+        className={text ? styles.withText : undefined}
         isActive={open}
         tooltipAlignment="end"
         onClick={() => {
@@ -121,6 +130,7 @@ export function HeaderPanelAction({ label, icon, children }: Props) {
         {...triggerProps}
       >
         {icon}
+        {text && <span className={styles.text}>{text}</span>}
       </HeaderGlobalAction>
       <HeaderPanel
         ref={panel}

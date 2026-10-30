@@ -17,8 +17,8 @@ use crate::{
 pub use links::{account_exists, email_change, email_in_use, password_reset, signup_confirmation};
 pub use notices::{Notice, account_deletion_scheduled, notice};
 
-/// Validade dos links mandados por email (cadastro, recuperação de senha,
-/// troca de email).
+/// Validade dos links mandados por email (cadastro, com o código dele,
+/// recuperação de senha, troca de email).
 pub const LINK_TTL_SECS: u64 = 60 * 60;
 
 /// `LINK_TTL_SECS` como o texto diz (igual em português e espanhol).

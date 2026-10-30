@@ -4,8 +4,12 @@
 //! email sem parar para o mesmo endereço e o teto do plano do provedor. Os
 //! avisos (`reserve_today`) só contam no dia. O envio que falha no provedor
 //! devolve a reserva (`release`): a espera sai e o dia volta um.
+//!
+//! Os pedidos sem login que mandam email contam também por IP (`count_ip`):
+//! `email_ip:{ip}:{AAAA-MM-DDTHH}` na hora e `email_ip:{ip}:{AAAA-MM-DD}` no
+//! dia (UTC), cada um com o TTL do seu período.
 
-use chrono::Utc;
+use chrono::{DateTime, Timelike, Utc};
 use redis::{Cmd, RedisResult};
 
 use crate::shared::Redis;
@@ -78,6 +82,56 @@ pub async fn release(redis: &Redis, to: Option<&str>, day: &str) -> RedisResult<
     }
     pipe.decr(day_key(redis, day), 1).ignore();
     redis.query_pipe(&pipe).await
+}
+
+/// Pedidos de um IP: dentro dos limites ou, fora, quantos segundos até o
+/// período que estourou acabar.
+pub enum IpSlot {
+    Granted,
+    Limited { seconds: i64 },
+}
+
+/// Conta mais um pedido do IP `bucket` na hora e no dia, e diz se ele passou
+/// de `hourly` na hora ou de `daily` no dia. Dois comandos por pedido; o
+/// primeiro pedido de cada período faz mais um, que põe o TTL.
+pub async fn count_ip(
+    redis: &Redis,
+    bucket: &str,
+    hourly: u32,
+    daily: u32,
+    now: DateTime<Utc>,
+) -> RedisResult<IpSlot> {
+    let hour = redis.key(format_args!(
+        "email_ip:{bucket}:{}",
+        now.format("%Y-%m-%dT%H")
+    ));
+    let day = redis.key(format_args!("email_ip:{bucket}:{}", now.format("%Y-%m-%d")));
+    let (in_hour, in_day): (u32, u32) = redis
+        .query_pipe(redis::pipe().incr(&hour, 1).incr(&day, 1))
+        .await?;
+    if in_hour == 1 || in_day == 1 {
+        let mut pipe = redis::pipe();
+        if in_hour == 1 {
+            pipe.expire(&hour, 60 * 60).ignore();
+        }
+        if in_day == 1 {
+            pipe.expire(&day, 24 * 60 * 60).ignore();
+        }
+        redis.query_pipe::<()>(&pipe).await?;
+    }
+    let into_hour = i64::from(now.minute() * 60 + now.second());
+    let into_day = i64::from(now.num_seconds_from_midnight());
+    Ok(if in_day > daily {
+        IpSlot::Limited {
+            seconds: 24 * 60 * 60 - into_day,
+        }
+    } else if in_hour > hourly {
+        IpSlot::Limited {
+            seconds: 60 * 60 - into_hour,
+        }
+    } else {
+        IpSlot::Granted
+    })
 }
 
 fn cooldown_key(redis: &Redis, to: &str) -> String {

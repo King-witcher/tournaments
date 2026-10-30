@@ -1,7 +1,8 @@
 //! Email: o endereço na forma que é gravada (`Mail::normalize`: a canônica,
 //! sem descartáveis nem apelidos, ou, com `EMAIL_STRICT` desligado, como foi
 //! escrito), o layout no visual do site (`compose`), o envio atrás da trait
-//! `Mailer` e os limites de envio no Redis. Não tem rota, e do texto só o nome
+//! `Mailer` e os limites de envio no Redis (por endereço, por dia e, nos
+//! pedidos sem login, por IP). Não tem rota, e do texto só o nome
 //! do site e o rodapé: quem manda (`auth`) escreve o email no idioma de quem
 //! recebe, reserva o envio e chama `Ticket::send`. Só depende de `shared`.
 
@@ -14,8 +15,9 @@ mod sender;
 use std::sync::Arc;
 
 use axum::http::StatusCode;
+use chrono::Utc;
 
-use crate::shared::{ApiError, Redis};
+use crate::shared::{ApiError, ClientIp, Redis};
 
 pub use layout::{Action, Alert, Content, compose};
 pub use sender::{Email, LogMailer, Mailer, ResendMailer};
@@ -26,6 +28,13 @@ const COOLDOWN_SECS: u64 = 60;
 /// Teto de envios por dia quando `EMAIL_DAILY_LIMIT` não diz: abaixo dos 100
 /// do plano grátis do Resend.
 pub const DEFAULT_DAILY_LIMIT: u32 = 90;
+
+/// Pedidos sem login que mandam email (cadastro e o reenvio dele, esqueci a
+/// senha), somados, por IP: na hora cheia e no dia (UTC). Quem se cadastra
+/// pede um ou dois; mais que isso de um IP só é abuso, e o teto do dia (90)
+/// não acaba na mão de um IP só.
+const IP_HOURLY_LIMIT: u32 = 5;
+const IP_DAILY_LIMIT: u32 = 20;
 
 /// O envio da API: provedor, teto do dia e se o endereço vai para a forma
 /// canônica (`EMAIL_STRICT`). Clonar é barato.
@@ -70,6 +79,31 @@ impl Mail {
                     StatusCode::SERVICE_UNAVAILABLE,
                     "email.unavailable",
                 ))
+            }
+        }
+    }
+
+    /// Conta um pedido sem login que manda email (cadastro, esqueci a senha)
+    /// para o IP de quem pede, antes de tudo que gasta (o hash da senha, o
+    /// envio): passou de `IP_HOURLY_LIMIT` na hora ou de `IP_DAILY_LIMIT` no
+    /// dia → 429 `email.ip_limited` com `{"minutes"}` até o período acabar.
+    /// O pedido conta mesmo que o envio depois não saia (o mesmo endereço há
+    /// menos de 60 s), para quem insiste não passar do limite. Sem IP (só no
+    /// app dos testes), não conta.
+    pub async fn limit_ip(&self, redis: &Redis, ip: &ClientIp) -> Result<(), ApiError> {
+        let Some(bucket) = ip.bucket() else {
+            return Ok(());
+        };
+        let slot = kv::count_ip(redis, &bucket, IP_HOURLY_LIMIT, IP_DAILY_LIMIT, Utc::now());
+        match slot.await? {
+            kv::IpSlot::Granted => Ok(()),
+            kv::IpSlot::Limited { seconds } => {
+                tracing::warn!(ip = %bucket, "limite de emails por IP atingido");
+                let minutes = (seconds + 59) / 60;
+                Err(
+                    ApiError::new(StatusCode::TOO_MANY_REQUESTS, "email.ip_limited")
+                        .with_params([("minutes", minutes.max(1))]),
+                )
             }
         }
     }

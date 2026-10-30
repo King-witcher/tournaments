@@ -21,7 +21,10 @@ export type UserPanelItem =
 type Props = {
   /** Nome da ação: "Conta de Fulano", ou "Entrar ou criar conta" sem sessão. */
   label: string;
-  /** Com sessão: o nome no topo do painel (quebra a linha se for longo). */
+  /**
+   * Com sessão: o nome na barra (cortado) e no topo do painel (inteiro,
+   * quebrando a linha se for longo).
+   */
   name?: string;
   avatarSrc?: string | null;
   items: UserPanelItem[];
@@ -36,16 +39,17 @@ function asIntlLink(href: Href) {
 }
 
 /**
- * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) que abre um
- * painel com os itens (Conta e Sair; sem sessão, Entrar e Criar conta) e,
- * no fim, o tema de cor, que vale com ou sem sessão. O nome não fica na
- * barra: no celular um nome longo empurraria a página. Os itens vêm de
- * `features/auth`.
+ * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) e, com
+ * sessão, o nome, que abrem um painel com os itens (Conta e Sair; sem
+ * sessão, Entrar e Criar conta) e, no fim, o tema de cor, que vale com ou
+ * sem sessão. Na barra o nome longo termina em reticências (no celular, mais
+ * cedo); no painel ele aparece inteiro. Os itens vêm de `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
   return (
     <HeaderPanelAction
       label={label}
+      text={name}
       icon={
         avatarSrc ? (
           <Avatar src={avatarSrc} name={name} size="sm" />

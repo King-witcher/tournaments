@@ -78,6 +78,17 @@ pub struct EmailSent {
     pub email: String,
 }
 
+/// O código do email de cadastro, digitado no lugar de abrir o link.
+#[derive(Deserialize, ToSchema)]
+pub struct SignupCode {
+    /// O email do cadastro, como o pedido devolveu.
+    #[schema(example = "rapha@gmail.com")]
+    pub email: String,
+    /// 6 dígitos.
+    #[schema(example = "042917")]
+    pub code: String,
+}
+
 /// Token de um link mandado por email (cadastro, troca de email).
 #[derive(Deserialize, ToSchema)]
 pub struct LinkToken {

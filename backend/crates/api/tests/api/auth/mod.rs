@@ -6,6 +6,7 @@ mod deletion;
 mod discord;
 mod email;
 mod google;
+mod ip_limit;
 mod link;
 mod notices;
 mod password;
@@ -13,6 +14,7 @@ mod profile;
 mod recovery;
 mod sessions;
 mod signup;
+mod signup_code;
 
 use std::sync::Arc;
 

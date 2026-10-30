@@ -25,11 +25,12 @@ import { SignupEmailSent } from "./signup-email-sent";
 
 /**
  * Cadastro com nome de usuário, email e senha (repetida). A conta só nasce
- * quando o link mandado ao email é aberto: no 202, o formulário dá lugar ao
- * "confira seu email" (`SignupEmailSent`), com o endereço na forma canônica
- * que a API devolveu. Os campos continuam no estado, para reenviar o mesmo
- * pedido ou voltar e trocar o email. O erro de um campo vai nele, que recebe
- * o foco; `returnTo` fica guardado para depois do link.
+ * com o código ou o link mandados ao email: no 202, o formulário dá lugar ao
+ * "confira seu email" (`SignupEmailSent`, com o campo do código), com o
+ * endereço na forma canônica que a API devolveu. Os campos continuam no
+ * estado, para reenviar o mesmo pedido ou voltar e trocar o email. O erro de
+ * um campo vai nele, que recebe o foco; `returnTo` fica guardado para depois
+ * do link, que pode abrir em outra aba.
  */
 export function SignupForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
@@ -70,6 +71,7 @@ export function SignupForm({ returnTo }: { returnTo: string }) {
       <SignupEmailSent
         email={sentTo}
         body={body}
+        returnTo={returnTo}
         onResent={setSentTo}
         onBack={() => {
           setSentTo(undefined);

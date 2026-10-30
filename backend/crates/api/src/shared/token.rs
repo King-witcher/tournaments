@@ -20,6 +20,20 @@ pub fn random_token() -> String {
     base58(u128::from_le_bytes(bytes))
 }
 
+/// Dígitos do código que vai por email para a pessoa digitar.
+pub const CODE_LEN: usize = 6;
+
+/// Código de `CODE_LEN` dígitos (com zeros à esquerda), do mesmo gerador dos
+/// tokens. Com só um milhão de valores, quem o guarda limita as tentativas.
+pub fn random_code() -> String {
+    format!("{:06}", rand::random_range(0..1_000_000u32))
+}
+
+/// `code` tem a forma de um código: `CODE_LEN` dígitos ASCII.
+pub fn is_code(code: &str) -> bool {
+    code.len() == CODE_LEN && code.bytes().all(|b| b.is_ascii_digit())
+}
+
 /// Quantos caracteres do início do token ficam em claro (`token_hint`), só
 /// para reconhecer o link numa lista. Sobram ~105 bits de segredo.
 pub const TOKEN_HINT_LEN: usize = 4;
@@ -81,6 +95,18 @@ mod tests {
             assert!(token.bytes().all(|b| ALPHABET.contains(&b)), "{token}");
         }
         assert_ne!(random_token(), random_token());
+    }
+
+    #[test]
+    fn codes_have_six_digits() {
+        for _ in 0..100 {
+            let code = random_code();
+            assert!(is_code(&code), "{code}");
+        }
+        assert!(is_code("000123"));
+        for bad in ["12345", "1234567", "12345a", "١٢٣٤٥٦", ""] {
+            assert!(!is_code(bad), "{bad}");
+        }
     }
 
     #[test]

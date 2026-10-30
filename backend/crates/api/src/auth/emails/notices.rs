@@ -113,6 +113,7 @@ pub fn notice(web: &str, locale: Locale, to: &str, notice: &Notice) -> Email {
     let content = Content {
         title: title.into(),
         paragraphs: vec![what, fine.into()],
+        code: None,
         alert: Some(Alert {
             title: not_you.into(),
             text: remedy.into(),
@@ -145,6 +146,7 @@ pub fn account_deletion_scheduled(
                 ),
                 "Para cancelar, entre de novo no site antes disso, pelo botão abaixo.".into(),
             ],
+            code: None,
             alert: Some(Alert {
                 title: "Não foi você que pediu?".into(),
                 text: "Entre agora. A exclusão é cancelada.".into(),
@@ -164,6 +166,7 @@ pub fn account_deletion_scheduled(
                 "Para cancelar, vuelve a entrar al sitio antes de esa fecha, con el botón de abajo."
                     .into(),
             ],
+            code: None,
             alert: Some(Alert {
                 title: "¿No fuiste tú quien lo pidió?".into(),
                 text: "Entra ahora. La eliminación se cancela.".into(),

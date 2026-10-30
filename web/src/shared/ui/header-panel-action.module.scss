@@ -1,0 +1,32 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Ação com texto ao lado do ícone (o nome de quem está logado). O invólucro
+// do Carbon (a dica) é o item da barra: pode encolher, e é ele que cede
+// espaço no celular, no lugar do nome do site.
+.wrapper {
+  min-inline-size: 0;
+}
+
+// O botão do Carbon é um quadrado de 48px só com ícone; a classe dobrada
+// vence a dele.
+.withText.withText {
+  gap: spacing.$spacing-03;
+  inline-size: auto;
+  max-inline-size: 100%;
+  padding-inline: spacing.$spacing-04;
+  // O botão "ghost" pinta o texto de azul de link; aqui ele abre um menu.
+  color: theme.$text-primary;
+}
+
+// Nome longo termina em reticências: a barra não cresce nem quebra.
+.text {
+  @include type.type-style("body-compact-01");
+
+  overflow: hidden;
+  min-inline-size: 0;
+  max-inline-size: spacing.$spacing-13;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

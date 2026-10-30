@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 
 import { Link as IntlLink } from "@/i18n/navigation";
+import styles from "./app-header.module.scss";
 
 type Props = {
   /** O nome do site, que leva ao início. */
@@ -28,10 +29,10 @@ export function AppHeader({ name, skipLabel, children }: Props) {
   return (
     <Header aria-label={name}>
       <SkipToContent href="#main-content">{skipLabel}</SkipToContent>
-      <HeaderName as={IntlLink} href="/" prefix="">
+      <HeaderName as={IntlLink} href="/" prefix="" className={styles.name}>
         {name}
       </HeaderName>
-      <HeaderGlobalBar>{children}</HeaderGlobalBar>
+      <HeaderGlobalBar className={styles.bar}>{children}</HeaderGlobalBar>
     </Header>
   );
 }
