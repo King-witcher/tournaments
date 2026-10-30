@@ -8,6 +8,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
@@ -49,6 +50,7 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
   const tAccount = useTranslations("Account");
   const errorMessage = useApiErrorMessage();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [email, setEmail] = useState(current ?? "");
   const [password, setPassword] = useState("");
   // O email gravado é minúsculo: mudar só a caixa não é trocar.
@@ -89,7 +91,7 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
   const editing = Boolean(current) && changed && !sent;
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "email")}
@@ -125,6 +127,7 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
         <FormActions
           submitLabel={current ? t("change") : t("add")}
           pending={pending}
+          disabled={!canSubmit}
           onCancel={
             editing
               ? () => {

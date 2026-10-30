@@ -9,6 +9,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import {
   type FormResult,
@@ -16,6 +17,7 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { slugChars } from "@/shared/lib/input-filters";
 import { slugify } from "@/shared/lib/slugify";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
@@ -41,6 +43,7 @@ export function CreateTenantForm() {
   const router = useRouter();
   const isClient = useIsClient();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
@@ -67,7 +70,7 @@ export function CreateTenantForm() {
   const address = `${isClient ? window.location.origin : ""}/${slug || t("slugPlaceholder")}`;
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "name")}
@@ -92,12 +95,14 @@ export function CreateTenantForm() {
           minLength={3}
           maxLength={32}
           pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          patternMessage={t("slugInvalid")}
+          filter={slugChars}
           autoComplete="off"
           spellCheck={false}
           value={slug}
           onChange={(event) => {
             setSlugEdited(true);
-            setSlug(event.target.value.toLowerCase());
+            setSlug(event.target.value);
           }}
           {...invalidProps(result, "slug")}
         />
@@ -105,6 +110,7 @@ export function CreateTenantForm() {
         <FormActions
           submitLabel={t("submit")}
           pending={pending}
+          disabled={!canSubmit}
           cancelHref="/"
         />
       </Stack>

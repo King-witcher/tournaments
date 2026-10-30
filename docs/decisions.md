@@ -474,6 +474,7 @@ Decididas em 28/10/2026, ao adotar o Carbon Design System no MVP. O alvo página
 - **Ações da organização na linha do mapa**, não no acordeão fechado: resolver uma contestação não pode ficar escondido. O acordeão fica com o W.O. e o histórico.
 - **Suas comunidades no cabeçalho** (28/10, pedido do usuário): para ir de uma comunidade a outra sem voltar ao início, uma ação na barra (como a do idioma) com a lista e "Criar comunidade". A lista é buscada só ao abrir o painel (`GET /tenants` pelo navegador): no layout, ela custaria uma leitura da sessão no Redis a cada página e a cada recarga do tempo real. A última lista que chegou aparece na abertura seguinte, enquanto a nova é buscada.
 - **Organizador que também joga**: a ação de jogador dele (inscrever-se, check-in) fica como terciária ou no `Tile` "Sua situação", para o cabeçalho ter uma primária só (a da organização).
+- **Validação de formulário** (30/10, pedido do usuário): o campo cobra o limite, e o texto de ajuda só diz o que ele é. Obrigatório com estrela vermelha no rótulo; caractere recusado não entra (`filter`); número fora da faixa fica vermelho na hora; texto (tamanho mínimo, formato, email) fica vermelho depois da primeira saída do campo. O botão de enviar fica desabilitado enquanto faltar obrigatório ou houver campo inválido (escolhido em vez de habilitado com foco no primeiro inválido: o pedido é prevenir o envio e a causa está à vista). Diretriz em `web/CLAUDE.md`.
 
 ## Notificações
 

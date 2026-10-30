@@ -1,0 +1,13 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// O vermelho do erro, para a estrela ser vista antes de o campo ficar inválido.
+.mark {
+  margin-inline-start: spacing.$spacing-02;
+  color: theme.$text-error;
+}
+
+.hidden {
+  @include visually-hidden;
+}

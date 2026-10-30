@@ -9,6 +9,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusIfLost } from "@/shared/lib/focus";
 import {
   type FormResult,
@@ -16,6 +17,7 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { usernameChars } from "@/shared/lib/input-filters";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
@@ -36,6 +38,7 @@ export function CredentialsForm() {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -65,17 +68,19 @@ export function CredentialsForm() {
   const general = formError(result);
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "username")}
           labelText={t("username")}
-          helperText={t("usernameHint")}
+          helperText={t("usernameAbout")}
           required
           autoComplete="username"
           minLength={3}
           maxLength={20}
           pattern="[A-Za-z0-9_.\-]{3,20}"
+          patternMessage={t("usernameInvalid")}
+          filter={usernameChars}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           {...invalidProps(result, "username")}
@@ -83,7 +88,6 @@ export function CredentialsForm() {
         <PasswordInput
           id={fieldId(prefix, "password")}
           labelText={t("password")}
-          helperText={t("passwordHint")}
           required
           autoComplete="new-password"
           minLength={8}
@@ -96,13 +100,14 @@ export function CredentialsForm() {
           id={fieldId(prefix, "confirm")}
           labelText={t("confirmPassword")}
           required
+          sameAs={password}
           autoComplete="new-password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           {...invalidProps(result, "confirm")}
         />
         {general && <FormError>{general}</FormError>}
-        <Button type="submit" pending={pending}>
+        <Button type="submit" pending={pending} disabled={!canSubmit}>
           {tAccount("create")}
         </Button>
       </Stack>

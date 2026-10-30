@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { Button } from "@/shared/ui/button";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { ErrorText } from "@/shared/ui/error-text";
@@ -33,6 +34,7 @@ export function DeleteAccountForm({ password }: Props) {
   const t = useTranslations("Account");
   const enter = useEnterAccount();
   const { run, pending, error } = useApiAction();
+  const { ref, canSubmit } = useFormValidity();
   const [current, setCurrent] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
@@ -61,6 +63,7 @@ export function DeleteAccountForm({ password }: Props) {
 
   return (
     <Form
+      ref={ref}
       onSubmit={(event) => {
         event.preventDefault();
         if (pending || leaving) return;
@@ -87,6 +90,7 @@ export function DeleteAccountForm({ password }: Props) {
             type="submit"
             kind="danger--tertiary"
             pending={pending || leaving}
+            disabled={!canSubmit}
           >
             {t("deletion.submit")}
           </Button>

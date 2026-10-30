@@ -45,5 +45,17 @@
     "on": "Activado",
     "off": "Desactivado"
   },
-  "dangerZone": "Zona de peligro"
+  "dangerZone": "Zona de peligro",
+  "validation": {
+    "required": "Completa este campo.",
+    "requiredHidden": "(obligatorio)",
+    "minLength": "Mínimo de {min} caracteres.",
+    "maxLength": "Máximo de {max} caracteres.",
+    "pattern": "Formato no válido.",
+    "mismatch": "Las contraseñas no coinciden.",
+    "email": "Email no válido.",
+    "range": "Usa de {min} a {max}.",
+    "atLeast": "El mínimo es {min}.",
+    "atMost": "El máximo es {max}."
+  }
 }

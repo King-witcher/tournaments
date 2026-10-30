@@ -3,7 +3,7 @@
 import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { ErrorText } from "@/shared/ui/error-text";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { useOAuthStart } from "../hooks/use-oauth-start";
@@ -30,11 +30,13 @@ const PASSWORD_ERRORS = new Set([
 export function LinkProviderForm({ provider, returnTo }: Props) {
   const t = useTranslations("Account");
   const { start, pending, error } = useOAuthStart(provider, "link", returnTo);
+  const { ref, canSubmit } = useFormValidity();
   const [current, setCurrent] = useState("");
   const [passwordError, setPasswordError] = useState(false);
 
   return (
     <Form
+      ref={ref}
       onSubmit={(event) => {
         event.preventDefault();
         if (pending) return;
@@ -52,7 +54,12 @@ export function LinkProviderForm({ provider, returnTo }: Props) {
           invalid={passwordError && error !== undefined}
           invalidText={error}
         />
-        <ProviderButton provider={provider} type="submit" pending={pending}>
+        <ProviderButton
+          provider={provider}
+          type="submit"
+          pending={pending}
+          disabled={!canSubmit}
+        >
           {t(`${provider}.link`)}
         </ProviderButton>
         {error && !passwordError && <ErrorText>{error}</ErrorText>}

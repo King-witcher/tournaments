@@ -9,12 +9,14 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { usernameChars } from "@/shared/lib/input-filters";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
@@ -33,6 +35,7 @@ export function ChangePasswordForm({ username }: { username: string }) {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [newUsername, setNewUsername] = useState(username);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -71,17 +74,19 @@ export function ChangePasswordForm({ username }: { username: string }) {
   const general = formError(result);
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "username")}
           labelText={t("username")}
-          helperText={t("usernameHint")}
+          helperText={t("usernameAbout")}
           required
           autoComplete="username"
           minLength={3}
           maxLength={20}
           pattern="[A-Za-z0-9_.\-]{3,20}"
+          patternMessage={t("usernameInvalid")}
+          filter={usernameChars}
           value={newUsername}
           onChange={(e) => setNewUsername(e.target.value)}
           {...invalidProps(result, "username")}
@@ -102,6 +107,7 @@ export function ChangePasswordForm({ username }: { username: string }) {
             id={fieldId(prefix, "confirm")}
             labelText={t("confirmPassword")}
             required
+            sameAs={password}
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
@@ -121,7 +127,7 @@ export function ChangePasswordForm({ username }: { username: string }) {
         {result.saved && !pending && (
           <Notice kind="success">{tAccount("password.saved")}</Notice>
         )}
-        <FormActions pending={pending} />
+        <FormActions pending={pending} disabled={!canSubmit} />
       </Stack>
     </Form>
   );

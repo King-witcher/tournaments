@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
@@ -41,6 +42,7 @@ export function RemoveLoginForm({ login, needsPassword = true }: Props) {
   const t = useTranslations("Account");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
+  const { ref, canSubmit } = useFormValidity();
   const [current, setCurrent] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
@@ -87,6 +89,7 @@ export function RemoveLoginForm({ login, needsPassword = true }: Props) {
 
   return (
     <Form
+      ref={ref}
       onSubmit={(event) => {
         event.preventDefault();
         if (pending) return;
@@ -108,7 +111,12 @@ export function RemoveLoginForm({ login, needsPassword = true }: Props) {
             invalidText={error}
           />
         )}
-        <Button type="submit" kind="danger--tertiary" pending={pending}>
+        <Button
+          type="submit"
+          kind="danger--tertiary"
+          pending={pending}
+          disabled={!canSubmit}
+        >
           {text.action}
         </Button>
         {error && !passwordError && <ErrorText>{error}</ErrorText>}

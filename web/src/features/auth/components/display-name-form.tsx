@@ -9,6 +9,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
@@ -30,6 +31,7 @@ export function DisplayNameForm({ name }: { name: string }) {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [value, setValue] = useState(name);
 
   const [result, submit, pending] = useActionState<Result>(async () => {
@@ -51,7 +53,7 @@ export function DisplayNameForm({ name }: { name: string }) {
   const saved = result.saved && !pending && result.savedName === value;
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={fieldId(prefix, "name")}
@@ -65,7 +67,7 @@ export function DisplayNameForm({ name }: { name: string }) {
         />
         {general && <FormError>{general}</FormError>}
         {saved && <Notice kind="success">{t("saved")}</Notice>}
-        <FormActions pending={pending} />
+        <FormActions pending={pending} disabled={!canSubmit} />
       </Stack>
     </Form>
   );
