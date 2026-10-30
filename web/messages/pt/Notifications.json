@@ -8,16 +8,16 @@
     },
     "match": {
       "ready": {
-        "title": "Sua partida está pronta",
+        "title": "Sua série está pronta",
         "body": "{tournament}: você contra {opponent}."
       },
       "game_reported": {
-        "title": "{opponent} enviou o mapa {game}",
-        "body": "{tournament}: confirme ou conteste até {deadline}. Sem resposta, o mapa vale."
+        "title": "{opponent} enviou a partida {game}",
+        "body": "{tournament}: confirme ou conteste até {deadline}. Sem resposta, a partida vale."
       },
       "game_contested": {
-        "title": "Mapa contestado",
-        "body": "{tournament}: {player} contestou o mapa {game}. Resolva na partida."
+        "title": "Partida contestada",
+        "body": "{tournament}: {player} contestou a partida {game}. Resolva na série."
       },
       "opponent_ready": {
         "title": "{opponent} está pronto",
@@ -25,11 +25,11 @@
       },
       "veto_started": {
         "title": "O veto começou",
-        "body": "{tournament}: veto contra {opponent}. Cada passo tem tempo: no fim, a escolha é sorteada."
+        "body": "{tournament}: veto contra {opponent}. Cada passo tem tempo. No fim, a escolha é sorteada."
       },
       "team_pick_open": {
         "title": "Escolha seu campeão",
-        "body": "{tournament}: a escolha de campeões do mapa {game} abriu. Todos escolhem ao mesmo tempo; quem não escolher a tempo recebe um sorteado."
+        "body": "{tournament}: a escolha de campeões da partida {game} abriu. Todos escolhem ao mesmo tempo; quem não escolher a tempo recebe um sorteado."
       }
     },
     "tournament": {
@@ -40,16 +40,16 @@
     }
   },
   "open": {
-    "match": "Abrir partida",
+    "match": "Abrir série",
     "tournament": "Abrir torneio"
   },
   "region": "Notificações",
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notificações com o site fechado",
-    "description": "Check-in aberto, partida pronta e mapa enviado pelo adversário; para a organização, mapa contestado e hora de iniciar. Cada navegador se ativa à parte: ative em cada aparelho que você usa.",
+    "description": "Check-in aberto, série pronta e partida enviada pelo adversário; para a organização, partida contestada e hora de iniciar. Cada navegador se ativa à parte. Ative em cada aparelho que você usa.",
     "loading": "Conferindo este navegador…",
-    "on": "Ativadas neste navegador: as notificações chegam mesmo com o site fechado.",
+    "on": "Ativadas neste navegador. As notificações chegam mesmo com o site fechado.",
     "off": "Desligadas neste navegador. Com o site aberto, as notificações aparecem na página.",
     "enable": "Ativar notificações",
     "disable": "Desativar notificações",
@@ -59,16 +59,16 @@
     "unsupported": "Este navegador não recebe notificações com o site fechado. Com o site aberto, elas aparecem na página.",
     "serverOff": "As notificações com o site fechado estão desligadas por enquanto. Com o site aberto, elas aparecem na página.",
     "installTitle": "No iPhone e no iPad, instale o site primeiro.",
-    "install": "As notificações com o site fechado só chegam com o site na tela inicial: toque em Compartilhar, depois em Adicionar à Tela de Início, abra o site pelo ícone novo e ative aqui.",
-    "prompt": "Receba uma notificação quando o check-in abrir e quando sua partida estiver pronta, mesmo com o site fechado.",
-    "promptInstall": "Para receber notificações no iPhone com o site fechado, instale o site: Compartilhar → Adicionar à Tela de Início.",
+    "install": "As notificações com o site fechado só chegam com o site na tela inicial. Toque em Compartilhar, depois em Adicionar à Tela de Início, abra o site pelo ícone novo e ative aqui.",
+    "prompt": "Receba uma notificação quando o check-in abrir e quando sua série estiver pronta, mesmo com o site fechado.",
+    "promptInstall": "Para receber notificações no iPhone com o site fechado, instale o site com Compartilhar → Adicionar à Tela de Início.",
     "enabled": "Notificações ativadas neste navegador.",
     "blocked": "Notificações bloqueadas neste navegador.",
     "settings": "Como mudar"
   },
   "sound": {
     "title": "Som",
-    "description": "Com o site aberto, cada notificação toca um som curto, também com a aba em segundo plano (a não ser que as notificações com o site fechado estejam ativadas: aí quem avisa é a do sistema). A escolha vale para este navegador.",
+    "description": "Com o site aberto, cada notificação toca um som curto, também com a aba em segundo plano (a não ser que as notificações com o site fechado estejam ativadas; aí quem avisa é a do sistema). A escolha vale para este navegador.",
     "label": "Tocar som com as notificações",
     "test": "Ouvir o som"
   }

@@ -212,7 +212,7 @@ async fn the_test_message_reaches_the_channel_in_the_chosen_language() {
     assert_eq!(hits[0].path, format!("/api/webhooks/{WEBHOOK}/{TOKEN}"));
     assert_eq!(
         hits[0].body["content"],
-        "Teste de **Tenant quake-br**: os avisos da comunidade vão chegar neste canal.\nhttp://localhost:4001/pt/quake-br"
+        "Teste de **Tenant quake-br**. Os avisos da comunidade vão chegar neste canal.\nhttp://localhost:4001/pt/quake-br"
     );
     assert_eq!(
         hits[0].body["allowed_mentions"],

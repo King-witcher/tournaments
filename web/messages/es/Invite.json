@@ -14,10 +14,10 @@
   "accept": "Unirme a la comunidad",
   "acceptTournament": "Unirme e inscribirme",
   "register": "Inscribirme",
-  "alreadyMember": "Ya eres miembro de {tenant}: no necesitas aceptar la invitación.",
+  "alreadyMember": "Ya eres miembro de {tenant}. No necesitas aceptar la invitación.",
   "alreadyRegistered": "Tu inscripción en este torneo ya está hecha.",
   "goToTenant": "Ir a la comunidad",
   "goToTournament": "Ir al torneo",
   "returning": "Ya fuiste parte de {tenant}. Al volver, entras como jugador y recuperas el apodo \"{nickname}\" y tu historial de torneos.",
-  "memberRegisters": "Ya eres miembro de {tenant}: aceptar solo hace tu inscripción."
+  "memberRegisters": "Ya eres miembro de {tenant}. Aceptar solo hace tu inscripción."
 }

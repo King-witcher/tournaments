@@ -2,8 +2,8 @@
   "teamOf": "Time de {captain}",
   "loading": "Carregando os times…",
   "pageTitle": "Times",
-  "what": "A inscrição é individual: antes de iniciar, a organização forma os times de {size} jogadores e escolhe o capitão de cada um, que age pelo time no veto. Quem fica sem time é reserva e pode entrar no lugar de alguém durante o torneio.",
-  "howToEdit": "Sorteie e ajuste à mão: arraste um jogador para outro time, para a reserva ou para “Novo time”, ou use o menu ⋯ dele.",
+  "what": "A inscrição é individual. Antes de iniciar, a organização forma os times de {size} jogadores e escolhe o capitão de cada um, que age pelo time no veto. Quem fica sem time é reserva e pode entrar no lugar de alguém durante o torneio.",
+  "howToEdit": "Sorteie e ajuste à mão. Arraste um jogador para outro time, para a reserva ou para “Novo time”, ou use o menu ⋯ dele.",
   "form": "Formar times",
   "backToManage": "Voltar à organização",
   "seeding": "Ordem da chave",
@@ -15,8 +15,8 @@
   },
   "draw": {
     "title": "Sortear os times",
-    "what": "Refaz todos os times com os inscritos, na ordem de inscrição: os últimos que não completam um time ficam de reserva.",
-    "whatCheckIn": "Refaz todos os times com quem fez check-in, na ordem de inscrição: os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time.",
+    "what": "Refaz todos os times com os inscritos, na ordem de inscrição. Os últimos que não completam um time ficam de reserva.",
+    "whatCheckIn": "Refaz todos os times com quem fez check-in, na ordem de inscrição. Os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time.",
     "random": "Sortear",
     "randomHint": "Jogadores e capitães ao acaso.",
     "balanced": "Sortear balanceado",
@@ -81,7 +81,7 @@
   "substitute": {
     "open": "Substituir jogador",
     "title": "Substituir jogador em {name}",
-    "hint": "A troca vale a partir do próximo mapa enviado. Quem sai continua inscrito, sem time (fica de reserva); quem entra passa a jogar pelo time.",
+    "hint": "A troca vale a partir da próxima partida enviada. Quem sai continua inscrito, sem time (fica de reserva); quem entra passa a jogar pelo time.",
     "out": "Quem sai",
     "in": "Quem entra",
     "choose": "Escolha…",
@@ -93,11 +93,11 @@
   },
   "withdraw": {
     "open": "Marcar desistência",
-    "confirm": "Marcar a desistência de {name}? O time continua na chave, mas as partidas que tiver, agora ou quando ficarem prontas, viram W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos)."
+    "confirm": "Marcar a desistência de {name}? O time continua na chave, mas as séries que tiver, agora ou quando ficarem prontas, viram W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos)."
   },
   "manage": {
     "title": "Times",
-    "what": "A inscrição é individual: os times de {size} jogadores se formam antes de iniciar, por sorteio ou à mão.",
+    "what": "A inscrição é individual. Os times de {size} jogadores se formam antes de iniciar, por sorteio ou à mão.",
     "started": "Os times estão na aba Inscritos; lá a organização troca o capitão e substitui jogadores.",
     "unavailable": "Não foi possível carregar os times agora. Recarregue a página.",
     "view": "Ver os times"

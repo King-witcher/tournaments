@@ -1,9 +1,9 @@
 {
   "title": "Pendências da organização",
   "contested": {
-    "tag": "Mapa contestado",
-    "where": "{match}, mapa {game}",
-    "whereMap": "{match}, mapa {game} ({map})",
+    "tag": "Partida contestada",
+    "where": "{match}, partida {game}",
+    "whereMap": "{match}, partida {game} ({map})",
     "by": "{player} contestou <ago></ago>",
     "byUnknown": "Contestado <ago></ago>"
   },

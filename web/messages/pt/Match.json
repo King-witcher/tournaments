@@ -1,10 +1,10 @@
 {
-  "loading": "Carregando a partida…",
-  "loginRequired": "Entre para ver esta partida.",
+  "loading": "Carregando a série…",
+  "loginRequired": "Entre para ver esta série.",
   "title": "{code}: {a} × {b}",
-  "label": "{part} · {round} · partida {index}",
+  "label": "{part} · {round} · série {index}",
   "bestOf": "Melhor de {count}",
-  "seed": "seed {seed}",
+  "seed": "ordem {seed}",
   "stateTag": {
     "pending": "Aguardando os lados",
     "ready": "A jogar",
@@ -13,22 +13,22 @@
     "not_needed": "Não precisou"
   },
   "state": {
-    "pending": "Os lados ainda dependem de outras partidas.",
+    "pending": "Os lados ainda dependem de outras séries.",
     "ready": "A jogar.",
-    "bye": "Sem adversário: avança sem jogar.",
+    "bye": "Sem adversário. Avança sem jogar.",
     "completed": "Encerrada.",
-    "not_needed": "Não precisou: quem veio da chave principal venceu a grande final."
+    "not_needed": "Não precisou. Quem veio da chave principal venceu a grande final."
   },
   "confirmedVia": {
-    "opponent": "Confirmado pelo adversário <time></time>.",
-    "deadline": "Confirmado pelo fim da janela de contestação <time></time>.",
-    "organizer": "Definido pela organização <time></time>.",
-    "withdrawal": "W.O. automático: quem perdeu desistiu ou saiu da comunidade <time></time>.",
-    "maps": "Decidida pelos mapas confirmados <time></time>."
+    "opponent": "Confirmada pelo adversário <time></time>.",
+    "deadline": "Confirmada pelo fim da janela de contestação <time></time>.",
+    "organizer": "Definida pela organização <time></time>.",
+    "withdrawal": "W.O. automático. Quem perdeu desistiu ou saiu da comunidade <time></time>.",
+    "maps": "Decidida pelas partidas confirmadas <time></time>."
   },
   "games": {
-    "title": "Mapas",
-    "hint": "Cada mapa é enviado e confirmado sozinho. O adversário tem {window} para confirmar ou contestar; sem resposta, confirma sozinho.",
+    "title": "Partidas",
+    "hint": "Cada partida é enviada e confirmada sozinha. O adversário tem {window} para confirmar ou contestar; sem resposta, ela se confirma sozinha.",
     "columns": {
       "number": "Nº",
       "map": "Mapa",
@@ -36,27 +36,27 @@
       "frags": "Frags",
       "status": "Estado"
     },
-    "numberCell": "<prefix>Mapa </prefix>{number}",
+    "numberCell": "<prefix>Partida </prefix>{number}",
     "fragsCell": "<prefix>Frags: </prefix>{a} × {b}",
     "noMap": "mapa não informado",
     "won": "{name} venceu",
-    "claim": "{reporter} enviou: {winner} venceu",
+    "claim": "{reporter} enviou que {winner} venceu",
     "awaiting": "Aguardando envio.",
-    "pending": "Ainda não conta no placar: confirma sozinho às <at></at> (faltam <time></time>).",
-    "contested": "Contestado por {name}: “{comment}”. Não conta no placar até a organização resolver.",
+    "pending": "Ainda não conta no placar. Confirma sozinha às <at></at> (faltam <time></time>).",
+    "contested": "Contestada por {name}: “{comment}”. Não conta no placar até a organização resolver.",
     "confirmed": {
-      "opponent": "Confirmado pelo adversário.",
-      "deadline": "Confirmado pelo fim do prazo.",
-      "organizer": "Confirmado pela organização.",
-      "withdrawal": "Confirmado.",
-      "maps": "Confirmado."
+      "opponent": "Confirmada pelo adversário.",
+      "deadline": "Confirmada pelo fim do prazo.",
+      "organizer": "Confirmada pela organização.",
+      "withdrawal": "Confirmada.",
+      "maps": "Confirmada."
     },
     "badge": {
       "pending": "Aguardando",
-      "contested": "Contestado",
-      "confirmed": "Confirmado"
+      "contested": "Contestada",
+      "confirmed": "Confirmada"
     },
-    "vetoFirst": "O mapa {number} pode ser enviado quando o veto dele acabar.",
+    "vetoFirst": "A partida {number} pode ser enviada quando o veto dela acabar.",
     "lineup": "Jogaram: {a} contra {b}"
   },
   "respond": {
@@ -69,7 +69,7 @@
   },
   "organizer": {
     "title": "Organização",
-    "hint": "W.O. vale para a série inteira: os mapas confirmados ficam e os pendentes saem. Para lançar ou corrigir um mapa, use a linha dele acima.",
+    "hint": "W.O. vale para a série inteira. As partidas confirmadas ficam e as pendentes saem. Para lançar ou corrigir uma partida, use a linha dela acima.",
     "walkover": "W.O. para {name}",
     "walkoverTitle": "Dar W.O. na série",
     "walkoverConfirm": "Dar W.O. para {name}? Conta como vitória da série sem placar.",
@@ -77,51 +77,51 @@
   },
   "correction": {
     "title": "Antes de corrigir esta série",
-    "why": "Quem passou por aqui já jogou <matches></matches>, que está decidida. Por isso, uma correção que mude o resultado desta série (outro vencedor, ou série sem decisão) é recusada: aquela partida foi jogada com os lados que este resultado definiu.",
-    "how": "Para mudar o resultado, corrija antes <matches></matches> até ela ficar sem decisão (mude o vencedor de um mapa dela) e depois volte aqui. Os mapas dela são anulados quando os lados mudarem. Se ela também levou a outra partida decidida, comece pela última.",
-    "howWalkover": "<matches></matches> foi decidida por W.O., que uma correção de mapa não desfaz: ela não volta a ficar sem decisão. Para mudar o resultado desta série, só desfazendo o início do torneio.",
+    "why": "Quem passou por aqui já jogou <matches></matches>, que está decidida. Por isso, uma correção que mude o resultado desta série (outro vencedor, ou série sem decisão) é recusada, porque aquela série foi jogada com os lados que este resultado definiu.",
+    "how": "Para mudar o resultado, corrija antes <matches></matches> até ela ficar sem decisão (mude o vencedor de uma partida dela) e depois volte aqui. As partidas dela são anuladas quando os lados mudarem. Se ela também levou a outra série decidida, comece pela última.",
+    "howWalkover": "<matches></matches> foi decidida por W.O., que uma correção de partida não desfaz. Ela não volta a ficar sem decisão. Para mudar o resultado desta série, só desfazendo o início do torneio.",
     "allowed": "Corrigir sem mudar o resultado da série (o mapa jogado ou os frags) continua valendo."
   },
   "history": {
     "title": "Histórico",
-    "empty": "Nada aconteceu nesta partida ainda.",
+    "empty": "Nada aconteceu nesta série ainda.",
     "score": "{winner} venceu {winnerMaps} x {loserMaps}",
     "walkover": "W.O. para {winner}",
-    "game": "Mapa {number}",
+    "game": "Partida {number}",
     "mapWinner": "{winner} venceu",
     "kinds": {
       "reported": "{actor} enviou",
       "confirmed": "{actor} confirmou",
-      "auto_confirmed": "Confirmado pelo fim do prazo",
+      "auto_confirmed": "Confirmada pelo fim do prazo",
       "contested": "{actor} contestou",
       "resolved": "{actor} resolveu a contestação",
       "entered": "{actor} lançou",
       "corrected": "{actor} corrigiu",
       "walkover": "{actor} deu W.O.",
-      "auto_walkover": "W.O. automático: um dos lados desistiu ou saiu da comunidade",
-      "voided": "{actor} anulou: o mapa ficou depois da decisão da série, ou quem joga a partida mudou",
-      "replay": "{actor} anulou o mapa para ser jogado de novo",
-      "voided_auto": "Anulado: a série virou W.O.",
-      "decided": "Série decidida pelos mapas confirmados",
-      "reopened": "{actor} reabriu a série: a correção a deixou sem decisão"
+      "auto_walkover": "W.O. automático. Um dos lados desistiu ou saiu da comunidade",
+      "voided": "{actor} anulou, porque a partida ficou depois da decisão da série ou quem joga a série mudou",
+      "replay": "{actor} anulou a partida para ser jogada de novo",
+      "voided_auto": "Anulada. A série virou W.O.",
+      "decided": "Série decidida pelas partidas confirmadas",
+      "reopened": "{actor} reabriu a série. A correção a deixou sem decisão"
     }
   },
-  "labelSingle": "{round} · partida {index}",
+  "labelSingle": "{round} · série {index}",
   "labelPart": "{part} · {round}",
   "vs": "×",
   "score": {
     "label": "Placar da série",
     "sr": "{a}: {aScore}; {b}: {bScore}",
-    "deadline": "O mapa {number} confirma sozinho às <at></at> (faltam <time></time>)."
+    "deadline": "A partida {number} confirma sozinha às <at></at> (faltam <time></time>)."
   },
   "series": {
-    "needed": "Melhor de {bestOf}: vence quem fizer {needed, plural, one {# mapa} other {# mapas}}.",
-    "open": "Placar dos mapas confirmados.",
-    "pending": "{count, plural, one {# mapa espera confirmação.} other {# mapas esperam confirmação.}}",
-    "contested": "{count, plural, one {# mapa contestado: a organização resolve.} other {# mapas contestados: a organização resolve.}}"
+    "needed": "Melhor de {bestOf}. Vence quem fizer {needed, plural, one {# partida} other {# partidas}}.",
+    "open": "Placar das partidas confirmadas.",
+    "pending": "{count, plural, one {# partida espera confirmação.} other {# partidas esperam confirmação.}}",
+    "contested": "{count, plural, one {# partida contestada. A organização resolve.} other {# partidas contestadas. A organização resolve.}}"
   },
   "form": {
-    "winner": "Quem venceu o mapa {number}",
+    "winner": "Quem venceu a partida {number}",
     "map": "Mapa jogado",
     "chooseMap": "Escolha o mapa…",
     "pool": "Pool de duelo",
@@ -129,10 +129,10 @@
     "frags": "Frags (opcional)",
     "fragsOf": "Frags de {name}",
     "fragsRange": "De {min} a {max}.",
-    "submit": "Enviar mapa {number}",
-    "enter": "Lançar mapa {number}",
-    "save": "Salvar mapa {number}",
-    "chooseWinner": "Escolha quem venceu o mapa.",
+    "submit": "Enviar partida {number}",
+    "enter": "Lançar partida {number}",
+    "save": "Salvar partida {number}",
+    "chooseWinner": "Escolha quem venceu a partida.",
     "chooseTheMap": "Escolha o mapa jogado.",
     "comment": "Nota no histórico (opcional)",
     "vetoedMap": "Mapa jogado: {map} (saiu do veto)."
@@ -141,19 +141,19 @@
     "confirmNow": "Confirmar agora",
     "accept": "Confirmar vitória de {name}",
     "other": "Lançar outro resultado",
-    "replay": "Anular: jogam de novo",
-    "replayQuestion": "O mapa {number} sai da série, e os jogadores jogam e enviam o mapa {number} de novo. O histórico guarda quem anulou e a nota.",
-    "replaySubmit": "Anular o mapa {number}",
+    "replay": "Anular e jogar de novo",
+    "replayQuestion": "A partida {number} sai da série, e os jogadores jogam e enviam a partida {number} de novo. O histórico guarda quem anulou e a nota.",
+    "replaySubmit": "Anular a partida {number}",
     "note": "Nota no histórico (opcional)",
     "correct": "Corrigir",
-    "correctHint": "A chave é refeita. Se a série mudar e isso contradiz uma partida decidida depois desta, a correção é recusada; mapas que passem a vir depois da decisão são anulados."
+    "correctHint": "A chave é refeita. Se a série mudar e isso contradiz uma série decidida depois desta, a correção é recusada; as partidas que passem a vir depois da decisão são anuladas."
   },
   "veto": {
     "title": "Veto",
     "mode": {
-      "veto": "Veto de mapas: banir e escolher, alternando, antes do primeiro mapa; o que sobra é o decisivo.",
-      "vote": "Votação: a cada mapa, cada um vota num dos 3 sorteados; votos diferentes, sorteio entre os dois.",
-      "random": "Mapa sorteado: o mapa de cada jogo é sorteado quando ele começa.",
+      "veto": "Veto de mapas: banir e escolher, alternando, antes da primeira partida; o que sobra é o decisivo.",
+      "vote": "Votação: a cada partida, cada um vota num dos 3 mapas sorteados; votos diferentes, sorteio entre os dois.",
+      "random": "Mapa sorteado: o mapa de cada partida é sorteado quando ela começa.",
       "off": "Mapa combinado entre os jogadores."
     },
     "waitingReady": "O veto começa quando os dois clicarem em “Pronto”.",
@@ -162,28 +162,28 @@
     "readyButton": "Pronto",
     "youAreReady": "Você está pronto. Esperando {name}.",
     "forceStart": "Começar o veto agora",
-    "forceStartQuestion": "Começar o veto sem esperar os dois clicarem em “Pronto”? Cada passo tem tempo: quem não escolher a tempo leva uma escolha sorteada.",
+    "forceStartQuestion": "Começar o veto sem esperar os dois clicarem em “Pronto”? Cada passo tem tempo. Quem não escolher a tempo leva uma escolha sorteada.",
     "yourTurn": "Sua vez: {action}.",
     "theirTurn": "Vez de {name}: {action}.",
-    "bothVote": "Os dois votam no mapa do jogo {game}.",
+    "bothVote": "Os dois votam no mapa da partida {game}.",
     "votedWaiting": "Você votou. Esperando o voto de {name}.",
     "action": {
       "ban_map": "banir um mapa",
       "pick_map": "escolher um mapa",
-      "vote_map": "votar no mapa do jogo {game}",
-      "ban_champion": "banir um campeão no mapa {game}",
-      "pick_champion": "escolher o campeão do mapa {game}",
+      "vote_map": "votar no mapa da partida {game}",
+      "ban_champion": "banir um campeão na partida {game}",
+      "pick_champion": "escolher o campeão da partida {game}",
       "vote_champion": "votar",
-      "team_pick_map": "escolher o campeão do mapa {game}",
-      "team_pick_champion": "escolher o campeão do mapa {game}"
+      "team_pick_map": "escolher o campeão da partida {game}",
+      "team_pick_champion": "escolher o campeão da partida {game}"
     },
     "deadline": "Tempo: <time></time>. Se acabar, a escolha é sorteada.",
-    "done": "Veto do mapa {game} concluído: joguem e enviem o mapa.",
+    "done": "Veto da partida {game} concluído. Joguem e enviem a partida.",
     "maps": {
       "title": "Mapas",
       "banned": "Banido por {name}",
-      "picked": "Jogo {game}: escolhido por {name}",
-      "decider": "Jogo {game}: decisivo (o que sobrou)",
+      "picked": "Partida {game}: escolhido por {name}",
+      "decider": "Partida {game}: decisivo (o que sobrou)",
       "available": "Disponível",
       "ban": "Banir",
       "pick": "Escolher",
@@ -191,17 +191,17 @@
       "pickMap": "Escolher {map}"
     },
     "vote": {
-      "title": "Votação do mapa do jogo {game}",
+      "title": "Votação do mapa da partida {game}",
       "hint": "Votos iguais, é esse; diferentes, sorteio entre os dois.",
       "votes": "Voto de {names}",
       "noVotes": "Sem votos",
       "vote": "Votar",
       "voteFor": "Votar em {map}",
-      "result": "Mapa do jogo: {map}."
+      "result": "Mapa da partida: {map}."
     },
     "champions": {
-      "title": "Campeões do mapa {game}",
-      "banHint": "O ban tira o campeão dos dois neste mapa.",
+      "title": "Campeões da partida {game}",
+      "banHint": "O ban tira o campeão dos dois nesta partida.",
       "pickHint": "Os dois veem a escolha do outro.",
       "banned": "banido por {name}",
       "banChampion": "Banir {champion}",
@@ -216,7 +216,7 @@
         "stage": "você já usou nesta fase",
         "tournament": "você já usou neste torneio"
       },
-      "teamPickHint": "Os campeões que um colega já escolheu neste mapa não aparecem para você.",
+      "teamPickHint": "Os campeões que um colega já escolheu nesta partida não aparecem para você.",
       "pickedBy": "escolhido por {name}",
       "usedByYourTeam": {
         "match": "seu time já usou nesta série",
@@ -229,8 +229,8 @@
         "tournament": "um jogador de {name} já usou neste torneio"
       },
       "gaveWay": {
-        "rule": "Pela regra de não repetição, não sobrava campeão para você neste mapa: ela cedeu, e os que ela tira voltaram às suas opções (marcados abaixo).",
-        "team": "Não sobrava campeão para você sem repetir o de um colega neste mapa: vale qualquer campeão sem ban, mesmo o que um colega já escolheu."
+        "rule": "Pela regra de não repetição, não sobrava campeão para você nesta partida. Ela cedeu, e os que ela tira voltaram às suas opções (marcados abaixo).",
+        "team": "Não sobrava campeão para você sem repetir o de um colega nesta partida. Vale qualquer campeão sem ban, mesmo o que um colega já escolheu."
       }
     },
     "undo": {
@@ -244,7 +244,7 @@
     },
     "games": {
       "title": "Decidido no veto",
-      "game": "Jogo {game}",
+      "game": "Partida {game}",
       "map": "{map}",
       "mapPicked": "{map} (escolha de {name})",
       "bans": "bans: {list}",
@@ -253,12 +253,12 @@
     },
     "history": {
       "title": "Histórico do veto",
-      "game": "Mapa {game}",
+      "game": "Partida {game}",
       "timeout": "sorteado pelo fim do tempo",
       "kinds": {
         "ready": "{name} ficou pronto",
         "begin": "{forced, select, yes {{actor} começou o veto} other {O veto começou}}",
-        "game": "O jogo {game} começou",
+        "game": "A partida {game} começou",
         "ban": "{name} baniu {map}{champion}",
         "pick": "{name} escolheu {map}{champion}",
         "vote": "{name} votou em {map}",
@@ -268,19 +268,19 @@
       }
     },
     "captainReadies": "Quem clica em “Pronto” é o capitão do seu time.",
-    "captainTurn": "Vez do seu time: o capitão vai {action}.",
-    "teamPick": "Escolha de campeões do mapa {game}: todos escolhem ao mesmo tempo e veem as escolhas dos outros.",
-    "teamPickYours": "Escolha o seu campeão do mapa {game}. A escolha é definitiva.",
+    "captainTurn": "Vez do seu time. O capitão vai {action}.",
+    "teamPick": "Escolha de campeões da partida {game}. Todos escolhem ao mesmo tempo e veem as escolhas dos outros.",
+    "teamPickYours": "Escolha o seu campeão da partida {game}. A escolha é definitiva.",
     "teamPickPicked": "Você já escolheu. Esperando os outros.",
     "missing": "Faltam: {names}.",
     "teamDeadline": "Tempo: <time></time>. Quem não escolher recebe um campeão sorteado.",
     "teamPicks": {
-      "title": "Escolhas do mapa {game}",
+      "title": "Escolhas da partida {game}",
       "choosing": "escolhendo…",
       "drawn": "{champion} (sorteado)"
     }
   },
-  "labelTable": "Rodada {round} de {total} · partida {index}",
+  "labelTable": "Rodada {round} de {total} · série {index}",
   "captain": "capitão",
   "members": "Jogadores de {name}"
 }

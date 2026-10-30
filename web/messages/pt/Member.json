@@ -19,14 +19,14 @@
       "registered": "Inscrição feita",
       "check_in_pending": "Falta o check-in",
       "checked_in": "Check-in feito",
-      "missed_check_in": "Fora da chave: sem check-in",
+      "missed_check_in": "Fora da chave, sem check-in",
       "playing": "Na chave",
       "eliminated": "Terminou em {place}",
       "withdrawn": "Desistiu",
       "champion": "1º lugar",
-      "reserve": "Reserva: sem time"
+      "reserve": "Reserva, sem time"
     },
-    "empty": "{name} ainda não jogou aqui: não há inscrição em nenhum torneio desta comunidade que você vê.",
+    "empty": "{name} ainda não jogou aqui. Não há inscrição em nenhum torneio desta comunidade que você vê.",
     "emptyYou": "Você ainda não jogou aqui. Os torneios com inscrição aberta ficam na aba Torneios.",
     "browse": "Ver os torneios",
     "withTeam": "{tournament} · time: {team}"

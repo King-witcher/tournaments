@@ -4,7 +4,7 @@
   "loginRequired": "Entre para ver a chave.",
   "notStarted": "A chave aparece aqui quando a organização iniciar o torneio. Até lá, confira quem está inscrito.",
   "seeParticipants": "Ver os inscritos",
-  "hint": "Abra uma partida para enviar ou ver o resultado.",
+  "hint": "Abra uma série para enviar ou ver o resultado.",
   "scrollHint": "Arraste a chave para o lado para ver as outras rodadas.",
   "scrollLabel": "Chave do torneio (rola para o lado)",
   "partsLabel": "Partes da chave",
@@ -12,7 +12,7 @@
     "winners": "Chave principal",
     "losers": "Repescagem",
     "grand_final": "Grande final",
-    "round_robin": "Round robin",
+    "round_robin": "Todos contra todos",
     "swiss": "Suíço"
   },
   "rounds": {
@@ -43,12 +43,12 @@
   "advances": "<name></name> avança sem jogar",
   "matchSides": "{a} × {b}",
   "result": {
-    "pending": "Mapa esperando confirmação",
-    "contested": "Mapa contestado"
+    "pending": "Partida esperando confirmação",
+    "contested": "Partida contestada"
   },
   "task": {
-    "report": "Envie o próximo mapa",
-    "respond": "Confirme ou conteste o mapa",
+    "report": "Envie a próxima partida",
+    "respond": "Confirme ou conteste a partida",
     "await_opponent": "Aguardando o adversário",
     "await_organizer": "Aguardando a organização",
     "resolve": "Resolver contestação",
@@ -58,13 +58,13 @@
     "veto_in_progress": "Veto em andamento",
     "await_captain": "Aguardando o capitão do seu time"
   },
-  "yours": "Sua partida",
+  "yours": "Sua série",
   "departure": {
     "left": "saiu",
     "withdrawn": "desistiu"
   },
   "pending": {
-    "title": "Partidas que esperam você",
+    "title": "Séries que esperam você",
     "item": "{match} · {a} × {b}: {task}"
   },
   "standings": {
@@ -76,19 +76,19 @@
     "result": "Resultado",
     "champion": "Venceu o torneio",
     "eliminated": "Eliminação: <match></match> ({score})",
-    "empty": "A classificação aparece aqui quando a última partida da chave for decidida."
+    "empty": "A classificação aparece aqui quando a última série da chave for decidida."
   },
   "rest": "<name></name> folga nesta rodada",
   "swissBye": "<name></name> recebe o bye (vale vitória)",
-  "matchesTitle": "Partidas",
+  "matchesTitle": "Séries",
   "roundOf": "Rodada {round} de {total}",
-  "roundRobinHint": "Todas as partidas estão abertas: as rodadas só organizam, e cada uma é jogada quando os dois combinarem. Abra uma partida para enviar ou ver o resultado.",
-  "swissProgress": "Rodada {round} de {total}. Abra uma partida para enviar ou ver o resultado.",
-  "nextRound": "A rodada {round} de {total} é pareada quando todas as partidas da rodada {previous} terminarem: quem tem a mesma pontuação se enfrenta, sem repetir adversário.",
+  "roundRobinHint": "Todas as séries estão abertas. As rodadas só organizam, e cada uma é jogada quando os dois combinarem. Abra uma série para enviar ou ver o resultado.",
+  "swissProgress": "Rodada {round} de {total}. Abra uma série para enviar ou ver o resultado.",
+  "nextRound": "A rodada {round} de {total} é pareada quando todas as séries da rodada {previous} terminarem. Quem tem a mesma pontuação se enfrenta, sem repetir adversário.",
   "table": {
     "title": "Tabela",
     "finalTitle": "Classificação",
-    "current": "A ordem de agora: vira a classificação quando a última partida terminar.",
+    "current": "A ordem de agora. Vira a classificação quando a última série terminar.",
     "position": "Pos.",
     "place": "{position}º",
     "team": "Jogador",
@@ -96,7 +96,7 @@
     "record": "V–D",
     "recordValue": "{wins}–{losses}",
     "recordByes": "{wins}–{losses} (+{byes} bye)",
-    "maps": "Mapas",
+    "maps": "Partidas",
     "frags": "Frags",
     "diff": "{won}–{lost} ({diff})",
     "fragsDiff": "{won} – {lost} ({diff})",
@@ -108,9 +108,9 @@
     "aheadBy": {
       "buchholz": "{position}º ({name}) à frente do {next}º ({other}) pelo Buchholz.",
       "head_to_head": "{position}º ({name}) à frente do {next}º ({other}) pelo confronto direto.",
-      "map_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de mapas.",
+      "map_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de partidas.",
       "frag_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de frags.",
-      "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave: empataram em todo o resto."
+      "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave. Empataram em todo o resto."
     },
     "noFrags": "sem frags",
     "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um."

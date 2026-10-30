@@ -4,21 +4,21 @@
   "slug": "Endereço",
   "slugHint": "O link do torneio será {address}. Letras minúsculas, números e hífen, de 3 a 32; não dá para mudar depois.",
   "startsAt": "Início",
-  "startsAtHint": "No seu fuso horário ({timeZone}). Opcional: sem data, o check-in não abre sozinho (você o abre quando quiser). Muda até o torneio começar.",
+  "startsAtHint": "No seu fuso horário ({timeZone}). Opcional. Sem data, o check-in não abre sozinho (você o abre quando quiser). Muda até o torneio começar.",
   "format": "Formato",
-  "formatLocked": "O torneio já começou: formato e campeões não mudam mais.",
+  "formatLocked": "O torneio já começou. Formato e campeões não mudam mais.",
   "mode": "Modalidade",
   "modeHints": {
-    "duel": "Um contra um: cada inscrito joga por si.",
-    "tdm": "Times contra times. A inscrição é individual: antes de iniciar, a organização forma os times (por sorteio, equilibrados pelo rating ou à mão), e quem sobra fica de reserva."
+    "duel": "Um contra um. Cada inscrito joga por si.",
+    "tdm": "Times contra times. A inscrição é individual. Antes de iniciar, a organização forma os times (por sorteio, equilibrados pelo rating ou à mão), e quem sobra fica de reserva."
   },
   "teamSize": "Jogadores por time",
   "teamSizeOption": "{size}v{size}",
   "teamSizeHint": "Cada time tem {size} jogadores. O torneio só começa com todos os times completos.",
   "teamsReset": {
-    "fromDuel": "Ao salvar, {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}: forme os times na aba Organização antes de iniciar.",
+    "fromDuel": "Ao salvar, {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme os times na aba Organização antes de iniciar.",
     "toDuel": "Ao salvar, os times são desfeitos e {count, plural, one {o inscrito joga} other {cada um dos # inscritos joga}} por si.",
-    "resize": "Ao salvar, os times formados são desfeitos e {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}: forme times de {size} de novo na aba Organização."
+    "resize": "Ao salvar, os times formados são desfeitos e {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme times de {size} de novo na aba Organização."
   },
   "grandFinalReset": "Reset de grande final",
   "grandFinalResetHint": "Se quem chega pela repescagem vencer a grande final, os dois jogam mais uma série, porque só então os dois têm uma derrota.",
@@ -29,9 +29,9 @@
   },
   "bestOfOption": "Melhor de {count}",
   "champions": "Campeões",
-  "bansPerGame": "Bans de campeão por mapa",
+  "bansPerGame": "Bans de campeão por partida",
   "bansOption": "{count, plural, =0 {Sem bans} one {# ban} other {# bans}}",
-  "bansPerGameHintTdm": "{count, plural, =0 {Ninguém bane campeão.} one {O capitão de cada time bane # campeão por mapa, alternando; o banido fica fora do mapa para os dois times.} other {O capitão de cada time bane # campeões por mapa, alternando; os banidos ficam fora do mapa para os dois times.}}",
+  "bansPerGameHintTdm": "{count, plural, =0 {Ninguém bane campeão.} one {O capitão de cada time bane # campeão por partida, alternando; o banido fica fora da partida para os dois times.} other {O capitão de cada time bane # campeões por partida, alternando; os banidos ficam fora da partida para os dois times.}}",
   "noRepeat": "Repetir campeão",
   "noRepeatOptions": {
     "off": "Pode repetir",
@@ -54,15 +54,15 @@
     "player": "Cada jogador não repete os campeões que ele mesmo usou; pode usar um que um colega já usou.",
     "team": "Um campeão que alguém do time usou ninguém do time usa de novo. Pede muito mais campeões do pool, por isso limita as séries, as vagas e os bans."
   },
-  "teamDuplicates": "Dois do mesmo time podem escolher o mesmo campeão no mesmo mapa",
+  "teamDuplicates": "Dois do mesmo time podem escolher o mesmo campeão na mesma partida",
   "teamDuplicatesHints": {
-    "off": "Cada jogador do time escolhe um campeão diferente dos colegas no mapa. Entre os times, o mesmo campeão pode aparecer dos dois lados.",
-    "on": "Colegas de time podem usar o mesmo campeão no mesmo mapa. Entre os times, também."
+    "off": "Cada jogador do time escolhe um campeão diferente dos colegas na partida. Entre os times, o mesmo campeão pode aparecer dos dois lados.",
+    "on": "Colegas de time podem usar o mesmo campeão na mesma partida. Entre os times, também."
   },
   "registration": "Inscrições e prazos",
-  "registrationLocked": "O torneio já começou: início, vagas e check-in não mudam mais.",
+  "registrationLocked": "O torneio já começou. Início, vagas e check-in não mudam mais.",
   "countsForRating": "Conta para o rating da comunidade",
-  "countsForRatingHint": "Cada mapa confirmado entra no ranking (W.O. não). Desmarque para um torneio de treino ou de brincadeira.",
+  "countsForRatingHint": "Cada partida confirmada entra no ranking (W.O. não). Desmarque para um torneio de treino ou de brincadeira.",
   "maxParticipants": "Vagas",
   "maxParticipantsHint": "De 2 a 1024. A inscrição fecha quando lotar.",
   "maxParticipantsTdm": "Vagas (jogadores)",
@@ -81,9 +81,9 @@
   "checkInOff": "Sem check-in",
   "checkInOption": "Abre {minutes} min antes do início",
   "checkInOffHint": "Todos os inscritos entram na chave.",
-  "checkInHint": "Check-in é a confirmação de presença: perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra na chave.",
+  "checkInHint": "Check-in é a confirmação de presença. Perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra na chave.",
   "checkInOffHintTdm": "Todos os inscritos podem entrar num time.",
-  "checkInHintTdm": "Check-in é a confirmação de presença: perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra num time.",
+  "checkInHintTdm": "Check-in é a confirmação de presença. Perto do início, cada inscrito confirma no site que vai jogar, e só quem confirmar entra num time.",
   "contest": "Janela de contestação",
   "contestOption": "{minutes, plural, one {# minuto} other {# minutos}}",
   "contestHint": "Tempo que o adversário tem para confirmar ou contestar o placar enviado; sem resposta, confirma sozinho. Muda até o torneio encerrar e vale para os próximos envios.",
@@ -144,34 +144,34 @@
   },
   "startWarning": {
     "past": "A data de início já passou. O check-in abre assim que o torneio for publicado ou salvo, e os jogadores não terão tempo de se inscrever. Escolha uma data futura ou deixe sem data.",
-    "window": "O check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes do início, ou seja, já abriria na hora: os jogadores não terão tempo de se inscrever. Escolha uma data mais distante, diminua a janela de check-in ou deixe sem data."
+    "window": "O check-in abre {minutes, plural, one {# minuto} other {# minutos}} antes do início, ou seja, já abriria na hora. Os jogadores não terão tempo de se inscrever. Escolha uma data mais distante, diminua a janela de check-in ou deixe sem data."
   },
   "veto": {
     "title": "Veto",
-    "mapMode": "Mapa de cada jogo",
+    "mapMode": "Mapa de cada partida",
     "mapModes": {
       "veto": "Veto de mapas",
-      "vote": "Votação a cada mapa",
-      "random": "Sorteio a cada mapa",
+      "vote": "Votação a cada partida",
+      "random": "Sorteio a cada partida",
       "off": "Combinado entre os jogadores"
     },
     "mapModeHint": {
-      "veto": "Antes do primeiro mapa, os dois banem e escolhem alternando (o seed melhor começa); o que sobra é o decisivo.",
-      "vote": "A cada mapa, 3 mapas do pool sorteados (sem os já jogados); cada um vota num; votos diferentes, sorteio entre os dois.",
-      "random": "O mapa de cada jogo é sorteado do pool quando ele começa, sem repetir na série.",
+      "veto": "Antes da primeira partida, os dois banem e escolhem alternando (quem tem a melhor posição na ordem da chave começa); o que sobra é o decisivo.",
+      "vote": "A cada partida, 3 mapas do pool sorteados (sem os já jogados); cada um vota num; votos diferentes, sorteio entre os dois.",
+      "random": "O mapa de cada partida é sorteado do pool quando ela começa, sem repetir na série.",
       "off": "Os jogadores combinam o mapa fora do site e enviam como sempre."
     },
     "mapModeHintTdm": {
-      "veto": "Antes do primeiro mapa, os capitães banem e escolhem alternando (o seed melhor começa); o que sobra é o decisivo.",
-      "vote": "A cada mapa, 3 mapas do pool sorteados (sem os já jogados); cada capitão vota num; votos diferentes, sorteio entre os dois.",
-      "random": "O mapa de cada jogo é sorteado do pool quando ele começa, sem repetir na série.",
+      "veto": "Antes da primeira partida, os capitães banem e escolhem alternando (quem tem a melhor posição na ordem da chave começa); o que sobra é o decisivo.",
+      "vote": "A cada partida, 3 mapas do pool sorteados (sem os já jogados); cada capitão vota num; votos diferentes, sorteio entre os dois.",
+      "random": "O mapa de cada partida é sorteado do pool quando ela começa, sem repetir na série.",
       "off": "Os times combinam o mapa fora do site e enviam como sempre."
     },
     "mapPool": "Pool de mapas",
     "mapPoolHint": "{count, plural, one {# mapa escolhido} other {# mapas escolhidos}}; a série mais longa pede pelo menos {min}.",
-    "championPhase": "Ban/pick de campeões a cada mapa",
-    "championPhaseHint": "Ban de um, ban do outro (conforme os bans por mapa), pick de um, pick do outro, abertos. Vale com qualquer modo de mapa e aplica a regra de não repetição.",
-    "championPhaseHintTdm": "Os capitães banem alternando (conforme os bans por mapa); depois, todos escolhem o campeão ao mesmo tempo, vendo as escolhas dos outros. Vale com qualquer modo de mapa e aplica as regras de campeão.",
+    "championPhase": "Ban/pick de campeões a cada partida",
+    "championPhaseHint": "Ban de um, ban do outro (conforme os bans por partida), pick de um, pick do outro, abertos. Vale com qualquer modo de mapa e aplica a regra de não repetição.",
+    "championPhaseHintTdm": "Os capitães banem alternando (conforme os bans por partida); depois, todos escolhem o campeão ao mesmo tempo, vendo as escolhas dos outros. Vale com qualquer modo de mapa e aplica as regras de campeão.",
     "seconds": "Tempo de cada passo",
     "secondsHint": "Se o tempo acabar, a escolha é sorteada (a organização pode desfazer).",
     "secondsHintTdm": "Vale para cada passo do capitão (mapas e bans). Se o tempo acabar, a escolha é sorteada (a organização pode desfazer).",
@@ -182,7 +182,7 @@
   "stageFormats": {
     "double": "Eliminação dupla",
     "single": "Eliminação simples",
-    "round_robin": "Round robin",
+    "round_robin": "Todos contra todos",
     "swiss": "Suíço"
   },
   "stageFormatHints": {
@@ -192,8 +192,8 @@
     "swiss": "Rodadas em que se enfrenta quem tem a mesma pontuação, sem repetir adversário; a classificação sai da tabela de pontos. Até {max} participantes."
   },
   "swissRounds": "Rodadas",
-  "swissRoundsHint": "O máximo é uma a menos que os inscritos: com menos gente, vale esse. Automático: 3 com até 8 inscritos, 4 com até 16, 5 com até 32.",
-  "swissRoundsHintTdm": "O máximo é uma a menos que os times: com menos times, vale esse. Automático: 3 com até 8 times, 4 com até 16, 5 com até 32.",
+  "swissRoundsHint": "O máximo é uma a menos que os inscritos. Com menos gente, vale esse. Automático: 3 com até 8 inscritos, 4 com até 16, 5 com até 32.",
+  "swissRoundsHintTdm": "O máximo é uma a menos que os times. Com menos times, vale esse. Automático: 3 com até 8 times, 4 com até 16, 5 com até 32.",
   "swissRoundsAuto": "Automático (pelos inscritos)",
   "swissRoundsAutoTdm": "Automático (pelos times)",
   "swissRoundsOption": "{count, plural, one {# rodada} other {# rodadas}}"

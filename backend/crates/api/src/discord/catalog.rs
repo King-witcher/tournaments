@@ -88,16 +88,16 @@ pub const CATALOG: &[Spec] = &[
             "match.ready",
             true,
             To::Players,
-            "Partida pronta em **{tournament}** ({match}): {to}\n{link}",
-            "Partida lista en **{tournament}** ({match}): {to}\n{link}",
+            "SÃ©rie pronta em **{tournament}** ({match}): {to}\n{link}",
+            "Serie lista en **{tournament}** ({match}): {to}\n{link}",
         )
     },
     spec(
         "match.opponent_ready",
         true,
         To::Players,
-        "{to}: {opponent} está pronto para o veto da partida {match} de **{tournament}** e espera você.\n{link}",
-        "{to}: {opponent} está listo para el veto de la partida {match} de **{tournament}** y te espera.\n{link}",
+        "{to}: {opponent} está pronto para o veto da sÃ©rie {match} de **{tournament}** e espera você.\n{link}",
+        "{to}: {opponent} está listo para el veto de la serie {match} de **{tournament}** y te espera.\n{link}",
     ),
     // Desligado numa configuração nova: quem clicou em "Pronto" já está na
     // página; serve mais para o começo forçado pela organização.
@@ -107,7 +107,7 @@ pub const CATALOG: &[Spec] = &[
             "match.veto_started",
             false,
             To::Players,
-            "O veto da partida {match} de **{tournament}** começou: {to}\n{link}",
+            "O veto da sÃ©rie {match} de **{tournament}** começou: {to}\n{link}",
             "Empezó el veto de la partida {match} de **{tournament}**: {to}\n{link}",
         )
     },
@@ -122,7 +122,7 @@ pub const CATALOG: &[Spec] = &[
         "match.game_contested",
         true,
         To::Staff,
-        "{to} {player} contestou o mapa {game} da partida {match} de **{tournament}**. A organização precisa resolver.\n{link}",
+        "{to} {player} contestou a partida {game} da sÃ©rie {match} de **{tournament}**. A organização precisa resolver.\n{link}",
         "{to} {player} impugnó el mapa {game} de la partida {match} de **{tournament}**. La organización debe resolverlo.\n{link}",
     ),
     spec(
@@ -136,7 +136,7 @@ pub const CATALOG: &[Spec] = &[
         "match.series_decided",
         false,
         To::Nobody,
-        "**{tournament}**, partida {match}: {winner} venceu {loser}{score_part}.\n{link}",
+        "**{tournament}**, sÃ©rie {match}: {winner} venceu {loser}{score_part}.\n{link}",
         "**{tournament}**, partida {match}: {winner} venció a {loser}{score_part}.\n{link}",
     ),
 ];
@@ -149,10 +149,10 @@ pub fn find(code: &str) -> Option<&'static Spec> {
 pub const fn test_text(locale: Locale) -> &'static str {
     match locale {
         Locale::Pt => {
-            "Teste de **{community}**: os avisos da comunidade vão chegar neste canal.\n{link}"
+            "Teste de **{community}**. Os avisos da comunidade vão chegar neste canal.\n{link}"
         }
         Locale::Es => {
-            "Prueba de **{community}**: los avisos de la comunidad llegarán a este canal.\n{link}"
+            "Prueba de **{community}**. Los avisos de la comunidad llegarán a este canal.\n{link}"
         }
     }
 }

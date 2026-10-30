@@ -10,7 +10,7 @@
   "url": {
     "label": "Endereço do webhook",
     "newLabel": "Endereço do novo webhook",
-    "hint": "Começa com https://discord.com/api/webhooks/. Quem tem este endereço posta no canal: não o compartilhe. Depois de salvo, ele não aparece mais aqui."
+    "hint": "Começa com https://discord.com/api/webhooks/. Quem tem este endereço posta no canal. Não o compartilhe. Depois de salvo, ele não aparece mais aqui."
   },
   "replace": "Trocar o webhook",
   "keep": "Manter o webhook",
@@ -26,16 +26,16 @@
       "finished": "Torneio encerrado, com o pódio"
     },
     "match": {
-      "ready": "Partida pronta",
+      "ready": "Série pronta",
       "opponent_ready": "Adversário pronto para o veto",
       "veto_started": "Veto começou",
-      "game_contested": "Mapa contestado, para a organização",
+      "game_contested": "Partida contestada, para a organização",
       "series_decided": "Resultado de cada série (muitas mensagens)"
     }
   },
   "mention": {
     "label": "Mencionar com @ quem vinculou o Discord à conta",
-    "hint": "Vale para os avisos da partida (pronta, adversário pronto, veto) e para os da organização. Quem não vinculou aparece pelo apelido."
+    "hint": "Vale para os avisos da série (pronta, adversário pronto, veto) e para os da organização. Quem não vinculou aparece pelo apelido."
   },
   "saved": "Configuração salva.",
   "test": "Enviar teste",

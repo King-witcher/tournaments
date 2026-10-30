@@ -121,6 +121,19 @@ Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo
 - Código novo de aviso na API: `Notifications.notices.<código>` (`title` e `body`) nos dois idiomas, os mesmos na página e no service worker. Só `{param}` simples (o service worker não entende plural do ICU); o prazo `confirm_by` entra como `{deadline}`.
 - O espanhol é em "tú", como o resto.
 
+### Termos da interface
+
+| Conceito                                                              | pt      | es      | No código    |
+| --------------------------------------------------------------------- | ------- | ------- | ------------ |
+| Um jogo só, num mapa                                                  | partida | partida | `game`       |
+| Md3, md5 (o confronto entre dois lados)                               | série   | serie   | `match`      |
+| O todo                                                                | torneio | torneo  | `tournament` |
+| A arena (pool, veto, ban e pick de mapa, mapa decisivo, nome do mapa) | mapa    | mapa    | `map`        |
+- "Mapa" só quando é a arena. "Mapa enviado", "rating por mapa", "mapas jogados" e "placar mapa a mapa" são partidas. "Partida pronta", "Partidas que esperam você" e "C1 · partida 3" são séries.
+- Concordância: a partida foi enviada, a série foi decidida.
+- Outros termos já decididos: "ordem da chave" (seeding, nunca "seed"), "captura de tela", "W.O.", "check-in", "chave", "rating", "todos contra todos" (nunca "round robin"), "queda do K".
+- Dois-pontos só em aposto, lista ou rótulo ("Rating: 1500"). Para explicar, ponha ponto e comece outro período: "Faça o check-in na página do torneio. Quem não fizer, não entra em nenhum time." A API também segue isto nos emails e nas mensagens do Discord.
+
 ## Quando quebrar um componente
 
 Quebre quando aparecer qualquer um destes sinais:

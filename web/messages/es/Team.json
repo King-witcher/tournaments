@@ -2,8 +2,8 @@
   "teamOf": "Equipo de {captain}",
   "loading": "Cargando los equipos…",
   "pageTitle": "Equipos",
-  "what": "La inscripción es individual: antes de iniciar, la organización arma los equipos de {size} jugadores y elige el capitán de cada uno, que actúa por el equipo en el veto. Quien queda sin equipo es suplente y puede entrar en lugar de alguien durante el torneo.",
-  "howToEdit": "Sortea y ajusta a mano: arrastra a un jugador a otro equipo, a los suplentes o a “Nuevo equipo”, o usa su menú ⋯.",
+  "what": "La inscripción es individual. Antes de iniciar, la organización arma los equipos de {size} jugadores y elige el capitán de cada uno, que actúa por el equipo en el veto. Quien queda sin equipo es suplente y puede entrar en lugar de alguien durante el torneo.",
+  "howToEdit": "Sortea y ajusta a mano. Arrastra a un jugador a otro equipo, a los suplentes o a “Nuevo equipo”, o usa su menú ⋯.",
   "form": "Armar equipos",
   "backToManage": "Volver a la organización",
   "seeding": "Orden de la llave",
@@ -15,8 +15,8 @@
   },
   "draw": {
     "title": "Sortear los equipos",
-    "what": "Rehace todos los equipos con los inscritos, en orden de inscripción: los últimos que no completan un equipo quedan como suplentes.",
-    "whatCheckIn": "Rehace todos los equipos con quienes hicieron check-in, en orden de inscripción: los últimos que no completan un equipo quedan como suplentes, y quien no hizo check-in queda sin equipo.",
+    "what": "Rehace todos los equipos con los inscritos, en orden de inscripción. Los últimos que no completan un equipo quedan como suplentes.",
+    "whatCheckIn": "Rehace todos los equipos con quienes hicieron check-in, en orden de inscripción. Los últimos que no completan un equipo quedan como suplentes, y quien no hizo check-in queda sin equipo.",
     "random": "Sortear",
     "randomHint": "Jugadores y capitanes al azar.",
     "balanced": "Sortear equilibrado",
@@ -81,7 +81,7 @@
   "substitute": {
     "open": "Sustituir jugador",
     "title": "Sustituir jugador en {name}",
-    "hint": "El cambio vale a partir del próximo mapa enviado. Quien sale sigue inscrito, sin equipo (queda como suplente); quien entra pasa a jugar por el equipo.",
+    "hint": "El cambio vale a partir de la próxima partida enviada. Quien sale sigue inscrito, sin equipo (queda como suplente); quien entra pasa a jugar por el equipo.",
     "out": "Quién sale",
     "in": "Quién entra",
     "choose": "Elige…",
@@ -93,11 +93,11 @@
   },
   "withdraw": {
     "open": "Marcar abandono",
-    "confirm": "¿Marcar el abandono de {name}? El equipo sigue en la llave, pero las partidas que tenga, ahora o cuando estén listas, pasan a W.O. para el rival. No se puede deshacer (los resultados aún se pueden corregir)."
+    "confirm": "¿Marcar el abandono de {name}? El equipo sigue en la llave, pero las series que tenga, ahora o cuando estén listas, pasan a W.O. para el rival. No se puede deshacer (los resultados aún se pueden corregir)."
   },
   "manage": {
     "title": "Equipos",
-    "what": "La inscripción es individual: los equipos de {size} jugadores se arman antes de iniciar, por sorteo o a mano.",
+    "what": "La inscripción es individual. Los equipos de {size} jugadores se arman antes de iniciar, por sorteo o a mano.",
     "started": "Los equipos están en la pestaña Inscritos; ahí la organización cambia el capitán y sustituye jugadores.",
     "unavailable": "No se pudieron cargar los equipos ahora. Recarga la página.",
     "view": "Ver los equipos"

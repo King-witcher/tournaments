@@ -3,7 +3,7 @@
   "subtitle": "Organize torneios de duelo da sua comunidade: inscrição, check-in, chave e resultados num lugar só.",
   "loading": "Carregando o início…",
   "anonymous": {
-    "hint": "Para participar, entre ou crie uma conta. Quem recebeu um link de convite pode abri-lo direto: ele leva ao cadastro.",
+    "hint": "Para participar, entre ou crie uma conta. Quem recebeu um link de convite pode abri-lo direto. Ele leva ao cadastro.",
     "login": "Entrar",
     "signup": "Criar conta"
   },
@@ -21,18 +21,18 @@
       "registered": "Inscrição feita",
       "check_in_pending": "Falta o seu check-in",
       "checked_in": "Check-in feito",
-      "missed_check_in": "Fora da chave: sem check-in",
+      "missed_check_in": "Fora da chave, sem check-in",
       "playing": "Na chave",
       "eliminated": "Terminou em {place}",
       "withdrawn": "Desistiu",
-      "champion": "1º lugar: você venceu",
-      "reserve": "Reserva: sem time"
+      "champion": "1º lugar, você venceu",
+      "reserve": "Reserva, sem time"
     },
     "next": {
-      "against": "Próxima partida: {match} contra {opponent}",
-      "winner": "Próxima partida: {match} contra quem vencer {source}",
-      "loser": "Próxima partida: {match} contra quem perder {source}",
-      "unknown": "Próxima partida: {match}"
+      "against": "Próxima série: {match} contra {opponent}",
+      "winner": "Próxima série: {match} contra quem vencer {source}",
+      "loser": "Próxima série: {match} contra quem perder {source}",
+      "unknown": "Próxima série: {match}"
     },
     "noDate": "Sem data",
     "team": "Time: {team}"

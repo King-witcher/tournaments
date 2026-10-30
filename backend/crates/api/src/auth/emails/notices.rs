@@ -147,7 +147,7 @@ pub fn account_deletion_scheduled(
             ],
             alert: Some(Alert {
                 title: "Não foi você que pediu?".into(),
-                text: "Entre agora: a exclusão é cancelada.".into(),
+                text: "Entre agora. A exclusão é cancelada.".into(),
             }),
             action: Action {
                 label: "Entrar".into(),
@@ -166,7 +166,7 @@ pub fn account_deletion_scheduled(
             ],
             alert: Some(Alert {
                 title: "¿No fuiste tú quien lo pidió?".into(),
-                text: "Entra ahora: la eliminación se cancela.".into(),
+                text: "Entra ahora. La eliminación se cancela.".into(),
             }),
             action: Action {
                 label: "Entrar".into(),
@@ -182,14 +182,14 @@ pub fn account_deletion_scheduled(
 type Text = (&'static str, String, &'static str, Remedy);
 
 fn pt(notice: &Notice) -> Text {
-    const KNEW_PASSWORD: &str = "Quem fez isso sabia a sua senha. Recupere a senha pelo botão abaixo: todas as sessões da conta são encerradas, e só a senha nova passa a valer.";
+    const KNEW_PASSWORD: &str = "Quem fez isso sabia a sua senha. Recupere a senha pelo botão abaixo. Todas as sessões da conta são encerradas, e só a senha nova passa a valer.";
     match notice {
         Notice::PasswordCreated { username } => (
             "Sua conta agora tem senha",
             format!(
                 "Foram criados um nome de usuário e uma senha para entrar na sua conta. O nome de usuário é {username}."
             ),
-            "Alguém pode estar com a sua conta aberta. Recupere a senha pelo botão abaixo: a senha criada deixa de valer, e todas as sessões da conta são encerradas.",
+            "Alguém pode estar com a sua conta aberta. Recupere a senha pelo botão abaixo. A senha criada deixa de valer, e todas as sessões da conta são encerradas.",
             Remedy::Recover,
         ),
         Notice::PasswordChanged {
@@ -232,7 +232,7 @@ fn pt(notice: &Notice) -> Text {
         ),
         Notice::PasswordRemoved => (
             "A senha da sua conta foi removida",
-            "O nome de usuário e a senha da sua conta foram removidos: agora ela só entra pelo Discord ou pelo Google que você vinculou.".into(),
+            "O nome de usuário e a senha da sua conta foram removidos. Agora ela só entra pelo Discord ou pelo Google que você vinculou.".into(),
             "Entre por ele e encerre as sessões que você não reconhecer. Depois, se quiser, crie um nome de usuário e uma senha de novo, na aba Logins.",
             Remedy::Sessions,
         ),
@@ -300,7 +300,7 @@ fn pt(notice: &Notice) -> Text {
         ),
         Notice::EmailRemoved { .. } => (
             "Este email foi removido da sua conta",
-            "Sua conta, que entra pelo Discord ou pelo Google, não tem mais email: este endereço não recebe mais os avisos dela.".into(),
+            "Sua conta, que entra pelo Discord ou pelo Google, não tem mais email. Este endereço não recebe mais os avisos dela.".into(),
             "Entre pelo que você vinculou, encerre as sessões que você não reconhecer e cadastre este email de novo na aba Logins.",
             Remedy::Sessions,
         ),
@@ -308,14 +308,14 @@ fn pt(notice: &Notice) -> Text {
 }
 
 fn es(notice: &Notice) -> Text {
-    const KNEW_PASSWORD: &str = "Quien lo hizo sabía tu contraseña. Recupera la contraseña con el botón de abajo: todas las sesiones de la cuenta se cierran y solo vale la contraseña nueva.";
+    const KNEW_PASSWORD: &str = "Quien lo hizo sabía tu contraseña. Recupera la contraseña con el botón de abajo. Todas las sesiones de la cuenta se cierran y solo vale la contraseña nueva.";
     match notice {
         Notice::PasswordCreated { username } => (
             "Tu cuenta ahora tiene contraseña",
             format!(
                 "Se crearon un nombre de usuario y una contraseña para entrar en tu cuenta. El nombre de usuario es {username}."
             ),
-            "Alguien puede tener tu cuenta abierta. Recupera la contraseña con el botón de abajo: la contraseña creada deja de valer y todas las sesiones de la cuenta se cierran.",
+            "Alguien puede tener tu cuenta abierta. Recupera la contraseña con el botón de abajo. La contraseña creada deja de valer y todas las sesiones de la cuenta se cierran.",
             Remedy::Recover,
         ),
         Notice::PasswordChanged {
@@ -358,7 +358,7 @@ fn es(notice: &Notice) -> Text {
         ),
         Notice::PasswordRemoved => (
             "Se quitó la contraseña de tu cuenta",
-            "El nombre de usuario y la contraseña de tu cuenta se quitaron: ahora solo entra con el Discord o el Google que vinculaste.".into(),
+            "El nombre de usuario y la contraseña de tu cuenta se quitaron. Ahora solo entra con el Discord o el Google que vinculaste.".into(),
             "Entra con él y cierra las sesiones que no reconozcas. Después, si quieres, crea de nuevo un nombre de usuario y una contraseña en la pestaña Accesos.",
             Remedy::Sessions,
         ),
@@ -424,7 +424,7 @@ fn es(notice: &Notice) -> Text {
         ),
         Notice::EmailRemoved { .. } => (
             "Se quitó este email de tu cuenta",
-            "Tu cuenta, que entra con Discord o con Google, ya no tiene email: esta dirección ya no recibe sus avisos.".into(),
+            "Tu cuenta, que entra con Discord o con Google, ya no tiene email. Esta dirección ya no recibe sus avisos.".into(),
             "Entra con el que vinculaste, cierra las sesiones que no reconozcas y vuelve a registrar este email en la pestaña Accesos.",
             Remedy::Sessions,
         ),

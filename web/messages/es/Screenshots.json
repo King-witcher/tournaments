@@ -1,14 +1,14 @@
 {
   "attach": "Adjuntar captura de pantalla",
-  "attachTo": "Adjuntar captura de pantalla al mapa {number}",
+  "attachTo": "Adjuntar captura de pantalla a la partida {number}",
   "hint": "Imagen del marcador. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
-  "requiredHint": "Este torneo exige una captura de pantalla del marcador: adjúntala antes de enviar el mapa. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
-  "open": "Captura de pantalla {index} del mapa {number}, de {name}, en tamaño real",
-  "openNoAuthor": "Captura de pantalla {index} del mapa {number}, en tamaño real",
+  "requiredHint": "Este torneo exige una captura de pantalla del marcador. Adjúntala antes de enviar la partida. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
+  "open": "Captura de pantalla {index} de la partida {number}, de {name}, en tamaño real",
+  "openNoAuthor": "Captura de pantalla {index} de la partida {number}, en tamaño real",
   "by": "de {name}",
   "remove": "Quitar",
-  "removeTitle": "Quitar la captura de pantalla {index} del mapa {number}",
-  "removeQuestion": "La captura de pantalla sale del mapa para todos. No se puede deshacer.",
+  "removeTitle": "Quitar la captura de pantalla {index} de la partida {number}",
+  "removeQuestion": "La captura de pantalla sale de la partida para todos. No se puede deshacer.",
   "errors": {
     "notImage": "Elige o pega una imagen (PNG, JPEG o WebP).",
     "unreadable": "No se pudo leer esa imagen. Prueba con otro archivo.",
@@ -17,6 +17,6 @@
   },
   "field": {
     "label": "Exigir captura de pantalla del marcador",
-    "hint": "El jugador solo envía un mapa con una captura de pantalla del marcador adjunta. La organización carga y corrige sin captura de pantalla."
+    "hint": "El jugador solo envía una partida con una captura de pantalla del marcador adjunta. La organización carga y corrige sin captura de pantalla."
   }
 }

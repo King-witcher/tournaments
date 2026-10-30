@@ -8,16 +8,16 @@
     },
     "match": {
       "ready": {
-        "title": "Tu partida está lista",
+        "title": "Tu serie está lista",
         "body": "{tournament}: tú contra {opponent}."
       },
       "game_reported": {
-        "title": "{opponent} envió el mapa {game}",
-        "body": "{tournament}: confirma o impugna hasta {deadline}. Sin respuesta, el mapa vale."
+        "title": "{opponent} envió la partida {game}",
+        "body": "{tournament}: confirma o impugna hasta {deadline}. Sin respuesta, la partida vale."
       },
       "game_contested": {
-        "title": "Mapa impugnado",
-        "body": "{tournament}: {player} impugnó el mapa {game}. Resuélvelo en la partida."
+        "title": "Partida impugnada",
+        "body": "{tournament}: {player} impugnó la partida {game}. Resuélvelo en la serie."
       },
       "opponent_ready": {
         "title": "{opponent} está listo",
@@ -25,11 +25,11 @@
       },
       "veto_started": {
         "title": "Empezó el veto",
-        "body": "{tournament}: veto contra {opponent}. Cada paso tiene tiempo: al terminar, la elección se sortea."
+        "body": "{tournament}: veto contra {opponent}. Cada paso tiene tiempo. Al terminar, la elección se sortea."
       },
       "team_pick_open": {
         "title": "Elige tu campeón",
-        "body": "{tournament}: la elección de campeones del mapa {game} se abrió. Todos eligen al mismo tiempo; quien no elija a tiempo recibe uno sorteado."
+        "body": "{tournament}: la elección de campeones de la partida {game} se abrió. Todos eligen al mismo tiempo; quien no elija a tiempo recibe uno sorteado."
       }
     },
     "tournament": {
@@ -40,16 +40,16 @@
     }
   },
   "open": {
-    "match": "Abrir partida",
+    "match": "Abrir serie",
     "tournament": "Abrir torneo"
   },
   "region": "Notificaciones",
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notificaciones con el sitio cerrado",
-    "description": "Check-in abierto, partida lista y mapa enviado por el rival; para la organización, mapa impugnado y hora de iniciar. Cada navegador se activa por separado: actívalas en cada dispositivo que uses.",
+    "description": "Check-in abierto, serie lista y partida enviada por el rival; para la organización, partida impugnada y hora de iniciar. Cada navegador se activa por separado. Actívalas en cada dispositivo que uses.",
     "loading": "Revisando este navegador…",
-    "on": "Activadas en este navegador: las notificaciones llegan incluso con el sitio cerrado.",
+    "on": "Activadas en este navegador. Las notificaciones llegan incluso con el sitio cerrado.",
     "off": "Desactivadas en este navegador. Con el sitio abierto, las notificaciones aparecen en la página.",
     "enable": "Activar notificaciones",
     "disable": "Desactivar notificaciones",
@@ -59,16 +59,16 @@
     "unsupported": "Este navegador no recibe notificaciones con el sitio cerrado. Con el sitio abierto, aparecen en la página.",
     "serverOff": "Las notificaciones con el sitio cerrado están desactivadas por ahora. Con el sitio abierto, aparecen en la página.",
     "installTitle": "En iPhone y iPad, instala el sitio primero.",
-    "install": "Las notificaciones con el sitio cerrado solo llegan con el sitio en la pantalla de inicio: toca Compartir, luego Agregar a inicio, abre el sitio desde el ícono nuevo y actívalas aquí.",
-    "prompt": "Recibe una notificación cuando abra el check-in y cuando tu partida esté lista, incluso con el sitio cerrado.",
-    "promptInstall": "Para recibir notificaciones en el iPhone con el sitio cerrado, instala el sitio: Compartir → Agregar a inicio.",
+    "install": "Las notificaciones con el sitio cerrado solo llegan con el sitio en la pantalla de inicio. Toca Compartir, luego Agregar a inicio, abre el sitio desde el ícono nuevo y actívalas aquí.",
+    "prompt": "Recibe una notificación cuando abra el check-in y cuando tu serie esté lista, incluso con el sitio cerrado.",
+    "promptInstall": "Para recibir notificaciones en el iPhone con el sitio cerrado, instala el sitio con Compartir → Agregar a inicio.",
     "enabled": "Notificaciones activadas en este navegador.",
     "blocked": "Notificaciones bloqueadas en este navegador.",
     "settings": "Cómo cambiarlo"
   },
   "sound": {
     "title": "Sonido",
-    "description": "Con el sitio abierto, cada notificación suena brevemente, también con la pestaña en segundo plano (salvo que las notificaciones con el sitio cerrado estén activadas: ahí avisa la del sistema). La elección vale para este navegador.",
+    "description": "Con el sitio abierto, cada notificación suena brevemente, también con la pestaña en segundo plano (salvo que las notificaciones con el sitio cerrado estén activadas; ahí avisa la del sistema). La elección vale para este navegador.",
     "label": "Sonar con las notificaciones",
     "test": "Escuchar el sonido"
   }

@@ -22,22 +22,22 @@
     "notLinked": "Vincule o Discord para entrar com ele. Se você esquecer a senha, continua entrando pelo Discord.",
     "link": "Vincular Discord",
     "linkHint": "Para vincular, confirme sua senha.",
-    "linked": "Vinculado: você pode entrar com o Discord.",
+    "linked": "Vinculado. Você pode entrar com o Discord.",
     "unlinkHint": "Para desvincular, confirme sua senha. O avatar do Discord sai junto.",
     "unlink": "Desvincular o Discord",
     "unlinkConfirm": "Você deixa de entrar com o Discord e o avatar dele sai da sua conta. Os outros jeitos de entrar continuam, e você pode vincular de novo depois.",
-    "needsOther": "Para desvincular o Discord, crie antes um nome de usuário e senha ou vincule o Google: a conta precisa de pelo menos um jeito de entrar."
+    "needsOther": "Para desvincular o Discord, crie antes um nome de usuário e senha ou vincule o Google. A conta precisa de pelo menos um jeito de entrar."
   },
   "google": {
     "title": "Google",
     "notLinked": "Vincule sua conta Google para entrar com ela. O site recebe só o nome da conta, sem o email nem a foto.",
     "link": "Vincular Google",
     "linkHint": "Para vincular, confirme sua senha.",
-    "linked": "Vinculada: você pode entrar com sua conta Google.",
+    "linked": "Vinculada. Você pode entrar com sua conta Google.",
     "unlinkHint": "Para desvincular, confirme sua senha.",
     "unlink": "Desvincular o Google",
     "unlinkConfirm": "Você deixa de entrar com sua conta Google. Os outros jeitos de entrar continuam, e você pode vincular de novo depois.",
-    "needsOther": "Para desvincular o Google, crie antes um nome de usuário e senha ou vincule o Discord: a conta precisa de pelo menos um jeito de entrar."
+    "needsOther": "Para desvincular o Google, crie antes um nome de usuário e senha ou vincule o Discord. A conta precisa de pelo menos um jeito de entrar."
   },
   "password": {
     "title": "Nome de usuário e senha",
@@ -45,7 +45,7 @@
     "create": "Criar nome de usuário e senha",
     "current": "Seu nome de usuário: {username}",
     "changeTitle": "Trocar nome de usuário ou senha",
-    "noPassword": "Sua conta ainda não tem nome de usuário e senha: você entra com o Discord ou o Google. Crie os dois na aba Logins para poder trocá-los aqui.",
+    "noPassword": "Sua conta ainda não tem nome de usuário e senha. Você entra com o Discord ou o Google. Crie os dois na aba Logins para poder trocá-los aqui.",
     "goToLogins": "Ir para Logins",
     "newPassword": "Nova senha",
     "newPasswordHint": "Deixe em branco para manter a atual. Trocar a senha encerra suas outras sessões.",
@@ -53,19 +53,19 @@
     "remove": "Remover nome de usuário e senha",
     "removeHint": "Para remover, confirme sua senha. Você continua entrando com o Discord ou o Google que vinculou.",
     "removeConfirm": "Você deixa de entrar com nome de usuário e senha e passa a entrar só com o Discord ou o Google que vinculou. Dá para criar outros depois.",
-    "needsProvider": "Para remover a senha, vincule antes o Discord ou o Google: a conta precisa de pelo menos um jeito de entrar.",
-    "needsEmail": "Para criar nome de usuário e senha, cadastre antes um email (na seção Email, acima) e abra o link que vamos mandar para ele: é por ele que você recupera a senha se esquecer.",
+    "needsProvider": "Para remover a senha, vincule antes o Discord ou o Google. A conta precisa de pelo menos um jeito de entrar.",
+    "needsEmail": "Para criar nome de usuário e senha, cadastre antes um email (na seção Email, acima) e abra o link que vamos mandar para ele. É por ele que você recupera a senha se esquecer.",
     "resetDoneTitle": "Senha trocada",
     "resetDone": "Você entrou com a senha nova, e as outras sessões da conta foram encerradas."
   },
   "email": {
     "title": "Email",
     "recovers": "Se você esquecer a senha, o link para criar outra vai para ele.",
-    "optional": "Com ele, você pode criar nome de usuário e senha: é para ele que vai o link se você esquecer a senha.",
+    "optional": "Com ele, você pode criar nome de usuário e senha. É para ele que vai o link se você esquecer a senha.",
     "none": "Sua conta não tem email. Ele é necessário para criar nome de usuário e senha, porque é por ele que você recupera a senha se esquecer.",
     "label": "Email",
     "hint": "Vamos mandar um link para ele. O email só entra na conta quando você abrir o link.",
-    "changeHint": "Para trocar, edite o campo: vamos mandar um link para o email novo, e o da conta só muda quando você abrir o link.",
+    "changeHint": "Para trocar, edite o campo. Vamos mandar um link para o email novo, e o da conta só muda quando você abrir o link.",
     "add": "Cadastrar email",
     "change": "Trocar email",
     "sentTitle": "Confira seu email",
@@ -73,14 +73,14 @@
     "sentChange": "Enviamos um link para {email}. Até você abrir o link, que vale 1 hora, o email da conta continua {current}. Não chegou? Confira a caixa de spam.",
     "remove": "Remover email",
     "removeConfirm": "O email sai da sua conta, e um link de troca que ainda não foi aberto deixa de valer. Para criar nome de usuário e senha depois, você vai precisar cadastrar um email de novo.",
-    "removeBlocked": "Com nome de usuário e senha na conta, o email não sai: é por ele que você recupera a senha. Para remover o email, remova antes a senha."
+    "removeBlocked": "Com nome de usuário e senha na conta, o email não sai. É por ele que você recupera a senha. Para remover o email, remova antes a senha."
   },
   "emailConfirm": {
     "title": "Confirmar email",
     "text": "Confirme para que este passe a ser o email da sua conta.",
     "submit": "Confirmar email",
     "doneTitle": "Email confirmado",
-    "done": "Agora ele é o email da sua conta: se você esquecer a senha, o link para criar outra vai para ele.",
+    "done": "Agora ele é o email da sua conta. Se você esquecer a senha, o link para criar outra vai para ele.",
     "goToAccount": "Ir para a conta"
   },
   "sessions": {
@@ -100,7 +100,7 @@
   "deletion": {
     "title": "Excluir conta",
     "description": "A conta é excluída 7 dias depois do pedido, e todas as sessões dela são encerradas na hora. Se você entrar de novo antes disso, a exclusão é cancelada.",
-    "consequences": "Na data, você sai de todas as comunidades: desiste dos torneios em andamento (suas partidas pendentes viram W.O.), sai das inscrições dos que não começaram, e os convites que você criou são revogados. Nos torneios que você jogou, seu nome dá lugar a “Conta excluída”. Nome, avatar, email e logins saem da conta, e o nome de usuário e o email ficam livres.",
+    "consequences": "Na data, você sai de todas as comunidades, desiste dos torneios em andamento (suas séries pendentes viram W.O.) e sai das inscrições dos que não começaram. Os convites que você criou são revogados. Nos torneios que você jogou, seu nome dá lugar a “Conta excluída”. Nome, avatar, email e logins saem da conta, e o nome de usuário e o email ficam livres.",
     "ownerTitle": "Você é dono de uma comunidade",
     "owner": "Antes de excluir a conta, transfira a posse ou exclua cada comunidade de que você é dono:",
     "ownerLink": "{name}: configurações",

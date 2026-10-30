@@ -29,7 +29,7 @@ pub fn signup_confirmation(
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR}. Se não foi você, ignore este email: a conta não é criada sem ele."
+                "O link vale por {VALID_FOR}. Se não foi você, ignore este email. A conta não é criada sem ele."
             )),
         },
         Locale::Es => Content {
@@ -43,7 +43,7 @@ pub fn signup_confirmation(
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email: la cuenta no se crea sin él."
+                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email. La cuenta no se crea sin él."
             )),
         },
     };
@@ -72,7 +72,7 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
                 "Se foi você e esqueceu a senha, crie uma nova pelo botão abaixo.".to_owned(),
             ],
             "Recuperar a senha",
-            "Se não foi você, ignore este email: nada muda na sua conta.",
+            "Se não foi você, ignore este email. Nada muda na sua conta.",
         ),
         (Locale::Pt, None) => (
             "Você já tem uma conta",
@@ -81,7 +81,7 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
                 "Se foi você, é só entrar pelo que você vinculou.".to_owned(),
             ],
             "Entrar",
-            "Se não foi você, ignore este email: nada muda na sua conta.",
+            "Se não foi você, ignore este email. Nada muda na sua conta.",
         ),
         (Locale::Es, Some(name)) => (
             "Ya tienes una cuenta",
@@ -90,7 +90,7 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
                 "Si fuiste tú y olvidaste la contraseña, crea una nueva con el botón de abajo.".to_owned(),
             ],
             "Recuperar la contraseña",
-            "Si no fuiste tú, ignora este email: nada cambia en tu cuenta.",
+            "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
         (Locale::Es, None) => (
             "Ya tienes una cuenta",
@@ -99,7 +99,7 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, username: Option<&str
                 "Si fuiste tú, solo tienes que entrar con el que vinculaste.".to_owned(),
             ],
             "Entrar",
-            "Si no fuiste tú, ignora este email: nada cambia en tu cuenta.",
+            "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
     };
     let content = Content {
@@ -129,7 +129,7 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str, username: Option<&str>)
                 "Um email fica em uma conta só. Se foi você e quer usá-lo na outra, troque antes o email desta, na aba Logins.".to_owned(),
             ],
             "Entrar",
-            "Se não foi você, ignore este email: nada muda na sua conta.",
+            "Se não foi você, ignore este email. Nada muda na sua conta.",
         ),
         Locale::Es => (
             "Este email ya es de tu cuenta",
@@ -141,7 +141,7 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str, username: Option<&str>)
                 "Un email está en una sola cuenta. Si fuiste tú y quieres usarlo en la otra, cambia antes el email de esta, en la pestaña Accesos.".to_owned(),
             ],
             "Entrar",
-            "Si no fuiste tú, ignora este email: nada cambia en tu cuenta.",
+            "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
     };
     let content = Content {
@@ -172,7 +172,7 @@ pub fn password_reset(web: &str, locale: Locale, to: &str, username: &str, token
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR} e só uma vez. Se não foi você, ignore este email: a senha continua a mesma."
+                "O link vale por {VALID_FOR} e só uma vez. Se não foi você, ignore este email. A senha continua a mesma."
             )),
         },
         Locale::Es => Content {
@@ -186,7 +186,7 @@ pub fn password_reset(web: &str, locale: Locale, to: &str, username: &str, token
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR} y una sola vez. Si no fuiste tú, ignora este email: la contraseña sigue igual."
+                "El enlace vale por {VALID_FOR} y una sola vez. Si no fuiste tú, ignora este email. La contraseña sigue igual."
             )),
         },
     };
@@ -208,7 +208,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR}. Se não foi você, ignore este email: nada muda na conta."
+                "O link vale por {VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
             )),
         },
         Locale::Es => Content {
@@ -222,7 +222,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email: nada cambia en la cuenta."
+                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
             )),
         },
     };

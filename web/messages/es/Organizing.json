@@ -1,9 +1,9 @@
 {
   "title": "Pendientes de la organización",
   "contested": {
-    "tag": "Mapa impugnado",
-    "where": "{match}, mapa {game}",
-    "whereMap": "{match}, mapa {game} ({map})",
+    "tag": "Partida impugnada",
+    "where": "{match}, partida {game}",
+    "whereMap": "{match}, partida {game} ({map})",
     "by": "{player} lo impugnó <ago></ago>",
     "byUnknown": "Impugnado <ago></ago>"
   },

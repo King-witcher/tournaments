@@ -27,7 +27,7 @@
     "makePlayer": "Hacer jugador",
     "remove": "Quitar",
     "removeTitle": "Quitar a {name}",
-    "removeConfirm": "¿Quitar a {name} de la comunidad? {name} pierde el acceso, sale de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierde por W.O. las partidas pendientes. Las invitaciones que {name} creó se revocan. El historial queda, y {name} puede volver con una invitación, como jugador."
+    "removeConfirm": "¿Quitar a {name} de la comunidad? {name} pierde el acceso, sale de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierde por W.O. las series pendientes. Las invitaciones que {name} creó se revocan. El historial queda, y {name} puede volver con una invitación, como jugador."
   },
   "settings": {
     "loading": "Cargando la configuración…"
@@ -35,14 +35,14 @@
   "nickname": {
     "title": "Tu apodo",
     "label": "Apodo en esta comunidad",
-    "hint": "Es como apareces aquí: en las inscripciones, en la llave y en las partidas. De 1 a 32 caracteres.",
+    "hint": "Es como apareces aquí: en las inscripciones, en la llave y en las series. De 1 a 32 caracteres.",
     "saved": "Apodo guardado."
   },
   "leave": {
     "title": "Salir de la comunidad",
-    "description": "Pierdes el acceso, sales de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierdes por W.O. las partidas pendientes. Las invitaciones que creaste se revocan. Tu nombre sigue en la llave de los torneos que jugaste, y puedes volver con una invitación, como jugador y con el mismo apodo.",
+    "description": "Pierdes el acceso, sales de las inscripciones de los torneos que todavía no empezaron y, en los torneos en curso, pierdes por W.O. las series pendientes. Las invitaciones que creaste se revocan. Tu nombre sigue en la llave de los torneos que jugaste, y puedes volver con una invitación, como jugador y con el mismo apodo.",
     "submit": "Salir de la comunidad",
-    "confirm": "¿Salir de la comunidad? En los torneos en curso, tus partidas pendientes pasan a W.O."
+    "confirm": "¿Salir de la comunidad? En los torneos en curso, tus series pendientes pasan a W.O."
   },
   "transfer": {
     "title": "Transferir la propiedad",
@@ -66,10 +66,10 @@
     "uses": "Entraron",
     "usesCount": "{count, plural, =0 {nadie todavía} one {# persona} other {# personas}}",
     "createdAt": "Creado el",
-    "empty": "No hay invitaciones activas. Genera un enlace y envíalo a quien quieras invitar: quien entra por él queda como jugador.",
+    "empty": "No hay invitaciones activas. Genera un enlace y envíalo a quien quieras invitar. Quien entra por él queda como jugador.",
     "actions": "Acciones de la invitación de {name}",
     "link": "Enlace generado",
-    "createdHint": "Cópialo ahora: este enlace no vuelve a aparecer.",
+    "createdHint": "Cópialo ahora. Este enlace no vuelve a aparecer.",
     "copy": "Copiar el enlace",
     "copied": "¡Copiado!",
     "revoke": "Revocar",

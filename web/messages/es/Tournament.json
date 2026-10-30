@@ -25,88 +25,88 @@
     "start": "El inicio está programado para <date></date>.",
     "checkInAt": "El check-in abre {window} antes, a las <time></time>, y sigue hasta que la organización inicie el torneo.",
     "checkIn": "El check-in abre {window} antes del inicio y sigue hasta que la organización inicie el torneo.",
-    "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar: quien no lo haga queda fuera de la llave.",
-    "noCheckIn": "No hay check-in: cuando la organización inicia el torneo, todos los inscritos entran en la llave.",
+    "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar. Quien no lo haga queda fuera de la llave.",
+    "noCheckIn": "No hay check-in. Cuando la organización inicia el torneo, todos los inscritos entran en la llave.",
     "bracket": {
       "single": "La llave es de eliminación simple.",
       "double": "La llave es de eliminación doble.",
-      "round_robin": "El formato es round robin: todos juegan contra todos, una vez.",
+      "round_robin": "El formato es todos contra todos. Cada uno juega contra todos los demás, una vez.",
       "swiss": "El formato es suizo, con el número de rondas según los inscritos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
       "swissRounds": "El formato es suizo, en {rounds, plural, one {# ronda} other {# rondas}} (como máximo una menos que los inscritos)."
     },
     "bracketRule": {
-      "single": "Quien pierde una partida queda fuera del torneo.",
-      "double": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final: quien gane es el campeón.",
-      "doubleReset": "Quien pierde una partida pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, los dos juegan la gran final otra vez, porque ahora cada uno perdió una vez.",
-      "round_robin": "Las partidas quedan abiertas desde el inicio: las rondas solo ordenan, y juegas cada una cuando lo acuerdes con tu rival. Con un número impar de inscritos, cada uno descansa una ronda.",
-      "swiss": "En la primera ronda, el orden de la llave arma los pares; en las siguientes, se enfrentan quienes tienen la misma puntuación, sin repetir rival. La ronda siguiente empieza cuando terminan todas las partidas de la anterior. Con un número impar, el peor ubicado que todavía no descansó recibe el bye, que vale victoria."
+      "single": "Quien pierde una serie queda fuera del torneo.",
+      "double": "Quien pierde una serie pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Quien gane es el campeón.",
+      "doubleReset": "Quien pierde una serie pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, los dos juegan la gran final otra vez, porque ahora cada uno perdió una vez.",
+      "round_robin": "Las series quedan abiertas desde el inicio. Las rondas solo ordenan, y juegas cada una cuando lo acuerdes con tu rival. Con un número impar de inscritos, cada uno descansa una ronda.",
+      "swiss": "En la primera ronda, el orden de la llave arma los pares; en las siguientes, se enfrentan quienes tienen la misma puntuación, sin repetir rival. La ronda siguiente empieza cuando terminan todas las series de la anterior. Con un número impar, el peor ubicado que todavía no descansó recibe el bye, que vale victoria."
     },
-    "series": "{bestOf, plural, =1 {Las partidas son a un solo mapa.} other {Las partidas son al mejor de # mapas: gana quien se lleve {wins}.}}",
+    "series": "{bestOf, plural, =1 {Las series son a una sola partida.} other {Las series son al mejor de # partidas. Gana quien se lleve {wins}.}}",
     "finals": {
-      "single": "{bestOf, plural, =1 {La final es a un solo mapa.} other {La final es al mejor de # mapas: gana quien se lleve {wins}.}}",
-      "double": "{bestOf, plural, =1 {La gran final es a un solo mapa.} other {La gran final es al mejor de # mapas: gana quien se lleve {wins}.}}"
+      "single": "{bestOf, plural, =1 {La final es a una sola partida.} other {La final es al mejor de # partidas. Gana quien se lleve {wins}.}}",
+      "double": "{bestOf, plural, =1 {La gran final es a una sola partida.} other {La gran final es al mejor de # partidas. Gana quien se lleve {wins}.}}"
     },
-    "maps": "El mismo mapa no se repite en una partida.",
+    "maps": "El mismo mapa no se repite en una serie.",
     "noBans": "No hay ban de campeones.",
     "champions": {
-      "bans": "{count, plural, one {Antes de cada mapa, cada jugador banea # campeón del rival, que no puede usarlo en ese mapa.} other {Antes de cada mapa, cada jugador banea # campeones del rival, que no puede usarlos en ese mapa.}}",
+      "bans": "{count, plural, one {Antes de cada partida, cada jugador banea # campeón del rival, que no puede usarlo en esa partida.} other {Antes de cada partida, cada jugador banea # campeones del rival, que no puede usarlos en esa partida.}}",
       "repeat": {
         "off": "Puedes repetir campeones.",
-        "match": "En una misma partida no repites campeón: usa uno distinto en cada mapa.",
-        "stage": "En esta fase del torneo no repites campeón: usa uno distinto en cada mapa que juegues.",
-        "tournament": "En todo el torneo no repites campeón: usa uno distinto en cada mapa que juegues."
+        "match": "En una misma serie no repites campeón. Usa uno distinto en cada partida.",
+        "stage": "En esta fase del torneo no repites campeón. Usa uno distinto en cada partida que juegues.",
+        "tournament": "En todo el torneo no repites campeón. Usa uno distinto en cada partida que juegues."
       }
     },
-    "report": "Después de cada mapa, uno de los dos envía el resultado en la página de la partida: quién ganó y el mapa jugado.",
-    "nextMap": "No hace falta esperar la confirmación para jugar el siguiente mapa.",
+    "report": "Después de cada partida, uno de los dos envía el resultado en la página de la serie: quién ganó y el mapa jugado.",
+    "nextMap": "No hace falta esperar la confirmación para jugar la siguiente partida.",
     "confirm": "El otro jugador tiene {window} para confirmar o impugnar. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
-    "walkover": "Si tu rival no aparece, o si necesitas dejar el torneo, avísale a la organización: quien no juega pierde por W.O.",
+    "walkover": "Si tu rival no aparece, o si necesitas dejar el torneo, avísale a la organización. Quien no juega pierde por W.O.",
     "tableRule": {
-      "round_robin": "Cada partida ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el enfrentamiento directo, después la diferencia de mapas, la diferencia de frags y por último el orden de la llave.",
-      "swiss": "Cada partida ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el Buchholz (la suma de los puntos de tus rivales), después el enfrentamiento directo, la diferencia de mapas, la diferencia de frags y por último el orden de la llave."
+      "round_robin": "Cada serie ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el enfrentamiento directo, después la diferencia de partidas, la diferencia de frags y por último el orden de la llave.",
+      "swiss": "Cada serie ganada vale 1 punto, y la clasificación sale de la tabla: más puntos adelante; en el empate, el Buchholz (la suma de los puntos de tus rivales), después el enfrentamiento directo, la diferencia de partidas, la diferencia de frags y por último el orden de la llave."
     },
-    "fragsTable": "Los frags de cada mapa son opcionales, pero cuentan en el desempate de la tabla: envíalos también.",
-    "walkoverTable": "El W.O. vale victoria por {wins} a 0 en mapas.",
+    "fragsTable": "Los frags de cada partida son opcionales, pero cuentan en el desempate de la tabla. Envíalos también.",
+    "walkoverTable": "El W.O. vale victoria por {wins} a 0 en partidas.",
     "withdrawal": {
-      "round_robin": "Quien deja el torneo pierde por W.O. las partidas que le faltaban, y los puntos que ya hizo siguen en la tabla.",
+      "round_robin": "Quien deja el torneo pierde por W.O. las series que le faltaban, y los puntos que ya hizo siguen en la tabla.",
       "swiss": "Quien deja el torneo ya no es emparejado, y los puntos que ya hizo siguen en la tabla."
     },
     "tdm": {
-      "noCheckIn": "No hay check-in: cuando la organización inicia el torneo, los equipos armados entran en la llave.",
-      "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar: quien no lo haga no entra en ningún equipo.",
-      "formation": "El torneo es por equipos de {size} jugadores (TDM {size}v{size}). La inscripción es individual: antes de iniciar, la organización arma los equipos, por sorteo, por sorteo equilibrado según el rating de la comunidad o a mano, y define el capitán de cada uno.",
+      "noCheckIn": "No hay check-in. Cuando la organización inicia el torneo, los equipos armados entran en la llave.",
+      "checkInDo": "Haz el check-in en la página del torneo para confirmar que vas a jugar. Quien no lo haga, no entra en ningún equipo.",
+      "formation": "El torneo es por equipos de {size} jugadores (TDM {size}v{size}). La inscripción es individual. Antes de iniciar, la organización arma los equipos, por sorteo, por sorteo equilibrado según el rating de la comunidad o a mano, y define el capitán de cada uno.",
       "reserves": "Quien sobra queda como suplente (por defecto, los últimos en inscribirse) y puede entrar en lugar de alguien durante el torneo.",
       "start": "El torneo solo empieza con todos los equipos completos y con el check-in de todos los jugadores.",
       "startNoCheckIn": "El torneo solo empieza con todos los equipos completos.",
       "captain": "El capitán actúa por el equipo en el veto: hace clic en “Listo”, hace las elecciones del equipo y pide o responde la solicitud de deshacer un paso.",
       "swiss": "El formato es suizo, con el número de rondas según los equipos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
       "swissRounds": "El formato es suizo, en {rounds, plural, one {# ronda} other {# rondas}} (como máximo una menos que los equipos).",
-      "roundRobinRule": "Las partidas quedan abiertas desde el inicio: las rondas solo ordenan, y tu equipo juega cada una cuando lo acuerde con el rival. Con un número impar de equipos, cada uno descansa una ronda.",
-      "bans": "{count, plural, one {Antes de cada mapa, los capitanes banean # campeón cada uno, alternando; el baneado queda fuera de ese mapa para los dos equipos.} other {Antes de cada mapa, los capitanes banean # campeones cada uno, alternando; los baneados quedan fuera de ese mapa para los dos equipos.}}",
+      "roundRobinRule": "Las series quedan abiertas desde el inicio. Las rondas solo ordenan, y tu equipo juega cada una cuando lo acuerde con el rival. Con un número impar de equipos, cada uno descansa una ronda.",
+      "bans": "{count, plural, one {Antes de cada partida, los capitanes banean # campeón cada uno, alternando; el baneado queda fuera de esa partida para los dos equipos.} other {Antes de cada partida, los capitanes banean # campeones cada uno, alternando; los baneados quedan fuera de esa partida para los dos equipos.}}",
       "pick": "Después de los bans, todos los jugadores eligen su campeón al mismo tiempo, en una ventana de {window}, viendo las elecciones de los demás. A quien no elija a tiempo le toca un campeón sorteado entre los que podía elegir.",
       "duplicates": {
-        "off": "Dos jugadores del mismo equipo no usan el mismo campeón en el mismo mapa; entre equipos, sí se puede.",
-        "on": "Los jugadores del mismo equipo pueden usar el mismo campeón en el mismo mapa, y los dos equipos también."
+        "off": "Dos jugadores del mismo equipo no usan el mismo campeón en la misma partida; entre equipos, sí se puede.",
+        "on": "Los jugadores del mismo equipo pueden usar el mismo campeón en la misma partida, y los dos equipos también."
       },
       "repeat": {
-        "off": "De un mapa a otro, los campeones se pueden repetir.",
+        "off": "De una partida a otra, los campeones se pueden repetir.",
         "player": {
-          "match": "En una misma partida, cada jugador no repite campeón: usa uno distinto en cada mapa.",
-          "stage": "En esta fase del torneo, cada jugador no repite campeón: usa uno distinto en cada mapa que juegues.",
-          "tournament": "En todo el torneo, cada jugador no repite campeón: usa uno distinto en cada mapa que juegues."
+          "match": "En una misma serie, cada jugador no repite campeón. Usa uno distinto en cada partida.",
+          "stage": "En esta fase del torneo, cada jugador no repite campeón. Usa uno distinto en cada partida que juegues.",
+          "tournament": "En todo el torneo, cada jugador no repite campeón. Usa uno distinto en cada partida que juegues."
         },
         "team": {
-          "match": "En una misma partida, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo usa en los siguientes.",
-          "stage": "En esta fase del torneo, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo vuelve a usar.",
-          "tournament": "En todo el torneo, el equipo no repite campeón: el que usó alguien del equipo en un mapa nadie del equipo lo vuelve a usar."
+          "match": "En una misma serie, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo usa en las siguientes.",
+          "stage": "En esta fase del torneo, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo vuelve a usar.",
+          "tournament": "En todo el torneo, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo vuelve a usar."
         }
       },
-      "report": "Después de cada mapa, cualquier jugador de uno de los equipos envía el resultado en la página de la partida: quién ganó y el mapa jugado.",
+      "report": "Después de cada partida, cualquier jugador de uno de los equipos envía el resultado en la página de la serie: quién ganó y el mapa jugado.",
       "confirm": "Cualquier jugador del otro equipo tiene {window} para confirmar o impugnar. Sin respuesta, el resultado vale; si lo impugnan, decide la organización.",
-      "walkover": "Si el otro equipo no aparece, o si tu equipo necesita dejar el torneo, avísale a la organización: el equipo que no juega pierde por W.O.",
-      "substitution": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad; el cambio vale a partir del próximo mapa enviado.",
+      "walkover": "Si el otro equipo no aparece, o si tu equipo necesita dejar el torneo, avísale a la organización. El equipo que no juega pierde por W.O.",
+      "substitution": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad; el cambio vale a partir de la próxima partida enviada.",
       "shortHanded": "Quien sale de la comunidad deja al equipo incompleto, y este sigue jugando con menos; el equipo solo sale del torneo si se retira o si no queda nadie de él.",
-      "rating": "Cada mapa cuenta en el rating de la comunidad de quien lo jugó, según el promedio de rating de cada equipo."
+      "rating": "Cada partida cuenta en el rating de la comunidad de quien la jugó, según el promedio de rating de cada equipo."
     }
   },
   "extraRules": "Reglas adicionales",
@@ -120,7 +120,7 @@
   "publish": "Publicar y abrir inscripciones",
   "publishToCheckIn": "Publicar y abrir el check-in",
   "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar.",
-  "publishConfirmCheckIn": "¿Publicar el torneo ya con el check-in abierto? Los jugadores no tendrán tiempo de inscribirse: solo entra en la llave quien ya inscribiste. La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar. Para tener inscripciones, cambia la fecha en Editar antes de publicar.",
+  "publishConfirmCheckIn": "¿Publicar el torneo ya con el check-in abierto? Los jugadores no tendrán tiempo de inscribirse. Solo entra en la llave quien ya inscribiste. La comunidad pasa a verlo (si es privado, solo inscritos y organizadores). Publicado, no vuelve a borrador ni se puede eliminar. Para tener inscripciones, cambia la fecha en Editar antes de publicar.",
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
   "setup": {
@@ -141,7 +141,7 @@
       "single": "Eliminación simple",
       "double": "Eliminación doble",
       "doubleReset": "Eliminación doble, con reset en la gran final",
-      "round_robin": "Round robin (todos contra todos)",
+      "round_robin": "Todos contra todos",
       "swiss": "Suizo"
     },
     "series": {
@@ -149,7 +149,7 @@
       "double": "Al mejor de {bestOf}; gran final al mejor de {finals}",
       "table": "Al mejor de {bestOf}"
     },
-    "bans": "{count, plural, =0 {sin bans} one {# ban por mapa} other {# bans por mapa}}",
+    "bans": "{count, plural, =0 {sin bans} one {# ban por partida} other {# bans por partida}}",
     "noRepeat": {
       "off": "se pueden repetir",
       "match": "único por serie",
@@ -163,14 +163,14 @@
       "champions": "¿Cómo funcionan las reglas de campeones?",
       "checkIn": "¿Qué es el check-in?",
       "checkInText": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en la llave.",
-      "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: todos los inscritos entran en la llave.",
+      "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in. Todos los inscritos entran en la llave.",
       "contest": "¿Qué es el plazo para impugnar?",
-      "contestText": "Después de cada mapa, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
+      "contestText": "Después de cada partida, un jugador envía el resultado y el otro tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugna, decide la organización.",
       "format": "¿Cómo funciona el formato?",
       "mode": "¿Cómo funcionan los equipos?",
       "checkInTextTdm": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en un equipo.",
-      "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in: cualquier inscrito puede entrar en un equipo.",
-      "contestTextTdm": "Después de cada mapa, un jugador de un equipo envía el resultado y cualquiera del otro equipo tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugnan, decide la organización."
+      "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in. Cualquier inscrito puede entrar en un equipo.",
+      "contestTextTdm": "Después de cada partida, un jugador de un equipo envía el resultado y cualquiera del otro equipo tiene este plazo para confirmarlo o impugnarlo. Sin respuesta, el resultado vale; si lo impugnan, decide la organización."
     },
     "seeRules": "Ver las reglas",
     "rounds": {
@@ -194,7 +194,7 @@
   "invites": {
     "title": "Enlaces de inscripción",
     "description": "Quien entra por el enlace queda como jugador de la comunidad y ya inscrito. El enlace sirve para varias personas y vale mientras la inscripción esté abierta.",
-    "full": "Los cupos se agotaron: los enlaces no inscriben a nadie más hasta que se libere un cupo (alguien sale o se amplían los cupos).",
+    "full": "Los cupos se agotaron. Los enlaces no inscriben a nadie más hasta que se libere un cupo (alguien sale o se amplían los cupos).",
     "create": "Generar enlace de inscripción",
     "createdTitle": "Enlace de inscripción generado",
     "empty": "No hay enlaces de inscripción. Genera uno y envíalo a quien quieras inscribir, incluso a quien todavía no es de la comunidad.",
