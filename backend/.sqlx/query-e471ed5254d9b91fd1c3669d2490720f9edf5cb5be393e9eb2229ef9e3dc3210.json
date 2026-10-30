@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select extract(epoch from g.confirm_by - coalesce(p.reported_at, t.started_at))::integer\n                  as \"seconds!\"\n           from match_games g\n           join tournaments t on t.id = g.tournament_id\n           left join match_games p on p.tournament_id = g.tournament_id and p.stage = g.stage\n                                  and p.match_key = g.match_key and p.number = g.number - 1\n           order by g.match_key, g.number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seconds!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e471ed5254d9b91fd1c3669d2490720f9edf5cb5be393e9eb2229ef9e3dc3210"
+}

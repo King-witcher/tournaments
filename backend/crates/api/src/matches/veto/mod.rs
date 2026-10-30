@@ -17,7 +17,9 @@
 //!   relógio no `realtime` dorme até o próximo prazo (`clock`): no fim, a
 //!   escolha é sorteada pelo `engine`, gravada com a hora do prazo.
 //! - O envio de um mapa por um jogador exige o veto daquele jogo concluído e
-//!   o mapa que ele deu (`check_report`).
+//!   o mapa que ele deu (`check_report`). Quando o veto deixou enviar conta
+//!   no prazo de confirmação (`released_at`), e o veto começado de outra
+//!   série fecha a contestação tardia (`begun_at`).
 
 mod advance;
 mod db;
@@ -27,11 +29,13 @@ mod state;
 mod types;
 mod view;
 
+use chrono::{DateTime, Utc};
 use engine::{
     champions::{NoRepeatScope, NoRepeatWho},
     core::{ChampionId, Match, MatchState, PlayerId},
     veto::{self as ev, Turn},
 };
+use state::Kind;
 
 pub use advance::advance;
 pub use db::{Champion, champions, events};
@@ -115,6 +119,30 @@ impl Ctx {
             used_by: &self.used_by,
         }
     }
+}
+
+/// Para o prazo de confirmação (`release`): quando o veto da partida `id`
+/// mudou pela última vez (começo, jogo seguinte, passo, desfazer; o
+/// "Pronto" e o pedido de desfazer não contam). Com o envio liberado pelo
+/// `check_report`, é quando o veto deixou enviar. `None` sem veto.
+pub fn released_at(stage: &Stage, id: engine::core::MatchId) -> Option<DateTime<Utc>> {
+    stage
+        .veto_of(id)?
+        .rows
+        .iter()
+        .rev()
+        .find(|r| !matches!(r.kind, Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined))
+        .map(|r| r.created_at)
+}
+
+/// Quando o veto da partida `id` começou; `None` se não começou.
+pub fn begun_at(stage: &Stage, id: engine::core::MatchId) -> Option<DateTime<Utc>> {
+    stage
+        .veto_of(id)?
+        .rows
+        .iter()
+        .find(|r| r.kind == Kind::Begin)
+        .map(|r| r.created_at)
 }
 
 /// O jogador pode enviar o mapa `game` da partida `m` com o mapa `map`? Sem

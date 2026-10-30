@@ -1,12 +1,15 @@
 //! Testes de `matches`: a chave (`bracket`), envio e confirmação mapa a mapa
-//! (`results`), contestação e organizador (`organizer`), mapa anulado para
+//! (`results`), o prazo de confirmação (`deadline`), quem contesta e até quando
+//! (`contest`), contestação e organizador (`organizer`), mapa anulado para
 //! ser jogado de novo (`replay`), correções e fim (`corrections`), as regras
 //! do banco para mapas, séries e histórico (`schema`), o veto de mapas e
 //! campeões (`veto`) e os formatos de tabela (`round_robin`, `swiss`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod bracket;
+mod contest;
 mod corrections;
+mod deadline;
 mod organizer;
 mod replay;
 mod results;
@@ -307,6 +310,24 @@ pub fn kinds(detail: &Value) -> Vec<String> {
             }
         })
         .collect()
+}
+
+/// O prazo de cada partida enviada (por série e número), em segundos desde
+/// a liberação sem veto: a 1 no início do torneio, as outras no envio da
+/// anterior.
+pub async fn deadlines(db: &PgPool) -> Vec<i32> {
+    sqlx::query_scalar!(
+        r#"select extract(epoch from g.confirm_by - coalesce(p.reported_at, t.started_at))::integer
+                  as "seconds!"
+           from match_games g
+           join tournaments t on t.id = g.tournament_id
+           left join match_games p on p.tournament_id = g.tournament_id and p.stage = g.stage
+                                  and p.match_key = g.match_key and p.number = g.number - 1
+           order by g.match_key, g.number"#
+    )
+    .fetch_all(db)
+    .await
+    .unwrap()
 }
 
 /// Volta o relógio `minutes` minutos em todos os mapas e eventos, em vez de

@@ -224,9 +224,17 @@ fn match_result(r: &StoredResult) -> MatchResult {
     }
 }
 
-/// O mapa `g` como a página da partida mostra, com a escalação de cada lado
-/// (`lineup`: as linhas do mapa).
-pub fn game(g: &StoredGame, task: Option<ViewerTask>, lineup: &[LineupRow]) -> GameDetail {
+/// O que a página da série mostra de uma partida além da linha gravada: o
+/// que ela espera de quem vê, se ele pode contestar e quem contestou.
+pub struct GameExtra {
+    pub task: Option<ViewerTask>,
+    pub can_contest: bool,
+    pub contested_by: Option<String>,
+}
+
+/// A partida `g` como a página da série mostra, com a escalação de cada lado
+/// (`lineup`: as linhas da partida).
+pub fn game(g: &StoredGame, extra: GameExtra, lineup: &[LineupRow]) -> GameDetail {
     let side = |s: &str| -> Vec<TeamMember> {
         lineup
             .iter()
@@ -258,9 +266,11 @@ pub fn game(g: &StoredGame, task: Option<ViewerTask>, lineup: &[LineupRow]) -> G
             .flatten(),
         contest_comment: g.contest_comment.clone(),
         contested_at: g.contested_at,
+        contested_by: extra.contested_by,
+        can_contest: extra.can_contest,
         confirmed_via: g.confirmed_via,
         confirmed_at: g.confirmed_at,
-        task,
+        task: extra.task,
     }
 }
 

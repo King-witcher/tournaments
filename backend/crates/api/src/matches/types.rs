@@ -291,12 +291,19 @@ pub struct GameDetail {
     /// Lado de quem enviou; `null` quando o organizador lançou.
     pub reported_side: Option<Side>,
     pub reported_at: DateTime<Utc>,
-    /// Pendente: até quando o adversário confirma ou contesta; depois,
-    /// confirma sozinho.
+    /// Pendente: até quando o outro time confirma ou alguém contesta;
+    /// depois, confirma sozinha.
     pub confirm_by: Option<DateTime<Utc>>,
-    /// Contestado: o comentário de quem contestou.
+    /// Contestada: o comentário de quem contestou.
     pub contest_comment: Option<String>,
     pub contested_at: Option<DateTime<Utc>>,
+    /// Contestada: o apelido de quem contestou (pode ser do time de quem
+    /// enviou); `null` se a conta foi excluída.
+    pub contested_by: Option<String>,
+    /// Quem vê pode contestar agora: pendente e não foi ele quem enviou, ou
+    /// confirmada e a contestação tardia ainda vale (até a próxima série de
+    /// um dos lados começar).
+    pub can_contest: bool,
     pub confirmed_via: Option<Confirmation>,
     pub confirmed_at: Option<DateTime<Utc>>,
     /// O que este mapa espera de quem vê (`respond`, `await_opponent`,

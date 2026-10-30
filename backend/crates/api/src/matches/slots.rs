@@ -1,14 +1,18 @@
 //! Uma partida vista de fora da chave, para o domínio `screenshots`: quem joga,
-//! os mapas enviados (número e se já confirmou) e o próximo, que ainda não foi
-//! enviado mas já recebe screenshot (o jogador anexa antes de enviar). As
-//! confirmações por tempo vencidas valem antes, como em toda leitura.
+//! as partidas enviadas (número, se já confirmou e se ainda dá para contestar)
+//! e a próxima, que ainda não foi enviada mas já recebe screenshot (o jogador
+//! anexa antes de enviar). As confirmações por tempo vencidas valem antes,
+//! como em toda leitura.
 
 use engine::core::{Match, MatchState};
 use sqlx::PgConnection;
 
-use super::{detail, due, games::GameStatus, key, stage, tasks};
+use super::{contest, detail, due, games::GameStatus, key, stage, tasks};
 use crate::{
-    shared::ApiError, teams::StoredTeam, tenants::TenantMember, tournaments::StoredTournament,
+    shared::ApiError,
+    teams::StoredTeam,
+    tenants::TenantMember,
+    tournaments::{StoredTournament, TournamentStatus},
 };
 
 pub struct MatchGames {
@@ -31,6 +35,8 @@ pub struct MatchGames {
 pub struct SlotGame {
     pub number: i16,
     pub confirmed: bool,
+    /// Confirmada, mas a contestação tardia ainda vale (`contest`).
+    pub contestable: bool,
 }
 
 impl MatchGames {
@@ -93,6 +99,9 @@ async fn load(
             .map(|g| SlotGame {
                 number: g.number,
                 confirmed: g.status == GameStatus::Confirmed,
+                contestable: g.status == GameStatus::Confirmed
+                    && tournament.status == TournamentStatus::InProgress
+                    && contest::late(&stage, m, g).is_ok(),
             })
             .collect(),
         tournament,

@@ -5,7 +5,9 @@ use engine::core::{Match, ParticipantId};
 use sqlx::PgConnection;
 
 use super::{
-    db, key,
+    contest, db,
+    games::GameStatus,
+    key,
     stage::Stage,
     tasks,
     types::MatchDetail,
@@ -57,8 +59,22 @@ pub async fn load(
         games: games
             .iter()
             .map(|g| {
-                let task = tasks::game_task(tournament.status, m, g, mine, viewer);
-                view::game(g, task, &lineups)
+                // Quem contestou por último (a contestação que vale agora).
+                let contested_by = (g.status == GameStatus::Contested)
+                    .then(|| {
+                        events
+                            .iter()
+                            .rev()
+                            .find(|e| e.kind == "contested" && e.game == Some(g.number))
+                            .and_then(|e| e.actor_name.clone())
+                    })
+                    .flatten();
+                let extra = view::GameExtra {
+                    task: tasks::game_task(tournament.status, m, g, mine, viewer),
+                    can_contest: contest::allowed(viewer.user_id, tournament.status, stage, m, g),
+                    contested_by,
+                };
+                view::game(g, extra, &lineups)
             })
             .collect(),
         next_game: tasks::next_game(tournament.status, m, &games),

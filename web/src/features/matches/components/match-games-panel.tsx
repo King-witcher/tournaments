@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import { Section } from "@/shared/ui/section";
 import { useSideNames } from "../hooks/use-side-names";
 import type { MatchTarget } from "../lib/match-target";
@@ -15,7 +14,6 @@ type Props = {
   target: MatchTarget;
   detail: Schemas["MatchDetail"];
   maps: Schemas["Map"][];
-  contestMinutes: number;
 };
 
 /**
@@ -23,14 +21,8 @@ type Props = {
  * e o que dá para fazer nele); por último, a linha do próximo mapa, enquanto
  * a série aceita. Some com a partida que ainda não tem lados.
  */
-export function MatchGamesPanel({
-  target,
-  detail,
-  maps,
-  contestMinutes,
-}: Props) {
+export function MatchGamesPanel({ target, detail, maps }: Props) {
   const t = useTranslations("Match.games");
-  const formatMinutes = useFormatMinutes();
   const s = detail.summary;
   const names = useSideNames(detail);
   const next = detail.next_game;
@@ -38,12 +30,7 @@ export function MatchGamesPanel({
   if (!open && detail.games.length === 0) return null;
 
   return (
-    <Section
-      title={t("title")}
-      description={
-        open ? t("hint", { window: formatMinutes(contestMinutes) }) : undefined
-      }
-    >
+    <Section title={t("title")} description={open ? t("hint") : undefined}>
       <div>
         {/* Os nomes das colunas, para correr o olho; cada linha também se
             explica sozinha (o leitor de tela lê "Mapa 1", "Frags"). */}

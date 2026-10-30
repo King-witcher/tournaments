@@ -1,7 +1,10 @@
 //! Chave e resultados, mapa a mapa: ver a chave e uma partida, enviar um
-//! mapa, confirmar ou contestar (`report`), e o organizador lançar ou
-//! corrigir mapas e dar W.O. na série (`manage`) ou anular um mapa para ser
-//! jogado de novo (`replay`).
+//! mapa, confirmar ou contestar (`report`; o prazo conta de quando o mapa
+//! foi liberado, `release`; quem contesta e até quando, também depois de
+//! confirmado, `contest`), e o organizador lançar ou corrigir mapas e dar
+//! W.O. na série (`manage`) ou anular um mapa para ser jogado de novo
+//! (`replay`). A série decidida que muda (correção ou contestação tardia) é
+//! conferida e gravada em `correction`.
 //!
 //! Cada mapa da série é enviado e confirmado sozinho (`games`); a série
 //! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
@@ -32,6 +35,8 @@
 mod actions;
 mod announce;
 mod changes;
+mod contest;
+mod correction;
 mod db;
 mod detail;
 mod due;
@@ -43,6 +48,7 @@ mod key;
 mod manage;
 mod mine;
 mod outcome;
+mod release;
 mod replay;
 mod report;
 mod result;

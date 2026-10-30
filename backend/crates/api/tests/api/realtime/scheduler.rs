@@ -41,7 +41,9 @@ async fn confirms_due_maps_and_moves_the_bracket() {
     let tick = realtime::tick(&state, Utc::now()).await.unwrap();
     assert_eq!(tick, Some(Tick::default()));
 
-    age(&db, 11).await;
+    // Enviadas logo no início: o prazo é a duração da partida (15 minutos)
+    // mais a janela (10).
+    age(&db, 26).await;
     clear(&db).await;
     let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
     assert_eq!(tick.confirmed, 2);

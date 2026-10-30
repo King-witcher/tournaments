@@ -236,7 +236,7 @@ async fn reporting_rules() {
 }
 
 #[tokio::test]
-async fn unanswered_maps_confirm_when_the_ten_minute_window_ends() {
+async fn unanswered_maps_confirm_when_the_deadline_ends() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
@@ -245,17 +245,13 @@ async fn unanswered_maps_confirm_when_the_ten_minute_window_ends() {
         let (status, body) = report(&app, &p[0], "wb-1-1", n, game("a", map)).await;
         assert_eq!(status, StatusCode::OK, "{body}");
     }
-    let window = sqlx::query_scalar!(
-        r#"select extract(epoch from confirm_by - reported_at)::integer as "seconds!"
-           from match_games where number = 1"#
-    )
-    .fetch_one(&db)
-    .await
-    .unwrap();
-    assert_eq!(window, 10 * 60);
+    // Enviadas antes da duração prevista (15 minutos): os 10 da janela
+    // contam do fim dela, desde a partida liberada (a 1 no início do
+    // torneio, a 2 no envio da 1).
+    assert_eq!(deadlines(&db).await, [25 * 60, 25 * 60]);
 
-    // Nove minutos depois, ainda na janela: seguem pendentes.
-    age(&db, 9).await;
+    // 24 minutos depois, ainda no prazo: seguem pendentes.
+    age(&db, 24).await;
     let b = bracket(&app, &p[1]).await;
     assert_eq!(find(&b, "wb-1-1")["pending_maps"], 2);
 

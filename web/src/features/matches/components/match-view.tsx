@@ -86,12 +86,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         detail={detail}
         rule={tournament.champion_rules.no_repeat ?? null}
       />
-      <MatchGamesPanel
-        target={target}
-        detail={detail}
-        maps={maps}
-        contestMinutes={tournament.contest_minutes}
-      />
+      <MatchGamesPanel target={target} detail={detail} maps={maps} />
       {detail.can_manage &&
         s.state === "completed" &&
         bracket.kind === "ok" && (

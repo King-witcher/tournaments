@@ -28,7 +28,7 @@
   },
   "games": {
     "title": "Partidas",
-    "hint": "Cada partida é enviada e confirmada sozinha. O adversário tem {window} para confirmar ou contestar; sem resposta, ela se confirma sozinha.",
+    "hint": "Cada partida é enviada e confirmada sozinha.",
     "columns": {
       "number": "Nº",
       "map": "Mapa",
@@ -57,13 +57,14 @@
       "confirmed": "Confirmada"
     },
     "vetoFirst": "A partida {number} pode ser enviada quando o veto dela acabar.",
-    "lineup": "Jogaram: {a} contra {b}"
+    "lineup": "Jogaram: {a} contra {b}",
+    "lateContest": "Você pode contestar até a próxima série de {a} ou de {b} começar."
   },
   "respond": {
     "confirm": "Confirmar",
     "contest": "Contestar",
     "comment": "O que está errado?",
-    "commentHint": "Até 280 caracteres. A organização vai ver e resolver.",
+    "commentHint": "A organização vai ver e resolver.",
     "submitContest": "Enviar contestação",
     "cancel": "Cancelar"
   },

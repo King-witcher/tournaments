@@ -28,7 +28,7 @@
   },
   "games": {
     "title": "Partidas",
-    "hint": "Cada partida se envía y se confirma por separado. El rival tiene {window} para confirmar o impugnar; sin respuesta, se confirma sola.",
+    "hint": "Cada partida se envía y se confirma por separado.",
     "columns": {
       "number": "N.º",
       "map": "Mapa",
@@ -57,13 +57,14 @@
       "confirmed": "Confirmada"
     },
     "vetoFirst": "La partida {number} se puede enviar cuando termine su veto.",
-    "lineup": "Jugaron: {a} contra {b}"
+    "lineup": "Jugaron: {a} contra {b}",
+    "lateContest": "Puedes impugnarla hasta que empiece la próxima serie de {a} o de {b}."
   },
   "respond": {
     "confirm": "Confirmar",
     "contest": "Impugnar",
     "comment": "¿Qué está mal?",
-    "commentHint": "Hasta 280 caracteres. La organización lo verá y resolverá.",
+    "commentHint": "La organización lo verá y resolverá.",
     "submitContest": "Enviar impugnación",
     "cancel": "Cancelar"
   },

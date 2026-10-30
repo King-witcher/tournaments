@@ -1881,18 +1881,29 @@ export interface components {
             /** Format: int32 */
             b_frags?: number | null;
             /**
+             * @description Quem vê pode contestar agora: pendente e não foi ele quem enviou, ou
+             *     confirmada e a contestação tardia ainda vale (até a próxima série de
+             *     um dos lados começar).
+             */
+            can_contest: boolean;
+            /**
              * Format: date-time
-             * @description Pendente: até quando o adversário confirma ou contesta; depois,
-             *     confirma sozinho.
+             * @description Pendente: até quando o outro time confirma ou alguém contesta;
+             *     depois, confirma sozinha.
              */
             confirm_by?: string | null;
             /** Format: date-time */
             confirmed_at?: string | null;
             confirmed_via?: components["schemas"]["Confirmation"] | null;
-            /** @description Contestado: o comentário de quem contestou. */
+            /** @description Contestada: o comentário de quem contestou. */
             contest_comment?: string | null;
             /** Format: date-time */
             contested_at?: string | null;
+            /**
+             * @description Contestada: o apelido de quem contestou (pode ser do time de quem
+             *     enviou); `null` se a conta foi excluída.
+             */
+            contested_by?: string | null;
             /**
              * @description Quem jogou o mapa por cada lado (no duelo, o jogador; nos times, quem
              *     estava no time e na comunidade quando o mapa foi enviado).
@@ -7721,7 +7732,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.own_report (quem enviou não confirma o próprio mapa) */
+            /** @description match.not_player, match.own_report (o time de quem enviou não confirma) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7759,9 +7770,9 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
                 match: string;
-                /** @description Número do mapa na série, a partir de 1 */
+                /** @description Número da partida na série, a partir de 1 */
                 game: number;
             };
             cookie?: never;
@@ -7772,7 +7783,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O adversário de quem enviou contesta o mapa, com comentário: o mapa sai da janela de contestação e espera o organizador. O próximo mapa continua podendo ser enviado */
+            /** @description Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e espera o organizador, e a próxima continua podendo ser enviada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7790,7 +7801,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.own_report */
+            /** @description match.not_player, match.own_report (quem enviou não contesta) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -7808,7 +7819,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.already_contested, match.already_confirmed (inclusive pela janela, que já acabou) */
+            /** @description tournament.not_in_progress, match.already_contested, match.contest_closed (confirmada e a contestação tardia não vale mais: outra série de um dos lados começou, a organização confirmou ou lançou, a série acabou em W.O., ou reabrir contradiz uma série decidida depois) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7928,7 +7939,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Mapa enviado por um jogador da partida: fica pendente até o adversário confirmar ou contestar; sem resposta, confirma sozinho no fim da janela de contestação. O próximo mapa já pode ser enviado. A série fecha quando os mapas confirmados dão a maioria a um lado */
+            /** @description Partida enviada por um jogador da série: fica pendente até o outro time confirmar ou alguém contestar; sem resposta, confirma sozinha no fim do prazo (`confirm_by`): a janela de contestação depois do envio ou depois de 15 minutos da partida liberada (veto dela concluído, partida anterior enviada ou série pronta), o que vier por último. A próxima já pode ser enviada. A série fecha quando as partidas confirmadas dão a maioria a um lado */
             200: {
                 headers: {
                     [name: string]: unknown;

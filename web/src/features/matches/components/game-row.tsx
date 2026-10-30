@@ -27,10 +27,10 @@ type Props = {
 };
 
 /**
- * Um mapa enviado: número, mapa, quem venceu e os frags (sem confirmar, como
- * o que quem enviou diz), a etiqueta e a frase do estado (até quando
- * confirma sozinho, contestado e por quê, ou confirmado e como) e, embaixo,
- * o que quem vê pode fazer nele.
+ * Uma partida enviada: número, mapa, quem venceu e os frags (sem confirmar,
+ * como o que quem enviou diz), a etiqueta e a frase do estado (até quando
+ * confirma sozinha, contestada e por quem, ou confirmada e como, com até
+ * quando quem vê ainda contesta) e, embaixo, o que quem vê pode fazer nela.
  */
 export function GameRow({
   target,
@@ -58,13 +58,17 @@ export function GameRow({
     });
   } else if (g.status === "contested" && g.reported_side) {
     status = t("contested", {
-      name: names[other(g.reported_side)],
+      name: g.contested_by ?? names[other(g.reported_side)],
       comment: g.contest_comment ?? "",
     });
   } else if (g.confirmed_via) {
-    status = t(`confirmed.${g.confirmed_via}`);
+    // Confirmada, mas quem vê ainda pode contestar: até quando.
+    status = g.can_contest
+      ? `${t(`confirmed.${g.confirmed_via}`)} ${t("lateContest", names)}`
+      : t(`confirmed.${g.confirmed_via}`);
   }
   const responds = g.task === "respond";
+  const contests = responds || g.can_contest;
   // TDM: quem jogou o mapa por lado (no duelo, o próprio jogador: não
   // aparece).
   const nicks = (list: Schemas["TeamMember"][]) =>
@@ -110,9 +114,15 @@ export function GameRow({
         </StatusTag>
         {status && <span className={styles.phrase}>{status}</span>}
       </span>
-      {(responds || canManage) && (
+      {(contests || canManage) && (
         <div className={styles.actions}>
-          {responds && <GameRespond target={target} number={g.number} />}
+          {contests && (
+            <GameRespond
+              target={target}
+              number={g.number}
+              canConfirm={responds}
+            />
+          )}
           {canManage && (
             <GameOrganizerActions
               target={target}

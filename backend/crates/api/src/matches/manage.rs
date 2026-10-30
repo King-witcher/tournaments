@@ -3,29 +3,25 @@
 //! resolução de um contestado com outro resultado, ou a correção de um
 //! confirmado), e dá W.O. na série. A correção que muda a série decidida
 //! refaz a chave por replay e é recusada se contradiz uma partida decidida
-//! depois. Tudo fica no histórico, com autor e horário.
+//! depois (`correction`). Tudo fica no histórico, com autor e horário.
 
 use axum::{Json, extract::State};
 use engine::{
-    core::{MatchId, MatchState, ParticipantId},
-    series::{self, Decision},
+    core::{MatchState, ParticipantId},
+    series,
 };
 
 use super::{
-    actions, db, detail, due,
+    actions, correction, db, detail, due,
     games::{GameStatus, StoredGame, series_games},
     history::NewEvent,
-    key, outcome,
-    result::{Side, StoredResult, played_or_walkover},
-    settle,
-    stage::{self, Stage},
+    outcome, settle,
     types::{EventKind, GamePath, MatchDetail, MatchPath, ResultInput, SetGame, SetResult},
 };
 use crate::{
     AppState,
     shared::{ApiError, ErrorBody, JsonBody, PathParams},
     tenants::{Organizer, TenantMember},
-    tournaments::StoredTournament,
 };
 
 #[utoipa::path(
@@ -74,9 +70,9 @@ pub async fn put_game(
         Some(GameStatus::Confirmed) => EventKind::Corrected,
         Some(GameStatus::Pending) | None => EventKind::Entered,
     };
-    let change = series_change(stage.result(m.id), after.decided, sides);
+    let change = correction::series_change(stage.result(m.id), after.decided, sides);
     if let Some(change) = &change {
-        void_stale(&mut tx, &member, &tournament, &stage, m.id, change).await?;
+        correction::void_stale(&mut tx, &member, &tournament, &stage, m.id, change).await?;
     }
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
@@ -91,22 +87,9 @@ pub async fn put_game(
         .map(|(_, g)| *g)
         .collect();
     settle::void(&mut tx, &at, &beyond, Some(member.user.id)).await?;
-    match change {
-        Some(Change::Put { winner, score }) => {
-            let now = chrono::Utc::now();
-            let score = score.ok_or_else(ApiError::internal)?;
-            db::put_decided(&mut tx, &at, m.best_of, sides, winner, score, now).await?;
-            let outcome = played_or_walkover(winner, Some(score));
-            let event = NewEvent::series(EventKind::Decided, None, Some(outcome));
-            db::insert_event(&mut tx, &at, &event).await?;
-        }
-        Some(Change::Remove) => {
-            let id = stage.result(m.id).ok_or_else(ApiError::internal)?.id;
-            db::remove_result(&mut tx, id).await?;
-            let event = NewEvent::series(EventKind::Reopened, Some(member.user.id), None);
-            db::insert_event(&mut tx, &at, &event).await?;
-        }
-        None => {}
+    if let Some(change) = change {
+        let series = (path.key.as_str(), m.best_of);
+        correction::write(&mut tx, &member, &tournament, &stage, series, sides, change).await?;
     }
     let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
@@ -146,11 +129,11 @@ pub async fn set_result(
     let ResultInput::Walkover { winner } = body.result;
     let outcome = outcome::walkover(sides, winner);
     if stage.result(m.id).is_some() {
-        let change = Change::Put {
+        let change = correction::Change::Put {
             winner: outcome.winner(),
             score: None,
         };
-        void_stale(&mut tx, &member, &tournament, &stage, m.id, &change).await?;
+        correction::void_stale(&mut tx, &member, &tournament, &stage, m.id, &change).await?;
     }
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
@@ -184,86 +167,4 @@ fn playable(state: MatchState) -> Result<(ParticipantId, ParticipantId), ApiErro
         MatchState::Ready { a, b } | MatchState::Completed { a, b, .. } => Ok((a, b)),
         _ => Err(ApiError::conflict("match.not_ready")),
     }
-}
-
-/// O que acontece com a série decidida depois de mudar um mapa.
-enum Change {
-    /// Passa a ser esta (`score`: mapas de `a` e de `b`; `None` no W.O.).
-    Put {
-        winner: ParticipantId,
-        score: Option<(u8, u8)>,
-    },
-    /// Fica sem decisão: a série reabre.
-    Remove,
-}
-
-/// A mudança na série decidida `current` quando os mapas passam a decidir
-/// `decided`. `None`: nada muda (a mesma decisão; série ainda aberta, que o
-/// `settle` fecha se for o caso; W.O. que os mapas não desfazem).
-fn series_change(
-    current: Option<&StoredResult>,
-    decided: Option<Decision>,
-    sides: (ParticipantId, ParticipantId),
-) -> Option<Change> {
-    let current = current?;
-    match decided {
-        Some(d) => {
-            let winner = Side::from(d.winner).of(sides);
-            let score = Some((d.a_wins, d.b_wins));
-            (current.winner != winner || current.score != score)
-                .then_some(Change::Put { winner, score })
-        }
-        None if current.score.is_none() => None,
-        None => Some(Change::Remove),
-    }
-}
-
-/// Confere a mudança `change` na série decidida da partida `id` refazendo a
-/// chave com ela (na posição da antiga). 409 `match.correction_conflicts` se
-/// uma partida decidida depois deixa de fechar (outro vencedor, outros lados,
-/// reset que deixa de existir). Anula os mapas das partidas ainda abertas
-/// cujos lados mudaram.
-async fn void_stale(
-    conn: &mut sqlx::PgConnection,
-    member: &TenantMember<Organizer>,
-    tournament: &StoredTournament,
-    stage: &Stage,
-    id: MatchId,
-    change: &Change,
-) -> Result<(), ApiError> {
-    let mut corrected = stage.results.clone();
-    match change {
-        Change::Put { winner, score } => {
-            let current = corrected
-                .iter_mut()
-                .find(|r| r.match_id == id)
-                .ok_or_else(ApiError::internal)?;
-            current.winner = *winner;
-            current.score = *score;
-        }
-        Change::Remove => corrected.retain(|r| r.match_id != id),
-    }
-    let bracket = stage::replay(stage.format, &stage.history(&corrected))
-        .map_err(|_| ApiError::conflict("match.correction_conflicts"))?;
-    let mut open: Vec<MatchId> = stage
-        .games
-        .iter()
-        .map(|g| g.match_id)
-        .filter(|m| *m != id && stage.result(*m).is_none())
-        .collect();
-    open.dedup();
-    for m in open {
-        let games = stage.games_of(m);
-        let keeps = matches!(
-            bracket.get(m).map(|x| x.state),
-            Some(MatchState::Ready { a, b }) if games.iter().all(|g| g.sides() == (a, b))
-        );
-        if keeps {
-            continue;
-        }
-        let key = key::format(m);
-        let at = actions::at(member, tournament, stage, &key);
-        settle::void(conn, &at, &games, Some(member.user.id)).await?;
-    }
-    Ok(())
 }

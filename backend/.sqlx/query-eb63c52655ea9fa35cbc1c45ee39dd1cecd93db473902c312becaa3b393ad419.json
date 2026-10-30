@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,\n                  m.slug as \"map_slug?\", m.name as \"map_name?\", g.a_frags, g.b_frags, g.status,\n                  g.reported_side, g.reported_at, g.confirm_by, g.contested_at,\n                  g.contest_comment, g.confirmed_via, g.confirmed_at\n           from match_games g\n           left join maps m on m.id = g.map_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number",
+  "query": "select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,\n                  m.slug as \"map_slug?\", m.name as \"map_name?\", g.a_frags, g.b_frags, g.status,\n                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_at,\n                  g.contest_comment, g.confirmed_via, g.confirmed_at\n           from match_games g\n           left join maps m on m.id = g.map_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number",
   "describe": {
     "columns": [
       {
@@ -148,6 +148,17 @@
       },
       {
         "ordinal": 13,
+        "name": "reported_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "reported_by"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
         "name": "reported_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -158,7 +169,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "confirm_by",
         "type_info": "Timestamptz",
         "origin": {
@@ -169,7 +180,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "contested_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -180,7 +191,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "contest_comment",
         "type_info": "Text",
         "origin": {
@@ -191,7 +202,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "confirmed_via",
         "type_info": "Text",
         "origin": {
@@ -202,7 +213,7 @@
         }
       },
       {
-        "ordinal": 18,
+        "ordinal": 19,
         "name": "confirmed_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -233,6 +244,7 @@
       true,
       false,
       true,
+      true,
       false,
       true,
       true,
@@ -241,5 +253,5 @@
       true
     ]
   },
-  "hash": "e8fcf5f6539c1a5112c2832367383802263db490449d5425c14cb1f014acba1f"
+  "hash": "eb63c52655ea9fa35cbc1c45ee39dd1cecd93db473902c312becaa3b393ad419"
 }

@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select extract(epoch from g.confirm_by - e.created_at)::integer as \"seconds!\"\n           from match_games g\n           join match_veto_events e on e.tournament_id = g.tournament_id and e.kind = 'begin'\n           where g.number = 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seconds!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b4bf8870eead9a3e2c20bd73d35b9c3aa2685687e9018d13694a609afaa90125"
+}

@@ -35,7 +35,7 @@ pub async fn games(
         GameRow,
         r#"select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,
                   m.slug as "map_slug?", m.name as "map_name?", g.a_frags, g.b_frags, g.status,
-                  g.reported_side, g.reported_at, g.confirm_by, g.contested_at,
+                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_at,
                   g.contest_comment, g.confirmed_via, g.confirmed_at
            from match_games g
            left join maps m on m.id = g.map_id
@@ -51,23 +51,35 @@ pub async fn games(
     .collect()
 }
 
-/// O mapa que um jogador do lado `side` enviou: pendente até o adversário
-/// responder ou acabar a janela (`contest_minutes`). Devolve o prazo.
+/// Quanto dura o prazo de um envio: a partida liberada em `released` (ver
+/// `release`) dura `game_minutes`, e a janela de contestação
+/// (`contest_minutes`) começa no envio ou no fim dessa duração, o que vier
+/// por último.
+pub struct Deadline {
+    pub released: Option<DateTime<Utc>>,
+    pub game_minutes: i32,
+    pub contest_minutes: i32,
+}
+
+/// A partida que um jogador do lado `side` enviou: pendente até o adversário
+/// responder ou acabar o prazo (`deadline`). Devolve o prazo.
 pub async fn insert_report(
     conn: &mut PgConnection,
     at: &MatchRef<'_>,
     game: &NewGame,
     side: Side,
     by: i64,
-    contest_minutes: i32,
+    deadline: &Deadline,
 ) -> Result<DateTime<Utc>, sqlx::Error> {
     let (a_frags, b_frags) = game.frags.unzip();
+    // `greatest` ignora o nulo: sem `released`, o prazo conta do envio.
     sqlx::query_scalar!(
         r#"insert into match_games
                (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,
                 map_id, a_frags, b_frags, status, reported_side, reported_by, confirm_by)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13,
-                   now() + make_interval(mins => $14))
+                   greatest(now(), $14::timestamptz + make_interval(mins => $15))
+                       + make_interval(mins => $16))
            returning confirm_by as "confirm_by!""#,
         at.tenant.get(),
         at.tournament.get(),
@@ -82,7 +94,9 @@ pub async fn insert_report(
         b_frags,
         side.as_str(),
         by,
-        contest_minutes
+        deadline.released,
+        deadline.game_minutes,
+        deadline.contest_minutes
     )
     .fetch_one(conn)
     .await
@@ -151,8 +165,9 @@ pub async fn confirm_game(
     Ok(())
 }
 
-/// O adversário `by` contesta o mapa pendente `id`: sai da janela e espera o
-/// organizador.
+/// Um jogador da série (`by`) contesta a partida `id`, pendente ou já
+/// confirmada (a contestação tardia): sai do prazo, perde a confirmação e
+/// espera o organizador.
 pub async fn contest_game(
     conn: &mut PgConnection,
     id: i64,
@@ -161,8 +176,9 @@ pub async fn contest_game(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"update match_games
-           set status = 'contested', contested_by = $2, contested_at = now(), contest_comment = $3
-           where id = $1 and status = 'pending'"#,
+           set status = 'contested', contested_by = $2, contested_at = now(), contest_comment = $3,
+               confirmed_via = null, confirmed_by = null, confirmed_at = null
+           where id = $1 and status in ('pending', 'confirmed')"#,
         id,
         by,
         comment

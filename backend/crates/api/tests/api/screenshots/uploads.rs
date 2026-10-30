@@ -149,9 +149,17 @@ async fn players_and_staff_attach_to_sent_maps_and_the_next() {
     }
     let (status, _) = confirm(&c.app, &c.p2, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK);
-    // Confirmado, o jogador não anexa mais; a organização sim (trocando o
-    // dela: um de cada pessoa).
-    let (status, body) = request_upload(&c.app, &c.p1, FINAL, 1, "image/webp", 10).await;
+    // Confirmada pelo adversário, ainda dá para contestar (nenhum dos dois
+    // começou outra série): o jogador ainda anexa.
+    let (status, body) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    // Confirmada pela organização, não se contesta mais: o jogador não anexa;
+    // a organização sim (trocando o dela: um de cada pessoa).
+    let (status, _) = report(&c.app, &c.p1, FINAL, 2, map("b", "exile")).await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, _) = confirm(&c.app, &c.ana, FINAL, 2).await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, body) = request_upload(&c.app, &c.p1, FINAL, 2, "image/webp", 10).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("screenshots.game_confirmed"))
@@ -164,8 +172,8 @@ async fn players_and_staff_attach_to_sent_maps_and_the_next() {
     let (status, body) = attach_screenshot(&c.app, &c.ana, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let list = listing(&c.app, &c.p1, FINAL).await;
-    assert_eq!(game(&list, 1)["can_attach"], false);
-    assert_eq!(game(&list, 1)["screenshots"].as_array().unwrap().len(), 2);
+    assert_eq!(game(&list, 2)["can_attach"], false);
+    assert_eq!(game(&list, 1)["screenshots"].as_array().unwrap().len(), 3);
 }
 
 #[tokio::test]

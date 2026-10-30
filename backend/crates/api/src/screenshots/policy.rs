@@ -1,9 +1,11 @@
-//! Quem anexa e quem remove um screenshot. Anexam os dois jogadores da partida
-//! e a organização (organizer e owner), num mapa enviado ou no próximo, ainda
-//! por enviar, com o torneio em andamento; o jogador, só enquanto o mapa não
-//! confirmou (depois, o screenshot não serve de prova de nada). Quem anexou
-//! remove o próprio enquanto o mapa não confirmou; a organização remove
-//! qualquer um, a qualquer hora.
+//! Quem anexa e quem remove um screenshot. Anexam os jogadores da série e a
+//! organização (organizer e owner), numa partida enviada ou na próxima, ainda
+//! por enviar, com o torneio em andamento; o jogador, só enquanto a partida
+//! ainda pode ser contestada: antes de confirmar e, depois, enquanto a
+//! contestação tardia valer (até a próxima série de um dos lados começar).
+//! Depois, o screenshot não serve de prova de nada. Quem anexou remove o
+//! próprio enquanto a partida não confirmou; a organização remove qualquer
+//! um, a qualquer hora.
 
 use crate::{matches::MatchGames, shared::ApiError, tournaments::TournamentStatus};
 
@@ -18,21 +20,24 @@ pub struct Actor {
     pub organizer: bool,
 }
 
-/// Onde está o mapa `number` na série.
+/// Onde está a partida `number` na série.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Slot {
-    /// Enviado, esperando confirmação (pendente ou contestado).
+    /// Enviada, esperando confirmação (pendente ou contestada).
     Open,
+    /// Confirmada, e a contestação tardia ainda vale.
+    Contestable,
     Confirmed,
-    /// O próximo, ainda não enviado.
+    /// A próxima, ainda não enviada.
     Next,
-    /// Nem enviado nem o próximo.
+    /// Nem enviada nem a próxima.
     Unavailable,
 }
 
 impl Slot {
     pub fn of(m: &MatchGames, number: i16) -> Self {
         match m.game(number) {
+            Some(g) if g.confirmed && g.contestable => Self::Contestable,
             Some(g) if g.confirmed => Self::Confirmed,
             Some(_) => Self::Open,
             None if m.next_game == Some(number) => Self::Next,
@@ -42,9 +47,9 @@ impl Slot {
 }
 
 /// Erros: 409 `tournament.not_in_progress`, 409 `screenshots.game_unavailable`
-/// (mapa que nem foi enviado nem é o próximo), 403 `screenshots.forbidden` (não
-/// joga a partida nem organiza), 409 `screenshots.game_confirmed` (jogador,
-/// mapa já confirmado).
+/// (partida que nem foi enviada nem é a próxima), 403 `screenshots.forbidden`
+/// (não joga a série nem organiza), 409 `screenshots.game_confirmed`
+/// (jogador, partida confirmada que não dá mais para contestar).
 pub fn attach(
     status: TournamentStatus,
     plays: bool,
@@ -70,7 +75,7 @@ pub fn attach(
 }
 
 /// Erros: 403 `screenshots.forbidden` (screenshot de outra pessoa) e 409
-/// `screenshots.game_confirmed` (o próprio, com o mapa já confirmado).
+/// `screenshots.game_confirmed` (o próprio, com a partida já confirmada).
 pub fn remove(actor: Actor, uploaded_by: Option<i64>, slot: Slot) -> Result<(), ApiError> {
     if actor.organizer {
         return Ok(());
@@ -78,7 +83,7 @@ pub fn remove(actor: Actor, uploaded_by: Option<i64>, slot: Slot) -> Result<(), 
     if uploaded_by != Some(actor.user_id) {
         return Err(FORBIDDEN);
     }
-    if slot == Slot::Confirmed {
+    if matches!(slot, Slot::Confirmed | Slot::Contestable) {
         return Err(CONFIRMED);
     }
     Ok(())
@@ -103,8 +108,8 @@ mod tests {
     }
 
     #[test]
-    fn players_attach_until_the_map_confirms() {
-        for slot in [Slot::Next, Slot::Open] {
+    fn players_attach_while_the_game_can_be_contested() {
+        for slot in [Slot::Next, Slot::Open, Slot::Contestable] {
             assert_eq!(code(attach(IN_PROGRESS, true, PLAYER, slot)), "ok");
         }
         let confirmed = attach(IN_PROGRESS, true, PLAYER, Slot::Confirmed);
@@ -132,8 +137,10 @@ mod tests {
     fn removing() {
         assert_eq!(code(remove(PLAYER, Some(1), Slot::Open)), "ok");
         assert_eq!(code(remove(PLAYER, Some(1), Slot::Next)), "ok");
-        let late = remove(PLAYER, Some(1), Slot::Confirmed);
-        assert_eq!(code(late), "screenshots.game_confirmed");
+        for slot in [Slot::Confirmed, Slot::Contestable] {
+            let late = remove(PLAYER, Some(1), slot);
+            assert_eq!(code(late), "screenshots.game_confirmed");
+        }
         assert_eq!(
             code(remove(PLAYER, Some(2), Slot::Open)),
             "screenshots.forbidden"

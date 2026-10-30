@@ -60,6 +60,8 @@ pub struct StoredGame {
     pub status: GameStatus,
     /// Lado de quem enviou; `None` quando o organizador lançou.
     pub reported_side: Option<Side>,
+    /// Quem enviou ou lançou o que vale agora; `None` se a conta foi excluída.
+    pub reported_by: Option<i64>,
     pub reported_at: DateTime<Utc>,
     pub confirm_by: Option<DateTime<Utc>>,
     pub contested_at: Option<DateTime<Utc>>,
@@ -90,6 +92,7 @@ pub(super) struct GameRow {
     pub b_frags: Option<i16>,
     pub status: String,
     pub reported_side: Option<String>,
+    pub reported_by: Option<i64>,
     pub reported_at: DateTime<Utc>,
     pub confirm_by: Option<DateTime<Utc>>,
     pub contested_at: Option<DateTime<Utc>>,
@@ -122,6 +125,7 @@ impl TryFrom<GameRow> for StoredGame {
             frags: r.a_frags.zip(r.b_frags),
             status: GameStatus::from_db(&r.status)?,
             reported_side: r.reported_side.as_deref().map(Side::from_db).transpose()?,
+            reported_by: r.reported_by,
             reported_at: r.reported_at,
             confirm_by: r.confirm_by,
             contested_at: r.contested_at,

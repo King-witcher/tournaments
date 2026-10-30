@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select started_at from tournaments where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "started_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "started_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "dd815ef1d9a3825613ab26a7ab0a346a7c42863ae0bb87cd1d79291f29e7d231"
+}

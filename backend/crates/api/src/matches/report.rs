@@ -1,19 +1,23 @@
-//! O que os jogadores da partida fazem, mapa a mapa: um envia o mapa e o
-//! adversário confirma ou contesta (sem resposta, confirma sozinho no fim da
-//! janela). O organizador também confirma, na hora: o pendente, ou o
-//! contestado (resolvendo com o mapa enviado). A série fecha sozinha quando
-//! os mapas confirmados dão a maioria (`settle`).
+//! O que os jogadores da série fazem, partida a partida: um envia a partida
+//! e o outro time confirma; qualquer um deles menos quem enviou contesta,
+//! também depois de confirmada, até a próxima série de um dos lados começar
+//! (`contest`). Sem resposta, a partida confirma sozinha no fim do prazo: a
+//! janela de contestação depois do envio, ou depois da duração prevista da
+//! partida, contada de quando ela foi liberada (`release`), o que vier por
+//! último. O organizador também confirma, na hora: o pendente, ou o
+//! contestado (resolvendo com o envio). A série fecha sozinha quando as
+//! partidas confirmadas dão a maioria (`settle`).
 
 use axum::{Json, extract::State};
 use engine::series;
 
 use super::{
-    actions, changes, db,
-    db::NewGame,
+    actions, changes, contest as rules, correction, db,
+    db::{Deadline, NewGame},
     detail, due, evidence,
     games::{GameStatus, series_games},
     history::NewEvent,
-    outcome,
+    outcome, release,
     result::{Confirmation, Side},
     types::{ContestReport, EventKind, GameInput, GamePath, MatchDetail},
     veto,
@@ -27,6 +31,10 @@ use crate::{
 const NOT_PLAYER: ApiError = ApiError::forbidden("match.not_player");
 const OWN_REPORT: ApiError = ApiError::forbidden("match.own_report");
 
+/// Duração prevista de uma partida, em minutos: o envio feito antes dela
+/// conta o prazo do fim dela.
+const GAME_MINUTES: i32 = 15;
+
 #[utoipa::path(
     post,
     path = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/report",
@@ -39,7 +47,7 @@ const OWN_REPORT: ApiError = ApiError::forbidden("match.own_report");
     ),
     request_body = GameInput,
     responses(
-        (status = OK, body = MatchDetail, description = "Mapa enviado por um jogador da partida: fica pendente até o adversário confirmar ou contestar; sem resposta, confirma sozinho no fim da janela de contestação. O próximo mapa já pode ser enviado. A série fecha quando os mapas confirmados dão a maioria a um lado"),
+        (status = OK, body = MatchDetail, description = "Partida enviada por um jogador da série: fica pendente até o outro time confirmar ou alguém contestar; sem resposta, confirma sozinha no fim do prazo (`confirm_by`): a janela de contestação depois do envio ou depois de 15 minutos da partida liberada (veto dela concluído, partida anterior enviada ou série pronta), o que vier por último. A próxima já pode ser enviada. A série fecha quando as partidas confirmadas dão a maioria a um lado"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player (quem envia não joga a partida)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
@@ -83,9 +91,13 @@ pub async fn report(
         path.game,
     )
     .await?;
-    let contest_minutes = tournament.contest_minutes;
-    let confirm_by =
-        db::insert_report(&mut tx, &at, &new, side, member.user.id, contest_minutes).await?;
+    let started_at = db::started_at(&mut tx, tournament.id).await?;
+    let deadline = Deadline {
+        released: release::released_at(&stage, m, sides, path.game, started_at),
+        game_minutes: GAME_MINUTES,
+        contest_minutes: tournament.contest_minutes,
+    };
+    let confirm_by = db::insert_report(&mut tx, &at, &new, side, member.user.id, &deadline).await?;
     let (from, to) = match side {
         Side::A => sides,
         Side::B => (sides.1, sides.0),
@@ -127,7 +139,7 @@ pub async fn report(
     responses(
         (status = OK, body = MatchDetail, description = "Mapa confirmado como foi enviado: pelo adversário de quem enviou, ou por organizer ou owner na hora (no contestado, é a resolução que aceita o mapa enviado). Se os mapas confirmados dão a maioria, a série fecha, a chave avança e, se era a partida decisiva, o torneio encerra"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.own_report (quem enviou não confirma o próprio mapa)"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.own_report (o time de quem enviou não confirma)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found"),
         (status = CONFLICT, body = ErrorBody, description = "match.already_confirmed, match.contested (espera o organizador)"),
     )
@@ -175,16 +187,16 @@ pub async fn confirm(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
-        ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
+        ("match" = String, Path, description = "Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("game" = i16, Path, description = "Número da partida na série, a partir de 1"),
     ),
     request_body = ContestReport,
     responses(
-        (status = OK, body = MatchDetail, description = "O adversário de quem enviou contesta o mapa, com comentário: o mapa sai da janela de contestação e espera o organizador. O próximo mapa continua podendo ser enviado"),
+        (status = OK, body = MatchDetail, description = "Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e espera o organizador, e a próxima continua podendo ser enviada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.own_report"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.own_report (quem enviou não contesta)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.already_contested, match.already_confirmed (inclusive pela janela, que já acabou)"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.already_contested, match.contest_closed (confirmada e a contestação tardia não vale mais: outra série de um dos lados começou, a organização confirmou ou lançou, a série acabou em W.O., ou reabrir contradiz uma série decidida depois)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.comment_invalid, request.invalid_body"),
     )
 )]
@@ -200,18 +212,18 @@ pub async fn contest(
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);
     let g = actions::game(&games, path.game)?;
-    match g.status {
-        GameStatus::Pending => {}
-        GameStatus::Contested => return Err(ApiError::conflict("match.already_contested")),
-        GameStatus::Confirmed => return Err(ApiError::conflict("match.already_confirmed")),
-    }
-    let mine = stage
+    stage
         .participant_of(member.user.id)
         .and_then(|p| g.side_of(p))
         .ok_or(NOT_PLAYER)?;
-    if Some(mine) == g.reported_side {
+    if g.reported_by == Some(member.user.id) {
         return Err(OWN_REPORT);
     }
+    let reopen = match g.status {
+        GameStatus::Pending => None,
+        GameStatus::Contested => return Err(ApiError::conflict("match.already_contested")),
+        GameStatus::Confirmed => rules::late(&stage, m, g)?,
+    };
     let comment = actions::comment(&body.comment)?;
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
@@ -221,6 +233,28 @@ pub async fn contest(
     let event = NewEvent::game(EventKind::Contested, Some(member.user.id), g.number, None)
         .with_comment(Some(&comment));
     db::insert_event(&mut tx, &at, &event).await?;
+    if let Some(change) = reopen {
+        correction::void_stale(&mut tx, &member, &tournament, &stage, m.id, &change)
+            .await
+            .map_err(|e| {
+                if e.code == correction::CONFLICTS.code {
+                    rules::CLOSED
+                } else {
+                    e
+                }
+            })?;
+        let series = (path.key.as_str(), m.best_of);
+        correction::write(
+            &mut tx,
+            &member,
+            &tournament,
+            &stage,
+            series,
+            g.sides(),
+            change,
+        )
+        .await?;
+    }
     let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))

@@ -14,13 +14,22 @@ import { TextArea } from "@/shared/ui/text-area";
 import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 import styles from "./game-respond.module.scss";
 
-type Props = { target: MatchTarget; number: number };
+type Props = {
+  target: MatchTarget;
+  number: number;
+  /** Do outro time, na partida pendente: também confirma. */
+  canConfirm: boolean;
+};
 
 /** O comentário da contestação vai de 1 a 280 caracteres. */
 const MAX_COMMENT = 280;
 
-/** Para o adversário de quem enviou o mapa: confirmar, ou contestar com um comentário. */
-export function GameRespond({ target, number }: Props) {
+/**
+ * Para quem pode responder a uma partida enviada: o outro time confirma ou
+ * contesta; o colega de quem enviou, e todos depois de confirmada (enquanto a
+ * contestação tardia vale), só contestam, com um comentário.
+ */
+export function GameRespond({ target, number, canConfirm }: Props) {
   const t = useTranslations("Match.respond");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -93,9 +102,11 @@ export function GameRespond({ target, number }: Props) {
         </Stack>
       ) : (
         <div className={styles.buttons}>
-          <Button size="sm" pending={pending} onClick={confirm}>
-            {t("confirm")}
-          </Button>
+          {canConfirm && (
+            <Button size="sm" pending={pending} onClick={confirm}>
+              {t("confirm")}
+            </Button>
+          )}
           <Button ref={contestButton} size="sm" kind="tertiary" onClick={open}>
             {t("contest")}
           </Button>

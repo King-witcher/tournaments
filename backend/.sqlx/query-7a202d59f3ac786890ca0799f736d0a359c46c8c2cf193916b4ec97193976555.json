@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into match_games\n               (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,\n                map_id, a_frags, b_frags, status, reported_side, reported_by, confirm_by)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13,\n                   now() + make_interval(mins => $14))\n           returning confirm_by as \"confirm_by!\"",
+  "query": "insert into match_games\n               (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,\n                map_id, a_frags, b_frags, status, reported_side, reported_by, confirm_by)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13,\n                   greatest(now(), $14::timestamptz + make_interval(mins => $15))\n                       + make_interval(mins => $16))\n           returning confirm_by as \"confirm_by!\"",
   "describe": {
     "columns": [
       {
@@ -30,6 +30,8 @@
         "Int2",
         "Text",
         "Int8",
+        "Timestamptz",
+        "Int4",
         "Int4"
       ]
     },
@@ -37,5 +39,5 @@
       true
     ]
   },
-  "hash": "5ca4f7a946f2095a44993550532595cc0543a68fdd6f898733be88ce8dfb00df"
+  "hash": "7a202d59f3ac786890ca0799f736d0a359c46c8c2cf193916b4ec97193976555"
 }
