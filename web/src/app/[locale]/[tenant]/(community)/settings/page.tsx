@@ -3,10 +3,14 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { DiscordSection } from "@/features/discord/components/discord-section";
+import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
 import { MembershipSettings } from "@/features/members/components/membership-settings";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
-/** Aba Configurações da comunidade: o que é de quem vê e, para o owner, o Discord. */
+/**
+ * Aba Configurações da comunidade: o que é de quem vê, o Discord (só o owner)
+ * e, por último, a zona de perigo.
+ */
 export default async function TenantSettingsPage({
   params,
 }: PageProps<"/[locale]/[tenant]/settings">) {
@@ -28,6 +32,11 @@ export default async function TenantSettingsPage({
       <Suspense fallback={null}>
         {params.then(({ tenant }) => (
           <DiscordSection slug={tenant} />
+        ))}
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton rows={2} />}>
+        {params.then(({ tenant }) => (
+          <CommunityDangerZone slug={tenant} />
         ))}
       </Suspense>
     </Stack>
