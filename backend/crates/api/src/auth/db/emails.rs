@@ -96,7 +96,7 @@ pub async fn contact_by_email(
 ) -> Result<Option<AccountContact>, sqlx::Error> {
     sqlx::query_as!(
         AccountContact,
-        "select u.id as user_id, u.email, p.username as \"username?\", u.locale
+        "select u.id as \"user_id!\", u.email, p.username as \"username?\", u.locale as \"locale!\"
          from users u
          left join password_credentials p on p.user_id = u.id
          where u.email = $1",

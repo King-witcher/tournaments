@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id as user_id, u.email, p.username as \"username?\", u.locale\n         from users u\n         left join password_credentials p on p.user_id = u.id\n         where u.email = $1",
+  "query": "select u.id as \"user_id!\", u.email, p.username as \"username?\", u.locale as \"locale!\"\n         from users u\n         left join password_credentials p on p.user_id = u.id\n         where u.email = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "user_id",
+        "name": "user_id!",
         "type_info": "Int8",
         "origin": {
           "Table": {
@@ -38,7 +38,7 @@
       },
       {
         "ordinal": 3,
-        "name": "locale",
+        "name": "locale!",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -54,11 +54,11 @@
       ]
     },
     "nullable": [
+      true,
+      true,
       false,
-      true,
-      true,
-      false
+      true
     ]
   },
-  "hash": "5834379a84651a052922423146b7bd57b3a03eb6cd34a1effae850798e540440"
+  "hash": "d09cbb292f9ccac0111878ecb31208b204834eeffc5b792ba141bc3832748608"
 }
