@@ -91,7 +91,7 @@ proptest! {
     fn any_results_and_withdrawals_keep_the_rules(
         n in 2i64..=14,
         rounds in proptest::option::of(1u16..=13),
-        picks in proptest::collection::vec((any::<bool>(), 0u8..2, 0u32..100, 0u32..100), 1..40),
+        picks in proptest::collection::vec((any::<bool>(), 0u8..2, -30i32..100, -30i32..100), 1..40),
         withdrawals in proptest::collection::vec((0usize..60, 0i64..14), 0..4),
     ) {
         let mut run = Run::new(n, rounds);

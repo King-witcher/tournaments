@@ -4,7 +4,7 @@ use super::*;
 use proptest::prelude::*;
 
 /// O resultado do passo `i`: vencedor, W.O. ou placar, frags.
-fn report(m: &Match, i: usize, picks: &[(bool, bool, u8, u32, u32)]) -> StageReport {
+fn report(m: &Match, i: usize, picks: &[(bool, bool, u8, i32, i32)]) -> StageReport {
     let MatchState::Ready { a, b } = m.state else {
         unreachable!()
     };
@@ -48,6 +48,11 @@ fn check_table(b: &RoundRobinBracket) {
     assert_eq!(wins as usize, n * (n - 1) / 2);
     let map_diff: i32 = t.iter().map(|r| r.map_diff).sum();
     assert_eq!(map_diff, 0);
+    // Os frags de uma série entram pró de um e contra do outro, com sinal.
+    let frags_for: i64 = t.iter().map(|r| r.frags_for).sum();
+    let frags_against: i64 = t.iter().map(|r| r.frags_against).sum();
+    assert_eq!(frags_for, frags_against);
+    assert_eq!(t.iter().map(|r| r.frag_diff).sum::<i64>(), 0);
     for r in t {
         assert_eq!(r.points, r.wins);
         assert_eq!(r.played as usize, n - 1);
@@ -62,7 +67,7 @@ proptest! {
     fn any_results_finish_with_a_consistent_table(
         n in 2i64..=16,
         picks in proptest::collection::vec(
-            (any::<bool>(), any::<bool>(), 0u8..3, 0u32..200, 0u32..200), 1..40),
+            (any::<bool>(), any::<bool>(), 0u8..3, -50i32..200, -50i32..200), 1..40),
         order_seed in any::<u64>(),
     ) {
         let mut b = RoundRobinBracket::new(config(), seeds(n)).unwrap();

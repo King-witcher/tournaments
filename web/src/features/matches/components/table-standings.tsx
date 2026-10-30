@@ -37,7 +37,10 @@ export function TableStandings({ tenant, bracket }: Props) {
   const swiss = bracket.format.format === "swiss";
   const finished = bracket.status === "finished";
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
-  const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+  // Negativo com o sinal de menos (−), que não se confunde com o traço entre
+  // pró e contra: os frags podem ser negativos (suicídio e queda tiram frag).
+  const minus = (n: number) => (n < 0 ? `−${-n}` : String(n));
+  const signed = (n: number) => (n > 0 ? `+${n}` : minus(n));
   const nameOf = (teamId: number) => {
     const team = byId.get(teamId);
     return team ? teamName(team) : "";
@@ -60,9 +63,9 @@ export function TableStandings({ tenant, bracket }: Props) {
     const team = byId.get(r.team_id);
     const name = nameOf(r.team_id);
     const solo = team ? soloMember(team) : null;
-    const frags = t("diff", {
-      won: r.frags_for,
-      lost: r.frags_against,
+    const frags = t("fragsDiff", {
+      won: minus(r.frags_for),
+      lost: minus(r.frags_against),
       diff: signed(r.frag_diff),
     });
     return {
@@ -88,10 +91,11 @@ export function TableStandings({ tenant, bracket }: Props) {
           lost: r.maps_lost,
           diff: signed(r.map_diff),
         }),
-        // Sem nenhum frag enviado, "sem frags" em vez de 0–0 incompleto.
+        // Sem nenhum frag enviado, "sem frags" em vez de 0–0 incompleto (com
+        // negativos, a soma dá 0 com frags; os dois em 0, quase nunca).
         frags: r.frags_complete
           ? frags
-          : r.frags_for + r.frags_against === 0
+          : r.frags_for === 0 && r.frags_against === 0
             ? t("noFrags")
             : t("incomplete", { frags }),
         buchholz: String(r.buchholz ?? 0),

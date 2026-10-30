@@ -77,9 +77,10 @@ pub struct TableRow {
     pub maps_won: u16,
     pub maps_lost: u16,
     pub map_diff: i32,
-    /// Frags das séries jogadas que vieram com frags (o W.O. não soma).
-    pub frags_for: u32,
-    pub frags_against: u32,
+    /// Frags das séries jogadas que vieram com frags (o W.O. não soma); podem
+    /// ser negativos (suicídio e queda tiram frag).
+    pub frags_for: i64,
+    pub frags_against: i64,
     pub frag_diff: i64,
     /// Toda série jogada veio com frags: só assim o saldo de frags desempata.
     pub frags_complete: bool,
@@ -283,7 +284,7 @@ pub struct GameDetail {
     pub winner: Side,
     /// `null` só em série antiga, enviada sem detalhe por mapa.
     pub map: Option<MapRef>,
-    /// Frags de cada lado, se vieram.
+    /// Frags de cada lado, se vieram; de -999 a 999.
     pub a_frags: Option<i16>,
     pub b_frags: Option<i16>,
     pub status: GameStatus,
@@ -404,12 +405,15 @@ pub struct GameInput {
     #[schema(example = "blood-covenant")]
     #[serde(default)]
     pub map: Option<String>,
-    /// Frags do lado `a` e do lado `b`, de 0 a 999, opcionais (os dois ou
-    /// nenhum); sem empate e com mais frags para quem venceu.
+    /// Frags do lado `a` e do lado `b`, de -999 a 999 (suicídio e queda tiram
+    /// frag), opcionais (os dois ou nenhum); sem empate e com mais frags para
+    /// quem venceu.
     #[serde(default)]
-    pub a_frags: Option<u16>,
+    #[schema(minimum = -999, maximum = 999)]
+    pub a_frags: Option<i16>,
     #[serde(default)]
-    pub b_frags: Option<u16>,
+    #[schema(minimum = -999, maximum = 999)]
+    pub b_frags: Option<i16>,
 }
 
 /// O mapa que o organizador lança ou corrige, já confirmado.

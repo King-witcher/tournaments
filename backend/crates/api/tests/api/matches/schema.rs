@@ -110,7 +110,8 @@ async fn maps_must_be_valid() {
         number: 1,
         winner: a,
         map: Some("awoken"),
-        frags: (Some(20), Some(10)),
+        // Suicídio e queda tiram frag: o placar pode ficar abaixo de 0.
+        frags: (Some(20), Some(-1)),
         status: "pending",
         comment: None,
     };
@@ -130,6 +131,20 @@ async fn maps_must_be_valid() {
                 ..base()
             },
             check("match_games_frags_winner"),
+        ),
+        (
+            Game {
+                frags: (Some(-3), Some(-1)),
+                ..base()
+            },
+            check("match_games_frags_winner"),
+        ),
+        (
+            Game {
+                frags: (Some(-999), Some(-1000)),
+                ..base()
+            },
+            check("match_games_b_frags_check"),
         ),
         (
             Game {

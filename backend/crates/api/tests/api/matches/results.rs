@@ -21,11 +21,13 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
     )
     .await;
 
-    // P4 (lado b) envia o mapa 1, vencido por P1, com frags.
-    let first = json!({ "winner": "a", "map": "awoken", "a_frags": 20, "b_frags": 12 });
+    // P4 (lado b) envia o mapa 1, vencido por P1, com frags; os de P4,
+    // negativos (suicídio e queda tiram frag).
+    let first = json!({ "winner": "a", "map": "awoken", "a_frags": 20, "b_frags": -1 });
     let (status, sent) = report(&app, &p[3], "wb-1-1", 1, first).await;
     assert_eq!(status, StatusCode::OK, "{sent}");
     let g = &sent["games"][0];
+    assert_eq!((&g["a_frags"], &g["b_frags"]), (&json!(20), &json!(-1)));
     assert_eq!(
         (
             &g["status"],

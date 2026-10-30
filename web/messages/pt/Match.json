@@ -128,7 +128,7 @@
     "others": "Outros mapas",
     "frags": "Frags (opcional)",
     "fragsOf": "Frags de {name}",
-    "fragsRange": "De 0 a {max}.",
+    "fragsRange": "De {min} a {max}.",
     "submit": "Enviar mapa {number}",
     "enter": "Lançar mapa {number}",
     "save": "Salvar mapa {number}",

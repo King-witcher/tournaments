@@ -14,6 +14,7 @@
 //! - o mapa não se repete na série; mapa nulo (resultado antigo, sem
 //!   detalhe) não conta como repetido;
 //! - frags são opcionais; com frags, não há empate e quem fez mais venceu.
+//!   Podem ser negativos (suicídio e queda tiram frag): -1 vence -3.
 
 use serde::{Deserialize, Serialize};
 
@@ -197,11 +198,12 @@ pub fn check_map(
 }
 
 /// Os frags do mapa `game` (a partir de 1), se vieram: sem empate e com mais
-/// frags para quem venceu. Erros: `GameTied` e `FragsDisagree`.
+/// frags para quem venceu, negativos inclusive (a faixa é do site). Erros:
+/// `GameTied` e `FragsDisagree`.
 pub fn check_frags(
     game: usize,
     winner: Side,
-    frags: Option<(u16, u16)>,
+    frags: Option<(i16, i16)>,
 ) -> Result<(), EngineError> {
     let Some((a, b)) = frags else { return Ok(()) };
     if a == b {
@@ -373,6 +375,23 @@ mod tests {
         assert_eq!(
             check_frags(3, A, Some((5, 10))),
             Err(EngineError::FragsDisagree { game: 3 })
+        );
+    }
+
+    #[test]
+    fn negative_frags_follow_the_same_rules() {
+        // Suicídio e queda tiram frag: quem fez mais venceu, mesmo abaixo de 0.
+        assert_eq!(check_frags(1, A, Some((20, -1))), Ok(()));
+        assert_eq!(check_frags(1, A, Some((-1, -3))), Ok(()));
+        assert_eq!(check_frags(1, A, Some((0, -1))), Ok(()));
+        assert_eq!(check_frags(1, B, Some((-999, 999))), Ok(()));
+        assert_eq!(
+            check_frags(2, B, Some((-1, -3))),
+            Err(EngineError::FragsDisagree { game: 2 })
+        );
+        assert_eq!(
+            check_frags(3, A, Some((-2, -2))),
+            Err(EngineError::GameTied { game: 3 })
         );
     }
 }

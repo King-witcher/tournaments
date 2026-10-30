@@ -145,7 +145,7 @@
     "not_ready": "Esta partida todavía no se puede jugar.",
     "not_player": "Solo quien juega la partida puede hacer esto.",
     "not_in_match": "Ese participante no juega esta partida.",
-    "frags_invalid": "Informa los frags de los dos lados, de 0 a {max}, o ninguno.",
+    "frags_invalid": "Informa los frags de los dos lados, de {min} a {max}, o ninguno.",
     "map_unknown": "Mapa desconocido.",
     "map_repeated": "Ese mapa ya se jugó en esta serie.",
     "game_tied": "Los frags del mapa {game} están empatados: en el duelo siempre hay un ganador.",

@@ -45,7 +45,7 @@ use crate::{
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "match.not_ready, match.series_decided, match.no_games_left {best_of}, match.game_out_of_order {next}, match.correction_conflicts (uma partida decidida depois deixaria de fechar)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os do envio (match.map_unknown, match.map_repeated, match.frags_invalid {max}, match.game_tied {game}, match.frags_disagree {game}, match.map_required: frags sem mapa), match.comment_invalid, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os do envio (match.map_unknown, match.map_repeated, match.frags_invalid {min, max}, match.game_tied {game}, match.frags_disagree {game}, match.map_required: frags sem mapa), match.comment_invalid, request.invalid_body"),
     )
 )]
 pub async fn put_game(

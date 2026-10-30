@@ -194,8 +194,8 @@ fn frags(r: &StoredResult, games: &[StoredGame]) -> Option<SeriesFrags> {
         let (a, b) = g.frags?;
         let (won, lost) = if r.winner == g.side_a { (a, b) } else { (b, a) };
         let total = sum.get_or_insert_default();
-        total.winner += u32::try_from(won).ok()?;
-        total.loser += u32::try_from(lost).ok()?;
+        total.winner += i32::from(won);
+        total.loser += i32::from(lost);
     }
     sum
 }

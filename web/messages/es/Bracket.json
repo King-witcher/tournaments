@@ -99,6 +99,7 @@
     "maps": "Mapas",
     "frags": "Frags",
     "diff": "{won}–{lost} ({diff})",
+    "fragsDiff": "{won} – {lost} ({diff})",
     "incomplete": "{frags}, incompletos",
     "buchholz": "Buchholz",
     "notes": "Situación",

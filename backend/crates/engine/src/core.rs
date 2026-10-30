@@ -105,11 +105,13 @@ pub struct MatchReport {
 }
 
 /// Frags somados de uma série jogada (os mapas que valem), do vencedor e do
-/// perdedor da série. Quem venceu a série pode ter feito menos frags.
+/// perdedor da série. Quem venceu a série pode ter feito menos frags, e os
+/// frags podem ser negativos (no Quake Champions, suicídio e queda tiram
+/// frag; cada mapa vai de -999 a 999, faixa do site).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SeriesFrags {
-    pub winner: u32,
-    pub loser: u32,
+    pub winner: i32,
+    pub loser: i32,
 }
 
 /// Resultado de uma série com os frags dela, como entra no histórico de uma

@@ -49,7 +49,11 @@ type Props = {
 /** O que falta preencher (junto do campo) ou o erro da API (acima dos botões). */
 type Errors = { winner?: string; map?: string; form?: string } | undefined;
 
-/** Frags vão de 0 a 999 (a API confere de novo). */
+/**
+ * Frags vão de -999 a 999 (a API confere de novo): no Quake Champions,
+ * suicídio e queda tiram frag, então o placar de um lado pode ficar negativo.
+ */
+const MIN_FRAGS = -999;
 const MAX_FRAGS = 999;
 
 /** Um mapa da série: quem venceu, o mapa jogado e os frags opcionais. */
@@ -122,10 +126,10 @@ export function GameForm(props: Props) {
       onChange={(value) => setGame({ ...game, [side]: value })}
       allowEmpty
       hideSteppers
-      min={0}
+      min={MIN_FRAGS}
       max={MAX_FRAGS}
-      inputMode="numeric"
-      invalidText={t("fragsRange", { max: MAX_FRAGS })}
+      negative
+      invalidText={t("fragsRange", { min: MIN_FRAGS, max: MAX_FRAGS })}
     />
   );
 

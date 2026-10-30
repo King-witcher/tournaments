@@ -121,6 +121,7 @@ function AdjustRatingModal({
         disableWheel
         min={-MAX_DELTA}
         max={MAX_DELTA}
+        negative
         step={1}
         value={delta}
         onChange={setDelta}

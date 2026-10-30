@@ -32,7 +32,7 @@ fn league(rules: Rules, n: i64, pairs: &[(i64, i64)], rests: &[i64]) -> League {
 
 /// A partida `index` (a partir de 1) vencida por `winner` com `loser_maps`
 /// para o outro, numa md3, com os frags (do vencedor, do perdedor).
-fn won(l: &mut League, index: u16, winner: i64, loser_maps: u8, frags: (u32, u32)) {
+fn won(l: &mut League, index: u16, winner: i64, loser_maps: u8, frags: (i32, i32)) {
     report(l, index, winner, loser_maps, Some(frags));
 }
 
@@ -41,7 +41,7 @@ fn won_without_frags(l: &mut League, index: u16, winner: i64, loser_maps: u8) {
     report(l, index, winner, loser_maps, None);
 }
 
-fn report(l: &mut League, index: u16, winner: i64, loser_maps: u8, frags: Option<(u32, u32)>) {
+fn report(l: &mut League, index: u16, winner: i64, loser_maps: u8, frags: Option<(i32, i32)>) {
     l.report(StageReport {
         report: MatchReport {
             match_id: mid(index),
@@ -214,6 +214,35 @@ fn frags_only_compare_who_has_them_all() {
     assert!(!row(&l, 1).frags_complete);
     assert!(row(&l, 2).frags_complete);
     assert_eq!(row(&l, 2).frag_diff, 40);
+}
+
+#[test]
+fn negative_frags_count_with_their_sign() {
+    // Suicídio e queda tiram frag. 1, 2 e 3 vencem 2 x 1 quem não joga entre
+    // eles: 2 por -1 x -3 (+2), 3 por 20 x -1 (+21), 1 por 0 x -1 (+1).
+    let mut l = league(ROUND_ROBIN, 5, &[(2, 4), (3, 5), (1, 4)], &[]);
+    won(&mut l, 1, 2, 1, (-1, -3));
+    won(&mut l, 2, 3, 1, (20, -1));
+    won(&mut l, 3, 1, 1, (0, -1));
+    assert_eq!(order(&l), [3, 2, 1, 5, 4]);
+    assert_eq!(
+        ahead(&l),
+        [
+            Some(FragDiff),
+            Some(FragDiff),
+            Some(Points),
+            Some(MapDiff),
+            None
+        ]
+    );
+    // Frags pró negativos com saldo positivo, e o saldo de quem perdeu as
+    // duas somando os dois lados com sinal.
+    let r = row(&l, 2);
+    assert_eq!((r.frags_for, r.frags_against, r.frag_diff), (-1, -3, 2));
+    let r = row(&l, 4);
+    assert_eq!((r.frags_for, r.frags_against, r.frag_diff), (-4, -1, -3));
+    let r = row(&l, 5);
+    assert_eq!((r.frags_for, r.frags_against, r.frag_diff), (-1, 20, -21));
 }
 
 #[test]

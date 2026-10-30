@@ -13,14 +13,16 @@ use engine::{
 use super::{db::NewGame, result::Side, types::GameInput};
 use crate::shared::ApiError;
 
-/// Teto de frags num mapa (o mesmo check está na tabela).
-pub const MAX_FRAGS: u16 = 999;
+/// Faixa dos frags de um lado num mapa (o mesmo check está na tabela). O
+/// piso é negativo porque, no Quake Champions, suicídio e queda tiram frag.
+pub const MIN_FRAGS: i16 = -999;
+pub const MAX_FRAGS: i16 = 999;
 
 /// O mapa `number` entre `sides`, com o mapa resolvido por `maps` (ids dos
 /// mapas ativos pelo slug). `require_map`: o jogador sempre diz o mapa; o
 /// organizador pode deixar sem (série antiga). Erros: 422
 /// `match.map_required` (também frags sem mapa), `match.map_unknown`,
-/// `match.frags_invalid` `{max}` (um lado só, ou acima do teto) e os do
+/// `match.frags_invalid` `{min, max}` (um lado só, ou fora da faixa) e os do
 /// `engine` (`match.game_tied` `{game}`, `match.frags_disagree` `{game}`).
 pub fn game(
     number: i16,
@@ -37,12 +39,13 @@ pub fn game(
         ),
         None => None,
     };
+    let range = MIN_FRAGS..=MAX_FRAGS;
     let frags = match (input.a_frags, input.b_frags) {
         (None, None) => None,
-        (Some(a), Some(b)) if a <= MAX_FRAGS && b <= MAX_FRAGS => Some((a, b)),
+        (Some(a), Some(b)) if range.contains(&a) && range.contains(&b) => Some((a, b)),
         _ => {
             return Err(ApiError::invalid("match.frags_invalid")
-                .with_params([("max", i64::from(MAX_FRAGS))]));
+                .with_params([("min", i64::from(MIN_FRAGS)), ("max", i64::from(MAX_FRAGS))]));
         }
     };
     if map.is_none() && (require_map || frags.is_some()) {
@@ -55,8 +58,7 @@ pub fn game(
         sides,
         winner: input.winner.of(sides),
         map,
-        // Cabem em i16: no máximo MAX_FRAGS.
-        frags: frags.map(|(a, b)| (a as i16, b as i16)),
+        frags,
     })
 }
 
@@ -77,7 +79,7 @@ mod tests {
         [("awoken".to_owned(), MapId(1))].into_iter().collect()
     }
 
-    fn input(winner: Side, map: Option<&str>, frags: (Option<u16>, Option<u16>)) -> GameInput {
+    fn input(winner: Side, map: Option<&str>, frags: (Option<i16>, Option<i16>)) -> GameInput {
         GameInput {
             winner,
             map: map.map(str::to_owned),
@@ -112,6 +114,15 @@ mod tests {
             true,
         );
         assert_eq!(g.unwrap().frags, None);
+        // Suicídio e queda tiram frag: negativos valem, até o piso.
+        let g = game(
+            1,
+            SIDES,
+            &input(Side::B, Some("awoken"), (Some(-999), Some(-1))),
+            &maps(),
+            true,
+        );
+        assert_eq!(g.unwrap().frags, Some((-999, -1)));
         // O organizador pode lançar sem o mapa (série antiga).
         let g = game(
             1,
@@ -143,6 +154,20 @@ mod tests {
             check(input(Side::A, Some("awoken"), (Some(1000), Some(0))), true),
             "match.frags_invalid"
         );
+        assert_eq!(
+            check(input(Side::A, Some("awoken"), (Some(0), Some(-1000))), true),
+            "match.frags_invalid"
+        );
+        let err = game(
+            1,
+            SIDES,
+            &input(Side::A, Some("awoken"), (Some(-1000), Some(-1001))),
+            &m,
+            true,
+        )
+        .err()
+        .unwrap();
+        assert_eq!(err.params, [("min", -999), ("max", 999)]);
         assert_eq!(
             check(input(Side::A, Some("awoken"), (Some(10), None)), true),
             "match.frags_invalid"

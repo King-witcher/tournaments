@@ -13,7 +13,9 @@
 //!   saldo, de quem jogou contra o mesmo adversário (assumido). O bye não
 //!   soma mapa;
 //! - **frags**: os da série, só de série jogada e com frags em todos os
-//!   mapas (`StageReport::frags`); o W.O. não soma frag (assumido);
+//!   mapas (`StageReport::frags`); o W.O. não soma frag (assumido). Podem
+//!   ser negativos, os pró também (suicídio e queda tiram frag): o saldo é
+//!   pró menos contra, com sinal;
 //! - **Buchholz** (só suíço): soma dos pontos atuais dos adversários das
 //!   séries decididas, inclusive por W.O. e repetindo o adversário da
 //!   revanche; o bye não soma nada, porque não há adversário (assumido);
@@ -111,9 +113,9 @@ pub struct TableRow {
     pub maps_won: u16,
     pub maps_lost: u16,
     pub map_diff: i32,
-    /// Frags das séries jogadas que vieram com frags.
-    pub frags_for: u32,
-    pub frags_against: u32,
+    /// Frags das séries jogadas que vieram com frags; podem ser negativos.
+    pub frags_for: i64,
+    pub frags_against: i64,
     pub frag_diff: i64,
     /// Toda série jogada veio com frags: só assim o saldo de frags desempata.
     pub frags_complete: bool,
@@ -130,8 +132,8 @@ struct Tally {
     byes: u16,
     maps_won: u16,
     maps_lost: u16,
-    frags_for: u32,
-    frags_against: u32,
+    frags_for: i64,
+    frags_against: i64,
     /// Séries jogadas sem frags.
     frags_missing: u16,
     /// Adversários das séries decididas (com repetição, se houve revanche).
@@ -180,10 +182,11 @@ pub(crate) fn compute(
                 if let Outcome::Played { .. } = outcome {
                     match f {
                         Some(f) => {
-                            tally[w].frags_for += f.winner;
-                            tally[w].frags_against += f.loser;
-                            tally[l].frags_for += f.loser;
-                            tally[l].frags_against += f.winner;
+                            let (fw, fl) = (i64::from(f.winner), i64::from(f.loser));
+                            tally[w].frags_for += fw;
+                            tally[w].frags_against += fl;
+                            tally[l].frags_for += fl;
+                            tally[l].frags_against += fw;
                         }
                         None => {
                             tally[w].frags_missing += 1;
@@ -218,7 +221,7 @@ pub(crate) fn compute(
             Criterion::Points => i64::from(points[i]),
             Criterion::Buchholz => i64::from(buchholz[i]),
             Criterion::MapDiff => i64::from(t.maps_won) - i64::from(t.maps_lost),
-            Criterion::FragDiff => i64::from(t.frags_for) - i64::from(t.frags_against),
+            Criterion::FragDiff => t.frags_for - t.frags_against,
             // O seed melhor (menor índice) fica à frente.
             Criterion::Seed => -(i as i64),
             // Calculado dentro de cada grupo de empatados (`tiebreak`).
@@ -251,7 +254,7 @@ pub(crate) fn compute(
                 map_diff: i32::from(t.maps_won) - i32::from(t.maps_lost),
                 frags_for: t.frags_for,
                 frags_against: t.frags_against,
-                frag_diff: i64::from(t.frags_for) - i64::from(t.frags_against),
+                frag_diff: t.frags_for - t.frags_against,
                 frags_complete: complete(i),
                 buchholz: with_buchholz.then_some(buchholz[i]),
                 ahead_by,
