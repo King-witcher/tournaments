@@ -28,7 +28,7 @@ use super::{
 use crate::{
     AppState,
     auth::{CurrentUser, current_session_id},
-    outbox,
+    notifications, outbox,
     shared::{ApiError, ErrorBody},
     tenants::TenantMember,
     tournaments,
@@ -65,7 +65,7 @@ impl FromRequestParts<AppState> for SameOrigin {
     path = "/ws",
     tag = "realtime",
     responses(
-        (status = 101, description = "WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (mudanças do que assinou e de \"Seus torneios\", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu"),
+        (status = 101, description = "WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ver; depois, mudanças do que assinou e de \"Seus torneios\", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "realtime.origin_forbidden (o Origin não é o do site)"),
         (status = UPGRADE_REQUIRED, body = ErrorBody, description = "realtime.upgrade_required (não é um pedido de WebSocket)"),
@@ -90,6 +90,11 @@ async fn run(state: AppState, user: CurrentUser, session: String, socket: WebSoc
     let mut connection = Connection::new(user.id, session);
     let mut events = state.realtime.subscribe();
     let (mut sink, mut stream) = socket.split();
+    // Depois de entrar no canal: um aviso que chega no meio pode contar duas
+    // vezes (a mais, até abrir o sininho), mas não fica de fora.
+    if send_unread(&state, &mut sink, user.id).await.is_err() {
+        return;
+    }
     let mut ping = interval_at(Instant::now() + PING_EVERY, PING_EVERY);
     let mut waiting_pong = false;
     loop {
@@ -120,7 +125,8 @@ async fn run(state: AppState, user: CurrentUser, session: String, socket: WebSoc
                     }
                 },
                 Err(RecvError::Lagged(_)) => {
-                    let mut result = Ok(());
+                    // Os avisos perdidos também ficaram fora da contagem.
+                    let mut result = send_unread(&state, &mut sink, user.id).await;
                     for message in connection.resync() {
                         result = send(&mut sink, &message).await;
                     }
@@ -145,6 +151,18 @@ async fn run(state: AppState, user: CurrentUser, session: String, socket: WebSoc
 async fn send(sink: &mut Sink, message: &ServerMessage) -> Result<(), axum::Error> {
     let text = serde_json::to_string(message).expect("a mensagem vira JSON");
     sink.send(Message::Text(text.into())).await
+}
+
+/// Quantas notificações faltam ver (`unread`). Se o banco falha, a conexão
+/// segue sem a contagem, com log.
+async fn send_unread(state: &AppState, sink: &mut Sink, user: i64) -> Result<(), axum::Error> {
+    match notifications::unread_count(&state.db, user).await {
+        Ok(count) => send(sink, &ServerMessage::Unread { count }).await,
+        Err(e) => {
+            tracing::error!(error = %e, "contagem das notificações falhou");
+            Ok(())
+        }
+    }
 }
 
 /// Uma mensagem do navegador e a resposta.

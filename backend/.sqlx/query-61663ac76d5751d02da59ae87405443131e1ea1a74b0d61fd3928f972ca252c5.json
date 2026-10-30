@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into notifications (user_id, notice)\n         select id, $2 from users where id = any($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "61663ac76d5751d02da59ae87405443131e1ea1a74b0d61fd3928f972ca252c5"
+}

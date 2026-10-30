@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"count!\" from notifications\n           where user_id = $1 and read_at is null",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3edf544bb419b53299cdd67f5e462ea086bb7353939eff3bffa9ca6938e2770d"
+}

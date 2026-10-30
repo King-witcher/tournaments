@@ -76,12 +76,23 @@ async fn serve(state: api::AppState) -> String {
     format!("ws://{addr}/ws")
 }
 
-async fn connect(url: &str, who: &User) -> Socket {
+/// Conecta e devolve o socket e a primeira mensagem, a das notificações não
+/// lidas.
+async fn open(url: &str, who: &User) -> (Socket, Value) {
     let mut request = url.into_client_request().unwrap();
     let headers = request.headers_mut();
     headers.insert(header::COOKIE, who.cookie.parse().unwrap());
     headers.insert(header::ORIGIN, WEB.parse().unwrap());
-    tokio_tungstenite::connect_async(request).await.unwrap().0
+    let mut socket = tokio_tungstenite::connect_async(request).await.unwrap().0;
+    let unread = next(&mut socket).await;
+    (socket, unread)
+}
+
+/// Conecta sem notificações não lidas.
+async fn connect(url: &str, who: &User) -> Socket {
+    let (socket, unread) = open(url, who).await;
+    assert_eq!(unread, json!({ "type": "unread", "count": 0 }));
+    socket
 }
 
 /// A próxima mensagem de texto, em JSON (falha se não chega em 5 s).
@@ -262,6 +273,29 @@ async fn notices_and_ended_sessions() {
             "params": { "tournament": "Copa de Outubro" }, "path": "/quake-br/copa"
         })
     );
+    for _ in 0..2 {
+        next(&mut other_tab).await;
+    }
+
+    // O aviso ficou no sininho: a aba que abre agora já conta, e ver numa aba
+    // leva a contagem às outras.
+    let (mut new_tab, unread) = open(&url, &bia).await;
+    assert_eq!(unread, json!({ "type": "unread", "count": 1 }));
+    let (_, list) = get(&app, "/me/notifications", &bia).await;
+    let up_to = list[0]["id"].clone();
+    let (status, _) = post(
+        &app,
+        "/me/notifications/read",
+        &bia,
+        json!({ "up_to": up_to }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    realtime::dispatch_once(&state).await.unwrap();
+    for tab in [&mut socket, &mut other_tab, &mut new_tab] {
+        assert_eq!(next(tab).await, json!({ "type": "unread", "count": 0 }));
+    }
+    drop(new_tab);
 
     // Sair fecha os sockets desta sessão (as duas abas são do mesmo cookie).
     let (status, _) = call(

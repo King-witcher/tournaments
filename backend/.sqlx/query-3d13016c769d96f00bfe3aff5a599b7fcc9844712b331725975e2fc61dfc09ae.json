@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select display_name, avatar_url, email, deletion_due_at, deleted_at is not null as \"deleted!\",\n                  (select count(*) from user_identities where user_id = u.id) as \"identities!\",\n                  (select count(*) from password_credentials where user_id = u.id) as \"passwords!\",\n                  (select count(*) from push_subscriptions where user_id = u.id) as \"push!\"\n           from users u where id = $1",
+  "query": "select display_name, avatar_url, email, deletion_due_at, deleted_at is not null as \"deleted!\",\n                  (select count(*) from user_identities where user_id = u.id) as \"identities!\",\n                  (select count(*) from password_credentials where user_id = u.id) as \"passwords!\",\n                  (select count(*) from push_subscriptions where user_id = u.id) as \"push!\",\n                  (select count(*) from notifications where user_id = u.id) as \"notifications!\"\n           from users u where id = $1",
   "describe": {
     "columns": [
       {
@@ -70,6 +70,12 @@
         "name": "push!",
         "type_info": "Int8",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "notifications!",
+        "type_info": "Int8",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -85,8 +91,9 @@
       null,
       null,
       null,
+      null,
       null
     ]
   },
-  "hash": "38d43702006cc92c5ae6d58c824e08bf58e1617f60a0cadbc5a5870cdae7a857"
+  "hash": "3d13016c769d96f00bfe3aff5a599b7fcc9844712b331725975e2fc61dfc09ae"
 }

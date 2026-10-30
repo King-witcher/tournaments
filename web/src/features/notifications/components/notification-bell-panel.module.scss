@@ -1,0 +1,26 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O ícone é a referência do número, que fica no canto de cima dele.
+.icon {
+  position: relative;
+  display: flex;
+}
+
+// Quantas faltam ver, no vermelho do Carbon para o que pede atenção (o
+// `BadgeIndicator` do Carbon, que só existe no `IconButton`): visível de longe
+// e sem depender só da cor, porque é um número.
+.badge {
+  @include type.type-style("helper-text-01");
+
+  position: absolute;
+  inset-block-start: calc(-1 * #{spacing.$spacing-03});
+  inset-inline-start: spacing.$spacing-04;
+  min-inline-size: spacing.$spacing-05;
+  padding: 0 spacing.$spacing-02;
+  border-radius: spacing.$spacing-05;
+  background-color: theme.$support-error;
+  color: theme.$text-on-color;
+  text-align: center;
+}

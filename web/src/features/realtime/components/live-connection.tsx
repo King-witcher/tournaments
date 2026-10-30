@@ -83,6 +83,7 @@ export function LiveConnection() {
       offReconnect();
       scheduler.dispose();
       hub.client.close();
+      hub.setUnread(undefined);
     };
   }, [hub]);
 

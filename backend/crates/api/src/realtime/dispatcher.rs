@@ -1,12 +1,13 @@
 //! O despachante: lê o outbox em ordem, publica cada evento no canal dos
-//! sockets, manda os Web Push dos avisos e apaga o que saiu, tudo numa
-//! transação (outra instância pula as linhas travadas). Os avisos que a
-//! comunidade quer no Discord entram na fila dele nessa transação (o envio é
-//! da tarefa do `discord`). Roda quando acordado: depois de cada requisição
-//! que emitiu e a cada passada do agendador.
+//! sockets, guarda os avisos no sininho de cada destinatário, manda os Web
+//! Push e apaga o que saiu, tudo numa transação (outra instância pula as
+//! linhas travadas). Os avisos que a comunidade quer no Discord entram na
+//! fila dele nessa transação (o envio é da tarefa do `discord`). Roda quando
+//! acordado: depois de cada requisição que emitiu e a cada passada do
+//! agendador.
 
 use crate::{
-    AppState, discord,
+    AppState, discord, notifications,
     outbox::{self, Event},
     push,
     shared::ApiError,
@@ -26,8 +27,11 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
             continue;
         };
         queued |= enqueue_discord(&mut tx, event).await?;
-        if let (Event::Notice { users, notice }, Some(sender)) = (event, &state.push) {
-            push::deliver(&mut tx, sender.as_ref(), users, notice).await?;
+        if let Event::Notice { users, notice } = event {
+            notifications::store(&mut tx, users, notice).await?;
+            if let Some(sender) = &state.push {
+                push::deliver(&mut tx, sender.as_ref(), users, notice).await?;
+            }
         }
         state.realtime.publish(event.clone());
     }

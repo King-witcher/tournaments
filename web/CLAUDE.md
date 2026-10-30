@@ -59,7 +59,7 @@ messages/<pt|es>/       um JSON por namespace
 ### Tempo real
 
 - Página que se atualiza sozinha: ponha `<LiveUpdates>` (`features/realtime`) dizendo o que ela mostra (`tenant`, `tournament`, `match`, `me`), no `params.then(...)` da página ou do `layout.tsx` do grupo. Página sem `LiveUpdates` só muda ao navegar. O refresh mantém o `useState` dos componentes de cliente, mas `key` derivada do dado remonta o bloco.
-- O que recarrega cada página: `features/realtime/lib/interest.ts`. Conexão, toasts e som: `features/realtime`; Web Push e service worker: `features/push` e `app/sw.js/route.ts`.
+- O que recarrega cada página: `features/realtime/lib/interest.ts`. Conexão, toasts e som: `features/realtime`; Web Push e service worker: `features/push` e `app/sw.js/route.ts`; o sininho do cabeçalho (a lista e o número das não lidas, que o `RealtimeHub` guarda): `features/notifications`.
 
 ## Estilo (Carbon)
 

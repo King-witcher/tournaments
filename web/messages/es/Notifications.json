@@ -72,5 +72,15 @@
     "description": "Con el sitio abierto, cada notificación suena brevemente, también con la pestaña en segundo plano (salvo que las notificaciones con el sitio cerrado estén activadas; ahí avisa la del sistema). La elección vale para este navegador.",
     "label": "Sonar con las notificaciones",
     "test": "Escuchar el sonido"
+  },
+  "bell": {
+    "label": "Notificaciones",
+    "labelUnread": "{count, plural, one {Notificaciones: # nueva} other {Notificaciones: # nuevas}}",
+    "title": "Notificaciones",
+    "loading": "Cargando las notificaciones…",
+    "failed": "No se pudieron cargar las notificaciones. Ciérralas y ábrelas de nuevo.",
+    "empty": "Ninguna notificación en los últimos 30 días. Los avisos de check-in, partida y mapa quedan aquí, aunque ya no estén en la pantalla.",
+    "new": "Nueva",
+    "kept": "Las notificaciones quedan aquí por 30 días."
   }
 }

@@ -1,14 +1,16 @@
-//! Tempo real: o WebSocket de cada aba (`GET /ws`, `socket`), o canal em
-//! memória por onde os eventos chegam aos sockets (`Realtime`, em `hub`), o
-//! despachante que tira os eventos do outbox, publica e manda os Web Push
+//! Tempo real: o WebSocket de cada aba (`GET /ws`, `socket`, que abre com as
+//! notificações não lidas), o canal em memória por onde os eventos chegam aos
+//! sockets (`Realtime`, em `hub`), o despachante que tira os eventos do
+//! outbox, publica, guarda os avisos no sininho e manda os Web Push
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
 //! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
 //! sorteio dos passos de veto vencidos, exclusões de comunidade e de conta,
-//! a rotina diária dos screenshots, rating das comunidades marcadas) e o
-//! relógio dos passos do veto (`clock`), que dorme até o próximo prazo.
-//! Fica acima de todos os domínios: confere o acesso como na leitura
-//! (`tenants`, `tournaments`) e o agendador chama `tournaments`, `matches`,
-//! `tenants`, `members`, `screenshots` e `ratings`.
+//! a rotina diária dos screenshots, rating das comunidades marcadas,
+//! notificações vencidas) e o relógio dos passos do veto (`clock`), que dorme
+//! até o próximo prazo. Fica acima de todos os domínios: confere o acesso
+//! como na leitura (`tenants`, `tournaments`), o socket e o despachante
+//! chamam `notifications`, e o agendador chama `tournaments`, `matches`,
+//! `tenants`, `members`, `screenshots`, `ratings` e `notifications`.
 //! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos.
 
 mod clock;

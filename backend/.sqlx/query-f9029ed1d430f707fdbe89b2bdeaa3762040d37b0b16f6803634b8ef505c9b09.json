@@ -1,0 +1,60 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, notice as \"notice: Json<Value>\", created_at,\n                  read_at is not null as \"read!\"\n           from notifications\n           where user_id = $1\n           order by id desc\n           limit $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "notifications",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "notice: Json<Value>",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "notifications",
+            "name": "notice"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "notifications",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "read!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "f9029ed1d430f707fdbe89b2bdeaa3762040d37b0b16f6803634b8ef505c9b09"
+}

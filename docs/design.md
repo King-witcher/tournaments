@@ -39,7 +39,7 @@ O que ganhou página própria e por quê: **pessoa na comunidade** (quem é o ad
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, com sessão, suas comunidades (ação com ícone `UserMultiple` abrindo um painel com a lista, a atual marcada, e "Criar comunidade"; a lista é buscada ao abrir), o idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". No fim do painel, com ou sem sessão, o tema (`ContentSwitcher` de ícones: claro, do navegador, escuro). `Content` embaixo com `Grid`. Sem `SideNav` no MVP: cada nível (comunidade, torneio, conta) tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
+`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC" (vai ao início); na `HeaderGlobalBar`, com sessão, suas comunidades (ação com ícone `UserMultiple` abrindo um painel com a lista, a atual marcada, e "Criar comunidade"; a lista é buscada ao abrir), o sininho (ícone `Notification` com o número das que faltam ver, abrindo um painel com os avisos dos últimos 30 dias em `LinkTile`, "Nova" nas que faltavam ver; ver "Sininho" no `decisions.md`), o idioma (ação com ícone `Translate` abrindo um painel pt/es) e a pessoa (avatar/nome abrindo `HeaderPanel` com "Conta" e "Sair"); sem sessão, "Entrar" e "Criar conta". No fim do painel, com ou sem sessão, o tema (`ContentSwitcher` de ícones: claro, do navegador, escuro). `Content` embaixo com `Grid`. Sem `SideNav` no MVP: cada nível (comunidade, torneio, conta) tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
 
 ### Início `/`
 

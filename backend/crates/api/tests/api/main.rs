@@ -14,6 +14,7 @@ mod maps;
 mod matches;
 mod members;
 mod my_tournaments;
+mod notifications;
 mod organizing;
 mod origin;
 mod participants;

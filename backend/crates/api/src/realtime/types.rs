@@ -40,8 +40,12 @@ pub enum ServerMessage {
     /// Algo que a página mostra mudou: peça de novo à API (o dado não vem
     /// aqui).
     Changed(Changed),
-    /// Aviso para quem está conectado (o mesmo do Web Push).
+    /// Aviso para quem está conectado (o mesmo do Web Push). Também fica no
+    /// sininho: some uma às não lidas.
     Notify(Notice),
+    /// Quantas notificações faltam ver: a primeira mensagem de toda conexão,
+    /// e de novo quando a pessoa as vê noutra aba ou aparelho.
+    Unread { count: i64 },
     /// Quem está conectado saiu ou foi removido da comunidade: as assinaturas
     /// dela acabaram.
     AccessLost { tenant: String },

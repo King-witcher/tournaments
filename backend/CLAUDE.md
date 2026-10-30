@@ -38,6 +38,8 @@ crates/api/src/
                   partida para screenshots
   my_tournaments/ GET /me/tournaments: os torneios de quem vê, com a situação e a próxima partida
   organizing/     GET /me/organizing: o que espera a organização em todas as comunidades
+  notifications/  o sininho: os avisos guardados por pessoa (o despachante grava), /me/notifications,
+                  as não lidas (o socket conta ao abrir) e o prazo de 30 dias
   ratings/        ranking Elo por comunidade: cache refeito do zero quando os triggers marcam o tenant (agendador, leitura e as rotas daqui); lê mapas e torneios direto no banco, sem chamar matches
   screenshots/    screenshots do placar por mapa no bucket: PUT assinado conferido por HEAD, quem anexa
                   e remove, URL assinada para ver, rotina diária de exclusão. Fica acima de matches

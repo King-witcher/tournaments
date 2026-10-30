@@ -10,6 +10,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/features/auth/components/user-menu";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { PushSession } from "@/features/push/components/push-session";
 import { RealtimeProvider } from "@/features/realtime/components/realtime-provider";
 import { RealtimeSession } from "@/features/realtime/components/realtime-session";
@@ -59,9 +60,14 @@ export default async function LocaleLayout({
               Web Push acompanha o idioma e a conta (PushSession). */}
           <RealtimeProvider>
             <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
-              {/* O lugar de cada ação enquanto ela chega: a barra não pula. */}
+              {/* O lugar de cada ação enquanto ela chega: a barra não pula.
+                  As que só existem com sessão (comunidades, sininho) ficam à
+                  esquerda: sem sessão, somem sem mexer nas outras. */}
               <Suspense fallback={<HeaderPlaceholder />}>
                 <TenantSwitcher />
+              </Suspense>
+              <Suspense fallback={<HeaderPlaceholder />}>
+                <NotificationBell />
               </Suspense>
               <Suspense fallback={<HeaderPlaceholder />}>
                 <LocaleSwitcher />

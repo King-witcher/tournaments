@@ -491,6 +491,15 @@ Decididas em 28/10/2026, ao adotar o Carbon Design System no MVP. O alvo página
 - **Discord** (decidido pelo usuário em 28/10): por **webhook por comunidade**. O owner cola a URL do webhook de um canal e o site posta lá. Nada de bot nem DM.
 - **Email**: nenhum aviso por enquanto. A cota grátis do Resend (100 por dia) fica para a conta (cadastro, recuperação de senha, troca de email).
 
+### Sininho
+
+Pedido em 30/10: o toast some em 20 s (e com o site fechado só chega o Web Push), então os avisos ficam num sininho do cabeçalho, com o número dos que faltam ver. O usuário escolheu guardar no banco por **30 dias** e que **abrir o sininho** marque tudo como visto; o resto é decisão minha, fácil de mudar.
+
+- **Guardados no Postgres**, um por destinatário (`notifications`, o `Notice` em jsonb, `read_at` nulo enquanto não visto), em qualquer aparelho e também o que chegou com o site fechado. O despachante grava cada `Notice` que publica, na mesma transação. Saem com 30 dias (o agendador apaga a cada passada, pelo índice de `created_at`) e com a conta excluída. Comunidade ou torneio excluído não apaga a notificação: o link cai no 404 até ela vencer.
+- **Contagem sem Redis novo**: buscar a contagem a cada página leria a sessão mais uma vez. Ela vem pelo WebSocket, que já leu a sessão ao conectar: a primeira mensagem de toda conexão é `unread` (uma contagem no Postgres, por índice parcial), cada `notify` soma uma no front, e a perda de eventos (fila lenta) manda a contagem de novo. A lista só é buscada ao abrir o sininho, como as comunidades.
+- **Visto**: abrir o sininho busca as 50 mais recentes e, se alguma era nova, marca como vistas até a mais recente da lista (`POST /me/notifications/read` com `up_to`: a que chega no meio continua nova). As que eram novas ficam com "Nova" até o painel fechar. O toast não marca nada: some sozinho e pode não ter sido lido. Ver numa aba emite `unread` no outbox, que leva a contagem às outras abas e aparelhos.
+- **No cabeçalho**, à esquerda do idioma, junto das comunidades (as duas só existem com sessão e somem sem mexer nas outras): o ícone de sino do Carbon com o número no vermelho do Carbon (`$support-error`, até "99+"), no lugar do `BadgeIndicator`, que o Carbon só põe no `IconButton`. O número vai também no nome da ação, para o leitor de tela. Cada notificação é um `LinkTile` para a partida ou o torneio, com o título, a frase do aviso e há quanto tempo chegou.
+
 ### Avisos no Discord
 
 O que não está acima é decisão minha (28/10), fácil de mudar:

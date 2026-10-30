@@ -2,14 +2,14 @@
 //! comunidade como quem sai sozinho (`departure::depart`: desiste dos
 //! torneios em andamento, com W.O. nas partidas dela, sai das inscrições dos
 //! que não começaram e tem os convites revogados), os apelidos dela viram o
-//! marcador de conta excluída (o vazio), as inscrições de push saem e `auth`
-//! anonimiza o resto. Cada conta na própria transação; o erro de uma fica no
-//! log e não para as outras.
+//! marcador de conta excluída (o vazio), as inscrições de push e as
+//! notificações saem e `auth` anonimiza o resto. Cada conta na própria
+//! transação; o erro de uma fica no log e não para as outras.
 
 use chrono::{DateTime, Utc};
 
 use super::{db, departure};
-use crate::{AppState, auth, push, shared::ApiError, tenants};
+use crate::{AppState, auth, notifications, push, shared::ApiError, tenants};
 
 /// Executa as exclusões de conta vencidas em `now` e devolve quantas fez.
 pub async fn delete_due_accounts(state: &AppState, now: DateTime<Utc>) -> Result<usize, ApiError> {
@@ -42,6 +42,7 @@ async fn delete_account(
         tenants::changed(&mut tx, tenant).await?;
     }
     push::forget_user(&mut tx, user_id).await?;
+    notifications::forget_user(&mut tx, user_id).await?;
     auth::anonymize_account(&mut tx, user_id).await?;
     tx.commit().await?;
     // Ninguém entrou desde o pedido (entrar cancela), mas por garantia.

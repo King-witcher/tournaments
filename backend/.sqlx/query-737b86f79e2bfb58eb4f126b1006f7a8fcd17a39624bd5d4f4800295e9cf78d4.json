@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from notifications where created_at < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "737b86f79e2bfb58eb4f126b1006f7a8fcd17a39624bd5d4f4800295e9cf78d4"
+}

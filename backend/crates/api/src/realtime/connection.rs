@@ -93,6 +93,9 @@ impl Connection {
             Event::Notice { users, notice } if users.contains(&self.user) => {
                 ServerMessage::Notify(notice.clone())
             }
+            Event::Unread { user, count } if *user == self.user => {
+                ServerMessage::Unread { count: *count }
+            }
             _ => return Delivery::Skip,
         };
         Delivery::Send(message)
@@ -199,6 +202,12 @@ mod tests {
             Delivery::Send(ServerMessage::Notify(notice.clone()))
         );
         assert_eq!(c.deliver(&Event::notice([8], notice)), Delivery::Skip);
+        let unread = |user| Event::Unread { user, count: 2 };
+        assert_eq!(
+            c.deliver(&unread(7)),
+            Delivery::Send(ServerMessage::Unread { count: 2 })
+        );
+        assert_eq!(c.deliver(&unread(8)), Delivery::Skip);
     }
 
     #[test]

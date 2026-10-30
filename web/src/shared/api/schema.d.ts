@@ -436,6 +436,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["notifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mark_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/organizing": {
         parameters: {
             query?: never;
@@ -2052,6 +2084,14 @@ export interface components {
             name: string;
             slug: string;
         };
+        /** @description As notificações vistas: as da lista que a pessoa abriu. */
+        MarkRead: {
+            /**
+             * Format: int64
+             * @description O id da mais recente da lista: as que chegaram depois continuam novas.
+             */
+            up_to: number;
+        };
         /** @description Uma partida com os lados, o detalhe por mapa e o histórico. */
         MatchDetail: {
             a?: components["schemas"]["Team"] | null;
@@ -2417,6 +2457,17 @@ export interface components {
             params: {
                 tournament: string;
             };
+        };
+        /** @description Um aviso que chegou para quem vê. */
+        Notification: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int64 */
+            id: number;
+            /** @description O aviso, como chega pelo WebSocket (`notify`) e pelo Web Push. */
+            notice: components["schemas"]["Notice"];
+            /** @description Se a pessoa já abriu o sininho com ele na lista. */
+            read: boolean;
         };
         /** @description O code que o provedor mandou ao callback do front, com o verifier da aba. */
         OAuthCode: {
@@ -2796,6 +2847,11 @@ export interface components {
             /** @enum {string} */
             type: "notify";
         }) | {
+            /** Format: int64 */
+            count: number;
+            /** @enum {string} */
+            type: "unread";
+        } | {
             tenant: string;
             /** @enum {string} */
             type: "access_lost";
@@ -3352,6 +3408,11 @@ export interface components {
         UnlinkLogin: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
             current_password?: string | null;
+        };
+        /** @description Quantas notificações faltam ver. */
+        Unread: {
+            /** Format: int64 */
+            unread: number;
         };
         /** @description O que o próprio usuário muda na conta. */
         UpdateMe: {
@@ -5342,6 +5403,77 @@ export interface operations {
             };
             /** @description auth.too_many_attempts {minutes} */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    notifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description As 50 notificações mais recentes de quem vê (ficam 30 dias), da mais nova, cada uma dizendo se já foi vista. Quantas faltam ver chega pelo WebSocket (`unread` ao conectar e ao ver noutra aba; cada `notify` soma uma) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"][];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    mark_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkRead"];
+            };
+        };
+        responses: {
+            /** @description As notificações até `up_to` (as da lista aberta) foram vistas; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unread"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10305,7 +10437,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
+            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ver; depois, mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
             101: {
                 headers: {
                     [name: string]: unknown;

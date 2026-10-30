@@ -5,9 +5,9 @@
 //! e de conta que venceram, cada torneio, comunidade ou conta na própria
 //! transação e emitindo pelo outbox; uma vez por dia roda a rotina dos
 //! screenshots (depois das exclusões, para já levar do bucket os screenshots
-//! das comunidades excluídas), e recalcula o rating das comunidades marcadas
-//! (por último, para pegar as confirmações e as desistências desta passada);
-//! depois acorda o despachante. Aplicar ao ler e agir continua, para quem chega
+//! das comunidades excluídas), recalcula o rating das comunidades marcadas
+//! (depois das confirmações e das desistências desta passada) e apaga as
+//! notificações com mais de 30 dias; depois acorda o despachante. Aplicar ao ler e agir continua, para quem chega
 //! antes do agendador ver o estado certo.
 
 use std::time::Duration;
@@ -16,7 +16,8 @@ use chrono::{DateTime, Utc};
 
 use super::db;
 use crate::{
-    AppState, matches, members, ratings, screenshots, shared::ApiError, tenants, tournaments,
+    AppState, matches, members, notifications, ratings, screenshots, shared::ApiError, tenants,
+    tournaments,
 };
 
 pub const EVERY: Duration = Duration::from_secs(10);
@@ -40,6 +41,8 @@ pub struct Tick {
     pub swept: bool,
     /// Comunidades com o rating recalculado e diferente.
     pub rated: usize,
+    /// Notificações que passaram do prazo e saíram.
+    pub expired_notifications: u64,
 }
 
 /// Uma passada em `now`. `None` se outra instância está numa passada.
@@ -58,6 +61,7 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             deleted_accounts: members::delete_due_accounts(state, now).await?,
             swept: sweep_screenshots(state, now).await,
             rated: ratings::refresh_stale(&state.db).await?,
+            expired_notifications: notifications::delete_expired(&state.db, now).await?,
         })
     }
     .await;

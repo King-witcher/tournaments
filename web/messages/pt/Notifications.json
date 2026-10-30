@@ -72,5 +72,15 @@
     "description": "Com o site aberto, cada notificação toca um som curto, também com a aba em segundo plano (a não ser que as notificações com o site fechado estejam ativadas; aí quem avisa é a do sistema). A escolha vale para este navegador.",
     "label": "Tocar som com as notificações",
     "test": "Ouvir o som"
+  },
+  "bell": {
+    "label": "Notificações",
+    "labelUnread": "{count, plural, one {Notificações: # nova} other {Notificações: # novas}}",
+    "title": "Notificações",
+    "loading": "Carregando as notificações…",
+    "failed": "Não deu para carregar as notificações. Feche e abra de novo.",
+    "empty": "Nenhuma notificação nos últimos 30 dias. Os avisos de check-in, partida e mapa ficam aqui, mesmo depois de sumirem da tela.",
+    "new": "Nova",
+    "kept": "As notificações ficam aqui por 30 dias."
   }
 }

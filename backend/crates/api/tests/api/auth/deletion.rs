@@ -177,6 +177,14 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
     let rapha = super::signup(&app, &db, "Rapha", PASSWORD).await;
     add_discord(&db, rapha.id).await;
     subscribe_push(&db, rapha.id).await;
+    sqlx::query(
+        r#"insert into notifications (user_id, notice)
+           values ($1, '{"code": "check_in.opened", "params": {"tournament": "Copa"}, "path": "/outra/copa"}')"#,
+    )
+    .bind(rapha.id)
+    .execute(&db)
+    .await
+    .unwrap();
     join(&app, &rapha, &invite(&app, &ana, "outra").await).await;
     let (status, _) = delete(&app, "/tenants/outra/me", &rapha).await;
     assert_eq!(status, StatusCode::NO_CONTENT);
@@ -207,12 +215,13 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
     let tick = realtime::tick(&state, later).await.unwrap().unwrap();
     assert_eq!(tick.deleted_accounts, 0);
 
-    // Anonimizada: sem nome, avatar, email, logins nem push.
+    // Anonimizada: sem nome, avatar, email, logins, push nem notificações.
     let row = sqlx::query!(
         r#"select display_name, avatar_url, email, deletion_due_at, deleted_at is not null as "deleted!",
                   (select count(*) from user_identities where user_id = u.id) as "identities!",
                   (select count(*) from password_credentials where user_id = u.id) as "passwords!",
-                  (select count(*) from push_subscriptions where user_id = u.id) as "push!"
+                  (select count(*) from push_subscriptions where user_id = u.id) as "push!",
+                  (select count(*) from notifications where user_id = u.id) as "notifications!"
            from users u where id = $1"#,
         rapha.id
     )
@@ -229,7 +238,10 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
         ("", None, None, None)
     );
     assert!(row.deleted);
-    assert_eq!((row.identities, row.passwords, row.push), (0, 0, 0));
+    assert_eq!(
+        (row.identities, row.passwords, row.push, row.notifications),
+        (0, 0, 0, 0)
+    );
     // Inativa nas duas comunidades, com o apelido vazio.
     let members = sqlx::query!(
         r#"select nickname, left_at is not null as "left!" from tenant_members where user_id = $1"#,

@@ -12,6 +12,7 @@ mod maps;
 mod matches;
 mod members;
 mod my_tournaments;
+mod notifications;
 mod organizing;
 pub mod outbox;
 mod participants;
@@ -87,6 +88,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(maps::router())
         .merge(matches::router())
         .merge(my_tournaments::router())
+        .merge(notifications::router())
         .merge(organizing::router())
         .merge(screenshots::router())
         .merge(push::router())
