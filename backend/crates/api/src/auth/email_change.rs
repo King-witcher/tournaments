@@ -15,7 +15,7 @@ use super::{
     types::{ChangeEmail, EmailSent, LinkToken, LoginMethods},
 };
 use crate::{
-    AppState, mail,
+    AppState,
     shared::{ApiError, ErrorBody, JsonBody, Locale},
 };
 
@@ -31,6 +31,7 @@ use crate::{
         (status = CONFLICT, body = ErrorBody, description = "auth.email_unchanged"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}, email.too_soon {seconds}"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "email.unavailable (teto de envios do dia)"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "email.send_failed (o provedor de email falhou; o link não fica valendo, e pedir de novo não espera os 60 s)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "email.invalid, email.disposable, request.invalid_body"),
     )
 )]
@@ -39,7 +40,7 @@ pub async fn change_email(
     user: CurrentUser,
     JsonBody(body): JsonBody<ChangeEmail>,
 ) -> Result<(StatusCode, Json<EmailSent>), ApiError> {
-    let email = mail::normalize(&body.email)?;
+    let email = state.mail.normalize(&body.email)?;
     let methods = db::login_methods(&state.db, user.id).await?;
     if methods.email.as_deref() == Some(email.as_str()) {
         return Err(ApiError::conflict("auth.email_unchanged"));
@@ -55,6 +56,7 @@ pub async fn change_email(
     // Email de outra conta passa pelos mesmos limites e tem a mesma resposta:
     // só o dono dela fica sabendo, como no cadastro.
     let owner = db::contact_by_email(&state.db, &email).await?;
+    let new_link = owner.is_none();
     let ticket = state.mail.reserve(&state.redis, &email).await?;
     let web = &state.auth.web_origin;
     let message = match owner {
@@ -68,7 +70,13 @@ pub async fn change_email(
             emails::email_change(web, Locale::from_db(&user.locale)?, &email, &token)
         }
     };
-    ticket.send(message);
+    if let Err(err) = ticket.send(message).await {
+        // O link não chegou: não fica valendo (o de antes já tinha caído).
+        if new_link {
+            kv::cancel_email_change(&state.redis, user.id).await?;
+        }
+        return Err(err);
+    }
     Ok((StatusCode::ACCEPTED, Json(EmailSent { email })))
 }
 

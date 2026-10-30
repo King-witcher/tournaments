@@ -1,14 +1,16 @@
 //! Rotas dos provedores externos (Discord e Google), com PKCE gerado no
 //! navegador: o front gera o state e o code verifier e guarda os dois na aba;
-//! `authorize` devolve a URL do provedor com o state e o challenge; o provedor
-//! volta para a página de callback do front, que confere o state e manda aqui
-//! o code com o verifier, para entrar (`login`) ou ligar à conta logada
-//! (`link`). O provedor confere o verifier contra o challenge na troca, então
-//! o code só serve a quem abriu o fluxo. Para entrar, a API não guarda nada
-//! entre as duas pontas. Para ligar, `authorize` pede a senha atual (se a
-//! conta tem: quem pegou a sessão não põe o próprio login nela) e guarda o
-//! challenge com a sessão (`kv::authorize_link`), e `link` só aceita o code
-//! com o verifier dele, nessa sessão. As rotas de cada provedor só passam o
+//! o provedor volta para a página de callback do front, que confere o state e
+//! manda aqui o code com o verifier, para entrar (`login`) ou ligar à conta
+//! logada (`link`). O provedor confere o verifier contra o challenge na troca,
+//! então o code só serve a quem abriu o fluxo. Para entrar, a API não guarda
+//! nada entre as duas pontas, e o front monta a URL de autorização sozinho
+//! (com o client id público, o mesmo escopo e o mesmo redirect de
+//! `discord::authorize_url` e `google::authorize_url`), indo direto ao
+//! provedor. Para ligar, passa antes por `authorize`, que pede a senha atual
+//! (se a conta tem: quem pegou a sessão não põe o próprio login nela), guarda
+//! o challenge com a sessão (`kv::authorize_link`) e devolve a URL; `link` só
+//! aceita o code com o verifier dele, nessa sessão. As rotas de cada provedor só passam o
 //! dele para o fluxo comum, aqui embaixo; o que muda entre eles (URL de
 //! autorização, leitura do usuário) fica em `discord.rs` e `google.rs`.
 
@@ -31,9 +33,7 @@ use super::{
     pkce,
     provider::Provider,
     session::current_hash,
-    types::{
-        LoginMethods, OAuthCode, OAuthIntent, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin,
-    },
+    types::{LoginMethods, OAuthCode, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin},
 };
 use crate::{
     AppState,
@@ -54,10 +54,10 @@ const LINK_FLOW_SECS: u64 = 10 * 60;
     tag = "auth",
     request_body = OAuthStart,
     responses(
-        (status = OK, body = OAuthRedirect, description = "A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
-        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere)"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.discord_already_linked (ligar numa conta que já tem um)"),
+        (status = OK, body = OAuthRedirect, description = "Só para ligar o Discord à conta logada (para entrar, o front vai direto ao Discord). A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.discord_already_linked (a conta já tem um)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
@@ -65,7 +65,7 @@ const LINK_FLOW_SECS: u64 = 10 * 60;
 )]
 pub async fn discord_authorize(
     State(state): State<AppState>,
-    user: Option<CurrentUser>,
+    user: CurrentUser,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthStart>,
 ) -> Result<Json<OAuthRedirect>, ApiError> {
@@ -145,10 +145,10 @@ pub async fn unlink_discord(
     tag = "auth",
     request_body = OAuthStart,
     responses(
-        (status = OK, body = OAuthRedirect, description = "A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated (ligar sem sessão)"),
-        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere)"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.google_already_linked (ligar numa conta que já tem uma)"),
+        (status = OK, body = OAuthRedirect, description = "Só para ligar o Google à conta logada (para entrar, o front vai direto ao Google). A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Esta sessão fica autorizada por 10 minutos a ligar o code deste challenge"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.google_already_linked (a conta já tem uma)"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também state ou challenge fora do formato)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.google_not_configured"),
@@ -156,7 +156,7 @@ pub async fn unlink_discord(
 )]
 pub async fn google_authorize(
     State(state): State<AppState>,
-    user: Option<CurrentUser>,
+    user: CurrentUser,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthStart>,
 ) -> Result<Json<OAuthRedirect>, ApiError> {
@@ -230,13 +230,13 @@ pub async fn unlink_google(
     unlink(&state, &user, Provider::Google, body).await
 }
 
-/// A URL de autorização do provedor, com o state e o challenge do navegador.
-/// Para ligar, confere antes a sessão, se a conta já tem um dele (aí a
+/// A URL de autorização do provedor para ligá-lo à conta logada, com o state
+/// e o challenge do navegador. Confere antes se a conta já tem um dele (aí a
 /// pessoa nem sai do site) e a senha atual, se a conta tem, e autoriza esta
 /// sessão a ligar o code deste challenge.
 async fn authorize(
     state: &AppState,
-    user: Option<CurrentUser>,
+    user: CurrentUser,
     jar: &CookieJar,
     provider: Provider,
     body: OAuthStart,
@@ -249,29 +249,26 @@ async fn authorize(
     if !pkce::is_state(&body.state) || !pkce::is_challenge(&body.code_challenge) {
         return Err(ApiError::invalid("request.invalid_body"));
     }
-    if body.intent == OAuthIntent::Link {
-        let user = user.ok_or(ApiError::unauthenticated())?;
-        let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
-        let methods = db::login_methods(&state.db, user.id).await?;
-        let linked = match provider {
-            Provider::Discord => methods.discord,
-            Provider::Google => methods.google,
-        };
-        if linked {
-            return Err(ApiError::conflict(codes.already_linked));
-        }
-        // Com senha, quem pegou a sessão não põe o próprio login na conta
-        // (para entrar depois por ele, mesmo com a senha trocada).
-        confirm_password_if_set(state, user.id, body.current_password).await?;
-        kv::authorize_link(
-            &state.redis,
-            &session,
-            provider.as_str(),
-            &body.code_challenge,
-            LINK_FLOW_SECS,
-        )
-        .await?;
+    let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
+    let methods = db::login_methods(&state.db, user.id).await?;
+    let linked = match provider {
+        Provider::Discord => methods.discord,
+        Provider::Google => methods.google,
+    };
+    if linked {
+        return Err(ApiError::conflict(codes.already_linked));
     }
+    // Com senha, quem pegou a sessão não põe o próprio login na conta (para
+    // entrar depois por ele, mesmo com a senha trocada).
+    confirm_password_if_set(state, user.id, body.current_password).await?;
+    kv::authorize_link(
+        &state.redis,
+        &session,
+        provider.as_str(),
+        &body.code_challenge,
+        LINK_FLOW_SECS,
+    )
+    .await?;
 
     let url = match provider {
         Provider::Discord => discord::authorize_url(client, &body.state, &body.code_challenge),

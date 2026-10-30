@@ -2401,18 +2401,14 @@ export interface components {
              */
             code_verifier: string;
         };
-        /**
-         * @description Para que o OAuth de um provedor é aberto.
-         * @enum {string}
-         */
-        OAuthIntent: "login" | "link";
         /** @description A autorização no provedor, para onde o navegador vai. */
         OAuthRedirect: {
             url: string;
         };
         /**
-         * @description Abrir o OAuth de um provedor, com o que o navegador gerou e guardou na
-         *     aba (a API não guarda nada).
+         * @description Abrir o OAuth de um provedor para ligá-lo à conta logada, com o que o
+         *     navegador gerou e guardou na aba. Para entrar, o front monta a URL de
+         *     autorização sozinho, com o client id público, e não passa por aqui.
          */
         OAuthStart: {
             /**
@@ -2420,12 +2416,8 @@ export interface components {
              *     método é sempre `S256`.
              */
             code_challenge: string;
-            /**
-             * @description Senha atual, só para ligar (`intent` link): obrigatória se a conta tem
-             *     senha.
-             */
+            /** @description Senha atual: obrigatória se a conta tem senha. */
             current_password?: string | null;
-            intent: components["schemas"]["OAuthIntent"];
             /**
              * @description O que o provedor devolve ao callback, para o front conferir que a volta
              *     é do fluxo desta aba: 22 a 128 caracteres de `A-Z a-z 0-9 - . _ ~`.
@@ -3726,7 +3718,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
+            /** @description Só para ligar o Discord à conta logada (para entrar, o front vai direto ao Discord). A autorização no Discord (escopo identify), com o state e o challenge; o Discord volta para /auth/discord/callback no front, com code e state (ou error). Esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -3735,7 +3727,7 @@ export interface operations {
                     "application/json": components["schemas"]["OAuthRedirect"];
                 };
             };
-            /** @description auth.unauthenticated (ligar sem sessão) */
+            /** @description auth.unauthenticated */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -3744,7 +3736,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere) */
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3753,7 +3745,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.discord_already_linked (ligar numa conta que já tem um) */
+            /** @description auth.discord_already_linked (a conta já tem um) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3987,6 +3979,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description email.send_failed (o provedor de email falhou; o link não fica valendo, e pedir de novo não espera os 60 s) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
             /** @description email.unavailable (teto de envios do dia) */
             503: {
                 headers: {
@@ -4167,7 +4168,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Para ligar, esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
+            /** @description Só para ligar o Google à conta logada (para entrar, o front vai direto ao Google). A autorização no Google (escopos openid e profile), com o state e o challenge; o Google volta para /auth/google/callback no front, com code e state (ou error). Esta sessão fica autorizada por 10 minutos a ligar o code deste challenge */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4176,7 +4177,7 @@ export interface operations {
                     "application/json": components["schemas"]["OAuthRedirect"];
                 };
             };
-            /** @description auth.unauthenticated (ligar sem sessão) */
+            /** @description auth.unauthenticated */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4185,7 +4186,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.wrong_password (ligar numa conta com senha, e a atual não veio ou não confere) */
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4194,7 +4195,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.google_already_linked (ligar numa conta que já tem uma) */
+            /** @description auth.google_already_linked (a conta já tem uma) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4867,6 +4868,15 @@ export interface operations {
             };
             /** @description email.too_soon {seconds} */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.send_failed (o provedor de email falhou; nada fica guardado, e pedir de novo não espera os 60 s) */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

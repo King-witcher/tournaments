@@ -4,7 +4,10 @@
 
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{Arc, LazyLock, Mutex},
+    sync::{
+        Arc, LazyLock, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
@@ -78,16 +81,19 @@ pub fn redis(db: &PgPool) -> Redis {
 /// Teto de emails por dia do app de teste.
 pub const DAILY_EMAILS: u32 = 20;
 
-/// Emails que o app de teste mandaria, na ordem em que saíram.
+/// Emails que o app de teste mandaria, na ordem em que saíram. Com
+/// `set_failing(true)`, o envio falha como o provedor fora do ar.
 #[derive(Default)]
 pub struct Mailbox {
     sent: Mutex<VecDeque<Email>>,
     arrived: Notify,
+    failing: AtomicBool,
 }
 
 #[async_trait]
 impl Mailer for Mailbox {
     async fn send(&self, email: &Email) -> anyhow::Result<()> {
+        anyhow::ensure!(!self.failing.load(Ordering::SeqCst), "falha simulada");
         self.sent.lock().unwrap().push_back(email.clone());
         self.arrived.notify_one();
         Ok(())
@@ -95,6 +101,11 @@ impl Mailer for Mailbox {
 }
 
 impl Mailbox {
+    /// Liga ou desliga a falha de todo envio.
+    pub fn set_failing(&self, failing: bool) {
+        self.failing.store(failing, Ordering::SeqCst);
+    }
+
     /// O próximo email; o envio é em segundo plano, então espera um pouco.
     pub async fn next(&self) -> Email {
         let wait = async {
@@ -139,7 +150,7 @@ pub fn link_token(email: &Email) -> String {
 pub fn state(db: PgPool) -> AppState {
     AppState {
         redis: redis(&db),
-        mail: Mail::new(mailbox(&db), DAILY_EMAILS),
+        mail: Mail::new(mailbox(&db), DAILY_EMAILS, true),
         db,
         discord: Arc::new(HttpDiscord::new(String::new(), String::new())),
         google: Arc::new(HttpGoogle::new(String::new(), String::new())),

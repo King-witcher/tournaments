@@ -2,7 +2,8 @@
 //! depois de cada envio para o endereço, e `email_sent:{AAAA-MM-DD}` conta os
 //! envios do dia (UTC) e expira dois dias depois. Juntos, seguram quem pede
 //! email sem parar para o mesmo endereço e o teto do plano do provedor. Os
-//! avisos (`reserve_today`) só contam no dia.
+//! avisos (`reserve_today`) só contam no dia. O envio que falha no provedor
+//! devolve a reserva (`release`): a espera sai e o dia volta um.
 
 use chrono::Utc;
 use redis::{Cmd, RedisResult};
@@ -13,11 +14,10 @@ use crate::shared::Redis;
 const DAY_KEY_TTL_SECS: i64 = 2 * 24 * 60 * 60;
 
 pub enum Slot {
-    Granted,
+    /// Reservado no dia `day` (`AAAA-MM-DD`, UTC), o que `release` devolve.
+    Granted { day: String },
     /// O último envio para o endereço foi há pouco; o próximo, em `seconds`.
-    TooSoon {
-        seconds: i64,
-    },
+    TooSoon { seconds: i64 },
     /// O teto do dia acabou.
     DailyLimit,
 }
@@ -30,7 +30,7 @@ pub async fn reserve(
     cooldown_secs: u64,
     daily_limit: u32,
 ) -> RedisResult<Slot> {
-    let cooldown = redis.key(format_args!("email_cooldown:{to}"));
+    let cooldown = cooldown_key(redis, to);
     let started: Option<String> = redis
         .query(
             redis::cmd("SET")
@@ -52,7 +52,8 @@ pub async fn reserve(
 
 /// Reserva um envio só no teto do dia, sem a espera do endereço.
 pub async fn reserve_today(redis: &Redis, daily_limit: u32) -> RedisResult<Slot> {
-    let day = redis.key(format_args!("email_sent:{}", Utc::now().format("%Y-%m-%d")));
+    let date = Utc::now().format("%Y-%m-%d").to_string();
+    let day = day_key(redis, &date);
     let (sent,): (u32,) = redis
         .query_pipe(
             redis::pipe()
@@ -64,6 +65,25 @@ pub async fn reserve_today(redis: &Redis, daily_limit: u32) -> RedisResult<Slot>
     Ok(if sent > daily_limit {
         Slot::DailyLimit
     } else {
-        Slot::Granted
+        Slot::Granted { day: date }
     })
+}
+
+/// Devolve a reserva de um envio que não saiu: a espera do endereço `to` (se
+/// o envio a marcou) e um no contador do dia `day`.
+pub async fn release(redis: &Redis, to: Option<&str>, day: &str) -> RedisResult<()> {
+    let mut pipe = redis::pipe();
+    if let Some(to) = to {
+        pipe.del(cooldown_key(redis, to)).ignore();
+    }
+    pipe.decr(day_key(redis, day), 1).ignore();
+    redis.query_pipe(&pipe).await
+}
+
+fn cooldown_key(redis: &Redis, to: &str) -> String {
+    redis.key(format_args!("email_cooldown:{to}"))
+}
+
+fn day_key(redis: &Redis, day: &str) -> String {
+    redis.key(format_args!("email_sent:{day}"))
 }

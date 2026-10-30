@@ -224,3 +224,32 @@ async fn a_new_request_replaces_the_link_and_limits_stay_quiet() {
         StatusCode::OK
     );
 }
+
+#[tokio::test]
+async fn failed_send_stays_silent_and_leaves_no_link() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
+    skip_cooldown(&db, "rapha@example.com").await;
+
+    mailbox(&db).set_failing(true);
+    // A resposta não muda: a recuperação não diz quem tem conta.
+    assert_eq!(request(&app, "rapha").await, StatusCode::ACCEPTED);
+    let redis = crate::common::redis(&db);
+    let link = redis.key(format_args!("password_reset_user:{}", me.id));
+    let cooldown = redis.key(format_args!("email_cooldown:rapha@example.com"));
+    // O envio é em segundo plano: espera ele falhar e desfazer o link.
+    let mut gone = false;
+    for _ in 0..50 {
+        let (link, cooldown): (bool, bool) = redis
+            .query_pipe(redis::pipe().exists(&link).exists(&cooldown))
+            .await
+            .unwrap();
+        if !link && !cooldown {
+            gone = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert!(gone, "o link que não chegou e a espera de 60 s saem");
+}

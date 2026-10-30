@@ -251,10 +251,34 @@ async fn email_in_use_warns_its_owner_without_revealing_it() {
 }
 
 #[tokio::test]
+async fn without_strict_variations_open_other_accounts() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app_from(AppState {
+        mail: Mail::new(mailbox(&db), 20, false),
+        ..state(db.clone())
+    });
+    for (username, address) in [
+        ("giu", "giuseppe@gmail.com"),
+        ("giu2", "Giuseppe+2@gmail.com"),
+        ("giu3", "giu.seppe@gmail.com"),
+        ("temp", "x@mailinator.com"),
+    ] {
+        let (status, body) = start(&app, username, address).await;
+        assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+        let kept = address.to_lowercase();
+        assert_eq!(body, json!({ "email": kept }));
+        let email = mailbox(&db).next().await;
+        assert_eq!(email.to, kept);
+        confirm_signup(&app, &email).await;
+    }
+    assert_eq!(users(&db).await, 4);
+}
+
+#[tokio::test]
 async fn daily_limit_stops_sending() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app_from(AppState {
-        mail: Mail::new(mailbox(&db), 2),
+        mail: Mail::new(mailbox(&db), 2, true),
         ..state(db.clone())
     });
     for n in 0..2 {
@@ -291,4 +315,31 @@ async fn confirm_refuses_email_taken_in_between() {
         confirm(&app, "nao-existe").await,
         (StatusCode::GONE, err("auth.link_expired"))
     );
+}
+
+#[tokio::test]
+async fn failed_send_keeps_nothing_and_allows_a_retry_right_away() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    mailbox(&db).set_failing(true);
+    assert_eq!(
+        start(&app, "Rapha", "rapha@outlook.com").await,
+        (StatusCode::BAD_GATEWAY, err("email.send_failed"))
+    );
+    // O link não chegou: nem o cadastro nem a reserva do username ficam.
+    let redis = redis(&db);
+    for key in ["signup:rapha@outlook.com", "signup_username:rapha"] {
+        let kept: bool = redis
+            .query(&Cmd::exists(redis.key(format_args!("{key}"))))
+            .await
+            .unwrap();
+        assert!(!kept, "{key}");
+    }
+
+    // De novo, na hora: a espera de 60 s voltou com a falha.
+    mailbox(&db).set_failing(false);
+    let (status, body) = start(&app, "Rapha", "rapha@outlook.com").await;
+    assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+    confirm_signup(&app, &mailbox(&db).next().await).await;
+    assert_eq!(users(&db).await, 1);
 }

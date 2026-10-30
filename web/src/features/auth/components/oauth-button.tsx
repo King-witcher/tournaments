@@ -18,9 +18,9 @@ type Props = {
 };
 
 /**
- * Leva ao OAuth do provedor (`useOAuthStart`). A API recusando (provedor
- * desligado, ou, ao vincular, sem sessão ou já vinculado), o erro fica
- * embaixo do botão, sem sair do site. A conta com senha vincula pelo
+ * Leva ao OAuth do provedor (`useOAuthStart`). Provedor desligado (ou, ao
+ * vincular, a API recusando: sem sessão ou já vinculado), o erro fica embaixo
+ * do botão, sem sair do site. A conta com senha vincula pelo
  * `LinkProviderForm`, que pede a atual.
  */
 export function OAuthButton({ provider, action, returnTo, children }: Props) {

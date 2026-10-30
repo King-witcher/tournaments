@@ -231,7 +231,7 @@ async fn reset_by_link_right_after_the_link() {
 async fn daily_limit_drops_notices() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app_from(AppState {
-        mail: Mail::new(mailbox(&db), 1),
+        mail: Mail::new(mailbox(&db), 1, true),
         ..state(db.clone())
     });
     let me = signup(&app, &db, "Rapha", PASSWORD).await;

@@ -13,13 +13,14 @@ use super::{
     CHALLENGE, OTHER_VERIFIER, STATE, VERIFIER, app, authorize, body_text, discord_user, do_login,
     exchange, get, json_request, pair, send, send_json, session_key, set_cookie,
 };
-use crate::common::{err, redis};
+use crate::common::{self, err, redis};
 
 #[tokio::test]
 async fn without_config_is_503() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = app(db, None, false);
-    let (status, body) = authorize(&app, "discord", "login", None, None).await;
+    let app = app(db.clone(), None, false);
+    let me = common::user(&db, "Ana").await;
+    let (status, body) = authorize(&app, "discord", Some(&me.cookie), None).await;
     assert_eq!(
         (status, body),
         (
@@ -40,17 +41,23 @@ async fn without_config_is_503() {
 #[tokio::test]
 async fn authorize_returns_the_discord_url_with_the_challenge() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = app(db, None, true);
-    let body = json!({ "intent": "login", "state": STATE, "code_challenge": CHALLENGE });
+    let app = app(db.clone(), None, true);
+    let me = common::user(&db, "Ana").await;
+    let body = json!({ "state": STATE, "code_challenge": CHALLENGE });
     let res = send(
         &app,
-        json_request(Method::POST, "/auth/discord/authorize", None, body),
+        json_request(
+            Method::POST,
+            "/auth/discord/authorize",
+            Some(&me.cookie),
+            body,
+        ),
     )
     .await;
     assert_eq!(res.status(), StatusCode::OK);
     assert!(
         res.headers().get(header::SET_COOKIE).is_none(),
-        "a API não guarda nada do fluxo"
+        "o fluxo fica no Redis, não num cookie"
     );
 
     let body: serde_json::Value = serde_json::from_str(&body_text(res).await).unwrap();
@@ -77,6 +84,7 @@ async fn authorize_returns_the_discord_url_with_the_challenge() {
 async fn malformed_pkce_is_refused() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
+    let me = common::user(&db, "Ana").await;
     let refused = (
         StatusCode::UNPROCESSABLE_ENTITY,
         err("request.invalid_body"),
@@ -86,13 +94,20 @@ async fn malformed_pkce_is_refused() {
         (STATE, &CHALLENGE[..42]),
         (STATE, "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-c="),
     ] {
-        let body = json!({ "intent": "login", "state": state, "code_challenge": challenge });
-        let (status, body, _) =
-            send_json(&app, Method::POST, "/auth/discord/authorize", None, body).await;
+        let body = json!({ "state": state, "code_challenge": challenge });
+        let uri = "/auth/discord/authorize";
+        let (status, body, _) = send_json(&app, Method::POST, uri, Some(&me.cookie), body).await;
         assert_eq!((status, body), refused, "{state} {challenge}");
     }
-    let body = json!({ "intent": "entrar", "state": STATE, "code_challenge": CHALLENGE });
-    let (status, _, _) = send_json(&app, Method::POST, "/auth/discord/authorize", None, body).await;
+    let body = json!({ "state": STATE });
+    let (status, _, _) = send_json(
+        &app,
+        Method::POST,
+        "/auth/discord/authorize",
+        Some(&me.cookie),
+        body,
+    )
+    .await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
 
     for verifier in [

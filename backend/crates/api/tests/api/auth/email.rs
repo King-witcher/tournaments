@@ -224,3 +224,31 @@ async fn only_accounts_without_password_remove_the_email() {
     let unauthenticated = call(&app, Method::DELETE, "/auth/email", None, None).await;
     assert_eq!(unauthenticated.0, StatusCode::UNAUTHORIZED);
 }
+
+#[tokio::test]
+async fn failed_send_leaves_no_link_and_allows_a_retry_right_away() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let me = signup(&app, &db, "Rapha", PASSWORD).await;
+    let change = json!({ "email": "novo@outlook.com", "current_password": PASSWORD });
+
+    mailbox(&db).set_failing(true);
+    assert_eq!(
+        put(&app, "/auth/email", &me, change.clone()).await,
+        (StatusCode::BAD_GATEWAY, err("email.send_failed"))
+    );
+    let redis = crate::common::redis(&db);
+    let link = redis.key(format_args!("email_change_user:{}", me.id));
+    let kept: bool = redis.query(&redis::Cmd::exists(link)).await.unwrap();
+    assert!(!kept, "o link que não chegou não fica valendo");
+
+    mailbox(&db).set_failing(false);
+    let (status, body) = put(&app, "/auth/email", &me, change).await;
+    assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+    let email = mailbox(&db).next().await;
+    assert_eq!(
+        confirm(&app, &link_token(&email)).await.0,
+        StatusCode::NO_CONTENT
+    );
+    assert_eq!(email_of(&app, &me).await, "novo@outlook.com");
+}

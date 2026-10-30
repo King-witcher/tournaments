@@ -37,7 +37,7 @@ async fn password_account_links_discord() {
     assert_eq!(body["id"], me.id);
 
     // Já ligado: nem vai para o Discord.
-    let (status, body) = authorize(&app, "discord", "link", Some(&me.cookie), None).await;
+    let (status, body) = authorize(&app, "discord", Some(&me.cookie), None).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("auth.discord_already_linked"))
@@ -49,7 +49,7 @@ async fn link_requires_session() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), Some(discord_user(None)), true);
     let unauthenticated = (StatusCode::UNAUTHORIZED, err("auth.unauthenticated"));
-    let (status, body) = authorize(&app, "discord", "link", None, None).await;
+    let (status, body) = authorize(&app, "discord", None, None).await;
     assert_eq!((status, body), unauthenticated);
 
     // A sessão também precisa estar na troca do code.
@@ -85,7 +85,7 @@ async fn link_errors_link_nothing() {
     // O code de outra aba não liga, mesmo com a sessão: o verifier não é o
     // do fluxo aberto, e nem vai ao Discord.
     let app = app(db.clone(), Some(discord_user(None)), true);
-    let (status, _) = authorize(&app, "discord", "link", Some(&me.cookie), Some(PASSWORD)).await;
+    let (status, _) = authorize(&app, "discord", Some(&me.cookie), Some(PASSWORD)).await;
     assert_eq!(status, StatusCode::OK);
     let (status, body, _) =
         exchange(&app, "discord", "link", Some(&me.cookie), OTHER_VERIFIER).await;
@@ -106,17 +106,16 @@ async fn link_needs_the_password_and_a_flow_of_this_session() {
     let mismatch = (StatusCode::FORBIDDEN, err("auth.state_mismatch"));
 
     // Com senha na conta, a sessão sozinha não abre o fluxo de ligar.
-    let (status, body) = authorize(&app, "discord", "link", Some(&me.cookie), None).await;
+    let (status, body) = authorize(&app, "discord", Some(&me.cookie), None).await;
     assert_eq!((status, body), wrong);
-    let (status, body) =
-        authorize(&app, "discord", "link", Some(&me.cookie), Some("errada!!")).await;
+    let (status, body) = authorize(&app, "discord", Some(&me.cookie), Some("errada!!")).await;
     assert_eq!((status, body), wrong);
     // E sem o fluxo aberto, o code não liga.
     let (status, body, _) = exchange(&app, "discord", "link", Some(&me.cookie), VERIFIER).await;
     assert_eq!((status, body), mismatch);
 
     // O fluxo é da sessão que o abriu: outra sessão da conta não o usa.
-    let (status, _) = authorize(&app, "discord", "link", Some(&me.cookie), Some(PASSWORD)).await;
+    let (status, _) = authorize(&app, "discord", Some(&me.cookie), Some(PASSWORD)).await;
     assert_eq!(status, StatusCode::OK);
     let credentials = json!({ "username": "rapha", "password": PASSWORD });
     let (_, _, other) = send_json(&app, Method::POST, "/auth/login", None, credentials).await;

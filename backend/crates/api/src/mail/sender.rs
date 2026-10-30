@@ -3,11 +3,17 @@
 //! portas de SMTP) e `LogMailer`, que só escreve no log (desenvolvimento, sem
 //! chave).
 
+use std::time::Duration;
+
 use anyhow::Context;
 use async_trait::async_trait;
 use serde_json::json;
 
 const RESEND_URL: &str = "https://api.resend.com/emails";
+
+/// Quanto o pedido espera o Resend: o cadastro e a troca de email esperam o
+/// envio para dizer se ele falhou.
+const TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Um email pronto, com o texto no idioma de quem recebe.
 #[derive(Debug, Clone)]
@@ -35,7 +41,10 @@ pub struct ResendMailer {
 impl ResendMailer {
     pub fn new(api_key: String, from: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(TIMEOUT)
+                .build()
+                .expect("cliente HTTP"),
             api_key,
             from,
         }

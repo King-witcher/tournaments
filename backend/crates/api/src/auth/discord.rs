@@ -30,6 +30,8 @@ impl DiscordUser {
     }
 }
 
+/// URL de autorização do Discord, para ligar. Para entrar, o front monta a
+/// mesma (`features/auth/lib/authorize-url.ts`): mudou aqui, mude lá.
 pub fn authorize_url(client: &OAuthClient, state: &str, code_challenge: &str) -> reqwest::Url {
     let mut url = reqwest::Url::parse("https://discord.com/oauth2/authorize").expect("url fixa");
     url.query_pairs_mut()

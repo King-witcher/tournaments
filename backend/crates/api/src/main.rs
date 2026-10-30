@@ -26,7 +26,16 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env()?;
     // Antes das migrations, como o Redis abaixo: um deploy sem o Resend (ou com
     // o bucket mal configurado) falha sem mexer no banco.
-    let mail = Mail::new(mailer(&config)?, config.email_daily_limit);
+    let mail = Mail::new(
+        mailer(&config)?,
+        config.email_daily_limit,
+        config.email_strict,
+    );
+    if !config.email_strict {
+        tracing::warn!(
+            "EMAIL_STRICT desligado: variações do mesmo email abrem contas diferentes e domínios descartáveis passam"
+        );
+    }
     let storage = storage(&config)?;
 
     let db = PgPoolOptions::new()

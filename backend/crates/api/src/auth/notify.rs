@@ -36,6 +36,7 @@ async fn send(state: &AppState, user_id: i64, notice: &Notice) -> Result<(), Api
         return Ok(());
     };
     let locale = Locale::from_db(&contact.locale)?;
-    ticket.send(emails::notice(&state.auth.web_origin, locale, &to, notice));
-    Ok(())
+    ticket
+        .send(emails::notice(&state.auth.web_origin, locale, &to, notice))
+        .await
 }

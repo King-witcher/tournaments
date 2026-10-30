@@ -59,7 +59,7 @@ pub async fn schedule_account_deletion(
     if let Some(email) = methods.email {
         // Fora dos limites de envio, a exclusão vale do mesmo jeito.
         match state.mail.reserve_quietly(&state.redis, &email).await? {
-            Some(ticket) => ticket.send(emails::account_deletion_scheduled(
+            Some(ticket) => ticket.send_in_background(emails::account_deletion_scheduled(
                 &state.auth.web_origin,
                 Locale::from_db(&user.locale)?,
                 &email,

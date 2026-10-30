@@ -39,7 +39,9 @@ impl GoogleUser {
 }
 
 /// URL de autorização do Google. `select_account` mostra a escolha da conta
-/// mesmo com uma só logada, para quem vincula ver qual vai.
+/// mesmo com uma só logada, para quem vincula ver qual vai. Para entrar, o
+/// front monta a mesma (`features/auth/lib/authorize-url.ts`): mudou aqui,
+/// mude lá.
 pub fn authorize_url(client: &OAuthClient, state: &str, code_challenge: &str) -> reqwest::Url {
     let mut url =
         reqwest::Url::parse("https://accounts.google.com/o/oauth2/v2/auth").expect("url fixa");

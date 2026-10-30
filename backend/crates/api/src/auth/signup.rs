@@ -19,7 +19,7 @@ use super::{
     username::validate_username,
 };
 use crate::{
-    AppState, mail,
+    AppState,
     shared::{ApiError, ErrorBody, JsonBody, Locale},
 };
 
@@ -33,6 +33,7 @@ use crate::{
         (status = CONFLICT, body = ErrorBody, description = "auth.username_taken (por uma conta ou pelo cadastro de outra pessoa esperando confirmação)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.username_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.too_soon {seconds}"),
+        (status = BAD_GATEWAY, body = ErrorBody, description = "email.send_failed (o provedor de email falhou; nada fica guardado, e pedir de novo não espera os 60 s)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "email.unavailable (teto de envios do dia)"),
     )
 )]
@@ -42,7 +43,7 @@ pub async fn signup(
 ) -> Result<(StatusCode, Json<EmailSent>), ApiError> {
     let username = validate_username(&body.username)?;
     validate_password(&body.password)?;
-    let email = mail::normalize(&body.email)?;
+    let email = state.mail.normalize(&body.email)?;
     let locale = body.locale.unwrap_or(Locale::Pt);
 
     if db::username_taken(&state.db, &username).await? {
@@ -52,7 +53,8 @@ pub async fn signup(
     // limites e pelo mesmo hash da senha: nem a resposta nem o tempo dizem
     // se o email já tem conta.
     let owner = db::contact_by_email(&state.db, &email).await?;
-    if owner.is_none() {
+    let new_signup = owner.is_none();
+    if new_signup {
         claim_username(&state, &username, &email, &body.password).await?;
     }
     let ticket = state.mail.reserve(&state.redis, &email).await?;
@@ -75,7 +77,14 @@ pub async fn signup(
             emails::signup_confirmation(web, locale, &email, &pending.username, &token)
         }
     };
-    ticket.send(message);
+    if let Err(err) = ticket.send(message).await {
+        // O link não chegou: o cadastro sai do Redis e o username fica livre,
+        // para pedir de novo na hora (a reserva do envio já voltou).
+        if new_signup {
+            kv::drop_signup(&state.redis, &email).await?;
+        }
+        return Err(err);
+    }
     Ok((StatusCode::ACCEPTED, Json(EmailSent { email })))
 }
 

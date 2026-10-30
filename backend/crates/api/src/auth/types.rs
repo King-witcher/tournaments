@@ -4,29 +4,18 @@ use utoipa::ToSchema;
 
 use crate::{auth::CurrentUser, shared::Locale};
 
-/// Para que o OAuth de um provedor é aberto.
-#[derive(Deserialize, ToSchema, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum OAuthIntent {
-    /// Entrar (ou criar a conta) com o provedor.
-    Login,
-    /// Ligar o provedor à conta logada.
-    Link,
-}
-
-/// Abrir o OAuth de um provedor, com o que o navegador gerou e guardou na
-/// aba (a API não guarda nada).
+/// Abrir o OAuth de um provedor para ligá-lo à conta logada, com o que o
+/// navegador gerou e guardou na aba. Para entrar, o front monta a URL de
+/// autorização sozinho, com o client id público, e não passa por aqui.
 #[derive(Deserialize, ToSchema)]
 pub struct OAuthStart {
-    pub intent: OAuthIntent,
     /// O que o provedor devolve ao callback, para o front conferir que a volta
     /// é do fluxo desta aba: 22 a 128 caracteres de `A-Z a-z 0-9 - . _ ~`.
     pub state: String,
     /// `BASE64URL(SHA-256(code_verifier))`, sem `=` (43 caracteres): o
     /// método é sempre `S256`.
     pub code_challenge: String,
-    /// Senha atual, só para ligar (`intent` link): obrigatória se a conta tem
-    /// senha.
+    /// Senha atual: obrigatória se a conta tem senha.
     pub current_password: Option<String>,
 }
 

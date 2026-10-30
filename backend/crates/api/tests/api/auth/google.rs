@@ -15,8 +15,9 @@ const PASSWORD: &str = "senha forte 1";
 #[tokio::test]
 async fn without_config_is_503() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = providers_app(db, None, None, false);
-    let (status, body) = authorize(&app, "google", "login", None, None).await;
+    let app = providers_app(db.clone(), None, None, false);
+    let me = common::user(&db, "Ana").await;
+    let (status, body) = authorize(&app, "google", Some(&me.cookie), None).await;
     assert_eq!(
         (status, body),
         (
@@ -29,8 +30,9 @@ async fn without_config_is_503() {
 #[tokio::test]
 async fn authorize_asks_only_id_and_name() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = providers_app(db, None, None, true);
-    let (status, body) = authorize(&app, "google", "login", None, None).await;
+    let app = providers_app(db.clone(), None, None, true);
+    let me = common::user(&db, "Ana").await;
+    let (status, body) = authorize(&app, "google", Some(&me.cookie), None).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let url = body["url"].as_str().unwrap();
@@ -171,7 +173,7 @@ async fn discord_account_links_google_and_drops_discord() {
     );
 
     // Já ligado: nem vai para o Google.
-    let (status, body) = authorize(&app, "google", "link", Some(&me.cookie), None).await;
+    let (status, body) = authorize(&app, "google", Some(&me.cookie), None).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("auth.google_already_linked"))

@@ -20,7 +20,7 @@ use super::{
     username::{username_key, validate_username},
 };
 use crate::{
-    AppState, mail,
+    AppState,
     shared::{ApiError, ErrorBody, JsonBody, Locale},
 };
 
@@ -41,7 +41,7 @@ pub async fn request_password_reset(
     let login = body.login.trim();
     // Fora do formato, a conta não pode existir.
     let contact = if login.contains('@') {
-        match mail::normalize(login) {
+        match state.mail.normalize(login) {
             Ok(email) => db::contact_by_email(&state.db, &email).await?,
             Err(_) => None,
         }
@@ -80,10 +80,16 @@ async fn send_reset_link(state: &AppState, contact: AccountContact) -> Result<()
     let token = kv::create_password_reset(&state.redis, user_id, LINK_TTL_SECS).await?;
     let locale = Locale::from_db(&locale)?;
     let web = &state.auth.web_origin;
-    ticket.send(emails::password_reset(
-        web, locale, &email, &username, &token,
-    ));
-    Ok(())
+    let sent = ticket
+        .send(emails::password_reset(
+            web, locale, &email, &username, &token,
+        ))
+        .await;
+    if sent.is_err() {
+        // O link não chegou: não fica valendo.
+        kv::cancel_password_reset(&state.redis, user_id).await?;
+    }
+    sent
 }
 
 #[utoipa::path(

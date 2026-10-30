@@ -281,19 +281,17 @@ async fn skip_cooldown(db: &PgPool, address: &str) {
     redis.query::<()>(&Cmd::del(key)).await.unwrap();
 }
 
-/// Abre o OAuth de `provider` (`discord` ou `google`) para `intent` (`login`
-/// ou `link`), com o state e o challenge de teste e, para ligar numa conta
-/// com senha, a atual (`password`). Devolve status e corpo (a URL da
-/// autorização).
+/// Abre o OAuth de `provider` (`discord` ou `google`) para ligar à conta da
+/// `session`, com o state e o challenge de teste e, na conta com senha, a
+/// atual (`password`). Devolve status e corpo (a URL da autorização). Para
+/// entrar, o front vai direto ao provedor, sem passar pela API.
 async fn authorize(
     app: &Router,
     provider: &str,
-    intent: &str,
     session: Option<&str>,
     password: Option<&str>,
 ) -> (StatusCode, Value) {
     let body = json!({
-        "intent": intent,
         "state": STATE,
         "code_challenge": CHALLENGE,
         "current_password": password,
@@ -333,7 +331,7 @@ async fn link_provider(
     who: &User,
     password: Option<&str>,
 ) -> (StatusCode, Value) {
-    let (status, body) = authorize(app, provider, "link", Some(&who.cookie), password).await;
+    let (status, body) = authorize(app, provider, Some(&who.cookie), password).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body, session) =
         exchange(app, provider, "link", Some(&who.cookie), VERIFIER).await;

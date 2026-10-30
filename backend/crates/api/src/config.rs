@@ -36,6 +36,10 @@ pub struct Config {
     pub email_from: Option<String>,
     /// Teto de emails por dia, abaixo do plano do provedor.
     pub email_daily_limit: u32,
+    /// Endereço na forma canônica, sem descartáveis (`EMAIL_STRICT`, ligado por
+    /// padrão). Desligado em dev e staging, as variações do mesmo endereço
+    /// (`+etiqueta`, pontos no Gmail) abrem contas diferentes.
+    pub email_strict: bool,
     /// Bucket dos screenshots do placar (`S3_*`); `None` sem bucket nem chaves:
     /// os screenshots ficam desligados.
     pub storage: Option<StorageConfig>,
@@ -71,6 +75,7 @@ impl Config {
                 Some(limit) => limit.parse().context("EMAIL_DAILY_LIMIT inválido")?,
                 None => crate::mail::DEFAULT_DAILY_LIMIT,
             },
+            email_strict: env_flag("EMAIL_STRICT", true)?,
             storage: storage_from_env()?,
         })
     }
@@ -99,6 +104,17 @@ fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
 
 fn env_or(key: &str, default: &str) -> String {
     std::env::var(key).unwrap_or_else(|_| default.to_owned())
+}
+
+/// Liga ou desliga: `true`/`1` ou `false`/`0` (sem diferenciar maiúsculas);
+/// ausente ou vazia, `default`. Outro valor é engano: a API não sobe.
+fn env_flag(key: &str, default: bool) -> anyhow::Result<bool> {
+    match env_opt(key).map(|v| v.to_ascii_lowercase()).as_deref() {
+        None => Ok(default),
+        Some("1" | "true") => Ok(true),
+        Some("0" | "false") => Ok(false),
+        Some(other) => anyhow::bail!("{key} inválida: {other} (use true ou false)"),
+    }
 }
 
 /// Variável opcional; vazia conta como ausente.

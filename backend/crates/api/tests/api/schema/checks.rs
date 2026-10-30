@@ -379,9 +379,9 @@ async fn logins_and_secrets_keep_their_format() {
             "users_avatar_url_https",
         ),
         ("email = 'Ana@outlook.com'", "users_email_format"),
-        ("email = 'ana+x@outlook.com'", "users_email_format"),
-        ("email = 'ana.silva@gmail.com'", "users_email_format"),
-        ("email = 'anasilva@googlemail.com'", "users_email_format"),
+        ("email = 'ana+@outlook.com'", "users_email_format"),
+        ("email = 'ana+x y@outlook.com'", "users_email_format"),
+        ("email = '+x@outlook.com'", "users_email_format"),
         ("email = 'ana@localhost'", "users_email_format"),
     ] {
         let sql = format!("update users set {change}");
@@ -390,6 +390,15 @@ async fn logins_and_secrets_keep_their_format() {
             rule(CHECK, name),
             "{change}"
         );
+    }
+    // Sem EMAIL_STRICT (dev e staging), a API grava as variações como vieram.
+    for address in [
+        "bia+x@outlook.com",
+        "bia+a.b+c@outlook.com",
+        "bia.silva@gmail.com",
+        "biasilva@googlemail.com",
+    ] {
+        exec(&db, &email(bia.id, address)).await.unwrap();
     }
     assert_eq!(
         rejected(exec(&db, &email(bia.id, "ana@outlook.com")).await),
