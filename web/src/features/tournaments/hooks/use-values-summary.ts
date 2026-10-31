@@ -4,6 +4,7 @@ import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import {
   isTdm,
   poolOf,
+  stepSecondsGroup,
   type TournamentValues,
   teamSizeOf,
 } from "../lib/form-values";
@@ -89,17 +90,19 @@ export function useValuesSummary() {
         tdm && v.noRepeat !== "off"
           ? tSetup("noRepeatWho", { rule: repeat, who: v.noRepeatWho })
           : repeat,
+        stepSecondsGroup(v) === "champions" &&
+          t("seconds", { time: formatSeconds(v.vetoSeconds) }),
+        tdm &&
+          v.championPhase &&
+          t("teamPick", { time: formatSeconds(v.teamPickSeconds) }),
       ]);
     },
     veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
         v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
-        (v.mapMode !== "off" || v.championPhase) &&
+        stepSecondsGroup(v) === "maps" &&
           t("seconds", { time: formatSeconds(v.vetoSeconds) }),
-        isTdm(v) &&
-          v.championPhase &&
-          t("teamPick", { time: formatSeconds(v.teamPickSeconds) }),
       ]),
   };
 }

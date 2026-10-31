@@ -19,14 +19,14 @@ type Row =
   | "startsAt"
   | "format"
   | "registration"
-  | "champions"
   | "veto"
+  | "champions"
   | "results"
   | "languages";
 
 /**
  * O que vai ser publicado, para conferir antes de "Criar": nome, início,
- * formato, inscrições, campeões, veto, resultados e idiomas.
+ * formato, inscrições, mapas, campeões, resultados e idiomas.
  */
 export function TournamentReview({ form, maps }: Props) {
   const t = useTranslations("TournamentForm.review");
@@ -50,8 +50,8 @@ export function TournamentReview({ form, maps }: Props) {
     ],
     ["format", summary.format(values)],
     ["registration", summary.registration(values)],
-    ["champions", summary.champions(values)],
     ["veto", summary.veto(values, maps)],
+    ["champions", summary.champions(values)],
     ["results", summary.results(values, screenshots)],
     ["languages", languages.map((l) => tLocales(l)).join(", ")],
   ];

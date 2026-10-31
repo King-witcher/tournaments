@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+// A imagem marca a caixa como o nome: o cursor diz que dá para clicar.
+.image {
+  cursor: pointer;
+}
+
+.disabled {
+  cursor: not-allowed;
+}

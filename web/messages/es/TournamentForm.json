@@ -92,7 +92,7 @@
       "registration": "Inscripciones",
       "champions": "Campeones",
       "languages": "Idiomas",
-      "veto": "Veto",
+      "veto": "Mapas",
       "results": "Resultados"
     },
     "noDate": "Sin fecha"
@@ -110,7 +110,7 @@
     "loginRequired": "Inicia sesión para editar este torneo."
   },
   "veto": {
-    "title": "Veto",
+    "title": "Mapas",
     "mapMode": "Mapa de cada partida",
     "mapModes": {
       "veto": "Veto de mapas",
@@ -134,6 +134,7 @@
     "mapPoolHint": "{count, plural, one {# mapa elegido} other {# mapas elegidos}}; la serie más larga pide al menos {min}.",
     "seconds": "Tiempo de cada paso",
     "secondsHint": "Si se acaba el tiempo, la elección se sortea.",
+    "secondsHintDraft": "También vale para los campeones. Si se acaba el tiempo, la elección se sortea.",
     "teamPickSeconds": "Tiempo de la elección de campeones",
     "teamPickSecondsHint": "Todos eligen al mismo tiempo, un campeón por partida. Lo que falte al final se sortea."
   },

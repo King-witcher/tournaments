@@ -192,6 +192,22 @@ export function poolOf(values: TournamentValues, maps: Schemas["Map"][]) {
   );
 }
 
+/** As opções do tempo de cada passo do veto e do draft (a API aceita de 10 a 300). */
+export const STEP_SECONDS = [15, 20, 30, 45, 60, 90, 120];
+
+/** A janela da escolha simultânea do TDM (a API aceita de 15 a 300). */
+export const TEAM_PICK_SECONDS = [15, 30, 45, 60, 90, 120, 180, 300];
+
+/**
+ * O grupo do formulário em que fica o tempo de cada passo: Mapas, com veto
+ * ou votação (e então vale também para o draft); Campeões, quando só o draft
+ * no site tem passos; nenhum, sem passo (o sorteio do mapa não tem).
+ */
+export function stepSecondsGroup(values: TournamentValues) {
+  if (values.mapMode === "veto" || values.mapMode === "vote") return "maps";
+  return values.championPhase ? "champions" : null;
+}
+
 /** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
 export const longestSeries = (values: TournamentValues) =>
   values.stageFormat === "elimination"

@@ -120,6 +120,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
           })
         : String(slots),
     },
+    { key: "veto", label: t("labels.veto"), value: summary.veto(values, []) },
     {
       key: "champions",
       // No duelo, sem ban e sem regra, "Podem repetir" não tem o que
@@ -130,7 +131,6 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
           : t("labels.champions"),
       value: summary.champions(values),
     },
-    { key: "veto", label: t("labels.veto"), value: summary.veto(values, []) },
     {
       key: "checkIn",
       label: tip("checkIn", t(checkInTip)),

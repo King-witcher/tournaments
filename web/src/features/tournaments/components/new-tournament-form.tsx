@@ -36,7 +36,7 @@ type Group = "champions" | "veto" | "registration" | "results";
 /**
  * Criar torneio, numa página só: à vista o que se decide sempre (nome, id,
  * início, descrição, modalidade, chave e séries); fechados, com o resumo no
- * título, os grupos que já vêm com padrão (campeões, veto, inscrições e
+ * título, os grupos que já vêm com padrão (mapas, campeões, inscrições e
  * prazos, resultados); depois as regras adicionais e, por último, "Outros
  * idiomas". Os botões só liberam com todos os campos válidos.
  * "Criar" confere e mostra a revisão antes de criar já publicado; "Criar como
@@ -131,20 +131,7 @@ export function NewTournamentForm({
           />
         </FormSection>
         <Accordion align="start">
-          <FormAccordionItem
-            title={t("champions")}
-            summary={summary.champions(values)}
-            group="champions"
-            open={open.champions}
-            onToggle={toggle("champions")}
-          >
-            <TournamentChampionFields
-              values={values}
-              onChange={onChange}
-              errors={errors}
-              disabled={false}
-            />
-          </FormAccordionItem>
+          {/* Mapas antes de Campeões: a ordem em que a série os decide. */}
           <FormAccordionItem
             title={t("veto.title")}
             summary={summary.veto(values, maps)}
@@ -157,6 +144,20 @@ export function NewTournamentForm({
               onChange={onChange}
               errors={errors}
               maps={maps}
+              disabled={false}
+            />
+          </FormAccordionItem>
+          <FormAccordionItem
+            title={t("champions")}
+            summary={summary.champions(values)}
+            group="champions"
+            open={open.champions}
+            onToggle={toggle("champions")}
+          >
+            <TournamentChampionFields
+              values={values}
+              onChange={onChange}
+              errors={errors}
               disabled={false}
             />
           </FormAccordionItem>

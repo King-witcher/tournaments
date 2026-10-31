@@ -124,20 +124,20 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                     disabled={setupLocked}
                   />
                 </FormSection>
-                <FormSection legend={t("champions")}>
-                  <TournamentChampionFields
-                    values={values}
-                    onChange={onChange}
-                    errors={errors}
-                    disabled={setupLocked}
-                  />
-                </FormSection>
                 <FormSection legend={t("veto.title")}>
                   <TournamentVetoFields
                     values={values}
                     onChange={onChange}
                     errors={errors}
                     maps={maps}
+                    disabled={setupLocked}
+                  />
+                </FormSection>
+                <FormSection legend={t("champions")}>
+                  <TournamentChampionFields
+                    values={values}
+                    onChange={onChange}
+                    errors={errors}
                     disabled={setupLocked}
                   />
                 </FormSection>

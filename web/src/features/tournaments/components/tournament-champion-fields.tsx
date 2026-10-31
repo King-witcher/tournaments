@@ -10,8 +10,12 @@ import {
   isTdm,
   type NoRepeatChoice,
   noRepeatChoices,
+  STEP_SECONDS,
+  stepSecondsGroup,
+  TEAM_PICK_SECONDS,
   type TournamentValues,
 } from "../lib/form-values";
+import { SecondsSelect } from "./seconds-select";
 
 const BANS = [0, 1, 2, 3];
 
@@ -29,7 +33,9 @@ type Props = {
  * O draft de campeões da série: se é feito no site, os bans de cada lado e o
  * que pode repetir (na partida, entre adversários e, no TDM, entre colegas;
  * em outras partidas, pela regra de não repetição e, no TDM, quem não
- * repete).
+ * repete). Com o draft no site: o tempo de cada passo, quando o mapa não
+ * tem passo (com veto ou votação, ele fica no grupo Mapas), e, no TDM, o da
+ * janela simultânea.
  */
 export function TournamentChampionFields({
   values,
@@ -38,6 +44,7 @@ export function TournamentChampionFields({
   disabled,
 }: Props) {
   const t = useTranslations("TournamentForm.championRules");
+  const tVeto = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
 
   return (
@@ -126,6 +133,30 @@ export function TournamentChampionFields({
             label: t(`whoOptions.${value}`),
           }))}
           onChange={(noRepeatWho) => onChange({ noRepeatWho })}
+        />
+      )}
+      {stepSecondsGroup(values) === "champions" && (
+        <SecondsSelect
+          labelText={tVeto("seconds")}
+          helperText={tVeto("secondsHint")}
+          name="vetoSeconds"
+          options={STEP_SECONDS}
+          value={values.vetoSeconds}
+          error={errors.vetoSeconds}
+          disabled={disabled}
+          onChange={(vetoSeconds) => onChange({ vetoSeconds })}
+        />
+      )}
+      {tdm && values.championPhase && (
+        <SecondsSelect
+          labelText={tVeto("teamPickSeconds")}
+          helperText={tVeto("teamPickSecondsHint")}
+          name="teamPickSeconds"
+          options={TEAM_PICK_SECONDS}
+          value={values.teamPickSeconds}
+          error={errors.teamPickSeconds}
+          disabled={disabled}
+          onChange={(teamPickSeconds) => onChange({ teamPickSeconds })}
         />
       )}
     </>

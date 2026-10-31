@@ -11,7 +11,7 @@
   background: theme.$layer-accent-01;
 }
 
-// Banido: o cinza mostra de relance o que saiu (o nome também fica riscado).
+// Banido no veto ou fora do pool: o cinza mostra de relance o que está fora.
 .out {
   filter: grayscale(1);
 }

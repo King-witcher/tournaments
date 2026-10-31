@@ -1,17 +1,13 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/breakpoint";
 
-// Os mapas em duas colunas: 16 caixas numa coluna só alongariam o grupo.
+// Os mapas em grade, com a imagem, como no veto da série: duas colunas no
+// celular, mais quando cabe.
 .pool {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: spacing.$spacing-03 spacing.$spacing-05;
-
-  @include breakpoint.breakpoint(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
+  gap: spacing.$spacing-05 spacing.$spacing-03;
 }
 
 .hint {

@@ -34,7 +34,7 @@ const IMAGES = new Set([
 
 type Props = {
   slug: string;
-  /** Saiu do jogo (banido): em tons de cinza. */
+  /** Fora (banido no veto, ou fora do pool no formulário): em tons de cinza. */
   out?: boolean;
 };
 
