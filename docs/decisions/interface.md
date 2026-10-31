@@ -29,7 +29,8 @@ O alvo página a página está em `docs/design.md`; o guia de código e as regra
 - **Página que pede login** oferece "Entrar" e "Criar conta", os dois voltando para a página (quem chega por convite geralmente ainda não tem conta). **Sessão expirada no meio de uma ação**: o erro diz para recarregar e entrar de novo.
 - **Data de início que passou** (organização ainda não iniciou): "Início marcado para", não "Começa".
 - **Validação de formulário** (do usuário): o campo cobra o limite e o texto de ajuda só diz o que ele é. Obrigatório com estrela vermelha no rótulo; caractere recusado não entra (`filter`); número fora da faixa fica vermelho na hora; texto fica vermelho depois da primeira saída do campo. O botão de enviar fica desabilitado enquanto faltar obrigatório ou houver campo inválido (escolhido no lugar de habilitado com foco no primeiro inválido: o pedido é prevenir o envio e a causa está à vista). No formulário de torneio vale o mesmo, mantendo `noValidate` (o `check` abre o grupo do campo recusado); uma data que só o formulário sabe validar usa `problem`, que bloqueia e vale menos que o erro da API. Diretriz em `web/CLAUDE.md`.
-- **Menos texto** (do usuário): o texto diz só o que a pessoa não sabe e não vai descobrir logo em seguida, sem ficar vago. Regras em "Como escrever" no `web/CLAUDE.md`.
+- **Menos texto** (do usuário): o texto diz só o que a pessoa não sabe e não vai descobrir logo em seguida, sem ficar vago. Regras em "Como escrever" no `web/CLAUDE.md`. Aplicado ao site inteiro em duas partes (30/10); campo opcional não leva "(opcional)" no rótulo, como não leva estrela.
+- **Inicial do avatar**: a primeira letra ou número do nome ("[AR] Lobo" dá "A"); `charAt(0)` partia o emoji ao meio e quebrava a hidratação. O contador do `TextArea` fala pt e es (o do Carbon dizia "Character limit").
 - **Terminologia**: partida (jogo), série, torneio, mapa (arena); glossário em `web/CLAUDE.md`.
 
 ## Home e páginas de uso

@@ -31,15 +31,11 @@ export function TournamentSlotsField({
   const size = teamSizeOf(values);
   const limits = slotLimits(values.stageFormat, size);
   const slots = values.maxParticipants;
-  const hint = tdm
-    ? [
-        slots !== null &&
-          t("slotsTeams", { slots, size, ...teamsIn(slots, size) }),
-        t("maxParticipantsHintTdm"),
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : t("maxParticipantsHint");
+  // No duelo, "Vagas" se explica sozinho.
+  const hint =
+    tdm && slots !== null
+      ? t("slotsTeams", { slots, size, ...teamsIn(slots, size) })
+      : undefined;
 
   return (
     <NumberInput

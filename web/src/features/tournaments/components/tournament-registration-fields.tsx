@@ -40,7 +40,11 @@ export function TournamentRegistrationFields({
       />
       <RadioGroup
         legendText={t("admission")}
-        helperText={t(`admissionHints.${values.admission}`)}
+        // "Só por link ou pela organização" já diz tudo; da aberta, falta o
+        // prazo.
+        helperText={
+          values.admission === "open" ? t("admissionOpenHint") : undefined
+        }
         name="admission"
         orientation="horizontal"
         value={values.admission}

@@ -13,25 +13,25 @@
   },
   "draw": {
     "title": "Sortear os times",
-    "what": "Refaz todos os times com os inscritos, na ordem de inscrição. Os últimos que não completam um time ficam de reserva.",
-    "whatCheckIn": "Refaz todos os times com quem fez check-in, na ordem de inscrição. Os últimos que não completam um time ficam de reserva, e quem não fez check-in fica sem time.",
+    "what": "Refaz todos os times. Quem se inscreveu por último e não completa um time fica de reserva.",
+    "whatCheckIn": "Refaz todos os times com quem fez check-in. Quem se inscreveu por último e não completa um time fica de reserva.",
     "random": "Sortear",
     "randomHint": "Jogadores e capitães ao acaso.",
     "balanced": "Sortear balanceado",
     "balancedHint": "Times com rating médio parecido, pelo rating da comunidade. O capitão é o de maior rating.",
-    "confirm": "Sortear de novo desfaz todos os times de agora, com os nomes e os capitães, e a ordem da chave. Continuar?",
+    "confirm": "Sortear de novo? Os times atuais, com nomes e capitães, e a ordem da chave são desfeitos.",
     "short": "O sorteio precisa de pelo menos {size} inscritos; {count, plural, =0 {ainda não há nenhum} one {só há #} other {só há #}}.",
     "shortCheckIn": "O sorteio usa só quem fez check-in e precisa de pelo menos {size}; {count, plural, =0 {ninguém fez ainda} one {só # fez} other {só # fizeram}}."
   },
   "teams": {
     "title": "Times ({count})",
-    "empty": "Nenhum time ainda. Sorteie os times, ou crie um pelo menu ⋯ de um reserva.",
+    "empty": "Nenhum time ainda.",
     "emptyReadOnly": "Os times ainda não foram formados.",
     "newTeam": "Solte aqui para criar um novo time"
   },
   "reserves": {
     "title": "Reservas ({count})",
-    "what": "Inscritos sem time, na ordem de inscrição.",
+    "what": "Na ordem de inscrição.",
     "empty": "Ninguém de reserva."
   },
   "state": {
@@ -66,20 +66,20 @@
     "open": "Renomear",
     "title": "Renomear {name}",
     "label": "Nome do time",
-    "helper": "Até 40 caracteres. Vazio, o time aparece como “{fallback}”.",
+    "helper": "Sem nome, o time aparece como “{fallback}”.",
     "submit": "Salvar nome"
   },
   "captain": {
     "open": "Trocar capitão",
     "title": "Trocar o capitão de {name}",
-    "hint": "O capitão age pelo time no veto: clica em “Pronto”, faz as escolhas do time e pede ou responde o pedido de desfazer um passo.",
+    "hint": "O capitão dá nome ao time e pode renomeá-lo.",
     "label": "Capitão",
     "submit": "Salvar capitão"
   },
   "substitute": {
     "open": "Substituir jogador",
     "title": "Substituir jogador em {name}",
-    "hint": "A troca vale a partir da próxima partida enviada. Quem sai continua inscrito, sem time (fica de reserva); quem entra passa a jogar pelo time.",
+    "hint": "Vale a partir da próxima partida enviada. Quem sai fica de reserva.",
     "out": "Quem sai",
     "in": "Quem entra",
     "choose": "Escolha…",
@@ -91,12 +91,13 @@
   },
   "withdraw": {
     "open": "Marcar desistência",
-    "confirm": "Marcar a desistência de {name}? O time continua na chave, mas as séries que tiver, agora ou quando ficarem prontas, viram W.O. para o adversário. Não dá para desfazer (resultados ainda podem ser corrigidos)."
+    "confirm": "Marcar a desistência de {name}? As séries do time, a atual e as próximas, viram W.O. para o adversário. Não dá para desfazer."
   },
   "manage": {
     "title": "Times",
-    "started": "Os times estão na aba Inscritos; lá a organização troca o capitão e substitui jogadores.",
+    "started": "Substituições e troca de capitão ficam na aba Inscritos.",
     "unavailable": "Não foi possível carregar os times agora. Recarregue a página.",
     "view": "Ver os times"
-  }
+  },
+  "howToEditTouch": "Use o menu ⋯ de cada jogador para formar times."
 }

@@ -29,8 +29,8 @@ type Props = {
  * (com "Pronto" para quem joga e "Começar agora" para a organização);
  * depois, de quem é a vez e o tempo que falta (no fim, a escolha é
  * sorteada: a página recarrega para mostrar o sorteio); na janela
- * simultânea do TDM, o tempo da janela; concluído, que a partida pode ser
- * enviada.
+ * simultânea do TDM, o tempo da janela; concluído, só isso (a etiqueta do
+ * cabeçalho e a linha da partida dizem o que fazer).
  */
 export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
   const t = useTranslations("Match.veto");
@@ -41,10 +41,11 @@ export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
 
   if (veto.status === "waiting_ready") {
     const ready = { a: veto.ready_a, b: veto.ready_b };
-    const other = mine === "a" ? "b" : "a";
+    const canReady = mine != null && !ready[mine];
     return (
       <div className={styles.turn}>
         <p>{t(teams ? "waitingReadyTeams" : "waitingReady")}</p>
+        {/* Quem já está pronto vê só a lista: ela já diz quem falta. */}
         <ul className={styles.ready}>
           {(["a", "b"] as const).map((side) => (
             <li key={side}>
@@ -52,38 +53,40 @@ export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
             </li>
           ))}
         </ul>
-        <div className={styles.buttons}>
-          {mine && !ready[mine] && (
-            <Button pending={action.pending} onClick={action.ready}>
-              {t("readyButton")}
-            </Button>
-          )}
-          {mine && ready[mine] && (
-            <p className={styles.note}>
-              {t(teams ? "yourTeamIsReady" : "youAreReady", {
-                name: names[other],
-              })}
-            </p>
-          )}
-          {canManage && (
-            <ConfirmButton
-              question={t("forceStartQuestion")}
-              onConfirm={action.start}
-              pending={action.pending}
-              destructive={false}
-              kind={mine ? "ghost" : "tertiary"}
-            >
-              {t("forceStart")}
-            </ConfirmButton>
-          )}
-        </div>
+        {(canReady || canManage) && (
+          <div className={styles.buttons}>
+            {canReady && (
+              <Button pending={action.pending} onClick={action.ready}>
+                {t("readyButton")}
+              </Button>
+            )}
+            {canManage && (
+              <ConfirmButton
+                question={t("forceStartQuestion")}
+                onConfirm={action.start}
+                pending={action.pending}
+                destructive={false}
+                kind={mine ? "ghost" : "tertiary"}
+              >
+                {t("forceStart")}
+              </ConfirmButton>
+            )}
+          </div>
+        )}
         {action.error && <ErrorText>{action.error}</ErrorText>}
       </div>
     );
   }
 
   if (veto.status === "done" || !veto.turn) {
-    return <p className={styles.turn}>{t("done", { game })}</p>;
+    return (
+      <p className={styles.turn}>
+        {t("done", {
+          game,
+          mode: veto.map_mode === "vote" ? "vote" : "other",
+        })}
+      </p>
+    );
   }
 
   const turn = veto.turn;

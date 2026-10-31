@@ -89,10 +89,12 @@ export function TournamentChampionFields({
       </FormGroup>
       <Select
         labelText={t("otherGames")}
+        // Na série, a opção se explica; fora dela, conta só o que foi jogado
+        // e o pool pode não bastar.
         helperText={
-          values.noRepeat === "off"
-            ? undefined
-            : t(`otherGamesHints.${values.noRepeat}`)
+          values.noRepeat === "stage" || values.noRepeat === "tournament"
+            ? t(`otherGamesHints.${values.noRepeat}`)
+            : undefined
         }
         name="noRepeat"
         value={values.noRepeat}

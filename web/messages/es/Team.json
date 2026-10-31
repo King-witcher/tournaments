@@ -13,25 +13,25 @@
   },
   "draw": {
     "title": "Sortear los equipos",
-    "what": "Rehace todos los equipos con los inscritos, en orden de inscripción. Los últimos que no completan un equipo quedan como suplentes.",
-    "whatCheckIn": "Rehace todos los equipos con quienes hicieron check-in, en orden de inscripción. Los últimos que no completan un equipo quedan como suplentes, y quien no hizo check-in queda sin equipo.",
+    "what": "Rehace todos los equipos. Quien se inscribió último y no completa un equipo queda como suplente.",
+    "whatCheckIn": "Rehace todos los equipos con quienes hicieron check-in. Quien se inscribió último y no completa un equipo queda como suplente.",
     "random": "Sortear",
     "randomHint": "Jugadores y capitanes al azar.",
     "balanced": "Sortear equilibrado",
     "balancedHint": "Equipos con rating promedio parecido, según el rating de la comunidad. El capitán es el de mayor rating.",
-    "confirm": "Sortear de nuevo deshace todos los equipos actuales, con los nombres y los capitanes, y el orden de la llave. ¿Continuar?",
+    "confirm": "¿Sortear de nuevo? Los equipos actuales, con nombres y capitanes, y el orden de la llave se deshacen.",
     "short": "El sorteo necesita al menos {size} inscritos; {count, plural, =0 {todavía no hay ninguno} one {solo hay #} other {solo hay #}}.",
     "shortCheckIn": "El sorteo usa solo a quienes hicieron check-in y necesita al menos {size}; {count, plural, =0 {nadie lo hizo todavía} one {solo # lo hizo} other {solo # lo hicieron}}."
   },
   "teams": {
     "title": "Equipos ({count})",
-    "empty": "Todavía no hay equipos. Sortea los equipos, o crea uno desde el menú ⋯ de un suplente.",
+    "empty": "Todavía no hay equipos.",
     "emptyReadOnly": "Los equipos todavía no se armaron.",
     "newTeam": "Suelta aquí para crear un nuevo equipo"
   },
   "reserves": {
     "title": "Suplentes ({count})",
-    "what": "Inscritos sin equipo, en orden de inscripción.",
+    "what": "En orden de inscripción.",
     "empty": "No hay suplentes."
   },
   "state": {
@@ -66,20 +66,20 @@
     "open": "Renombrar",
     "title": "Renombrar {name}",
     "label": "Nombre del equipo",
-    "helper": "Hasta 40 caracteres. Vacío, el equipo aparece como “{fallback}”.",
+    "helper": "Sin nombre, el equipo aparece como “{fallback}”.",
     "submit": "Guardar nombre"
   },
   "captain": {
     "open": "Cambiar capitán",
     "title": "Cambiar el capitán de {name}",
-    "hint": "El capitán actúa por el equipo en el veto: hace clic en “Listo”, hace las elecciones del equipo y pide o responde la solicitud de deshacer un paso.",
+    "hint": "El capitán le da nombre al equipo y puede renombrarlo.",
     "label": "Capitán",
     "submit": "Guardar capitán"
   },
   "substitute": {
     "open": "Sustituir jugador",
     "title": "Sustituir jugador en {name}",
-    "hint": "El cambio vale a partir de la próxima partida enviada. Quien sale sigue inscrito, sin equipo (queda como suplente); quien entra pasa a jugar por el equipo.",
+    "hint": "Vale a partir de la próxima partida enviada. Quien sale queda como suplente.",
     "out": "Quién sale",
     "in": "Quién entra",
     "choose": "Elige…",
@@ -91,12 +91,13 @@
   },
   "withdraw": {
     "open": "Marcar abandono",
-    "confirm": "¿Marcar el abandono de {name}? El equipo sigue en la llave, pero las series que tenga, ahora o cuando estén listas, pasan a W.O. para el rival. No se puede deshacer (los resultados aún se pueden corregir)."
+    "confirm": "¿Marcar el abandono de {name}? Las series del equipo, la actual y las próximas, pasan a W.O. para el rival. No se puede deshacer."
   },
   "manage": {
     "title": "Equipos",
-    "started": "Los equipos están en la pestaña Inscritos; ahí la organización cambia el capitán y sustituye jugadores.",
+    "started": "Las sustituciones y el cambio de capitán están en la pestaña Inscritos.",
     "unavailable": "No se pudieron cargar los equipos ahora. Recarga la página.",
     "view": "Ver los equipos"
-  }
+  },
+  "howToEditTouch": "Usa el menú ⋯ de cada jugador para formar equipos."
 }

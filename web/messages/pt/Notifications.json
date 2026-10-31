@@ -25,11 +25,11 @@
       },
       "veto_started": {
         "title": "O veto começou",
-        "body": "{tournament}: veto contra {opponent}. Cada passo tem tempo. No fim, a escolha é sorteada."
+        "body": "{tournament}: contra {opponent}. Se o tempo de um passo acabar, a escolha é sorteada."
       },
       "team_pick_open": {
         "title": "Escolha seus campeões",
-        "body": "{tournament}: a escolha de campeões da série abriu. Todos escolhem ao mesmo tempo, um para cada partida; o que faltar no fim é sorteado."
+        "body": "{tournament}: um campeão para cada partida da série. O que faltar no fim é sorteado."
       }
     },
     "tournament": {

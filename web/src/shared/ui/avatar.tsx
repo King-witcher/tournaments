@@ -14,13 +14,23 @@ type Props = {
   size?: keyof typeof PIXELS;
 };
 
+/**
+ * A inicial: a primeira letra ou número ("[AR] Lobo" dá "A"), senão o
+ * primeiro caractere inteiro. `charAt(0)` partia o emoji ao meio ("🔥 Inferno"
+ * virava "�" e o servidor e o navegador discordavam na hidratação).
+ */
+function initial(name: string | undefined) {
+  const text = name?.trim() ?? "";
+  return text.match(/[\p{L}\p{N}]/u)?.[0] ?? Array.from(text)[0] ?? "";
+}
+
 /** Avatar redondo; decorativo (o nome sempre aparece ao lado). */
 export function Avatar({ src, name, size = "sm" }: Props) {
   const className = cn(styles.avatar, styles[size]);
   if (!src) {
     return (
       <span aria-hidden className={className}>
-        {name?.trim().charAt(0)}
+        {initial(name)}
       </span>
     );
   }

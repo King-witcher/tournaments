@@ -100,7 +100,12 @@ export function GameRow({
       <span className={cn(styles.result, settled && styles.settled)}>
         {settled || !g.reported_side
           ? t("won", { name: winner })
-          : t("claim", { reporter: names[g.reported_side], winner })}
+          : t("claim", {
+              reporter: names[g.reported_side],
+              winner,
+              // "Fulano enviou que venceu", sem o nome duas vezes.
+              self: g.reported_side === g.winner ? "yes" : "no",
+            })}
         {lineup && <span className={styles.lineup}>{lineup}</span>}
       </span>
       <span className={styles.frags}>

@@ -2,7 +2,7 @@
   "attach": "Adjuntar captura de pantalla",
   "attachTo": "Adjuntar captura de pantalla a la partida {number}",
   "hint": "Imagen del marcador. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
-  "requiredHint": "Este torneo exige una captura de pantalla del marcador. Adjúntala antes de enviar la partida. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
+  "requiredHint": "Este torneo exige la captura de pantalla del marcador. En la computadora, también puedes pegarla con el botón seleccionado (Ctrl+V).",
   "open": "Captura de pantalla {index} de la partida {number}, de {name}, en tamaño real",
   "openNoAuthor": "Captura de pantalla {index} de la partida {number}, en tamaño real",
   "by": "de {name}",
@@ -17,6 +17,6 @@
   },
   "field": {
     "label": "Exigir captura de pantalla del marcador",
-    "hint": "El jugador solo envía una partida con una captura de pantalla del marcador adjunta. La organización carga y corrige sin captura de pantalla."
+    "hint": "La organización carga y corrige partidas sin captura de pantalla."
   }
 }

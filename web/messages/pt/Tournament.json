@@ -1,7 +1,7 @@
 {
   "loading": "Carregando o torneio…",
   "loginRequired": "Entre para ver este torneio.",
-  "draftHint": "Rascunho: só organizadores veem. Publique para abrir as inscrições.",
+  "draftHint": "Só a organização vê o rascunho.",
   "edit": "Editar",
   "sections": "Seções do torneio",
   "tabs": {
@@ -131,8 +131,8 @@
         "tdm": "{count, plural, one {Antes da partida 1, cada time bane # campeão, alternando. O banido fica fora da série toda, para os dois times.} other {Antes da partida 1, cada time bane # campeões, alternando. Os banidos ficam fora da série toda, para os dois times.}}"
       },
       "pick": {
-        "duel": "Depois, ainda antes da partida 1, vocês escolhem o campeão de cada partida, uma por vez, alternando quem escolhe primeiro. Ninguém volta ao veto entre as partidas.",
-        "tdm": "Depois, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que faltar no fim é sorteado. Ninguém volta ao veto entre as partidas."
+        "duel": "Depois, ainda antes da partida 1, vocês escolhem o campeão de cada partida, uma por vez, alternando quem escolhe primeiro.",
+        "tdm": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que faltar no fim é sorteado."
       },
       "mirror": {
         "duel": {
@@ -172,7 +172,7 @@
   "rulesEditor": {
     "edit": "Editar regras adicionais",
     "write": "Escrever regras adicionais",
-    "empty": "Escreva o que o texto acima não cobre: mapas, conduta, queda de conexão.",
+    "empty": "Nenhuma regra adicional.",
     "labelOriginal": "Regras adicionais ({language}, original)",
     "labelTranslation": "Regras adicionais ({language}, tradução)"
   },
@@ -224,13 +224,13 @@
       "champions": "Como funcionam as regras de campeões?",
       "checkIn": "O que é check-in?",
       "checkInText": "No check-in, você confirma na página do torneio que vai jogar. Só quem faz check-in entra na chave.",
-      "noCheckInText": "No check-in, os inscritos confirmam perto do início que vão jogar. Este torneio não tem check-in. Todos os inscritos entram na chave.",
+      "noCheckInText": "No check-in, os inscritos confirmam perto do início que vão jogar. Sem ele, todos os inscritos entram na chave.",
       "contest": "O que é o prazo para contestar?",
       "contestText": "Depois de cada partida, um jogador envia o resultado, e o outro tem esse prazo para confirmar ou contestar. Se o resultado chegar antes de a partida completar {duration}, o prazo só começa a contar aos {duration}. Sem resposta, o resultado vale; se houver contestação, a organização decide.",
       "format": "Como funciona o formato?",
       "mode": "Como funcionam os times?",
       "checkInTextTdm": "No check-in, você confirma na página do torneio que vai jogar. Só quem faz check-in entra num time.",
-      "noCheckInTextTdm": "No check-in, os inscritos confirmam perto do início que vão jogar. Este torneio não tem check-in. Qualquer inscrito pode entrar num time.",
+      "noCheckInTextTdm": "No check-in, os inscritos confirmam perto do início que vão jogar. Sem ele, qualquer inscrito pode entrar num time.",
       "contestTextTdm": "Depois de cada partida, um jogador envia o resultado, e o outro time tem esse prazo para confirmar ou contestar (o colega de quem enviou também pode contestar). Se o resultado chegar antes de a partida completar {duration}, o prazo só começa a contar aos {duration}. Sem resposta, o resultado vale; se houver contestação, a organização decide."
     },
     "seeRules": "Ver as regras",
@@ -265,7 +265,7 @@
       "uses": "Inscrições"
     },
     "revoke": "Revogar",
-    "revokeConfirm": "Revogar {has, select, yes {o link de inscrição {link}} other {este link de inscrição}}? Quem abrir o link depois não entra mais por ele; quem já se inscreveu continua inscrito. Dá para gerar outro depois."
+    "revokeConfirm": "Revogar {has, select, yes {o link de inscrição {link}} other {este link de inscrição}}? Quem já se inscreveu por ele continua inscrito."
   },
   "startsAt": "Começa <date></date>",
   "startedAt": "Início marcado para <date></date>",

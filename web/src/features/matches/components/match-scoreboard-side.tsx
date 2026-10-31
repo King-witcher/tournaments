@@ -28,7 +28,8 @@ type Props = {
 /**
  * Um lado no placar da partida: avatar, nome do time (no duelo, o apelido
  * como link para a pessoa), seed e a marca de quem saiu; no TDM, os
- * jogadores, com o capitão marcado; sem time, de onde ele vem.
+ * jogadores (o capitão só dá nome ao time: não é marcado aqui); sem time,
+ * de onde ele vem.
  */
 export function MatchScoreboardSide({
   tenant,
@@ -87,7 +88,6 @@ export function MatchScoreboardSide({
                         {nick}
                       </MemberLink>
                     )}
-                    {m.user_id === team.captain && ` (${t("captain")})`}
                     {m.left && <DepartureTag withdrawn={false} left={true} />}
                   </li>
                 );

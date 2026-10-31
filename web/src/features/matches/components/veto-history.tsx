@@ -52,12 +52,15 @@ export function VetoHistory({ veto, names }: Props) {
             forced: e.actor != null ? "yes" : "no",
           });
           // O pick de campeão diz a partida a que se destina; o ban de
-          // campeão vale para a série inteira.
+          // campeão e o veto de mapas valem para a série inteira (o mapa
+          // escolhido para a partida 2 sai antes da partida 1: "Partida 1"
+          // na frente enganaria).
           const game = e.pick_game ?? e.game;
           const seriesWide =
             e.kind === "game" ||
             e.kind === "begin" ||
-            (e.kind === "ban" && e.champion != null);
+            (e.kind === "ban" && e.champion != null) ||
+            (e.map != null && veto.map_mode === "veto");
           const parts = [
             game != null && !seriesWide ? t("game", { game }) : null,
             text,

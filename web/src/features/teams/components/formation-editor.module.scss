@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Arrastar só funciona com mouse: do md para baixo (onde a alça e a área de
+// soltar somem), a dica fala do menu ⋯.
+.pointer {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.touch {
+  @include breakpoint.breakpoint(md) {
+    display: none;
+  }
+}

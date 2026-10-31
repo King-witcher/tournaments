@@ -2,7 +2,7 @@
   "attach": "Anexar captura de tela",
   "attachTo": "Anexar captura de tela à partida {number}",
   "hint": "Imagem do placar. No computador, também dá para colar com o botão selecionado (Ctrl+V).",
-  "requiredHint": "Este torneio exige uma captura de tela do placar. Anexe antes de enviar a partida. No computador, também dá para colar com o botão selecionado (Ctrl+V).",
+  "requiredHint": "Este torneio exige a captura de tela do placar. No computador, também dá para colar com o botão selecionado (Ctrl+V).",
   "open": "Captura de tela {index} da partida {number}, de {name}, em tamanho real",
   "openNoAuthor": "Captura de tela {index} da partida {number}, em tamanho real",
   "by": "de {name}",
@@ -17,6 +17,6 @@
   },
   "field": {
     "label": "Exigir captura de tela do placar",
-    "hint": "O jogador só envia uma partida com uma captura de tela do placar anexada. A organização lança e corrige sem captura de tela."
+    "hint": "A organização lança e corrige partidas sem captura de tela."
   }
 }

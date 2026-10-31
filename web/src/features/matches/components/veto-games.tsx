@@ -43,11 +43,11 @@ export function VetoGames({ veto, names }: Props) {
           {t("bans", {
             list: veto.bans
               .map((b) =>
-                b.timeout
-                  ? t("drawn", { champion: b.champion.name })
-                  : b.champion.name,
+                t(b.timeout ? "banDrawn" : "ban", {
+                  champion: b.champion.name,
+                  name: names[b.side],
+                }),
               )
-              .map((name, i) => `${name} (${names[veto.bans[i].side]})`)
               .join(", "),
           })}
         </p>

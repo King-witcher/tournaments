@@ -20,9 +20,9 @@ type Props = {
 /**
  * O placar da série logo abaixo do cabeçalho: os dois lados com avatar e os
  * mapas de cada um em tipo grande (os confirmados, enquanto a série não
- * fecha); embaixo, o estado (quantos mapas vencem, quantos esperam
- * confirmação ou estão contestados, ou como a série foi decidida) e o prazo
- * do próximo mapa que confirma sozinho.
+ * fecha); embaixo, quando há, quantos esperam confirmação ou estão
+ * contestados (fora do placar), como a série foi decidida e o prazo do
+ * próximo mapa que confirma sozinho.
  */
 export function MatchScoreboard({ tenant, detail }: Props) {
   const t = useTranslations("Match");
@@ -41,7 +41,6 @@ export function MatchScoreboard({ tenant, detail }: Props) {
   };
   const scoreA = score("a");
   const scoreB = score("b");
-  const needed = Math.floor(s.best_of / 2) + 1;
   // O mapa pendente que confirma primeiro (a linha dele tem o mesmo prazo).
   const due = detail.games
     .filter((g) => g.status === "pending" && g.confirm_by)
@@ -56,9 +55,7 @@ export function MatchScoreboard({ tenant, detail }: Props) {
       }),
     );
   } else if (playing) {
-    lines.push(
-      `${t("series.open")} ${t("series.needed", { bestOf: s.best_of, needed })}`,
-    );
+    // Sem partida pendente ou contestada, o placar fala por si.
     if (s.pending_maps > 0)
       lines.push(t("series.pending", { count: s.pending_maps }));
     if (s.contested_maps > 0)
@@ -128,12 +125,14 @@ export function MatchScoreboard({ tenant, detail }: Props) {
           alignEnd
         />
       </div>
-      <div className={styles.lines}>
-        {lines.map((line, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
-          <p key={i}>{line}</p>
-        ))}
-      </div>
+      {lines.length > 0 && (
+        <div className={styles.lines}>
+          {lines.map((line, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, na mesma ordem.
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

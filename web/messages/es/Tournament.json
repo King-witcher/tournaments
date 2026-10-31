@@ -1,7 +1,7 @@
 {
   "loading": "Cargando el torneo…",
   "loginRequired": "Inicia sesión para ver este torneo.",
-  "draftHint": "Borrador: solo lo ven los organizadores. Publícalo para abrir las inscripciones.",
+  "draftHint": "Solo la organización ve el borrador.",
   "edit": "Editar",
   "sections": "Secciones del torneo",
   "tabs": {
@@ -131,8 +131,8 @@
         "tdm": "{count, plural, one {Antes de la partida 1, cada equipo banea # campeón, por turnos. El baneado queda fuera de toda la serie, para los dos equipos.} other {Antes de la partida 1, cada equipo banea # campeones, por turnos. Los baneados quedan fuera de toda la serie, para los dos equipos.}}"
       },
       "pick": {
-        "duel": "Después, todavía antes de la partida 1, tú y tu rival eligen el campeón de cada partida, una por vez, alternando quién elige primero. Nadie vuelve al veto entre partidas.",
-        "tdm": "Después, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea. Nadie vuelve al veto entre partidas."
+        "duel": "Después, todavía antes de la partida 1, tú y tu rival eligen el campeón de cada partida, una por vez, alternando quién elige primero.",
+        "tdm": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea."
       },
       "mirror": {
         "duel": {
@@ -172,7 +172,7 @@
   "rulesEditor": {
     "edit": "Editar reglas adicionales",
     "write": "Escribir reglas adicionales",
-    "empty": "Escribe lo que el texto de arriba no cubre: mapas, conducta, caídas de conexión.",
+    "empty": "Ninguna regla adicional.",
     "labelOriginal": "Reglas adicionales ({language}, original)",
     "labelTranslation": "Reglas adicionales ({language}, traducción)"
   },
@@ -224,13 +224,13 @@
       "champions": "¿Cómo funcionan las reglas de campeones?",
       "checkIn": "¿Qué es el check-in?",
       "checkInText": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en la llave.",
-      "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in. Todos los inscritos entran en la llave.",
+      "noCheckInText": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Sin él, todos los inscritos entran en la llave.",
       "contest": "¿Qué es el plazo para impugnar?",
       "contestText": "Después de cada partida, un jugador envía el resultado, y el otro tiene este plazo para confirmarlo o impugnarlo. Si el resultado llega antes de que la partida cumpla {duration}, el plazo solo empieza a contar a los {duration}. Sin respuesta, el resultado vale; si hay impugnación, decide la organización.",
       "format": "¿Cómo funciona el formato?",
       "mode": "¿Cómo funcionan los equipos?",
       "checkInTextTdm": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en un equipo.",
-      "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Este torneo no tiene check-in. Cualquier inscrito puede entrar en un equipo.",
+      "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Sin él, cualquier inscrito puede entrar en un equipo.",
       "contestTextTdm": "Después de cada partida, un jugador envía el resultado, y el otro equipo tiene este plazo para confirmarlo o impugnarlo (el compañero de quien lo envió también puede impugnarlo). Si el resultado llega antes de que la partida cumpla {duration}, el plazo solo empieza a contar a los {duration}. Sin respuesta, el resultado vale; si hay impugnación, decide la organización."
     },
     "seeRules": "Ver las reglas",
@@ -265,7 +265,7 @@
       "uses": "Inscripciones"
     },
     "revoke": "Revocar",
-    "revokeConfirm": "¿Revocar {has, select, yes {el enlace de inscripción {link}} other {este enlace de inscripción}}? Quien lo abra después ya no entra por él; quien ya se inscribió sigue inscrito. Puedes generar otro después."
+    "revokeConfirm": "¿Revocar {has, select, yes {el enlace de inscripción {link}} other {este enlace de inscripción}}? Quien ya se inscribió por él sigue inscrito."
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",

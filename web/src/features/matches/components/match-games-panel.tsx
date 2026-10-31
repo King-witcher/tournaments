@@ -30,7 +30,7 @@ export function MatchGamesPanel({ target, detail, maps }: Props) {
   if (!open && detail.games.length === 0) return null;
 
   return (
-    <Section title={t("title")} description={open ? t("hint") : undefined}>
+    <Section title={t("title")}>
       <div>
         {/* Os nomes das colunas, para correr o olho; cada linha também se
             explica sozinha (o leitor de tela lê "Mapa 1", "Frags"). */}

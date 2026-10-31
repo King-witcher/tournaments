@@ -9,6 +9,7 @@ import { DrawSection } from "./draw-section";
 import { EditableReserves } from "./editable-reserves";
 import { EditableTeam } from "./editable-team";
 import { FormationBoard } from "./formation-board";
+import styles from "./formation-editor.module.scss";
 import { FormationSummary } from "./formation-summary";
 import { NewTeamZone } from "./new-team-zone";
 import { TeamsColumn } from "./teams-column";
@@ -61,7 +62,12 @@ export function FormationEditor({
         teams={
           <TeamsColumn
             count={formation.teams.length}
-            description={t("howToEdit")}
+            description={
+              <>
+                <span className={styles.pointer}>{t("howToEdit")}</span>
+                <span className={styles.touch}>{t("howToEditTouch")}</span>
+              </>
+            }
             empty={t("teams.empty")}
             extra={<NewTeamZone board={board} />}
           >

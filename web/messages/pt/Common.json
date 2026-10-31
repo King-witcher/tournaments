@@ -66,5 +66,10 @@
     "range": "Use de {min} a {max}.",
     "atLeast": "O mínimo é {min}.",
     "atMost": "O máximo é {max}."
+  },
+  "counter": {
+    "remaining": "{count, plural, one {Resta # caractere.} other {Restam # caracteres.}}",
+    "maxReached": "Limite de caracteres atingido.",
+    "limit": "Limite de {max} caracteres."
   }
 }
