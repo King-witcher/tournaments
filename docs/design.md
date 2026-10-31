@@ -49,7 +49,7 @@ Coluna estreita, `Tile` com o formulário e os botões do Discord e do Google; "
 
 ### Conta `/account`
 
-Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **Logins** (email primeiro, com a senha atual pedida quando ele muda e "Remover email" travado com o motivo se há senha; Discord e Google cada um no seu bloco, vincular ou desvincular se sobrar outro jeito de entrar; senha), **Senha**, **Sessões** (a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som).
+Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **Logins** (email primeiro, com a senha atual pedida quando ele muda e "Remover email" travado com o motivo se há senha; Discord e Google cada um no seu bloco, vincular ou desvincular se sobrar outro jeito de entrar; senha: criar ou, com ela, trocar e "Remover senha", travado com o motivo sem Discord nem Google), **Sessões** (a atual marcada, encerrar uma ou as outras), **Notificações** (as do navegador e o som).
 
 ### Convite `/invite/[token]`, Nova comunidade `/new`
 

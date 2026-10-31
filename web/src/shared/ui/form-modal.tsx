@@ -31,6 +31,8 @@ type Props = {
   pending?: boolean;
   /** Mantém o primário travado (falta preencher algo). */
   submitDisabled?: boolean;
+  /** Primário destrutivo (`danger`), ex.: "Remover senha". */
+  destructive?: boolean;
   /** O erro geral (o que a API devolveu, já traduzido), acima dos botões. */
   error?: ReactNode;
   /** O botão que abriu, se o navegador não der foco a ele no clique; sem isso, quem tinha o foco. */
@@ -59,6 +61,7 @@ function OpenFormModal({
   onClose,
   pending,
   submitDisabled,
+  destructive,
   error,
   returnFocusTo,
 }: Props) {
@@ -103,7 +106,12 @@ function OpenFormModal({
         <Button kind="secondary" onClick={close}>
           {t("cancel")}
         </Button>
-        <Button pending={pending} disabled={submitDisabled} onClick={submit}>
+        <Button
+          kind={destructive ? "danger" : "primary"}
+          pending={pending}
+          disabled={submitDisabled}
+          onClick={submit}
+        >
           {submitLabel}
         </Button>
       </ModalFooter>

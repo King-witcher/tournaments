@@ -6,7 +6,6 @@
   "tabs": {
     "profile": "Perfil",
     "logins": "Accesos",
-    "password": "Contraseña",
     "sessions": "Sesiones",
     "notifications": "Notificaciones"
   },
@@ -42,14 +41,11 @@
   "password": {
     "title": "Contraseña",
     "create": "Crear contraseña",
-    "changeTitle": "Cambiar contraseña",
-    "noPassword": "Tu cuenta todavía no tiene contraseña. Crea una en la pestaña Accesos.",
-    "goToLogins": "Ir a Accesos",
+    "change": "Cambiar contraseña",
     "newPassword": "Nueva contraseña",
     "newPasswordHint": "Cambiar la contraseña cierra tus otras sesiones.",
     "saved": "Guardado.",
     "remove": "Quitar contraseña",
-    "removeHint": "Para quitarla, confirma tu contraseña.",
     "removeConfirm": "Pasas a entrar solo con el Discord o el Google que vinculaste. Puedes crear otra contraseña después.",
     "needsProvider": "Para quitar la contraseña, vincula antes Discord o Google.",
     "needsEmail": "Para crear una contraseña, registra antes un email, en la sección de arriba.",

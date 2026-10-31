@@ -17,11 +17,11 @@ import { LOGIN_SECTION } from "../lib/login-sections";
 import type { Provider } from "../lib/providers";
 
 type Props = {
-  /** O nome de usuário e a senha (`password`) ou um provedor. */
-  login: "password" | Provider;
+  /** O provedor a desvincular (a senha sai pelo `RemovePasswordButton`). */
+  login: Provider;
   /**
-   * A conta tem senha, e a API pede a atual para tirar qualquer login. Sem
-   * senha (só para provedor), o formulário é só o botão.
+   * A conta tem senha, e a API pede a atual para desvincular. Sem senha, o
+   * formulário é só o botão.
    */
   needsPassword?: boolean;
 };
@@ -33,7 +33,7 @@ const PASSWORD_ERRORS = new Set([
 ]);
 
 /**
- * Remove um login da conta. Com senha na conta, pede a atual (a API confere)
+ * Desvincula um provedor da conta. Com senha na conta, pede a atual (a API confere)
  * e, ao enviar, o `ConfirmModal` diz o que a conta perde; só o "sim" chama a
  * API. O foco volta para onde estava ao fechar e, quando o login sai, vai
  * para o bloco dele (o formulário some no refresh).
@@ -47,18 +47,11 @@ export function RemoveLoginForm({ login, needsPassword = true }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
-  const text =
-    login === "password"
-      ? {
-          action: t("password.remove"),
-          hint: t("password.removeHint"),
-          question: t("password.removeConfirm"),
-        }
-      : {
-          action: t(`${login}.unlink`),
-          hint: t(`${login}.unlinkHint`),
-          question: t(`${login}.unlinkConfirm`),
-        };
+  const text = {
+    action: t(`${login}.unlink`),
+    hint: t(`${login}.unlinkHint`),
+    question: t(`${login}.unlinkConfirm`),
+  };
 
   const close = () => {
     setConfirming(false);
@@ -77,10 +70,7 @@ export function RemoveLoginForm({ login, needsPassword = true }: Props) {
     // Sem o campo, todo erro vai embaixo do botão.
     const failed = (code: string) =>
       setPasswordError(needsPassword && PASSWORD_ERRORS.has(code));
-    if (login === "password") {
-      const password = { current_password: current };
-      run(() => api.DELETE("/auth/password", { body: password }), done, failed);
-    } else if (login === "discord") {
+    if (login === "discord") {
       run(() => api.DELETE("/auth/discord", { body }), done, failed);
     } else {
       run(() => api.DELETE("/auth/google", { body }), done, failed);

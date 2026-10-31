@@ -21,12 +21,19 @@ import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { type AuthField, errorField } from "../lib/auth-field";
+import { RemovePasswordButton } from "./remove-password-button";
+
+type Props = {
+  /** O Discord ou o Google está vinculado: sem senha, a conta ainda entra. */
+  canRemove: boolean;
+};
 
 /**
- * Troca a senha, confirmando a atual. O erro de um campo (senha atual
- * errada, senhas diferentes) vai nele, que recebe o foco.
+ * Troca a senha, confirmando a atual, com "Remover senha" na ponta oposta
+ * dos botões (como "Remover email" no bloco do email). O erro de um campo
+ * (senha atual errada, senhas diferentes) vai nele, que recebe o foco.
  */
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ canRemove }: Props) {
   const t = useTranslations("Auth");
   const tAccount = useTranslations("Account");
   const errorMessage = useApiErrorMessage();
@@ -102,7 +109,12 @@ export function ChangePasswordForm() {
         {result.saved && !pending && (
           <Notice kind="success">{tAccount("password.saved")}</Notice>
         )}
-        <FormActions pending={pending} disabled={!canSubmit} />
+        <FormActions
+          submitLabel={tAccount("password.change")}
+          pending={pending}
+          disabled={!canSubmit}
+          extra={<RemovePasswordButton blocked={!canRemove} />}
+        />
       </Stack>
     </Form>
   );

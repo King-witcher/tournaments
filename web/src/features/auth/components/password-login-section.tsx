@@ -3,8 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
 import { LOGIN_SECTION } from "../lib/login-sections";
+import { ChangePasswordForm } from "./change-password-form";
 import { CredentialsForm } from "./credentials-form";
-import { RemoveLoginForm } from "./remove-login-form";
 
 type Props = {
   hasPassword: boolean;
@@ -15,9 +15,9 @@ type Props = {
 
 /**
  * A senha da conta, que entra com ela e o email: criar, se houver email, ou
- * remover, se o Discord ou o Google estiver vinculado (trocar fica na aba
- * Senha). Sem um dos dois, o motivo no lugar do formulário. O bloco recebe o
- * foco quando o formulário some (`tabIndex={-1}`).
+ * trocar e remover (remover só com o Discord ou o Google vinculado). Sem
+ * email, o motivo no lugar do formulário. O bloco recebe o foco quando o
+ * formulário some (`tabIndex={-1}`).
  */
 export async function PasswordLoginSection({
   hasPassword,
@@ -29,16 +29,12 @@ export async function PasswordLoginSection({
   return (
     <div id={LOGIN_SECTION.password} tabIndex={-1}>
       <Section title={t("title")}>
-        {!hasPassword ? (
-          hasEmail ? (
-            <CredentialsForm />
-          ) : (
-            <Notice kind="info">{t("needsEmail")}</Notice>
-          )
-        ) : providerLinked ? (
-          <RemoveLoginForm login="password" />
+        {hasPassword ? (
+          <ChangePasswordForm canRemove={providerLinked} />
+        ) : hasEmail ? (
+          <CredentialsForm />
         ) : (
-          <Notice kind="info">{t("needsProvider")}</Notice>
+          <Notice kind="info">{t("needsEmail")}</Notice>
         )}
       </Section>
     </div>

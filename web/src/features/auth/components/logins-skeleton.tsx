@@ -3,7 +3,7 @@ import { FormSkeleton } from "@/shared/ui/skeleton";
 /**
  * A aba Logins carregando, na forma dela: o bloco do email (título, frase,
  * campo, botão), o do Discord e o do Google (título, frase, botão) e o da
- * senha (título, frase, campo, botão).
+ * senha (título e os três campos de trocar).
  */
 export function LoginsSkeleton({ label }: { label?: string | false }) {
   return (
@@ -11,7 +11,7 @@ export function LoginsSkeleton({ label }: { label?: string | false }) {
       <FormSkeleton heading text fields={1} label={label} />
       <FormSkeleton heading text fields={0} label={false} />
       <FormSkeleton heading text fields={0} label={false} />
-      <FormSkeleton heading text fields={1} label={false} />
+      <FormSkeleton heading fields={3} label={false} />
     </>
   );
 }

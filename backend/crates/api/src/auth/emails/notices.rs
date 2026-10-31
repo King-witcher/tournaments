@@ -253,7 +253,7 @@ fn pt(notice: &Notice) -> Text {
                 )
             },
             if *has_password {
-                "Quem fez isso sabia a sua senha. Entre na conta, troque a senha na aba Senha (isso encerra as outras sessões) e ponha este email de volta na aba Logins."
+                "Quem fez isso sabia a sua senha. Entre na conta e, na aba Logins, troque a senha (isso encerra as outras sessões) e ponha este email de volta."
             } else {
                 "Entre pelo Discord ou pelo Google que você vinculou, encerre as sessões que você não reconhecer e ponha este email de volta na aba Logins."
             },
@@ -348,7 +348,7 @@ fn es(notice: &Notice) -> Text {
                 )
             },
             if *has_password {
-                "Quien lo hizo sabía tu contraseña. Entra en la cuenta, cambia la contraseña en la pestaña Contraseña (eso cierra las otras sesiones) y vuelve a poner este email en la pestaña Accesos."
+                "Quien lo hizo sabía tu contraseña. Entra en la cuenta y, en la pestaña Accesos, cambia la contraseña (eso cierra las otras sesiones) y vuelve a poner este email."
             } else {
                 "Entra con el Discord o el Google que vinculaste, cierra las sesiones que no reconozcas y vuelve a poner este email en la pestaña Accesos."
             },

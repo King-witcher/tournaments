@@ -23,13 +23,13 @@ import { useLinkToken } from "../hooks/use-link-token";
 import { type AuthField, errorField } from "../lib/auth-field";
 import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 
-/** Para onde vai quem trocou a senha: a aba Senha, com o aviso de feito. */
-const AFTER_RESET = "/account/password?password_reset=1";
+/** Para onde vai quem trocou a senha: a aba Logins, com o aviso de feito. */
+const AFTER_RESET = "/account/logins?password_reset=1";
 
 /**
  * O link do email de recuperação (`#token`): a senha nova e a repetida. Salvar
  * troca a senha, encerra todas as sessões da conta e entra numa nova, indo
- * para a aba Senha com o aviso (`PasswordResetDone`); se a exclusão da
+ * para a aba Logins com o aviso (`PasswordResetDone`); se a exclusão da
  * conta estava agendada, entrar a cancela, e vai para a conta, que avisa.
  * Senha fora do formato não gasta o link (o erro vai no campo); link vencido
  * ou sem token, o motivo e o caminho para pedir outro.

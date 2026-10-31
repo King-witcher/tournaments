@@ -6,7 +6,6 @@
   "tabs": {
     "profile": "Perfil",
     "logins": "Logins",
-    "password": "Senha",
     "sessions": "Sessões",
     "notifications": "Notificações"
   },
@@ -42,14 +41,11 @@
   "password": {
     "title": "Senha",
     "create": "Criar senha",
-    "changeTitle": "Trocar senha",
-    "noPassword": "Sua conta ainda não tem senha. Crie uma na aba Logins.",
-    "goToLogins": "Ir para Logins",
+    "change": "Trocar senha",
     "newPassword": "Nova senha",
     "newPasswordHint": "Trocar a senha encerra suas outras sessões.",
     "saved": "Salvo.",
     "remove": "Remover senha",
-    "removeHint": "Para remover, confirme sua senha.",
     "removeConfirm": "Você passa a entrar só com o Discord ou o Google que vinculou. Dá para criar outra senha depois.",
     "needsProvider": "Para remover a senha, vincule antes o Discord ou o Google.",
     "needsEmail": "Para criar uma senha, cadastre antes um email, na seção acima.",

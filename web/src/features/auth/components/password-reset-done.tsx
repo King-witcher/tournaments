@@ -7,7 +7,7 @@ type Props = {
 };
 
 /**
- * Na aba Senha, para quem acabou de trocar a senha pelo link do email
+ * Na aba Logins, para quem acabou de trocar a senha pelo link do email
  * (`?password_reset=1`, de `PasswordResetForm`): diz que trocou e que as
  * outras sessões saíram. Fica em `<Suspense>`.
  */

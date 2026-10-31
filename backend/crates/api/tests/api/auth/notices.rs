@@ -144,7 +144,7 @@ async fn email_change_warns_the_old_address() {
         "com senha, o email era o login: {text}"
     );
     assert!(
-        text.contains("aba Senha"),
+        text.contains("na aba Logins, troque a senha"),
         "com senha, a saída é trocá-la: {text}"
     );
 }
