@@ -11,7 +11,7 @@ export type TournamentField = keyof Pick<
   | "teamSize"
   | "bestOf"
   | "swissRounds"
-  | "bansPerGame"
+  | "bansPerSeries"
   | "noRepeat"
   | "startsAt"
   | "checkInMinutes"
@@ -49,7 +49,7 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "format.invalid_rounds": "swissRounds",
   "format.too_many_participants": "maxParticipants",
   "format.not_enough_players": "maxParticipants",
-  "tournament.bans_invalid": "bansPerGame",
+  "tournament.bans_invalid": "bansPerSeries",
   "champions.pool_exhausted": "noRepeat",
   "tournament.check_in_minutes_invalid": "checkInMinutes",
   "tournament.starts_at_past": "startsAt",

@@ -96,3 +96,11 @@
 .summary {
   @include type.type-style("body-01");
 }
+
+// Na lista das partidas, o resumo (mapa e campeões de cada lado) é longo: no
+// celular, desce para a linha de baixo, para o nome da partida não espremer.
+.item .summary {
+  @include breakpoint.breakpoint-down(md) {
+    grid-column: 1 / -1;
+  }
+}

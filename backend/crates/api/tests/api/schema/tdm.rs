@@ -40,7 +40,7 @@ async fn mode_and_team_size_go_together() {
             "tournaments_team_pick_seconds_check",
         ),
         (
-            r#"update tournaments set champion_rules = '{"bans_per_game": 1, "no_repeat": null, "team_duplicates": 1}'"#,
+            r#"update tournaments set champion_rules = '{"bans_per_series": 1, "mirror": true, "same_team": 1, "no_repeat": null}'"#,
             "tournaments_champion_rules_shape",
         ),
     ] {
@@ -191,14 +191,18 @@ async fn a_team_pick_is_of_a_player_of_that_side() {
         .fetch_one(&db)
         .await
         .unwrap();
-    let pick = |side: &str, player: i64, kind: &str| {
+    let event = |side: &str, player: &str, kind: &str, pick_game: &str, gave_way: bool| {
         format!(
             "insert into match_veto_events (tenant_id, tournament_id, stage, match_key, side_a,
-                 side_b, kind, game, side, champion_id, player_id)
+                 side_b, kind, game, side, champion_id, player_id, pick_game, gave_way)
              values ({tenant}, {tournament}, 1, 'wb-1-1', {}, {}, '{kind}', 1, '{side}', {anarki},
-                     {player})",
+                     {player}, {pick_game}, {gave_way})",
             teams[0], teams[1]
         )
+    };
+    let pick = |side: &str, player: i64, kind: &str| {
+        let pick_game = if kind == "pick" { "1" } else { "null" };
+        event(side, &player.to_string(), kind, pick_game, false)
     };
     // P3 é do lado b.
     assert_eq!(
@@ -209,6 +213,18 @@ async fn a_team_pick_is_of_a_player_of_that_side() {
     assert_eq!(
         rejected(exec(&db, &pick("a", p[1].id, "ban")).await),
         rule(CHECK, "match_veto_events_player")
+    );
+    // O pick de campeão diz a partida a que se destina, a em andamento ou
+    // uma seguinte; e só o da janela simultânea diz se cedeu.
+    for (pick_game, gave_way, player) in [("null", false, "null"), ("0", false, "null")] {
+        assert_eq!(
+            rejected(exec(&db, &event("a", player, "pick", pick_game, gave_way)).await),
+            rule(CHECK, "match_veto_events_pick_game")
+        );
+    }
+    assert_eq!(
+        rejected(exec(&db, &event("a", "null", "pick", "2", true)).await),
+        rule(CHECK, "match_veto_events_gave_way")
     );
     exec(&db, &pick("a", p[1].id, "pick")).await.unwrap();
 }

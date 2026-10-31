@@ -54,9 +54,12 @@ async fn tournaments_keep_state_and_shape() {
 
     // O JSON tem a forma do engine.
     for rules in [
-        json!({ "bans_per_game": 4, "no_repeat": null }),
-        json!({ "bans_per_game": 1, "no_repeat": { "who": "player", "scope": "season" } }),
-        json!({ "bans_per_game": 1 }),
+        json!({ "bans_per_series": 4, "mirror": true, "same_team": false, "no_repeat": null }),
+        json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": { "who": "player", "scope": "season" } }),
+        json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": { "who": "player", "scope": "match" } }),
+        json!({ "bans_per_series": 1, "mirror": "yes", "same_team": false, "no_repeat": null }),
+        json!({ "bans_per_series": 1 }),
+        json!({ "bans_per_game": 1, "no_repeat": null, "team_duplicates": false }),
         json!([]),
     ] {
         let result = sqlx::query("update tournaments set champion_rules = $1")
@@ -161,7 +164,7 @@ async fn every_tournament_has_a_stage() {
     let mut tx = db.begin().await.unwrap();
     sqlx::query(
         "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_game\": 1, \"no_repeat\": null}')",
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}')",
     )
     .bind(tenant)
     .execute(&mut *tx)

@@ -1,4 +1,4 @@
-//! Veto de mapas e ban/pick de campeões: "Pronto", os passos, o tempo
+//! Veto de mapas e draft de campeões da série: "Pronto", os passos, o tempo
 //! esgotado (sorteio), desfazer, a votação, a regra de não repetição, o
 //! envio que segue o veto e o que apaga o veto.
 
@@ -29,7 +29,7 @@ async fn final_with(
 }
 
 fn one_ban() -> Value {
-    json!({ "bans_per_game": 1, "no_repeat": null })
+    json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": null })
 }
 
 fn uri(action: &str) -> String {
@@ -169,21 +169,50 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
         d["veto"]["remaining"],
         json!([{ "slug": "vale-of-pnath", "name": "Vale of Pnath" }])
     );
-    // A escolheu o mapa 1: B começa os campeões.
+    // O draft da série inteira: o seed pior (b) bane primeiro.
     assert_eq!(turn(&d), (json!("ban"), json!("champion"), json!(["b"])));
     ok_step(&app, &p[1], champ("anarki")).await;
     ok_step(&app, &p[0], champ("athena")).await;
-    // O ban vale para os dois.
+    // O ban vale para os dois, em todas as partidas.
+    let d = detail(&app, &p[0], "wb-1-1").await;
+    assert_eq!(d["veto"]["turn"]["pick_for"], 1);
     assert_eq!(
-        pick(&app, &p[1], champ("anarki")).await,
+        pick(&app, &p[0], champ("anarki")).await,
         (StatusCode::UNPROCESSABLE_ENTITY, err("veto.option_invalid"))
     );
-    ok_step(&app, &p[1], champ("clutch")).await;
-    let d = ok_step(&app, &p[0], champ("clutch")).await;
+    let slot = &d["veto"]["picks"][0];
+    assert_eq!(slot["game"], 1);
+    assert!(
+        slot["unavailable"]
+            .as_array()
+            .unwrap()
+            .contains(&json!({ "slug": "anarki", "reason": "banned" }))
+    );
+    // Partida 1: a escolhe e b responde; na 2, o contrário; na 3, de novo a.
+    for (who, game, slug) in [
+        (&p[0], 1, "clutch"),
+        (&p[1], 1, "clutch"),
+        (&p[1], 2, "eisen"),
+        (&p[0], 2, "galena"),
+        (&p[0], 3, "keel"),
+    ] {
+        let d = detail(&app, who, "wb-1-1").await;
+        assert_eq!(d["veto"]["turn"]["pick_for"], game, "{slug}");
+        ok_step(&app, who, champ(slug)).await;
+    }
+    let d = ok_step(&app, &p[1], champ("nyx")).await;
     assert_eq!(d["veto"]["status"], "done");
     assert_eq!(d["veto"]["reportable"], true);
     assert_eq!(d["summary"]["task"], "report");
-    assert_eq!(d["veto"]["games"][0]["pick_a"]["slug"], "clutch");
+    let games = &d["veto"]["games"];
+    assert_eq!(games.as_array().unwrap().len(), 3);
+    // Espelho vale por padrão.
+    assert_eq!(
+        (&games[0]["pick_a"]["slug"], &games[0]["pick_b"]["slug"]),
+        (&json!("clutch"), &json!("clutch"))
+    );
+    assert_eq!(games[2]["pick_b"]["slug"], "nyx");
+    assert_eq!(d["veto"]["bans"].as_array().unwrap().len(), 2);
     assert_eq!(
         pick(&app, &p[1], champ("eisen")).await,
         (StatusCode::CONFLICT, err("veto.finished"))
@@ -196,22 +225,97 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
     );
     let (status, d) = report(&app, &p[0], "wb-1-1", 1, game("b", "blood-run")).await;
     assert_eq!(status, StatusCode::OK, "{d}");
-    // O jogo 2 começou: B escolheu o mapa 2, então A começa os campeões.
+    // A partida 2 começou e não espera nada: o draft já foi feito.
     assert_eq!(d["veto"]["game"], 2);
-    assert_eq!(turn(&d), (json!("ban"), json!("champion"), json!(["a"])));
+    assert_eq!(d["veto"]["status"], "done");
+    assert_eq!(d["veto"]["reportable"], true);
     assert_eq!(
-        report(&app, &p[0], "wb-1-1", 2, game("a", "corrupted-keep")).await,
-        (StatusCode::CONFLICT, err("match.veto_pending"))
+        report(&app, &p[0], "wb-1-1", 2, game("a", "blood-run")).await,
+        (StatusCode::UNPROCESSABLE_ENTITY, err("match.map_mismatch"))
     );
-    // O histórico guarda os passos.
-    let kinds: Vec<&str> = d["veto"]["history"]
-        .as_array()
-        .unwrap()
+    // O histórico guarda os passos, com a partida de cada pick.
+    let history = d["veto"]["history"].as_array().unwrap();
+    let kinds: Vec<&str> = history
         .iter()
         .map(|e| e["kind"].as_str().unwrap())
         .collect();
     assert_eq!(&kinds[..3], ["ready", "ready", "begin"]);
     assert_eq!(kinds.last(), Some(&"game"));
+    let last_pick = history.iter().rev().find(|e| e["kind"] == "pick").unwrap();
+    assert_eq!(
+        (&last_pick["game"], &last_pick["pick_game"]),
+        (&json!(1), &json!(3))
+    );
+}
+
+#[tokio::test]
+async fn without_mirror_the_first_to_pick_keeps_the_champion() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "map_mode": "off", "champion_phase": true });
+    let rules =
+        json!({ "bans_per_series": 0, "mirror": false, "same_team": false, "no_repeat": null });
+    let (app, _, p) = final_with(&db, 1, veto, rules).await;
+    ready(&app, &p[0]).await;
+    ready(&app, &p[1]).await;
+    ok_step(&app, &p[0], champ("anarki")).await;
+    assert_eq!(
+        pick(&app, &p[1], champ("anarki")).await,
+        (StatusCode::CONFLICT, err("veto.champion_taken"))
+    );
+    let d = detail(&app, &p[1], "wb-1-1").await;
+    assert!(
+        d["veto"]["picks"][0]["unavailable"]
+            .as_array()
+            .unwrap()
+            .contains(&json!({ "slug": "anarki", "reason": "opponent" }))
+    );
+    ok_step(&app, &p[1], champ("athena")).await;
+}
+
+#[tokio::test]
+async fn the_organizer_sending_game_one_completes_the_draft_by_draw() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "map_mode": "off", "champion_phase": true });
+    let (app, ana, p) = final_with(&db, 3, veto, one_ban()).await;
+    ready(&app, &p[0]).await;
+    ready(&app, &p[1]).await;
+    ok_step(&app, &p[1], champ("anarki")).await;
+    let (status, d) = set_game(&app, &ana, "wb-1-1", 1, game("a", "awoken"), None).await;
+    assert_eq!(status, StatusCode::OK, "{d}");
+    // O resto do draft saiu pelo sorteio, e a partida 2 começou.
+    assert_eq!(d["veto"]["game"], 2, "{d}");
+    assert_eq!(d["veto"]["bans"].as_array().unwrap().len(), 2);
+    for g in d["veto"]["games"].as_array().unwrap() {
+        assert!(g["pick_a"].is_object() && g["pick_b"].is_object(), "{g}");
+    }
+    let drawn = d["veto"]["history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|e| e["timeout"] == true)
+        .count();
+    assert_eq!(drawn, 7);
+}
+
+#[tokio::test]
+async fn too_few_champions_for_the_bans_do_not_begin() {
+    let (db, _lease) = crate::db::test_db().await;
+    let rules =
+        json!({ "bans_per_series": 3, "mirror": true, "same_team": false, "no_repeat": null });
+    let (app, _, p) = final_with(&db, 1, veto_on(), rules).await;
+    // Depois de iniciar (a criação e o início conferem o pool).
+    sqlx::query("update champions set active = slug in ('anarki', 'athena', 'clutch')")
+        .execute(&db)
+        .await
+        .unwrap();
+    ready(&app, &p[0]).await;
+    assert_eq!(
+        ready(&app, &p[1]).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({ "error": "champions.pool_exhausted", "params": { "required": 7, "available": 3 } })
+        )
+    );
 }
 
 #[tokio::test]
@@ -381,29 +485,24 @@ async fn vote_mode_both_vote_and_the_map_comes_out() {
 async fn no_repeat_takes_the_used_champion_out() {
     let (db, _lease) = crate::db::test_db().await;
     let veto = json!({ "map_mode": "off", "champion_phase": true });
-    let rules = json!({ "bans_per_game": 0, "no_repeat": { "who": "player", "scope": "match" } });
+    let rules = json!({
+        "bans_per_series": 0, "mirror": true, "same_team": false,
+        "no_repeat": { "who": "player", "scope": "series" }
+    });
     let (app, _, p) = final_with(&db, 3, veto, rules).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[1]).await;
     ok_step(&app, &p[0], champ("anarki")).await;
     ok_step(&app, &p[1], champ("athena")).await;
-    // Desligado: o mapa é o que eles combinaram.
-    let (status, d) = report(&app, &p[0], "wb-1-1", 1, game("a", "exile")).await;
-    assert_eq!(status, StatusCode::OK, "{d}");
-    // Quem perdeu o jogo 1 (b) começa os campeões do 2.
-    assert_eq!(turn(&d), (json!("pick"), json!("champion"), json!(["b"])));
-    let anarki = d["veto"]["champions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|c| c["slug"] == "anarki")
-        .unwrap()
-        .clone();
-    assert_eq!(
-        (&anarki["used_by_a"], &anarki["used_by_b"]),
-        (&json!(true), &json!(false))
-    );
+    // Partida 2: b escolhe primeiro e pode pegar o anarki de a.
     ok_step(&app, &p[1], champ("anarki")).await;
+    let d = detail(&app, &p[0], "wb-1-1").await;
+    assert!(
+        d["veto"]["picks"][0]["unavailable"]
+            .as_array()
+            .unwrap()
+            .contains(&json!({ "slug": "anarki", "reason": "repeat" }))
+    );
     assert_eq!(
         pick(&app, &p[0], champ("anarki")).await,
         (
@@ -539,4 +638,78 @@ async fn the_veto_settings_lock_once_started() {
         patch(&app, COPA, &ana, json!({ "veto": { "step_seconds": 60 } })).await,
         (StatusCode::CONFLICT, err("tournament.setup_locked"))
     );
+}
+
+#[tokio::test]
+async fn a_series_in_progress_reserves_its_champions_until_it_ends() {
+    // Todos contra todos, cada jogador sem repetir no torneio: as três séries
+    // de P1 ficam prontas ao mesmo tempo.
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let rules = json!({
+        "bans_per_series": 0, "mirror": true, "same_team": false,
+        "no_repeat": { "who": "player", "scope": "tournament" }
+    });
+    let body = copa(with(
+        table("round_robin", json!({ "best_of": 1 })),
+        json!({ "veto": { "map_mode": "off", "champion_phase": true }, "champion_rules": rules }),
+    ));
+    start(&app, &ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    let b = bracket(&app, &p[0]).await;
+    let mut series: Vec<(String, &User)> = Vec::new();
+    for key in keys_in(&b, "ready") {
+        let (a, other) = sides(&b, find(&b, &key));
+        let opponent = if a == json!(p[0].id) {
+            other
+        } else if other == json!(p[0].id) {
+            a
+        } else {
+            continue;
+        };
+        let opponent = p.iter().find(|u| json!(u.id) == opponent).unwrap();
+        series.push((key, opponent));
+    }
+    assert_eq!(series.len(), 3);
+    let uri = |key: &str, action: &str| format!("{COPA}/matches/{key}/veto/{action}");
+    for (key, opponent) in &series[..2] {
+        assert_eq!(
+            post_empty(&app, &uri(key, "ready"), &p[0]).await.0,
+            StatusCode::OK
+        );
+        assert_eq!(
+            post_empty(&app, &uri(key, "ready"), opponent).await.0,
+            StatusCode::OK
+        );
+    }
+    // P1, o seed melhor, escolhe primeiro: o anarki na primeira série.
+    let (first, second) = (&series[0].0, &series[1].0);
+    let (status, body) = post(&app, &uri(first, "steps"), &p[0], champ("anarki")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    // Na outra, ele está reservado: a primeira ainda pode ser jogada.
+    let d = detail(&app, &p[0], second).await;
+    assert!(
+        d["veto"]["picks"][0]["unavailable"]
+            .as_array()
+            .unwrap()
+            .contains(&json!({ "slug": "anarki", "reason": "repeat" })),
+        "{d}"
+    );
+    assert_eq!(
+        post(&app, &uri(second, "steps"), &p[0], champ("anarki")).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("veto.champion_forbidden")
+        )
+    );
+    // A primeira acaba por W.O., sem a partida: a reserva sai.
+    let side = if sides(&b, find(&b, first)).0 == json!(p[0].id) {
+        "b"
+    } else {
+        "a"
+    };
+    let (status, body) = set_result(&app, &ana, first, walkover(side), None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = post(&app, &uri(second, "steps"), &p[0], champ("anarki")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
 }

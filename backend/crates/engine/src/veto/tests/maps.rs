@@ -70,7 +70,6 @@ fn not_begun_and_begun_twice() {
     assert_eq!(v.apply(Event::Undo, None), Err(VetoError::NotBegun));
     let game = Event::Game {
         game: 2,
-        starter: A,
         previous: None,
     };
     assert_eq!(v.apply(game, None), Err(VetoError::NotBegun));
@@ -125,7 +124,6 @@ fn random_mode_draws_each_game_without_repeating() {
         v.apply(
             Event::Game {
                 game,
-                starter: A,
                 previous: None,
             },
             None,
@@ -142,7 +140,6 @@ fn random_mode_draws_each_game_without_repeating() {
         v.apply(
             Event::Game {
                 game: 8,
-                starter: A,
                 previous: None
             },
             None
@@ -158,7 +155,6 @@ fn games_start_in_order() {
         v.apply(
             Event::Game {
                 game: 3,
-                starter: A,
                 previous: None
             },
             None

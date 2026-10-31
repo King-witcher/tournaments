@@ -45,7 +45,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const tdm = tournament.mode === "tdm";
   const [stage] = tournament.stages;
   const kind = formatKind(stage);
-  const bans = tournament.champion_rules.bans_per_game;
+  const bans = tournament.champion_rules.bans_per_series;
   const repeat = repeatScope(tournament.champion_rules);
   const checkIn = tournament.check_in_minutes;
   const slots = tournament.max_participants;
@@ -125,7 +125,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
       // No duelo, sem ban e sem regra, "Podem repetir" não tem o que
       // explicar; no TDM, há sempre a escolha e o campeão igual no time.
       label:
-        tdm || bans > 0 || repeat !== "off"
+        tdm || bans > 0 || repeat !== "off" || !tournament.champion_rules.mirror
           ? tip("champions", rules.champions(tournament).join(" "))
           : t("labels.champions"),
       value: summary.champions(values),

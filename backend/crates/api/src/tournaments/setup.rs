@@ -15,8 +15,8 @@ use crate::shared::ApiError;
 
 /// Vagas aceitas (no TDM, o mínimo é o de dois times).
 const PARTICIPANTS: RangeInclusive<i32> = 2..=1024;
-/// Bans de campeão por mapa.
-const MAX_BANS_PER_GAME: u32 = 3;
+/// Bans de campeão de cada lado na série.
+const MAX_BANS_PER_SERIES: u32 = engine::champions::MAX_BANS_PER_SERIES;
 /// Fases por torneio. Ainda não há regra de classificação entre fases nem
 /// interface para mais de uma.
 const MAX_STAGES: usize = 1;
@@ -125,11 +125,7 @@ impl Setup {
 
     /// As regras do veto das séries do torneio.
     pub fn veto_rules(&self) -> engine::veto::VetoRules {
-        self.veto.rules(
-            self.champion_rules.bans_per_game,
-            self.team_size(),
-            self.champion_rules.team_duplicates,
-        )
+        self.veto.rules(self.champion_rules, self.team_size())
     }
 
     /// Limites do site (tamanho do time, vagas, bans, número de fases,
@@ -161,9 +157,9 @@ impl Setup {
                     .with_params([("registered", registered)]),
             );
         }
-        if self.champion_rules.bans_per_game > MAX_BANS_PER_GAME {
+        if self.champion_rules.bans_per_series > MAX_BANS_PER_SERIES {
             return Err(ApiError::invalid("tournament.bans_invalid")
-                .with_params([("max", i64::from(MAX_BANS_PER_GAME))]));
+                .with_params([("max", i64::from(MAX_BANS_PER_SERIES))]));
         }
         if self.stages.is_empty() || self.stages.len() > MAX_STAGES {
             return Err(ApiError::invalid("tournament.stage_count_invalid")
@@ -231,12 +227,13 @@ mod tests {
         stages: Vec<StageFormat>,
     ) -> Setup {
         let rules = ChampionRules {
-            bans_per_game: bans,
+            bans_per_series: bans,
+            mirror: true,
+            same_team: false,
             no_repeat: scope.map(|scope| NoRepeatRule {
                 who: NoRepeatWho::Player,
                 scope,
             }),
-            team_duplicates: false,
         };
         Setup::from_dto(
             TournamentMode::Duel,
@@ -384,7 +381,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            check(setup(16, 1, Some(NoRepeatScope::Match), vec![double(3)])),
+            check(setup(16, 1, Some(NoRepeatScope::Series), vec![double(3)])),
             Ok(())
         );
     }

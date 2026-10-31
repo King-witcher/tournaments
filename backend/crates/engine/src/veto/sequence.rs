@@ -1,34 +1,36 @@
-//! A ordem dos passos: o veto de mapas da série (modo veto) e o ban/pick de
-//! campeões de cada mapa. Os lados alternam a cada passo, começando por quem
-//! começa (o seed melhor no veto de mapas; nos campeões, ver `Veto::starter`).
+//! A ordem dos passos: o veto de mapas da série (modo veto) e o draft de
+//! campeões. No veto de mapas, os lados alternam a cada passo, começando pelo
+//! seed melhor; no draft, ver `draft_sequence`.
 
 use serde::{Deserialize, Serialize};
 
-use super::VetoError;
+use super::{VetoError, other};
+use crate::series::Side;
 
 /// O que um passo faz.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
-    /// Tira um mapa do pool (veto) ou um campeão do mapa, para os dois.
+    /// Tira um mapa do pool (veto) ou um campeão da série, para os dois.
     Ban,
-    /// Escolhe o mapa de um jogo (veto) ou o próprio campeão do mapa.
+    /// Escolhe o mapa de uma partida (veto) ou, no duelo, o próprio campeão
+    /// de uma partida.
     Pick,
     /// Vota num dos mapas oferecidos (modo votação).
     Vote,
-    /// Nos times: cada jogador escolhe o próprio campeão do mapa, todos ao
-    /// mesmo tempo (a escolha simultânea, depois dos bans).
+    /// Nos times: cada jogador escolhe o próprio campeão de cada partida,
+    /// todos ao mesmo tempo (a janela simultânea, depois dos bans).
     TeamPick,
 }
 
 /// Os passos do veto de mapas de uma melhor de `best_of` com um pool de
-/// `pool` mapas, sem o decisivo (o mapa que sobra, que é o último jogo).
+/// `pool` mapas, sem o decisivo (o mapa que sobra, que é a última partida).
 ///
 /// Sobram `pool - best_of` bans e `best_of - 1` picks: dois bans primeiro
 /// (se houver), depois os picks e por fim o resto dos bans. Com 7 mapas:
 /// md1, seis bans; md3, ban, ban, pick, pick, ban, ban; md5, ban, ban e
 /// quatro picks; md7, seis picks. Erro: `PoolTooSmall` com menos mapas que
-/// jogos.
+/// partidas.
 pub fn map_sequence(pool: usize, best_of: u8) -> Result<Vec<Action>, VetoError> {
     let games = usize::from(best_of);
     if best_of == 0 || pool < games {
@@ -42,12 +44,46 @@ pub fn map_sequence(pool: usize, best_of: u8) -> Result<Vec<Action>, VetoError> 
     Ok(steps)
 }
 
-/// Os passos de campeões de um mapa no duelo: `bans` rodadas de um ban de
-/// cada lado e depois um pick de cada lado. Nos times, os bans são os mesmos
-/// e os picks dão lugar à escolha simultânea (`Action::TeamPick`).
-pub fn champion_sequence(bans: u8) -> Vec<Action> {
-    let mut steps = vec![Action::Ban; usize::from(bans) * 2];
-    steps.extend([Action::Pick, Action::Pick]);
+/// Um passo do draft de campeões.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DraftStep {
+    pub action: Action,
+    pub side: Side,
+    /// No pick, a partida a que ele se destina.
+    pub game: Option<u8>,
+}
+
+/// Os passos do draft de campeões de uma melhor de `best_of`, com `bans` de
+/// cada lado; `first` é o seed melhor, que começou o veto de mapas.
+///
+/// Primeiro os bans da série, alternados, começando pelo seed pior. No
+/// duelo, depois, um pick de cada lado por partida, na ordem das partidas:
+/// nas ímpares escolhe primeiro o seed melhor e nas pares o pior, e quem
+/// escolhe por último numa partida vê o campeão do outro. Num md3 com 1 ban:
+/// pior bane, melhor bane; partida 1, melhor e pior; partida 2, pior e
+/// melhor; partida 3, melhor e pior. Nos times, só os bans: os picks são a
+/// janela simultânea (`Action::TeamPick`), que não tem ordem.
+pub fn draft_sequence(bans: u8, best_of: u8, first: Side, teams: bool) -> Vec<DraftStep> {
+    let worse = other(first);
+    let mut steps: Vec<DraftStep> = (0..usize::from(bans) * 2)
+        .map(|i| DraftStep {
+            action: Action::Ban,
+            side: if i % 2 == 0 { worse } else { first },
+            game: None,
+        })
+        .collect();
+    if !teams {
+        for game in 1..=best_of {
+            let opener = if game % 2 == 1 { first } else { worse };
+            for side in [opener, other(opener)] {
+                steps.push(DraftStep {
+                    action: Action::Pick,
+                    side,
+                    game: Some(game),
+                });
+            }
+        }
+    }
     steps
 }
 
@@ -55,6 +91,7 @@ pub fn champion_sequence(bans: u8) -> Vec<Action> {
 mod tests {
     use super::*;
     use Action::{Ban, Pick};
+    use Side::{A, B};
 
     #[test]
     fn the_sequences_with_seven_maps() {
@@ -98,9 +135,83 @@ mod tests {
         );
     }
 
+    /// O draft como (ação, lado, partida), com A no seed melhor.
+    fn draft(bans: u8, best_of: u8, teams: bool) -> Vec<(Action, Side, Option<u8>)> {
+        draft_sequence(bans, best_of, A, teams)
+            .into_iter()
+            .map(|s| (s.action, s.side, s.game))
+            .collect()
+    }
+
     #[test]
-    fn champions() {
-        assert_eq!(champion_sequence(0), [Pick, Pick]);
-        assert_eq!(champion_sequence(2), [Ban, Ban, Ban, Ban, Pick, Pick]);
+    fn duel_md3_with_one_ban_each() {
+        assert_eq!(
+            draft(1, 3, false),
+            [
+                (Ban, B, None),
+                (Ban, A, None),
+                (Pick, A, Some(1)),
+                (Pick, B, Some(1)),
+                (Pick, B, Some(2)),
+                (Pick, A, Some(2)),
+                (Pick, A, Some(3)),
+                (Pick, B, Some(3)),
+            ]
+        );
+    }
+
+    #[test]
+    fn every_length_gives_each_side_its_bans_and_a_pick_per_game() {
+        for best_of in [1u8, 3, 5, 7] {
+            for bans in 0..=3u8 {
+                let steps = draft(bans, best_of, false);
+                assert_eq!(
+                    steps.len(),
+                    usize::from(bans) * 2 + usize::from(best_of) * 2
+                );
+                for side in [A, B] {
+                    let mine = |a: Action| steps.iter().filter(|s| s.0 == a && s.1 == side).count();
+                    assert_eq!(mine(Ban), usize::from(bans));
+                    assert_eq!(mine(Pick), usize::from(best_of));
+                }
+                // Os bans vêm antes dos picks; os picks, partida a partida.
+                let games: Vec<u8> = steps.iter().filter_map(|s| s.2).collect();
+                assert!(games.windows(2).all(|w| w[0] <= w[1]));
+                assert!(steps[..usize::from(bans) * 2].iter().all(|s| s.0 == Ban));
+                // Quem escolhe por último alterna: o seed pior nas ímpares.
+                for game in 1..=best_of {
+                    let last = steps.iter().rev().find(|s| s.2 == Some(game)).unwrap();
+                    assert_eq!(last.1, if game % 2 == 1 { B } else { A }, "partida {game}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn md1_and_md7() {
+        assert_eq!(
+            draft(2, 1, false),
+            [
+                (Ban, B, None),
+                (Ban, A, None),
+                (Ban, B, None),
+                (Ban, A, None),
+                (Pick, A, Some(1)),
+                (Pick, B, Some(1)),
+            ]
+        );
+        let md7 = draft(0, 7, false);
+        assert_eq!(md7.len(), 14);
+        assert_eq!(md7[12..], [(Pick, A, Some(7)), (Pick, B, Some(7))]);
+    }
+
+    #[test]
+    fn teams_only_ban() {
+        assert_eq!(draft(1, 3, true), [(Ban, B, None), (Ban, A, None)]);
+        assert!(draft(0, 5, true).is_empty());
+        // Com B no seed melhor, A bane primeiro.
+        let steps = draft_sequence(1, 1, B, false);
+        assert_eq!(steps[0].side, A);
+        assert_eq!(steps[2].side, B);
     }
 }

@@ -34,10 +34,10 @@ type Props = {
 };
 
 /**
- * O veto das partidas: como sai o mapa de cada jogo, o pool de mapas (fora
- * do modo desligado; vale para o veto, a votação e o sorteio), o ban/pick
- * de campeões e o tempo de cada passo. No TDM, as dicas dizem que o capitão
- * age pelo time e, com a fase de campeões, há o tempo da escolha simultânea.
+ * O veto das séries: como sai o mapa de cada partida, o pool de mapas (fora
+ * do modo desligado; vale para o veto, a votação e o sorteio) e o tempo de
+ * cada passo. No TDM, com o draft de campeões no site, também o tempo da
+ * janela simultânea. Se o draft é no site fica no grupo Campeões.
  */
 export function TournamentVetoFields(props: Props) {
   const { values, onChange, errors, maps, disabled } = props;
@@ -100,18 +100,10 @@ export function TournamentVetoFields(props: Props) {
           {errors.mapPool && <ErrorText>{errors.mapPool}</ErrorText>}
         </FormGroup>
       )}
-      <Checkbox
-        labelText={t("championPhase")}
-        helperText={t(tdm ? "championPhaseHintTdm" : "championPhaseHint")}
-        name="championPhase"
-        checked={values.championPhase}
-        disabled={disabled}
-        onChange={(championPhase) => onChange({ championPhase })}
-      />
       {(values.mapMode !== "off" || values.championPhase) && (
         <SecondsSelect
           labelText={t("seconds")}
-          helperText={t(tdm ? "secondsHintTdm" : "secondsHint")}
+          helperText={t("secondsHint")}
           name="vetoSeconds"
           options={SECONDS}
           value={values.vetoSeconds}

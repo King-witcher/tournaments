@@ -172,7 +172,7 @@
       "ban_map": "banir um mapa",
       "pick_map": "escolher um mapa",
       "vote_map": "votar no mapa da partida {game}",
-      "ban_champion": "banir um campeão na partida {game}",
+      "ban_champion": "banir um campeão",
       "pick_champion": "escolher o campeão da partida {game}",
       "vote_champion": "votar",
       "team_pick_map": "escolher o campeão da partida {game}",
@@ -201,37 +201,27 @@
       "result": "Mapa da partida: {map}."
     },
     "champions": {
-      "title": "Campeões da partida {game}",
-      "banHint": "O ban tira o campeão dos dois nesta partida.",
-      "pickHint": "Os dois veem a escolha do outro.",
-      "banned": "banido por {name}",
+      "banTitle": "Bans da série",
+      "pickTitle": "Campeão da partida {game}",
+      "teamPickTitle": "Seus campeões",
+      "banHint": "O campeão banido fica fora da série toda, para os dois.",
+      "forGame": "Escolher para",
+      "game": "Partida {game}",
       "banChampion": "Banir {champion}",
-      "pickChampion": "Escolher {champion}",
-      "usedBy": {
-        "match": "{name} já usou nesta série",
-        "stage": "{name} já usou nesta fase",
-        "tournament": "{name} já usou neste torneio"
-      },
-      "usedByYou": {
-        "match": "você já usou nesta série",
-        "stage": "você já usou nesta fase",
-        "tournament": "você já usou neste torneio"
-      },
-      "teamPickHint": "Os campeões que um colega já escolheu nesta partida não aparecem para você.",
-      "pickedBy": "escolhido por {name}",
-      "usedByYourTeam": {
-        "match": "seu time já usou nesta série",
-        "stage": "seu time já usou nesta fase",
-        "tournament": "seu time já usou neste torneio"
-      },
-      "usedByPlayerOf": {
-        "match": "um jogador de {name} já usou nesta série",
-        "stage": "um jogador de {name} já usou nesta fase",
-        "tournament": "um jogador de {name} já usou neste torneio"
+      "pickChampion": "Escolher {champion} para a partida {game}",
+      "reasons": {
+        "banned": "banido por {name}",
+        "teammate": "um colega escolheu para esta partida",
+        "opponent": "o adversário escolheu para esta partida",
+        "repeat": {
+          "series": "escolhido para outra partida",
+          "stage": "já usado nesta fase",
+          "tournament": "já usado neste torneio"
+        }
       },
       "gaveWay": {
-        "rule": "Pela regra de não repetição, não sobrava campeão para você nesta partida. Ela cedeu, e os que ela tira voltaram às suas opções (marcados abaixo).",
-        "team": "Não sobrava campeão para você sem repetir o de um colega nesta partida. Vale qualquer campeão sem ban, mesmo o que um colega já escolheu."
+        "rule": "Pela regra de não repetição, não sobrava campeão para esta partida, então ela cedeu e os que ela tira voltaram às opções.",
+        "game": "Não sobrava campeão sem repetir o de outro jogador nesta partida. Vale qualquer um sem ban."
       }
     },
     "undo": {
@@ -244,13 +234,16 @@
       "organizerQuestion": "Desfazer o último passo do veto (inclusive o sorteado pelo fim do tempo)? A vez volta para quem o fez, com o tempo inteiro."
     },
     "games": {
-      "title": "Decidido no veto",
+      "title": "Partidas da série",
       "game": "Partida {game}",
       "map": "{map}",
       "mapPicked": "{map} (escolha de {name})",
-      "bans": "bans: {list}",
+      "bans": "Bans: {list}",
       "pick": "{name}: {champion}",
-      "teamPicks": "{name}: {list}"
+      "teamPicks": "{name}: {list}",
+      "teamPick": "{name} com {champion}",
+      "drawn": "{champion} (sorteado)",
+      "choosing": "{name} escolhendo"
     },
     "history": {
       "title": "Histórico do veto",
@@ -268,18 +261,11 @@
         "undo_declined": "{name} recusou desfazer"
       }
     },
-    "captainReadies": "Quem clica em “Pronto” é o capitão do seu time.",
-    "captainTurn": "Vez do seu time. O capitão vai {action}.",
-    "teamPick": "Escolha de campeões da partida {game}. Todos escolhem ao mesmo tempo e veem as escolhas dos outros.",
-    "teamPickYours": "Escolha o seu campeão da partida {game}. A escolha é definitiva.",
-    "teamPickPicked": "Você já escolheu. Esperando os outros.",
-    "missing": "Faltam: {names}.",
-    "teamDeadline": "Tempo: <time></time>. Quem não escolher recebe um campeão sorteado.",
-    "teamPicks": {
-      "title": "Escolhas da partida {game}",
-      "choosing": "escolhendo…",
-      "drawn": "{champion} (sorteado)"
-    }
+    "teamPick": "Escolha de campeões da série. Todos escolhem ao mesmo tempo, um campeão para cada partida.",
+    "teamPickYours": "Escolha os seus campeões, um para cada partida. A escolha é definitiva.",
+    "teamDeadline": "Tempo: <time></time>. O que faltar no fim é sorteado.",
+    "waitingReadyTeams": "O veto começa quando os dois times clicarem em “Pronto”. Qualquer jogador do time pode clicar.",
+    "yourTeamIsReady": "Seu time está pronto. Esperando {name}."
   },
   "labelTable": "Rodada {round} de {total} · série {index}",
   "captain": "capitão",

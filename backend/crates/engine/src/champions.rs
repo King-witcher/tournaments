@@ -1,17 +1,32 @@
-//! Regras de não repetição de campeões e o orçamento do pool.
+//! Regras de campeões de um torneio (bans da série, repetição na partida e
+//! entre partidas) e o orçamento do pool.
+//!
+//! O draft é da série inteira, antes da partida 1 (`veto`): os bans valem
+//! para os dois lados em todas as partidas dela, e cada um escolhe o campeão
+//! de cada partida. Três regras dizem o que pode repetir:
+//! - **na partida, entre adversários** (`mirror`): os dois lados com o mesmo
+//!   campeão. Sem ela, fica com o campeão quem escolhe primeiro.
+//! - **na partida, no time** (`same_team`, só nos times): dois colegas com o
+//!   mesmo campeão.
+//! - **entre partidas** (`no_repeat`): quem (`who`) não repete o campeão de
+//!   outra partida, e até onde (`scope`). Pick de partida que não chega a
+//!   ser jogada não conta fora da série.
 
 use serde::{Deserialize, Serialize};
 
 use crate::core::EngineError;
 
-/// Quem não pode repetir campeão.
+/// Bans de campeão de cada lado na série, no máximo.
+pub const MAX_BANS_PER_SERIES: u32 = 3;
+
+/// Quem não pode repetir campeão entre partidas.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NoRepeatWho {
     /// Cada jogador não repete os próprios campeões.
     Player,
-    /// O time inteiro não repete: um campeão usado por um membro fica
-    /// indisponível para todos nos mapas seguintes.
+    /// O time inteiro não repete: um campeão que um membro escolheu para uma
+    /// partida fica indisponível para todos nas outras.
     Team,
 }
 
@@ -19,9 +34,9 @@ pub enum NoRepeatWho {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NoRepeatScope {
-    /// Entre os mapas de uma mesma partida.
-    Match,
-    /// Em todas as partidas de uma fase.
+    /// Entre as partidas de uma mesma série.
+    Series,
+    /// Em todas as séries de uma fase.
     Stage,
     /// No torneio inteiro.
     Tournament,
@@ -36,75 +51,70 @@ pub struct NoRepeatRule {
 /// Regras de campeões de um torneio (guardadas em JSON no torneio).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChampionRules {
-    /// Bans de cada lado por mapa. O ban tira o campeão dos dois lados
-    /// naquele mapa (veto): cada mapa perde `2 * bans_per_game` campeões.
-    pub bans_per_game: u32,
-    /// `None`: sem regra de não repetição.
+    /// Bans de cada lado na série. O ban tira o campeão dos dois lados em
+    /// todas as partidas dela: a série perde `2 * bans_per_series`.
+    pub bans_per_series: u32,
+    /// Adversários podem ter o mesmo campeão na mesma partida.
+    pub mirror: bool,
+    /// Nos times (TDM): colegas podem ter o mesmo campeão na mesma partida.
+    /// No duelo não se aplica.
+    pub same_team: bool,
+    /// `None`: pode repetir entre partidas.
     pub no_repeat: Option<NoRepeatRule>,
-    /// Nos times (TDM): dois jogadores do mesmo time podem escolher o mesmo
-    /// campeão no mesmo mapa. Padrão não (ausente no JSON gravado antes do
-    /// TDM: falso). Entre times o espelho vale sempre.
-    #[serde(default)]
-    pub team_duplicates: bool,
 }
 
-/// Dados para checar se o pool de campeões aguenta a regra no pior caso.
+/// Dados para checar se o pool de campeões aguenta as regras no pior caso.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ChampionBudget {
     /// Campeões disponíveis no torneio.
     pub pool_size: u32,
-    /// Bans de cada lado por mapa (valem para os dois lados).
-    pub bans_per_game: u32,
+    /// Bans de cada lado na série (valem para os dois lados).
+    pub bans_per_series: u32,
     /// Jogadores por lado (1 no duelo).
     pub team_size: u32,
-    /// Dois do mesmo time podem escolher o mesmo campeão no mesmo mapa.
-    pub team_duplicates: bool,
-    /// Máximo de mapas que um participante pode jogar dentro do escopo da
-    /// regra: o melhor de N mais longo para `Match`; o pior caso do formato
-    /// (`worst_case_games`) para `Stage` e `Tournament`.
+    pub mirror: bool,
+    pub same_team: bool,
+    /// Máximo de partidas que um participante pode jogar dentro do escopo da
+    /// regra: a série mais longa para `Series`; o pior caso do formato
+    /// (`worst_case_games`) para `Stage` e `Tournament`. Sem a regra, não
+    /// conta.
     pub games_in_scope: u32,
 }
 
-impl ChampionBudget {
-    /// Campeões diferentes que um time escolhe num mapa: um por jogador, ou
-    /// um só se o time pode repetir no mapa (no duelo, 1).
-    const fn per_map(&self) -> u32 {
-        if self.team_duplicates || self.team_size == 0 {
-            1
-        } else {
-            self.team_size
-        }
-    }
-}
-
-/// Campeões necessários no pior caso, com a regra.
+/// Campeões necessários no pior caso, com as regras.
 ///
-/// No último mapa do escopo, o último a escolher enfrenta os bans daquele
-/// mapa (os dois lados: o ban vale para os dois), o que a regra já tirou dele
-/// nos mapas anteriores (um por mapa, o dele; ou o time todo, um por jogador
-/// por mapa, com a regra do time) e, sem repetir no time, o que os colegas
-/// escolheram no mapa; precisa sobrar um:
-/// `2·bans + (jogos − 1)·(1 ou tamanho) + (tamanho ou 1)`. No duelo dá
-/// `jogos + 2·bans`.
-pub fn required_pool(rule: NoRepeatRule, budget: ChampionBudget) -> u32 {
-    let before = match rule.who {
-        NoRepeatWho::Player => 1,
-        NoRepeatWho::Team => budget.team_size.max(1),
+/// O último a escolher numa partida enfrenta os bans da série (os dois
+/// lados), o que a regra de não repetição já tirou dele nas outras partidas
+/// do escopo (um por partida, o dele; ou o time todo, um por jogador por
+/// partida, com a regra do time), sem repetir no time o que os colegas
+/// escolheram na partida e, sem espelho, o que os adversários escolheram
+/// nela; precisa sobrar um:
+/// `2·bans + antes + colegas + adversários + 1`, com `antes` = 0 sem regra,
+/// `partidas − 1` pela do jogador e `(partidas − 1)·tamanho` pela do time;
+/// `colegas` = `tamanho − 1` sem repetir no time; `adversários` = `tamanho`
+/// sem espelho. No duelo com a regra, `2·bans + partidas` (+ 1 sem espelho).
+pub fn required_pool(rule: Option<NoRepeatRule>, budget: ChampionBudget) -> u32 {
+    let size = budget.team_size.max(1);
+    let earlier = budget.games_in_scope.saturating_sub(1);
+    let before = match rule.map(|r| r.who) {
+        None => 0,
+        Some(NoRepeatWho::Player) => earlier,
+        Some(NoRepeatWho::Team) => earlier.saturating_mul(size),
     };
-    2 * budget.bans_per_game + budget.games_in_scope.saturating_sub(1) * before + budget.per_map()
+    let mates = if budget.same_team { 0 } else { size - 1 };
+    let opponents = if budget.mirror { 0 } else { size };
+    budget
+        .bans_per_series
+        .saturating_mul(2)
+        .saturating_add(before)
+        .saturating_add(mates)
+        .saturating_add(opponents)
+        .saturating_add(1)
 }
 
-/// Campeões necessários sem a regra de não repetição: os bans dos dois lados
-/// e um para cada escolha que não pode repetir no mapa (no duelo, um).
-pub fn required_without_rule(budget: ChampionBudget) -> u32 {
-    2 * budget.bans_per_game + budget.per_map()
-}
-
+/// Erro: `ChampionPoolExhausted` quando o pool não aguenta `required_pool`.
 pub fn check_budget(rule: Option<NoRepeatRule>, budget: ChampionBudget) -> Result<(), EngineError> {
-    let required = match rule {
-        Some(rule) => required_pool(rule, budget),
-        None => required_without_rule(budget),
-    };
+    let required = required_pool(rule, budget);
     if required <= budget.pool_size {
         Ok(())
     } else {
@@ -119,99 +129,99 @@ pub fn check_budget(rule: Option<NoRepeatRule>, budget: ChampionBudget) -> Resul
 mod tests {
     use super::*;
 
-    const TOURNAMENT_PLAYER: NoRepeatRule = NoRepeatRule {
-        who: NoRepeatWho::Player,
-        scope: NoRepeatScope::Tournament,
-    };
+    const fn rule(who: NoRepeatWho, scope: NoRepeatScope) -> Option<NoRepeatRule> {
+        Some(NoRepeatRule { who, scope })
+    }
 
-    const TOURNAMENT_TEAM: NoRepeatRule = NoRepeatRule {
-        who: NoRepeatWho::Team,
-        scope: NoRepeatScope::Tournament,
-    };
+    const PLAYER: Option<NoRepeatRule> = rule(NoRepeatWho::Player, NoRepeatScope::Tournament);
+    const TEAM: Option<NoRepeatRule> = rule(NoRepeatWho::Team, NoRepeatScope::Tournament);
 
-    fn budget(pool_size: u32, bans_per_game: u32, team_size: u32, games: u32) -> ChampionBudget {
+    fn budget(bans: u32, team_size: u32, games: u32) -> ChampionBudget {
         ChampionBudget {
-            pool_size,
-            bans_per_game,
+            pool_size: 17,
+            bans_per_series: bans,
             team_size,
-            team_duplicates: false,
+            mirror: true,
+            same_team: false,
             games_in_scope: games,
         }
     }
 
     #[test]
-    fn duel_without_bans_needs_one_champion_per_game() {
-        assert_eq!(required_pool(TOURNAMENT_PLAYER, budget(17, 0, 1, 9)), 9);
-        assert!(check_budget(Some(TOURNAMENT_PLAYER), budget(9, 0, 1, 9)).is_ok());
-    }
-
-    #[test]
-    fn bans_add_to_the_requirement() {
-        assert_eq!(required_pool(TOURNAMENT_PLAYER, budget(17, 2, 1, 9)), 13);
-    }
-
-    #[test]
-    fn team_rule_multiplies_by_team_size() {
-        assert_eq!(required_pool(TOURNAMENT_TEAM, budget(17, 1, 2, 6)), 14);
-        // Podendo repetir no mapa, o último mapa pede um só.
-        let dup = ChampionBudget {
-            team_duplicates: true,
-            ..budget(17, 1, 2, 6)
-        };
-        assert_eq!(required_pool(TOURNAMENT_TEAM, dup), 13);
-    }
-
-    #[test]
-    fn team_rule_with_duplicates_in_md5() {
-        // 3v3, md5, 2 bans: cada mapa anterior gasta 3 do time (um por
-        // jogador, mesmo podendo repetir no mapa: no pior caso, os três são
-        // distintos); no último, quem escolhe por último pode repetir o de um
-        // colega e só precisa de 1.
-        let dup = ChampionBudget {
-            team_duplicates: true,
-            ..budget(17, 2, 3, 5)
-        };
-        assert_eq!(required_pool(TOURNAMENT_TEAM, dup), 4 + 4 * 3 + 1);
-        assert!(check_budget(Some(TOURNAMENT_TEAM), dup).is_ok());
-        let short = ChampionBudget {
-            pool_size: 16,
-            ..dup
-        };
-        assert_eq!(
-            check_budget(Some(TOURNAMENT_TEAM), short),
-            Err(EngineError::ChampionPoolExhausted {
-                required: 17,
-                available: 16
-            })
+    fn duel_with_the_rule_needs_one_champion_per_game() {
+        assert_eq!(required_pool(PLAYER, budget(0, 1, 9)), 9);
+        assert_eq!(required_pool(TEAM, budget(0, 1, 9)), 9);
+        assert!(
+            check_budget(
+                PLAYER,
+                ChampionBudget {
+                    pool_size: 9,
+                    ..budget(0, 1, 9)
+                }
+            )
+            .is_ok()
         );
     }
 
     #[test]
-    fn player_rule_in_teams_counts_the_teammates_of_the_map() {
-        // 3v3, md3, 1 ban: 2 bans + 2 mapas dele + 3 no mapa.
-        assert_eq!(required_pool(TOURNAMENT_PLAYER, budget(17, 1, 3, 3)), 7);
-        let dup = ChampionBudget {
-            team_duplicates: true,
-            ..budget(17, 1, 3, 3)
-        };
-        assert_eq!(required_pool(TOURNAMENT_PLAYER, dup), 5);
+    fn bans_of_both_sides_add_to_the_requirement() {
+        assert_eq!(required_pool(PLAYER, budget(2, 1, 9)), 13);
+        assert_eq!(required_pool(None, budget(3, 1, 9)), 7);
     }
 
     #[test]
-    fn without_rule_a_team_needs_one_per_player() {
-        assert_eq!(required_without_rule(budget(17, 3, 1, 1)), 7);
-        assert_eq!(required_without_rule(budget(17, 3, 4, 1)), 10);
-        let dup = ChampionBudget {
-            team_duplicates: true,
-            ..budget(17, 3, 4, 1)
+    fn without_mirror_the_opponents_of_the_game_count() {
+        let no_mirror = |b: ChampionBudget| ChampionBudget { mirror: false, ..b };
+        // Duelo md3 na série, 1 ban: 2 bans, os 2 dele e o do adversário.
+        assert_eq!(required_pool(PLAYER, budget(1, 1, 3)), 5);
+        assert_eq!(required_pool(PLAYER, no_mirror(budget(1, 1, 3))), 6);
+        // 3v3 sem regra: 2 bans, 2 colegas, 3 adversários e o dele.
+        assert_eq!(required_pool(None, no_mirror(budget(1, 3, 1))), 8);
+    }
+
+    #[test]
+    fn the_team_rule_multiplies_by_team_size() {
+        assert_eq!(required_pool(TEAM, budget(1, 2, 6)), 2 + 5 * 2 + 1 + 1);
+        // Podendo repetir no time, os colegas da partida não contam.
+        let same = ChampionBudget {
+            same_team: true,
+            ..budget(1, 2, 6)
         };
-        assert_eq!(required_without_rule(dup), 7);
+        assert_eq!(required_pool(TEAM, same), 2 + 5 * 2 + 1);
+    }
+
+    #[test]
+    fn the_player_rule_in_teams_counts_the_teammates_of_the_game() {
+        // 3v3, md3, 1 ban: 2 bans + 2 partidas dele + 2 colegas + o dele.
+        assert_eq!(required_pool(PLAYER, budget(1, 3, 3)), 7);
+        let same = ChampionBudget {
+            same_team: true,
+            ..budget(1, 3, 3)
+        };
+        assert_eq!(required_pool(PLAYER, same), 5);
+    }
+
+    #[test]
+    fn the_three_scenarios_of_the_user() {
+        // Todos contra todos com personagens diferentes: cada jogador não
+        // repete no torneio. 2v2, 7 séries md1, sem bans: as 6 dele, o
+        // colega e o dele.
+        let round_robin = budget(0, 2, 7);
+        assert_eq!(required_pool(PLAYER, round_robin), 6 + 1 + 1);
+        // Pode repetir entre times mas não no time: o padrão.
+        assert_eq!(required_pool(None, budget(1, 2, 1)), 2 + 1 + 1);
+        // Ninguém repete na partida: os 4 da partida e os bans.
+        let nobody = ChampionBudget {
+            mirror: false,
+            ..budget(1, 2, 1)
+        };
+        assert_eq!(required_pool(None, nobody), 2 + 4);
     }
 
     #[test]
     fn reports_required_and_available_when_short() {
         assert_eq!(
-            check_budget(Some(TOURNAMENT_PLAYER), budget(17, 0, 1, 24)),
+            check_budget(PLAYER, budget(0, 1, 24)),
             Err(EngineError::ChampionPoolExhausted {
                 required: 24,
                 available: 17

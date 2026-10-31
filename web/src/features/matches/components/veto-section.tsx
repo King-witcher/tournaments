@@ -10,7 +10,6 @@ import styles from "./veto-board.module.scss";
 import { VetoChampionBoard } from "./veto-champion-board";
 import { VetoGames } from "./veto-games";
 import { VetoMapBoard } from "./veto-map-board";
-import { VetoTeamPicks } from "./veto-team-picks";
 import { VetoTurn } from "./veto-turn";
 import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
@@ -20,15 +19,17 @@ type Schemas = components["schemas"];
 type Props = {
   target: MatchTarget;
   detail: Schemas["MatchDetail"];
-  /** A regra de não repetição do torneio (para explicar o que ela tira). */
+  /** A regra de não repetição do torneio (para dizer o que ela tira). */
   rule: Schemas["NoRepeatRule"] | null;
 };
 
 /**
- * O veto da partida, entre ela ficar pronta e o envio de cada mapa: de quem
- * é a vez e o tempo, o veto de mapas (ou a votação do jogo), os campeões do
- * mapa em andamento, desfazer e o que já foi decidido. Enquanto o veto anda,
- * a página recarrega com o aviso mais rápido (cada passo tem 30 s).
+ * O veto da série, entre ela ficar pronta e o envio de cada partida: de quem
+ * é a vez e o tempo, o veto de mapas (ou a votação da partida), o draft de
+ * campeões da série inteira antes da partida 1, desfazer e o que cada
+ * partida já tem (mapa e campeões), à vista durante a série. Qualquer
+ * jogador do time age pelo lado. Enquanto o veto anda, a página recarrega
+ * com o aviso mais rápido (cada passo tem 30 s).
  */
 export function VetoSection({ target, detail, rule }: Props) {
   const t = useTranslations("Match.veto");
@@ -38,8 +39,6 @@ export function VetoSection({ target, detail, rule }: Props) {
   const s = detail.summary;
   const live = s.state === "ready";
   const mine = detail.viewer_side ?? null;
-  const captain = detail.viewer_captain;
-  const teams = veto.team_pick_seconds != null;
   const game = currentGame(veto);
   const current = veto.games.find((g) => g.game === game);
   const begun = veto.status !== "waiting_ready";
@@ -62,7 +61,6 @@ export function VetoSection({ target, detail, rule }: Props) {
             veto={veto}
             names={names}
             mine={mine}
-            captain={captain}
             canManage={detail.can_manage}
           />
         )}
@@ -71,7 +69,7 @@ export function VetoSection({ target, detail, rule }: Props) {
             target={target}
             veto={veto}
             names={names}
-            mine={captain ? mine : null}
+            mine={mine}
             canManage={detail.can_manage}
           />
         )}
@@ -95,14 +93,9 @@ export function VetoSection({ target, detail, rule }: Props) {
           <VetoChampionBoard
             target={target}
             veto={veto}
-            game={game}
             names={names}
-            mine={mine}
             rule={rule}
           />
-        )}
-        {live && begun && teams && current && (
-          <VetoTeamPicks game={current} veto={veto} names={names} />
         )}
         <VetoGames veto={veto} names={names} />
       </div>

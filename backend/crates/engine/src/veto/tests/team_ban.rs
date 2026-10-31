@@ -1,119 +1,111 @@
 //! A proteção do ban nos times: quem bane precisa que sobre campeão para
-//! cada jogador do elenco, contado jogador a jogador.
+//! cada jogador do elenco em todas as partidas, contado jogador a jogador,
+//! com o mesmo pior caso do orçamento (`champions::required_pool`).
 
 use super::*;
 use crate::champions::NoRepeatWho;
 
-/// Os eventos de um jogo já feito: o ban de cada lado (`[a, b]`, A
-/// começa) e as escolhas.
-fn played(events: &mut Vec<Event>, game: u8, bans: [i64; 2], picks: &[(Side, PlayerId, i64)]) {
-    if game > 1 {
-        events.push(Event::Game {
-            game,
-            starter: A,
-            previous: None,
-        });
-    }
-    for (side, c) in [(A, bans[0]), (B, bans[1])] {
-        events.push(Event::Step {
-            side,
-            action: Action::Ban,
-            choice: champ(c),
-        });
-    }
-    for (side, player, c) in picks {
-        events.push(Event::TeamPick {
-            side: *side,
-            player: *player,
-            champion: ChampionId(100 + c),
-        });
-    }
-}
-
-/// 2v2 md5, 1 ban, no jogo 3 (A bane primeiro), depois de dois jogos em
-/// que P1 escolheu `p1` e P2 escolheu `p2`.
-fn third_game(p1: [i64; 2], p2: [i64; 2], bans: [[i64; 2]; 2]) -> Veto {
-    let mut events = vec![Event::Begin { seed: 42, first: A }];
-    for g in 0..2 {
-        played(
-            &mut events,
-            g as u8 + 1,
-            bans[g],
-            &[
-                (A, P1, p1[g]),
-                (A, P2, p2[g]),
-                (B, P3, p1[g]),
-                (B, P4, p2[g]),
-            ],
-        );
-    }
-    events.push(Event::Game {
-        game: 3,
-        starter: A,
-        previous: None,
-    });
-    let mut v = Veto::replay(team_rules(1, 2, false), 5, events).unwrap();
+/// 2v2 com `bans`, B no seed melhor: A bane primeiro.
+fn a_bans_first(rules: VetoRules, best_of: u8) -> Veto {
+    let mut v = begun(rules, best_of, B);
     v.set_rosters(open(&[P1, P2], &[P3, P4])).unwrap();
+    assert_eq!(acting(&v), (Action::Ban, Target::Champion, vec![A]));
     v
 }
 
-fn player_rule(champions: &[ChampionId]) -> Context<'_> {
+/// 2v2 md1, 1 ban de cada lado, pela regra do jogador.
+fn by_player() -> Veto {
+    a_bans_first(with_rule(team_rules(1, 2, false), NoRepeatWho::Player), 1)
+}
+
+fn used(pairs: &[(PlayerId, i64)]) -> Vec<(PlayerId, ChampionId)> {
+    pairs
+        .iter()
+        .map(|(p, c)| (*p, ChampionId(100 + c)))
+        .collect()
+}
+
+fn used_by<'a>(champions: &'a [ChampionId], used_by: &'a [(PlayerId, ChampionId)]) -> Context<'a> {
     Context {
-        champions,
-        no_repeat: Some(NoRepeatWho::Player),
-        used: [&[], &[]],
-        used_by: &[],
+        used_by,
+        ..free(champions)
     }
 }
 
 #[test]
 fn each_player_counts_only_what_he_used() {
-    // Pool de 6. P1 usou o 1 e o 2; P2, o 3 e o 1. Cada um tem 4 livres, o
-    // que basta: o ban de A (1), o de B (1) e os dois de A no mapa. Contar
-    // o que o elenco todo usou (1, 2 e 3) deixaria só 3 e prenderia o ban.
-    let v = third_game([1, 2], [3, 1], [[5, 6], [5, 6]]);
+    // Pool de 6. P1 usou o 1 e o 2 em outras séries; P2, o 3 e o 1. Cada um
+    // tem 4 livres, o que basta: o ban de A, o de B e os dois de A na
+    // partida. Contar o que o elenco todo usou (1, 2 e 3) deixaria só 3 e
+    // prenderia o ban.
+    let v = by_player();
     let champions = champions(6);
-    let ctx = player_rule(&champions);
-    assert_eq!(acting(&v), (Action::Ban, Target::Champion, vec![A]));
+    let pairs = used(&[(P1, 1), (P1, 2), (P2, 3), (P2, 1)]);
+    let ctx = used_by(&champions, &pairs);
     assert_eq!(v.options(A, &ctx), [1, 2, 3, 4, 5, 6].map(champ).to_vec());
 }
 
 #[test]
 fn the_ban_spares_what_a_short_player_can_pick() {
-    // Pool de 5, as mesmas escolhas: P1 tem 3, 4 e 5; P2, 2, 4 e 5. Os dois
-    // ficariam sem campeão: A só bane o 1, que nenhum dos dois pode escolher
-    // (o 2 é de P2; o 3, de P1).
-    let v = third_game([1, 2], [3, 1], [[5, 4], [5, 4]]);
+    // Pool de 5, os mesmos usos: P1 tem 3, 4 e 5; P2, 2, 4 e 5. Os dois
+    // ficariam sem campeão: A só bane o 1, que nenhum dos dois pode escolher.
+    let v = by_player();
     let champions = champions(5);
-    let ctx = player_rule(&champions);
+    let pairs = used(&[(P1, 1), (P1, 2), (P2, 3), (P2, 1)]);
+    let ctx = used_by(&champions, &pairs);
     assert_eq!(v.options(A, &ctx), [champ(1)]);
 }
 
 #[test]
 fn with_nothing_safe_the_protection_gives_way() {
-    // Pool de 5: P1 usou o 1 e o 2; P2, o 3 e o 4. Cada um tem 3 (o 5 e os
-    // dois do outro), e todo campeão serve a algum dos dois: a proteção
-    // cede, como a regra, para o veto não travar.
-    let v = third_game([1, 2], [3, 4], [[5, 4], [5, 3]]);
+    // Pool de 5: P1 usou o 1 e o 2; P2, o 3 e o 4. Todo campeão serve a
+    // algum dos dois: a proteção cede, como a regra, para o veto não travar.
+    let v = by_player();
     let champions = champions(5);
-    let ctx = player_rule(&champions);
+    let pairs = used(&[(P1, 1), (P1, 2), (P2, 3), (P2, 4)]);
+    let ctx = used_by(&champions, &pairs);
     assert_eq!(v.options(A, &ctx).len(), 5);
 }
 
 #[test]
 fn the_team_rule_counts_the_whole_team() {
-    // Pool de 6, 1 ban de cada lado, 2v2 pela regra do time: A já usou 4
-    // fora da série e tem 101 e 102 para os dois. B ainda bane uma vez: se A
-    // banisse um dos dois, B tiraria o outro.
+    // Pool de 6, pela regra do time: A já usou 4 fora da série e tem 101 e
+    // 102 para os dois. B ainda bane uma vez: se A banisse um dos dois, B
+    // tiraria o outro.
     let champions = champions(6);
     let used = [103, 104, 105, 106].map(ChampionId);
-    let ctx = Context {
-        champions: &champions,
-        no_repeat: Some(NoRepeatWho::Team),
-        used: [&used, &[]],
-        used_by: &[],
-    };
-    let mut v = two_v_two(1, false);
-    assert_eq!(v.options(A, &ctx), [champ(3), champ(4), champ(5), champ(6)]);
+    let ctx = ctx(&champions, [&used, &[]]);
+    let mut v = a_bans_first(with_rule(team_rules(1, 2, false), NoRepeatWho::Team), 1);
+    assert_eq!(v.options(A, &ctx), [3, 4, 5, 6].map(champ));
     step_in(&mut v, A, champ(3), &ctx).unwrap();
+}
+
+#[test]
+fn the_team_rule_repeating_in_the_game_needs_the_budget_worst_case() {
+    // 2v2 md3, regra do time, colegas podem repetir na partida: no pior caso
+    // do orçamento, as duas primeiras partidas gastam 2 cada e a última 1:
+    // A precisa de 5 dos seus, além do ban dele e do de B. Com 6 livres
+    // (pool de 7, 1 usado fora), banir um dos seus deixaria B levá-lo a 4.
+    let champions = champions(7);
+    let used = [ChampionId(107)];
+    let ctx = ctx(&champions, [&used, &[]]);
+    let v = a_bans_first(with_rule(team_rules(1, 2, true), NoRepeatWho::Team), 3);
+    assert_eq!(v.options(A, &ctx), [champ(7)]);
+    // Com 8, cabe.
+    let eight = super::champions(8);
+    assert_eq!(v.options(A, &super::ctx(&eight, [&used, &[]])).len(), 8);
+}
+
+#[test]
+fn without_mirror_the_opponents_count_too() {
+    // Pool de 6, sem regra e sem espelho: A precisa de 2 para o time e de
+    // mais 2 que B pode pegar na partida, além do próprio ban e do de B.
+    let mut v = a_bans_first(no_mirror(team_rules(1, 2, false)), 1);
+    let champions = champions(6);
+    // 1 + 1 + 2 + 2 = 6: cabe, por pouco.
+    assert_eq!(v.options(A, &free(&champions)).len(), 6);
+    // Com 5, todo campeão é de A: cede.
+    let five = champions[..5].to_vec();
+    assert_eq!(v.options(A, &free(&five)).len(), 5);
+    step_in(&mut v, A, champ(1), &free(&five)).unwrap();
 }

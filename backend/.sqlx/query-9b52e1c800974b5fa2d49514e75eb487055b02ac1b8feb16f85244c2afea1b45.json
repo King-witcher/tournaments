@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,\n                  e.played_map_id, e.champion_id, e.player_id, e.seed, e.timeout, e.actor,\n                  coalesce(m.nickname, u.display_name) as actor_name,\n                  pm.nickname as \"player_name?\", e.created_at\n           from match_veto_events e\n           left join users u on u.id = e.actor\n           left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor\n           left join tenant_members pm on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id\n           where e.tournament_id = $1 and e.stage = $2\n           order by e.match_key, e.id",
+  "query": "select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,\n                  e.played_map_id, e.champion_id, e.player_id, e.pick_game, e.gave_way, e.seed,\n                  e.timeout, e.actor,\n                  coalesce(m.nickname, u.display_name) as actor_name,\n                  pm.nickname as \"player_name?\", e.created_at\n           from match_veto_events e\n           left join users u on u.id = e.actor\n           left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor\n           left join tenant_members pm on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id\n           where e.tournament_id = $1 and e.stage = $2\n           order by e.match_key, e.id",
   "describe": {
     "columns": [
       {
@@ -126,6 +126,28 @@
       },
       {
         "ordinal": 11,
+        "name": "pick_game",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "pick_game"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "gave_way",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "match_veto_events",
+            "name": "gave_way"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "seed",
         "type_info": "Int8",
         "origin": {
@@ -136,7 +158,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 14,
         "name": "timeout",
         "type_info": "Bool",
         "origin": {
@@ -147,7 +169,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 15,
         "name": "actor",
         "type_info": "Int8",
         "origin": {
@@ -158,13 +180,13 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 16,
         "name": "actor_name",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 17,
         "name": "player_name?",
         "type_info": "Text",
         "origin": {
@@ -175,7 +197,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 18,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -207,10 +229,12 @@
       true,
       false,
       true,
+      false,
+      true,
       null,
       true,
       false
     ]
   },
-  "hash": "755253d678acb1f9fa09602b662edeee3af32f8ff078cccec1433cd2c47403f1"
+  "hash": "9b52e1c800974b5fa2d49514e75eb487055b02ac1b8feb16f85244c2afea1b45"
 }

@@ -9,7 +9,6 @@
 //! termina, e os resultados já separados por `stage`.
 
 use engine::{
-    champions::NoRepeatRule,
     core::{EngineError, MatchId, MatchState, ParticipantId, PlayerId, SeriesFrags, StageReport},
     formats::{self as ef, StageBracket, StageHistory, swiss::SwissRound},
     veto::{Rosters, VetoRules},
@@ -19,7 +18,7 @@ use sqlx::PgConnection;
 use super::{
     changes, db,
     games::StoredGame,
-    result::StoredResult,
+    result::{Side, StoredResult},
     rounds,
     veto::{self, Champion, MatchVeto, VetoRow},
 };
@@ -45,15 +44,13 @@ pub struct Stage {
     /// outros formatos.
     pub rounds: Vec<SwissRound>,
     pub bracket: StageBracket,
-    /// O veto das partidas: as regras do torneio, o tempo de cada passo, a
-    /// regra de não repetição, os campeões do torneio (só com a fase de
-    /// campeões), o pool de mapas e o veto refeito de cada partida que tem
-    /// algum evento.
+    /// O veto das séries: as regras do torneio (com as de campeões), o tempo
+    /// de cada passo, os campeões do torneio (só com o draft no site), o pool
+    /// de mapas e o veto refeito de cada série que tem algum evento.
     pub veto_rules: VetoRules,
     pub veto_seconds: i32,
-    /// TDM: a janela da escolha simultânea de campeões.
+    /// TDM: a janela simultânea de campeões.
     pub team_pick_seconds: i32,
-    pub no_repeat: Option<NoRepeatRule>,
     pub champions: Vec<Champion>,
     pub map_pool: Vec<PoolMap>,
     pub vetoes: Vec<MatchVeto>,
@@ -67,8 +64,8 @@ impl Stage {
 
     /// O time da chave em que `user_id` joga. "Jogador da partida" é membro do
     /// time de um dos lados: é por aqui que as ações dos jogadores (envio,
-    /// resposta, veto, screenshot) acham o lado de quem age. Nos times, o que
-    /// for só do capitão confere `StoredTeam::captain` depois.
+    /// resposta, veto, screenshot) acham o lado de quem age; nos times,
+    /// qualquer jogador do time age pelo lado.
     pub fn participant_of(&self, user_id: i64) -> Option<ParticipantId> {
         self.entrants
             .iter()
@@ -100,11 +97,6 @@ impl Stage {
             rounds: &self.rounds,
         }
     }
-
-    /// O capitão do time `id` da chave.
-    pub fn captain(&self, id: ParticipantId) -> Option<i64> {
-        self.entrant(id).map(|t| t.captain)
-    }
 }
 
 /// Quem escolhe campeão pelo time `id` no TDM: os jogadores dele que estão
@@ -121,6 +113,18 @@ fn roster(entrants: &[StoredTeam], id: ParticipantId) -> Vec<PlayerId> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// TDM: quem jogou a partida `game` da série `id` por lado (`[a, b]`), de
+/// `lineups` (vazio no duelo, em que o pick é do lado).
+fn lineup(lineups: &[(MatchId, i16, Side, i64)], id: MatchId, game: usize) -> [Vec<PlayerId>; 2] {
+    let mut sides = [Vec::new(), Vec::new()];
+    for (m, number, side, user) in lineups {
+        if *m == id && usize::try_from(*number).ok() == Some(game) {
+            sides[usize::from(*side == Side::B)].push(PlayerId(*user));
+        }
+    }
+    sides
 }
 
 /// Por que o histórico não fecha numa partida.
@@ -254,7 +258,19 @@ pub async fn load(
         }
         ApiError::internal()
     })?;
-    let vetoes = vetoes(&bracket, &veto_rules, veto_rows, &entrants, &games)?;
+    let lineups = if veto_rules.champion_phase && veto_rules.teams() {
+        veto::lineups(conn, tournament.id, number).await?
+    } else {
+        Vec::new()
+    };
+    let vetoes = vetoes(
+        &bracket,
+        &veto_rules,
+        veto_rows,
+        &entrants,
+        &games,
+        &lineups,
+    )?;
     Ok(Stage {
         number,
         format,
@@ -266,23 +282,23 @@ pub async fn load(
         veto_rules,
         veto_seconds: tournament.setup.veto.step_seconds,
         team_pick_seconds: tournament.setup.veto.team_pick_seconds,
-        no_repeat: tournament.setup.champion_rules.no_repeat,
         champions,
         map_pool: tournament.map_pool.clone(),
         vetoes,
     })
 }
 
-/// O veto de cada partida refeito das linhas `rows` (por partida, na ordem),
-/// com o elenco de cada lado (TDM) dos times `entrants`, os mapas enviados
-/// dela (`games`) e se a série acabou: a escolha simultânea de um mapa
-/// enviado não reabre com quem entrou no time depois.
+/// O veto de cada série refeito das linhas `rows` (por série, na ordem), com
+/// o elenco de cada lado (TDM) dos times `entrants`, a escalação de cada
+/// partida enviada (`games`; no TDM, quem jogou, de `lineups`) e se a série
+/// acabou: a janela simultânea não reabre numa partida enviada.
 fn vetoes(
     bracket: &StageBracket,
     rules: &VetoRules,
     rows: Vec<VetoRow>,
     entrants: &[StoredTeam],
     games: &[StoredGame],
+    lineups: &[(MatchId, i16, Side, i64)],
 ) -> Result<Vec<MatchVeto>, ApiError> {
     let mut by_match: Vec<(MatchId, Vec<VetoRow>)> = Vec::new();
     for row in rows {
@@ -297,9 +313,10 @@ fn vetoes(
             let m = bracket.get(id).ok_or_else(ApiError::internal)?;
             let sides = rows[0].sides;
             let sent = games.iter().filter(|g| g.match_id == id).count();
+            let lineups = (1..=sent).map(|n| lineup(lineups, id, n)).collect();
             let rosters = Rosters {
                 players: [roster(entrants, sides.0), roster(entrants, sides.1)],
-                sent: u8::try_from(sent).unwrap_or(u8::MAX),
+                lineups,
                 finished: matches!(m.state, MatchState::Completed { .. }),
             };
             let best_of = m.best_of;

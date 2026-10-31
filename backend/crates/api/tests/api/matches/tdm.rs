@@ -1,6 +1,7 @@
-//! A partida no TDM: o veto do lado é do capitão, a escolha simultânea de
-//! campeões (todos, ao vivo, numa janela só, com o sorteio no fim e sem
-//! repetir no time) e o rating de um mapa pela escalação.
+//! A série no TDM: qualquer jogador do time age pelo lado, a janela
+//! simultânea de campeões (cada um escolhe o de cada partida, ao vivo, com o
+//! sorteio no fim e sem repetir no time) e o rating de uma partida pela
+//! escalação.
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
@@ -20,18 +21,40 @@ async fn ready(app: &Router, who: &User) -> (StatusCode, Value) {
     post_empty(app, &uri("ready"), who).await
 }
 
-async fn step(app: &Router, who: &User, champion: &str) -> (StatusCode, Value) {
+/// O ban do lado.
+async fn ban(app: &Router, who: &User, champion: &str) -> (StatusCode, Value) {
     post(app, &uri("steps"), who, json!({ "champion": champion })).await
 }
 
-async fn ok(app: &Router, who: &User, champion: &str) -> Value {
-    let (status, body) = step(app, who, champion).await;
+/// O pick de quem age para a partida `game`, na janela simultânea.
+async fn step(app: &Router, who: &User, game: u8, champion: &str) -> (StatusCode, Value) {
+    post(
+        app,
+        &uri("steps"),
+        who,
+        json!({ "champion": champion, "game": game }),
+    )
+    .await
+}
+
+async fn ok(app: &Router, who: &User, game: u8, champion: &str) -> Value {
+    let (status, body) = step(app, who, game, champion).await;
     assert_eq!(status, StatusCode::OK, "{champion}: {body}");
     body
 }
 
-/// 2v2 na final única md1, mapa combinado fora, campeões com `bans` por
-/// mapa: A = P1 (capitão) e P2; B = P3 (capitão) e P4.
+async fn ok_ban(app: &Router, who: &User, champion: &str) -> Value {
+    let (status, body) = ban(app, who, champion).await;
+    assert_eq!(status, StatusCode::OK, "{champion}: {body}");
+    body
+}
+
+fn rules(bans: u8, same_team: bool) -> Value {
+    json!({ "bans_per_series": bans, "mirror": true, "same_team": same_team, "no_repeat": null })
+}
+
+/// 2v2 na final única md1, mapa combinado fora, `bans` de cada lado na
+/// série: A = P1 (capitão) e P2; B = P3 (capitão) e P4.
 async fn final_2v2(db: &PgPool, bans: u8, extra: Value) -> (Router, User, Vec<User>) {
     let (app, ana, _) = quake_br(db).await;
     let p = players(&app, db, &ana, 4).await;
@@ -40,7 +63,7 @@ async fn final_2v2(db: &PgPool, bans: u8, extra: Value) -> (Router, User, Vec<Us
         with(
             json!({
                 "veto": { "map_mode": "off", "champion_phase": true },
-                "champion_rules": { "bans_per_game": bans, "no_repeat": null }
+                "champion_rules": rules(bans, false)
             }),
             extra,
         ),
@@ -65,8 +88,8 @@ async fn age_veto(db: &PgPool, seconds: i32) {
     }
 }
 
-fn picks(detail: &Value) -> Vec<(i64, String)> {
-    detail["veto"]["games"][0]["team_picks"]
+fn picks(detail: &Value, game: usize) -> Vec<(i64, String)> {
+    detail["veto"]["games"][game - 1]["team_picks"]
         .as_array()
         .unwrap()
         .iter()
@@ -80,21 +103,20 @@ fn picks(detail: &Value) -> Vec<(i64, String)> {
 }
 
 #[tokio::test]
-async fn the_captain_does_what_belongs_to_the_side() {
+async fn anyone_of_the_team_acts_for_the_side() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, _, p) = final_2v2(&db, 1, json!({})).await;
+    // Sem capitão nas ações: P2 também está "pronto" pelo time.
+    assert_eq!(detail(&app, &p[1], KEY).await["summary"]["task"], "ready");
+    let (status, body) = ready(&app, &p[1]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["ready_a"], true);
     assert_eq!(
-        detail(&app, &p[1], KEY).await["summary"]["task"],
-        "await_captain"
+        detail(&app, &p[0], KEY).await["summary"]["task"],
+        "await_opponent"
     );
-    assert_eq!(detail(&app, &p[0], KEY).await["summary"]["task"], "ready");
-    assert_eq!(
-        ready(&app, &p[1]).await,
-        (StatusCode::FORBIDDEN, err("match.not_captain"))
-    );
-    assert_eq!(ready(&app, &p[0]).await.0, StatusCode::OK);
     clear(&db).await;
-    let (status, body) = ready(&app, &p[2]).await;
+    let (status, body) = ready(&app, &p[3]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // O começo do veto avisa todos dos dois times.
     let started: Vec<Vec<i64>> = notices(&outbox(&db).await)
@@ -108,41 +130,68 @@ async fn the_captain_does_what_belongs_to_the_side() {
     b.sort();
     assert!(started.contains(&a) && started.contains(&b), "{started:?}");
 
-    // O ban é do capitão: P2 espera, P1 bane.
-    let d = detail(&app, &p[1], KEY).await;
-    assert_eq!(d["summary"]["task"], "await_captain");
-    assert!(d["veto"]["options"].as_array().unwrap().is_empty());
+    // O ban é do lado B (o seed pior): qualquer um dos dois bane, e vale o
+    // primeiro; o histórico grava quem fez.
+    let d = detail(&app, &p[3], KEY).await;
+    assert_eq!(d["summary"]["task"], "veto");
+    assert_eq!(d["veto"]["options"].as_array().unwrap().len(), 16);
     assert_eq!(
-        step(&app, &p[1], "anarki").await,
-        (StatusCode::FORBIDDEN, err("match.not_captain"))
+        ban(&app, &p[0], "anarki").await,
+        (StatusCode::CONFLICT, err("veto.not_your_turn"))
     );
-    ok(&app, &p[0], "anarki").await;
-    // Pedir para desfazer também é do capitão.
+    let d = ok_ban(&app, &p[3], "anarki").await;
+    let last = d["veto"]["history"]
+        .as_array()
+        .unwrap()
+        .last()
+        .unwrap()
+        .clone();
     assert_eq!(
-        post_empty(&app, &uri("undo-request"), &p[3]).await,
-        (StatusCode::FORBIDDEN, err("match.not_captain"))
+        (&last["kind"], &last["actor"]),
+        (&json!("ban"), &json!("P4"))
     );
+    // Pedir para desfazer também é de qualquer um do lado; responder, do
+    // outro.
+    let (status, body) = post_empty(&app, &uri("undo-request"), &p[2]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
-        post_empty(&app, &uri("undo-request"), &p[2]).await.0,
-        StatusCode::OK
+        post(
+            &app,
+            &uri("undo-request/answer"),
+            &p[3],
+            json!({ "accept": true })
+        )
+        .await,
+        (StatusCode::FORBIDDEN, err("veto.own_request"))
     );
+    let (status, body) = post(
+        &app,
+        &uri("undo-request/answer"),
+        &p[1],
+        json!({ "accept": true }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(body["veto"]["bans"].as_array().unwrap().is_empty());
 }
 
 #[tokio::test]
-async fn everyone_picks_at_once_without_repeating_in_the_team() {
+async fn everyone_picks_every_game_at_once_without_repeating_in_the_team() {
     let (db, _lease) = crate::db::test_db().await;
-    let (app, _, p) = final_2v2(&db, 1, json!({})).await;
+    let (app, _, p) = final_2v2(&db, 1, single(3, 3)).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[2]).await;
-    ok(&app, &p[0], "anarki").await;
+    ok_ban(&app, &p[2], "anarki").await;
     clear(&db).await;
-    let d = ok(&app, &p[2], "athena").await;
+    let d = ok_ban(&app, &p[0], "athena").await;
 
-    // A janela abre para os quatro, avisados.
+    // A janela abre para os quatro, avisados, com as três partidas.
     assert_eq!(d["veto"]["turn"]["action"], "team_pick");
     assert_eq!(d["veto"]["turn"]["sides"], json!(["a", "b"]));
     assert_eq!(d["veto"]["team_pick_seconds"], 60);
-    assert_eq!(d["veto"]["missing"].as_array().unwrap().len(), 4);
+    let missing = d["veto"]["missing"].as_array().unwrap();
+    assert_eq!(missing.len(), 4);
+    assert_eq!(missing[0]["games"], json!([1, 2, 3]));
     let mut everyone: Vec<i64> = p.iter().map(|u| u.id).collect();
     everyone.sort();
     assert_eq!(
@@ -153,34 +202,58 @@ async fn everyone_picks_at_once_without_repeating_in_the_team() {
             json!({ "tournament": "Copa de Outubro", "match": KEY, "game": 1 })
         )]
     );
-    // Cada um vê as próprias opções; os banidos não estão.
+    // Cada um vê as próprias opções, por partida; os banidos não estão.
     let d = detail(&app, &p[1], KEY).await;
     assert_eq!(d["summary"]["task"], "veto");
-    let options = d["veto"]["options"].as_array().unwrap();
+    let slots = d["veto"]["picks"].as_array().unwrap();
+    assert_eq!(slots.len(), 3);
+    let options = slots[0]["options"].as_array().unwrap();
     assert_eq!(options.len(), 14);
     assert!(!options.contains(&json!("anarki")));
 
-    // P2 escolhe antes do capitão; P1 não repete o campeão de P2.
-    ok(&app, &p[1], "clutch").await;
+    // P2 escolhe antes do capitão; P1 não repete o campeão de P2 na mesma
+    // partida, mas pode em outra.
+    ok(&app, &p[1], 1, "clutch").await;
     assert_eq!(
-        step(&app, &p[0], "clutch").await,
-        (StatusCode::UNPROCESSABLE_ENTITY, err("veto.option_invalid"))
+        step(&app, &p[0], 1, "clutch").await,
+        (StatusCode::CONFLICT, err("veto.champion_taken"))
     );
+    ok(&app, &p[0], 2, "clutch").await;
     // Espelho entre times vale.
-    ok(&app, &p[3], "clutch").await;
+    ok(&app, &p[3], 1, "clutch").await;
     // Definitiva.
     assert_eq!(
-        step(&app, &p[1], "eisen").await,
+        step(&app, &p[1], 1, "eisen").await,
         (StatusCode::CONFLICT, err("veto.already_picked"))
     );
+    // Sem a partida, ou fora da série.
+    assert_eq!(
+        ban(&app, &p[1], "eisen").await,
+        (StatusCode::UNPROCESSABLE_ENTITY, err("veto.option_invalid"))
+    );
+    assert_eq!(
+        step(&app, &p[1], 4, "eisen").await,
+        (StatusCode::UNPROCESSABLE_ENTITY, err("veto.option_invalid"))
+    );
+    for (who, game, champion) in [
+        (&p[0], 1, "eisen"),
+        (&p[0], 3, "galena"),
+        (&p[1], 2, "eisen"),
+        (&p[1], 3, "keel"),
+        (&p[2], 1, "galena"),
+        (&p[2], 2, "galena"),
+        (&p[2], 3, "galena"),
+        (&p[3], 2, "keel"),
+    ] {
+        ok(&app, who, game, champion).await;
+    }
     let d = detail(&app, &p[1], KEY).await;
     assert_eq!(d["summary"]["task"], "await_opponent");
-    ok(&app, &p[0], "eisen").await;
-    let d = ok(&app, &p[2], "galena").await;
+    let d = ok(&app, &p[3], 3, "nyx").await;
     assert_eq!(d["veto"]["status"], "done");
     assert_eq!(d["veto"]["reportable"], true);
     assert_eq!(
-        picks(&d),
+        picks(&d, 1),
         [
             (p[1].id, "clutch".to_owned()),
             (p[3].id, "clutch".to_owned()),
@@ -189,20 +262,22 @@ async fn everyone_picks_at_once_without_repeating_in_the_team() {
         ]
     );
     let history = d["veto"]["history"].as_array().unwrap();
-    assert_eq!(history.last().unwrap()["player"], "P3");
+    let last = history.last().unwrap();
+    assert_eq!(
+        (&last["player"], &last["pick_game"]),
+        (&json!("P4"), &json!(3))
+    );
 }
 
 #[tokio::test]
 async fn the_team_can_be_allowed_to_repeat() {
     let (db, _lease) = crate::db::test_db().await;
-    let rules = json!({ "champion_rules": {
-        "bans_per_game": 0, "no_repeat": null, "team_duplicates": true
-    } });
-    let (app, _, p) = final_2v2(&db, 0, rules).await;
+    let extra = json!({ "champion_rules": rules(0, true) });
+    let (app, _, p) = final_2v2(&db, 0, extra).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[2]).await;
-    ok(&app, &p[0], "clutch").await;
-    ok(&app, &p[1], "clutch").await;
+    ok(&app, &p[0], 1, "clutch").await;
+    ok(&app, &p[1], 1, "clutch").await;
 }
 
 #[tokio::test]
@@ -218,17 +293,17 @@ async fn the_window_closes_with_a_draw_for_whoever_did_not_pick() {
     .await;
     ready(&app, &p[0]).await;
     ready(&app, &p[2]).await;
-    ok(&app, &p[0], "anarki").await;
-    // O prazo é um só para a janela: o passo de P1 não o reinicia.
+    ok(&app, &p[0], 1, "anarki").await;
+    // O prazo é um só para a janela: o pick de P1 não o reinicia.
     let d = detail(&app, &p[0], KEY).await;
     let deadline = d["veto"]["deadline"].as_str().unwrap().to_owned();
-    ok(&app, &p[3], "athena").await;
+    ok(&app, &p[3], 1, "athena").await;
     assert_eq!(detail(&app, &p[0], KEY).await["veto"]["deadline"], deadline);
 
     age_veto(&db, 16).await;
     let d = detail(&app, &p[0], KEY).await;
     assert_eq!(d["veto"]["status"], "done", "{d}");
-    let all = picks(&d);
+    let all = picks(&d, 1);
     assert_eq!(all.len(), 4);
     let drawn: Vec<&Value> = d["veto"]["games"][0]["team_picks"]
         .as_array()
@@ -311,7 +386,7 @@ async fn teams_play_a_round_robin_too() {
 }
 
 #[tokio::test]
-async fn a_sent_map_does_not_reopen_the_picks_for_a_substitute() {
+async fn a_sent_game_does_not_reopen_the_picks_for_a_substitute() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
@@ -319,7 +394,7 @@ async fn a_sent_map_does_not_reopen_the_picks_for_a_substitute() {
         2,
         json!({
             "veto": { "map_mode": "off", "champion_phase": true },
-            "champion_rules": { "bans_per_game": 0, "no_repeat": null }
+            "champion_rules": rules(0, false)
         }),
     );
     let teams = started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
@@ -328,27 +403,27 @@ async fn a_sent_map_does_not_reopen_the_picks_for_a_substitute() {
     ready(&app, &p[0]).await;
     ready(&app, &p[2]).await;
     for (who, champion) in [(&p[0], "anarki"), (&p[1], "athena"), (&p[2], "anarki")] {
-        ok(&app, who, champion).await;
+        ok(&app, who, 1, champion).await;
     }
-    let d = ok(&app, &p[3], "athena").await;
+    let d = ok(&app, &p[3], 1, "athena").await;
     assert_eq!(d["veto"]["status"], "done");
 
     // Antes do envio, quem entra no time passa a faltar e escolhe; a
-    // escolha de quem saiu fica no histórico e não conta para ele.
+    // escolha de quem saiu fica no histórico e não conta.
     let (status, f) = post(&app, &substitution, &ana, sub(&p[1], &bia)).await;
     assert_eq!(status, StatusCode::OK, "{f}");
     let d = detail(&app, &bia, KEY).await;
     assert_eq!(d["veto"]["status"], "in_progress");
     assert_eq!(d["veto"]["missing"][0]["user_id"], bia.id);
     assert!(
-        d["veto"]["options"]
+        d["veto"]["picks"][0]["options"]
             .as_array()
             .unwrap()
             .contains(&json!("athena"))
     );
-    ok(&app, &bia, "athena").await;
+    ok(&app, &bia, 1, "athena").await;
 
-    // Enviado o mapa, a troca não reabre a escolha.
+    // Enviada a partida, a troca não reabre a escolha.
     let (status, body) = report(&app, &bia, KEY, 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, f) = post(&app, &substitution, &ana, sub(&bia, &p[1])).await;
@@ -356,19 +431,23 @@ async fn a_sent_map_does_not_reopen_the_picks_for_a_substitute() {
     let d = detail(&app, &p[1], KEY).await;
     assert_eq!(d["veto"]["status"], "done", "{d}");
     assert!(d["veto"]["missing"].as_array().unwrap().is_empty());
-    assert!(d["veto"]["options"].as_array().unwrap().is_empty());
+    assert!(d["veto"]["picks"].as_array().unwrap().is_empty());
     assert_eq!(
-        step(&app, &p[1], "clutch").await,
+        step(&app, &p[1], 1, "clutch").await,
         (StatusCode::CONFLICT, err("veto.finished"))
     );
-    assert_eq!(picks(&d).len(), 5);
+    // Contam os de quem jogou: bia, não P2.
+    let all = picks(&d, 1);
+    assert_eq!(all.len(), 4);
+    assert!(all.contains(&(bia.id, "athena".to_owned())));
+    assert!(!all.iter().any(|(id, _)| *id == p[1].id));
 }
 
 #[tokio::test]
 async fn the_screen_says_when_the_rule_gave_way() {
-    // 2v2 md3, regra do time na série, pool de 3 campeões ativos: no mapa
-    // 2, o time A tem só um livre; quem escolhe por último fica com a regra
-    // cedida, e a tela diz.
+    // 2v2 md3, regra do time na série, pool de 3 campeões ativos: para a
+    // partida 2, o time A tem só um livre; quem escolhe por último fica com a
+    // regra cedida, e a tela diz.
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
@@ -378,8 +457,8 @@ async fn the_screen_says_when_the_rule_gave_way() {
             json!({
                 "veto": { "map_mode": "off", "champion_phase": true },
                 "champion_rules": {
-                    "bans_per_game": 0,
-                    "no_repeat": { "who": "team", "scope": "match" }
+                    "bans_per_series": 0, "mirror": true, "same_team": false,
+                    "no_repeat": { "who": "team", "scope": "series" }
                 }
             }),
             single(3, 3),
@@ -393,33 +472,34 @@ async fn the_screen_says_when_the_rule_gave_way() {
         .unwrap();
     ready(&app, &p[0]).await;
     ready(&app, &p[2]).await;
-    for (who, champion) in [
-        (&p[0], "anarki"),
-        (&p[1], "athena"),
-        (&p[2], "anarki"),
-        (&p[3], "athena"),
-    ] {
-        ok(&app, who, champion).await;
-    }
-    let (status, body) = report(&app, &p[0], KEY, 1, game("a", "awoken")).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
+    ok(&app, &p[0], 1, "anarki").await;
+    ok(&app, &p[1], 1, "athena").await;
 
-    // Mapa 2: A já usou anarki e athena; só clutch é livre.
+    // Partida 2: o time já tem anarki e athena; só clutch é livre.
     let d = detail(&app, &p[0], KEY).await;
-    assert_eq!(d["veto"]["game"], 2, "{d}");
-    assert_eq!(d["veto"]["options"], json!(["clutch"]));
-    assert!(d["veto"]["gave_way"].is_null());
-    ok(&app, &p[1], "clutch").await;
+    let slot = |d: &Value, game: i64| -> Value {
+        d["veto"]["picks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["game"] == game)
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(slot(&d, 2)["options"], json!(["clutch"]));
+    assert!(slot(&d, 2)["gave_way"].is_null());
+    ok(&app, &p[1], 2, "clutch").await;
     let d = detail(&app, &p[0], KEY).await;
-    assert_eq!(d["veto"]["gave_way"], "rule");
-    assert_eq!(d["veto"]["options"], json!(["anarki", "athena"]));
-    let used: Vec<&str> = d["veto"]["champions"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter(|c| c["used_by_you"] == true)
-        .map(|c| c["slug"].as_str().unwrap())
-        .collect();
-    assert_eq!(used, ["anarki", "athena"]);
-    ok(&app, &p[0], "anarki").await;
+    let two = slot(&d, 2);
+    assert_eq!(two["gave_way"], "rule");
+    assert_eq!(two["options"], json!(["anarki", "athena"]));
+    assert_eq!(
+        two["unavailable"],
+        json!([
+            { "slug": "anarki", "reason": "repeat" },
+            { "slug": "athena", "reason": "repeat" },
+            { "slug": "clutch", "reason": "teammate" }
+        ])
+    );
+    ok(&app, &p[0], 2, "anarki").await;
 }

@@ -1,7 +1,7 @@
 //! Os sorteios do veto, reproduzíveis pela seed da série: cada sorteio tem a
-//! própria sequência do ChaCha8, separada pelo propósito, pelo jogo e por um
+//! própria sequência do ChaCha8, separada pelo propósito, pela partida e por um
 //! índice (os 8 bytes da seed, little-endian, no início da chave de 32
-//! bytes; depois o propósito, o jogo e o índice; o resto zero). Mudar qualquer
+//! bytes; depois o propósito, a partida e o índice; o resto zero). Mudar qualquer
 //! passo muda os sorteios já gravados: os testes fixam alguns resultados.
 
 use chacha20::ChaCha8Rng;
@@ -12,15 +12,15 @@ use crate::seeding::below;
 /// Para que é o sorteio.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Purpose {
-    /// Os mapas oferecidos na votação de um jogo.
+    /// Os mapas oferecidos na votação de uma partida.
     Offer = 1,
     /// O desempate entre os dois votos diferentes.
     Flip = 2,
-    /// O mapa do jogo no modo aleatório.
+    /// O mapa da partida no modo aleatório.
     Draw = 3,
     /// A escolha de quem deixou o tempo do passo acabar.
     Timeout = 4,
-    /// Nos times, o campeão de quem não escolheu na escolha simultânea.
+    /// Nos times, o campeão de quem não escolheu na janela simultânea.
     TeamTimeout = 5,
 }
 

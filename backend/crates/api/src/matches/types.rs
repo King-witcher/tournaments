@@ -139,8 +139,6 @@ pub enum ViewerTask {
     /// Fazer o passo do veto que está na vez dele (na escolha simultânea do
     /// TDM, escolher o próprio campeão).
     Veto,
-    /// TDM: o "Pronto" ou o passo do veto é do capitão do time dele.
-    AwaitCaptain,
 }
 
 /// A próxima partida de quem vê num torneio em andamento.
@@ -260,10 +258,6 @@ pub struct MatchDetail {
     pub next_game: Option<i16>,
     /// O lado de quem vê, se joga a partida.
     pub viewer_side: Option<Side>,
-    /// Quem vê joga a partida e é o capitão do time dele (no duelo, sempre
-    /// que joga): o "Pronto", o veto do lado (mapas e bans) e o pedido de
-    /// desfazer são dele.
-    pub viewer_captain: bool,
     /// Do mais antigo ao mais novo.
     pub history: Vec<MatchEvent>,
     /// Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.).

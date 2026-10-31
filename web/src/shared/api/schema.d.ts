@@ -1527,19 +1527,30 @@ export interface components {
             name: string;
             slug: string;
         };
+        /**
+         * @description As regras do draft de campeões, feito para a série inteira antes da
+         *     partida 1.
+         */
         ChampionRules: {
             /**
              * Format: int32
-             * @description Bans de campeão que cada lado sofre por mapa, de 0 a 3.
+             * @description Bans de campeão de cada lado na série, de 0 a 3; valem para os dois
+             *     lados em todas as partidas.
              * @example 1
              */
-            bans_per_game: number;
+            bans_per_series: number;
+            /**
+             * @description Adversários podem usar o mesmo campeão na mesma partida. Sem isso,
+             *     fica com ele quem escolhe primeiro.
+             * @example true
+             */
+            mirror: boolean;
             no_repeat?: components["schemas"]["NoRepeatRule"] | null;
             /**
-             * @description TDM: dois jogadores do mesmo time podem escolher o mesmo campeão no
-             *     mesmo mapa. Ausente: não (entre times, o espelho vale sempre).
+             * @description TDM: colegas de time podem usar o mesmo campeão na mesma partida. No
+             *     duelo, não se aplica.
              */
-            team_duplicates?: boolean;
+            same_team: boolean;
         };
         ChangeEmail: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
@@ -2073,7 +2084,7 @@ export interface components {
             slug: string;
         };
         /**
-         * @description Como sai o mapa de cada jogo da série.
+         * @description Como sai o mapa de cada partida da série.
          * @enum {string}
          */
         MapMode: "veto" | "vote" | "random" | "off";
@@ -2116,12 +2127,6 @@ export interface components {
             status: components["schemas"]["TournamentStatus"];
             summary: components["schemas"]["BracketMatch"];
             veto?: components["schemas"]["VetoView"] | null;
-            /**
-             * @description Quem vê joga a partida e é o capitão do time dele (no duelo, sempre
-             *     que joga): o "Pronto", o veto do lado (mapas e bans) e o pedido de
-             *     desfazer são dele.
-             */
-            viewer_captain: boolean;
             viewer_side?: components["schemas"]["Side"] | null;
         };
         MatchEvent: {
@@ -2342,10 +2347,11 @@ export interface components {
             who: components["schemas"]["NoRepeatWho"];
         };
         /**
-         * @description Até onde a regra vale.
+         * @description Até onde a regra vale: entre as partidas da série, em todas as séries da
+         *     fase ou no torneio inteiro. Fora da série, conta só partida jogada.
          * @enum {string}
          */
-        NoRepeatScope: "match" | "stage" | "tournament";
+        NoRepeatScope: "series" | "stage" | "tournament";
         /**
          * @description Quem não pode repetir campeão: cada jogador os próprios, ou o time
          *     inteiro (o que um usou sai de todos). No duelo os dois dão no mesmo.
@@ -3487,31 +3493,31 @@ export interface components {
         };
         /** @enum {string} */
         VetoAction: "ban" | "pick" | "vote" | "team_pick";
+        /**
+         * @description Um ban de campeão da série (vale para os dois lados em todas as
+         *     partidas).
+         */
         VetoBan: {
             champion: components["schemas"]["ChampionRef"];
             side: components["schemas"]["Side"];
+            /** @description Sorteado pelo fim do tempo. */
+            timeout: boolean;
         };
-        /** @description Um campeão do torneio no jogo em andamento, com o que o tira das opções. */
+        /** @description Um campeão ativo do torneio, com o ban da série. */
         VetoChampion: {
             banned_by?: components["schemas"]["Side"] | null;
             name: string;
             slug: string;
-            /**
-             * @description A regra de não repetição o tira de cada lado (já usado na série ou,
-             *     pelo escopo da regra, em outra partida).
-             *     Nos times, pela regra do jogador, o que ela tira de algum do elenco.
-             */
-            used_by_a: boolean;
-            used_by_b: boolean;
-            /**
-             * @description TDM: a regra tira de quem vê, se ele joga (pela do jogador, o que ele
-             *     mesmo usou; pela do time, o que o time usou).
-             */
-            used_by_you: boolean;
         };
         /** @description Um passo: um mapa ou um campeão, pelo slug. */
         VetoChoice: {
             champion?: string | null;
+            /**
+             * Format: int32
+             * @description TDM, na janela simultânea: a partida para a qual o campeão é
+             *     escolhido.
+             */
+            game?: number | null;
             map?: string | null;
         };
         /** @description Um evento do histórico do veto. */
@@ -3521,11 +3527,19 @@ export interface components {
             /** Format: date-time */
             at: string;
             champion?: components["schemas"]["ChampionRef"] | null;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description A partida em andamento quando aconteceu.
+             */
             game?: number | null;
             kind: components["schemas"]["VetoEventKind"];
             map?: components["schemas"]["MapRef"] | null;
-            /** @description TDM: na escolha simultânea, o apelido do jogador (também no sorteado). */
+            /**
+             * Format: int32
+             * @description Pick de campeão: a partida a que ele se destina.
+             */
+            pick_game?: number | null;
+            /** @description TDM: na janela simultânea, o apelido do jogador (também no sorteado). */
             player?: string | null;
             side?: components["schemas"]["Side"] | null;
             /** @description Escolha sorteada pelo fim do tempo. */
@@ -3533,9 +3547,8 @@ export interface components {
         };
         /** @enum {string} */
         VetoEventKind: "ready" | "begin" | "game" | "ban" | "pick" | "vote" | "undo" | "undo_request" | "undo_declined";
-        /** @description O veto de um jogo da série. */
+        /** @description Uma partida da série: o mapa e os campeões escolhidos para ela. */
         VetoGame: {
-            bans: components["schemas"]["VetoBan"][];
             /** Format: int32 */
             game: number;
             map?: components["schemas"]["MapRef"] | null;
@@ -3544,32 +3557,34 @@ export interface components {
             pick_a?: components["schemas"]["ChampionRef"] | null;
             pick_b?: components["schemas"]["ChampionRef"] | null;
             picked_by?: components["schemas"]["Side"] | null;
-            starter?: components["schemas"]["Side"] | null;
-            /** @description TDM: o campeão de cada jogador, na ordem em que escolheram. */
+            /**
+             * @description TDM: o campeão de cada jogador, na ordem em que escolheram (só o que
+             *     conta: numa partida enviada, de quem a jogou).
+             */
             team_picks: components["schemas"]["VetoTeamPick"][];
             vote_a?: string | null;
             vote_b?: string | null;
         };
         /**
-         * @description TDM: o que cedeu para quem vê ter campeão na escolha simultânea (cada um
-         *     cede sozinho, na hora em que escolhe).
+         * @description O que cedeu para quem vê ter campeão (cada um cede sozinho, na hora em
+         *     que escolhe).
          * @enum {string}
          */
-        VetoGaveWay: "rule" | "team";
+        VetoGaveWay: "rule" | "game";
         /**
          * @description A configuração do veto que chega: o que vier no lugar do atual (na
          *     criação, do padrão).
          */
         VetoInput: {
             /**
-             * @description Ban/pick de campeões a cada mapa, com os bans de `champion_rules`.
-             *     Padrão ligado; vale com qualquer modo de mapa.
+             * @description Draft de campeões da série no site, antes da partida 1, com as regras
+             *     de `champion_rules`. Padrão ligado; vale com qualquer modo de mapa.
              */
             champion_phase?: boolean | null;
             map_mode?: components["schemas"]["MapMode"] | null;
             /**
              * @description Slugs dos mapas (`GET /maps`, ativos), na ordem, sem repetir; fora do
-             *     modo `off`, pelo menos um por jogo da série mais longa. Padrão: os 7
+             *     modo `off`, pelo menos um por partida da série mais longa. Padrão: os 7
              *     primeiros do pool de duelo. Vale para o veto, a votação e o sorteio.
              */
             map_pool?: string[] | null;
@@ -3581,9 +3596,9 @@ export interface components {
             step_seconds?: number | null;
             /**
              * Format: int32
-             * @description TDM: segundos da escolha simultânea de campeões (todos do mapa numa
-             *     janela só, depois dos bans), de 15 a 300 (padrão 60); no fim, quem
-             *     não escolheu recebe um sorteado.
+             * @description TDM: segundos da janela simultânea de campeões (cada jogador escolhe
+             *     um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no
+             *     fim, o que faltou é sorteado.
              */
             team_pick_seconds?: number | null;
         };
@@ -3593,8 +3608,26 @@ export interface components {
             map: components["schemas"]["MapRef"];
             side: components["schemas"]["Side"];
         };
-        /** @description TDM: um jogador na escolha simultânea de campeões. */
+        /**
+         * @description Um pick que quem vê pode fazer agora: no duelo, o da vez dele; no TDM,
+         *     cada partida em que ele falta na janela simultânea.
+         */
+        VetoPickSlot: {
+            /** Format: int32 */
+            game: number;
+            gave_way?: components["schemas"]["VetoGaveWay"] | null;
+            /** @description Os slugs que ele pode escolher. */
+            options: string[];
+            /**
+             * @description Os campeões que não estão nas opções, com o motivo (sem contar o que
+             *     cedeu).
+             */
+            unavailable: components["schemas"]["VetoUnavailable"][];
+        };
+        /** @description TDM: um jogador que falta na janela simultânea. */
         VetoPlayer: {
+            /** @description As partidas para as quais ele ainda não escolheu. */
+            games: number[];
             /** @description Apelido; vazio quando a conta foi excluída. */
             nickname: string;
             side: components["schemas"]["Side"];
@@ -3616,13 +3649,13 @@ export interface components {
             team_pick_seconds: number;
         };
         /**
-         * @description Onde o veto da partida está (só na partida pronta de um torneio com veto).
+         * @description Onde o veto da série está (só na série pronta de um torneio com veto).
          * @enum {string}
          */
         VetoStatus: "waiting_ready" | "in_progress" | "done";
         /** @enum {string} */
         VetoTarget: "map" | "champion";
-        /** @description TDM: a escolha de um jogador num mapa. */
+        /** @description TDM: o campeão de um jogador numa partida. */
         VetoTeamPick: {
             champion: components["schemas"]["ChampionRef"];
             nickname: string;
@@ -3636,19 +3669,36 @@ export interface components {
         VetoTurn: {
             action: components["schemas"]["VetoAction"];
             /**
-             * @description Quem age: um lado (nos times, pelo capitão), ou os dois na votação
-             *     enquanto nenhum votou e na escolha simultânea enquanto falta alguém
-             *     de cada um.
+             * Format: int32
+             * @description Pick de campeão do duelo: a partida a que ele se destina.
+             */
+            pick_for?: number | null;
+            /**
+             * @description Quem age: um lado (qualquer jogador do time), ou os dois na votação
+             *     enquanto nenhum votou e na janela simultânea enquanto falta alguém de
+             *     cada um.
              */
             sides: components["schemas"]["Side"][];
             target: components["schemas"]["VetoTarget"];
         };
-        /** @description O veto da partida. */
+        VetoUnavailable: {
+            reason: components["schemas"]["VetoUnavailableReason"];
+            slug: string;
+        };
+        /**
+         * @description Por que um campeão não está nas opções de quem escolhe.
+         * @enum {string}
+         */
+        VetoUnavailableReason: "banned" | "teammate" | "opponent" | "repeat";
+        /** @description O veto da série. */
         VetoView: {
-            /** @description Há passo para desfazer no jogo em andamento. */
+            /** @description Os bans de campeão da série, na ordem. */
+            bans: components["schemas"]["VetoBan"][];
+            /** @description Há passo para desfazer na partida em andamento. */
             can_undo: boolean;
+            /** @description Draft de campeões no site. */
             champion_phase: boolean;
-            /** @description Os campeões do torneio no jogo em andamento (com a fase de campeões). */
+            /** @description Os campeões ativos do torneio (com o draft no site), com os bans. */
             champions: components["schemas"]["VetoChampion"][];
             /**
              * Format: date-time
@@ -3657,35 +3707,40 @@ export interface components {
             deadline?: string | null;
             /**
              * Format: int32
-             * @description O jogo em andamento.
+             * @description A partida em andamento.
              */
             game?: number | null;
+            /**
+             * @description Cada partida da série, da 1 à última (com o draft, os campeões de
+             *     todas aparecem antes da partida 1).
+             */
             games: components["schemas"]["VetoGame"][];
-            gave_way?: components["schemas"]["VetoGaveWay"] | null;
             /** @description Do mais antigo ao mais novo. */
             history: components["schemas"]["VetoEvent"][];
             map_mode: components["schemas"]["MapMode"];
             /** @description Modo veto: os passos do veto de mapas, na ordem. */
             map_steps: components["schemas"]["VetoMapStep"][];
-            /**
-             * @description TDM: quem ainda não escolheu na escolha simultânea do jogo em
-             *     andamento.
-             */
+            /** @description TDM: quem ainda falta na janela simultânea, e em quais partidas. */
             missing: components["schemas"]["VetoPlayer"][];
             /**
-             * @description O que quem vê pode escolher agora (slugs de mapas ou de campeões);
-             *     vazio se não é a vez dele (nos times, o passo do lado é do capitão; na
-             *     escolha simultânea, cada um tem as suas, sem o que um colega já
-             *     escolheu no mapa).
+             * @description O que quem vê pode escolher no passo do lado dele agora (slugs de
+             *     mapas ou de campeões: veto de mapas, voto, ban, pick do duelo); vazio
+             *     se não é a vez do lado dele e na janela simultânea, que é por partida
+             *     (`picks`).
              */
             options: string[];
+            /**
+             * @description Os picks de campeão que quem vê pode fazer agora, com o motivo de cada
+             *     campeão fora.
+             */
+            picks: components["schemas"]["VetoPickSlot"][];
             /** @description O pool de mapas do torneio, na ordem. */
             pool: components["schemas"]["MapRef"][];
             ready_a: boolean;
             ready_b: boolean;
             /** @description Modo veto: os mapas que ainda não saíram. */
             remaining: components["schemas"]["MapRef"][];
-            /** @description Os jogadores podem enviar o próximo mapa (o veto dele acabou). */
+            /** @description Os jogadores podem enviar a próxima partida (o veto dela acabou). */
             reportable: boolean;
             status: components["schemas"]["VetoStatus"];
             /**
@@ -3695,7 +3750,7 @@ export interface components {
             step_seconds: number;
             /**
              * Format: int32
-             * @description TDM: segundos da escolha simultânea de campeões; `null` no duelo.
+             * @description TDM: segundos da janela simultânea de campeões; `null` no duelo.
              */
             team_pick_seconds?: number | null;
             turn?: components["schemas"]["VetoTurn"] | null;
@@ -3705,7 +3760,7 @@ export interface components {
          * @description O que a partida (ou um mapa dela) espera de quem vê.
          * @enum {string}
          */
-        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto" | "await_captain";
+        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto";
         /** @description O webhook como a API devolve ao owner: sem o endereço nem o token. */
         WebhookSettings: {
             /**
@@ -8405,6 +8460,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description champions.pool_exhausted `{required, available}` (campeões ativos de menos para os bans da série) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     veto_ready: {
@@ -8423,7 +8487,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O jogador está pronto. Com os dois prontos, o veto começa (aviso `match.veto_started` para os dois); senão, o adversário recebe `match.opponent_ready`. Repetir não muda nada */
+            /** @description O lado de quem clica está pronto (no TDM, qualquer jogador do time responde pelo time). Com os dois prontos, o veto começa (aviso `match.veto_started` para os dois); senão, o adversário recebe `match.opponent_ready`. Repetir não muda nada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8441,7 +8505,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.not_captain (nos times, só o capitão) */
+            /** @description match.not_player */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8461,6 +8525,15 @@ export interface operations {
             };
             /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off (torneio sem veto), veto.already_begun */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description champions.pool_exhausted `{required, available}` (com os dois prontos: campeões ativos de menos para os bans da série) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8490,7 +8563,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O passo de quem está na vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez). Nos times, o passo do lado é do capitão; na escolha simultânea (`team_pick`), cada jogador escolhe o próprio campeão, uma vez por mapa. Quando o veto do jogo acaba, o mapa pode ser enviado */
+            /** @description O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. Na janela simultânea do TDM (`team_pick`), cada jogador escolhe o próprio campeão de cada partida (`game`), uma vez por partida. Quando o veto da partida acaba, ela pode ser enviada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8508,7 +8581,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.not_captain (nos times, o passo do lado é do capitão) */
+            /** @description match.not_player */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8526,7 +8599,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto do jogo já acabou), veto.not_your_turn (na escolha simultânea: quem saiu da comunidade), veto.already_picked (já escolheu neste mapa) */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; na janela simultânea, quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -8535,7 +8608,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description veto.option_invalid (mapa ou campeão fora das opções, já banido ou escolhido por um colega, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body */
+            /** @description veto.option_invalid (mapa ou campeão fora das opções, já banido, a partida fora da série ou faltando na janela simultânea, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8562,7 +8635,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O organizador desfaz o último passo do jogo em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro */
+            /** @description O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8625,7 +8698,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Um jogador (nos times, o capitão) pede para desfazer o último passo do jogo em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
+            /** @description Um jogador (no TDM, qualquer um do time, pelo lado) pede para desfazer o último passo da partida em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8643,7 +8716,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.not_captain */
+            /** @description match.not_player */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8692,7 +8765,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O adversário de quem pediu (nos times, o capitão) aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer */
+            /** @description Um jogador do lado adversário ao que pediu aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8710,7 +8783,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.not_player, match.not_captain, veto.own_request (quem pediu não responde) */
+            /** @description match.not_player, veto.own_request (o lado que pediu não responde) */
             403: {
                 headers: {
                     [name: string]: unknown;

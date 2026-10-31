@@ -1,4 +1,4 @@
-import { SelectItem } from "@carbon/react";
+import { FormGroup, SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
@@ -26,9 +26,10 @@ type Props = {
 };
 
 /**
- * Bans por mapa e a regra de não repetir campeão. No TDM, também quem não
- * repete (só com a regra ligada) e se dois do mesmo time podem escolher o
- * mesmo campeão no mesmo mapa.
+ * O draft de campeões da série: se é feito no site, os bans de cada lado e o
+ * que pode repetir (na partida, entre adversários e, no TDM, entre colegas;
+ * em outras partidas, pela regra de não repetição e, no TDM, quem não
+ * repete).
  */
 export function TournamentChampionFields({
   values,
@@ -36,33 +37,63 @@ export function TournamentChampionFields({
   errors,
   disabled,
 }: Props) {
-  const t = useTranslations("TournamentForm");
+  const t = useTranslations("TournamentForm.championRules");
   const tdm = isTdm(values);
 
   return (
     <>
-      <Select
-        labelText={t("bansPerGame")}
-        // No TDM, a dica diz quem bane (o capitão).
-        helperText={
-          tdm
-            ? t("bansPerGameHintTdm", { count: values.bansPerGame })
-            : undefined
-        }
-        name="bansPerGame"
-        value={values.bansPerGame}
+      <RadioGroup
+        legendText={t("phase")}
+        name="championPhase"
+        orientation="horizontal"
+        value={values.championPhase ? "site" : "off"}
         disabled={disabled}
-        invalid={errors.bansPerGame !== undefined}
-        invalidText={errors.bansPerGame}
-        onChange={(e) => onChange({ bansPerGame: Number(e.target.value) })}
+        options={(["site", "off"] as const).map((value) => ({
+          value,
+          label: t(`phaseOptions.${value}`),
+        }))}
+        onChange={(v) => onChange({ championPhase: v === "site" })}
+      />
+      <Select
+        labelText={t("bans")}
+        helperText={t("bansHint")}
+        name="bansPerSeries"
+        value={values.bansPerSeries}
+        disabled={disabled}
+        invalid={errors.bansPerSeries !== undefined}
+        invalidText={errors.bansPerSeries}
+        onChange={(e) => onChange({ bansPerSeries: Number(e.target.value) })}
       >
         {BANS.map((n) => (
           <SelectItem key={n} value={n} text={t("bansOption", { count: n })} />
         ))}
       </Select>
+      <FormGroup legendText={t("repeat")}>
+        <Checkbox
+          labelText={t("mirror")}
+          helperText={values.mirror ? undefined : t("mirrorOff")}
+          name="mirror"
+          checked={values.mirror}
+          disabled={disabled}
+          onChange={(mirror) => onChange({ mirror })}
+        />
+        {tdm && (
+          <Checkbox
+            labelText={t("sameTeam")}
+            name="sameTeam"
+            checked={values.sameTeam}
+            disabled={disabled}
+            onChange={(sameTeam) => onChange({ sameTeam })}
+          />
+        )}
+      </FormGroup>
       <Select
-        labelText={t("noRepeat")}
-        helperText={t(`noRepeatHints.${values.noRepeat}`)}
+        labelText={t("otherGames")}
+        helperText={
+          values.noRepeat === "off"
+            ? undefined
+            : t(`otherGamesHints.${values.noRepeat}`)
+        }
         name="noRepeat"
         value={values.noRepeat}
         disabled={disabled}
@@ -76,37 +107,23 @@ export function TournamentChampionFields({
           <SelectItem
             key={choice}
             value={choice}
-            text={t(`noRepeatOptions.${choice}`)}
+            text={t(`otherGamesOptions.${choice}`)}
           />
         ))}
       </Select>
       {tdm && values.noRepeat !== "off" && (
         <RadioGroup
-          legendText={t("noRepeatWho")}
-          helperText={t(`noRepeatWhoHints.${values.noRepeatWho}`)}
+          legendText={t("who")}
+          helperText={values.noRepeatWho === "team" ? t("whoTeam") : undefined}
           name="noRepeatWho"
           orientation="horizontal"
           value={values.noRepeatWho}
           disabled={disabled}
           options={WHO.map((value) => ({
             value,
-            label: t(`noRepeatWhoOptions.${value}`),
+            label: t(`whoOptions.${value}`),
           }))}
           onChange={(noRepeatWho) => onChange({ noRepeatWho })}
-        />
-      )}
-      {tdm && (
-        <Checkbox
-          labelText={t("teamDuplicates")}
-          helperText={t(
-            values.teamDuplicates
-              ? "teamDuplicatesHints.on"
-              : "teamDuplicatesHints.off",
-          )}
-          name="teamDuplicates"
-          checked={values.teamDuplicates}
-          disabled={disabled}
-          onChange={(teamDuplicates) => onChange({ teamDuplicates })}
         />
       )}
     </>

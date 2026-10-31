@@ -139,7 +139,7 @@ async fn start_rechecks_the_champion_pool_with_the_real_entrants() {
         json!({
             "max_participants": 4,
             "champion_rules": {
-                "bans_per_game": 1,
+                "bans_per_series": 1, "mirror": true, "same_team": false,
                 "no_repeat": { "who": "player", "scope": "tournament" }
             }
         }),

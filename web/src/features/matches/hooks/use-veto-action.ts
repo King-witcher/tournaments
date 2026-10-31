@@ -7,7 +7,7 @@ import { focusIfLost } from "@/shared/lib/focus";
 import { type MatchTarget, matchParams, VETO_ID } from "../lib/match-target";
 
 /**
- * As ações do veto de uma partida (pronto, forçar o começo, um passo,
+ * As ações do veto de uma série (pronto, forçar o começo, um passo,
  * desfazer, pedir e responder o pedido de desfazer), com `pending` e o erro
  * já traduzido. Depois de agir, a página recarrega e o foco vai para o
  * bloco do veto, se o botão sumiu; com erro (a tela ficou para trás: o
@@ -46,7 +46,7 @@ export function useVetoAction(target: MatchTarget) {
         done,
         stale,
       ),
-    step: (choice: { map: string } | { champion: string }) =>
+    step: (choice: { map: string } | { champion: string; game?: number }) =>
       run(
         () =>
           api.POST(

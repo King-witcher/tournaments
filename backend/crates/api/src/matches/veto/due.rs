@@ -1,16 +1,18 @@
 //! O tempo de cada passo do veto. Vencido o prazo, o `engine` sorteia a
 //! escolha de quem deixou o tempo acabar (`random_choice`, pela seed da
 //! série), gravada como `timeout` e com a hora do prazo: o passo seguinte
-//! conta dali, como se alguém tivesse esperado. Na escolha simultânea dos
-//! times, a janela é uma só (`team_pick_seconds`) e, no fim, cada um que não
-//! escolheu recebe um campeão sorteado (`random_team_choice`), um de cada
-//! vez, na ordem do elenco. A API aplica ao ler a partida ou a chave e antes
-//! de cada ação (`any_due`, `apply_due`), e o relógio do `realtime` aplica
-//! nos torneios que ninguém leu (`clock`), dormindo até o próximo prazo.
+//! conta dali, como se alguém tivesse esperado. Na janela simultânea dos
+//! times, o prazo é um só (`team_pick_seconds`) e, no fim, cada partida de
+//! cada um que não escolheu recebe um campeão sorteado (`random_team_choice`),
+//! um de cada vez, na ordem do elenco. A API aplica ao ler a série ou a chave
+//! e antes de cada ação (`any_due`, `apply_due`), e o relógio do `realtime`
+//! aplica nos torneios que ninguém leu (`clock`), dormindo até o próximo
+//! prazo. O mesmo sorteio completa o draft quando o organizador lança a
+//! partida 1 antes do fim dele (`draw_turn`, pelo `advance`).
 
 use chrono::{DateTime, Utc};
 use engine::{
-    core::MatchState,
+    core::{MatchState, ParticipantId},
     veto::{Action, Choice, Event, Turn, Veto},
 };
 use sqlx::{PgConnection, PgPool};
@@ -94,92 +96,109 @@ pub async fn apply_due(
         let mut state = mv.state.clone();
         let mut deadline = first;
         while deadline <= now {
-            let Turn::Act {
-                game,
-                action,
-                sides,
-                ..
-            } = state.turn()
-            else {
+            let n = draw_turn(conn, &at, mv.sides, &mut state, &ctx, Some(deadline)).await?;
+            if n == 0 {
+                // Ninguém mais tem opção: não há o que sortear.
                 break;
-            };
-            if action == Action::TeamPick {
-                for (side, player) in state.missing(game) {
-                    let Some(champion) = state.random_team_choice(side, player, &ctx.engine())
-                    else {
-                        continue;
-                    };
-                    let event = Event::TeamPick {
-                        side,
-                        player,
-                        champion,
-                    };
-                    state.apply(event, Some(&ctx.engine())).map_err(|e| {
-                        tracing::error!(%e, key, "sorteio da escolha simultânea recusado");
-                        ApiError::internal()
-                    })?;
-                    let row = NewVetoEvent {
-                        champion: Some(champion),
-                        player: Some(player.0),
-                        timeout: true,
-                        at: Some(deadline),
-                        ..NewVetoEvent::new(
-                            Kind::Pick,
-                            Some(i16::from(game)),
-                            Some(api_side(side)),
-                            None,
-                        )
-                    };
-                    db::insert(conn, &at, mv.sides, &row).await?;
-                    written += 1;
-                }
-                if matches!(
-                    state.turn(),
-                    Turn::Act {
-                        action: Action::TeamPick,
-                        ..
-                    }
-                ) {
-                    // Ninguém mais tem opção: não há o que sortear.
-                    break;
-                }
-                deadline += seconds_of(stage, &state);
-                continue;
             }
-            for side in sides {
-                let Some(choice) = state.random_choice(side, &ctx.engine()) else {
-                    break;
-                };
-                let event = Event::Step {
-                    side,
-                    action,
-                    choice,
-                };
-                state.apply(event, Some(&ctx.engine())).map_err(|e| {
-                    tracing::error!(%e, key, "sorteio do veto recusado");
-                    ApiError::internal()
-                })?;
-                let (map, champion) = match choice {
-                    Choice::Map(m) => (Some(m), None),
-                    Choice::Champion(c) => (None, Some(c)),
-                };
-                let row = NewVetoEvent {
-                    map,
-                    champion,
-                    timeout: true,
-                    at: Some(deadline),
-                    ..NewVetoEvent::new(
-                        Kind::of(action),
-                        Some(i16::from(game)),
-                        Some(api_side(side)),
-                        None,
-                    )
-                };
-                db::insert(conn, &at, mv.sides, &row).await?;
-                written += 1;
-            }
+            written += n;
             deadline += seconds_of(stage, &state);
         }
+    }
+    Ok(written)
+}
+
+/// Sorteia, como no fim do tempo, o que a vez de `state` espera agora (o
+/// passo de cada lado da vez; na janela simultânea, cada partida de cada um
+/// que falta, um de cada vez, na ordem de `missing`), aplica em `state` e
+/// grava como `timeout`, com a hora `when` (`None`: agora). Devolve quantos
+/// passos gravou: 0 sem vez ou sem opção.
+pub(super) async fn draw_turn(
+    conn: &mut PgConnection,
+    at: &MatchRef<'_>,
+    sides: (ParticipantId, ParticipantId),
+    state: &mut Veto,
+    ctx: &Ctx,
+    when: Option<DateTime<Utc>>,
+) -> Result<u64, ApiError> {
+    let Turn::Act {
+        game,
+        action,
+        sides: acting,
+        pick_for,
+        ..
+    } = state.turn()
+    else {
+        return Ok(0);
+    };
+    let recused = |e: engine::veto::VetoError| {
+        tracing::error!(%e, key = at.key, "sorteio do veto recusado");
+        ApiError::internal()
+    };
+    let mut written = 0;
+    if action == Action::TeamPick {
+        for m in state.missing() {
+            let options = state.team_options(m.side, m.player, m.game, &ctx.engine());
+            let Some(champion) = state.random_team_choice(m.side, m.player, m.game, &ctx.engine())
+            else {
+                continue;
+            };
+            let event = Event::TeamPick {
+                side: m.side,
+                player: m.player,
+                game: m.game,
+                champion,
+                gave_way: options.gave_way.is_some(),
+            };
+            state.apply(event, Some(&ctx.engine())).map_err(recused)?;
+            let row = NewVetoEvent {
+                champion: Some(champion),
+                player: Some(m.player.0),
+                pick_game: Some(i16::from(m.game)),
+                gave_way: options.gave_way.is_some(),
+                timeout: true,
+                at: when,
+                ..NewVetoEvent::new(
+                    Kind::Pick,
+                    Some(i16::from(game)),
+                    Some(api_side(m.side)),
+                    None,
+                )
+            };
+            db::insert(conn, at, sides, &row).await?;
+            written += 1;
+        }
+        return Ok(written);
+    }
+    for side in acting {
+        let Some(choice) = state.random_choice(side, &ctx.engine()) else {
+            break;
+        };
+        let event = Event::Step {
+            side,
+            action,
+            choice,
+        };
+        state.apply(event, Some(&ctx.engine())).map_err(recused)?;
+        let (map, champion) = match choice {
+            Choice::Map(m) => (Some(m), None),
+            Choice::Champion(c) => (None, Some(c)),
+        };
+        let row = NewVetoEvent {
+            map,
+            champion,
+            pick_game: champion.and(pick_for).map(i16::from),
+            timeout: true,
+            at: when,
+            ..NewVetoEvent::new(
+                Kind::of(action),
+                Some(i16::from(game)),
+                Some(api_side(side)),
+                None,
+            )
+        };
+        db::insert(conn, at, sides, &row).await?;
+        written += 1;
     }
     Ok(written)
 }

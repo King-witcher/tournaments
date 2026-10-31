@@ -69,7 +69,7 @@ async fn stage_and_champion_rules_are_stored_as_engine_json() {
     let (app, ana, _) = quake_br(&db).await;
     let body = with(
         duel("copa"),
-        json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": "match" } } }),
+        json!({ "champion_rules": { "bans_per_series": 1, "mirror": false, "same_team": true, "no_repeat": { "who": "player", "scope": "series" } } }),
     );
     create_tournament(&app, &ana, body).await;
 
@@ -92,9 +92,10 @@ async fn stage_and_champion_rules_are_stored_as_engine_json() {
     assert_eq!(
         rules,
         json!({
-            "bans_per_game": 1,
-            "no_repeat": { "who": "player", "scope": "match" },
-            "team_duplicates": false
+            "bans_per_series": 1,
+            "mirror": false,
+            "same_team": true,
+            "no_repeat": { "who": "player", "scope": "series" }
         })
     );
 }
@@ -103,7 +104,7 @@ async fn stage_and_champion_rules_are_stored_as_engine_json() {
 async fn champion_pool_check_blocks_with_numbers() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
-    let no_repeat = |scope: &str| json!({ "champion_rules": { "bans_per_game": 1, "no_repeat": { "who": "player", "scope": scope } } });
+    let no_repeat = |scope: &str| json!({ "champion_rules": { "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": { "who": "player", "scope": scope } } });
 
     // Dupla de 16, md3/md5: 7 * 3 + 2 * 5 = 31 mapas no pior caso, + 1 ban de
     // cada lado.
@@ -200,7 +201,7 @@ async fn create_validates_the_input() {
     assert_eq!(
         try_create(with(
             duel("copa"),
-            json!({ "champion_rules": { "bans_per_game": 4, "no_repeat": null } })
+            json!({ "champion_rules": { "bans_per_series": 4, "mirror": true, "same_team": false, "no_repeat": null } })
         ))
         .await,
         with_params("tournament.bans_invalid", json!({ "max": 3 }))

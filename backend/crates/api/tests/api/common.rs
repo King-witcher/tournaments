@@ -330,7 +330,7 @@ pub fn duel(slug: &str) -> Value {
         "rules": "- md3\n- md5 na grande final",
         "mode": "duel",
         "max_participants": 16,
-        "champion_rules": { "bans_per_game": 1, "no_repeat": null },
+        "champion_rules": { "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": null },
         "stages": [{
             "format": "elimination",
             "bracket": "double",

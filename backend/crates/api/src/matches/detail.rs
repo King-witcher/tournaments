@@ -79,7 +79,6 @@ pub async fn load(
             .collect(),
         next_game: tasks::next_game(tournament.status, m, &games),
         viewer_side: mine,
-        viewer_captain: mine.is_some() && viewer.captain,
         history: events
             .into_iter()
             .map(|e| view::event(stage, e))

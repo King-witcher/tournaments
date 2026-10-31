@@ -218,6 +218,10 @@ pub enum EngineError {
     NoGamesLeft { best_of: u8 },
     #[error("no pior caso são necessários {required} campeões; o pool tem {available}")]
     ChampionPoolExhausted { required: u32, available: u32 },
+    #[error("tamanho de time {got} inválido: de 1 a {max}")]
+    InvalidTeamSize { max: u32, got: u32 },
+    #[error("{got} bans de campeão por lado na série: no máximo {max}")]
+    TooManyBans { max: u32, got: u32 },
     #[error("o torneio precisa de pelo menos uma fase")]
     NoStages,
     #[error("número de rodadas {got} inválido: de 1 a {max}")]

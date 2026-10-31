@@ -171,9 +171,10 @@ mod tests {
 
     fn rules() -> ChampionRules {
         ChampionRules {
-            bans_per_game: 1,
+            bans_per_series: 1,
+            mirror: true,
+            same_team: false,
             no_repeat: None,
-            team_duplicates: false,
         }
     }
 

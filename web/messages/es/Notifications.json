@@ -28,8 +28,8 @@
         "body": "{tournament}: veto contra {opponent}. Cada paso tiene tiempo. Al terminar, la elección se sortea."
       },
       "team_pick_open": {
-        "title": "Elige tu campeón",
-        "body": "{tournament}: la elección de campeones de la partida {game} se abrió. Todos eligen al mismo tiempo; quien no elija a tiempo recibe uno sorteado."
+        "title": "Elige tus campeones",
+        "body": "{tournament}: se abrió la elección de campeones de la serie. Todos eligen al mismo tiempo, uno para cada partida; lo que falte al final se sortea."
       }
     },
     "tournament": {

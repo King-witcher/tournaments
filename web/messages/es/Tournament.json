@@ -77,7 +77,7 @@
     "series": {
       "title": "Cada serie",
       "ready": "Cuando la serie esté lista, abre su página y haz clic en “Listo”.",
-      "readyTdm": "Cuando la serie esté lista, el capitán de cada equipo abre su página y hace clic en “Listo”.",
+      "readyTdm": "Cuando la serie esté lista, un jugador de cada equipo abre su página y hace clic en “Listo”. En el veto, cualquier jugador actúa por el equipo, y vale el primer clic.",
       "vetoStarts": "El veto empieza cuando los dos estén listos.",
       "vetoStartsTdm": "El veto empieza cuando los dos equipos estén listos.",
       "timer": "Cada elección del veto tiene {time}. Si se acaba el tiempo, se sortea.",
@@ -90,9 +90,9 @@
         "offOne": "Tú y tu rival acuerdan el mapa."
       },
       "mapsTdm": {
-        "veto": "Antes de la primera partida, los capitanes banean y eligen mapas, por turnos, hasta definir el mapa de cada partida.",
-        "vetoOne": "Antes de la partida, los capitanes banean mapas, por turnos, hasta que quede uno.",
-        "vote": "Antes de cada partida, los capitanes votan por uno de 3 mapas sorteados. Si los votos son distintos, el mapa se sortea entre los dos.",
+        "veto": "Antes de la primera partida, los equipos banean y eligen mapas, por turnos, hasta definir el mapa de cada partida.",
+        "vetoOne": "Antes de la partida, los equipos banean mapas, por turnos, hasta que quede uno.",
+        "vote": "Antes de cada partida, cada equipo vota por uno de 3 mapas sorteados. Si los votos son distintos, el mapa se sortea entre los dos.",
         "random": "El mapa de cada partida se sortea cuando empieza.",
         "off": "Los equipos acuerdan el mapa de cada partida, sin repetir en la serie.",
         "offOne": "Los equipos acuerdan el mapa."
@@ -122,35 +122,49 @@
       }
     },
     "tdm": {
-      "roundRobinRule": "Las series quedan abiertas desde el inicio, y tu equipo juega cada una cuando lo acuerde con el rival. Las rondas solo ordenan. Con un número impar de equipos, cada uno descansa una ronda.",
-      "bans": "{count, plural, one {Antes de cada partida, los capitanes banean # campeón cada uno, alternando; el baneado queda fuera de esa partida para los dos equipos.} other {Antes de cada partida, los capitanes banean # campeones cada uno, alternando; los baneados quedan fuera de esa partida para los dos equipos.}}",
-      "pick": "Después de los bans, todos los jugadores eligen su campeón al mismo tiempo, en una ventana de {window}, viendo las elecciones de los demás. A quien no elija a tiempo le toca un campeón sorteado entre los que podía elegir.",
-      "duplicates": {
-        "off": "Dos jugadores del mismo equipo no usan el mismo campeón en la misma partida; entre equipos, sí se puede.",
-        "on": "Los jugadores del mismo equipo pueden usar el mismo campeón en la misma partida, y los dos equipos también."
-      },
-      "repeat": {
-        "off": "De una partida a otra, los campeones se pueden repetir.",
-        "player": {
-          "match": "En una misma serie, cada jugador no repite campeón. Usa uno distinto en cada partida.",
-          "stage": "En esta fase del torneo, cada jugador no repite campeón. Usa uno distinto en cada partida que juegues.",
-          "tournament": "En todo el torneo, cada jugador no repite campeón. Usa uno distinto en cada partida que juegues."
-        },
-        "team": {
-          "match": "En una misma serie, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo usa en las siguientes.",
-          "stage": "En esta fase del torneo, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo vuelve a usar.",
-          "tournament": "En todo el torneo, el equipo no repite campeón. El que usó alguien del equipo en una partida nadie del equipo lo vuelve a usar."
-        }
-      }
+      "roundRobinRule": "Las series quedan abiertas desde el inicio, y tu equipo juega cada una cuando lo acuerde con el rival. Las rondas solo ordenan. Con un número impar de equipos, cada uno descansa una ronda."
     },
     "noBans": "No hay ban de campeones.",
     "champions": {
-      "bans": "{count, plural, one {Antes de cada partida, cada jugador banea # campeón del rival, que no puede usarlo en esa partida.} other {Antes de cada partida, cada jugador banea # campeones del rival, que no puede usarlos en esa partida.}}",
+      "bans": {
+        "duel": "{count, plural, one {Antes de la partida 1, cada uno banea # campeón, por turnos. El baneado queda fuera de toda la serie, para los dos.} other {Antes de la partida 1, cada uno banea # campeones, por turnos. Los baneados quedan fuera de toda la serie, para los dos.}}",
+        "tdm": "{count, plural, one {Antes de la partida 1, cada equipo banea # campeón, por turnos. El baneado queda fuera de toda la serie, para los dos equipos.} other {Antes de la partida 1, cada equipo banea # campeones, por turnos. Los baneados quedan fuera de toda la serie, para los dos equipos.}}"
+      },
+      "pick": {
+        "duel": "Después, todavía antes de la partida 1, tú y tu rival eligen el campeón de cada partida, una por vez, alternando quién elige primero. Nadie vuelve al veto entre partidas.",
+        "tdm": "Después, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea. Nadie vuelve al veto entre partidas."
+      },
+      "mirror": {
+        "duel": {
+          "on": "Tú y tu rival pueden usar el mismo campeón en la partida.",
+          "off": "Tú y tu rival no usan el mismo campeón en la partida. Se lo queda quien elija primero."
+        },
+        "tdm": {
+          "on": "Los dos equipos pueden usar el mismo campeón en la partida.",
+          "off": "Los dos equipos no usan el mismo campeón en la partida. Se lo queda quien elija primero."
+        }
+      },
+      "sameTeam": {
+        "on": "Los compañeros de equipo pueden usar el mismo campeón en la partida.",
+        "off": "Los compañeros de equipo no usan el mismo campeón en la partida."
+      },
       "repeat": {
-        "off": "Puedes repetir campeones.",
-        "match": "En una misma serie no repites campeón. Usa uno distinto en cada partida.",
-        "stage": "En esta fase del torneo no repites campeón. Usa uno distinto en cada partida que juegues.",
-        "tournament": "En todo el torneo no repites campeón. Usa uno distinto en cada partida que juegues."
+        "off": "De una partida a otra, el campeón se puede repetir.",
+        "duel": {
+          "series": "En la serie, no repites campeón.",
+          "stage": "En esta fase, no repites campeón. Cuenta solo la partida jugada.",
+          "tournament": "En el torneo, no repites campeón. Cuenta solo la partida jugada."
+        },
+        "player": {
+          "series": "En la serie, cada jugador no repite campeón.",
+          "stage": "En esta fase, cada jugador no repite campeón. Cuenta solo la partida jugada.",
+          "tournament": "En el torneo, cada jugador no repite campeón. Cuenta solo la partida jugada."
+        },
+        "team": {
+          "series": "En la serie, el equipo no repite campeón. El que alguien del equipo eligió para una partida nadie del equipo lo usa en otra.",
+          "stage": "En esta fase, el equipo no repite campeón. El que usó alguien del equipo nadie del equipo lo vuelve a usar. Cuenta solo la partida jugada.",
+          "tournament": "En el torneo, el equipo no repite campeón. El que usó alguien del equipo nadie del equipo lo vuelve a usar. Cuenta solo la partida jugada."
+        }
       }
     }
   },
@@ -196,12 +210,12 @@
       "double": "Al mejor de {bestOf}; gran final al mejor de {finals}",
       "table": "Al mejor de {bestOf}"
     },
-    "bans": "{count, plural, =0 {sin bans} one {# ban por partida} other {# bans por partida}}",
+    "bans": "{count, plural, =0 {sin bans} one {# ban por serie} other {# bans por serie}}",
     "noRepeat": {
-      "off": "se pueden repetir",
-      "match": "único por serie",
-      "stage": "único en la fase",
-      "tournament": "único en el torneo"
+      "off": "se puede repetir",
+      "series": "no repite en la serie",
+      "stage": "no repite en la fase",
+      "tournament": "no repite en el torneo"
     },
     "checkIn": "abre {window} antes del inicio",
     "noCheckIn": "sin check-in",
@@ -232,11 +246,10 @@
       "fixedTeams": "{count} (como máximo una menos que los equipos)"
     },
     "noRepeatWho": "{rule}, {who, select, team {por equipo} other {por jugador}}",
-    "duplicates": {
-      "off": "sin campeón repetido en el equipo",
-      "on": "campeón repetido en el equipo permitido"
-    },
-    "slotsTeams": "{slots} ({teams, plural, one {# equipo} other {# equipos}} de {size})"
+    "slotsTeams": "{slots} ({teams, plural, one {# equipo} other {# equipos}} de {size})",
+    "offSite": "campeones fuera del sitio",
+    "noMirror": "sin campeón repetido entre rivales",
+    "sameTeam": "campeón repetido en el equipo permitido"
   },
   "invites": {
     "title": "Enlaces de inscripción",

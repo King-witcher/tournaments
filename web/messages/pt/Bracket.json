@@ -55,8 +55,7 @@
     "ready": "Clique em “Pronto” para o veto",
     "veto": "Sua vez no veto",
     "await_ready": "Aguardando o adversário ficar pronto",
-    "veto_in_progress": "Veto em andamento",
-    "await_captain": "Aguardando o capitão do seu time"
+    "veto_in_progress": "Veto em andamento"
   },
   "yours": "Sua série",
   "departure": {

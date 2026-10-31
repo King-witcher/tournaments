@@ -55,11 +55,11 @@ pub fn game_task(
     }
 }
 
-/// O que o veto do próximo mapa espera de quem joga (do lado `mine`):
-/// "Pronto" antes de começar, o passo da vez dele ou esperar o adversário.
-/// Nos times, o "Pronto" e o passo do lado são do capitão (os outros
-/// esperam o capitão); na escolha simultânea, cada um escolhe o seu.
-/// `None` sem veto no torneio, ou com o veto do próximo mapa concluído.
+/// O que o veto da próxima partida espera de quem joga (do lado `mine`):
+/// "Pronto" antes de começar, o passo da vez do lado dele (qualquer jogador
+/// do time age pelo time) ou esperar o adversário; na janela simultânea do
+/// TDM, cada um escolhe os seus. `None` sem veto no torneio, ou com o veto
+/// da próxima partida concluído.
 fn veto_task(
     status: TournamentStatus,
     stage: &Stage,
@@ -72,18 +72,13 @@ fn veto_task(
         return None;
     }
     let next = next_game(status, m, games)?;
-    let mine_to_act = if viewer.captain {
-        ViewerTask::Veto
-    } else {
-        ViewerTask::AwaitCaptain
-    };
     let Some(mv) = stage.veto_of(m.id).filter(|v| v.state.begun()) else {
         let ready = stage.veto_of(m.id).map(|v| v.ready()).unwrap_or_default();
         let me = usize::from(mine == Side::B);
-        return Some(match (ready[me], viewer.captain) {
-            (true, _) => ViewerTask::AwaitOpponent,
-            (false, true) => ViewerTask::Ready,
-            (false, false) => ViewerTask::AwaitCaptain,
+        return Some(if ready[me] {
+            ViewerTask::AwaitOpponent
+        } else {
+            ViewerTask::Ready
         });
     };
     match mv.state.turn() {
@@ -92,8 +87,9 @@ fn veto_task(
             action: Action::TeamPick,
             ..
         } if i16::from(game) == next => {
-            let me = (veto::ev_side(mine), PlayerId(viewer.user_id));
-            Some(if mv.state.missing(game).contains(&me) {
+            let me = PlayerId(viewer.user_id);
+            let missing = mv.state.missing();
+            Some(if missing.iter().any(|m| m.player == me) {
                 ViewerTask::Veto
             } else {
                 ViewerTask::AwaitOpponent
@@ -101,7 +97,7 @@ fn veto_task(
         }
         Turn::Act { game, sides, .. } if i16::from(game) == next => {
             Some(if sides.contains(&veto::ev_side(mine)) {
-                mine_to_act
+                ViewerTask::Veto
             } else {
                 ViewerTask::AwaitOpponent
             })

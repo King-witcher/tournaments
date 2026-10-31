@@ -31,8 +31,6 @@ use crate::{
 pub struct Viewer {
     pub user_id: i64,
     pub participant: Option<ParticipantId>,
-    /// Capitão do time dele (no duelo, sempre): o veto do lado é dele.
-    pub captain: bool,
     pub organizer: bool,
 }
 
@@ -42,7 +40,6 @@ impl Viewer {
         Self {
             user_id: member.user.id,
             participant,
-            captain: participant.and_then(|p| stage.captain(p)) == Some(member.user.id),
             organizer: member.role >= Role::Organizer,
         }
     }

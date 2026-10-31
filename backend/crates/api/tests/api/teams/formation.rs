@@ -81,8 +81,9 @@ async fn slots_are_players_and_hold_two_teams() {
             })
         )
     );
-    // 4v4 com 3 bans e sem repetir no time: 6 bans + 4 escolhas no mapa.
-    let rules = json!({ "bans_per_game": 3, "no_repeat": null });
+    // 4v4 com 3 bans e sem repetir no time: 6 bans + 4 escolhas na partida.
+    let rules =
+        json!({ "bans_per_series": 3, "mirror": true, "same_team": false, "no_repeat": null });
     let body = tdm(4, json!({ "champion_rules": rules }));
     let created = create_tournament(&app, &ana, body).await;
     assert_eq!(

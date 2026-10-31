@@ -25,9 +25,13 @@ pub struct VetoRow {
     pub map: Option<MapId>,
     pub played_map: Option<MapId>,
     pub champion: Option<ChampionId>,
-    /// TDM: na escolha simultânea, quem escolheu o campeão (e o apelido).
+    /// TDM: na janela simultânea, quem escolheu o campeão (e o apelido).
     pub player: Option<i64>,
     pub player_name: Option<String>,
+    /// Pick de campeão: a partida a que ele se destina.
+    pub pick_game: Option<i16>,
+    /// TDM: o pick veio com alguma regra cedida.
+    pub gave_way: bool,
     pub seed: Option<i64>,
     pub timeout: bool,
     pub actor: Option<i64>,
@@ -100,7 +104,7 @@ impl Kind {
 }
 
 impl VetoRow {
-    /// Reinicia o relógio do passo: a escolha simultânea dos times não
+    /// Reinicia o relógio do passo: a janela simultânea dos times não
     /// reinicia (a janela é uma só para todos).
     const fn resets_clock(&self) -> bool {
         self.kind.clock() && self.player.is_none()
@@ -132,7 +136,6 @@ impl VetoRow {
             Kind::Game => {
                 return Ok(Some(Event::Game {
                     game: game()?,
-                    starter: side()?,
                     previous: self.played_map,
                 }));
             }
@@ -149,6 +152,11 @@ impl VetoRow {
             return Ok(Some(Event::TeamPick {
                 side: side()?,
                 player: PlayerId(player),
+                game: self
+                    .pick_game
+                    .and_then(|g| u8::try_from(g).ok())
+                    .ok_or_else(|| unknown("pick_game", "null"))?,
+                gave_way: self.gave_way,
                 champion,
             }));
         }

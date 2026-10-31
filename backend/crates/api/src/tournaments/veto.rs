@@ -1,11 +1,11 @@
-//! A configuração do veto das partidas: como sai o mapa de cada jogo (veto,
-//! votação, sorteio ou desligado), o pool de mapas do torneio, o ban/pick de
+//! A configuração do veto das séries: como sai o mapa de cada partida (veto,
+//! votação, sorteio ou desligado), o pool de mapas do torneio, o draft de
 //! campeões e o tempo de cada passo. Faz parte da configuração (`Setup`):
 //! muda até o torneio começar. O veto de cada partida fica em `matches`.
 
 use std::{collections::HashMap, ops::RangeInclusive};
 
-use engine::{core::MapId, veto as ev};
+use engine::{champions::ChampionRules, core::MapId, veto as ev};
 use serde::{Deserialize, Serialize};
 use sqlx::PgConnection;
 use utoipa::ToSchema;
@@ -23,17 +23,17 @@ const TEAM_PICK_SECONDS: RangeInclusive<i32> = 15..=300;
 /// Teto do pool (a tabela aceita até 64 posições).
 const MAX_POOL: usize = 32;
 
-/// Como sai o mapa de cada jogo da série.
+/// Como sai o mapa de cada partida da série.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum MapMode {
-    /// Ban/pick alternado da série inteira antes do primeiro jogo, com o
+    /// Ban/pick alternado da série inteira antes da partida 1, com o
     /// decisivo.
     Veto,
-    /// A cada jogo, 3 mapas sorteados do pool (sem os já jogados); cada um
+    /// A cada partida, 3 mapas sorteados do pool (sem os já jogados); cada um
     /// vota; votos diferentes, sorteio entre os dois.
     Vote,
-    /// O mapa de cada jogo é sorteado quando ele começa.
+    /// O mapa de cada partida é sorteado quando ela começa.
     Random,
     /// Os jogadores combinam fora e enviam o mapa.
     Off,
@@ -80,21 +80,21 @@ pub struct VetoInput {
     #[serde(default)]
     pub map_mode: Option<MapMode>,
     /// Slugs dos mapas (`GET /maps`, ativos), na ordem, sem repetir; fora do
-    /// modo `off`, pelo menos um por jogo da série mais longa. Padrão: os 7
+    /// modo `off`, pelo menos um por partida da série mais longa. Padrão: os 7
     /// primeiros do pool de duelo. Vale para o veto, a votação e o sorteio.
     #[serde(default)]
     pub map_pool: Option<Vec<String>>,
-    /// Ban/pick de campeões a cada mapa, com os bans de `champion_rules`.
-    /// Padrão ligado; vale com qualquer modo de mapa.
+    /// Draft de campeões da série no site, antes da partida 1, com as regras
+    /// de `champion_rules`. Padrão ligado; vale com qualquer modo de mapa.
     #[serde(default)]
     pub champion_phase: Option<bool>,
     /// Segundos de cada passo, de 10 a 300 (padrão 30); no fim, a escolha é
     /// sorteada.
     #[serde(default)]
     pub step_seconds: Option<i32>,
-    /// TDM: segundos da escolha simultânea de campeões (todos do mapa numa
-    /// janela só, depois dos bans), de 15 a 300 (padrão 60); no fim, quem
-    /// não escolheu recebe um sorteado.
+    /// TDM: segundos da janela simultânea de campeões (cada jogador escolhe
+    /// um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no
+    /// fim, o que faltou é sorteado.
     #[serde(default)]
     pub team_pick_seconds: Option<i32>,
 }
@@ -145,19 +145,13 @@ impl VetoSetup {
     }
 
     /// As regras do `engine` para as séries do torneio (`Setup::veto_rules`).
-    pub fn rules(
-        &self,
-        bans_per_game: u32,
-        team_size: u32,
-        team_duplicates: bool,
-    ) -> ev::VetoRules {
+    pub fn rules(&self, champions: ChampionRules, team_size: u32) -> ev::VetoRules {
         ev::VetoRules {
             map_mode: self.map_mode.into(),
             pool: self.pool.clone(),
             champion_phase: self.champion_phase,
-            champion_bans: u8::try_from(bans_per_game).unwrap_or(u8::MAX),
             team_size: u8::try_from(team_size).unwrap_or(1),
-            team_duplicates,
+            champions,
         }
     }
 
@@ -188,7 +182,13 @@ impl VetoSetup {
             return Err(ApiError::invalid("tournament.map_pool_too_large")
                 .with_params([("max", MAX_POOL as i64)]));
         }
-        match self.rules(0, 1, false).validate(longest) {
+        let champions = ChampionRules {
+            bans_per_series: 0,
+            mirror: true,
+            same_team: false,
+            no_repeat: None,
+        };
+        match self.rules(champions, 1).validate(longest) {
             Ok(()) => Ok(()),
             Err(ev::VetoError::PoolRepeated(_)) => {
                 Err(ApiError::invalid("tournament.map_pool_repeated"))

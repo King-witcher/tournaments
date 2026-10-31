@@ -10,11 +10,13 @@ use crate::formats::StageFormat;
 
 /// Times na chave, no mínimo.
 const MIN_SIDES: usize = 2;
+/// Jogadores por lado, no máximo (4v4).
+pub const MAX_TEAM_SIZE: u32 = 4;
 
 /// O que o torneio define antes de ter inscritos.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TournamentSetup<'a> {
-    /// Jogadores por lado (1 no duelo; 0 conta como 1).
+    /// Jogadores por lado: 1 no duelo, até `MAX_TEAM_SIZE`.
     pub team_size: u32,
     /// Vagas, em jogadores (no duelo, os lados). Os lados da chave no pior
     /// caso são os times que elas comportam, `⌊vagas/tamanho⌋`: o pior caso
@@ -29,17 +31,31 @@ pub struct TournamentSetup<'a> {
 }
 
 impl TournamentSetup<'_> {
-    /// Erros: `NoStages`; `NotEnoughPlayers` nos times, quando as vagas não
-    /// formam dois times; os de cada fase (`StageFormat::validate` e
+    /// Erros: `InvalidTeamSize` fora de 1 a `MAX_TEAM_SIZE`; `TooManyBans`
+    /// acima de `champions::MAX_BANS_PER_SERIES`; `NoStages`;
+    /// `NotEnoughPlayers` nos times, quando as vagas não formam dois times;
+    /// os de cada fase (`StageFormat::validate` e
     /// `StageFormat::worst_case_games` com os lados);
-    /// `ChampionPoolExhausted` quando o pool não aguenta os bans, a regra de
-    /// não repetição e, nos times, a escolha de cada jogador no pior caso
-    /// (`champions::required_pool`).
+    /// `ChampionPoolExhausted` quando o pool não aguenta os bans da série,
+    /// as regras de repetição e, nos times, a escolha de cada jogador no pior
+    /// caso (`champions::required_pool`).
     pub fn validate(&self) -> Result<(), EngineError> {
+        if !(1..=MAX_TEAM_SIZE).contains(&self.team_size) {
+            return Err(EngineError::InvalidTeamSize {
+                max: MAX_TEAM_SIZE,
+                got: self.team_size,
+            });
+        }
+        if self.champions.bans_per_series > champions::MAX_BANS_PER_SERIES {
+            return Err(EngineError::TooManyBans {
+                max: champions::MAX_BANS_PER_SERIES,
+                got: self.champions.bans_per_series,
+            });
+        }
         if self.stages.is_empty() {
             return Err(EngineError::NoStages);
         }
-        let size = usize::try_from(self.team_size.max(1)).unwrap_or(usize::MAX);
+        let size = usize::try_from(self.team_size).unwrap_or(usize::MAX);
         let sides = self.slots / size;
         if size > 1 && sides < MIN_SIDES {
             return Err(EngineError::NotEnoughPlayers {
@@ -56,7 +72,7 @@ impl TournamentSetup<'_> {
         let rule = self.champions.no_repeat;
         let games_in_scope = match rule.map(|r| r.scope) {
             None => 1,
-            Some(NoRepeatScope::Match) => self
+            Some(NoRepeatScope::Series) => self
                 .stages
                 .iter()
                 .map(|s| u32::from(s.longest_series()))
@@ -69,9 +85,10 @@ impl TournamentSetup<'_> {
             rule,
             ChampionBudget {
                 pool_size: self.champion_pool,
-                bans_per_game: self.champions.bans_per_game,
+                bans_per_series: self.champions.bans_per_series,
                 team_size: self.team_size,
-                team_duplicates: self.champions.team_duplicates,
+                mirror: self.champions.mirror,
+                same_team: self.champions.same_team,
                 games_in_scope,
             },
         )
@@ -102,12 +119,13 @@ mod tests {
 
     fn rules(bans: u32, scope: Option<NoRepeatScope>) -> ChampionRules {
         ChampionRules {
-            bans_per_game: bans,
+            bans_per_series: bans,
+            mirror: true,
             no_repeat: scope.map(|scope| NoRepeatRule {
                 who: NoRepeatWho::Player,
                 scope,
             }),
-            team_duplicates: false,
+            same_team: false,
         }
     }
 
@@ -167,7 +185,37 @@ mod tests {
     }
 
     #[test]
-    fn without_rule_each_map_needs_both_bans_plus_one() {
+    fn team_size_and_bans_have_limits() {
+        let s = [double(3, 5)];
+        for size in [0, 5] {
+            assert_eq!(
+                teams(size, 40, rules(0, None), 17, &s),
+                Err(EngineError::InvalidTeamSize { max: 4, got: size })
+            );
+        }
+        assert_eq!(
+            setup(8, rules(4, None), 17, &s),
+            Err(EngineError::TooManyBans { max: 3, got: 4 })
+        );
+        assert_eq!(setup(8, rules(3, None), 17, &s), Ok(()));
+        // Números absurdos não estouram a conta do orçamento.
+        let huge = ChampionRules {
+            bans_per_series: 3,
+            ..rules(0, Some(NoRepeatScope::Tournament))
+        };
+        let budget = ChampionBudget {
+            pool_size: 17,
+            bans_per_series: u32::MAX,
+            team_size: u32::MAX,
+            mirror: false,
+            same_team: false,
+            games_in_scope: u32::MAX,
+        };
+        assert_eq!(champions::required_pool(huge.no_repeat, budget), u32::MAX);
+    }
+
+    #[test]
+    fn without_rule_the_series_needs_both_bans_plus_one() {
         let s = [double(3, 5)];
         assert_eq!(setup(8, rules(3, None), 6, &s), exhausted(7, 6));
         assert_eq!(setup(8, rules(1, None), 17, &s), Ok(()));
@@ -181,16 +229,16 @@ mod tests {
     }
 
     #[test]
-    fn match_scope_uses_longest_series() {
+    fn series_scope_uses_longest_series() {
         let s = [double(3, 5)];
-        let r = rules(1, Some(NoRepeatScope::Match));
+        let r = rules(1, Some(NoRepeatScope::Series));
         assert_eq!(setup(16, r, 17, &s), Ok(()));
         assert_eq!(setup(16, r, 5, &s), exhausted(7, 5));
     }
 
     #[test]
     fn teams_need_a_champion_per_player() {
-        // 4v4, 3 bans, sem regra: 6 bans e 4 escolhas no mapa.
+        // 4v4, 3 bans, sem regra: 6 bans e 4 escolhas do time na partida.
         let s = [double(3, 5)];
         let tdm = |champions, pool| {
             TournamentSetup {
@@ -203,15 +251,21 @@ mod tests {
             .validate()
         };
         assert_eq!(tdm(rules(3, None), 9), exhausted(10, 9));
-        let dup = ChampionRules {
-            team_duplicates: true,
+        let same = ChampionRules {
+            same_team: true,
             ..rules(3, None)
         };
-        assert_eq!(tdm(dup, 9), Ok(()));
-        // Na série (md5): 6 bans, 4 mapas dele e 4 no último.
-        assert_eq!(tdm(rules(3, Some(NoRepeatScope::Match)), 17), Ok(()));
+        assert_eq!(tdm(same, 9), Ok(()));
+        // Sem espelho, também as 4 do adversário na partida.
+        let no_mirror = ChampionRules {
+            mirror: false,
+            ..rules(3, None)
+        };
+        assert_eq!(tdm(no_mirror, 13), exhausted(14, 13));
+        // Na série (md5): 6 bans, 4 partidas dele e 4 do time na última.
+        assert_eq!(tdm(rules(3, Some(NoRepeatScope::Series)), 17), Ok(()));
         assert_eq!(
-            tdm(rules(3, Some(NoRepeatScope::Match)), 13),
+            tdm(rules(3, Some(NoRepeatScope::Series)), 13),
             exhausted(14, 13)
         );
     }
@@ -298,12 +352,13 @@ mod tests {
         let wb = b.worst_case_games(4).unwrap();
         assert!(wb > wa);
         let rule = |scope| ChampionRules {
-            bans_per_game: 1,
+            bans_per_series: 1,
+            mirror: true,
             no_repeat: Some(NoRepeatRule {
                 who: NoRepeatWho::Team,
                 scope,
             }),
-            team_duplicates: true,
+            same_team: true,
         };
         let required = |games: u32| 2 + (games - 1) * 3 + 1;
         for (scope, games) in [

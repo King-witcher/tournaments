@@ -72,7 +72,6 @@ fn played_maps_leave_the_vote_and_the_pool_can_run_short() {
             v.apply(
                 Event::Game {
                     game,
-                    starter: B,
                     previous: None,
                 },
                 None,
@@ -102,7 +101,6 @@ fn best_of_five_always_has_three_to_vote() {
             v.apply(
                 Event::Game {
                     game,
-                    starter: A,
                     previous: None,
                 },
                 None,
@@ -153,7 +151,6 @@ fn the_map_actually_played_leaves_the_pool() {
                 Event::Begin { seed: 1, first: A },
                 Event::Game {
                     game: 2,
-                    starter: A,
                     previous: Some(MapId(3)),
                 },
             ],
@@ -169,7 +166,6 @@ fn the_map_actually_played_leaves_the_pool() {
         v.apply(
             Event::Game {
                 game: 3,
-                starter: A,
                 previous: Some(second),
             },
             None,

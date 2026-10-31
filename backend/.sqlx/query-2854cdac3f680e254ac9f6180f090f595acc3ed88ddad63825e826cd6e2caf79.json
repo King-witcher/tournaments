@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select g.match_key, g.number, gp.side, gp.user_id\n           from match_game_players gp\n           join match_games g on g.id = gp.game_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number, gp.side, gp.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "side"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_game_players",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2854cdac3f680e254ac9f6180f090f595acc3ed88ddad63825e826cd6e2caf79"
+}

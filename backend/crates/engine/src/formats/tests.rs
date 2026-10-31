@@ -66,34 +66,33 @@ fn table_formats_json_is_stable() {
 #[test]
 fn champion_rules_json_is_stable() {
     let with = ChampionRules {
-        bans_per_game: 1,
+        bans_per_series: 1,
+        mirror: true,
+        same_team: false,
         no_repeat: Some(NoRepeatRule {
             who: NoRepeatWho::Player,
-            scope: NoRepeatScope::Tournament,
+            scope: NoRepeatScope::Series,
         }),
-        team_duplicates: false,
     };
-    let json = r#"{"bans_per_game":1,"no_repeat":{"who":"player","scope":"tournament"},"team_duplicates":false}"#;
+    let json = r#"{"bans_per_series":1,"mirror":true,"same_team":false,"no_repeat":{"who":"player","scope":"series"}}"#;
     assert_eq!(serde_json::to_string(&with).unwrap(), json);
     assert_eq!(serde_json::from_str::<ChampionRules>(json).unwrap(), with);
     let without = ChampionRules {
-        bans_per_game: 0,
+        bans_per_series: 0,
+        mirror: false,
+        same_team: true,
         no_repeat: None,
-        team_duplicates: true,
     };
-    let json = r#"{"bans_per_game":0,"no_repeat":null,"team_duplicates":true}"#;
+    let json = r#"{"bans_per_series":0,"mirror":false,"same_team":true,"no_repeat":null}"#;
     assert_eq!(serde_json::to_string(&without).unwrap(), json);
     assert_eq!(
         serde_json::from_str::<ChampionRules>(json).unwrap(),
         without
     );
-    // Gravado antes do TDM, sem o campo: não repete no time.
-    let old = r#"{"bans_per_game":0,"no_repeat":null}"#;
-    assert!(
-        !serde_json::from_str::<ChampionRules>(old)
-            .unwrap()
-            .team_duplicates
-    );
+    // O formato de antes do draft da série não é mais lido (a migration
+    // apagou os torneios).
+    let old = r#"{"bans_per_game":0,"no_repeat":null,"team_duplicates":false}"#;
+    assert!(serde_json::from_str::<ChampionRules>(old).is_err());
 }
 
 #[test]

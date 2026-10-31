@@ -52,6 +52,11 @@ impl From<EngineError> for ApiError {
                 ("required", i64::from(required)),
                 ("available", i64::from(available)),
             ]),
+            E::InvalidTeamSize { max, got: _ } => Self::invalid("tournament.team_size_invalid")
+                .with_params([("min", 1), ("max", i64::from(max))]),
+            E::TooManyBans { max, got: _ } => {
+                Self::invalid("tournament.bans_invalid").with_params([("max", i64::from(max))])
+            }
             E::InvalidRounds { max, got } => Self::invalid("format.invalid_rounds")
                 .with_params([("max", i64::from(max)), ("got", i64::from(got))]),
             // Histórico gravado que não fecha: erro nosso, não do usuário.
@@ -72,12 +77,24 @@ impl From<VetoError> for ApiError {
             E::AlreadyPicked => Self::conflict("veto.already_picked"),
             E::OptionInvalid | E::WrongAction => Self::invalid("veto.option_invalid"),
             E::ChampionForbidden => Self::invalid("veto.champion_forbidden"),
+            // Outro escolheu o mesmo campeão para a partida antes (sem espelho
+            // ou sem repetir no time).
+            E::ChampionTaken => Self::conflict("veto.champion_taken"),
+            E::ChampionPoolExhausted {
+                required,
+                available,
+            } => Self::invalid("champions.pool_exhausted").with_params([
+                ("required", required as i64),
+                ("available", available as i64),
+            ]),
             E::PoolTooSmall { best_of, .. } => Self::invalid("tournament.map_pool_too_small")
                 .with_params([("min", i64::from(best_of))]),
             E::PoolRepeated(_) => Self::invalid("tournament.map_pool_repeated"),
-            // Só o histórico gravado e o elenco que a fase monta erram assim:
-            // ver `MatchVeto::replay`.
-            E::GameOutOfOrder { .. }
+            // Só o histórico gravado e o elenco que a fase monta erram assim (ver
+            // `MatchVeto::replay`); a API completa o draft antes de começar a
+            // partida seguinte (`advance`).
+            E::DraftPending
+            | E::GameOutOfOrder { .. }
             | E::RostersUnknown
             | E::RosterRepeated(_)
             | E::RosterTooLarge { .. } => Self::internal(),

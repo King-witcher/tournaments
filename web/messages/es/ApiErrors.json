@@ -171,8 +171,7 @@
     "frags_disagree": "Los frags de la partida {game} no coinciden con quién ganó.",
     "veto_pending": "El veto de esta partida todavía no terminó.",
     "map_mismatch": "Envía el mapa que salió del veto.",
-    "screenshot_required": "Este torneo exige una captura de pantalla del marcador. Adjunta una a la partida antes de enviar.",
-    "not_captain": "Solo el capitán del equipo puede hacer esto."
+    "screenshot_required": "Este torneo exige una captura de pantalla del marcador. Adjunta una a la partida antes de enviar."
   },
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
@@ -209,7 +208,8 @@
     "undo_requested": "Ya hay un pedido para deshacer esperando respuesta.",
     "no_undo_request": "No hay pedido para deshacer.",
     "own_request": "Quien pidió deshacer no responde. Espera al rival.",
-    "already_picked": "Ya elegiste el campeón de esta partida."
+    "already_picked": "Ya elegiste el campeón de esta partida.",
+    "champion_taken": "Otro jugador eligió ese campeón para la partida antes."
   },
   "screenshots": {
     "not_configured": "Las capturas de pantalla están desactivadas en este servidor.",

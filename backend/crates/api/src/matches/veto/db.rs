@@ -49,7 +49,8 @@ pub async fn events(
 ) -> Result<Vec<VetoRow>, ApiError> {
     let rows = sqlx::query!(
         r#"select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,
-                  e.played_map_id, e.champion_id, e.player_id, e.seed, e.timeout, e.actor,
+                  e.played_map_id, e.champion_id, e.player_id, e.pick_game, e.gave_way, e.seed,
+                  e.timeout, e.actor,
                   coalesce(m.nickname, u.display_name) as actor_name,
                   pm.nickname as "player_name?", e.created_at
            from match_veto_events e
@@ -78,6 +79,8 @@ pub async fn events(
                 champion: r.champion_id.map(ChampionId),
                 player: r.player_id,
                 player_name: r.player_name,
+                pick_game: r.pick_game,
+                gave_way: r.gave_way,
                 seed: r.seed,
                 timeout: r.timeout,
                 actor: r.actor,
@@ -96,8 +99,12 @@ pub struct NewVetoEvent {
     pub map: Option<MapId>,
     pub played_map: Option<MapId>,
     pub champion: Option<ChampionId>,
-    /// TDM: o jogador da escolha simultânea.
+    /// TDM: o jogador da janela simultânea.
     pub player: Option<i64>,
+    /// Pick de campeão: a partida a que ele se destina.
+    pub pick_game: Option<i16>,
+    /// TDM: o pick veio com alguma regra cedida.
+    pub gave_way: bool,
     pub seed: Option<i64>,
     pub timeout: bool,
     pub actor: Option<i64>,
@@ -120,6 +127,8 @@ impl NewVetoEvent {
             played_map: None,
             champion: None,
             player: None,
+            pick_game: None,
+            gave_way: false,
             seed: None,
             timeout: false,
             actor,
@@ -138,9 +147,10 @@ pub async fn insert(
     sqlx::query!(
         r#"insert into match_veto_events
                (tenant_id, tournament_id, stage, match_key, side_a, side_b, kind, game, side,
-                map_id, played_map_id, champion_id, seed, timeout, actor, created_at, player_id)
+                map_id, played_map_id, champion_id, seed, timeout, actor, created_at, player_id,
+                pick_game, gave_way)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                   coalesce($16, now()), $17)"#,
+                   coalesce($16, now()), $17, $18, $19)"#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
@@ -157,7 +167,9 @@ pub async fn insert(
         event.timeout,
         event.actor,
         event.at,
-        event.player
+        event.player,
+        event.pick_game,
+        event.gave_way
     )
     .execute(conn)
     .await?;
@@ -197,4 +209,32 @@ pub async fn open_tournaments(db: &PgPool) -> Result<Vec<(TenantId, String)>, sq
     .into_iter()
     .map(|r| (TenantId::new(r.tenant_id), r.slug))
     .collect())
+}
+
+/// TDM: quem jogou cada partida enviada da fase `stage` (a escalação gravada
+/// no envio, `match_game_players`), por partida e lado: `(série, partida,
+/// lado, jogador)`, na ordem.
+pub async fn lineups(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    stage: i16,
+) -> Result<Vec<(engine::core::MatchId, i16, Side, i64)>, ApiError> {
+    let rows = sqlx::query!(
+        r#"select g.match_key, g.number, gp.side, gp.user_id
+           from match_game_players gp
+           join match_games g on g.id = gp.game_id
+           where g.tournament_id = $1 and g.stage = $2
+           order by g.match_key, g.number, gp.side, gp.user_id"#,
+        tournament.get(),
+        stage
+    )
+    .fetch_all(conn)
+    .await?;
+    rows.into_iter()
+        .map(|r| {
+            let id = crate::matches::key::parse(&r.match_key)
+                .ok_or_else(|| crate::matches::result::unknown("match_key", &r.match_key))?;
+            Ok((id, r.number, Side::from_db(&r.side)?, r.user_id))
+        })
+        .collect()
 }

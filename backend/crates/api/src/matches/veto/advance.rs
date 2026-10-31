@@ -1,16 +1,19 @@
-//! Depois de toda mudança na chave (`settle`): a partida que passou a ter
-//! outros lados (ou nenhum) perde o veto, e o jogo seguinte de cada partida
-//! pronta começa quando a série aceita mais um mapa (o anterior foi enviado),
-//! com quem começa os campeões gravado no evento (quem perdeu o anterior;
-//! no modo veto, quem não escolheu o mapa) e o mapa em que o anterior foi
-//! enviado.
+//! Depois de toda mudança na chave (`settle`): a série que passou a ter
+//! outros lados (ou nenhum) perde o veto, e a partida seguinte de cada série
+//! pronta começa quando a série aceita mais uma (a anterior foi enviada),
+//! com o mapa em que a anterior foi enviada. O draft de campeões nunca fica
+//! pela metade: se o organizador lançou a partida 1 antes do fim dele, o que
+//! falta sai pelo sorteio do tempo esgotado (`due::draw_turn`) antes de a
+//! partida 2 começar.
 
 use engine::{core::MatchState, series, veto::Event};
 use sqlx::PgConnection;
 
 use super::{
+    Ctx,
     db::{self, NewVetoEvent},
-    state::{Kind, api_side, ev_side, other},
+    due,
+    state::Kind,
 };
 use crate::{
     matches::{
@@ -63,33 +66,31 @@ pub async fn advance(
         let next = games.len() + 1;
         let mut state = mv.state.clone();
         let mut current = usize::from(state.game().unwrap_or(1));
+        if current < next && current == 1 && stage.veto_rules.champion_phase {
+            let ctx = Ctx::of(stage, mv);
+            while due::draw_turn(conn, &at, (a, b), &mut state, &ctx, None).await? > 0 {
+                changed = true;
+            }
+        }
         while current < next {
             let previous: &StoredGame = games[current - 1];
-            let loser = other(previous.winner_side());
-            let starter = state.next_starter(ev_side(loser));
             let game = u8::try_from(current + 1).map_err(|_| ApiError::internal())?;
             let played_map = previous.map.as_ref().map(|m| m.id);
             state
                 .apply(
                     Event::Game {
                         game,
-                        starter,
                         previous: played_map,
                     },
                     None,
                 )
                 .map_err(|e| {
-                    tracing::error!(%e, key, "jogo seguinte do veto recusado");
+                    tracing::error!(%e, key, "partida seguinte do veto recusada");
                     ApiError::internal()
                 })?;
             let event = NewVetoEvent {
                 played_map,
-                ..NewVetoEvent::new(
-                    Kind::Game,
-                    Some(i16::from(game)),
-                    Some(api_side(starter)),
-                    None,
-                )
+                ..NewVetoEvent::new(Kind::Game, Some(i16::from(game)), None, None)
             };
             db::insert(conn, &at, (a, b), &event).await?;
             changed = true;

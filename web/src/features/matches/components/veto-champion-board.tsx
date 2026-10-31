@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 
-import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { ErrorText } from "@/shared/ui/error-text";
 import { Notice } from "@/shared/ui/notice";
+import { RadioGroup } from "@/shared/ui/radio-group";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
 import styles from "./veto-board.module.scss";
@@ -16,102 +17,110 @@ type Schemas = components["schemas"];
 type Props = {
   target: MatchTarget;
   veto: Schemas["VetoView"];
-  game: number;
   names: { a: string; b: string };
-  /** O lado de quem vê, se joga. */
-  mine: Schemas["Side"] | null;
-  /** A regra de não repetição do torneio, para explicar o que ela tira. */
+  /** A regra de não repetição do torneio, para dizer o que ela tira. */
   rule: Schemas["NoRepeatRule"] | null;
 };
 
 /**
- * Os campeões do mapa em andamento: na vez de quem vê (nos times, o ban é
- * do capitão e a escolha simultânea é de cada um), um botão por campeão que
- * ele pode banir ou escolher; os outros aparecem com o motivo (banido neste
- * mapa e por quem; já usado, pela regra de não repetição, por quem vê ou
- * pelo adversário; no TDM, escolhido neste mapa e por quem). No TDM, o que a
- * regra tira de quem vê é o dele (pela regra do jogador, só o que ele mesmo
- * usou), e um aviso diz quando a regra cedeu para ele ter campeão: os que
- * ela tira voltam às opções, com o motivo ao lado.
+ * O draft de campeões para quem age agora: no ban, um botão por campeão que
+ * o lado dele pode banir (vale para a série inteira); no pick do duelo, um
+ * por campeão que ele pode escolher para a partida da vez; na janela do
+ * TDM, a partida que ele escolhe (as que faltam) e os campeões dela. Os que
+ * não dá para escolher aparecem com o motivo, e um aviso diz quando uma
+ * regra cedeu para ele ter campeão. Sem nada para quem vê fazer, não
+ * aparece: o que já foi escolhido está em "Partidas da série".
  */
-export function VetoChampionBoard(props: Props) {
-  const { target, veto, game, names, mine, rule } = props;
+export function VetoChampionBoard({ target, veto, names, rule }: Props) {
   const t = useTranslations("Match.veto.champions");
-  const tMember = useTranslations("Member");
   const action = useVetoAction(target);
   const turn = veto.turn?.target === "champion" ? veto.turn : null;
+  const slots = veto.picks;
+  const [chosen, setChosen] = useState<number | null>(null);
+  const banning = turn?.action === "ban" && veto.options.length > 0;
+  if (!banning && slots.length === 0) return null;
+  // A partida da janela: a escolhida, se ainda falta; senão, a primeira.
+  const slot = slots.find((s) => s.game === chosen) ?? slots[0];
   const teamPick = turn?.action === "team_pick";
-  const teams = veto.team_pick_seconds != null;
-  const label = turn?.action === "ban" ? "ban" : "pick";
-  // As opções só vêm para quem age agora (o capitão, ou na escolha
-  // simultânea quem ainda não escolheu).
-  const myTurn = turn != null && veto.options.length > 0;
-  const picks = veto.games.find((g) => g.game === game)?.team_picks ?? [];
+  const options = banning ? veto.options : (slot?.options ?? []);
+  const unavailable = new Map(
+    (slot?.unavailable ?? []).map((u) => [u.slug, u.reason]),
+  );
 
-  const used = (c: Schemas["VetoChampion"], side: Schemas["Side"]) => {
-    if (!rule) return null;
-    const { scope, who } = rule;
-    // Nos times, o lado de quem vê: o que a regra tira dele.
-    if (teams && side === mine) {
-      if (!c.used_by_you) return null;
-      return t(
-        who === "team" ? `usedByYourTeam.${scope}` : `usedByYou.${scope}`,
-      );
+  const reason = (c: Schemas["VetoChampion"]) => {
+    if (c.banned_by) return t("reasons.banned", { name: names[c.banned_by] });
+    if (banning) return null;
+    switch (unavailable.get(c.slug)) {
+      case "teammate":
+        return t("reasons.teammate");
+      case "opponent":
+        return t("reasons.opponent");
+      case "repeat":
+        return rule
+          ? t(`reasons.repeat.${rule.scope}`)
+          : t("reasons.repeat.series");
+      default:
+        return null;
     }
-    if (!c[`used_by_${side}`]) return null;
-    if (side === mine) return t(`usedByYou.${scope}`);
-    // Pela regra do jogador, o lado junta o que ela tira de cada um.
-    return teams && who === "player"
-      ? t(`usedByPlayerOf.${scope}`, { name: names[side] })
-      : t(`usedBy.${scope}`, { name: names[side] });
-  };
-
-  const reasons = (c: Schemas["VetoChampion"]) => {
-    const list: string[] = [];
-    if (c.banned_by) list.push(t("banned", { name: names[c.banned_by] }));
-    for (const p of picks.filter((p) => p.champion.slug === c.slug)) {
-      const name = shownNickname(p.nickname, tMember("deletedAccount"));
-      list.push(t("pickedBy", { name }));
-    }
-    for (const side of ["a", "b"] as const) {
-      const reason = used(c, side);
-      if (reason) list.push(reason);
-    }
-    return list;
   };
 
   return (
     <div className={styles.board}>
-      <h3 className={styles.heading}>{t("title", { game })}</h3>
-      {myTurn && (
-        <p className={styles.reason}>
-          {t(teamPick ? "teamPickHint" : `${label}Hint`)}
-        </p>
+      <h3 className={styles.heading}>
+        {banning
+          ? t("banTitle")
+          : teamPick
+            ? t("teamPickTitle")
+            : t("pickTitle", { game: slot?.game ?? 1 })}
+      </h3>
+      {banning && <p className={styles.reason}>{t("banHint")}</p>}
+      {teamPick && slots.length > 1 && slot && (
+        <RadioGroup
+          legendText={t("forGame")}
+          orientation="horizontal"
+          value={String(slot.game)}
+          options={slots.map((s) => ({
+            value: String(s.game),
+            label: t("game", { game: s.game }),
+          }))}
+          onChange={(g) => setChosen(Number(g))}
+        />
       )}
-      {myTurn && veto.gave_way && (
-        <Notice kind="warning">{t(`gaveWay.${veto.gave_way}`)}</Notice>
+      {!banning && slot?.gave_way && (
+        <Notice kind="warning">{t(`gaveWay.${slot.gave_way}`)}</Notice>
       )}
       <ul className={styles.grid}>
         {veto.champions.map((c) => {
-          const why = reasons(c);
+          const why = reason(c);
           return (
             <li key={c.slug} className={styles.champion}>
-              {myTurn && veto.options.includes(c.slug) ? (
+              {options.includes(c.slug) ? (
                 <Button
                   size="sm"
-                  kind={label === "pick" ? "primary" : "danger--tertiary"}
+                  kind={banning ? "danger--tertiary" : "primary"}
                   pending={action.pending}
-                  onClick={() => action.step({ champion: c.slug })}
-                  aria-label={t(`${label}Champion`, { champion: c.name })}
+                  onClick={() =>
+                    action.step(
+                      teamPick && slot
+                        ? { champion: c.slug, game: slot.game }
+                        : { champion: c.slug },
+                    )
+                  }
+                  aria-label={
+                    banning
+                      ? t("banChampion", { champion: c.name })
+                      : t("pickChampion", {
+                          champion: c.name,
+                          game: slot?.game ?? 1,
+                        })
+                  }
                 >
                   {c.name}
                 </Button>
               ) : (
                 <span className={styles.unavailable}>{c.name}</span>
               )}
-              {why.length > 0 && (
-                <span className={styles.reason}>{why.join(" · ")}</span>
-              )}
+              {why && <span className={styles.reason}>{why}</span>}
             </li>
           );
         })}

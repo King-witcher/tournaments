@@ -30,22 +30,113 @@ fn undo_crosses_from_champions_back_to_the_map_veto() {
 }
 
 #[test]
+fn the_draft_undoes_back_to_the_bans() {
+    let mut v = begun(rules(MapMode::Off, 0, true, 1), 3, A);
+    step(&mut v, B, champ(1)).unwrap();
+    step(&mut v, A, champ(2)).unwrap();
+    step(&mut v, A, champ(3)).unwrap();
+    v.apply(Event::Undo, None).unwrap();
+    assert_eq!(picking(&v), (A, 1));
+    v.apply(Event::Undo, None).unwrap();
+    assert_eq!(acting(&v), (Action::Ban, Target::Champion, vec![A]));
+    assert_eq!(v.bans().len(), 1);
+}
+
+#[test]
 fn a_finished_game_does_not_undo() {
+    // O draft inteiro fica com a partida 1: enviada ela, nada se desfaz.
     let mut v = begun(rules(MapMode::Off, 0, true, 0), 3, A);
-    step(&mut v, A, champ(1)).unwrap();
-    step(&mut v, B, champ(2)).unwrap();
-    v.apply(
-        Event::Game {
-            game: 2,
-            starter: B,
-            previous: None,
-        },
-        None,
-    )
-    .unwrap();
+    for (side, c) in [(A, 1), (B, 2), (B, 3), (A, 4), (A, 5), (B, 6)] {
+        step(&mut v, side, champ(c)).unwrap();
+    }
+    next_game(&mut v, 2);
     assert!(!v.can_undo());
     assert_eq!(v.apply(Event::Undo, None), Err(VetoError::NothingToUndo));
     assert_eq!(v.picks(1), [Some(ChampionId(101)), Some(ChampionId(102))]);
+    assert_eq!(v.picks(3), [Some(ChampionId(105)), Some(ChampionId(106))]);
+}
+
+#[test]
+fn game_two_waits_for_the_whole_draft() {
+    // O organizador lançou a partida 1 no meio do draft: a 2 só começa
+    // depois que o resto sai pelo sorteio do tempo esgotado (a API faz).
+    let champions = champions(17);
+    let ctx = free(&champions);
+    let game = Event::Game {
+        game: 2,
+        previous: None,
+    };
+    let mut v = begun(rules(MapMode::Off, 0, true, 1), 3, A);
+    step(&mut v, B, champ(1)).unwrap();
+    assert_eq!(v.apply(game, None), Err(VetoError::DraftPending));
+    while let Turn::Act { sides, .. } = v.turn() {
+        let choice = v.random_choice(sides[0], &ctx).unwrap();
+        step_in(&mut v, sides[0], choice, &ctx).unwrap();
+    }
+    v.apply(game, None).unwrap();
+    assert!(v.picks(3).iter().all(Option::is_some));
+
+    // Nos times, também a janela, pelo elenco: com a partida 1 enviada,
+    // faltam a 2 e a 3.
+    let mut t = two_v_two(team_rules(0, 2, false), 3);
+    t.set_rosters(sent(&[P1, P2], &[P3, P4], 1, [&[P1, P2], &[P3, P4]]))
+        .unwrap();
+    assert_eq!(t.apply(game, None), Err(VetoError::DraftPending));
+    assert_eq!(missing(&t).len(), 8);
+    for m in t.missing() {
+        let champion = t
+            .random_team_choice(m.side, m.player, m.game, &ctx)
+            .unwrap();
+        let pick = Event::TeamPick {
+            side: m.side,
+            player: m.player,
+            game: m.game,
+            champion,
+            gave_way: false,
+        };
+        t.apply(pick, Some(&ctx)).unwrap();
+    }
+    t.apply(game, None).unwrap();
+
+    // Sem o draft no site, a partida 2 começa mesmo com o veto de mapas pela
+    // metade, como antes.
+    let mut off = begun(rules(MapMode::Veto, 7, false, 0), 3, A);
+    step(&mut off, A, map(1)).unwrap();
+    off.apply(game, None).unwrap();
+}
+
+#[test]
+fn a_sent_or_finished_game_does_not_undo() {
+    let mut v = begun(rules(MapMode::Off, 0, true, 0), 1, A);
+    step(&mut v, A, champ(1)).unwrap();
+    step(&mut v, B, champ(2)).unwrap();
+    v.set_rosters(open(&[P1], &[P3])).unwrap();
+    assert!(v.can_undo());
+    // A partida 1 enviada (a série md1 acabou com ela).
+    let mut played = v.clone();
+    played
+        .set_rosters(Rosters {
+            finished: true,
+            ..sent(&[P1], &[P3], 1, [&[P1], &[P3]])
+        })
+        .unwrap();
+    assert!(!played.can_undo());
+    assert_eq!(played.apply(Event::Undo, None), Err(VetoError::Finished));
+    // Enviada, antes de a série seguir.
+    let mut sent_only = v.clone();
+    sent_only
+        .set_rosters(sent(&[P1], &[P3], 1, [&[P1], &[P3]]))
+        .unwrap();
+    assert_eq!(sent_only.apply(Event::Undo, None), Err(VetoError::Finished));
+    // W.O. no meio do veto.
+    let mut wo = v.clone();
+    wo.set_rosters(Rosters {
+        finished: true,
+        ..open(&[P1], &[P3])
+    })
+    .unwrap();
+    assert!(!wo.can_undo());
+    assert_eq!(wo.apply(Event::Undo, None), Err(VetoError::Finished));
 }
 
 #[test]

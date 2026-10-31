@@ -19,40 +19,32 @@ type Props = {
   target: MatchTarget;
   veto: Schemas["VetoView"];
   names: { a: string; b: string };
-  /** O lado de quem vê, se joga. */
+  /** O lado de quem vê, se joga (qualquer jogador do time age pelo lado). */
   mine: Schemas["Side"] | null;
-  /** Quem vê é o capitão do time dele (no duelo, sempre que joga). */
-  captain: boolean;
   canManage: boolean;
 };
 
 /**
  * O que o veto espera agora, numa frase: antes de começar, quem está pronto
- * (com "Pronto" para o capitão de cada lado e "Começar agora" para a
- * organização); depois, de quem é a vez e o tempo que falta (no fim, a
- * escolha é sorteada: a página recarrega para mostrar o sorteio); na
- * escolha simultânea do TDM, quem falta e o tempo da janela; concluído, que
- * o mapa pode ser enviado.
+ * (com "Pronto" para quem joga e "Começar agora" para a organização);
+ * depois, de quem é a vez e o tempo que falta (no fim, a escolha é
+ * sorteada: a página recarrega para mostrar o sorteio); na janela
+ * simultânea do TDM, o tempo da janela; concluído, que a partida pode ser
+ * enviada.
  */
-export function VetoTurn({
-  target,
-  veto,
-  names,
-  mine,
-  captain,
-  canManage,
-}: Props) {
+export function VetoTurn({ target, veto, names, mine, canManage }: Props) {
   const t = useTranslations("Match.veto");
   const router = useRouter();
   const action = useVetoAction(target);
   const game = currentGame(veto);
+  const teams = veto.team_pick_seconds != null;
 
   if (veto.status === "waiting_ready") {
     const ready = { a: veto.ready_a, b: veto.ready_b };
     const other = mine === "a" ? "b" : "a";
     return (
       <div className={styles.turn}>
-        <p>{t("waitingReady")}</p>
+        <p>{t(teams ? "waitingReadyTeams" : "waitingReady")}</p>
         <ul className={styles.ready}>
           {(["a", "b"] as const).map((side) => (
             <li key={side}>
@@ -61,17 +53,16 @@ export function VetoTurn({
           ))}
         </ul>
         <div className={styles.buttons}>
-          {mine && !ready[mine] && captain && (
+          {mine && !ready[mine] && (
             <Button pending={action.pending} onClick={action.ready}>
               {t("readyButton")}
             </Button>
           )}
-          {mine && !ready[mine] && !captain && (
-            <p className={styles.note}>{t("captainReadies")}</p>
-          )}
           {mine && ready[mine] && (
             <p className={styles.note}>
-              {t("youAreReady", { name: names[other] })}
+              {t(teams ? "yourTeamIsReady" : "youAreReady", {
+                name: names[other],
+              })}
             </p>
           )}
           {canManage && (
@@ -104,22 +95,12 @@ export function VetoTurn({
     />
   );
   if (turn.action === "team_pick") {
-    const yours = veto.options.length > 0;
-    const waiting =
-      mine != null && !yours && veto.missing.some((p) => p.side === mine);
+    const yours = veto.picks.length > 0;
     return (
       <div className={styles.turn}>
         <p className={yours ? styles.yours : undefined}>
-          {yours ? t("teamPickYours", { game }) : t("teamPick", { game })}
+          {t(yours ? "teamPickYours" : "teamPick")}
         </p>
-        {waiting && <p className={styles.note}>{t("teamPickPicked")}</p>}
-        {veto.missing.length > 0 && (
-          <p className={styles.note}>
-            {t("missing", {
-              names: veto.missing.map((p) => p.nickname).join(", "),
-            })}
-          </p>
-        )}
         {deadline && (
           <p className={styles.note}>
             {t.rich("teamDeadline", { time: () => deadline })}
@@ -128,16 +109,15 @@ export function VetoTurn({
       </div>
     );
   }
-  const what = t(`action.${turnKey(turn)}`, { game });
-  const ourTurn = mine != null && turn.sides.includes(mine);
-  const mineToAct = ourTurn && captain;
+  const what = t(`action.${turnKey(turn)}`, {
+    game: turn.pick_for ?? game,
+  });
+  const ours = mine != null && turn.sides.includes(mine);
   let sentence: string;
-  if (turn.sides.length === 2 && !(ourTurn && !captain)) {
+  if (turn.sides.length === 2) {
     sentence = t("bothVote", { game });
-  } else if (mineToAct) {
+  } else if (ours) {
     sentence = t("yourTurn", { action: what });
-  } else if (ourTurn) {
-    sentence = t("captainTurn", { action: what });
   } else if (turn.action === "vote" && mine) {
     sentence = t("votedWaiting", { name: names[turn.sides[0]] });
   } else {
@@ -145,7 +125,7 @@ export function VetoTurn({
   }
   return (
     <div className={styles.turn}>
-      <p className={mineToAct ? styles.yours : undefined}>{sentence}</p>
+      <p className={ours ? styles.yours : undefined}>{sentence}</p>
       {deadline && (
         <p className={styles.note}>
           {t.rich("deadline", { time: () => deadline })}

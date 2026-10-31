@@ -35,12 +35,15 @@ export type TournamentValues = {
   finalsBestOf: number;
   /** No suíço: as rodadas; `null` é o automático (⌈log2 N⌉). */
   swissRounds: number | null;
-  bansPerGame: number;
+  /** Bans de campeão de cada lado na série. */
+  bansPerSeries: number;
+  /** Adversários podem usar o mesmo campeão na partida. */
+  mirror: boolean;
   noRepeat: NoRepeatChoice;
   /** TDM: quem não repete, cada jogador ou o time inteiro (no duelo, o jogador). */
   noRepeatWho: Schemas["NoRepeatWho"];
-  /** TDM: dois do mesmo time podem escolher o mesmo campeão no mesmo mapa. */
-  teamDuplicates: boolean;
+  /** TDM: colegas de time podem usar o mesmo campeão na partida. */
+  sameTeam: boolean;
   /** Início em ISO (UTC); `null` sem data, só no rascunho. */
   startsAt: string | null;
   /** Janela de check-in em minutos; `null` sem check-in. */
@@ -53,11 +56,11 @@ export type TournamentValues = {
   mapMode: Schemas["MapMode"];
   /** Slugs do pool de mapas; `null` na criação: o padrão da API. */
   mapPool: string[] | null;
-  /** Ban/pick de campeões a cada mapa. */
+  /** Draft de campeões da série no site (`false`: fora do site). */
   championPhase: boolean;
   /** Segundos de cada passo do veto. */
   vetoSeconds: number;
-  /** TDM: segundos da escolha simultânea de campeões. */
+  /** TDM: segundos da janela simultânea de campeões. */
   teamPickSeconds: number;
   /** O envio do jogador exige captura de tela do placar (o campo só aparece com capturas na API). */
   screenshotsRequired: boolean;
@@ -90,10 +93,10 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
 
 /**
  * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
- * vagas, 1 ban, check-in de 30 min, 10 min para contestar, veto de mapas no
- * pool padrão com ban/pick de campeões e 30 s por passo. Trocado para o TDM:
- * times de 2, a regra de não repetição por jogador, sem campeão igual no
- * time e 60 s para a escolha simultânea.
+ * vagas, 1 ban por série, espelho permitido, check-in de 30 min, 10 min para
+ * contestar, veto de mapas no pool padrão, draft de campeões no site e 30 s
+ * por passo. Trocado para o TDM: times de 2, a regra de não repetição por
+ * jogador, sem campeão igual no time e 60 s para a janela simultânea.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -112,10 +115,11 @@ export function defaultValues(locale: Locale): TournamentValues {
     bestOf: 3,
     finalsBestOf: 5,
     swissRounds: null,
-    bansPerGame: 1,
+    bansPerSeries: 1,
+    mirror: true,
     noRepeat: "off",
     noRepeatWho: "player",
-    teamDuplicates: false,
+    sameTeam: false,
     startsAt: null,
     checkInMinutes: 30,
     contestMinutes: 10,
@@ -154,10 +158,11 @@ export function valuesFrom(
     bestOf: stage.best_of,
     finalsBestOf: stage.format === "elimination" ? stage.finals_best_of : 5,
     swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
-    bansPerGame: rules.bans_per_game,
+    bansPerSeries: rules.bans_per_series,
+    mirror: rules.mirror,
     noRepeat: rules.no_repeat?.scope ?? "off",
     noRepeatWho: rules.no_repeat?.who ?? "player",
-    teamDuplicates: rules.team_duplicates ?? false,
+    sameTeam: rules.same_team,
     startsAt: tournament.starts_at ?? null,
     checkInMinutes: tournament.check_in_minutes ?? null,
     contestMinutes: tournament.contest_minutes,
@@ -232,8 +237,8 @@ export function translationChange(
  */
 export function noRepeatChoices(current: NoRepeatChoice): NoRepeatChoice[] {
   return current === "stage"
-    ? ["off", "match", "stage", "tournament"]
-    : ["off", "match", "tournament"];
+    ? ["off", "series", "stage", "tournament"]
+    : ["off", "series", "tournament"];
 }
 
 /**
@@ -348,7 +353,9 @@ function setupBody(values: TournamentValues) {
     // erro aparece no campo.
     max_participants: values.maxParticipants ?? 0,
     champion_rules: {
-      bans_per_game: values.bansPerGame,
+      bans_per_series: values.bansPerSeries,
+      mirror: values.mirror,
+      same_team: tdm && values.sameTeam,
       no_repeat:
         values.noRepeat === "off"
           ? null
@@ -356,7 +363,6 @@ function setupBody(values: TournamentValues) {
               who: tdm ? values.noRepeatWho : ("player" as const),
               scope: values.noRepeat,
             },
-      team_duplicates: tdm && values.teamDuplicates,
     },
     stages: [stageBody(values)],
   };

@@ -30,36 +30,6 @@
   },
   "bestOfOption": "Al mejor de {count}",
   "champions": "Campeones",
-  "bansPerGame": "Bans de campeón por partida",
-  "bansOption": "{count, plural, =0 {Sin bans} one {# ban} other {# bans}}",
-  "bansPerGameHintTdm": "{count, plural, =0 {Nadie banea campeones.} one {El capitán de cada equipo banea # campeón por partida, alternando; el baneado queda fuera de la partida para los dos equipos.} other {El capitán de cada equipo banea # campeones por partida, alternando; los baneados quedan fuera de la partida para los dos equipos.}}",
-  "noRepeat": "Repetir campeón",
-  "noRepeatOptions": {
-    "off": "Se puede repetir",
-    "match": "No se repite en la serie",
-    "stage": "No se repite en la fase",
-    "tournament": "No se repite en el torneo"
-  },
-  "noRepeatHints": {
-    "off": "Se pueden repetir campeones cuando quieras.",
-    "match": "No se pueden repetir campeones en una serie.",
-    "stage": "No se pueden repetir campeones en la fase.",
-    "tournament": "No se pueden repetir campeones en todo el torneo (limita la cantidad de cupos)."
-  },
-  "noRepeatWho": "Quién no repite",
-  "noRepeatWhoOptions": {
-    "player": "Cada jugador",
-    "team": "El equipo"
-  },
-  "noRepeatWhoHints": {
-    "player": "Cada jugador no repite los campeones que él mismo usó; puede usar uno que ya usó un compañero.",
-    "team": "Un campeón que usó alguien del equipo nadie del equipo lo vuelve a usar. Pide muchos más campeones del pool, por eso limita las series, los cupos y los bans."
-  },
-  "teamDuplicates": "Dos del mismo equipo pueden elegir el mismo campeón en la misma partida",
-  "teamDuplicatesHints": {
-    "off": "Cada jugador del equipo elige un campeón distinto al de sus compañeros en la partida. Entre equipos, el mismo campeón puede aparecer en los dos lados.",
-    "on": "Los compañeros de equipo pueden usar el mismo campeón en la misma partida. Entre equipos, también."
-  },
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó. El inicio, los cupos y el check-in ya no cambian.",
   "results": "Resultados",
@@ -96,10 +66,8 @@
     "noCheckIn": "sin check-in",
     "contest": "{window} para impugnar",
     "maps": "{count, plural, one {# mapa} other {# mapas}}",
-    "championPhase": "ban/pick de campeones",
-    "noChampionPhase": "sin ban/pick de campeones",
     "seconds": "{time} por paso",
-    "teamPick": "{time} para elegir campeón",
+    "teamPick": "{time} para elegir los campeones",
     "screenshotsRequired": "captura de pantalla obligatoria"
   },
   "duration": {
@@ -163,21 +131,17 @@
       "off": "Los jugadores acuerdan el mapa fuera del sitio y lo envían como siempre."
     },
     "mapModeHintTdm": {
-      "veto": "Antes de la primera partida, los capitanes banean y eligen alternando (empieza quien tiene mejor posición en el orden de la llave); el que queda es el decisivo.",
-      "vote": "En cada partida, 3 mapas del pool sorteados (sin los ya jugados); cada capitán vota uno; votos distintos, sorteo entre los dos.",
+      "veto": "Antes de la primera partida, los equipos banean y eligen por turnos (empieza quien tiene la mejor posición en el orden del bracket); el que queda es el decisivo.",
+      "vote": "En cada partida, 3 mapas del pool sorteados (sin los ya jugados); cada equipo vota por uno; votos distintos, sorteo entre los dos.",
       "random": "El mapa de cada partida se sortea del pool cuando empieza, sin repetir en la serie.",
       "off": "Los equipos acuerdan el mapa fuera del sitio y lo envían como siempre."
     },
     "mapPool": "Pool de mapas",
     "mapPoolHint": "{count, plural, one {# mapa elegido} other {# mapas elegidos}}; la serie más larga pide al menos {min}.",
-    "championPhase": "Ban/pick de campeones en cada partida",
-    "championPhaseHint": "Ban de uno, ban del otro (según los bans por partida), pick de uno, pick del otro, abiertos. Vale con cualquier modo de mapa y aplica la regla de no repetición.",
-    "championPhaseHintTdm": "Los capitanes banean alternando (según los bans por partida); después, todos eligen su campeón al mismo tiempo, viendo las elecciones de los demás. Vale con cualquier modo de mapa y aplica las reglas de campeones.",
     "seconds": "Tiempo de cada paso",
-    "secondsHint": "Si se termina el tiempo, la elección se sortea (la organización puede deshacerla).",
-    "secondsHintTdm": "Vale para cada paso del capitán (mapas y bans). Si se termina el tiempo, la elección se sortea (la organización puede deshacerla).",
+    "secondsHint": "Si se acaba el tiempo, la elección se sortea.",
     "teamPickSeconds": "Tiempo de la elección de campeones",
-    "teamPickSecondsHint": "Después de los bans, todos eligen su campeón al mismo tiempo en esta ventana; a quien no elija le toca uno sorteado entre los que podía elegir."
+    "teamPickSecondsHint": "Todos eligen al mismo tiempo, un campeón para cada partida. Lo que falte al final se sortea."
   },
   "stageFormat": "Sistema",
   "stageFormats": {
@@ -197,5 +161,37 @@
   "swissRoundsHintTdm": "El máximo es una menos que los equipos. Con menos equipos, vale ese. Automático: 3 con hasta 8 equipos, 4 con hasta 16, 5 con hasta 32.",
   "swissRoundsAuto": "Automático (según los inscritos)",
   "swissRoundsAutoTdm": "Automático (según los equipos)",
-  "swissRoundsOption": "{count, plural, one {# ronda} other {# rondas}}"
+  "swissRoundsOption": "{count, plural, one {# ronda} other {# rondas}}",
+  "championRules": {
+    "phase": "Elección de campeones",
+    "phaseOptions": {
+      "site": "En el sitio",
+      "off": "Fuera del sitio"
+    },
+    "bans": "Bans por serie",
+    "bansHint": "El campeón baneado queda fuera de toda la serie, para los dos lados.",
+    "bansOption": "{count, plural, =0 {Sin bans} one {# por lado} other {# por lado}}",
+    "repeat": "Repetir campeón",
+    "mirror": "Los rivales pueden usar el mismo campeón en la partida",
+    "mirrorOff": "Se queda con el campeón quien elija primero.",
+    "sameTeam": "Los compañeros de equipo pueden usar el mismo campeón en la partida",
+    "otherGames": "En otras partidas",
+    "otherGamesOptions": {
+      "off": "Puede repetir",
+      "series": "No repite en la serie",
+      "stage": "No repite en la fase",
+      "tournament": "No repite en el torneo"
+    },
+    "otherGamesHints": {
+      "series": "Cada partida de la serie con un campeón distinto.",
+      "stage": "Cuenta solo la partida jugada. Pide más campeones del pool, lo que limita plazas y series.",
+      "tournament": "Cuenta solo la partida jugada. Pide más campeones del pool, lo que limita plazas y series."
+    },
+    "who": "Quién no repite",
+    "whoOptions": {
+      "player": "Cada jugador",
+      "team": "El equipo"
+    },
+    "whoTeam": "El campeón de un jugador queda fuera para todo el equipo en las otras partidas."
+  }
 }

@@ -62,19 +62,20 @@ impl From<ef::StageFormat> for StageFormat {
 impl From<ChampionRules> for ec::ChampionRules {
     fn from(rules: ChampionRules) -> Self {
         Self {
-            bans_per_game: rules.bans_per_game.into(),
+            bans_per_series: rules.bans_per_series.into(),
+            mirror: rules.mirror,
+            same_team: rules.same_team,
             no_repeat: rules.no_repeat.map(|r| ec::NoRepeatRule {
                 who: match r.who {
                     NoRepeatWho::Player => ec::NoRepeatWho::Player,
                     NoRepeatWho::Team => ec::NoRepeatWho::Team,
                 },
                 scope: match r.scope {
-                    NoRepeatScope::Match => ec::NoRepeatScope::Match,
+                    NoRepeatScope::Series => ec::NoRepeatScope::Series,
                     NoRepeatScope::Stage => ec::NoRepeatScope::Stage,
                     NoRepeatScope::Tournament => ec::NoRepeatScope::Tournament,
                 },
             }),
-            team_duplicates: rules.team_duplicates,
         }
     }
 }
@@ -83,19 +84,20 @@ impl From<ec::ChampionRules> for ChampionRules {
     fn from(rules: ec::ChampionRules) -> Self {
         Self {
             // Gravado só depois de validado (0 a 3).
-            bans_per_game: rules.bans_per_game.try_into().unwrap_or(u8::MAX),
+            bans_per_series: rules.bans_per_series.try_into().unwrap_or(u8::MAX),
+            mirror: rules.mirror,
+            same_team: rules.same_team,
             no_repeat: rules.no_repeat.map(|r| NoRepeatRule {
                 who: match r.who {
                     ec::NoRepeatWho::Player => NoRepeatWho::Player,
                     ec::NoRepeatWho::Team => NoRepeatWho::Team,
                 },
                 scope: match r.scope {
-                    ec::NoRepeatScope::Match => NoRepeatScope::Match,
+                    ec::NoRepeatScope::Series => NoRepeatScope::Series,
                     ec::NoRepeatScope::Stage => NoRepeatScope::Stage,
                     ec::NoRepeatScope::Tournament => NoRepeatScope::Tournament,
                 },
             }),
-            team_duplicates: rules.team_duplicates,
         }
     }
 }
@@ -144,12 +146,13 @@ mod tests {
     #[test]
     fn champion_rules_round_trip() {
         let dto = ChampionRules {
-            bans_per_game: 2,
+            bans_per_series: 2,
+            mirror: false,
+            same_team: true,
             no_repeat: Some(NoRepeatRule {
                 who: NoRepeatWho::Player,
                 scope: NoRepeatScope::Tournament,
             }),
-            team_duplicates: true,
         };
         assert_eq!(ChampionRules::from(ec::ChampionRules::from(dto)), dto);
     }

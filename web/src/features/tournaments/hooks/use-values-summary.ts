@@ -82,18 +82,19 @@ export function useValuesSummary() {
       const repeat = tSetup(`noRepeat.${v.noRepeat}`);
       const tdm = isTdm(v);
       return line([
-        tSetup("bans", { count: v.bansPerGame }),
+        !v.championPhase && tSetup("offSite"),
+        tSetup("bans", { count: v.bansPerSeries }),
+        !v.mirror && tSetup("noMirror"),
+        tdm && v.sameTeam && tSetup("sameTeam"),
         tdm && v.noRepeat !== "off"
           ? tSetup("noRepeatWho", { rule: repeat, who: v.noRepeatWho })
           : repeat,
-        tdm && tSetup(v.teamDuplicates ? "duplicates.on" : "duplicates.off"),
       ]);
     },
     veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
         v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
-        v.championPhase ? t("championPhase") : t("noChampionPhase"),
         (v.mapMode !== "off" || v.championPhase) &&
           t("seconds", { time: formatSeconds(v.vetoSeconds) }),
         isTdm(v) &&

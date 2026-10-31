@@ -56,17 +56,23 @@ pub enum Bracket {
     Double,
 }
 
+/// As regras do draft de campeões, feito para a série inteira antes da
+/// partida 1.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChampionRules {
-    /// Bans de campeão que cada lado sofre por mapa, de 0 a 3.
+    /// Bans de campeão de cada lado na série, de 0 a 3; valem para os dois
+    /// lados em todas as partidas.
     #[schema(example = 1)]
-    pub bans_per_game: u8,
-    /// Regra de não repetição; `null` desliga.
+    pub bans_per_series: u8,
+    /// Adversários podem usar o mesmo campeão na mesma partida. Sem isso,
+    /// fica com ele quem escolhe primeiro.
+    #[schema(example = true)]
+    pub mirror: bool,
+    /// TDM: colegas de time podem usar o mesmo campeão na mesma partida. No
+    /// duelo, não se aplica.
+    pub same_team: bool,
+    /// Não repetir o campeão de outra partida; `null`: pode repetir.
     pub no_repeat: Option<NoRepeatRule>,
-    /// TDM: dois jogadores do mesmo time podem escolher o mesmo campeão no
-    /// mesmo mapa. Ausente: não (entre times, o espelho vale sempre).
-    #[serde(default)]
-    pub team_duplicates: bool,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,11 +90,12 @@ pub enum NoRepeatWho {
     Team,
 }
 
-/// Até onde a regra vale.
+/// Até onde a regra vale: entre as partidas da série, em todas as séries da
+/// fase ou no torneio inteiro. Fora da série, conta só partida jogada.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum NoRepeatScope {
-    Match,
+    Series,
     Stage,
     Tournament,
 }

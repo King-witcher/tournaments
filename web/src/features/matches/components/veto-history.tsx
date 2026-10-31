@@ -23,33 +23,43 @@ export function VetoHistory({ veto, names }: Props) {
   const t = useTranslations("Match.veto.history");
   const tMember = useTranslations("Member");
   if (veto.history.length === 0) return null;
+  const teams = veto.team_pick_seconds != null;
 
   return (
     <AccordionItem title={t("title")}>
       <ol className={styles.events}>
         {veto.history.map((e, i) => {
-          // TDM: na escolha simultânea, o jogador (também no sorteado).
+          // TDM: na janela simultânea, o jogador (também no sorteado); no passo
+          // do lado, o time e quem agiu por ele.
+          const actor =
+            e.actor != null
+              ? shownNickname(e.actor, tMember("deletedAccount"))
+              : null;
           const who =
             e.player != null
               ? shownNickname(e.player, tMember("deletedAccount"))
               : e.side
-                ? names[e.side]
+                ? teams && actor
+                  ? `${names[e.side]} (${actor})`
+                  : names[e.side]
                 : "";
           const text = t(`kinds.${e.kind}`, {
             name: who,
-            actor:
-              e.actor != null
-                ? shownNickname(e.actor, tMember("deletedAccount"))
-                : "",
+            actor: actor ?? "",
             map: e.map?.name ?? "",
             champion: e.champion?.name ?? "",
             game: e.game ?? 1,
             forced: e.actor != null ? "yes" : "no",
           });
+          // O pick de campeão diz a partida a que se destina; o ban de
+          // campeão vale para a série inteira.
+          const game = e.pick_game ?? e.game;
+          const seriesWide =
+            e.kind === "game" ||
+            e.kind === "begin" ||
+            (e.kind === "ban" && e.champion != null);
           const parts = [
-            e.game != null && e.kind !== "game" && e.kind !== "begin"
-              ? t("game", { game: e.game })
-              : null,
+            game != null && !seriesWide ? t("game", { game }) : null,
             text,
             e.timeout ? t("timeout") : null,
           ].filter(Boolean);
