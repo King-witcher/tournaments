@@ -1,0 +1,43 @@
+# Interface
+
+O alvo página a página está em `docs/design.md`; o guia de código e as regras de texto, em `web/CLAUDE.md`. Páginas e formulário de torneio: `tournaments-ui.md`. Quase tudo foi decidido por utilidade, sem enfeite, e assumido (revisão de uso de 28/10) salvo o que diz "do usuário".
+
+## Carbon e base
+
+- **Carbon v11 e só ele**; o Tailwind sai. Dois sistemas de espaçamento e cor convivendo derivam, e o auditor do Carbon só ajuda se o código for Carbon.
+- **Uso esperado: computador, com a aba aberta de lado** durante o torneio (do usuário). O celular é atendido (390 px, toque), mas não é o caso principal (por isso não há `SideNav`).
+- **Tema**: `white` no claro e `g100` no escuro, seguindo o sistema; a pessoa escolhe claro, escuro ou o do navegador (padrão) no painel dela no cabeçalho, em `localStorage` (vale sem login, não custa rota nem coluna); um script no `<head>` aplica antes da pintura.
+- **Uma coisa por tela, o resto em abas por sub-rota** (comunidade; torneio): link direto, `loading.tsx` por aba e menos dado por página. `members`, `invites` e `settings` viram slugs reservados de torneio.
+- **Listas grandes em `DataTable` com busca e paginação no cliente** (25 por página): a API não pagina, as listas são limitadas pelo torneio ou comunidade.
+- **Confirmação em `Modal`** (kind `danger` quando apaga ou tira algo): o texto diz o que vai acontecer, o primário tem o nome da ação, "Não" é o secundário, o foco volta ao gatilho. Nada de `confirm()`. Desfazer o início e transferir a posse pedem o slug digitado. A consequência de uma ação destrutiva (excluir a conta, sair da comunidade) fica no modal; acima do botão, no máximo o prazo e como desfazer.
+- **Messages por namespace** (`messages/<locale>/<Namespace>.json`): um arquivo por domínio, para fluxos paralelos não escreverem no mesmo arquivo. **Fonte IBM Plex pelo `next/font`**, sem CDN.
+- **Trabalho em agentes**: uma base (biblioteca, casca, guia, home) antes dos fluxos; depois fluxos em paralelo, donos de arquivos disjuntos. Comparação Opus × Sonnet nos mesmos briefs: estrutura igual; Opus com melhor julgamento de detalhe (um título por página, erro de campo com foco, uma ação primária por papel) a 1,65× os tokens e o dobro do tempo. Daqui em diante: Opus para o que pede julgamento de interface; Sonnet para trabalho com guia claro (migração mecânica, correção pontual, tela que copia um padrão).
+- **Formulários enviam por `onSubmit`, não por `action`**: o `action` do React reseta os campos controlados (os selects voltavam ao valor errado).
+- **Página da pessoa fora das abas da comunidade**: mesma URL (`/[tenant]/members/[user]`), cabeçalho próprio, para ter um só título e o breadcrumb dizer de onde veio.
+- **Suas comunidades no cabeçalho** (do usuário): ação na barra com a lista e "Criar comunidade". A lista é buscada só ao abrir o painel (`GET /tenants`): no layout custaria uma leitura de sessão no Redis a cada página e a cada recarga do tempo real. A última lista aparece na abertura seguinte enquanto a nova é buscada.
+- **Organizador que também joga**: a ação de jogador dele (inscrever-se, check-in) fica terciária ou no `Tile` "Sua situação", para o cabeçalho ter uma primária só.
+- **Nome no cabeçalho** (do usuário): o nome exibido ao lado do avatar, no botão do painel da conta; longo, termina em reticências (até 10rem no computador) e, no celular, é ele que cede espaço, até 320 px, sem quebrar o nome do site nem rolar a página.
+- **Abas no celular sem as setas de rolagem** (as abas tremiam): as setas do Carbon aparecem e somem conforme a rolagem e mudam a largura da barra; abaixo do `md` saem (`TabList` de `shared/ui`). A tabela nunca alarga a página (`contain: inline-size` no `DataTable`).
+
+## Comportamento
+
+- **Carregamento**: toda página que busca dado mostra na hora o lugar do conteúdo (esqueleto pulsando, "Carregando…"); todo botão que chama a API fica com indicador girando até a resposta.
+- **Links e texto**: item de lista que abre página é a linha inteira, com o nome sublinhado na cor de link; links soltos e botões-link sempre sublinhados. Texto secundário numa cor própria com contraste AA, nunca opacidade.
+- **Foco depois de agir**: botão pendente não recebe `disabled` (o navegador tiraria o foco e quem usa teclado voltaria ao começo da página): `aria-disabled`, ignorando clique e Enter. Depois de ação cujo botão some no refresh, o foco vai para o bloco afetado (linha do mapa, bloco da inscrição, quadro da organização). O `ConfirmButton` devolve o foco ao fechar.
+- **Tela desatualizada**: sem tempo real, quem confirma um mapa que a organização já confirmou recebe o erro e a tela recarrega com o estado de agora.
+- **Login e cadastro com sessão**: quem já entrou e volta a essas páginas vê "Você já entrou como X" com "Continuar com esta conta" (leva ao `return_to`); o formulário continua embaixo.
+- **Página que pede login** oferece "Entrar" e "Criar conta", os dois voltando para a página (quem chega por convite geralmente ainda não tem conta). **Sessão expirada no meio de uma ação**: o erro diz para recarregar e entrar de novo.
+- **Data de início que passou** (organização ainda não iniciou): "Início marcado para", não "Começa".
+- **Validação de formulário** (do usuário): o campo cobra o limite e o texto de ajuda só diz o que ele é. Obrigatório com estrela vermelha no rótulo; caractere recusado não entra (`filter`); número fora da faixa fica vermelho na hora; texto fica vermelho depois da primeira saída do campo. O botão de enviar fica desabilitado enquanto faltar obrigatório ou houver campo inválido (escolhido no lugar de habilitado com foco no primeiro inválido: o pedido é prevenir o envio e a causa está à vista). No formulário de torneio vale o mesmo, mantendo `noValidate` (o `check` abre o grupo do campo recusado); uma data que só o formulário sabe validar usa `problem`, que bloqueia e vale menos que o erro da API. Diretriz em `web/CLAUDE.md`.
+- **Menos texto** (do usuário): o texto diz só o que a pessoa não sabe e não vai descobrir logo em seguida, sem ficar vago. Regras em "Como escrever" no `web/CLAUDE.md`.
+- **Terminologia**: partida (jogo), série, torneio, mapa (arena); glossário em `web/CLAUDE.md`.
+
+## Home e páginas de uso
+
+- **Home**: sem login, diz o que fazer (entrar ou criar conta; convite leva ao cadastro). Logado: as pendências da organização (para quem organiza e tem alguma), "Seus torneios" e "Minhas comunidades". O status da API só aparece quando há problema.
+- **Seus torneios** (`GET /me/tournaments`): os torneios em que a pessoa está inscrita, de todas as comunidades, com a **situação** dela (inscrição feita, check-in pendente/feito, fora da chave sem check-in, na chave, terminou em Nº, desistiu, 1º lugar) e, para quem ainda joga, a **próxima partida** (link) com o adversário (ou "quem vencer C1.2") e o que ela espera (enviar, confirmar/contestar, aguardar). Os que não encerraram vêm primeiro; os **encerrados** ficam numa lista à parte, só os 5 de início mais recente (cada um refaz a chave para dar a colocação; a lista inteira cresceria sem fim). A próxima partida fica fora do link do torneio (sem link dentro de link). Confirmações por tempo vencidas valem antes, como ao abrir a chave.
+- **Pendências da organização** (`GET /me/organizing`), na home acima de "Seus torneios", para organizer/owner ativo: **mapa contestado** (torneio, comunidade, partida e mapa, quem contestou e há quanto tempo; leva à partida) e **hora de iniciar** (torneio na inscrição ou no check-in com o início já passado, o critério do aviso `tournament.start_due` sem o "uma vez": fica até iniciar ou adiar; leva à aba Organização). Contestados primeiro, do mais antigo; depois os torneios, do início mais antigo.
+  - **Sem pendência, o bloco some** (também para quem organiza): o aviso com som e o push já chamam, e um "nada a resolver" no topo empurraria "Seus torneios" sem dizer nada útil.
+  - **Fora**: mapa pendente com prazo longo e adversário sumido (confirma sozinho; "confirmar agora" na partida já resolve) e torneio com check-in aberto antes da hora (vira pendência na hora; como informação, a home recarregaria a cada check-in).
+  - **Rota própria**, não campo de `/me/tournaments`: aquela devolve lista (virar objeto mudaria quem a usa) e refaz a chave de cada torneio, enquanto as pendências são duas queries diretas. E só quem organiza pergunta (o front decide pelos papéis de "Minhas comunidades", que a home já busca), então quem só joga não gasta uma leitura de sessão a mais por recarga.
+- **Página da comunidade**: torneios, membros, convites e, por último, "Você nesta comunidade" (apelido e sair, ou transferir a posse).

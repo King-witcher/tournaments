@@ -1,6 +1,6 @@
 //! Segredos aleatórios e o hash que fica guardado (banco ou Redis): o valor
 //! só existe na resposta ou no cookie. A estratégia de ids do projeto está em
-//! "Ids" no `docs/decisions.md`.
+//! "Ids" em `docs/decisions/stack.md`.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use sha2::{Digest, Sha256};

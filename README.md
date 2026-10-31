@@ -1,6 +1,6 @@
 # Torneios de Quake Champions
 
-Site multi-tenant para organizar torneios de Quake Champions. API em Rust (Axum + sqlx), frontend em Next.js. Decisões do projeto em [`docs/decisions.md`](docs/decisions.md).
+Site multi-tenant para organizar torneios de Quake Champions. API em Rust (Axum + sqlx), frontend em Next.js. Decisões do projeto em [`docs/decisions.md`](docs/decisions.md) (índice por área).
 
 ## Pré-requisitos
 
@@ -36,7 +36,7 @@ As três primeiras liberam o usuário sem senha só no próprio banco e nos de t
 
 ## Redis local
 
-Sessões e tentativas de senha ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`); os outros databases do servidor ficam para outros projetos. Dentro do 1, a API põe `REDIS_PREFIX` (padrão `tournaments:`) na frente de toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database (ou o de `REDIS_URL`), com um prefixo `test:` por teste; a execução seguinte apaga as chaves da anterior antes de começar.
+Sessões e outros dados efêmeros ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`; os outros databases são de outros projetos). A API põe `REDIS_PREFIX` (padrão `tournaments:`) em toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database com um prefixo `test:` por teste (ver `docs/decisions/stack.md`, "Redis").
 
 ## Rodando
 
@@ -58,7 +58,7 @@ Os emails (confirmação do cadastro, recuperação de senha, troca de email) sa
 
 Para os avisos fora do site (Web Push), gere as chaves VAPID com `bun scripts/vapid-keys.ts` (em `backend/`, sem instalar nada) e cole as duas linhas que ele imprime (`VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY`) no `backend/.env`; `VAPID_SUBJECT` (um `mailto:` ou `https:`) é opcional e, sem ele, vai a origem do front. Sem as chaves, tudo funciona e os avisos só chegam com o site aberto, pelo WebSocket. Em produção, as mesmas variáveis no Render: trocar o par depois faz cada navegador precisar ativar os avisos de novo.
 
-Os avisos da comunidade no Discord não precisam de variável de ambiente nem de bot: o owner cria um webhook no canal e cola o endereço nas configurações da comunidade. No Discord: **Configurações do servidor → Integrações → Webhooks → Novo webhook**, escolha o canal, copie a URL do webhook (`https://discord.com/api/webhooks/…`). No site: aba **Configurações** da comunidade (só o owner a vê), seção "Avisos no Discord"; cole a URL, escolha os avisos e o idioma e use "Enviar teste". A URL é uma credencial: fica só no banco, a API nunca a devolve nem a escreve no log, e quem a perde apaga o webhook no Discord e cola outro.
+Os avisos da comunidade no Discord não precisam de variável de ambiente nem de bot: o owner cria um webhook no canal e cola o endereço nas configurações da comunidade. No Discord: **Configurações do servidor → Integrações → Webhooks → Novo webhook**, escolha o canal, copie a URL do webhook (`https://discord.com/api/webhooks/…`). No site: aba **Configurações** da comunidade (só o owner a vê), seção "Avisos no Discord"; cole a URL, escolha os avisos e o idioma e use "Enviar teste". A URL é uma credencial (a API nunca a devolve nem a escreve no log): quem a perde apaga o webhook no Discord e cola outro.
 
 Os screenshots do placar vão para um bucket S3 (ver "Bucket dos screenshots" abaixo). Localmente, deixe as variáveis `S3_*` de fora: tudo funciona, os screenshots somem da interface (o "screenshot obrigatório" do torneio não liga) e nada vai para o bucket de produção.
 
@@ -87,7 +87,7 @@ bun run dev
 
 Os screenshots vão do navegador direto para o bucket, por URLs assinadas que a API gera (o navegador nunca vê as chaves); a API só confere o arquivo (HEAD) e apaga (os removidos, os de torneios encerrados há mais de 30 dias e os uploads abandonados, numa rotina diária). Qualquer S3 compatível serve; em produção, AWS S3:
 
-No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.webp` (ex.: `screenshots/quake-br/copa/wb-1-3/mapa-2-….webp`), as mesmas pastas do site. Um bucket por ambiente: não há prefixo de ambiente (motivo em "Screenshots do placar", no `docs/decisions.md`).
+No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.webp` (ex.: `screenshots/quake-br/copa/wb-1-3/mapa-2-….webp`), as mesmas pastas do site. Um bucket por ambiente: não há prefixo de ambiente (motivo em `docs/decisions/screenshots.md`).
 
 1. **Bucket**: no console do S3, crie um bucket na região da API (ex.: `us-east-1`), classe Standard, com **Block all public access ligado** (os screenshots só saem por URL assinada) e o versionamento desligado (apagar precisa apagar de vez).
 2. **CORS** do bucket (aba Permissions → CORS), liberando o PUT do navegador pela origem do front (o endereço do site em produção, o mesmo `WEB_ORIGIN` da API, sem barra no fim). É o que falta configurar no bucket além das variáveis:
@@ -123,24 +123,6 @@ No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida
 4. **Variáveis** que a API lê (no Render, e no `backend/.env` só se quiser um bucket de dev à parte): `S3_BUCKET` (o nome do bucket), `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` (a access key do usuário IAM) e `S3_REGION` (a região do bucket; sem ela, `us-east-1`). Com só parte das três primeiras, a API não sobe (é engano de configuração); com nenhuma, sobe sem screenshots. `S3_ENDPOINT` só para outro provedor compatível (Cloudflare R2, MinIO), com o bucket no caminho da URL.
 5. **Conferir**: com as variáveis no Render, o log da API não mostra o aviso "screenshots desligados" e `GET /screenshots/settings` responde `"enabled": true`. Sem o CORS do passo 2, o PUT do navegador falha e a tela mostra "O envio da imagem falhou".
 
-## Dia a dia
+## Comandos e CI
 
-| O quê | Onde | Comando |
-|---|---|---|
-| API com recarga automática | `backend/` | `bun scripts/dev.ts` |
-| Testes do engine (rápidos, sem banco) | `backend/` | `cargo test -p engine` |
-| Todos os testes do backend (Postgres e Redis locais) | `backend/` | `cargo test` |
-| Lint do backend | `backend/` | `cargo clippy --all-targets -- -D warnings` |
-| Nova migration | `backend/` | criar `migrations/AAAAMMDDHHMMSS_nome.sql` e rodar `cargo run -p migrate` |
-| Regenerar tipos da API no front (API rodando) | `web/` | `bun run gen:api` |
-| Lint / formatar o front (Biome) | `web/` | `bun run lint` / `bun run format` |
-| Build do front | `web/` | `bun run build` |
-
-## CI
-
-`.github/workflows/ci.yml` roda em push na `main` e em pull request, com os dois lados em paralelo:
-
-- **backend**: `cargo fmt --check`, `cargo clippy` com `SQLX_OFFLINE=true` (confere que o `.sqlx/` cobre todas as queries, como no deploy), migrations, `cargo test` (Postgres 18 e Redis como serviços) e uma conferência de que o `.sqlx/` versionado é igual ao que as queries geram. Se falhar nela, rode `bun scripts/sqlx-prepare.ts` em `backend/` e faça commit.
-- **web**: `bun install --frozen-lockfile`, `bun run lint` e `bun run build` (não precisa de API no ar).
-
-Em pull request só roda o lado cujos arquivos mudaram; em push na `main` rodam os dois. Uma execução nova do mesmo ref cancela a anterior. A versão do Bun está fixa no workflow: ao subir o Bun localmente, suba lá também.
+Os comandos do dia a dia (API com recarga, testes, clippy, migrations, tipos do front) estão no `CLAUDE.md`. O `.github/workflows/ci.yml` roda em push na `main` e em pull request, backend e web em paralelo, só o lado que mudou nos pull requests: `cargo fmt --check`, `cargo clippy` offline, migrations, `cargo test` (Postgres 18 e Redis como serviços) e a conferência de que o `.sqlx/` versionado é o que as queries geram (se falhar, `bun scripts/sqlx-prepare.ts` em `backend/` e commit); no web, `bun install --frozen-lockfile`, `bun run lint` e `bun run build`. A versão do Bun está fixa no workflow: ao subir o Bun localmente, suba lá também.

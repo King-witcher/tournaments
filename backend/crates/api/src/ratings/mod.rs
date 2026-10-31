@@ -1,4 +1,4 @@
-//! Rating da comunidade (decisões em "Rating" no docs/decisions.md): Elo por
+//! Rating da comunidade (decisões em docs/decisions/ratings.md): Elo por
 //! mapa confirmado dos torneios que contam, mais os ajustes manuais da
 //! organização, reprocessados do zero pelo engine. As tabelas `ratings` e
 //! `rating_history` são cache: um trigger marca o tenant como desatualizado

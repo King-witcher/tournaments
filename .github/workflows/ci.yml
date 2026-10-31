@@ -1,6 +1,6 @@
 # Confere backend e front. Em pull request só roda o lado cujos arquivos
-# mudaram; em push na main roda os dois. Regras e motivos: "Repositório" em
-# docs/decisions.md.
+# mudaram; em push na main roda os dois. Regras e motivos: "Repositório e CI" em
+# docs/decisions/stack.md.
 name: CI
 
 on:
