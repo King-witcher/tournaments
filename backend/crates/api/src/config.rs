@@ -40,8 +40,8 @@ pub struct Config {
     /// padrão). Desligado em dev e staging, as variações do mesmo endereço
     /// (`+etiqueta`, pontos no Gmail) abrem contas diferentes.
     pub email_strict: bool,
-    /// Bucket dos screenshots do placar (`S3_*`); `None` sem bucket nem chaves:
-    /// os screenshots ficam desligados.
+    /// Bucket privado, o dos screenshots do placar (`S3_*`); `None` sem bucket
+    /// nem chaves: os screenshots ficam desligados.
     pub storage: Option<StorageConfig>,
 }
 
@@ -81,10 +81,11 @@ impl Config {
     }
 }
 
-/// O bucket, se `S3_BUCKET`, `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY`
-/// existem. Só parte delas é engano de configuração: a API não sobe.
+/// O bucket privado, se `S3_PRIVATE_BUCKET`, `S3_ACCESS_KEY_ID` e
+/// `S3_SECRET_ACCESS_KEY` existem. Só parte delas é engano de configuração: a
+/// API não sobe.
 fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
-    let bucket = env_opt("S3_BUCKET");
+    let bucket = env_opt("S3_PRIVATE_BUCKET");
     let key = env_opt("S3_ACCESS_KEY_ID");
     let secret = env_opt("S3_SECRET_ACCESS_KEY");
     match (bucket, key, secret) {
@@ -97,7 +98,7 @@ fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
             secret_access_key,
         })),
         _ => anyhow::bail!(
-            "S3_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem screenshots)"
+            "S3_PRIVATE_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem screenshots)"
         ),
     }
 }

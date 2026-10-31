@@ -89,7 +89,7 @@ Os screenshots vão do navegador direto para o bucket, por URLs assinadas que a 
 
 No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.webp` (ex.: `screenshots/quake-br/copa/wb-1-3/mapa-2-….webp`), as mesmas pastas do site. Um bucket por ambiente: não há prefixo de ambiente (motivo em `docs/decisions/screenshots.md`).
 
-1. **Bucket**: no console do S3, crie um bucket na região da API (ex.: `us-east-1`), classe Standard, com **Block all public access ligado** (os screenshots só saem por URL assinada) e o versionamento desligado (apagar precisa apagar de vez).
+1. **Bucket**: no console do S3, crie o bucket privado do ambiente na região da API (ex.: `us-east-1`), no namespace regional da conta (o nome termina em `-<conta>-<região>-an`, ex.: `telefrag-prod-private-<conta>-us-east-1-an`), classe Standard, com **Block all public access ligado** (os screenshots só saem por URL assinada) e o versionamento desligado (apagar precisa apagar de vez).
 2. **CORS** do bucket (aba Permissions → CORS), liberando o PUT do navegador pela origem do front (o endereço do site em produção, o mesmo `WEB_ORIGIN` da API, sem barra no fim). É o que falta configurar no bucket além das variáveis:
 
    ```json
@@ -120,7 +120,7 @@ No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida
    ```
 
    `PutObject` assina o envio do navegador, `GetObject` a leitura (e o HEAD da conferência) e `DeleteObject` a exclusão (inclusive em lote).
-4. **Variáveis** que a API lê (no Render, e no `backend/.env` só se quiser um bucket de dev à parte): `S3_BUCKET` (o nome do bucket), `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` (a access key do usuário IAM) e `S3_REGION` (a região do bucket; sem ela, `us-east-1`). Com só parte das três primeiras, a API não sobe (é engano de configuração); com nenhuma, sobe sem screenshots. `S3_ENDPOINT` só para outro provedor compatível (Cloudflare R2, MinIO), com o bucket no caminho da URL.
+4. **Variáveis** que a API lê (no Render, e no `backend/.env` só se quiser um bucket de dev à parte): `S3_PRIVATE_BUCKET` (o nome do bucket privado), `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` (a access key do usuário IAM) e `S3_REGION` (a região do bucket; sem ela, `us-east-1`). Com só parte das três primeiras, a API não sobe (é engano de configuração); com nenhuma, sobe sem screenshots. `S3_ENDPOINT` só para outro provedor compatível (Cloudflare R2, MinIO), com o bucket no caminho da URL.
 5. **Conferir**: com as variáveis no Render, o log da API não mostra o aviso "screenshots desligados" e `GET /screenshots/settings` responde `"enabled": true`. Sem o CORS do passo 2, o PUT do navegador falha e a tela mostra "O envio da imagem falhou".
 
 ## Comandos e CI

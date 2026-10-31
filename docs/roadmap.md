@@ -9,6 +9,7 @@ Nada na fila: os itens de "Depois" ainda não foram escolhidos. Um incremento po
 ## Depois
 
 - Outros formatos: FFA por pontos/frags, playoffs (os N melhores da tabela do round robin ou do suíço numa eliminação) e grupos.
+- Imagens públicas: avatar enviado e logo da comunidade (a `og:image` dos links), no bucket público atrás do CloudFront. O bucket existe e o `S3_PUBLIC_BUCKET` já está no Render, mas a API ainda não o lê; entra com a variável da URL pública e com o banco guardando só a chave do objeto.
 
 ## Pendências
 
