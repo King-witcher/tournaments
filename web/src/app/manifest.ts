@@ -5,8 +5,9 @@ import nav from "../../messages/pt/Nav.json";
 
 /**
  * O manifest do site (`/manifest.webmanifest`): instalável na tela inicial,
- * que é o que liga o Web Push no iPhone. Um só para os dois idiomas, com o
- * nome do cabeçalho no idioma padrão; `/` leva cada um ao seu idioma.
+ * que é o que liga o Web Push no iPhone. Um só para os dois idiomas (o nome
+ * é o mesmo; a descrição vai no idioma padrão); `/` leva cada um ao seu
+ * idioma.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -16,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    // As cores do tema claro do Carbon: o fundo (white) e o do ícone (blue 60).
+    // O fundo do tema claro do Carbon (white), na abertura e na barra.
     background_color: "#ffffff",
     theme_color: "#ffffff",
     icons: [

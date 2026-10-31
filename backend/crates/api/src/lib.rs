@@ -45,7 +45,7 @@ pub static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 /// componentes para o `gen:api` do front gerar os tipos.
 #[derive(OpenApi)]
 #[openapi(
-    info(title = "Tournaments API"),
+    info(title = "Telefrag API"),
     components(schemas(realtime::ClientMessage, realtime::ServerMessage))
 )]
 struct ApiDoc;

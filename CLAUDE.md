@@ -1,4 +1,4 @@
-# Torneios de Quake Champions
+# Telefrag
 
 Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA por pontos/frags, 2v2, 3v3), em português e espanhol. Decisões e motivos, por área: `docs/decisions.md` (índice) e `docs/decisions/`.
 

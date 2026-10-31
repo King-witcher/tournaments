@@ -34,7 +34,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` "Torneios QC"; na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista, a atual marcada e "Criar comunidade"), o sininho (número das que faltam ver; painel com os avisos dos últimos 30 dias), o idioma (painel pt/es) e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema); sem sessão, "Entrar" e "Criar conta". Sem `SideNav`: cada nível tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
+`Header` do UI Shell: `SkipToContent`; `HeaderName` com o logo do Telefrag (só o ícone abaixo do `md`); na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista, a atual marcada e "Criar comunidade"), o sininho (número das que faltam ver; painel com os avisos dos últimos 30 dias), o idioma (painel pt/es) e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema); sem sessão, "Entrar" e "Criar conta". Sem `SideNav`: cada nível tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
 
 ### Início `/`
 

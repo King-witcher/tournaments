@@ -3,6 +3,8 @@
 ## Produto
 
 - Site para organizar torneios de Quake Champions: duelo, FFA, FFA por pontos/frags, 2v2, 3v3.
+- **Nome: Telefrag** (do usuário, 31/10): termo do Quake sem a marca "Quake", igual em pt e es, e não amarra a plataforma a um torneio (a RageCon é uma comunidade dentro dela). `telefrag.com.br` e `telefrag.gg` estavam livres em 31/10. O nome interno (banco, Redis, repositório, Render) continua `tournaments`.
+- **Logo**: o banner do usuário vetorizado à mão em `docs/brand/` (branco, como o original) e em `web/src/shared/lib/logo.ts` (os mesmos caminhos). No cabeçalho, na cor do texto do tema e só o ícone abaixo do `md` (a barra de ações não deixa espaço). Ícones do site (favicon, tela inicial) com o ícone em branco no fundo `#161616`, que funciona em aba clara e escura.
 - Português e espanhol (a comunidade joga muito com argentinos).
 - Multi-tenant: qualquer usuário logado cria tenants, com limite por usuário. Jogadores entram num tenant só por link de convite e têm um perfil por tenant.
 - Primeiro formato de ponta a ponta: **duelo**. Exercita chave, veto, pick/ban, não repetição, resultado e rating; os outros reaproveitam.

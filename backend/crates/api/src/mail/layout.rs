@@ -7,7 +7,7 @@
 //! estilo inline, que é o que os leitores de email respeitam; a fonte é a
 //! IBM Plex Sans de quem a tem instalada, sem buscar fora (a Helvetica ou a
 //! Arial no lugar). O texto vem de quem manda, no idioma de quem recebe; aqui
-//! só ficam o nome do site e o rodapé, nos dois idiomas.
+//! só ficam o nome do site (o mesmo nos dois idiomas) e o rodapé.
 
 use super::Email;
 use crate::shared::Locale;
@@ -55,9 +55,10 @@ const STYLE: &str = "body{margin:0;padding:0}\
 .fg3{color:#a8a8a8!important}\
 .link{color:#78a9ff!important}}";
 
+/// O nome do site, no cabeçalho, no assunto e no rodapé.
+const BRAND: &str = "Telefrag";
+
 struct Chrome {
-    brand: &'static str,
-    site: &'static str,
     fallback: &'static str,
     sent_to: &'static str,
 }
@@ -65,14 +66,10 @@ struct Chrome {
 fn chrome(locale: Locale) -> Chrome {
     match locale {
         Locale::Pt => Chrome {
-            brand: "Torneios QC",
-            site: "Torneios de Quake Champions",
             fallback: "Se o botão não abrir, copie este endereço no navegador:",
             sent_to: "Este email foi enviado para",
         },
         Locale::Es => Chrome {
-            brand: "Torneos QC",
-            site: "Torneos de Quake Champions",
             fallback: "Si el botón no se abre, copia esta dirección en el navegador:",
             sent_to: "Este email se envió a",
         },
@@ -85,7 +82,7 @@ pub fn compose(locale: Locale, home: &str, to: &str, content: Content) -> Email 
     let chrome = chrome(locale);
     Email {
         to: to.to_owned(),
-        subject: format!("{} · {}", content.title, chrome.brand),
+        subject: format!("{} · {BRAND}", content.title),
         text: text(&chrome, home, to, &content),
         html: html(locale, &chrome, home, to, &content),
     }
@@ -106,7 +103,7 @@ fn text(chrome: &Chrome, home: &str, to: &str, content: &Content) -> String {
     if let Some(note) = &content.note {
         out += &format!("{note}\n\n");
     }
-    out += &format!("— {}: {home}\n{} {to}.\n", chrome.site, chrome.sent_to);
+    out += &format!("— {BRAND}: {home}\n{} {to}.\n", chrome.sent_to);
     out
 }
 
@@ -119,8 +116,7 @@ fn html(locale: Locale, chrome: &Chrome, home: &str, to: &str, content: &Content
     // Cabeçalho: 48px, como o do UI Shell.
     body += &format!(
         "<tr><td {card}padding:14px 32px;border-bottom:1px solid #e0e0e0;\
-         font:600 14px/20px {FONT};letter-spacing:0.16px\">{}</td></tr>",
-        escape(chrome.brand)
+         font:600 14px/20px {FONT};letter-spacing:0.16px\">{BRAND}</td></tr>"
     );
     body += &format!(
         "<tr><td {card}padding:32px 32px 0\">\
@@ -187,9 +183,8 @@ fn html(locale: Locale, chrome: &Chrome, home: &str, to: &str, content: &Content
     body += &format!("<tr><td {card}padding:0;height:40px\"></td></tr>");
     body += &format!(
         "<tr><td class=\"pad fg3\" style=\"padding:24px 32px 0;font:12px/16px {FONT};letter-spacing:0.32px;color:#6f6f6f\">\
-         <a class=\"link\" href=\"{}\" style=\"color:#0f62fe\">{}</a><br>{} {}.</td></tr>",
+         <a class=\"link\" href=\"{}\" style=\"color:#0f62fe\">{BRAND}</a><br>{} {}.</td></tr>",
         escape(home),
-        escape(chrome.site),
         escape(chrome.sent_to),
         escape(to)
     );
@@ -262,7 +257,7 @@ mod tests {
     #[test]
     fn text_and_html_carry_the_same_content() {
         let email = compose(Locale::Es, "https://site.test/es", "a@b.com", content(true));
-        assert_eq!(email.subject, "Título <b> · Torneos QC");
+        assert_eq!(email.subject, "Título <b> · Telefrag");
         for part in [
             "Primeiro & único.",
             "\n042917\n",

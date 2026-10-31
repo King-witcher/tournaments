@@ -6,7 +6,7 @@ Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "séri
 
 | Arquivo | O que tem |
 |---|---|
-| `decisions/stack.md` | Produto, stack e hospedagem, Redis (cota e o que entra), ids e segredos, repositório e CI, organização do código, estratégia de testes |
+| `decisions/stack.md` | Produto (nome e logo), stack e hospedagem, Redis (cota e o que entra), ids e segredos, repositório e CI, organização do código, estratégia de testes |
 | `decisions/auth.md` | Logins (Discord, Google, senha), PKCE, vincular, limites de tentativa, CSRF e cabeçalhos, sessão |
 | `decisions/mail.md` | Resend, forma canônica e domínios recusados, cadastro por código/link, recuperação, limites de envio e por IP, avisos de segurança |
 | `decisions/tenants.md` | Comunidades, papéis, convites, membros inativos, posse |

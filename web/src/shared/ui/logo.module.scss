@@ -1,0 +1,22 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Os dois desenhos encostados: o respiro entre o ícone e o nome já está no
+// quadro do nome.
+.logo {
+  display: flex;
+}
+
+// 32px dentro dos 48px do cabeçalho; a largura sai da proporção do desenho.
+.part {
+  block-size: spacing.$spacing-07;
+  fill: currentColor;
+}
+
+// No celular, as ações da barra (comunidades, sininho, idioma, a pessoa)
+// ocupam quase toda a largura: o nome sai e fica o ícone.
+.wordmark {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}

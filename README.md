@@ -1,4 +1,4 @@
-# Torneios de Quake Champions
+# Telefrag
 
 Site multi-tenant para organizar torneios de Quake Champions. API em Rust (Axum + sqlx), frontend em Next.js. Decisões do projeto em [`docs/decisions.md`](docs/decisions.md) (índice por área).
 

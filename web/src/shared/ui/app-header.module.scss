@@ -1,9 +1,5 @@
-// O nome do site não quebra a linha no celular: quem cede espaço é o nome de
-// quem está logado, na barra, que pode encolher abaixo do conteúdo dela.
-.name {
-  white-space: nowrap;
-}
-
+// No celular, quem cede espaço é o nome de quem está logado, na barra, que
+// pode encolher abaixo do conteúdo dela; o logo fica inteiro.
 .bar {
   min-inline-size: 0;
 }
