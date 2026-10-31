@@ -379,7 +379,11 @@ async fn fetch_login(
         }
     };
     result.map_err(|err| {
-        tracing::error!(error = ?err, provider = provider.as_str(), "provedor falhou na troca do code");
+        tracing::error!(
+            error = format_args!("{err:#}"),
+            provider = provider.as_str(),
+            "provedor falhou na troca do code"
+        );
         ApiError::new(StatusCode::BAD_GATEWAY, codes.failed)
     })
 }

@@ -206,7 +206,7 @@ impl Ticket {
         let Err(err) = self.mailer.send(email).await else {
             return true;
         };
-        tracing::error!(error = ?err, subject = %email.subject, "envio de email falhou");
+        tracing::error!(error = format_args!("{err:#}"), subject = %email.subject, "envio de email falhou");
         let to = self.cooldown.then_some(self.to.as_str());
         if let Err(err) = kv::release(&self.redis, to, &self.day).await {
             tracing::error!(error = ?err, "reserva do email que falhou não foi devolvida");
