@@ -45,7 +45,7 @@ async fn a_ready_match_mentions_the_players_who_linked_discord() {
     assert_eq!(
         hits[0].body,
         json!({
-            "content": "SÃ©rie pronta em **Copa de Outubro** (wb-1-1): <@111222333> vs P2\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1",
+            "content": "Série pronta em **Copa de Outubro** (wb-1-1): <@111222333> vs P2\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1",
             "allowed_mentions": { "parse": [], "users": ["111222333"] }
         })
     );
@@ -154,7 +154,7 @@ async fn the_series_and_the_podium_of_a_finished_tournament() {
     assert_eq!(
         s.fake.texts(),
         [
-            "**Copa de Outubro**, sÃ©rie wb-1-1: P2 venceu P1 (2-1).\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1",
+            "**Copa de Outubro**, série wb-1-1: P2 venceu P1 (2-1).\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1",
             "**Copa de Outubro** terminou. Pódio:\n1. P2\n2. P1\nhttp://localhost:4001/pt/quake-br/copa",
         ]
     );
@@ -198,7 +198,7 @@ async fn the_organization_is_mentioned_on_a_contested_map() {
     let hit = &s.fake.hits()[0];
     assert_eq!(
         hit.body["content"],
-        "<@999> P1 contestou a partida 1 da sÃ©rie wb-1-1 de **Copa de Outubro**. A organização precisa resolver.\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1"
+        "<@999> P1 contestou a partida 1 da série wb-1-1 de **Copa de Outubro**. A organização precisa resolver.\nhttp://localhost:4001/pt/quake-br/copa/matches/wb-1-1"
     );
     assert_eq!(hit.body["allowed_mentions"]["users"], json!(["999"]));
 }
@@ -421,10 +421,10 @@ async fn the_veto_notices_reach_the_channel() {
         s.fake.texts(),
         [
             format!(
-                "<@444555666>: P1 está pronto para o veto da sÃ©rie wb-1-1 de **Copa de Outubro** e espera você.\n{link}"
+                "<@444555666>: P1 está pronto para o veto da série wb-1-1 de **Copa de Outubro** e espera você.\n{link}"
             ),
             format!(
-                "O veto da sÃ©rie wb-1-1 de **Copa de Outubro** começou: P1 vs <@444555666>\n{link}"
+                "O veto da série wb-1-1 de **Copa de Outubro** começou: P1 vs <@444555666>\n{link}"
             ),
         ]
     );

@@ -6,7 +6,7 @@ import styles from "./section.module.scss";
 type Props = {
   /** Título da seção (h2). */
   title: ReactNode;
-  /** Uma frase sobre a seção, embaixo do título. */
+  /** Uma frase embaixo do título, só com o que o título e o conteúdo não dizem. */
   description?: ReactNode;
   /** Ação da seção, à direita do título (no celular, embaixo). */
   action?: ReactNode;

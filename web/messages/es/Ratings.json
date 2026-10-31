@@ -26,12 +26,12 @@
     "noGame": "Ninguno todavía",
     "adjusted": "Ajustes de la organización",
     "adjustedValue": "{points} (ya sumados al rating)",
-    "none": "Todavía sin rating. Aparece en la primera partida confirmada de un torneo que cuenta. Empieza con {initial}.",
-    "provisionalHint": "Provisorio. Con menos de {count} partidas, el rating todavía cambia mucho en cada partida."
+    "none": "Todavía sin rating. Hay que jugar al menos una partida.",
+    "provisionalHint": "Con menos de {count} partidas, el rating todavía cambia mucho."
   },
   "games": {
     "title": "Últimas partidas",
-    "description": "Los más recientes que contaron para el rating (hasta {count}).",
+    "description": "Las más recientes que contaron para el rating, hasta {count}.",
     "label": "Últimas partidas que contaron",
     "tournament": "Torneo",
     "opponent": "Rival",
@@ -44,12 +44,11 @@
     "points": "Puntos",
     "after": "Rating después",
     "when": "Cuándo",
-    "left": "se fue",
-    "empty": "Ninguna partida que cuente, entre los torneos que ves."
+    "left": "se fue"
   },
   "adjustments": {
     "title": "Ajustes manuales",
-    "description": "Puntos de más o de menos dados por la organización, con el motivo. Entran en el rating en el orden en que se hicieron; solo la organización ve esta lista.",
+    "description": "Solo la organización ve esta lista.",
     "label": "Ajustes manuales del rating",
     "when": "Cuándo",
     "points": "Puntos",
@@ -59,11 +58,11 @@
     "empty": "Ningún ajuste.",
     "open": "Ajustar rating",
     "modalTitle": "Ajustar el rating de {name}",
-    "hint": "Suma (o quita) puntos ahora, sin contar como partida. Queda registrado con el motivo y contigo como autor.",
+    "hint": "No cuenta como partida. Queda registrado con el motivo y tu nombre.",
     "delta": "Puntos",
-    "deltaHint": "De -1000 a 1000, sin cero. Negativo quita puntos.",
+    "deltaHint": "Negativo quita puntos.",
     "reasonLabel": "Motivo",
-    "reasonHint": "Hasta 280 caracteres. Ej.: rating de otra liga, sanción.",
+    "reasonHint": "Por ejemplo, rating de otra liga o sanción.",
     "submit": "Ajustar"
   },
   "settings": {
@@ -89,7 +88,7 @@
   },
   "tournament": {
     "label": "Rating",
-    "counts": "Cuenta para el rating de la comunidad",
-    "doesNotCount": "No cuenta para el rating"
+    "counts": "Cada partida actualiza el rating",
+    "doesNotCount": "No cambia el rating"
   }
 }

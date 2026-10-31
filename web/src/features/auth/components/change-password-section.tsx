@@ -24,11 +24,10 @@ export async function ChangePasswordSection() {
   }
   const { username } = result.logins;
 
+  // O nome de usuário de agora já vem no campo: sem a linha "Seu nome de
+  // usuário" embaixo do título.
   return (
-    <Section
-      title={t("changeTitle")}
-      description={username ? t("current", { username }) : undefined}
-    >
+    <Section title={t("changeTitle")}>
       {username ? (
         <ChangePasswordForm username={username} />
       ) : (

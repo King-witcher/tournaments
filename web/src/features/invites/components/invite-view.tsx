@@ -48,22 +48,15 @@ export async function InviteView({ token }: { token: string }) {
   const member = viewer?.membership === "member";
   // Já é membro e não há o que aceitar (nem inscrição a fazer).
   const done = member && (!tournament || viewer.registered);
+  // O botão já diz o que aceitar faz (entrar, inscrever-se ou os dois); a
+  // nota só para quem volta, que recupera o apelido e o histórico.
   const notes = [
-    tournament &&
-      !member &&
-      !closed &&
-      t("tournamentHint", { tenant: invite.tenant_name }),
     viewer?.membership === "former" &&
       !done &&
       t("returning", {
         tenant: invite.tenant_name,
         nickname: viewer.nickname ?? "",
       }),
-    member &&
-      tournament &&
-      !done &&
-      !closed &&
-      t("memberRegisters", { tenant: invite.tenant_name }),
   ].filter((note) => typeof note === "string");
 
   return (

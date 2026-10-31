@@ -12,7 +12,7 @@ import { StatusTag } from "@/shared/ui/status-tag";
 import { formatPoints } from "../lib/format-points";
 import styles from "./rated-games.module.scss";
 
-/** Quantos mapas a API manda (o texto diz "até N"). */
+/** Quantas partidas a API manda (o texto diz "até N"). */
 const RECENT = 20;
 
 type Props = {
@@ -21,9 +21,10 @@ type Props = {
 };
 
 /**
- * "Últimos mapas" na página da pessoa: torneio (a linha abre a partida),
- * adversário, mapa, resultado, pontos e o rating depois, do mais recente ao
- * mais antigo. Só os torneios que quem vê vê (a API filtra).
+ * "Últimas partidas" na página da pessoa: torneio (a linha abre a série),
+ * adversário, mapa, resultado, pontos e o rating depois, da mais recente à
+ * mais antiga. Sem nenhuma, quem chama não mostra a seção (o "ainda sem
+ * rating" acima já diz).
  */
 export function RatedGames({ tenant, games }: Props) {
   const t = useTranslations("Ratings.games");
@@ -82,7 +83,6 @@ export function RatedGames({ tenant, games }: Props) {
             },
           };
         })}
-        empty={{ text: t("empty") }}
       />
     </Section>
   );

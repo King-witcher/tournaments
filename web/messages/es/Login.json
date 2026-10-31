@@ -8,15 +8,14 @@
     "login": "Nombre de usuario o email",
     "submit": "Enviar enlace",
     "sentTitle": "Pedido recibido",
-    "sent": "Si hay una cuenta con contraseña y email confirmado para “{login}”, enviamos el enlace a su email. Vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
+    "sent": "Si hay una cuenta con contraseña para “{login}”, enviamos el enlace a su email. Vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
     "again": "Pedir otro enlace",
-    "noEmail": "Una cuenta sin email registrado no tiene recuperación por email. Si le vinculaste Discord o Google, entra con él.",
     "remembered": "¿Recordaste la contraseña?",
     "backToLogin": "Entrar"
   },
   "reset": {
     "title": "Nueva contraseña",
-    "text": "Elige la contraseña nueva. Al guardarla, entras en la cuenta y sus otras sesiones se cierran.",
+    "text": "Al guardar, se cierran las otras sesiones de la cuenta.",
     "submit": "Guardar y entrar",
     "requestAgain": "Pedir otro enlace"
   },

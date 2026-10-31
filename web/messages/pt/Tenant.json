@@ -21,7 +21,7 @@
     "viaLink": "link {hint}",
     "viaLegacyLink": "link de convite",
     "viaTournament": "{via} · inscrição em {tournament}",
-    "empty": "Ninguém na comunidade ainda. Gere um link na aba Convites para chamar quem vai jogar.",
+    "empty": "Ninguém na comunidade ainda.",
     "actions": "Ações de {name}",
     "makeOrganizer": "Tornar organizador",
     "makePlayer": "Tornar jogador",
@@ -50,7 +50,7 @@
     "chooseFirst": "Escolha quem vai receber a posse.",
     "submit": "Transferir posse",
     "confirm": "{name} vira o dono da comunidade e você vira organizador. Para ter a posse de volta, só se {name} transferir para você.",
-    "empty": "Ainda não há outro membro para receber a posse. Convide alguém e, quando a pessoa entrar, volte aqui.",
+    "empty": "Ainda não há outro membro para receber a posse.",
     "invite": "Convidar alguém"
   },
   "invites": {
@@ -69,13 +69,13 @@
     "copy": "Copiar o link",
     "copied": "Copiado!",
     "revoke": "Revogar",
-    "revokeConfirm": "Revogar {has, select, yes {o link {link}} other {este link}}? Quem ainda não usou não consegue mais entrar por ele; dá para gerar outro depois."
+    "revokeConfirm": "Revogar {has, select, yes {o link {link}} other {este link}}? Ninguém mais entra por ele."
   },
   "deletion": {
     "title": "Excluir comunidade",
-    "description": "A comunidade é excluída 7 dias depois do pedido, com os torneios, as inscrições, os resultados e os convites. Até lá ela fica só leitura (ninguém muda nada nela), e você pode cancelar. Se algum torneio estiver em andamento, encerre ou desfaça o início antes.",
+    "description": "A comunidade é excluída 7 dias depois do pedido, com tudo o que tem dentro. Até lá, ela fica só leitura, e você pode cancelar. Se algum torneio estiver em andamento, encerre ou desfaça o início antes.",
     "submit": "Excluir comunidade",
-    "confirm": "Agendar a exclusão da comunidade para daqui a 7 dias? Até lá ela fica só leitura para todos; na data, é apagada com tudo o que tem dentro, sem volta.",
+    "confirm": "Agendar a exclusão da comunidade? Na data, ela é apagada com tudo o que tem dentro, sem volta.",
     "scheduledTitle": "Exclusão agendada",
     "scheduled": "A comunidade vai ser excluída em <date></date>, com tudo o que tem dentro. Até lá, ela fica só leitura.",
     "cancel": "Cancelar exclusão"

@@ -49,7 +49,6 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
         </StatusTag>
       }
     >
-      {situation === "missed_check_in" && <p>{t("checkIn.missed")}</p>}
       {entry?.next_match && (
         <NextMatchLink
           next={entry.next_match}

@@ -68,7 +68,9 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
           )}
         </Section>
       </div>
-      <RatedGames tenant={tenant} games={rating.games} />
+      {rating.games.length > 0 && (
+        <RatedGames tenant={tenant} games={rating.games} />
+      )}
       {rating.adjustments && (
         <RatingAdjustments adjustments={rating.adjustments} />
       )}

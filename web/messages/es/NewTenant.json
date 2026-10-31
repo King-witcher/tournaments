@@ -4,9 +4,8 @@
   "loginRequired": "Inicia sesión para crear una comunidad.",
   "name": "Nombre",
   "slug": "Dirección",
-  "slugHint": "Identifica la comunidad en el enlace y no se puede cambiar después. El enlace queda {address}",
+  "slugHint": "El enlace de la comunidad será {address}. No cambia después.",
   "slugInvalid": "No puede terminar con guion.",
   "slugPlaceholder": "tu-direccion",
-  "limit": "Cada persona puede ser dueña de hasta 3 comunidades.",
   "submit": "Crear comunidad"
 }

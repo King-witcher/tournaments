@@ -17,7 +17,6 @@ export default async function NewTenantPage() {
       <PageHeader
         breadcrumbs={[{ href: "/", label: tNav("home") }]}
         title={t("title")}
-        meta={t("limit")}
       />
       <Suspense fallback={<FormSkeleton label={false} />}>
         <RequireLogin message={t("loginRequired")}>

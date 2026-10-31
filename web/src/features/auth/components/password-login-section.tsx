@@ -31,7 +31,7 @@ export async function PasswordLoginSection({
     <div id={LOGIN_SECTION.password} tabIndex={-1}>
       <Section
         title={t("title")}
-        description={username ? t("current", { username }) : t("none")}
+        description={username ? t("current", { username }) : undefined}
       >
         {!username ? (
           hasEmail ? (

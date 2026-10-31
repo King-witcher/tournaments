@@ -8,11 +8,11 @@ import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
 import { getLogins } from "../server";
 import { DeleteAccountForm } from "./delete-account-form";
-import styles from "./delete-account-section.module.scss";
 
 /**
- * A zona de perigo da aba Perfil (`DangerZone`): excluir a conta, com o prazo, como cancelar
- * e o que acontece na data. Dono de comunidade não exclui: no lugar do
+ * A zona de perigo da aba Perfil (`DangerZone`): excluir a conta, com o prazo
+ * e como cancelar (o que acontece na data fica na confirmação, que aparece
+ * na hora de excluir). Dono de comunidade não exclui: no lugar do
  * botão, o motivo e o link para as configurações de cada comunidade dele
  * (transferir a posse ou excluir). Fica em `<Suspense>`.
  */
@@ -29,7 +29,6 @@ export async function DeleteAccountSection() {
     <DangerZone>
       <Section level={3} title={t("title")} description={t("description")}>
         <Stack gap={5}>
-          <p className={styles.consequences}>{t("consequences")}</p>
           {owned.length > 0 ? (
             <>
               {/* Os links ficam fora do aviso: o InlineNotification do Carbon

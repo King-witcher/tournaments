@@ -108,7 +108,7 @@ export function DeleteAccountForm({ password }: Props) {
         confirmLabel={t("deletion.submit")}
         destructive
       >
-        {t("deletion.confirm")}
+        {`${t("deletion.confirm")} ${t("deletion.consequences")}`}
       </ConfirmModal>
     </Form>
   );

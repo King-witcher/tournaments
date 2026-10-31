@@ -134,6 +134,16 @@ Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo
 - Outros termos já decididos: "ordem da chave" (seeding, nunca "seed"), "captura de tela", "W.O.", "check-in", "chave", "rating", "todos contra todos" (nunca "round robin"), "queda do K".
 - Dois-pontos só em aposto, lista ou rótulo ("Rating: 1500"). Para explicar, ponha ponto e comece outro período: "Faça o check-in na página do torneio. Quem não fizer, não entra em nenhum time." A API também segue isto nos emails e nas mensagens do Discord.
 
+### Como escrever
+
+O texto diz só o que a pessoa não sabe e não vai descobrir logo em seguida. Para cada frase, pergunte o que ela faria diferente sem a frase; se nada, corte. Cortar não é ficar vago: nomeie a coisa ("a série pronta", "o fator K"), dê a data ou o número quando importam e não tire o que a pessoa precisa para decidir (o que se perde, o que não volta, o que falta fazer).
+
+- **Não repita a tela.** Título, etiqueta, botão e coluna já falam: a etiqueta "Inscrição feita" dispensa "Você está inscrito."; o botão "Ver os inscritos" dispensa "Até lá, confira quem está inscrito."; o título "Nova senha" dispensa "Escolha a senha nova."
+- **Estado vazio é o estado e a ação**: "Nenhum link de inscrição." e o botão, não "Gere um e mande para quem você quer inscrever…".
+- **Fica de fora**: regra interna ("vale para os próximos envios"), mecânica que se percebe ao usar (o pedido de refazer no veto), definição do óbvio ("Completo é o time com 2 jogadores"), o porquê de uma exigência evidente ("A conta precisa de pelo menos um jeito de entrar.") e a exceção de cada caso entre parênteses quando a regra geral basta ("quando abrir vaga", não "(alguém sair ou as vagas aumentarem)").
+- **Cada coisa na hora e para quem age**: a consequência de uma ação no modal de confirmação, não acima do botão; o limite no campo e no erro, não na descrição; a validade do convite só para quem gerencia; a explicação longa na página que a usa, não no resumo que leva a ela.
+- **Um fato por frase, curta, com ponto no fim.** Sem jargão de sistema ("API", "banco") e sem nada com cara de texto gerado (dois-pontos encadeando explicação, "ou seja", listas de todos os casos).
+
 ## Quando quebrar um componente
 
 Quebre quando aparecer qualquer um destes sinais:
@@ -164,8 +174,8 @@ Utilidade antes de enfeite: cada estilo precisa de um motivo de uso (hierarquia,
   - Caractere que o campo não aceita não entra: `filter` do `TextInput` (`slugChars`, `usernameChars`, `digitsOnly` em `shared/lib/input-filters.ts`); `maxLength` já corta o excesso; `NumberInput` recusa letra, `e`, `+`, vírgula e ponto (e `-` sem `negative`).
   - Valor fora do limite fica inválido, com a mensagem curta do limite no `invalidText` do campo: número, na hora (`min`/`max`, "Use de 1 a 10."); texto (`minLength`, `pattern` com `patternMessage`, `type="email"`, `required`, `sameAs` da senha repetida), depois que a pessoa sai do campo pela primeira vez e dali em diante a cada tecla, para "mínimo de 3" não ficar vermelho na primeira letra.
   - Regra que só o chamador sabe (uma data que precisa ficar à frente de agora): `problem` do `TextInput`/`DateTimeInput`, a mensagem já traduzida, que aparece na hora e bloqueia o envio.
-  - O `helperText` diz o que o campo é e o que acontece com ele, nunca a faixa nem o tamanho. O erro que a API devolve continua no `invalid`/`invalidText` do campo (`invalidProps`) e vale mais que o do campo.
-- **Estado vazio e erro**: o `EmptyState` diz o próximo passo, com a ação; erro sempre traduzido, junto do controle que falhou (`invalidText`, `ErrorText`) ou acima dos botões (`FormError`).
+  - O `helperText` só existe quando o rótulo não basta: diz o que o campo é ou um efeito que não se vê, nunca a faixa nem o tamanho. O erro que a API devolve continua no `invalid`/`invalidText` do campo (`invalidProps`) e vale mais que o do campo.
+- **Estado vazio e erro**: o `EmptyState` diz o estado e põe a ação (o botão), sem ensinar o uso (ver "Como escrever"); erro sempre traduzido, junto do controle que falhou (`invalidText`, `ErrorText`) ou acima dos botões (`FormError`).
 
 ## MCP do Carbon
 

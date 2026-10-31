@@ -1,19 +1,19 @@
 {
   "title": "Torneios de Quake Champions",
-  "subtitle": "Organize torneios de duelo da sua comunidade: inscrição, check-in, chave e resultados num lugar só.",
+  "subtitle": "Os torneios da sua comunidade, em duelo ou em times, da inscrição ao resultado.",
   "loading": "Carregando o início…",
   "anonymous": {
-    "hint": "Para participar, entre ou crie uma conta. Quem recebeu um link de convite pode abri-lo direto. Ele leva ao cadastro.",
+    "hint": "Recebeu um link de convite? Abra-o, que ele leva ao cadastro.",
     "login": "Entrar",
     "signup": "Criar conta"
   },
   "status": {
-    "unavailable": "A API respondeu, mas o banco está indisponível.",
-    "offline": "Não foi possível falar com a API."
+    "unavailable": "O site está com problemas agora. Tente de novo daqui a pouco.",
+    "offline": "Não foi possível conectar ao servidor. Tente de novo daqui a pouco."
   },
   "tournaments": {
     "title": "Seus torneios",
-    "noneActive": "Nenhum torneio seu em andamento ou com inscrição aberta. Os torneios da comunidade ficam na página dela.",
+    "noneActive": "Nenhum torneio seu em andamento ou com inscrição aberta.",
     "finished": "Encerrados recentemente",
     "rank": "{rank}º",
     "range": "{from}º–{to}º",
@@ -39,7 +39,7 @@
   },
   "tenants": {
     "title": "Minhas comunidades",
-    "empty": "Você ainda não participa de nenhuma comunidade. Crie uma ou peça um link de convite.",
+    "empty": "Você ainda não participa de nenhuma comunidade. Para entrar numa, peça o link de convite a quem organiza.",
     "create": "Criar comunidade"
   }
 }

@@ -33,7 +33,7 @@ pub fn signup_confirmation(
                 url,
             },
             note: Some(format!(
-                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email. A conta não é criada sem ele."
+                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email, e a conta não é criada."
             )),
         },
         Locale::Es => Content {
@@ -48,7 +48,7 @@ pub fn signup_confirmation(
                 url,
             },
             note: Some(format!(
-                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email. La cuenta no se crea sin él."
+                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email, y la cuenta no se crea."
             )),
         },
     };
@@ -208,9 +208,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme seu email".into(),
-            paragraphs: vec![
-                "Este email foi indicado para a sua conta. Ele só passa a ser o email da conta quando você confirmar.".into(),
-            ],
+            paragraphs: vec!["Confirme para que este passe a ser o email da sua conta.".into()],
             code: None,
             alert: None,
             action: Action {
@@ -223,9 +221,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
         },
         Locale::Es => Content {
             title: "Confirma tu email".into(),
-            paragraphs: vec![
-                "Este email se indicó para tu cuenta. Solo pasa a ser el email de la cuenta cuando lo confirmes.".into(),
-            ],
+            paragraphs: vec!["Confirma para que este pase a ser el email de tu cuenta.".into()],
             code: None,
             alert: None,
             action: Action {

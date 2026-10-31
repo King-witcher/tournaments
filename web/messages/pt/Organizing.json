@@ -5,7 +5,7 @@
     "where": "{match}, partida {game}",
     "whereMap": "{match}, partida {game} ({map})",
     "by": "{player} contestou <ago></ago>",
-    "byUnknown": "Contestado <ago></ago>"
+    "byUnknown": "Contestada <ago></ago>"
   },
   "startDue": {
     "tag": "Hora de iniciar",

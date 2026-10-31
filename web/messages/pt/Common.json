@@ -41,7 +41,7 @@
     "search": "Buscar",
     "clearSearch": "Limpar a busca",
     "actions": "Ações",
-    "noResults": "Nada encontrado para “{query}”. Confira a grafia ou limpe a busca.",
+    "noResults": "Nada encontrado para “{query}”.",
     "previousPage": "Página anterior",
     "nextPage": "Próxima página",
     "itemsPerPage": "Por página:",

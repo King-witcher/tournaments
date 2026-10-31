@@ -35,10 +35,10 @@
     "code_expired": "Este código não vale mais. Use o link do email ou reenvie o email.",
     "email_taken": "Esse email já é de outra conta.",
     "email_unchanged": "Esse já é o email da sua conta.",
-    "email_required": "Para criar nome de usuário e senha, cadastre e confirme antes um email na conta. É por ele que você recupera a senha se esquecer.",
+    "email_required": "Cadastre e confirme antes um email na conta. É por ele que você recupera a senha.",
     "no_email": "Sua conta não tem email.",
     "owns_tenants": "Você é dono de uma comunidade. Transfira a posse ou exclua a comunidade antes de excluir a conta.",
-    "password_needs_email": "Com nome de usuário e senha na conta, o email não sai. É por ele que você recupera a senha. Remova antes a senha.",
+    "password_needs_email": "Para remover o email, remova antes a senha. É por ele que você a recupera.",
     "session_not_found": "Essa sessão já foi encerrada."
   },
   "email": {
@@ -60,7 +60,7 @@
     "confirmation_mismatch": "O endereço digitado não confere com o da comunidade.",
     "deletion_scheduled": "Esta comunidade vai ser excluída e, até lá, nada muda nela.",
     "deletion_not_scheduled": "A exclusão desta comunidade não está agendada.",
-    "tournament_in_progress": "Há um torneio em andamento. Encerre o torneio ou desfaça o início antes de excluir a comunidade."
+    "tournament_in_progress": "Há um torneio em andamento. Encerre-o ou desfaça o início antes."
   },
   "invite": {
     "not_found": "Convite não encontrado. Confira o link.",
@@ -69,7 +69,7 @@
   },
   "member": {
     "not_found": "Membro não encontrado.",
-    "is_owner": "Isso não vale para o dono. O papel dele não muda e ninguém o remove.",
+    "is_owner": "O dono não muda de papel nem pode ser removido.",
     "owner_must_transfer": "O dono não sai da comunidade. Transfira a posse antes.",
     "remove_self": "Para sair da comunidade, use \"Sair da comunidade\".",
     "owner_limit_reached": "Esse membro já é dono do máximo de {max} comunidades.",
@@ -103,7 +103,7 @@
     "schedule_locked": "O torneio já começou. Data de início e check-in não mudam mais.",
     "check_in_closed": "O check-in não está aberto.",
     "check_in_disabled": "Este torneio não tem check-in.",
-    "check_in_not_open": "Abra o check-in antes de iniciar. Só quem fizer check-in entra na chave.",
+    "check_in_not_open": "Abra o check-in antes de iniciar.",
     "not_registration": "Isso só vale com as inscrições abertas.",
     "not_in_progress": "O torneio não está em andamento.",
     "not_published": "Publique o torneio antes.",
@@ -125,7 +125,7 @@
     "already_registered": "Esse membro já está inscrito.",
     "not_found": "Esse membro não está inscrito.",
     "not_registered": "Você não está inscrito neste torneio.",
-    "not_in_bracket": "Esse inscrito ficou fora da chave (sem check-in). Não há do que desistir."
+    "not_in_bracket": "Esse inscrito ficou fora da chave, sem check-in."
   },
   "format": {
     "invalid_best_of": "Melhor de {best_of} não vale. Use um número ímpar (1, 3, 5...).",
@@ -143,7 +143,7 @@
     "order_invalid": "A lista de elegíveis mudou (alguém fez ou desfez o check-in). Recarregue a página e ajuste de novo."
   },
   "bracket": {
-    "not_found": "A chave ainda não existe. O torneio não começou."
+    "not_found": "O torneio ainda não começou."
   },
   "match": {
     "not_found": "Série não encontrada.",

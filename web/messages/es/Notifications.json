@@ -47,19 +47,19 @@
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notificaciones con el sitio cerrado",
-    "description": "Check-in abierto, serie lista y partida enviada por el rival; para la organización, partida impugnada y hora de iniciar. Cada navegador se activa por separado. Actívalas en cada dispositivo que uses.",
+    "description": "Check-in abierto, serie lista y partida enviada por el rival. Para la organización, también partida impugnada y hora de iniciar.",
     "loading": "Revisando este navegador…",
-    "on": "Activadas en este navegador. Las notificaciones llegan incluso con el sitio cerrado.",
-    "off": "Desactivadas en este navegador. Con el sitio abierto, las notificaciones aparecen en la página.",
+    "on": "Activadas en este navegador.",
+    "off": "Desactivadas en este navegador. Cada dispositivo se activa por separado.",
     "enable": "Activar notificaciones",
     "disable": "Desactivar notificaciones",
     "failed": "No se pudieron cambiar las notificaciones de este navegador. Inténtalo de nuevo.",
     "deniedTitle": "Notificaciones bloqueadas en este navegador.",
     "denied": "Para activarlas, permite las notificaciones de este sitio en la configuración del navegador (en el ícono junto a la dirección) y recarga la página.",
-    "unsupported": "Este navegador no recibe notificaciones con el sitio cerrado. Con el sitio abierto, aparecen en la página.",
-    "serverOff": "Las notificaciones con el sitio cerrado están desactivadas por ahora. Con el sitio abierto, aparecen en la página.",
+    "unsupported": "Este navegador no recibe notificaciones con el sitio cerrado.",
+    "serverOff": "No disponibles por ahora.",
     "installTitle": "En iPhone y iPad, instala el sitio primero.",
-    "install": "Las notificaciones con el sitio cerrado solo llegan con el sitio en la pantalla de inicio. Toca Compartir, luego Agregar a inicio, abre el sitio desde el ícono nuevo y actívalas aquí.",
+    "install": "Toca Compartir y Agregar a inicio. Después, abre el sitio desde el ícono nuevo y actívalas aquí.",
     "prompt": "Recibe avisos de lo que pasa en el torneo, como la serie lista, incluso con el sitio cerrado.",
     "dismiss": "Ahora no",
     "promptInstall": "Para recibir notificaciones en el iPhone con el sitio cerrado, instala el sitio con Compartir → Agregar a inicio.",
@@ -69,7 +69,7 @@
   },
   "sound": {
     "title": "Sonido",
-    "description": "Con el sitio abierto, cada notificación suena brevemente, también con la pestaña en segundo plano (salvo que las notificaciones con el sitio cerrado estén activadas; ahí avisa la del sistema). La elección vale para este navegador.",
+    "description": "Suena con el sitio abierto, incluso en otra pestaña. Vale para este navegador.",
     "label": "Sonar con las notificaciones",
     "test": "Escuchar el sonido"
   },
@@ -79,7 +79,7 @@
     "title": "Notificaciones",
     "loading": "Cargando las notificaciones…",
     "failed": "No se pudieron cargar las notificaciones. Ciérralas y ábrelas de nuevo.",
-    "empty": "Ninguna notificación en los últimos 30 días. Los avisos de check-in, partida y mapa quedan aquí, aunque ya no estén en la pantalla.",
+    "empty": "Ninguna notificación en los últimos 30 días.",
     "new": "Nueva",
     "kept": "Las notificaciones quedan aquí por 30 días."
   }

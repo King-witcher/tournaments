@@ -88,7 +88,7 @@ pub const CATALOG: &[Spec] = &[
             "match.ready",
             true,
             To::Players,
-            "SÃ©rie pronta em **{tournament}** ({match}): {to}\n{link}",
+            "Série pronta em **{tournament}** ({match}): {to}\n{link}",
             "Serie lista en **{tournament}** ({match}): {to}\n{link}",
         )
     },
@@ -96,7 +96,7 @@ pub const CATALOG: &[Spec] = &[
         "match.opponent_ready",
         true,
         To::Players,
-        "{to}: {opponent} está pronto para o veto da sÃ©rie {match} de **{tournament}** e espera você.\n{link}",
+        "{to}: {opponent} está pronto para o veto da série {match} de **{tournament}** e espera você.\n{link}",
         "{to}: {opponent} está listo para el veto de la serie {match} de **{tournament}** y te espera.\n{link}",
     ),
     // Desligado numa configuração nova: quem clicou em "Pronto" já está na
@@ -107,8 +107,8 @@ pub const CATALOG: &[Spec] = &[
             "match.veto_started",
             false,
             To::Players,
-            "O veto da sÃ©rie {match} de **{tournament}** começou: {to}\n{link}",
-            "Empezó el veto de la partida {match} de **{tournament}**: {to}\n{link}",
+            "O veto da série {match} de **{tournament}** começou: {to}\n{link}",
+            "Empezó el veto de la serie {match} de **{tournament}**: {to}\n{link}",
         )
     },
     spec(
@@ -122,8 +122,8 @@ pub const CATALOG: &[Spec] = &[
         "match.game_contested",
         true,
         To::Staff,
-        "{to} {player} contestou a partida {game} da sÃ©rie {match} de **{tournament}**. A organização precisa resolver.\n{link}",
-        "{to} {player} impugnó el mapa {game} de la partida {match} de **{tournament}**. La organización debe resolverlo.\n{link}",
+        "{to} {player} contestou a partida {game} da série {match} de **{tournament}**. A organização precisa resolver.\n{link}",
+        "{to} {player} impugnó la partida {game} de la serie {match} de **{tournament}**. La organización debe resolverla.\n{link}",
     ),
     spec(
         "tournament.finished",
@@ -136,8 +136,8 @@ pub const CATALOG: &[Spec] = &[
         "match.series_decided",
         false,
         To::Nobody,
-        "**{tournament}**, sÃ©rie {match}: {winner} venceu {loser}{score_part}.\n{link}",
-        "**{tournament}**, partida {match}: {winner} venció a {loser}{score_part}.\n{link}",
+        "**{tournament}**, série {match}: {winner} venceu {loser}{score_part}.\n{link}",
+        "**{tournament}**, serie {match}: {winner} venció a {loser}{score_part}.\n{link}",
     ),
 ];
 

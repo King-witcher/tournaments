@@ -4,9 +4,8 @@
   "loginRequired": "Entre para criar uma comunidade.",
   "name": "Nome",
   "slug": "Endereço",
-  "slugHint": "Identifica a comunidade no link e não muda depois. O link fica {address}",
+  "slugHint": "O link da comunidade será {address}. Não muda depois.",
   "slugInvalid": "Não pode terminar com hífen.",
   "slugPlaceholder": "seu-endereco",
-  "limit": "Cada pessoa pode ser dona de até 3 comunidades.",
   "submit": "Criar comunidade"
 }

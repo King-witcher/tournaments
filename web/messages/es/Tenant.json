@@ -21,7 +21,7 @@
     "viaLink": "enlace {hint}",
     "viaLegacyLink": "enlace de invitación",
     "viaTournament": "{via} · inscripción en {tournament}",
-    "empty": "Todavía no hay nadie en la comunidad. Genera un enlace en la pestaña Invitaciones para llamar a quien va a jugar.",
+    "empty": "Todavía no hay nadie en la comunidad.",
     "actions": "Acciones de {name}",
     "makeOrganizer": "Hacer organizador",
     "makePlayer": "Hacer jugador",
@@ -50,7 +50,7 @@
     "chooseFirst": "Elige quién recibirá la propiedad.",
     "submit": "Transferir propiedad",
     "confirm": "{name} pasa a ser el dueño de la comunidad y tú pasas a organizador. Para recuperar la propiedad, {name} tendría que transferírtela.",
-    "empty": "Todavía no hay otro miembro que pueda recibir la propiedad. Invita a alguien y, cuando entre, vuelve aquí.",
+    "empty": "Todavía no hay otro miembro que pueda recibir la propiedad.",
     "invite": "Invitar a alguien"
   },
   "invites": {
@@ -69,13 +69,13 @@
     "copy": "Copiar el enlace",
     "copied": "¡Copiado!",
     "revoke": "Revocar",
-    "revokeConfirm": "¿Revocar {has, select, yes {el enlace {link}} other {este enlace}}? Quien aún no lo usó ya no puede entrar con él; se puede generar otro después."
+    "revokeConfirm": "¿Revocar {has, select, yes {el enlace {link}} other {este enlace}}? Nadie más entra con él."
   },
   "deletion": {
     "title": "Eliminar la comunidad",
-    "description": "La comunidad se elimina 7 días después del pedido, con los torneos, las inscripciones, los resultados y las invitaciones. Hasta entonces queda en solo lectura (nadie cambia nada en ella), y puedes cancelar. Si algún torneo está en curso, termínalo o deshaz el inicio antes.",
+    "description": "La comunidad se elimina 7 días después del pedido, con todo lo que tiene dentro. Hasta entonces queda en solo lectura, y puedes cancelar. Si algún torneo está en curso, termínalo o deshaz el inicio antes.",
     "submit": "Eliminar comunidad",
-    "confirm": "¿Programar la eliminación de la comunidad para dentro de 7 días? Hasta entonces queda en solo lectura para todos; en la fecha, se borra con todo lo que tiene dentro, sin vuelta atrás.",
+    "confirm": "¿Programar la eliminación de la comunidad? En la fecha, se borra con todo lo que tiene dentro, sin vuelta atrás.",
     "scheduledTitle": "Eliminación programada",
     "scheduled": "La comunidad se eliminará el <date></date>, con todo lo que tiene dentro. Hasta entonces, queda en solo lectura.",
     "cancel": "Cancelar la eliminación"

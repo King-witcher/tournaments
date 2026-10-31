@@ -92,7 +92,6 @@ export function PasswordResetForm() {
               <PasswordInput
                 id={fieldId(prefix, "password")}
                 labelText={tAccount("newPassword")}
-                helperText={tAuth("passwordHint")}
                 required
                 autoComplete="new-password"
                 minLength={8}

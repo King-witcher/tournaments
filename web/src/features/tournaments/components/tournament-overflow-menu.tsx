@@ -21,6 +21,8 @@ type Props = {
   undoCheckIn: boolean;
   /** Quem vê está inscrito, com a inscrição aberta: pode cancelar. */
   withdrawRegistration: boolean;
+  /** Inscrição só por link: a confirmação de cancelar diz como voltar. */
+  inviteOnly: boolean;
   /** Em andamento: desfazer o início apaga `results` partidas com mapa ou resultado. */
   undoStart?: { results: number; hasCheckIn: boolean };
   deleteDraft: boolean;
@@ -37,6 +39,7 @@ export function TournamentOverflowMenu({
   slug,
   undoCheckIn,
   withdrawRegistration,
+  inviteOnly,
   undoStart,
   deleteDraft,
 }: Props) {
@@ -74,7 +77,13 @@ export function TournamentOverflowMenu({
     items.push({
       label: tParticipants("registration.withdraw"),
       destructive: true,
-      confirm: { question: tParticipants("registration.withdrawConfirm") },
+      confirm: {
+        question: tParticipants(
+          inviteOnly
+            ? "registration.withdrawConfirmInviteOnly"
+            : "registration.withdrawConfirm",
+        ),
+      },
       onSelect: () =>
         run(
           () =>

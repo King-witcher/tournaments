@@ -47,19 +47,19 @@
   "tabTitle": "({count}) {title}",
   "push": {
     "title": "Notificações com o site fechado",
-    "description": "Check-in aberto, série pronta e partida enviada pelo adversário; para a organização, partida contestada e hora de iniciar. Cada navegador se ativa à parte. Ative em cada aparelho que você usa.",
+    "description": "Check-in aberto, série pronta e partida enviada pelo adversário. Para a organização, também partida contestada e hora de iniciar.",
     "loading": "Conferindo este navegador…",
-    "on": "Ativadas neste navegador. As notificações chegam mesmo com o site fechado.",
-    "off": "Desligadas neste navegador. Com o site aberto, as notificações aparecem na página.",
+    "on": "Ativadas neste navegador.",
+    "off": "Desativadas neste navegador. Cada aparelho se ativa à parte.",
     "enable": "Ativar notificações",
     "disable": "Desativar notificações",
     "failed": "Não deu para mudar as notificações deste navegador. Tente de novo.",
     "deniedTitle": "Notificações bloqueadas neste navegador.",
     "denied": "Para ativar, permita as notificações deste site nas configurações do navegador (no ícone ao lado do endereço) e recarregue a página.",
-    "unsupported": "Este navegador não recebe notificações com o site fechado. Com o site aberto, elas aparecem na página.",
-    "serverOff": "As notificações com o site fechado estão desligadas por enquanto. Com o site aberto, elas aparecem na página.",
+    "unsupported": "Este navegador não recebe notificações com o site fechado.",
+    "serverOff": "Indisponíveis por enquanto.",
     "installTitle": "No iPhone e no iPad, instale o site primeiro.",
-    "install": "As notificações com o site fechado só chegam com o site na tela inicial. Toque em Compartilhar, depois em Adicionar à Tela de Início, abra o site pelo ícone novo e ative aqui.",
+    "install": "Toque em Compartilhar e em Adicionar à Tela de Início. Depois, abra o site pelo ícone novo e ative aqui.",
     "prompt": "Seja avisado do que acontece no torneio, como a série pronta, mesmo com o site fechado.",
     "dismiss": "Agora não",
     "promptInstall": "Para receber notificações no iPhone com o site fechado, instale o site com Compartilhar → Adicionar à Tela de Início.",
@@ -69,7 +69,7 @@
   },
   "sound": {
     "title": "Som",
-    "description": "Com o site aberto, cada notificação toca um som curto, também com a aba em segundo plano (a não ser que as notificações com o site fechado estejam ativadas; aí quem avisa é a do sistema). A escolha vale para este navegador.",
+    "description": "Toca com o site aberto, mesmo em outra aba. Vale para este navegador.",
     "label": "Tocar som com as notificações",
     "test": "Ouvir o som"
   },
@@ -79,7 +79,7 @@
     "title": "Notificações",
     "loading": "Carregando as notificações…",
     "failed": "Não deu para carregar as notificações. Feche e abra de novo.",
-    "empty": "Nenhuma notificação nos últimos 30 dias. Os avisos de check-in, partida e mapa ficam aqui, mesmo depois de sumirem da tela.",
+    "empty": "Nenhuma notificação nos últimos 30 dias.",
     "new": "Nova",
     "kept": "As notificações ficam aqui por 30 dias."
   }

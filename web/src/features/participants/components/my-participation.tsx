@@ -13,6 +13,7 @@ import { StatusTag } from "@/shared/ui/status-tag";
 import { SITUATION_STATUS } from "../lib/situation";
 import { MyBracketSituation } from "./my-bracket-situation";
 import { ParticipationTile } from "./participation-tile";
+import { TeamSituationTag } from "./team-situation-tag";
 
 type Props = {
   tenant: string;
@@ -24,7 +25,8 @@ type Props = {
 };
 
 /**
- * "Sua situação" para quem joga: a situação uma vez, na etiqueta, e só o que
+ * "Sua situação" para quem joga: a situação uma vez, na etiqueta (no TDM, de
+ * reserva se os times já se formaram sem a pessoa), e só o que
  * a pessoa ainda precisa saber ou fazer (quando o check-in abre, o check-in
  * que falta, com o prazo e a contagem) e, depois de iniciar, a situação na
  * chave e a próxima partida. Para quem não está inscrito, só o motivo de não
@@ -40,6 +42,20 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
       {t(`situation.${situation}`, { place: "" })}
     </StatusTag>
   );
+  // No TDM, inscrito ou com o check-in feito pode já estar de reserva (os
+  // times foram formados sem ele): a etiqueta confere a formação.
+  const teamTag = (situation: "registered" | "checked_in") =>
+    tournament.mode === "tdm" ? (
+      <Suspense fallback={tag(situation)}>
+        <TeamSituationTag
+          tenant={tenant}
+          slug={tournament.slug}
+          situation={situation}
+        />
+      </Suspense>
+    ) : (
+      tag(situation)
+    );
 
   if (!tournament.registered) {
     if (organizer) return null;
@@ -70,7 +86,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
 
   if (status === "check_in") {
     if (tournament.checked_in) {
-      return <ParticipationTile tag={tag("checked_in")} suggestPush />;
+      return <ParticipationTile tag={teamTag("checked_in")} suggestPush />;
     }
     const startsAt = tournament.starts_at;
     return (
@@ -99,7 +115,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
       date: () => <LocalDateTime value={opensAt} />,
     });
   return (
-    <ParticipationTile tag={tag("registered")} suggestPush>
+    <ParticipationTile tag={teamTag("registered")} suggestPush>
       {checkInHint && <p>{checkInHint}</p>}
     </ParticipationTile>
   );

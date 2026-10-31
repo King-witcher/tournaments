@@ -41,8 +41,6 @@ export function LifecycleSection({ tenant, tournament, now }: Props) {
     hint = t(teams ? "noCheckInTdm" : "noCheckIn");
   } else if (status === "check_in") {
     hint = t(teams ? "checkInOpenTdm" : "checkInOpen");
-  } else if (status === "in_progress") {
-    hint = t("inProgress");
   } else if (status === "finished") {
     hint = t("finished");
   }

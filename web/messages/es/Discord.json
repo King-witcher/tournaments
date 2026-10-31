@@ -10,7 +10,7 @@
   "url": {
     "label": "Dirección del webhook",
     "newLabel": "Dirección del nuevo webhook",
-    "hint": "Quien tiene esta dirección publica en el canal. No la compartas. Una vez guardada, ya no se muestra aquí.",
+    "hint": "Quien tiene esta dirección publica en el canal. No la compartas.",
     "tipLabel": "Cómo crear el webhook",
     "tip": "En Discord, abre Ajustes del servidor, Integraciones, Webhooks, crea un webhook para el canal y pega aquí su dirección.",
     "invalid": "Usa la dirección de un webhook de Discord."
@@ -38,11 +38,11 @@
   },
   "mention": {
     "label": "Mencionar con @ a quien vinculó Discord a su cuenta",
-    "hint": "Vale para los avisos de la serie (lista, rival listo, veto) y para los de la organización. Quien no lo vinculó aparece por su apodo."
+    "hint": "En los avisos de la serie y en los de la organización. Quien no lo vinculó aparece por su apodo."
   },
   "saved": "Configuración guardada.",
   "test": "Enviar prueba",
   "tested": "Mensaje de prueba enviado al canal.",
   "remove": "Quitar webhook",
-  "removeConfirm": "¿Quitar el webhook? Los avisos dejan de salir y los mensajes que esperan en la cola se descartan. El webhook en Discord sigue existiendo."
+  "removeConfirm": "¿Quitar el webhook? Los avisos dejan de salir, incluso los que esperan en la cola. El webhook sigue existiendo en Discord."
 }

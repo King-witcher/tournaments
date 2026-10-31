@@ -97,7 +97,6 @@ export function ChangeEmailForm({ current, hasPassword }: Props) {
           id={fieldId(prefix, "email")}
           type="email"
           labelText={t("label")}
-          helperText={current ? t("changeHint") : t("hint")}
           required
           autoComplete="email"
           maxLength={254}

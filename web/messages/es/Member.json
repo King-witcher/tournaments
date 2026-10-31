@@ -26,8 +26,8 @@
       "champion": "1.er puesto",
       "reserve": "Suplente, sin equipo"
     },
-    "empty": "{name} todavía no jugó aquí. No hay inscripción en ningún torneo de esta comunidad que tú veas.",
-    "emptyYou": "Todavía no jugaste aquí. Los torneos con inscripción abierta están en la pestaña Torneos.",
+    "empty": "{name} todavía no jugó aquí.",
+    "emptyYou": "Todavía no jugaste aquí.",
     "browse": "Ver los torneos",
     "withTeam": "{tournament} · equipo: {team}"
   }

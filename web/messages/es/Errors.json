@@ -1,6 +1,6 @@
 {
   "title": "Algo salió mal",
-  "text": "No se pudo mostrar esta página. Inténtalo de nuevo; si el problema continúa, vuelve al inicio e inténtalo más tarde.",
+  "text": "No se pudo mostrar esta página.",
   "retry": "Intentar de nuevo",
   "reference": "Referencia para el soporte: {digest}"
 }

@@ -1,6 +1,6 @@
 {
   "title": "Algo deu errado",
-  "text": "Não foi possível mostrar esta página. Tente de novo; se o problema continuar, volte para o início e tente mais tarde.",
+  "text": "Não foi possível mostrar esta página.",
   "retry": "Tentar de novo",
   "reference": "Referência para o suporte: {digest}"
 }

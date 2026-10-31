@@ -17,9 +17,9 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
-import { FormModal } from "@/shared/ui/form-modal";
 import { Notice } from "@/shared/ui/notice";
 import { NumberInput } from "@/shared/ui/number-input";
 
@@ -50,8 +50,9 @@ type Result = FormResult<Field> & { savedValues?: Values };
 /**
  * Os parâmetros do Elo (rating inicial e o fator K, do inicial ao mínimo,
  * com a queda). O rating é sempre refeito do zero, então salvar sempre
- * recalcula: o botão abre um Modal que diz isso, com "Cancelar" e "Salvar e
- * recalcular".
+ * recalcula: o botão abre a confirmação que diz isso (`ConfirmModal`, com o
+ * foco no "Não", já que não há campo), e o "Salvar" fica pendente até a
+ * resposta.
  */
 export function RatingSettingsForm({
   slug,
@@ -148,21 +149,29 @@ export function RatingSettingsForm({
           {field("k_decay", t("kDecay"), t("kDecayHint"))}
           {general && <FormError>{general}</FormError>}
           {saved && <Notice kind="success">{t("saved")}</Notice>}
-          <FormActions submitRef={submitButton} disabled={!canSubmit} />
+          <FormActions
+            submitRef={submitButton}
+            pending={pending}
+            disabled={!canSubmit}
+          />
         </Stack>
       </Form>
-      {asking && (
-        <FormModal
-          title={t("recompute.title")}
-          submitLabel={t("recompute.submit")}
-          pending={pending}
-          returnFocusTo={submitButton}
-          onSubmit={save}
-          onClose={() => setAsking(false)}
-        >
-          <p>{t("recompute.text")}</p>
-        </FormModal>
-      )}
+      <ConfirmModal
+        open={asking}
+        title={t("recompute.title")}
+        confirmLabel={t("recompute.submit")}
+        onConfirm={() => {
+          setAsking(false);
+          save();
+        }}
+        onClose={() => {
+          setAsking(false);
+          // O Modal sai da árvore e o foco cairia no body.
+          requestAnimationFrame(() => submitButton.current?.focus());
+        }}
+      >
+        {t("recompute.text")}
+      </ConfirmModal>
     </>
   );
 }

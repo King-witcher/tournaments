@@ -4,8 +4,8 @@
     "tag": "Partida impugnada",
     "where": "{match}, partida {game}",
     "whereMap": "{match}, partida {game} ({map})",
-    "by": "{player} lo impugnó <ago></ago>",
-    "byUnknown": "Impugnado <ago></ago>"
+    "by": "{player} la impugnó <ago></ago>",
+    "byUnknown": "Impugnada <ago></ago>"
   },
   "startDue": {
     "tag": "Hora de iniciar",

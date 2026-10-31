@@ -43,6 +43,7 @@ export async function TournamentOverflow({
       tenant={tenant}
       slug={tournament.slug}
       undoStart={undoStart}
+      inviteOnly={tournament.admission === "invite_only"}
       {...flags}
     />
   );
