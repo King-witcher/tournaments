@@ -8,7 +8,9 @@
     "start": "next start -p 4001",
     "lint": "biome check",
     "format": "biome check --write",
-    "gen:api": "openapi-typescript http://localhost:4000/openapi.json -o src/shared/api/schema.d.ts"
+    "gen:api": "openapi-typescript http://localhost:4000/openapi.json -o src/shared/api/schema.d.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.91.0",
@@ -21,12 +23,18 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
+    "@storybook/addon-a11y": "10.6.3",
+    "@storybook/addon-docs": "10.6.3",
+    "@storybook/addon-themes": "10.6.3",
+    "@storybook/nextjs-vite": "10.6.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "openapi-typescript": "^7.13.0",
     "sass": "^1.106.1",
     "sass-loader": "^17.1.0",
-    "typescript": "^5"
+    "storybook": "10.6.3",
+    "typescript": "^5",
+    "vite": "8.3.4"
   }
 }

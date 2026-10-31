@@ -75,6 +75,17 @@ Os que não se deduzem do nome:
 
 Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo (com um grupo só, os campos direto num `Stack gap={6}`), erro de campo no `invalidText` (`invalidProps`), `FormError` acima dos botões, `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos. Modelo: `features/tenants/components/create-tenant-form.tsx`. Validação: "Formulários: validação" em Princípios de interface; `useFormValidity` (`shared/hooks/`) e os filtros de `shared/lib/input-filters.ts`.
 
+### Storybook
+
+`bun run storybook` (http://localhost:6006) mostra cada componente da `shared/ui` nas variações que ele expõe, com tema (`white`/`g100`), idioma e largura (`Celular (390px)`, `md`) na barra de ferramentas e a aba Accessibility (axe) para contraste. `bun run build-storybook` gera o site estático em `storybook-static/` (ignorado).
+
+- A história fica ao lado do componente: `button.tsx` → `button.stories.tsx`, CSF3 como em `button.stories.tsx`. Título `"<Grupo>/<Componente>"`, com os grupos de "Biblioteca `shared/ui`" acima (Página, Ação, Formulário, Listas, Estado e conteúdo; mais Cabeçalho e Data e hora).
+- Uma história por variação do Carbon que o componente expõe (consulte `code_search` no MCP) e por estado próprio (`pending`, inválido, travado), mais uma que põe as variações lado a lado quando comparar ajuda. Componente que muda no celular ganha uma com `globals: { viewport: { value: "phone" } }`.
+- O conteúdo de exemplo pode ser texto em português direto na história (não passa pelo messages); o idioma da barra troca só os textos dos componentes.
+- Modal, toast e outro elemento fixo: `parameters: { docs: { story: { inline: false, height: "500px" } } }`, senão cobre a página de documentação.
+- Componente novo ou com variação nova na `shared/ui` ganha a história no mesmo commit. Componente de feature fica de fora: depende de dado da API.
+- O Storybook usa o Vite, não o Next: `next/navigation`, `next/link`, `next/image` e `next/font` são simulados pelo `@storybook/nextjs-vite`, e o Sass do Carbon lê o `loadPaths` de `.storybook/main.ts`. Componente async (Server Component que busca dado) não roda lá.
+
 ## Textos (messages)
 
 - Um arquivo por namespace de primeiro nível (`messages/pt/Tenant.json` e `messages/es/Tenant.json`); chave nova vai no namespace do seu fluxo, nos dois idiomas. `es` precisa ter as mesmas chaves de `pt` (o `tsc` e o `build` acusam).

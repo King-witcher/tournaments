@@ -20,7 +20,7 @@ Backend (em `backend/`):
 - `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/` (compila sem banco, `SQLX_OFFLINE=true`, como no Render). Rode e faça commit sempre que criar ou mudar um `query!`, senão o deploy falha.
 - `.cargo/config.toml` define o `DATABASE_URL` local para as macros e, no Windows, o linker `rust-lld`.
 
-Frontend (em `web/`), sempre Bun (nada de npm/pnpm): `bun run dev`, `bun run build`, `bun run lint` e `bun run format` (Biome; ainda não há testes de frontend), `bun run gen:api` (regenera `src/shared/api/schema.d.ts` do OpenAPI, com a API rodando).
+Frontend (em `web/`), sempre Bun (nada de npm/pnpm): `bun run dev`, `bun run build`, `bun run lint` e `bun run format` (Biome; ainda não há testes de frontend), `bun run gen:api` (regenera `src/shared/api/schema.d.ts` do OpenAPI, com a API rodando), `bun run storybook` (os componentes da `shared/ui` em http://localhost:6006).
 
 Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.example`. Setup do banco e do Redis locais no `README.md`.
 
