@@ -17,20 +17,18 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
-import { usernameChars } from "@/shared/lib/input-filters";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
-import { TextInput } from "@/shared/ui/text-input";
 import { type AuthField, errorField } from "../lib/auth-field";
 import { LOGIN_SECTION } from "../lib/login-sections";
 
 /**
- * Dá nome de usuário e senha à conta logada (que entra pelo Discord ou pelo
- * Google e já tem o email que recupera a senha: sem ele, o formulário nem
- * aparece). Nome, senha e a senha repetida. O erro de um campo (nome em uso,
- * senhas diferentes) vai nele, que recebe o foco; o resto, acima do botão. O
- * cadastro com senha é o `SignupForm`.
+ * Dá senha à conta logada (que entra pelo Discord ou pelo Google e já tem o
+ * email, que passa a ser o login: sem ele, o formulário nem aparece). Senha
+ * e a senha repetida. O erro de um campo (senhas diferentes) vai nele, que
+ * recebe o foco; o resto, acima do botão. O cadastro com senha é o
+ * `SignupForm`.
  */
 export function CredentialsForm() {
   const t = useTranslations("Auth");
@@ -39,7 +37,6 @@ export function CredentialsForm() {
   const router = useRouter();
   const prefix = useId();
   const { ref, canSubmit } = useFormValidity();
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
@@ -49,7 +46,7 @@ export function CredentialsForm() {
         return { error: t("passwordsDiffer"), field: "confirm" };
       }
       const outcome = await callApi(
-        api.POST("/auth/password", { body: { username, password } }),
+        api.POST("/auth/password", { body: { password } }),
       );
       if (!outcome.ok) {
         return {
@@ -70,21 +67,6 @@ export function CredentialsForm() {
   return (
     <Form ref={ref} action={submit}>
       <Stack gap={6}>
-        <TextInput
-          id={fieldId(prefix, "username")}
-          labelText={t("username")}
-          helperText={t("usernameAbout")}
-          required
-          autoComplete="username"
-          minLength={3}
-          maxLength={20}
-          pattern="[A-Za-z0-9_.\-]{3,20}"
-          patternMessage={t("usernameInvalid")}
-          filter={usernameChars}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          {...invalidProps(result, "username")}
-        />
         <PasswordInput
           id={fieldId(prefix, "password")}
           labelText={t("password")}

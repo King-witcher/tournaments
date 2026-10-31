@@ -1,30 +1,24 @@
 //! Cadastros com senha esperando a confirmação do email. A conta só vai para
 //! o banco quando o link é aberto ou o código é digitado; até lá, e por no
 //! máximo o TTL do link:
-//! - `signup:{email}`: hash com `username`, `password_hash` (argon2),
+//! - `signup:{email}`: hash com `display_name`, `password_hash` (argon2),
 //!   `locale`, `token` (hash do token do link, em hexadecimal), `code` (hash
 //!   do código, com o do token como sal; sai quando as tentativas acabam) e
 //!   `code_attempts` (códigos conferidos);
 //! - `signup_token:{hash do token}`: o email do cadastro. Vale uma vez só
-//!   (`GETDEL`), pelo link ou pelo código;
-//! - `signup_username:{username em minúsculas}`: o email do cadastro que
-//!   reservou o username, para outro cadastro não pegar o mesmo nome antes da
-//!   confirmação.
+//!   (`GETDEL`), pelo link ou pelo código.
 //!
 //! Um cadastro por email: pedir de novo troca o anterior (o link e o código
-//! velhos param de valer e o username dele fica livre).
+//! velhos param de valer).
 
 use std::collections::HashMap;
 
 use redis::{Cmd, RedisResult};
 
-use crate::{
-    auth::username::username_key,
-    shared::{Locale, Redis, token},
-};
+use crate::shared::{Locale, Redis, token};
 
 pub struct PendingSignup {
-    pub username: String,
+    pub display_name: String,
     /// Forma canônica.
     pub email: String,
     pub password_hash: String,
@@ -55,10 +49,6 @@ fn token_key(redis: &Redis, hash: &str) -> String {
     redis.key(format_args!("signup_token:{hash}"))
 }
 
-fn username_reservation(redis: &Redis, username: &str) -> String {
-    redis.key(format_args!("signup_username:{}", username_key(username)))
-}
-
 /// Hash do código, com o hash do token do mesmo cadastro como sal. Com um
 /// milhão de códigos possíveis, o hash não esconde o código de quem lê o
 /// Redis; só o tira do texto puro. O que segura são as tentativas.
@@ -66,70 +56,28 @@ fn code_hash(link_hash: &str, code: &str) -> String {
     token::hex(&token::hash_token(&format!("{link_hash}:{code}")))
 }
 
-/// Reserva `username` para o cadastro de `email`. Devolve o email do cadastro
-/// que já o reservou, se for outro; pedir de novo com o mesmo email vale (a
-/// reserva é dele).
-pub async fn reserve_username(
-    redis: &Redis,
-    username: &str,
-    email: &str,
-    ttl_secs: u64,
-) -> RedisResult<Option<String>> {
-    let reservation = username_reservation(redis, username);
-    let reserved: Option<String> = redis
-        .query(
-            redis::cmd("SET")
-                .arg(&reservation)
-                .arg(email)
-                .arg("NX")
-                .arg("EX")
-                .arg(ttl_secs),
-        )
-        .await?;
-    if reserved.is_some() {
-        return Ok(None);
-    }
-    let holder: Option<String> = redis.query(&Cmd::get(&reservation)).await?;
-    Ok(holder.filter(|holder| holder != email))
-}
-
-/// Hash da senha do cadastro de `email` que espera a confirmação.
-pub async fn pending_password_hash(redis: &Redis, email: &str) -> RedisResult<Option<String>> {
-    redis
-        .query(&Cmd::hget(signup_key(redis, email), "password_hash"))
-        .await
-}
-
 /// Desfaz o cadastro de `email` que espera a confirmação: o link e o código
-/// param de valer e o username dele fica livre.
+/// param de valer.
 pub async fn drop_signup(redis: &Redis, email: &str) -> RedisResult<()> {
     let key = signup_key(redis, email);
-    let (username, token): (Option<String>, Option<String>) = redis
-        .query(redis::cmd("HMGET").arg(&key).arg("username").arg("token"))
-        .await?;
+    let token: Option<String> = redis.query(&Cmd::hget(&key, "token")).await?;
     let mut pipe = redis::pipe();
     pipe.atomic().del(&key).ignore();
     if let Some(token) = token {
         pipe.del(token_key(redis, &token)).ignore();
     }
-    if let Some(username) = username {
-        pipe.del(username_reservation(redis, &username)).ignore();
-    }
     redis.query_pipe(&pipe).await
 }
 
-/// Guarda o cadastro, com o username já reservado (`reserve_username`), no
-/// lugar do anterior do mesmo email, e devolve o token do link e o código.
+/// Guarda o cadastro no lugar do anterior do mesmo email e devolve o token do
+/// link e o código.
 pub async fn store_signup(
     redis: &Redis,
     pending: &PendingSignup,
     ttl_secs: u64,
 ) -> RedisResult<SignupSecrets> {
-    let reservation = username_reservation(redis, &pending.username);
     let key = signup_key(redis, &pending.email);
-    let (old_username, old_token): (Option<String>, Option<String>) = redis
-        .query(redis::cmd("HMGET").arg(&key).arg("username").arg("token"))
-        .await?;
+    let old_token: Option<String> = redis.query(&Cmd::hget(&key, "token")).await?;
 
     let link = token::random_token();
     let code = token::random_code();
@@ -139,15 +87,12 @@ pub async fn store_signup(
     if let Some(old) = old_token {
         pipe.del(token_key(redis, &old)).ignore();
     }
-    if let Some(old) = old_username.filter(|u| username_key(u) != username_key(&pending.username)) {
-        pipe.del(username_reservation(redis, &old)).ignore();
-    }
     pipe.del(&key)
         .ignore()
         .hset_multiple(
             &key,
             &[
-                ("username", pending.username.as_str()),
+                ("display_name", pending.display_name.as_str()),
                 ("password_hash", pending.password_hash.as_str()),
                 ("locale", pending.locale.as_str()),
                 ("token", hash.as_str()),
@@ -158,8 +103,6 @@ pub async fn store_signup(
         .expire(&key, ttl_secs as i64)
         .ignore()
         .set_ex(token_key(redis, &hash), &pending.email, ttl_secs)
-        .ignore()
-        .set_ex(&reservation, &pending.email, ttl_secs)
         .ignore();
     redis.query_pipe::<()>(&pipe).await?;
     Ok(SignupSecrets { link, code })
@@ -234,29 +177,20 @@ async fn take_by_hash(redis: &Redis, hash: &str) -> RedisResult<Option<PendingSi
     if fields.get("token").map(String::as_str) != Some(hash) {
         return Ok(None);
     }
-    let (Some(username), Some(password_hash)) =
-        (fields.remove("username"), fields.remove("password_hash"))
-    else {
+    let (Some(display_name), Some(password_hash)) = (
+        fields.remove("display_name"),
+        fields.remove("password_hash"),
+    ) else {
         return Ok(None);
     };
     let locale = match fields.get("locale").map(String::as_str) {
         Some("es") => Locale::Es,
         _ => Locale::Pt,
     };
-    redis
-        .query::<()>(&Cmd::del(username_reservation(redis, &username)))
-        .await?;
     Ok(Some(PendingSignup {
-        username,
+        display_name,
         email,
         password_hash,
         locale,
     }))
-}
-
-/// Um cadastro ainda sem confirmação reservou este username.
-pub async fn username_reserved(redis: &Redis, username: &str) -> RedisResult<bool> {
-    redis
-        .query(&Cmd::exists(username_reservation(redis, username)))
-        .await
 }

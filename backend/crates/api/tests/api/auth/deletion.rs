@@ -1,6 +1,6 @@
 //! Excluir a conta: o pedido (senha, owner, sessões, email), entrar de novo
 //! cancela, e a execução pelo agendador (sai das comunidades, desiste dos
-//! torneios em andamento, anonimiza e libera username, email e Discord).
+//! torneios em andamento, anonimiza e libera email e Discord).
 
 use api::{auth::create_session, realtime};
 use axum::{
@@ -123,7 +123,7 @@ async fn signing_in_again_cancels_the_deletion() {
     let (status, body, _) = schedule(&app, &rapha, json!({ "current_password": PASSWORD })).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
-    let login = json!({ "username": "rapha", "password": PASSWORD });
+    let login = json!({ "email": "rapha@example.com", "password": PASSWORD });
     let (status, body, _) = send_json(&app, Method::POST, "/auth/login", None, login.clone()).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
@@ -294,7 +294,7 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
         (&json!(""), &json!(true))
     );
 
-    // O username, o email e o Discord ficam livres para outra conta.
+    // O email e o Discord ficam livres para outra conta.
     skip_cooldown(&db, &email_of("Rapha")).await;
     let again = super::signup(&app, &db, "Rapha", PASSWORD).await;
     assert_ne!(again.id, rapha.id);

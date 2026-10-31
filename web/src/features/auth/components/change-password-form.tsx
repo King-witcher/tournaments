@@ -16,44 +16,35 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
-import { usernameChars } from "@/shared/lib/input-filters";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { PasswordInput } from "@/shared/ui/password-input";
-import { TextInput } from "@/shared/ui/text-input";
 import { type AuthField, errorField } from "../lib/auth-field";
 
 /**
- * Troca o nome de usuário e/ou a senha, confirmando a senha atual. A senha
- * repetida só aparece quando há senha nova. O erro de um campo (senha atual
- * errada, nome em uso) vai nele, que recebe o foco.
+ * Troca a senha, confirmando a atual. O erro de um campo (senha atual
+ * errada, senhas diferentes) vai nele, que recebe o foco.
  */
-export function ChangePasswordForm({ username }: { username: string }) {
+export function ChangePasswordForm() {
   const t = useTranslations("Auth");
   const tAccount = useTranslations("Account");
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const prefix = useId();
   const { ref, canSubmit } = useFormValidity();
-  const [newUsername, setNewUsername] = useState(username);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [current, setCurrent] = useState("");
 
   const [result, submit, pending] = useActionState<FormResult<AuthField>>(
     async () => {
-      // Sem senha nova, a repetida nem aparece: não há o que comparar.
-      if (password && password !== confirm) {
+      if (password !== confirm) {
         return { error: t("passwordsDiffer"), field: "confirm" };
       }
       const outcome = await callApi(
         api.PATCH("/auth/password", {
-          body: {
-            current_password: current,
-            username: newUsername.trim() === username ? undefined : newUsername,
-            password: password || undefined,
-          },
+          body: { current_password: current, password },
         }),
       );
       if (!outcome.ok) {
@@ -76,25 +67,11 @@ export function ChangePasswordForm({ username }: { username: string }) {
   return (
     <Form ref={ref} action={submit}>
       <Stack gap={6}>
-        <TextInput
-          id={fieldId(prefix, "username")}
-          labelText={t("username")}
-          helperText={t("usernameAbout")}
-          required
-          autoComplete="username"
-          minLength={3}
-          maxLength={20}
-          pattern="[A-Za-z0-9_.\-]{3,20}"
-          patternMessage={t("usernameInvalid")}
-          filter={usernameChars}
-          value={newUsername}
-          onChange={(e) => setNewUsername(e.target.value)}
-          {...invalidProps(result, "username")}
-        />
         <PasswordInput
           id={fieldId(prefix, "password")}
           labelText={tAccount("password.newPassword")}
           helperText={tAccount("password.newPasswordHint")}
+          required
           autoComplete="new-password"
           minLength={8}
           maxLength={128}
@@ -102,18 +79,16 @@ export function ChangePasswordForm({ username }: { username: string }) {
           onChange={(e) => setPassword(e.target.value)}
           {...invalidProps(result, "password")}
         />
-        {password && (
-          <PasswordInput
-            id={fieldId(prefix, "confirm")}
-            labelText={t("confirmPassword")}
-            required
-            sameAs={password}
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            {...invalidProps(result, "confirm")}
-          />
-        )}
+        <PasswordInput
+          id={fieldId(prefix, "confirm")}
+          labelText={t("confirmPassword")}
+          required
+          sameAs={password}
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          {...invalidProps(result, "confirm")}
+        />
         <PasswordInput
           id={fieldId(prefix, "current")}
           labelText={tAccount("currentPassword")}

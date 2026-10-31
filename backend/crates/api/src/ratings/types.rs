@@ -25,7 +25,7 @@ pub struct RankingEntry {
     pub position: i64,
     pub user_id: i64,
     pub nickname: String,
-    /// Nome exibido do usuário: o do Discord ou o username do cadastro.
+    /// Nome exibido do usuário: o do Discord ou o do cadastro.
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub rating: i32,

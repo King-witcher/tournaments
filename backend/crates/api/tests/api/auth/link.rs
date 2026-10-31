@@ -21,7 +21,7 @@ async fn password_account_links_discord() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "google": false, "username": "Rapha", "email": "rapha@example.com" })
+        json!({ "discord": true, "google": false, "password": true, "email": "rapha@example.com" })
     );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", me.id)
         .fetch_one(&db)
@@ -117,7 +117,7 @@ async fn link_needs_the_password_and_a_flow_of_this_session() {
     // O fluxo é da sessão que o abriu: outra sessão da conta não o usa.
     let (status, _) = authorize(&app, "discord", Some(&me.cookie), Some(PASSWORD)).await;
     assert_eq!(status, StatusCode::OK);
-    let credentials = json!({ "username": "rapha", "password": PASSWORD });
+    let credentials = json!({ "email": "rapha@example.com", "password": PASSWORD });
     let (_, _, other) = send_json(&app, Method::POST, "/auth/login", None, credentials).await;
     let (status, body, _) =
         exchange(&app, "discord", "link", Some(&other.unwrap()), VERIFIER).await;
@@ -162,13 +162,7 @@ async fn unlink_needs_password() {
 
     // A senha vem com o email que a recupera.
     set_email(&db, id, "quaker@example.com").await;
-    let (status, _) = post(
-        &app,
-        "/auth/password",
-        &me,
-        json!({ "username": "quaker", "password": PASSWORD }),
-    )
-    .await;
+    let (status, _) = post(&app, "/auth/password", &me, json!({ "password": PASSWORD })).await;
     assert_eq!(status, StatusCode::CREATED);
     let (status, body) = unlink("errada!!").await;
     assert_eq!(
@@ -179,7 +173,7 @@ async fn unlink_needs_password() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": false, "google": false, "username": "quaker", "email": "quaker@example.com" })
+        json!({ "discord": false, "google": false, "password": true, "email": "quaker@example.com" })
     );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", id)
         .fetch_one(&db)

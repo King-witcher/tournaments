@@ -45,9 +45,9 @@ pub async fn change_email(
     if methods.email.as_deref() == Some(email.as_str()) {
         return Err(ApiError::conflict("auth.email_unchanged"));
     }
-    // Com senha, quem pegou a sessão não troca o email para depois recuperar
-    // a senha por ele.
-    if methods.username.is_some() {
+    // Com senha, quem pegou a sessão não troca o email (o login) para depois
+    // recuperar a senha por ele.
+    if methods.password {
         let current = body
             .current_password
             .ok_or(ApiError::forbidden("auth.wrong_password"))?;
@@ -62,7 +62,7 @@ pub async fn change_email(
     let message = match owner {
         Some(owner) => {
             let locale = Locale::from_db(&owner.locale)?;
-            emails::email_in_use(web, locale, &email, owner.username.as_deref())
+            emails::email_in_use(web, locale, &email, owner.has_password)
         }
         None => {
             let token =

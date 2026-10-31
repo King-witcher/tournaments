@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select user_id, username, password_hash from password_credentials",
+  "query": "select user_id, password_hash from password_credentials",
   "describe": {
     "columns": [
       {
@@ -16,17 +16,6 @@
       },
       {
         "ordinal": 1,
-        "name": "username",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "password_credentials",
-            "name": "username"
-          }
-        }
-      },
-      {
-        "ordinal": 2,
         "name": "password_hash",
         "type_info": "Text",
         "origin": {
@@ -42,9 +31,8 @@
     },
     "nullable": [
       false,
-      false,
       false
     ]
   },
-  "hash": "cde45f5dbc1570271a78a486c115b5cc7b1a09e6331c174ef16a0d87b70ec5f5"
+  "hash": "5a4f1a0832acc6b5d94a820c26de333892143f55eb21fe8a2e84606110200e9b"
 }

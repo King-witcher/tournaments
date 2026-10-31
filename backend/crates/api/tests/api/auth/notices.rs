@@ -1,5 +1,5 @@
-//! Avisos por email do que muda no acesso à conta: senha, username, Discord e
-//! email. Saem sem esperar a espera entre envios, que é dos links.
+//! Avisos por email do que muda no acesso à conta: senha, Discord e email.
+//! Saem sem esperar a espera entre envios, que é dos links.
 
 use api::{AppState, mail::Mail};
 use axum::{
@@ -41,7 +41,7 @@ async fn expect_notice(db: &PgPool, to: &str, subject: &str, path: &str) -> Stri
 }
 
 #[tokio::test]
-async fn password_and_username_changes() {
+async fn password_changes() {
     let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
@@ -53,35 +53,14 @@ async fn password_and_username_changes() {
         patch(&app, "/auth/password", &me, change).await.0,
         StatusCode::OK
     );
-    let text = expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/forgot").await;
-    assert!(text.contains("Rapha"), "{text}");
+    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/forgot").await;
 
-    let change = json!({ "current_password": NEW_PASSWORD, "username": "Rapha2" });
+    let change = json!({ "current_password": NEW_PASSWORD, "password": PASSWORD });
     assert_eq!(
         patch(&app, "/auth/password", &me, change).await.0,
         StatusCode::OK
     );
-    let text = expect_notice(&db, to, "nome de usuário foi trocado", "/pt/login/forgot").await;
-    assert!(text.contains("Rapha2"), "{text}");
-
-    let change = json!({
-        "current_password": NEW_PASSWORD,
-        "username": "Rapha3",
-        "password": PASSWORD,
-    });
-    assert_eq!(
-        patch(&app, "/auth/password", &me, change).await.0,
-        StatusCode::OK
-    );
-    expect_notice(&db, to, "nome de usuário e sua senha", "/pt/login/forgot").await;
-
-    // Sem mudança, sem aviso.
-    let change = json!({ "current_password": PASSWORD });
-    assert_eq!(
-        patch(&app, "/auth/password", &me, change).await.0,
-        StatusCode::OK
-    );
-    mailbox(&db).assert_empty().await;
+    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/forgot").await;
 
     assert_eq!(remove(&app, "/auth/password", &me).await, StatusCode::OK);
     expect_notice(
@@ -101,13 +80,13 @@ async fn creating_a_password() {
     add_discord(&db, me.id).await;
     set_email(&db, me.id, "q@outlook.com").await;
 
-    let body = json!({ "username": "Quaker", "password": PASSWORD });
+    let body = json!({ "password": PASSWORD });
     assert_eq!(
         post(&app, "/auth/password", &me, body).await.0,
         StatusCode::CREATED
     );
     let text = expect_notice(&db, "q@outlook.com", "agora tem senha", "/pt/login/forgot").await;
-    assert!(text.contains("Quaker"), "{text}");
+    assert!(text.contains("com este email e a senha"), "{text}");
 }
 
 #[tokio::test]
@@ -161,6 +140,10 @@ async fn email_change_warns_the_old_address() {
     .await;
     assert!(text.contains("novo@outlook.com"), "{text}");
     assert!(
+        text.contains("não serve mais para entrar"),
+        "com senha, o email era o login: {text}"
+    );
+    assert!(
         text.contains("aba Senha"),
         "com senha, a saída é trocá-la: {text}"
     );
@@ -205,7 +188,7 @@ async fn reset_by_link_right_after_the_link() {
 
     // O link acabou de sair para o mesmo endereço: o aviso não espera.
     super::skip_cooldown(&db, "rapha@example.com").await;
-    let body = json!({ "login": "Rapha" });
+    let body = json!({ "email": "rapha@example.com" });
     send_json(&app, Method::POST, "/auth/password/reset", None, body).await;
     let link = mailbox(&db).next().await;
     let body = json!({ "token": link_token(&link), "password": NEW_PASSWORD });

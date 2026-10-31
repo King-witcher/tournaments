@@ -45,10 +45,17 @@ pub struct UpdateMe {
 
 #[derive(Deserialize, ToSchema)]
 pub struct Credentials {
-    /// 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
-    /// removidos. Único sem diferenciar maiúsculas.
-    #[schema(example = "Rapha")]
-    pub username: String,
+    /// O email da conta, escrito de qualquer jeito que dê na forma canônica
+    /// (maiúsculas, `+etiqueta`, pontos no Gmail).
+    #[schema(example = "rapha@gmail.com")]
+    pub email: String,
+    /// 8 a 128 caracteres.
+    pub password: String,
+}
+
+/// Senha para a conta logada, que ainda não tem.
+#[derive(Deserialize, ToSchema)]
+pub struct NewPassword {
     /// 8 a 128 caracteres.
     pub password: String,
 }
@@ -56,10 +63,10 @@ pub struct Credentials {
 /// Cadastro com senha: a conta só é criada quando o link do email é aberto.
 #[derive(Deserialize, ToSchema)]
 pub struct Signup {
-    /// 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
-    /// removidos. Único sem diferenciar maiúsculas.
+    /// Nome exibido: 1 a 32 caracteres, uma linha; espaços nas pontas são
+    /// removidos. Não precisa ser único.
     #[schema(example = "Rapha")]
-    pub username: String,
+    pub display_name: String,
     /// 8 a 128 caracteres.
     pub password: String,
     /// Gravado na forma canônica: minúsculo, sem `+etiqueta` e, no Gmail, sem
@@ -97,9 +104,8 @@ pub struct LinkToken {
 
 #[derive(Deserialize, ToSchema)]
 pub struct PasswordResetRequest {
-    /// Username ou email da conta.
-    #[schema(example = "Rapha")]
-    pub login: String,
+    #[schema(example = "rapha@gmail.com")]
+    pub email: String,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -118,13 +124,12 @@ pub struct ChangeEmail {
     pub current_password: Option<String>,
 }
 
-/// Campos ausentes não mudam.
 #[derive(Deserialize, ToSchema)]
 pub struct ChangePassword {
     pub current_password: String,
-    pub username: Option<String>,
-    /// Trocar a senha encerra as outras sessões da conta.
-    pub password: Option<String>,
+    /// Senha nova, de 8 a 128 caracteres. Trocar encerra as outras sessões da
+    /// conta.
+    pub password: String,
 }
 
 /// Desligar um provedor (Discord ou Google) da conta.
@@ -188,9 +193,10 @@ pub struct SessionPath {
 pub struct LoginMethods {
     pub discord: bool,
     pub google: bool,
-    /// Username do login com senha, se a conta tem senha.
-    pub username: Option<String>,
-    /// Email confirmado, na forma canônica. Toda conta com senha tem (é por
-    /// ele que a senha esquecida volta); só a conta sem senha fica sem.
+    /// Entra com o email e a senha.
+    pub password: bool,
+    /// Email confirmado, na forma canônica. Toda conta com senha tem (é o
+    /// login dela e por ele a senha esquecida volta); só a conta sem senha
+    /// fica sem.
     pub email: Option<String>,
 }

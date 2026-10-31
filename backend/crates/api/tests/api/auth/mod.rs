@@ -216,16 +216,16 @@ async fn send_json(
     (status, json, session)
 }
 
-/// Email do cadastro de `username` nos helpers.
-fn email_of(username: &str) -> String {
-    format!("{}@example.com", username.to_lowercase())
+/// Email do cadastro de `name` nos helpers.
+fn email_of(name: &str) -> String {
+    format!("{}@example.com", name.to_lowercase())
 }
 
-/// Cria a conta pelo cadastro com senha (email `email_of(username)`,
-/// confirmado pelo link) e devolve o usuário com a sessão.
-async fn signup(app: &Router, db: &PgPool, username: &str, password: &str) -> User {
-    let email = email_of(username);
-    let body = json!({ "username": username, "password": password, "email": email });
+/// Cria a conta pelo cadastro com senha (nome exibido `name`, email
+/// `email_of(name)`, confirmado pelo link) e devolve o usuário com a sessão.
+async fn signup(app: &Router, db: &PgPool, name: &str, password: &str) -> User {
+    let email = email_of(name);
+    let body = json!({ "display_name": name, "password": password, "email": email });
     let (status, body, _) = send_json(app, Method::POST, "/auth/signup", None, body).await;
     assert_eq!(status, StatusCode::ACCEPTED, "{body}");
     confirm_signup(app, &mailbox(db).next().await).await

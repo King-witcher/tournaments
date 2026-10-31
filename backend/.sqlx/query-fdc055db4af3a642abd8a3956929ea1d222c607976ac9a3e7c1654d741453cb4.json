@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update password_credentials set password_hash = $2 where user_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fdc055db4af3a642abd8a3956929ea1d222c607976ac9a3e7c1654d741453cb4"
+}

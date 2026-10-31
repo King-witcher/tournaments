@@ -1,7 +1,7 @@
-//! Login com Discord e com Google (OAuth2) e com username e senha, sessão em
+//! Login com Discord e com Google (OAuth2) e com email e senha, sessão em
 //! cookie e o extractor `CurrentUser`. A conta pode ter os três logins, ligar
 //! e desligar cada um, mas nunca fica sem nenhum, e com senha tem sempre email
-//! (a recuperação; o banco também confere). Os provedores (`provider.rs`)
+//! (o login e a recuperação; o banco também confere). Os provedores (`provider.rs`)
 //! dividem o fluxo de `oauth.rs`, com PKCE gerado no navegador (o formato do
 //! state, do verifier e do challenge em `pkce.rs`); o que é de cada um fica em
 //! `discord.rs` e `google.rs`. O cadastro com senha exige email e só cria a
@@ -36,7 +36,6 @@ mod recovery;
 mod session;
 mod signup;
 mod types;
-mod username;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 

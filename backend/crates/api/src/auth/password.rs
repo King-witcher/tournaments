@@ -17,12 +17,12 @@ const MAX_LEN: usize = 128;
 
 /// Hashes e verificações ao mesmo tempo. Cada um aloca 19 MiB (o `m_cost`
 /// padrão), e o Render free tem 512 MB: sem fila, logins em massa (até de
-/// usernames que não existem) derrubariam a API por falta de memória. O resto
+/// emails sem conta) derrubariam a API por falta de memória. O resto
 /// espera a vez sem thread nem memória.
 static HASHING: Semaphore = Semaphore::const_new(2);
 
-/// Hash de uma senha que ninguém tem, para a verificação de um username
-/// inexistente levar o mesmo tempo e não revelar que ele não existe.
+/// Hash de uma senha que ninguém tem, para a verificação de um email sem
+/// conta levar o mesmo tempo e não revelar que ela não existe.
 static DUMMY_HASH: LazyLock<String> = LazyLock::new(|| hash_now("senha de ninguém"));
 
 /// Só o tamanho, em caracteres, sem regra de composição (como o NIST 800-63B).
@@ -43,7 +43,7 @@ pub async fn hash_password(password: String) -> Result<String, ApiError> {
     blocking(move || hash_now(&password)).await
 }
 
-/// Confere a senha. Sem hash (username inexistente) compara com um hash fixo
+/// Confere a senha. Sem hash (conta inexistente) compara com um hash fixo
 /// e devolve `false`.
 pub async fn verify_password(hash: Option<String>, password: String) -> Result<bool, ApiError> {
     blocking(move || match hash {

@@ -14,31 +14,30 @@ import { Notice } from "@/shared/ui/notice";
 import { TextInput } from "@/shared/ui/text-input";
 
 /**
- * Pede o link de recuperação pelo nome de usuário ou pelo email. A API
- * responde igual exista a conta ou não, então a resposta é neutra: "se
- * houver uma conta com senha e email confirmado, o link foi". Enviado, o
- * aviso fica no lugar do formulário (e recebe o foco); "Pedir outro link"
- * volta ao campo, com o que foi digitado. O campo já vem com o que estava no
- * login (`initialLogin`).
+ * Pede o link de recuperação pelo email da conta. A API responde igual
+ * exista a conta ou não, então a resposta é neutra: "se o email for de uma
+ * conta com senha, o link foi". Enviado, o aviso fica no lugar do formulário
+ * (e recebe o foco); "Pedir outro link" volta ao campo, com o que foi
+ * digitado. O campo já vem com o que estava no login (`initialEmail`).
  */
 export function ForgotPasswordForm({
-  initialLogin = "",
+  initialEmail = "",
 }: {
-  initialLogin?: string;
+  initialEmail?: string;
 }) {
   const t = useTranslations("Login.forgot");
   const errorMessage = useApiErrorMessage();
   const inputId = useId();
   const sentId = useId();
-  const [login, setLogin] = useState(initialLogin);
+  const [email, setEmail] = useState(initialEmail);
   const [sentFor, setSentFor] = useState<string>();
 
   const [error, submit, pending] = useActionState(async () => {
     const outcome = await callApi(
-      api.POST("/auth/password/reset", { body: { login } }),
+      api.POST("/auth/password/reset", { body: { email } }),
     );
     if (!outcome.ok) return errorMessage(outcome.code, outcome.params);
-    setSentFor(login.trim());
+    setSentFor(email.trim());
     focusIfLost(sentId);
     return undefined;
   }, undefined);
@@ -48,7 +47,7 @@ export function ForgotPasswordForm({
       <div id={sentId} tabIndex={-1}>
         <Stack gap={5}>
           <Notice kind="success" title={t("sentTitle")}>
-            {t("sent", { login: sentFor })}
+            {t("sent", { email: sentFor })}
           </Notice>
           <Button
             kind="tertiary"
@@ -69,14 +68,15 @@ export function ForgotPasswordForm({
       <Stack gap={6}>
         <TextInput
           id={inputId}
-          labelText={t("login")}
+          type="email"
+          labelText={t("email")}
           required
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
           maxLength={254}
-          value={login}
-          onChange={(e) => setLogin(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         {error && <FormError>{error}</FormError>}
         <Button type="submit" pending={pending}>

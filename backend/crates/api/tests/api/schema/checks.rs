@@ -307,15 +307,11 @@ async fn logins_and_secrets_keep_their_format() {
         |id: i64, address: &str| format!("update users set email = '{address}' where id = {id}");
     // A senha pede o email da conta (`password_needs_the_account_email`).
     exec(&db, &email(ana.id, "ana@outlook.com")).await.unwrap();
-    let password = |username: &'static str, hash: &'static str| {
-        sqlx::query(
-            "insert into password_credentials (user_id, username, password_hash)
-             values ($1, $2, $3)",
-        )
-        .bind(ana.id)
-        .bind(username)
-        .bind(hash)
-        .execute(&db)
+    let password = |hash: &'static str| {
+        sqlx::query("insert into password_credentials (user_id, password_hash) values ($1, $2)")
+            .bind(ana.id)
+            .bind(hash)
+            .execute(&db)
     };
     let identity = |provider: &'static str, id: &'static str| {
         sqlx::query(
@@ -328,15 +324,8 @@ async fn logins_and_secrets_keep_their_format() {
     };
     let argon = "$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA";
 
-    for username in ["ab", "com espaço", "ação", "a23456789012345678901"] {
-        assert_eq!(
-            rejected(password(username, argon).await),
-            rule(CHECK, "password_credentials_username_format"),
-            "{username}"
-        );
-    }
     assert_eq!(
-        rejected(password("Ana_1", "hunter22").await),
+        rejected(password("hunter22").await),
         rule(CHECK, "password_credentials_password_hash_format")
     );
     assert_eq!(
@@ -358,22 +347,14 @@ async fn logins_and_secrets_keep_their_format() {
         );
     }
     identity("google", "110248495921238986420").await.unwrap();
-    password("Ana_1", argon).await.unwrap();
+    password(argon).await.unwrap();
+    // Uma senha por conta.
+    assert_eq!(
+        rejected(password(argon).await),
+        rule(UNIQUE, "password_credentials_pkey")
+    );
     let bia = user(&db, "Bia").await;
     exec(&db, &email(bia.id, "bia@outlook.com")).await.unwrap();
-    assert_eq!(
-        rejected(
-            sqlx::query(
-                "insert into password_credentials (user_id, username, password_hash)
-                 values ($1, 'ANA_1', $2)"
-            )
-            .bind(bia.id)
-            .bind(argon)
-            .execute(&db)
-            .await
-        ),
-        rule(UNIQUE, "password_credentials_username_idx")
-    );
 
     for (change, name) in [
         ("display_name = ''", "users_display_name_check"),
@@ -425,8 +406,8 @@ async fn password_needs_the_account_email() {
     let ana = user(&db, "Ana").await;
     let bia = user(&db, "Bia").await;
     let password = format!(
-        "insert into password_credentials (user_id, username, password_hash)
-         values ({}, 'Ana_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
+        "insert into password_credentials (user_id, password_hash)
+         values ({}, '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
         ana.id
     );
     let email = |value: &str| format!("update users set email = {value} where id = {}", ana.id);

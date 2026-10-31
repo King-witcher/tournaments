@@ -167,7 +167,6 @@ async fn email_of_another_account_answers_the_same() {
     let notice = mailbox(&db).next().await;
     assert_eq!(notice.to, "rapha@example.com");
     assert!(notice.text.contains("já é da sua conta"), "{}", notice.text);
-    assert!(notice.text.contains("Rapha"), "{}", notice.text);
     assert!(
         !notice.text.contains("/email/confirm"),
         "sem link: {}",
@@ -213,7 +212,7 @@ async fn only_accounts_without_password_remove_the_email() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "google": false, "username": null, "email": null })
+        json!({ "discord": true, "google": false, "password": false, "email": null })
     );
     assert_eq!(
         confirm(&app, &link_token(&pending)).await,

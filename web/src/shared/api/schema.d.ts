@@ -1558,12 +1558,13 @@ export interface components {
             /** @example rapha@gmail.com */
             email: string;
         };
-        /** @description Campos ausentes não mudam. */
         ChangePassword: {
             current_password: string;
-            /** @description Trocar a senha encerra as outras sessões da conta. */
-            password?: string | null;
-            username?: string | null;
+            /**
+             * @description Senha nova, de 8 a 128 caracteres. Trocar encerra as outras sessões da
+             *     conta.
+             */
+            password: string;
         };
         /** @description O que mudou. */
         Changed: {
@@ -1771,14 +1772,14 @@ export interface components {
             token: string;
         };
         Credentials: {
+            /**
+             * @description O email da conta, escrito de qualquer jeito que dê na forma canônica
+             *     (maiúsculas, `+etiqueta`, pontos no Gmail).
+             * @example rapha@gmail.com
+             */
+            email: string;
             /** @description 8 a 128 caracteres. */
             password: string;
-            /**
-             * @description 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
-             *     removidos. Único sem diferenciar maiúsculas.
-             * @example Rapha
-             */
-            username: string;
         };
         CurrentPassword: {
             current_password: string;
@@ -2062,13 +2063,14 @@ export interface components {
         LoginMethods: {
             discord: boolean;
             /**
-             * @description Email confirmado, na forma canônica. Toda conta com senha tem (é por
-             *     ele que a senha esquecida volta); só a conta sem senha fica sem.
+             * @description Email confirmado, na forma canônica. Toda conta com senha tem (é o
+             *     login dela e por ele a senha esquecida volta); só a conta sem senha
+             *     fica sem.
              */
             email?: string | null;
             google: boolean;
-            /** @description Username do login com senha, se a conta tem senha. */
-            username?: string | null;
+            /** @description Entra com o email e a senha. */
+            password: boolean;
         };
         Map: {
             /** @description Está no pool padrão de um torneio novo (`duel_pool`). */
@@ -2193,7 +2195,7 @@ export interface components {
         MatchState: "pending" | "ready" | "bye" | "completed" | "not_needed";
         Member: {
             avatar_url?: string | null;
-            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
+            /** @description Nome exibido do usuário: o do Discord ou o do cadastro. */
             display_name: string;
             /** Format: date-time */
             joined_at: string;
@@ -2206,7 +2208,7 @@ export interface components {
         /** @description Um membro na comunidade, com os torneios dela em que se inscreveu. */
         MemberProfile: {
             avatar_url?: string | null;
-            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
+            /** @description Nome exibido do usuário: o do Discord ou o do cadastro. */
             display_name: string;
             /** Format: date-time */
             joined_at: string;
@@ -2307,6 +2309,11 @@ export interface components {
              * @example Rating de outra liga
              */
             reason: string;
+        };
+        /** @description Senha para a conta logada, que ainda não tem. */
+        NewPassword: {
+            /** @description 8 a 128 caracteres. */
+            password: string;
         };
         /** @description Um time novo com um jogador, que vira o capitão. */
         NewTeam: {
@@ -2567,11 +2574,8 @@ export interface components {
             token: string;
         };
         PasswordResetRequest: {
-            /**
-             * @description Username ou email da conta.
-             * @example Rapha
-             */
-            login: string;
+            /** @example rapha@gmail.com */
+            email: string;
         };
         /** @description O torneio de um item: a comunidade, o endereço e o nome. */
         PendingTournament: {
@@ -2644,7 +2648,7 @@ export interface components {
         /** @description Uma pessoa no ranking. */
         RankingEntry: {
             avatar_url?: string | null;
-            /** @description Nome exibido do usuário: o do Discord ou o username do cadastro. */
+            /** @description Nome exibido do usuário: o do Discord ou o do cadastro. */
             display_name: string;
             /**
              * Format: int32
@@ -2924,6 +2928,12 @@ export interface components {
         /** @description Cadastro com senha: a conta só é criada quando o link do email é aberto. */
         Signup: {
             /**
+             * @description Nome exibido: 1 a 32 caracteres, uma linha; espaços nas pontas são
+             *     removidos. Não precisa ser único.
+             * @example Rapha
+             */
+            display_name: string;
+            /**
              * @description Gravado na forma canônica: minúsculo, sem `+etiqueta` e, no Gmail, sem
              *     pontos. Domínio descartável ou de apelidos é recusado.
              * @example rapha@gmail.com
@@ -2932,12 +2942,6 @@ export interface components {
             locale?: components["schemas"]["Locale"] | null;
             /** @description 8 a 128 caracteres. */
             password: string;
-            /**
-             * @description 3 a 20 letras ou números, `_`, `.` ou `-`; espaços nas pontas são
-             *     removidos. Único sem diferenciar maiúsculas.
-             * @example Rapha
-             */
-            username: string;
         };
         /** @description O código do email de cadastro, digitado no lugar de abrir o link. */
         SignupCode: {
@@ -4540,7 +4544,7 @@ export interface operations {
                     "application/json": components["schemas"]["SignedIn"];
                 };
             };
-            /** @description auth.invalid_credentials (username ou senha errados) */
+            /** @description auth.invalid_credentials (email ou senha errados) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4549,7 +4553,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description request.invalid_body */
+            /** @description email.invalid (fora do formato de email; não conta tentativa), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4625,11 +4629,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Credentials"];
+                "application/json": components["schemas"]["NewPassword"];
             };
         };
         responses: {
-            /** @description Username e senha criados para a conta logada */
+            /** @description Senha criada para a conta logada, que passa a entrar também com o email dela e a senha */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -4647,7 +4651,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.password_exists, auth.email_required (a conta não tem email, que recuperaria a senha), auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
+            /** @description auth.password_exists, auth.email_required (a conta não tem email, que é o login e recuperaria a senha) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4656,7 +4660,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            /** @description auth.password_invalid, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4680,7 +4684,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Username e senha removidos; a conta continua entrando pelo Discord ou pelo Google */
+            /** @description Senha removida; a conta continua entrando pelo Discord ou pelo Google */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4749,7 +4753,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Username e/ou senha trocados. Trocar a senha encerra as outras sessões */
+            /** @description Senha trocada; as outras sessões da conta foram encerradas */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4776,7 +4780,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.no_password, auth.username_taken (por uma conta ou por um cadastro esperando confirmação) */
+            /** @description auth.no_password */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4785,7 +4789,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.username_invalid, auth.password_invalid, request.invalid_body */
+            /** @description auth.password_invalid, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4825,7 +4829,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description request.invalid_body */
+            /** @description email.invalid (fora do formato de email; não conta no limite), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -5004,7 +5008,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Email enviado com o link e um código de 6 dígitos (os dois valem 1 hora); a conta só é criada pelo link aberto ou pelo código digitado. Pedir de novo com o mesmo email troca o link e o código; com o mesmo username e a mesma senha e outro email, troca o email (os anteriores param de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma */
+            /** @description Email enviado com o link e um código de 6 dígitos (os dois valem 1 hora); a conta só é criada pelo link aberto ou pelo código digitado. Pedir de novo com o mesmo email troca o link e o código (os anteriores param de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -5013,16 +5017,7 @@ export interface operations {
                     "application/json": components["schemas"]["EmailSent"];
                 };
             };
-            /** @description auth.username_taken (por uma conta ou pelo cadastro de outra pessoa esperando confirmação) */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.username_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body */
+            /** @description auth.display_name_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -5082,7 +5077,7 @@ export interface operations {
                     "application/json": components["schemas"]["SignedIn"];
                 };
             };
-            /** @description auth.username_taken, auth.email_taken (outra conta pegou desde o pedido) */
+            /** @description auth.email_taken (outra conta pegou o email desde o pedido) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5124,7 +5119,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Conta criada, já com a sessão no cookie. O nome exibido é o username */
+            /** @description Conta criada, já com a sessão no cookie */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -5133,7 +5128,7 @@ export interface operations {
                     "application/json": components["schemas"]["SignedIn"];
                 };
             };
-            /** @description auth.username_taken, auth.email_taken (outra conta pegou desde o pedido) */
+            /** @description auth.email_taken (outra conta pegou o email desde o pedido) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5404,7 +5399,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o username, o Discord e o Google ficam livres */
+            /** @description Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o email, o Discord e o Google ficam livres */
             200: {
                 headers: {
                     [name: string]: unknown;

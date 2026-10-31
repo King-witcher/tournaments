@@ -1,5 +1,5 @@
-//! Avisos por email do que muda no acesso à conta (senha, username, Discord,
-//! Google, email), para quem não fez a mudança saber a tempo de agir. Saem depois da
+//! Avisos por email do que muda no acesso à conta (senha, Discord, Google,
+//! email), para quem não fez a mudança saber a tempo de agir. Saem depois da
 //! mudança gravada, em segundo plano: a resposta não espera, e uma falha (do
 //! Redis, do provedor) fica no log sem desfazer nada. Contam no teto de
 //! emails do dia, mas não na espera entre envios (`Mail::reserve_notice`).

@@ -15,7 +15,7 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 - **Times**: no duelo, o time de um jogador nasce com a inscrição e some com ela; no commit, o capitão é do time, todo inscrito do duelo tem time e todo time do duelo tem exatamente um jogador e nenhum nome; a escalação de cada mapa é de jogadores do time daquele lado, não muda e tem alguém dos dois lados.
 - **Owner**: exatamente um por tenant e membro. "No máximo um" vale na hora (índice único parcial); "pelo menos um", no commit.
 - Quem inscreveu, quem marcou check-in e quem criou o convite são membros do mesmo tenant (FK composta); o convite gravado numa inscrição é um link do mesmo torneio.
-- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slugs e idioma original fixos; JSON de regras de campeões e de fase com a forma do `engine`; username no formato do cadastro, senha só como hash argon2id, tokens como SHA-256 de 32 bytes, avatar só por https, nome exibido não vazio, campeão com nome único.
+- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slugs e idioma original fixos; JSON de regras de campeões e de fase com a forma do `engine`; senha só como hash argon2id, tokens como SHA-256 de 32 bytes, avatar só por https, nome exibido não vazio, campeão com nome único.
 
 ## Fora do banco, de propósito
 

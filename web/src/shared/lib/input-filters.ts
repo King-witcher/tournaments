@@ -16,8 +16,3 @@ export function slugChars(value: string) {
     .replace(/-{2,}/g, "-")
     .replace(/^-/, "");
 }
-
-/** Nome de usuário: letras sem acento, números, `_`, `.` e `-`. */
-export function usernameChars(value: string) {
-  return value.replace(/[^A-Za-z0-9_.-]/g, "");
-}

@@ -31,7 +31,7 @@ const DELETION_DAYS: i32 = 7;
     tag = "auth",
     request_body = ScheduleAccountDeletion,
     responses(
-        (status = OK, body = AccountDeletion, description = "Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o username, o Discord e o Google ficam livres"),
+        (status = OK, body = AccountDeletion, description = "Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o email, o Discord e o Google ficam livres"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.owns_tenants (owner de alguma comunidade: transfere a posse ou exclui a comunidade antes)"),
@@ -47,7 +47,7 @@ pub async fn schedule_account_deletion(
 ) -> Result<(CookieJar, Json<AccountDeletion>), ApiError> {
     let methods = db::login_methods(&state.db, user.id).await?;
     // Com senha, quem pegou a sessão não exclui a conta.
-    if methods.username.is_some() {
+    if methods.password {
         let current = body
             .current_password
             .ok_or(ApiError::forbidden("auth.wrong_password"))?;

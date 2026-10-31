@@ -7,10 +7,10 @@ import { PasswordLoginSection } from "./password-login-section";
 import { ProviderLoginSection } from "./provider-login-section";
 
 /**
- * A aba Logins da conta: o email (primeiro, porque a senha depende dele: só
- * se cria com email, e com senha ele não sai), o Discord, o Google e o nome
- * de usuário com senha, cada um para ligar ou remover. A conta nunca fica
- * sem jeito de entrar: cada um só sai se sobrar outro. Fica em `<Suspense>`.
+ * A aba Logins da conta: o email (primeiro, porque a senha depende dele: é o
+ * login dela, só se cria com email, e com senha ele não sai), o Discord, o
+ * Google e a senha, cada um para ligar ou remover. A conta nunca fica sem
+ * jeito de entrar: cada um só sai se sobrar outro. Fica em `<Suspense>`.
  */
 export async function AccountLogins() {
   const result = await getLogins();
@@ -19,7 +19,7 @@ export async function AccountLogins() {
     return <Notice kind="error">{await apiErrorMessage(result.code)}</Notice>;
   }
   const { logins } = result;
-  const hasPassword = Boolean(logins.username);
+  const hasPassword = logins.password;
 
   return (
     <>
@@ -40,7 +40,7 @@ export async function AccountLogins() {
         />
       ))}
       <PasswordLoginSection
-        username={logins.username ?? undefined}
+        hasPassword={hasPassword}
         providerLinked={PROVIDERS.some((provider) => logins[provider])}
         hasEmail={Boolean(logins.email)}
       />

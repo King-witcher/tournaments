@@ -93,7 +93,7 @@ async fn an_anonymized_account_keeps_only_the_row() {
         rule(CHECK, "user_identities_user_deleted")
     );
     let password = bia_sql(&format!(
-        "insert into password_credentials (user_id, username, password_hash) values ({{bia}}, 'bia', '{}')",
+        "insert into password_credentials (user_id, password_hash) values ({{bia}}, '{}')",
         "$argon2id$v=19$m=19456,t=2,p=1$x$y"
     ));
     // A conta excluída não tem email, e a senha sem email já é recusada antes

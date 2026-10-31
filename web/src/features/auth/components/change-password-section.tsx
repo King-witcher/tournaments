@@ -9,9 +9,9 @@ import { getLogins } from "../server";
 import { ChangePasswordForm } from "./change-password-form";
 
 /**
- * A aba Senha da conta: trocar o nome de usuário e a senha. Sem senha (só
- * Discord ou Google), diz que não há o que trocar e leva à aba Logins, onde
- * se cria. Fica em `<Suspense>`.
+ * A aba Senha da conta: trocar a senha. Sem senha (só Discord ou Google), diz
+ * que não há o que trocar e leva à aba Logins, onde se cria. Fica em
+ * `<Suspense>`.
  */
 export async function ChangePasswordSection() {
   const [result, t] = await Promise.all([
@@ -22,14 +22,10 @@ export async function ChangePasswordSection() {
   if (!result.ok) {
     return <Notice kind="error">{await apiErrorMessage(result.code)}</Notice>;
   }
-  const { username } = result.logins;
-
-  // O nome de usuário de agora já vem no campo: sem a linha "Seu nome de
-  // usuário" embaixo do título.
   return (
     <Section title={t("changeTitle")}>
-      {username ? (
-        <ChangePasswordForm username={username} />
+      {result.logins.password ? (
+        <ChangePasswordForm />
       ) : (
         <EmptyState
           action={

@@ -26,7 +26,7 @@
     "unlinkHint": "Para desvincularlo, confirma tu contraseña.",
     "unlink": "Desvincular Discord",
     "unlinkConfirm": "Dejas de entrar con Discord, y su avatar sale de la cuenta. Puedes vincularlo de nuevo después.",
-    "needsOther": "Para desvincular Discord, crea antes un nombre de usuario y contraseña o vincula Google."
+    "needsOther": "Para desvincular Discord, crea antes una contraseña o vincula Google."
   },
   "google": {
     "title": "Google",
@@ -37,31 +37,30 @@
     "unlinkHint": "Para desvincularla, confirma tu contraseña.",
     "unlink": "Desvincular Google",
     "unlinkConfirm": "Dejas de entrar con tu cuenta de Google. Puedes vincularla de nuevo después.",
-    "needsOther": "Para desvincular Google, crea antes un nombre de usuario y contraseña o vincula Discord."
+    "needsOther": "Para desvincular Google, crea antes una contraseña o vincula Discord."
   },
   "password": {
-    "title": "Nombre de usuario y contraseña",
-    "create": "Crear nombre de usuario y contraseña",
-    "current": "Tu nombre de usuario: {username}",
-    "changeTitle": "Cambiar nombre de usuario o contraseña",
-    "noPassword": "Tu cuenta todavía no tiene nombre de usuario y contraseña. Créalos en la pestaña Accesos.",
+    "title": "Contraseña",
+    "create": "Crear contraseña",
+    "changeTitle": "Cambiar contraseña",
+    "noPassword": "Tu cuenta todavía no tiene contraseña. Crea una en la pestaña Accesos.",
     "goToLogins": "Ir a Accesos",
     "newPassword": "Nueva contraseña",
-    "newPasswordHint": "Déjala en blanco para mantener la actual. Cambiar la contraseña cierra tus otras sesiones.",
+    "newPasswordHint": "Cambiar la contraseña cierra tus otras sesiones.",
     "saved": "Guardado.",
-    "remove": "Quitar nombre de usuario y contraseña",
-    "removeHint": "Para quitarlos, confirma tu contraseña.",
-    "removeConfirm": "Pasas a entrar solo con el Discord o el Google que vinculaste. Puedes crear otros después.",
+    "remove": "Quitar contraseña",
+    "removeHint": "Para quitarla, confirma tu contraseña.",
+    "removeConfirm": "Pasas a entrar solo con el Discord o el Google que vinculaste. Puedes crear otra contraseña después.",
     "needsProvider": "Para quitar la contraseña, vincula antes Discord o Google.",
-    "needsEmail": "Para crear nombre de usuario y contraseña, registra antes un email, en la sección de arriba. Con él recuperas la contraseña.",
+    "needsEmail": "Para crear una contraseña, registra antes un email, en la sección de arriba.",
     "resetDoneTitle": "Contraseña cambiada",
     "resetDone": "Entraste con la contraseña nueva, y las otras sesiones de la cuenta se cerraron."
   },
   "email": {
     "title": "Email",
-    "recovers": "Recibe el enlace si olvidas la contraseña.",
-    "optional": "Con él, puedes crear nombre de usuario y contraseña.",
-    "none": "Necesario para crear nombre de usuario y contraseña.",
+    "recovers": "Con él entras con la contraseña y la recuperas.",
+    "optional": "Con él, puedes crear una contraseña.",
+    "none": "Necesario para crear una contraseña.",
     "label": "Email",
     "add": "Registrar email",
     "change": "Cambiar email",
@@ -69,8 +68,8 @@
     "sent": "Enviamos un enlace a {email}. Ábrelo antes de 1 hora para confirmar. ¿No llegó? Revisa la carpeta de spam.",
     "sentChange": "Enviamos un enlace a {email}. Ábrelo antes de 1 hora para confirmar el cambio. ¿No llegó? Revisa la carpeta de spam.",
     "remove": "Quitar email",
-    "removeConfirm": "El email sale de la cuenta. Para crear nombre de usuario y contraseña después, vas a necesitar un email de nuevo.",
-    "removeBlocked": "Para quitar el email, quita antes la contraseña. Con el email la recuperas."
+    "removeConfirm": "El email sale de la cuenta. Para crear una contraseña después, vas a necesitar un email de nuevo.",
+    "removeBlocked": "Para quitar el email, quita antes la contraseña. Con el email entras con ella."
   },
   "emailConfirm": {
     "title": "Confirmar email",

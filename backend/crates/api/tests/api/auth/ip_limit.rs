@@ -30,14 +30,14 @@ async fn from_ip(app: &Router, ip: &str, uri: &str, body: Value) -> (StatusCode,
     (status, json)
 }
 
-async fn signup(app: &Router, ip: &str, username: &str) -> (StatusCode, Value) {
-    let email = format!("{}@outlook.com", username.to_lowercase());
-    let body = json!({ "username": username, "password": "senha forte 1", "email": email });
+async fn signup(app: &Router, ip: &str, name: &str) -> (StatusCode, Value) {
+    let email = format!("{}@outlook.com", name.to_lowercase());
+    let body = json!({ "display_name": name, "password": "senha forte 1", "email": email });
     from_ip(app, ip, "/auth/signup", body).await
 }
 
-async fn forgot(app: &Router, ip: &str, login: &str) -> (StatusCode, Value) {
-    from_ip(app, ip, "/auth/password/reset", json!({ "login": login })).await
+async fn forgot(app: &Router, ip: &str, email: &str) -> (StatusCode, Value) {
+    from_ip(app, ip, "/auth/password/reset", json!({ "email": email })).await
 }
 
 fn assert_limited((status, body): (StatusCode, Value), max_minutes: i64) {
@@ -55,10 +55,10 @@ async fn signups_and_resets_share_five_per_hour() {
 
     // Pedido recusado na validação não conta.
     assert_eq!(
-        signup(&app, ip, "ab").await,
+        signup(&app, ip, " ").await,
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            err("auth.username_invalid")
+            err("auth.display_name_invalid")
         )
     );
     for name in ["Ana", "Bia", "Caio"] {
@@ -66,11 +66,17 @@ async fn signups_and_resets_share_five_per_hour() {
         mailbox(&db).next().await;
     }
     // A recuperação conta mesmo sem conta (a resposta não diz nada).
-    assert_eq!(forgot(&app, ip, "ninguem").await.0, StatusCode::ACCEPTED);
-    assert_eq!(forgot(&app, ip, "ana").await.0, StatusCode::ACCEPTED);
+    assert_eq!(
+        forgot(&app, ip, "ninguem@outlook.com").await.0,
+        StatusCode::ACCEPTED
+    );
+    assert_eq!(
+        forgot(&app, ip, "ana@outlook.com").await.0,
+        StatusCode::ACCEPTED
+    );
 
     assert_limited(signup(&app, ip, "Duda").await, 60);
-    assert_limited(forgot(&app, ip, "ninguem").await, 60);
+    assert_limited(forgot(&app, ip, "ninguem@outlook.com").await, 60);
     mailbox(&db).assert_empty().await;
 
     // Outro IP segue; o mesmo /64 do IPv6 divide o limite.
@@ -80,9 +86,15 @@ async fn signups_and_resets_share_five_per_hour() {
     );
     for n in 0..5 {
         let ip = format!("2001:db8:1:2::{n}");
-        assert_eq!(forgot(&app, &ip, "ninguem").await.0, StatusCode::ACCEPTED);
+        assert_eq!(
+            forgot(&app, &ip, "ninguem@outlook.com").await.0,
+            StatusCode::ACCEPTED
+        );
     }
-    assert_limited(forgot(&app, "2001:db8:1:2:ffff::1", "ninguem").await, 60);
+    assert_limited(
+        forgot(&app, "2001:db8:1:2:ffff::1", "ninguem@outlook.com").await,
+        60,
+    );
 }
 
 #[tokio::test]
@@ -97,5 +109,5 @@ async fn twenty_per_day_even_across_hours() {
         Utc::now().format("%Y-%m-%d")
     ));
     redis.query::<()>(&Cmd::set_ex(&day, 20, 60)).await.unwrap();
-    assert_limited(forgot(&app, ip, "ninguem").await, 24 * 60);
+    assert_limited(forgot(&app, ip, "ninguem@outlook.com").await, 24 * 60);
 }

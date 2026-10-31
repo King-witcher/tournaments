@@ -28,6 +28,18 @@ const MAX_LABEL_LEN: usize = 63;
 /// letras, números, `.`, `_`, `-` e `+`, e domínio com pelo menos um ponto.
 /// Aceitar mais do que isso só serviria a endereços raros.
 pub fn normalize(raw: &str, strict: bool) -> Result<String, ApiError> {
+    let address = canonical(raw, strict)?;
+    let domain = address.split_once('@').map_or("", |(_, domain)| domain);
+    if strict && disposable::is_blocked(domain) {
+        return Err(ApiError::invalid("email.disposable"));
+    }
+    Ok(address)
+}
+
+/// Como [`normalize`], sem recusar domínio: a forma de um endereço que já
+/// pode estar numa conta, para procurá-la (login, recuperação). O domínio
+/// pode ter entrado na lista de descartáveis depois de a conta ser criada.
+pub fn canonical(raw: &str, strict: bool) -> Result<String, ApiError> {
     let invalid = || ApiError::invalid("email.invalid");
     let address = raw.trim().to_ascii_lowercase();
     if !address.is_ascii() || address.len() > MAX_LEN {
@@ -67,9 +79,6 @@ pub fn normalize(raw: &str, strict: bool) -> Result<String, ApiError> {
     };
     if !valid_local(&local) {
         return Err(invalid());
-    }
-    if disposable::is_blocked(domain) {
-        return Err(ApiError::invalid("email.disposable"));
     }
     Ok(format!("{local}@{domain}"))
 }
@@ -219,6 +228,15 @@ mod tests {
         assert_eq!(code("x@mailinator.com"), "email.disposable");
         assert_eq!(code("x+y@yopmail.com"), "email.disposable");
         assert_eq!(code("x@duck.com"), "email.disposable");
+    }
+
+    #[test]
+    fn canonical_finds_disposable_accounts() {
+        assert_eq!(
+            canonical("X.Y+z@Mailinator.com", true).unwrap(),
+            "x.y@mailinator.com"
+        );
+        assert_eq!(canonical("ana@", true).unwrap_err().code, "email.invalid");
     }
 
     #[test]

@@ -1,30 +1,31 @@
 //! Tentativas de senha recentes, para o limite (`attempts.rs`):
-//! `password_failures:{username}` é um zset com o horário de cada tentativa
-//! (em milissegundos, como score) e expira junto com a janela. A tentativa
-//! entra antes da conferência e fica como erro; o acerto apaga o zset.
+//! `password_failures:{email}` (na forma canônica) é um zset com o horário de
+//! cada tentativa (em milissegundos, como score) e expira junto com a janela.
+//! A tentativa entra antes da conferência e fica como erro; o acerto apaga o
+//! zset.
 
 use chrono::{DateTime, TimeDelta, Utc};
 use redis::{Cmd, RedisResult};
 
 use crate::shared::{Redis, token};
 
-fn failures_key(redis: &Redis, username: &str) -> String {
-    redis.key(format_args!("password_failures:{username}"))
+fn failures_key(redis: &Redis, email: &str) -> String {
+    redis.key(format_args!("password_failures:{email}"))
 }
 
-/// Conta uma tentativa de senha de `username`, antes de conferi-la, e esquece
+/// Conta uma tentativa de senha de `email`, antes de conferi-la, e esquece
 /// as que saíram da janela. Com `max` erros na janela, a tentativa não conta,
-/// e a resposta é até quando `username` está bloqueado: até o mais antigo dos
+/// e a resposta é até quando `email` está bloqueado: até o mais antigo dos
 /// `max` últimos sair dela. Contar antes de conferir, no mesmo MULTI que lê
 /// os erros, é o que segura as tentativas ao mesmo tempo: cada uma vê as
 /// outras, então não passam de `max` conferências na janela.
 pub async fn begin_password_attempt(
     redis: &Redis,
-    username: &str,
+    email: &str,
     max: usize,
     window: TimeDelta,
 ) -> RedisResult<Option<DateTime<Utc>>> {
-    let key = failures_key(redis, username);
+    let key = failures_key(redis, email);
     let now = Utc::now().timestamp_millis();
     // O membro do zset é único: duas tentativas no mesmo milissegundo contam duas.
     let attempt = format!("{now}-{}", token::random_token());
@@ -49,9 +50,9 @@ pub async fn begin_password_attempt(
 }
 
 /// Zera a contagem, inclusive a tentativa que acabou de acertar.
-pub async fn clear_password_failures(redis: &Redis, username: &str) -> RedisResult<()> {
+pub async fn clear_password_failures(redis: &Redis, email: &str) -> RedisResult<()> {
     redis
-        .query(&Cmd::del(failures_key(redis, username)))
+        .query(&Cmd::del(failures_key(redis, email)))
         .await
         .map(|_: i64| ())
 }

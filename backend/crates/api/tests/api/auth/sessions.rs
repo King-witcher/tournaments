@@ -13,13 +13,13 @@ use crate::common::{User, app, call, delete, err, get, user};
 
 const PASSWORD: &str = "senha forte 1";
 
-/// Entra como `username` pelo navegador `agent` e devolve a sessão nova.
-async fn login_from(app: &Router, username: &str, agent: &str) -> User {
+/// Entra com `email` pelo navegador `agent` e devolve a sessão nova.
+async fn login_from(app: &Router, email: &str, agent: &str) -> User {
     let req = Request::post("/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::USER_AGENT, agent)
         .body(Body::from(
-            json!({ "username": username, "password": PASSWORD }).to_string(),
+            json!({ "email": email, "password": PASSWORD }).to_string(),
         ))
         .unwrap();
     let res = send(app, req).await;
@@ -47,8 +47,8 @@ async fn sessions_are_listed_newest_first_with_the_browser() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
-    let pc = login_from(&app, "rapha", "Firefox/140").await;
-    login_from(&app, "rapha", "Celular").await;
+    let pc = login_from(&app, "rapha@example.com", "Firefox/140").await;
+    login_from(&app, "rapha@example.com", "Celular").await;
 
     let sessions = list(&app, &pc).await;
     assert_eq!(sessions.len(), 3);
@@ -84,8 +84,8 @@ async fn sessions_end_one_by_one_or_all_others() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let first = signup(&app, &db, "Rapha", PASSWORD).await;
-    let pc = login_from(&app, "rapha", "Firefox/140").await;
-    let phone = login_from(&app, "rapha", "Celular").await;
+    let pc = login_from(&app, "rapha@example.com", "Firefox/140").await;
+    let phone = login_from(&app, "rapha@example.com", "Celular").await;
     let other = user(&db, "Outro").await;
 
     // Encerra a do celular pelo id da lista.

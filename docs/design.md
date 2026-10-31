@@ -43,7 +43,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 
 ### Entrar `/login`, Criar conta `/signup`, links por email
 
-Coluna estreita, `Tile` com o formulário e os botões do Discord e do Google; "Você já entrou como X" quando há sessão; `return_to` continua. No cadastro o email é obrigatório e, depois do envio, "Confira seu email" (endereço canônico, validade de 1 hora, campo do código de 6 dígitos, "Reenviar", "Usar outro email"). "Esqueci a senha" (`/login/forgot`): um campo (username ou email) e resposta neutra.
+Coluna estreita, `Tile` com o formulário e os botões do Discord e do Google; "Você já entrou como X" quando há sessão; `return_to` continua. Entrar é com email e senha; o cadastro pede nome exibido, email e senha e, depois do envio, mostra "Confira seu email" (endereço canônico, validade de 1 hora, campo do código de 6 dígitos, "Reenviar", "Usar outro email"). "Esqueci a senha" (`/login/forgot`): o campo do email e resposta neutra.
 
 `/signup/confirm`, `/login/reset` e `/email/confirm` leem o token depois do `#`. O cadastro confirma sozinho ao carregar e leva para dentro já logado; a recuperação (senha nova) e a troca de email pedem uma ação, porque os scanners de link abririam a página. Link vencido: `Notice` de erro e o caminho (criar conta de novo, pedir outro link).
 

@@ -47,7 +47,7 @@ export async function DeleteAccountSection() {
               </UnorderedList>
             </>
           ) : (
-            <DeleteAccountForm password={logins.logins.username != null} />
+            <DeleteAccountForm password={logins.logins.password} />
           )}
         </Stack>
       </Section>

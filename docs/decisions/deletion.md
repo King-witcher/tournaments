@@ -8,7 +8,7 @@ Do usuário: as duas são agendadas para 7 dias; a conta é anonimizada (não ap
 - Ao agendar (assumido): todas as sessões são encerradas, também a do pedido, e o email da conta recebe a data em UTC e que entrar cancela (dentro dos limites de envio). A tela vai para a página de entrar com a data.
 - Entrar de novo cancela (senha, Discord, Google ou a senha nova pelo link). O login traz `deletion_cancelled`; Discord e Google levam a `/account?account_deletion=cancelled`.
 - Na data o agendador executa, uma conta por transação (o erro de uma fica no log): a conta sai de cada comunidade como quem sai sozinho (`members::depart`: W.O. automático nos torneios em andamento, sai das inscrições dos não iniciados, convites revogados); o nome exibido e os apelidos em todas as comunidades viram vazio, o **marcador de conta excluída** (o front mostra "Conta excluída"; a API devolve o marcador, nunca o texto); saem avatar, email, logins, inscrições de push e as sessões que sobraram. A linha de `users` fica, com `deleted_at`, e os torneios jogados continuam inteiros, com a marca "saiu".
-- Username, email, Discord e Google ficam livres: entrar pelo mesmo Discord depois cria conta nova (assumido). Sessão de conta excluída não vale (`CurrentUser` ignora).
+- Email, Discord e Google ficam livres: entrar pelo mesmo Discord depois cria conta nova (assumido). Sessão de conta excluída não vale (`CurrentUser` ignora).
 - No banco: nome vazio só (e sempre) na conta excluída, que não tem email, avatar nem exclusão agendada; no commit, não tem login, push nem participação ativa e todos os apelidos dela estão vazios; depois, não ganha login nem push e não volta.
 
 ## Comunidade

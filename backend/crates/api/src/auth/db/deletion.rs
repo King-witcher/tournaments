@@ -71,7 +71,7 @@ pub async fn lock_due_deletion(
     .is_some())
 }
 
-/// Anonimiza a conta: sem logins (o username, o Discord e o Google ficam livres
+/// Anonimiza a conta: sem logins (o email, o Discord e o Google ficam livres
 /// para outra conta), sem nome (o vazio é o marcador de conta excluída), sem
 /// avatar e sem email. Quem chama já a tirou das comunidades, trocou os
 /// apelidos dela e tirou as inscrições de push: o banco confere tudo no

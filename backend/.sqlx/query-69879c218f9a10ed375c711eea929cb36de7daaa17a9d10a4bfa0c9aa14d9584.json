@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id as user_id, u.email, p.username as \"username?\", u.locale\n         from password_credentials p\n         join users u on u.id = p.user_id\n         where lower(p.username) = lower($1)",
+  "query": "select p.user_id, u.email as \"email!\", p.password_hash\n           from password_credentials p\n           join users u on u.id = p.user_id\n           where p.user_id = $1",
   "describe": {
     "columns": [
       {
@@ -9,14 +9,14 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "users",
-            "name": "id"
+            "table": "password_credentials",
+            "name": "user_id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "email",
+        "name": "email!",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -27,38 +27,26 @@
       },
       {
         "ordinal": 2,
-        "name": "username?",
+        "name": "password_hash",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "password_credentials",
-            "name": "username"
-          }
-        }
-      },
-      {
-        "ordinal": 3,
-        "name": "locale",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "locale"
+            "name": "password_hash"
           }
         }
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int8"
       ]
     },
     "nullable": [
       false,
       true,
-      false,
       false
     ]
   },
-  "hash": "73acdcdc93fe352dfc36ff7e28cb8c640a2704087315960e5162693c809bc0e8"
+  "hash": "69879c218f9a10ed375c711eea929cb36de7daaa17a9d10a4bfa0c9aa14d9584"
 }

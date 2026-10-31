@@ -17,7 +17,6 @@ use super::{
     notify::notify,
     password::{hash_password, validate_password},
     types::{PasswordReset, PasswordResetRequest, SignedIn},
-    username::{username_key, validate_username},
 };
 use crate::{
     AppState,
@@ -32,7 +31,7 @@ use crate::{
     responses(
         (status = ACCEPTED, description = "Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio do endereço, para não revelar quem tem conta"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.ip_limited {minutes} (pedidos de email deste IP, somados com o cadastro; conta todo pedido, exista a conta ou não)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "email.invalid (fora do formato de email; não conta no limite), request.invalid_body"),
     )
 )]
 pub async fn request_password_reset(
@@ -40,22 +39,11 @@ pub async fn request_password_reset(
     ip: ClientIp,
     JsonBody(body): JsonBody<PasswordResetRequest>,
 ) -> Result<StatusCode, ApiError> {
+    // O formato não diz nada sobre quem tem conta.
+    let email = state.mail.canonical(&body.email)?;
     // Todo pedido conta, antes de saber se a conta existe: o 429 não diz nada.
     state.mail.limit_ip(&state.redis, &ip).await?;
-    let login = body.login.trim();
-    // Fora do formato, a conta não pode existir.
-    let contact = if login.contains('@') {
-        match state.mail.normalize(login) {
-            Ok(email) => db::contact_by_email(&state.db, &email).await?,
-            Err(_) => None,
-        }
-    } else {
-        match validate_username(login) {
-            Ok(username) => db::contact_by_username(&state.db, &username).await?,
-            Err(_) => None,
-        }
-    };
-    if let Some(contact) = contact {
+    if let Some(contact) = db::contact_by_email(&state.db, &email).await? {
         // Em segundo plano: a resposta sai no mesmo tempo, exista a conta ou não.
         tokio::spawn(async move {
             if let Err(err) = send_reset_link(&state, contact).await {
@@ -72,7 +60,7 @@ async fn send_reset_link(state: &AppState, contact: AccountContact) -> Result<()
     let AccountContact {
         user_id,
         email: Some(email),
-        username: Some(username),
+        has_password: true,
         locale,
     } = contact
     else {
@@ -85,9 +73,7 @@ async fn send_reset_link(state: &AppState, contact: AccountContact) -> Result<()
     let locale = Locale::from_db(&locale)?;
     let web = &state.auth.web_origin;
     let sent = ticket
-        .send(emails::password_reset(
-            web, locale, &email, &username, &token,
-        ))
+        .send(emails::password_reset(web, locale, &email, &token))
         .await;
     if sent.is_err() {
         // O link não chegou: não fica valendo.
@@ -120,19 +106,18 @@ pub async fn reset_password(
         .await?
         .ok_or(ApiError::gone("auth.link_expired"))?;
     let hash = hash_password(body.password).await?;
-    db::update_password(&state.db, user_id, None, Some(&hash)).await?;
+    db::update_password(&state.db, user_id, &hash).await?;
 
     // Quem tinha a senha antiga pode estar logado: todas as sessões saem, e
-    // os erros de senha do username, que eram contra a antiga, também. E o
-    // link de troca de email que ele tenha pedido: aberto, poria o email dele
-    // na conta, e a recuperação seguinte iria para lá.
+    // os erros de senha do email, que eram contra a antiga, também. E o link
+    // de troca de email que ele tenha pedido: aberto, poria o email dele na
+    // conta, e a recuperação seguinte iria para lá.
     kv::cancel_email_change(&state.redis, user_id).await?;
     let ended = kv::delete_all_sessions(&state.redis, user_id).await?;
     sessions_ended(&state, user_id, &ended).await?;
     if let Some(login) = db::password_login_of_user(&state.db, user_id).await? {
-        kv::clear_password_failures(&state.redis, &username_key(&login.username)).await?;
-        let username = login.username;
-        notify(&state, user_id, Notice::PasswordReset { username });
+        kv::clear_password_failures(&state.redis, &login.email).await?;
     }
+    notify(&state, user_id, Notice::PasswordReset);
     start_session(&state, &headers, jar, user_id).await
 }

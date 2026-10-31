@@ -26,7 +26,7 @@
     "unlinkHint": "Para desvincular, confirme sua senha.",
     "unlink": "Desvincular o Discord",
     "unlinkConfirm": "Você deixa de entrar com o Discord, e o avatar dele sai da conta. Dá para vincular de novo depois.",
-    "needsOther": "Para desvincular o Discord, crie antes um nome de usuário e senha ou vincule o Google."
+    "needsOther": "Para desvincular o Discord, crie antes uma senha ou vincule o Google."
   },
   "google": {
     "title": "Google",
@@ -37,31 +37,30 @@
     "unlinkHint": "Para desvincular, confirme sua senha.",
     "unlink": "Desvincular o Google",
     "unlinkConfirm": "Você deixa de entrar com sua conta Google. Dá para vincular de novo depois.",
-    "needsOther": "Para desvincular o Google, crie antes um nome de usuário e senha ou vincule o Discord."
+    "needsOther": "Para desvincular o Google, crie antes uma senha ou vincule o Discord."
   },
   "password": {
-    "title": "Nome de usuário e senha",
-    "create": "Criar nome de usuário e senha",
-    "current": "Seu nome de usuário: {username}",
-    "changeTitle": "Trocar nome de usuário ou senha",
-    "noPassword": "Sua conta ainda não tem nome de usuário e senha. Crie os dois na aba Logins.",
+    "title": "Senha",
+    "create": "Criar senha",
+    "changeTitle": "Trocar senha",
+    "noPassword": "Sua conta ainda não tem senha. Crie uma na aba Logins.",
     "goToLogins": "Ir para Logins",
     "newPassword": "Nova senha",
-    "newPasswordHint": "Deixe em branco para manter a atual. Trocar a senha encerra suas outras sessões.",
+    "newPasswordHint": "Trocar a senha encerra suas outras sessões.",
     "saved": "Salvo.",
-    "remove": "Remover nome de usuário e senha",
+    "remove": "Remover senha",
     "removeHint": "Para remover, confirme sua senha.",
-    "removeConfirm": "Você passa a entrar só com o Discord ou o Google que vinculou. Dá para criar outros depois.",
+    "removeConfirm": "Você passa a entrar só com o Discord ou o Google que vinculou. Dá para criar outra senha depois.",
     "needsProvider": "Para remover a senha, vincule antes o Discord ou o Google.",
-    "needsEmail": "Para criar nome de usuário e senha, cadastre antes um email, na seção acima. É por ele que você recupera a senha.",
+    "needsEmail": "Para criar uma senha, cadastre antes um email, na seção acima.",
     "resetDoneTitle": "Senha trocada",
     "resetDone": "Você entrou com a senha nova, e as outras sessões da conta foram encerradas."
   },
   "email": {
     "title": "Email",
-    "recovers": "Recebe o link se você esquecer a senha.",
-    "optional": "Com ele, você pode criar nome de usuário e senha.",
-    "none": "Necessário para criar nome de usuário e senha.",
+    "recovers": "É com ele que você entra com a senha e a recupera.",
+    "optional": "Com ele, você pode criar uma senha.",
+    "none": "Necessário para criar uma senha.",
     "label": "Email",
     "add": "Cadastrar email",
     "change": "Trocar email",
@@ -69,8 +68,8 @@
     "sent": "Enviamos um link para {email}. Abra-o em até 1 hora para confirmar. Não chegou? Confira a caixa de spam.",
     "sentChange": "Enviamos um link para {email}. Abra-o em até 1 hora para confirmar a troca. Não chegou? Confira a caixa de spam.",
     "remove": "Remover email",
-    "removeConfirm": "O email sai da conta. Para criar nome de usuário e senha depois, você vai precisar de um email de novo.",
-    "removeBlocked": "Para remover o email, remova antes a senha. É por ele que você a recupera."
+    "removeConfirm": "O email sai da conta. Para criar uma senha depois, você vai precisar de um email de novo.",
+    "removeBlocked": "Para remover o email, remova antes a senha. É com ele que você entra com ela."
   },
   "emailConfirm": {
     "title": "Confirmar email",

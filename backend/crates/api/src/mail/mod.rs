@@ -61,6 +61,12 @@ impl Mail {
         address::normalize(raw, self.strict)
     }
 
+    /// A mesma forma, para procurar a conta de um endereço (login,
+    /// recuperação): não recusa domínio (`address::canonical`).
+    pub fn canonical(&self, raw: &str) -> Result<String, ApiError> {
+        address::canonical(raw, self.strict)
+    }
+
     /// Reserva um envio para `to` nos limites, antes de gerar o link que vai
     /// nele: assim um pedido recusado não troca o link que já foi. Envio
     /// recente para o mesmo endereço → 429 `email.too_soon` com

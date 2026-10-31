@@ -1,15 +1,15 @@
 //! Senha conferida com limite de tentativas, no login e quando a conta logada
-//! mexe nos próprios logins. O limite é por username (exista a conta ou não),
-//! não por IP: não depende do proxy, mas quem erra de propósito bloqueia o
-//! login com senha do outro por um tempo (Discord e Google continuam
-//! entrando). A contagem fica no Redis (`kv::begin_password_attempt`), e cada
-//! tentativa conta antes da conferência: pedidos ao mesmo tempo não passam
-//! do limite.
+//! mexe nos próprios logins. O limite é por email, na forma canônica (exista
+//! a conta ou não), não por IP: não depende do proxy, mas quem sabe o email
+//! de outro e erra de propósito bloqueia o login com senha dele por um tempo
+//! (Discord e Google continuam entrando). A contagem fica no Redis
+//! (`kv::begin_password_attempt`), e cada tentativa conta antes da
+//! conferência: pedidos ao mesmo tempo não passam do limite.
 
 use axum::http::StatusCode;
 use chrono::{TimeDelta, Utc};
 
-use super::{db, kv, password::verify_password, username::username_key};
+use super::{db, kv, password::verify_password};
 use crate::{
     AppState,
     shared::{ApiError, Redis},
@@ -19,19 +19,18 @@ use crate::{
 const MAX_PASSWORD_FAILURES: usize = 5;
 const FAILURE_WINDOW: TimeDelta = TimeDelta::minutes(15);
 
-/// Confere `password` contra o hash do login `username`. Bloqueado → 429
-/// `auth.too_many_attempts` com `{"minutes"}`, sem nem olhar a senha. A
-/// tentativa conta antes de conferir e fica como erro; o acerto zera a
-/// contagem.
+/// Confere `password` contra o hash do login de `email` (canônico).
+/// Bloqueado → 429 `auth.too_many_attempts` com `{"minutes"}`, sem nem olhar
+/// a senha. A tentativa conta antes de conferir e fica como erro; o acerto
+/// zera a contagem.
 pub async fn check_password(
     redis: &Redis,
-    username: &str,
+    email: &str,
     hash: Option<String>,
     password: String,
 ) -> Result<bool, ApiError> {
-    let key = username_key(username);
     if let Some(until) =
-        kv::begin_password_attempt(redis, &key, MAX_PASSWORD_FAILURES, FAILURE_WINDOW).await?
+        kv::begin_password_attempt(redis, email, MAX_PASSWORD_FAILURES, FAILURE_WINDOW).await?
     {
         let minutes = ((until - Utc::now()).num_seconds() + 59) / 60;
         return Err(
@@ -42,15 +41,14 @@ pub async fn check_password(
 
     let ok = verify_password(hash, password).await?;
     if ok {
-        kv::clear_password_failures(redis, &key).await?;
+        kv::clear_password_failures(redis, email).await?;
     }
     Ok(ok)
 }
 
 /// Exige a senha atual da conta logada antes de mudar seus logins: sem senha
-/// → 409 `missing`; errada → 403 `auth.wrong_password`. O acerto zera os
-/// erros do username, então trocar ou remover o username não deixa erros
-/// para quem pegar o nome depois.
+/// → 409 `missing`; errada → 403 `auth.wrong_password`. Conta no limite do
+/// email da conta, como o login.
 pub async fn confirm_password(
     state: &AppState,
     user_id: i64,
@@ -85,7 +83,7 @@ async fn confirm_login(
 ) -> Result<(), ApiError> {
     if check_password(
         &state.redis,
-        &login.username,
+        &login.email,
         Some(login.password_hash),
         current_password,
     )

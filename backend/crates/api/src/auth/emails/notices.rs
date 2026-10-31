@@ -13,24 +13,12 @@ use crate::{
 
 /// O que mudou no acesso à conta.
 pub enum Notice {
-    /// A conta (que só entrava pelo Discord ou pelo Google) ganhou username e
-    /// senha.
-    PasswordCreated {
-        username: String,
-    },
-    /// Senha trocada na conta, e o username também se `renamed`.
-    PasswordChanged {
-        username: String,
-        renamed: bool,
-    },
-    /// Só o username trocado.
-    UsernameChanged {
-        username: String,
-    },
+    /// A conta (que só entrava pelo Discord ou pelo Google) ganhou senha e
+    /// passou a entrar também com o email.
+    PasswordCreated,
+    PasswordChanged,
     /// Senha trocada pelo link de recuperação.
-    PasswordReset {
-        username: String,
-    },
+    PasswordReset,
     PasswordRemoved,
     /// `discord` é o nome de usuário no Discord.
     DiscordLinked {
@@ -40,15 +28,15 @@ pub enum Notice {
     GoogleLinked {
         google: String,
     },
-    /// `username` é o do login com senha que fica; sem senha, a conta segue
-    /// pelo Google.
+    /// `password`: a conta segue com o email e a senha; sem senha, pelo
+    /// Google.
     DiscordUnlinked {
-        username: Option<String>,
+        password: bool,
     },
-    /// `username` é o do login com senha que fica; sem senha, a conta segue
-    /// pelo Discord.
+    /// `password`: a conta segue com o email e a senha; sem senha, pelo
+    /// Discord.
     GoogleUnlinked {
-        username: Option<String>,
+        password: bool,
     },
     /// Vai para o endereço de antes (`old`).
     EmailChanged {
@@ -187,56 +175,28 @@ type Text = (&'static str, String, &'static str, Remedy);
 fn pt(notice: &Notice) -> Text {
     const KNEW_PASSWORD: &str = "Quem fez isso sabia a sua senha. Recupere a senha pelo botão abaixo. Todas as sessões da conta são encerradas, e só a senha nova passa a valer.";
     match notice {
-        Notice::PasswordCreated { username } => (
+        Notice::PasswordCreated => (
             "Sua conta agora tem senha",
-            format!(
-                "Foram criados um nome de usuário e uma senha para entrar na sua conta. O nome de usuário é {username}."
-            ),
+            "Foi criada uma senha para a sua conta, que agora também entra com este email e a senha.".into(),
             "Alguém pode estar com a sua conta aberta. Recupere a senha pelo botão abaixo. A senha criada deixa de valer, e todas as sessões da conta são encerradas.",
             Remedy::Recover,
         ),
-        Notice::PasswordChanged {
-            username,
-            renamed: false,
-        } => (
+        Notice::PasswordChanged => (
             "Sua senha foi trocada",
-            format!(
-                "A senha da sua conta, de nome de usuário {username}, foi trocada, e as outras sessões abertas foram encerradas."
-            ),
+            "A senha da sua conta foi trocada, e as outras sessões abertas foram encerradas.".into(),
             KNEW_PASSWORD,
             Remedy::Recover,
         ),
-        Notice::PasswordChanged {
-            username,
-            renamed: true,
-        } => (
-            "Seu nome de usuário e sua senha foram trocados",
-            format!(
-                "O nome de usuário da sua conta agora é {username}, a senha foi trocada, e as outras sessões abertas foram encerradas."
-            ),
-            KNEW_PASSWORD,
-            Remedy::Recover,
-        ),
-        Notice::UsernameChanged { username } => (
-            "Seu nome de usuário foi trocado",
-            format!(
-                "O nome de usuário da sua conta agora é {username}. A senha continua a mesma."
-            ),
-            KNEW_PASSWORD,
-            Remedy::Recover,
-        ),
-        Notice::PasswordReset { username } => (
+        Notice::PasswordReset => (
             "Sua senha foi trocada",
-            format!(
-                "A senha da sua conta, de nome de usuário {username}, foi trocada pelo link de recuperação mandado a este email, e todas as sessões foram encerradas."
-            ),
+            "A senha da sua conta foi trocada pelo link de recuperação mandado a este email, e todas as sessões foram encerradas.".into(),
             "Então alguém tem acesso a este email. Troque a senha do email e depois recupere a senha da conta de novo pelo botão abaixo.",
             Remedy::Recover,
         ),
         Notice::PasswordRemoved => (
             "A senha da sua conta foi removida",
-            "O nome de usuário e a senha da sua conta foram removidos. Agora ela só entra pelo Discord ou pelo Google que você vinculou.".into(),
-            "Entre por ele e encerre as sessões que você não reconhecer. Depois, se quiser, crie um nome de usuário e uma senha de novo, na aba Logins.",
+            "A senha da sua conta foi removida. Agora ela só entra pelo Discord ou pelo Google que você vinculou.".into(),
+            "Entre por ele e encerre as sessões que você não reconhecer. Depois, se quiser, crie uma senha de novo, na aba Logins.",
             Remedy::Sessions,
         ),
         Notice::DiscordLinked { discord } => (
@@ -255,33 +215,25 @@ fn pt(notice: &Notice) -> Text {
             "Quem vinculou pode entrar na sua conta pelo Google. Entre na conta, desvincule o Google na aba Logins e encerre as sessões que você não reconhecer.",
             Remedy::Logins,
         ),
-        Notice::DiscordUnlinked {
-            username: Some(username),
-        } => (
+        Notice::DiscordUnlinked { password: true } => (
             "O Discord foi desvinculado da sua conta",
-            format!(
-                "Sua conta não entra mais pelo Discord, só com o nome de usuário {username} e a senha. O avatar do Discord saiu junto."
-            ),
+            "Sua conta não entra mais pelo Discord, só com este email e a senha. O avatar do Discord saiu junto.".into(),
             "Quem fez isso sabia a sua senha. Recupere a senha pelo botão abaixo, o que encerra todas as sessões da conta, e depois vincule o Discord de novo.",
             Remedy::Recover,
         ),
-        Notice::DiscordUnlinked { username: None } => (
+        Notice::DiscordUnlinked { password: false } => (
             "O Discord foi desvinculado da sua conta",
             "Sua conta não entra mais pelo Discord, só pelo Google. O avatar do Discord saiu junto.".into(),
             "Quem fez isso estava com a sua conta aberta. Entre pelo Google, encerre as sessões que você não reconhecer e vincule o Discord de novo na aba Logins.",
             Remedy::Sessions,
         ),
-        Notice::GoogleUnlinked {
-            username: Some(username),
-        } => (
+        Notice::GoogleUnlinked { password: true } => (
             "O Google foi desvinculado da sua conta",
-            format!(
-                "Sua conta não entra mais pelo Google, só com o nome de usuário {username} e a senha."
-            ),
+            "Sua conta não entra mais pelo Google, só com este email e a senha.".into(),
             "Quem fez isso sabia a sua senha. Recupere a senha pelo botão abaixo, o que encerra todas as sessões da conta, e depois vincule o Google de novo.",
             Remedy::Recover,
         ),
-        Notice::GoogleUnlinked { username: None } => (
+        Notice::GoogleUnlinked { password: false } => (
             "O Google foi desvinculado da sua conta",
             "Sua conta não entra mais pelo Google, só pelo Discord.".into(),
             "Quem fez isso estava com a sua conta aberta. Entre pelo Discord, encerre as sessões que você não reconhecer e vincule o Google de novo na aba Logins.",
@@ -291,9 +243,15 @@ fn pt(notice: &Notice) -> Text {
             new, has_password, ..
         } => (
             "O email da sua conta foi trocado",
-            format!(
-                "O email da sua conta agora é {new}. Este endereço não recebe mais os avisos da conta nem o link de recuperação da senha."
-            ),
+            if *has_password {
+                format!(
+                    "O email da sua conta agora é {new}. Este endereço não serve mais para entrar nem recebe os avisos da conta ou o link de recuperação da senha."
+                )
+            } else {
+                format!(
+                    "O email da sua conta agora é {new}. Este endereço não recebe mais os avisos da conta nem o link de recuperação da senha."
+                )
+            },
             if *has_password {
                 "Quem fez isso sabia a sua senha. Entre na conta, troque a senha na aba Senha (isso encerra as outras sessões) e ponha este email de volta na aba Logins."
             } else {
@@ -313,56 +271,29 @@ fn pt(notice: &Notice) -> Text {
 fn es(notice: &Notice) -> Text {
     const KNEW_PASSWORD: &str = "Quien lo hizo sabía tu contraseña. Recupera la contraseña con el botón de abajo. Todas las sesiones de la cuenta se cierran y solo vale la contraseña nueva.";
     match notice {
-        Notice::PasswordCreated { username } => (
+        Notice::PasswordCreated => (
             "Tu cuenta ahora tiene contraseña",
-            format!(
-                "Se crearon un nombre de usuario y una contraseña para entrar en tu cuenta. El nombre de usuario es {username}."
-            ),
+            "Se creó una contraseña para tu cuenta, que ahora también entra con este email y la contraseña.".into(),
             "Alguien puede tener tu cuenta abierta. Recupera la contraseña con el botón de abajo. La contraseña creada deja de valer y todas las sesiones de la cuenta se cierran.",
             Remedy::Recover,
         ),
-        Notice::PasswordChanged {
-            username,
-            renamed: false,
-        } => (
+        Notice::PasswordChanged => (
             "Tu contraseña fue cambiada",
-            format!(
-                "La contraseña de tu cuenta, con nombre de usuario {username}, fue cambiada, y las otras sesiones abiertas se cerraron."
-            ),
+            "La contraseña de tu cuenta fue cambiada, y las otras sesiones abiertas se cerraron."
+                .into(),
             KNEW_PASSWORD,
             Remedy::Recover,
         ),
-        Notice::PasswordChanged {
-            username,
-            renamed: true,
-        } => (
-            "Tu nombre de usuario y tu contraseña fueron cambiados",
-            format!(
-                "El nombre de usuario de tu cuenta ahora es {username}, la contraseña fue cambiada y las otras sesiones abiertas se cerraron."
-            ),
-            KNEW_PASSWORD,
-            Remedy::Recover,
-        ),
-        Notice::UsernameChanged { username } => (
-            "Tu nombre de usuario fue cambiado",
-            format!(
-                "El nombre de usuario de tu cuenta ahora es {username}. La contraseña sigue igual."
-            ),
-            KNEW_PASSWORD,
-            Remedy::Recover,
-        ),
-        Notice::PasswordReset { username } => (
+        Notice::PasswordReset => (
             "Tu contraseña fue cambiada",
-            format!(
-                "La contraseña de tu cuenta, con nombre de usuario {username}, fue cambiada con el enlace de recuperación enviado a este email, y todas las sesiones se cerraron."
-            ),
+            "La contraseña de tu cuenta fue cambiada con el enlace de recuperación enviado a este email, y todas las sesiones se cerraron.".into(),
             "Entonces alguien tiene acceso a este email. Cambia la contraseña del email y después recupera de nuevo la contraseña de la cuenta con el botón de abajo.",
             Remedy::Recover,
         ),
         Notice::PasswordRemoved => (
             "Se quitó la contraseña de tu cuenta",
-            "El nombre de usuario y la contraseña de tu cuenta se quitaron. Ahora solo entra con el Discord o el Google que vinculaste.".into(),
-            "Entra con él y cierra las sesiones que no reconozcas. Después, si quieres, crea de nuevo un nombre de usuario y una contraseña en la pestaña Accesos.",
+            "Se quitó la contraseña de tu cuenta. Ahora solo entra con el Discord o el Google que vinculaste.".into(),
+            "Entra con él y cierra las sesiones que no reconozcas. Después, si quieres, crea de nuevo una contraseña en la pestaña Accesos.",
             Remedy::Sessions,
         ),
         Notice::DiscordLinked { discord } => (
@@ -379,33 +310,25 @@ fn es(notice: &Notice) -> Text {
             "Quien la vinculó puede entrar en tu cuenta con Google. Entra en la cuenta, desvincula Google en la pestaña Accesos y cierra las sesiones que no reconozcas.",
             Remedy::Logins,
         ),
-        Notice::DiscordUnlinked {
-            username: Some(username),
-        } => (
+        Notice::DiscordUnlinked { password: true } => (
             "Se desvinculó Discord de tu cuenta",
-            format!(
-                "Tu cuenta ya no entra con Discord, solo con el nombre de usuario {username} y la contraseña. El avatar de Discord se quitó también."
-            ),
+            "Tu cuenta ya no entra con Discord, solo con este email y la contraseña. El avatar de Discord se quitó también.".into(),
             "Quien lo hizo sabía tu contraseña. Recupera la contraseña con el botón de abajo, lo que cierra todas las sesiones de la cuenta, y después vincula Discord de nuevo.",
             Remedy::Recover,
         ),
-        Notice::DiscordUnlinked { username: None } => (
+        Notice::DiscordUnlinked { password: false } => (
             "Se desvinculó Discord de tu cuenta",
             "Tu cuenta ya no entra con Discord, solo con Google. El avatar de Discord se quitó también.".into(),
             "Quien lo hizo tenía tu cuenta abierta. Entra con Google, cierra las sesiones que no reconozcas y vuelve a vincular Discord en la pestaña Accesos.",
             Remedy::Sessions,
         ),
-        Notice::GoogleUnlinked {
-            username: Some(username),
-        } => (
+        Notice::GoogleUnlinked { password: true } => (
             "Se desvinculó Google de tu cuenta",
-            format!(
-                "Tu cuenta ya no entra con Google, solo con el nombre de usuario {username} y la contraseña."
-            ),
+            "Tu cuenta ya no entra con Google, solo con este email y la contraseña.".into(),
             "Quien lo hizo sabía tu contraseña. Recupera la contraseña con el botón de abajo, lo que cierra todas las sesiones de la cuenta, y después vincula Google de nuevo.",
             Remedy::Recover,
         ),
-        Notice::GoogleUnlinked { username: None } => (
+        Notice::GoogleUnlinked { password: false } => (
             "Se desvinculó Google de tu cuenta",
             "Tu cuenta ya no entra con Google, solo con Discord.".into(),
             "Quien lo hizo tenía tu cuenta abierta. Entra con Discord, cierra las sesiones que no reconozcas y vuelve a vincular Google en la pestaña Accesos.",
@@ -415,9 +338,15 @@ fn es(notice: &Notice) -> Text {
             new, has_password, ..
         } => (
             "Se cambió el email de tu cuenta",
-            format!(
-                "El email de tu cuenta ahora es {new}. Esta dirección ya no recibe los avisos de la cuenta ni el enlace de recuperación de la contraseña."
-            ),
+            if *has_password {
+                format!(
+                    "El email de tu cuenta ahora es {new}. Esta dirección ya no sirve para entrar ni recibe los avisos de la cuenta o el enlace de recuperación de la contraseña."
+                )
+            } else {
+                format!(
+                    "El email de tu cuenta ahora es {new}. Esta dirección ya no recibe los avisos de la cuenta ni el enlace de recuperación de la contraseña."
+                )
+            },
             if *has_password {
                 "Quien lo hizo sabía tu contraseña. Entra en la cuenta, cambia la contraseña en la pestaña Contraseña (eso cierra las otras sesiones) y vuelve a poner este email en la pestaña Accesos."
             } else {

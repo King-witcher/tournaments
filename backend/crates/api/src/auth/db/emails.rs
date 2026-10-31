@@ -10,8 +10,8 @@ use crate::shared::ApiError;
 pub struct AccountContact {
     pub user_id: i64,
     pub email: Option<String>,
-    /// Username do login com senha, se a conta tem senha.
-    pub username: Option<String>,
+    /// Entra com o email e a senha.
+    pub has_password: bool,
     pub locale: String,
 }
 
@@ -79,10 +79,11 @@ pub async fn contact_by_id(
 ) -> Result<Option<AccountContact>, sqlx::Error> {
     sqlx::query_as!(
         AccountContact,
-        "select u.id as user_id, u.email, p.username as \"username?\", u.locale
-         from users u
-         left join password_credentials p on p.user_id = u.id
-         where u.id = $1",
+        r#"select u.id as user_id, u.email,
+                  p.user_id is not null as "has_password!", u.locale
+           from users u
+           left join password_credentials p on p.user_id = u.id
+           where u.id = $1"#,
         user_id
     )
     .fetch_optional(db)
@@ -96,28 +97,12 @@ pub async fn contact_by_email(
 ) -> Result<Option<AccountContact>, sqlx::Error> {
     sqlx::query_as!(
         AccountContact,
-        "select u.id as \"user_id!\", u.email, p.username as \"username?\", u.locale as \"locale!\"
-         from users u
-         left join password_credentials p on p.user_id = u.id
-         where u.email = $1",
+        r#"select u.id as "user_id!", u.email,
+                  p.user_id is not null as "has_password!", u.locale as "locale!"
+           from users u
+           left join password_credentials p on p.user_id = u.id
+           where u.email = $1"#,
         email
-    )
-    .fetch_optional(db)
-    .await
-}
-
-/// Conta deste username, sem diferenciar maiúsculas.
-pub async fn contact_by_username(
-    db: &PgPool,
-    username: &str,
-) -> Result<Option<AccountContact>, sqlx::Error> {
-    sqlx::query_as!(
-        AccountContact,
-        "select u.id as user_id, u.email, p.username as \"username?\", u.locale
-         from password_credentials p
-         join users u on u.id = p.user_id
-         where lower(p.username) = lower($1)",
-        username
     )
     .fetch_optional(db)
     .await

@@ -396,10 +396,10 @@ async fn unlink(
     db::unlink_external(&state.db, user.id, provider).await?;
     let methods = db::login_methods(&state.db, user.id).await?;
     // Sem senha, o aviso diz que a conta segue pelo outro provedor.
-    let username = methods.username.clone();
+    let password = methods.password;
     let notice = match provider {
-        Provider::Discord => Notice::DiscordUnlinked { username },
-        Provider::Google => Notice::GoogleUnlinked { username },
+        Provider::Discord => Notice::DiscordUnlinked { password },
+        Provider::Google => Notice::GoogleUnlinked { password },
     };
     notify(state, user.id, notice);
     Ok(Json(methods))

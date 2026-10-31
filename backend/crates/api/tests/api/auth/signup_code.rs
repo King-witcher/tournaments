@@ -15,8 +15,8 @@ use crate::common::{User, app, err, get, link_token, mailbox};
 const PASSWORD: &str = "senha forte 1";
 
 /// Pede o cadastro e devolve o email que saiu.
-async fn start(app: &Router, db: &PgPool, username: &str, address: &str) -> Email {
-    let body = json!({ "username": username, "password": PASSWORD, "email": address });
+async fn start(app: &Router, db: &PgPool, name: &str, address: &str) -> Email {
+    let body = json!({ "display_name": name, "password": PASSWORD, "email": address });
     let (status, body, _) = send_json(app, Method::POST, "/auth/signup", None, body).await;
     assert_eq!(status, StatusCode::ACCEPTED, "{body}");
     mailbox(db).next().await

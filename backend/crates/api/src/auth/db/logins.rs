@@ -166,7 +166,8 @@ pub async fn login_methods(db: &PgPool, user_id: i64) -> Result<LoginMethods, sq
                      where user_id = u.id and provider = 'discord') as "discord!",
              exists (select 1 from user_identities
                      where user_id = u.id and provider = 'google') as "google!",
-             (select username from password_credentials where user_id = u.id) as username,
+             exists (select 1 from password_credentials
+                     where user_id = u.id) as "password!",
              u.email
            from users u
            where u.id = $1"#,

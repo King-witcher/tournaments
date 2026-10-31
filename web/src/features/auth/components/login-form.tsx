@@ -16,23 +16,23 @@ import { useEnterAccount } from "../hooks/use-enter-account";
 import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 
 /**
- * Nome de usuário e senha; entrando, vai para `returnTo`. O erro (senha
- * errada, tentativas demais) é do formulário todo: dizer qual campo errou
- * revelaria quem tem conta. Entrar numa conta com a exclusão agendada a
- * cancela e leva à conta, que avisa. Embaixo do botão, o link para
- * recuperar a senha (depois dele na ordem do Tab, para não ficar entre a
- * senha e o "Entrar"), que leva o que foi digitado no campo de usuário.
+ * Email e senha; entrando, vai para `returnTo`. O erro (senha errada,
+ * tentativas demais) é do formulário todo: dizer qual campo errou revelaria
+ * quem tem conta. Entrar numa conta com a exclusão agendada a cancela e leva
+ * à conta, que avisa. Embaixo do botão, o link para recuperar a senha
+ * (depois dele na ordem do Tab, para não ficar entre a senha e o "Entrar"),
+ * que leva o email digitado.
  */
 export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
   const errorMessage = useApiErrorMessage();
   const enter = useEnterAccount();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [error, submit, pending] = useActionState(async () => {
     const result = await callApi(
-      api.POST("/auth/login", { body: { username, password } }),
+      api.POST("/auth/login", { body: { email, password } }),
     );
     if (!result.ok) return errorMessage(result.code, result.params);
     enter(result.data.deletion_cancelled ? DELETION_CANCELLED : returnTo);
@@ -43,11 +43,13 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
     <Form action={submit}>
       <Stack gap={6}>
         <TextInput
-          labelText={t("username")}
+          type="email"
+          labelText={t("email")}
           required
           autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          maxLength={254}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <PasswordInput
           labelText={t("password")}
@@ -63,7 +65,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         <Link
           href={{
             pathname: "/login/forgot",
-            query: username.trim() ? { login: username.trim() } : undefined,
+            query: email.trim() ? { email: email.trim() } : undefined,
           }}
         >
           {t("forgotPassword")}

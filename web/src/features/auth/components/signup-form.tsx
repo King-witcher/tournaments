@@ -16,7 +16,6 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
-import { usernameChars } from "@/shared/lib/input-filters";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
@@ -26,10 +25,10 @@ import { rememberSignupReturnTo } from "../lib/signup-return-to";
 import { SignupEmailSent } from "./signup-email-sent";
 
 /**
- * Cadastro com nome de usuário, email e senha (repetida). A conta só nasce
- * com o código ou o link mandados ao email: no 202, o formulário dá lugar ao
- * "confira seu email" (`SignupEmailSent`, com o campo do código), com o
- * endereço na forma canônica que a API devolveu. Os campos continuam no
+ * Cadastro com nome exibido, email (o login) e senha (repetida). A conta só
+ * nasce com o código ou o link mandados ao email: no 202, o formulário dá
+ * lugar ao "confira seu email" (`SignupEmailSent`, com o campo do código),
+ * com o endereço na forma canônica que a API devolveu. Os campos continuam no
  * estado, para reenviar o mesmo pedido ou voltar e trocar o email. O erro de
  * um campo vai nele, que recebe o foco; `returnTo` fica guardado para depois
  * do link, que pode abrir em outra aba.
@@ -40,12 +39,12 @@ export function SignupForm({ returnTo }: { returnTo: string }) {
   const locale = useLocale();
   const errorMessage = useApiErrorMessage();
   const prefix = useId();
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [sentTo, setSentTo] = useState<string>();
-  const body = { username, email, password, locale };
+  const body = { display_name: name, email, password, locale };
   const { ref, canSubmit } = useFormValidity();
 
   const [result, submit, pending] = useActionState<FormResult<AuthField>>(
@@ -89,19 +88,15 @@ export function SignupForm({ returnTo }: { returnTo: string }) {
     <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
-          id={fieldId(prefix, "username")}
-          labelText={t("username")}
-          helperText={t("usernameAbout")}
+          id={fieldId(prefix, "name")}
+          labelText={t("name")}
+          helperText={t("nameAbout")}
           required
-          autoComplete="username"
-          minLength={3}
-          maxLength={20}
-          pattern="[A-Za-z0-9_.\-]{3,20}"
-          patternMessage={t("usernameInvalid")}
-          filter={usernameChars}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          {...invalidProps(result, "username")}
+          autoComplete="nickname"
+          maxLength={32}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          {...invalidProps(result, "name")}
         />
         <TextInput
           id={fieldId(prefix, "email")}
@@ -109,7 +104,7 @@ export function SignupForm({ returnTo }: { returnTo: string }) {
           labelText={t("email")}
           helperText={t("emailHint")}
           required
-          autoComplete="email"
+          autoComplete="username"
           maxLength={254}
           value={email}
           onChange={(e) => setEmail(e.target.value)}

@@ -5,10 +5,10 @@
   "forgot": {
     "title": "Olvidé mi contraseña",
     "text": "Enviamos un enlace al email de la cuenta para que crees una contraseña nueva.",
-    "login": "Nombre de usuario o email",
+    "email": "Email",
     "submit": "Enviar enlace",
     "sentTitle": "Pedido recibido",
-    "sent": "Si hay una cuenta con contraseña para “{login}”, enviamos el enlace a su email. Vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
+    "sent": "Si “{email}” es de una cuenta con contraseña, le enviamos el enlace. Vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
     "again": "Pedir otro enlace",
     "remembered": "¿Recordaste la contraseña?",
     "backToLogin": "Entrar"

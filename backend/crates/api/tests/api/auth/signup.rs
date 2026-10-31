@@ -15,8 +15,8 @@ use crate::common::{app, app_from, err, get, link_token, mailbox, redis, state, 
 
 const PASSWORD: &str = "senha forte 1";
 
-async fn start(app: &Router, username: &str, email: &str) -> (StatusCode, Value) {
-    let body = json!({ "username": username, "password": PASSWORD, "email": email });
+async fn start(app: &Router, name: &str, email: &str) -> (StatusCode, Value) {
+    let body = json!({ "display_name": name, "password": PASSWORD, "email": email });
     let (status, body, session) = send_json(app, Method::POST, "/auth/signup", None, body).await;
     assert!(session.is_none(), "o pedido não cria sessão");
     (status, body)
@@ -61,15 +61,15 @@ async fn account_is_created_only_by_the_link() {
     let (_, body) = get(&app, "/auth/logins", &me).await;
     assert_eq!(
         body,
-        json!({ "discord": false, "google": false, "username": "Rapha", "email": "joaosilva@gmail.com" })
+        json!({ "discord": false, "google": false, "password": true, "email": "joaosilva@gmail.com" })
     );
 
-    // O banco guarda o username como digitado e só o hash da senha.
-    let login = sqlx::query!("select user_id, username, password_hash from password_credentials")
+    // O banco guarda só o hash da senha.
+    let login = sqlx::query!("select user_id, password_hash from password_credentials")
         .fetch_one(&db)
         .await
         .unwrap();
-    assert_eq!((login.user_id, login.username.as_str()), (me.id, "Rapha"));
+    assert_eq!(login.user_id, me.id);
     assert!(login.password_hash.starts_with("$argon2id$"));
     assert!(!login.password_hash.contains(PASSWORD));
 
@@ -77,10 +77,9 @@ async fn account_is_created_only_by_the_link() {
     let (status, body) = confirm(&app, &link_token(&email)).await;
     assert_eq!((status, body), (StatusCode::GONE, err("auth.link_expired")));
     let redis = redis(&db);
-    for key in ["signup:joaosilva@gmail.com", "signup_username:rapha"] {
-        let left: bool = redis.query(&Cmd::exists(redis.key(key))).await.unwrap();
-        assert!(!left, "{key}");
-    }
+    let key = redis.key("signup:joaosilva@gmail.com");
+    let left: bool = redis.query(&Cmd::exists(key)).await.unwrap();
+    assert!(!left);
     assert_eq!(users(&db).await, 1);
 }
 
@@ -88,7 +87,7 @@ async fn account_is_created_only_by_the_link() {
 async fn signup_uses_the_locale_and_refuses_bad_input() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
-    let body = json!({ "username": "Rapha", "password": PASSWORD, "email": "r@outlook.com", "locale": "es" });
+    let body = json!({ "display_name": "Rapha", "password": PASSWORD, "email": "r@outlook.com", "locale": "es" });
     let (status, _, _) = send_json(&app, Method::POST, "/auth/signup", None, body).await;
     assert_eq!(status, StatusCode::ACCEPTED);
     let email = mailbox(&db).next().await;
@@ -101,15 +100,21 @@ async fn signup_uses_the_locale_and_refuses_bad_input() {
     let me = confirm_signup(&app, &email).await;
     assert_eq!(get(&app, "/me", &me).await.1["locale"], "es");
 
-    for (username, password, address, code) in [
-        ("ab", PASSWORD, "a@outlook.com", "auth.username_invalid"),
+    for (name, password, address, code) in [
+        ("  ", PASSWORD, "a@outlook.com", "auth.display_name_invalid"),
+        (
+            "123456789012345678901234567890123",
+            PASSWORD,
+            "a@outlook.com",
+            "auth.display_name_invalid",
+        ),
         ("Bia", "curta", "a@outlook.com", "auth.password_invalid"),
         ("Bia", PASSWORD, "sem-arroba", "email.invalid"),
         ("Bia", PASSWORD, "bia_x@gmail.com", "email.invalid"),
         ("Bia", PASSWORD, "bia@mailinator.com", "email.disposable"),
         ("Bia", PASSWORD, "bia@duck.com", "email.disposable"),
     ] {
-        let body = json!({ "username": username, "password": password, "email": address });
+        let body = json!({ "display_name": name, "password": password, "email": address });
         let (status, body, _) = send_json(&app, Method::POST, "/auth/signup", None, body).await;
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{address}");
         assert_eq!(body, err(code), "{address}");
@@ -117,47 +122,16 @@ async fn signup_uses_the_locale_and_refuses_bad_input() {
     mailbox(&db).assert_empty().await;
 }
 
+/// O nome exibido não identifica a conta: outro cadastro usa o mesmo.
 #[tokio::test]
-async fn username_is_taken_by_accounts_and_pending_signups() {
+async fn display_name_is_not_unique() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
-    let (status, body) = start(&app, "RAPHA", "outro@outlook.com").await;
-    assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.username_taken"))
-    );
-
-    // Outro email, com outra senha, não pega o username de um cadastro
-    // esperando o link...
-    assert_eq!(
-        start(&app, "Bia", "biaa@outlook.com").await.0,
-        StatusCode::ACCEPTED
-    );
-    let typo = mailbox(&db).next().await;
-    let intruder =
-        json!({ "username": "bia", "password": "outra senha 9", "email": "x@outlook.com" });
-    let (status, body, _) = send_json(&app, Method::POST, "/auth/signup", None, intruder).await;
-    assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.username_taken"))
-    );
-    mailbox(&db).assert_empty().await;
-
-    // ...mas quem fez o cadastro (a mesma senha) corrige o email digitado
-    // errado, e o link do endereço errado para de valer.
-    assert_eq!(
-        start(&app, "Bia", "bia@outlook.com").await.0,
-        StatusCode::ACCEPTED
-    );
-    let fixed = mailbox(&db).next().await;
-    assert_eq!(fixed.to, "bia@outlook.com");
-    assert_eq!(
-        confirm(&app, &link_token(&typo)).await,
-        (StatusCode::GONE, err("auth.link_expired"))
-    );
-    let me = confirm_signup(&app, &fixed).await;
-    assert_eq!(get(&app, "/me", &me).await.1["display_name"], "Bia");
+    let (status, body) = start(&app, "Rapha", "outro@outlook.com").await;
+    assert_eq!(status, StatusCode::ACCEPTED, "{body}");
+    let other = confirm_signup(&app, &mailbox(&db).next().await).await;
+    assert_eq!(get(&app, "/me", &other).await.1["display_name"], "Rapha");
 }
 
 #[tokio::test]
@@ -176,7 +150,7 @@ async fn asking_again_replaces_the_pending_signup() {
     assert_eq!(body["error"], "email.too_soon");
     assert!((1..=60).contains(&body["params"]["seconds"].as_i64().unwrap()));
 
-    // Depois da espera, o pedido novo (com outro username) troca o anterior.
+    // Depois da espera, o pedido novo (com outro nome) troca o anterior.
     skip_cooldown(&db, "bia@outlook.com").await;
     assert_eq!(
         start(&app, "Bia2", "bia@outlook.com").await.0,
@@ -187,12 +161,6 @@ async fn asking_again_replaces_the_pending_signup() {
         confirm(&app, &link_token(&first)).await,
         (StatusCode::GONE, err("auth.link_expired"))
     );
-    // O username do pedido trocado fica livre.
-    assert_eq!(
-        start(&app, "Bia", "ana@outlook.com").await.0,
-        StatusCode::ACCEPTED
-    );
-    mailbox(&db).next().await;
 
     let me = confirm_signup(&app, &second).await;
     assert_eq!(get(&app, "/me", &me).await.1["display_name"], "Bia2");
@@ -257,13 +225,13 @@ async fn without_strict_variations_open_other_accounts() {
         mail: Mail::new(mailbox(&db), 20, false),
         ..state(db.clone())
     });
-    for (username, address) in [
+    for (name, address) in [
         ("giu", "giuseppe@gmail.com"),
         ("giu2", "Giuseppe+2@gmail.com"),
         ("giu3", "giu.seppe@gmail.com"),
         ("temp", "x@mailinator.com"),
     ] {
-        let (status, body) = start(&app, username, address).await;
+        let (status, body) = start(&app, name, address).await;
         assert_eq!(status, StatusCode::ACCEPTED, "{body}");
         let kept = address.to_lowercase();
         assert_eq!(body, json!({ "email": kept }));
@@ -326,15 +294,11 @@ async fn failed_send_keeps_nothing_and_allows_a_retry_right_away() {
         start(&app, "Rapha", "rapha@outlook.com").await,
         (StatusCode::BAD_GATEWAY, err("email.send_failed"))
     );
-    // O link não chegou: nem o cadastro nem a reserva do username ficam.
+    // O link não chegou: o cadastro não fica.
     let redis = redis(&db);
-    for key in ["signup:rapha@outlook.com", "signup_username:rapha"] {
-        let kept: bool = redis
-            .query(&Cmd::exists(redis.key(format_args!("{key}"))))
-            .await
-            .unwrap();
-        assert!(!kept, "{key}");
-    }
+    let key = redis.key("signup:rapha@outlook.com");
+    let kept: bool = redis.query(&Cmd::exists(key)).await.unwrap();
+    assert!(!kept);
 
     // De novo, na hora: a espera de 60 s voltou com a falha.
     mailbox(&db).set_failing(false);

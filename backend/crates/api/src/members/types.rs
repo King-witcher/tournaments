@@ -13,7 +13,7 @@ use crate::{
 pub struct Member {
     pub user_id: i64,
     pub nickname: String,
-    /// Nome exibido do usuário: o do Discord ou o username do cadastro.
+    /// Nome exibido do usuário: o do Discord ou o do cadastro.
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub role: Role,
@@ -40,7 +40,7 @@ pub struct JoinedVia {
 pub struct MemberProfile {
     pub user_id: i64,
     pub nickname: String,
-    /// Nome exibido do usuário: o do Discord ou o username do cadastro.
+    /// Nome exibido do usuário: o do Discord ou o do cadastro.
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub role: Role,

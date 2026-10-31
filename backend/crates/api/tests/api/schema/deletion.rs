@@ -391,8 +391,8 @@ async fn deleting_a_user_takes_logins_and_registrations() {
     .await
     .unwrap();
     sqlx::query(
-        "insert into password_credentials (user_id, username, password_hash)
-         values ($1, 'Bia_1', '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
+        "insert into password_credentials (user_id, password_hash)
+         values ($1, '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA')",
     )
     .bind(bia)
     .execute(&db)

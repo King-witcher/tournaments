@@ -80,7 +80,7 @@ async fn login_creates_account_with_the_google_name() {
     let (_, body) = common::get(&app, "/auth/logins", &me).await;
     assert_eq!(
         body,
-        json!({ "discord": false, "google": true, "username": null, "email": null })
+        json!({ "discord": false, "google": true, "password": false, "email": null })
     );
 
     // Entrar de novo é a mesma conta, e o nome trocado aqui fica.
@@ -145,7 +145,7 @@ async fn discord_account_links_google_and_drops_discord() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": true, "google": true, "username": null, "email": "quaker@example.com" })
+        json!({ "discord": true, "google": true, "password": false, "email": "quaker@example.com" })
     );
     let notice = mailbox(&db).next().await;
     assert!(
@@ -185,7 +185,7 @@ async fn discord_account_links_google_and_drops_discord() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": false, "google": true, "username": null, "email": "quaker@example.com" })
+        json!({ "discord": false, "google": true, "password": false, "email": "quaker@example.com" })
     );
     // O aviso diz por onde a conta continua entrando.
     let notice = mailbox(&db).next().await;
@@ -255,7 +255,7 @@ async fn password_account_with_google() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body,
-        json!({ "discord": false, "google": true, "username": null, "email": "rapha@example.com" })
+        json!({ "discord": false, "google": true, "password": false, "email": "rapha@example.com" })
     );
     let (status, body) = unlink(json!({})).await;
     assert_eq!(
