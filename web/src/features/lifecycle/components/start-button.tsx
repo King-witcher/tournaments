@@ -18,16 +18,16 @@ type Props = {
   kind?: ButtonKind;
 };
 
-/** O que o botão mostra: a pergunta e, se houver, o motivo embaixo. */
+/** O que o botão mostra: a pergunta e, se houver, o motivo. */
 type Copy = { confirm: string; disabledReason?: string; note?: string };
 
 /**
  * "Iniciar torneio" com a conta na confirmação. No duelo, no check-in,
  * quantos entram na chave e quantos ficam de fora sem check-in; com menos de
- * 2 elegíveis, o botão fica desabilitado e o motivo aparece embaixo. No TDM,
- * quantos times entram e quantos jogadores ficam de reserva; time incompleto
- * (ou com alguém sem check-in) é explicado embaixo sem travar o botão (a API
- * responde `tournament.teams_incomplete`).
+ * 2 elegíveis, o botão fica desabilitado, com o motivo. No TDM, quantos times
+ * entram e quantos jogadores ficam de reserva; time incompleto (ou com
+ * alguém sem check-in) é explicado sem travar o botão (a API responde
+ * `tournament.teams_incomplete`).
  */
 export async function StartButton({ tenant, tournament, kind }: Props) {
   const [t, copy] = await Promise.all([

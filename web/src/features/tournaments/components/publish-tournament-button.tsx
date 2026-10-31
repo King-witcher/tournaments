@@ -14,11 +14,14 @@ import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 type Props = {
   tenant: string;
   slug: string;
-  /** `primary` no cabeçalho; `secondary` na aba Organização. */
+  /**
+   * `primary` no cabeçalho, onde o motivo vira a dica do botão; `secondary`
+   * na aba Organização, onde ele fica escrito embaixo.
+   */
   kind?: ButtonKind;
   /**
    * A data do rascunho ficou para trás (passou, ou ficou mais perto que a
-   * janela de check-in): o botão fica desabilitado, com o motivo embaixo.
+   * janela de check-in): o botão fica desabilitado, com o motivo.
    */
   startBehind?: "past" | "window";
 };
@@ -41,6 +44,8 @@ export function PublishTournamentButton({
     <ActionWithNote
       error={error}
       note={startBehind && t(`publishBlocked.${startBehind}`)}
+      compact={kind === "primary"}
+      blocked={startBehind !== undefined}
     >
       <ConfirmButton
         destructive={false}

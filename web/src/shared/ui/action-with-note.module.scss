@@ -23,6 +23,27 @@
   max-inline-size: calc(#{spacing.$spacing-13} * 2);
 }
 
+// A dica do botão (`compact`). Sem motivo, o invólucro continua no lugar, mas
+// a caixa vazia não abre.
+.empty.empty [role="tooltip"] {
+  display: none;
+}
+
+// O botão entra direto na linha, sem a folga de entrelinha embaixo dele.
+.trigger {
+  display: flex;
+}
+
+// O `disabled` não recebe o mouse: quem recebe é o invólucro, que mostra o
+// cursor de travado.
+.blocked {
+  cursor: not-allowed;
+
+  button {
+    pointer-events: none;
+  }
+}
+
 // Na célula de ações (que não quebra linha), o texto quebra numa largura
 // que ainda dá para ler, alinhado com o botão.
 .end {

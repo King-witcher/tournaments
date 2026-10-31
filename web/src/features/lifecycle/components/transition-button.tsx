@@ -19,13 +19,16 @@ type Props = {
   label: string;
   /** Pergunta antes de chamar a API (o Modal com o mesmo texto do botão). */
   confirm?: string;
-  /** `primary` no cabeçalho; `secondary` na aba Organização. */
+  /**
+   * `primary` no cabeçalho, onde o motivo vira a dica do botão; `secondary`
+   * na aba Organização, onde ele fica escrito embaixo.
+   */
   kind?: ButtonKind;
-  /** Sem como dar certo agora: o botão fica desabilitado com este motivo embaixo. */
+  /** Sem como dar certo agora: o botão fica desabilitado, com este motivo. */
   disabledReason?: string;
   /**
    * O que vai impedir a ação, sem travar o botão (a API confere e responde
-   * com o código): embaixo dele, como o motivo.
+   * com o código): junto dele, como o motivo.
    */
   note?: string;
 };
@@ -73,7 +76,12 @@ export function TransitionButton({
     );
 
   return (
-    <ActionWithNote note={disabledReason ?? note} error={error}>
+    <ActionWithNote
+      note={disabledReason ?? note}
+      error={error}
+      compact={kind === "primary"}
+      blocked={disabled}
+    >
       {confirm ? (
         <ConfirmButton
           destructive={false}

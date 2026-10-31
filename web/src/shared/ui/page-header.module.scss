@@ -32,10 +32,12 @@
   overflow-wrap: anywhere;
 }
 
+// Alinhados pelo topo: o erro de um botão aparece embaixo dele, e centralizar
+// desceria os vizinhos.
 .actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: spacing.$spacing-03;
 }
 
