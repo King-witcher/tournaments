@@ -11,13 +11,13 @@ Site multi-tenant para organizar torneios de Quake Champions. API em Rust (Axum 
 
 ## Banco local
 
-O projeto usa um banco `tournaments` com um usuário `tournaments` que só acessa esse banco e entra sem senha a partir desta máquina. Para criar numa máquina nova, como `postgres`:
+O projeto usa um banco `telefrag` com um usuário `telefrag` que só acessa esse banco e entra sem senha a partir desta máquina. Para criar numa máquina nova, como `postgres`:
 
 ```sql
-CREATE ROLE tournaments LOGIN NOSUPERUSER NOCREATEROLE CREATEDB NOREPLICATION;
-CREATE DATABASE tournaments OWNER tournaments;
-REVOKE ALL ON DATABASE tournaments FROM PUBLIC;
-GRANT CONNECT, TEMPORARY ON DATABASE tournaments TO tournaments;
+CREATE ROLE telefrag LOGIN NOSUPERUSER NOCREATEROLE CREATEDB NOREPLICATION;
+CREATE DATABASE telefrag OWNER telefrag;
+REVOKE ALL ON DATABASE telefrag FROM PUBLIC;
+GRANT CONNECT, TEMPORARY ON DATABASE telefrag TO telefrag;
 ```
 
 `CREATEDB` existe só para os testes: eles criam até 8 bancos `_sqlx_test_<banco>_t<n>` (`backend/crates/api/tests/api/db.rs`), mantidos entre execuções e esvaziados antes de cada teste.
@@ -25,18 +25,18 @@ GRANT CONNECT, TEMPORARY ON DATABASE tournaments TO tournaments;
 No `pg_hba.conf`, **antes** das linhas `all all`, e depois `SELECT pg_reload_conf();`:
 
 ```
-host    tournaments,/^_sqlx_test    tournaments    127.0.0.1/32    trust
-host    tournaments,/^_sqlx_test    tournaments    ::1/128         trust
-local   tournaments,/^_sqlx_test    tournaments                    trust
-host    all                         tournaments    all             reject
-local   all                         tournaments                    reject
+host    telefrag,/^_sqlx_test    telefrag    127.0.0.1/32    trust
+host    telefrag,/^_sqlx_test    telefrag    ::1/128         trust
+local   telefrag,/^_sqlx_test    telefrag                    trust
+host    all                      telefrag    all             reject
+local   all                      telefrag                    reject
 ```
 
 As três primeiras liberam o usuário sem senha só no próprio banco e nos de teste; as duas últimas recusam o resto.
 
 ## Redis local
 
-Sessões e outros dados efêmeros ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`; os outros databases são de outros projetos). A API põe `REDIS_PREFIX` (padrão `tournaments:`) em toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database com um prefixo `test:` por teste (ver `docs/decisions/stack.md`, "Redis").
+Sessões e outros dados efêmeros ficam no Redis, sempre no database 1 (`redis://127.0.0.1:6379/1` no `.env.example`; os outros databases são de outros projetos). A API põe `REDIS_PREFIX` (padrão `telefrag:`) em toda chave, o que separa os ambientes deste projeto (um worktree com outro prefixo não vê as sessões do checkout principal). Os testes usam o mesmo database com um prefixo `test:` por teste (ver `docs/decisions/stack.md`, "Redis").
 
 ## Rodando
 

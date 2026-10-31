@@ -3,7 +3,7 @@
 ## Produto
 
 - Site para organizar torneios de Quake Champions: duelo, FFA, FFA por pontos/frags, 2v2, 3v3.
-- **Nome: Telefrag** (do usuário, 31/10): termo do Quake sem a marca "Quake", igual em pt e es, e não amarra a plataforma a um torneio (a RageCon é uma comunidade dentro dela). `telefrag.com.br` e `telefrag.gg` estavam livres em 31/10. O nome interno (banco, Redis, repositório, Render) continua `tournaments`.
+- **Nome: Telefrag** (do usuário, 31/10): termo do Quake sem a marca "Quake", igual em pt e es, e não amarra a plataforma a um torneio (a RageCon é uma comunidade dentro dela). `telefrag.com.br` e `telefrag.gg` estavam livres em 31/10. O nome interno (bancos, roles, prefixo do Redis) também virou `telefrag` em 31/10; ainda chamam `tournaments` a pasta do checkout e o repositório no GitHub, e o domínio não mudou.
 - **Logo**: o banner do usuário vetorizado à mão em `docs/brand/` (branco, como o original) e em `web/src/shared/lib/logo.ts` (os mesmos caminhos). No cabeçalho, na cor do texto do tema e só o ícone abaixo do `md` (a barra de ações não deixa espaço). Ícones do site (favicon, tela inicial) com o ícone em branco no fundo `#161616`, que funciona em aba clara e escura.
 - Português e espanhol (a comunidade joga muito com argentinos).
 - Multi-tenant: qualquer usuário logado cria tenants, com limite por usuário. Jogadores entram num tenant só por link de convite e têm um perfil por tenant.
@@ -44,7 +44,7 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
   - tempo real entre instâncias (continua `tokio::broadcast`) e rate limit por conta nas escritas (não pedido).
 - **Sem Redis a API não sobe** (`REDIS_URL` obrigatória, `PING` ao subir) e, se cair, as rotas que leem a sessão respondem 500. O `/health` não consulta o Redis (o monitor de uptime gastaria a cota). A API confere o Redis antes das migrations: sem ele, o deploy falha sem mexer no banco e a instância antiga segue no ar.
 - **Conexão**: `ConnectionManager` do redis-rs (abre no primeiro comando, reconecta; o comando que falha por conexão parada tenta de novo uma vez). TLS (`rediss://`) pelo rustls com o provedor aws-lc instalado no `main`: com ring (sqlx) e aws-lc (reqwest) ativos o rustls não escolhe sozinho e entra em pânico.
-- **Database e prefixo**: um database só (local, o 1: os outros são de outros projetos do usuário; Upstash, o 0, o único). Toda chave passa por `Redis::key` com `REDIS_PREFIX` (padrão `tournaments:`), para checkout principal e worktrees dividirem o database. Os testes usam `test:{banco}:{empréstimo}:`; a execução seguinte, com o lock da suíte, apaga todo `test:*` antes do primeiro teste (senão chegaram a 39 mil chaves; hoje ~1.900).
+- **Database e prefixo**: um database só (local, o 1: os outros são de outros projetos do usuário; Upstash, o 0, o único). Toda chave passa por `Redis::key` com `REDIS_PREFIX` (padrão `telefrag:`), para checkout principal e worktrees dividirem o database. Os testes usam `test:{banco}:{empréstimo}:`; a execução seguinte, com o lock da suíte, apaga todo `test:*` antes do primeiro teste (senão chegaram a 39 mil chaves; hoje ~1.900).
 
 ## Ids
 
@@ -61,7 +61,7 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 - Privado agora, público depois: nenhum segredo no código (`.env.example` versionado), histórico limpo.
 - GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês). Em pull request roda só o lado cujos arquivos mudaram (`dorny/paths-filter`); em push na `main`, os dois; execução antiga do mesmo ref é cancelada.
 - A conferência do `.sqlx/` regrava as queries num diretório à parte e compara (`diff -r`), reaproveitando as dependências compiladas (~1 min), em vez de rodar `sqlx-prepare.ts` (compilaria tudo de novo). Existe porque `.sqlx/` sobrando ou diferente seria invisível ao clippy offline.
-- Banco de dev: cluster Postgres local; usuário `tournaments` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos de teste.
+- Banco de dev: cluster Postgres local; usuário `telefrag` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos de teste.
 
 ## Organização do código
 
@@ -78,5 +78,5 @@ Uma suíte levou perto de uma hora com outras sessões rodando; um cluster Postg
 
 - **Bancos reaproveitados** (`tests/api/db.rs`), no lugar do `sqlx::test` (criava e apagava um banco por teste; o `drop database` força um checkpoint no servidor inteiro, 107 s com três suítes): cada banco principal tem 8 bancos de teste (`TEST_DATABASES`), `_sqlx_test_<banco>_t<n>`, migrados uma vez e recriados só quando as migrations aplicadas não batem com as do código. Antes de cada teste as tabelas são esvaziadas e as linhas das migrations (campeões, mapas) voltam de uma cópia. Descartado: um banco só (os testes contam com banco vazio e rodam em paralelo) e uma transação por teste (os handlers fazem commit). A suíte foi de ~1 hora para ~40 s.
 - **Esvaziar por `delete`, não `truncate`**: o `truncate ... restart identity` troca os arquivos de cada tabela, e no Windows com antivírus isso custava 0,13 s por teste parado e 9 s com outras sessões compilando (suíte de 65 s a 760 s). O `delete` de tabelas quase vazias fica na memória: 9 a 23 s. Comunidades e usuários saem primeiro (a cascata leva o resto) e cada tabela numa subtransação, repetindo a que um trigger recusou. `session_replication_role = replica` pediria `grant` de superusuário em cada máquina. 8 bancos porque 16 ganha pouco e, com o pool cheio (8 conexões por teste), passaria das 100 conexões do Postgres.
-- **Uma suíte por vez na máquina**: o binário pega um lock de arquivo na pasta temporária (`tournaments-api-tests.lock`); a de outra sessão espera. Dez suítes juntas levaram o mesmo que em fila, mas ninguém via resultado antes do fim, e os testes do Discord que dependem do relógio falharam sob carga.
+- **Uma suíte por vez na máquina**: o binário pega um lock de arquivo na pasta temporária (`telefrag-api-tests.lock`); a de outra sessão espera. Dez suítes juntas levaram o mesmo que em fila, mas ninguém via resultado antes do fim, e os testes do Discord que dependem do relógio falharam sob carga.
 - **Teste que não cobre nada novo sai**: só fica o que exercita um caminho, regra, código de erro ou constraint que nenhum outro exercita. Juntar testes pequenos num só ficou de fora: um teste a mais custa milissegundos, e o separado diz melhor o que quebrou.

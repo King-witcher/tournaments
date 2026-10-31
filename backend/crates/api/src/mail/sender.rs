@@ -58,7 +58,7 @@ impl Mailer for ResendMailer {
             .client
             .post(RESEND_URL)
             .bearer_auth(&self.api_key)
-            .header(reqwest::header::USER_AGENT, "tournaments-api")
+            .header(reqwest::header::USER_AGENT, "telefrag-api")
             .json(&json!({
                 "from": self.from,
                 "to": [email.to],

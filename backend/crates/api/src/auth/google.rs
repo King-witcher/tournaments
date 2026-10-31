@@ -80,7 +80,7 @@ impl HttpGoogle {
     pub fn new(client_id: String, client_secret: String) -> Self {
         Self {
             client: reqwest::Client::builder()
-                .user_agent("tournaments-api")
+                .user_agent("telefrag-api")
                 .build()
                 .expect("cliente HTTP"),
             client_id,

@@ -50,7 +50,7 @@ impl Config {
         Ok(Self {
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL não definida")?,
             redis_url: std::env::var("REDIS_URL").context("REDIS_URL não definida")?,
-            redis_prefix: env_or("REDIS_PREFIX", "tournaments:"),
+            redis_prefix: env_or("REDIS_PREFIX", "telefrag:"),
             addr: env_or("API_ADDR", "127.0.0.1:4000")
                 .parse()
                 .context("API_ADDR inválido")?,

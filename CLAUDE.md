@@ -43,7 +43,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 
 - Próximo passo e pendências: `docs/roadmap.md`. Ao terminar um incremento, ajuste a linha da área em "Feito" (uma linha por área; o detalhe vai no commit) e tire de "Pendências" o que resolveu; cada pendência é curta: o que falta e onde.
 - Decisão de produto em aberto: pergunte ao usuário (ele prefere rodadas de perguntas com opções) em vez de decidir sozinho, e registre a resposta no arquivo da área em `docs/decisions/` (poucas linhas: decisão, motivo, número que importa).
-- Subagentes (`.claude/agents/`): `format-engine` (trabalho no `engine`), `rules-reviewer` (revisar um formato), `test-runner` (rodar testes), `investigator` (causa de um erro, só leitura). Passe a especificação completa no prompt: eles não veem esta conversa.
+- Subagentes (`.claude/agents/`): `format-engine` (trabalho no `engine`), `rules-reviewer` (revisar um formato), `test-runner` (rodar testes), `investigator` (como algo funciona ou por que falha, só leitura; use sempre que a resposta pedir código de mais de uma camada ou além de `docs/decisions/`). Passe a especificação completa no prompt: eles não veem esta conversa.
 
 ## Armadilhas (Windows)
 

@@ -119,7 +119,7 @@ static SLOTS: LazyLock<Slots> = LazyLock::new(|| {
         .unwrap_or(DEFAULT_DATABASES);
     let main = main_options();
     // Com o prefixo `_sqlx_test_`, que o pg_hba.conf do README libera para o
-    // usuário do projeto: `tournaments` → `_sqlx_test_tournaments_t0`, e o
+    // usuário do projeto: `telefrag` → `_sqlx_test_telefrag_t0`, e o
     // banco de um worktree (`_sqlx_test_wt_x`) → `_sqlx_test_wt_x_t0`.
     let main_name = main.get_database().unwrap_or("postgres");
     let base = main_name.strip_prefix("_sqlx_test_").unwrap_or(main_name);
@@ -143,7 +143,7 @@ static RESET: OnceLock<String> = OnceLock::new();
 /// duas suítes juntas se atrasam mais do que uma depois da outra. O lock vale
 /// até o processo sair.
 static SUITE_LOCK: LazyLock<File> = LazyLock::new(|| {
-    let path = std::env::temp_dir().join("tournaments-api-tests.lock");
+    let path = std::env::temp_dir().join("telefrag-api-tests.lock");
     let file = File::options()
         .create(true)
         .truncate(false)

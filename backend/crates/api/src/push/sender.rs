@@ -74,7 +74,7 @@ impl HttpWebPush {
         }
         Ok(Self {
             client: reqwest::Client::builder()
-                .user_agent("tournaments-api")
+                .user_agent("telefrag-api")
                 .timeout(TIMEOUT)
                 .build()
                 .context("cliente HTTP")?,

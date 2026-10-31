@@ -50,13 +50,13 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_USER: tournaments
+          POSTGRES_USER: telefrag
           POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: tournaments
+          POSTGRES_DB: telefrag
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U tournaments"
+          --health-cmd "pg_isready -U telefrag"
           --health-interval 5s --health-timeout 5s --health-retries 10
       redis:
         image: redis:7
@@ -68,7 +68,7 @@ jobs:
     env:
       # O usuário do serviço é superusuário: os testes criam os bancos deles
       # (crates/api/tests/api/db.rs).
-      DATABASE_URL: postgres://tournaments@localhost:5432/tournaments
+      DATABASE_URL: postgres://telefrag@localhost:5432/telefrag
       REDIS_URL: redis://127.0.0.1:6379/0
       RUST_TEST_THREADS: "8"
     defaults:

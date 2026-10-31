@@ -1,6 +1,6 @@
 # Banco local sem senha, usado pelas macros sqlx::query! na compilação.
 [env]
-DATABASE_URL = "postgres://tournaments@localhost:5432/tournaments"
+DATABASE_URL = "postgres://telefrag@localhost:5432/telefrag"
 # Testes ao mesmo tempo: os de rota dividem 8 bancos (TEST_DATABASES em
 # crates/api/tests/api/db.rs), e um a mais só esperaria um banco livre.
 RUST_TEST_THREADS = "8"

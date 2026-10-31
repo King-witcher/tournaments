@@ -50,7 +50,7 @@ impl Webhooks {
     pub fn with_base(base: &str) -> Self {
         Self {
             client: reqwest::Client::builder()
-                .user_agent("tournaments-api")
+                .user_agent("telefrag-api")
                 .timeout(TIMEOUT)
                 // Um redirecionamento levaria o token a outro endereço.
                 .redirect(reqwest::redirect::Policy::none())

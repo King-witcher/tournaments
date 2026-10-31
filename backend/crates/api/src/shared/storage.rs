@@ -83,7 +83,7 @@ impl Storage {
             bucket,
             credentials: Credentials::new(config.access_key_id, config.secret_access_key),
             http: reqwest::Client::builder()
-                .user_agent("tournaments-api")
+                .user_agent("telefrag-api")
                 .timeout(TIMEOUT)
                 .build()
                 .context("cliente HTTP")?,
