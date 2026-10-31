@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/theme";
+
+// Na largura de quem contém, sempre 16:9; o fundo aparece enquanto a imagem
+// carrega e no mapa sem imagem.
+.thumbnail {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: theme.$layer-accent-01;
+}
+
+// Banido: o cinza mostra de relance o que saiu (o nome também fica riscado).
+.out {
+  filter: grayscale(1);
+}

@@ -9,6 +9,7 @@ import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
 import { type PoolMapState, poolStates } from "../lib/veto";
 import styles from "./veto-board.module.scss";
+import { VetoMapTile } from "./veto-map-tile";
 
 type Schemas = components["schemas"];
 
@@ -20,8 +21,8 @@ type Props = {
 };
 
 /**
- * O veto de mapas (modo veto): o pool, um mapa por linha, com o que
- * aconteceu com ele (banido por quem, escolhido por quem para qual jogo, o
+ * O veto de mapas (modo veto): o pool, em cartões com a imagem do mapa, com
+ * o que aconteceu com ele (banido por quem, escolhido por quem para qual jogo, o
  * decisivo) e, na vez de quem vê, o botão de banir ou escolher nos que
  * sobraram.
  */
@@ -48,18 +49,17 @@ export function VetoMapBoard({ target, veto, bestOf, names }: Props) {
   return (
     <div className={styles.board}>
       <h3 className={styles.heading}>{t("title")}</h3>
-      <ul className={styles.list}>
+      <ul className={styles.maps}>
         {veto.pool.map((m) => {
           const state = states[m.slug];
-          const can = veto.options.includes(m.slug);
           return (
-            <li
+            <VetoMapTile
               key={m.slug}
-              className={state.kind === "banned" ? styles.out : styles.item}
+              map={m}
+              state={describe(state)}
+              out={state.kind === "banned"}
             >
-              <span className={styles.name}>{m.name}</span>
-              <span className={styles.state}>{describe(state)}</span>
-              {can && (
+              {veto.options.includes(m.slug) && (
                 <Button
                   size="sm"
                   kind={label === "pick" ? "primary" : "danger--tertiary"}
@@ -70,7 +70,7 @@ export function VetoMapBoard({ target, veto, bestOf, names }: Props) {
                   {t(label)}
                 </Button>
               )}
-            </li>
+            </VetoMapTile>
           );
         })}
       </ul>

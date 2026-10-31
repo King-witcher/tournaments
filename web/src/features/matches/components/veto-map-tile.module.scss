@@ -1,0 +1,39 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  min-inline-size: 0;
+}
+
+.name {
+  @include type.type-style("body-compact-01");
+  @include type.font-weight("semibold");
+
+  margin-block-start: spacing.$spacing-02;
+  overflow-wrap: anywhere;
+}
+
+// O que saiu do jogo fica riscado, mas legível (cor secundária com contraste
+// AA, nunca opacidade).
+.out .name {
+  color: theme.$text-secondary;
+  text-decoration: line-through;
+}
+
+.state {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}
+
+// O botão no pé do cartão, na largura toda: na mesma altura em toda a fileira,
+// mesmo quando o estado de um mapa quebra em duas linhas.
+.tile > button {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin-block-start: auto;
+}

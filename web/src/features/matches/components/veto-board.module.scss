@@ -13,15 +13,21 @@
   @include type.type-style("heading-02");
 }
 
-// Uma linha por mapa ou campeão: nome, o que aconteceu com ele e, na vez de
-// quem vê, o botão. No celular o botão desce para a linha de baixo.
+// Mapas: cartões com a imagem, em grade como os campeões. A imagem acha o mapa
+// mais rápido que o nome, no tempo do passo.
+.maps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
+  gap: spacing.$spacing-05 spacing.$spacing-03;
+}
+
+// Uma linha por partida: o número e o que ela já tem.
 .list {
   display: flex;
   flex-direction: column;
 }
 
-.item,
-.out {
+.item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
   gap: spacing.$spacing-03;
@@ -39,24 +45,6 @@
   @include type.font-weight("semibold");
 
   overflow-wrap: anywhere;
-}
-
-// O que saiu do jogo fica riscado, mas legível (cor secundária com contraste
-// AA, nunca opacidade).
-.out .name {
-  color: theme.$text-secondary;
-  text-decoration: line-through;
-}
-
-.state {
-  @include type.type-style("helper-text-01");
-
-  color: theme.$text-secondary;
-
-  @include breakpoint.breakpoint-down(md) {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
 }
 
 // Campeões: muitos, então em grade de botões e de nomes com a nota embaixo.
