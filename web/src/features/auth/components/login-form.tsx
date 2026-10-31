@@ -21,7 +21,7 @@ import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
  * revelaria quem tem conta. Entrar numa conta com a exclusão agendada a
  * cancela e leva à conta, que avisa. Embaixo do botão, o link para
  * recuperar a senha (depois dele na ordem do Tab, para não ficar entre a
- * senha e o "Entrar").
+ * senha e o "Entrar"), que leva o que foi digitado no campo de usuário.
  */
 export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
@@ -60,7 +60,14 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         <Button type="submit" pending={pending}>
           {t("submit")}
         </Button>
-        <Link href="/login/forgot">{t("forgotPassword")}</Link>
+        <Link
+          href={{
+            pathname: "/login/forgot",
+            query: username.trim() ? { login: username.trim() } : undefined,
+          }}
+        >
+          {t("forgotPassword")}
+        </Link>
       </Stack>
     </Form>
   );

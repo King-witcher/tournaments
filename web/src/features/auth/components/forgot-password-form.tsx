@@ -18,14 +18,19 @@ import { TextInput } from "@/shared/ui/text-input";
  * responde igual exista a conta ou não, então a resposta é neutra: "se
  * houver uma conta com senha e email confirmado, o link foi". Enviado, o
  * aviso fica no lugar do formulário (e recebe o foco); "Pedir outro link"
- * volta ao campo, com o que foi digitado.
+ * volta ao campo, com o que foi digitado. O campo já vem com o que estava no
+ * login (`initialLogin`).
  */
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({
+  initialLogin = "",
+}: {
+  initialLogin?: string;
+}) {
   const t = useTranslations("Login.forgot");
   const errorMessage = useApiErrorMessage();
   const inputId = useId();
   const sentId = useId();
-  const [login, setLogin] = useState("");
+  const [login, setLogin] = useState(initialLogin);
   const [sentFor, setSentFor] = useState<string>();
 
   const [error, submit, pending] = useActionState(async () => {
