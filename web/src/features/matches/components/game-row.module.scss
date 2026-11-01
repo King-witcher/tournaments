@@ -3,48 +3,71 @@
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
-@use "./games-grid";
 
-// Uma linha por mapa, separada da seguinte como numa StructuredList.
+// Uma partida por linha (as enviadas e as que faltam), separada da seguinte
+// como numa StructuredList: a miniatura do mapa à esquerda e, ao lado, a
+// partida, o resultado e o estado (no celular, um embaixo do outro). As
+// ações e os screenshots vêm embaixo, a partir da coluna do texto.
 .row {
   @include type.type-style("body-compact-01");
 
   display: grid;
-  align-items: baseline;
-  padding-block: spacing.$spacing-05;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-05;
+  padding-block: spacing.$spacing-04;
   border-block-end: 1px solid theme.$border-subtle-01;
+  grid-template-areas:
+    "thumb title"
+    "thumb result"
+    "thumb status";
+  grid-template-columns: spacing.$spacing-12 minmax(0, 1fr);
 
-  @include games-grid.columns;
-  @include games-grid.cells;
-}
-
-.num {
-  @include type.font-weight("semibold");
-
-  grid-area: num;
-  font-variant-numeric: tabular-nums;
-}
-
-// "Mapa " antes do número: no celular, onde não há cabeçalho de coluna, ele
-// aparece; no resto, só o leitor de tela lê (a coluna se chama "Nº").
-.numPrefix {
   @include breakpoint.breakpoint(md) {
-    @include visually-hidden;
+    grid-template-areas: "thumb title result status";
+    grid-template-columns:
+      spacing.$spacing-12 minmax(0, 2fr) minmax(0, 3fr)
+      minmax(0, 3fr);
   }
 }
 
+.thumb {
+  align-self: start;
+  grid-area: thumb;
+}
+
+// Partida sem mapa ainda (votação, sorteio): só o contorno, do tamanho da
+// miniatura.
+.noMap {
+  display: block;
+  border: 1px dashed theme.$border-strong-01;
+  aspect-ratio: 16 / 9;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  grid-area: title;
+  min-inline-size: 0;
+}
+
+.number {
+  @include type.font-weight("semibold");
+}
+
 .map {
-  grid-area: map;
+  color: theme.$text-secondary;
   overflow-wrap: anywhere;
 }
 
 // Mapa antigo, enviado sem nome.
 .missing {
-  color: theme.$text-secondary;
   font-style: italic;
 }
 
 .result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 spacing.$spacing-03;
   grid-area: result;
   overflow-wrap: anywhere;
 }
@@ -54,10 +77,20 @@
 }
 
 .frags {
-  grid-area: frags;
+  @include type.font-weight("regular");
+
   color: theme.$text-secondary;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+// TDM: quem jogou, embaixo do resultado.
+.lineup {
+  @include type.type-style("helper-text-01");
+  @include type.font-weight("regular");
+
+  flex-basis: 100%;
+  color: theme.$text-secondary;
 }
 
 // A etiqueta e, embaixo, a frase do estado.
@@ -70,37 +103,43 @@
 }
 
 .phrase {
-  @include type.type-style("body-compact-01");
+  @include type.type-style("helper-text-01");
 
   color: theme.$text-secondary;
   overflow-wrap: anywhere;
 }
 
-// Os botões de responder e os da organização, um bloco embaixo do outro.
+// Os botões de responder e os da organização, e os screenshots: embaixo, a
+// partir da coluna do texto.
+.actions,
+.screenshots {
+  grid-column: 2 / -1;
+  padding-block-start: spacing.$spacing-03;
+}
+
 .actions {
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-05;
-  padding-block-start: spacing.$spacing-03;
-
-  @include games-grid.actions;
 }
 
-// Os screenshots do mapa (feature `screenshots`), embaixo, no lugar das ações.
-.screenshots {
-  padding-block-start: spacing.$spacing-03;
+// As que faltam: os campeões de cada lado, pequenos, na coluna do resultado
+// e do estado.
+.picks {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-05;
+  grid-column: 2 / -1;
 
-  @include games-grid.actions;
+  @include breakpoint.breakpoint(md) {
+    grid-column: 3 / -1;
+  }
+}
+
+.vs {
+  color: theme.$text-secondary;
 }
 
 .srOnly {
   @include visually-hidden;
-}
-
-// TDM: quem jogou o mapa, embaixo do resultado.
-.lineup {
-  @include type.type-style("helper-text-01");
-
-  display: block;
-  color: theme.$text-secondary;
 }

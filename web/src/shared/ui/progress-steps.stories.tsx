@@ -1,6 +1,8 @@
 import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useState } from "react";
 
+import { Button } from "./button";
 import { ProgressSteps } from "./progress-steps";
 
 const steps = [
@@ -63,6 +65,55 @@ export const EachStep: Story = {
       ))}
     </Stack>
   ),
+};
+
+const seriesSteps = [
+  { key: "ready", label: "Pronto" },
+  { key: "maps", label: "Mapas" },
+  { key: "champions", label: "Campeões" },
+  { key: "games", label: "Partidas" },
+];
+
+/**
+ * Com `onSelect`, os passos feitos viram botões (nome na cor de link) para ver
+ * como terminaram; `selected` marca o que está à vista. O atual e os
+ * seguintes não respondem.
+ */
+export const Selectable: Story = {
+  args: { steps: seriesSteps, current: 2, label: "Passos da série" },
+  render: function Render(args) {
+    const [selected, setSelected] = useState<number>();
+    return (
+      <Stack gap={5}>
+        <ProgressSteps {...args} selected={selected} onSelect={setSelected} />
+        <p>
+          {selected == null
+            ? "À vista: o passo atual."
+            : `À vista: ${seriesSteps[selected].label}.`}
+        </p>
+        {selected != null && (
+          <Button
+            kind="tertiary"
+            size="sm"
+            onClick={() => setSelected(undefined)}
+          >
+            Voltar para Campeões
+          </Button>
+        )}
+      </Stack>
+    );
+  },
+};
+
+/** Um passo feito escolhido: em negrito, como uma aba ativa. */
+export const SelectedStep: Story = {
+  args: {
+    steps: seriesSteps,
+    current: 3,
+    label: "Passos da série",
+    selected: 1,
+    onSelect: () => {},
+  },
 };
 
 /** Até `md` (celular), a lista fica vertical. */

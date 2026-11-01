@@ -50,3 +50,22 @@
     block-size: spacing.$spacing-09;
   }
 }
+
+// No cartão da partida, nas colunas dos lados dele (mesmo espaço entre
+// elas): três iguais com o "×" no meio da do mapa e, no celular, duas, uma
+// embaixo de cada lado, sem o "×".
+.aligned {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.aligned .versus {
+  justify-content: center;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}

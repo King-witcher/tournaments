@@ -42,6 +42,11 @@ type Props = {
   onCancel?: () => void;
   /** Abriu por um botão que sumiu: o foco vai para o primeiro campo. */
   focusOnMount?: boolean;
+  /**
+   * No cartão da partida da vez: os frags nas colunas dos lados do cartão,
+   * que já mostra o mapa do veto (sem a frase do mapa).
+   */
+  card?: boolean;
 };
 
 /**
@@ -52,7 +57,8 @@ type Props = {
  */
 export function GameForm(props: Props) {
   const { target, number, mode, names, maps, initial, fixedMap } = props;
-  const { beforeSubmit, submitLabel, onDone, onCancel, focusOnMount } = props;
+  const { beforeSubmit, submitLabel, onDone, onCancel, focusOnMount, card } =
+    props;
   const t = useTranslations("Match.form");
   const form = useRef<HTMLFormElement>(null);
   const [game, setGame] = useState<GameValues>(initial ?? EMPTY_GAME);
@@ -77,28 +83,33 @@ export function GameForm(props: Props) {
   return (
     <Form
       ref={form}
-      className={styles.form}
+      className={card ? undefined : styles.form}
       onSubmit={submitAction(
         () => score && send({ game: { map, ...score }, comment }),
       )}
     >
       <Stack gap={6}>
         {fixedMap ? (
-          <p className={styles.fixedMap}>
-            {t("vetoedMap", { map: fixedMap.name })}
-          </p>
+          !card && (
+            <p className={styles.fixedMap}>
+              {t("vetoedMap", { map: fixedMap.name })}
+            </p>
+          )
         ) : (
-          <MapSelect
-            maps={maps}
-            value={map}
-            onChange={(slug) => setGame({ ...game, map: slug })}
-          />
+          <div className={card ? styles.form : undefined}>
+            <MapSelect
+              maps={maps}
+              value={map}
+              onChange={(slug) => setGame({ ...game, map: slug })}
+            />
+          </div>
         )}
         <ScoreFields
           names={names}
           a={game.a}
           b={game.b}
           onChange={(side, value) => setGame({ ...game, [side]: value })}
+          aligned={card}
         />
         {mode === "organizer" && (
           <TextInput

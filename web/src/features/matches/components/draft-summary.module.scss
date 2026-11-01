@@ -1,0 +1,98 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+// Três colunas iguais: lado A, a partida (o mapa) e lado B, como os dois
+// lados de frente na tela de escolha do jogo.
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: spacing.$spacing-03 spacing.$spacing-02;
+  border-block-end: 1px solid theme.$border-subtle-01;
+  text-align: center;
+  vertical-align: middle;
+}
+
+// O cabeçalho só nomeia os lados (o do meio fica vazio): sem linha embaixo
+// dele, os nomes ficam colados na coluna que nomeiam.
+.table thead th {
+  @include type.type-style("heading-compact-01");
+
+  vertical-align: bottom;
+}
+
+.table thead th:nth-child(1) {
+  inline-size: calc(100% / 3);
+}
+
+.table thead th:nth-child(2) {
+  inline-size: calc(100% / 3);
+}
+
+.side {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-02;
+  overflow-wrap: anywhere;
+}
+
+.middle {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.map {
+  display: block;
+  max-inline-size: spacing.$spacing-12;
+  margin-inline: auto;
+
+  @include breakpoint.breakpoint(md) {
+    max-inline-size: spacing.$spacing-13;
+  }
+}
+
+// Partida sem mapa ainda (votação, sorteio): só o contorno.
+.noMap {
+  display: block;
+  border: 1px dashed theme.$border-strong-01;
+  aspect-ratio: 16 / 9;
+}
+
+.game {
+  @include type.type-style("heading-compact-01");
+
+  display: block;
+  margin-block-start: spacing.$spacing-02;
+  color: theme.$text-primary;
+}
+
+.mapName {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+// A partida da vez no draft.
+.current > * {
+  background: theme.$layer-selected-01;
+}
+
+.bans {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: spacing.$spacing-03;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

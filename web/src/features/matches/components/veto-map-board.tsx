@@ -2,36 +2,38 @@
 
 import { useTranslations } from "next-intl";
 
-import type { components } from "@/shared/api/schema";
-import { Button } from "@/shared/ui/button";
+import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { ErrorText } from "@/shared/ui/error-text";
+import { useLiveMatch } from "../hooks/use-live-match";
+import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
-import { type PoolMapState, poolStates } from "../lib/veto";
+import { type PoolMapState, poolStates, type TileState } from "../lib/veto";
 import styles from "./veto-board.module.scss";
-import { VetoMapTile } from "./veto-map-tile";
+import { VetoTile } from "./veto-tile";
 
-type Schemas = components["schemas"];
-
-type Props = {
-  target: MatchTarget;
-  veto: Schemas["VetoView"];
-  bestOf: number;
-  names: { a: string; b: string };
+const TILE: Record<PoolMapState["kind"], TileState> = {
+  available: "available",
+  banned: "banned",
+  picked: "picked",
+  decider: "picked",
 };
 
 /**
- * O veto de mapas (modo veto): o pool, em cartões com a imagem do mapa, com
- * o que aconteceu com ele (banido por quem, escolhido por quem para qual jogo, o
- * decisivo) e, na vez de quem vê, o botão de banir ou escolher nos que
- * sobraram.
+ * O veto de mapas (modo veto): o pool em cartões com a imagem, o banido e o
+ * escolhido marcados (com "Partida N" no escolhido e no decisivo; quem
+ * escolheu ou baniu fica para o leitor de tela) e, na vez de quem vê, os que
+ * sobraram como botões de banir ou escolher.
  */
-export function VetoMapBoard({ target, veto, bestOf, names }: Props) {
+export function VetoMapBoard({ target }: { target: MatchTarget }) {
   const t = useTranslations("Match.veto.maps");
+  const { detail } = useLiveMatch();
+  const names = useSideNames(detail);
   const action = useVetoAction(target);
-  const states = poolStates(veto, bestOf);
-  const mapTurn = veto.turn?.target === "map" ? veto.turn : null;
-  const label = mapTurn?.action === "pick" ? "pick" : "ban";
+  const veto = detail.veto;
+  if (!veto) return null;
+  const states = poolStates(veto, detail.summary.best_of);
+  const kind = veto.turn?.action === "pick" ? "pick" : "ban";
 
   const describe = (s: PoolMapState) => {
     switch (s.kind) {
@@ -42,35 +44,38 @@ export function VetoMapBoard({ target, veto, bestOf, names }: Props) {
       case "decider":
         return t("decider", { game: s.game });
       case "available":
-        return t("available");
+        return undefined;
     }
   };
 
   return (
     <div className={styles.board}>
-      <h3 className={styles.heading}>{t("title")}</h3>
       <ul className={styles.maps}>
         {veto.pool.map((m) => {
           const state = states[m.slug];
           return (
-            <VetoMapTile
+            <VetoTile
               key={m.slug}
-              map={m}
-              state={describe(state)}
-              out={state.kind === "banned"}
-            >
-              {veto.options.includes(m.slug) && (
-                <Button
-                  size="sm"
-                  kind={label === "pick" ? "primary" : "danger--tertiary"}
-                  pending={action.pending}
-                  onClick={() => action.step({ map: m.slug })}
-                  aria-label={t(`${label}Map`, { map: m.name })}
-                >
-                  {t(label)}
-                </Button>
-              )}
-            </VetoMapTile>
+              image={
+                <MapThumbnail slug={m.slug} out={state.kind === "banned"} />
+              }
+              name={m.name}
+              state={TILE[state.kind]}
+              note={
+                "game" in state ? t("game", { game: state.game }) : undefined
+              }
+              described={describe(state)}
+              action={
+                veto.options.includes(m.slug)
+                  ? {
+                      kind,
+                      text: t(kind),
+                      label: t(`${kind}Map`, { map: m.name }),
+                      onClick: () => action.step({ map: m.slug }),
+                    }
+                  : undefined
+              }
+            />
           );
         })}
       </ul>

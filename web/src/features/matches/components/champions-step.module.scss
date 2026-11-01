@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/breakpoint";
+
+// O resumo (com a partida da vez) junto da grade: em cima no celular, à
+// direita dela do lg para cima.
+.draft {
+  display: grid;
+  gap: spacing.$spacing-07;
+  grid-template-areas:
+    "summary"
+    "grid";
+
+  @include breakpoint.breakpoint(lg) {
+    align-items: start;
+    grid-template-areas: "grid summary";
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.summary {
+  grid-area: summary;
+}
+
+.grid {
+  grid-area: grid;
+}
+
+// Feito, só o resumo: na largura da coluna dele, sem esticar as três colunas.
+.alone {
+  @include breakpoint.breakpoint(lg) {
+    max-inline-size: 50%;
+  }
+}

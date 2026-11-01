@@ -2,69 +2,69 @@
 
 import { useTranslations } from "next-intl";
 
-import type { components } from "@/shared/api/schema";
-import { Button } from "@/shared/ui/button";
+import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { ErrorText } from "@/shared/ui/error-text";
+import { useLiveMatch } from "../hooks/use-live-match";
+import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
 import styles from "./veto-board.module.scss";
-import { VetoMapTile } from "./veto-map-tile";
-
-type Schemas = components["schemas"];
+import { VetoTile } from "./veto-tile";
 
 type Props = {
   target: MatchTarget;
-  veto: Schemas["VetoView"];
-  game: Schemas["VetoGame"];
-  names: { a: string; b: string };
+  /** A partida votada. */
+  game: number;
 };
 
 /**
- * A votação do mapa de um jogo: os mapas oferecidos, em cartões com a
- * imagem, quem votou em qual e, para quem ainda não votou, o botão de votar. Votos iguais, é esse;
- * diferentes, sorteio entre os dois.
+ * A votação do mapa de uma partida, nos mesmos cartões do veto: os mapas
+ * oferecidos, quem votou em qual e, para quem ainda não votou, o cartão como
+ * botão de votar. Some com menos de dois oferecidos (sem votação) e quando o
+ * mapa sai.
  */
-export function VetoVoteBoard({ target, veto, game, names }: Props) {
+export function VetoVoteBoard({ target, game }: Props) {
   const t = useTranslations("Match.veto.vote");
+  const { detail } = useLiveMatch();
+  const names = useSideNames(detail);
   const action = useVetoAction(target);
-  if (game.offered.length < 2) return null;
+  const veto = detail.veto;
+  const g = veto?.games.find((x) => x.game === game);
+  if (!veto || !g || g.map || g.offered.length < 2) return null;
 
   return (
     <div className={styles.board}>
-      <h3 className={styles.heading}>{t("title", { game: game.game })}</h3>
-      <p className={styles.reason}>{t("hint")}</p>
+      <p className={styles.hint}>{t("hint")}</p>
       <ul className={styles.maps}>
-        {game.offered.map((m) => {
+        {g.offered.map((m) => {
           const voters = (["a", "b"] as const)
-            .filter((s) => game[`vote_${s}`] === m.slug)
+            .filter((s) => g[`vote_${s}`] === m.slug)
             .map((s) => names[s]);
+          const note =
+            voters.length > 0
+              ? t("votes", { names: voters.join(", ") })
+              : undefined;
           return (
-            <VetoMapTile
+            <VetoTile
               key={m.slug}
-              map={m}
-              state={
-                voters.length > 0
-                  ? t("votes", { names: voters.join(", ") })
-                  : t("noVotes")
+              image={<MapThumbnail slug={m.slug} />}
+              name={m.name}
+              state="available"
+              note={note}
+              action={
+                veto.options.includes(m.slug)
+                  ? {
+                      kind: "pick",
+                      text: t("vote"),
+                      label: t("voteFor", { map: m.name }),
+                      onClick: () => action.step({ map: m.slug }),
+                    }
+                  : undefined
               }
-            >
-              {veto.options.includes(m.slug) && (
-                <Button
-                  size="sm"
-                  pending={action.pending}
-                  onClick={() => action.step({ map: m.slug })}
-                  aria-label={t("voteFor", { map: m.name })}
-                >
-                  {t("vote")}
-                </Button>
-              )}
-            </VetoMapTile>
+            />
           );
         })}
       </ul>
-      {game.map && (
-        <p className={styles.summary}>{t("result", { map: game.map.name })}</p>
-      )}
       {action.error && <ErrorText>{action.error}</ErrorText>}
     </div>
   );

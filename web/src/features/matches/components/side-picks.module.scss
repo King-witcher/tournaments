@@ -1,0 +1,74 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// TDM: um jogador por linha, o retrato à esquerda e o apelido e o campeão ao
+// lado.
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  text-align: start;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+.portrait {
+  flex: none;
+  inline-size: spacing.$spacing-07;
+}
+
+.lg .portrait {
+  inline-size: spacing.$spacing-09;
+}
+
+// Ainda escolhendo: só o contorno do retrato.
+.placeholder {
+  display: block;
+  border: 1px dashed theme.$border-strong-01;
+  aspect-ratio: 86 / 123;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.nick {
+  @include type.type-style("label-01");
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  overflow-wrap: anywhere;
+}
+
+.lg .nick {
+  @include type.type-style("body-compact-01");
+}
+
+.you .nick {
+  @include type.font-weight("semibold");
+}
+
+.champion {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+  overflow-wrap: anywhere;
+}
+
+.you .champion {
+  color: theme.$text-primary;
+}
+
+.choosing {
+  font-style: italic;
+}

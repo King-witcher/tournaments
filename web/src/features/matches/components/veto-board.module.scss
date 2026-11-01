@@ -1,94 +1,31 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/breakpoint";
 
 .board {
   display: flex;
   flex-direction: column;
-  gap: spacing.$spacing-03;
+  gap: spacing.$spacing-05;
 }
 
-.heading {
-  @include type.type-style("heading-02");
-}
-
-// Mapas: cartões com a imagem, em grade como os campeões. A imagem acha o mapa
-// mais rápido que o nome, no tempo do passo.
+// Mapas: cartões com a imagem, que acha o mapa mais rápido que o nome no
+// tempo do passo; dois por linha no celular.
 .maps {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
   gap: spacing.$spacing-05 spacing.$spacing-03;
 }
 
-// Uma linha por partida: o número e o que ela já tem.
-.list {
-  display: flex;
-  flex-direction: column;
-}
-
-.item {
+// Campeões: os retratos 3:4 lado a lado, como na escolha do jogo; quatro por
+// linha no celular.
+.champions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
-  gap: spacing.$spacing-03;
-  align-items: center;
-  padding-block: spacing.$spacing-03;
-  border-block-end: 1px solid theme.$border-subtle-01;
-
-  @include breakpoint.breakpoint-down(md) {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
+  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-11, 1fr));
+  gap: spacing.$spacing-05 spacing.$spacing-03;
 }
 
-.name {
-  @include type.type-style("body-compact-01");
-  @include type.font-weight("semibold");
-
-  overflow-wrap: anywhere;
-}
-
-// Campeões: muitos, então em grade de botões e de nomes com a nota embaixo.
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
-  gap: spacing.$spacing-03;
-}
-
-.champion {
-  display: flex;
-  flex-direction: column;
-  gap: spacing.$spacing-02;
-  min-inline-size: 0;
-}
-
-.champion > button {
-  inline-size: 100%;
-  max-inline-size: none;
-}
-
-.unavailable {
-  @include type.type-style("body-compact-01");
-
-  padding: spacing.$spacing-03;
-  border: 1px solid theme.$border-subtle-01;
-  color: theme.$text-secondary;
-  overflow-wrap: anywhere;
-}
-
-.reason {
+.hint {
   @include type.type-style("helper-text-01");
 
   color: theme.$text-secondary;
-}
-
-.summary {
-  @include type.type-style("body-01");
-}
-
-// Na lista das partidas, o resumo (mapa e campeões de cada lado) é longo: no
-// celular, desce para a linha de baixo, para o nome da partida não espremer.
-.item .summary {
-  @include breakpoint.breakpoint-down(md) {
-    grid-column: 1 / -1;
-  }
 }

@@ -89,7 +89,7 @@ Organização, antes do início: quantos entram na chave, a lista com campo de p
 
 ### Partida `/[tenant]/[tournament]/matches/[match]`
 
-Código (C2.1), os dois lados com avatar e o placar da série em tipo grande, `Tag` de estado, prazo com contagem. Depois, **uma linha por mapa** (`StructuredList`: nº, mapa, vencedor, frags, estado e ações) com o próximo mapa como última linha e, em cada mapa, os screenshots (`features/screenshots`). No veto, o bloco do veto (os mapas em cartões com a imagem, como na votação) e do draft de campeões ao vivo. Organização: `Accordion` fechada "Organização" (W.O.) e "Histórico" no fim.
+Código (C2.1), os dois lados com avatar e o placar da série em tipo grande, `Tag` de estado, prazo com contagem, sempre à vista. Com veto no torneio, embaixo, os passos (`ProgressSteps` com os passos feitos clicáveis): Pronto, Mapas (os mapas em cartões com a imagem; banido em cinza com borda vermelha e cadeado, escolhido com borda verde, check e "Partida N"), Campeões (os retratos lado a lado e o resumo do draft: uma coluna por lado e, por partida, campeão, mapa, campeão) e Partidas, só os que o torneio tem. Nas Partidas, a da vez num cartão (`Tile`: lado A, mapa, lado B, com os campeões e "Você") com o envio e os screenshots, e as outras numa linha compacta cada (miniatura, mapa, resultado, etiqueta, ações e screenshots). Organização: `Accordion` fechada "Organização" (W.O.) e "Histórico" no fim.
 
 ### Não encontrado e erro
 

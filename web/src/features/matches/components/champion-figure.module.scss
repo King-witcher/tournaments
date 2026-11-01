@@ -1,0 +1,94 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+
+.figure {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  min-inline-size: 0;
+  text-align: center;
+}
+
+// A largura do retrato por tamanho; a altura segue a proporção dele.
+.frame {
+  position: relative;
+  display: block;
+  border: spacing.$spacing-01 solid transparent;
+}
+
+.sm .frame {
+  inline-size: spacing.$spacing-09;
+}
+
+// No resumo do draft, menor no celular: as linhas das partidas cabem acima
+// da grade sem empurrá-la para longe.
+.md .frame {
+  inline-size: spacing.$spacing-09;
+
+  @include breakpoint.breakpoint(md) {
+    inline-size: spacing.$spacing-10;
+  }
+}
+
+// No cartão da partida, o retrato grande: o campeão de cada lado se acha de
+// relance.
+.lg .frame {
+  inline-size: spacing.$spacing-12;
+
+  @include breakpoint.breakpoint(md) {
+    inline-size: spacing.$spacing-13;
+  }
+}
+
+// Ainda a escolher: só o contorno, para não pesar como um retrato.
+.placeholder {
+  display: block;
+  border: 1px dashed theme.$border-strong-01;
+  aspect-ratio: 86 / 123;
+}
+
+.lg .placeholder {
+  aspect-ratio: 1;
+}
+
+.banned .frame {
+  border-color: theme.$support-error;
+}
+
+.icon {
+  position: absolute;
+  display: flex;
+  padding: spacing.$spacing-01;
+  background: theme.$background;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+}
+
+.icon svg {
+  fill: theme.$support-error;
+}
+
+.name {
+  @include type.type-style("label-01");
+
+  overflow-wrap: anywhere;
+}
+
+.lg .name {
+  @include type.type-style("body-compact-01");
+  @include type.font-weight("semibold");
+}
+
+.banned .name,
+.empty {
+  color: theme.$text-secondary;
+}
+
+.note {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}

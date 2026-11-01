@@ -1,0 +1,24 @@
+@use "@carbon/react/scss/theme";
+
+// Na largura de quem contém, na proporção do retrato; o fundo aparece
+// enquanto a imagem carrega e no campeão sem retrato.
+.portrait {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  object-fit: cover;
+  background: theme.$layer-accent-01;
+}
+
+.roster {
+  aspect-ratio: 86 / 123;
+}
+
+.big {
+  aspect-ratio: 1;
+}
+
+// Banido no draft: o cinza mostra de relance o que está fora.
+.out {
+  filter: grayscale(1);
+}

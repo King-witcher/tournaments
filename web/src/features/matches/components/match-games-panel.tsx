@@ -5,9 +5,10 @@ import { Section } from "@/shared/ui/section";
 import { useSideNames } from "../hooks/use-side-names";
 import { freeMaps } from "../lib/free-maps";
 import type { MatchTarget } from "../lib/match-target";
+import { GameCard } from "./game-card";
 import { GameRow } from "./game-row";
 import styles from "./match-games-panel.module.scss";
-import { NextGameRow } from "./next-game-row";
+import { UpcomingGames } from "./upcoming-games";
 
 type Schemas = components["schemas"];
 
@@ -16,14 +17,17 @@ type Props = {
   detail: Schemas["MatchDetail"];
   /** Os mapas ativos; cada formulário recebe só os que ainda cabem. */
   maps: Schemas["Map"][];
+  /** Sem os passos da série em cima, a seção tem o título à vista. */
+  titled: boolean;
 };
 
 /**
- * Os mapas da série, uma linha por mapa (nº, mapa, resultado, frags, estado
- * e o que dá para fazer nele); por último, a linha do próximo mapa, enquanto
- * a série aceita. Some com a partida que ainda não tem lados.
+ * As partidas da série, na ordem: as enviadas numa linha compacta cada (com
+ * o que dá para fazer nelas), a da vez num cartão com o envio e as que
+ * faltam e o veto já decidiu, compactas. Some com a série que ainda não tem
+ * lados.
  */
-export function MatchGamesPanel({ target, detail, maps }: Props) {
+export function MatchGamesPanel({ target, detail, maps, titled }: Props) {
   const t = useTranslations("Match.games");
   const s = detail.summary;
   const names = useSideNames(detail);
@@ -31,49 +35,30 @@ export function MatchGamesPanel({ target, detail, maps }: Props) {
   const open = s.state === "ready";
   if (!open && detail.games.length === 0) return null;
 
-  return (
-    <Section title={t("title")}>
-      <div>
-        {/* Os nomes das colunas, para correr o olho; cada linha também se
-            explica sozinha (o leitor de tela lê "Mapa 1", "Frags"). */}
-        <div aria-hidden className={styles.header}>
-          <span className={styles.num}>{t("columns.number")}</span>
-          <span className={styles.map}>{t("columns.map")}</span>
-          <span className={styles.result}>{t("columns.result")}</span>
-          <span className={styles.frags}>{t("columns.frags")}</span>
-          <span className={styles.status}>{t("columns.status")}</span>
-        </div>
-        <ol aria-label={t("title")}>
-          {detail.games.map((game) => (
-            <GameRow
-              key={game.number}
-              target={target}
-              game={game}
-              names={names}
-              maps={freeMaps(maps, detail.games, game.number)}
-              canManage={detail.can_manage}
-              last={game.number === detail.games.length}
-            />
-          ))}
-          {next != null && (
-            <NextGameRow
-              target={target}
-              number={next}
-              names={names}
-              maps={freeMaps(maps, detail.games, next)}
-              plays={detail.viewer_side != null}
-              enters={detail.can_manage && detail.viewer_side == null}
-              veto={
-                detail.veto && {
-                  reportable: detail.veto.reportable,
-                  map:
-                    detail.veto.games.find((g) => g.game === next)?.map ?? null,
-                }
-              }
-            />
-          )}
-        </ol>
-      </div>
-    </Section>
+  const list = (
+    <ol className={styles.list} aria-label={t("title")}>
+      {detail.games.map((game) => (
+        <GameRow
+          key={game.number}
+          target={target}
+          game={game}
+          names={names}
+          maps={freeMaps(maps, detail.games, game.number)}
+          canManage={detail.can_manage}
+          last={game.number === detail.games.length}
+        />
+      ))}
+      {next != null && (
+        <GameCard
+          target={target}
+          detail={detail}
+          number={next}
+          names={names}
+          maps={freeMaps(maps, detail.games, next)}
+        />
+      )}
+      {open && <UpcomingGames after={next ?? detail.games.length} />}
+    </ol>
   );
+  return titled ? <Section title={t("title")}>{list}</Section> : list;
 }

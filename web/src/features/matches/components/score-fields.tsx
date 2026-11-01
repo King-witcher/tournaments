@@ -3,6 +3,7 @@
 import { FormGroup } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
+import { cn } from "@/shared/lib/cn";
 import { NumberInput } from "@/shared/ui/number-input";
 import { isTied, MAX_FRAGS, MIN_FRAGS } from "../lib/score";
 import styles from "./score-fields.module.scss";
@@ -12,6 +13,11 @@ type Props = {
   a: number | null;
   b: number | null;
   onChange: (side: "a" | "b", value: number | null) => void;
+  /**
+   * Nas colunas dos lados do cartão da partida: três colunas iguais (o "×" no
+   * meio) e, no celular, duas, sem o "×".
+   */
+  aligned?: boolean;
 };
 
 /**
@@ -20,7 +26,7 @@ type Props = {
  * longo). Quem fez mais vence, então o empate fica inválido na hora, no
  * segundo campo; quem usa decide o envio com `validScore`.
  */
-export function ScoreFields({ names, a, b, onChange }: Props) {
+export function ScoreFields({ names, a, b, onChange, aligned }: Props) {
   const t = useTranslations("Match.form");
   const tMatch = useTranslations("Match");
   const tied = isTied(a, b);
@@ -54,7 +60,7 @@ export function ScoreFields({ names, a, b, onChange }: Props) {
 
   return (
     <FormGroup legendText={t("score")}>
-      <div className={styles.score}>
+      <div className={cn(styles.score, aligned && styles.aligned)}>
         {field("a", a)}
         <span aria-hidden className={styles.versus}>
           {tMatch("vs")}

@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { shownNickname } from "@/features/members/lib/nickname";
 import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
@@ -22,15 +23,17 @@ type Props = {
   names: { a: string; b: string };
   maps: Schemas["Map"][];
   canManage: boolean;
-  /** É o último mapa da série. */
+  /** É a última partida da série. */
   last: boolean;
 };
 
 /**
- * Uma partida enviada: número, mapa, quem venceu e os frags (sem confirmar,
- * como o que quem enviou diz), a etiqueta e a frase do estado (até quando
- * confirma sozinha, contestada e por quem, ou confirmada e como, com até
- * quando quem vê ainda contesta) e, embaixo, o que quem vê pode fazer nela.
+ * Uma partida enviada, numa linha compacta: a miniatura do mapa, "Partida N"
+ * e o mapa, quem venceu e os frags (sem confirmar, como o que quem enviou
+ * diz), a etiqueta e a frase do estado (até quando confirma sozinha,
+ * contestada e por quem, confirmada e como) e, embaixo, o que quem vê pode
+ * fazer nela (confirmar, contestar, as ações da organização) e os
+ * screenshots.
  */
 export function GameRow({
   target,
@@ -61,16 +64,13 @@ export function GameRow({
       name: g.contested_by ?? names[other(g.reported_side)],
       comment: g.contest_comment ?? "",
     });
-  } else if (g.confirmed_via) {
+  } else if (g.confirmed_via && g.can_contest) {
     // Confirmada, mas quem vê ainda pode contestar: até quando.
-    status = g.can_contest
-      ? `${t(`confirmed.${g.confirmed_via}`)} ${t("lateContest", names)}`
-      : t(`confirmed.${g.confirmed_via}`);
+    status = `${t(`confirmed.${g.confirmed_via}`)} ${t("lateContest", names)}`;
   }
   const responds = g.task === "respond";
   const contests = responds || g.can_contest;
-  // TDM: quem jogou o mapa por lado (no duelo, o próprio jogador: não
-  // aparece).
+  // TDM: quem jogou por lado (no duelo, o próprio jogador: não aparece).
   const nicks = (list: Schemas["TeamMember"][]) =>
     list
       .map((m) => shownNickname(m.nickname, tMember("deletedAccount")))
@@ -81,22 +81,20 @@ export function GameRow({
       : null;
 
   return (
-    // tabIndex -1: recebe o foco depois de confirmar, contestar ou resolver o
-    // mapa, quando o botão usado some.
+    // tabIndex -1: recebe o foco depois de confirmar, contestar ou resolver a
+    // partida, quando o botão usado some.
     <li id={gameRowId(g.number)} tabIndex={-1} className={styles.row}>
-      <span className={styles.num}>
-        {t.rich("numberCell", {
-          number: g.number,
-          prefix: (chunks) => (
-            <span className={styles.numPrefix}>{chunks}</span>
-          ),
-        })}
+      <span className={styles.thumb}>
+        <MapThumbnail slug={g.map?.slug ?? ""} />
       </span>
-      <span className={cn(styles.map, !g.map && styles.missing)}>
-        {g.map?.name ?? t("noMap")}
+      <span className={styles.title}>
+        <span className={styles.number}>{t("game", { number: g.number })}</span>
+        <span className={cn(styles.map, !g.map && styles.missing)}>
+          {g.map?.name ?? t("noMap")}
+        </span>
       </span>
       {/* Negrito só no que vale: sem confirmar, é a palavra de quem enviou,
-          e o placar no topo ainda não conta o mapa. */}
+          e o placar no topo ainda não conta a partida. */}
       <span className={cn(styles.result, settled && styles.settled)}>
         {settled || !g.reported_side
           ? t("won", { name: winner })
@@ -106,12 +104,16 @@ export function GameRow({
               // "Fulano enviou que venceu", sem o nome duas vezes.
               self: g.reported_side === g.winner ? "yes" : "no",
             })}
+        {g.a_frags != null && g.b_frags != null && (
+          <span className={styles.frags}>
+            {t.rich("fragsCell", {
+              a: g.a_frags,
+              b: g.b_frags,
+              prefix: hidden,
+            })}
+          </span>
+        )}
         {lineup && <span className={styles.lineup}>{lineup}</span>}
-      </span>
-      <span className={styles.frags}>
-        {g.a_frags != null &&
-          g.b_frags != null &&
-          t.rich("fragsCell", { a: g.a_frags, b: g.b_frags, prefix: hidden })}
       </span>
       <span className={styles.status}>
         <StatusTag status={GAME_STATUS[g.status]} size="sm">

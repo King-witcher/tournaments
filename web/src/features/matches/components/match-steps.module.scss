@@ -1,0 +1,20 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-07;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+}
+
+// O nome do passo à vista: o indicador já o mostra; o título é para o leitor
+// de tela navegar.
+.srOnly {
+  @include visually-hidden;
+}

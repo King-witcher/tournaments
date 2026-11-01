@@ -1,0 +1,140 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/components/button/tokens" as button;
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+.tile {
+  display: flex;
+  min-inline-size: 0;
+}
+
+// O conteúdo (botão ou não) ocupa o cartão inteiro, na mesma altura da fileira.
+.body,
+.button {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  min-inline-size: 0;
+}
+
+.button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+// A borda do estado em volta da imagem: com a largura de um token, porque 1px
+// some numa miniatura; transparente no disponível, para nada pular de lugar.
+.frame {
+  position: relative;
+  display: block;
+  border: spacing.$spacing-01 solid transparent;
+}
+
+.banned .frame {
+  border-color: theme.$support-error;
+}
+
+.picked .frame {
+  border-color: theme.$support-success;
+}
+
+// O ícone no canto da imagem, num quadrado do fundo da página: a cor dele
+// sobre a imagem não teria contraste garantido.
+.icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: spacing.$spacing-01;
+  background: theme.$background;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+}
+
+.banned .icon svg {
+  fill: theme.$support-error;
+}
+
+.picked .icon svg {
+  fill: theme.$support-success;
+}
+
+.name {
+  @include type.type-style("body-compact-01");
+  @include type.font-weight("semibold");
+
+  overflow-wrap: anywhere;
+}
+
+// Banido ou fora pela regra: o nome em cinza legível (nunca opacidade).
+.banned .name,
+.unavailable .name {
+  color: theme.$text-secondary;
+}
+
+.banned .name {
+  text-decoration: line-through;
+}
+
+.note {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.picked .note {
+  color: theme.$text-primary;
+}
+
+// A ação escrita no pé do cartão, com a cara do botão do Carbon: o pick no
+// primário, o ban no perigo de contorno (sete bans cheios de vermelho
+// gritariam mais que a escolha).
+.action {
+  @include type.type-style("body-compact-01");
+
+  display: block;
+  padding: spacing.$spacing-03 spacing.$spacing-04;
+  margin-block-start: auto;
+}
+
+.pick .action {
+  background: button.$button-primary;
+  color: theme.$text-on-color;
+}
+
+.ban .action {
+  box-shadow: inset 0 0 0 1px button.$button-danger-secondary;
+  color: button.$button-danger-secondary;
+}
+
+@media (any-hover: hover) {
+  .pick:hover .action {
+    background: button.$button-primary-hover;
+  }
+
+  .ban:hover .action {
+    background: button.$button-danger-hover;
+    box-shadow: none;
+    color: theme.$text-on-color;
+  }
+}
+
+.pick:active .action {
+  background: button.$button-primary-active;
+}
+
+.ban:active .action {
+  background: button.$button-danger-active;
+  color: theme.$text-on-color;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

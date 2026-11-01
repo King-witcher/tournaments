@@ -28,14 +28,6 @@
   },
   "games": {
     "title": "Partidas",
-    "columns": {
-      "number": "Nº",
-      "map": "Mapa",
-      "result": "Resultado",
-      "frags": "Frags",
-      "status": "Estado"
-    },
-    "numberCell": "<prefix>Partida </prefix>{number}",
     "fragsCell": "<prefix>Frags: </prefix>{a} × {b}",
     "noMap": "mapa não informado",
     "won": "{name} venceu",
@@ -55,9 +47,9 @@
       "contested": "Contestada",
       "confirmed": "Confirmada"
     },
-    "vetoFirst": "A partida {number} pode ser enviada quando o veto acabar.",
     "lineup": "Jogaram: {a} contra {b}",
-    "lateContest": "Você pode contestar até a próxima série de {a} ou de {b} começar."
+    "lateContest": "Você pode contestar até a próxima série de {a} ou de {b} começar.",
+    "game": "Partida {number}"
   },
   "respond": {
     "confirm": "Confirmar",
@@ -142,13 +134,6 @@
     "correctHint": "A chave acompanha a correção. Partidas que ficarem depois da decisão da série são anuladas."
   },
   "veto": {
-    "title": "Veto",
-    "mode": {
-      "veto": "Os mapas saem de um veto antes da primeira partida.",
-      "vote": "O mapa de cada partida é votado entre 3 sorteados.",
-      "random": "O mapa de cada partida é sorteado quando ela começa.",
-      "off": "Mapa combinado entre os jogadores."
-    },
     "waitingReady": "O veto começa quando os dois clicarem em “Pronto”.",
     "isReady": "{name} está pronto.",
     "notReady": "{name} ainda não está pronto.",
@@ -170,32 +155,23 @@
       "team_pick_champion": "escolher o campeão da partida {game}"
     },
     "deadline": "Tempo: <time></time>. Se acabar, a escolha é sorteada.",
-    "done": "{mode, select, vote {Votação da partida {game} concluída.} other {Veto concluído.}}",
     "maps": {
-      "title": "Mapas",
       "banned": "Banido por {name}",
-      "picked": "Partida {game}: escolhido por {name}",
-      "decider": "Partida {game}: decisivo",
-      "available": "Disponível",
+      "picked": "Escolhido por {name} para a partida {game}",
+      "decider": "Mapa decisivo, partida {game}",
       "ban": "Banir",
       "pick": "Escolher",
       "banMap": "Banir {map}",
-      "pickMap": "Escolher {map}"
+      "pickMap": "Escolher {map}",
+      "game": "Partida {game}"
     },
     "vote": {
-      "title": "Votação do mapa da partida {game}",
       "hint": "Votos iguais, é esse; diferentes, sorteio entre os dois.",
       "votes": "Voto de {names}",
-      "noVotes": "Sem votos",
       "vote": "Votar",
-      "voteFor": "Votar em {map}",
-      "result": "Mapa da partida: {map}."
+      "voteFor": "Votar em {map}"
     },
     "champions": {
-      "banTitle": "Bans da série",
-      "pickTitle": "Campeão da partida {game}",
-      "teamPickTitle": "Seus campeões",
-      "banHint": "O campeão banido fica fora para os dois lados.",
       "forGame": "Escolher para",
       "game": "Partida {game}",
       "banChampion": "Banir {champion}",
@@ -208,11 +184,22 @@
           "series": "escolhido para outra partida",
           "stage": "já usado nesta fase",
           "tournament": "já usado neste torneio"
-        }
+        },
+        "picked": "escolhido por {name} ({games})"
       },
       "gaveWay": {
         "rule": "A regra de não repetição não deixava nenhum campeão para esta partida. Por isso, ela não vale aqui.",
         "game": "Não sobrava campeão sem repetir o de outro jogador nesta partida. Vale qualquer um sem ban."
+      },
+      "grid": "Campeões",
+      "short": {
+        "teammate": "Do colega",
+        "opponent": "Do adversário",
+        "repeat": {
+          "series": "Já escolhido",
+          "stage": "Usado na fase",
+          "tournament": "Usado no torneio"
+        }
       }
     },
     "undo": {
@@ -223,20 +210,6 @@
       "decline": "Recusar",
       "organizer": "Desfazer o último passo",
       "organizerQuestion": "Desfazer o último passo do veto? A vez volta para quem o fez, com o tempo inteiro."
-    },
-    "games": {
-      "title": "Partidas da série",
-      "game": "Partida {game}",
-      "map": "{map}",
-      "mapPicked": "{map} (escolha de {name})",
-      "bans": "Bans: {list}",
-      "pick": "{name}: {champion}",
-      "teamPicks": "{name}: {list}",
-      "teamPick": "{name} com {champion}",
-      "drawn": "{champion} (sorteado)",
-      "choosing": "{name} escolhendo",
-      "ban": "{champion} ({name})",
-      "banDrawn": "{champion} ({name}, sorteado)"
     },
     "history": {
       "title": "Histórico do veto",
@@ -257,8 +230,33 @@
     "teamPick": "Todos os jogadores escolhem os campeões ao mesmo tempo, um para cada partida.",
     "teamPickYours": "Escolha um campeão para cada partida. A escolha é definitiva.",
     "teamDeadline": "Tempo: <time></time>. O que faltar no fim é sorteado.",
-    "waitingReadyTeams": "O veto começa quando os dois times clicarem em “Pronto”. Qualquer jogador do time pode clicar."
+    "waitingReadyTeams": "O veto começa quando os dois times clicarem em “Pronto”. Qualquer jogador do time pode clicar.",
+    "draft": {
+      "caption": "Campeões de cada lado por partida",
+      "gameColumn": "Partida",
+      "bans": "Bans",
+      "game": "Partida {game}",
+      "toPick": "a escolher",
+      "choosing": "escolhendo",
+      "drawn": "sorteado",
+      "drawnChampion": "{champion} (sorteado)",
+      "you": "Você"
+    }
   },
   "labelTable": "Rodada {round} de {total} · série {index}",
-  "members": "Jogadores de {name}"
+  "members": "Jogadores de {name}",
+  "steps": {
+    "label": "Passos da série",
+    "ready": "Pronto",
+    "maps": "Mapas",
+    "champions": "Campeões",
+    "games": "Partidas",
+    "back": "Voltar para {step}"
+  },
+  "card": {
+    "pickedBy": "Escolhido por {name}",
+    "decider": "Decisivo",
+    "voted": "Votado",
+    "drawn": "Sorteado"
+  }
 }
