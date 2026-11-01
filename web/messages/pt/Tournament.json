@@ -82,21 +82,26 @@
       "vetoStartsTdm": "O veto começa quando os dois times estiverem prontos.",
       "timer": "Cada escolha do veto tem {time}. Se o tempo acabar, ela é sorteada.",
       "maps": {
-        "veto": "Antes da primeira partida, vocês banem e escolhem mapas, alternando, até definir o mapa de cada partida.",
-        "vetoOne": "Antes da partida, vocês banem mapas, alternando, até sobrar um.",
+        "veto": "Antes da primeira partida, vocês banem e escolhem mapas, um de cada vez, até definir o mapa de cada partida.",
+        "vetoBansFirst": "Antes da primeira partida, vocês banem mapas, um de cada vez, até sobrarem só os da série. Depois escolhem a ordem em que eles são jogados.",
+        "vetoOne": "Antes da partida, vocês banem mapas, um de cada vez, até sobrar um.",
         "vote": "Antes de cada partida, cada um vota num de 3 mapas sorteados. Se os votos forem diferentes, o mapa é sorteado entre os dois.",
         "random": "O mapa de cada partida é sorteado quando ela começa.",
         "off": "Vocês combinam o mapa de cada partida, sem repetir na série.",
         "offOne": "Vocês combinam o mapa."
       },
       "mapsTdm": {
-        "veto": "Antes da primeira partida, os times banem e escolhem mapas, alternando, até definir o mapa de cada partida.",
-        "vetoOne": "Antes da partida, os times banem mapas, alternando, até sobrar um.",
+        "veto": "Antes da primeira partida, os times banem e escolhem mapas, um de cada vez, até definir o mapa de cada partida.",
+        "vetoBansFirst": "Antes da primeira partida, os times banem mapas, um de cada vez, até sobrarem só os da série. Depois escolhem a ordem em que eles são jogados.",
+        "vetoOne": "Antes da partida, os times banem mapas, um de cada vez, até sobrar um.",
         "vote": "Antes de cada partida, cada time vota num de 3 mapas sorteados. Se os votos forem diferentes, o mapa é sorteado entre os dois.",
         "random": "O mapa de cada partida é sorteado quando ela começa.",
         "off": "Os times combinam o mapa de cada partida, sem repetir na série.",
         "offOne": "Os times combinam o mapa."
       }
+    },
+    "pool": {
+      "title": "Mapas"
     },
     "results": {
       "title": "Resultado",

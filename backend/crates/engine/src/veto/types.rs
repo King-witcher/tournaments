@@ -23,10 +23,23 @@ pub enum MapMode {
     Off,
 }
 
+/// A ordem dos passos do veto de mapas (modo `Veto`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoOrder {
+    /// Os lados banem, alternando, até sobrarem só os mapas da série; depois
+    /// escolhem a ordem dos que sobraram, e o último é o decisivo.
+    BansFirst,
+    /// Dois bans, depois os picks e por fim o resto dos bans.
+    Alternating,
+}
+
 /// O que o torneio define para o veto das séries.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VetoRules {
     pub map_mode: MapMode,
+    /// A ordem dos passos do veto de mapas; só vale no modo `Veto`.
+    pub order: VetoOrder,
     /// Pool do torneio, na ordem configurada (fora do modo `Off`).
     pub pool: Vec<MapId>,
     /// Draft de campeões no site, antes da partida 1.

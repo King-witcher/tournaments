@@ -6,8 +6,11 @@
 //! hora: o cronômetro e o "pronto" dos jogadores ficam lá.
 //!
 //! Regras:
-//! - **Modo do mapa**, por torneio (`maps.rs`): `Veto` (ban/pick alternado
-//!   da série inteira antes da partida 1, com o decisivo: `map_sequence`),
+//! - **Modo do mapa**, por torneio (`maps.rs`): `Veto` (ban/pick da série
+//!   inteira antes da partida 1, com o decisivo: `map_sequence`; os lados
+//!   alternam a cada passo, e `VetoOrder` diz quais são bans e quais são
+//!   picks: todos os bans primeiro, ou dois bans, os picks e o resto dos
+//!   bans),
 //!   `Vote` (a cada partida, até 3 mapas sorteados do pool, sem os já
 //!   jogados na série; cada lado vota num; votos iguais, é esse; diferentes,
 //!   sorteio entre os dois), `Random` (o mapa da partida é sorteado quando
@@ -67,7 +70,8 @@ pub use draft::{GaveWay, PickOptions, Picker, Unavailable};
 pub use sequence::{Action, DraftStep, draft_sequence, map_sequence};
 pub use team::{Missing, Rosters};
 pub use types::{
-    Applied, Choice, Context, Event, MapMode, Target, Turn, VOTE_OPTIONS, VetoError, VetoRules,
+    Applied, Choice, Context, Event, MapMode, Target, Turn, VOTE_OPTIONS, VetoError, VetoOrder,
+    VetoRules,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -268,7 +272,7 @@ impl Veto {
             return Err(VetoError::GameOutOfOrder { next: 1 });
         }
         if self.rules.map_mode != MapMode::Off {
-            map_sequence(self.rules.pool.len(), self.best_of)?;
+            map_sequence(self.rules.pool.len(), self.best_of, self.rules.order)?;
         }
         // Sobrar um campeão depois dos bans da série; o resto cede.
         let required = usize::from(self.rules.bans()) * 2 + 1;

@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/utilities/skeleton" as *;
+
+// A imagem do mapa carregando: a mesma proporção 16:9 da `MapThumbnail`.
+.image {
+  @include skeleton;
+
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}

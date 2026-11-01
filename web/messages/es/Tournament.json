@@ -83,6 +83,7 @@
       "timer": "Cada elección del veto tiene {time}. Si se acaba el tiempo, se sortea.",
       "maps": {
         "veto": "Antes de la primera partida, tú y tu rival banean y eligen mapas, por turnos, hasta definir el mapa de cada partida.",
+        "vetoBansFirst": "Antes de la primera partida, tú y tu rival banean mapas, por turnos, hasta que queden solo los de la serie. Luego eligen el orden en que se juegan.",
         "vetoOne": "Antes de la partida, tú y tu rival banean mapas, por turnos, hasta que quede uno.",
         "vote": "Antes de cada partida, cada uno vota por uno de 3 mapas sorteados. Si los votos son distintos, el mapa se sortea entre los dos.",
         "random": "El mapa de cada partida se sortea cuando empieza.",
@@ -91,12 +92,16 @@
       },
       "mapsTdm": {
         "veto": "Antes de la primera partida, los equipos banean y eligen mapas, por turnos, hasta definir el mapa de cada partida.",
+        "vetoBansFirst": "Antes de la primera partida, los equipos banean mapas, por turnos, hasta que queden solo los de la serie. Luego eligen el orden en que se juegan.",
         "vetoOne": "Antes de la partida, los equipos banean mapas, por turnos, hasta que quede uno.",
         "vote": "Antes de cada partida, cada equipo vota por uno de 3 mapas sorteados. Si los votos son distintos, el mapa se sortea entre los dos.",
         "random": "El mapa de cada partida se sortea cuando empieza.",
         "off": "Los equipos acuerdan el mapa de cada partida, sin repetir en la serie.",
         "offOne": "Los equipos acuerdan el mapa."
       }
+    },
+    "pool": {
+      "title": "Mapas"
     },
     "results": {
       "title": "Resultado",

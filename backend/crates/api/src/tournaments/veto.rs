@@ -1,7 +1,8 @@
 //! A configuração do veto das séries: como sai o mapa de cada partida (veto,
-//! votação, sorteio ou desligado), o pool de mapas do torneio, o draft de
-//! campeões e o tempo de cada passo. Faz parte da configuração (`Setup`):
-//! muda até o torneio começar. O veto de cada partida fica em `matches`.
+//! votação, sorteio ou desligado), a ordem dos bans e picks do veto, o pool de
+//! mapas do torneio, o draft de campeões e o tempo de cada passo. Faz parte da
+//! configuração (`Setup`): muda até o torneio começar. O veto de cada partida
+//! fica em `matches`.
 
 use std::{collections::HashMap, ops::RangeInclusive};
 
@@ -27,8 +28,8 @@ const MAX_POOL: usize = 32;
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum MapMode {
-    /// Ban/pick alternado da série inteira antes da partida 1, com o
-    /// decisivo.
+    /// Ban/pick da série inteira antes da partida 1, com o decisivo; a ordem
+    /// dos passos é `VetoOrder`.
     Veto,
     /// A cada partida, 3 mapas sorteados do pool (sem os já jogados); cada um
     /// vota; votos diferentes, sorteio entre os dois.
@@ -72,6 +73,46 @@ impl From<MapMode> for ev::MapMode {
     }
 }
 
+/// A ordem dos passos do veto de mapas (só vale no modo `veto`).
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoOrder {
+    /// Os lados banem, alternando, até sobrarem só os mapas da série; depois
+    /// escolhem a ordem dos que sobraram, e o último é o decisivo.
+    BansFirst,
+    /// Dois bans, depois os picks e por fim o resto dos bans.
+    Alternating,
+}
+
+impl VetoOrder {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::BansFirst => "bans_first",
+            Self::Alternating => "alternating",
+        }
+    }
+
+    /// Lê `tournaments.veto_order` (garantida pelo check da tabela).
+    pub fn from_db(value: &str) -> Result<Self, ApiError> {
+        [Self::BansFirst, Self::Alternating]
+            .into_iter()
+            .find(|o| o.as_str() == value)
+            .ok_or_else(|| {
+                tracing::error!(veto_order = value, "ordem do veto desconhecida no banco");
+                ApiError::internal()
+            })
+    }
+}
+
+impl From<VetoOrder> for ev::VetoOrder {
+    fn from(order: VetoOrder) -> Self {
+        match order {
+            VetoOrder::BansFirst => Self::BansFirst,
+            VetoOrder::Alternating => Self::Alternating,
+        }
+    }
+}
+
 /// A configuração do veto que chega: o que vier no lugar do atual (na
 /// criação, do padrão).
 #[derive(Deserialize, ToSchema, Default)]
@@ -79,6 +120,10 @@ pub struct VetoInput {
     /// Padrão `veto`.
     #[serde(default)]
     pub map_mode: Option<MapMode>,
+    /// Ordem do veto de mapas, só no modo `veto`: `bans_first` (padrão) ou
+    /// `alternating`.
+    #[serde(default)]
+    pub order: Option<VetoOrder>,
     /// Slugs dos mapas (`GET /maps`, ativos), na ordem, sem repetir; fora do
     /// modo `off`, pelo menos um por partida da série mais longa. Padrão: os 7
     /// primeiros do pool de duelo. Vale para o veto, a votação e o sorteio.
@@ -103,6 +148,7 @@ pub struct VetoInput {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VetoSetup {
     pub map_mode: MapMode,
+    pub order: VetoOrder,
     /// O pool, na ordem.
     pub pool: Vec<MapId>,
     pub champion_phase: bool,
@@ -115,6 +161,8 @@ pub struct VetoSetup {
 #[derive(Serialize, ToSchema)]
 pub struct VetoSettings {
     pub map_mode: MapMode,
+    /// Só vale no modo `veto`.
+    pub order: VetoOrder,
     /// Slugs do pool, na ordem.
     pub map_pool: Vec<String>,
     pub champion_phase: bool,
@@ -137,6 +185,7 @@ impl VetoSetup {
     pub fn off() -> Self {
         Self {
             map_mode: MapMode::Off,
+            order: VetoOrder::BansFirst,
             pool: Vec::new(),
             champion_phase: false,
             step_seconds: DEFAULT_STEP_SECONDS,
@@ -148,6 +197,7 @@ impl VetoSetup {
     pub fn rules(&self, champions: ChampionRules, team_size: u32) -> ev::VetoRules {
         ev::VetoRules {
             map_mode: self.map_mode.into(),
+            order: self.order.into(),
             pool: self.pool.clone(),
             champion_phase: self.champion_phase,
             team_size: u8::try_from(team_size).unwrap_or(1),
@@ -223,6 +273,10 @@ pub async fn resolve(
             .map_mode
             .or(current.map(|c| c.map_mode))
             .unwrap_or(MapMode::Veto),
+        order: input
+            .order
+            .or(current.map(|c| c.order))
+            .unwrap_or(VetoOrder::BansFirst),
         pool,
         champion_phase: input
             .champion_phase
@@ -246,6 +300,7 @@ mod tests {
     fn setup(mode: MapMode, maps: i64, seconds: i32) -> VetoSetup {
         VetoSetup {
             map_mode: mode,
+            order: VetoOrder::BansFirst,
             pool: (1..=maps).map(MapId).collect(),
             champion_phase: true,
             step_seconds: seconds,

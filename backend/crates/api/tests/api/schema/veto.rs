@@ -1,11 +1,13 @@
 //! Veto: o histórico só cresce, com a forma de cada tipo e os mesmos lados;
 //! pronto antes do começo e o resto depois dele, um começo por partida; o
 //! pool de mapas com mapas para a série mais longa e, como a configuração do
-//! veto, congelado depois do início; tudo sai com o torneio.
+//! veto (inclusive a ordem dele, `veto_order`: as duas ordens e o padrão),
+//! congelado depois do início; tudo sai com o torneio.
 
 use serde_json::json;
 use sqlx::PgPool;
 
+use super::checks::tenant_id;
 use super::*;
 use crate::common::*;
 use crate::matches::{copa, single, start};
@@ -137,6 +139,33 @@ async fn veto_events_keep_their_shape_and_order() {
 }
 
 #[tokio::test]
+async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
+    let (db, _lease) = crate::db::test_db().await;
+    let _ = quake_br(&db).await;
+    // Uma linha que não diz a ordem (o código anterior à coluna, durante o
+    // deploy) nasce em bans primeiro, o padrão novo.
+    let tenant = tenant_id(&db, "quake-br").await;
+    let mut tx = db.begin().await.unwrap();
+    let order: String = sqlx::query_scalar(
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}')
+         returning veto_order",
+    )
+    .bind(tenant)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    assert_eq!(order, "bans_first");
+    let unknown = sqlx::query("update tournaments set veto_order = 'random'")
+        .execute(&mut *tx)
+        .await;
+    assert_eq!(
+        rejected(unknown),
+        rule(CHECK, "tournaments_veto_order_check")
+    );
+}
+
+#[tokio::test]
 async fn the_pool_fits_the_series_and_freezes_with_the_start() {
     let (db, _lease) = crate::db::test_db().await;
     let (tournament, _, _, _) = started(&db).await;
@@ -149,6 +178,13 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
     let veto_off = format!("update tournaments set map_mode = 'off' where id = {tournament}");
     assert_eq!(
         rejected(exec(&db, &veto_off).await),
+        rule(CHECK, "tournaments_veto_started_frozen")
+    );
+    // A ordem do veto também (a API cria em bans primeiro).
+    let veto_order =
+        format!("update tournaments set veto_order = 'alternating' where id = {tournament}");
+    assert_eq!(
+        rejected(exec(&db, &veto_order).await),
         rule(CHECK, "tournaments_veto_started_frozen")
     );
 

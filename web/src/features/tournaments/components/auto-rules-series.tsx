@@ -22,7 +22,11 @@ export function AutoRulesSeries({ tournament }: Props) {
   const formatSeconds = useFormatSeconds();
   const rules = useRuleSentences();
   const tdm = tournament.mode === "tdm";
-  const { map_mode: mapMode, champion_phase: championPhase } = tournament.veto;
+  const {
+    map_mode: mapMode,
+    order,
+    champion_phase: championPhase,
+  } = tournament.veto;
   const [stage] = tournament.stages;
   // Tudo numa partida só: o veto não tem pick, e não há o que repetir.
   const oneGame = Math.max(stage.best_of, finalsBestOf(stage) ?? 0) === 1;
@@ -30,12 +34,15 @@ export function AutoRulesSeries({ tournament }: Props) {
   const phases = mapMode !== "off" || championPhase;
   // O sorteio do mapa não tem escolha; o resto tem, com tempo.
   const choices = mapMode === "veto" || mapMode === "vote" || championPhase;
+  // Com uma partida só, os dois jeitos de vetar são só bans.
   const mapKey =
     oneGame && mapMode === "veto"
       ? "vetoOne"
       : oneGame && mapMode === "off"
         ? "offOne"
-        : mapMode;
+        : mapMode === "veto" && order === "bans_first"
+          ? "vetoBansFirst"
+          : mapMode;
   const maps = t(`${tdm ? "mapsTdm" : "maps"}.${mapKey}`);
   const champions = rules.champions(tournament);
 

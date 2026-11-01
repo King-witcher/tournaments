@@ -34,6 +34,71 @@ fn best_of_three_bans_picks_and_decider() {
 }
 
 #[test]
+fn best_of_three_with_bans_first_bans_four_maps_then_picks_two() {
+    let mut v = begun(bans_first(rules(MapMode::Veto, 7, false, 0)), 3, B);
+    // Quatro bans, alternando a partir do seed melhor.
+    for (i, m) in [1, 2, 3, 4].into_iter().enumerate() {
+        let side = if i % 2 == 0 { B } else { A };
+        assert_eq!(acting(&v), (Action::Ban, Target::Map, vec![side]));
+        step(&mut v, side, map(m)).unwrap();
+    }
+    // Só então os picks, e o alternado continua: B, depois A.
+    assert_eq!(acting(&v), (Action::Pick, Target::Map, vec![B]));
+    assert_eq!(v.decider(), None);
+    step(&mut v, B, map(6)).unwrap();
+    assert_eq!(acting(&v), (Action::Pick, Target::Map, vec![A]));
+    step(&mut v, A, map(5)).unwrap();
+    assert_eq!(v.turn(), Turn::Done { game: 1 });
+    // O mapa da partida N é o N-ésimo pick; o que sobrou é o decisivo.
+    assert_eq!(
+        [v.map_of(1), v.map_of(2), v.map_of(3)],
+        [Some(MapId(6)), Some(MapId(5)), Some(MapId(7))]
+    );
+    assert_eq!(v.decider(), Some(MapId(7)));
+    assert_eq!(
+        (v.picker(1), v.picker(2), v.picker(3)),
+        (Some(B), Some(A), None)
+    );
+}
+
+#[test]
+fn bans_first_refuses_a_pick_while_maps_are_left_to_ban() {
+    // No índice 2 (depois de dois bans) o alternado já pede um pick; bans
+    // primeiro ainda pede ban, e é A quem age nos dois.
+    let pick_at_two = |order: fn(VetoRules) -> VetoRules| {
+        let mut v = begun(order(rules(MapMode::Veto, 7, false, 0)), 3, A);
+        step(&mut v, A, map(1)).unwrap();
+        step(&mut v, B, map(2)).unwrap();
+        let pick = Event::Step {
+            side: A,
+            action: Action::Pick,
+            choice: map(3),
+        };
+        v.apply(pick, None)
+    };
+    assert_eq!(pick_at_two(bans_first), Err(VetoError::WrongAction));
+    assert_eq!(pick_at_two(|r| r), Ok(()));
+}
+
+#[test]
+fn bans_first_with_an_odd_number_of_bans_hands_the_first_pick_to_the_other_side() {
+    // 6 mapas, md3: três bans (A, B, A) e o primeiro pick é de B.
+    let mut v = begun(bans_first(rules(MapMode::Veto, 6, false, 0)), 3, A);
+    for (m, side) in [(1, A), (2, B), (3, A)] {
+        assert_eq!(acting(&v), (Action::Ban, Target::Map, vec![side]));
+        step(&mut v, side, map(m)).unwrap();
+    }
+    assert_eq!(acting(&v), (Action::Pick, Target::Map, vec![B]));
+    step(&mut v, B, map(5)).unwrap();
+    assert_eq!(acting(&v), (Action::Pick, Target::Map, vec![A]));
+    step(&mut v, A, map(4)).unwrap();
+    assert_eq!(
+        [v.map_of(1), v.map_of(2), v.map_of(3)],
+        [Some(MapId(5)), Some(MapId(4)), Some(MapId(6))]
+    );
+}
+
+#[test]
 fn best_of_one_is_all_bans() {
     let mut v = begun(rules(MapMode::Veto, 7, false, 0), 1, A);
     for (i, m) in [1, 2, 3, 4, 5, 6].into_iter().enumerate() {

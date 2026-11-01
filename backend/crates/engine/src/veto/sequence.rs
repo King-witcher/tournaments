@@ -1,10 +1,11 @@
 //! A ordem dos passos: o veto de mapas da série (modo veto) e o draft de
 //! campeões. No veto de mapas, os lados alternam a cada passo, começando pelo
-//! seed melhor; no draft, ver `draft_sequence`.
+//! seed melhor (quais passos são bans e quais são picks vem de `VetoOrder`);
+//! no draft, ver `draft_sequence`.
 
 use serde::{Deserialize, Serialize};
 
-use super::{VetoError, other};
+use super::{VetoError, VetoOrder, other};
 use crate::series::Side;
 
 /// O que um passo faz.
@@ -26,18 +27,22 @@ pub enum Action {
 /// Os passos do veto de mapas de uma melhor de `best_of` com um pool de
 /// `pool` mapas, sem o decisivo (o mapa que sobra, que é a última partida).
 ///
-/// Sobram `pool - best_of` bans e `best_of - 1` picks: dois bans primeiro
-/// (se houver), depois os picks e por fim o resto dos bans. Com 7 mapas:
-/// md1, seis bans; md3, ban, ban, pick, pick, ban, ban; md5, ban, ban e
-/// quatro picks; md7, seis picks. Erro: `PoolTooSmall` com menos mapas que
-/// partidas.
-pub fn map_sequence(pool: usize, best_of: u8) -> Result<Vec<Action>, VetoError> {
+/// Sobram `pool - best_of` bans e `best_of - 1` picks. `BansFirst`: todos os
+/// bans, depois os picks. `Alternating`: dois bans primeiro (se houver),
+/// depois os picks e por fim o resto dos bans. Com 7 mapas: md1, seis bans
+/// nos dois; md3, quatro bans e dois picks (`BansFirst`) ou ban, ban, pick,
+/// pick, ban, ban (`Alternating`); md5, ban, ban e quatro picks nos dois;
+/// md7, seis picks. Erro: `PoolTooSmall` com menos mapas que partidas.
+pub fn map_sequence(pool: usize, best_of: u8, order: VetoOrder) -> Result<Vec<Action>, VetoError> {
     let games = usize::from(best_of);
     if best_of == 0 || pool < games {
         return Err(VetoError::PoolTooSmall { pool, best_of });
     }
     let bans = pool - games;
-    let first = bans.min(2);
+    let first = match order {
+        VetoOrder::BansFirst => bans,
+        VetoOrder::Alternating => bans.min(2),
+    };
     let mut steps = vec![Action::Ban; first];
     steps.extend(std::iter::repeat_n(Action::Pick, games - 1));
     steps.extend(std::iter::repeat_n(Action::Ban, bans - first));
@@ -92,47 +97,85 @@ mod tests {
     use super::*;
     use Action::{Ban, Pick};
     use Side::{A, B};
+    use VetoOrder::{Alternating, BansFirst};
 
     #[test]
     fn the_sequences_with_seven_maps() {
-        assert_eq!(map_sequence(7, 1).unwrap(), [Ban; 6]);
+        assert_eq!(map_sequence(7, 1, Alternating).unwrap(), [Ban; 6]);
         assert_eq!(
-            map_sequence(7, 3).unwrap(),
+            map_sequence(7, 3, Alternating).unwrap(),
             [Ban, Ban, Pick, Pick, Ban, Ban]
         );
         assert_eq!(
-            map_sequence(7, 5).unwrap(),
+            map_sequence(7, 5, Alternating).unwrap(),
             [Ban, Ban, Pick, Pick, Pick, Pick]
         );
-        assert_eq!(map_sequence(7, 7).unwrap(), [Pick; 6]);
+        assert_eq!(map_sequence(7, 7, Alternating).unwrap(), [Pick; 6]);
+    }
+
+    #[test]
+    fn bans_first_puts_every_ban_before_the_picks() {
+        assert_eq!(
+            map_sequence(7, 3, BansFirst).unwrap(),
+            [Ban, Ban, Ban, Ban, Pick, Pick]
+        );
+        assert_eq!(
+            map_sequence(9, 3, BansFirst).unwrap(),
+            [Ban, Ban, Ban, Ban, Ban, Ban, Pick, Pick]
+        );
+        assert_eq!(
+            map_sequence(5, 3, BansFirst).unwrap(),
+            [Ban, Ban, Pick, Pick]
+        );
+    }
+
+    #[test]
+    fn with_seven_maps_md1_and_md5_come_out_the_same_in_both_orders() {
+        for best_of in [1, 5, 7] {
+            assert_eq!(
+                map_sequence(7, best_of, BansFirst),
+                map_sequence(7, best_of, Alternating),
+                "md{best_of}"
+            );
+        }
     }
 
     #[test]
     fn other_pools_keep_the_shape() {
-        assert_eq!(map_sequence(5, 3).unwrap(), [Ban, Ban, Pick, Pick]);
-        assert_eq!(map_sequence(4, 3).unwrap(), [Ban, Pick, Pick]);
-        assert_eq!(map_sequence(1, 1).unwrap(), []);
         assert_eq!(
-            map_sequence(9, 3).unwrap(),
+            map_sequence(5, 3, Alternating).unwrap(),
+            [Ban, Ban, Pick, Pick]
+        );
+        assert_eq!(map_sequence(4, 3, Alternating).unwrap(), [Ban, Pick, Pick]);
+        assert_eq!(map_sequence(1, 1, Alternating).unwrap(), []);
+        assert_eq!(
+            map_sequence(9, 3, Alternating).unwrap(),
             [Ban, Ban, Pick, Pick, Ban, Ban, Ban, Ban]
         );
-        // Sempre sobra um mapa, o decisivo.
-        for pool in 1..=16 {
-            for best_of in (1..=pool as u8).step_by(2) {
-                assert_eq!(map_sequence(pool, best_of).unwrap().len(), pool - 1);
+        // Sempre sobra um mapa, o decisivo, e há um pick por partida menos uma.
+        for order in [BansFirst, Alternating] {
+            for pool in 1..=16 {
+                for best_of in (1..=pool as u8).step_by(2) {
+                    let steps = map_sequence(pool, best_of, order).unwrap();
+                    assert_eq!(steps.len(), pool - 1);
+                    let picks = steps.iter().filter(|a| **a == Pick).count();
+                    assert_eq!(picks, usize::from(best_of) - 1);
+                }
             }
         }
     }
 
     #[test]
     fn more_games_than_maps() {
-        assert_eq!(
-            map_sequence(3, 5),
-            Err(VetoError::PoolTooSmall {
-                pool: 3,
-                best_of: 5
-            })
-        );
+        for order in [BansFirst, Alternating] {
+            assert_eq!(
+                map_sequence(3, 5, order),
+                Err(VetoError::PoolTooSmall {
+                    pool: 3,
+                    best_of: 5
+                })
+            );
+        }
     }
 
     /// O draft como (ação, lado, partida), com A no seed melhor.

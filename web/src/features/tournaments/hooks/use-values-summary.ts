@@ -116,6 +116,7 @@ export function useValuesSummary() {
     veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
+        v.mapMode === "veto" && t(`vetoOrder.${v.vetoOrder}`),
         v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
         stepSecondsGroup(v) === "maps" &&
           t("seconds", { time: formatSeconds(v.vetoSeconds) }),

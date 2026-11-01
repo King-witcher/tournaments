@@ -27,6 +27,7 @@ impl From<StoredTournament> for Tournament {
             counts_for_rating: t.counts_for_rating,
             veto: VetoSettings {
                 map_mode: t.setup.veto.map_mode,
+                order: t.setup.veto.order,
                 map_pool: t.map_pool.into_iter().map(|m| m.slug).collect(),
                 champion_phase: t.setup.veto.champion_phase,
                 step_seconds: t.setup.veto.step_seconds,

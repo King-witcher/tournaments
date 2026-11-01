@@ -54,6 +54,8 @@ export type TournamentValues = {
   countsForRating: boolean;
   /** Como sai o mapa de cada jogo. */
   mapMode: Schemas["MapMode"];
+  /** Ordem do veto de mapas (só vale no modo veto): todos os bans primeiro, ou alternando. */
+  vetoOrder: Schemas["VetoOrder"];
   /** Slugs do pool de mapas; `null` na criação: o padrão da API. */
   mapPool: string[] | null;
   /** Draft de campeões da série no site (`false`: fora do site). */
@@ -125,6 +127,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     contestMinutes: 10,
     countsForRating: true,
     mapMode: "veto",
+    vetoOrder: "bans_first",
     mapPool: null,
     championPhase: true,
     vetoSeconds: 30,
@@ -168,6 +171,7 @@ export function valuesFrom(
     contestMinutes: tournament.contest_minutes,
     countsForRating: tournament.counts_for_rating,
     mapMode: tournament.veto.map_mode,
+    vetoOrder: tournament.veto.order,
     mapPool: tournament.veto.map_pool,
     championPhase: tournament.veto.champion_phase,
     vetoSeconds: tournament.veto.step_seconds,
@@ -234,6 +238,18 @@ export function stepSecondsGroup(
   if (values.mapMode === "veto" || values.mapMode === "vote") return "maps";
   return values.championPhase ? "champions" : null;
 }
+
+/** Os melhor de N que o torneio usa, sem repetir, do menor para o maior. */
+export const seriesLengths = (
+  values: Pick<TournamentValues, "stageFormat" | "bestOf" | "finalsBestOf">,
+) =>
+  [
+    ...new Set(
+      values.stageFormat === "elimination"
+        ? [values.bestOf, values.finalsBestOf]
+        : [values.bestOf],
+    ),
+  ].sort((a, b) => a - b);
 
 /** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
 export const longestSeries = (
@@ -404,6 +420,7 @@ function setupBody(values: TournamentValues) {
     counts_for_rating: values.countsForRating,
     veto: {
       map_mode: values.mapMode,
+      order: values.vetoOrder,
       // Sem mexer, na criação, vale o pool padrão da API.
       map_pool: values.mapPool ?? undefined,
       champion_phase: values.championPhase,

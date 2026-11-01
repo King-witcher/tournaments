@@ -66,7 +66,7 @@ impl Veto {
     }
 
     fn map_sequence(&self) -> Vec<Action> {
-        map_sequence(self.rules.pool.len(), self.best_of).unwrap_or_default()
+        map_sequence(self.rules.pool.len(), self.best_of, self.rules.order).unwrap_or_default()
     }
 
     /// Os passos do veto de mapas da série (modo veto), na ordem.

@@ -1,6 +1,7 @@
 import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
+import { loadMaps } from "@/features/matches/server";
 import { Section } from "@/shared/ui/section";
 import { UserText } from "@/shared/ui/user-text";
 import { rulesSource } from "../lib/localize";
@@ -21,10 +22,11 @@ type Props = { tenant: string; slug: string };
  * Fica em `<Suspense>`.
  */
 export async function TournamentRules({ tenant, slug }: Props) {
-  const [t, locale, loaded] = await Promise.all([
+  const [t, locale, loaded, maps] = await Promise.all([
     getTranslations("Tournament"),
     getLocale(),
     loadTournament(tenant, slug),
+    loadMaps(),
   ]);
   if (loaded.kind !== "ok") return null;
 
@@ -33,7 +35,11 @@ export async function TournamentRules({ tenant, slug }: Props) {
   const editable = me.role !== "player" && textsEditable(tournament.status);
   return (
     <Stack gap={7}>
-      <TournamentAutoRules tournament={tournament} editable={editable} />
+      <TournamentAutoRules
+        tournament={tournament}
+        maps={maps}
+        editable={editable}
+      />
       {(editable || source.rules) && (
         <Section title={t("extraRules")}>
           {editable ? (

@@ -87,10 +87,15 @@ fn veto_on() -> Value {
     json!({ "map_mode": "veto", "champion_phase": true })
 }
 
+/// O veto de mapas na ordem alternada (ban, ban, pick, pick, ban, ban no md3).
+fn veto_alternating() -> Value {
+    json!({ "map_mode": "veto", "champion_phase": true, "order": "alternating" })
+}
+
 #[tokio::test]
 async fn veto_of_maps_and_champions_then_the_report_follows_it() {
     let (db, _lease) = crate::db::test_db().await;
-    let (app, _, p) = final_with(&db, 3, veto_on(), one_ban()).await;
+    let (app, _, p) = final_with(&db, 3, veto_alternating(), one_ban()).await;
     let d = detail(&app, &p[0], "wb-1-1").await;
     assert_eq!(d["veto"]["status"], "waiting_ready");
     assert_eq!(d["summary"]["task"], "ready");
@@ -246,6 +251,47 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
         (&last_pick["game"], &last_pick["pick_game"]),
         (&json!(1), &json!(3))
     );
+}
+
+#[tokio::test]
+async fn the_map_veto_bans_first_by_default_then_picks_and_leaves_the_decider() {
+    let (db, _lease) = crate::db::test_db().await;
+    // Sem `order`: o padrão, bans primeiro.
+    let veto = json!({ "map_mode": "veto", "champion_phase": false });
+    let (app, _, p) = final_with(&db, 3, veto, one_ban()).await;
+    ready(&app, &p[0]).await;
+    ready(&app, &p[1]).await;
+    // Quatro bans, alternando a partir do seed melhor (a).
+    for (who, side, slug) in [
+        (&p[0], "a", "awoken"),
+        (&p[1], "b", "blood-covenant"),
+        (&p[0], "a", "corrupted-keep"),
+        (&p[1], "b", "molten-falls"),
+    ] {
+        let d = detail(&app, who, "wb-1-1").await;
+        assert_eq!(turn(&d), (json!("ban"), json!("map"), json!([side])));
+        ok_step(&app, who, map(slug)).await;
+    }
+    // Sobraram três: a escolhe a partida 1, b a 2, e o último é o decisivo.
+    let d = detail(&app, &p[0], "wb-1-1").await;
+    assert_eq!(turn(&d), (json!("pick"), json!("map"), json!(["a"])));
+    assert_eq!(d["veto"]["options"].as_array().unwrap().len(), 3);
+    ok_step(&app, &p[0], map("vale-of-pnath")).await;
+    let d = detail(&app, &p[1], "wb-1-1").await;
+    assert_eq!(turn(&d), (json!("pick"), json!("map"), json!(["b"])));
+    let d = ok_step(&app, &p[1], map("ruins-of-sarnath")).await;
+    assert_eq!(d["veto"]["status"], "done");
+    let games = &d["veto"]["games"];
+    assert_eq!(
+        (&games[0]["map"]["slug"], &games[0]["picked_by"]),
+        (&json!("vale-of-pnath"), &json!("a"))
+    );
+    assert_eq!(
+        (&games[1]["map"]["slug"], &games[1]["picked_by"]),
+        (&json!("ruins-of-sarnath"), &json!("b"))
+    );
+    assert_eq!(games[2]["map"]["slug"], "deep-embrace");
+    assert!(games[2]["picked_by"].is_null());
 }
 
 #[tokio::test]
@@ -673,6 +719,7 @@ async fn the_tournament_keeps_the_veto_settings() {
         created["veto"],
         json!({
             "map_mode": "veto",
+            "order": "bans_first",
             "map_pool": ["awoken", "blood-covenant", "corrupted-keep", "molten-falls",
                          "ruins-of-sarnath", "vale-of-pnath", "deep-embrace"],
             "champion_phase": true,
@@ -721,11 +768,12 @@ async fn the_tournament_keeps_the_veto_settings() {
         &app,
         tournament,
         &ana,
-        json!({ "veto": { "map_mode": "vote", "map_pool": ["lockbox", "exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
+        json!({ "veto": { "map_mode": "vote", "order": "alternating", "map_pool": ["lockbox", "exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{edited}");
     assert_eq!(edited["veto"]["map_mode"], "vote");
+    assert_eq!(edited["veto"]["order"], "alternating");
     assert_eq!(edited["veto"]["map_pool"][0], "lockbox");
     assert_eq!(edited["veto"]["step_seconds"], 45);
     assert_eq!(edited["veto"]["champion_phase"], true);
@@ -737,6 +785,16 @@ async fn the_veto_settings_lock_once_started() {
     let (app, ana, _) = final_with(&db, 1, veto_on(), one_ban()).await;
     assert_eq!(
         patch(&app, COPA, &ana, json!({ "veto": { "step_seconds": 60 } })).await,
+        (StatusCode::CONFLICT, err("tournament.setup_locked"))
+    );
+    assert_eq!(
+        patch(
+            &app,
+            COPA,
+            &ana,
+            json!({ "veto": { "order": "alternating" } })
+        )
+        .await,
         (StatusCode::CONFLICT, err("tournament.setup_locked"))
     );
 }

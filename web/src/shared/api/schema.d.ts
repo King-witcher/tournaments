@@ -3616,6 +3616,7 @@ export interface components {
              *     primeiros do pool de duelo. Vale para o veto, a votação e o sorteio.
              */
             map_pool?: string[] | null;
+            order?: components["schemas"]["VetoOrder"] | null;
             /**
              * Format: int32
              * @description Segundos de cada passo, de 10 a 300 (padrão 30); no fim, a escolha é
@@ -3636,6 +3637,11 @@ export interface components {
             map: components["schemas"]["MapRef"];
             side: components["schemas"]["Side"];
         };
+        /**
+         * @description A ordem dos passos do veto de mapas (só vale no modo `veto`).
+         * @enum {string}
+         */
+        VetoOrder: "bans_first" | "alternating";
         /**
          * @description Um pick que quem vê pode fazer agora: no duelo, o da vez dele; no TDM,
          *     cada partida em que ele falta na janela simultânea.
@@ -3676,6 +3682,8 @@ export interface components {
             map_mode: components["schemas"]["MapMode"];
             /** @description Slugs do pool, na ordem. */
             map_pool: string[];
+            /** @description Só vale no modo `veto`. */
+            order: components["schemas"]["VetoOrder"];
             /** Format: int32 */
             step_seconds: number;
             /**

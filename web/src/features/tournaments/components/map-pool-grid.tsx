@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { MapGrid } from "@/features/maps/components/map-grid";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import styles from "./map-pool-grid.module.scss";
@@ -57,7 +58,7 @@ export function MapPoolGrid({
   const first = parts.find((p) => p.maps.length > 0)?.maps[0]?.slug;
 
   return (
-    <div className={styles.grid}>
+    <MapGrid>
       {parts.flatMap((p) => {
         if (p.maps.length === 0) return [];
         if (p.key === "out" && !outShown) {
@@ -85,6 +86,6 @@ export function MapPoolGrid({
           )),
         ];
       })}
-    </div>
+    </MapGrid>
   );
 }

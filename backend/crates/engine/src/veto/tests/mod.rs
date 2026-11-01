@@ -23,10 +23,12 @@ pub fn champions(n: i64) -> Vec<ChampionId> {
     (1..=n).map(|c| ChampionId(100 + c)).collect()
 }
 
-/// Duelo, com espelho e sem regra de não repetição.
+/// Duelo, com espelho e sem regra de não repetição, no veto alternado (a ordem
+/// que os testes mais antigos usam; `bans_first` troca para bans primeiro).
 pub fn rules(mode: MapMode, maps: i64, champion_phase: bool, bans: u8) -> VetoRules {
     VetoRules {
         map_mode: mode,
+        order: VetoOrder::Alternating,
         pool: pool(maps),
         champion_phase,
         team_size: 1,
@@ -52,6 +54,12 @@ pub fn with_rule(mut r: VetoRules, who: crate::champions::NoRepeatWho) -> VetoRu
 /// As regras `r` sem espelho.
 pub fn no_mirror(mut r: VetoRules) -> VetoRules {
     r.champions.mirror = false;
+    r
+}
+
+/// As regras `r` com o veto de mapas em bans primeiro.
+pub fn bans_first(mut r: VetoRules) -> VetoRules {
+    r.order = VetoOrder::BansFirst;
     r
 }
 

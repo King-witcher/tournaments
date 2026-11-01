@@ -19,7 +19,7 @@ use crate::{
         status::TournamentStatus,
         texts::Texts,
         types::{NameTranslation, TournamentSummary, TournamentTranslation},
-        veto::{MapMode, PoolMap, VetoSetup},
+        veto::{MapMode, PoolMap, VetoOrder, VetoSetup},
     },
 };
 
@@ -135,7 +135,7 @@ pub async fn find(
                   t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
                   t.starts_at, t.check_in_minutes, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
-                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds,
+                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
@@ -227,6 +227,7 @@ pub async fn find(
             stages: stages.into_iter().map(|s| s.0).collect(),
             veto: VetoSetup {
                 map_mode: MapMode::from_db(&row.map_mode)?,
+                order: VetoOrder::from_db(&row.veto_order)?,
                 pool: map_pool.iter().map(|m| m.id).collect(),
                 champion_phase: row.champion_phase,
                 step_seconds: row.veto_seconds,

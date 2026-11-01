@@ -1,0 +1,19 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A imagem e o nome embaixo; o espaço de baixo separa o nome da imagem da
+// linha seguinte.
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+  padding-block-end: spacing.$spacing-03;
+}
+
+.name {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-primary;
+}

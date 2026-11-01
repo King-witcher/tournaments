@@ -14,6 +14,7 @@ import {
 import { sameValues } from "../lib/same-values";
 import { MapPoolField } from "./map-pool-field";
 import { SecondsSelect } from "./seconds-select";
+import { TournamentVetoOrderField } from "./tournament-veto-order-field";
 
 type Schemas = components["schemas"];
 
@@ -22,6 +23,7 @@ const MODES: Schemas["MapMode"][] = ["veto", "vote", "random", "off"];
 /** Os campos do formulário que o bloco lê. */
 const KEYS = [
   "mapMode",
+  "vetoOrder",
   "mode",
   "mapPool",
   "championPhase",
@@ -44,11 +46,11 @@ type Props = {
 };
 
 /**
- * O grupo Mapas: como sai o mapa de cada partida, o pool de mapas com a
- * imagem de cada um (fora do modo desligado; vale para o veto, a votação e o
- * sorteio) e, com veto ou votação, o tempo de cada passo, que vale também
- * para o draft de campeões. Sem passo de mapa, esse tempo fica no grupo
- * Campeões.
+ * O grupo Mapas: como sai o mapa de cada partida, no veto a ordem dos bans e
+ * picks, o pool de mapas com a imagem de cada um (fora do modo desligado;
+ * vale para o veto, a votação e o sorteio) e, com veto ou votação, o tempo de
+ * cada passo, que vale também para o draft de campeões. Sem passo de mapa,
+ * esse tempo fica no grupo Campeões.
  */
 export const TournamentVetoFields = memo(function TournamentVetoFields(
   props: Props,
@@ -77,6 +79,14 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           <SelectItem key={m} value={m} text={t(`mapModes.${m}`)} />
         ))}
       </Select>
+      {values.mapMode === "veto" && (
+        <TournamentVetoOrderField
+          values={values}
+          onChange={onChange}
+          maps={maps}
+          disabled={disabled}
+        />
+      )}
       {values.mapMode !== "off" && (
         <MapPoolField
           tenant={tenant}

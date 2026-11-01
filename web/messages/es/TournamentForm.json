@@ -60,6 +60,10 @@
     "noCheckIn": "sin check-in",
     "contest": "{window} para impugnar",
     "maps": "{count, plural, one {# mapa} other {# mapas}}",
+    "vetoOrder": {
+      "bans_first": "bans primero",
+      "alternating": "alternado"
+    },
     "seconds": "{time} por paso",
     "teamPick": "{time} para elegir los campeones",
     "screenshotsRequired": "captura de pantalla obligatoria",
@@ -121,17 +125,29 @@
       "off": "Acordado entre los jugadores"
     },
     "mapModeHint": {
-      "veto": "Antes de la primera partida, los dos lados banean y eligen mapas, alternando. El que queda es el decisivo.",
+      "veto": "Antes de la primera partida, los dos lados banean y eligen mapas.",
       "vote": "En cada partida, cada lado vota uno de 3 mapas sorteados del pool. Votos distintos, sorteo entre los dos.",
       "random": "El mapa sale del pool, sin repetir en la serie.",
       "off": "Sin repetir mapa en la serie."
     },
     "mapModeHintTdm": {
-      "veto": "Antes de la primera partida, los equipos banean y eligen mapas, alternando. El que queda es el decisivo.",
+      "veto": "Antes de la primera partida, los equipos banean y eligen mapas.",
       "vote": "En cada partida, cada equipo vota uno de 3 mapas sorteados del pool. Votos distintos, sorteo entre los dos.",
       "random": "El mapa sale del pool, sin repetir en la serie.",
       "off": "Sin repetir mapa en la serie."
     },
+    "order": "Orden del veto",
+    "orders": {
+      "bans_first": "Bans primero",
+      "alternating": "Alternado"
+    },
+    "sequence": "Al mejor de {bestOf} con {maps, plural, one {# mapa} other {# mapas}}: {steps}.",
+    "steps": {
+      "ban": "ban",
+      "pick": "elección",
+      "decider": "decisivo"
+    },
+    "run": "{step} ×{count}",
     "mapPool": "Pool de mapas",
     "mapPoolHint": "La serie más larga pide al menos {min, plural, one {# mapa} other {# mapas}}.",
     "poolIn": "En el pool ({count})",

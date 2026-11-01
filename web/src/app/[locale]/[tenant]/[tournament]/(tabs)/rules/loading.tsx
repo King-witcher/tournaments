@@ -1,13 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TournamentRulesSkeleton } from "@/features/tournaments/components/tournament-rules-skeleton";
 
-/** As regras carregando: o texto gerado do formato, com uns oito parágrafos. */
+/** As regras carregando: o texto gerado do formato e a grade dos mapas. */
 export default async function Loading() {
   const t = await getTranslations("Tournament");
-  return (
-    <TabLoading label={t("loading")}>
-      <SectionSkeleton rows={8} />
-    </TabLoading>
-  );
+  return <TournamentRulesSkeleton label={t("loading")} />;
 }

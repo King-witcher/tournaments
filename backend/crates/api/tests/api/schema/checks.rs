@@ -8,7 +8,7 @@ use sqlx::PgPool;
 use super::*;
 use crate::common::*;
 
-async fn tenant_id(db: &PgPool, slug: &str) -> i64 {
+pub(super) async fn tenant_id(db: &PgPool, slug: &str) -> i64 {
     sqlx::query_scalar("select id from tenants where slug = $1")
         .bind(slug)
         .fetch_one(db)

@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Os mapas em grade: tantas colunas quantas couberem e, no celular, duas
+// (dentro do acordeão não cabem duas do tamanho mínimo, e uma só fazia rolar
+// 20 imagens da largura da tela).
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
+  gap: spacing.$spacing-03;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
