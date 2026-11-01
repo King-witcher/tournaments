@@ -11,6 +11,7 @@
     "state_mismatch": "El inicio de sesión expiró o se interrumpió. Inténtalo de nuevo.",
     "discord_denied": "Autorización cancelada en Discord.",
     "discord_failed": "No se pudo hablar con Discord. Inténtalo de nuevo.",
+    "discord_rate_limited": "Discord bloqueó el inicio de sesión por ahora.",
     "discord_taken": "Ese Discord ya lo usa otra cuenta. Entra en ella y desvincúlalo antes.",
     "discord_already_linked": "Tu cuenta ya tiene un Discord vinculado.",
     "discord_not_linked": "Tu cuenta no tiene Discord vinculado.",

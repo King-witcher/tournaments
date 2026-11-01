@@ -4101,7 +4101,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.discord_not_configured */
+            /** @description auth.discord_not_configured, auth.discord_rate_limited */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -4152,7 +4152,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.discord_not_configured */
+            /** @description auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429: em produção, o IP de saída do Render bloqueado) */
             503: {
                 headers: {
                     [name: string]: unknown;

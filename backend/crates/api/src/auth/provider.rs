@@ -39,7 +39,8 @@ pub struct ProviderCodes {
     /// 503: sem client id e secret, o login com ele fica desligado.
     pub not_configured: &'static str,
     /// 502: o provedor não respondeu, recusou o code (ou o verifier) ou
-    /// mandou o que não se lê.
+    /// mandou o que não se lê. O 429 do Discord sai à parte, 503
+    /// `auth.discord_rate_limited` (`discord::RateLimited`).
     pub failed: &'static str,
     /// 409: a conta do provedor já é login de outra conta daqui.
     pub taken: &'static str,

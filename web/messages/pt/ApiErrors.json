@@ -11,6 +11,7 @@
     "state_mismatch": "O login expirou ou foi interrompido. Tente de novo.",
     "discord_denied": "Autorização cancelada no Discord.",
     "discord_failed": "Não foi possível falar com o Discord. Tente de novo.",
+    "discord_rate_limited": "O Discord bloqueou o login por enquanto.",
     "discord_taken": "Esse Discord já é usado por outra conta. Entre nela e desvincule-o antes.",
     "discord_already_linked": "Sua conta já tem um Discord vinculado.",
     "discord_not_linked": "Sua conta não tem Discord vinculado.",

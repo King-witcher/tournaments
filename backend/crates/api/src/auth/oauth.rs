@@ -80,7 +80,7 @@ pub async fn discord_authorize(
         (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier)"),
-        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429: em produção, o IP de saída do Render bloqueado)"),
     )
 )]
 pub async fn discord_login(
@@ -104,7 +104,7 @@ pub async fn discord_login(
         (status = CONFLICT, body = ErrorBody, description = "auth.discord_taken (é login de outra conta), auth.discord_already_linked"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed"),
-        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured, auth.discord_rate_limited"),
     )
 )]
 pub async fn discord_link(
@@ -389,6 +389,9 @@ async fn fetch_login(
             provider = provider.as_str(),
             "provedor falhou na troca do code"
         );
+        if err.root_cause().is::<discord::RateLimited>() {
+            return ApiError::new(StatusCode::SERVICE_UNAVAILABLE, "auth.discord_rate_limited");
+        }
         ApiError::new(StatusCode::BAD_GATEWAY, codes.failed)
     })
 }
