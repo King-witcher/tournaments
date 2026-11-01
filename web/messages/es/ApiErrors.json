@@ -76,9 +76,9 @@
   },
   "tournament": {
     "not_found": "Torneo no encontrado.",
-    "slug_taken": "Ya hay un torneo con ese id en esta comunidad.",
+    "slug_taken": "Ya hay un torneo con esa dirección en esta comunidad.",
     "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
-    "slug_reserved": "Ese id está reservado. Elige otro.",
+    "slug_reserved": "Esa dirección está reservada. Elige otra.",
     "name_invalid": "El nombre debe tener de 1 a 80 caracteres.",
     "description_invalid": "La descripción puede tener hasta {max} caracteres.",
     "rules_invalid": "Las reglas pueden tener hasta {max} caracteres.",

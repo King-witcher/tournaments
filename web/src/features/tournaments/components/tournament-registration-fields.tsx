@@ -6,32 +6,24 @@ import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
 import { TournamentCheckInField } from "./tournament-check-in-field";
-import { TournamentSlotsField } from "./tournament-slots-field";
 
 /** Os campos do formulário que o bloco lê. */
-const KEYS = [
-  "maxParticipants",
-  "mode",
-  "teamSize",
-  "stageFormat",
-  "admission",
-  "checkInMinutes",
-] as const;
+const KEYS = ["mode", "admission", "checkInMinutes"] as const;
 
 type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: vagas e check-in ficam travados. */
+  /** O torneio já começou: o check-in fica travado. */
   setupLocked: boolean;
   /** Encerrado: o tipo de inscrição não muda mais. */
   finished: boolean;
 };
 
 /**
- * Inscrições e prazos: vagas, tipo de inscrição e janela de check-in, todos com
- * padrão. A data de início fica fora, junto do nome; a contestação e a captura
- * de tela, em Resultados.
+ * Inscrições e prazos: tipo de inscrição e janela de check-in, os dois com
+ * padrão. A data de início fica fora, junto do nome; as vagas, no Formato; a
+ * contestação e a captura de tela, em Resultados.
  */
 export const TournamentRegistrationFields = memo(
   function TournamentRegistrationFields({
@@ -45,12 +37,6 @@ export const TournamentRegistrationFields = memo(
 
     return (
       <>
-        <TournamentSlotsField
-          values={values}
-          onChange={(maxParticipants) => onChange({ maxParticipants })}
-          error={errors.maxParticipants}
-          disabled={setupLocked}
-        />
         <RadioGroup
           legendText={t("admission")}
           // "Só por link ou pela organização" já diz tudo; da aberta, falta o

@@ -1,31 +1,34 @@
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { NumberInput } from "@/shared/ui/number-input";
+import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
 import { SLOTS, slotLimits, teamsIn } from "../lib/format";
+import { sameValues } from "../lib/same-values";
+
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["mode", "teamSize", "stageFormat", "maxParticipants"] as const;
 
 type Props = {
-  values: Pick<
-    TournamentValues,
-    "mode" | "teamSize" | "stageFormat" | "maxParticipants"
-  >;
-  onChange: (maxParticipants: number | null) => void;
-  /** O que a API disse deste campo, já traduzido. */
-  error?: string;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
+  onChange: (patch: Partial<TournamentValues>) => void;
+  errors: FieldErrors;
   /** O torneio já começou: não muda mais. */
   disabled: boolean;
 };
 
 /**
- * As vagas, em jogadores (a inscrição é individual). Os limites seguem o
- * formato e o time: de dois times até o teto do formato vezes o tamanho. No
- * TDM, a dica diz quantos times cabem e quantos sobram de reserva.
+ * As vagas, em jogadores (a inscrição é individual), na seção Formato: os
+ * limites seguem o formato e o time, de dois times até o teto do formato
+ * vezes o tamanho, e as rodadas do suíço seguem as vagas. No TDM, a dica diz
+ * quantos times cabem e quantos sobram de reserva.
  */
-export function TournamentSlotsField({
+export const TournamentSlotsField = memo(function TournamentSlotsField({
   values,
   onChange,
-  error,
+  errors,
   disabled,
 }: Props) {
   const t = useTranslations("TournamentForm");
@@ -34,6 +37,7 @@ export function TournamentSlotsField({
   const size = teamSizeOf(values);
   const limits = slotLimits(values.stageFormat, size);
   const slots = values.maxParticipants;
+  const error = errors.maxParticipants;
   // No duelo, "Vagas" se explica sozinho.
   const hint =
     tdm && slots !== null
@@ -63,7 +67,7 @@ export function TournamentSlotsField({
               max: SLOTS.max,
             }))
       }
-      onChange={onChange}
+      onChange={(maxParticipants) => onChange({ maxParticipants })}
     />
   );
-}
+}, sameValues(KEYS));

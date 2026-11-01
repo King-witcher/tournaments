@@ -71,7 +71,7 @@ Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde";
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-Uma página, coluna estreita; à vista nome, id, início, chave e séries; o resto em acordeão com resumo no título. Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; excluir rascunho fica no ⋯ do torneio.
+Uma página, coluna estreita; à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; excluir rascunho fica no ⋯ do torneio.
 
 ### Torneio `/[tenant]/[tournament]`
 

@@ -29,6 +29,11 @@ type Options<E extends Element> = {
    * aparece na hora, sem esperar a pessoa sair do campo, e bloqueia o envio.
    */
   problem?: string;
+  /**
+   * Mostra o erro sem esperar a pessoa sair deste campo: o valor veio de
+   * outro, que ela já deixou (o endereço gerado pelo nome).
+   */
+  touched?: boolean;
   /** Erro vindo de fora (o que a API devolveu): vale mais que o daqui. */
   invalid?: boolean;
   invalidText?: ReactNode;
@@ -69,7 +74,7 @@ export function useFieldCheck<E extends Element>(options: Options<E>) {
     setProblem(found);
   });
 
-  const shown = touched ? problem : undefined;
+  const shown = touched || options.touched ? problem : undefined;
   const messages = {
     required: t("required"),
     minLength: t("minLength", { min: minLength ?? 0 }),

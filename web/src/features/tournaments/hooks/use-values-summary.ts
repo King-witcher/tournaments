@@ -12,6 +12,9 @@ import { teamsIn } from "../lib/format";
 import { useFormatSeconds } from "./use-format-seconds";
 import { useModeLabel } from "./use-mode-label";
 
+/** Caracteres das regras adicionais no título do grupo fechado: uma linha no celular. */
+const RULES_PREVIEW = 40;
+
 /**
  * O resumo dos valores do formulário, uma linha por grupo: o que aparece no
  * título dos grupos fechados e na revisão antes de publicar (e, a partir de
@@ -39,8 +42,18 @@ export function useValuesSummary() {
           : v.bracket === "double" && v.grandFinalReset
             ? "doubleReset"
             : v.bracket;
+      const slots = v.maxParticipants;
+      const size = teamSizeOf(v);
       return line([
-        modeLabel(v.mode, teamSizeOf(v)),
+        modeLabel(v.mode, size),
+        slots !== null &&
+          (isTdm(v)
+            ? t("slotsTeams", {
+                count: slots,
+                size,
+                teams: teamsIn(slots, size).teams,
+              })
+            : t("slots", { count: slots })),
         tSetup(`bracket.${kind}`),
         v.stageFormat === "elimination"
           ? tSetup(`series.${v.bracket}`, {
@@ -55,24 +68,27 @@ export function useValuesSummary() {
           : undefined,
       ]);
     },
-    registration: (v: TournamentValues) => {
-      const slots = v.maxParticipants;
-      const size = teamSizeOf(v);
-      return line([
+    registration: (v: TournamentValues) =>
+      line([
         tForm(`admissionOptions.${v.admission}`),
-        slots !== null &&
-          (isTdm(v)
-            ? t("slotsTeams", {
-                count: slots,
-                size,
-                teams: teamsIn(slots, size).teams,
-              })
-            : t("slots", { count: slots })),
         v.checkInMinutes === null
           ? t("noCheckIn")
           : t("checkIn", { window: formatMinutes(v.checkInMinutes) }),
-      ]);
+      ]),
+    /** A primeira linha das regras adicionais, cortada, ou "Nenhuma". */
+    rules: (v: TournamentValues) => {
+      const first = v.rules
+        .split("\n")
+        .map((l) => l.trim())
+        .find(Boolean);
+      if (!first) return t("noRules");
+      return first.length > RULES_PREVIEW
+        ? `${first.slice(0, RULES_PREVIEW).trimEnd()}…`
+        : first;
     },
+    /** Os idiomas com tradução, ou "Nenhum". */
+    languages: (enabled: string[]) =>
+      enabled.length === 0 ? t("noLanguages") : line(enabled),
     /** `screenshots`: a API tem capturas de tela; sem elas, o campo não aparece e o valor não conta. */
     results: (v: TournamentValues, screenshots: boolean) =>
       line([

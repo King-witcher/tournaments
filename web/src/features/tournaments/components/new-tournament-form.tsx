@@ -27,21 +27,35 @@ import { TournamentRegistrationFields } from "./tournament-registration-fields";
 import { TournamentResultsFields } from "./tournament-results-fields";
 import { TournamentReview } from "./tournament-review";
 import { TournamentRulesSection } from "./tournament-rules-section";
+import { TournamentSlotsField } from "./tournament-slots-field";
 import { TournamentStartField } from "./tournament-start-field";
 import { TournamentTranslations } from "./tournament-translations";
 import { TournamentVetoFields } from "./tournament-veto-fields";
 
-/** Os grupos que começam fechados: têm padrão bom e o resumo no título. */
-type Group = "champions" | "veto" | "registration" | "results";
+/** Os grupos que começam fechados: têm padrão bom ou são opcionais, e o resumo no título. */
+const GROUPS = [
+  "veto",
+  "champions",
+  "registration",
+  "results",
+  "rules",
+  "languages",
+] as const;
+type Group = (typeof GROUPS)[number];
+
+const CLOSED = Object.fromEntries(GROUPS.map((g) => [g, false])) as Record<
+  Group,
+  boolean
+>;
 
 /**
- * Criar torneio, numa página só: à vista o que se decide sempre (nome, id,
- * início, descrição, modalidade, chave e séries); fechados, com o resumo no
- * título, os grupos que já vêm com padrão (mapas, campeões, inscrições e
- * prazos, resultados); depois as regras adicionais e, por último, "Outros
- * idiomas". Os botões só liberam com todos os campos válidos.
- * "Criar" confere e mostra a revisão antes de criar já publicado; "Criar como
- * rascunho" cria sem publicar (e sem exigir a data).
+ * Criar torneio, numa página só: à vista o que se decide sempre (nome,
+ * endereço, início, descrição, modalidade, vagas, chave e séries); fechados,
+ * com o resumo no título, os grupos que já vêm com padrão (mapas, campeões,
+ * inscrições e prazos, resultados) e os opcionais (regras adicionais e outros
+ * idiomas). Os botões só liberam com todos os campos válidos. "Criar como
+ * rascunho" é o primário (e o Enter): cria sem publicar. "Criar e publicar"
+ * confere e mostra a revisão antes, porque publicado não volta a rascunho.
  */
 export function NewTournamentForm({
   tenant,
@@ -52,28 +66,17 @@ export function NewTournamentForm({
   maps: components["schemas"]["Map"][];
 }) {
   const t = useTranslations("TournamentForm");
+  const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
   const screenshots = useScreenshotSettings()?.enabled ?? false;
-  const [open, setOpen] = useState<Record<Group, boolean>>({
-    champions: false,
-    veto: false,
-    registration: false,
-    results: false,
-  });
+  const [open, setOpen] = useState(CLOSED);
   const [reviewing, setReviewing] = useState(false);
   const [intent, setIntent] = useState<SubmitIntent>();
-  const createRef = useRef<HTMLButtonElement>(null);
+  const publishRef = useRef<HTMLButtonElement>(null);
   const form = useTournamentForm(tenant, undefined, {
     reveal: (control) => {
-      const group = groupOf(control);
-      if (
-        group === "champions" ||
-        group === "veto" ||
-        group === "registration" ||
-        group === "results"
-      ) {
-        setOpen((o) => ({ ...o, [group]: true }));
-      }
+      const group = GROUPS.find((g) => g === groupOf(control));
+      if (group) setOpen((o) => ({ ...o, [group]: true }));
     },
   });
   const { values, onChange, errors } = form;
@@ -93,6 +96,9 @@ export function NewTournamentForm({
     setIntent(next);
     form.submit(next);
   };
+  const languages = form.others
+    .filter((l) => form.translationOf(l).enabled)
+    .map((l) => tLocales(l));
 
   return (
     <Form
@@ -102,7 +108,7 @@ export function NewTournamentForm({
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!form.pending && form.check()) setReviewing(true);
+        if (!form.pending && form.check()) send("draft");
       }}
     >
       <Stack gap={7}>
@@ -128,6 +134,12 @@ export function NewTournamentForm({
         </FormSection>
         <FormSection legend={t("format")}>
           <TournamentModeFields
+            values={values}
+            onChange={onChange}
+            errors={errors}
+            disabled={false}
+          />
+          <TournamentSlotsField
             values={values}
             onChange={onChange}
             errors={errors}
@@ -201,30 +213,47 @@ export function NewTournamentForm({
               finished={false}
             />
           </FormAccordionItem>
+          <FormAccordionItem
+            title={t("rules")}
+            summary={summary.rules(values)}
+            group="rules"
+            open={open.rules}
+            onToggle={toggle("rules")}
+          >
+            <TournamentRulesSection
+              values={values}
+              onChange={onChange}
+              errors={errors}
+              bare
+            />
+          </FormAccordionItem>
+          <FormAccordionItem
+            title={t("otherLanguages")}
+            summary={summary.languages(languages)}
+            group="languages"
+            open={open.languages}
+            onToggle={toggle("languages")}
+          >
+            <TournamentTranslations form={form} bare />
+          </FormAccordionItem>
         </Accordion>
-        <TournamentRulesSection
-          values={values}
-          onChange={onChange}
-          errors={errors}
-        />
-        <TournamentTranslations form={form} />
         {form.formError && <FormError>{form.formError}</FormError>}
         <FormActions
-          submitLabel={t("create")}
-          submitRef={createRef}
+          submitLabel={t("createDraft")}
           disabled={!form.canSubmit}
-          pending={form.pending && intent === "publish"}
+          pending={form.pending && intent === "draft"}
           cancelHref={`/${tenant}`}
           alternative={
             <Button
+              ref={publishRef}
               kind="secondary"
               disabled={!form.canSubmit}
-              pending={form.pending && intent === "draft"}
+              pending={form.pending && intent === "publish"}
               onClick={() => {
-                if (!form.pending && form.check()) send("draft");
+                if (!form.pending && form.check()) setReviewing(true);
               }}
             >
-              {t("createDraft")}
+              {t("create")}
             </Button>
           }
         />
@@ -233,11 +262,11 @@ export function NewTournamentForm({
         open={reviewing}
         onClose={() => {
           setReviewing(false);
-          createRef.current?.focus();
+          publishRef.current?.focus();
         }}
         onConfirm={() => {
           setReviewing(false);
-          createRef.current?.focus();
+          publishRef.current?.focus();
           send("publish");
         }}
         title={t("review.title")}

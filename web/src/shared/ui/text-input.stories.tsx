@@ -153,6 +153,20 @@ export const Problem: Story = {
   },
 };
 
+/**
+ * O valor veio de outro campo que a pessoa já deixou (o endereço gerado pelo
+ * nome): o erro aparece sem esperar a saída deste.
+ */
+export const Touched: Story = {
+  args: {
+    id: "text-input-touched",
+    labelText: "Endereço",
+    defaultValue: "q",
+    minLength: 3,
+    touched: true,
+  },
+};
+
 /** Sobre um `Layer`, o campo troca o fundo para continuar visível. */
 export const InLayer: Story = {
   render: (args) => (

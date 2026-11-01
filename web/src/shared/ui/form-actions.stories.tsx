@@ -52,10 +52,13 @@ export const Extra: Story = {
   },
 };
 
-/** Duas formas de enviar: "Cancelar" vira `ghost` para os três pesos serem diferentes. */
+/**
+ * Duas formas de enviar: "Cancelar" vira `ghost` e vai para o começo, para os
+ * três pesos serem diferentes.
+ */
 export const Alternative: Story = {
   args: {
-    submitLabel: "Criar",
-    alternative: <Button kind="secondary">Criar como rascunho</Button>,
+    submitLabel: "Criar como rascunho",
+    alternative: <Button kind="secondary">Criar e publicar</Button>,
   },
 };

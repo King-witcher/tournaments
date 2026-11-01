@@ -23,9 +23,9 @@ type Props = {
 
 /**
  * A página do formulário de torneio carregando, na forma dela: na criação,
- * as seções à vista (no Formato, modalidade e chave), os três grupos fechados
- * e as regras; na edição, as abas
- * com a primeira (nome, descrição e regras). Os botões no fim, como no `FormActions`.
+ * as seções à vista (no Formato, modalidade, vagas e chave) e os seis grupos
+ * fechados; na edição, as abas com a primeira (nome, descrição e regras). Os
+ * botões no fim, como no `FormActions`.
  */
 export function TournamentFormSkeleton({ label, edit = false }: Props) {
   return (
@@ -54,18 +54,17 @@ export function TournamentFormSkeleton({ label, edit = false }: Props) {
               </FormSectionSkeleton>
               <FormSectionSkeleton>
                 <RadioButtonSkeleton />
+                <TextInputSkeleton />
                 <RadioButtonSkeleton />
                 <SelectSkeleton />
               </FormSectionSkeleton>
-              <AccordionSkeleton count={3} open={false} />
-              <FormSectionSkeleton>
-                <TextAreaSkeleton />
-              </FormSectionSkeleton>
+              <AccordionSkeleton count={6} open={false} />
             </>
           )}
           <div>
             <ButtonSkeleton />
             <ButtonSkeleton />
+            {!edit && <ButtonSkeleton />}
           </div>
         </Stack>
       </div>

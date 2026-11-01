@@ -1,9 +1,10 @@
 {
   "tournament": "Torneio",
   "name": "Nome",
-  "slug": "Id",
+  "slug": "Endereço",
   "slugHint": "O link do torneio será {address}. Não muda depois.",
   "slugInvalid": "Não pode terminar com hífen.",
+  "slugPlaceholder": "seu-torneio",
   "startsAt": "Início",
   "startsAtCheckIn": "O check-in abre {opens}.",
   "startError": {
@@ -11,7 +12,7 @@
     "soon": "Use um início a partir de {from}, para o check-in abrir antes."
   },
   "format": "Formato",
-  "formatLocked": "O torneio já começou. Formato e campeões não mudam mais.",
+  "formatLocked": "O torneio já começou. Formato, vagas, mapas e campeões não mudam mais.",
   "mode": "Modalidade",
   "teamSize": "Tamanho do time",
   "teamSizeOption": "{size}v{size}",
@@ -30,7 +31,7 @@
   "bestOfOption": "Melhor de {count}",
   "champions": "Campeões",
   "registration": "Inscrições e prazos",
-  "registrationLocked": "O torneio já começou. Início, vagas e check-in não mudam mais.",
+  "registrationLocked": "O torneio já começou. Início e check-in não mudam mais.",
   "results": "Resultados",
   "countsForRating": "Modifica rating",
   "countsForRatingHint": "Cada partida atualiza o rating dos jogadores.",
@@ -61,7 +62,9 @@
     "maps": "{count, plural, one {# mapa} other {# mapas}}",
     "seconds": "{time} por passo",
     "teamPick": "{time} para escolher os campeões",
-    "screenshotsRequired": "captura de tela obrigatória"
+    "screenshotsRequired": "captura de tela obrigatória",
+    "noRules": "Nenhuma",
+    "noLanguages": "Nenhum"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -77,7 +80,7 @@
   "addLanguage": "Adicionar {language}",
   "removeLanguage": "Remover {language}",
   "willDelete": "A tradução salva vai ser apagada quando você salvar. Para mantê-la, adicione o idioma de novo antes de salvar.",
-  "create": "Criar",
+  "create": "Criar e publicar",
   "createDraft": "Criar como rascunho",
   "review": {
     "title": "Criar e publicar",
@@ -133,6 +136,7 @@
     "mapPoolHint": "A série mais longa pede pelo menos {min, plural, one {# mapa} other {# mapas}}.",
     "poolIn": "No pool ({count})",
     "poolOut": "Fora do pool ({count})",
+    "showPoolOut": "Mostrar {count, plural, one {o mapa} other {os # mapas}} fora do pool",
     "useDefaultPool": "Usar o pool padrão",
     "seconds": "Tempo de cada passo",
     "secondsHint": "Se o tempo acabar, a escolha é sorteada.",

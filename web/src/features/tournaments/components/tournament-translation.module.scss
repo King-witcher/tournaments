@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O que quem lê no idioma vê sem tradução: no corpo de uma descrição de seção
+// e em cor de apoio, como as outras frases do formulário (sem classe, o
+// parágrafo saía maior que tudo em volta).
+.off {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}

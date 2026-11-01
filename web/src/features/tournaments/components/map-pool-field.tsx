@@ -1,6 +1,6 @@
 import { FormGroup } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { focusIfLost } from "@/shared/lib/focus";
@@ -32,7 +32,9 @@ type Props = {
  * O pool de mapas do torneio. Cada marca ou desmarca fica lembrada neste
  * navegador para a comunidade (o próximo torneio novo começa com ela);
  * "Usar o pool padrão" aparece quando o pool é outro e volta ao padrão,
- * esquecendo o lembrado.
+ * esquecendo o lembrado. Os mapas de fora começam atrás de um botão (eram
+ * dois terços do grupo aberto) e aparecem sozinhos quando o pool não basta
+ * ou quando um mapa sai dele, para a caixa usada continuar à vista.
  */
 export function MapPoolField({
   tenant,
@@ -44,10 +46,14 @@ export function MapPoolField({
 }: Props) {
   const t = useTranslations("TournamentForm.veto");
   const headingId = useId();
+  const outHeadingId = useId();
+  const [outOpen, setOutOpen] = useState(false);
   const pool = poolOf(values, maps);
+  const min = longestSeries(values);
   const standard = maps.filter((m) => m.default_pool).map((m) => m.slug);
   const isStandard =
     pool.length === standard.length && standard.every((s) => pool.includes(s));
+  const outShown = outOpen || pool.length < min || error !== undefined;
 
   const toggle = (slug: string, on: boolean) => {
     const mapPool = on
@@ -55,8 +61,14 @@ export function MapPoolField({
           .filter((m) => pool.includes(m.slug) || m.slug === slug)
           .map((m) => m.slug)
       : pool.filter((s) => s !== slug);
+    if (!on) setOutOpen(true);
     onChange({ mapPool });
     rememberPool(tenant, mapPool);
+  };
+  const showOut = () => {
+    setOutOpen(true);
+    // O botão some: o foco vai para o subtítulo dos de fora.
+    focusIfLost(outHeadingId);
   };
   const resetToStandard = () => {
     onChange({ mapPool: standard });
@@ -68,9 +80,7 @@ export function MapPoolField({
   return (
     <FormGroup legendText={t("mapPool")} invalid={error !== undefined}>
       <div className={styles.hint}>
-        <p className={styles.text}>
-          {t("mapPoolHint", { min: longestSeries(values) })}
-        </p>
+        <p className={styles.text}>{t("mapPoolHint", { min })}</p>
         {!isStandard && !disabled && (
           <Button kind="ghost" size="sm" onClick={resetToStandard}>
             {t("useDefaultPool")}
@@ -83,6 +93,9 @@ export function MapPoolField({
         disabled={disabled}
         onToggle={toggle}
         headingId={headingId}
+        outHeadingId={outHeadingId}
+        outShown={outShown}
+        onShowOut={showOut}
       />
       {error && <ErrorText>{error}</ErrorText>}
     </FormGroup>

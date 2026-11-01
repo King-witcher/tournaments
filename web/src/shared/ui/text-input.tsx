@@ -21,6 +21,8 @@ type Props = Omit<
   patternMessage?: ReactNode;
   /** Erro calculado fora, já traduzido: aparece na hora e bloqueia o envio (ver `useFieldCheck`). */
   problem?: string;
+  /** Mostra o erro sem esperar a saída deste campo: o valor veio de outro, que a pessoa já deixou. */
+  touched?: boolean;
 };
 
 /**
@@ -29,7 +31,8 @@ type Props = Omit<
  * props nativas e o campo o cobra: `required` põe a estrela no rótulo;
  * `minLength`, `maxLength` (não deixa passar), `pattern` (+ `patternMessage`) e
  * `type="email"` ficam vermelhos com a mensagem curta depois que a pessoa sai
- * do campo; `filter` não deixa entrar o caractere recusado. O erro que a API
+ * do campo (ou já, com `touched`); `filter` não deixa entrar o caractere
+ * recusado. O erro que a API
  * devolveu vai em `invalid` + `invalidText` (já traduzido) e vale mais que os
  * daqui.
  */
@@ -40,6 +43,7 @@ export function TextInput({
   filter,
   patternMessage,
   problem,
+  touched,
   ...props
 }: Props) {
   const t = useTranslations("Common.counter");
@@ -50,6 +54,7 @@ export function TextInput({
     filter,
     patternMessage,
     problem,
+    touched,
   });
   return (
     <CarbonTextInput

@@ -9,6 +9,7 @@ import { TextArea } from "@/shared/ui/text-area";
 import { TextInput } from "@/shared/ui/text-input";
 import { controlName, type FieldErrors } from "../lib/form-errors";
 import type { TranslationDraft, TranslationValues } from "../lib/form-values";
+import styles from "./tournament-translation.module.scss";
 
 type Locale = components["schemas"]["Locale"];
 
@@ -56,7 +57,7 @@ export const TournamentTranslation = memo(function TournamentTranslation({
       <FormGroup legendText={language}>
         <Stack gap={5}>
           {saved && <Notice kind="warning">{t("willDelete")}</Notice>}
-          <p>
+          <p className={styles.off}>
             {t("translationOff", { language, original: tLocales(original) })}
           </p>
           <div>
