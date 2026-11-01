@@ -17,7 +17,10 @@ use super::{
         VetoTurn, VetoUnavailable, VetoUnavailableReason, VetoView,
     },
 };
-use crate::matches::{result::Side, stage::Stage, types::MapRef};
+use crate::{
+    matches::{games::StoredGame, result::Side, stage::Stage, tasks, types::MapRef},
+    tournaments::TournamentStatus,
+};
 
 /// Onde o veto da série pronta `m` está; `None` sem fase de veto no torneio
 /// ou fora da série pronta.
@@ -43,6 +46,20 @@ fn map_ref(stage: &Stage, id: MapId) -> MapRef {
             name: m.name.clone(),
         },
     )
+}
+
+/// O mapa do próximo jogo que dá para enviar na série `m` (`games`: os
+/// enviados), quando o veto, a votação ou o sorteio já o deu. Sai do veto já
+/// refeito da fase, sem consulta nova.
+pub fn next_map(
+    status: TournamentStatus,
+    stage: &Stage,
+    m: &Match,
+    games: &[&StoredGame],
+) -> Option<MapRef> {
+    let next = u8::try_from(tasks::next_game(status, m, games)?).ok()?;
+    let id = stage.veto_of(m.id)?.state.map_of(next)?;
+    Some(map_ref(stage, id))
 }
 
 fn champion_ref(stage: &Stage, id: ChampionId) -> ChampionRef {

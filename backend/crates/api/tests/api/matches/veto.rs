@@ -628,6 +628,67 @@ async fn vote_mode_both_vote_and_the_map_comes_out() {
     );
 }
 
+/// `next_map` da série `wb-1-1` na chave e na próxima série de "Seus
+/// torneios", vistas por `who`.
+async fn next_maps(app: &Router, who: &User) -> (Value, Value) {
+    let in_bracket = find(&bracket(app, who).await, "wb-1-1")["next_map"].clone();
+    let (status, mine) = get(app, "/me/tournaments", who).await;
+    assert_eq!(status, StatusCode::OK, "{mine}");
+    (in_bracket, mine[0]["next_match"]["next_map"].clone())
+}
+
+#[tokio::test]
+async fn the_next_map_shows_in_the_lists_once_it_is_decided() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "map_mode": "veto", "champion_phase": false });
+    let (app, ana, p) = final_with(&db, 3, veto, one_ban()).await;
+    let named = |slug: &str, name: &str| json!({ "slug": slug, "name": name });
+
+    // Sem veto começado, o mapa não está decidido.
+    assert_eq!(next_maps(&app, &p[0]).await, (Value::Null, Value::Null));
+    ready(&app, &p[0]).await;
+    ready(&app, &p[1]).await;
+    ok_step(&app, &p[0], map("awoken")).await;
+    ok_step(&app, &p[1], map("blood-covenant")).await;
+    assert_eq!(next_maps(&app, &p[0]).await, (Value::Null, Value::Null));
+
+    // O mapa da partida 1 sai quando é escolhido, antes de o veto acabar; vale
+    // para quem joga e para quem só olha a chave.
+    let first = named("corrupted-keep", "Corrupted Keep");
+    let d = ok_step(&app, &p[0], map("corrupted-keep")).await;
+    assert_eq!(d["summary"]["next_map"], first);
+    assert_eq!(next_maps(&app, &p[0]).await, (first.clone(), first.clone()));
+    assert_eq!(next_maps(&app, &p[1]).await, (first.clone(), first.clone()));
+    assert_eq!(next_maps(&app, &ana).await.0, first);
+
+    // Enviado o 1, o próximo é o do 2; com 1 x 1, o decisivo.
+    for (who, slug) in [
+        (&p[1], "molten-falls"),
+        (&p[0], "ruins-of-sarnath"),
+        (&p[1], "vale-of-pnath"),
+    ] {
+        ok_step(&app, who, map(slug)).await;
+    }
+    let (status, body) = report(&app, &p[0], "wb-1-1", 1, game("a", "corrupted-keep")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let second = named("molten-falls", "Molten Falls");
+    assert_eq!(next_maps(&app, &p[0]).await, (second.clone(), second));
+    let (status, body) = confirm(&app, &p[1], "wb-1-1", 1).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = report(&app, &p[1], "wb-1-1", 2, game("b", "molten-falls")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let decider = named("deep-embrace", "Deep Embrace");
+    assert_eq!(next_maps(&app, &p[0]).await, (decider.clone(), decider));
+
+    // Os mapas enviados já decidem a série (o 3 ainda espera resposta): não há
+    // mais mapa a jogar.
+    let (status, body) = confirm(&app, &p[0], "wb-1-1", 2).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = report(&app, &p[0], "wb-1-1", 3, game("a", "deep-embrace")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(next_maps(&app, &p[0]).await, (Value::Null, Value::Null));
+}
+
 #[tokio::test]
 async fn no_repeat_takes_the_used_champion_out() {
     let (db, _lease) = crate::db::test_db().await;

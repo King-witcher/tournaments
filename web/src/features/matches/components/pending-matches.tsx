@@ -21,9 +21,9 @@ type Props = {
 
 /**
  * As partidas que esperam uma ação de quem vê (enviar, responder ou, para a
- * organização, resolver), cada uma como link com os lados e o que falta: numa
- * chave grande ou no celular, o cartão da partida pode estar fora da tela.
- * Some sem pendência.
+ * organização, resolver), cada uma como link com os lados, o que falta e, nas
+ * que ele joga, o próximo mapa quando já saiu: numa chave grande ou no
+ * celular, o cartão da partida pode estar fora da tela. Some sem pendência.
  */
 export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const t = useTranslations("Bracket");
@@ -49,6 +49,9 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
                 b: name(m.b),
                 task: m.task ? t(`task.${taskKey(m.task, m.veto)}`) : "",
               })}
+              {m.yours &&
+                m.next_map &&
+                ` · ${t("nextMap", { map: m.next_map.name })}`}
             </Link>
           </li>
         ))}

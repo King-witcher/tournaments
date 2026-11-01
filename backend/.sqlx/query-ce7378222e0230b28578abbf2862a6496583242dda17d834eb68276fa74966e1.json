@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select mp.slug, mp.name,\n                  (count(*) filter (where (p.side = 'a') = (g.winner = g.side_a)))::int\n                      as \"wins!\",\n                  (count(*) filter (where (p.side = 'a') <> (g.winner = g.side_a)))::int\n                      as \"losses!\"\n           from tournaments t\n           join match_game_players p on p.tournament_id = t.id and p.user_id = $2\n           join match_games g on g.id = p.game_id\n           join maps mp on mp.id = g.map_id\n           where t.tenant_id = $1 and g.status = 'confirmed'\n           group by mp.id\n           order by count(*) desc, mp.name, mp.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "maps",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "wins!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "losses!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "ce7378222e0230b28578abbf2862a6496583242dda17d834eb68276fa74966e1"
+}

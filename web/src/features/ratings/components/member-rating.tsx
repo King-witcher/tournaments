@@ -5,6 +5,7 @@ import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
 import { getMemberRating, getRanking } from "../server";
 import { AdjustRatingButton } from "./adjust-rating-button";
+import { MapRecords } from "./map-records";
 import { RatedGames } from "./rated-games";
 import { RatingAdjustments } from "./rating-adjustments";
 import { RatingSummary } from "./rating-summary";
@@ -22,8 +23,8 @@ const RATING_ID = "member-rating";
 
 /**
  * O rating da pessoa na página dela: o resumo (com "Ajustar rating" para a
- * organização), os últimos mapas que contaram e, para a organização, os
- * ajustes. Fica em `<Suspense>`.
+ * organização), o desempenho por mapa, as últimas partidas que contaram e,
+ * para a organização, os ajustes. Fica em `<Suspense>`.
  */
 export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
   const [loaded, ranking, t] = await Promise.all([
@@ -68,6 +69,7 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
           )}
         </Section>
       </div>
+      {rating.by_map.length > 0 && <MapRecords records={rating.by_map} />}
       {rating.games.length > 0 && (
         <RatedGames tenant={tenant} games={rating.games} />
       )}

@@ -1,9 +1,11 @@
 //! Testes de `ratings`: o ranking e o rating de um membro pelos mapas
-//! (aqui), os ajustes manuais (`adjustments`), a configuração do Elo
-//! (`settings`) e o recálculo quando o passado muda, pelo agendador e pela
-//! leitura (`refresh`). As regras do banco ficam em `schema::ratings`.
+//! (aqui), o retrospecto por mapa (`by_map`), os ajustes manuais
+//! (`adjustments`), a configuração do Elo (`settings`) e o recálculo quando o
+//! passado muda, pelo agendador e pela leitura (`refresh`). As regras do
+//! banco ficam em `schema::ratings`.
 
 mod adjustments;
+mod by_map;
 mod refresh;
 mod settings;
 

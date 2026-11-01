@@ -13,13 +13,13 @@ type Props = {
 };
 
 /**
- * A próxima partida de quem vê, com o adversário (ou de onde ele vem) e o que
- * ela espera dele, como link para a página da partida. O que pede uma ação
- * de quem vê vai em negrito.
+ * A próxima partida de quem vê, com o adversário (ou de onde ele vem), o que
+ * ela espera dele e, quando já saiu, o próximo mapa, como link para a página
+ * da partida. O que pede uma ação de quem vê vai em negrito.
  */
 export function NextMatchLink({ next, tournamentPath }: Props) {
   const t = useTranslations("Home.tournaments.next");
-  const tTask = useTranslations("Bracket.task");
+  const tBracket = useTranslations("Bracket");
   const { code } = useMatchLabels(next.single);
   const teamName = useTeamName();
   const match = code(next.key);
@@ -29,7 +29,7 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
     : from
       ? t(from.outcome, { match, source: code(from.match_key) })
       : t("unknown", { match });
-  const task = next.task && tTask(taskKey(next.task, next.veto));
+  const task = next.task && tBracket(`task.${taskKey(next.task, next.veto)}`);
   const urgent =
     next.task !== undefined &&
     next.task !== null &&
@@ -40,6 +40,8 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
       <span>
         {label}
         {task && (urgent ? <strong> · {task}</strong> : <> · {task}</>)}
+        {next.next_map &&
+          ` · ${tBracket("nextMap", { map: next.next_map.name })}`}
       </span>
     </Link>
   );

@@ -1,12 +1,15 @@
-//! SQL do rating: a configuração, o ranking, os mapas e os ajustes de um
-//! membro aqui; o recálculo (marcas, lock, histórico e cache) em `cache`.
+//! SQL do rating: a configuração, o ranking, os mapas, o retrospecto por
+//! arena e os ajustes de um membro aqui; o recálculo (marcas, lock, histórico e
+//! cache) em `cache`.
 
 mod cache;
 
 use engine::rating::{EloConfig, PROVISIONAL_GAMES};
 use sqlx::{PgConnection, PgExecutor, PgPool};
 
-use super::types::{AdjustmentAuthor, RankingEntry, RatedGame, RatedTournament, RatingAdjustment};
+use super::types::{
+    AdjustmentAuthor, MapRecord, RankingEntry, RatedGame, RatedTournament, RatingAdjustment,
+};
 use crate::{
     shared::{ApiError, Locale},
     teams,
@@ -159,6 +162,37 @@ pub async fn recent_games(
             })
         })
         .collect()
+}
+
+/// As vitórias e derrotas de `user` em cada arena, da mais jogada à menos: os
+/// mapas confirmados, com a arena conhecida, de qualquer torneio do tenant
+/// (conte ele para o rating ou não). W.O. não tem mapa, e o anulado é
+/// apagado, então nenhum dos dois entra. Parte dos torneios do tenant para
+/// usar o índice de `match_game_players` (torneio, jogador).
+pub async fn map_records(
+    db: &PgPool,
+    tenant: TenantId,
+    user: i64,
+) -> Result<Vec<MapRecord>, sqlx::Error> {
+    sqlx::query_as!(
+        MapRecord,
+        r#"select mp.slug, mp.name,
+                  (count(*) filter (where (p.side = 'a') = (g.winner = g.side_a)))::int
+                      as "wins!",
+                  (count(*) filter (where (p.side = 'a') <> (g.winner = g.side_a)))::int
+                      as "losses!"
+           from tournaments t
+           join match_game_players p on p.tournament_id = t.id and p.user_id = $2
+           join match_games g on g.id = p.game_id
+           join maps mp on mp.id = g.map_id
+           where t.tenant_id = $1 and g.status = 'confirmed'
+           group by mp.id
+           order by count(*) desc, mp.name, mp.id"#,
+        tenant.get(),
+        user
+    )
+    .fetch_all(db)
+    .await
 }
 
 /// Os ajustes de `user`, do mais recente ao mais antigo.

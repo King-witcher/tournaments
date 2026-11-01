@@ -26,8 +26,12 @@
     "noGame": "Ninguno todavía",
     "adjusted": "Ajustes de la organización",
     "adjustedValue": "{points} (ya sumados al rating)",
-    "none": "Todavía sin rating. Hay que jugar al menos una partida.",
+    "none": "Todavía sin rating.",
     "provisionalHint": "Con menos de {count} partidas, el rating todavía cambia mucho."
+  },
+  "byMap": {
+    "title": "Por mapa",
+    "description": "Incluye torneos que no cuentan para el rating."
   },
   "games": {
     "title": "Últimas partidas",

@@ -1,0 +1,13 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Duas colunas no celular e, do `md` para cima, quantas couberem.
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: spacing.$spacing-05 spacing.$spacing-03;
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
+  }
+}

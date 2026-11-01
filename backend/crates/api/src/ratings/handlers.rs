@@ -55,7 +55,7 @@ pub async fn get_ranking(
         ("user_id" = i64, Path, description = "Id do usuário membro"),
     ),
     responses(
-        (status = OK, body = MemberRating, description = "O rating do membro e os últimos 20 mapas que contaram; para organizer e owner, também os ajustes"),
+        (status = OK, body = MemberRating, description = "O rating do membro, os últimos 20 mapas que contaram e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, member.not_found (não é membro ativo)"),
@@ -79,6 +79,7 @@ pub async fn get_member_rating(
         .find(|e| e.user_id == user);
     let staff = member.role >= Role::Organizer;
     let games = db::recent_games(&state.db, member.tenant, user, RECENT_GAMES).await?;
+    let by_map = db::map_records(&state.db, member.tenant, user).await?;
     let adjustments = db::adjustments(&state.db, member.tenant, user).await?;
     Ok(Json(MemberRating {
         user_id: user,
@@ -87,6 +88,7 @@ pub async fn get_member_rating(
         provisional_games: PROVISIONAL_GAMES,
         adjusted: adjustments.iter().map(|a| a.delta).sum(),
         games,
+        by_map,
         adjustments: staff.then_some(adjustments),
     }))
 }

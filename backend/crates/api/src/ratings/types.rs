@@ -39,7 +39,8 @@ pub struct RankingEntry {
     pub provisional: bool,
 }
 
-/// O rating de um membro, com os últimos mapas que contaram.
+/// O rating de um membro, com os últimos mapas que contaram e o retrospecto
+/// por arena.
 #[derive(Serialize, ToSchema)]
 pub struct MemberRating {
     pub user_id: i64,
@@ -53,9 +54,26 @@ pub struct MemberRating {
     /// Os últimos mapas que contaram, do mais recente ao mais antigo, só dos
     /// torneios que quem vê vê na lista da comunidade.
     pub games: Vec<RatedGame>,
+    /// O retrospecto da pessoa em cada arena que jogou, da mais jogada à menos
+    /// (no empate, por nome). Conta os mapas confirmados (jogos) com a arena
+    /// conhecida, de todos os torneios da comunidade, com ou sem rating; W.O. e
+    /// mapas anulados ficam de fora. Vazio sem nenhum.
+    pub by_map: Vec<MapRecord>,
     /// Os ajustes manuais, do mais recente ao mais antigo; só para organizer
     /// e owner (`null` para player).
     pub adjustments: Option<Vec<RatingAdjustment>>,
+}
+
+/// As vitórias e derrotas de alguém numa arena.
+#[derive(Serialize, ToSchema)]
+pub struct MapRecord {
+    #[schema(example = "exile")]
+    pub slug: String,
+    /// Nome próprio do mapa, igual em todos os idiomas.
+    #[schema(example = "Exile")]
+    pub name: String,
+    pub wins: i32,
+    pub losses: i32,
 }
 
 /// Um mapa que contou para o rating de alguém.

@@ -42,6 +42,7 @@
   "notNeeded": "No fue necesaria",
   "advances": "<name></name> avanza sin jugar",
   "matchSides": "{a} × {b}",
+  "nextMap": "Próximo mapa: {map}",
   "result": {
     "pending": "Partida esperando confirmación",
     "contested": "Partida impugnada"

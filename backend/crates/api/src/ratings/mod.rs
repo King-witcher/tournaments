@@ -4,9 +4,12 @@
 //! `rating_history` são cache: um trigger marca o tenant como desatualizado
 //! quando a fonte muda, e o recálculo (`refresh`) roda no agendador, antes de
 //! ler e nas rotas daqui. Rotas: o ranking, o rating de um membro (com os
-//! últimos mapas e, para a organização, os ajustes), o ajuste manual e a
-//! configuração do Elo. Lê mapas, torneios e membros direto no banco, sem
-//! chamar `matches`: fica abaixo do `realtime`, que chama `refresh_stale`.
+//! últimos mapas, o retrospecto por arena e, para a organização, os ajustes),
+//! o ajuste manual e a configuração do Elo. O retrospecto por arena não vem do
+//! cache: conta os mapas confirmados de qualquer torneio da comunidade,
+//! conte ele para o rating ou não. Lê mapas, torneios e membros direto no
+//! banco, sem chamar `matches`: fica abaixo do `realtime`, que chama
+//! `refresh_stale`.
 
 mod db;
 mod handlers;

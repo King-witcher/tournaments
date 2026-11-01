@@ -52,7 +52,7 @@ pub use db::{Champion, champions, events, lineups};
 pub use due::{any_due, apply_due, clock};
 pub use state::{MatchVeto, VetoRow, ev_side};
 pub use types::{VetoStatus, VetoView};
-pub use view::{status, view};
+pub use view::{next_map, status, view};
 
 use super::stage::Stage;
 use crate::shared::ApiError;

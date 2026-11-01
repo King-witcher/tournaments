@@ -39,7 +39,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 ### Início `/`
 
 - Sem sessão, a **apresentação** (estática), em faixas de parede a parede que alternam o fundo e a camada: abertura com o título expressivo (`fluid-heading-05`), uma frase, "Criar conta" (primário, leva à criação da comunidade depois do cadastro) e "Entrar", a frase do convite e a captura da chave; "Como funciona" em três passos; "Do veto ao ranking" em abas (veto e draft, resultado, ranking), texto e captura; "Para quem organiza" em quatro colunas; e "Criar conta" de novo no fim. As capturas são do próprio site, por idioma e por tema.
-- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: nome, comunidade, situação, próxima partida como link separado; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (+ "Criar comunidade").
+- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: nome, comunidade, situação, próxima série como link separado, com o próximo mapa quando já saiu; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (+ "Criar comunidade").
 
 ### Entrar `/login`, Criar conta `/signup`, links por email
 
@@ -67,7 +67,7 @@ Convite: coluna estreita, `Tile` com o nome da comunidade, o dono, o número de 
 
 ### Pessoa na comunidade `/[tenant]/members/[user]`
 
-Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde"; se for você, "Editar apelido". Depois: **Rating** (resumo em `StructuredList`, "Ajustar rating" para a organização), **Últimos mapas** (a linha abre a partida), **Ajustes manuais** (organização) e **Torneios nesta comunidade** (estado, situação da pessoa e colocação). O apelido é link para cá em toda lista.
+Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde"; se for você, "Editar apelido". Depois: **Rating** (resumo em `StructuredList`, "Ajustar rating" para a organização), **Por mapa** (um tile por mapa jogado, com a imagem, V–D e a porcentagem, do mais jogado ao menos), **Últimas partidas** (a linha abre a série), **Ajustes manuais** (organização) e **Torneios nesta comunidade** (estado, situação da pessoa e colocação). O apelido é link para cá em toda lista.
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
@@ -77,7 +77,7 @@ Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade,
 
 `PageHeader`: breadcrumb, nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Copiar torneio", "Desfazer início" e "Excluir rascunho". Abaixo, "Sua situação". Abas:
 
-- **Visão geral**: `ProgressIndicator`, "Partidas que esperam você", descrição, resumo do formato (`StructuredList` com `InfoTip`) e "Ver as regras".
+- **Visão geral**: `ProgressIndicator`, "Séries que esperam você" (com o próximo mapa, nas que ele joga), descrição, resumo do formato (`StructuredList` com `InfoTip`) e "Ver as regras".
 - **Chave** (a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e a classificação. Cada lado do cartão: seed, avatar, apelido e placar; linhas curvas ligam a partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas **Chave principal** (com a grande final) e **Repescagem**, abrindo na aba da partida de quem vê.
 - **Inscritos**: `DataTable` (seed, apelido, estado, inscrito em) com busca; organização: "Inscrever alguém", check-in, tirar, desistência por linha e, depois da tabela, os links de inscrição.
 - **Regras** (sempre): "Como funciona" gerado da configuração e "Regras adicionais", editáveis ali pela organização.

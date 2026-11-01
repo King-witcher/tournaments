@@ -157,9 +157,13 @@ pub struct NextMatch {
     pub opponent_from: Option<SideSource>,
     /// O que a partida espera de quem vê; `null` se nada.
     pub task: Option<ViewerTask>,
-    /// Onde o veto da partida pronta está; `null` sem veto no torneio ou fora
-    /// da partida pronta.
+    /// Onde o veto da série pronta está; `null` sem veto no torneio ou fora da
+    /// série pronta.
     pub veto: Option<VetoStatus>,
+    /// O mapa (a arena) do próximo jogo a enviar na série, quando o veto, a
+    /// votação ou o sorteio já o deu; `null` antes disso, sem veto de mapas e
+    /// com a série decidida.
+    pub next_map: Option<MapRef>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -186,9 +190,13 @@ pub struct BracketMatch {
     /// Quem vê joga a partida.
     pub yours: bool,
     pub task: Option<ViewerTask>,
-    /// Onde o veto da partida pronta está; `null` sem veto no torneio ou fora
-    /// da partida pronta.
+    /// Onde o veto da série pronta está; `null` sem veto no torneio ou fora da
+    /// série pronta.
     pub veto: Option<VetoStatus>,
+    /// O mapa (a arena) do próximo jogo a enviar na série, quando o veto, a
+    /// votação ou o sorteio já o deu; `null` antes disso, sem veto de mapas e
+    /// com a série decidida.
+    pub next_map: Option<MapRef>,
 }
 
 /// Um lado da partida.

@@ -186,6 +186,7 @@ pub fn summary(
         yours: mine.is_some(),
         task: tasks::match_task(status, stage, m, mine, viewer),
         veto: veto::status(stage, m),
+        next_map: veto::next_map(status, stage, m, &games),
     }
 }
 

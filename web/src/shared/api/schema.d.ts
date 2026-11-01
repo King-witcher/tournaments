@@ -1503,6 +1503,7 @@ export interface components {
              * @example wb-1-3
              */
             key: string;
+            next_map?: components["schemas"]["MapRef"] | null;
             part: components["schemas"]["BracketPart"];
             /**
              * Format: int32
@@ -2088,6 +2089,20 @@ export interface components {
          * @enum {string}
          */
         MapMode: "veto" | "vote" | "random" | "off";
+        /** @description As vitórias e derrotas de alguém num mapa. */
+        MapRecord: {
+            /** Format: int32 */
+            losses: number;
+            /**
+             * @description Nome próprio do mapa, igual em todos os idiomas.
+             * @example Exile
+             */
+            name: string;
+            /** @example exile */
+            slug: string;
+            /** Format: int32 */
+            wins: number;
+        };
         MapRef: {
             name: string;
             slug: string;
@@ -2230,7 +2245,10 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
-        /** @description O rating de um membro, com os últimos mapas que contaram. */
+        /**
+         * @description O rating de um membro, com os últimos mapas que contaram e o retrospecto
+         *     por mapa.
+         */
         MemberRating: {
             /**
              * Format: int32
@@ -2242,6 +2260,13 @@ export interface components {
              *     e owner (`null` para player).
              */
             adjustments?: components["schemas"]["RatingAdjustment"][] | null;
+            /**
+             * @description O retrospecto da pessoa em cada mapa que jogou, do mais jogado ao
+             *     menos (no empate, por nome). Conta as partidas confirmadas, com mapa
+             *     conhecido, de todos os torneios da comunidade, com ou sem rating; W.O.
+             *     e partidas anuladas ficam de fora. Vazio sem nenhuma.
+             */
+            by_map: components["schemas"]["MapRecord"][];
             /**
              * @description Os últimos mapas que contaram, do mais recente ao mais antigo, só dos
              *     torneios que quem vê vê na lista da comunidade.
@@ -2344,6 +2369,7 @@ export interface components {
         NextMatch: {
             /** @example wb-2-1 */
             key: string;
+            next_map?: components["schemas"]["MapRef"] | null;
             opponent?: components["schemas"]["Team"] | null;
             opponent_from?: components["schemas"]["SideSource"] | null;
             /** @description Eliminação simples: o código da partida não tem a parte da chave. */
@@ -6952,7 +6978,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O rating do membro e os últimos 20 mapas que contaram; para organizer e owner, também os ajustes */
+            /** @description O rating do membro, os últimos 20 mapas que contaram e o retrospecto por mapa (as partidas confirmadas de todos os torneios da comunidade); para organizer e owner, também os ajustes */
             200: {
                 headers: {
                     [name: string]: unknown;

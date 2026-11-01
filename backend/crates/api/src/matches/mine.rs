@@ -154,5 +154,6 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
         },
         task: tasks::match_task(status, stage, m, Some(side), viewer),
         veto: veto::status(stage, m),
+        next_map: veto::next_map(status, stage, m, &stage.games_of(m.id)),
     })
 }
