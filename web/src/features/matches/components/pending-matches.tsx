@@ -6,7 +6,7 @@ import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { ACTIONABLE, taskKey } from "../lib/status";
+import { actionableMatches, taskKey } from "../lib/status";
 import styles from "./pending-matches.module.scss";
 
 type Schemas = components["schemas"];
@@ -30,9 +30,7 @@ export function PendingMatches({ bracket, basePath, exclude }: Props) {
   const { code } = useMatchLabels(isSingle(bracket.format));
   const teamName = useTeamName();
   const teams = new Map(bracket.entrants.map((e) => [e.id, e]));
-  const pending = bracket.matches.filter(
-    (m) => m.key !== exclude && m.task && ACTIONABLE.includes(m.task),
-  );
+  const pending = actionableMatches(bracket, exclude);
   if (pending.length === 0) return null;
 
   const name = (side: Schemas["MatchSide"]) => {

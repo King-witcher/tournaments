@@ -12,6 +12,16 @@ export const ACTIONABLE: Schemas["ViewerTask"][] = [
   "veto",
 ];
 
+/** As séries que esperam uma ação de quem vê, menos a `exclude`. */
+export function actionableMatches(
+  bracket: Schemas["TournamentBracket"],
+  exclude?: string,
+) {
+  return bracket.matches.filter(
+    (m) => m.key !== exclude && m.task != null && ACTIONABLE.includes(m.task),
+  );
+}
+
 /**
  * A chave do texto (em `Bracket.task`) do que a partida espera de quem vê:
  * esperar o adversário vira, com veto, esperar ele ficar pronto ou o veto em
