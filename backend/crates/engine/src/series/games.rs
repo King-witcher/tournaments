@@ -13,8 +13,11 @@
 //!   ficaram depois da decisão saem (`SeriesState::standing`);
 //! - o mapa não se repete na série; mapa nulo (resultado antigo, sem
 //!   detalhe) não conta como repetido;
-//! - frags são opcionais; com frags, não há empate e quem fez mais venceu.
-//!   Podem ser negativos (suicídio e queda tiram frag): -1 vence -3.
+//! - o vencedor do mapa é quem fez mais frags, e empate não existe
+//!   (`winner_from_frags`). Os frags podem ser negativos (suicídio e queda
+//!   tiram frag): -1 vence -3.
+
+use std::cmp::Ordering;
 
 use serde::{Deserialize, Serialize};
 
@@ -197,23 +200,15 @@ pub fn check_map(
     Ok(())
 }
 
-/// Os frags do mapa `game` (a partir de 1), se vieram: sem empate e com mais
-/// frags para quem venceu, negativos inclusive (a faixa é do site). Erros:
-/// `GameTied` e `FragsDisagree`.
-pub fn check_frags(
-    game: usize,
-    winner: Side,
-    frags: Option<(i16, i16)>,
-) -> Result<(), EngineError> {
-    let Some((a, b)) = frags else { return Ok(()) };
-    if a == b {
-        return Err(EngineError::GameTied { game });
+/// Quem venceu o mapa `game` (a partir de 1) com `a` frags para o lado `a` e
+/// `b` para o lado `b`: quem fez mais, negativos inclusive (a faixa é do
+/// site). Erro: `GameTied`, porque empate não tem vencedor.
+pub fn winner_from_frags(game: usize, a: i16, b: i16) -> Result<Side, EngineError> {
+    match a.cmp(&b) {
+        Ordering::Greater => Ok(Side::A),
+        Ordering::Less => Ok(Side::B),
+        Ordering::Equal => Err(EngineError::GameTied { game }),
     }
-    let frags_winner = if a > b { Side::A } else { Side::B };
-    if frags_winner != winner {
-        return Err(EngineError::FragsDisagree { game });
-    }
-    Ok(())
 }
 
 #[cfg(test)]
@@ -364,33 +359,25 @@ mod tests {
     }
 
     #[test]
-    fn frags_are_optional_and_agree_with_the_winner() {
-        assert_eq!(check_frags(1, A, None), Ok(()));
-        assert_eq!(check_frags(1, A, Some((20, 10))), Ok(()));
-        assert_eq!(check_frags(2, B, Some((3, 30))), Ok(()));
+    fn the_winner_is_who_scored_more() {
+        assert_eq!(winner_from_frags(1, 20, 10), Ok(A));
+        assert_eq!(winner_from_frags(2, 3, 30), Ok(B));
         assert_eq!(
-            check_frags(2, A, Some((10, 10))),
+            winner_from_frags(2, 10, 10),
             Err(EngineError::GameTied { game: 2 })
-        );
-        assert_eq!(
-            check_frags(3, A, Some((5, 10))),
-            Err(EngineError::FragsDisagree { game: 3 })
         );
     }
 
     #[test]
-    fn negative_frags_follow_the_same_rules() {
+    fn negative_frags_follow_the_same_rule() {
         // Suicídio e queda tiram frag: quem fez mais venceu, mesmo abaixo de 0.
-        assert_eq!(check_frags(1, A, Some((20, -1))), Ok(()));
-        assert_eq!(check_frags(1, A, Some((-1, -3))), Ok(()));
-        assert_eq!(check_frags(1, A, Some((0, -1))), Ok(()));
-        assert_eq!(check_frags(1, B, Some((-999, 999))), Ok(()));
+        assert_eq!(winner_from_frags(1, 20, -1), Ok(A));
+        assert_eq!(winner_from_frags(1, -1, -3), Ok(A));
+        assert_eq!(winner_from_frags(1, -3, -1), Ok(B));
+        assert_eq!(winner_from_frags(1, 0, -1), Ok(A));
+        assert_eq!(winner_from_frags(1, -999, 999), Ok(B));
         assert_eq!(
-            check_frags(2, B, Some((-1, -3))),
-            Err(EngineError::FragsDisagree { game: 2 })
-        );
-        assert_eq!(
-            check_frags(3, A, Some((-2, -2))),
+            winner_from_frags(3, -2, -2),
             Err(EngineError::GameTied { game: 3 })
         );
     }

@@ -36,8 +36,8 @@ async fn corrections_that_contradict_a_later_match_are_refused() {
         set_game(&app, &ana, "wb-1-1", 1, game("b", "awoken"), None).await,
         conflicts
     );
-    // O mesmo vencedor, com frags, passa, mesmo encerrado.
-    let with_frags = json!({ "winner": "a", "map": "awoken", "a_frags": 30, "b_frags": 28 });
+    // O mesmo vencedor com outro placar passa, mesmo encerrado.
+    let with_frags = json!({ "map": "awoken", "a_frags": 30, "b_frags": 28 });
     let (status, fixed) = set_game(&app, &ana, "wb-1-1", 1, with_frags, Some("frags")).await;
     assert_eq!(status, StatusCode::OK, "{fixed}");
     assert_eq!(kinds(&fixed).last().unwrap(), "corrected:1");

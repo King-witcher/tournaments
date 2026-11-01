@@ -24,7 +24,9 @@ const DOUBLE: Part[][] = [["winners", "grand_final"], ["losers"]];
 /**
  * Chave inteira: na simples, uma grade de rodadas; na dupla, uma aba para a
  * chave principal (com a grande final) e outra para a repescagem. Abre na
- * aba da partida que espera quem vê, se ela estiver na repescagem.
+ * aba da partida que espera quem vê, se ela estiver na repescagem. Sem
+ * nenhuma série na repescagem (dupla com 2 inscritos), só a grade da chave
+ * principal, sem abas.
  */
 export function BracketView({ tenant, tournament, bracket }: Props) {
   const t = useTranslations("Bracket");
@@ -42,6 +44,7 @@ export function BracketView({ tenant, tournament, bracket }: Props) {
   );
 
   if (single) return grid(["winners"]);
+  if (!bracket.matches.some((m) => m.part === "losers")) return grid(DOUBLE[0]);
 
   const open = bracket.matches.find(
     (m) => m.yours && (m.state === "ready" || m.state === "pending"),

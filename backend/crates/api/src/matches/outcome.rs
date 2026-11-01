@@ -1,7 +1,7 @@
-//! O que chega para um mapa (vencedor pelo lado, mapa pelo slug, frags de
-//! `a` e de `b`) → o mapa que se grava, e o W.O. pelo lado. As regras de
-//! série (frags batendo com o vencedor, mapa sem repetir, próximo mapa) são
-//! do `engine`; aqui ficam os limites do site.
+//! O que chega para um mapa (mapa pelo slug e os frags de `a` e de `b`) → o
+//! mapa que se grava, e o W.O. pelo lado. O vencedor sai do placar (quem fez
+//! mais; `series::winner_from_frags`). As regras de série (mapa sem repetir,
+//! próximo mapa) são do `engine`; aqui ficam os limites do site.
 
 use std::collections::HashMap;
 
@@ -19,46 +19,38 @@ pub const MIN_FRAGS: i16 = -999;
 pub const MAX_FRAGS: i16 = 999;
 
 /// O mapa `number` entre `sides`, com o mapa resolvido por `maps` (ids dos
-/// mapas ativos pelo slug). `require_map`: o jogador sempre diz o mapa; o
-/// organizador pode deixar sem (série antiga). Erros: 422
-/// `match.map_required` (também frags sem mapa), `match.map_unknown`,
-/// `match.frags_invalid` `{min, max}` (um lado só, ou fora da faixa) e os do
-/// `engine` (`match.game_tied` `{game}`, `match.frags_disagree` `{game}`).
+/// mapas ativos pelo slug). O mapa e o placar são sempre obrigatórios, para
+/// o jogador e para o organizador (a tabela não aceita frags sem mapa), e o
+/// vencedor é quem fez mais frags. Erros: 422 `match.map_required`,
+/// `match.map_unknown`, `match.frags_invalid` `{min, max}` (fora da faixa) e
+/// `match.game_tied` `{game}` (frags iguais).
 pub fn game(
     number: i16,
     sides: (ParticipantId, ParticipantId),
     input: &GameInput,
     maps: &HashMap<String, MapId>,
-    require_map: bool,
 ) -> Result<NewGame, ApiError> {
-    let map = match &input.map {
-        Some(slug) => Some(
-            *maps
-                .get(slug)
-                .ok_or(ApiError::invalid("match.map_unknown"))?,
-        ),
-        None => None,
-    };
+    let slug = input
+        .map
+        .as_ref()
+        .ok_or(ApiError::invalid("match.map_required"))?;
+    let map = *maps
+        .get(slug)
+        .ok_or(ApiError::invalid("match.map_unknown"))?;
+    let (a, b) = (input.a_frags, input.b_frags);
     let range = MIN_FRAGS..=MAX_FRAGS;
-    let frags = match (input.a_frags, input.b_frags) {
-        (None, None) => None,
-        (Some(a), Some(b)) if range.contains(&a) && range.contains(&b) => Some((a, b)),
-        _ => {
-            return Err(ApiError::invalid("match.frags_invalid")
-                .with_params([("min", i64::from(MIN_FRAGS)), ("max", i64::from(MAX_FRAGS))]));
-        }
-    };
-    if map.is_none() && (require_map || frags.is_some()) {
-        return Err(ApiError::invalid("match.map_required"));
+    if !range.contains(&a) || !range.contains(&b) {
+        return Err(ApiError::invalid("match.frags_invalid")
+            .with_params([("min", i64::from(MIN_FRAGS)), ("max", i64::from(MAX_FRAGS))]));
     }
     let game = usize::try_from(number).map_err(|_| ApiError::internal())?;
-    series::check_frags(game, input.winner.into(), frags)?;
+    let winner = Side::from(series::winner_from_frags(game, a, b)?);
     Ok(NewGame {
         number,
         sides,
-        winner: input.winner.of(sides),
+        winner,
         map,
-        frags,
+        frags: (a, b),
     })
 }
 
@@ -79,12 +71,11 @@ mod tests {
         [("awoken".to_owned(), MapId(1))].into_iter().collect()
     }
 
-    fn input(winner: Side, map: Option<&str>, frags: (Option<i16>, Option<i16>)) -> GameInput {
+    fn input(map: Option<&str>, a_frags: i16, b_frags: i16) -> GameInput {
         GameInput {
-            winner,
             map: map.map(str::to_owned),
-            a_frags: frags.0,
-            b_frags: frags.1,
+            a_frags,
+            b_frags,
         }
     }
 
@@ -93,93 +84,44 @@ mod tests {
     }
 
     #[test]
-    fn a_map_with_or_without_frags() {
-        let g = game(
-            2,
-            SIDES,
-            &input(Side::B, Some("awoken"), (Some(3), Some(9))),
-            &maps(),
-            true,
-        )
-        .unwrap();
+    fn the_score_decides_the_winner() {
+        let g = game(2, SIDES, &input(Some("awoken"), 3, 9), &maps()).unwrap();
         assert_eq!(
-            (g.winner, g.map, g.frags),
-            (ParticipantId(20), Some(MapId(1)), Some((3, 9)))
+            (g.winner_id(), g.winner, g.map, g.frags),
+            (ParticipantId(20), Side::B, MapId(1), (3, 9))
         );
-        let g = game(
-            1,
-            SIDES,
-            &input(Side::A, Some("awoken"), (None, None)),
-            &maps(),
-            true,
-        );
-        assert_eq!(g.unwrap().frags, None);
-        // Suicídio e queda tiram frag: negativos valem, até o piso.
-        let g = game(
-            1,
-            SIDES,
-            &input(Side::B, Some("awoken"), (Some(-999), Some(-1))),
-            &maps(),
-            true,
-        );
-        assert_eq!(g.unwrap().frags, Some((-999, -1)));
-        // O organizador pode lançar sem o mapa (série antiga).
-        let g = game(
-            1,
-            SIDES,
-            &input(Side::A, None, (None, None)),
-            &maps(),
-            false,
-        );
-        assert_eq!(g.unwrap().map, None);
+        let g = game(1, SIDES, &input(Some("awoken"), 9, 3), &maps()).unwrap();
+        assert_eq!((g.winner_id(), g.winner), (ParticipantId(10), Side::A));
+        // Suicídio e queda tiram frag: negativos valem, até o piso, e quem
+        // fez mais vence mesmo abaixo de zero.
+        let g = game(1, SIDES, &input(Some("awoken"), -999, -1), &maps()).unwrap();
+        assert_eq!((g.winner_id(), g.frags), (ParticipantId(20), (-999, -1)));
+        let g = game(1, SIDES, &input(Some("awoken"), 999, -999), &maps()).unwrap();
+        assert_eq!(g.winner_id(), ParticipantId(10));
     }
 
     #[test]
     fn site_limits_and_engine_rules() {
         let m = maps();
-        let check = |i: GameInput, require| code(game(1, SIDES, &i, &m, require));
+        let check = |i: GameInput| code(game(1, SIDES, &i, &m));
+        assert_eq!(check(input(None, 1, 0)), "match.map_required");
+        assert_eq!(check(input(Some("q3dm17"), 1, 0)), "match.map_unknown");
+        assert_eq!(check(input(Some("awoken"), 1000, 0)), "match.frags_invalid");
         assert_eq!(
-            check(input(Side::A, None, (None, None)), true),
-            "match.map_required"
-        );
-        assert_eq!(
-            check(input(Side::A, None, (Some(1), Some(0))), false),
-            "match.map_required"
-        );
-        assert_eq!(
-            check(input(Side::A, Some("q3dm17"), (None, None)), true),
-            "match.map_unknown"
-        );
-        assert_eq!(
-            check(input(Side::A, Some("awoken"), (Some(1000), Some(0))), true),
+            check(input(Some("awoken"), 0, -1000)),
             "match.frags_invalid"
         );
-        assert_eq!(
-            check(input(Side::A, Some("awoken"), (Some(0), Some(-1000))), true),
-            "match.frags_invalid"
-        );
-        let err = game(
-            1,
-            SIDES,
-            &input(Side::A, Some("awoken"), (Some(-1000), Some(-1001))),
-            &m,
-            true,
-        )
-        .err()
-        .unwrap();
+        let err = game(1, SIDES, &input(Some("awoken"), -1000, -1001), &m)
+            .err()
+            .unwrap();
         assert_eq!(err.params, [("min", -999), ("max", 999)]);
-        assert_eq!(
-            check(input(Side::A, Some("awoken"), (Some(10), None)), true),
-            "match.frags_invalid"
-        );
-        assert_eq!(
-            check(input(Side::A, Some("awoken"), (Some(10), Some(10))), true),
-            "match.game_tied"
-        );
-        assert_eq!(
-            check(input(Side::A, Some("awoken"), (Some(1), Some(10))), true),
-            "match.frags_disagree"
-        );
+        // Empate não tem vencedor, nem com os dois no piso.
+        let err = game(2, SIDES, &input(Some("awoken"), 10, 10), &m)
+            .err()
+            .unwrap();
+        assert_eq!(err.code, "match.game_tied");
+        assert_eq!(err.params, [("game", 2)]);
+        assert_eq!(check(input(Some("awoken"), -999, -999)), "match.game_tied");
     }
 
     #[test]

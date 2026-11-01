@@ -138,15 +138,15 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
-    let game = |winner: &str, map: &str, a: u16, b: u16| json!({ "winner": winner, "map": map, "a_frags": a, "b_frags": b });
+    let game = |map: &str, a: u16, b: u16| json!({ "map": map, "a_frags": a, "b_frags": b });
     let ok = |(status, body): (StatusCode, serde_json::Value)| {
         assert_eq!(status, StatusCode::OK, "{body}");
     };
-    ok(report(&app, &p1, "wb-1-1", 1, game("a", "awoken", 20, 10)).await);
+    ok(report(&app, &p1, "wb-1-1", 1, game("awoken", 20, 10)).await);
     ok(confirm(&app, &p2, "wb-1-1", 1).await);
-    ok(report(&app, &p2, "wb-1-1", 2, game("b", "exile", 5, 10)).await);
+    ok(report(&app, &p2, "wb-1-1", 2, game("exile", 5, 10)).await);
     ok(confirm(&app, &p1, "wb-1-1", 2).await);
-    let third = game("a", "insomnia", 30, 2);
+    let third = game("insomnia", 30, 2);
     ok(report(&app, &p1, "wb-1-1", 3, third.clone()).await);
     ok(contest(&app, &p2, "wb-1-1", 3, "foi meu").await);
     ok(set_game(&app, &olga, "wb-1-1", 3, third, Some("conferido")).await);

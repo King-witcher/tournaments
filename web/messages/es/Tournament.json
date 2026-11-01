@@ -105,9 +105,8 @@
     },
     "results": {
       "title": "Resultado",
-      "report": "Después de cada partida, uno de los dos envía el resultado en la página de la serie.",
-      "reportTdm": "Después de cada partida, cualquier jugador envía el resultado en la página de la serie.",
-      "frags": "Envía también los frags, que cuentan para el desempate.",
+      "report": "Después de cada partida, uno de los dos envía el marcador en la página de la serie.",
+      "reportTdm": "Después de cada partida, cualquier jugador envía el marcador en la página de la serie.",
       "next": "No hace falta esperar la confirmación para jugar la siguiente.",
       "screenshot": "Haz una captura de pantalla del marcador antes de salir de la partida. El envío la exige.",
       "confirm": "El otro jugador tiene {window} para confirmar o impugnar. Sin respuesta, la partida se confirma sola. Si el resultado llega antes de que la partida cumpla {duration}, los {window} solo empiezan a contar a los {duration}.",

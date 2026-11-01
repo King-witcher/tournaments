@@ -35,9 +35,6 @@ impl From<EngineError> for ApiError {
                 Self::invalid("match.game_tied").with_params([("game", game as i64)])
             }
             E::MapRepeated(_) => Self::invalid("match.map_repeated"),
-            E::FragsDisagree { game } => {
-                Self::invalid("match.frags_disagree").with_params([("game", game as i64)])
-            }
             E::SeriesDecided => Self::conflict("match.series_decided"),
             E::GameOutOfOrder { next } => {
                 Self::conflict("match.game_out_of_order").with_params([("next", next as i64)])

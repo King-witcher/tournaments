@@ -120,8 +120,8 @@ pub struct SeriesFrags {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StageReport {
     pub report: MatchReport,
-    /// `None` quando algum mapa da série veio sem frags (são opcionais no
-    /// envio): a série fica sem frags, em vez de contar 0.
+    /// `None` quando algum mapa da série veio sem frags (série antiga
+    /// convertida): a série fica sem frags, em vez de contar 0.
     pub frags: Option<SeriesFrags>,
 }
 
@@ -204,12 +204,10 @@ pub enum EngineError {
     },
     #[error("placar {score:?} inválido para melhor de {best_of}")]
     InvalidScore { best_of: u8, score: SeriesScore },
-    #[error("o mapa {game} do detalhe está empatado")]
+    #[error("o mapa {game} está empatado")]
     GameTied { game: usize },
     #[error("mapa repetido na série: {0:?}")]
     MapRepeated(MapId),
-    #[error("os frags do mapa {game} não batem com o vencedor")]
-    FragsDisagree { game: usize },
     #[error("a série já está decidida pelos mapas enviados")]
     SeriesDecided,
     #[error("o próximo mapa da série é o {next}")]

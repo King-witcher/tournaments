@@ -3,8 +3,8 @@
 mod games;
 
 pub use games::{
-    Decision, GameStatus, SeriesGame, SeriesState, Side, check_frags, check_map, check_next,
-    evaluate, put,
+    Decision, GameStatus, SeriesGame, SeriesState, Side, check_map, check_next, evaluate, put,
+    winner_from_frags,
 };
 
 use serde::{Deserialize, Serialize};

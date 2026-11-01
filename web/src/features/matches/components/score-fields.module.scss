@@ -1,0 +1,52 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Um campo por lado, com o "×" no meio. Alinhado pelo topo: a mensagem de erro
+// de um campo cresce para baixo e não desloca o outro nem o "×".
+.score {
+  display: grid;
+  align-items: start;
+  gap: spacing.$spacing-05;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+// O input do Carbon tem largura mínima de 150px (feita para os botões de
+// mais e menos); sem os botões, ela estoura a coluna a 390px, dentro do
+// acordeão. O rótulo vira uma linha só, de altura fixa, para o "×" saber onde
+// está o campo.
+.field.field {
+  min-inline-size: 0;
+
+  input[type="number"] {
+    min-inline-size: 0;
+  }
+
+  label {
+    display: flex;
+  }
+}
+
+.name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// O rótulo tem 16px de linha e 8px de margem (spacing-06); o "×" tem a altura
+// do campo: 40px e, no celular, 48px.
+.versus {
+  @include type.type-style("heading-03");
+
+  display: flex;
+  align-items: center;
+  block-size: spacing.$spacing-08;
+  margin-block-start: spacing.$spacing-06;
+  color: theme.$text-secondary;
+
+  @include breakpoint.breakpoint-down(md) {
+    block-size: spacing.$spacing-09;
+  }
+}

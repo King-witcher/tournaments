@@ -400,24 +400,20 @@ pub struct GamePath {
     pub game: i16,
 }
 
-/// Um mapa da série: quem venceu, o mapa e os frags.
+/// Um mapa da série: o mapa e o placar. O vencedor é quem fez mais frags.
 #[derive(Deserialize, ToSchema)]
 pub struct GameInput {
-    pub winner: Side,
-    /// Slug do mapa (`GET /maps`), sem repetir na série. Obrigatório no envio
-    /// do jogador; o organizador pode deixar sem, numa série antiga.
+    /// Slug do mapa (`GET /maps`), sem repetir na série. Obrigatório, para o
+    /// jogador e para o organizador (sem ele, 422 `match.map_required`).
     #[schema(example = "blood-covenant")]
     #[serde(default)]
     pub map: Option<String>,
     /// Frags do lado `a` e do lado `b`, de -999 a 999 (suicídio e queda tiram
-    /// frag), opcionais (os dois ou nenhum); sem empate e com mais frags para
-    /// quem venceu.
-    #[serde(default)]
+    /// frag). Obrigatórios e sem empate: vence quem fez mais.
     #[schema(minimum = -999, maximum = 999)]
-    pub a_frags: Option<i16>,
-    #[serde(default)]
+    pub a_frags: i16,
     #[schema(minimum = -999, maximum = 999)]
-    pub b_frags: Option<i16>,
+    pub b_frags: i16,
 }
 
 /// O mapa que o organizador lança ou corrige, já confirmado.

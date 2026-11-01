@@ -119,19 +119,14 @@
     "contested": "{count, plural, one {# partida impugnada queda fuera del marcador hasta que la resuelva la organización.} other {# partidas impugnadas quedan fuera del marcador hasta que las resuelva la organización.}}"
   },
   "form": {
-    "winner": "Quién ganó la partida {number}",
     "map": "Mapa jugado",
     "chooseMap": "Elige el mapa…",
-    "pool": "Pool de duelo",
-    "others": "Otros mapas",
-    "frags": "Frags",
-    "fragsOf": "Frags de {name}",
+    "score": "Marcador",
     "fragsRange": "De {min} a {max}.",
+    "tied": "El marcador no puede empatar.",
     "submit": "Enviar partida {number}",
     "enter": "Cargar partida {number}",
     "save": "Guardar partida {number}",
-    "chooseWinner": "Elige quién ganó la partida.",
-    "chooseTheMap": "Elige el mapa jugado.",
     "comment": "Nota en el historial",
     "vetoedMap": "Mapa jugado: {map}."
   },

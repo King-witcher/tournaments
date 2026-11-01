@@ -41,7 +41,7 @@ use crate::{
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "match.not_ready, match.series_decided, match.no_games_left {best_of}, match.game_out_of_order {next}, match.correction_conflicts (uma partida decidida depois deixaria de fechar)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os do envio (match.map_unknown, match.map_repeated, match.frags_invalid {min, max}, match.game_tied {game}, match.frags_disagree {game}, match.map_required: frags sem mapa), match.comment_invalid, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os do envio (match.map_required, match.map_unknown, match.map_repeated, match.frags_invalid {min, max}, match.game_tied {game}: frags iguais), match.comment_invalid, request.invalid_body"),
     )
 )]
 pub async fn put_game(
@@ -58,12 +58,8 @@ pub async fn put_game(
     let games = stage.games_of(m.id);
     let index = actions::game_index(path.game, games.len())?;
     let maps = actions::map_ids(&mut tx, &body.game).await?;
-    let new = outcome::game(path.game, sides, &body.game, &maps, false)?;
-    let candidate = series::SeriesGame {
-        winner: body.game.winner.into(),
-        status: series::GameStatus::Confirmed,
-        map: new.map,
-    };
+    let new = outcome::game(path.game, sides, &body.game, &maps)?;
+    let candidate = new.series_game(series::GameStatus::Confirmed);
     let after = series::put(m.best_of, &series_games(&games), index, candidate)?;
     let kind = match games.get(index).map(|g| g.status) {
         Some(GameStatus::Contested) => EventKind::Resolved,
@@ -77,7 +73,7 @@ pub async fn put_game(
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
     db::put_game(&mut tx, &at, &new, member.user.id).await?;
-    let event = NewEvent::game(kind, Some(member.user.id), path.game, Some(new.winner))
+    let event = NewEvent::game(kind, Some(member.user.id), path.game, Some(new.winner_id()))
         .with_comment(comment.as_deref());
     db::insert_event(&mut tx, &at, &event).await?;
     let beyond: Vec<&StoredGame> = games

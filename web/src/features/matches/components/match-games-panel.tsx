@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Section } from "@/shared/ui/section";
 import { useSideNames } from "../hooks/use-side-names";
+import { freeMaps } from "../lib/free-maps";
 import type { MatchTarget } from "../lib/match-target";
 import { GameRow } from "./game-row";
 import styles from "./match-games-panel.module.scss";
@@ -13,6 +14,7 @@ type Schemas = components["schemas"];
 type Props = {
   target: MatchTarget;
   detail: Schemas["MatchDetail"];
+  /** Os mapas ativos; cada formulário recebe só os que ainda cabem. */
   maps: Schemas["Map"][];
 };
 
@@ -48,7 +50,7 @@ export function MatchGamesPanel({ target, detail, maps }: Props) {
               target={target}
               game={game}
               names={names}
-              maps={maps}
+              maps={freeMaps(maps, detail.games, game.number)}
               canManage={detail.can_manage}
               last={game.number === detail.games.length}
             />
@@ -58,7 +60,7 @@ export function MatchGamesPanel({ target, detail, maps }: Props) {
               target={target}
               number={next}
               names={names}
-              maps={maps}
+              maps={freeMaps(maps, detail.games, next)}
               plays={detail.viewer_side != null}
               enters={detail.can_manage && detail.viewer_side == null}
               veto={

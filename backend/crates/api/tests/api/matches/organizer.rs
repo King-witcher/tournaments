@@ -210,6 +210,23 @@ async fn organizers_enter_maps_and_walkovers() {
     )
     .await;
 
+    // A organização também dá o placar (e o mapa) e não escolhe vencedor:
+    // empate e placar sem mapa são recusados.
+    let invalid = |code: &str| (StatusCode::UNPROCESSABLE_ENTITY, err(code));
+    let tied = json!({ "map": "awoken", "a_frags": 3, "b_frags": 3 });
+    assert_eq!(
+        set_game(&app, &ana, "wb-1-2", 1, tied, None).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({ "error": "match.game_tied", "params": { "game": 1 } })
+        )
+    );
+    let no_map = json!({ "a_frags": 3, "b_frags": 1 });
+    assert_eq!(
+        set_game(&app, &ana, "wb-1-2", 1, no_map, None).await,
+        invalid("match.map_required")
+    );
+
     // Lançados direto, sem ninguém ter enviado: já confirmados.
     for (n, map) in [(1, "awoken"), (2, "exile")] {
         let (status, body) = set_game(&app, &ana, "wb-1-2", n, game("b", map), None).await;

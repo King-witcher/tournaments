@@ -203,9 +203,15 @@ fn game_uri(key: &str, game: u8, action: &str) -> String {
     format!("{COPA}/matches/{key}/games/{game}{action}")
 }
 
-/// Um mapa vencido pelo lado `winner` (`"a"` ou `"b"`) em `map`, sem frags.
+/// Um mapa vencido pelo lado `winner` (`"a"` ou `"b"`) em `map`: o vencedor
+/// sai do placar, então quem venceu faz 10 frags e o outro lado, 5.
 pub fn game(winner: &str, map: &str) -> Value {
-    json!({ "winner": winner, "map": map })
+    let (a_frags, b_frags) = match winner {
+        "a" => (10, 5),
+        "b" => (5, 10),
+        other => panic!("lado desconhecido: {other}"),
+    };
+    json!({ "map": map, "a_frags": a_frags, "b_frags": b_frags })
 }
 
 /// O mapa `n` de `key`, enviado por um jogador.

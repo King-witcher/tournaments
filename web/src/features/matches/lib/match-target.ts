@@ -11,29 +11,22 @@ export function gameParams(target: MatchTarget, game: number) {
   return { path: { ...matchParams(target).path, game } };
 }
 
-/** Um mapa no formulário: vencedor, slug do mapa e frags (vazio é `null`). */
+/** Um mapa no formulário: slug do mapa e frags de cada lado (vazio é `null`). */
 export type GameValues = {
-  winner: "a" | "b" | "";
   map: string;
   a: number | null;
   b: number | null;
 };
 
 export const EMPTY_GAME: GameValues = {
-  winner: "",
   map: "",
   a: null,
   b: null,
 };
 
-/** O mapa como a API recebe (frags de um lado só voltam como erro da API). */
-export function gameInput(g: GameValues & { winner: "a" | "b" }) {
-  return {
-    winner: g.winner,
-    map: g.map || null,
-    a_frags: g.a,
-    b_frags: g.b,
-  };
+/** O mapa como a API recebe (o vencedor sai do placar). Sem mapa vai nulo: `match.map_required`. */
+export function gameInput(g: { map: string; a: number; b: number }) {
+  return { map: g.map || null, a_frags: g.a, b_frags: g.b };
 }
 
 /** Id da linha de um mapa na página da partida: o foco vai para ela depois de agir no mapa. */

@@ -1,29 +1,24 @@
 "use client";
 
-import { Form, FormGroup, Stack } from "@carbon/react";
+import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { useRouter } from "@/i18n/navigation";
-import { callApi } from "@/shared/api/call";
-import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
-import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { submitAction } from "@/shared/lib/submit-action";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
-import { NumberInput } from "@/shared/ui/number-input";
-import { RadioGroup } from "@/shared/ui/radio-group";
 import { TextInput } from "@/shared/ui/text-input";
+import { useSendGame } from "../hooks/use-send-game";
 import {
   EMPTY_GAME,
   type GameValues,
-  gameInput,
-  gameParams,
   type MatchTarget,
 } from "../lib/match-target";
+import { validScore } from "../lib/score";
 import styles from "./game-form.module.scss";
 import { MapSelect } from "./map-select";
+import { ScoreFields } from "./score-fields";
 
 type Props = {
   target: MatchTarget;
@@ -32,11 +27,14 @@ type Props = {
   /** `report`: jogador envia (fica pendente); `organizer`: lança, resolve ou corrige, já confirmado. */
   mode: "report" | "organizer";
   names: { a: string; b: string };
+  /** Os mapas que cabem na escolha (sem os já jogados na série). */
   maps: components["schemas"]["Map"][];
   /** Valores para começar (o mapa enviado, ao resolver ou corrigir). */
   initial?: GameValues;
   /** O mapa que o veto deu: o envio fica preso a ele, sem a escolha. */
   fixedMap?: components["schemas"]["MapRef"];
+  /** Entra depois dos campos e antes do erro e do botão (a captura de tela). */
+  beforeSubmit?: ReactNode;
   submitLabel: string;
   /** Depois de salvar (fecha o formulário de quem abriu). */
   onDone?: () => void;
@@ -46,114 +44,45 @@ type Props = {
   focusOnMount?: boolean;
 };
 
-/** O que falta preencher (junto do campo) ou o erro da API (acima dos botões). */
-type Errors = { winner?: string; map?: string; form?: string } | undefined;
-
 /**
- * Frags vão de -999 a 999 (a API confere de novo): no Quake Champions,
- * suicídio e queda tiram frag, então o placar de um lado pode ficar negativo.
+ * Um mapa da série: o mapa jogado e o placar, ambos obrigatórios. O vencedor
+ * é quem fez mais frags, para o jogador e para a organização, e o envio só
+ * abre com o mapa, os dois frags na faixa e sem empate. Para a partida
+ * seguinte, quem usa monta o formulário de novo (`key` com o número).
  */
-const MIN_FRAGS = -999;
-const MAX_FRAGS = 999;
-
-/** Um mapa da série: quem venceu, o mapa jogado e os frags opcionais. */
 export function GameForm(props: Props) {
-  const {
-    target,
-    number,
-    mode,
-    names,
-    maps,
-    initial,
-    fixedMap,
-    submitLabel,
-    onDone,
-    onCancel,
-    focusOnMount,
-  } = props;
+  const { target, number, mode, names, maps, initial, fixedMap } = props;
+  const { beforeSubmit, submitLabel, onDone, onCancel, focusOnMount } = props;
   const t = useTranslations("Match.form");
-  const errorMessage = useApiErrorMessage();
-  const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
   const [game, setGame] = useState<GameValues>(initial ?? EMPTY_GAME);
   const [comment, setComment] = useState("");
-  // Mapa antigo, sem nome: o organizador pode manter assim.
-  const mapOptional = mode === "organizer" && initial != null && !initial.map;
-
-  useEffect(() => {
-    if (focusOnMount) form.current?.querySelector("input")?.focus();
-  }, [focusOnMount]);
-
-  const [errors, submit, pending] = useActionState<Errors>(async () => {
-    const { winner } = game;
-    // O mapa do veto vale sempre (o formulário segue montado de um mapa para o próximo).
-    const map = fixedMap?.slug ?? game.map;
-    const missing = {
-      winner: winner ? undefined : t("chooseWinner"),
-      map: map || mapOptional ? undefined : t("chooseTheMap"),
-    };
-    if (!winner || missing.map) return missing;
-    const body = gameInput({ ...game, map, winner });
-    const params = gameParams(target, number);
-    const result =
-      mode === "report"
-        ? await callApi(
-            api.POST(
-              "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/report",
-              { params, body },
-            ),
-          )
-        : await callApi(
-            api.PUT(
-              "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}",
-              {
-                params,
-                body: { game: body, comment: comment.trim() || null },
-              },
-            ),
-          );
-    if (!result.ok) return { form: errorMessage(result.code, result.params) };
+  const { error, pending, send } = useSendGame(target, number, mode, () => {
     setGame(EMPTY_GAME);
     onDone?.();
-    router.refresh();
-    return undefined;
-  }, undefined);
+  });
+  // O mapa só vale se o formulário o oferece: o do veto, ou um da lista (o
+  // escolhido pode ter saído dela, por já ter sido jogado ou ter sido desativado).
+  const offered = maps.some((m) => m.slug === game.map);
+  const map = fixedMap?.slug ?? (offered ? game.map : "");
+  // O botão espera o estado, e não a validade do DOM: o `NumberInput` controlado
+  // atualiza o campo num commit depois do render, e o `Dropdown` nem é nativo.
+  const score = validScore(game.a, game.b);
 
-  const frags = (side: "a" | "b") => (
-    <NumberInput
-      labelText={t("fragsOf", { name: names[side] })}
-      value={game[side]}
-      onChange={(value) => setGame({ ...game, [side]: value })}
-      allowEmpty
-      hideSteppers
-      min={MIN_FRAGS}
-      max={MAX_FRAGS}
-      negative
-      invalidText={t("fragsRange", { min: MIN_FRAGS, max: MAX_FRAGS })}
-    />
-  );
+  useEffect(() => {
+    if (focusOnMount)
+      form.current?.querySelector<HTMLElement>("input, button")?.focus();
+  }, [focusOnMount]);
 
   return (
     <Form
       ref={form}
-      onSubmit={submitAction(submit)}
       className={styles.form}
-      noValidate
+      onSubmit={submitAction(
+        () => score && send({ game: { map, ...score }, comment }),
+      )}
     >
       <Stack gap={6}>
-        {/* Os dois nomes lado a lado: um toque escolhe quem venceu. */}
-        <RadioGroup
-          legendText={t("winner", { number })}
-          orientation="horizontal"
-          options={[
-            { value: "a", label: names.a },
-            { value: "b", label: names.b },
-          ]}
-          value={game.winner}
-          onChange={(winner) => setGame({ ...game, winner })}
-          invalid={errors?.winner !== undefined}
-          invalidText={errors?.winner}
-        />
         {fixedMap ? (
           <p className={styles.fixedMap}>
             {t("vetoedMap", { map: fixedMap.name })}
@@ -161,17 +90,16 @@ export function GameForm(props: Props) {
         ) : (
           <MapSelect
             maps={maps}
-            value={game.map}
-            onChange={(map) => setGame({ ...game, map })}
-            invalidText={errors?.map}
+            value={map}
+            onChange={(slug) => setGame({ ...game, map: slug })}
           />
         )}
-        <FormGroup legendText={t("frags")}>
-          <div className={styles.frags}>
-            {frags("a")}
-            {frags("b")}
-          </div>
-        </FormGroup>
+        <ScoreFields
+          names={names}
+          a={game.a}
+          b={game.b}
+          onChange={(side, value) => setGame({ ...game, [side]: value })}
+        />
         {mode === "organizer" && (
           <TextInput
             labelText={t("comment")}
@@ -180,10 +108,12 @@ export function GameForm(props: Props) {
             maxLength={280}
           />
         )}
-        {errors?.form && <FormError>{errors.form}</FormError>}
+        {beforeSubmit}
+        {error && <FormError>{error}</FormError>}
         <FormActions
           submitLabel={submitLabel}
           pending={pending}
+          disabled={map === "" || !score}
           onCancel={onCancel}
         />
       </Stack>

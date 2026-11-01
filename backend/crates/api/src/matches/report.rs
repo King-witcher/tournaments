@@ -52,7 +52,7 @@ const GAME_MINUTES: i32 = 15;
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player (quem envia não joga a partida)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided (pelos mapas enviados, a série já acabou), match.no_games_left {best_of}, match.game_already_reported, match.game_out_of_order {next}, match.veto_pending (o veto deste mapa ainda não acabou), match.screenshot_required (o torneio exige screenshot e o mapa não tem nenhum anexado)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {min, max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {min, max}, match.game_tied {game} (frags iguais), request.invalid_body"),
     )
 )]
 pub async fn report(
@@ -73,13 +73,9 @@ pub async fn report(
     }
     let index = actions::game_index(path.game, games.len())?;
     let maps = actions::map_ids(&mut tx, &body).await?;
-    let new: NewGame = outcome::game(path.game, sides, &body, &maps, true)?;
-    veto::check_report(&stage, m, path.game, new.map)?;
-    let candidate = series::SeriesGame {
-        winner: body.winner.into(),
-        status: series::GameStatus::Pending,
-        map: new.map,
-    };
+    let new: NewGame = outcome::game(path.game, sides, &body, &maps)?;
+    veto::check_report(&stage, m, path.game, Some(new.map))?;
+    let candidate = new.series_game(series::GameStatus::Pending);
     series::put(m.best_of, &series_games(&games), index, candidate)?;
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
@@ -118,7 +114,7 @@ pub async fn report(
         EventKind::Reported,
         Some(member.user.id),
         path.game,
-        Some(new.winner),
+        Some(new.winner_id()),
     );
     db::insert_event(&mut tx, &at, &event).await?;
     let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;

@@ -1918,24 +1918,22 @@ export interface components {
             task?: components["schemas"]["ViewerTask"] | null;
             winner: components["schemas"]["Side"];
         };
-        /** @description Um mapa da série: quem venceu, o mapa e os frags. */
+        /** @description Um mapa da série: o mapa e o placar. O vencedor é quem fez mais frags. */
         GameInput: {
             /**
              * Format: int32
              * @description Frags do lado `a` e do lado `b`, de -999 a 999 (suicídio e queda tiram
-             *     frag), opcionais (os dois ou nenhum); sem empate e com mais frags para
-             *     quem venceu.
+             *     frag). Obrigatórios e sem empate: vence quem fez mais.
              */
-            a_frags?: number | null;
+            a_frags: number;
             /** Format: int32 */
-            b_frags?: number | null;
+            b_frags: number;
             /**
-             * @description Slug do mapa (`GET /maps`), sem repetir na série. Obrigatório no envio
-             *     do jogador; o organizador pode deixar sem, numa série antiga.
+             * @description Slug do mapa (`GET /maps`), sem repetir na série. Obrigatório, para o
+             *     jogador e para o organizador (sem ele, 422 `match.map_required`).
              * @example blood-covenant
              */
             map?: string | null;
-            winner: components["schemas"]["Side"];
         };
         GameScreenshots: {
             /** @description Quem vê pode anexar mais um screenshot a este mapa agora. */
@@ -7770,7 +7768,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Os do envio (match.map_unknown, match.map_repeated, match.frags_invalid {min, max}, match.game_tied {game}, match.frags_disagree {game}, match.map_required: frags sem mapa), match.comment_invalid, request.invalid_body */
+            /** @description Os do envio (match.map_required, match.map_unknown, match.map_repeated, match.frags_invalid {min, max}, match.game_tied {game}: frags iguais), match.comment_invalid, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8069,7 +8067,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {min, max}, match.game_tied {game}, match.frags_disagree {game}, request.invalid_body */
+            /** @description match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {min, max}, match.game_tied {game} (frags iguais), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -148,7 +148,7 @@
     "not_ready": "Esta serie todavía no se puede jugar.",
     "not_player": "Solo quien juega la serie puede hacer esto.",
     "not_in_match": "Ese participante no juega esta serie.",
-    "frags_invalid": "Informa los frags de los dos lados, de {min} a {max}, o ninguno.",
+    "frags_invalid": "Los frags van de {min} a {max}.",
     "map_unknown": "Mapa desconocido.",
     "map_repeated": "Ese mapa ya se jugó en esta serie.",
     "game_tied": "Los frags de la partida {game} no pueden empatar.",
@@ -166,7 +166,6 @@
     "game_not_found": "Esta partida no fue enviada.",
     "game_not_last": "Solo se puede anular la última partida de la serie. Anula antes la partida {last}.",
     "map_required": "Elige el mapa jugado.",
-    "frags_disagree": "Los frags de la partida {game} no coinciden con quién ganó.",
     "veto_pending": "El veto todavía no terminó.",
     "map_mismatch": "Envía el mapa que salió del veto.",
     "screenshot_required": "Adjunta la captura de pantalla del marcador antes de enviar."

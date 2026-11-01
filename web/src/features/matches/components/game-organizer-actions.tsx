@@ -86,7 +86,6 @@ export function GameOrganizerActions({
           names={names}
           maps={maps}
           initial={{
-            winner: game.winner,
             map: game.map?.slug ?? "",
             a: game.a_frags ?? null,
             b: game.b_frags ?? null,

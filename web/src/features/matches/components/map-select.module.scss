@@ -1,0 +1,14 @@
+@use "@carbon/react/scss/spacing";
+
+// A miniatura (16:9, na largura do wrapper) ao lado do nome, na lista e no
+// campo.
+.option {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}
+
+.thumbnail {
+  flex: none;
+  inline-size: spacing.$spacing-09;
+}

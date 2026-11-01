@@ -28,9 +28,9 @@ type Props = {
 /**
  * A última linha da lista: o próximo mapa. Para quem joga, o formulário de
  * envio aberto (com veto, só depois do veto do mapa, e no mapa que ele deu),
- * com os screenshots do mapa antes dele (o anexo, quando o screenshot é
- * obrigatório); para os outros, os screenshots e "aguardando envio" e, para a
- * organização, o lançamento fechado num bloco (é exceção).
+ * com os screenshots do mapa no fim dele, antes do botão (o anexo, quando o
+ * screenshot é obrigatório); para os outros, os screenshots e "aguardando
+ * envio" e, para a organização, o lançamento fechado num bloco (é exceção).
  */
 export function NextGameRow({
   target,
@@ -43,6 +43,14 @@ export function NextGameRow({
 }: Props) {
   const t = useTranslations("Match.games");
   const tForm = useTranslations("Match.form");
+  const screenshots = (
+    <GameScreenshots
+      target={target}
+      number={number}
+      reporting={plays}
+      focusId={gameRowId(number)}
+    />
+  );
 
   return (
     // tabIndex -1: recebe o foco depois de anular o mapa com este número.
@@ -59,28 +67,24 @@ export function NextGameRow({
         {plays && veto && !veto.reportable ? (
           // O veto vem antes: sem ele, nem se sabe o mapa do screenshot.
           <p className={styles.awaiting}>{t("vetoFirst", { number })}</p>
+        ) : plays ? (
+          // A chave monta o formulário de novo a cada partida: o mapa e o placar
+          // da anterior não vão para a seguinte.
+          <GameForm
+            key={number}
+            target={target}
+            number={number}
+            mode="report"
+            names={names}
+            maps={maps}
+            fixedMap={veto?.map ?? undefined}
+            beforeSubmit={screenshots}
+            submitLabel={tForm("submit", { number })}
+          />
         ) : (
           <>
-            {/* Antes do envio: com screenshot obrigatório, ele vem primeiro. */}
-            <GameScreenshots
-              target={target}
-              number={number}
-              reporting={plays}
-              focusId={gameRowId(number)}
-            />
-            {plays ? (
-              <GameForm
-                target={target}
-                number={number}
-                mode="report"
-                names={names}
-                maps={maps}
-                fixedMap={veto?.map ?? undefined}
-                submitLabel={tForm("submit", { number })}
-              />
-            ) : (
-              <p className={styles.awaiting}>{t("awaiting")}</p>
-            )}
+            {screenshots}
+            <p className={styles.awaiting}>{t("awaiting")}</p>
           </>
         )}
         {/* A chave reinicia o bloco (fechado) a cada mapa novo. */}

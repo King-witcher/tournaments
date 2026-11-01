@@ -23,7 +23,7 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
 
     // P4 (lado b) envia o mapa 1, vencido por P1, com frags; os de P4,
     // negativos (suicídio e queda tiram frag).
-    let first = json!({ "winner": "a", "map": "awoken", "a_frags": 20, "b_frags": -1 });
+    let first = json!({ "map": "awoken", "a_frags": 20, "b_frags": -1 });
     let (status, sent) = report(&app, &p[3], "wb-1-1", 1, first).await;
     assert_eq!(status, StatusCode::OK, "{sent}");
     let g = &sent["games"][0];
@@ -165,12 +165,40 @@ async fn reporting_rules() {
         )
     );
     assert_eq!(
-        report(&app, &p[0], k, 1, json!({ "winner": "a" })).await,
+        report(&app, &p[0], k, 1, json!({ "a_frags": 10, "b_frags": 5 })).await,
         invalid("match.map_required")
+    );
+    // O placar é obrigatório: sem ele (ou com um lado só), o corpo é recusado.
+    let invalid_body = (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        err("request.invalid_body"),
+    );
+    assert_eq!(
+        report(&app, &p[0], k, 1, json!({ "map": "awoken" })).await,
+        invalid_body
+    );
+    assert_eq!(
+        report(&app, &p[0], k, 1, json!({ "map": "awoken", "a_frags": 10 })).await,
+        invalid_body
     );
     assert_eq!(
         report(&app, &p[0], k, 1, game("a", "q3dm17")).await,
         invalid("match.map_unknown")
+    );
+    // Empate não tem vencedor; fora da faixa, o código diz a faixa.
+    assert_eq!(
+        report(
+            &app,
+            &p[0],
+            k,
+            1,
+            json!({ "map": "awoken", "a_frags": 7, "b_frags": 7 })
+        )
+        .await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            json!({ "error": "match.game_tied", "params": { "game": 1 } })
+        )
     );
     assert_eq!(
         report(
@@ -178,12 +206,12 @@ async fn reporting_rules() {
             &p[0],
             k,
             1,
-            json!({ "winner": "a", "map": "awoken", "a_frags": 5, "b_frags": 9 })
+            json!({ "map": "awoken", "a_frags": 1000, "b_frags": 5 })
         )
         .await,
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "match.frags_disagree", "params": { "game": 1 } })
+            json!({ "error": "match.frags_invalid", "params": { "min": -999, "max": 999 } })
         )
     );
     assert_eq!(

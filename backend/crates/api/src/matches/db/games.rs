@@ -2,7 +2,10 @@
 //! organizador lançar e anular.
 
 use chrono::{DateTime, Utc};
-use engine::core::{MapId, ParticipantId};
+use engine::{
+    core::{MapId, ParticipantId},
+    series,
+};
 use sqlx::PgConnection;
 
 use super::MatchRef;
@@ -19,10 +22,27 @@ use crate::{
 pub struct NewGame {
     pub number: i16,
     pub sides: (ParticipantId, ParticipantId),
-    pub winner: ParticipantId,
-    pub map: Option<MapId>,
+    /// O lado que fez mais frags: o vencedor vem do placar, nunca do envio.
+    pub winner: Side,
+    pub map: MapId,
     /// Frags de `a` e de `b`.
-    pub frags: Option<(i16, i16)>,
+    pub frags: (i16, i16),
+}
+
+impl NewGame {
+    /// O participante que venceu.
+    pub fn winner_id(&self) -> ParticipantId {
+        self.winner.of(self.sides)
+    }
+
+    /// O mapa como a série o vê, com o estado que ele terá.
+    pub fn series_game(&self, status: series::GameStatus) -> series::SeriesGame {
+        series::SeriesGame {
+            winner: self.winner.into(),
+            status,
+            map: Some(self.map),
+        }
+    }
 }
 
 /// Os mapas da fase `stage`, por partida e na ordem.
@@ -71,7 +91,7 @@ pub async fn insert_report(
     by: i64,
     deadline: &Deadline,
 ) -> Result<DateTime<Utc>, sqlx::Error> {
-    let (a_frags, b_frags) = game.frags.unzip();
+    let (a_frags, b_frags) = game.frags;
     // `greatest` ignora o nulo: sem `released`, o prazo conta do envio.
     sqlx::query_scalar!(
         r#"insert into match_games
@@ -88,8 +108,8 @@ pub async fn insert_report(
         game.number,
         game.sides.0.0,
         game.sides.1.0,
-        game.winner.0,
-        game.map.map(|m| m.0),
+        game.winner_id().0,
+        game.map.0,
         a_frags,
         b_frags,
         side.as_str(),
@@ -110,7 +130,7 @@ pub async fn put_game(
     game: &NewGame,
     by: i64,
 ) -> Result<(), sqlx::Error> {
-    let (a_frags, b_frags) = game.frags.unzip();
+    let (a_frags, b_frags) = game.frags;
     sqlx::query!(
         r#"insert into match_games
                (tenant_id, tournament_id, stage, match_key, number, side_a, side_b, winner,
@@ -132,8 +152,8 @@ pub async fn put_game(
         game.number,
         game.sides.0.0,
         game.sides.1.0,
-        game.winner.0,
-        game.map.map(|m| m.0),
+        game.winner_id().0,
+        game.map.0,
         a_frags,
         b_frags,
         by

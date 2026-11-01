@@ -6,13 +6,6 @@
   max-inline-size: spacing.$spacing-13 * 3;
 }
 
-// Os frags de cada lado, lado a lado, na ordem dos nomes acima.
-.frags {
-  display: grid;
-  gap: spacing.$spacing-05;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 // O mapa que o veto deu: texto, não campo (não há o que escolher).
 .fixedMap {
   @include type.type-style("body-01");
