@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, useId, useState } from "react";
 import { createPortal } from "react-dom";
 
+import styles from "./confirm-modal.module.scss";
+
 export type ConfirmModalProps = {
   open: boolean;
   /** Fechou sem confirmar (Não, Esc, X ou clique fora). */
@@ -100,7 +102,7 @@ function OpenConfirmModal({
       {extra === undefined && details === undefined ? (
         <>
           <p>{children}</p>
-          {slugField}
+          {slugField && <div className={styles.slug}>{slugField}</div>}
         </>
       ) : (
         <Stack gap={5}>

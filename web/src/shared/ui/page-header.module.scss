@@ -9,14 +9,29 @@
   gap: spacing.$spacing-04;
 }
 
-// Título e tags à esquerda, ações à direita; no celular as ações descem
-// para a linha de baixo em vez de espremer o título.
+// Título e tags à esquerda, ações à direita. No celular, o título e o ⋯ ficam
+// na primeira linha e os botões descem para a de baixo, em vez de espremer o
+// título (e o ⋯ não fica sozinho numa terceira linha).
 .titleRow {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: spacing.$spacing-05;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    // O ⋯ já tem o espaço dele (48px de toque).
+    column-gap: 0;
+  }
+}
+
+// Abaixo do `md` o Carbon deixa a lista da trilha em `inline`, e os itens (`flex`)
+// ficam um por linha: o ⋯ e a página mãe têm de ficar lado a lado.
+.breadcrumb > ol {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .heading {
@@ -33,13 +48,38 @@
   overflow-wrap: anywhere;
 }
 
-// Alinhados pelo topo: o erro de um botão aparece embaixo dele, e centralizar
-// desceria os vizinhos.
+// Os botões e o ⋯ lado a lado; quando não cabem, quebram os botões e o ⋯ fica
+// ao lado do último. Alinhados pelo topo: o erro de um botão aparece embaixo
+// dele, e centralizar desceria os vizinhos. No celular o grupo some do
+// caminho (`contents`) e a grade do `.titleRow` recebe os botões e o ⋯.
 .actions {
+  display: flex;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: contents;
+  }
+}
+
+.buttons {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: spacing.$spacing-03;
+  min-inline-size: 0;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-column: 1 / -1;
+  }
+}
+
+.overflow {
+  @include breakpoint.breakpoint-down(md) {
+    grid-column: 2;
+    grid-row: 1;
+  }
 }
 
 .meta {

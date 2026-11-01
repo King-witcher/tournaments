@@ -33,6 +33,7 @@ export function Toast({
     <div className={styles.toast}>
       <ToastNotification
         kind={kind}
+        className={styles.notification}
         role="status"
         lowContrast
         title={title}

@@ -31,7 +31,9 @@ pub enum Situation {
     CheckedIn,
     /// O torneio começou sem ele na chave (não fez check-in).
     MissedCheckIn,
-    /// TDM: o torneio começou com ele sem time (de reserva, ou substituído).
+    /// TDM: fora de todo time. Antes do início, com algum time já formado
+    /// (inscreveu-se ou fez o check-in depois); depois, o torneio começou com
+    /// ele de reserva, ou ele foi substituído.
     Reserve,
     /// Na chave e ainda vivo (no round robin e no suíço, até a fase terminar).
     Playing,

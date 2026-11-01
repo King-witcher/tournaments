@@ -18,7 +18,8 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
  * Para qual comunidade (ou torneio, no link de inscrição) é o convite, num
  * `Tile` com o que ele é e a ação de cada caso: aceitar; entrar ou criar
  * conta, voltando para cá; já é membro (ou inscrito); inscrição fechada.
- * Convite expirado ou inválido: o erro e o caminho de volta. Fica em
+ * Convite expirado ou inválido: o erro e o caminho de volta (de comunidade
+ * em exclusão, com o texto do convite, e não o da escrita recusada). Fica em
  * `<Suspense>`.
  */
 export async function InviteView({ token }: { token: string }) {
@@ -34,11 +35,14 @@ export async function InviteView({ token }: { token: string }) {
 
   const invite = preview?.data;
   if (!invite) {
+    const code = preview?.error?.error ?? "internal";
     return (
       <>
         <PageHeader title={t("unavailable")} />
         <PageError href="/" label={tNav("backHome")}>
-          {await apiErrorMessage(preview?.error?.error ?? "internal")}
+          {code === "tenant.deletion_scheduled"
+            ? t("deletionScheduled")
+            : await apiErrorMessage(code)}
         </PageError>
       </>
     );

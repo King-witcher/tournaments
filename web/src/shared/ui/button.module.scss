@@ -1,20 +1,56 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
 
-// O indicador de "em andamento" dentro do botão: na cor do texto (o azul do
-// Carbon sumiria no botão primário), sem a largura e a altura que o
-// InlineLoading tem quando fica sozinho.
+// O indicador de "em andamento" dentro do botão: o anel do InlineLoading, sem
+// texto, na cor do texto do botão (o azul do Carbon sumiria no primário) e
+// alinhado com ele, sem a largura, a altura e a margem que o InlineLoading tem
+// quando fica sozinho.
 .pending .spinner {
+  // O InlineLoading pinta o conteúdo de $text-secondary, e o anel herda dele
+  // (cinza e quase invisível no primário e no secundário).
+  color: inherit;
+  // A altura de uma linha do rótulo, no alto como ele: o botão alinha o texto
+  // no alto (no rodapé do Modal, pela linha de base), e sem isto o anel ficaria
+  // no canto.
+  align-self: flex-start;
+  block-size: 1lh;
   inline-size: auto;
   min-block-size: 0;
   margin-inline-start: spacing.$spacing-03;
+
+  // A margem que o InlineLoading guarda do lado do texto dele.
+  > :first-child {
+    margin-inline-end: 0;
+  }
+
+  // `.cds--btn--ghost:not([disabled]) svg` pinta o preenchimento de
+  // $icon-primary (é a regra dos ícones do botão): sem isto o anel vira disco.
+  svg {
+    fill: none;
+  }
 
   svg circle {
     stroke: currentColor;
   }
 
+  // A trilha clara que o Carbon desenha atrás do arco não tem cor que sirva
+  // em todo tipo de botão.
   svg circle:first-of-type {
     stroke: transparent;
   }
+}
+
+// No botão só com ícone o anel é o único conteúdo: centrado, sem margem.
+.pending .spinner.alone {
+  align-self: center;
+  block-size: auto;
+  margin-inline-start: 0;
+}
+
+// O ícone do `ghost` só com ícone é $icon-primary, não o azul do texto do
+// `ghost`: o anel que toma o lugar dele tem a mesma cor.
+.pending .spinner.ghostIcon {
+  color: theme.$icon-primary;
 }
 
 .pending {

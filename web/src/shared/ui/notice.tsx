@@ -2,6 +2,8 @@ import { Callout, InlineNotification, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import styles from "./notice.module.scss";
+
 type Props = {
   kind?: "error" | "warning" | "info" | "success";
   /** Resumo curto em negrito antes do texto. */
@@ -29,6 +31,7 @@ export function Notice({ kind = "info", title, action, children }: Props) {
     kind === "info" || kind === "warning" ? (
       <Callout
         kind={kind}
+        className={styles.notice}
         lowContrast
         title={title}
         subtitle={text}
@@ -39,6 +42,7 @@ export function Notice({ kind = "info", title, action, children }: Props) {
     ) : (
       <InlineNotification
         kind={kind}
+        className={styles.notice}
         role={kind === "error" ? "alert" : "status"}
         lowContrast
         hideCloseButton

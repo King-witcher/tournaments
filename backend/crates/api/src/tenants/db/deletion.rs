@@ -1,4 +1,5 @@
-//! Exclusão do tenant: agendar, cancelar e, na data, apagar.
+//! Exclusão do tenant: agendar, cancelar, avisar o owner na véspera e, na
+//! data, apagar.
 
 use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
@@ -44,13 +45,65 @@ pub async fn cancel_deletion(
     tenant: TenantId,
 ) -> Result<bool, sqlx::Error> {
     let done = sqlx::query!(
-        r#"update tenants set deletion_due_at = null, deletion_requested_by = null
+        r#"update tenants
+           set deletion_due_at = null, deletion_requested_by = null, deletion_reminded_at = null
            where id = $1 and deletion_due_at is not null"#,
         tenant.get()
     )
     .execute(conn)
     .await?;
     Ok(done.rows_affected() > 0)
+}
+
+/// Tenants cuja exclusão vence entre `now` e `until`, sem o aviso ao owner,
+/// para o agendador.
+pub async fn deletions_to_remind(
+    db: &PgPool,
+    now: DateTime<Utc>,
+    until: DateTime<Utc>,
+) -> Result<Vec<TenantId>, sqlx::Error> {
+    Ok(sqlx::query_scalar!(
+        r#"select id from tenants
+           where deletion_due_at > $1 and deletion_due_at <= $2 and deletion_reminded_at is null
+           order by id"#,
+        now,
+        until
+    )
+    .fetch_all(db)
+    .await?
+    .into_iter()
+    .map(TenantId::new)
+    .collect())
+}
+
+/// O aviso da exclusão para o owner que a pediu.
+pub struct DeletionReminder {
+    pub owner: i64,
+    pub name: String,
+    pub slug: String,
+    pub due: DateTime<Utc>,
+}
+
+/// Marca o aviso da exclusão, se ainda vale (o owner não cancelou e ninguém
+/// marcou desde a busca), e devolve o que vai nele.
+pub async fn mark_deletion_reminded(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    now: DateTime<Utc>,
+    until: DateTime<Utc>,
+) -> Result<Option<DeletionReminder>, sqlx::Error> {
+    sqlx::query_as!(
+        DeletionReminder,
+        r#"update tenants set deletion_reminded_at = $2
+           where id = $1 and deletion_due_at > $2 and deletion_due_at <= $3
+             and deletion_reminded_at is null
+           returning deletion_requested_by as "owner!", name, slug, deletion_due_at as "due!""#,
+        tenant.get(),
+        now,
+        until
+    )
+    .fetch_optional(conn)
+    .await
 }
 
 /// Tenants cuja exclusão venceu em `now`, para o agendador (que age pelo

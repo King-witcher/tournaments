@@ -138,8 +138,6 @@ pub enum NoticeKind {
         match_key: String,
         opponent: String,
     },
-    /// O início marcado chegou e o torneio não foi iniciado (para organizers e
-    /// owner, uma vez).
     /// TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
     /// jogadores dos dois times).
     #[serde(rename = "match.team_pick_open")]
@@ -149,8 +147,17 @@ pub enum NoticeKind {
         match_key: String,
         game: i16,
     },
+    /// O início marcado chegou e o torneio não foi iniciado (para organizers e
+    /// owner, uma vez).
     #[serde(rename = "tournament.start_due")]
     StartDue { tournament: String },
+    /// A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
+    /// o owner, uma vez, na véspera).
+    #[serde(rename = "tenant.deletion_due")]
+    TenantDeletionDue {
+        tenant: String,
+        deletes_at: DateTime<Utc>,
+    },
 }
 
 /// Aviso que só vai para o canal do Discord da comunidade: o torneio começou,

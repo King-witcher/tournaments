@@ -1,8 +1,9 @@
 //! O agendador: a cada 10 s, numa instância só (advisory lock do Postgres),
 //! abre o check-in que chegou na hora, avisa a hora de iniciar, confirma os
 //! mapas com a janela vencida, sorteia os passos de veto vencidos (rede de
-//! segurança do relógio preciso, `clock`) e executa as exclusões de comunidade
-//! e de conta que venceram, cada torneio, comunidade ou conta na própria
+//! segurança do relógio preciso, `clock`), avisa na véspera as exclusões de
+//! comunidade (ao owner) e de conta (por email) e executa as que venceram,
+//! cada torneio, comunidade ou conta na própria
 //! transação e emitindo pelo outbox; uma vez por dia roda a rotina dos
 //! screenshots (depois das exclusões, para já levar do bucket os screenshots
 //! das comunidades excluídas), recalcula o rating das comunidades marcadas
@@ -16,8 +17,8 @@ use chrono::{DateTime, Utc};
 
 use super::db;
 use crate::{
-    AppState, matches, members, notifications, ratings, screenshots, shared::ApiError, tenants,
-    tournaments,
+    AppState, auth, matches, members, notifications, ratings, screenshots, shared::ApiError,
+    tenants, tournaments,
 };
 
 pub const EVERY: Duration = Duration::from_secs(10);
@@ -33,6 +34,10 @@ pub struct Tick {
     pub confirmed: u64,
     /// Passos de veto sorteados pelo fim do tempo.
     pub vetoed: u64,
+    /// Owners avisados da exclusão da comunidade na véspera.
+    pub tenant_reminders: usize,
+    /// Lembretes por email da exclusão da conta que saíram.
+    pub account_reminders: usize,
     /// Comunidades excluídas.
     pub deleted_tenants: usize,
     /// Contas excluídas (anonimizadas).
@@ -57,6 +62,8 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             reminded: tournaments::remind_due_starts(&state.db, now).await?,
             confirmed: matches::confirm_all_due(&state.db, now).await?,
             vetoed: matches::veto_clock(&state.db, now).await?.0,
+            tenant_reminders: tenants::remind_due_deletions(&state.db, now).await?,
+            account_reminders: auth::remind_due_account_deletions(state, now).await?,
             deleted_tenants: tenants::delete_due(&state.db, now).await?,
             deleted_accounts: members::delete_due_accounts(state, now).await?,
             swept: sweep_screenshots(state, now).await,

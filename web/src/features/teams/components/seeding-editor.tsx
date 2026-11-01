@@ -16,7 +16,7 @@ import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import styles from "./seeding-editor.module.scss";
-import { SeedingRow } from "./seeding-row";
+import { type FocusOn, SeedingRow } from "./seeding-row";
 
 type Team = components["schemas"]["Team"];
 
@@ -47,7 +47,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const shuffle = useApiAction();
   const pending = save.pending || shuffle.pending;
   const [order, setOrder] = useState(initial);
-  const [focus, setFocus] = useState<{ id: number; n: number }>();
+  const [focus, setFocus] = useState<{ id: number; n: number; on: FocusOn }>();
   const params = { path: { slug: tenant, tournament } };
   const manage = `/${tenant}/${tournament}/manage`;
   const changed = order.some((team, i) => team.id !== initial[i].id);
@@ -65,11 +65,19 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   }
 
   function move(index: number, delta: -1 | 1) {
+    const teamId = order[index].id;
     setOrder((current) => {
       const next = [...current];
       [next[index], next[index + delta]] = [next[index + delta], next[index]];
       return next;
     });
+    // A linha troca de lugar e o botão que acabou de ser usado pode sair do
+    // DOM ou ficar desabilitado (na ponta da lista): o foco o acompanha.
+    setFocus((f) => ({
+      id: teamId,
+      n: (f?.n ?? 0) + 1,
+      on: delta < 0 ? "up" : "down",
+    }));
   }
 
   /** Pelo id: um blur atrasado de um campo já movido não mexe em outro. */
@@ -82,7 +90,9 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
       next.splice(to - 1, 0, moved);
       return next;
     });
-    if (keepFocus) setFocus((f) => ({ id: teamId, n: (f?.n ?? 0) + 1 }));
+    if (keepFocus) {
+      setFocus((f) => ({ id: teamId, n: (f?.n ?? 0) + 1, on: "position" }));
+    }
   }
 
   const runShuffle = () =>
@@ -132,6 +142,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
               onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
               onMoveTo={(to, keepFocus) => moveTo(team.id, to, keepFocus)}
               focusToken={focus?.id === team.id ? focus.n : undefined}
+              focusOn={focus?.id === team.id ? focus.on : undefined}
             />
           ))}
         </ol>

@@ -12,8 +12,9 @@
 //!   português e espanhol. Aviso novo = uma linha lá.
 //! - `queue`: o despachante do `realtime` chama `enqueue` para cada evento do
 //!   outbox, e uma tarefa própria (`spawn`) esvazia a fila em ordem,
-//!   respeitando o ritmo do Discord (`sender`); `render` monta o corpo.
-//!   Webhook apagado (401/404) fica `broken` e para de receber.
+//!   respeitando o ritmo do Discord (`sender`); `render` monta o corpo, com
+//!   o código da série e o nome da conta excluída de `labels`. Webhook
+//!   apagado (401/404) fica `broken` e para de receber.
 //!
 //! Depende de `tenants` (o extractor e o `TenantId`); o `realtime` e o
 //! `main` usam `enqueue`, `deliver_due` e `spawn`.
@@ -21,6 +22,7 @@
 mod catalog;
 mod db;
 mod handlers;
+mod labels;
 mod queue;
 mod render;
 mod sender;

@@ -10,8 +10,12 @@ import pt from "../../../messages/pt/Notifications.json";
  * proxy do next-intl não passa por aqui (caminho com ponto).
  */
 export function GET() {
+  const texts = (messages: typeof pt) => ({
+    notices: messages.notices,
+    deletedAccount: messages.deletedAccount,
+  });
   const script = serviceWorkerScript(
-    { pt: pt.notices, es: es.notices },
+    { pt: texts(pt), es: texts(es) },
     routing.defaultLocale,
   );
   return new Response(script, {

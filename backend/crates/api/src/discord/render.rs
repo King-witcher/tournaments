@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 use super::{
     catalog::{self, To, escape},
     db::{self, Job, Person},
+    labels,
 };
 use crate::{AppState, shared::Locale};
 
@@ -20,8 +21,8 @@ pub async fn message(state: &AppState, job: &Job) -> Result<Option<Value>, sqlx:
         return Ok(None);
     };
     let tournament = job.path.trim_start_matches('/').split('/').nth(1);
-    let name = match tournament {
-        Some(slug) => db::translated_name(&state.db, job.tenant, slug, job.locale).await?,
+    let found = match tournament {
+        Some(slug) => db::tournament(&state.db, job.tenant, slug, job.locale).await?,
         None => None,
     };
     let people = if spec.to == To::Nobody || job.users.is_empty() {
@@ -36,10 +37,15 @@ pub async fn message(state: &AppState, job: &Job) -> Result<Option<Value>, sqlx:
         ("to", to.text),
         ("score_part", score_part(&job.params)),
     ];
-    if let Some(name) = name {
+    if let Some(Value::String(key)) = job.params.get("match") {
+        let single = found.as_ref().is_some_and(|t| t.single);
+        extra.push(("match", labels::match_code(key, single, job.locale)));
+    }
+    if let Some(name) = found.and_then(|t| t.translated_name) {
         extra.push(("tournament", escape(&name)));
     }
-    let content = catalog::render(spec.text(job.locale), &job.params, &extra);
+    let params = labels::with_names(&job.params, job.locale);
+    let content = catalog::render(spec.text(job.locale), &params, &extra);
     Ok(Some(body(&content, &to.mentioned)))
 }
 
@@ -81,8 +87,9 @@ struct Addressed {
 }
 
 /// Quem a mensagem procura. Menciona quem vinculou o Discord, se
-/// `mention`; os jogadores sem menção entram pelo apelido, a organização
-/// só por menção. No TDM, os jogadores de cada time vêm juntos, depois do
+/// `mention`; os jogadores sem menção entram pelo apelido (a conta excluída,
+/// sem apelido, fica de fora), a organização só por menção. No TDM, os
+/// jogadores de cada time vêm juntos, depois do
 /// nome do time (sem nome, "Time de {capitão}" no idioma da configuração);
 /// os times, separados por " vs ".
 fn addressed(to: To, people: &[Person], mention: bool, locale: Locale) -> Addressed {
@@ -97,7 +104,7 @@ fn addressed(to: To, people: &[Person], mention: bool, locale: Locale) -> Addres
         let part = if let Some(id) = id {
             mentioned.push(id.to_owned());
             format!("<@{id}>")
-        } else if to == To::Players {
+        } else if to == To::Players && !person.nickname.is_empty() {
             escape(&person.nickname)
         } else {
             continue;
@@ -140,7 +147,11 @@ fn team_name(team: &db::PersonTeam, locale: Locale) -> String {
                 Locale::Pt => "Time de",
                 Locale::Es => "Equipo de",
             };
-            format!("{of} {}", escape(&team.captain))
+            let captain = match team.captain.as_str() {
+                "" => labels::deleted_account(locale),
+                captain => captain,
+            };
+            format!("{of} {}", escape(captain))
         }
     }
 }
@@ -200,6 +211,24 @@ mod tests {
         assert_eq!(got.mentioned, ["111", "444"]);
         let es = addressed(To::Players, &people, false, Locale::Es).text;
         assert!(es.ends_with("**Equipo de Caio**: Caio Duda"), "{es}");
+    }
+
+    #[test]
+    fn a_deleted_account_is_left_out_but_names_its_team() {
+        let team = Some(db::PersonTeam {
+            id: 1,
+            name: None,
+            captain: String::new(),
+        });
+        let people = [
+            person("", None),
+            Person {
+                team,
+                ..person("Bia", None)
+            },
+        ];
+        let got = addressed(To::Players, &people, false, PT);
+        assert_eq!(got.text, "**Time de Conta excluída**: Bia");
     }
 
     #[test]

@@ -29,7 +29,12 @@ export function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Metadata");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    // A prévia (opengraph-image.tsx) grande no Discord e no X, não a miniatura.
+    twitter: { card: "summary_large_image" },
+  };
 }
 
 export default async function LocaleLayout({

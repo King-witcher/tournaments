@@ -258,3 +258,29 @@ async fn only_the_owner_schedules_the_community_deletion() {
     assert_eq!(count(&db, "select count(*) from tenant_members").await, 0);
     assert_eq!(count(&db, "select count(*) from participants").await, 0);
 }
+
+#[tokio::test]
+async fn a_reminder_exists_only_with_a_scheduled_deletion() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (_app, ana, _bia) = quake_br(&db).await;
+    assert_eq!(
+        rejected(exec(&db, "update users set deletion_reminded_at = now()").await),
+        rule(CHECK, "users_deletion_reminded_scheduled")
+    );
+    assert_eq!(
+        rejected(exec(&db, "update tenants set deletion_reminded_at = now()").await),
+        rule(CHECK, "tenants_deletion_reminded_scheduled")
+    );
+    // Cancelar sem limpar o lembrete também não passa.
+    let schedule = format!(
+        "update tenants set deletion_due_at = now() + interval '7 days',
+                deletion_requested_by = {}, deletion_reminded_at = now()",
+        ana.id
+    );
+    exec(&db, &schedule).await.unwrap();
+    let cancel = "update tenants set deletion_due_at = null, deletion_requested_by = null";
+    assert_eq!(
+        rejected(exec(&db, cancel).await),
+        rule(CHECK, "tenants_deletion_reminded_scheduled")
+    );
+}

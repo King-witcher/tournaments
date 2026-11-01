@@ -46,7 +46,7 @@ pub use db::{
     anonymize as anonymize_account, due_deletions as due_account_deletions,
     lock_due_deletion as lock_due_account_deletion,
 };
-pub use deletion::end_all_sessions;
+pub use deletion::{end_all_sessions, remind_due_deletions as remind_due_account_deletions};
 pub use discord::{DiscordApi, DiscordUser, HttpDiscord};
 pub use google::{GoogleApi, GoogleUser, HttpGoogle};
 /// Os testes criam sessões por aqui, sem passar pelo login.

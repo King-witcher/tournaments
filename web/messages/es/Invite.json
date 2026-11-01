@@ -19,5 +19,6 @@
   "returning": "Ya fuiste parte de {tenant}. Al volver, entras como jugador, con el apodo \"{nickname}\" y tu historial.",
   "owner": "Creada por",
   "members": "Miembros",
-  "memberCount": "{count, plural, one {# miembro} other {# miembros}}"
+  "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
+  "deletionScheduled": "Esta comunidad se va a eliminar y ya no acepta miembros."
 }

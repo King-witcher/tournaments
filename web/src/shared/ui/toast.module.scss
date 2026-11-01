@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/utilities/z-index";
 
@@ -14,5 +15,13 @@
 
   > * {
     pointer-events: auto;
+  }
+}
+
+// O Carbon fixa o toast em 288px; abaixo do `md` ele ocupa a largura da
+// região. Classe dobrada para vencer a regra dele (mesmo peso).
+.notification.notification {
+  @include breakpoint.breakpoint-down(md) {
+    inline-size: 100%;
   }
 }

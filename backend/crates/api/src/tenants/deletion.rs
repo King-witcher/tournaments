@@ -2,11 +2,12 @@
 //! slug, e cancela até lá; nesse meio-tempo a comunidade é só leitura (o
 //! `TenantMember` recusa toda escrita, menos o que recebe `DuringDeletion`:
 //! cancelar e sair). Não agenda com torneio em andamento (a regra é do banco).
-//! Na data, o agendador apaga o tenant, e a cascata leva tudo o que está
-//! dentro; os membros perdem o acesso na hora (`access_lost`).
+//! Na véspera, o owner recebe um aviso (`tenant.deletion_due`). Na data, o
+//! agendador apaga o tenant, e a cascata leva tudo o que está dentro; os
+//! membros perdem o acesso na hora (`access_lost`).
 
 use axum::{Json, extract::State};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use sqlx::PgPool;
 
 use super::{
@@ -15,11 +16,15 @@ use super::{
 };
 use crate::{
     AppState,
+    outbox::{self, Event, Notice, NoticeKind},
     shared::{ApiError, ErrorBody, JsonBody},
 };
 
 /// Dias entre o pedido e a exclusão da comunidade.
 const DELETION_DAYS: i32 = 7;
+
+/// Antecedência do aviso ao owner, antes da exclusão.
+const REMINDER_HOURS: i64 = 24;
 
 #[utoipa::path(
     post,
@@ -81,6 +86,40 @@ pub async fn cancel_tenant_deletion(
         deletion_scheduled_for: None,
         ..owner.into()
     }))
+}
+
+/// Avisa o owner de cada tenant cuja exclusão vence nas próximas
+/// `REMINDER_HOURS` (o sininho e o Web Push; os membros não recebem nada), cada
+/// um na própria transação, e devolve quantos avisou.
+pub async fn remind_due(db: &PgPool, now: DateTime<Utc>) -> Result<usize, sqlx::Error> {
+    let until = now + TimeDelta::hours(REMINDER_HOURS);
+    let mut reminded = 0;
+    for tenant in db::deletions_to_remind(db, now, until).await? {
+        let remind = async {
+            let mut tx = db.begin().await?;
+            let Some(due) = db::mark_deletion_reminded(&mut tx, tenant, now, until).await? else {
+                return Ok(false);
+            };
+            let notice = Notice {
+                kind: NoticeKind::TenantDeletionDue {
+                    tenant: due.name,
+                    deletes_at: due.due,
+                },
+                path: format!("/{}/settings", due.slug),
+            };
+            outbox::emit(&mut tx, Event::notice([due.owner], notice)).await?;
+            tx.commit().await?;
+            Ok::<_, sqlx::Error>(true)
+        };
+        match remind.await {
+            Ok(true) => reminded += 1,
+            Ok(false) => {}
+            Err(e) => {
+                tracing::error!(id = tenant.get(), %e, "aviso de exclusão de comunidade falhou")
+            }
+        }
+    }
+    Ok(reminded)
 }
 
 /// Apaga os tenants cuja exclusão venceu em `now`, cada um na própria

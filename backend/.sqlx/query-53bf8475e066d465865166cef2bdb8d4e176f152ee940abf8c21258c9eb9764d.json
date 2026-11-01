@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select deletion_reminded_at from tenants",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "deletion_reminded_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "deletion_reminded_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "53bf8475e066d465865166cef2bdb8d4e176f152ee940abf8c21258c9eb9764d"
+}

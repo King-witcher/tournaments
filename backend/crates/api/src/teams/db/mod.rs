@@ -267,3 +267,21 @@ pub async fn of_user(
     };
     Ok(by_ids(conn, tenant, &[team]).await?.into_iter().next())
 }
+
+/// O torneio `slug` do tenant já tem algum time (no TDM antes do início:
+/// quem está fora de todos fica de reserva).
+pub async fn any_formed(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    slug: &str,
+) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select exists (select 1 from teams t
+                          join tournaments tr on tr.id = t.tournament_id
+                          where tr.tenant_id = $1 and tr.slug = $2) as "formed!""#,
+        tenant.get(),
+        slug
+    )
+    .fetch_one(conn)
+    .await
+}

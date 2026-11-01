@@ -1,7 +1,7 @@
 //! Os avisos do que mudou no acesso à conta: o que aconteceu, "se foi você,
 //! nada a fazer" e, em destaque, o que fazer se não foi, com o botão para o
-//! primeiro passo. E o aviso da exclusão da conta agendada, com a data e como
-//! cancelar.
+//! primeiro passo. E os avisos da exclusão da conta (ao agendar e na
+//! véspera), com a data e como cancelar.
 
 use chrono::{DateTime, Utc};
 
@@ -159,6 +159,45 @@ pub fn account_deletion_scheduled(
                 title: "¿No fuiste tú quien lo pidió?".into(),
                 text: "Entra ahora. La eliminación se cancela.".into(),
             }),
+            action: Action {
+                label: "Entrar".into(),
+                url,
+            },
+            note: None,
+        },
+    };
+    compose(web, locale, to, content)
+}
+
+/// O lembrete na véspera da exclusão da conta: a data (em UTC) e que entrar
+/// cancela. O botão leva ao login.
+pub fn account_deletion_reminder(web: &str, locale: Locale, to: &str, due: DateTime<Utc>) -> Email {
+    let url = page(web, locale, "/login");
+    let when = due.format("%d/%m/%Y %H:%M");
+    let content = match locale {
+        Locale::Pt => Content {
+            title: "Sua conta vai ser excluída".into(),
+            paragraphs: vec![
+                format!("A exclusão da sua conta está marcada para {when} (UTC)."),
+                "Para manter a conta, entre no site antes disso, pelo botão abaixo.".into(),
+            ],
+            code: None,
+            alert: None,
+            action: Action {
+                label: "Entrar".into(),
+                url,
+            },
+            note: None,
+        },
+        Locale::Es => Content {
+            title: "Tu cuenta se va a eliminar".into(),
+            paragraphs: vec![
+                format!("La eliminación de tu cuenta está programada para el {when} (UTC)."),
+                "Para conservar la cuenta, entra al sitio antes de esa fecha, con el botón de abajo."
+                    .into(),
+            ],
+            code: None,
+            alert: None,
             action: Action {
                 label: "Entrar".into(),
                 url,

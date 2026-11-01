@@ -369,22 +369,38 @@ pub async fn people(
         .collect())
 }
 
-/// O nome do torneio `slug` da comunidade `tenant` no idioma `locale`, se ele
-/// tem tradução.
-pub async fn translated_name(
+/// O torneio do aviso, para o texto.
+pub struct Tournament {
+    /// O nome no idioma da configuração, se o torneio tem a tradução.
+    pub translated_name: Option<String>,
+    /// A chave é de eliminação simples: o código da série vai sem a letra da
+    /// chave (`1.2`, não `C1.2`).
+    pub single: bool,
+}
+
+/// O torneio `slug` da comunidade `tenant`, com o nome no idioma `locale`.
+pub async fn tournament(
     db: &PgPool,
     tenant: TenantId,
     slug: &str,
     locale: Locale,
-) -> Result<Option<String>, sqlx::Error> {
-    sqlx::query_scalar!(
-        r#"select tr.name from tournaments t
-           join tournament_translations tr on tr.tournament_id = t.id and tr.locale = $3
+) -> Result<Option<Tournament>, sqlx::Error> {
+    let row = sqlx::query!(
+        r#"select tr.name as "name?",
+                  exists (select 1 from tournament_stages s
+                          where s.tournament_id = t.id
+                            and s.config #>> '{kind,kind}' = 'single') as "single!"
+           from tournaments t
+           left join tournament_translations tr on tr.tournament_id = t.id and tr.locale = $3
            where t.tenant_id = $1 and t.slug = $2"#,
         tenant.get(),
         slug,
         locale.as_str()
     )
     .fetch_optional(db)
-    .await
+    .await?;
+    Ok(row.map(|r| Tournament {
+        translated_name: r.name,
+        single: r.single,
+    }))
 }

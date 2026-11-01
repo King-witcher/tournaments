@@ -64,7 +64,10 @@ pub async fn my_tournaments(
     let mut conn = state.db.acquire().await?;
     let mut out = Vec::with_capacity(active.len() + finished.len());
     for (member, mut tournament) in active.into_iter().chain(finished) {
-        let before = Situation::before_bracket(tournament.status, tournament.checked_in);
+        let team = team_of(&mut conn, member.tenant, &tournament, user.id).await?;
+        let checked_in = tournament.checked_in;
+        let before =
+            before_bracket(&mut conn, member.tenant, &tournament, checked_in, &team).await?;
         let (situation, placement, next_match) = match before {
             Some(situation) => (situation, None, None),
             None => {
@@ -75,7 +78,6 @@ pub async fn my_tournaments(
                 (situation, placement, place.next)
             }
         };
-        let team = team_of(&mut conn, member.tenant, &tournament, user.id).await?;
         out.push(MyTournament {
             tenant_slug: member.slug.clone(),
             tenant_name: member.name.clone(),
@@ -87,6 +89,30 @@ pub async fn my_tournaments(
         });
     }
     Ok(Json(out))
+}
+
+/// A situação antes da chave (`None` com ela), pelo status e pelo check-in.
+/// No TDM, com algum time formado e quem vê fora de todos (`team` vazio),
+/// reserva: inscreveu-se ou fez o check-in depois de formados os times, como
+/// diz "Sua situação" na página do torneio.
+pub async fn before_bracket(
+    conn: &mut sqlx::PgConnection,
+    tenant: TenantId,
+    tournament: &TournamentSummary,
+    checked_in: bool,
+    team: &Option<Team>,
+) -> Result<Option<Situation>, ApiError> {
+    let Some(situation) = Situation::before_bracket(tournament.status, checked_in) else {
+        return Ok(None);
+    };
+    let reserve = tournament.mode == TournamentMode::Tdm
+        && team.is_none()
+        && teams::any_formed(conn, tenant, &tournament.slug).await?;
+    Ok(Some(if reserve {
+        Situation::Reserve
+    } else {
+        situation
+    }))
 }
 
 /// TDM: o time de `user_id` no torneio (no duelo, `None`: o time de um não

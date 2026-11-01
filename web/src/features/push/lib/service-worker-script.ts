@@ -1,6 +1,7 @@
 /**
  * O service worker do Web Push, servido por `app/sw.js/route.ts` com os
- * textos dos avisos embutidos (`Notifications.notices` de cada idioma), para
+ * textos dos avisos embutidos (`Notifications.notices` e o
+ * `Notifications.deletedAccount` de cada idioma, em `messages[locale]`), para
  * o texto continuar só em `messages/`. JavaScript puro, sem build: os textos
  * usam só `{param}` (nada de plural do ICU), que o `fill` daqui troca.
  *
@@ -60,10 +61,16 @@ function text(notice) {
     ? notice.locale
     : DEFAULT_LOCALE;
   const [group, name] = String(notice.code).split(".");
-  const entry = MESSAGES[locale][group] && MESSAGES[locale][group][name];
+  const notices = MESSAGES[locale].notices;
+  const entry = notices[group] && notices[group][name];
   if (!entry) return undefined;
   const values = Object.assign({}, notice.params);
-  if (values.confirm_by) values.deadline = deadline(values.confirm_by, locale);
+  const due = values.confirm_by || values.deletes_at;
+  if (due) values.deadline = deadline(due, locale);
+  // O nome vazio é o da conta excluída.
+  for (const key of ["opponent", "player"]) {
+    if (values[key] === "") values[key] = MESSAGES[locale].deletedAccount;
+  }
   return { locale, title: fill(entry.title, values), body: fill(entry.body, values) };
 }
 

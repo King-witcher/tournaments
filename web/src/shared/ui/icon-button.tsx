@@ -64,7 +64,14 @@ export function IconButton({
       {...rest}
     >
       {pending ? (
-        <Spinner className={styles.spinner} label={t("loading")} />
+        <Spinner
+          className={cn(
+            styles.spinner,
+            styles.alone,
+            kind === "ghost" && styles.ghostIcon,
+          )}
+          label={t("loading")}
+        />
       ) : (
         children
       )}

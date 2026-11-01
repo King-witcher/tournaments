@@ -37,12 +37,20 @@
         "title": "Hora de iniciar",
         "body": "{tournament} chegou ao horário marcado e ainda não foi iniciado."
       }
+    },
+    "tenant": {
+      "deletion_due": {
+        "title": "{tenant} vai ser excluída",
+        "body": "Para manter a comunidade, cancele a exclusão nas configurações até {deadline}."
+      }
     }
   },
   "open": {
     "match": "Abrir série",
-    "tournament": "Abrir torneio"
+    "tournament": "Abrir torneio",
+    "settings": "Abrir configurações"
   },
+  "deletedAccount": "Conta excluída",
   "region": "Notificações",
   "tabTitle": "({count}) {title}",
   "push": {

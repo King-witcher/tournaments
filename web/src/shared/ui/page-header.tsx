@@ -39,7 +39,8 @@ function crumbKey({ href }: Crumb, index: number) {
 /**
  * O topo de toda página: onde estou (trilha e título), o que é isto (tags e
  * metadado) e o que posso fazer agora (uma ação primária, as secundárias e o
- * menu ⋯). No celular as ações descem para baixo do título.
+ * menu ⋯). No celular as ações descem para baixo do título e o ⋯ vai para a
+ * linha dele, no canto.
  */
 export function PageHeader({
   breadcrumbs,
@@ -54,7 +55,11 @@ export function PageHeader({
   return (
     <header className={styles.header}>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb aria-label={t("breadcrumb")}>
+        <Breadcrumb
+          aria-label={t("breadcrumb")}
+          className={styles.breadcrumb}
+          noTrailingSlash
+        >
           {/* No celular, como pede o Carbon: o ⋯ com as de cima e só a mãe. */}
           {breadcrumbs.length > 1 && (
             <BreadcrumbItem className={styles.phoneOnly}>
@@ -80,8 +85,8 @@ export function PageHeader({
         </div>
         {(actions || overflow) && (
           <div className={styles.actions}>
-            {actions}
-            {overflow}
+            {actions && <div className={styles.buttons}>{actions}</div>}
+            {overflow && <div className={styles.overflow}>{overflow}</div>}
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import { useActionState, useId, useState } from "react";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
@@ -29,6 +30,7 @@ export function ForgotPasswordForm({
   const errorMessage = useApiErrorMessage();
   const inputId = useId();
   const sentId = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [email, setEmail] = useState(initialEmail);
   const [sentFor, setSentFor] = useState<string>();
 
@@ -64,7 +66,7 @@ export function ForgotPasswordForm({
   }
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           id={inputId}
@@ -79,7 +81,7 @@ export function ForgotPasswordForm({
           onChange={(e) => setEmail(e.target.value)}
         />
         {error && <FormError>{error}</FormError>}
-        <Button type="submit" pending={pending}>
+        <Button type="submit" pending={pending} disabled={!canSubmit}>
           {t("submit")}
         </Button>
       </Stack>

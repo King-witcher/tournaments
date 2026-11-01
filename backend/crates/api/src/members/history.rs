@@ -44,7 +44,15 @@ pub async fn of<R>(
 
     let mut out = Vec::with_capacity(found.len());
     for (mut tournament, checked_in) in found {
-        let before = Situation::before_bracket(tournament.status, checked_in);
+        let team = my_tournaments::team_of(&mut conn, viewer.tenant, &tournament, user_id).await?;
+        let before = my_tournaments::before_bracket(
+            &mut conn,
+            viewer.tenant,
+            &tournament,
+            checked_in,
+            &team,
+        )
+        .await?;
         let (situation, placement) = match before {
             Some(situation) => (situation, None),
             None => {
@@ -54,7 +62,6 @@ pub async fn of<R>(
                 Situation::in_bracket(place.place, teams)
             }
         };
-        let team = my_tournaments::team_of(&mut conn, viewer.tenant, &tournament, user_id).await?;
         out.push(MemberTournament {
             tournament,
             situation,

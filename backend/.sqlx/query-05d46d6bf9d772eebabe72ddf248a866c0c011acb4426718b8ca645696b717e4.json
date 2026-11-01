@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select deletion_reminded_at from users where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "deletion_reminded_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "deletion_reminded_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "05d46d6bf9d772eebabe72ddf248a866c0c011acb4426718b8ca645696b717e4"
+}

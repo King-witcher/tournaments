@@ -8,6 +8,7 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import {
   type FormResult,
   fieldId,
@@ -42,6 +43,7 @@ export function PasswordResetForm() {
   const token = useLinkToken();
   const enter = useEnterAccount();
   const prefix = useId();
+  const { ref, canSubmit } = useFormValidity();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   // Enquanto a página da conta carrega, o botão continua pendente.
@@ -87,7 +89,7 @@ export function PasswordResetForm() {
         {token === "" ? (
           problem(tAuth("linkIncomplete"))
         ) : (
-          <Form action={submit}>
+          <Form ref={ref} action={submit}>
             <Stack gap={6}>
               <PasswordInput
                 id={fieldId(prefix, "password")}
@@ -104,6 +106,7 @@ export function PasswordResetForm() {
                 id={fieldId(prefix, "confirm")}
                 labelText={tAuth("confirmPassword")}
                 required
+                sameAs={password}
                 autoComplete="new-password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
@@ -113,6 +116,7 @@ export function PasswordResetForm() {
               <Button
                 type="submit"
                 pending={pending || leaving || token === undefined}
+                disabled={!canSubmit}
               >
                 {t("submit")}
               </Button>

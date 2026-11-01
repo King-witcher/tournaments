@@ -173,6 +173,50 @@ async fn the_scheduler_waits_while_it_is_read_only() {
 }
 
 #[tokio::test]
+async fn the_owner_is_reminded_the_day_before() {
+    let (db, _lease) = crate::db::test_db().await;
+    let state = state(db.clone());
+    let app = app_from(state.clone());
+    let (_, ana, _) = quake_br(&db).await;
+    let (status, body) = schedule(&app, &ana, "quake-br").await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let due = body["deletion_scheduled_for"].clone();
+
+    // A mais de 24 h, nada; na véspera, só o owner, uma vez.
+    clear(&db).await;
+    let tick = realtime::tick(&state, Utc::now() + Duration::days(5))
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(tick.tenant_reminders, 0);
+    let eve = Utc::now() + Duration::days(6) + Duration::hours(1);
+    let tick = realtime::tick(&state, eve).await.unwrap().unwrap();
+    assert_eq!(tick.tenant_reminders, 1);
+    let notice = json!({
+        "kind": "notice",
+        "users": [ana.id],
+        "notice": {
+            "code": "tenant.deletion_due",
+            "params": { "tenant": "Tenant quake-br", "deletes_at": due },
+            "path": "/quake-br/settings",
+        },
+    });
+    assert_eq!(outbox(&db).await, [notice]);
+    clear(&db).await;
+    let tick = realtime::tick(&state, eve).await.unwrap().unwrap();
+    assert_eq!(tick.tenant_reminders, 0);
+
+    // Cancelar limpa o aviso: o próximo agendamento avisa de novo.
+    let (status, body) = delete(&app, DELETION, &ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let reminded = sqlx::query_scalar!("select deletion_reminded_at from tenants")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    assert_eq!(reminded, None);
+}
+
+#[tokio::test]
 async fn not_with_a_tournament_in_progress() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;

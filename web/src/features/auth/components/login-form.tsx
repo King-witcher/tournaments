@@ -7,6 +7,7 @@ import { useActionState, useState } from "react";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
+import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { Button } from "@/shared/ui/button";
 import { FormError } from "@/shared/ui/form-error";
 import { Link } from "@/shared/ui/link";
@@ -27,6 +28,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
   const errorMessage = useApiErrorMessage();
   const enter = useEnterAccount();
+  const { ref, canSubmit } = useFormValidity();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -40,7 +42,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
   }, undefined);
 
   return (
-    <Form action={submit}>
+    <Form ref={ref} action={submit}>
       <Stack gap={6}>
         <TextInput
           type="email"
@@ -59,7 +61,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
           onChange={(e) => setPassword(e.target.value)}
         />
         {error && <FormError>{error}</FormError>}
-        <Button type="submit" pending={pending}>
+        <Button type="submit" pending={pending} disabled={!canSubmit}>
           {t("submit")}
         </Button>
         <Link

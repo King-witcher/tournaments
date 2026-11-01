@@ -20,6 +20,9 @@ import { useTeamName } from "../hooks/use-team-name";
 import { soloMember } from "../lib/team-name";
 import styles from "./seeding-row.module.scss";
 
+/** O controle da linha que moveu o time: o campo da posição ou uma das setas. */
+export type FocusOn = "position" | "up" | "down";
+
 type Props = {
   /** Seed que fica se a ordem for salva (1 = melhor). */
   position: number;
@@ -32,10 +35,11 @@ type Props = {
   ratingText?: string;
   disabled: boolean;
   /**
-   * Muda a cada vez que ele é movido pelo campo com Enter: o foco volta para o
-   * campo na posição nova.
+   * Muda a cada vez que ele é movido (pelo campo com Enter ou pelas setas): o
+   * foco volta ao controle usado (`focusOn`), na posição nova.
    */
   focusToken?: number;
+  focusOn?: FocusOn;
   /** Ausente no primeiro. */
   onUp?: () => void;
   /** Ausente no último. */
@@ -57,6 +61,7 @@ export function SeedingRow({
   ratingText,
   disabled,
   focusToken,
+  focusOn,
   onUp,
   onDown,
   onMoveTo,
@@ -66,11 +71,22 @@ export function SeedingRow({
   const name = useTeamName()(team);
   const solo = soloMember(team);
   const input = useRef<HTMLInputElement>(null);
+  const up = useRef<HTMLButtonElement>(null);
+  const down = useRef<HTMLButtonElement>(null);
 
-  // O campo é recriado na posição nova (key): devolve o foco a ele.
+  // O campo é recriado na posição nova (key) e a linha muda de lugar no DOM
+  // (o foco se perderia): devolve o foco ao controle usado. Seta que chegou à
+  // ponta fica desabilitada, e o foco vai para a outra.
   useEffect(() => {
-    if (focusToken !== undefined) input.current?.focus();
-  }, [focusToken]);
+    if (focusToken === undefined) return;
+    if (focusOn === "position") {
+      input.current?.focus();
+      return;
+    }
+    const used = focusOn === "up" ? up : down;
+    const other = focusOn === "up" ? down : up;
+    (used.current?.disabled ? other : used).current?.focus();
+  }, [focusToken, focusOn]);
 
   return (
     <li className={styles.row}>
@@ -108,6 +124,7 @@ export function SeedingRow({
       )}
       <span className={styles.moves}>
         <IconButton
+          ref={up}
           size="sm"
           label={t("up", { name })}
           disabled={disabled || !onUp}
@@ -116,6 +133,7 @@ export function SeedingRow({
           <ArrowUp />
         </IconButton>
         <IconButton
+          ref={down}
           size="sm"
           label={t("down", { name })}
           disabled={disabled || !onDown}

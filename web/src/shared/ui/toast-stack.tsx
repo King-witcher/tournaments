@@ -101,6 +101,7 @@ function StackedToast({
     <div className={styles.item}>
       <ToastNotification
         kind="info"
+        className={styles.notification}
         role="status"
         lowContrast
         title={item.title}

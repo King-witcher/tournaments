@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/spacing";
+
+// O campo do texto a digitar, logo depois do parágrafo (que é filho direto do
+// conteúdo do Modal, como o Carbon pede, e por isso não vai num `Stack`): sem
+// isto o rótulo encosta nele.
+.slug {
+  margin-block-start: spacing.$spacing-05;
+}

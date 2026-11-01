@@ -104,6 +104,29 @@ async fn situation_before_the_bracket() {
     assert_eq!(mine(&app, &bia).await[0]["situation"], "playing");
 }
 
+#[tokio::test]
+async fn a_tdm_reserve_before_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = member(&app, &db, &ana, "Caio").await;
+    create_tournament(&app, &ana, crate::teams::tdm(2, json!({}))).await;
+    publish(&app, &ana, "copa").await;
+    register(&app, "copa", &[&ana, &bia]).await;
+    assert_eq!(mine(&app, &bia).await[0]["situation"], "registered");
+
+    // Com o time formado, quem se inscreve depois fica de reserva, também na
+    // página da pessoa.
+    let (status, body) = crate::teams::draw(&app, &ana, "random").await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    register(&app, "copa", &[&caio]).await;
+    assert_eq!(mine(&app, &caio).await[0]["situation"], "reserve");
+    assert_eq!(mine(&app, &bia).await[0]["situation"], "registered");
+    let uri = format!("/tenants/quake-br/members/{}", caio.id);
+    let (status, body) = get(&app, &uri, &ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["tournaments"][0]["situation"], "reserve");
+}
+
 /// O lado (`"a"` ou `"b"`) de `who` na partida `key`.
 async fn side_of(app: &Router, who: &User, key: &str) -> &'static str {
     let b = bracket(app, who).await;

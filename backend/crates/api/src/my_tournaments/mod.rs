@@ -13,7 +13,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use handlers::team_of;
+pub use handlers::{before_bracket, team_of};
 pub use types::{MyPlacement, Situation};
 
 pub fn router() -> OpenApiRouter<AppState> {

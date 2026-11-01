@@ -2457,9 +2457,7 @@ export interface components {
             /** @enum {string} */
             code: "match.team_pick_open";
             /**
-             * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
-             *     owner, uma vez).
-             *     TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
+             * @description TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
              *     jogadores dos dois times).
              */
             params: {
@@ -2471,8 +2469,24 @@ export interface components {
         } | {
             /** @enum {string} */
             code: "tournament.start_due";
+            /**
+             * @description O início marcado chegou e o torneio não foi iniciado (para organizers e
+             *     owner, uma vez).
+             */
             params: {
                 tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tenant.deletion_due";
+            /**
+             * @description A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
+             *     o owner, uma vez, na véspera).
+             */
+            params: {
+                /** Format: date-time */
+                deletes_at: string;
+                tenant: string;
             };
         };
         /** @description Um aviso que chegou para quem vê. */

@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/utilities/z-index";
@@ -25,6 +26,18 @@
 .item {
   display: flex;
   flex-direction: column;
+
+  // No celular o aviso ocupa a largura da pilha (o Carbon fixa 288px).
+  @include breakpoint.breakpoint-down(md) {
+    align-self: stretch;
+  }
+}
+
+// Classe dobrada para vencer a regra do Carbon (mesmo peso).
+.notification.notification {
+  @include breakpoint.breakpoint-down(md) {
+    inline-size: 100%;
+  }
 }
 
 // Faixa do link, separada do aviso pela borda, como o rodapé do `LinkTile`.

@@ -1,8 +1,9 @@
 //! Tenants ("comunidades"): criar, listar os meus, ver um, transferir a
 //! posse (o owner rebaixa a si mesmo a organizer e promove outro membro, numa
 //! transação, dentro do limite de tenants por owner) e excluir (`deletion`:
-//! o owner agenda para 7 dias, a comunidade fica só leitura até lá, e o
-//! agendador apaga na data). Também é a base de todo dado de tenant:
+//! o owner agenda para 7 dias, a comunidade fica só leitura até lá, o
+//! agendador avisa o owner na véspera e apaga na data). Também é a base de
+//! todo dado de tenant:
 //! `TenantId`, `Role`, o extractor `TenantMember` (que recusa escrita na
 //! comunidade com a exclusão agendada; `DuringDeletion` passa) e as regras de
 //! apelido, que os outros domínios usam nas rotas `/tenants/{slug}/...`, e o
@@ -26,7 +27,7 @@ use crate::AppState;
 pub use access::{DuringDeletion, Organizer, Owner, Role, TenantId, TenantMember};
 pub use changes::{access_lost, changed, organizing_changed};
 pub use db::{my_tenant, staff, standing};
-pub use deletion::delete_due;
+pub use deletion::{delete_due, remind_due as remind_due_deletions};
 pub use nickname::{default_nickname, validate_nickname};
 pub use types::MyTenant;
 

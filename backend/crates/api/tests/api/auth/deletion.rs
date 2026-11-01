@@ -150,6 +150,46 @@ async fn signing_in_again_cancels_the_deletion() {
     assert_eq!(due(&db, quaker).await, None);
 }
 
+#[tokio::test]
+async fn the_day_before_an_email_reminds_once() {
+    let (db, _lease) = crate::db::test_db().await;
+    let state = state(db.clone());
+    let app = app_from(state.clone());
+    let rapha = super::signup(&app, &db, "Rapha", PASSWORD).await;
+    skip_cooldown(&db, &email_of("Rapha")).await;
+    let (status, body, _) = schedule(&app, &rapha, json!({ "current_password": PASSWORD })).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let mail = mailbox(&db);
+    assert!(mail.next().await.subject.starts_with("Exclusão"));
+
+    // A mais de 24 h, nada; na véspera, uma vez.
+    let early = Utc::now() + Duration::days(5);
+    let tick = realtime::tick(&state, early).await.unwrap().unwrap();
+    assert_eq!(tick.account_reminders, 0);
+    let eve = Utc::now() + Duration::days(6) + Duration::hours(1);
+    let tick = realtime::tick(&state, eve).await.unwrap().unwrap();
+    assert_eq!(tick.account_reminders, 1);
+    let reminder = mail.next().await;
+    assert_eq!(reminder.to, email_of("Rapha"));
+    assert!(reminder.subject.starts_with("Sua conta vai ser excluída"));
+    let tick = realtime::tick(&state, eve).await.unwrap().unwrap();
+    assert_eq!(tick.account_reminders, 0);
+    mail.assert_empty().await;
+
+    // Entrar cancela e limpa o lembrete: o próximo agendamento lembra de novo.
+    let login = json!({ "email": email_of("Rapha"), "password": PASSWORD });
+    let (status, body, _) = send_json(&app, Method::POST, "/auth/login", None, login).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let reminded = sqlx::query_scalar!(
+        "select deletion_reminded_at from users where id = $1",
+        rapha.id
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
+    assert_eq!(reminded, None);
+}
+
 /// Inscrição de push direto no banco.
 async fn subscribe_push(db: &PgPool, user_id: i64) {
     sqlx::query!(

@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists (select 1 from teams t\n                          join tournaments tr on tr.id = t.tournament_id\n                          where tr.tenant_id = $1 and tr.slug = $2) as \"formed!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "formed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "45470e57be21410b8c6a9126ce9f287eddd5216d34f900e86eb13588431c0436"
+}
