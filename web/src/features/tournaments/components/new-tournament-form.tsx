@@ -2,7 +2,13 @@
 
 import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
@@ -28,6 +34,7 @@ import { TournamentResultsFields } from "./tournament-results-fields";
 import { TournamentReview } from "./tournament-review";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentSlotsField } from "./tournament-slots-field";
+import { TournamentSourceField } from "./tournament-source-field";
 import { TournamentStartField } from "./tournament-start-field";
 import { TournamentTranslations } from "./tournament-translations";
 import { TournamentVetoFields } from "./tournament-veto-fields";
@@ -43,6 +50,8 @@ const GROUPS = [
 ] as const;
 type Group = (typeof GROUPS)[number];
 
+type Schemas = components["schemas"];
+
 const CLOSED = Object.fromEntries(GROUPS.map((g) => [g, false])) as Record<
   Group,
   boolean
@@ -56,20 +65,32 @@ const CLOSED = Object.fromEntries(GROUPS.map((g) => [g, false])) as Record<
  * idiomas). Os botões só liberam com todos os campos válidos. "Criar como
  * rascunho" é o primário (e o Enter): cria sem publicar. "Criar e publicar"
  * confere e mostra a revisão antes, porque publicado não volta a rascunho.
+ * No topo, "Copiar de" começa da configuração de outro torneio.
  */
 export function NewTournamentForm({
   tenant,
   maps,
+  tournaments,
+  source,
 }: {
   tenant: string;
   /** Os mapas ativos, para o pool do veto. */
-  maps: components["schemas"]["Map"][];
+  maps: Schemas["Map"][];
+  /** Os torneios da comunidade, para copiar um deles. */
+  tournaments: Schemas["TournamentSummary"][];
+  /** O torneio copiado ao abrir (`?from=`). */
+  source: Schemas["Tournament"] | undefined;
 }) {
   const t = useTranslations("TournamentForm");
   const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
   const screenshots = useScreenshotSettings()?.enabled ?? false;
-  const [open, setOpen] = useState(CLOSED);
+  // A tradução copiada vem sem o nome, que é obrigatório: o grupo abre para
+  // ele ficar à vista.
+  const [open, setOpen] = useState(() => ({
+    ...CLOSED,
+    languages: (source?.translations.length ?? 0) > 0,
+  }));
   const [reviewing, setReviewing] = useState(false);
   const [intent, setIntent] = useState<SubmitIntent>();
   const publishRef = useRef<HTMLButtonElement>(null);
@@ -78,11 +99,15 @@ export function NewTournamentForm({
       const group = GROUPS.find((g) => g === groupOf(control));
       if (group) setOpen((o) => ({ ...o, [group]: true }));
     },
+    source,
+    maps,
   });
-  const { values, onChange, errors } = form;
+  const { values, onChange, errors, copyFrom } = form;
   // O pool lembrado entra depois da hidratação: o servidor não lê o
-  // `localStorage`, e o primeiro desenho tem de ser igual ao dele.
+  // `localStorage`, e o primeiro desenho tem de ser igual ao dele. Com
+  // origem, o pool é o dela.
   const restorePool = useEffectEvent(() => {
+    if (source) return;
     const pool = rememberedPool(
       tenant,
       maps.map((m) => m.slug),
@@ -90,6 +115,14 @@ export function NewTournamentForm({
     if (pool) onChange({ mapPool: pool });
   });
   useEffect(() => restorePool(), []);
+  const copy = useCallback(
+    (next: Schemas["Tournament"] | undefined) => {
+      copyFrom(next);
+      if (next?.translations.length)
+        setOpen((o) => ({ ...o, languages: true }));
+    },
+    [copyFrom],
+  );
   const toggle = (group: Group) => (isOpen: boolean) =>
     setOpen((o) => ({ ...o, [group]: isOpen }));
   const send = (next: SubmitIntent) => {
@@ -112,6 +145,14 @@ export function NewTournamentForm({
       }}
     >
       <Stack gap={7}>
+        {tournaments.length > 0 && (
+          <TournamentSourceField
+            tenant={tenant}
+            tournaments={tournaments}
+            initial={source?.slug}
+            onCopy={copy}
+          />
+        )}
         <FormSection legend={t("tournament")}>
           <TournamentIdentityFields
             tenant={tenant}

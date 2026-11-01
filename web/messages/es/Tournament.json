@@ -184,6 +184,7 @@
   },
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
+  "copy": "Copiar torneo",
   "setup": {
     "title": "Formato",
     "labels": {

@@ -35,9 +35,12 @@ import {
   type TranslationValues,
   translationChange,
   translationFrom,
+  translationsFromSource,
   updateBody,
   valuesFrom,
+  valuesFromSource,
 } from "../lib/form-values";
+import { rememberedPool } from "../lib/remembered-pool";
 import { setupEditable } from "../lib/status";
 
 type Schemas = components["schemas"];
@@ -60,17 +63,27 @@ type Failure = {
 /** Sem erro: sempre o mesmo objeto, para o `memo` dos blocos. */
 const NO_ERRORS: FieldErrors = {};
 
+/** Os idiomas que podem ter tradução: os diferentes do original. */
+const otherLocales = (original: Locale) =>
+  routing.locales.filter((l) => l !== original);
+
 type Options = {
   /**
    * Mostra o que esconde um controle (o acordeão ou a aba), para o
    * foco chegar a ele quando é recusado.
    */
   reveal: (control: HTMLElement) => void;
+  /** Na criação: o torneio copiado ao abrir (`valuesFromSource`). */
+  source?: Schemas["Tournament"];
+  /** Na criação: os mapas ativos, que limitam o pool copiado. */
+  maps?: Schemas["Map"][];
 };
 
 /**
- * Estado e envio do formulário de torneio. Criar faz um POST só, com as
- * traduções ligadas e, em "Criar", já publicando (a API grava tudo ou nada).
+ * Estado e envio do formulário de torneio. A criação começa do padrão ou da
+ * cópia de outro torneio (`source`, trocável por `copyFrom`). Criar faz um
+ * POST só, com as traduções ligadas e, em "Criar", já publicando (a API grava
+ * tudo ou nada).
  * Editar faz o PATCH e, depois, grava cada tradução que mudou (PUT) ou apaga
  * a que foi desligada, tudo no mesmo "Salvar". Deu certo, vai para a página
  * do torneio. O erro de um campo vai para ele, que é mostrado (acordeão ou aba)
@@ -79,29 +92,30 @@ type Options = {
 export function useTournamentForm(
   tenant: string,
   tournament: Schemas["Tournament"] | undefined,
-  { reveal }: Options,
+  { reveal, source, maps }: Options,
 ) {
   const uiLocale = useLocale() as Locale;
   const router = useRouter();
   const errorMessage = useApiErrorMessage();
   // `canSubmit`: todos os campos válidos (os de `shared/ui` declaram o que cobram).
   const { ref: formRef, canSubmit } = useFormValidity();
-  // Na criação, o original é o idioma da interface; os outros são traduções.
-  const original = tournament?.locale ?? uiLocale;
-  const others = useMemo(
-    () => routing.locales.filter((l) => l !== original),
-    [original],
-  );
   const [values, setValues] = useState(() =>
-    tournament ? valuesFrom(tournament) : defaultValues(original),
+    tournament
+      ? valuesFrom(tournament)
+      : source
+        ? valuesFromSource(source, maps ?? [])
+        : defaultValues(uiLocale),
   );
+  // O original é o idioma do torneio ou o da origem copiada (as traduções
+  // dela continuam traduções); sem nenhum, o da interface.
+  const original = values.locale;
+  const others = useMemo(() => otherLocales(original), [original]);
   const [translations, setTranslations] = useState<Translations>(() =>
-    Object.fromEntries(
-      others.map((l) => [
-        l,
-        tournament ? translationFrom(tournament, l) : EMPTY_TRANSLATION,
-      ]),
-    ),
+    tournament
+      ? Object.fromEntries(
+          others.map((l) => [l, translationFrom(tournament, l)]),
+        )
+      : translationsFromSource(source, others),
   );
   /** O que a conferência antes de enviar recusou (a data para publicar). */
   const [checked, setChecked] = useState<Failure>();
@@ -244,6 +258,38 @@ export function useTournamentForm(
     (l: Locale) => errorsOf(l) as FieldErrors<keyof TranslationValues>,
     [errorsOf],
   );
+  const copyFrom = useCallback(
+    (next: Schemas["Tournament"] | undefined) => {
+      const active = maps ?? [];
+      const start = next
+        ? valuesFromSource(next, active)
+        : {
+            ...defaultValues(uiLocale),
+            mapPool: rememberedPool(
+              tenant,
+              active.map((m) => m.slug),
+            ),
+          };
+      setValues((v) => ({
+        ...start,
+        name: v.name,
+        slug: v.slug,
+        startsAt: v.startsAt,
+      }));
+      const locales = otherLocales(start.locale);
+      const copied = translationsFromSource(next, locales);
+      // O nome de cada tradução também é da edição: fica o que foi digitado.
+      setTranslations((all) =>
+        Object.fromEntries(
+          locales.map((l) => [
+            l,
+            { ...(copied[l] ?? EMPTY_TRANSLATION), name: all[l]?.name ?? "" },
+          ]),
+        ),
+      );
+    },
+    [tenant, uiLocale, maps],
+  );
 
   /**
    * Confere antes de enviar: os campos (a validação nativa, com o grupo do
@@ -280,6 +326,13 @@ export function useTournamentForm(
       translations[l] ?? EMPTY_TRANSLATION,
     /** Muda a tradução de um idioma; a mesma função em todo render. */
     onTranslationChange,
+    /**
+     * Na criação, troca a origem (`undefined`: o padrão, com o pool
+     * lembrado). Tudo passa a ser o dela, menos o que identifica a edição e
+     * a pessoa pode já ter digitado: nome, endereço, início e o nome das
+     * traduções. A mesma função em todo render.
+     */
+    copyFrom,
     setupLocked,
     check,
     /** Envia (depois de `check`). */

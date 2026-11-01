@@ -184,6 +184,7 @@
   },
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
+  "copy": "Copiar torneio",
   "setup": {
     "title": "Formato",
     "labels": {

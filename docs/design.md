@@ -71,11 +71,11 @@ Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde";
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-Uma página, coluna estreita; à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; excluir rascunho fica no ⋯ do torneio.
+Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade, cuja configuração vem junto; também pelo ⋯ do torneio, com `?from=`); à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; excluir rascunho fica no ⋯ do torneio.
 
 ### Torneio `/[tenant]/[tournament]`
 
-`PageHeader`: breadcrumb, nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Desfazer início" e "Excluir rascunho". Abaixo, "Sua situação". Abas:
+`PageHeader`: breadcrumb, nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Copiar torneio", "Desfazer início" e "Excluir rascunho". Abaixo, "Sua situação". Abas:
 
 - **Visão geral**: `ProgressIndicator`, "Partidas que esperam você", descrição, resumo do formato (`StructuredList` com `InfoTip`) e "Ver as regras".
 - **Chave** (a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e a classificação. Cada lado do cartão: seed, avatar, apelido e placar; linhas curvas ligam a partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas **Chave principal** (com a grande final) e **Repescagem**, abrindo na aba da partida de quem vê.

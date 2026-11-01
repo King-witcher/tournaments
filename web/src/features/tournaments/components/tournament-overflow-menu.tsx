@@ -17,6 +17,8 @@ import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 type Props = {
   tenant: string;
   slug: string;
+  /** Organização: "Copiar torneio", que abre a criação com `?from=`. */
+  copy: boolean;
   /** Quem vê fez o check-in, que ainda está aberto: pode desfazer. */
   undoCheckIn: boolean;
   /** Quem vê está inscrito, com a inscrição aberta: pode cancelar. */
@@ -37,6 +39,7 @@ type Props = {
 export function TournamentOverflowMenu({
   tenant,
   slug,
+  copy,
   undoCheckIn,
   withdrawRegistration,
   inviteOnly,
@@ -60,6 +63,12 @@ export function TournamentOverflowMenu({
   };
 
   const items: OverflowAction[] = [];
+  if (copy) {
+    items.push({
+      label: t("copy"),
+      href: { pathname: `/${tenant}/new`, query: { from: slug } },
+    });
+  }
   if (undoCheckIn) {
     items.push({
       label: tParticipants("checkIn.undo"),

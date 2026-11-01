@@ -176,6 +176,28 @@ export function valuesFrom(
   };
 }
 
+/**
+ * O começo de um torneio novo copiado de `source`: a configuração e os textos
+ * que se repetem a cada edição, no idioma original dela. Nome, endereço e
+ * início ficam vazios, porque são da edição. O pool perde os mapas que saíram
+ * do jogo (fora de `maps`); sem nenhum, fica o padrão.
+ */
+export function valuesFromSource(
+  source: Schemas["Tournament"],
+  maps: Schemas["Map"][],
+): TournamentValues {
+  const pool = source.veto.map_pool.filter((slug) =>
+    maps.some((m) => m.slug === slug),
+  );
+  return {
+    ...valuesFrom(source),
+    name: "",
+    slug: "",
+    startsAt: null,
+    mapPool: pool.length > 0 ? pool : null,
+  };
+}
+
 /** É TDM: times, capitão e escolha simultânea de campeões. */
 export const isTdm = (values: Pick<TournamentValues, "mode">) =>
   values.mode === "tdm";
@@ -235,6 +257,22 @@ export function translationFrom(
         rules: saved.rules,
       }
     : EMPTY_TRANSLATION;
+}
+
+/**
+ * As traduções de um torneio novo nos idiomas `locales`: as de `source`,
+ * ligadas e com os textos, mas sem o nome, que é da edição. Sem origem, vazias.
+ */
+export function translationsFromSource(
+  source: Schemas["Tournament"] | undefined,
+  locales: Locale[],
+): Translations {
+  return Object.fromEntries(
+    locales.map((l) => {
+      const saved = source ? translationFrom(source, l) : EMPTY_TRANSLATION;
+      return [l, saved.enabled ? { ...saved, name: "" } : saved];
+    }),
+  );
 }
 
 /** O que salvar a tradução de `locale` faz: gravar (PUT), apagar ou nada. */

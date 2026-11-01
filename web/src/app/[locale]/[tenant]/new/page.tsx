@@ -7,13 +7,17 @@ import { Page } from "@/shared/ui/page";
 
 export default async function NewTournamentPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/[tenant]/new">) {
   const t = await getTranslations("NewTournament");
   return (
     <Page>
       <Suspense fallback={<TournamentFormSkeleton label={t("loading")} />}>
-        {params.then(({ tenant }) => (
-          <NewTournamentView tenant={tenant} />
+        {Promise.all([params, searchParams]).then(([{ tenant }, { from }]) => (
+          <NewTournamentView
+            tenant={tenant}
+            from={typeof from === "string" ? from : undefined}
+          />
         ))}
       </Suspense>
     </Page>

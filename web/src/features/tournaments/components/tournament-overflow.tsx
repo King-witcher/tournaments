@@ -12,9 +12,9 @@ type Props = {
 
 /**
  * O ⋯ do cabeçalho, com o que é raro ou destrutivo e vale agora: desfazer o
- * próprio check-in, cancelar a própria inscrição e, para a organização,
- * desfazer o início (com a conta dos resultados que ele
- * apaga, lida da chave) e excluir o rascunho. Sem nada, não aparece.
+ * próprio check-in, cancelar a própria inscrição e, para a organização, criar
+ * outro torneio a partir deste, desfazer o início (com a conta dos resultados
+ * que ele apaga, lida da chave) e excluir o rascunho. Sem nada, não aparece.
  */
 export async function TournamentOverflow({
   tenant,
@@ -23,6 +23,7 @@ export async function TournamentOverflow({
 }: Props) {
   const { status, registered, checked_in: checkedIn } = tournament;
   const flags = {
+    copy: organizer,
     undoCheckIn: status === "check_in" && registered && checkedIn,
     withdrawRegistration: registrationOpen(status) && registered,
     deleteDraft: organizer && status === "draft",

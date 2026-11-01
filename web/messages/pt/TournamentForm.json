@@ -194,5 +194,9 @@
     },
     "whoTeam": "O campeão de um jogador fica fora para o time inteiro nas outras partidas."
   },
-  "admissionOpenHint": "Qualquer membro se inscreve, até o início."
+  "admissionOpenHint": "Qualquer membro se inscreve, até o início.",
+  "source": {
+    "label": "Copiar de",
+    "none": "Nenhum torneio"
+  }
 }
