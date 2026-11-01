@@ -1,0 +1,4 @@
+// O invólucro só existe para achar o aviso do leitor de tela: some do layout.
+.box {
+  display: contents;
+}

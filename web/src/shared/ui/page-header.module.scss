@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
@@ -45,4 +46,19 @@
   @include type.type-style("body-compact-01");
 
   color: theme.$text-secondary;
+}
+
+// A trilha no celular: o ⋯ e a página mãe (as de cima ficam no ⋯); do md
+// para cima, a trilha inteira. Classe dobrada para vencer o `display` do
+// item do Carbon.
+.phoneOnly.phoneOnly {
+  @include breakpoint.breakpoint(md) {
+    display: none;
+  }
+}
+
+.desktopOnly.desktopOnly {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
 }

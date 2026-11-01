@@ -16,7 +16,7 @@ export type OverflowAction = {
   onSelect?: () => void;
   /** Leva a outra página. */
   href?: Href;
-  /** Apaga ou tira algo: item vermelho e, com `confirm`, Modal `danger`. */
+  /** Apaga ou tira algo: item vermelho, por último e com uma linha antes; com `confirm`, Modal `danger`. */
   destructive?: boolean;
   disabled?: boolean;
   /** Pede confirmação antes de `onSelect` (o mesmo Modal do `ConfirmButton`). */
@@ -72,11 +72,16 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
         size={size}
         flipped
       >
-        {items.map((item) => (
+        {items.map((item, index) => (
           <OverflowMenuItem
             key={item.label}
             itemText={item.label}
             isDelete={item.destructive}
+            // O Carbon separa com uma linha o que mexe nos dados da pessoa
+            // (excluir, tirar) do resto do menu.
+            hasDivider={
+              item.destructive && index > 0 && !items[index - 1].destructive
+            }
             disabled={item.disabled || pending}
             onClick={() => select(item)}
           />

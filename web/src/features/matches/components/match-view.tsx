@@ -104,7 +104,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
           exclude={matchKey}
         />
       )}
-      <Accordion align="start">
+      <Accordion>
         {detail.can_manage && playable && (
           // A chave muda a cada resultado: o bloco fecha depois de salvar.
           <OrganizerPanel

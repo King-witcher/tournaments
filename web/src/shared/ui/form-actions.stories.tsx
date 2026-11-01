@@ -22,7 +22,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** "Cancelar" secundário à esquerda, o primário à direita (o padrão é "Salvar"). */
+/** O primário à esquerda (o padrão é "Salvar"), "Cancelar" secundário ao lado. */
 export const Default: Story = {};
 
 export const SubmitLabel: Story = { args: { submitLabel: "Criar torneio" } };

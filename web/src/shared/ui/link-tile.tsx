@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "@carbon/icons-react";
 import { ClickableTile } from "@carbon/react";
 import type { ReactNode } from "react";
 
@@ -20,7 +21,9 @@ type Props = {
 
 /**
  * Item de lista "minha" que abre uma página: o tile inteiro (`ClickableTile`
- * do Carbon) é o link, com nome, metadado e tags. Vai dentro de `TileGrid`.
+ * do Carbon) é o link, com nome, metadado, tags e a seta no canto de baixo,
+ * que o Carbon põe no tile que navega (sem hover no celular, é ela que diz
+ * que o tile abre algo). Vai dentro de `TileGrid`.
  */
 export function LinkTile({ href, title, meta, tags, footer }: Props) {
   // O ClickableTile repassa `as` ao Link do Carbon (que o aceita), mas o tipo
@@ -28,7 +31,7 @@ export function LinkTile({ href, title, meta, tags, footer }: Props) {
   const link = { as: IntlLink, href } as unknown as { href: string };
   return (
     <>
-      <ClickableTile {...link} className={styles.tile}>
+      <ClickableTile {...link} className={styles.tile} renderIcon={ArrowRight}>
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
           {meta && <div className={styles.meta}>{meta}</div>}

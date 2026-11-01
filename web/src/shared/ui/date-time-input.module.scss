@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// A data e, ao lado, a hora com o fuso; no celular, a hora desce.
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: spacing.$spacing-05;
+}

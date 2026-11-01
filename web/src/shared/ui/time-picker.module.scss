@@ -1,0 +1,18 @@
+// Com nome de fuso comprido, o seletor encolhe (e corta o nome) em vez de
+// passar da largura da tela no celular.
+.item {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.picker {
+  max-inline-size: 100%;
+}
+
+.zone {
+  min-inline-size: 0;
+
+  select {
+    max-inline-size: 100%;
+  }
+}

@@ -19,7 +19,7 @@ const meta = {
     size: { control: "inline-radio", options: ["sm", "md", "lg"] },
     value: { control: "text" },
     onChange: { control: false },
-    onBlur: { control: false },
+    onTimeZoneChange: { control: false },
   },
   // Controlado: o valor escolhido volta para os controles da história.
   render: function Render(args) {
@@ -34,6 +34,8 @@ const meta = {
       />
     );
   },
+  // O calendário abre embaixo do campo.
+  parameters: { docs: { story: { inline: false, height: "420px" } } },
 } satisfies Meta<typeof DateTimeInput>;
 
 export default meta;
@@ -41,20 +43,45 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** O valor entra em ISO (UTC) e aparece no fuso de quem usa. */
+/** O valor entra em ISO (UTC) e aparece no fuso do seletor. */
 export const WithValue: Story = {
   args: { id: "date-time-input-value", value: "2026-11-14T21:00:00.000Z" },
 };
 
+/** Outra dica no lugar do formato (que fica no placeholder). */
 export const WithHelperText: Story = {
   args: {
     id: "date-time-input-helper",
-    helperText: "No seu fuso. As inscrições fecham uma hora antes.",
+    value: "2026-11-14T21:00:00.000Z",
+    helperText: "O check-in abre sáb., 14 de nov., 17:30.",
   },
+};
+
+/** Os dias antes do mínimo saem do calendário. */
+export const WithMin: Story = {
+  args: { id: "date-time-input-min", min: new Date().toISOString() },
 };
 
 export const Required: Story = {
   args: { id: "date-time-input-required", required: true },
+};
+
+/** Só a data: o valor continua `null` e a hora passa a ser obrigatória. */
+export const DateOnly: Story = {
+  render: function Render(args) {
+    const [value, setValue] = useState<string | null>(null);
+    return (
+      <DateTimeInput
+        {...args}
+        id="date-time-input-date-only"
+        value={value}
+        onChange={(next) => {
+          args.onChange(next);
+          setValue(next);
+        }}
+      />
+    );
+  },
 };
 
 /** Regra que só o chamador sabe (data à frente de agora): aparece na hora. */
@@ -62,7 +89,7 @@ export const Problem: Story = {
   args: {
     id: "date-time-input-problem",
     value: "2020-01-01T21:00:00.000Z",
-    problem: "Escolha uma data no futuro.",
+    problem: "A data de início já passou.",
   },
 };
 
@@ -92,46 +119,35 @@ export const ReadOnly: Story = {
   },
 };
 
-function Stateful(
-  props: Omit<Parameters<typeof DateTimeInput>[0], "onChange">,
-) {
-  const [value, setValue] = useState(props.value);
-  return <DateTimeInput {...props} value={value} onChange={setValue} />;
-}
+/**
+ * O fuso controlado de fora: quem escreve outra data na tela (quando o
+ * check-in abre) usa o mesmo fuso. Trocar o fuso mantém o relógio e muda o
+ * instante.
+ */
+export const ControlledTimeZone: Story = {
+  render: function Render(args) {
+    const [value, setValue] = useState<string | null>(
+      "2026-11-14T21:00:00.000Z",
+    );
+    const [timeZone, setTimeZone] = useState("Europe/Madrid");
+    return (
+      <Stack gap={5}>
+        <DateTimeInput
+          {...args}
+          id="date-time-input-zone"
+          value={value}
+          onChange={setValue}
+          timeZone={timeZone}
+          onTimeZoneChange={setTimeZone}
+        />
+        <p>Valor: {value ?? "—"}</p>
+      </Stack>
+    );
+  },
+};
 
-/** Os estados lado a lado. */
-export const States: Story = {
-  render: () => (
-    <Stack gap={6}>
-      <Stateful
-        id="date-time-input-states-default"
-        labelText="Início do torneio"
-        value="2026-11-14T21:00:00.000Z"
-      />
-      <Stateful
-        id="date-time-input-states-required"
-        labelText="Início do torneio"
-        value={null}
-        required
-      />
-      <Stateful
-        id="date-time-input-states-problem"
-        labelText="Início do torneio"
-        value="2020-01-01T21:00:00.000Z"
-        problem="Escolha uma data no futuro."
-      />
-      <Stateful
-        id="date-time-input-states-disabled"
-        labelText="Início do torneio"
-        value="2026-11-14T21:00:00.000Z"
-        disabled
-      />
-      <Stateful
-        id="date-time-input-states-readonly"
-        labelText="Início do torneio"
-        value="2026-11-14T21:00:00.000Z"
-        readOnly
-      />
-    </Stack>
-  ),
+/** No celular, a hora desce para baixo da data. */
+export const Phone: Story = {
+  args: { id: "date-time-input-phone", value: "2026-11-14T21:00:00.000Z" },
+  globals: { viewport: { value: "phone" } },
 };

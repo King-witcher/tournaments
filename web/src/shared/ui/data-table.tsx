@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -21,6 +20,7 @@ import { cn } from "@/shared/lib/cn";
 import styles from "./data-table.module.scss";
 import { EmptyState } from "./empty-state";
 import { Link } from "./link";
+import { Pagination } from "./pagination";
 
 export type DataTableColumn = {
   key: string;
@@ -144,6 +144,10 @@ export function DataTable({
       )}
       {rows.length === 0 ? (
         empty && <EmptyState action={empty.action}>{empty.text}</EmptyState>
+      ) : filtered.length === 0 ? (
+        // Busca sem resultado: o estado vazio no lugar da tabela, sem os
+        // cabeçalhos (o estado vazio de tabela do Carbon).
+        <EmptyState>{t("noResults", { query: query.trim() })}</EmptyState>
       ) : (
         <Table aria-label={label} size={size} className={styles.table}>
           <TableHead>
@@ -164,39 +168,31 @@ export function DataTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {visible.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length + (hasActions ? 1 : 0)}>
-                  {t("noResults", { query: query.trim() })}
-                </TableCell>
+            {visible.map((row) => (
+              <TableRow
+                key={row.id}
+                className={cn(row.href !== undefined && styles.linkRow)}
+                onClick={openRow(row)}
+              >
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.key}
+                    className={cn(column.secondary && styles.secondary)}
+                  >
+                    {row.href !== undefined && column.key === primary ? (
+                      <Link href={row.href}>{row.cells[column.key]}</Link>
+                    ) : (
+                      row.cells[column.key]
+                    )}
+                  </TableCell>
+                ))}
+                {hasActions && (
+                  <TableCell className={styles.actions}>
+                    {row.actions}
+                  </TableCell>
+                )}
               </TableRow>
-            ) : (
-              visible.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={cn(row.href !== undefined && styles.linkRow)}
-                  onClick={openRow(row)}
-                >
-                  {columns.map((column) => (
-                    <TableCell
-                      key={column.key}
-                      className={cn(column.secondary && styles.secondary)}
-                    >
-                      {row.href !== undefined && column.key === primary ? (
-                        <Link href={row.href}>{row.cells[column.key]}</Link>
-                      ) : (
-                        row.cells[column.key]
-                      )}
-                    </TableCell>
-                  ))}
-                  {hasActions && (
-                    <TableCell className={styles.actions}>
-                      {row.actions}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       )}
@@ -207,15 +203,6 @@ export function DataTable({
           pageSizes={PAGE_SIZES}
           totalItems={filtered.length}
           size={size}
-          backwardText={t("previousPage")}
-          forwardText={t("nextPage")}
-          itemsPerPageText={t("itemsPerPage")}
-          pageNumberText={t("pageNumber")}
-          itemRangeText={(min, max, total) =>
-            t("itemRange", { min, max, total })
-          }
-          pageRangeText={(_page, total) => t("pageRange", { total })}
-          pageSelectLabelText={(total) => t("pageSelect", { total })}
           onChange={(next) => {
             setPage(next.page);
             setPageSize(next.pageSize);

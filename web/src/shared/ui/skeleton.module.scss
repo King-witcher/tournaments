@@ -31,14 +31,6 @@
   block-size: spacing.$spacing-08;
 }
 
-.tabs {
-  @include skeleton;
-
-  display: block;
-  inline-size: 100%;
-  block-size: spacing.$spacing-08;
-}
-
 .stack {
   display: flex;
   flex-direction: column;

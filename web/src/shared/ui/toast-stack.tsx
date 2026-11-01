@@ -30,9 +30,9 @@ type Props = {
 
 /**
  * Avisos que chegam sozinhos (de outra pessoa, do servidor), empilhados no
- * canto de baixo, com o X e, se houver, o link para resolver. Somem depois de
- * `timeout`, mas não enquanto o ponteiro ou o foco estão na pilha (quem vai
- * clicar no link não perde o aviso). A região (`role="log"`) existe sempre,
+ * canto de cima, à direita, com o X e, se houver, o link para resolver.
+ * Somem depois de `timeout`, mas não enquanto o ponteiro ou o foco estão na
+ * pilha (quem vai clicar no link não perde o aviso). A região (`role="log"`) existe sempre,
  * para o leitor de tela anunciar o que entra: monte a pilha uma vez e mude só
  * os `items`. Para "copiado" e afins, use `Toast`.
  */

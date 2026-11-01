@@ -1,0 +1,6 @@
+@use "@carbon/react/scss/spacing";
+
+// O `PopoverContent` do Carbon não tem respiro: o mesmo do `Toggletip`.
+.content {
+  padding: spacing.$spacing-05;
+}

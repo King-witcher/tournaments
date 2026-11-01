@@ -1,6 +1,7 @@
 "use client";
 
 import { TextInput as CarbonTextInput } from "@carbon/react";
+import { useTranslations } from "next-intl";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
@@ -41,6 +42,7 @@ export function TextInput({
   problem,
   ...props
 }: Props) {
+  const t = useTranslations("Common.counter");
   const generated = useId();
   const check = useFieldCheck<HTMLInputElement>({
     ...props,
@@ -54,6 +56,12 @@ export function TextInput({
       id={id ?? generated}
       labelText={<RequiredLabel required={required}>{labelText}</RequiredLabel>}
       required={required}
+      // O contador (`enableCounter`) fala como o do `TextArea`.
+      translateWithId={(messageId, args) =>
+        messageId.endsWith(".max-reached")
+          ? t("maxReached")
+          : t("remaining", { count: args?.count ?? 0 })
+      }
       {...props}
       ref={check.ref}
       onChange={check.onChange}

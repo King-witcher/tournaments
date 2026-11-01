@@ -8,12 +8,12 @@ import { Toast } from "./toast";
 const meta = {
   title: "Estado e conteúdo/Toast",
   component: Toast,
-  // Fixo no canto de baixo: um quadro com altura própria na documentação.
+  // Fixo no canto de cima: um quadro com altura própria na documentação.
   parameters: {
     layout: "fullscreen",
     docs: { story: { inline: false, height: "500px" } },
   },
-  // `timeout: 0` mantém o aviso na tela para ver; o padrão é 3000 ms.
+  // `timeout: 0` mantém o aviso na tela para ver; o padrão é 5000 ms.
   args: { open: true, title: "Link copiado", timeout: 0, onClose: fn() },
   argTypes: {
     kind: { control: "inline-radio", options: ["success", "info"] },
@@ -41,13 +41,13 @@ function CopyDemo() {
         open={open}
         onClose={() => setOpen(false)}
         title="Link copiado"
-        timeout={3000}
+        timeout={5000}
       />
     </>
   );
 }
 
-/** Aparece ao clicar e some sozinho depois de 3 segundos. */
+/** Aparece ao clicar e some sozinho depois de 5 segundos. */
 export const Timeout: Story = {
   render: () => <CopyDemo />,
   play: async ({ canvasElement }) => {

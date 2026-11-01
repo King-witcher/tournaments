@@ -3,6 +3,8 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
+import { cn } from "@/shared/lib/cn";
+import { BreadcrumbOverflow } from "./breadcrumb-overflow";
 import styles from "./page-header.module.scss";
 
 type Crumb = {
@@ -53,8 +55,19 @@ export function PageHeader({
     <header className={styles.header}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumb aria-label={t("breadcrumb")}>
+          {/* No celular, como pede o Carbon: o ⋯ com as de cima e só a mãe. */}
+          {breadcrumbs.length > 1 && (
+            <BreadcrumbItem className={styles.phoneOnly}>
+              <BreadcrumbOverflow crumbs={breadcrumbs.slice(0, -1)} />
+            </BreadcrumbItem>
+          )}
           {breadcrumbs.map((crumb, index) => (
-            <BreadcrumbItem key={crumbKey(crumb, index)}>
+            <BreadcrumbItem
+              key={crumbKey(crumb, index)}
+              className={cn(
+                index < breadcrumbs.length - 1 && styles.desktopOnly,
+              )}
+            >
               <IntlLink href={crumb.href}>{crumb.label}</IntlLink>
             </BreadcrumbItem>
           ))}

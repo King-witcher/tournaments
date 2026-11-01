@@ -25,6 +25,7 @@
   "increment": "Aumentar",
   "decrement": "Disminuir",
   "breadcrumb": "Estás en",
+  "breadcrumbMore": "Páginas superiores",
   "notice": {
     "error": "Error",
     "warning": "Aviso",
@@ -71,5 +72,77 @@
     "remaining": "{count, plural, one {Queda # carácter.} other {Quedan # caracteres.}}",
     "maxReached": "Llegaste al límite de caracteres.",
     "limit": "Límite de {max} caracteres."
+  },
+  "pagination": {
+    "items": "{min}–{max}",
+    "page": "Página {page}"
+  },
+  "paginationNav": {
+    "page": "Página",
+    "active": "Actual",
+    "of": "de",
+    "selectPage": "Elegir la página"
+  },
+  "listBox": {
+    "openMenu": "Abrir el menú",
+    "closeMenu": "Cerrar el menú",
+    "clearSelection": "Borrar la selección",
+    "clearAll": "Borrar todos los seleccionados"
+  },
+  "multiSelect": {
+    "selected": "Elementos seleccionados:",
+    "clearHint": "Para borrar la selección, pulsa Supr o Retroceso",
+    "cleared": "Se borró la selección."
+  },
+  "slider": {
+    "lower": "Valor mínimo",
+    "upper": "Valor máximo",
+    "corrected": "El valor {value} se ajustó al más cercano permitido."
+  },
+  "expandableTile": {
+    "expand": "Expandir",
+    "collapse": "Contraer"
+  },
+  "fileUploader": {
+    "add": "Agregar archivo",
+    "drop": "Arrastra los archivos aquí o haz clic para elegir",
+    "remove": "Quitar el archivo",
+    "uploading": "Enviando el archivo",
+    "uploaded": "Archivo enviado"
+  },
+  "copy": {
+    "copy": "Copiar",
+    "copied": "Copiado"
+  },
+  "codeSnippet": {
+    "label": "Fragmento de código",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos"
+  },
+  "notification": {
+    "close": "Cerrar el aviso"
+  },
+  "tag": {
+    "dismiss": "Quitar",
+    "dismissTag": "Quitar la etiqueta"
+  },
+  "aiLabel": {
+    "text": "IA",
+    "showInformation": "Mostrar información",
+    "revert": "Volver al contenido de la IA"
+  },
+  "datePicker": {
+    "format": "dd/mm/aaaa",
+    "pattern": "Usa el formato dd/mm/aaaa.",
+    "nonexistent": "Ese día no existe.",
+    "calendar": "Calendario",
+    "nextMonth": "Mes siguiente",
+    "previousMonth": "Mes anterior"
+  },
+  "timePicker": {
+    "label": "Hora",
+    "format": "hh:mm",
+    "pattern": "Usa una hora de 00:00 a 23:59.",
+    "timeZone": "Zona horaria"
   }
 }

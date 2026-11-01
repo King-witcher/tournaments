@@ -21,11 +21,11 @@ Toda página, de cima para baixo:
 ## Padrões
 
 - **Listas grandes**: `DataTable` com busca, paginação no cliente (25 por página), coluna de estado com `Tag`, ações por linha num `OverflowMenu` (organização); até `md`, só a coluna principal e o estado. **Listas "minhas"** (seus torneios, suas comunidades): `ClickableTile` em grade.
-- **Formulários**: `Form` com `FormGroup` por seção, `Stack gap={6}`, erro geral em `InlineNotification` acima dos botões, botões no fim (primário "Salvar", secundário "Cancelar"). Campo travado: o motivo em `InlineNotification` (kind `info`) **antes** dos campos.
+- **Formulários**: `Form` com `FormGroup` por seção, `Stack gap={6}`, erro geral em `InlineNotification` acima dos botões, botões no fim (primário "Salvar" à esquerda, secundário "Cancelar" ao lado, como o Carbon pede em formulário de página). Campo travado: o motivo num `Callout` (kind `info`) **antes** dos campos.
 - **Confirmação**: `Modal` (kind `danger` quando apaga ou tira algo); texto diz o que vai acontecer, primário com o nome do botão que abriu, "Não" secundário, foco volta ao gatilho.
 - **Estado**: `Tag` com cor fixa por significado: rascunho `gray`, inscrições `blue`, check-in `purple`, em andamento `green`, encerrado `cool-gray`, cancelado/desistiu/saiu `red`, aguardando `teal`, contestado `magenta`, confirmado `green`.
 - **Ciclo do torneio**: `ProgressIndicator` (Rascunho → Inscrições → Check-in → Em andamento → Encerrado); só leitura para quem joga, e na aba Organização vem com o próximo passo como botão.
-- **Mensagens**: `InlineNotification` para erro e aviso na página; `ToastNotification` só para "copiado" e afins.
+- **Mensagens**: `Callout` para informação e cuidado que carregam com a página (fixos, sem fechar); `InlineNotification` para erro e sucesso, o retorno de algo que aconteceu; `ToastNotification`, no canto de cima à direita, só para "copiado" e para os avisos que chegam sozinhos.
 - **Texto do organizador** (descrição, regras): texto simples (`UserText`), coluna estreita. **Larguras**: `Page width="narrow"` (texto e formulário) e `"wide"` (tabela e chave).
 
 ## Mapa de páginas

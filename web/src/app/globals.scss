@@ -32,38 +32,74 @@
 @use "@carbon/react/scss/themes";
 @use "@carbon/react/scss/theme";
 
-// Só os componentes que o site usa: o @use "@carbon/react" inteiro gerava
-// 1,25 MB de CSS (minificado); esta lista, cerca de 0,6 MB. Componente do
-// Carbon que não está aqui aparece sem estilo: acrescente a linha dele, em
-// ordem alfabética (nome da pasta em node_modules/@carbon/styles/scss/components).
+// Todos os componentes do @carbon/react, também os que o site ainda não usa,
+// para qualquer um já sair com estilo quando entrar. Ficam de fora só as
+// pastas do @carbon/styles que são do @carbon/ibm-products (side-panel,
+// tearsheet, coachmark...), que o @carbon/react não exporta, e o slug, que o
+// ai-label substituiu. Card, combo-button, menu-button e shape-indicator não
+// têm o atalho em @carbon/react/scss e vêm do @carbon/styles. Versão nova do
+// Carbon com pasta nova: acrescente aqui, em ordem alfabética.
 @use "@carbon/react/scss/components/accordion";
+@use "@carbon/react/scss/components/ai-label";
+@use "@carbon/react/scss/components/aspect-ratio";
+@use "@carbon/react/scss/components/badge-indicator";
 @use "@carbon/react/scss/components/breadcrumb";
 @use "@carbon/react/scss/components/button";
+@use "@carbon/styles/scss/components/card";
+@use "@carbon/react/scss/components/chat-button";
 @use "@carbon/react/scss/components/checkbox";
 @use "@carbon/react/scss/components/code-snippet";
 @use "@carbon/react/scss/components/combo-box";
+@use "@carbon/styles/scss/components/combo-button";
+@use "@carbon/react/scss/components/contained-list";
 @use "@carbon/react/scss/components/content-switcher";
 @use "@carbon/react/scss/components/copy-button";
 @use "@carbon/react/scss/components/data-table";
+@use "@carbon/react/scss/components/data-table/action";
+@use "@carbon/react/scss/components/data-table/expandable";
+@use "@carbon/react/scss/components/data-table/skeleton";
+@use "@carbon/react/scss/components/data-table/sort";
+@use "@carbon/react/scss/components/date-picker";
+@use "@carbon/react/scss/components/dialog";
 @use "@carbon/react/scss/components/dropdown";
+@use "@carbon/react/scss/components/file-uploader";
+@use "@carbon/react/scss/components/fluid-combo-box";
+@use "@carbon/react/scss/components/fluid-date-picker";
+@use "@carbon/react/scss/components/fluid-dropdown";
+@use "@carbon/react/scss/components/fluid-list-box";
+@use "@carbon/react/scss/components/fluid-multiselect";
+@use "@carbon/react/scss/components/fluid-number-input";
+@use "@carbon/react/scss/components/fluid-search";
+@use "@carbon/react/scss/components/fluid-select";
+@use "@carbon/react/scss/components/fluid-text-area";
+@use "@carbon/react/scss/components/fluid-text-input";
+@use "@carbon/react/scss/components/fluid-time-picker";
 @use "@carbon/react/scss/components/form";
+@use "@carbon/react/scss/components/icon-indicator";
 @use "@carbon/react/scss/components/inline-loading";
 @use "@carbon/react/scss/components/link";
 @use "@carbon/react/scss/components/list";
 @use "@carbon/react/scss/components/list-box";
 @use "@carbon/react/scss/components/loading";
 @use "@carbon/react/scss/components/menu";
+@use "@carbon/styles/scss/components/menu-button";
 @use "@carbon/react/scss/components/modal";
+@use "@carbon/react/scss/components/multiselect";
 @use "@carbon/react/scss/components/notification";
 @use "@carbon/react/scss/components/number-input";
 @use "@carbon/react/scss/components/overflow-menu";
+@use "@carbon/react/scss/components/page-header";
 @use "@carbon/react/scss/components/pagination";
+@use "@carbon/react/scss/components/pagination-nav";
 @use "@carbon/react/scss/components/popover";
+@use "@carbon/react/scss/components/progress-bar";
 @use "@carbon/react/scss/components/progress-indicator";
 @use "@carbon/react/scss/components/radio-button";
 @use "@carbon/react/scss/components/search";
 @use "@carbon/react/scss/components/select";
+@use "@carbon/styles/scss/components/shape-indicator";
 @use "@carbon/react/scss/components/skeleton-styles";
+@use "@carbon/react/scss/components/slider";
 @use "@carbon/react/scss/components/stack";
 @use "@carbon/react/scss/components/structured-list";
 @use "@carbon/react/scss/components/tabs";
@@ -71,9 +107,11 @@
 @use "@carbon/react/scss/components/text-area";
 @use "@carbon/react/scss/components/text-input";
 @use "@carbon/react/scss/components/tile";
+@use "@carbon/react/scss/components/time-picker";
 @use "@carbon/react/scss/components/toggle";
 @use "@carbon/react/scss/components/toggletip";
 @use "@carbon/react/scss/components/tooltip";
+@use "@carbon/react/scss/components/treeview";
 @use "@carbon/react/scss/components/ui-shell";
 
 // Tema claro (white) por padrão e escuro (g100) quando o sistema pede; os

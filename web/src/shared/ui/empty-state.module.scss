@@ -11,9 +11,11 @@
   background-color: theme.$layer-01;
 }
 
+// O estado é o título do bloco (a anatomia do estado vazio do Carbon), não
+// um texto secundário: é a única coisa que a lista tem a dizer.
 .text {
-  @include type.type-style("body-01");
+  @include type.type-style("heading-compact-01");
 
   max-inline-size: 40rem;
-  color: theme.$text-secondary;
+  color: theme.$text-primary;
 }

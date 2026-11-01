@@ -130,7 +130,7 @@ export function NewTournamentForm({
             disabled={false}
           />
         </FormSection>
-        <Accordion align="start">
+        <Accordion>
           {/* Mapas antes de Campeões: a ordem em que a série os decide. */}
           <FormAccordionItem
             title={t("veto.title")}

@@ -7,6 +7,7 @@ import {
   SwitcherDivider,
   SwitcherItem,
 } from "@carbon/react";
+import { useTranslations } from "next-intl";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { Avatar } from "./avatar";
@@ -46,6 +47,7 @@ function asIntlLink(href: Href) {
  * cedo); no painel ele aparece inteiro. Os itens vêm de `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
+  const t = useTranslations("Common");
   return (
     <HeaderPanelAction
       label={label}
@@ -82,15 +84,20 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
               }}
             >
               {item.pending ? (
-                <InlineLoading status="active" description={item.label} />
+                <InlineLoading
+                  status="active"
+                  description={item.label}
+                  iconDescription={t("loading")}
+                />
               ) : (
                 item.label
               )}
             </SwitcherItem>
           ),
         )}
+        {/* Dentro do Switcher, como no Carbon: é um <li>. */}
+        <SwitcherDivider />
       </Switcher>
-      <SwitcherDivider />
       <ThemeSwitcher />
     </HeaderPanelAction>
   );

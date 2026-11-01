@@ -1,6 +1,7 @@
 import {
   BreadcrumbSkeleton,
   ButtonSkeleton,
+  TabsSkeleton as CarbonTabsSkeleton,
   DataTableSkeleton,
   SkeletonText,
   Stack,
@@ -73,9 +74,13 @@ export function TabLoading({
   );
 }
 
-/** As abas (`PageTabs`) carregando. */
+/** As abas (`PageTabs`) carregando: o esqueleto de abas do Carbon. */
 export function TabsSkeleton() {
-  return <span aria-hidden className={styles.tabs} />;
+  return (
+    <div aria-hidden>
+      <CarbonTabsSkeleton />
+    </div>
+  );
 }
 
 /** Uma `Section` carregando: o título e tiles (`tiles`) ou linhas (`rows`). */

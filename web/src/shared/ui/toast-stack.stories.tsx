@@ -24,7 +24,7 @@ const items: ToastItem[] = [
 const meta = {
   title: "Estado e conteúdo/ToastStack",
   component: ToastStack,
-  // Fixa no canto de baixo: um quadro com altura própria na documentação.
+  // Fixa no canto de cima: um quadro com altura própria na documentação.
   parameters: {
     layout: "fullscreen",
     docs: { story: { inline: false, height: "500px" } },

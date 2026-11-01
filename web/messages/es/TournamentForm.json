@@ -5,8 +5,7 @@
   "slugHint": "El enlace del torneo será {address}. No cambia después.",
   "slugInvalid": "No puede terminar con guion.",
   "startsAt": "Inicio",
-  "startsAtHint": "En tu zona horaria ({timeZone}).",
-  "startsAtCheckIn": "En tu zona horaria ({timeZone}). El check-in abre {opens}.",
+  "startsAtCheckIn": "El check-in abre {opens}.",
   "startError": {
     "past": "La fecha de inicio ya pasó.",
     "soon": "Usa un inicio a partir de {from}, para que el check-in abra antes."

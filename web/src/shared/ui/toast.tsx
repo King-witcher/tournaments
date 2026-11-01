@@ -17,14 +17,15 @@ type Props = {
 
 /**
  * Confirmação passageira de algo que não muda a página ("copiado" e afins),
- * no canto de baixo. Para erro ou aviso que precisa ficar, use `Notice`.
+ * no canto de cima, à direita, por 5 segundos (o tempo do Carbon). Para erro
+ * ou aviso que precisa ficar, use `Notice`.
  */
 export function Toast({
   open,
   onClose,
   title,
   kind = "success",
-  timeout = 3000,
+  timeout = 5000,
 }: Props) {
   const t = useTranslations("Common");
   if (!open) return null;

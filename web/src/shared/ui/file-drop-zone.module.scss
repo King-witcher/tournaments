@@ -1,0 +1,28 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O título, a dica e a lista com a forma das do `FileUploader`, como no
+// exemplo do Carbon para o envio por arrastar.
+.title {
+  @include type.type-style("heading-compact-01");
+
+  margin: 0 0 spacing.$spacing-03;
+  color: theme.$text-primary;
+}
+
+.description {
+  @include type.type-style("body-compact-01");
+
+  margin: 0 0 spacing.$spacing-05;
+  color: theme.$text-secondary;
+}
+
+.disabled {
+  color: theme.$text-disabled;
+}
+
+.files {
+  inline-size: 100%;
+  margin-block-start: spacing.$spacing-03;
+}

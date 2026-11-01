@@ -1,9 +1,9 @@
 "use client";
 
-import { CodeSnippet } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
+import { CodeSnippet } from "@/shared/ui/code-snippet";
 import styles from "./invite-link.module.scss";
 
 /**

@@ -17,7 +17,7 @@ type Props = {
  */
 export function Accordion({ title, children, open = false }: Props) {
   return (
-    <CarbonAccordion align="start">
+    <CarbonAccordion>
       <AccordionItem title={title} open={open}>
         {children}
       </AccordionItem>

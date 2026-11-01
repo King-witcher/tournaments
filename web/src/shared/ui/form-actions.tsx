@@ -22,10 +22,10 @@ type Props = {
   cancelLabel?: ReactNode;
   /** Primário destrutivo (`danger`), ex.: "Remover senha". */
   destructive?: boolean;
-  /** Uma ação a mais, à esquerda de "Cancelar" e do primário (ex.: um botão `ghost` ou `tertiary`). */
+  /** Uma ação a mais, na ponta oposta aos botões (ex.: um botão `ghost` ou `tertiary`). */
   extra?: ReactNode;
   /**
-   * Outra forma de enviar, entre "Cancelar" e o primário ("Criar como
+   * Outra forma de enviar, entre o primário e "Cancelar" ("Criar como
    * rascunho" ao lado de "Criar"): um `Button kind="secondary"`. Com ela,
    * "Cancelar" fica `ghost`, para os três botões terem pesos diferentes.
    */
@@ -33,10 +33,12 @@ type Props = {
 };
 
 /**
- * Os botões do fim de um formulário: "Cancelar" secundário à esquerda e o
- * primário à direita, que envia o formulário e fica pendente. Cada botão tem
- * a largura do próprio texto. `extra` é uma ação a mais na ponta oposta
- * ("Sortear" ao lado de "Cancelar" e "Salvar").
+ * Os botões do fim de um formulário de página: o primário à esquerda, que
+ * envia o formulário e fica pendente, e "Cancelar" secundário à direita
+ * dele, como o Carbon pede fora de Modal e de assistente (o olho já está à
+ * esquerda, lendo o formulário). Cada botão tem a largura do próprio texto.
+ * `extra` é uma ação a mais na ponta oposta ("Salvar" e "Cancelar" à
+ * esquerda, "Sortear" à direita).
  */
 export function FormActions({
   submitLabel,
@@ -55,8 +57,17 @@ export function FormActions({
   const cancelKind = alternative ? "ghost" : "secondary";
   return (
     <div className={styles.actions}>
-      {extra}
       <div className={styles.buttons}>
+        <Button
+          ref={submitRef}
+          type="submit"
+          kind={destructive ? "danger" : "primary"}
+          pending={pending}
+          disabled={disabled}
+        >
+          {submitLabel ?? t("save")}
+        </Button>
+        {alternative}
         {cancelHref !== undefined ? (
           <ButtonLink href={cancelHref} kind={cancelKind}>
             {cancel}
@@ -68,17 +79,8 @@ export function FormActions({
             </Button>
           )
         )}
-        {alternative}
-        <Button
-          ref={submitRef}
-          type="submit"
-          kind={destructive ? "danger" : "primary"}
-          pending={pending}
-          disabled={disabled}
-        >
-          {submitLabel ?? t("save")}
-        </Button>
       </div>
+      {extra}
     </div>
   );
 }
