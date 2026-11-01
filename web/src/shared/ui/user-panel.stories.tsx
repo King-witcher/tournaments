@@ -46,8 +46,9 @@ type Story = StoryObj<typeof meta>;
 export const SignedIn: Story = {};
 
 /**
- * Painel aberto: Conta, Sair e o tema. O seletor de tema grava `data-theme` no
- * `<html>` e no `localStorage`, e disputa com o tema da barra de ferramentas.
+ * Painel aberto: Conta, Sair, o tema e o idioma. O seletor de tema grava
+ * `data-theme` no `<html>` e no `localStorage`, e disputa com o tema da barra
+ * de ferramentas.
  */
 export const SignedInOpen: Story = {
   play: ({ canvasElement }) => openPanel(canvasElement),

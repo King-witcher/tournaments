@@ -3,7 +3,6 @@ import { fn } from "storybook/test";
 
 import { AppHeader } from "./app-header";
 import { HeaderPlaceholder } from "./header-placeholder";
-import { LocaleSwitcher } from "./locale-switcher";
 import { UserPanel } from "./user-panel";
 
 const meta = {
@@ -19,7 +18,6 @@ const meta = {
     skipLabel: "Pular para o conteúdo",
     children: (
       <>
-        <LocaleSwitcher />
         <UserPanel
           label="Conta de Lobo"
           name="Lobo"
@@ -43,7 +41,6 @@ export const SignedOut: Story = {
   args: {
     children: (
       <>
-        <LocaleSwitcher />
         <UserPanel
           label="Entrar ou criar conta"
           items={[
@@ -77,7 +74,6 @@ export const Phone: Story = {
   args: {
     children: (
       <>
-        <LocaleSwitcher />
         <UserPanel
           label="Conta de Lobo Solitário da Arena Brasil"
           name="Lobo Solitário da Arena Brasil"

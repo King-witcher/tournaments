@@ -5,7 +5,6 @@ import { fn } from "storybook/test";
 import { AppContent } from "./app-content";
 import { AppHeader } from "./app-header";
 import { Button } from "./button";
-import { LocaleSwitcher } from "./locale-switcher";
 import { OverflowActions } from "./overflow-actions";
 import { Page } from "./page";
 import { PageHeader } from "./page-header";
@@ -92,7 +91,6 @@ const rotas = [
 const exemplo = (
   <>
     <AppHeader name="Telefrag" skipLabel="Pular para o conteúdo">
-      <LocaleSwitcher />
       <UserPanel
         label="Conta de Lobo"
         name="Lobo"

@@ -30,8 +30,8 @@ type Props = {
 };
 
 /**
- * Ação da barra do cabeçalho que abre um `HeaderPanel` à direita (idioma, a
- * pessoa). Abre e fecha no clique; fecha com Esc (o foco volta ao botão),
+ * Ação da barra do cabeçalho que abre um `HeaderPanel` à direita (as
+ * comunidades, os avisos, a pessoa). Abre e fecha no clique; fecha com Esc (o foco volta ao botão),
  * clicando fora, saindo dele pelo Tab, num link dele ou ao trocar de página.
  * Ao abrir, o foco vai para o primeiro item; num painel que carrega ao abrir
  * (as comunidades), quando o primeiro item chega, se o foco ainda está no

@@ -22,7 +22,6 @@ import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
 import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
-import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -68,9 +67,6 @@ export default async function LocaleLayout({
               </Suspense>
               <Suspense fallback={<HeaderPlaceholder />}>
                 <NotificationBell />
-              </Suspense>
-              <Suspense fallback={<HeaderPlaceholder />}>
-                <LocaleSwitcher />
               </Suspense>
               <Suspense fallback={<HeaderPlaceholder />}>
                 <UserMenu />

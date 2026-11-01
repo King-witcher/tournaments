@@ -3,10 +3,10 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { AppContent } from "./app-content";
 import { AppHeader } from "./app-header";
-import { LocaleSwitcher } from "./locale-switcher";
 import { Page } from "./page";
 import { PageHeader } from "./page-header";
 import { Section } from "./section";
+import { UserPanel } from "./user-panel";
 
 const meta = {
   title: "Cabeçalho/AppContent",
@@ -16,7 +16,13 @@ const meta = {
     (Story) => (
       <>
         <AppHeader name="Telefrag" skipLabel="Pular para o conteúdo">
-          <LocaleSwitcher />
+          <UserPanel
+            label="Entrar ou criar conta"
+            items={[
+              { label: "Entrar", href: "/login" },
+              { label: "Criar conta", href: "/signup" },
+            ]}
+          />
         </AppHeader>
         <Story />
       </>

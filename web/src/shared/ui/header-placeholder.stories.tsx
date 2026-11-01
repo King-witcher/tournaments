@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { AppHeader } from "./app-header";
 import { HeaderPlaceholder } from "./header-placeholder";
-import { LocaleSwitcher } from "./locale-switcher";
+import { UserPanel } from "./user-panel";
 
 const meta = {
   title: "Cabeçalho/HeaderPlaceholder",
@@ -26,12 +26,18 @@ type Story = StoryObj<typeof meta>;
 /** Invisível: só segura os 48px de uma ação da barra enquanto ela carrega. */
 export const Default: Story = {};
 
-/** O idioma já chegou e a pessoa ainda carrega: a barra não pula. */
+/** A pessoa já chegou e os avisos ainda carregam: a barra não pula. */
 export const NextToAction: Story = {
   render: () => (
     <>
-      <LocaleSwitcher />
       <HeaderPlaceholder />
+      <UserPanel
+        label="Entrar ou criar conta"
+        items={[
+          { label: "Entrar", href: "/login" },
+          { label: "Criar conta", href: "/signup" },
+        ]}
+      />
     </>
   ),
 };

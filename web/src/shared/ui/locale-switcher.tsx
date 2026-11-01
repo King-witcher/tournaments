@@ -1,16 +1,16 @@
 "use client";
 
-import { Translate } from "@carbon/icons-react";
 import { Switcher, SwitcherItem } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useId } from "react";
 
 import { Link as IntlLink, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { HeaderPanelAction } from "./header-panel-action";
+import styles from "./locale-switcher.module.scss";
 
 /**
- * Troca o idioma mantendo a página: ação com o ícone `Translate` no
- * cabeçalho, abrindo um painel com os idiomas. Cada idioma aparece no
+ * O idioma, no painel da pessoa (`UserPanel`), embaixo do tema: os idiomas
+ * como links para a mesma página, o atual marcado. Cada idioma aparece no
  * próprio nome ("Español" também para quem lê em português), como se espera
  * de um seletor.
  */
@@ -18,10 +18,14 @@ export function LocaleSwitcher() {
   const t = useTranslations("LocaleSwitcher");
   const current = useLocale();
   const pathname = usePathname();
+  const labelId = useId();
 
   return (
-    <HeaderPanelAction label={t("label")} icon={<Translate size={20} />}>
-      <Switcher aria-label={t("label")} expanded>
+    <div className={styles.locale}>
+      <p id={labelId} className={styles.label}>
+        {t("label")}
+      </p>
+      <Switcher aria-labelledby={labelId} expanded className={styles.list}>
         {routing.locales.map((locale) => (
           <SwitcherItem
             key={locale}
@@ -37,6 +41,6 @@ export function LocaleSwitcher() {
           </SwitcherItem>
         ))}
       </Switcher>
-    </HeaderPanelAction>
+    </div>
   );
 }

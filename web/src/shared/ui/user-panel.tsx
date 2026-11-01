@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { Avatar } from "./avatar";
 import { HeaderPanelAction } from "./header-panel-action";
+import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import styles from "./user-panel.module.scss";
 
@@ -42,8 +43,8 @@ function asIntlLink(href: Href) {
 /**
  * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) e, com
  * sessão, o nome, que abrem um painel com os itens (Conta e Sair; sem
- * sessão, Entrar e Criar conta) e, no fim, o tema de cor, que vale com ou
- * sem sessão. Na barra o nome longo termina em reticências (no celular, mais
+ * sessão, Entrar e Criar conta) e, no fim, o tema de cor e o idioma, que
+ * valem com ou sem sessão. Na barra o nome longo termina em reticências (no celular, mais
  * cedo); no painel ele aparece inteiro. Os itens vêm de `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
@@ -99,6 +100,7 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
         <SwitcherDivider />
       </Switcher>
       <ThemeSwitcher />
+      <LocaleSwitcher />
     </HeaderPanelAction>
   );
 }
