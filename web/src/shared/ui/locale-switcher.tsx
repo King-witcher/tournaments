@@ -1,23 +1,29 @@
 "use client";
 
-import { Switcher, SwitcherItem } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
 
-import { Link as IntlLink, usePathname } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { ContentSwitcher } from "./content-switcher";
 import styles from "./locale-switcher.module.scss";
 
+type Locale = (typeof routing.locales)[number];
+
 /**
- * O idioma, no painel da pessoa (`UserPanel`), embaixo do tema: os idiomas
- * como links para a mesma página, o atual marcado. Cada idioma aparece no
- * próprio nome ("Español" também para quem lê em português), como se espera
- * de um seletor.
+ * O idioma, no painel da pessoa (`UserPanel`), embaixo do tema e do mesmo
+ * jeito: um `ContentSwitcher`, cujo valor é o idioma atual (o Carbon não
+ * marca item escolhido num painel do cabeçalho, mas um controle mostra o
+ * valor). Escolher outro abre a mesma página nele. As setas só mudam o foco
+ * e o Enter escolhe, para não trocar de página a cada seta. Cada idioma
+ * aparece no próprio nome ("Español" também para quem lê em português),
+ * como se espera de um seletor.
  */
 export function LocaleSwitcher() {
   const t = useTranslations("LocaleSwitcher");
-  const current = useLocale();
+  const current = useLocale() as Locale;
   const pathname = usePathname();
+  const router = useRouter();
   const labelId = useId();
 
   return (
@@ -25,22 +31,17 @@ export function LocaleSwitcher() {
       <p id={labelId} className={styles.label}>
         {t("label")}
       </p>
-      <Switcher aria-labelledby={labelId} expanded className={styles.list}>
-        {routing.locales.map((locale) => (
-          <SwitcherItem
-            key={locale}
-            // O SwitcherItem repassa `as` e `locale` ao Link do i18n, mas o
-            // tipo dele não os declara.
-            {...({ as: IntlLink, locale, lang: locale } as object)}
-            href={pathname}
-            isSelected={locale === current}
-            aria-current={locale === current ? "true" : undefined}
-            aria-label={t(`names.${locale}`)}
-          >
-            {t(`names.${locale}`)}
-          </SwitcherItem>
-        ))}
-      </Switcher>
+      <ContentSwitcher
+        aria-labelledby={labelId}
+        selectionMode="manual"
+        options={routing.locales.map((locale) => ({
+          value: locale,
+          text: t(`names.${locale}`),
+          lang: locale,
+        }))}
+        value={current}
+        onChange={(locale) => router.replace(pathname, { locale })}
+      />
     </div>
   );
 }

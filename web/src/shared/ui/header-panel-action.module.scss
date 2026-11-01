@@ -17,7 +17,13 @@
   max-inline-size: 100%;
   padding-inline: spacing.$spacing-04;
   // O botão "ghost" pinta o texto de azul de link; aqui ele abre um menu.
-  color: theme.$text-primary;
+  // Como o ícone das ações: secundário parado, primário no hover e aberto.
+  color: theme.$text-secondary;
+
+  &:hover,
+  &[aria-expanded="true"] {
+    color: theme.$text-primary;
+  }
 }
 
 // Nome longo termina em reticências: a barra não cresce nem quebra.

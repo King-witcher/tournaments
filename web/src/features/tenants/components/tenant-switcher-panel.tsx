@@ -19,7 +19,11 @@ export function TenantSwitcherPanel() {
   const t = useTranslations("Nav.tenants");
   const [tenants, setTenants] = useState<MyTenant[]>();
   return (
-    <HeaderPanelAction label={t("label")} icon={<UserMultiple size={20} />}>
+    <HeaderPanelAction
+      label={t("label")}
+      icon={<UserMultiple size={20} />}
+      navigation
+    >
       <TenantSwitcherList tenants={tenants} onLoad={setTenants} />
     </HeaderPanelAction>
   );

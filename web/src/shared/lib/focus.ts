@@ -37,3 +37,26 @@ export function focusIfLost(id: string) {
   };
   requestAnimationFrame(tick);
 }
+
+/**
+ * Leva o foco ao controle seguinte (`step` 1) ou anterior (-1) dentro de
+ * `container`, na ordem do Tab e dando a volta nas pontas: as setas de um
+ * menu. Grupo com foco itinerante (`ContentSwitcher`, em que só a opção
+ * escolhida entra no Tab) conta como um controle só.
+ */
+export function focusSibling(container: HTMLElement, step: 1 | -1) {
+  const items = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      "a[href], button:not([disabled]), input:not([disabled]), [tabindex]",
+    ),
+  ).filter((item) => item.tabIndex >= 0 && item.checkVisibility());
+  if (items.length === 0) return;
+  const index = items.indexOf(document.activeElement as HTMLElement);
+  const next =
+    index < 0
+      ? step > 0
+        ? 0
+        : items.length - 1
+      : (index + step + items.length) % items.length;
+  items[next].focus();
+}

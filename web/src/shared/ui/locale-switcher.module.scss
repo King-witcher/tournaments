@@ -2,20 +2,18 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
+// Como o tema, logo acima: o rótulo em cima e o seletor do tamanho das
+// opções embaixo, com o respiro lateral dos itens do painel.
 .locale {
-  padding-block-end: spacing.$spacing-05;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+  padding: 0 spacing.$spacing-05 spacing.$spacing-05;
 }
 
-// Com o mesmo respiro do rótulo do tema; o texto dos itens já vem recuado.
 .label {
   @include type.type-style("label-01");
 
-  padding: 0 spacing.$spacing-05 spacing.$spacing-03;
   color: theme.$text-secondary;
-}
-
-// O Carbon põe uma margem acima do primeiro item de cada Switcher; aqui o
-// rótulo já o separa do tema.
-.list.list > :first-child {
-  margin-block-start: 0;
 }

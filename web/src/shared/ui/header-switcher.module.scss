@@ -1,0 +1,22 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// O Carbon fixa o item em 32px, pensando em nomes curtos de produto: o nome
+// longo vazaria sobre o item de baixo. Aqui o item cresce com o texto, e no
+// celular tem o alvo de dedo dos outros controles.
+.list > li {
+  block-size: auto;
+}
+
+.list > li > a,
+.list > li > button {
+  display: flex;
+  align-items: center;
+  block-size: auto;
+  min-block-size: spacing.$spacing-07;
+  overflow-wrap: anywhere;
+
+  @include breakpoint.breakpoint-down(md) {
+    min-block-size: var(--cds-layout-size-height-lg);
+  }
+}

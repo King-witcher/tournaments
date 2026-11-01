@@ -1,8 +1,12 @@
+import { Notification } from "@carbon/icons-react";
+import { SwitcherItem } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AppHeader } from "./app-header";
+import { HeaderPanelAction } from "./header-panel-action";
 import { HeaderPlaceholder } from "./header-placeholder";
+import { HeaderSwitcher } from "./header-switcher";
 import { UserPanel } from "./user-panel";
 
 const meta = {
@@ -10,14 +14,30 @@ const meta = {
   component: AppHeader,
   parameters: {
     layout: "fullscreen",
-    // A barra é fixa no topo da janela.
-    docs: { story: { inline: false, height: "200px" } },
+    // A barra é fixa no topo da janela, e o painel aberto, abaixo dela.
+    docs: { story: { inline: false, height: "400px" } },
   },
   args: {
     name: "Telefrag",
     skipLabel: "Pular para o conteúdo",
+    // Com sessão: os avisos (com o número) e a pessoa. Um painel aberto por
+    // vez: abrir um fecha o outro.
     children: (
       <>
+        <HeaderPanelAction
+          label="Notificações"
+          icon={<Notification size={20} />}
+          badgeCount={3}
+        >
+          <HeaderSwitcher label="Notificações">
+            <SwitcherItem href="/arena-brasil" aria-label="Série pronta">
+              Série pronta
+            </SwitcherItem>
+            <SwitcherItem href="/arena-brasil" aria-label="Check-in aberto">
+              Check-in aberto
+            </SwitcherItem>
+          </HeaderSwitcher>
+        </HeaderPanelAction>
         <UserPanel
           label="Conta de Lobo"
           name="Lobo"

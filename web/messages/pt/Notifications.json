@@ -75,7 +75,6 @@
   },
   "bell": {
     "label": "Notificações",
-    "labelUnread": "{count, plural, one {Notificações: # nova} other {Notificações: # novas}}",
     "title": "Notificações",
     "loading": "Carregando as notificações…",
     "failed": "Não deu para carregar as notificações. Feche e abra de novo.",

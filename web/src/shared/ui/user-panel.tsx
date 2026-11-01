@@ -1,17 +1,13 @@
 "use client";
 
 import { UserAvatar } from "@carbon/icons-react";
-import {
-  InlineLoading,
-  Switcher,
-  SwitcherDivider,
-  SwitcherItem,
-} from "@carbon/react";
+import { InlineLoading, SwitcherDivider, SwitcherItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { Avatar } from "./avatar";
 import { HeaderPanelAction } from "./header-panel-action";
+import { HeaderSwitcher } from "./header-switcher";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import styles from "./user-panel.module.scss";
@@ -44,8 +40,9 @@ function asIntlLink(href: Href) {
  * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) e, com
  * sessão, o nome, que abrem um painel com os itens (Conta e Sair; sem
  * sessão, Entrar e Criar conta) e, no fim, o tema de cor e o idioma, que
- * valem com ou sem sessão. Na barra o nome longo termina em reticências (no celular, mais
- * cedo); no painel ele aparece inteiro. Os itens vêm de `features/auth`.
+ * valem com ou sem sessão. Na barra o nome longo termina em reticências (no
+ * celular, mais cedo); no painel ele aparece inteiro. Os itens vêm de
+ * `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
   const t = useTranslations("Common");
@@ -62,7 +59,7 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
       }
     >
       {name && <p className={styles.name}>{name}</p>}
-      <Switcher aria-label={label} expanded>
+      <HeaderSwitcher label={label}>
         {items.map((item) =>
           "href" in item ? (
             <SwitcherItem
@@ -98,7 +95,7 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
         )}
         {/* Dentro do Switcher, como no Carbon: é um <li>. */}
         <SwitcherDivider />
-      </Switcher>
+      </HeaderSwitcher>
       <ThemeSwitcher />
       <LocaleSwitcher />
     </HeaderPanelAction>
