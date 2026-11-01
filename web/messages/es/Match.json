@@ -2,9 +2,9 @@
   "loading": "Cargando la serie…",
   "loginRequired": "Inicia sesión para ver esta serie.",
   "title": "{code}: {a} × {b}",
+  "titleScore": "{code}: {a} {aScore} × {bScore} {b}",
   "label": "{part} · {round} · serie {index}",
   "bestOf": "Al mejor de {count}",
-  "seed": "orden {seed}",
   "stateTag": {
     "pending": "Esperando los lados",
     "ready": "Por jugar",
@@ -26,15 +26,20 @@
     "withdrawal": "W.O. automático. Quien perdió abandonó o salió de la comunidad <time></time>.",
     "maps": "Decidida <time></time>."
   },
+  "walkover": {
+    "organizer": "{name} ganó por W.O., definido por la organización <time></time>.",
+    "withdrawal": "{name} ganó por W.O. El rival abandonó o salió de la comunidad <time></time>."
+  },
   "games": {
-    "title": "Partidas",
-    "fragsCell": "<prefix>Frags: </prefix>{a} × {b}",
     "noMap": "mapa sin informar",
-    "won": "Ganó {name}",
-    "claim": "{self, select, yes {{reporter} envió que ganó} other {{reporter} envió que ganó {winner}}}",
+    "won": "Ganó {name}.",
+    "fragsInline": "{a} × {b}",
+    "claim": "{self, select, yes {{reporter} envió que ganó.} other {{reporter} envió que ganó {winner}.}}",
     "awaiting": "Esperando envío.",
     "pending": "Se confirma sola a las <at></at> (faltan <time></time>).",
+    "notCounted": "Todavía no cuenta en el marcador.",
     "contested": "{name} impugnó: “{comment}”",
+    "notCountedContested": "Queda fuera del marcador hasta que la resuelva la organización.",
     "confirmed": {
       "opponent": "Confirmada por el rival.",
       "deadline": "Confirmada al terminar el plazo.",
@@ -102,13 +107,7 @@
   "labelPart": "{part} · {round}",
   "vs": "×",
   "score": {
-    "label": "Resultado de la serie",
-    "sr": "{a}: {aScore}; {b}: {bScore}",
-    "deadline": "La partida {number} se confirma sola a las <at></at> (faltan <time></time>)."
-  },
-  "series": {
-    "pending": "{count, plural, one {# partida espera confirmación y todavía no cuenta en el marcador.} other {# partidas esperan confirmación y todavía no cuentan en el marcador.}}",
-    "contested": "{count, plural, one {# partida impugnada queda fuera del marcador hasta que la resuelva la organización.} other {# partidas impugnadas quedan fuera del marcador hasta que las resuelva la organización.}}"
+    "sr": "{a}: {aScore}; {b}: {bScore}"
   },
   "form": {
     "map": "Mapa jugado",
@@ -131,7 +130,8 @@
     "replaySubmit": "Anular la partida {number}",
     "note": "Nota en el historial",
     "correct": "Corregir",
-    "correctHint": "La llave sigue la corrección. Las partidas que queden después de la decisión de la serie se anulan."
+    "correctHint": "La llave sigue la corrección. Las partidas que queden después de la decisión de la serie se anulan.",
+    "more": "Más acciones de la partida {number}"
   },
   "veto": {
     "waitingReady": "El veto empieza cuando los dos hagan clic en “Listo”.",
@@ -240,14 +240,14 @@
     }
   },
   "labelTable": "Ronda {round} de {total} · serie {index}",
-  "members": "Jugadores de {name}",
   "steps": {
     "label": "Pasos de la serie",
     "ready": "Listo",
     "maps": "Mapas",
     "champions": "Campeones",
     "games": "Partidas",
-    "back": "Volver a {step}"
+    "now": "Ahora",
+    "score": "{a} × {b}"
   },
   "card": {
     "pickedBy": "Elegido por {name}",

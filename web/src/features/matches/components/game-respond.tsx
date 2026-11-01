@@ -7,6 +7,7 @@ import { useId, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { cn } from "@/shared/lib/cn";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
 import { ErrorText } from "@/shared/ui/error-text";
@@ -78,7 +79,7 @@ export function GameRespond({ target, number, canConfirm }: Props) {
   };
 
   return (
-    <div className={styles.respond}>
+    <div className={cn(styles.respond, contesting && styles.open)}>
       {contesting ? (
         <Stack gap={5}>
           <TextArea

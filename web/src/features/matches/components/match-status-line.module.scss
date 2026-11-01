@@ -1,0 +1,6 @@
+@use "@carbon/react/scss/type";
+
+// Como a série terminou: texto principal, não metadado (é o resultado).
+.line {
+  @include type.type-style("body-01");
+}

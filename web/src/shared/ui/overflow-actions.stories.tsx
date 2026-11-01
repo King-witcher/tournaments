@@ -1,8 +1,10 @@
 import { Column, Grid, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useState } from "react";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
 import { OverflowActions } from "./overflow-actions";
+import { TextInput } from "./text-input";
 
 const meta = {
   title: "Ação/OverflowActions",
@@ -127,6 +129,52 @@ export const WithConfirmSlug: Story = {
       await screen.findByRole("menuitem", { name: "Transferir posse" }),
     );
     await expect(await screen.findByRole("dialog")).toBeVisible();
+  },
+};
+
+/**
+ * `confirm.extra`: um campo no Modal (a nota de anular uma partida),
+ * controlado por quem monta o menu.
+ */
+export const WithConfirmExtra: Story = {
+  render: function Render() {
+    const [note, setNote] = useState("");
+    return (
+      <OverflowActions
+        items={[
+          {
+            label: "Anular e jogar de novo",
+            destructive: true,
+            onSelect: fn(),
+            confirm: {
+              title: "Anular a partida 2",
+              question: "Os lados jogam a partida 2 de novo.",
+              extra: (
+                <TextInput
+                  labelText="Nota no histórico"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              ),
+            },
+          },
+        ]}
+      />
+    );
+  },
+  parameters: WithConfirm.parameters,
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole("button"));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Anular e jogar de novo" }),
+    );
+    await userEvent.type(
+      await screen.findByLabelText("Nota no histórico"),
+      "queda",
+    );
+    await expect(screen.getByLabelText("Nota no histórico")).toHaveValue(
+      "queda",
+    );
   },
 };
 

@@ -16,6 +16,8 @@ import styles from "./veto-undo.module.scss";
  * Desfazer o último passo do jogo em andamento: o jogador pede e o
  * adversário aceita ou recusa (um passo novo cancela o pedido); a
  * organização desfaz direto (inclusive o passo sorteado pelo fim do tempo).
+ * Fica ao lado do título do passo: botões fantasma, para não competir com a
+ * escolha.
  */
 export function VetoUndo({ target }: { target: MatchTarget }) {
   const t = useTranslations("Match.veto.undo");
@@ -83,6 +85,7 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
           question={t("organizerQuestion")}
           onConfirm={action.undo}
           {...busy("undo")}
+          kind="danger--ghost"
           size="sm"
         >
           {t("organizer")}

@@ -7,6 +7,7 @@ import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import { useSideNames } from "../hooks/use-side-names";
 import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
+import { MatchStatusLine } from "./match-status-line";
 
 type Props = {
   tenant: string;
@@ -18,9 +19,11 @@ type Props = {
 };
 
 /**
- * O topo da partida: a trilha até a chave, o código curto (o mesmo do
- * cartão na chave) com os dois lados, o estado e o que ela espera de quem
- * vê, e a parte, a rodada e o melhor de N.
+ * O topo da série: a trilha até a chave, o código curto (o mesmo do cartão
+ * na chave) com os dois lados e, depois da primeira partida enviada, o
+ * placar entre eles (o das confirmadas enquanto corre), o estado e o que ela
+ * espera de quem vê, a parte, a rodada e o melhor de N e, embaixo, como ela
+ * terminou (ou por que ainda não começou).
  */
 export function MatchHeader({
   tenant,
@@ -59,6 +62,16 @@ export function MatchHeader({
           });
   const side = (who: "a" | "b") =>
     detail[who] ? names[who] : placeholder(s[who]);
+  // O W.O. não tem placar: a linha embaixo diz quem venceu.
+  const r = s.result;
+  const score = r
+    ? r.walkover || r.a_wins == null || r.b_wins == null
+      ? null
+      : { a: r.a_wins, b: r.b_wins }
+    : detail.games.length > 0
+      ? { a: s.a_maps, b: s.b_maps }
+      : null;
+  const sides = { code: code(s.key), a: side("a"), b: side("b") };
 
   return (
     <PageHeader
@@ -68,7 +81,11 @@ export function MatchHeader({
         { href: `/${tenant}/${slug}`, label: tournamentName },
         { href: `/${tenant}/${slug}/bracket`, label: tBracket("title") },
       ]}
-      title={t("title", { code: code(s.key), a: side("a"), b: side("b") })}
+      title={
+        score
+          ? t("titleScore", { ...sides, aScore: score.a, bScore: score.b })
+          : t("title", sides)
+      }
       tags={
         <>
           <StatusTag status={MATCH_STATE_STATUS[s.state]}>
@@ -82,6 +99,8 @@ export function MatchHeader({
         </>
       }
       meta={`${label} · ${t("bestOf", { count: s.best_of })}`}
-    />
+    >
+      <MatchStatusLine detail={detail} />
+    </PageHeader>
   );
 }

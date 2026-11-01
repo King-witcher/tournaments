@@ -1,20 +1,14 @@
 @use "@carbon/react/scss/spacing";
-@use "@carbon/react/scss/utilities/visually-hidden" as *;
 
+// O indicador e, embaixo, o passo à vista, com o espaço entre blocos da página.
 .steps {
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-07;
 }
 
+// O contorno de foco do passo que recebe o foco depois de uma ação fica no
+// bloco inteiro; sem margem, ele ficaria colado no conteúdo.
 .panel {
-  display: flex;
-  flex-direction: column;
-  gap: spacing.$spacing-05;
-}
-
-// O nome do passo à vista: o indicador já o mostra; o título é para o leitor
-// de tela navegar.
-.srOnly {
-  @include visually-hidden;
+  outline-offset: spacing.$spacing-02;
 }

@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/spacing";
+
+// O contorno de foco, quando o passo recebe o foco depois de uma ação, não
+// fica colado no conteúdo.
+.step {
+  outline-offset: spacing.$spacing-02;
+}
+
+// "Partida N" e a etiqueta do estado na mesma linha, alinhados pelo meio.
+.title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}

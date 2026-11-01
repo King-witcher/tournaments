@@ -25,6 +25,8 @@ export type OverflowAction = {
     title?: ReactNode;
     /** Texto que precisa ser digitado para liberar. */
     slug?: string;
+    /** Campos no Modal (uma nota), controlados por quem monta o menu. */
+    extra?: ReactNode;
   };
 };
 
@@ -46,7 +48,10 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
   const t = useTranslations("Common");
   const router = useRouter();
   const wrapper = useRef<HTMLSpanElement>(null);
-  const [asking, setAsking] = useState<OverflowAction>();
+  // Pelo nome, e não o objeto: o `extra` controlado muda a cada tecla, e o
+  // Modal mostra o do item de agora.
+  const [askingLabel, setAskingLabel] = useState<string>();
+  const asking = items.find((item) => item.label === askingLabel);
 
   const focusTrigger = () =>
     requestAnimationFrame(() =>
@@ -55,7 +60,7 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
 
   const select = (item: OverflowAction) => {
     if (item.href !== undefined) router.push(item.href);
-    else if (item.confirm) setAsking(item);
+    else if (item.confirm) setAskingLabel(item.label);
     else item.onSelect?.();
   };
 
@@ -90,12 +95,12 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
       <ConfirmModal
         open={asking !== undefined}
         onClose={() => {
-          setAsking(undefined);
+          setAskingLabel(undefined);
           focusTrigger();
         }}
         onConfirm={() => {
           const item = asking;
-          setAsking(undefined);
+          setAskingLabel(undefined);
           focusTrigger();
           item?.onSelect?.();
         }}
@@ -103,6 +108,7 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
         confirmLabel={asking?.label}
         destructive={asking?.destructive}
         slug={asking?.confirm?.slug}
+        extra={asking?.confirm?.extra}
       >
         {asking?.confirm?.question}
       </ConfirmModal>

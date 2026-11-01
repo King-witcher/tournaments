@@ -13,19 +13,18 @@ import { loadBracket, loadMaps, loadMatch } from "../server";
 import { MatchAfter } from "./match-after";
 import { MatchHeader } from "./match-header";
 import { MatchLive } from "./match-live";
-import { MatchScoreboard } from "./match-scoreboard";
 
 type Props = { tenant: string; slug: string; matchKey: string };
 
 /**
  * Página da série, de cima para baixo: o cabeçalho (trilha até a chave,
- * código e lados, estado), o placar da série, os passos (com o torneio que
- * tem veto: "Pronto", mapas, campeões, partidas; sem, só as partidas: as
- * enviadas numa linha cada, com confirmar, contestar e, para a organização,
- * confirmar na hora, resolver, corrigir e anular, e a da vez num cartão com
- * o envio), o aviso de correção recusada, as outras séries que esperam quem
- * vê e, fechados no fim, o W.O. da organização e o histórico (o da série e o
- * do veto). Lê a sessão: fica em `<Suspense>`.
+ * código e lados com o placar depois da primeira partida enviada, estado e,
+ * embaixo, como terminou), os passos (Pronto, Mapas e Campeões com veto no
+ * torneio, e uma partida por passo, cada uma num cartão com o envio ou o
+ * resultado e o que dá para fazer nela), o aviso de correção recusada, as
+ * outras séries que esperam quem vê e, fechados no fim, o W.O. da
+ * organização e o histórico (o da série e o do veto). Lê a sessão: fica em
+ * `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
   // Os screenshots de cada partida (GameScreenshots) saem deste pedido:
@@ -74,7 +73,6 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         tournamentName={localizedTexts(tournament, locale).name}
         detail={detail}
       />
-      <MatchScoreboard tenant={tenant} detail={detail} />
       <MatchLive
         target={target}
         detail={detail}

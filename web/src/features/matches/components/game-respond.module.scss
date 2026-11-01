@@ -1,6 +1,7 @@
 @use "@carbon/react/scss/spacing";
 
-// Na largura de um formulário, mesmo na linha larga do mapa.
+// Os botões ao lado das ações da organização, na linha do cartão; o
+// comentário da contestação abre na linha toda, na largura de um formulário.
 .respond {
   display: flex;
   flex-direction: column;
@@ -12,4 +13,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: spacing.$spacing-03;
+}
+
+.open {
+  flex-basis: 100%;
+  max-inline-size: none;
+}
+
+.open > * {
+  max-inline-size: spacing.$spacing-13 * 3;
 }

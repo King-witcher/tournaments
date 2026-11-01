@@ -2,7 +2,6 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/breakpoint";
-@use "./veto-state";
 
 .figure {
   display: inline-flex;
@@ -15,7 +14,7 @@
 
 // A largura do retrato por tamanho; a altura segue a proporção dele.
 .frame {
-  @include veto-state.frame;
+  display: block;
 }
 
 .sm .frame {
@@ -51,14 +50,6 @@
 
 .lg .placeholder {
   aspect-ratio: 1;
-}
-
-.icon {
-  @include veto-state.icon;
-}
-
-.banned {
-  @include veto-state.banned(".frame", ".icon");
 }
 
 .name {

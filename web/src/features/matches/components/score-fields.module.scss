@@ -2,6 +2,7 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "./game-columns";
 
 // Um campo por lado, com o "×" no meio. Alinhado pelo topo: a mensagem de erro
 // de um campo cresce para baixo e não desloca o outro nem o "×".
@@ -51,21 +52,17 @@
   }
 }
 
-// No cartão da partida, nas colunas dos lados dele (mesmo espaço entre
-// elas): três iguais com o "×" no meio da do mapa e, no celular, duas, uma
-// embaixo de cada lado, sem o "×".
+// No cartão da partida, nas colunas dos lados dele (as do alto): três
+// iguais com o "×" no meio da do mapa e, no celular, duas, uma embaixo de
+// cada lado, sem o "×".
 .aligned {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @include game-columns.columns;
 
-  @include breakpoint.breakpoint(md) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  align-items: start;
 }
 
 .aligned .versus {
-  justify-content: center;
+  @include game-columns.middle;
 
-  @include breakpoint.breakpoint-down(md) {
-    display: none;
-  }
+  justify-content: center;
 }

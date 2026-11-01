@@ -1,8 +1,10 @@
 // As grades de cartões do veto: os mapas (a imagem acha o mapa mais rápido
 // que o nome, no tempo do passo; dois por linha no celular) e os campeões (os
 // retratos 3:4 lado a lado, como na escolha do jogo; quatro por linha no
-// celular). O tabuleiro empilha a grade e o que vem junto dela.
+// celular), com o mesmo espaço do pool de mapas do formulário. O tabuleiro
+// empilha a grade e o que vem junto dela.
 
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 
 @mixin board {
@@ -14,11 +16,18 @@
 @mixin maps {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
-  gap: spacing.$spacing-05 spacing.$spacing-03;
+  gap: spacing.$spacing-03;
 }
 
+// Uns 80px por retrato (quatro por linha no celular, sete nas 11 colunas ao
+// lado do resumo no lg) e, do xlg para cima, uns 100px, com o nome no tipo
+// normal (oito por linha em 1440px: os 16 campeões em duas).
 @mixin champions {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-11, 1fr));
-  gap: spacing.$spacing-05 spacing.$spacing-03;
+  gap: spacing.$spacing-03;
+
+  @include breakpoint.breakpoint(xlg) {
+    grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-12, 1fr));
+  }
 }

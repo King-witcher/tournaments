@@ -2,18 +2,17 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
+// O nome em cima e o campeão embaixo, centrados na coluna do lado.
 .side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: spacing.$spacing-03;
-  padding: spacing.$spacing-04;
-  border: spacing.$spacing-01 solid theme.$border-subtle;
+  gap: spacing.$spacing-04;
+  min-inline-size: 0;
   text-align: center;
 }
 
-// A coluna do lado na grade do alto do cartão (game-card-head).
+// A coluna do lado na grade do alto do cartão (game-versus).
 .a {
   grid-area: a;
 }
@@ -22,20 +21,25 @@
   grid-area: b;
 }
 
-// O lado de quem vê: a borda de seleção e o fundo selecionado, além do
-// "Você" (a cor não vem sozinha).
-.mine {
-  border-color: theme.$border-interactive;
-  background: theme.$layer-selected;
-}
-
 .who {
-  @include type.type-style("heading-compact-02");
-
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: spacing.$spacing-02;
+  gap: spacing.$spacing-02 spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+.name {
+  @include type.type-style("heading-compact-02");
+
+  overflow-wrap: anywhere;
+}
+
+// TDM sem draft: os jogadores do time, um por linha.
+.members {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
   overflow-wrap: anywhere;
 }

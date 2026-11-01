@@ -1,0 +1,26 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "./game-columns";
+
+.row {
+  @include game-columns.columns;
+  @include type.type-style("heading-05");
+
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.loser {
+  color: theme.$text-secondary;
+}
+
+.vs {
+  @include game-columns.middle;
+
+  color: theme.$text-secondary;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

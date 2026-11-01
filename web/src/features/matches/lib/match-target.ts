@@ -29,11 +29,11 @@ export function gameInput(g: { map: string; a: number; b: number }) {
   return { map: g.map || null, a_frags: g.a, b_frags: g.b };
 }
 
-/** Id da linha de um mapa na página da partida: o foco vai para ela depois de agir no mapa. */
+/** Id do passo de uma partida: o foco vai para ele depois de agir nela. */
 export const gameRowId = (number: number) => `game-${number}`;
 
-/** Id do placar da série: o foco vai para ele depois do W.O., que fecha o bloco da organização. */
+/** Id da linha do resultado da série, embaixo do cabeçalho: o foco vai para ela depois do W.O., que fecha o bloco da organização. */
 export const SCORE_ID = "match-score";
 
-/** Id do bloco do veto: o foco vai para ele depois de um passo (o botão some). */
+/** Id do passo à vista: o foco vai para ele depois de uma ação cujo botão some e quando o passo muda sozinho. */
 export const VETO_ID = "match-veto";

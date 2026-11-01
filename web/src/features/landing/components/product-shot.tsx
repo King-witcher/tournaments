@@ -11,8 +11,8 @@ import styles from "./product-shot.module.scss";
  */
 const SHOTS = {
   bracket: { width: 1800, height: 1051 },
-  veto: { width: 1800, height: 468 },
-  result: { width: 1800, height: 1174 },
+  veto: { width: 1800, height: 471 },
+  result: { width: 1800, height: 810 },
   ranking: { width: 1800, height: 943 },
 };
 

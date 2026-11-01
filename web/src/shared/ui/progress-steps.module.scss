@@ -1,27 +1,43 @@
-@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-// Cinco passos lado a lado não cabem em 390px: no celular a lista fica
-// vertical. Os dois existem no HTML e um some por CSS (sem pular na hidratação).
-.horizontal {
-  @include breakpoint.breakpoint-down(md) {
-    display: none;
-  }
+// Lado a lado enquanto cada passo tem a largura mínima do passo do Carbon
+// (128px); abaixo disso, a forma de reserva (vertical, ou a lista no
+// Dropdown). A largura é a do bloco, não a da tela: o mesmo número de passos
+// cabe numa página larga e não numa coluna estreita. Os dois existem no HTML
+// e um some por CSS (sem pular na hidratação).
+.steps {
+  container: progress-steps / inline-size;
 }
 
-.vertical {
-  @include breakpoint.breakpoint(md) {
-    display: none;
+.fallback {
+  display: none;
+}
+
+@for $count from 1 through 16 {
+  @container progress-steps (width < #{$count * 2 * spacing.$spacing-10}) {
+    .count#{$count} .horizontal {
+      display: none;
+    }
+
+    .count#{$count} .fallback {
+      display: block;
+    }
   }
 }
 
 // Com `onSelect`, pelos tokens que o nome do passo do Carbon lê (sem depender
-// do HTML dele): o passo feito com o nome na cor de link, porque no celular
-// não há hover que mostre que ele abre; o escolhido no texto normal, em
-// negrito, como uma aba ativa.
+// do HTML dele): o passo que abre com o nome na cor de link, porque no
+// celular não há hover que mostre que ele abre; o que está à vista no texto
+// normal, em negrito, como uma aba ativa.
 .selectable {
   --cds-text-primary: #{theme.$link-primary};
+
+  // O atual o Carbon desenha como não clicável (seta): aqui ele volta a ser.
+  button {
+    cursor: pointer;
+  }
 }
 
 .selected {

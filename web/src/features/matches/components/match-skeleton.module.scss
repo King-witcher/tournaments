@@ -1,14 +1,13 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/utilities/skeleton" as *;
 
-// O placar: os dois lados com avatar e o placar grande, e as linhas do
-// estado embaixo.
-.board {
+// O indicador dos passos: uma faixa da altura dele (no celular, a do campo
+// da lista compacta).
+.steps {
   @include skeleton;
 
   display: block;
-  max-inline-size: spacing.$spacing-13 * 4;
-  block-size: spacing.$spacing-13;
+  block-size: spacing.$spacing-09;
 }
 
 // Os blocos fechados do fim (organização, histórico).

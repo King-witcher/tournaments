@@ -6,10 +6,12 @@ import { shownNickname } from "@/features/members/lib/nickname";
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
+import { Section } from "@/shared/ui/section";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
+import { VetoError } from "./veto-error";
 import styles from "./veto-ready.module.scss";
 
 type Props = {
@@ -19,12 +21,13 @@ type Props = {
 };
 
 /**
- * O passo "Pronto": quem está pronto, com "Pronto" para quem joga e ainda não
+ * O passo "Pronto", com o título: quem está pronto, com "Pronto" para quem joga e ainda não
  * clicou e "Começar o veto agora" para a organização. Feito, a lista e quem
  * começou sem esperar, se foi a organização.
  */
 export function VetoReady({ target, done = false }: Props) {
   const t = useTranslations("Match.veto");
+  const tSteps = useTranslations("Match.steps");
   const tMember = useTranslations("Member");
   const { detail } = useLiveMatch();
   const names = useSideNames(detail);
@@ -38,7 +41,7 @@ export function VetoReady({ target, done = false }: Props) {
   const forcedBy = veto.history.find((e) => e.kind === "begin")?.actor;
 
   return (
-    <div className={styles.ready}>
+    <Section title={tSteps("ready")}>
       {!done && (
         <p>
           {t(
@@ -88,6 +91,7 @@ export function VetoReady({ target, done = false }: Props) {
           )}
         </div>
       )}
-    </div>
+      {!done && <VetoError />}
+    </Section>
   );
 }

@@ -1,15 +1,18 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/utilities/visually-hidden" as *;
 
-.result {
+// A frase do resultado e, embaixo, o estado, em texto de apoio.
+.outcome {
+  @include type.type-style("body-01");
+
   display: flex;
-  flex-wrap: wrap;
-  gap: 0 spacing.$spacing-03;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
   overflow-wrap: anywhere;
 }
 
+// Negrito só no que vale: sem confirmar, é a palavra de quem enviou.
 .settled {
   @include type.font-weight("semibold");
 }
@@ -22,15 +25,8 @@
   white-space: nowrap;
 }
 
-// TDM: quem jogou, embaixo do resultado.
-.lineup {
-  @include type.type-style("helper-text-01");
-  @include type.font-weight("regular");
+.note {
+  @include type.type-style("body-compact-01");
 
-  flex-basis: 100%;
   color: theme.$text-secondary;
-}
-
-.srOnly {
-  @include visually-hidden;
 }

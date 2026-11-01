@@ -1,14 +1,15 @@
 @use "@carbon/react/scss/spacing";
 
+// Os botões e o ⋯ numa linha, que quebra no celular em vez de empurrar a
+// página; o erro e o formulário ocupam a linha toda.
 .actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
   gap: spacing.$spacing-03;
 }
 
-// Os botões quebram de linha no celular em vez de empurrar a página.
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-03;
+.error,
+.form {
+  flex-basis: 100%;
 }

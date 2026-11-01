@@ -1,66 +1,67 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/components/button/tokens" as button;
+@use "@carbon/react/scss/utilities/focus-outline";
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
-@use "./veto-state";
 
 .tile {
   display: flex;
   min-inline-size: 0;
 }
 
-// O conteúdo (botão ou não) ocupa o cartão inteiro, na mesma altura da fileira.
-.body,
-.button {
+// O tile (o do pool de mapas do formulário): fundo de camada, a imagem de
+// ponta a ponta em cima e o texto embaixo; a borda de 1px fica transparente
+// até o escolhido, para nada pular de lugar.
+.surface {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: spacing.$spacing-02;
   min-inline-size: 0;
-}
-
-.button {
   padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  cursor: pointer;
+  border: 1px solid transparent;
+  background: theme.$layer;
+  color: theme.$text-primary;
   font: inherit;
   text-align: start;
 }
 
-.frame {
-  @include veto-state.frame;
+.image {
+  display: block;
 }
 
-.icon {
-  @include veto-state.icon;
-}
-
-.banned {
-  @include veto-state.banned(".frame", ".icon");
-}
-
-.picked {
-  @include veto-state.picked(".frame", ".icon");
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  padding: spacing.$spacing-03;
 }
 
 .name {
-  @include type.type-style("body-compact-01");
-  @include type.font-weight("semibold");
+  @include type.type-style("heading-compact-01");
 
-  overflow-wrap: anywhere;
+  // No retrato estreito, "Scalebearer" quebra com hífen, não no meio.
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
-// Banido ou fora pela regra: o nome em cinza legível (nunca opacidade).
-.banned .name,
-.unavailable .name {
-  color: theme.$text-secondary;
+// A etiqueta e, no canto de baixo, o ícone do estado: fora da imagem (sobre
+// ela, a cor não teria contraste garantido) e fora da linha do nome, que no
+// retrato estreito do campeão quebraria. Sem espaço, o ícone desce, e a
+// etiqueta não quebra no meio ("Partida / 1").
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: spacing.$spacing-02;
+  margin-block-start: auto;
 }
 
-.banned .name {
-  text-decoration: line-through;
+.icon {
+  flex: none;
 }
 
 .note {
@@ -69,63 +70,103 @@
   color: theme.$text-secondary;
 }
 
+// O retrato do campeão abaixo do xlg (uns 80px): o nome no tipo menor e
+// menos margem, para "Scalebearer" e "Partida 1" caberem numa linha.
+.narrow .text {
+  @include breakpoint.breakpoint-down(xlg) {
+    padding-inline: spacing.$spacing-02;
+  }
+}
+
+.narrow .name {
+  @include breakpoint.breakpoint-down(xlg) {
+    @include type.type-style("label-01");
+    @include type.font-weight("semibold");
+  }
+}
+
+// Escolhido e decisivo: a borda do tile selecionado e o check verde.
+.picked .surface {
+  border-color: theme.$layer-selected-inverse;
+}
+
+.picked .icon {
+  fill: theme.$support-success;
+}
+
 .picked .note {
   color: theme.$text-primary;
 }
 
-// A ação escrita no pé do cartão, com a cara do botão do Carbon: o pick no
-// primário, o ban no perigo de contorno (sete bans cheios de vermelho
-// gritariam mais que a escolha).
+// Banido (com a imagem em cinza) ou fora pela regra: o nome em cinza legível
+// (nunca opacidade); o banido com o X vermelho.
+.banned .icon {
+  fill: theme.$support-error;
+}
+
+.banned .name,
+.unavailable .name {
+  color: theme.$text-secondary;
+}
+
+// Na vez de quem vê, o tile clicável do Carbon: fundo de hover, contorno de
+// foco e a ação escrita no pé, na cor de link (o ban na do perigo, como o
+// botão fantasma de perigo).
+.button {
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-outline.focus-outline("outline");
+  }
+
+  &:active {
+    background: theme.$layer-active;
+  }
+}
+
+@media (any-hover: hover) {
+  .button:hover {
+    background: theme.$layer-hover;
+  }
+}
+
 .action {
   @include type.type-style("body-compact-01");
 
-  display: block;
-  padding: spacing.$spacing-03 spacing.$spacing-04;
   margin-block-start: auto;
+  padding-block-start: spacing.$spacing-03;
+  color: theme.$link-primary;
 }
 
-.pick .action {
-  background: button.$button-primary;
-  color: theme.$text-on-color;
+// Com a etiqueta (o voto), a ação vem logo embaixo dela.
+.state ~ .action {
+  margin-block-start: 0;
 }
 
 .ban .action {
-  box-shadow: inset 0 0 0 1px button.$button-danger-secondary;
   color: button.$button-danger-secondary;
 }
 
 @media (any-hover: hover) {
   .pick:hover .action {
-    background: button.$button-primary-hover;
+    color: theme.$link-primary-hover;
   }
 
   .ban:hover .action {
-    background: button.$button-danger-hover;
-    box-shadow: none;
-    color: theme.$text-on-color;
+    color: button.$button-danger-hover;
   }
-}
-
-.pick:active .action {
-  background: button.$button-primary-active;
-}
-
-.ban:active .action {
-  background: button.$button-danger-active;
-  color: theme.$text-on-color;
-}
-
-.srOnly {
-  @include visually-hidden;
 }
 
 // Outra ação do veto no ar: a ação fica no lugar, apagada, até a resposta.
 .button:disabled {
+  background: theme.$layer;
   cursor: not-allowed;
 }
 
 .button:disabled .action {
-  background: button.$button-disabled;
-  box-shadow: none;
-  color: theme.$text-on-color-disabled;
+  color: theme.$text-disabled;
+}
+
+.srOnly {
+  @include visually-hidden;
 }

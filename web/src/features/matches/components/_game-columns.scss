@@ -1,0 +1,24 @@
+// As colunas do cartão da partida, as mesmas no alto (lado A, o mapa, lado
+// B), no placar enviado e nos campos do envio, para os frags de cada lado
+// ficarem embaixo do nome dele: três iguais e, no celular, duas (o mapa numa
+// linha própria em cima; o "×" do meio some).
+
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+@mixin columns {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @include breakpoint.breakpoint(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+// O que fica na coluna do meio (o "×"): some no celular.
+@mixin middle {
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}

@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+
+// As ações de jogador e as da organização numa linha só (quebra no celular).
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: spacing.$spacing-03;
+}

@@ -1,16 +1,19 @@
 "use client";
 
+import { Column, Grid } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { RadioGroup } from "@/shared/ui/radio-group";
+import { Section } from "@/shared/ui/section";
 import { useLiveMatch } from "../hooks/use-live-match";
 import type { MatchTarget } from "../lib/match-target";
 import { currentGame } from "../lib/veto";
 import styles from "./champions-step.module.scss";
 import { DraftSummary } from "./draft-summary";
 import { VetoChampionBoard } from "./veto-champion-board";
+import { VetoError } from "./veto-error";
 import { VetoTurn } from "./veto-turn";
 import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
@@ -23,39 +26,39 @@ type Props = {
 };
 
 /**
- * O passo Campeões: de quem é a vez, desfazer, o resumo do draft (bans e
- * cada partida, com a da vez em destaque, junto da grade) e a grade. Na
- * votação, a do mapa da partida 1 vem antes (o draft depende dele); na
- * janela do TDM, quem vê escolhe para qual partida está escolhendo.
+ * O passo Campeões: o título com o desfazer ao lado, de quem é a vez, a
+ * grade e, ao lado dela (em cima no celular), o resumo do draft (bans e cada
+ * partida, com a da vez em destaque), nas colunas da grade da página (11 e
+ * 5 no lg, 10 e 6 do xlg para cima), e o erro da última ação. Na votação,
+ * a do mapa da partida 1 vem antes (o draft depende dele); na janela do
+ * TDM, quem vê escolhe para qual partida está escolhendo.
  */
 export function ChampionsStep({ target, rule, done = false }: Props) {
   const t = useTranslations("Match.veto.champions");
   const tGame = useTranslations("Match.games");
+  const tSteps = useTranslations("Match.steps");
   const { detail } = useLiveMatch();
   const [chosen, setChosen] = useState<number | null>(null);
   const veto = detail.veto;
   if (!veto) return null;
-  if (done) {
-    return (
-      <div className={styles.alone}>
-        <DraftSummary />
-      </div>
-    );
-  }
-  const voting = veto.turn?.action === "vote";
+  const voting = !done && veto.turn?.action === "vote";
   const slots = veto.picks;
   const slot = slots.find((s) => s.game === chosen) ?? slots[0];
   const teamPick = veto.turn?.action === "team_pick";
-  const current = voting
-    ? undefined
-    : (slot?.game ?? veto.turn?.pick_for ?? undefined);
+  const current =
+    done || voting
+      ? undefined
+      : (slot?.game ?? veto.turn?.pick_for ?? undefined);
+  const board = !done && !voting;
 
   return (
-    <>
-      <VetoTurn />
-      <VetoUndo target={target} />
+    <Section
+      title={tSteps("champions")}
+      action={done ? undefined : <VetoUndo target={target} />}
+    >
+      {!done && <VetoTurn />}
       {voting && <VetoVoteBoard target={target} game={currentGame(veto)} />}
-      {teamPick && slots.length > 1 && slot && (
+      {!done && teamPick && slots.length > 1 && slot && (
         <RadioGroup
           legendText={t("forGame")}
           orientation="horizontal"
@@ -67,16 +70,29 @@ export function ChampionsStep({ target, rule, done = false }: Props) {
           onChange={(g) => setChosen(Number(g))}
         />
       )}
-      <div className={styles.draft}>
-        <div className={styles.summary}>
+      <Grid>
+        <Column
+          sm={4}
+          md={8}
+          lg={board ? { span: 5, start: 12 } : 8}
+          xlg={board ? { span: 6, start: 11 } : 8}
+          className={styles.summary}
+        >
           <DraftSummary current={current} />
-        </div>
-        {!voting && (
-          <div className={styles.grid}>
+        </Column>
+        {board && (
+          <Column
+            sm={4}
+            md={8}
+            lg={{ span: 11, start: 1 }}
+            xlg={{ span: 10, start: 1 }}
+            className={styles.board}
+          >
             <VetoChampionBoard target={target} rule={rule} slot={slot} />
-          </div>
+          </Column>
         )}
-      </div>
-    </>
+      </Grid>
+      {!done && <VetoError />}
+    </Section>
   );
 }

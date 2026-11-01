@@ -2,7 +2,6 @@ import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 
-import { Button } from "./button";
 import { ProgressSteps } from "./progress-steps";
 
 const steps = [
@@ -71,52 +70,83 @@ const seriesSteps = [
   { key: "ready", label: "Pronto" },
   { key: "maps", label: "Mapas" },
   { key: "champions", label: "Campeões" },
-  { key: "games", label: "Partidas" },
+  { key: "game-1", label: "Partida 1", secondaryLabel: "15 × 9" },
+  { key: "game-2", label: "Partida 2", secondaryLabel: "Agora" },
+  { key: "game-3", label: "Partida 3" },
 ];
 
 /**
- * Com `onSelect`, os passos feitos viram botões (nome na cor de link) para ver
- * como terminaram; `selected` marca o que está à vista. O atual e os
- * seguintes não respondem.
+ * Com `onSelect`, os passos feitos e o atual viram botões (nome na cor de
+ * link) para escolher o que ver; `selected` marca o que está à vista, em
+ * negrito. Os seguintes não respondem.
  */
 export const Selectable: Story = {
-  args: { steps: seriesSteps, current: 2, label: "Passos da série" },
+  args: { steps: seriesSteps, current: 4, label: "Passos da série" },
   render: function Render(args) {
-    const [selected, setSelected] = useState<number>();
+    const [selected, setSelected] = useState<number>(args.current);
     return (
       <Stack gap={5}>
         <ProgressSteps {...args} selected={selected} onSelect={setSelected} />
-        <p>
-          {selected == null
-            ? "À vista: o passo atual."
-            : `À vista: ${seriesSteps[selected].label}.`}
-        </p>
-        {selected != null && (
-          <Button
-            kind="tertiary"
-            size="sm"
-            onClick={() => setSelected(undefined)}
-          >
-            Voltar para Campeões
-          </Button>
-        )}
+        <p>À vista: {seriesSteps[selected].label}.</p>
       </Stack>
     );
   },
 };
 
-/** Um passo feito escolhido: em negrito, como uma aba ativa. */
+/** Um passo feito escolhido: em negrito, e o atual na cor de link. */
 export const SelectedStep: Story = {
   args: {
     steps: seriesSteps,
-    current: 3,
+    current: 4,
     label: "Passos da série",
     selected: 1,
     onSelect: () => {},
   },
 };
 
-/** Até `md` (celular), a lista fica vertical. */
+/** `invalid`: o passo com problema (uma partida contestada). */
+export const Invalid: Story = {
+  args: {
+    steps: [
+      ...seriesSteps.slice(0, 3),
+      {
+        key: "game-1",
+        label: "Partida 1",
+        secondaryLabel: "Contestada",
+        invalid: true,
+      },
+      ...seriesSteps.slice(4),
+    ],
+    current: 4,
+    label: "Passos da série",
+    selected: 3,
+    onSelect: () => {},
+  },
+};
+
+const longSeries = [
+  ...seriesSteps.slice(0, 5),
+  { key: "game-3", label: "Partida 3" },
+  { key: "game-4", label: "Partida 4" },
+  { key: "game-5", label: "Partida 5" },
+];
+
+/**
+ * Sem espaço para os passos lado a lado (128px cada), navegável e com mais
+ * de 4 passos: a lista num `Dropdown`, com o estado de cada um.
+ */
+export const CompactWhenNarrow: Story = {
+  args: {
+    steps: longSeries,
+    current: 4,
+    label: "Passos da série",
+    selected: 4,
+    onSelect: () => {},
+  },
+  globals: { viewport: { value: "phone", isRotated: false } },
+};
+
+/** Até 4 passos, ou só leitura: no celular, a lista fica vertical. */
 export const Phone: Story = {
   args: WithSecondaryLabels.args,
   globals: { viewport: { value: "phone", isRotated: false } },

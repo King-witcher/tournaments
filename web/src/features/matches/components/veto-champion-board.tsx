@@ -67,6 +67,7 @@ export function VetoChampionBoard({ target, rule, slot }: Props) {
               }
               name={c.name}
               state={tile.state}
+              size="narrow"
               note={note(tile)}
               described={described(tile)}
               action={

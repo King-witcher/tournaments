@@ -5,36 +5,41 @@ import { useTranslations } from "next-intl";
 
 import { cn } from "@/shared/lib/cn";
 import styles from "./progress-steps.module.scss";
+import { ProgressStepsMenu } from "./progress-steps-menu";
 
-type Step = {
+export type ProgressStepItem = {
   key: string;
   /** Nome do passo, já traduzido. */
   label: string;
-  /** Linha curta embaixo do nome (uma data, "agora"). */
+  /** Linha curta embaixo do nome (uma data, "agora", um placar). */
   secondaryLabel?: string;
+  /** Passo com problema (o ícone de alerta do Carbon, em vermelho). */
+  invalid?: boolean;
 };
 
 type Props = {
-  steps: Step[];
+  steps: ProgressStepItem[];
   /** Índice do passo atual; os anteriores aparecem como feitos. */
   current: number;
   /** O que a lista é, para leitor de tela ("Ciclo do torneio"). */
   label: string;
   /**
-   * Escolher um passo feito para ver como ele terminou: com isto, os passos
-   * feitos viram botões (nome na cor de link) e o clique devolve o índice. O
-   * atual e os seguintes não respondem; a volta ao atual fica com quem usa
-   * (um botão "Voltar" no conteúdo).
+   * Escolher o que ver: com isto, os passos feitos e o atual viram botões
+   * (nome na cor de link) e o clique devolve o índice; os seguintes não
+   * respondem.
    */
   onSelect?: (index: number) => void;
-  /** O passo feito que está à vista (com `onSelect`): marcado como escolhido. */
+  /** O passo à vista (com `onSelect`): em negrito, como uma aba ativa. */
   selected?: number;
 };
 
 /**
  * Passos de um processo com o atual marcado (`ProgressIndicator` do Carbon):
- * só leitura (o ciclo do torneio) ou, com `onSelect`, com os passos feitos
- * clicáveis (os passos da série). No celular fica vertical.
+ * só leitura (o ciclo do torneio) ou, com `onSelect`, navegável (os passos
+ * da série). Lado a lado enquanto cada passo tem os 128px do Carbon; sem
+ * espaço, vertical e, navegável com mais de 4 passos (a lista vertical
+ * empurraria o conteúdo para longe no celular), um `Dropdown` com os passos,
+ * o estado de cada um e os seguintes desabilitados.
  *
  * ```tsx
  * <ProgressSteps steps={steps} current={2} label={t("steps")}
@@ -57,9 +62,8 @@ export function ProgressSteps({
         : id.endsWith("invalid")
           ? t("invalid")
           : t("incomplete");
-  // O Carbon põe o clique em todo passo que não é o atual: os seguintes saem
-  // do Tab e do mouse, e o clique neles não chega.
-  const choose = onSelect && ((i: number) => i < current && onSelect(i));
+  const reachable = (i: number) => onSelect != null && i <= current;
+  const choose = (i: number) => reachable(i) && onSelect?.(i);
   const list = (vertical: boolean) => (
     <ProgressIndicator
       currentIndex={current}
@@ -68,32 +72,49 @@ export function ProgressSteps({
       aria-label={label}
       onChange={choose}
     >
-      {steps.map((step, i) => {
-        const done = i < current;
-        return (
-          <ProgressStep
-            key={step.key}
-            label={step.label}
-            secondaryLabel={step.secondaryLabel}
-            translateWithId={translate}
-            className={cn(
-              onSelect && done && i !== selected && styles.selectable,
-              onSelect && i === selected && styles.selected,
-              onSelect && i > current && styles.inert,
-            )}
-            {...(onSelect && done ? { "aria-pressed": i === selected } : {})}
-            {...(onSelect && i > current ? { tabIndex: -1 } : {})}
-          />
-        );
-      })}
+      {steps.map((step, i) => (
+        <ProgressStep
+          key={step.key}
+          label={step.label}
+          secondaryLabel={step.secondaryLabel}
+          invalid={step.invalid}
+          translateWithId={translate}
+          className={cn(
+            reachable(i) && i !== selected && styles.selectable,
+            reachable(i) && i === selected && styles.selected,
+            onSelect && i > current && styles.inert,
+          )}
+          {...(reachable(i) ? { "aria-pressed": i === selected } : {})}
+          {...(onSelect && i > current
+            ? { tabIndex: -1, "aria-disabled": true }
+            : {})}
+          // O Carbon não põe o clique no passo atual: volta para ele.
+          {...(onSelect && i === current
+            ? { onClickCapture: () => choose(i) }
+            : {})}
+        />
+      ))}
     </ProgressIndicator>
   );
-  // Um wrapper por orientação: o display:none fica nele, não na classe do
-  // Carbon (que define o próprio display).
+  const compact = onSelect != null && steps.length > 4;
+  // A largura decide (container query, sem pular na hidratação): os dois
+  // existem no HTML e um some por CSS.
   return (
-    <>
+    <div className={cn(styles.steps, styles[`count${steps.length}`])}>
       <div className={styles.horizontal}>{list(false)}</div>
-      <div className={styles.vertical}>{list(true)}</div>
-    </>
+      <div className={styles.fallback}>
+        {compact ? (
+          <ProgressStepsMenu
+            steps={steps}
+            current={current}
+            label={label}
+            selected={selected ?? current}
+            onSelect={choose}
+          />
+        ) : (
+          list(true)
+        )}
+      </div>
+    </div>
   );
 }

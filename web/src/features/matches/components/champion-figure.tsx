@@ -1,4 +1,3 @@
-import { Locked } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
 
 import { ChampionPortrait } from "@/features/champions/components/champion-portrait";
@@ -10,7 +9,7 @@ type Props = {
   champion: components["schemas"]["ChampionRef"] | null | undefined;
   /** Sem campeão ainda: o texto no lugar do nome ("a escolher"). */
   empty?: string;
-  /** Banido: em cinza, com a borda vermelha e o cadeado. */
+  /** Banido: em cinza, com o nome em cinza (a linha "Bans" diz o porquê). */
   banned?: boolean;
   /** Sorteado pelo fim do tempo. */
   drawn?: boolean;
@@ -42,11 +41,6 @@ export function ChampionFigure({
           />
         ) : (
           <span aria-hidden className={styles.placeholder} />
-        )}
-        {banned && (
-          <span className={styles.icon}>
-            <Locked aria-hidden size={16} />
-          </span>
         )}
       </span>
       <span className={cn(styles.name, !champion && styles.empty)}>

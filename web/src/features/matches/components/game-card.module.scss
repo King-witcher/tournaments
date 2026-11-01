@@ -1,10 +1,7 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 
-.item {
-  padding-block: spacing.$spacing-05;
-}
-
+// O alto, o placar ou o envio e o resto, com o espaço entre grupos do Carbon.
 .content {
   display: flex;
   flex-direction: column;

@@ -1,44 +1,93 @@
 import type { components } from "@/shared/api/schema";
 
 type Detail = components["schemas"]["MatchDetail"];
+type Veto = NonNullable<Detail["veto"]>;
 
-/** Um passo da série: "Pronto", o veto de mapas, o draft e as partidas. */
-export type StepKey = "ready" | "maps" | "champions" | "games";
+/** Um passo da série: "Pronto", o veto de mapas, o draft e cada partida. */
+export type StepKey = "ready" | "maps" | "champions" | `game-${number}`;
+
+/** O passo da partida `number`. */
+export const gameStep = (number: number): StepKey => `game-${number}`;
+
+/** A partida de um passo, ou `null` nos passos do veto. */
+export function stepGame(key: StepKey): number | null {
+  return key.startsWith("game-") ? Number(key.slice(5)) : null;
+}
+
+/** As tarefas de uma partida enviada que pedem uma ação de quem vê. */
+const GAME_ACTIONS: components["schemas"]["ViewerTask"][] = [
+  "respond",
+  "resolve",
+];
 
 /**
- * Os passos da série no torneio dela e o atual; `null` sem veto (torneio sem
- * fase nenhuma, que nem pede "Pronto") ou sem nenhum passo feito numa série
- * decidida. Mapas só no modo veto (a votação de cada partida fica no cartão
- * dela, nas Partidas; a da partida 1, quando há draft, abre os Campeões, que
- * dependem do mapa), Campeões só com o draft no site. Série decidida: todos
- * feitos, mas só os que o veto completou (um W.O. no meio dos mapas deixa
- * Pronto e Partidas, sem o pool pela metade).
+ * Os passos da série e onde ela está: Pronto, Mapas (só no modo veto) e
+ * Campeões (só com o draft no site), quando o torneio tem veto, e uma
+ * partida por passo, até o melhor de N. `current` é o índice do passo em
+ * que a série está (`steps.length` com a série decidida: todos feitos);
+ * `home`, o que abre: o passo em que quem vê tem o que fazer (a vez dele no
+ * veto, que tem prazo, antes de confirmar ou resolver uma partida enviada),
+ * senão o atual. Série decidida: só os passos do veto que ele completou (um
+ * W.O. no meio dos mapas deixa o Pronto) e as partidas jogadas, abrindo na
+ * última. Sem lados ainda (ou sem adversário), nenhum passo.
  */
-export function seriesSteps(detail: Detail) {
+export function seriesSteps(detail: Detail): {
+  steps: StepKey[];
+  current: number;
+  home: StepKey;
+} {
   const veto = detail.veto;
-  if (!veto) return null;
-  const all: StepKey[] = ["ready"];
-  if (veto.map_mode === "veto") all.push("maps");
-  if (veto.champion_phase) all.push("champions");
-  all.push("games");
-  const at = vetoPhase(detail);
-  if (detail.summary.state === "ready") {
-    return { steps: all, home: at, current: all.indexOf(at) };
+  const s = detail.summary;
+  const vetoSteps: StepKey[] = [];
+  if (veto) {
+    vetoSteps.push("ready");
+    if (veto.map_mode === "veto") vetoSteps.push("maps");
+    if (veto.champion_phase) vetoSteps.push("champions");
   }
-  const reached = vetoReached(veto);
-  const steps: StepKey[] = [
-    ...all.slice(0, all.indexOf(reached)).filter((s) => s !== "games"),
-    "games",
-  ];
-  if (steps.length < 2) return null;
-  return { steps, home: "games" as const, current: steps.length };
+
+  if (s.state === "completed") {
+    const reached = veto ? vetoReached(veto) : "games";
+    const done =
+      reached === "games"
+        ? vetoSteps
+        : vetoSteps.slice(0, vetoSteps.indexOf(reached));
+    const steps = [...done, ...detail.games.map((g) => gameStep(g.number))];
+    return { steps, current: steps.length, home: steps[steps.length - 1] };
+  }
+  if (s.state !== "ready") {
+    return { steps: [], current: 0, home: "ready" };
+  }
+
+  const games = Array.from({ length: s.best_of }, (_, i) => gameStep(i + 1));
+  const steps = [...vetoSteps, ...games];
+  const phase = vetoPhase(detail);
+  const at =
+    phase === "games"
+      ? gameStep(detail.next_game ?? Math.max(1, detail.games.length))
+      : phase;
+  const respond = detail.games.find(
+    (g) => g.task != null && GAME_ACTIONS.includes(g.task),
+  );
+  const home =
+    respond && !vetoTurnIsMine(detail) ? gameStep(respond.number) : at;
+  const current = steps.indexOf(at);
+  return { steps, current: current < 0 ? steps.length - 1 : current, home };
+}
+
+/** Quem vê tem um passo do veto para fazer agora (com prazo). */
+function vetoTurnIsMine(detail: Detail) {
+  const veto = detail.veto;
+  return (
+    veto?.status === "in_progress" &&
+    (veto.options.length > 0 || veto.picks.length > 0)
+  );
 }
 
 /**
  * Até onde o veto de uma série decidida chegou, pelo que ele tem: um W.O. no
  * meio deixa o veto em andamento, sem vez.
  */
-function vetoReached(veto: NonNullable<Detail["veto"]>): StepKey {
+function vetoReached(veto: Veto): "ready" | "maps" | "champions" | "games" {
   if (veto.status === "done") return "games";
   if (veto.status === "waiting_ready") return "ready";
   if (veto.map_mode === "veto" && veto.map_steps.length < veto.pool.length - 1)
@@ -49,8 +98,14 @@ function vetoReached(veto: NonNullable<Detail["veto"]>): StepKey {
   return veto.champion_phase && !drafted ? "champions" : "games";
 }
 
-/** Onde o veto está: o passo da vez dele, ou as partidas depois dele. */
-function vetoPhase(detail: Detail): StepKey {
+/**
+ * Onde o veto está: o passo da vez dele, ou as partidas (a votação de cada
+ * partida fica no passo dela; a da partida 1, com o draft, abre os Campeões,
+ * que dependem do mapa).
+ */
+export function vetoPhase(
+  detail: Detail,
+): "ready" | "maps" | "champions" | "games" {
   const veto = detail.veto;
   if (!veto) return "games";
   if (veto.status === "waiting_ready") return "ready";
@@ -58,7 +113,6 @@ function vetoPhase(detail: Detail): StepKey {
   if (veto.status === "done" || !turn) return "games";
   if (turn.target === "champion") return "champions";
   if (veto.map_mode === "veto") return "maps";
-  // Votação da partida 1 antes do draft: abre os Campeões.
   const first = veto.games.find((g) => g.game === 1);
   const drafted = first?.pick_a || first?.pick_b || first?.team_picks.length;
   return veto.champion_phase && (veto.game ?? 1) === 1 && !drafted

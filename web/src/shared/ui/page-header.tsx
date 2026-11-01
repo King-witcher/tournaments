@@ -62,9 +62,10 @@ export function PageHeader({
         >
           {/* No celular, como pede o Carbon: o ⋯ com as de cima e só a mãe. */}
           {breadcrumbs.length > 1 && (
-            <BreadcrumbItem className={styles.phoneOnly}>
-              <BreadcrumbOverflow crumbs={breadcrumbs.slice(0, -1)} />
-            </BreadcrumbItem>
+            <BreadcrumbOverflow
+              className={styles.phoneOnly}
+              crumbs={breadcrumbs.slice(0, -1)}
+            />
           )}
           {breadcrumbs.map((crumb, index) => (
             <BreadcrumbItem
