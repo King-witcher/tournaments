@@ -34,7 +34,7 @@
       "tab": "Resultado",
       "title": "Un lado envía, el otro confirma",
       "body": "Cada partida llega con los frags y la captura de pantalla del marcador. Sin respuesta en el plazo, vale lo enviado. Impugnada, pasa a la organización.",
-      "shot": "Una serie con el marcador de cada partida y la siguiente esperando el envío."
+      "shot": "Una serie con el marcador de cada partida y la siguiente esperando el envío, con el mapa y el campeón de cada lado."
     },
     "ranking": {
       "tab": "Ranking",

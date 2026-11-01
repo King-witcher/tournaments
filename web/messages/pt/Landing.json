@@ -34,7 +34,7 @@
       "tab": "Resultado",
       "title": "Um lado envia, o outro confirma",
       "body": "Cada partida entra com os frags e a captura de tela do placar. Sem resposta no prazo, vale o que foi enviado. Contestada, vai para a organização.",
-      "shot": "Uma série com o placar de cada partida e a próxima esperando o envio."
+      "shot": "Uma série com o placar de cada partida e a próxima esperando o envio, com o mapa e o campeão de cada lado."
     },
     "ranking": {
       "tab": "Ranking",
