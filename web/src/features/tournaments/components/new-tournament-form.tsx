@@ -115,10 +115,9 @@ export function NewTournamentForm({
             isNew
           />
           <TournamentStartField
-            value={values.startsAt}
-            onChange={(startsAt) => onChange({ startsAt })}
-            error={errors.startsAt}
-            checkInMinutes={values.checkInMinutes}
+            values={values}
+            onChange={onChange}
+            errors={errors}
             disabled={false}
           />
           <TournamentDescriptionField

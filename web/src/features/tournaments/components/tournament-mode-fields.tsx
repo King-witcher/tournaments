@@ -1,5 +1,6 @@
 import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Notice } from "@/shared/ui/notice";
@@ -11,13 +12,17 @@ import {
   type TournamentValues,
   teamSizeOf,
 } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
 
 type Schemas = components["schemas"];
 
 const MODES: Schemas["TournamentMode"][] = ["duel", "tdm"];
 
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["mode", "teamSize"] as const;
+
 type Props = {
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** O torneio já começou: tudo aqui fica travado. */
@@ -34,7 +39,7 @@ type Props = {
  * vagas não mudam sozinhas ao trocar: abaixo de dois times, a conferência
  * mostra o erro no campo delas.
  */
-export function TournamentModeFields({
+export const TournamentModeFields = memo(function TournamentModeFields({
   values,
   onChange,
   errors,
@@ -94,7 +99,7 @@ export function TournamentModeFields({
       )}
     </>
   );
-}
+}, sameValues(KEYS));
 
 /**
  * O que salvar faz com os times dos inscritos, se a modalidade ou o tamanho

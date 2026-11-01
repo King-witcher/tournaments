@@ -150,10 +150,9 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                   <Notice kind="info">{t("registrationLocked")}</Notice>
                 )}
                 <TournamentStartField
-                  value={values.startsAt}
-                  onChange={(startsAt) => onChange({ startsAt })}
-                  error={errors.startsAt}
-                  checkInMinutes={values.checkInMinutes}
+                  values={values}
+                  onChange={onChange}
+                  errors={errors}
                   disabled={setupLocked}
                   saved={tournament.starts_at ?? null}
                 />

@@ -76,6 +76,8 @@ Os que não se deduzem do nome:
 
 Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo (com um grupo só, os campos direto num `Stack gap={6}`), erro de campo no `invalidText` (`invalidProps`), `FormError` acima dos botões, `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos. Modelo: `features/tenants/components/create-tenant-form.tsx`. Validação: "Formulários: validação" em Princípios de interface; `useFormValidity` (`shared/hooks/`) e os filtros de `shared/lib/input-filters.ts`.
 
+Formulário grande com um estado só (o de torneio): cada bloco é `memo(Componente, sameValues(KEYS))` (`features/tournaments/lib/same-values.ts`) e tipa `values` como o `Pick` dos campos que lê; o `onChange` e os `errors` do `useTournamentForm` não mudam de objeto à toa, e função passada a um bloco também não pode mudar (nada de `onChange={(x) => ...}` inline nele). Sem isso, cada tecla renderiza o formulário inteiro, inclusive os grupos fechados (o acordeão e a aba do Carbon só escondem).
+
 ### Storybook
 
 `bun run storybook` (http://localhost:6006) mostra cada componente da `shared/ui` nas variações que ele expõe, com tema (`white`/`g100`), idioma e largura (`Celular (390px)`, `md`) na barra de ferramentas e a aba Accessibility (axe) para contraste. `bun run build-storybook` gera o site estático em `storybook-static/` (ignorado).

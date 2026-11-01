@@ -1,5 +1,6 @@
 import { FormGroup, SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -15,14 +16,29 @@ import {
   TEAM_PICK_SECONDS,
   type TournamentValues,
 } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
 import { SecondsSelect } from "./seconds-select";
 
 const BANS = [0, 1, 2, 3];
 
 const WHO: components["schemas"]["NoRepeatWho"][] = ["player", "team"];
 
+/** Os campos do formulário que o bloco lê. */
+const KEYS = [
+  "championPhase",
+  "bansPerSeries",
+  "mirror",
+  "sameTeam",
+  "noRepeat",
+  "noRepeatWho",
+  "mode",
+  "mapMode",
+  "vetoSeconds",
+  "teamPickSeconds",
+] as const;
+
 type Props = {
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** O torneio já começou: tudo aqui fica travado. */
@@ -37,7 +53,7 @@ type Props = {
  * tem passo (com veto ou votação, ele fica no grupo Mapas), e, no TDM, o da
  * janela simultânea.
  */
-export function TournamentChampionFields({
+export const TournamentChampionFields = memo(function TournamentChampionFields({
   values,
   onChange,
   errors,
@@ -161,4 +177,4 @@ export function TournamentChampionFields({
       )}
     </>
   );
-}
+}, sameValues(KEYS));

@@ -1,5 +1,6 @@
 import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Select } from "@/shared/ui/select";
@@ -10,6 +11,7 @@ import {
   stepSecondsGroup,
   type TournamentValues,
 } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
 import { MapPoolField } from "./map-pool-field";
 import { SecondsSelect } from "./seconds-select";
 
@@ -17,10 +19,22 @@ type Schemas = components["schemas"];
 
 const MODES: Schemas["MapMode"][] = ["veto", "vote", "random", "off"];
 
+/** Os campos do formulário que o bloco lê. */
+const KEYS = [
+  "mapMode",
+  "mode",
+  "mapPool",
+  "championPhase",
+  "vetoSeconds",
+  "stageFormat",
+  "bestOf",
+  "finalsBestOf",
+] as const;
+
 type Props = {
   /** A comunidade: o pool escolhido fica lembrado por comunidade. */
   tenant: string;
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** Os mapas ativos (`GET /maps`), para escolher o pool. */
@@ -36,7 +50,9 @@ type Props = {
  * para o draft de campeões. Sem passo de mapa, esse tempo fica no grupo
  * Campeões.
  */
-export function TournamentVetoFields(props: Props) {
+export const TournamentVetoFields = memo(function TournamentVetoFields(
+  props: Props,
+) {
   const { tenant, values, onChange, errors, maps, disabled } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
@@ -87,4 +103,4 @@ export function TournamentVetoFields(props: Props) {
       )}
     </>
   );
-}
+}, sameValues(KEYS));

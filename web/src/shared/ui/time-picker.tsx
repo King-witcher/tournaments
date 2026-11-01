@@ -11,6 +11,7 @@ import {
   type ComponentProps,
   type ReactNode,
   useId,
+  useMemo,
 } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
@@ -86,6 +87,17 @@ export function TimePicker({
   const isClient = useIsClient();
   const generated = useId();
   const inputId = id ?? generated;
+  // Uns 400 fusos: a lista é a mesma em todo render, e recriá-la a cada
+  // tecla em outro campo do formulário custava mais que o resto dele.
+  const zones = useMemo(
+    () =>
+      isClient
+        ? timeZoneOptions().map((zone) => (
+            <SelectItem key={zone.value} value={zone.value} text={zone.label} />
+          ))
+        : null,
+    [isClient],
+  );
   const check = useFieldCheck<HTMLInputElement>({
     required,
     filter: timeDigits,
@@ -140,14 +152,7 @@ export function TimePicker({
             onTimeZoneChange?.(event.target.value)
           }
         >
-          {isClient &&
-            timeZoneOptions().map((zone) => (
-              <SelectItem
-                key={zone.value}
-                value={zone.value}
-                text={zone.label}
-              />
-            ))}
+          {zones}
         </TimePickerSelect>
       )}
     </CarbonTimePicker>

@@ -1,18 +1,28 @@
 import { useFormatter, useTranslations } from "next-intl";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { browserTimeZone } from "@/shared/lib/zoned-time";
 import { DateTimeInput } from "@/shared/ui/date-time-input";
-import { earliestStart, startTiming } from "../lib/form-values";
+import type { FieldErrors } from "../lib/form-errors";
+import {
+  earliestStart,
+  startTiming,
+  type TournamentValues,
+} from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
+
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["startsAt", "checkInMinutes"] as const;
 
 type Props = {
-  /** Início em ISO (UTC), ou `null` sem data. */
-  value: string | null;
-  onChange: (startsAt: string | null) => void;
-  error?: string;
-  /** Janela de check-in do formulário: o início precisa deixá-la pela frente. */
-  checkInMinutes: number | null;
+  /**
+   * O início (ISO em UTC, ou `null` sem data) e a janela de check-in, que o
+   * início precisa deixar pela frente.
+   */
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
+  onChange: (patch: Partial<TournamentValues>) => void;
+  errors: FieldErrors;
   /** O torneio já começou: não muda mais. */
   disabled: boolean;
   /**
@@ -28,14 +38,15 @@ type Props = {
  * é erro do campo (e bloqueia o envio). Embaixo, com check-in, quando ele
  * abre, no mesmo fuso.
  */
-export function TournamentStartField({
-  value,
+export const TournamentStartField = memo(function TournamentStartField({
+  values,
   onChange,
-  error,
-  checkInMinutes,
+  errors,
   disabled,
   saved,
 }: Props) {
+  const { startsAt: value, checkInMinutes } = values;
+  const error = errors.startsAt;
   const t = useTranslations("TournamentForm");
   const format = useFormatter();
   const isClient = useIsClient();
@@ -88,7 +99,7 @@ export function TournamentStartField({
       }
       invalid={error !== undefined}
       invalidText={error}
-      onChange={onChange}
+      onChange={(startsAt) => onChange({ startsAt })}
     />
   );
-}
+}, sameValues(KEYS));

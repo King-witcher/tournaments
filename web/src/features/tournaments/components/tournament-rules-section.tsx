@@ -1,12 +1,17 @@
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import { FormSection } from "@/shared/ui/form-section";
 import { TextArea } from "@/shared/ui/text-area";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
+
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["rules", "locale"] as const;
 
 type Props = {
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
 };
@@ -17,7 +22,11 @@ type Props = {
  * do torneio já explica, por isso o campo é opcional. A legenda da seção já
  * nomeia o campo: o rótulo fica só para o leitor de tela.
  */
-export function TournamentRulesSection({ values, onChange, errors }: Props) {
+export const TournamentRulesSection = memo(function TournamentRulesSection({
+  values,
+  onChange,
+  errors,
+}: Props) {
   const t = useTranslations("TournamentForm");
 
   return (
@@ -36,4 +45,4 @@ export function TournamentRulesSection({ values, onChange, errors }: Props) {
       />
     </FormSection>
   );
-}
+}, sameValues(KEYS));

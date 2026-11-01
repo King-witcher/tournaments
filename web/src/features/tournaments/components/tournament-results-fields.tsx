@@ -1,10 +1,15 @@
+import { memo } from "react";
 import { ScreenshotsRequiredField } from "@/features/screenshots/components/screenshots-required-field";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
 import { TournamentContestField } from "./tournament-contest-field";
 
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["contestMinutes", "screenshotsRequired"] as const;
+
 type Props = {
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** Encerrado: nem a janela de contestação nem a captura de tela obrigatória mudam. */
@@ -16,7 +21,7 @@ type Props = {
  * com capturas de tela na API). Ambas valem para os próximos envios e têm
  * padrão.
  */
-export function TournamentResultsFields({
+export const TournamentResultsFields = memo(function TournamentResultsFields({
   values,
   onChange,
   errors,
@@ -37,4 +42,4 @@ export function TournamentResultsFields({
       />
     </>
   );
-}
+}, sameValues(KEYS));

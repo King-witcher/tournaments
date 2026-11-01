@@ -186,7 +186,10 @@ export const teamSizeOf = (
 ) => (isTdm(values) ? values.teamSize : 1);
 
 /** O pool do formulário: o escolhido, ou o padrão (`default_pool`) enquanto não mexeram. */
-export function poolOf(values: TournamentValues, maps: Schemas["Map"][]) {
+export function poolOf(
+  values: Pick<TournamentValues, "mapPool">,
+  maps: Schemas["Map"][],
+) {
   return (
     values.mapPool ?? maps.filter((m) => m.default_pool).map((m) => m.slug)
   );
@@ -203,13 +206,17 @@ export const TEAM_PICK_SECONDS = [15, 30, 45, 60, 90, 120, 180, 300];
  * ou votação (e então vale também para o draft); Campeões, quando só o draft
  * no site tem passos; nenhum, sem passo (o sorteio do mapa não tem).
  */
-export function stepSecondsGroup(values: TournamentValues) {
+export function stepSecondsGroup(
+  values: Pick<TournamentValues, "mapMode" | "championPhase">,
+) {
   if (values.mapMode === "veto" || values.mapMode === "vote") return "maps";
   return values.championPhase ? "champions" : null;
 }
 
 /** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
-export const longestSeries = (values: TournamentValues) =>
+export const longestSeries = (
+  values: Pick<TournamentValues, "stageFormat" | "bestOf" | "finalsBestOf">,
+) =>
   values.stageFormat === "elimination"
     ? Math.max(values.bestOf, values.finalsBestOf)
     : values.bestOf;

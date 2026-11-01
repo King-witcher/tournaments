@@ -1,5 +1,6 @@
 import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 
 import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup } from "@/shared/ui/radio-group";
@@ -7,6 +8,7 @@ import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
 import { slotLimits, teamsIn } from "../lib/format";
+import { sameValues } from "../lib/same-values";
 import styles from "./tournament-format-fields.module.scss";
 
 const BEST_OF = [1, 3, 5, 7, 9];
@@ -19,7 +21,9 @@ type FormatChoice = "double" | "single" | "round_robin" | "swiss";
 
 const CHOICES: FormatChoice[] = ["double", "single", "round_robin", "swiss"];
 
-function choiceOf(values: TournamentValues): FormatChoice {
+function choiceOf(
+  values: Pick<TournamentValues, "stageFormat" | "bracket">,
+): FormatChoice {
   return values.stageFormat === "elimination"
     ? values.bracket
     : values.stageFormat;
@@ -31,8 +35,22 @@ function patchOf(choice: FormatChoice): Partial<TournamentValues> {
     : { stageFormat: choice };
 }
 
+/** Os campos do formulário que o bloco lê. */
+const KEYS = [
+  "stageFormat",
+  "bracket",
+  "grandFinalReset",
+  "bestOf",
+  "finalsBestOf",
+  "swissRounds",
+  "mode",
+  "teamSize",
+  "maxParticipants",
+  "countsForRating",
+] as const;
+
 type Props = {
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** O torneio já começou: tudo aqui fica travado. */
@@ -45,7 +63,7 @@ type Props = {
  * do suíço. No TDM, o teto do formato aparece em jogadores (como as vagas) e
  * as rodadas contam times.
  */
-export function TournamentFormatFields({
+export const TournamentFormatFields = memo(function TournamentFormatFields({
   values,
   onChange,
   errors,
@@ -158,4 +176,4 @@ export function TournamentFormatFields({
       />
     </>
   );
-}
+}, sameValues(KEYS));

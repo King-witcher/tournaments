@@ -2,8 +2,10 @@ import { useLocale } from "next-intl";
 import {
   startTransition,
   useActionState,
+  useCallback,
   useEffect,
   useEffectEvent,
+  useMemo,
   useState,
 } from "react";
 
@@ -55,6 +57,9 @@ type Failure = {
   value?: unknown;
 };
 
+/** Sem erro: sempre o mesmo objeto, para o `memo` dos blocos. */
+const NO_ERRORS: FieldErrors = {};
+
 type Options = {
   /**
    * Mostra o que esconde um controle (o acordeão ou a aba), para o
@@ -83,7 +88,10 @@ export function useTournamentForm(
   const { ref: formRef, canSubmit } = useFormValidity();
   // Na criação, o original é o idioma da interface; os outros são traduções.
   const original = tournament?.locale ?? uiLocale;
-  const others = routing.locales.filter((l) => l !== original);
+  const others = useMemo(
+    () => routing.locales.filter((l) => l !== original),
+    [original],
+  );
   const [values, setValues] = useState(() =>
     tournament ? valuesFrom(tournament) : defaultValues(original),
   );
@@ -209,8 +217,33 @@ export function useTournamentForm(
     failure?.field !== undefined && current(failure) === failure.value
       ? failure
       : undefined;
-  const errorsOf = (at?: Locale): FieldErrors =>
-    live?.field && live.locale === at ? { [live.field]: live.message } : {};
+  // Os erros mudam de objeto só quando o erro muda: os blocos do formulário
+  // (com `memo`) não renderizam de novo a cada tecla por causa deles.
+  const liveErrors = useMemo<FieldErrors>(
+    () => (live?.field ? { [live.field]: live.message } : NO_ERRORS),
+    [live],
+  );
+  const errorsOf = useCallback(
+    (at?: Locale) => (live?.locale === at ? liveErrors : NO_ERRORS),
+    [live, liveErrors],
+  );
+  const onChange = useCallback(
+    (patch: Partial<TournamentValues>) =>
+      setValues((v) => ({ ...v, ...patch })),
+    [],
+  );
+  const onTranslationChange = useCallback(
+    (l: Locale, patch: Partial<TranslationDraft>) =>
+      setTranslations((all) => ({
+        ...all,
+        [l]: { ...EMPTY_TRANSLATION, ...all[l], ...patch },
+      })),
+    [],
+  );
+  const translationErrors = useCallback(
+    (l: Locale) => errorsOf(l) as FieldErrors<keyof TranslationValues>,
+    [errorsOf],
+  );
 
   /**
    * Confere antes de enviar: os campos (a validação nativa, com o grupo do
@@ -235,8 +268,8 @@ export function useTournamentForm(
     /** Nenhum campo recusa o que tem: o envio pode ser liberado. */
     canSubmit,
     values,
-    onChange: (patch: Partial<TournamentValues>) =>
-      setValues((v) => ({ ...v, ...patch })),
+    /** Muda campos do torneio; a mesma função em todo render. */
+    onChange,
     /** O idioma original dos textos. */
     original,
     /** Os idiomas que podem ter tradução (os diferentes do original). */
@@ -245,11 +278,8 @@ export function useTournamentForm(
     /** A tradução de `l` (vazia e desligada se não existe). */
     translationOf: (l: Locale): TranslationDraft =>
       translations[l] ?? EMPTY_TRANSLATION,
-    onTranslationChange: (l: Locale, patch: Partial<TranslationDraft>) =>
-      setTranslations((all) => ({
-        ...all,
-        [l]: { ...EMPTY_TRANSLATION, ...all[l], ...patch },
-      })),
+    /** Muda a tradução de um idioma; a mesma função em todo render. */
+    onTranslationChange,
     setupLocked,
     check,
     /** Envia (depois de `check`). */
@@ -259,8 +289,8 @@ export function useTournamentForm(
     },
     pending,
     errors: errorsOf(),
-    translationErrors: (l: Locale) =>
-      errorsOf(l) as FieldErrors<keyof TranslationValues>,
+    /** Os erros da tradução de um idioma; muda só quando o erro muda. */
+    translationErrors,
     formError:
       failure && failure.field === undefined ? failure.message : undefined,
   };

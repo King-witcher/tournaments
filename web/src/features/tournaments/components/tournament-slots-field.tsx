@@ -6,7 +6,10 @@ import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
 import { SLOTS, slotLimits, teamsIn } from "../lib/format";
 
 type Props = {
-  values: TournamentValues;
+  values: Pick<
+    TournamentValues,
+    "mode" | "teamSize" | "stageFormat" | "maxParticipants"
+  >;
   onChange: (maxParticipants: number | null) => void;
   /** O que a API disse deste campo, já traduzido. */
   error?: string;

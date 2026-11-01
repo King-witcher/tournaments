@@ -1,6 +1,6 @@
 import { FormGroup, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useId } from "react";
+import { memo, useId } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
@@ -17,7 +17,8 @@ type Props = {
   /** O idioma original, para dizer o que aparece sem tradução. */
   original: Locale;
   draft: TranslationDraft;
-  onChange: (patch: Partial<TranslationDraft>) => void;
+  /** A mesma função em todo render, para o `memo`. */
+  onChange: (locale: Locale, patch: Partial<TranslationDraft>) => void;
   errors: FieldErrors<keyof TranslationValues>;
   /** O torneio já tem esta tradução salva: remover a apaga ao salvar. */
   saved: boolean;
@@ -29,7 +30,7 @@ type Props = {
  * regras adicionais e "Remover". O texto não se perde ao remover: adicionar
  * de novo antes de salvar o traz de volta. O foco acompanha a troca.
  */
-export function TournamentTranslation({
+export const TournamentTranslation = memo(function TournamentTranslation({
   locale,
   original,
   draft,
@@ -43,7 +44,7 @@ export function TournamentTranslation({
   const addId = useId();
   const language = tLocales(locale);
   const toggle = (enabled: boolean) => {
-    onChange({ enabled });
+    onChange(locale, { enabled });
     // O botão usado some: o foco vai para o que aparece no lugar dele.
     requestAnimationFrame(() =>
       document.getElementById(enabled ? nameId : addId)?.focus(),
@@ -82,7 +83,7 @@ export function TournamentTranslation({
           value={draft.name}
           invalid={errors.name !== undefined}
           invalidText={errors.name}
-          onChange={(e) => onChange({ name: e.target.value })}
+          onChange={(e) => onChange(locale, { name: e.target.value })}
         />
         <TextArea
           labelText={t("description")}
@@ -93,7 +94,7 @@ export function TournamentTranslation({
           value={draft.description}
           invalid={errors.description !== undefined}
           invalidText={errors.description}
-          onChange={(e) => onChange({ description: e.target.value })}
+          onChange={(e) => onChange(locale, { description: e.target.value })}
         />
         <TextArea
           labelText={t("rules")}
@@ -104,7 +105,7 @@ export function TournamentTranslation({
           value={draft.rules}
           invalid={errors.rules !== undefined}
           invalidText={errors.rules}
-          onChange={(e) => onChange({ rules: e.target.value })}
+          onChange={(e) => onChange(locale, { rules: e.target.value })}
         />
         <div>
           <Button kind="danger--ghost" onClick={() => toggle(false)}>
@@ -114,4 +115,4 @@ export function TournamentTranslation({
       </Stack>
     </FormGroup>
   );
-}
+});

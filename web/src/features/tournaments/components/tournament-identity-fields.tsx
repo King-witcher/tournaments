@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { slugChars } from "@/shared/lib/input-filters";
@@ -7,10 +7,14 @@ import { slugify } from "@/shared/lib/slugify";
 import { TextInput } from "@/shared/ui/text-input";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
+import { sameValues } from "../lib/same-values";
+
+/** Os campos do formulário que o bloco lê. */
+const KEYS = ["name", "slug", "locale"] as const;
 
 type Props = {
   tenant: string;
-  values: TournamentValues;
+  values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
   /** Na criação aparece o id, que depois não muda. */
@@ -21,7 +25,7 @@ type Props = {
  * O nome no idioma original e, na criação, o id com a prévia do link. O id
  * acompanha o nome até a pessoa editá-lo.
  */
-export function TournamentIdentityFields({
+export const TournamentIdentityFields = memo(function TournamentIdentityFields({
   tenant,
   values,
   onChange,
@@ -79,4 +83,4 @@ export function TournamentIdentityFields({
       )}
     </>
   );
-}
+}, sameValues(KEYS));

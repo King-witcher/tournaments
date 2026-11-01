@@ -28,7 +28,7 @@ export function TournamentTranslations({ form, saved = [] }: Props) {
           locale={l}
           original={form.original}
           draft={form.translationOf(l)}
-          onChange={(patch) => form.onTranslationChange(l, patch)}
+          onChange={form.onTranslationChange}
           errors={form.translationErrors(l)}
           saved={saved.includes(l)}
         />
