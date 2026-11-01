@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// O respiro entre faixas separa os assuntos sem linha nem caixa; no
+// computador, maior, na proporção dos títulos expressivos.
+.band {
+  padding-block: spacing.$spacing-10;
+
+  @include breakpoint.breakpoint(lg) {
+    padding-block: spacing.$spacing-12;
+  }
+}
+
+// De parede a parede: o `Content` não tem padding lateral (`AppContent`).
+.layer {
+  background: theme.$layer-01;
+}

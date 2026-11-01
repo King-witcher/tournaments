@@ -1,0 +1,59 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O `AppContent` já dá o respiro abaixo do cabeçalho; embaixo, o mesmo das
+// faixas, antes da primeira de camada.
+.hero {
+  padding-block-end: spacing.$spacing-10;
+
+  @include breakpoint.breakpoint(lg) {
+    padding-block: spacing.$spacing-07 spacing.$spacing-12;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  @include type.type-style("fluid-heading-05", true);
+}
+
+// A frase de apoio, um degrau abaixo do título e em cor secundária, para o
+// título ler primeiro.
+.lead {
+  @include type.type-style("fluid-heading-03", true);
+
+  margin-block-start: spacing.$spacing-06;
+  color: theme.$text-secondary;
+}
+
+// No celular os dois não cabem lado a lado: "Entrar" desce para baixo do
+// primário, em vez de alargar a página. Só lá: no `ButtonSet` cada botão
+// pede a largura toda, e a quebra empilharia os dois também no computador.
+.actions {
+  margin-block-start: spacing.$spacing-08;
+
+  @include breakpoint.breakpoint-down(md) {
+    flex-wrap: wrap;
+  }
+}
+
+.invite {
+  @include type.type-style("body-01");
+
+  margin-block-start: spacing.$spacing-05;
+  color: theme.$text-secondary;
+}
+
+.shot {
+  margin-block-start: spacing.$spacing-10;
+
+  @include breakpoint.breakpoint(xlg) {
+    margin-block-start: 0;
+  }
+}

@@ -38,8 +38,8 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 
 ### Início `/`
 
-- Sem sessão: título, uma frase do que o site faz, "Entrar" (primário) e "Criar conta" (secundário).
-- Com sessão: "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: nome, comunidade, situação, próxima partida como link separado; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (+ "Criar comunidade").
+- Sem sessão, a **apresentação** (estática), em faixas de parede a parede que alternam o fundo e a camada: abertura com o título expressivo (`fluid-heading-05`), uma frase, "Criar conta" (primário, leva à criação da comunidade depois do cadastro) e "Entrar", a frase do convite e a captura da chave; "Como funciona" em três passos; "Do veto ao ranking" em abas (veto e draft, resultado, ranking), texto e captura; "Para quem organiza" em quatro colunas; e "Criar conta" de novo no fim. As capturas são do próprio site, por idioma e por tema.
+- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: nome, comunidade, situação, próxima partida como link separado; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (+ "Criar comunidade").
 
 ### Entrar `/login`, Criar conta `/signup`, links por email
 

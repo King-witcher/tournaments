@@ -1,0 +1,69 @@
+{
+  "hero": {
+    "title": "Torneos de Quake Champions",
+    "lead": "Inscripción, check-in, llave, veto, resultado y ranking de los torneos de tu comunidad, en un solo lugar. En duelo o por equipos.",
+    "signup": "Crear cuenta",
+    "login": "Entrar",
+    "invite": "¿Recibiste un enlace de invitación? Ábrelo, que te lleva al registro.",
+    "shot": "La llave de un torneo de doble eliminación, con las series de la primera ronda decididas."
+  },
+  "steps": {
+    "title": "Cómo funciona",
+    "community": {
+      "title": "Crea la comunidad",
+      "body": "Los jugadores entran con un enlace de invitación."
+    },
+    "tournament": {
+      "title": "Arma el torneo",
+      "body": "Elige el formato, el pool de mapas y la fecha. El check-in se abre solo antes del inicio."
+    },
+    "play": {
+      "title": "Deja que la llave avance",
+      "body": "Los jugadores hacen el veto y envían cada partida. La organización solo resuelve lo que se impugna."
+    }
+  },
+  "tour": {
+    "title": "Del veto al ranking",
+    "veto": {
+      "tab": "Veto y draft",
+      "title": "Mapas y campeones decididos en vivo",
+      "body": "Veto, votación o sorteo de mapa, con cronómetro en cada paso. Después, cada lado banea y elige los campeones de la serie, dentro de las reglas de repetición del torneo.",
+      "shot": "El veto de una serie en curso, con los mapas baneados en gris."
+    },
+    "result": {
+      "tab": "Resultado",
+      "title": "Un lado envía, el otro confirma",
+      "body": "Cada partida llega con los frags y la captura de pantalla del marcador. Sin respuesta en el plazo, vale lo enviado. Impugnada, pasa a la organización.",
+      "shot": "Una serie con el marcador de cada partida y la siguiente esperando el envío."
+    },
+    "ranking": {
+      "tab": "Ranking",
+      "title": "El rating Elo de la comunidad",
+      "body": "Cada partida confirmada cambia el rating de quienes jugaron, en duelo y por equipos. Con él, la organización ordena la llave y equilibra los equipos.",
+      "shot": "El ranking de una comunidad, con el rating, las partidas y las victorias de cada miembro."
+    }
+  },
+  "features": {
+    "title": "Para quien organiza",
+    "formats": {
+      "title": "Formatos",
+      "body": "Eliminación simple o doble, todos contra todos y suizo."
+    },
+    "teams": {
+      "title": "Equipos de 2 a 4",
+      "body": "Formación por sorteo o equilibrada por el rating, con capitán y sustituciones durante el torneo."
+    },
+    "notices": {
+      "title": "Avisos",
+      "body": "Serie lista, partida impugnada y hora de empezar llegan al sitio, al celular y al Discord de la comunidad."
+    },
+    "languages": {
+      "title": "Español y portugués",
+      "body": "El sitio, los avisos y el texto del torneo en los dos idiomas."
+    }
+  },
+  "closing": {
+    "title": "Arma el primer torneo de tu comunidad",
+    "action": "Crear cuenta"
+  }
+}

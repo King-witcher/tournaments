@@ -1,0 +1,41 @@
+@use "@carbon/react/scss/theme";
+
+// A captura tem o fundo da página; a borda mostra onde ela começa.
+.frame {
+  border: 1px solid theme.$border-subtle-00;
+}
+
+.light,
+.dark {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+// Uma versão por tema, com as mesmas regras do tema em `globals.scss`: a do
+// sistema, e a escolha da pessoa (`data-theme`) acima dela.
+.dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) {
+    .light {
+      display: none;
+    }
+
+    .dark {
+      display: block;
+    }
+  }
+}
+
+:global(:root[data-theme="dark"]) {
+  .light {
+    display: none;
+  }
+
+  .dark {
+    display: block;
+  }
+}

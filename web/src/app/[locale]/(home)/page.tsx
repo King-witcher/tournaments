@@ -1,47 +1,32 @@
-import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { AnonymousIntro } from "@/features/auth/components/anonymous-intro";
 import { AuthError } from "@/features/auth/components/auth-error";
-import { ApiStatus } from "@/features/health/components/api-status";
-import { OrganizingPending } from "@/features/organizing/components/organizing-pending";
-import { LiveUpdates } from "@/features/realtime/components/live-updates";
-import { MyTenants } from "@/features/tenants/components/my-tenants";
-import { MyTournaments } from "@/features/tournaments/components/my-tournaments";
+import { LandingClosing } from "@/features/landing/components/landing-closing";
+import { LandingFeatures } from "@/features/landing/components/landing-features";
+import { LandingHero } from "@/features/landing/components/landing-hero";
+import { LandingSteps } from "@/features/landing/components/landing-steps";
+import { LandingTour } from "@/features/landing/components/landing-tour";
 import { Page } from "@/shared/ui/page";
-import { PageHeader } from "@/shared/ui/page-header";
-import { SectionSkeleton } from "@/shared/ui/skeleton";
 
-export default async function Home({ searchParams }: PageProps<"/[locale]">) {
-  const t = await getTranslations("Home");
-
+/**
+ * O início de quem não entrou: a apresentação do site, estática (sai pronta,
+ * sem esperar a API). Com cookie de sessão, o proxy serve `/me` neste
+ * endereço.
+ */
+export default function Landing({ searchParams }: PageProps<"/[locale]">) {
   return (
-    <Page width="wide">
+    <>
+      {/* O login pelo provedor que deu errado volta para cá. */}
       <Suspense fallback={null}>
-        <AuthError searchParams={searchParams} />
+        <Page width="wide">
+          <AuthError searchParams={searchParams} />
+        </Page>
       </Suspense>
-      <PageHeader title={t("title")} meta={t("subtitle")} />
-      {/* As pendências da organização, "Seus torneios" e "Suas comunidades"
-          recarregam sozinhos. */}
-      <LiveUpdates me />
-      <Suspense fallback={null}>
-        <ApiStatus />
-      </Suspense>
-      {/* Uma espera só: quem não entrou vê o convite a entrar, quem entrou vê as
-          listas, e a página troca o esqueleto uma vez em vez de pular três. */}
-      <Suspense
-        fallback={
-          <>
-            <SectionSkeleton tiles={3} />
-            <SectionSkeleton tiles={2} />
-          </>
-        }
-      >
-        <AnonymousIntro />
-        <OrganizingPending />
-        <MyTournaments />
-        <MyTenants />
-      </Suspense>
-    </Page>
+      <LandingHero />
+      <LandingSteps />
+      <LandingTour />
+      <LandingFeatures />
+      <LandingClosing />
+    </>
   );
 }

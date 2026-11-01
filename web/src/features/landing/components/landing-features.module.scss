@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.title {
+  @include type.type-style("fluid-heading-04", true);
+
+  margin-block-end: spacing.$spacing-07;
+}
+
+// A linha em cima marca onde cada item começa, na grade de duas ou quatro
+// colunas.
+.feature {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+  padding-block-start: spacing.$spacing-05;
+  border-block-start: 1px solid theme.$border-subtle-01;
+}
+
+.featureTitle {
+  @include type.type-style("heading-02");
+}
+
+.body {
+  @include type.type-style("body-01");
+
+  color: theme.$text-secondary;
+}

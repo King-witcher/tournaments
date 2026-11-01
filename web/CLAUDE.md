@@ -15,7 +15,8 @@
 ```
 src/
   app/[locale]/...      só rotas: lê params, monta <Page>, <Suspense> e componentes de feature
-    (home)/             o início (/), num grupo para ter o próprio loading.tsx
+    (home)/             a apresentação (/ sem sessão), estática
+    me/                 o início de quem entrou, servido em / pelo proxy (src/proxy.ts)
   app/globals.scss      Carbon (lista de componentes), temas, fonte, toque, foco
   features/<domínio>/   tudo de um domínio, os mesmos da API
     components/         um componente por arquivo (+ o .module.scss com o mesmo nome)

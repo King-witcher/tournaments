@@ -1,0 +1,14 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Sem o padding lateral que o Carbon põe no painel: a grade de dentro
+// alinha com a da página. Em cima, o respiro entre as abas e o texto.
+// Classe dobrada para vencer a do Carbon, que tem o mesmo peso.
+.panel.panel {
+  padding: 0;
+  padding-block-start: spacing.$spacing-07;
+
+  @include breakpoint.breakpoint(lg) {
+    padding-block-start: spacing.$spacing-09;
+  }
+}
