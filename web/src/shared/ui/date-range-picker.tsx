@@ -2,10 +2,20 @@
 
 import { DatePicker as CarbonDatePicker, DatePickerInput } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
-import { type ComponentProps, type ReactNode, useId, useMemo } from "react";
+import {
+  type ChangeEvent,
+  type ComponentProps,
+  type ReactNode,
+  useId,
+  useMemo,
+} from "react";
 
+import { dayFirstDigits } from "@/shared/lib/input-filters";
 import {
   DAY_FIRST_FORMAT,
+  DAY_FIRST_REGEX,
+  dateOfPlain,
+  fromDayFirst,
   parseDayFirst,
   plainDateOf,
   toDayFirst,
@@ -60,20 +70,34 @@ export function DateRangePicker({
   const generated = useId();
   const startId = id ?? generated;
   const [start, end] = value;
-  // Um array novo a cada render faria o Carbon remarcar a data (e voltar o
+  // `Date`, não texto: no intervalo, o Carbon reescreve os campos com
+  // `new Date(texto)`, que lê "09/11/2026" como 11 de setembro. Memorizado:
+  // um array novo a cada render faria o Carbon remarcar a data (e voltar o
   // mês do calendário) a cada render.
   const dates = useMemo(
-    () => [start ? toDayFirst(start) : "", end ? toDayFirst(end) : ""],
+    () => [start ? dateOfPlain(start) : "", end ? dateOfPlain(end) : ""],
     [start, end],
   );
-  // Os tipos do Carbon não declaram este atributo do input, que ele repassa.
-  const native = { required };
-  const input = {
+  // Os tipos do Carbon não declaram estes atributos do input, que ele repassa.
+  // As barras entram sozinhas, então o teclado numérico do celular basta.
+  const native = { required, inputMode: "numeric" as const, maxLength: 10 };
+  const input = (point: 0 | 1) => ({
     placeholder: t("format"),
     helperText: helperText ?? t("format"),
+    // O que se digita passa pelo mesmo filtro do `DatePicker`. No intervalo, o
+    // Carbon não lê o que foi digitado (só no modo `single`) e o flatpickr o
+    // apaga ao sair do campo: a ponta completa e válida vira valor na hora.
+    onChange: (event: ChangeEvent<HTMLInputElement>) => {
+      const clean = dayFirstDigits(event.target.value);
+      if (clean !== event.target.value) event.target.value = clean;
+      const typed = DAY_FIRST_REGEX.test(clean) ? fromDayFirst(clean) : null;
+      if (typed && typed !== value[point]) {
+        onChange(point === 0 ? [typed, end] : [start, typed]);
+      }
+    },
     ...native,
     ...props,
-  };
+  });
 
   return (
     <CarbonDatePicker
@@ -103,14 +127,14 @@ export function DateRangePicker({
         labelText={
           <RequiredLabel required={required}>{startLabelText}</RequiredLabel>
         }
-        {...input}
+        {...input(0)}
       />
       <DatePickerInput
         id={`${startId}-end`}
         labelText={
           <RequiredLabel required={required}>{endLabelText}</RequiredLabel>
         }
-        {...input}
+        {...input(1)}
       />
     </CarbonDatePicker>
   );

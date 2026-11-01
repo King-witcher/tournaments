@@ -15,6 +15,12 @@ export function plainDateOf(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/** "AAAA-MM-DD" → o `Date` desse dia, à meia-noite no fuso do navegador. */
+export function dateOfPlain(plain: string) {
+  const [year, month, day] = plain.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 /** "AAAA-MM-DD" → "dd/mm/aaaa". */
 export function toDayFirst(plain: string) {
   const [year, month, day] = plain.split("-");

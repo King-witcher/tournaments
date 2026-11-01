@@ -16,6 +16,7 @@ import {
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { cn } from "@/shared/lib/cn";
+import { timeDigits } from "@/shared/lib/input-filters";
 import { timeZoneOptions } from "@/shared/lib/zoned-time";
 import { RequiredLabel } from "./required-label";
 import styles from "./time-picker.module.scss";
@@ -57,9 +58,11 @@ type Props = Omit<
  * O `TimePicker` do Carbon: hora e minuto em 24 horas ("hh:mm"), como se
  * escreve em pt e es (o seletor AM/PM do Carbon só existe no formato de 12
  * horas e fica de fora). Com `timeZone`, o seletor de fuso, que o Carbon pede
- * para toda hora marcada. Cobra `required`, o formato e `problem` como o
- * `TextInput`; o erro da API vai em `invalid` + `invalidText`. Data e hora
- * juntas: `DateTimeInput`.
+ * para toda hora marcada. Só entram dígitos, e os dois-pontos entram sozinhos
+ * quando o dígito não cabe mais na hora ("133" vira "13:3"): o teclado
+ * numérico do celular não os tem. Cobra `required`, o formato e `problem`
+ * como o `TextInput`; o erro da API vai em `invalid` + `invalidText`. Data e
+ * hora juntas: `DateTimeInput`.
  */
 export function TimePicker({
   id,
@@ -85,6 +88,7 @@ export function TimePicker({
   const inputId = id ?? generated;
   const check = useFieldCheck<HTMLInputElement>({
     required,
+    filter: timeDigits,
     pattern: PATTERN,
     patternMessage: t("pattern"),
     problem,

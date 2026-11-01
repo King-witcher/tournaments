@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
+import { dayFirstDigits } from "@/shared/lib/input-filters";
 import {
   DAY_FIRST_FORMAT,
   DAY_FIRST_PATTERN,
@@ -63,7 +64,9 @@ type Props = Pick<
  * "dd/mm/aaaa", com o calendário no idioma da página. O valor entra e sai
  * em "AAAA-MM-DD", sem fuso. A dica embaixo é o formato, como pede o
  * Carbon, a não ser que venha outra em `helperText` (o formato continua no
- * placeholder). Cobra `required`, o formato e `problem` como o `TextInput`.
+ * placeholder). Dá para digitar a data: só entram dígitos, e as barras entram
+ * sozinhas ("15112026" vira "15/11/2026"; "1/2/2026" também serve). Cobra
+ * `required`, o formato e `problem` como o `TextInput`.
  * Intervalo: `DateRangePicker`; data e hora: `DateTimeInput`.
  */
 export function DatePicker({
@@ -97,6 +100,7 @@ export function DatePicker({
     fromDayFirst(typed) === null;
   const check = useFieldCheck<HTMLInputElement>({
     required,
+    filter: dayFirstDigits,
     pattern: DAY_FIRST_PATTERN,
     patternMessage: t("pattern"),
     problem: problem ?? (nonexistent ? t("nonexistent") : undefined),
@@ -111,7 +115,13 @@ export function DatePicker({
     check.ref.current = wrapper.current?.querySelector("input") ?? null;
   });
   // Os tipos do Carbon não declaram estes atributos do input, que ele repassa.
-  const native = { name, required };
+  // As barras entram sozinhas, então o teclado numérico do celular basta.
+  const native = {
+    name,
+    required,
+    inputMode: "numeric" as const,
+    maxLength: 10,
+  };
 
   return (
     <div ref={wrapper}>
