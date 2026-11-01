@@ -12,6 +12,7 @@ import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
 import { ErrorText } from "@/shared/ui/error-text";
 import { TextArea } from "@/shared/ui/text-area";
+import { useMarkMine } from "../hooks/use-live-match";
 import { gameParams, gameRowId, type MatchTarget } from "../lib/match-target";
 import styles from "./game-respond.module.scss";
 
@@ -33,6 +34,7 @@ const MAX_COMMENT = 280;
 export function GameRespond({ target, number, canConfirm }: Props) {
   const t = useTranslations("Match.respond");
   const router = useRouter();
+  const markMine = useMarkMine();
   const { run, pending, error } = useApiAction();
   const [contesting, setContesting] = useState(false);
   const [comment, setComment] = useState("");
@@ -40,6 +42,7 @@ export function GameRespond({ target, number, canConfirm }: Props) {
   const contestButton = useRef<HTMLButtonElement>(null);
   const params = gameParams(target, number);
   const done = () => {
+    markMine();
     router.refresh();
     focusIfLost(gameRowId(number));
   };

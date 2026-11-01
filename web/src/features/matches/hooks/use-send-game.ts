@@ -4,7 +4,14 @@ import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
-import { gameInput, gameParams, type MatchTarget } from "../lib/match-target";
+import { focusIfLost } from "@/shared/lib/focus";
+import {
+  gameInput,
+  gameParams,
+  gameRowId,
+  type MatchTarget,
+} from "../lib/match-target";
+import { useMarkMine } from "./use-live-match";
 
 type Sent = {
   game: Parameters<typeof gameInput>[0];
@@ -15,7 +22,8 @@ type Sent = {
 /**
  * Envia o mapa `number`: `report` é o jogador (fica pendente), `organizer` a
  * organização (lança, resolve ou corrige, já confirmado, com a nota). Depois
- * de gravar, chama `onSent` e recarrega a página; o erro volta traduzido.
+ * de gravar, chama `onSent`, marca a mudança como de quem vê e recarrega a
+ * página, com o foco no passo da partida; o erro volta traduzido.
  * `send` entra num `submitAction`.
  */
 export function useSendGame(
@@ -26,6 +34,7 @@ export function useSendGame(
 ) {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
+  const markMine = useMarkMine();
   const [error, dispatch, pending] = useActionState<string | undefined, Sent>(
     async (_previous, { game, comment }) => {
       const params = gameParams(target, number);
@@ -49,7 +58,11 @@ export function useSendGame(
             );
       if (!result.ok) return errorMessage(result.code, result.params);
       onSent?.();
+      markMine();
       router.refresh();
+      // O formulário some: o foco vai para o passo da partida enviada (ou,
+      // se os passos seguirem para outro, para ele: `MatchSteps`).
+      focusIfLost(gameRowId(number));
       return undefined;
     },
     undefined,

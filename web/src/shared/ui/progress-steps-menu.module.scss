@@ -1,6 +1,7 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
 
 // O ícone, o nome e a linha curta numa linha, com as cores do indicador.
 .item {
@@ -34,4 +35,8 @@
 
   flex: none;
   color: theme.$text-secondary;
+}
+
+.srOnly {
+  @include visually-hidden;
 }

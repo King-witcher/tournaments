@@ -1,14 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ProgressSteps } from "@/shared/ui/progress-steps";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useStepItems } from "../hooks/use-step-items";
-import { type StepKey, seriesSteps, stepGame } from "../lib/match-steps";
+import { asks, type StepKey, seriesSteps, stepGame } from "../lib/match-steps";
 import { type MatchTarget, VETO_ID } from "../lib/match-target";
 import { ChampionsStep } from "./champions-step";
 import { MapsStep } from "./maps-step";
@@ -22,37 +22,52 @@ type Props = {
   games: Partial<Record<StepKey, ReactNode>>;
 };
 
+/** O foco está num controle do passo à vista (alguém lendo ou digitando nele). */
+const focusInside = () => {
+  const panel = document.getElementById(VETO_ID);
+  const active = document.activeElement;
+  return panel != null && active !== panel && panel.contains(active);
+};
+
 /**
  * Os passos da série (Pronto, Mapas, Campeões e cada partida; só os que o
  * torneio tem) e o passo à vista, um por vez. Abre no que pede uma ação de
- * quem vê, senão no atual, e segue para o novo quando ele muda; o indicador
- * é a navegação: os passos feitos e o atual abrem, os seguintes não. As
- * partidas ficam montadas mesmo escondidas (o formulário de envio não perde
- * o que já foi preenchido). Com um passo só, sem indicador.
+ * quem vê, senão no atual; o indicador é a navegação (os passos feitos e o
+ * atual abrem, os seguintes não). Quando o passo que abre muda, a tela só
+ * segue sozinha se a mudança veio de uma ação de quem vê (e então o foco
+ * vai junto) ou se ele estava nesse passo, que não pede mais nada dele, sem
+ * o foco num controle dele; com uma ação do veto no ar, espera a resposta.
+ * Nos outros casos fica onde está: o indicador mostra o estado do passo
+ * novo. As partidas ficam montadas mesmo escondidas (o formulário de envio
+ * não perde o que já foi preenchido). Com um passo só, sem indicador.
  */
 export function MatchSteps({ target, rule, games }: Props) {
   const t = useTranslations("Match.steps");
   const stepItems = useStepItems();
-  const { detail } = useLiveMatch();
+  const { detail, pending, isMine, clearMine } = useLiveMatch();
   const flow = seriesSteps(detail);
-  const [viewing, setViewing] = useState<StepKey | null>(null);
-  const [seen, setSeen] = useState(flow.home);
-  if (flow.home !== seen) {
-    setSeen(flow.home);
-    setViewing(null);
+  const [view, setView] = useState({ home: flow.home, shown: flow.home });
+  const [focusTurn, setFocusTurn] = useState(0);
+  if (flow.home !== view.home && pending == null) {
+    const mine = isMine();
+    const follow =
+      mine ||
+      (view.shown === view.home && !asks(detail, view.home) && !focusInside());
+    setView({ home: flow.home, shown: follow ? flow.home : view.shown });
+    if (mine) setFocusTurn((n) => n + 1);
   }
-  // O passo mudou sozinho (depois de agir, o botão usado some): o foco vai
-  // para o passo novo. Não na primeira vez, que é a página abrindo.
-  const focused = useRef(seen);
+  // A mudança da ação de quem vê: o botão usado sumiu, o foco vai para o
+  // passo novo.
   useEffect(() => {
-    if (focused.current === seen) return;
-    focused.current = seen;
+    if (focusTurn === 0) return;
+    clearMine();
     focusIfLost(VETO_ID);
-  });
+  }, [focusTurn, clearMine]);
   if (flow.steps.length === 0) return null;
-  const shown = viewing && flow.steps.includes(viewing) ? viewing : flow.home;
-  const index = flow.steps.indexOf(shown);
-  const done = index < flow.current;
+  const shown =
+    view.shown && flow.steps.includes(view.shown) ? view.shown : flow.home;
+  const index = shown ? flow.steps.indexOf(shown) : -1;
+  const done = index < flow.current && shown !== flow.active;
 
   return (
     <div className={styles.steps}>
@@ -61,7 +76,7 @@ export function MatchSteps({ target, rule, games }: Props) {
           steps={stepItems(detail, flow)}
           current={flow.current}
           label={t("label")}
-          onSelect={(i) => setViewing(flow.steps[i])}
+          onSelect={(i) => setView({ ...view, shown: flow.steps[i] })}
           selected={index}
         />
       )}

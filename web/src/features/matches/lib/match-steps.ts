@@ -20,22 +20,31 @@ const GAME_ACTIONS: components["schemas"]["ViewerTask"][] = [
   "resolve",
 ];
 
+/** Os passos da série, o atual e o que abre (`seriesSteps`). */
+export type SeriesFlow = {
+  steps: StepKey[];
+  /** Índice do passo em que a série está (`steps.length` na decidida). */
+  current: number;
+  /** O passo que abre; `null` sem passos. */
+  home: StepKey | null;
+  /** O passo do veto em andamento, mesmo antes do atual (o substituto do TDM escolhe o campeão depois da partida 1). */
+  active: "ready" | "maps" | "champions" | null;
+};
+
 /**
  * Os passos da série e onde ela está: Pronto, Mapas (só no modo veto) e
  * Campeões (só com o draft no site), quando o torneio tem veto, e uma
- * partida por passo, até o melhor de N. `current` é o índice do passo em
- * que a série está (`steps.length` com a série decidida: todos feitos);
- * `home`, o que abre: o passo em que quem vê tem o que fazer (a vez dele no
- * veto, que tem prazo, antes de confirmar ou resolver uma partida enviada),
- * senão o atual. Série decidida: só os passos do veto que ele completou (um
- * W.O. no meio dos mapas deixa o Pronto) e as partidas jogadas, abrindo na
- * última. Sem lados ainda (ou sem adversário), nenhum passo.
+ * partida por passo, até o melhor de N. `home` é o passo em que quem vê tem
+ * o que fazer (a vez dele no veto, que tem prazo, antes de confirmar ou
+ * resolver uma partida enviada), senão o atual. Com partida enviada, a
+ * série fica nas partidas mesmo que o veto volte aos campeões (o
+ * substituto do TDM escolhendo na partida 2): o passo Campeões abre para
+ * ele, e as partidas enviadas continuam alcançáveis. Série decidida: só os
+ * passos do veto que ele completou (um W.O. no meio dos mapas deixa o
+ * Pronto) e as partidas jogadas, abrindo na última. Sem lados ainda (ou sem
+ * adversário), nenhum passo.
  */
-export function seriesSteps(detail: Detail): {
-  steps: StepKey[];
-  current: number;
-  home: StepKey;
-} {
+export function seriesSteps(detail: Detail): SeriesFlow {
   const veto = detail.veto;
   const s = detail.summary;
   const vetoSteps: StepKey[] = [];
@@ -52,26 +61,67 @@ export function seriesSteps(detail: Detail): {
         ? vetoSteps
         : vetoSteps.slice(0, vetoSteps.indexOf(reached));
     const steps = [...done, ...detail.games.map((g) => gameStep(g.number))];
-    return { steps, current: steps.length, home: steps[steps.length - 1] };
+    return {
+      steps,
+      current: steps.length,
+      home: steps[steps.length - 1] ?? null,
+      active: null,
+    };
   }
   if (s.state !== "ready") {
-    return { steps: [], current: 0, home: "ready" };
+    return { steps: [], current: 0, home: null, active: null };
   }
 
   const games = Array.from({ length: s.best_of }, (_, i) => gameStep(i + 1));
   const steps = [...vetoSteps, ...games];
   const phase = vetoPhase(detail);
-  const at =
-    phase === "games"
-      ? gameStep(detail.next_game ?? Math.max(1, detail.games.length))
-      : phase;
+  const active = phase === "games" ? null : phase;
+  const playing = gameStep(
+    detail.next_game ?? Math.max(1, detail.games.length),
+  );
+  const at = active && detail.games.length === 0 ? active : playing;
   const respond = detail.games.find(
     (g) => g.task != null && GAME_ACTIONS.includes(g.task),
   );
+  const mine = vetoTurnIsMine(detail);
   const home =
-    respond && !vetoTurnIsMine(detail) ? gameStep(respond.number) : at;
-  const current = steps.indexOf(at);
-  return { steps, current: current < 0 ? steps.length - 1 : current, home };
+    mine && active ? active : respond && !mine ? gameStep(respond.number) : at;
+  const index = steps.indexOf(at);
+  return {
+    steps,
+    current: index < 0 ? steps.length - 1 : index,
+    home,
+    active,
+  };
+}
+
+/**
+ * O passo ainda pede algo de quem vê: o "Pronto" que ele não deu, a vez dele
+ * no veto (no passo em que o veto está), a partida da vez para quem joga, a
+ * enviada que ele confirma ou resolve.
+ */
+export function asks(detail: Detail, key: StepKey | null): boolean {
+  const veto = detail.veto;
+  const side = detail.viewer_side;
+  const number = key ? stepGame(key) : null;
+  if (key == null) return false;
+  if (number == null) {
+    if (!veto || veto.status === "done") return false;
+    if (key === "ready")
+      return (
+        veto.status === "waiting_ready" &&
+        side != null &&
+        !(side === "a" ? veto.ready_a : veto.ready_b)
+      );
+    return vetoPhase(detail) === key && vetoTurnIsMine(detail);
+  }
+  const game = detail.games.find((g) => g.number === number);
+  if (game) return game.task != null && GAME_ACTIONS.includes(game.task);
+  return (
+    side != null &&
+    detail.summary.state === "ready" &&
+    detail.next_game === number
+  );
 }
 
 /** Quem vê tem um passo do veto para fazer agora (com prazo). */

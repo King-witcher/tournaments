@@ -6,6 +6,7 @@ import {
   Incomplete,
   Warning,
 } from "@carbon/icons-react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/shared/lib/cn";
 import { Dropdown } from "./dropdown";
@@ -39,11 +40,23 @@ export function ProgressStepsMenu({
   selected,
   onSelect,
 }: Props) {
+  const t = useTranslations("Common.progress");
   const items: Item[] = steps.map((step, index) => ({
     ...step,
     index,
     disabled: index > current,
   }));
+  // O estado por extenso, que o ícone só mostra: para o leitor de tela.
+  const state = (item: Item) =>
+    t(
+      item.invalid
+        ? "invalid"
+        : item.index < current
+          ? "complete"
+          : item.index === current
+            ? "current"
+            : "incomplete",
+    );
   const render = (item: Item) => {
     const Icon = item.invalid
       ? Warning
@@ -66,6 +79,9 @@ export function ProgressStepsMenu({
         {item.secondaryLabel && (
           <span className={styles.secondary}>{item.secondaryLabel}</span>
         )}
+        {state(item) !== item.secondaryLabel && (
+          <span className={styles.srOnly}>{state(item)}</span>
+        )}
       </span>
     );
   };
@@ -77,7 +93,9 @@ export function ProgressStepsMenu({
       selectedItem={items[selected]}
       itemToString={(item) =>
         item
-          ? [item.label, item.secondaryLabel].filter(Boolean).join(" · ")
+          ? [...new Set([item.label, item.secondaryLabel, state(item)])]
+              .filter(Boolean)
+              .join(" · ")
           : ""
       }
       itemToElement={render}

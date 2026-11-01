@@ -6,6 +6,7 @@ import type { components } from "@/shared/api/schema";
 import { Accordion } from "@/shared/ui/accordion";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
 import styles from "./game-card.module.scss";
+import { GameCardGate } from "./game-card-gate";
 import { GameForm } from "./game-form";
 import { GameVersus } from "./game-versus";
 
@@ -28,7 +29,8 @@ type Props = {
  * tela no fim; sem veto, com a escolha do mapa); para os outros, os
  * screenshots e "aguardando envio" e, para a organização que não joga, o
  * lançamento fechado num bloco (é exceção). Durante a votação, sem nada a
- * mostrar ainda, quem joga não vê o cartão.
+ * mostrar ainda, quem joga não vê o cartão (`GameCardGate`, pela série ao
+ * vivo).
  */
 export function GameCard({ target, detail, number, names, maps }: Props) {
   const t = useTranslations("Match.games");
@@ -39,7 +41,6 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
   // Sem o veto da partida (a votação, no passo), nem se sabe o mapa.
   const reportable = !veto || veto.reportable;
   const fixedMap = veto?.games.find((g) => g.game === number)?.map;
-  if (plays && !reportable && !fixedMap) return null;
   const screenshots = (
     <GameScreenshots
       target={target}
@@ -50,41 +51,43 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
   );
 
   return (
-    <Tile>
-      <Layer className={styles.content}>
-        <GameVersus number={number} />
-        {plays && reportable && (
-          // A chave monta o formulário de novo a cada partida: o mapa e o
-          // placar da anterior não vão para a seguinte.
-          <GameForm
-            key={number}
-            target={target}
-            number={number}
-            mode="report"
-            names={names}
-            maps={maps}
-            fixedMap={fixedMap ?? undefined}
-            beforeSubmit={screenshots}
-            submitLabel={tForm("submit", { number })}
-            card={fixedMap != null}
-          />
-        )}
-        {!plays && reportable && screenshots}
-        {!plays && <p className={styles.awaiting}>{t("awaiting")}</p>}
-        {/* A chave reinicia o bloco (fechado) a cada partida nova. */}
-        {enters && (
-          <Accordion key={number} title={tForm("enter", { number })}>
+    <GameCardGate number={number}>
+      <Tile>
+        <Layer className={styles.content}>
+          <GameVersus number={number} />
+          {plays && reportable && (
+            // A chave monta o formulário de novo a cada partida: o mapa e o
+            // placar da anterior não vão para a seguinte.
             <GameForm
+              key={number}
               target={target}
               number={number}
-              mode="organizer"
+              mode="report"
               names={names}
               maps={maps}
-              submitLabel={tForm("enter", { number })}
+              fixedMap={fixedMap ?? undefined}
+              beforeSubmit={screenshots}
+              submitLabel={tForm("submit", { number })}
+              card={fixedMap != null}
             />
-          </Accordion>
-        )}
-      </Layer>
-    </Tile>
+          )}
+          {!plays && reportable && screenshots}
+          {!plays && <p className={styles.awaiting}>{t("awaiting")}</p>}
+          {/* A chave reinicia o bloco (fechado) a cada partida nova. */}
+          {enters && (
+            <Accordion key={number} title={tForm("enter", { number })}>
+              <GameForm
+                target={target}
+                number={number}
+                mode="organizer"
+                names={names}
+                maps={maps}
+                submitLabel={tForm("enter", { number })}
+              />
+            </Accordion>
+          )}
+        </Layer>
+      </Tile>
+    </GameCardGate>
   );
 }

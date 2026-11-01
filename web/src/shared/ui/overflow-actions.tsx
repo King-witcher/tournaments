@@ -27,6 +27,8 @@ export type OverflowAction = {
     slug?: string;
     /** Campos no Modal (uma nota), controlados por quem monta o menu. */
     extra?: ReactNode;
+    /** O Modal fechou sem confirmar (limpar o `extra`). */
+    onCancel?: () => void;
   };
 };
 
@@ -48,10 +50,11 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
   const t = useTranslations("Common");
   const router = useRouter();
   const wrapper = useRef<HTMLSpanElement>(null);
-  // Pelo nome, e não o objeto: o `extra` controlado muda a cada tecla, e o
-  // Modal mostra o do item de agora.
-  const [askingLabel, setAskingLabel] = useState<string>();
-  const asking = items.find((item) => item.label === askingLabel);
+  // O item de agora com o mesmo nome (o `extra` controlado muda a cada
+  // tecla); se ele sumiu num refresh, o guardado ao abrir, e o Modal fica.
+  const [asked, setAsked] = useState<OverflowAction>();
+  const asking =
+    asked && (items.find((item) => item.label === asked.label) ?? asked);
 
   const focusTrigger = () =>
     requestAnimationFrame(() =>
@@ -60,7 +63,7 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
 
   const select = (item: OverflowAction) => {
     if (item.href !== undefined) router.push(item.href);
-    else if (item.confirm) setAskingLabel(item.label);
+    else if (item.confirm) setAsked(item);
     else item.onSelect?.();
   };
 
@@ -95,12 +98,13 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
       <ConfirmModal
         open={asking !== undefined}
         onClose={() => {
-          setAskingLabel(undefined);
+          asking?.confirm?.onCancel?.();
+          setAsked(undefined);
           focusTrigger();
         }}
         onConfirm={() => {
           const item = asking;
-          setAskingLabel(undefined);
+          setAsked(undefined);
           focusTrigger();
           item?.onSelect?.();
         }}

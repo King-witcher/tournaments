@@ -5,11 +5,3 @@
 .step {
   outline-offset: spacing.$spacing-02;
 }
-
-// "Partida N" e a etiqueta do estado na mesma linha, alinhados pelo meio.
-.title {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: spacing.$spacing-03;
-}

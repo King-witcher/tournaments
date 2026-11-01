@@ -1,10 +1,8 @@
 "use client";
 
-import { ProgressIndicator, ProgressStep } from "@carbon/react";
-import { useTranslations } from "next-intl";
-
 import { cn } from "@/shared/lib/cn";
 import styles from "./progress-steps.module.scss";
+import { ProgressStepsList } from "./progress-steps-list";
 import { ProgressStepsMenu } from "./progress-steps-menu";
 
 export type ProgressStepItem = {
@@ -53,48 +51,15 @@ export function ProgressSteps({
   onSelect,
   selected,
 }: Props) {
-  const t = useTranslations("Common.progress");
-  const translate = (id: string) =>
-    id.endsWith("complete") && !id.endsWith("incomplete")
-      ? t("complete")
-      : id.endsWith("current")
-        ? t("current")
-        : id.endsWith("invalid")
-          ? t("invalid")
-          : t("incomplete");
-  const reachable = (i: number) => onSelect != null && i <= current;
-  const choose = (i: number) => reachable(i) && onSelect?.(i);
   const list = (vertical: boolean) => (
-    <ProgressIndicator
-      currentIndex={current}
+    <ProgressStepsList
+      steps={steps}
+      current={current}
+      label={label}
       vertical={vertical}
-      spaceEqually={!vertical}
-      aria-label={label}
-      onChange={choose}
-    >
-      {steps.map((step, i) => (
-        <ProgressStep
-          key={step.key}
-          label={step.label}
-          secondaryLabel={step.secondaryLabel}
-          invalid={step.invalid}
-          translateWithId={translate}
-          className={cn(
-            reachable(i) && i !== selected && styles.selectable,
-            reachable(i) && i === selected && styles.selected,
-            onSelect && i > current && styles.inert,
-          )}
-          {...(reachable(i) ? { "aria-pressed": i === selected } : {})}
-          {...(onSelect && i > current
-            ? { tabIndex: -1, "aria-disabled": true }
-            : {})}
-          // O Carbon não põe o clique no passo atual: volta para ele.
-          {...(onSelect && i === current
-            ? { onClickCapture: () => choose(i) }
-            : {})}
-        />
-      ))}
-    </ProgressIndicator>
+      onSelect={onSelect}
+      selected={selected}
+    />
   );
   const compact = onSelect != null && steps.length > 4;
   // A largura decide (container query, sem pular na hidratação): os dois
@@ -109,7 +74,7 @@ export function ProgressSteps({
             current={current}
             label={label}
             selected={selected ?? current}
-            onSelect={choose}
+            onSelect={(i) => i <= current && onSelect?.(i)}
           />
         ) : (
           list(true)

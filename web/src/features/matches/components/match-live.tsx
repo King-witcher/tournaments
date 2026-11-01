@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
-import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
+import { useSideNames } from "../hooks/use-side-names";
 import { freeMaps } from "../lib/free-maps";
 import { gameStep, type StepKey } from "../lib/match-steps";
 import type { MatchTarget } from "../lib/match-target";
@@ -40,15 +40,11 @@ export function MatchLive({
   viewerId,
 }: Props) {
   const s = detail.summary;
-  const teamName = useTeamName();
-  const names = {
-    a: detail.a ? teamName(detail.a) : "",
-    b: detail.b ? teamName(detail.b) : "",
-  };
+  const names = useSideNames(detail);
   const games: Partial<Record<StepKey, ReactNode>> = {};
   for (const game of detail.games) {
     games[gameStep(game.number)] = (
-      <GameStep number={game.number} game={game}>
+      <GameStep number={game.number}>
         <GamePlayed
           target={target}
           game={game}

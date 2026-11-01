@@ -31,7 +31,6 @@
     "withdrawal": "{name} venceu por W.O. O adversário desistiu ou saiu da comunidade <time></time>."
   },
   "games": {
-    "noMap": "mapa não informado",
     "won": "{name} venceu.",
     "fragsInline": "{a} × {b}",
     "claim": "{self, select, yes {{reporter} enviou que venceu.} other {{reporter} enviou que {winner} venceu.}}",
@@ -245,7 +244,6 @@
     "ready": "Pronto",
     "maps": "Mapas",
     "champions": "Campeões",
-    "games": "Partidas",
     "now": "Agora",
     "score": "{a} × {b}"
   },

@@ -151,3 +151,22 @@ export const Phone: Story = {
   args: WithSecondaryLabels.args,
   globals: { viewport: { value: "phone", isRotated: false } },
 };
+
+/**
+ * Navegável com até 4 passos (uma md3 sem veto) no celular: a lista
+ * vertical, com os feitos e o atual clicáveis.
+ */
+export const SelectablePhone: Story = {
+  args: {
+    steps: [
+      { key: "game-1", label: "Partida 1", secondaryLabel: "25 × 14" },
+      { key: "game-2", label: "Partida 2", secondaryLabel: "Agora" },
+      { key: "game-3", label: "Partida 3" },
+    ],
+    current: 1,
+    label: "Passos da série",
+    selected: 0,
+    onSelect: () => {},
+  },
+  globals: { viewport: { value: "phone", isRotated: false } },
+};

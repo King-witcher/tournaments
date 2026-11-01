@@ -27,9 +27,28 @@ export type LiveMatch = {
     request: VetoRequest,
     optimistic?: Schemas["VetoView"],
   ) => void;
+  /**
+   * Marca a próxima mudança da série como de quem vê (antes do refresh de
+   * uma ação dele): os passos seguem para o novo e levam o foco junto.
+   */
+  markMine: () => void;
+  /** Uma ação de quem vê saiu há pouco (10 s) e ainda não foi atendida. */
+  isMine: () => boolean;
+  /** A mudança da ação de quem vê já foi atendida. */
+  clearMine: () => void;
 };
 
 export const LiveMatchContext = createContext<LiveMatch | null>(null);
+
+/**
+ * `markMine` do `LiveMatchProvider`, para as ações das partidas (enviar,
+ * confirmar, contestar, as da organização); fora dele, não faz nada.
+ */
+export function useMarkMine(): () => void {
+  return useContext(LiveMatchContext)?.markMine ?? noop;
+}
+
+const noop = () => {};
 
 /**
  * A série como a área dos passos a vê agora, para as folhas de cliente (os

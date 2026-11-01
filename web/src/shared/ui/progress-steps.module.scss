@@ -1,6 +1,4 @@
 @use "@carbon/react/scss/spacing";
-@use "@carbon/react/scss/theme";
-@use "@carbon/react/scss/type";
 
 // Lado a lado enquanto cada passo tem a largura mínima do passo do Carbon
 // (128px); abaixo disso, a forma de reserva (vertical, ou a lista no
@@ -25,26 +23,4 @@
       display: block;
     }
   }
-}
-
-// Com `onSelect`, pelos tokens que o nome do passo do Carbon lê (sem depender
-// do HTML dele): o passo que abre com o nome na cor de link, porque no
-// celular não há hover que mostre que ele abre; o que está à vista no texto
-// normal, em negrito, como uma aba ativa.
-.selectable {
-  --cds-text-primary: #{theme.$link-primary};
-
-  // O atual o Carbon desenha como não clicável (seta): aqui ele volta a ser.
-  button {
-    cursor: pointer;
-  }
-}
-
-.selected {
-  --cds-body-compact-01-font-weight: #{type.font-weight("semibold")};
-}
-
-// Os passos seguintes não abrem: sem o hover de link do Carbon.
-.inert {
-  pointer-events: none;
 }
