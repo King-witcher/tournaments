@@ -18,6 +18,10 @@ pub struct Config {
     pub discord_client_secret: Option<String>,
     pub google_client_id: Option<String>,
     pub google_client_secret: Option<String>,
+    /// Nome do cookie de sessão. Outro por ambiente quando um fica dentro do
+    /// domínio do outro (o staging em `staging.telefrag.com.br` recebe o
+    /// cookie da produção, de `.telefrag.com.br`).
+    pub cookie_name: String,
     /// Domínio do cookie de sessão (em produção, `.dominio`).
     pub cookie_domain: Option<String>,
     pub cookie_secure: bool,
@@ -59,6 +63,7 @@ impl Config {
             discord_client_secret: env_opt("DISCORD_CLIENT_SECRET"),
             google_client_id: env_opt("GOOGLE_CLIENT_ID"),
             google_client_secret: env_opt("GOOGLE_CLIENT_SECRET"),
+            cookie_name: cookie_name_from_env()?,
             cookie_domain: env_opt("COOKIE_DOMAIN"),
             cookie_secure: matches!(
                 env_or("COOKIE_SECURE", "false")
@@ -79,6 +84,21 @@ impl Config {
             storage: storage_from_env()?,
         })
     }
+}
+
+/// `COOKIE_NAME`, `session` por padrão. Só letras, dígitos, `_` e `-`: outro
+/// caractere o navegador recusa ou corta, e o login falharia sem aviso.
+fn cookie_name_from_env() -> anyhow::Result<String> {
+    let name = env_or("COOKIE_NAME", "session");
+    let valid = !name.is_empty()
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+    anyhow::ensure!(
+        valid,
+        "COOKIE_NAME inválido: {name} (use letras, dígitos, _ e -)"
+    );
+    Ok(name)
 }
 
 /// O bucket privado, se `S3_PRIVATE_BUCKET`, `S3_ACCESS_KEY_ID` e

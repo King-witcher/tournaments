@@ -90,6 +90,7 @@ async fn main() -> anyhow::Result<()> {
                 web,
             ),
             web_origin: web.to_owned(),
+            cookie_name: config.cookie_name.clone(),
             cookie_domain: config.cookie_domain.clone(),
             cookie_secure: config.cookie_secure,
         }),

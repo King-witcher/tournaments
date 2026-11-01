@@ -142,6 +142,7 @@ fn providers_app(
             discord: client("client-1", REDIRECT),
             google: client("google-client", GOOGLE_REDIRECT),
             web_origin: WEB.into(),
+            cookie_name: "session".into(),
             cookie_domain: None,
             cookie_secure: false,
         }),

@@ -32,7 +32,6 @@ use super::{
     notify::notify,
     pkce,
     provider::Provider,
-    session::current_hash,
     types::{LoginMethods, OAuthCode, OAuthRedirect, OAuthStart, SignedIn, UnlinkLogin},
 };
 use crate::{
@@ -249,7 +248,10 @@ async fn authorize(
     if !pkce::is_state(&body.state) || !pkce::is_challenge(&body.code_challenge) {
         return Err(ApiError::invalid("request.invalid_body"));
     }
-    let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
+    let session = state
+        .auth
+        .current_hash(jar)
+        .ok_or(ApiError::unauthenticated())?;
     let methods = db::login_methods(&state.db, user.id).await?;
     let linked = match provider {
         Provider::Discord => methods.discord,
@@ -302,7 +304,10 @@ async fn link(
     provider: Provider,
     body: OAuthCode,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    let session = current_hash(jar).ok_or(ApiError::unauthenticated())?;
+    let session = state
+        .auth
+        .current_hash(jar)
+        .ok_or(ApiError::unauthenticated())?;
     let challenge = pkce::challenge_of(&body.code_verifier);
     if !kv::take_link_authorization(&state.redis, &session, provider.as_str(), &challenge).await? {
         return Err(ApiError::forbidden("auth.state_mismatch"));

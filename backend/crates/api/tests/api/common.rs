@@ -158,6 +158,7 @@ pub fn state(db: PgPool) -> AppState {
             discord: None,
             google: None,
             web_origin: WEB.into(),
+            cookie_name: "session".into(),
             cookie_domain: None,
             cookie_secure: false,
         }),

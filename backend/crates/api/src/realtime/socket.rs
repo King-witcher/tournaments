@@ -27,7 +27,7 @@ use super::{
 };
 use crate::{
     AppState,
-    auth::{CurrentUser, current_session_id},
+    auth::CurrentUser,
     notifications, outbox,
     shared::{ApiError, ErrorBody},
     tenants::TenantMember,
@@ -80,7 +80,10 @@ pub async fn ws(
 ) -> Result<Response, ApiError> {
     let upgrade = upgrade
         .map_err(|_| ApiError::new(StatusCode::UPGRADE_REQUIRED, "realtime.upgrade_required"))?;
-    let session = current_session_id(&jar).ok_or(ApiError::unauthenticated())?;
+    let session = state
+        .auth
+        .current_session_id(&jar)
+        .ok_or(ApiError::unauthenticated())?;
     Ok(upgrade.on_upgrade(move |socket| run(state, user, session, socket)))
 }
 

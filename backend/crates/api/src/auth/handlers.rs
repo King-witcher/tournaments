@@ -8,7 +8,7 @@ use axum_extra::extract::CookieJar;
 
 use super::{
     CurrentUser, db, kv,
-    session::{SESSION_COOKIE, SESSION_ID_LEN, current_hash, session_id},
+    session::{SESSION_ID_LEN, session_id},
     types::{LoginMethods, SessionInfo, SessionPath, UpdateMe},
 };
 use crate::{
@@ -82,8 +82,8 @@ pub async fn logins(
     responses((status = NO_CONTENT, description = "Sessão encerrada (também sem sessão)"))
 )]
 pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Result<Response, ApiError> {
-    if let Some(cookie) = jar.get(SESSION_COOKIE) {
-        let hash = token::hash_token(cookie.value());
+    if let Some(current) = state.auth.session_token(&jar) {
+        let hash = token::hash_token(current);
         if let Some(user) = kv::delete_session(&state.redis, &hash).await? {
             sessions_ended(&state, user, &[token::hex(&hash)]).await?;
         }
@@ -119,7 +119,7 @@ pub async fn sessions(
     user: CurrentUser,
     jar: CookieJar,
 ) -> Result<Json<Vec<SessionInfo>>, ApiError> {
-    let current = current_hash(&jar);
+    let current = state.auth.current_hash(&jar);
     let sessions = kv::user_sessions(&state.redis, user.id).await?;
     Ok(Json(
         sessions
@@ -149,8 +149,11 @@ pub async fn end_other_sessions(
     user: CurrentUser,
     jar: CookieJar,
 ) -> Result<StatusCode, ApiError> {
-    let cookie = jar.get(SESSION_COOKIE).ok_or(ApiError::unauthenticated())?;
-    let keep = token::hash_token(cookie.value());
+    let current = state
+        .auth
+        .session_token(&jar)
+        .ok_or(ApiError::unauthenticated())?;
+    let keep = token::hash_token(current);
     let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
     sessions_ended(&state, user.id, &ended).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -180,7 +183,7 @@ pub async fn end_session(
         .ok_or(ApiError::not_found("auth.session_not_found"))?;
     kv::delete_sessions(&state.redis, user.id, std::slice::from_ref(&hash)).await?;
     sessions_ended(&state, user.id, std::slice::from_ref(&hash)).await?;
-    let jar = if current_hash(&jar) == Some(hash) {
+    let jar = if state.auth.current_hash(&jar) == Some(hash) {
         jar.remove(state.auth.clear_session_cookie())
     } else {
         jar

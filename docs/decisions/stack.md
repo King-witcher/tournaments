@@ -22,7 +22,7 @@
 | Tempo real | WebSocket no Axum, `tokio::broadcast` em memória (uma instância); `LISTEN/NOTIFY` se um dia houver mais de uma |
 | Storage | API S3 genérica, provedor por variável de ambiente. Prod: AWS S3 (ver `screenshots.md`) |
 | Observabilidade | Sentry no Rust e no Next |
-| Hospedagem | API no Render (Virgínia, free + uptime monitor). Front na Vercel (funções em `iad1`, perto da API). Domínio próprio |
+| Hospedagem | API no Render (Virgínia, free + uptime monitor). Front na Vercel (funções em `iad1`, perto da API). Domínio próprio: `telefrag.com.br` e `api.telefrag.com.br`; o staging em `staging.` e `api.staging.` (o cookie pede o mesmo site, `auth.md`, "Sessão") |
 
 - **Rust**: interesse em aprender; o Scalar em `/docs` (no lugar do Swagger UI) permite acompanhar e testar os endpoints.
 - **Bun só como gerenciador de pacotes e executor de scripts.** A Vercel detecta o `bun.lock`; as funções seguem no runtime Node (o do Bun na Vercel ainda é beta), e o `next` local também roda em Node.

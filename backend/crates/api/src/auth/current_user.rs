@@ -6,7 +6,7 @@ use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::{db, kv, session::SESSION_COOKIE};
+use super::{db, kv};
 use crate::{
     AppState,
     shared::{ApiError, token::hash_token},
@@ -44,10 +44,10 @@ impl FromRequestParts<AppState> for CurrentUser {
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         let jar = CookieJar::from_headers(&parts.headers);
-        let token = jar
-            .get(SESSION_COOKIE)
-            .ok_or(ApiError::unauthenticated())?
-            .value();
+        let token = state
+            .auth
+            .session_token(&jar)
+            .ok_or(ApiError::unauthenticated())?;
 
         Self::of_session(state, &hash_token(token))
             .await?
@@ -65,9 +65,9 @@ impl OptionalFromRequestParts<AppState> for CurrentUser {
         state: &AppState,
     ) -> Result<Option<Self>, Self::Rejection> {
         let jar = CookieJar::from_headers(&parts.headers);
-        let Some(cookie) = jar.get(SESSION_COOKIE) else {
+        let Some(token) = state.auth.session_token(&jar) else {
             return Ok(None);
         };
-        Self::of_session(state, &hash_token(cookie.value())).await
+        Self::of_session(state, &hash_token(token)).await
     }
 }

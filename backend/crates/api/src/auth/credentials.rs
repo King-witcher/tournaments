@@ -17,7 +17,7 @@ use super::{
     kv,
     notify::notify,
     password::{hash_password, is_acceptable, validate_password},
-    session::{SESSION_COOKIE, user_agent},
+    session::user_agent,
     types::{ChangePassword, Credentials, CurrentPassword, LoginMethods, NewPassword, SignedIn},
 };
 use crate::{
@@ -133,8 +133,8 @@ pub async fn change_password(
     // recuperação, a troca de email) param de valer.
     kv::cancel_password_reset(&state.redis, user.id).await?;
     kv::cancel_email_change(&state.redis, user.id).await?;
-    if let Some(cookie) = jar.get(SESSION_COOKIE) {
-        let keep = token::hash_token(cookie.value());
+    if let Some(current) = state.auth.session_token(&jar) {
+        let keep = token::hash_token(current);
         let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
         sessions_ended(&state, user.id, &ended).await?;
     }

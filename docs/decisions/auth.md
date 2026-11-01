@@ -25,7 +25,11 @@ Email, cadastro, recuperação e avisos de segurança estão em `mail.md`.
 
 ## Sessão
 
-Cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, 30 dias contados da entrada (sem renovar a cada uso: gastaria uma escrita por requisição). No Redis:
+Cookie `HttpOnly; Secure; SameSite=Lax; Domain=.<domínio>`, 30 dias contados da entrada (sem renovar a cada uso: gastaria uma escrita por requisição). Front e API ficam no mesmo site (`telefrag.com.br` e `api.telefrag.com.br`): nos domínios da Vercel e do Render o navegador descarta o cookie (resposta de outro site) e o servidor do Next nunca o recebe.
+
+O nome é `session`, e `COOKIE_NAME` (na API e no front) o troca por ambiente (31/10): o staging (`staging.telefrag.com.br`, `api.staging.telefrag.com.br`, `Domain=.staging.telefrag.com.br`) recebe também o cookie da produção, e com o mesmo nome a API leria só o mais novo dos dois. Lá, `session_staging`.
+
+No Redis:
 
 - `session:{sha256 do token}`: hash com `user_id`, `created_at` e `user_agent` (do login, até 256 caracteres), com o TTL da sessão. Cada requisição logada faz um `HGET` e lê o usuário no banco pela chave; o usuário não fica em cache, para nome, avatar e idioma nunca ficarem velhos.
 - `user_sessions:{user_id}`: zset com os hashes das sessões e a expiração como score, gravado junto (MULTI). Serve para listar, encerrar uma e encerrar as outras (também na troca de senha). As vencidas saem do índice ao criar e ao listar.

@@ -3,8 +3,8 @@ import { cache } from "react";
 
 import { serverApi } from "@/shared/api/server";
 
-/** O cookie que a API grava no login (`SESSION_COOKIE` em `auth/session.rs`). */
-const SESSION_COOKIE = "session";
+/** O cookie que a API grava no login: o `COOKIE_NAME` dela, o mesmo daqui. */
+const SESSION_COOKIE = process.env.COOKIE_NAME || "session";
 
 /**
  * Se o navegador mandou o cookie de sessão. Sem ele ninguém está logado, e

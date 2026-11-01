@@ -51,7 +51,7 @@ pub use discord::{DiscordApi, DiscordUser, HttpDiscord};
 pub use google::{GoogleApi, GoogleUser, HttpGoogle};
 /// Os testes criam sessões por aqui, sem passar pelo login.
 pub use kv::create_session;
-pub use session::{AuthSettings, OAuthClient, current_session_id};
+pub use session::{AuthSettings, OAuthClient};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

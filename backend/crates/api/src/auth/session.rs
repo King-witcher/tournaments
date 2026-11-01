@@ -10,7 +10,6 @@ use axum_extra::extract::{
 use super::provider::Provider;
 use crate::shared::token;
 
-pub const SESSION_COOKIE: &str = "session";
 pub const SESSION_DAYS: i64 = 30;
 
 /// Caracteres do hash (em hexadecimal) que identificam a sessão na lista e
@@ -21,17 +20,6 @@ pub const SESSION_ID_LEN: usize = 16;
 /// O id público da sessão de hash `hash` (em hexadecimal).
 pub fn session_id(hash: &str) -> String {
     hash[..SESSION_ID_LEN].to_owned()
-}
-
-/// Hash (em hexadecimal) da sessão do cookie.
-pub fn current_hash(jar: &CookieJar) -> Option<String> {
-    jar.get(SESSION_COOKIE)
-        .map(|c| token::hex(&token::hash_token(c.value())))
-}
-
-/// O id público da sessão do cookie.
-pub fn current_session_id(jar: &CookieJar) -> Option<String> {
-    current_hash(jar).map(|h| session_id(&h))
 }
 
 /// O app registrado num provedor: o que vai na autorização e na troca do
@@ -54,6 +42,8 @@ pub struct AuthSettings {
     pub google: Option<OAuthClient>,
     /// Origem do front, sem barra final.
     pub web_origin: String,
+    /// Nome do cookie da sessão (`COOKIE_NAME`, `session` por padrão).
+    pub cookie_name: String,
     pub cookie_domain: Option<String>,
     pub cookie_secure: bool,
 }
@@ -66,8 +56,24 @@ impl AuthSettings {
         }
     }
 
+    /// O token da sessão, do cookie com o nome deste ambiente.
+    pub fn session_token<'a>(&self, jar: &'a CookieJar) -> Option<&'a str> {
+        jar.get(&self.cookie_name).map(|c| c.value())
+    }
+
+    /// Hash (em hexadecimal) da sessão do cookie.
+    pub fn current_hash(&self, jar: &CookieJar) -> Option<String> {
+        self.session_token(jar)
+            .map(|t| token::hex(&token::hash_token(t)))
+    }
+
+    /// O id público da sessão do cookie.
+    pub fn current_session_id(&self, jar: &CookieJar) -> Option<String> {
+        self.current_hash(jar).map(|h| session_id(&h))
+    }
+
     pub fn session_cookie(&self, value: String) -> Cookie<'static> {
-        let mut cookie = Cookie::build((SESSION_COOKIE, value))
+        let mut cookie = Cookie::build((self.cookie_name.clone(), value))
             .http_only(true)
             .same_site(SameSite::Lax)
             .path("/")
@@ -80,7 +86,7 @@ impl AuthSettings {
     }
 
     pub fn clear_session_cookie(&self) -> Cookie<'static> {
-        let mut cookie = Cookie::build((SESSION_COOKIE, "")).path("/");
+        let mut cookie = Cookie::build((self.cookie_name.clone(), "")).path("/");
         if let Some(domain) = &self.cookie_domain {
             cookie = cookie.domain(domain.clone());
         }
@@ -124,5 +130,30 @@ mod tests {
         );
         let long = "a".repeat(USER_AGENT_MAX + 10);
         assert_eq!(user_agent(&headers(&long)).unwrap().len(), USER_AGENT_MAX);
+    }
+
+    #[test]
+    fn session_uses_the_cookie_of_this_environment() {
+        let settings = AuthSettings {
+            discord: None,
+            google: None,
+            web_origin: "https://staging.telefrag.com.br".into(),
+            cookie_name: "session_staging".into(),
+            cookie_domain: Some(".staging.telefrag.com.br".into()),
+            cookie_secure: true,
+        };
+        // O cookie da produção (`Domain=.telefrag.com.br`) chega junto.
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::COOKIE,
+            "session=prod; session_staging=staging".parse().unwrap(),
+        );
+        let jar = CookieJar::from_headers(&headers);
+        assert_eq!(settings.session_token(&jar), Some("staging"));
+        assert_eq!(
+            settings.session_cookie("t".into()).name(),
+            "session_staging"
+        );
+        assert_eq!(settings.clear_session_cookie().name(), "session_staging");
     }
 }
