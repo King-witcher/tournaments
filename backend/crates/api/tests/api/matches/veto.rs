@@ -640,7 +640,9 @@ async fn next_maps(app: &Router, who: &User) -> (Value, Value) {
 #[tokio::test]
 async fn the_next_map_shows_in_the_lists_once_it_is_decided() {
     let (db, _lease) = crate::db::test_db().await;
-    let veto = json!({ "map_mode": "veto", "champion_phase": false });
+    // A ordem alternada (ban, ban, pick, pick, ban, ban): o pick da partida 1
+    // sai antes de o veto acabar.
+    let veto = json!({ "map_mode": "veto", "champion_phase": false, "order": "alternating" });
     let (app, ana, p) = final_with(&db, 3, veto, one_ban()).await;
     let named = |slug: &str, name: &str| json!({ "slug": slug, "name": name });
 

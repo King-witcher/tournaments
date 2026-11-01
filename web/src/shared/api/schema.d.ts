@@ -2089,7 +2089,7 @@ export interface components {
          * @enum {string}
          */
         MapMode: "veto" | "vote" | "random" | "off";
-        /** @description As vitórias e derrotas de alguém num mapa. */
+        /** @description As vitórias e derrotas de alguém numa arena. */
         MapRecord: {
             /** Format: int32 */
             losses: number;
@@ -2247,7 +2247,7 @@ export interface components {
         };
         /**
          * @description O rating de um membro, com os últimos mapas que contaram e o retrospecto
-         *     por mapa.
+         *     por arena.
          */
         MemberRating: {
             /**
@@ -2261,10 +2261,10 @@ export interface components {
              */
             adjustments?: components["schemas"]["RatingAdjustment"][] | null;
             /**
-             * @description O retrospecto da pessoa em cada mapa que jogou, do mais jogado ao
-             *     menos (no empate, por nome). Conta as partidas confirmadas, com mapa
-             *     conhecido, de todos os torneios da comunidade, com ou sem rating; W.O.
-             *     e partidas anuladas ficam de fora. Vazio sem nenhuma.
+             * @description O retrospecto da pessoa em cada arena que jogou, da mais jogada à menos
+             *     (no empate, por nome). Conta os mapas confirmados (jogos) com a arena
+             *     conhecida, de todos os torneios da comunidade, com ou sem rating; W.O. e
+             *     mapas anulados ficam de fora. Vazio sem nenhum.
              */
             by_map: components["schemas"]["MapRecord"][];
             /**
@@ -6978,7 +6978,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O rating do membro, os últimos 20 mapas que contaram e o retrospecto por mapa (as partidas confirmadas de todos os torneios da comunidade); para organizer e owner, também os ajustes */
+            /** @description O rating do membro, os últimos 20 mapas que contaram e o retrospecto por arena (os mapas confirmados de todos os torneios da comunidade); para organizer e owner, também os ajustes */
             200: {
                 headers: {
                     [name: string]: unknown;

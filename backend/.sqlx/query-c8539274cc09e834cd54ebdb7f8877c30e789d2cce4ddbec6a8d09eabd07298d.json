@@ -64,9 +64,9 @@
     "nullable": [
       false,
       null,
+      false,
       true,
-      true,
-      true
+      false
     ]
   },
   "hash": "c8539274cc09e834cd54ebdb7f8877c30e789d2cce4ddbec6a8d09eabd07298d"
