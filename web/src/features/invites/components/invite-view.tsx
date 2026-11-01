@@ -5,10 +5,10 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
-import { serverApi } from "@/shared/api/server";
 import { Avatar } from "@/shared/ui/avatar";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
+import { getInvite, localizedName } from "../server";
 import { AcceptInviteButton } from "./accept-invite-button";
 import { InviteDetails } from "./invite-details";
 import { InviteMembership } from "./invite-membership";
@@ -26,14 +26,11 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
  * `<Suspense>`.
  */
 export async function InviteView({ token }: { token: string }) {
-  const api = await serverApi();
   const [t, tNav, locale, preview] = await Promise.all([
     getTranslations("Invite"),
     getTranslations("Nav"),
     getLocale(),
-    api
-      .GET("/invites/{token}", { params: { path: { token } } })
-      .catch(() => undefined),
+    getInvite(token),
   ]);
 
   const invite = preview?.data;
@@ -124,17 +121,6 @@ export async function InviteView({ token }: { token: string }) {
         </Layer>
       </Tile>
     </>
-  );
-}
-
-/**
- * Nome no idioma de quem vê, como o `localizedName` de `tournaments` (que
- * não é importado: aquela feature já monta os links de inscrição desta).
- */
-function localizedName(tournament: InvitedTournament, locale: string) {
-  return (
-    tournament.translations.find((tr) => tr.locale === locale)?.name ??
-    tournament.name
   );
 }
 

@@ -20,5 +20,7 @@
   "owner": "Creada por",
   "members": "Miembros",
   "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
-  "deletionScheduled": "Esta comunidad se va a eliminar y ya no acepta miembros."
+  "deletionScheduled": "Esta comunidad se va a eliminar y ya no acepta miembros.",
+  "preview": "{count, plural, one {# miembro} other {# miembros}} · creada por {owner}",
+  "tournamentPreview": "{tenant} · {spots}"
 }
