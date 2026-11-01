@@ -41,7 +41,8 @@ type Props = {
 /**
  * A imagem do mapa, na largura de quem a contém, em 16:9; decorativa (o nome
  * sempre aparece ao lado). Mapa sem imagem fica com o fundo, do mesmo
- * tamanho, para a grade não desalinhar.
+ * tamanho, para a grade não desalinhar. Não arrasta: ela fica dentro do que
+ * se clica, e o clique que mexe um pouco o mouse virava arrasto da imagem.
  */
 export function MapThumbnail({ slug, out = false }: Props) {
   const className = cn(styles.thumbnail, out && styles.out);
@@ -53,6 +54,7 @@ export function MapThumbnail({ slug, out = false }: Props) {
       width={480}
       height={270}
       unoptimized
+      draggable={false}
       className={className}
     />
   );

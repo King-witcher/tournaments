@@ -16,9 +16,12 @@ type Props = {
 };
 
 /**
- * Um mapa no pool do formulário: a imagem (em cinza fora do pool) e, embaixo,
- * a caixa com o nome. A imagem é um segundo rótulo da caixa, então clicar
- * nela também marca.
+ * Um mapa no pool do formulário, numa caixa como o tile selecionável do
+ * Carbon: a imagem (em cinza fora do pool) e, embaixo, a caixa de seleção com
+ * o nome; o escolhido ganha a borda de selecionado. A imagem é um segundo
+ * rótulo da caixa, esticado sobre a caixa inteira, então clicar em qualquer
+ * ponto marca. Não é o `SelectableTile` da `shared/ui`: ele põe a marca no
+ * canto de cima, sobre a imagem, e reserva uma faixa à direita para ela.
  */
 export function MapPoolOption({
   map,
@@ -29,21 +32,26 @@ export function MapPoolOption({
 }: Props) {
   const id = useId();
   return (
-    <div className={styles.option}>
-      <label
-        htmlFor={id}
-        className={cn(styles.image, disabled && styles.disabled)}
-      >
+    <div
+      className={cn(
+        styles.option,
+        checked && styles.selected,
+        disabled && styles.disabled,
+      )}
+    >
+      <label htmlFor={id} className={styles.image}>
         <MapThumbnail slug={map.slug} out={!checked} />
       </label>
-      <Checkbox
-        id={id}
-        name={name}
-        labelText={map.name}
-        checked={checked}
-        disabled={disabled}
-        onChange={onChange}
-      />
+      <div className={styles.check}>
+        <Checkbox
+          id={id}
+          name={name}
+          labelText={map.name}
+          checked={checked}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      </div>
     </div>
   );
 }

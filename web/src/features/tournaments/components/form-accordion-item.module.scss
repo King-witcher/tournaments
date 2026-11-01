@@ -21,3 +21,12 @@
 
   color: theme.$text-secondary;
 }
+
+// O Accordion do Carbon reserva 25% à direita do conteúdo, para o comprimento
+// da linha de um parágrafo. Aqui são campos, que ficam da largura dos das
+// seções abertas acima, e o pool de mapas, que perdia uma coluna. O conteúdo
+// é o pai deste bloco (o Carbon não deixa pôr classe nele); o padding volta a
+// ser o da esquerda.
+div:has(> .group) {
+  padding-inline-end: spacing.$spacing-05;
+}

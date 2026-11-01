@@ -1,17 +1,54 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/focus-outline";
 
+// Os estados do tile selecionável do Carbon: fundo de camada, o fundo de hover
+// sob o mouse e, no escolhido, a borda de 1px do token de selecionado (escura
+// no tema claro, clara no escuro). O azul fica só para o foco.
 .option {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: spacing.$spacing-03;
   min-inline-size: 0;
+  border: 1px solid transparent;
+  background: theme.$layer;
+  cursor: pointer;
+
+  &:hover {
+    background: theme.$layer-hover;
+  }
+
+  // O foco do teclado na caixa de seleção contorna o mapa inteiro, como no
+  // tile, para achar na grade onde ele está.
+  &:has(input:focus-visible) {
+    @include focus-outline.focus-outline("outline");
+  }
 }
 
-// A imagem marca a caixa como o nome: o cursor diz que dá para clicar.
-.image {
-  cursor: pointer;
+.selected {
+  border-color: theme.$layer-selected-inverse;
 }
 
 .disabled {
   cursor: not-allowed;
+
+  &:hover {
+    background: theme.$layer;
+  }
+
+  &.selected {
+    border-color: theme.$border-disabled;
+  }
+}
+
+// O rótulo da imagem se estende sobre a caixa inteira: o clique em qualquer
+// ponto dela, inclusive em volta do nome, marca o mapa.
+.image::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.check {
+  padding: spacing.$spacing-03;
 }

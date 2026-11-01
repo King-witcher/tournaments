@@ -39,7 +39,7 @@ export function FormAccordionItem({
         </span>
       }
     >
-      <div data-group={group}>
+      <div data-group={group} className={styles.group}>
         <Stack gap={6}>{children}</Stack>
       </div>
     </AccordionItem>
