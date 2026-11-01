@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use axum::{
     extract::{
-        FromRequestParts, State,
+        FromRequestParts, RawQuery, State,
         ws::{
             CloseFrame, Message, WebSocket, WebSocketUpgrade, rejection::WebSocketUpgradeRejection,
         },
@@ -23,6 +23,7 @@ use tokio::{
 
 use super::{
     connection::{Connection, Delivery},
+    hub::connection_id,
     types::{ClientMessage, ServerMessage, Topic},
 };
 use crate::{
@@ -64,6 +65,9 @@ impl FromRequestParts<AppState> for SameOrigin {
     get,
     path = "/ws",
     tag = "realtime",
+    params(
+        ("connection" = Option<String>, Query, description = "Id que a aba dá à conexão (16 a 64 de A-Z, a-z, 0-9, _ e -; um UUID serve). A ação que manda o mesmo id no cabeçalho `x-realtime-connection` diz que a aba aplica a resposta sozinha: as mudanças de partida que ela emitir não voltam a esta conexão (as outras abas recebem). Fora da forma, é ignorado"),
+    ),
     responses(
         (status = 101, description = "WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ver; depois, mudanças do que assinou e de \"Seus torneios\", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
@@ -76,6 +80,7 @@ pub async fn ws(
     State(state): State<AppState>,
     user: CurrentUser,
     jar: CookieJar,
+    RawQuery(query): RawQuery,
     upgrade: Result<WebSocketUpgrade, WebSocketUpgradeRejection>,
 ) -> Result<Response, ApiError> {
     let upgrade = upgrade
@@ -84,13 +89,28 @@ pub async fn ws(
         .auth
         .current_session_id(&jar)
         .ok_or(ApiError::unauthenticated())?;
-    Ok(upgrade.on_upgrade(move |socket| run(state, user, session, socket)))
+    let id = query.as_deref().and_then(tab_connection);
+    Ok(upgrade.on_upgrade(move |socket| run(state, user, session, id, socket)))
+}
+
+/// O `connection` da query, se tem a forma aceita (`connection_id`).
+fn tab_connection(query: &str) -> Option<String> {
+    query
+        .split('&')
+        .find_map(|pair| pair.strip_prefix("connection="))
+        .and_then(connection_id)
 }
 
 type Sink = SplitSink<WebSocket, Message>;
 
-async fn run(state: AppState, user: CurrentUser, session: String, socket: WebSocket) {
-    let mut connection = Connection::new(user.id, session);
+async fn run(
+    state: AppState,
+    user: CurrentUser,
+    session: String,
+    id: Option<String>,
+    socket: WebSocket,
+) {
+    let mut connection = Connection::new(user.id, session, id);
     let mut events = state.realtime.subscribe();
     let (mut sink, mut stream) = socket.split();
     // Depois de entrar no canal: um aviso que chega no meio pode contar duas
@@ -187,7 +207,7 @@ async fn handle(
             let topic = Topic { tenant, tournament };
             // Ler o torneio pode abrir o check-in (e emitir): acorda o
             // despachante, como a camada das rotas.
-            let (allowed, emitted) = outbox::track(check(state, user, &topic)).await;
+            let (allowed, emitted) = outbox::track(None, check(state, user, &topic)).await;
             if emitted {
                 state.realtime.wake();
             }

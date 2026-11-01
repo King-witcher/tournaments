@@ -5,6 +5,7 @@ mod rosters;
 mod team;
 mod team_ban;
 mod team_props;
+mod turn;
 mod undo;
 mod vote;
 

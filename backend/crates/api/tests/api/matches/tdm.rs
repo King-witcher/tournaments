@@ -300,7 +300,7 @@ async fn the_window_closes_with_a_draw_for_whoever_did_not_pick() {
     ok(&app, &p[3], 1, "athena").await;
     assert_eq!(detail(&app, &p[0], KEY).await["veto"]["deadline"], deadline);
 
-    age_veto(&db, 16).await;
+    age_veto(&db, 18).await;
     let d = detail(&app, &p[0], KEY).await;
     assert_eq!(d["veto"]["status"], "done", "{d}");
     let all = picks(&d, 1);

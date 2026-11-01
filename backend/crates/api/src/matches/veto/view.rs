@@ -154,6 +154,7 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Op
             }),
             _ => None,
         },
+        step: mv.and_then(MatchVeto::step),
         deadline: mv
             .filter(|_| ready_match)
             .and_then(|mv| mv.deadline(stage.veto_seconds, stage.team_pick_seconds)),

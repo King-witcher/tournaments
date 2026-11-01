@@ -1,7 +1,10 @@
-//! O tempo de cada passo do veto. Vencido o prazo, o `engine` sorteia a
-//! escolha de quem deixou o tempo acabar (`random_choice`, pela seed da
-//! série), gravada como `timeout` e com a hora do prazo: o passo seguinte
-//! conta dali, como se alguém tivesse esperado. Na janela simultânea dos
+//! O tempo de cada passo do veto. O prazo que a série mostra é o nominal
+//! (`MatchVeto::deadline`); a ação ainda vale até `GRACE` depois dele (o
+//! clique que sai no último segundo atravessa a rede), e só então o `engine`
+//! sorteia a escolha de quem deixou o tempo acabar (`random_choice`, pela
+//! seed da série), gravada como `timeout` e com a hora em que o sorteio
+//! valeu (prazo + `GRACE`): o passo seguinte conta dali, com o tempo inteiro,
+//! como se alguém tivesse esperado. Na janela simultânea dos
 //! times, o prazo é um só (`team_pick_seconds`) e, no fim, cada partida de
 //! cada um que não escolheu recebe um campeão sorteado (`random_team_choice`),
 //! um de cada vez, na ordem do elenco. A API aplica ao ler a série ou a chave
@@ -28,7 +31,13 @@ use crate::{
     tournaments::{self, StoredTournament, TournamentStatus},
 };
 
-/// Os vetos com passo esperando, com o prazo de cada um.
+/// Quanto a ação ainda vale depois do prazo de cada passo (e da janela
+/// simultânea): o cronômetro mostra o prazo nominal, e o clique dado no fim
+/// dele chega depois (do usuário, 01/11).
+pub const GRACE: chrono::TimeDelta = chrono::TimeDelta::seconds(2);
+
+/// Os vetos com passo esperando, com a hora em que o sorteio vale (o prazo
+/// mais `GRACE`).
 fn waiting<'a>(
     status: TournamentStatus,
     stage: &'a stage::Stage,
@@ -45,7 +54,7 @@ fn waiting<'a>(
         })
         .filter_map(|mv| {
             let deadline = mv.deadline(stage.veto_seconds, stage.team_pick_seconds)?;
-            Some((mv, deadline))
+            Some((mv, deadline + GRACE))
         })
 }
 
@@ -61,19 +70,20 @@ fn seconds_of(stage: &stage::Stage, state: &Veto) -> chrono::Duration {
     chrono::Duration::seconds(i64::from(seconds))
 }
 
-/// O próximo prazo de veto da fase.
+/// A hora do próximo sorteio de veto da fase (o prazo mais `GRACE`).
 pub fn next_deadline(status: TournamentStatus, stage: &stage::Stage) -> Option<DateTime<Utc>> {
     waiting(status, stage).map(|(_, d)| d).min()
 }
 
-/// Há passo com o prazo vencido em `now`.
+/// Há passo com o prazo (mais `GRACE`) vencido em `now`.
 pub fn any_due(status: TournamentStatus, stage: &stage::Stage, now: DateTime<Utc>) -> bool {
     next_deadline(status, stage).is_some_and(|d| d <= now)
 }
 
-/// Sorteia e grava os passos vencidos em `now`, em sequência (cada prazo
-/// conta do anterior). Quem chama trava o torneio e depois emite
-/// (`settle`). Devolve quantos passos gravou.
+/// Sorteia e grava os passos vencidos em `now`, em sequência: cada sorteio
+/// fica com a hora em que valeu (prazo + `GRACE`), e o prazo seguinte conta
+/// dali (com a API parada, cada passo vencido soma a tolerância). Quem chama
+/// trava o torneio e depois emite (`settle`). Devolve quantos passos gravou.
 pub async fn apply_due(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -102,7 +112,7 @@ pub async fn apply_due(
                 break;
             }
             written += n;
-            deadline += seconds_of(stage, &state);
+            deadline += seconds_of(stage, &state) + GRACE;
         }
     }
     Ok(written)

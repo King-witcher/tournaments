@@ -1,7 +1,9 @@
 //! O que um socket assina e o que ele recebe de cada evento: só o que a
 //! conexão assinou (a assinatura de um torneio também recebe a comunidade
-//! dele) e o que é da pessoa dela. Sem I/O: o laço do socket (`socket`)
-//! confere o acesso antes de assinar e manda o que sai daqui.
+//! dele) e o que é da pessoa dela, menos as mudanças de partida que a própria
+//! aba pediu dizendo que aplica a resposta (`origin`). Sem I/O: o laço do
+//! socket (`socket`) confere o acesso antes de assinar e manda o que sai
+//! daqui.
 
 use std::collections::HashSet;
 
@@ -18,6 +20,8 @@ pub struct Connection {
     user: i64,
     /// Id público da sessão do cookie, para fechar quando ela acaba.
     session: String,
+    /// O id que a aba deu à conexão (`/ws?connection=`), se deu.
+    id: Option<String>,
     topics: HashSet<Topic>,
 }
 
@@ -31,12 +35,18 @@ pub enum Delivery {
 }
 
 impl Connection {
-    pub fn new(user: i64, session: String) -> Self {
+    pub fn new(user: i64, session: String, id: Option<String>) -> Self {
         Self {
             user,
             session,
+            id,
             topics: HashSet::new(),
         }
+    }
+
+    /// O evento veio de uma ação desta aba, que já aplicou a resposta.
+    fn own(&self, published: &Published) -> bool {
+        self.id.is_some() && published.origin == self.id
     }
 
     #[cfg(test)]
@@ -59,6 +69,12 @@ impl Connection {
 
     pub fn deliver(&mut self, published: &Published) -> Delivery {
         let message = match &published.event {
+            // A mudança de partida que esta aba pediu e cuja resposta ela já
+            // aplicou: recarregar só repetiria o que ela tem. As do torneio
+            // inteiro, de "Seus torneios" e os avisos chegam.
+            Event::Tournament {
+                match_key: Some(_), ..
+            } if self.own(published) => return Delivery::Skip,
             Event::Tenant { tenant } if self.topics.iter().any(|t| t.tenant == *tenant) => {
                 ServerMessage::Changed(Changed::Tenant {
                     tenant: tenant.clone(),
@@ -158,7 +174,7 @@ mod tests {
     }
 
     fn connection() -> Connection {
-        let mut c = Connection::new(7, "abcd".into());
+        let mut c = Connection::new(7, "abcd".into(), None);
         assert!(c.subscribe(topic("quake-br", Some("copa"))));
         assert!(c.subscribe(topic("quake-ar", None)));
         c
@@ -197,7 +213,7 @@ mod tests {
 
     #[test]
     fn what_is_for_the_person() {
-        let mut c = Connection::new(7, "abcd".into());
+        let mut c = Connection::new(7, "abcd".into(), None);
         assert_eq!(
             c.deliver(&Event::me([3, 7]).into()),
             Delivery::Send(ServerMessage::Changed(Changed::Me))
@@ -213,6 +229,7 @@ mod tests {
         let published = |users: [i64; 2]| Published {
             event: Event::notice(users, notice.clone()),
             notifications: [(users[0], 41), (users[1], 42)].into(),
+            origin: None,
         };
         assert_eq!(
             c.deliver(&published([3, 7])),
@@ -261,6 +278,29 @@ mod tests {
     }
 
     #[test]
+    fn the_tab_that_acted_does_not_get_its_own_match_change_back() {
+        let tab = "0123456789abcdef";
+        let mut c = Connection::new(7, "abcd".into(), Some(tab.into()));
+        assert!(c.subscribe(topic("quake-br", Some("copa"))));
+        let from = |origin: Option<&str>, event: Event| Published {
+            origin: origin.map(Into::into),
+            ..event.into()
+        };
+        let sent = |d: Delivery| matches!(d, Delivery::Send(_));
+        let game = || tournament("quake-br", "copa", Some("wb-1-1"));
+        assert_eq!(c.deliver(&from(Some(tab), game())), Delivery::Skip);
+        // De outra aba, de ninguém (o relógio) ou do torneio inteiro, chega.
+        assert!(sent(c.deliver(&from(Some("fedcba9876543210"), game()))));
+        assert!(sent(c.deliver(&from(None, game()))));
+        let whole = tournament("quake-br", "copa", None);
+        assert!(sent(c.deliver(&from(Some(tab), whole))));
+        assert!(sent(c.deliver(&from(Some(tab), Event::me([7])))));
+        // A aba sem id recebe tudo.
+        let mut plain = connection();
+        assert!(sent(plain.deliver(&from(Some(tab), game()))));
+    }
+
+    #[test]
     fn ended_sessions_close_only_their_sockets() {
         let mut c = connection();
         let ended = |user, session: &str| Event::SessionsEnded {
@@ -274,7 +314,7 @@ mod tests {
 
     #[test]
     fn subscriptions_are_capped() {
-        let mut c = Connection::new(7, "abcd".into());
+        let mut c = Connection::new(7, "abcd".into(), None);
         for i in 0..MAX_TOPICS {
             assert!(c.subscribe(topic(&format!("t{i}"), None)));
         }

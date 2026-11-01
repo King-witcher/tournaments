@@ -265,6 +265,9 @@ pub struct MatchDetail {
     /// O veto de mapas e campeões; `null` sem veto no torneio, antes de a
     /// partida ficar pronta e na partida decidida sem veto.
     pub veto: Option<VetoView>,
+    /// A hora da API ao montar a resposta: com ela, quem vê corrige o próprio
+    /// relógio nos prazos (`veto.deadline`, `confirm_by`).
+    pub now: DateTime<Utc>,
 }
 
 /// Um mapa da série.

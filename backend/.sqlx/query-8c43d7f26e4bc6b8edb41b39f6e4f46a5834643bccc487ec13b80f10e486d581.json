@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into outbox (event, origin) values ($1, $2)\n           on conflict (xact, (md5(event::text))) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8c43d7f26e4bc6b8edb41b39f6e4f46a5834643bccc487ec13b80f10e486d581"
+}

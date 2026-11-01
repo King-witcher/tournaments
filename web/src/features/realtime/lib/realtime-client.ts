@@ -42,8 +42,13 @@ const topicKey = ({ tenant, tournament }: Topic) =>
  * quem deixou o site numa aba de lado, mas esperando mais
  * (`HIDDEN_BACKOFF_MS`); ao voltar a ser vista, a tentativa longa marcada
  * enquanto ela estava escondida sai na hora.
+ *
+ * A conexão tem um id da aba (`id`, o mesmo em toda reconexão), que vai na
+ * URL (`/ws?connection=`): a ação que o manda em `x-realtime-connection`
+ * não volta a esta aba como mudança da partida (ver `RealtimeHub.originHeaders`).
  */
 export class RealtimeClient {
+  private tab?: string;
   private socket?: WebSocket;
   private readonly topics = new Map<string, Entry>();
   private readonly listeners = new Set<(message: ServerMessage) => void>();
@@ -57,6 +62,21 @@ export class RealtimeClient {
   private retryWhileHidden = false;
 
   constructor(private readonly url: string) {}
+
+  /**
+   * O id desta aba para a API, sorteado na primeira vez que é pedido (no
+   * navegador: o cliente também é criado no prerender, onde o sorteio não
+   * pode acontecer).
+   */
+  get id() {
+    this.tab ??= tabId();
+    return this.tab;
+  }
+
+  /** Se a aba mantém a conexão (entre `connect` e `close`). */
+  get started() {
+    return this.active;
+  }
 
   /** Abre a conexão (e mantém aberta até `close`). */
   connect() {
@@ -122,7 +142,7 @@ export class RealtimeClient {
     if (!this.active) return;
     let socket: WebSocket;
     try {
-      socket = new WebSocket(this.url);
+      socket = new WebSocket(`${this.url}?connection=${this.id}`);
     } catch {
       this.scheduleRetry();
       return;
@@ -187,4 +207,14 @@ export class RealtimeClient {
 
 function wire({ tenant, tournament }: Topic) {
   return tournament ? { tenant, tournament } : { tenant };
+}
+
+/**
+ * 16 bytes aleatórios em hexadecimal. `getRandomValues`, e não
+ * `randomUUID`, porque este também existe fora de HTTPS (o site aberto pelo
+ * IP da rede local, no celular).
+ */
+function tabId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }

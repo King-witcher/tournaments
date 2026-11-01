@@ -46,6 +46,24 @@ export class RealtimeHub {
     return false;
   }
 
+  /**
+   * Os cabeçalhos de uma ação cuja resposta a página aplica sozinha (sem
+   * `router.refresh()`): com eles, as mudanças de partida que a ação causar
+   * não voltam a esta aba pelo socket (ela recarregaria o que já tem). As
+   * outras abas, inclusive as da mesma pessoa, recebem, e nenhuma mudança de
+   * outra pessoa deixa de chegar aqui. Vazio sem conexão aberta.
+   *
+   * ```ts
+   * const { data } = await api.POST(path, { params, body, headers: hub?.originHeaders() });
+   * if (data) setDetail(data);
+   * ```
+   */
+  originHeaders(): Record<string, string> {
+    return this.client.started
+      ? { "x-realtime-connection": this.client.id }
+      : {};
+  }
+
   /** Se `message` muda algo que uma página acompanha ao vivo (`fast`). */
   affectsLive(message: ServerMessage): boolean {
     for (const interest of this.interests) {

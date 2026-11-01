@@ -110,8 +110,16 @@ impl VetoRow {
         self.kind.clock() && self.player.is_none()
     }
 
-    /// O evento do `engine`; `None` nos que só a API usa (pronto, pedido e
-    /// recusa de desfazer).
+    /// É evento do `engine` (os que só a API usa: pronto, pedido e recusa de
+    /// desfazer).
+    const fn is_event(&self) -> bool {
+        !matches!(
+            self.kind,
+            Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined
+        )
+    }
+
+    /// O evento do `engine`; `None` nos que só a API usa (`is_event`).
     fn event(&self) -> Result<Option<Event>, ApiError> {
         let side = || {
             self.side
@@ -263,6 +271,20 @@ impl MatchVeto {
             }
         }
         pending.filter(|_| self.state.can_undo())
+    }
+
+    /// A vez de agora: o id da linha do evento que a abriu
+    /// (`Veto::turn_opened`); `None` antes do começo. Muda a cada passo
+    /// feito, sorteado ou desfeito e a cada partida nova; o voto que espera o
+    /// do outro e as escolhas da janela simultânea não a mudam.
+    pub fn step(&self) -> Option<i64> {
+        let n = usize::try_from(self.state.turn_opened()).ok()?;
+        let row = self
+            .rows
+            .iter()
+            .filter(|r| r.is_event())
+            .nth(n.checked_sub(1)?)?;
+        Some(row.id)
     }
 
     /// Quando começou o passo em andamento (ou a escolha simultânea dos

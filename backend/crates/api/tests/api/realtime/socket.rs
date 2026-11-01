@@ -315,3 +315,49 @@ async fn notices_and_ended_sessions() {
         assert_eq!(closed.unwrap().code, CloseCode::Library(4001));
     }
 }
+
+/// A aba que aplica sozinha a resposta da ação (`x-realtime-connection` com o
+/// id que ela deu à conexão em `/ws?connection=`) não recebe de volta a
+/// mudança da partida; a outra aba da mesma pessoa recebe.
+#[tokio::test]
+async fn the_tab_that_acted_does_not_reload_its_own_match_change() {
+    use crate::matches::{copa, players, single, start};
+    const TAB: &str = "0123456789abcdef";
+    let (db, _lease) = crate::db::test_db().await;
+    let state = state(db.clone());
+    let app = app_from(state.clone());
+    let ana = user(&db, "Ana").await;
+    create(&app, &ana, "quake-br").await;
+    let p = players(&app, &db, &ana, 2).await;
+    let veto = json!({ "veto": { "map_mode": "veto", "champion_phase": false } });
+    start(&app, &ana, copa(with(single(1, 1), veto)), &[&p[0], &p[1]]).await;
+    realtime::dispatch_once(&state).await.unwrap();
+
+    let url = serve(state.clone()).await;
+    // P1 já tem o aviso de série pronta: `open` não confere a contagem.
+    let (mut acting, _) = open(&format!("{url}?connection={TAB}"), &p[0]).await;
+    let (mut other, _) = open(&url, &p[0]).await;
+    for tab in [&mut acting, &mut other] {
+        let topic = json!({ "type": "subscribe", "tenant": "quake-br", "tournament": "copa" });
+        assert_eq!(send(tab, topic).await, subscribed("quake-br", Some("copa")));
+    }
+    let request = Request::post(format!("{COPA}/matches/wb-1-1/veto/ready"))
+        .header(header::COOKIE, &p[0].cookie)
+        .header("x-realtime-connection", TAB)
+        .body(Body::empty())
+        .unwrap();
+    assert_eq!(
+        app.clone().oneshot(request).await.unwrap().status(),
+        StatusCode::OK
+    );
+    realtime::dispatch_once(&state).await.unwrap();
+    let me = json!({ "type": "changed", "scope": "me" });
+    assert_eq!(
+        next(&mut other).await,
+        json!({ "type": "changed", "scope": "tournament", "tenant": "quake-br", "tournament": "copa", "match": "wb-1-1" })
+    );
+    assert_eq!(next(&mut other).await, me);
+    // "Seus torneios" chega também à aba que agiu; a partida, não.
+    assert_eq!(next(&mut acting).await, me);
+    silent(&mut acting).await;
+}

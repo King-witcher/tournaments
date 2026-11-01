@@ -20,8 +20,12 @@
 //!   organizador deixou pela metade. A série que passa a ter outros lados
 //!   perde o veto.
 //! - O tempo de cada passo vence ao ler e antes de cada ação (`due`), e um
-//!   relógio no `realtime` dorme até o próximo prazo (`clock`): no fim, a
-//!   escolha é sorteada pelo `engine`, gravada com a hora do prazo.
+//!   relógio no `realtime` dorme até o próximo prazo (`clock`): a ação vale
+//!   até 2 s depois do prazo que a série mostra (`due::GRACE`); então a
+//!   escolha é sorteada pelo `engine`, gravada com essa hora.
+//! - A série diz qual vez mostra (`VetoView::step`, o evento que a abriu);
+//!   a ação que manda esse número é recusada se a vez mudou antes de ela
+//!   chegar (`veto.step_changed`), em vez de cair no passo seguinte.
 //! - O envio de uma partida por um jogador exige o veto dela concluído e o
 //!   mapa que ele deu (`check_report`). Quando o veto deixou enviar conta no
 //!   prazo de confirmação (`released_at`), e o veto começado de outra série

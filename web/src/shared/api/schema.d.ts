@@ -2123,6 +2123,12 @@ export interface components {
              */
             next_game?: number | null;
             /**
+             * Format: date-time
+             * @description A hora da API ao montar a resposta: com ela, quem vê corrige o próprio
+             *     relógio nos prazos (`veto.deadline`, `confirm_by`).
+             */
+            now: string;
+            /**
              * Format: int32
              * @description Rodadas da parte da chave desta partida (para nomear final,
              *     semifinal...). No round robin e no suíço, as rodadas da fase (no
@@ -3414,6 +3420,12 @@ export interface components {
         /** @description A resposta ao pedido de desfazer do adversário. */
         UndoAnswer: {
             accept: boolean;
+            /**
+             * Format: int64
+             * @description A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de
+             *     agora.
+             */
+            step?: number | null;
         };
         /** @description Desligar um provedor (Discord ou Google) da conta. */
         UnlinkLogin: {
@@ -3529,6 +3541,12 @@ export interface components {
              */
             game?: number | null;
             map?: string | null;
+            /**
+             * Format: int64
+             * @description A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de
+             *     agora.
+             */
+            step?: number | null;
         };
         /** @description Um evento do histórico do veto. */
         VetoEvent: {
@@ -3644,6 +3662,14 @@ export interface components {
             /** Format: int64 */
             user_id: number;
         };
+        /**
+         * @description A vez que a tela de quem age mostrava (`VetoView::step`), no desfazer e
+         *     no pedido de desfazer. O corpo é opcional; sem ele, vale a de agora.
+         */
+        VetoSeen: {
+            /** Format: int64 */
+            step?: number | null;
+        };
         /** @description A configuração do veto na resposta. */
         VetoSettings: {
             champion_phase: boolean;
@@ -3712,7 +3738,9 @@ export interface components {
             champions: components["schemas"]["VetoChampion"][];
             /**
              * Format: date-time
-             * @description Até quando o passo esperado pode ser feito; depois, é sorteado.
+             * @description Até quando o passo esperado pode ser feito (o prazo que o cronômetro
+             *     mostra). A API ainda aceita a ação até 2 s depois; então ela é
+             *     sorteada.
              */
             deadline?: string | null;
             /**
@@ -3753,6 +3781,17 @@ export interface components {
             /** @description Os jogadores podem enviar a próxima partida (o veto dela acabou). */
             reportable: boolean;
             status: components["schemas"]["VetoStatus"];
+            /**
+             * Format: int64
+             * @description A vez que esta resposta mostra (o id do evento que a abriu; `null`
+             *     antes do começo). Muda a cada passo feito, sorteado ou desfeito e a
+             *     cada partida nova, mesmo quando o mesmo lado age de novo; o voto que
+             *     espera o do outro e as escolhas da janela simultânea não a mudam.
+             *     Mande-a em `step` nas ações (passo, desfazer, pedir e responder o
+             *     desfazer): se a vez mudou antes de a ação chegar, ela é recusada (409
+             *     `veto.step_changed`) em vez de cair no passo seguinte.
+             */
+            step?: number | null;
             /**
              * Format: int32
              * @description Segundos de cada passo.
@@ -8564,7 +8603,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. Na janela simultânea do TDM (`team_pick`), cada jogador escolhe o próprio campeão de cada partida (`game`), uma vez por partida. Quando o veto da partida acaba, ela pode ser enviada */
+            /** @description O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. Na janela simultânea do TDM (`team_pick`), cada jogador escolhe o próprio campeão de cada partida (`game`), uma vez por partida. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8600,7 +8639,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; na janela simultânea, quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time) */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; na janela simultânea, quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -8634,7 +8673,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VetoSeen"] | null;
+            };
+        };
         responses: {
             /** @description O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz */
             200: {
@@ -8672,8 +8715,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.nothing_to_undo */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o último passo não é o que a tela mostrava), veto.nothing_to_undo */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8697,7 +8749,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VetoSeen"] | null;
+            };
+        };
         responses: {
             /** @description Um jogador (no TDM, qualquer um do time, pelo lado) pede para desfazer o último passo da partida em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para */
             200: {
@@ -8735,8 +8791,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.nothing_to_undo, veto.undo_requested (já há um pedido esperando resposta) */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa), veto.nothing_to_undo, veto.undo_requested (já há um pedido esperando resposta) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8802,7 +8867,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.no_undo_request */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa), veto.no_undo_request */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -10436,7 +10501,10 @@ export interface operations {
     };
     ws: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Id que a aba dá à conexão (16 a 64 de A-Z, a-z, 0-9, _ e -; um UUID serve). A ação que manda o mesmo id no cabeçalho `x-realtime-connection` diz que a aba aplica a resposta sozinha: as mudanças de partida que ela emitir não voltam a esta conexão (as outras abas recebem). Fora da forma, é ignorado */
+                connection?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

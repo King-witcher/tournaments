@@ -6,6 +6,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Request, State},
+    http::HeaderName,
     middleware::Next,
     response::Response,
 };
@@ -17,6 +18,21 @@ use crate::outbox::{self, Event};
 /// (`Lagged`: ele recarrega tudo o que assina).
 const CAPACITY: usize = 1024;
 
+/// O cabeçalho em que a aba manda o id da própria conexão (o mesmo de
+/// `/ws?connection=`) quando aplica sozinha a resposta da ação: as mudanças de
+/// partida que a ação emitir não voltam a essa conexão.
+pub const ORIGIN_HEADER: HeaderName = HeaderName::from_static("x-realtime-connection");
+
+/// O id de conexão que a aba escolheu, se tem a forma aceita (16 a 64 de
+/// `A-Z a-z 0-9 _ -`, como um UUID); outro valor é ignorado.
+pub fn connection_id(raw: &str) -> Option<String> {
+    let valid = (16..=64).contains(&raw.len())
+        && raw
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-');
+    valid.then(|| raw.to_owned())
+}
+
 /// Um evento do outbox como sai para os sockets.
 #[derive(Debug)]
 pub struct Published {
@@ -24,6 +40,8 @@ pub struct Published {
     /// Num aviso, o id da notificação que ele virou no sininho de cada
     /// destinatário (o toast a marca como vista); vazio nos outros eventos.
     pub notifications: HashMap<i64, i64>,
+    /// A conexão da aba que pediu a mudança (`ORIGIN_HEADER`), se ela disse.
+    pub origin: Option<String>,
 }
 
 impl From<Event> for Published {
@@ -31,6 +49,7 @@ impl From<Event> for Published {
         Self {
             event,
             notifications: HashMap::new(),
+            origin: None,
         }
     }
 }
@@ -94,13 +113,19 @@ impl Realtime {
 }
 
 /// Camada de todas as rotas: depois de uma requisição que emitiu evento (com
-/// a transação já encerrada), acorda o despachante.
+/// a transação já encerrada), acorda o despachante. Os eventos levam a
+/// conexão de `ORIGIN_HEADER`, se veio.
 pub async fn wake_after_emit(
     State(realtime): State<Realtime>,
     request: Request,
     next: Next,
 ) -> Response {
-    let (response, emitted) = outbox::track(next.run(request)).await;
+    let origin = request
+        .headers()
+        .get(ORIGIN_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .and_then(connection_id);
+    let (response, emitted) = outbox::track(origin, next.run(request)).await;
     if emitted {
         realtime.wake();
     }

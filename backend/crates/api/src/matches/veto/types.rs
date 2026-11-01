@@ -235,7 +235,17 @@ pub struct VetoView {
     /// A partida em andamento.
     pub game: Option<i16>,
     pub turn: Option<VetoTurn>,
-    /// Até quando o passo esperado pode ser feito; depois, é sorteado.
+    /// A vez que esta resposta mostra (o id do evento que a abriu; `null`
+    /// antes do começo). Muda a cada passo feito, sorteado ou desfeito e a
+    /// cada partida nova, mesmo quando o mesmo lado age de novo; o voto que
+    /// espera o do outro e as escolhas da janela simultânea não a mudam.
+    /// Mande-a em `step` nas ações (passo, desfazer, pedir e responder o
+    /// desfazer): se a vez mudou antes de a ação chegar, ela é recusada (409
+    /// `veto.step_changed`) em vez de cair no passo seguinte.
+    pub step: Option<i64>,
+    /// Até quando o passo esperado pode ser feito (o prazo que o cronômetro
+    /// mostra). A API ainda aceita a ação até 2 s depois; então ela é
+    /// sorteada.
     pub deadline: Option<DateTime<Utc>>,
     /// Modo veto: os passos do veto de mapas, na ordem.
     pub map_steps: Vec<VetoMapStep>,
@@ -279,10 +289,26 @@ pub struct VetoChoice {
     /// escolhido.
     #[serde(default)]
     pub game: Option<i16>,
+    /// A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de
+    /// agora.
+    #[serde(default)]
+    pub step: Option<i64>,
+}
+
+/// A vez que a tela de quem age mostrava (`VetoView::step`), no desfazer e
+/// no pedido de desfazer. O corpo é opcional; sem ele, vale a de agora.
+#[derive(Deserialize, ToSchema, Default)]
+pub struct VetoSeen {
+    #[serde(default)]
+    pub step: Option<i64>,
 }
 
 /// A resposta ao pedido de desfazer do adversário.
 #[derive(Deserialize, ToSchema)]
 pub struct UndoAnswer {
     pub accept: bool,
+    /// A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de
+    /// agora.
+    #[serde(default)]
+    pub step: Option<i64>,
 }

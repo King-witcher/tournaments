@@ -86,5 +86,6 @@ pub async fn load(
         can_manage: viewer.organizer,
         veto: veto::view(stage, m, mine, Some(viewer.user_id)),
         summary,
+        now: chrono::Utc::now(),
     })
 }

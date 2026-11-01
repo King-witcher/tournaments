@@ -43,6 +43,7 @@ messages/<pt|es>/       um JSON por namespace
 
 - Página que se atualiza sozinha: `<LiveUpdates>` (`features/realtime`) dizendo o que ela mostra (`tenant`, `tournament`, `match`, `me`), no `params.then(...)` da página ou do `layout.tsx` do grupo. Sem ele, só muda ao navegar. O refresh mantém o `useState` dos componentes de cliente; `key` derivada do dado remonta o bloco.
 - O que recarrega cada página: `features/realtime/lib/interest.ts`. Conexão, toasts e som: `features/realtime`; Web Push e service worker: `features/push` e `app/sw.js/route.ts`; sininho: `features/notifications`.
+- Ação cuja resposta a página aplica sozinha, sem `router.refresh()`: mande `headers: useRealtimeHub()?.originHeaders()`, e a mudança de partida que ela causar não volta a esta aba pelo socket (as outras abas recebem).
 
 ## Estilo (Carbon)
 

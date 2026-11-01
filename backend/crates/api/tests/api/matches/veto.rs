@@ -324,7 +324,7 @@ async fn a_timeout_picks_at_random_and_the_organizer_undoes_it() {
     let (app, ana, p) = final_with(&db, 3, veto_on(), one_ban()).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[1]).await;
-    age_veto(&db, 31).await;
+    age_veto(&db, 33).await;
     // Ler aplica o passo vencido: o de A, sorteado.
     let d = detail(&app, &p[1], "wb-1-1").await;
     let last = d["veto"]["history"]
@@ -356,6 +356,107 @@ async fn a_timeout_picks_at_random_and_the_organizer_undoes_it() {
 }
 
 #[tokio::test]
+async fn a_click_up_to_two_seconds_late_counts_then_the_step_is_drawn() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, _, p) = final_with(&db, 3, veto_on(), one_ban()).await;
+    ready(&app, &p[0]).await;
+    ready(&app, &p[1]).await;
+    // 1 s depois do prazo que o cronômetro mostra: ainda vale.
+    age_veto(&db, 31).await;
+    let d = ok_step(&app, &p[0], map("awoken")).await;
+    let shown = d["veto"]["step"].clone();
+    let history = |d: &Value| d["veto"]["history"].as_array().unwrap().clone();
+    let mine = history(&d).last().unwrap().clone();
+    assert_eq!(
+        (&mine["side"], &mine["timeout"]),
+        (&json!("a"), &json!(false))
+    );
+    // 3 s depois do prazo de B: o passo dele já foi sorteado, com a hora em
+    // que o sorteio valeu (prazo + 2 s), e o clique dele não cai na vez de A.
+    age_veto(&db, 33).await;
+    assert_eq!(
+        pick(
+            &app,
+            &p[1],
+            json!({ "map": "ruins-of-sarnath", "step": shown })
+        )
+        .await,
+        (StatusCode::CONFLICT, err("veto.step_changed"))
+    );
+    let d = detail(&app, &p[1], "wb-1-1").await;
+    let events = history(&d);
+    let (mine, drawn) = (&events[events.len() - 2], &events[events.len() - 1]);
+    assert_eq!(
+        (&drawn["side"], &drawn["timeout"]),
+        (&json!("b"), &json!(true))
+    );
+    let at = |e: &Value| {
+        e["at"]
+            .as_str()
+            .unwrap()
+            .parse::<chrono::DateTime<Utc>>()
+            .unwrap()
+    };
+    assert_eq!(at(drawn) - at(mine), chrono::TimeDelta::seconds(32));
+    assert_eq!(turn(&d).2, json!(["a"]));
+}
+
+#[tokio::test]
+async fn the_step_on_screen_keeps_a_late_click_off_the_next_turn() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "map_mode": "off", "champion_phase": true });
+    let rules =
+        json!({ "bans_per_series": 0, "mirror": true, "same_team": false, "no_repeat": null });
+    let (app, ana, p) = final_with(&db, 3, veto, rules).await;
+    ready(&app, &p[0]).await;
+    let (_, d) = ready(&app, &p[1]).await;
+    let step = |d: &Value| d["veto"]["step"].clone();
+    let with_step = |slug: &str, d: &Value| json!({ "champion": slug, "step": step(d) });
+    // Partida 1: A, depois B; na 2, B escolhe primeiro (duas vezes seguidas).
+    let d = ok_step(&app, &p[0], with_step("anarki", &d)).await;
+    let seen = d.clone();
+    let d = ok_step(&app, &p[1], with_step("athena", &seen)).await;
+    assert_eq!(d["veto"]["turn"]["sides"], json!(["b"]));
+    assert_eq!(d["veto"]["turn"]["pick_for"], 2);
+    assert_ne!(step(&d), step(&seen));
+    // O clique repetido de B para a partida 1 não vira o pick da 2.
+    assert_eq!(
+        pick(&app, &p[1], with_step("clutch", &seen)).await,
+        (StatusCode::CONFLICT, err("veto.step_changed"))
+    );
+    // Desfazer também confere a vez que a tela mostrava.
+    let stale = json!({ "step": step(&seen) });
+    assert_eq!(
+        post(&app, &uri("undo"), &ana, stale.clone()).await,
+        (StatusCode::CONFLICT, err("veto.step_changed"))
+    );
+    assert_eq!(
+        post(&app, &uri("undo-request"), &p[0], stale).await,
+        (StatusCode::CONFLICT, err("veto.step_changed"))
+    );
+    let (status, d) = post(&app, &uri("undo"), &ana, json!({ "step": step(&d) })).await;
+    assert_eq!(status, StatusCode::OK, "{d}");
+    assert_eq!(d["veto"]["turn"]["pick_for"], 1);
+    // A vez de volta ao mesmo passo é outra vez.
+    assert_ne!(step(&d), step(&seen));
+    ok_step(&app, &p[1], with_step("clutch", &d)).await;
+}
+
+#[tokio::test]
+async fn both_votes_answer_the_same_turn() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "map_mode": "vote", "champion_phase": false });
+    let (app, _, p) = final_with(&db, 1, veto, one_ban()).await;
+    ready(&app, &p[0]).await;
+    let (_, d) = ready(&app, &p[1]).await;
+    let offered = d["veto"]["games"][0]["offered"][0]["slug"].clone();
+    let vote = json!({ "map": offered, "step": d["veto"]["step"] });
+    ok_step(&app, &p[0], vote.clone()).await;
+    let d = ok_step(&app, &p[1], vote).await;
+    assert_eq!(d["veto"]["status"], "done");
+}
+
+#[tokio::test]
 async fn the_scheduler_also_applies_timeouts() {
     let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
@@ -370,7 +471,7 @@ async fn the_scheduler_also_applies_timeouts() {
     let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
     assert_eq!(tick.vetoed, 0);
     // Dois prazos vencidos em sequência: dois passos sorteados.
-    age_veto(&db, 61).await;
+    age_veto(&db, 65).await;
     clear(&db).await;
     let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
     assert_eq!(tick.vetoed, 2);

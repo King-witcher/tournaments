@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
+import { noteServerTime, serverTime } from "@/shared/lib/server-clock";
 import styles from "./countdown.module.scss";
 
 type Props = {
@@ -10,6 +11,13 @@ type Props = {
   until: string;
   /** Chamado uma vez quando o tempo acaba. */
   onExpire?: () => void;
+  /**
+   * A hora da API (ISO) na resposta que trouxe `until`, como o `now` do
+   * `MatchDetail`: corrige o relógio de quem vê, que pode estar atrasado ou
+   * adiantado. Fica para a aba toda (`shared/lib/server-clock`), então os
+   * outros prazos da página também contam pela hora da API.
+   */
+  serverNow?: string;
 };
 
 function format(ms: number) {
@@ -23,17 +31,24 @@ function format(ms: number) {
 }
 
 /**
- * Tempo que falta até `until` (h:mm:ss ou m:ss), atualizado a cada segundo.
- * Até hidratar não mostra nada: o relógio do servidor não é o de quem vê.
+ * Tempo que falta até `until` (h:mm:ss ou m:ss), atualizado a cada segundo,
+ * pela hora da API quando alguma resposta a deu (`serverNow`). Até hidratar
+ * não mostra nada: o relógio do servidor não é o de quem vê.
  */
-export function Countdown({ until, onExpire }: Props) {
+export function Countdown({ until, onExpire, serverNow }: Props) {
   const isClient = useIsClient();
   const end = new Date(until).getTime();
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(serverTime);
   const expired = useRef(false);
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    if (serverNow === undefined) return;
+    noteServerTime(serverNow);
+    setNow(serverTime());
+  }, [serverNow]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(serverTime()), 1000);
     return () => window.clearInterval(id);
   }, []);
 

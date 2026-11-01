@@ -25,7 +25,7 @@ mod teams;
 mod tenants;
 mod tournaments;
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     Json, Router,
@@ -106,8 +106,12 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers([header::CONTENT_TYPE])
-        .allow_credentials(true);
+        .allow_headers([header::CONTENT_TYPE, realtime::ORIGIN_HEADER])
+        .allow_credentials(true)
+        // Sem isto, o navegador guarda a resposta do preflight por 5 s, e cada
+        // POST com JSON paga um OPTIONS antes (uma ida a mais até a
+        // Virgínia). 2 h é o teto do Chrome.
+        .max_age(Duration::from_secs(7200));
 
     let spec = Json(openapi.clone());
     router

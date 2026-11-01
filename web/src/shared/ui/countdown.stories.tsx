@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { resetServerClock } from "@/shared/lib/server-clock";
 import { Countdown } from "./countdown";
 
 /** O instante, em ISO, `seconds` segundos a partir de agora. */
@@ -12,7 +13,13 @@ const meta = {
   title: "Data e hora/Countdown",
   component: Countdown,
   args: { until: after(12 * 60), onExpire: fn() },
-  argTypes: { until: { control: "text" }, onExpire: { control: false } },
+  argTypes: {
+    until: { control: "text" },
+    serverNow: { control: "text" },
+    onExpire: { control: false },
+  },
+  // A correção do relógio vale para a aba toda: cada história começa sem ela.
+  beforeEach: resetServerClock,
 } satisfies Meta<typeof Countdown>;
 
 export default meta;
@@ -32,3 +39,13 @@ export const Ending: Story = {
 
 /** Passou do prazo: fica em `0:00` e chama `onExpire` ao montar. */
 export const Expired: Story = { args: { until: after(-60) } };
+
+/**
+ * Com a hora da API (`serverNow`): o relógio daqui está 1 min atrasado, e o
+ * prazo, 2 min à frente da hora da API. Mostra `2:00`, não `3:00`.
+ */
+export const ServerClock: Story = {
+  render: (args) => (
+    <Countdown {...args} until={after(60 + 120)} serverNow={after(60)} />
+  ),
+};

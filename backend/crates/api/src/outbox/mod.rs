@@ -4,7 +4,8 @@
 //! depende de `shared`, para todo domínio poder emitir (inclusive `auth`, que
 //! fecha os sockets de uma sessão encerrada); cada domínio monta os eventos
 //! dele (`tenants::changed`, `tournaments::changed`, ...). `track` diz se uma
-//! requisição emitiu, para a camada do `lib.rs` acordar o despachante.
+//! requisição emitiu, para a camada do `lib.rs` acordar o despachante, e
+//! guarda com cada evento a aba que pediu a mudança (`origin`).
 
 mod db;
 mod event;

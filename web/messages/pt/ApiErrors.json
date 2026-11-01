@@ -207,7 +207,8 @@
     "no_undo_request": "Não há pedido para desfazer.",
     "own_request": "Quem pediu para desfazer não responde. Espere o adversário.",
     "already_picked": "Você já escolheu o campeão desta partida.",
-    "champion_taken": "Outro jogador escolheu esse campeão para a partida antes."
+    "champion_taken": "Outro jogador escolheu esse campeão para a partida antes.",
+    "step_changed": "A vez mudou antes do seu clique. Confira a tela."
   },
   "screenshots": {
     "not_configured": "As capturas de tela estão desligadas no site.",

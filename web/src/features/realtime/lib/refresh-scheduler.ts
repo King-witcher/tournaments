@@ -1,5 +1,10 @@
 /** O primeiro aviso espera só o bastante para juntar os da mesma mudança. */
 const FIRST_DELAY_MS = 300;
+/**
+ * O mesmo, ao vivo: os avisos de uma mudança chegam juntos (saem do mesmo
+ * lote do despachante), e cada ms aqui atrasa a tela do adversário.
+ */
+const LIVE_FIRST_DELAY_MS = 50;
 /** Depois de uma recarga, os avisos desta janela viram uma recarga só. */
 const WINDOW_MS = 1500;
 /**
@@ -11,10 +16,11 @@ const LIVE_WINDOW_MS = 500;
 const hidden = () => document.visibilityState === "hidden";
 
 /**
- * Junta os pedidos de recarga: o primeiro sai em ~0,3 s e os que chegam até
- * 1,5 s depois da última recarga (0,5 s com `live`) viram uma só. Com a aba escondida não
- * recarrega (cada recarga lê a sessão na API, e a cota do Redis é contada):
- * guarda que ficou desatualizada e recarrega uma vez ao voltar a ser vista.
+ * Junta os pedidos de recarga: o primeiro sai em ~0,3 s (50 ms com `live`)
+ * e os que chegam até 1,5 s depois da última recarga (0,5 s com `live`)
+ * viram uma só. Com a aba escondida não recarrega (cada recarga lê a sessão
+ * na API, e a cota do Redis é contada): guarda que ficou desatualizada e
+ * recarrega uma vez ao voltar a ser vista.
  */
 export function createRefreshScheduler(refresh: () => void) {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -37,8 +43,9 @@ export function createRefreshScheduler(refresh: () => void) {
       return;
     }
     if (timer !== undefined) return;
+    const first = live ? LIVE_FIRST_DELAY_MS : FIRST_DELAY_MS;
     const window = live ? LIVE_WINDOW_MS : WINDOW_MS;
-    const wait = Math.max(FIRST_DELAY_MS, last + window - Date.now());
+    const wait = Math.max(first, last + window - Date.now());
     timer = setTimeout(fire, wait);
   };
 

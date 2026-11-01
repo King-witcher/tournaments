@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, event as \"event: Json<Value>\"\n           from outbox\n           order by id\n           limit $1\n           for update skip locked",
+  "query": "select id, event as \"event: Json<Value>\", origin\n           from outbox\n           order by id\n           limit $1\n           for update skip locked",
   "describe": {
     "columns": [
       {
@@ -24,6 +24,17 @@
             "name": "event"
           }
         }
+      },
+      {
+        "ordinal": 2,
+        "name": "origin",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outbox",
+            "name": "origin"
+          }
+        }
       }
     ],
     "parameters": {
@@ -33,8 +44,9 @@
     },
     "nullable": [
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "ad9c47927950ccf748d17e01da04a2174c93efde79228e2c16f49e5f95b037e9"
+  "hash": "d16232b7fca815fdab624ba76dccb54e1c697b8d4cdf80e60ab638d27682f46a"
 }

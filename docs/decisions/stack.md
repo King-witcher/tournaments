@@ -31,6 +31,7 @@
 - **Supabase é só host de Postgres**, via connection string. Nada de Supabase Auth, Realtime, Storage ou supabase-js, para evitar lock-in.
 - **Render free**: 750 h/mês por workspace, o que cabe em **um** serviço sempre ligado.
 - **Render → Supabase**: a conexão direta é só IPv6 e costuma falhar no Render; use o pooler em **modo sessão**, com o usuário próprio (`usuario.<project-ref>`). Se o pooler não aceitar outro database, um schema dedicado dentro de `postgres`.
+- **Latência** (medido em 01/11): os jogadores estão em São Paulo e a API na Virgínia (~0,45 s de ida e volta); uma rota trivial leva ~150 ms com a conexão quente, e a borda do Cloudflare às vezes abre conexão nova até o Render (+270 ms). Por isso o CORS responde com `max_age` de 2 h (o teto do Chrome): sem ele, o navegador guarda o preflight por 5 s e cada POST com JSON pagava um `OPTIONS` antes.
 
 ## Redis
 

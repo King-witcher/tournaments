@@ -131,6 +131,8 @@ pub struct Veto {
     games: Vec<GameVeto>,
     /// Eventos aplicados: separa os sorteios de tempo esgotado.
     events: u32,
+    /// O número do evento que abriu a vez de agora (`turn_opened`).
+    opened: u32,
     /// O que só a API sabe agora (`set_rosters`): quem escolhe campeão por
     /// lado nos times e o que já foi enviado. `None` até ser informado.
     rosters: Option<Rosters>,
@@ -153,6 +155,7 @@ impl Veto {
             begin: None,
             games: Vec::new(),
             events: 0,
+            opened: 0,
             rosters: None,
         }
     }
@@ -224,7 +227,37 @@ impl Veto {
             }
         }
         self.events += 1;
+        // O voto que espera o do outro lado e cada escolha da janela
+        // simultânea respondem à mesma vez que os outros: não abrem outra.
+        let shared = match event {
+            Event::TeamPick { .. } => true,
+            Event::Step {
+                action: Action::Vote,
+                ..
+            } => matches!(
+                self.phase(),
+                Phase::Turn(Turn::Act {
+                    action: Action::Vote,
+                    ..
+                })
+            ),
+            _ => false,
+        };
+        if !shared {
+            self.opened = self.events;
+        }
         Ok(())
+    }
+
+    /// O número (a partir de 1, na ordem do histórico) do evento que abriu a
+    /// vez de agora: o começo, a partida seguinte, um passo ou um desfazer. O
+    /// voto que ainda espera o do outro lado e as escolhas da janela
+    /// simultânea não abrem vez nova (o voto que fecha a votação, sim). Quem
+    /// mostra a vez guarda esse número e, com ele, sabe se a vez mudou antes
+    /// de a escolha chegar, inclusive quando o mesmo lado age duas vezes
+    /// seguidas (o draft do duelo, um sorteio pelo tempo). 0 antes do começo.
+    pub fn turn_opened(&self) -> u32 {
+        self.opened
     }
 
     fn begin(&mut self, seed: u64, first: Side, ctx: Option<&Context>) -> Result<(), VetoError> {

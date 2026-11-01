@@ -29,7 +29,10 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
             continue;
         };
         queued |= enqueue_discord(&mut tx, event).await?;
-        let mut out = Published::from(event.clone());
+        let mut out = Published {
+            origin: stored.origin.clone(),
+            ..Published::from(event.clone())
+        };
         if let Event::Notice { users, notice } = event {
             out.notifications = notifications::store(&mut tx, users, notice).await?;
             if let Some(sender) = &state.push {

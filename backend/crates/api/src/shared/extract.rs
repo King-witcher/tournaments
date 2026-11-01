@@ -3,7 +3,7 @@
 //! como texto puro.
 
 use axum::{
-    extract::{FromRequest, FromRequestParts, Request},
+    extract::{FromRequest, FromRequestParts, OptionalFromRequest, Request},
     http::request::Parts,
 };
 use serde::{Deserialize, Deserializer, de::DeserializeOwned};
@@ -11,15 +11,28 @@ use serde::{Deserialize, Deserializer, de::DeserializeOwned};
 use super::ApiError;
 
 /// Corpo JSON. Inválido → status do axum (400, 415 ou 422) com `request.invalid_body`.
+/// Como `Option<JsonBody<T>>`, o corpo é opcional: sem `Content-Type` JSON
+/// fica `None`.
 pub struct JsonBody<T>(pub T);
 
 impl<S: Send + Sync, T: DeserializeOwned> FromRequest<S> for JsonBody<T> {
     type Rejection = ApiError;
 
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
-        axum::Json::<T>::from_request(req, state)
+        <axum::Json<T> as FromRequest<S>>::from_request(req, state)
             .await
             .map(|axum::Json(value)| Self(value))
+            .map_err(|rej| ApiError::new(rej.status(), "request.invalid_body"))
+    }
+}
+
+impl<S: Send + Sync, T: DeserializeOwned> OptionalFromRequest<S> for JsonBody<T> {
+    type Rejection = ApiError;
+
+    async fn from_request(req: Request, state: &S) -> Result<Option<Self>, Self::Rejection> {
+        <axum::Json<T> as OptionalFromRequest<S>>::from_request(req, state)
+            .await
+            .map(|body| body.map(|axum::Json(value)| Self(value)))
             .map_err(|rej| ApiError::new(rej.status(), "request.invalid_body"))
     }
 }

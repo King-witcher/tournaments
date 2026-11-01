@@ -207,7 +207,8 @@
     "no_undo_request": "No hay pedido para deshacer.",
     "own_request": "Quien pidió deshacer no responde. Espera al rival.",
     "already_picked": "Ya elegiste el campeón de esta partida.",
-    "champion_taken": "Otro jugador eligió ese campeón para la partida antes."
+    "champion_taken": "Otro jugador eligió ese campeón para la partida antes.",
+    "step_changed": "El turno cambió antes de tu clic. Revisa la pantalla."
   },
   "screenshots": {
     "not_configured": "Las capturas de pantalla están desactivadas en el sitio.",
