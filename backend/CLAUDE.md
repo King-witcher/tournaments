@@ -31,6 +31,10 @@ O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//
 
 Toda função que muda algo que uma página mostra emite no outbox, na transação dela, antes do commit: `tournaments::changed(conn, id)` (dados, status, inscrições, check-in, seeding; `changed_with` também avisa quem saiu), `tenants::changed` (membros, papéis, apelidos, convites), `tenants::access_lost` (quem saiu); a chave emite sozinha pelo `settle` (passe a fase lida antes de gravar para `actions::respond`). Emita na função de domínio que faz a transição, não só no handler, para valer também quando outra função a chama (`lifecycle::leave_tournaments`). Escrita de uma linha que recebe `&PgPool` passa a receber `&mut PgConnection`, e o handler abre a transação. Aviso para pessoas é `outbox::Event::notice` com código e parâmetros, nunca texto. O que só vai ao canal do Discord (torneio iniciado, encerrado, série decidida) é `Event::Announce`; todo `Notice` e `Announce` vira mensagem no Discord se o código está no `CATALOG` de `discord/catalog.rs` (aviso novo: uma linha lá e a chave no `Discord.json` do front). O despachante acorda sozinho depois da requisição que emitiu; fora de requisição (socket, tarefa), `state.realtime.wake()`.
 
+### Idas ao banco no caminho do clique
+
+Cada query é uma ida Render → Supabase, em série. Ação sobre uma partida que só grava eventos de veto ou partidas responde com `actions::respond_to(.., Wrote::Veto | Wrote::Games, ..)`, que relê só isso (`Stage::refresh`); quem grava outra coisa usa `respond`. Dado do torneio que toda rota usa entra na query de `tournaments::find`, não numa query à parte. O teto por rota está em `tests/api/matches/cost.rs` (`cargo test -p api matches::cost -- --nocapture` lista as queries).
+
 ### O que é um domínio
 
 - Um recurso da API, e a rota diz qual: `/tenants/{slug}/tournaments/...` é `tournaments`, não `tenants`.

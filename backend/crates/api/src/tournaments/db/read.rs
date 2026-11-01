@@ -120,9 +120,28 @@ pub async fn list(
     Ok(list)
 }
 
+/// Um mapa do pool, como vem do `jsonb_agg` de `find`.
+#[derive(serde::Deserialize, Debug)]
+struct PoolMapRow {
+    id: i64,
+    slug: String,
+    name: String,
+}
+
+/// Uma tradução, como vem do `jsonb_agg` de `find`.
+#[derive(serde::Deserialize, Debug)]
+struct TranslationRow {
+    locale: String,
+    name: String,
+    description: String,
+    rules: String,
+}
+
 /// O torneio `slug` do tenant, com fases, traduções e o número de inscritos.
 /// `viewer` é quem vê (`None` sem login), para `registered` e `checked_in`.
-/// Não confere se ele pode ver: ver `visibility::find_visible`.
+/// Não confere se ele pode ver: ver `visibility::find_visible`. Uma query
+/// só (as fases, o pool e as traduções vêm agregadas em JSON): ela está em
+/// toda rota de torneio.
 pub async fn find(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -136,12 +155,33 @@ pub async fn find(
                   t.starts_at, t.check_in_minutes, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
                   t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
+                  t.started_at,
+                  (select n.slug from tenants n where n.id = t.tenant_id) as "tenant_slug!",
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3) as "registered!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3
-                           and p.checked_in_at is not null) as "checked_in!"
+                           and p.checked_in_at is not null) as "checked_in!",
+                  coalesce((select jsonb_agg(s.config order by s.position)
+                            from tournament_stages s
+                            where s.tournament_id = t.id), '[]')
+                      as "stages!: Json<Vec<ef::StageFormat>>",
+                  coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,
+                                                                'name', m.name)
+                                             order by p.position)
+                            from tournament_maps p
+                            join maps m on m.id = p.map_id
+                            where p.tournament_id = t.id), '[]')
+                      as "map_pool!: Json<Vec<PoolMapRow>>",
+                  coalesce((select jsonb_agg(jsonb_build_object('locale', r.locale,
+                                                                'name', r.name,
+                                                                'description', r.description,
+                                                                'rules', r.rules)
+                                             order by r.locale)
+                            from tournament_translations r
+                            where r.tournament_id = t.id), '[]')
+                      as "translations!: Json<Vec<TranslationRow>>"
            from tournaments t
            where t.tenant_id = $1 and t.slug = $2"#,
         tenant.get(),
@@ -161,55 +201,34 @@ pub async fn find(
     let stored = TournamentStatus::from_db(&row.status)?;
     let status = current_status(&mut *conn, id, stored, &schedule, Utc::now()).await?;
 
-    let stages = sqlx::query_scalar!(
-        r#"select config as "config: Json<ef::StageFormat>"
-           from tournament_stages
-           where tournament_id = $1
-           order by position"#,
-        row.id
-    )
-    .fetch_all(&mut *conn)
-    .await?;
-    let map_pool: Vec<PoolMap> = sqlx::query!(
-        r#"select m.id, m.slug, m.name
-           from tournament_maps p
-           join maps m on m.id = p.map_id
-           where p.tournament_id = $1
-           order by p.position"#,
-        row.id
-    )
-    .fetch_all(&mut *conn)
-    .await?
-    .into_iter()
-    .map(|m| PoolMap {
-        id: MapId(m.id),
-        slug: m.slug,
-        name: m.name,
-    })
-    .collect();
-    let translations = sqlx::query!(
-        r#"select locale, name, description, rules
-           from tournament_translations
-           where tournament_id = $1
-           order by locale"#,
-        row.id
-    )
-    .fetch_all(&mut *conn)
-    .await?
-    .into_iter()
-    .map(|t| {
-        Ok(TournamentTranslation {
-            locale: Locale::from_db(&t.locale)?,
-            name: t.name,
-            description: t.description,
-            rules: t.rules,
+    let map_pool: Vec<PoolMap> = row
+        .map_pool
+        .0
+        .into_iter()
+        .map(|m| PoolMap {
+            id: MapId(m.id),
+            slug: m.slug,
+            name: m.name,
         })
-    })
-    .collect::<Result<_, ApiError>>()?;
+        .collect();
+    let translations = row
+        .translations
+        .0
+        .into_iter()
+        .map(|t| {
+            Ok(TournamentTranslation {
+                locale: Locale::from_db(&t.locale)?,
+                name: t.name,
+                description: t.description,
+                rules: t.rules,
+            })
+        })
+        .collect::<Result<_, ApiError>>()?;
 
     Ok(Some(StoredTournament {
         id,
         tenant,
+        tenant_slug: row.tenant_slug,
         slug: row.slug,
         locale: Locale::from_db(&row.locale)?,
         texts: Texts {
@@ -224,7 +243,7 @@ pub async fn find(
             team_size: i32::from(row.team_size),
             max_participants: row.max_participants,
             champion_rules: row.champion_rules.0,
-            stages: stages.into_iter().map(|s| s.0).collect(),
+            stages: row.stages.0,
             veto: VetoSetup {
                 map_mode: MapMode::from_db(&row.map_mode)?,
                 order: VetoOrder::from_db(&row.veto_order)?,
@@ -244,6 +263,7 @@ pub async fn find(
         registered: row.registered,
         checked_in: row.checked_in,
         created_at: row.created_at,
+        started_at: row.started_at,
     }))
 }
 

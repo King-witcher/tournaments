@@ -2,13 +2,15 @@
 //! (`results`), o prazo de confirmação (`deadline`), quem contesta e até quando
 //! (`contest`), contestação e organizador (`organizer`), mapa anulado para
 //! ser jogado de novo (`replay`), correções e fim (`corrections`), as regras
-//! do banco para mapas, séries e histórico (`schema`), o veto de mapas e
+//! do banco para mapas, séries e histórico (`schema`), quantas idas ao banco
+//! custa cada clique (`cost`), o veto de mapas e
 //! campeões (`veto`) e os formatos de tabela (`round_robin`, `swiss`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod bracket;
 mod contest;
 mod corrections;
+mod cost;
 mod deadline;
 mod organizer;
 mod replay;

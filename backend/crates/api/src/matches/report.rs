@@ -19,6 +19,7 @@ use super::{
     history::NewEvent,
     outcome, release,
     result::{Confirmation, Side},
+    stage::Wrote,
     types::{ContestReport, EventKind, GameInput, GamePath, MatchDetail},
     veto,
 };
@@ -87,7 +88,7 @@ pub async fn report(
         path.game,
     )
     .await?;
-    let started_at = db::started_at(&mut tx, tournament.id).await?;
+    let started_at = tournament.started_at;
     let deadline = Deadline {
         released: release::released_at(&stage, m, sides, path.game, started_at),
         game_minutes: GAME_MINUTES,
@@ -117,7 +118,8 @@ pub async fn report(
         Some(new.winner_id()),
     );
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Games, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -171,7 +173,8 @@ pub async fn confirm(
     let winner = (kind == EventKind::Resolved).then_some(g.winner);
     let event = NewEvent::game(kind, Some(member.user.id), g.number, winner);
     db::insert_event(&mut tx, &at, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Games, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }

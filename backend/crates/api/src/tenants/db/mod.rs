@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
 
 use super::{MyTenant, Role, TenantId};
-use crate::shared::ApiError;
+use crate::{auth::CurrentUser, shared::ApiError};
 
 pub use deletion::*;
 
@@ -49,6 +49,52 @@ pub async fn membership(
         })
     })
     .transpose()
+}
+
+/// O usuário `user_id` (conta não excluída) e a participação ativa dele no
+/// tenant `slug`, numa query só (o extractor `TenantMember`). `None` sem a
+/// conta; `Some((user, None))` sem a participação.
+pub async fn user_and_membership(
+    db: &PgPool,
+    slug: &str,
+    user_id: i64,
+) -> Result<Option<(CurrentUser, Option<Membership>)>, ApiError> {
+    let Some(r) = sqlx::query!(
+        r#"select u.id, u.display_name, u.avatar_url, u.locale,
+                  t.id as "tenant_id?", t.slug as "slug?", t.name as "name?",
+                  m.role as "role?", m.nickname as "nickname?", t.deletion_due_at
+           from users u
+           left join tenant_members m
+                  on m.user_id = u.id and m.left_at is null
+                 and m.tenant_id = (select id from tenants where slug = $2)
+           left join tenants t on t.id = m.tenant_id
+           where u.id = $1 and u.deleted_at is null"#,
+        user_id,
+        slug
+    )
+    .fetch_optional(db)
+    .await?
+    else {
+        return Ok(None);
+    };
+    let user = CurrentUser {
+        id: r.id,
+        display_name: r.display_name,
+        avatar_url: r.avatar_url,
+        locale: r.locale,
+    };
+    let membership = match (r.tenant_id, r.slug, r.name, r.role, r.nickname) {
+        (Some(id), Some(slug), Some(name), Some(role), Some(nickname)) => Some(Membership {
+            tenant: TenantId::new(id),
+            slug,
+            name,
+            role: Role::from_db(&role)?,
+            nickname,
+            deletion_scheduled_for: r.deletion_due_at,
+        }),
+        _ => None,
+    };
+    Ok(Some((user, membership)))
 }
 
 /// A linha de um usuário num tenant, ativa ou de quem saiu.

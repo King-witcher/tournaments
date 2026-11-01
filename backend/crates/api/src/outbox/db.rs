@@ -25,6 +25,33 @@ pub async fn emit(conn: &mut PgConnection, event: Event) -> Result<(), sqlx::Err
     Ok(())
 }
 
+/// Como `emit`, com vários eventos numa ida ao banco, na ordem.
+pub async fn emit_all(
+    conn: &mut PgConnection,
+    events: impl IntoIterator<Item = Event>,
+) -> Result<(), sqlx::Error> {
+    let events: Vec<Value> = events
+        .into_iter()
+        .filter(|e| !e.is_empty())
+        .map(|e| serde_json::to_value(e).expect("o evento vira JSON"))
+        .collect();
+    if events.is_empty() {
+        return Ok(());
+    }
+    sqlx::query!(
+        r#"insert into outbox (event, origin)
+           select e.event, $2 from unnest($1::jsonb[]) with ordinality as e(event, n)
+           order by e.n
+           on conflict (xact, (md5(event::text))) do nothing"#,
+        &events,
+        tracking::origin()
+    )
+    .execute(conn)
+    .await?;
+    tracking::mark();
+    Ok(())
+}
+
 /// Um evento lido do outbox; `None` se a forma não é a que a API conhece.
 pub struct Stored {
     pub id: i64,

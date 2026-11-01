@@ -54,6 +54,19 @@ pub struct Stage {
     pub champions: Vec<Champion>,
     pub map_pool: Vec<PoolMap>,
     pub vetoes: Vec<MatchVeto>,
+    /// TDM com o draft: quem jogou cada partida enviada (o elenco do veto);
+    /// vazio nos outros casos.
+    lineups: Vec<(MatchId, i16, Side, i64)>,
+}
+
+/// O que uma ação gravou na fase, para `Stage::refresh` reler só isso.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Wrote {
+    /// Eventos de veto (pronto, começo, passo, desfazer, pedido e resposta).
+    Veto,
+    /// Partidas (envio, confirmação), com a escalação que o banco grava
+    /// junto.
+    Games,
 }
 
 impl Stage {
@@ -258,11 +271,7 @@ pub async fn load(
         }
         ApiError::internal()
     })?;
-    let lineups = if veto_rules.champion_phase && veto_rules.teams() {
-        veto::lineups(conn, tournament.id, number).await?
-    } else {
-        Vec::new()
-    };
+    let lineups = lineups_of(conn, tournament, &veto_rules).await?;
     let vetoes = vetoes(
         &bracket,
         &veto_rules,
@@ -285,7 +294,74 @@ pub async fn load(
         champions,
         map_pool: tournament.map_pool.clone(),
         vetoes,
+        lineups,
     })
+}
+
+/// TDM com o draft: quem jogou cada partida enviada da fase; vazio nos
+/// outros casos (o pick é do lado).
+async fn lineups_of(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    rules: &VetoRules,
+) -> Result<Vec<(MatchId, i16, Side, i64)>, ApiError> {
+    if rules.champion_phase && rules.teams() {
+        veto::lineups(conn, tournament.id, FIRST_STAGE).await
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+impl Stage {
+    /// A fase depois de uma ação que, na transação, só gravou `wrote`,
+    /// relendo só isso (o mesmo que `load`, com menos idas ao banco): os
+    /// times, as séries decididas, os pareamentos e os campeões não mudaram.
+    /// A chave e o veto saem do replay de novo. Quem grava outra coisa usa
+    /// `load`.
+    pub async fn refresh(
+        self,
+        conn: &mut PgConnection,
+        tournament: &StoredTournament,
+        wrote: Wrote,
+    ) -> Result<Self, ApiError> {
+        let (games, bracket, lineups, rows) = match wrote {
+            Wrote::Veto => {
+                let rows = veto::events(conn, tournament.id, self.number).await?;
+                (self.games, self.bracket, self.lineups, rows)
+            }
+            Wrote::Games => {
+                let games = db::games(conn, tournament.id, self.number).await?;
+                let lineups = lineups_of(conn, tournament, &self.veto_rules).await?;
+                let history = History {
+                    entrants: &self.entrants,
+                    results: &self.results,
+                    games: &games,
+                    rounds: &self.rounds,
+                };
+                let bracket = replay(self.format, &history).map_err(|_| {
+                    tracing::error!(id = tournament.id.get(), "histórico gravado não fecha");
+                    ApiError::internal()
+                })?;
+                let rows = self.vetoes.into_iter().flat_map(|v| v.rows).collect();
+                (games, bracket, lineups, rows)
+            }
+        };
+        let vetoes = vetoes(
+            &bracket,
+            &self.veto_rules,
+            rows,
+            &self.entrants,
+            &games,
+            &lineups,
+        )?;
+        Ok(Self {
+            games,
+            bracket,
+            vetoes,
+            lineups,
+            ..self
+        })
+    }
 }
 
 /// O veto de cada série refeito das linhas `rows` (por série, na ordem), com
@@ -358,11 +434,22 @@ pub async fn discard(
 }
 
 /// Encerra o torneio quando a fase termina e o reabre quando uma correção
-/// deixa partida por jogar. Devolve o status que vale.
+/// deixa partida por jogar. Devolve o status que vale. Sem mudança (o
+/// normal), não grava: o status de `tournament` é o lido com o torneio
+/// travado, o mesmo que `changes::settled` compara.
 pub async fn sync_status(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     stage: &Stage,
 ) -> Result<TournamentStatus, ApiError> {
-    Ok(tournaments::sync_finished(conn, tournament.id, stage.bracket.is_finished()).await?)
+    let finished = stage.bracket.is_finished();
+    let status = if finished {
+        TournamentStatus::Finished
+    } else {
+        TournamentStatus::InProgress
+    };
+    if status == tournament.status {
+        return Ok(status);
+    }
+    Ok(tournaments::sync_finished(conn, tournament.id, finished).await?)
 }

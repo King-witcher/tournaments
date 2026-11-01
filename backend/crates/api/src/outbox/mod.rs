@@ -11,6 +11,6 @@ mod db;
 mod event;
 mod tracking;
 
-pub use db::{Stored, claim, emit, remove};
+pub use db::{Stored, claim, emit, emit_all, remove};
 pub use event::{Announce, AnnounceKind, Event, Notice, NoticeKind, Placement};
 pub use tracking::track;

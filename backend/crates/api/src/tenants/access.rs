@@ -160,8 +160,9 @@ impl<R: MinRole> FromRequestParts<AppState> for DuringDeletion<R> {
 
 impl<R: MinRole> TenantMember<R> {
     /// O membro do tenant do `{slug}` da rota, sem olhar a exclusão agendada.
+    /// A conta e a participação saem de uma query só.
     async fn from_path(parts: &mut Parts, state: &AppState) -> Result<Self, ApiError> {
-        let user = CurrentUser::from_request_parts(parts, state).await?;
+        let user_id = CurrentUser::session_owner(parts, state).await?;
         let params = RawPathParams::from_request_parts(parts, state)
             .await
             .map_err(|_| ApiError::internal())?;
@@ -169,7 +170,10 @@ impl<R: MinRole> TenantMember<R> {
             tracing::error!("TenantMember usado em rota sem {{slug}}");
             return Err(ApiError::internal());
         };
-        Self::of(&state.db, user, slug).await
+        let (user, membership) = db::user_and_membership(&state.db, slug, user_id)
+            .await?
+            .ok_or(ApiError::unauthenticated())?;
+        Self::checked(user, membership)
     }
 }
 
@@ -178,9 +182,14 @@ impl<R: MinRole> TenantMember<R> {
     /// extractor: para quem confere o acesso fora de uma rota
     /// `/tenants/{slug}/...` (a assinatura do WebSocket).
     pub async fn of(db: &PgPool, user: CurrentUser, slug: &str) -> Result<Self, ApiError> {
-        let m = db::membership(db, slug, user.id)
-            .await?
-            .ok_or(ApiError::not_found("tenant.not_found"))?;
+        let membership = db::membership(db, slug, user.id).await?;
+        Self::checked(user, membership)
+    }
+
+    /// 404 `tenant.not_found` sem a participação, 403 `tenant.forbidden` com
+    /// papel abaixo de `R`.
+    fn checked(user: CurrentUser, membership: Option<db::Membership>) -> Result<Self, ApiError> {
+        let m = membership.ok_or(ApiError::not_found("tenant.not_found"))?;
         if m.role < R::ROLE {
             return Err(ApiError::forbidden("tenant.forbidden"));
         }

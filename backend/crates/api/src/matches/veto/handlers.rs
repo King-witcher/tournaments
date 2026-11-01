@@ -23,7 +23,7 @@ use crate::{
     matches::{
         actions, changes, detail, due,
         result::Side,
-        stage::Stage,
+        stage::{Stage, Wrote},
         types::{MatchDetail, MatchPath},
     },
     shared::{ApiError, ErrorBody, JsonBody, PathParams},
@@ -155,7 +155,8 @@ pub async fn veto_ready(
             changes::opponent_ready(&mut tx, &tournament, &stage, &path.key, to, &name).await?;
         }
     }
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -191,7 +192,8 @@ pub async fn veto_begin(
     }
     let actor = Some(member.user.id);
     begin(&mut tx, &member, &tournament, &stage, m, sides, actor).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -299,7 +301,8 @@ pub async fn veto_step(
         )
     };
     db::insert(&mut tx, &at, sides, &row).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -359,7 +362,8 @@ pub async fn veto_undo(
     let at = actions::at(&member, &tournament, &stage, &path.key);
     let event = NewVetoEvent::new(Kind::Undo, Some(game), None, Some(member.user.id));
     db::insert(&mut tx, &at, sides, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -416,7 +420,8 @@ pub async fn veto_undo_request(
         Some(member.user.id),
     );
     db::insert(&mut tx, &at, sides, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }
@@ -471,7 +476,8 @@ pub async fn veto_undo_answer(
         )
     };
     db::insert(&mut tx, &at, sides, &event).await?;
-    let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
 }

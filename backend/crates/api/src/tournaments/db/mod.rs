@@ -22,7 +22,7 @@ use crate::{
     tenants::TenantId,
 };
 
-pub use audience::{Audience, audience};
+pub use audience::{Address, Audience, audience};
 pub use read::{current_status, find, find_for_update, list, slugs_for_member};
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use status::{publish, set_status, sync_finished};
@@ -41,8 +41,9 @@ impl TournamentId {
 
 pub struct StoredTournament {
     pub id: TournamentId,
-    /// O tenant em que `find` achou o torneio.
+    /// O tenant em que `find` achou o torneio, e o slug dele.
     pub tenant: TenantId,
+    pub tenant_slug: String,
     pub slug: String,
     pub locale: Locale,
     pub texts: Texts,
@@ -68,6 +69,19 @@ pub struct StoredTournament {
     /// Se o `viewer` passado a `find` fez check-in.
     pub checked_in: bool,
     pub created_at: DateTime<Utc>,
+    /// Quando o torneio foi iniciado (nulo antes do início).
+    pub started_at: Option<DateTime<Utc>>,
+}
+
+impl StoredTournament {
+    /// O endereço e o nome, para avisar sem ler de novo (`Address`).
+    pub fn address(&self) -> Address {
+        Address {
+            tenant: self.tenant_slug.clone(),
+            slug: self.slug.clone(),
+            name: self.texts.name.clone(),
+        }
+    }
 }
 
 pub struct NewTournament<'a> {

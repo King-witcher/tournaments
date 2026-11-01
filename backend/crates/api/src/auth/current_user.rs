@@ -34,6 +34,21 @@ impl CurrentUser {
         };
         Ok(db::find_user(&state.db, user_id).await?)
     }
+
+    /// O id do dono da sessão do cookie, só pelo Redis, sem ler o usuário:
+    /// para quem lê o usuário na mesma query de outra coisa (`TenantMember`,
+    /// uma ida ao banco a menos por requisição). Quem chama confere que a
+    /// conta existe. 401 `auth.unauthenticated` sem sessão válida.
+    pub async fn session_owner(parts: &Parts, state: &AppState) -> Result<i64, ApiError> {
+        let jar = CookieJar::from_headers(&parts.headers);
+        let token = state
+            .auth
+            .session_token(&jar)
+            .ok_or(ApiError::unauthenticated())?;
+        kv::session_user(&state.redis, &hash_token(token))
+            .await?
+            .ok_or(ApiError::unauthenticated())
+    }
 }
 
 impl FromRequestParts<AppState> for CurrentUser {

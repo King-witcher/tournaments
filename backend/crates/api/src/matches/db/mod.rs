@@ -56,19 +56,6 @@ pub async fn results(
     .collect()
 }
 
-/// Quando o torneio começou; `None` antes de começar.
-pub async fn started_at(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
-    sqlx::query_scalar!(
-        "select started_at from tournaments where id = $1",
-        tournament.get()
-    )
-    .fetch_one(conn)
-    .await
-}
-
 /// Há mapa pendente com a janela de contestação vencida em `now`.
 pub async fn has_due(
     conn: &mut PgConnection,

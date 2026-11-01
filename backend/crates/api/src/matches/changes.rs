@@ -33,7 +33,7 @@ use crate::{
     shared::ApiError,
     teams::StoredTeam,
     tenants,
-    tournaments::{self, Audience, StoredTournament, TournamentStatus},
+    tournaments::{self, Address, StoredTournament, TournamentStatus},
 };
 
 /// Como cada partida da fase estava antes de uma mudança.
@@ -154,8 +154,11 @@ pub async fn settled(
     after: &Stage,
     status: TournamentStatus,
 ) -> Result<(), ApiError> {
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     let mut players = BTreeSet::new();
+    // As mudanças de cada partida e a de "Seus torneios" vão juntas, numa ida
+    // ao banco (os avisos saem no meio, cada um na sua).
+    let mut changed = Vec::new();
     for m in after.bracket.matches() {
         let now = Mark::of(after, m);
         let was = before.0.get(&m.id);
@@ -163,12 +166,11 @@ pub async fn settled(
             continue;
         }
         let key = key::format(m.id);
-        let changed = Event::Tournament {
+        changed.push(Event::Tournament {
             tenant: audience.tenant.clone(),
             tournament: audience.slug.clone(),
             match_key: Some(key.clone()),
-        };
-        outbox::emit(conn, changed).await?;
+        });
         let was_sides = was.and_then(|w| sides(w.state));
         for (a, b) in [sides(m.state), was_sides].into_iter().flatten() {
             players.extend(
@@ -199,7 +201,8 @@ pub async fn settled(
         )
         .await?;
     }
-    outbox::emit(conn, Event::me(players)).await?;
+    changed.push(Event::me(players));
+    outbox::emit_all(conn, changed).await?;
     if status != tournament.status {
         tournaments::changed(conn, tournament.id).await?;
         if status == TournamentStatus::Finished {
@@ -222,7 +225,7 @@ pub async fn started(
     bracket: &StageBracket,
     entrants: &[StoredTeam],
 ) -> Result<(), ApiError> {
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     for (id, pair, to) in ready_notices(None, bracket) {
         match_ready(conn, &audience, entrants, &key::format(id), pair, &to).await?;
     }
@@ -292,7 +295,7 @@ fn next_ready(
 /// times `to` (um ou os dois lados), com o nome do outro lado.
 async fn match_ready(
     conn: &mut PgConnection,
-    audience: &Audience,
+    audience: &Address,
     entrants: &[StoredTeam],
     key: &str,
     (a, b): (ParticipantId, ParticipantId),
@@ -321,7 +324,7 @@ async fn match_ready(
 /// jogadores dos dois times que estão na comunidade (todos escolhem).
 async fn team_pick_open(
     conn: &mut PgConnection,
-    audience: &Audience,
+    audience: &Address,
     stage: &Stage,
     key: &str,
     (a, b): (ParticipantId, ParticipantId),
@@ -342,7 +345,7 @@ async fn team_pick_open(
     outbox::emit(conn, Event::notice(players, notice)).await
 }
 
-fn match_path(audience: &Audience, key: &str) -> String {
+fn match_path(audience: &Address, key: &str) -> String {
     format!("{}/matches/{key}", audience.path())
 }
 
@@ -356,7 +359,7 @@ pub async fn game_reported(
     (from, to): (&StoredTeam, &StoredTeam),
     confirm_by: DateTime<Utc>,
 ) -> Result<(), sqlx::Error> {
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     let notice = Notice {
         kind: NoticeKind::GameReported {
             tournament: audience.name.clone(),
@@ -379,7 +382,7 @@ pub async fn game_contested(
     game: i16,
     (by, player): (i64, &str),
 ) -> Result<(), sqlx::Error> {
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     let staff = tenants::staff(conn, tournament.tenant).await?;
     let notice = Notice {
         kind: NoticeKind::GameContested {
@@ -403,7 +406,7 @@ pub async fn veto_started(
     key: &str,
     (a, b): (ParticipantId, ParticipantId),
 ) -> Result<(), ApiError> {
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     let (Some(a), Some(b)) = (stage.entrant(a), stage.entrant(b)) else {
         return Ok(());
     };
@@ -434,7 +437,7 @@ pub async fn opponent_ready(
     let Some(to) = stage.entrant(to) else {
         return Ok(());
     };
-    let audience = tournaments::audience(conn, tournament.id).await?;
+    let audience = tournament.address();
     let notice = Notice {
         kind: NoticeKind::OpponentReady {
             tournament: audience.name.clone(),

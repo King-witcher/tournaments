@@ -8,14 +8,14 @@ use sqlx::PgConnection;
 use super::{key, stage::Stage};
 use crate::{
     outbox::{self, Announce, AnnounceKind, Event, Placement},
-    tournaments::Audience,
+    tournaments::Address,
 };
 
 /// O pódio de quem fica até o 3º lugar.
 const PODIUM: u16 = 3;
 
 /// A chave foi gerada.
-pub async fn started(conn: &mut PgConnection, audience: &Audience) -> Result<(), sqlx::Error> {
+pub async fn started(conn: &mut PgConnection, audience: &Address) -> Result<(), sqlx::Error> {
     let kind = AnnounceKind::TournamentStarted {
         tournament: audience.name.clone(),
     };
@@ -25,7 +25,7 @@ pub async fn started(conn: &mut PgConnection, audience: &Audience) -> Result<(),
 /// A chave terminou: o pódio na ordem da classificação.
 pub async fn finished(
     conn: &mut PgConnection,
-    audience: &Audience,
+    audience: &Address,
     stage: &Stage,
 ) -> Result<(), sqlx::Error> {
     let podium = stage
@@ -51,7 +51,7 @@ pub async fn finished(
 /// quem e o placar em mapas, com o vencedor primeiro.
 pub async fn series_decided(
     conn: &mut PgConnection,
-    audience: &Audience,
+    audience: &Address,
     stage: &Stage,
     m: &Match,
 ) -> Result<(), sqlx::Error> {

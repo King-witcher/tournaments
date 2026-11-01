@@ -29,14 +29,20 @@ use crate::{
 };
 
 /// Aplica tudo e devolve a fase como ficou. `actor`: quem fez a mudança (fica
-/// como autor dos mapas anulados).
-pub async fn apply(
+/// como autor dos mapas anulados). Começa por `first`, a fase já lida depois
+/// da mudança (sem ela, lê); a cada passo que grava, lê a fase inteira de
+/// novo.
+async fn apply_from(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     actor: Option<i64>,
+    mut first: Option<Stage>,
 ) -> Result<Stage, ApiError> {
     loop {
-        let stage = stage::load(conn, tournament).await?;
+        let stage = match first.take() {
+            Some(stage) => stage,
+            None => stage::load(conn, tournament).await?,
+        };
         if close_series(conn, tournament, &stage, actor).await? {
             continue;
         }
@@ -53,7 +59,7 @@ pub async fn apply(
     }
 }
 
-/// `apply`, o status do torneio conforme a chave (encerra quando ela termina,
+/// `apply_from`, o status do torneio conforme a chave (encerra quando ela termina,
 /// reabre quando uma correção deixa partida por jogar) e o que mudou desde
 /// `before` no outbox (`changes`). Devolve a fase e o status como ficaram.
 pub async fn settle(
@@ -62,7 +68,19 @@ pub async fn settle(
     actor: Option<i64>,
     before: &Snapshot,
 ) -> Result<(Stage, TournamentStatus), ApiError> {
-    let stage = apply(conn, tournament, actor).await?;
+    settle_from(conn, tournament, actor, before, None).await
+}
+
+/// `settle` a partir de `first`, a fase já lida depois da mudança
+/// (`Stage::refresh`); sem ela, lê.
+pub async fn settle_from(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    actor: Option<i64>,
+    before: &Snapshot,
+    first: Option<Stage>,
+) -> Result<(Stage, TournamentStatus), ApiError> {
+    let stage = apply_from(conn, tournament, actor, first).await?;
     let status = stage::sync_status(conn, tournament, &stage).await?;
     changes::settled(conn, tournament, before, &stage, status).await?;
     Ok((stage, status))

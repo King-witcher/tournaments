@@ -13,7 +13,7 @@ use super::{
     games::StoredGame,
     result::Side,
     settle,
-    stage::Stage,
+    stage::{Stage, Wrote},
     types::{GameInput, MatchDetail},
     view::Viewer,
 };
@@ -125,6 +125,27 @@ pub async fn respond<R>(
     let before = Snapshot::of(before);
     let actor = Some(member.user.id);
     let (stage, status) = settle::settle(conn, &tournament, actor, &before).await?;
+    tournament.status = status;
+    let viewer = Viewer::new(member, &stage);
+    let m = detail::find(&stage, key)?;
+    detail::load(conn, &tournament, &stage, &viewer, m).await
+}
+
+/// `respond` para a ação que só gravou `wrote` na fase `before` (lida com o
+/// torneio travado): relê só isso (`Stage::refresh`) em vez da fase inteira.
+pub async fn respond_to<R>(
+    conn: &mut PgConnection,
+    member: &TenantMember<R>,
+    mut tournament: StoredTournament,
+    before: Stage,
+    wrote: Wrote,
+    key: &str,
+) -> Result<MatchDetail, ApiError> {
+    let snapshot = Snapshot::of(&before);
+    let first = before.refresh(conn, &tournament, wrote).await?;
+    let actor = Some(member.user.id);
+    let (stage, status) =
+        settle::settle_from(conn, &tournament, actor, &snapshot, Some(first)).await?;
     tournament.status = status;
     let viewer = Viewer::new(member, &stage);
     let m = detail::find(&stage, key)?;

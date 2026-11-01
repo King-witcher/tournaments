@@ -25,6 +25,22 @@ impl Audience {
     }
 }
 
+/// O endereço do torneio (slugs da comunidade e dele) e o nome no idioma
+/// original, do torneio já lido (`StoredTournament::address`): o que os
+/// avisos da chave usam, sem a query dos inscritos (`audience`).
+pub struct Address {
+    pub tenant: String,
+    pub slug: String,
+    pub name: String,
+}
+
+impl Address {
+    /// Caminho do torneio no site, sem o idioma.
+    pub fn path(&self) -> String {
+        format!("/{}/{}", self.tenant, self.slug)
+    }
+}
+
 pub async fn audience(conn: &mut PgConnection, id: TournamentId) -> Result<Audience, sqlx::Error> {
     let row = sqlx::query!(
         r#"select t.tenant_id, te.slug as tenant, t.slug, t.name,

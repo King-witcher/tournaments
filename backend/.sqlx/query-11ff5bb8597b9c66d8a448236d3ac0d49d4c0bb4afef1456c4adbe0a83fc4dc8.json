@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into outbox (event, origin)\n           select e.event, $2 from unnest($1::jsonb[]) with ordinality as e(event, n)\n           order by e.n\n           on conflict (xact, (md5(event::text))) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "JsonbArray",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "11ff5bb8597b9c66d8a448236d3ac0d49d4c0bb4afef1456c4adbe0a83fc4dc8"
+}
