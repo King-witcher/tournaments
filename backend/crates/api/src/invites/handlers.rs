@@ -5,7 +5,7 @@ use super::{
     db::{self, StoredInvite},
     types::{
         AcceptedInvite, CreatedInvite, Invite, InviteMembership, InvitePath, InvitePreview,
-        InviteViewer, InvitedTournament,
+        InviteViewer, InvitedTournament, InvitedTranslation,
     },
 };
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     participants::{self, Entry},
     shared::{ApiError, ErrorBody, PathParams, public_url, token},
     tenants::{self, Organizer, TenantId, TenantMember, default_nickname},
-    tournaments::{self, NameTranslation, StoredTournament},
+    tournaments::{self, StoredTournament},
 };
 
 /// Validade de um link de convite do tenant (o de torneio vale enquanto a
@@ -235,12 +235,14 @@ fn invited(found: Option<StoredTournament>) -> Result<InvitedTournament, ApiErro
         slug: t.slug,
         locale: t.locale,
         name: t.texts.name,
+        description: t.texts.description,
         translations: t
             .translations
             .into_iter()
-            .map(|tr| NameTranslation {
+            .map(|tr| InvitedTranslation {
                 locale: tr.locale,
                 name: tr.name,
+                description: tr.description,
             })
             .collect(),
         status: t.status,

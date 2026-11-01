@@ -2,11 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{
-    shared::Locale,
-    tenants::MyTenant,
-    tournaments::{NameTranslation, TournamentStatus},
-};
+use crate::{shared::Locale, tenants::MyTenant, tournaments::TournamentStatus};
 
 #[derive(Serialize, ToSchema)]
 pub struct CreatedInvite {
@@ -115,7 +111,9 @@ pub struct InvitedTournament {
     pub slug: String,
     pub locale: Locale,
     pub name: String,
-    pub translations: Vec<NameTranslation>,
+    /// A descrição do organizador, em texto simples; vazia sem descrição.
+    pub description: String,
+    pub translations: Vec<InvitedTranslation>,
     pub status: TournamentStatus,
     pub max_participants: i32,
     pub participants: i64,
@@ -123,6 +121,14 @@ pub struct InvitedTournament {
     pub starts_at: Option<DateTime<Utc>>,
     /// A capa (2:1), no CDN; nulo sem capa.
     pub cover_url: Option<String>,
+}
+
+/// Nome e descrição do torneio do link numa tradução.
+#[derive(Serialize, ToSchema)]
+pub struct InvitedTranslation {
+    pub locale: Locale,
+    pub name: String,
+    pub description: String,
 }
 
 #[derive(Serialize, ToSchema)]

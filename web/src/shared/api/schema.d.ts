@@ -2164,6 +2164,8 @@ export interface components {
         InvitedTournament: {
             /** @description A capa (2:1), no CDN; nulo sem capa. */
             cover_url?: string | null;
+            /** @description A descrição do organizador, em texto simples; vazia sem descrição. */
+            description: string;
             locale: components["schemas"]["Locale"];
             /** Format: int32 */
             max_participants: number;
@@ -2177,7 +2179,13 @@ export interface components {
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
-            translations: components["schemas"]["NameTranslation"][];
+            translations: components["schemas"]["InvitedTranslation"][];
+        };
+        /** @description Nome e descrição do torneio do link numa tradução. */
+        InvitedTranslation: {
+            description: string;
+            locale: components["schemas"]["Locale"];
+            name: string;
         };
         /** @description O link de convite pelo qual um membro entrou. */
         JoinedVia: {

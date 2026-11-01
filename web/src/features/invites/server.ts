@@ -19,12 +19,17 @@ export const getInvite = cache(async (token: string) => {
     .catch(() => undefined);
 });
 
+/** Até onde a descrição do torneio vai na prévia (o Discord mostra ~350). */
+const PREVIEW_DESCRIPTION_MAX = 300;
+
 /**
- * A prévia do link de convite (Discord, WhatsApp): o título do convite, a
- * descrição e a imagem inteira, sem moldura. No link de inscrição com capa,
- * a capa (2:1) grande; senão o logo da comunidade (1:1) como miniatura, que
- * o WhatsApp não corta. Sem imagem nenhuma, a prévia do site. Convite que
- * não vale mais: a prévia do site inteira.
+ * A prévia do link de convite (Discord, WhatsApp): o título do convite e a
+ * imagem inteira, sem moldura, e no link de inscrição a descrição do
+ * torneio. Nada que muda com o tempo (membros, vagas): a rede guarda a
+ * prévia na primeira vez. No link de inscrição com capa, a capa (2:1)
+ * grande; senão o logo da comunidade (1:1) como miniatura, que o WhatsApp
+ * não corta. Sem imagem nenhuma, a prévia do site. Convite que não vale
+ * mais: a prévia do site inteira.
  */
 export async function inviteMetadata(
   token: string,
@@ -41,15 +46,9 @@ export async function inviteMetadata(
   const title = tournament
     ? t("tournamentTitle", { name: localizedName(tournament, locale) })
     : t("title", { name: invite.tenant_name });
-  const description = tournament
-    ? t("tournamentPreview", {
-        tenant: invite.tenant_name,
-        spots: t("tournamentSpots", {
-          count: tournament.participants,
-          max: tournament.max_participants,
-        }),
-      })
-    : t("preview", { count: invite.member_count, owner: invite.owner_name });
+  // `null`, e não `undefined`, para não herdar a do site.
+  const description =
+    (tournament && shorten(localizedDescription(tournament, locale))) || null;
   // Os tamanhos do corte feito no envio (docs/decisions/images.md).
   const cover = tournament?.cover_url;
   const logo = invite.tenant_logo_url;
@@ -58,15 +57,15 @@ export async function inviteMetadata(
     : logo
       ? [{ url: logo, width: 256, height: 256 }]
       : ((await parent).openGraph?.images ?? []);
+  // Os de Open Graph e do X trocam os do site inteiros: sem descrição, nada.
+  const shared = { title, description: description ?? undefined, images };
   return {
     title,
     description,
-    openGraph: { title, description, siteName: tNav("brand"), images },
+    openGraph: { ...shared, siteName: tNav("brand") },
     twitter: {
+      ...shared,
       card: !cover && logo ? "summary" : "summary_large_image",
-      title,
-      description,
-      images,
     },
   };
 }
@@ -80,4 +79,19 @@ export function localizedName(tournament: InvitedTournament, locale: string) {
     tournament.translations.find((tr) => tr.locale === locale)?.name ??
     tournament.name
   );
+}
+
+function localizedDescription(tournament: InvitedTournament, locale: string) {
+  return (
+    tournament.translations.find((tr) => tr.locale === locale)?.description ||
+    tournament.description
+  );
+}
+
+/** Numa linha só e cortada na última palavra que cabe, com reticências. */
+function shorten(text: string) {
+  const line = text.replace(/\s+/g, " ").trim();
+  if (line.length <= PREVIEW_DESCRIPTION_MAX) return line;
+  const cut = line.slice(0, PREVIEW_DESCRIPTION_MAX);
+  return `${cut.slice(0, cut.lastIndexOf(" ")) || cut}…`;
 }
