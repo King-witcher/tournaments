@@ -34,6 +34,12 @@ export async function MyTournaments() {
   const t = await getTranslations("Home.tournaments");
   const key = (e: (typeof entries)[number]) =>
     `${e.tenant_slug}/${e.tournament.slug}`;
+  // Numa grade com alguma capa ou logo, todo tile leva o espaço da capa (com
+  // o logo ou a inicial no lugar da que falta); sem nenhuma, nenhum leva.
+  const media = (list: typeof entries) =>
+    list.some((e) => e.tournament.cover_url || e.tenant_logo_url);
+  const activeMedia = media(active);
+  const finishedMedia = media(finished);
 
   return (
     <Section title={t("title")}>
@@ -42,7 +48,11 @@ export async function MyTournaments() {
       ) : (
         <TileGrid>
           {active.map((entry) => (
-            <MyTournamentTile key={key(entry)} entry={entry} />
+            <MyTournamentTile
+              key={key(entry)}
+              entry={entry}
+              media={activeMedia}
+            />
           ))}
         </TileGrid>
       )}
@@ -50,7 +60,11 @@ export async function MyTournaments() {
         <Accordion title={t("finished")}>
           <TileGrid>
             {finished.map((entry) => (
-              <MyTournamentTile key={key(entry)} entry={entry} />
+              <MyTournamentTile
+                key={key(entry)}
+                entry={entry}
+                media={finishedMedia}
+              />
             ))}
           </TileGrid>
         </Accordion>

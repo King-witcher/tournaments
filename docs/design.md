@@ -39,7 +39,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 ### Início `/`
 
 - Sem sessão, a **apresentação** (estática), em faixas de parede a parede que alternam o fundo e a camada: abertura com o título expressivo (`fluid-heading-05`), uma frase, "Criar conta" (primário, leva à criação da comunidade depois do cadastro) e "Entrar", a frase do convite e a captura da chave; "Como funciona" em três passos; "Do veto ao ranking" em abas (veto e draft, resultado, ranking), texto e captura; "Para quem organiza" em quatro colunas; e "Criar conta" de novo no fim. As capturas são do próprio site, por idioma e por tema.
-- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: nome, comunidade, situação, próxima série como link separado, com o próximo mapa quando já saiu; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (+ "Criar comunidade").
+- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: a capa no topo quando a grade tem alguma, nome, comunidade, situação, próxima série como link separado, com o próximo mapa quando já saiu; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (o logo antes do nome quando alguma tem; + "Criar comunidade").
 
 ### Entrar `/login`, Criar conta `/signup`, links por email
 
@@ -53,17 +53,17 @@ Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **L
 
 ### Convite `/invite/[token]`, Nova comunidade `/new`
 
-Convite: coluna estreita, `Tile` com o nome da comunidade, o dono, o número de membros e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço.
+Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço.
 
 ### Comunidade `/[tenant]`
 
-`PageHeader`: nome, `Tag` do papel, "Novo torneio" (organização). Abas por sub-rota:
+`PageHeader`: logo (quando há), nome, `Tag` do papel, "Novo torneio" (organização). Abas por sub-rota:
 
 - **Torneios**: `DataTable` (nome, formato, estado, início, inscritos); jogador vê só os publicados.
 - **Ranking** (todos): posição, membro, rating com `Tag` "provisório", mapas, V–D, último mapa; a linha abre a página da pessoa.
 - **Membros**: membro com avatar, papel, desde e, para a organização, "Entrou por"; a linha abre a página da pessoa; o owner troca papel e remove no ⋯.
 - **Convites** (organização): links (começo do link, criado por, validade, quantos entraram), "Gerar link", copiar e revogar por linha.
-- **Configurações**: apelido; owner: rating da comunidade (salvar recalcula todos), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
+- **Configurações**: apelido; owner: rating da comunidade (salvar recalcula todos), logo (salva sozinho), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
 
 ### Pessoa na comunidade `/[tenant]/members/[user]`
 
@@ -71,11 +71,11 @@ Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde";
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade, cuja configuração vem junto; também pelo ⋯ do torneio, com `?from=`); à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; excluir rascunho fica no ⋯ do torneio.
+Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade, cuja configuração vem junto; também pelo ⋯ do torneio, com `?from=`); à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; a capa, na Geral, salva sozinha; excluir rascunho fica no ⋯ do torneio.
 
 ### Torneio `/[tenant]/[tournament]`
 
-`PageHeader`: breadcrumb, nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Copiar torneio", "Desfazer início" e "Excluir rascunho". Abaixo, "Sua situação". Abas:
+`PageHeader`: breadcrumb, nome, `Tag` de estado, metadado (formato · melhor de · início · inscritos N/máx) e, do `lg` para cima, a capa à direita (2:1). Ação primária conforme quem vê: jogador "Inscrever-se" / "Fazer check-in" (cancelar a inscrição no ⋯); organização, o próximo passo (Publicar / Abrir check-in / Iniciar), "Editar" secundário, ⋯ com "Copiar torneio", "Desfazer início" e "Excluir rascunho". Abaixo, "Sua situação". Abas:
 
 - **Visão geral**: `ProgressIndicator`, "Séries que esperam você" (com o próximo mapa, nas que ele joga), descrição, resumo do formato (`StructuredList` com `InfoTip`) e "Ver as regras".
 - **Chave** (a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e a classificação. Cada lado do cartão: seed, avatar, apelido e placar; linhas curvas ligam a partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas **Chave principal** (com a grande final) e **Repescagem**, abrindo na aba da partida de quem vê.

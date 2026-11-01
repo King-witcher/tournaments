@@ -47,10 +47,22 @@ pub struct Config {
     /// Bucket privado, o dos screenshots do placar (`S3_*`); `None` sem bucket
     /// nem chaves: os screenshots ficam desligados.
     pub storage: Option<StorageConfig>,
+    /// Bucket público, o dos logos e das capas, com as mesmas chaves; `None`
+    /// sem `S3_PUBLIC_BUCKET`: logos e capas ficam desligados.
+    pub public_storage: Option<PublicStorageConfig>,
+}
+
+/// O bucket público e o endereço do CDN que o serve.
+#[derive(Debug, Clone)]
+pub struct PublicStorageConfig {
+    pub storage: StorageConfig,
+    /// `S3_PUBLIC_URL`, sem barra no fim (`https://img.telefrag.com.br`).
+    pub url: String,
 }
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
+        let (storage, public_storage) = storage_from_env()?;
         Ok(Self {
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL não definida")?,
             redis_url: std::env::var("REDIS_URL").context("REDIS_URL não definida")?,
@@ -81,7 +93,8 @@ impl Config {
                 None => crate::mail::DEFAULT_DAILY_LIMIT,
             },
             email_strict: env_flag("EMAIL_STRICT", true)?,
-            storage: storage_from_env()?,
+            storage,
+            public_storage,
         })
     }
 }
@@ -101,26 +114,47 @@ fn cookie_name_from_env() -> anyhow::Result<String> {
     Ok(name)
 }
 
-/// O bucket privado, se `S3_PRIVATE_BUCKET`, `S3_ACCESS_KEY_ID` e
-/// `S3_SECRET_ACCESS_KEY` existem. Só parte delas é engano de configuração: a
-/// API não sobe.
-fn storage_from_env() -> anyhow::Result<Option<StorageConfig>> {
-    let bucket = env_opt("S3_PRIVATE_BUCKET");
-    let key = env_opt("S3_ACCESS_KEY_ID");
-    let secret = env_opt("S3_SECRET_ACCESS_KEY");
-    match (bucket, key, secret) {
-        (None, None, None) => Ok(None),
-        (Some(bucket), Some(access_key_id), Some(secret_access_key)) => Ok(Some(StorageConfig {
-            endpoint: env_opt("S3_ENDPOINT"),
-            region: env_or("S3_REGION", "us-east-1"),
-            bucket,
-            access_key_id,
-            secret_access_key,
-        })),
+/// Os buckets: o privado com `S3_PRIVATE_BUCKET`, o público com
+/// `S3_PUBLIC_BUCKET` e `S3_PUBLIC_URL`, os dois com `S3_ACCESS_KEY_ID` e
+/// `S3_SECRET_ACCESS_KEY`. Bucket sem as chaves, chaves sem bucket, o bucket
+/// público sem o endereço (ou o contrário) e endereço que não é URL são
+/// engano de configuração: a API não sobe.
+fn storage_from_env() -> anyhow::Result<(Option<StorageConfig>, Option<PublicStorageConfig>)> {
+    let private = env_opt("S3_PRIVATE_BUCKET");
+    let public = match (env_opt("S3_PUBLIC_BUCKET"), env_opt("S3_PUBLIC_URL")) {
+        (None, None) => None,
+        (Some(bucket), Some(url)) => {
+            let parsed: reqwest::Url = url.parse().context("S3_PUBLIC_URL inválida")?;
+            anyhow::ensure!(
+                matches!(parsed.scheme(), "https" | "http"),
+                "S3_PUBLIC_URL inválida: {url} (use https://...)"
+            );
+            Some((bucket, url.trim_end_matches('/').to_owned()))
+        }
+        _ => anyhow::bail!("S3_PUBLIC_BUCKET e S3_PUBLIC_URL vão juntas"),
+    };
+    let keys = (env_opt("S3_ACCESS_KEY_ID"), env_opt("S3_SECRET_ACCESS_KEY"));
+    let (access_key_id, secret_access_key) = match keys {
+        (None, None) if private.is_none() && public.is_none() => return Ok((None, None)),
+        (Some(key), Some(secret)) if private.is_some() || public.is_some() => (key, secret),
         _ => anyhow::bail!(
-            "S3_PRIVATE_BUCKET, S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas (ou nenhuma, sem screenshots)"
+            "S3_ACCESS_KEY_ID e S3_SECRET_ACCESS_KEY vão juntas e com S3_PRIVATE_BUCKET ou S3_PUBLIC_BUCKET (ou nenhuma, sem screenshots, logos e capas)"
         ),
-    }
+    };
+    let bucket = |bucket| StorageConfig {
+        endpoint: env_opt("S3_ENDPOINT"),
+        region: env_or("S3_REGION", "us-east-1"),
+        bucket,
+        access_key_id: access_key_id.clone(),
+        secret_access_key: secret_access_key.clone(),
+    };
+    Ok((
+        private.map(bucket),
+        public.map(|(name, url)| PublicStorageConfig {
+            storage: bucket(name),
+            url,
+        }),
+    ))
 }
 
 fn env_or(key: &str, default: &str) -> String {

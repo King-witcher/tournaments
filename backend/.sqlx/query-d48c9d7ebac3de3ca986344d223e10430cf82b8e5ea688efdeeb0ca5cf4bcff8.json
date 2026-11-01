@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select object_key from image_deletions\n           where upload_expires_at < $2\n           order by queued_at, object_key limit $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "object_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "image_deletions",
+            "name": "object_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d48c9d7ebac3de3ca986344d223e10430cf82b8e5ea688efdeeb0ca5cf4bcff8"
+}

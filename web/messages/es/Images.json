@@ -1,0 +1,19 @@
+{
+  "logo": {
+    "title": "Logo",
+    "hint": "La imagen se recorta en cuadrado, por el centro."
+  },
+  "cover": {
+    "title": "Portada",
+    "hint": "La imagen se recorta en 2:1, por el centro."
+  },
+  "drop": "Arrastra una imagen aquí o haz clic para elegir",
+  "change": "Cambiar",
+  "remove": "Quitar",
+  "errors": {
+    "notImage": "Elige una imagen (PNG, JPEG o WebP).",
+    "unreadable": "No se pudo leer esa imagen. Prueba con otro archivo.",
+    "tooLarge": "Incluso convertida, la imagen supera el tamaño máximo. Prueba con otra.",
+    "uploadFailed": "El envío de la imagen falló. Revisa la conexión e inténtalo de nuevo."
+  }
+}

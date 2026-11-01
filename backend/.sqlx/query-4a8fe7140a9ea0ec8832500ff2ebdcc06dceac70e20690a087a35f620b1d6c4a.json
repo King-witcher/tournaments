@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at\n           from tenants t\n           join tenant_members m on m.tenant_id = t.id\n           where t.slug = $1 and m.user_id = $2 and m.left_at is null",
+  "query": "select id, tournament_id, object_key, content_type, size, uploaded_by\n           from image_uploads where tenant_id = $1 and id = $2",
   "describe": {
     "columns": [
       {
@@ -9,81 +9,81 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenants",
+            "table": "image_uploads",
             "name": "id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "slug",
-        "type_info": "Text",
+        "name": "tournament_id",
+        "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenants",
-            "name": "slug"
+            "table": "image_uploads",
+            "name": "tournament_id"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "name",
+        "name": "object_key",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "tenants",
-            "name": "name"
+            "table": "image_uploads",
+            "name": "object_key"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "role",
+        "name": "content_type",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "tenant_members",
-            "name": "role"
+            "table": "image_uploads",
+            "name": "content_type"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "nickname",
-        "type_info": "Text",
+        "name": "size",
+        "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "tenant_members",
-            "name": "nickname"
+            "table": "image_uploads",
+            "name": "size"
           }
         }
       },
       {
         "ordinal": 5,
-        "name": "deletion_due_at",
-        "type_info": "Timestamptz",
+        "name": "uploaded_by",
+        "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenants",
-            "name": "deletion_due_at"
+            "table": "image_uploads",
+            "name": "uploaded_by"
           }
         }
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
+        "Int8",
         "Int8"
       ]
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       false,
       false,
       true
     ]
   },
-  "hash": "8da58836bae812be9a738458d6286cad5a9506a5964f1cab0f0cba2f24d80463"
+  "hash": "4a8fe7140a9ea0ec8832500ff2ebdcc06dceac70e20690a087a35f620b1d6c4a"
 }

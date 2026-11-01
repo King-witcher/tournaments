@@ -9,7 +9,7 @@ use sqlx::{Acquire, PgConnection, PgPool, types::Json};
 
 use super::{StoredTournament, TournamentId, status::open_due_check_in};
 use crate::{
-    shared::{ApiError, Locale},
+    shared::{ApiError, Locale, public_url},
     tenants::TenantId,
     tournaments::{
         admission::Admission,
@@ -56,7 +56,7 @@ pub async fn list(
     let mut conn = db.acquire().await?;
     let rows = sqlx::query!(
         r#"select t.id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status, t.admission,
-                  t.max_participants, t.starts_at, t.check_in_minutes, t.created_at,
+                  t.max_participants, t.starts_at, t.check_in_minutes, t.created_at, t.cover_key,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $2) as "registered!",
@@ -115,6 +115,7 @@ pub async fn list(
             starts_at: r.starts_at,
             translations,
             created_at: r.created_at,
+            cover_url: r.cover_key.as_deref().and_then(public_url),
         });
     }
     Ok(list)
@@ -155,7 +156,7 @@ pub async fn find(
                   t.starts_at, t.check_in_minutes, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
                   t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
-                  t.started_at,
+                  t.started_at, t.cover_key,
                   (select n.slug from tenants n where n.id = t.tenant_id) as "tenant_slug!",
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
@@ -264,6 +265,7 @@ pub async fn find(
         checked_in: row.checked_in,
         created_at: row.created_at,
         started_at: row.started_at,
+        cover_key: row.cover_key,
     }))
 }
 

@@ -13,6 +13,20 @@
   gap: spacing.$spacing-03;
 }
 
+// A capa fica dentro do respiro do tile, acima do nome. Sem fundo próprio:
+// o que substitui a capa (um `Avatar` com a inicial) precisa contrastar com o
+// tile, e no g100 o `$layer-02` tem a cor do avatar.
+.media {
+  margin-block-end: spacing.$spacing-05;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
 .title {
   @include type.type-style("heading-compact-02");
 

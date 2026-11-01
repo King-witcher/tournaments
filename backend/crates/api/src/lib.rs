@@ -5,6 +5,7 @@ pub mod auth;
 pub mod config;
 pub mod discord;
 mod health;
+pub mod images;
 mod invites;
 mod lifecycle;
 pub mod mail;
@@ -64,6 +65,9 @@ pub struct AppState {
     /// Bucket dos screenshots do placar; `None` sem as variáveis `S3_*` (os
     /// screenshots ficam desligados).
     pub storage: Option<shared::Storage>,
+    /// Bucket dos logos e das capas, servido pelo CDN; `None` sem
+    /// `S3_PUBLIC_BUCKET` (logos e capas ficam desligados).
+    pub public_storage: Option<shared::Storage>,
     /// Envio de email (Resend; sem chave, só o log).
     pub mail: mail::Mail,
     /// Webhooks do Discord das comunidades (a fila é esvaziada por `discord::spawn`).
@@ -91,6 +95,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(notifications::router())
         .merge(organizing::router())
         .merge(screenshots::router())
+        .merge(images::router())
         .merge(push::router())
         .merge(ratings::router())
         .merge(realtime::router())

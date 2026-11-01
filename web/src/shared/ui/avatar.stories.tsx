@@ -14,6 +14,7 @@ const meta = {
   args: { name: "João Silva", size: "md" },
   argTypes: {
     size: { control: "inline-radio", options: sizes },
+    shape: { control: "inline-radio", options: ["circle", "square"] },
     src: { control: "text" },
     name: { control: "text" },
   },
@@ -45,6 +46,18 @@ export const Empty: Story = { args: { name: undefined } };
 
 /** `src` nulo (jogador sem foto) cai na inicial. */
 export const NullImage: Story = { args: { src: null } };
+
+/** Quadrado: o logo de uma comunidade, com a inicial quando não há logo. */
+export const Square: Story = {
+  args: { shape: "square", name: "Arena Sul", size: "lg" },
+  render: (args) => (
+    <Stack orientation="horizontal" gap={3}>
+      <Avatar {...args} src={image} />
+      <Avatar {...args} />
+      <span>{args.name}</span>
+    </Stack>
+  ),
+};
 
 export const Sizes: Story = {
   render: (args) => (

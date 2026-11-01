@@ -1,47 +1,15 @@
-//! O arquivo de um screenshot: o tipo de imagem aceito e o nome do objeto no
-//! bucket, `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.<ext>`
+//! O arquivo de um screenshot: o nome do objeto no bucket,
+//! `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.<ext>`
 //! (`screenshots/quake-br/copa/wb-1-3/mapa-2-….webp`): no console da AWS, as
 //! pastas são os slugs (que não mudam), a partida e o mapa. Os 128 bits
 //! aleatórios fazem o nome impossível de adivinhar e únicos mesmo se uma
 //! comunidade apagada tiver o slug reaproveitado (a fila de exclusão apaga pelo
-//! nome exato, nunca pela pasta). A tabela confere o formato.
-
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+//! nome exato, nunca pela pasta). A tabela confere o formato. O tipo de imagem
+//! aceito é o `shared::ImageType`.
 
 use crate::shared::token::random_token;
 
-/// Tipo da imagem. O front converte para WebP; o Safari, que não gera WebP
-/// no canvas, manda JPEG.
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ImageType {
-    #[serde(rename = "image/webp")]
-    Webp,
-    #[serde(rename = "image/jpeg")]
-    Jpeg,
-}
-
-impl ImageType {
-    pub const ALL: [Self; 2] = [Self::Webp, Self::Jpeg];
-
-    pub const fn mime(self) -> &'static str {
-        match self {
-            Self::Webp => "image/webp",
-            Self::Jpeg => "image/jpeg",
-        }
-    }
-
-    const fn extension(self) -> &'static str {
-        match self {
-            Self::Webp => "webp",
-            Self::Jpeg => "jpg",
-        }
-    }
-
-    pub fn from_mime(value: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|t| t.mime() == value)
-    }
-}
+pub use crate::shared::ImageType;
 
 /// Onde vai um screenshot: os slugs da comunidade e do torneio, a partida e o
 /// número do mapa.
@@ -65,18 +33,6 @@ pub fn new_key(at: &Place<'_>, kind: ImageType) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn mime_round_trips() {
-        for t in ImageType::ALL {
-            assert_eq!(ImageType::from_mime(t.mime()), Some(t));
-        }
-        assert_eq!(ImageType::from_mime("image/png"), None);
-        assert_eq!(
-            serde_json::to_value(ImageType::Webp).unwrap(),
-            serde_json::json!("image/webp")
-        );
-    }
 
     #[test]
     fn the_name_reads_like_the_site() {

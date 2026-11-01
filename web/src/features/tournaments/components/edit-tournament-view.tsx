@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { CoverSection } from "@/features/images/components/cover-section";
 import { loadMaps } from "@/features/matches/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
@@ -77,6 +78,13 @@ export async function EditTournamentView({ tenant, slug }: Props) {
           tenant={tenant}
           tournament={tournament}
           maps={await loadMaps()}
+          cover={
+            <CoverSection
+              tenant={tenant}
+              tournament={slug}
+              url={tournament.cover_url}
+            />
+          }
         />
       )}
     </>

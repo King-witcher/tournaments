@@ -101,6 +101,8 @@ pub struct TenantMember<R = Player> {
     pub nickname: String,
     /// Quando a comunidade vai ser excluída (nulo: nenhuma exclusão agendada).
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
+    /// O objeto do logo no bucket público (nulo: sem logo).
+    pub logo_key: Option<String>,
     min_role: PhantomData<R>,
 }
 
@@ -124,6 +126,7 @@ impl TenantMember {
                 role: m.role,
                 nickname: m.nickname,
                 deletion_scheduled_for: m.deletion_scheduled_for,
+                logo_key: m.logo_key,
                 min_role: PhantomData,
             })
             .collect())
@@ -201,6 +204,7 @@ impl<R: MinRole> TenantMember<R> {
             role: m.role,
             nickname: m.nickname,
             deletion_scheduled_for: m.deletion_scheduled_for,
+            logo_key: m.logo_key,
             min_role: PhantomData,
         })
     }

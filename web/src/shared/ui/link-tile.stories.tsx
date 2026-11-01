@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import Image from "next/image";
 
+import { Avatar } from "./avatar";
 import { Link } from "./link";
 import { LinkTile } from "./link-tile";
 import { StatusTag } from "./status-tag";
@@ -18,6 +20,8 @@ const meta = {
     title: { control: "text" },
     meta: { control: "text" },
     tags: { control: false },
+    avatar: { control: false },
+    media: { control: false },
     footer: { control: false },
   },
   // O tile vai sempre dentro do TileGrid, que dá a largura de uma coluna.
@@ -51,6 +55,23 @@ export const WithFooter: Story = {
   args: {
     tags: <StatusTag status="in_progress">Em andamento</StatusTag>,
     footer: <Link href="/arena-sul/copa/series/12">Série pronta</Link>,
+  },
+};
+
+/** O logo da comunidade antes do nome. */
+export const WithAvatar: Story = {
+  args: {
+    title: "Arena Sul",
+    meta: "Owner",
+    avatar: <Avatar shape="square" size="md" name="Arena Sul" />,
+  },
+};
+
+/** A capa no topo, em 2:1. */
+export const WithMedia: Story = {
+  args: {
+    tags: <StatusTag status="registration">Inscrições abertas</StatusTag>,
+    media: <Image src="/maps/crucible.webp" alt="" fill unoptimized />,
   },
 };
 

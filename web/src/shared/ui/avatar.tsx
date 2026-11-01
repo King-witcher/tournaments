@@ -12,6 +12,12 @@ type Props = {
   name?: string;
   /** `sm` 24px (linha de tabela, cabeçalho), `md` 32px, `lg` 48px (placar). */
   size?: keyof typeof PIXELS;
+  /**
+   * `circle` (o padrão) para gente; `square` para uma coisa, como o logo de
+   * uma comunidade. O quadrado vem do CDN do site já no tamanho e não passa
+   * pela otimização de imagens da Vercel (que tem cota).
+   */
+  shape?: "circle" | "square";
 };
 
 /**
@@ -24,9 +30,9 @@ function initial(name: string | undefined) {
   return text.match(/[\p{L}\p{N}]/u)?.[0] ?? Array.from(text)[0] ?? "";
 }
 
-/** Avatar redondo; decorativo (o nome sempre aparece ao lado). */
-export function Avatar({ src, name, size = "sm" }: Props) {
-  const className = cn(styles.avatar, styles[size]);
+/** Avatar redondo (ou quadrado); decorativo (o nome sempre aparece ao lado). */
+export function Avatar({ src, name, size = "sm", shape = "circle" }: Props) {
+  const className = cn(styles.avatar, styles[size], styles[shape]);
   if (!src) {
     return (
       <span aria-hidden className={className}>
@@ -40,6 +46,7 @@ export function Avatar({ src, name, size = "sm" }: Props) {
       alt=""
       width={PIXELS[size]}
       height={PIXELS[size]}
+      unoptimized={shape === "square"}
       className={className}
     />
   );

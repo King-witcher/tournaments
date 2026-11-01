@@ -2,7 +2,7 @@
 
 import { Form, Stack, Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { FormActions } from "@/shared/ui/form-actions";
@@ -35,17 +35,19 @@ type Props = {
   tournament: Schemas["Tournament"];
   /** Os mapas ativos, para o pool do veto. */
   maps: Schemas["Map"][];
+  /** A capa (`CoverSection`), que se salva sozinha, na aba Geral. */
+  cover?: ReactNode;
 };
 
 /**
- * Editar torneio, uma aba por assunto: Geral (nome, descrição, regras
+ * Editar torneio, uma aba por assunto: Geral (nome, descrição, capa, regras
  * adicionais e outros idiomas), Formato (modalidade, vagas, chave, séries,
  * mapas, campeões), Inscrições e prazos (início, inscrição, check-in) e
  * Resultados (contestação, captura de tela).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
  * de começar, o motivo dos campos travados vem no topo da aba deles.
  */
-export function EditTournamentForm({ tenant, tournament, maps }: Props) {
+export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
   const t = useTranslations("TournamentForm");
   const [tab, setTab] = useState<EditTab>("general");
   const form = useTournamentForm(tenant, tournament, {
@@ -94,6 +96,7 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                     errors={errors}
                   />
                 </FormSection>
+                {cover}
                 <TournamentRulesSection
                   values={values}
                   onChange={onChange}

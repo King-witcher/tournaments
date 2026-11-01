@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { Avatar } from "@/shared/ui/avatar";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { LinkTile } from "@/shared/ui/link-tile";
@@ -8,8 +9,8 @@ import { TileGrid } from "@/shared/ui/tile-grid";
 import { getMyTenants } from "../server";
 
 /**
- * Comunidades do usuário logado, em tiles com o papel dele, e o "Criar
- * comunidade"; sem login não mostra nada. Fica em `<Suspense>`.
+ * Comunidades do usuário logado, em tiles com o logo e o papel dele, e o
+ * "Criar comunidade"; sem login não mostra nada. Fica em `<Suspense>`.
  */
 export async function MyTenants() {
   const tenants = await getMyTenants();
@@ -29,6 +30,9 @@ export async function MyTenants() {
       </Section>
     );
   }
+  // Com algum logo, todas levam um (a inicial na que não tem), e os nomes
+  // ficam alinhados; sem nenhum, nenhuma.
+  const withLogos = tenants.some((tenant) => tenant.logo_url);
   return (
     <Section
       title={t("title")}
@@ -44,6 +48,16 @@ export async function MyTenants() {
             key={tenant.slug}
             href={`/${tenant.slug}`}
             title={tenant.name}
+            avatar={
+              withLogos && (
+                <Avatar
+                  shape="square"
+                  size="md"
+                  src={tenant.logo_url}
+                  name={tenant.name}
+                />
+              )
+            }
             meta={tRoles(tenant.role)}
           />
         ))}

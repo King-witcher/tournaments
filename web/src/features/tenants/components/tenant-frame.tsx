@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { apiErrorMessage } from "@/shared/api/errors";
+import { Avatar } from "@/shared/ui/avatar";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Notice } from "@/shared/ui/notice";
@@ -19,8 +20,8 @@ type Props = {
 };
 
 /**
- * O topo da comunidade e as abas, com a aba aberta dentro: nome, o papel de
- * quem vê e, para a organização, "Novo torneio". A aba Convites só aparece
+ * O topo da comunidade e as abas, com a aba aberta dentro: o logo (quando
+ * há), nome, o papel de quem vê e, para a organização, "Novo torneio". A aba Convites só aparece
  * para a organização; o Ranking, para todos. Com a exclusão agendada, o aviso
  * com a data (e, para o dono, onde cancelar) entre o topo e as abas. Sem
  * sessão, o convite a entrar; sem acesso, o erro (e a aba nem é desenhada).
@@ -62,6 +63,11 @@ export async function TenantFrame({ slug, children }: Props) {
       <PageHeader
         breadcrumbs={[{ href: "/", label: tNav("home") }]}
         title={tenant.name}
+        logo={
+          tenant.logo_url && (
+            <Avatar shape="square" size="lg" src={tenant.logo_url} />
+          )
+        }
         tags={<StatusTag status="neutral">{tRoles(tenant.role)}</StatusTag>}
         actions={
           organizer && (

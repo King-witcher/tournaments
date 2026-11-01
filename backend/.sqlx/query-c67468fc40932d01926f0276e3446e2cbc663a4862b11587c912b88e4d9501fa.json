@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.admission, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,\n                  t.started_at,\n                  (select n.slug from tenants n where n.id = t.tenant_id) as \"tenant_slug!\",\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce((select jsonb_agg(s.config order by s.position)\n                            from tournament_stages s\n                            where s.tournament_id = t.id), '[]')\n                      as \"stages!: Json<Vec<ef::StageFormat>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,\n                                                                'name', m.name)\n                                             order by p.position)\n                            from tournament_maps p\n                            join maps m on m.id = p.map_id\n                            where p.tournament_id = t.id), '[]')\n                      as \"map_pool!: Json<Vec<PoolMapRow>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('locale', r.locale,\n                                                                'name', r.name,\n                                                                'description', r.description,\n                                                                'rules', r.rules)\n                                             order by r.locale)\n                            from tournament_translations r\n                            where r.tournament_id = t.id), '[]')\n                      as \"translations!: Json<Vec<TranslationRow>>\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
+  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.admission, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,\n                  t.started_at, t.cover_key,\n                  (select n.slug from tenants n where n.id = t.tenant_id) as \"tenant_slug!\",\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce((select jsonb_agg(s.config order by s.position)\n                            from tournament_stages s\n                            where s.tournament_id = t.id), '[]')\n                      as \"stages!: Json<Vec<ef::StageFormat>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,\n                                                                'name', m.name)\n                                             order by p.position)\n                            from tournament_maps p\n                            join maps m on m.id = p.map_id\n                            where p.tournament_id = t.id), '[]')\n                      as \"map_pool!: Json<Vec<PoolMapRow>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('locale', r.locale,\n                                                                'name', r.name,\n                                                                'description', r.description,\n                                                                'rules', r.rules)\n                                             order by r.locale)\n                            from tournament_translations r\n                            where r.tournament_id = t.id), '[]')\n                      as \"translations!: Json<Vec<TranslationRow>>\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
   "describe": {
     "columns": [
       {
@@ -269,42 +269,53 @@
       },
       {
         "ordinal": 24,
+        "name": "cover_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "cover_key"
+          }
+        }
+      },
+      {
+        "ordinal": 25,
         "name": "tenant_slug!",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 25,
+        "ordinal": 26,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 26,
+        "ordinal": 27,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 27,
+        "ordinal": 28,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 28,
+        "ordinal": 29,
         "name": "stages!: Json<Vec<ef::StageFormat>>",
         "type_info": "Jsonb",
         "origin": "Expression"
       },
       {
-        "ordinal": 29,
+        "ordinal": 30,
         "name": "map_pool!: Json<Vec<PoolMapRow>>",
         "type_info": "Jsonb",
         "origin": "Expression"
       },
       {
-        "ordinal": 30,
+        "ordinal": 31,
         "name": "translations!: Json<Vec<TranslationRow>>",
         "type_info": "Jsonb",
         "origin": "Expression"
@@ -342,6 +353,7 @@
       false,
       false,
       true,
+      true,
       null,
       null,
       null,
@@ -351,5 +363,5 @@
       null
     ]
   },
-  "hash": "0fb34685eaab179db3ae947297660b0dff676e761e99438930596cb8b3df102e"
+  "hash": "c67468fc40932d01926f0276e3446e2cbc663a4862b11587c912b88e4d9501fa"
 }

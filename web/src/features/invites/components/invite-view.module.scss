@@ -1,6 +1,15 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
+// A capa do torneio do link de inscrição, antes do que o convite é.
+.cover {
+  background-color: theme.$layer-02;
+}
+
+.image {
+  object-fit: cover;
+}
+
 // O que aceitar faz (entra como jogador, recupera o apelido): texto corrido.
 .note {
   @include type.type-style("body-01");

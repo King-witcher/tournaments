@@ -8,6 +8,7 @@ mod db;
 mod discord;
 mod docs;
 mod health;
+mod images;
 mod invites;
 mod lifecycle;
 mod maps;

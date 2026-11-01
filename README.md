@@ -123,6 +123,30 @@ No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida
 4. **Variáveis** que a API lê (no Render, e no `backend/.env` só se quiser um bucket de dev à parte): `S3_PRIVATE_BUCKET` (o nome do bucket privado), `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` (a access key do usuário IAM) e `S3_REGION` (a região do bucket; sem ela, `us-east-1`). Com só parte das três primeiras, a API não sobe (é engano de configuração); com nenhuma, sobe sem screenshots. `S3_ENDPOINT` só para outro provedor compatível (Cloudflare R2, MinIO), com o bucket no caminho da URL.
 5. **Conferir**: com as variáveis no Render, o log da API não mostra o aviso "screenshots desligados" e `GET /screenshots/settings` responde `"enabled": true`. Sem o CORS do passo 2, o PUT do navegador falha e a tela mostra "O envio da imagem falhou".
 
+## Bucket público (logos e capas)
+
+O logo da comunidade e a capa do torneio vão para outro bucket, que o CloudFront serve num domínio próprio; o bucket continua fechado (motivos em `docs/decisions/images.md`). O envio é como o dos screenshots (URL assinada, conferência por HEAD, rotina diária de exclusão), com as mesmas chaves. No console, `logos/<comunidade>/<aleatório>.jpg` e `covers/<comunidade>/<torneio>/<aleatório>.jpg` (só JPEG: a prévia dos links não desenha WebP).
+
+1. **Bucket**: como o privado, com **Block all public access ligado**, Object Ownership "Bucket owner enforced", versionamento e "Static website hosting" desligados.
+2. **CORS**: o do bucket privado com `cache-control` a mais nos `AllowedHeaders` (o envio grava o `Cache-Control` de um ano no objeto, assinado na URL).
+3. **Certificado** no ACM, na região **us-east-1** (o CloudFront só lê de lá): público, sem exportação, validação por DNS, RSA 2048, para `img.telefrag.com.br` (staging: `img-staging.telefrag.com.br`; nada da AWS embaixo de `staging.telefrag.com.br`, que é CNAME da Vercel e herda o CAA dela). O CNAME de validação fica no DNS para a renovação.
+4. **CloudFront**: plano Free, "Single website or app", origem Amazon S3 (o bucket, pelo endereço REST) com "Use recommended origin settings" (OAC, redirect para HTTPS, `GET`/`HEAD`, `CachingOptimized`) e a proteção do WAF ligada (vem no plano). Depois de criar, **Add a domain** com o domínio do passo 3 e o CNAME `img` (ou `img-staging`) para o `dxxxx.cloudfront.net`. O CloudFront grava a política do bucket (leitura só para a distribuição, por `AWS:SourceArn`).
+5. **IAM**: na política do usuário da API, mais um statement para o bucket público:
+
+   ```json
+   {
+     "Effect": "Allow",
+     "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+     "Resource": [
+       "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/logos/*",
+       "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/covers/*"
+     ]
+   }
+   ```
+
+6. **Variáveis**: `S3_PUBLIC_BUCKET` (o nome do bucket) e `S3_PUBLIC_URL` (o endereço do CDN, ex.: `https://img.telefrag.com.br`), as duas juntas, com as mesmas `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` e `S3_REGION`. Sem elas, logo e capa somem da interface.
+7. **Conferir**: o log da API sem o aviso "logos e capas desligados", `GET /images/settings` com `"enabled": true`; um arquivo de teste em `covers/teste.jpg` responde 200 pelo CDN (`x-cache` `Miss` e depois `Hit`) e 403 pela URL direta do S3.
+
 ## Comandos e CI
 
 Os comandos do dia a dia (API com recarga, testes, clippy, migrations, tipos do front) estão no `CLAUDE.md`. O `.github/workflows/ci.yml` roda em push na `main` e em pull request, backend e web em paralelo, só o lado que mudou nos pull requests: `cargo fmt --check`, `cargo clippy` offline, migrations, `cargo test` (Postgres 18 e Redis como serviços) e a conferência de que o `.sqlx/` versionado é o que as queries geram (se falhar, `bun scripts/sqlx-prepare.ts` em `backend/` e commit); no web, `bun install --frozen-lockfile`, `bun run lint` e `bun run build`. A versão do Bun está fixa no workflow: ao subir o Bun localmente, suba lá também.

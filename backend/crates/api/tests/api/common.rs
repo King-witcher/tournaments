@@ -166,6 +166,7 @@ pub fn state(db: PgPool) -> AppState {
         push: None,
         webhooks: Webhooks::new(),
         storage: None,
+        public_storage: None,
     }
 }
 

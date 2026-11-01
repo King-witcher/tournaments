@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{Role, TenantMember};
+use crate::shared::public_url;
 
 #[derive(Deserialize, ToSchema)]
 pub struct CreateTenant {
@@ -43,6 +44,9 @@ pub struct MyTenant {
     /// `tenant.deletion_scheduled`, menos cancelar a exclusão (o owner) e
     /// sair. Nulo: nenhuma exclusão agendada.
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
+    /// O logo (quadrado), no CDN. Nulo: sem logo, ou a API sem o bucket
+    /// público.
+    pub logo_url: Option<String>,
 }
 
 impl<R> From<TenantMember<R>> for MyTenant {
@@ -53,6 +57,7 @@ impl<R> From<TenantMember<R>> for MyTenant {
             role: m.role,
             nickname: m.nickname,
             deletion_scheduled_for: m.deletion_scheduled_for,
+            logo_url: m.logo_key.as_deref().and_then(public_url),
         }
     }
 }

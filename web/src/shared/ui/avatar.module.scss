@@ -8,11 +8,16 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 50%;
   background-color: theme.$layer-accent-01;
   color: theme.$text-primary;
   text-transform: uppercase;
   object-fit: cover;
+}
+
+// Redondo é gente; quadrado é uma coisa (o logo de uma comunidade), com os
+// cantos retos do Carbon.
+.circle {
+  border-radius: 50%;
 }
 
 .sm {

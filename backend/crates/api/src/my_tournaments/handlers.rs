@@ -5,7 +5,7 @@ use crate::{
     AppState,
     auth::CurrentUser,
     matches,
-    shared::{ApiError, ErrorBody},
+    shared::{ApiError, ErrorBody, public_url},
     teams::{self, Team},
     tenants::TenantId,
     tenants::{Role, TenantMember},
@@ -81,6 +81,7 @@ pub async fn my_tournaments(
         out.push(MyTournament {
             tenant_slug: member.slug.clone(),
             tenant_name: member.name.clone(),
+            tenant_logo_url: member.logo_key.as_deref().and_then(public_url),
             tournament,
             situation,
             placement,

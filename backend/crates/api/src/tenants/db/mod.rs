@@ -7,7 +7,10 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
 
 use super::{MyTenant, Role, TenantId};
-use crate::{auth::CurrentUser, shared::ApiError};
+use crate::{
+    auth::CurrentUser,
+    shared::{ApiError, public_url},
+};
 
 pub use deletion::*;
 
@@ -20,6 +23,7 @@ pub struct Membership {
     pub role: Role,
     pub nickname: String,
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
+    pub logo_key: Option<String>,
 }
 
 pub async fn membership(
@@ -28,7 +32,7 @@ pub async fn membership(
     user_id: i64,
 ) -> Result<Option<Membership>, ApiError> {
     let row = sqlx::query!(
-        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at
+        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenants t
            join tenant_members m on m.tenant_id = t.id
            where t.slug = $1 and m.user_id = $2 and m.left_at is null"#,
@@ -46,6 +50,7 @@ pub async fn membership(
             role: Role::from_db(&r.role)?,
             nickname: r.nickname,
             deletion_scheduled_for: r.deletion_due_at,
+            logo_key: r.logo_key,
         })
     })
     .transpose()
@@ -62,7 +67,7 @@ pub async fn user_and_membership(
     let Some(r) = sqlx::query!(
         r#"select u.id, u.display_name, u.avatar_url, u.locale,
                   t.id as "tenant_id?", t.slug as "slug?", t.name as "name?",
-                  m.role as "role?", m.nickname as "nickname?", t.deletion_due_at
+                  m.role as "role?", m.nickname as "nickname?", t.deletion_due_at, t.logo_key
            from users u
            left join tenant_members m
                   on m.user_id = u.id and m.left_at is null
@@ -91,6 +96,7 @@ pub async fn user_and_membership(
             role: Role::from_db(&role)?,
             nickname,
             deletion_scheduled_for: r.deletion_due_at,
+            logo_key: r.logo_key,
         }),
         _ => None,
     };
@@ -124,7 +130,7 @@ pub async fn standing(
 /// As participações ativas de um usuário, na ordem em que entrou.
 pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at
+        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.user_id = $1 and m.left_at is null
@@ -143,6 +149,7 @@ pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, A
                 role: Role::from_db(&r.role)?,
                 nickname: r.nickname,
                 deletion_scheduled_for: r.deletion_due_at,
+                logo_key: r.logo_key,
             })
         })
         .collect()
@@ -266,7 +273,7 @@ pub async fn transfer_ownership(
 /// entrou.
 pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at
+        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.user_id = $1 and m.left_at is null
@@ -284,6 +291,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
                 role: Role::from_db(&r.role)?,
                 nickname: r.nickname,
                 deletion_scheduled_for: r.deletion_due_at,
+                logo_url: r.logo_key.as_deref().and_then(public_url),
             })
         })
         .collect()
@@ -292,7 +300,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
 /// O tenant visto por um usuário que já é membro dele.
 pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<MyTenant, ApiError> {
     let row = sqlx::query!(
-        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at
+        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.tenant_id = $1 and m.user_id = $2"#,
@@ -307,6 +315,7 @@ pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<My
         role: Role::from_db(&row.role)?,
         nickname: row.nickname,
         deletion_scheduled_for: row.deletion_due_at,
+        logo_url: row.logo_key.as_deref().and_then(public_url),
     })
 }
 

@@ -356,6 +356,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/images/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_image_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invites/{token}": {
         parameters: {
             query?: never;
@@ -660,6 +676,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_logo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/logo/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_logo_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/logo/uploads/{upload}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach_logo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/me": {
         parameters: {
             query?: never;
@@ -862,6 +926,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["open_check_in"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_cover"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/cover/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_cover_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/cover/uploads/{upload}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach_cover"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1953,12 +2065,39 @@ export interface components {
         Health: {
             database: components["schemas"]["ServiceStatus"];
         };
+        /** @description O que o front precisa saber do logo e da capa antes de oferecer o envio. */
+        ImageSettings: {
+            content_types: components["schemas"]["ImageType"][];
+            /**
+             * @description O bucket público está configurado. Sem ele, o envio de logo e de capa
+             *     some da interface.
+             */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description Tamanho máximo de um arquivo, em bytes.
+             * @example 1048576
+             */
+            max_bytes: number;
+        };
         /**
          * @description Tipo da imagem. O front converte para WebP; o Safari, que não gera WebP
          *     no canvas, manda JPEG.
          * @enum {string}
          */
         ImageType: "image/webp" | "image/jpeg";
+        ImageUpload: {
+            /** @description O `Cache-Control` que o PUT leva (o bucket grava no objeto). */
+            cache_control: string;
+            /** @description O `Content-Type` que o PUT leva. */
+            content_type: components["schemas"]["ImageType"];
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: int64 */
+            id: number;
+            /** @description URL assinada para o PUT direto ao bucket. */
+            url: string;
+        };
         /** @description Convite ativo (nem revogado nem expirado). */
         Invite: {
             /** Format: date-time */
@@ -1999,6 +2138,8 @@ export interface components {
              *     criou).
              */
             owner_name: string;
+            /** @description O logo da comunidade, no CDN; nulo sem logo. */
+            tenant_logo_url?: string | null;
             tenant_name: string;
             /** @description Endereço da comunidade (para quem já é membro ir direto a ela). */
             tenant_slug: string;
@@ -2021,6 +2162,8 @@ export interface components {
          *     inscrição não está aberta (`status`) ou lota.
          */
         InvitedTournament: {
+            /** @description A capa (2:1), no CDN; nulo sem capa. */
+            cover_url?: string | null;
             locale: components["schemas"]["Locale"];
             /** Format: int32 */
             max_participants: number;
@@ -2309,6 +2452,11 @@ export interface components {
              *     sair. Nulo: nenhuma exclusão agendada.
              */
             deletion_scheduled_for?: string | null;
+            /**
+             * @description O logo (quadrado), no CDN. Nulo: sem logo, ou a API sem o bucket
+             *     público.
+             */
+            logo_url?: string | null;
             name: string;
             /** @description Apelido do usuário neste tenant. */
             nickname: string;
@@ -2321,6 +2469,8 @@ export interface components {
             placement?: components["schemas"]["MyPlacement"] | null;
             situation: components["schemas"]["Situation"];
             team?: components["schemas"]["Team"] | null;
+            /** @description O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela). */
+            tenant_logo_url?: string | null;
             tenant_name: string;
             tenant_slug: string;
             tournament: components["schemas"]["TournamentSummary"];
@@ -2341,6 +2491,15 @@ export interface components {
              * @example Rating de outra liga
              */
             reason: string;
+        };
+        /** @description Pedido da URL de upload de um logo ou de uma capa. */
+        NewImageUpload: {
+            content_type: components["schemas"]["ImageType"];
+            /**
+             * Format: int32
+             * @description Bytes, de 1 a `max_bytes`.
+             */
+            size: number;
         };
         /** @description Senha para a conta logada, que ainda não tem. */
         NewPassword: {
@@ -2633,6 +2792,11 @@ export interface components {
             tenant_slug: string;
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
+        };
+        /** @description O logo ou a capa registrados. */
+        PublicImage: {
+            /** @description A imagem no CDN. */
+            url: string;
         };
         PushKey: {
             /**
@@ -3292,6 +3456,8 @@ export interface components {
             contest_minutes: number;
             /** @description Se os mapas do torneio contam para o rating da comunidade. */
             counts_for_rating: boolean;
+            /** @description A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público. */
+            cover_url?: string | null;
             /** Format: date-time */
             created_at: string;
             description: string;
@@ -3407,6 +3573,8 @@ export interface components {
             admission: components["schemas"]["Admission"];
             /** @description Se quem vê fez check-in (no check-in, falso é o aviso de que falta). */
             checked_in: boolean;
+            /** @description A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público. */
+            cover_url?: string | null;
             /** Format: date-time */
             created_at: string;
             locale: components["schemas"]["Locale"];
@@ -5277,6 +5445,26 @@ export interface operations {
             };
         };
     };
+    get_image_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Se há logo e capa nesta API (o bucket público está configurado) e os limites de cada arquivo. Pública, sem sessão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageSettings"];
+                };
+            };
+        };
+    };
     preview_invite: {
         parameters: {
             query?: never;
@@ -6473,6 +6661,232 @@ export interface operations {
             };
         };
     };
+    remove_logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A comunidade fica sem logo (o arquivo sai do bucket na rotina diária); sem logo, nada muda. Só o owner */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_logo_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewImageUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar o logo direto ao bucket (PUT com o Content-Type e o Cache-Control dados, `If-None-Match: *` e exatamente `size` bytes, uma vez, em 10 minutos); depois, registrar com `.../logo/uploads/{upload}/attach`. Só o owner */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.too_many_uploads {max} (uploads pedidos e não registrados na última hora) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured (a API está sem o bucket público) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach_logo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description O `id` do upload */
+                upload: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket (tipo e tamanho pedidos) e gravado como o logo da comunidade; o de antes sai do bucket na rotina diária */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicImage"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, images.not_found (upload de outra pessoa, de uma capa, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_missing (o arquivo não chegou ao bucket), tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_invalid (chegou outro tipo ou tamanho: o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     leave_tenant: {
         parameters: {
             query?: never;
@@ -7574,6 +7988,238 @@ export interface operations {
             };
             /** @description tournament.not_registration, tournament.check_in_disabled */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove_cover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O torneio fica sem capa (o arquivo sai do bucket na rotina diária); sem capa, nada muda */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_cover_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewImageUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar a capa direto ao bucket (como a do logo); depois, registrar com `.../cover/uploads/{upload}/attach`. Organizer e owner, em qualquer estado do torneio */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.too_many_uploads {max} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach_cover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description O `id` do upload */
+                upload: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket e gravado como a capa do torneio; a de antes sai do bucket na rotina diária */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicImage"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio ou do logo, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_missing, tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_invalid (o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

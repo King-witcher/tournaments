@@ -289,6 +289,8 @@ pub struct Tournament {
     pub screenshots_required: bool,
     pub translations: Vec<TournamentTranslation>,
     pub created_at: DateTime<Utc>,
+    /// A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público.
+    pub cover_url: Option<String>,
 }
 
 /// Item da lista de torneios do tenant.
@@ -314,6 +316,8 @@ pub struct TournamentSummary {
     /// Nome nas traduções que existem.
     pub translations: Vec<NameTranslation>,
     pub created_at: DateTime<Utc>,
+    /// A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público.
+    pub cover_url: Option<String>,
 }
 
 /// Tradução de um torneio. Descrição ou regras vazias: o front mostra as do original.

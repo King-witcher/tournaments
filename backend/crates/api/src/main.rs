@@ -9,7 +9,7 @@ use api::{
     mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
-    shared::{Redis, Storage},
+    shared::{self, Redis, Storage},
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
@@ -37,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
         );
     }
     let storage = storage(&config)?;
+    let public_storage = public_storage(&config)?;
 
     let db = PgPoolOptions::new()
         .max_connections(5)
@@ -97,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
         realtime: Realtime::new(),
         push,
         storage,
+        public_storage,
         mail,
         webhooks: Webhooks::new(),
     };
@@ -163,6 +165,17 @@ fn storage(config: &Config) -> anyhow::Result<Option<Storage>> {
         return Ok(None);
     };
     Ok(Some(Storage::new(storage.clone())?))
+}
+
+/// O bucket público, o dos logos e das capas, com o endereço do CDN que monta
+/// as URLs; sem `S3_PUBLIC_BUCKET`, desligado.
+fn public_storage(config: &Config) -> anyhow::Result<Option<Storage>> {
+    let Some(public) = &config.public_storage else {
+        tracing::warn!("S3_PUBLIC_BUCKET/S3_PUBLIC_URL ausentes: logos e capas desligados");
+        return Ok(None);
+    };
+    shared::set_public_url(&public.url);
+    Ok(Some(Storage::new(public.storage.clone())?))
 }
 
 /// Resend com a chave e o remetente. Sem os dois, os emails vão para o log, o

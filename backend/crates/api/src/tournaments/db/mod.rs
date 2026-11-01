@@ -71,6 +71,8 @@ pub struct StoredTournament {
     pub created_at: DateTime<Utc>,
     /// Quando o torneio foi iniciado (nulo antes do início).
     pub started_at: Option<DateTime<Utc>>,
+    /// O objeto da capa no bucket público (nulo: sem capa).
+    pub cover_key: Option<String>,
 }
 
 impl StoredTournament {

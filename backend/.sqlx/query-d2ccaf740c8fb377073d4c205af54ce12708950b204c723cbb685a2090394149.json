@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\",\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\",\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -112,6 +112,17 @@
             "name": "deletion_due_at"
           }
         }
+      },
+      {
+        "ordinal": 10,
+        "name": "logo_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "logo_key"
+          }
+        }
       }
     ],
     "parameters": {
@@ -130,8 +141,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "ce099934967b1bc45a74660f03ee0e60f0546ef8bc2ab73d09fc8243ea1761ed"
+  "hash": "d2ccaf740c8fb377073d4c205af54ce12708950b204c723cbb685a2090394149"
 }

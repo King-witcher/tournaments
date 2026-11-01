@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments set cover_key = $3\n           where tenant_id = $1 and id = $2 and cover_key is distinct from $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "608997530b1643b5fb1ac2afce40313e792c5b9f501dae0e70dc0913e0e91924"
+}

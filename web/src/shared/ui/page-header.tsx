@@ -1,4 +1,5 @@
-import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
+import { AspectRatio, Breadcrumb, BreadcrumbItem } from "@carbon/react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -16,6 +17,17 @@ type Props = {
   /** As páginas de cima, da raiz até a mãe (a atual é o título). */
   breadcrumbs?: Crumb[];
   title: ReactNode;
+  /**
+   * Antes do título, o logo do que a página é (`Avatar` `square` `lg`), como
+   * o ícone do título no `PageHeader` do Carbon. Decorativo: o nome é o título.
+   */
+  logo?: ReactNode;
+  /**
+   * A capa (URL, 2:1) à direita do cabeçalho, como o `HeroImage` do
+   * `PageHeader` do Carbon; só do `lg` para cima (no celular empurraria as
+   * ações para baixo). Decorativa: o nome é o título.
+   */
+  image?: string | null;
   /** `StatusTag`s ao lado do título. */
   tags?: ReactNode;
   /** Uma linha curta: formato · melhor de · início · inscritos N/máx. */
@@ -45,6 +57,8 @@ function crumbKey({ href }: Crumb, index: number) {
 export function PageHeader({
   breadcrumbs,
   title,
+  logo,
+  image,
   tags,
   meta,
   actions,
@@ -53,10 +67,53 @@ export function PageHeader({
 }: Props) {
   const t = useTranslations("Common");
   return (
-    <header className={styles.header}>
+    <header className={image ? styles.withImage : undefined}>
+      <div className={styles.content}>
+        <HeaderContent
+          breadcrumbs={breadcrumbs}
+          title={title}
+          logo={logo}
+          tags={tags}
+          meta={meta}
+          actions={actions}
+          overflow={overflow}
+          breadcrumbLabel={t("breadcrumb")}
+        >
+          {children}
+        </HeaderContent>
+      </div>
+      {image && (
+        <AspectRatio ratio="2x1" className={styles.image}>
+          <Image
+            src={image}
+            alt=""
+            fill
+            unoptimized
+            loading="eager"
+            className={styles.cover}
+          />
+        </AspectRatio>
+      )}
+    </header>
+  );
+}
+
+function HeaderContent({
+  breadcrumbs,
+  title,
+  logo,
+  tags,
+  meta,
+  actions,
+  overflow,
+  breadcrumbLabel,
+  children,
+}: Omit<Props, "image"> & { breadcrumbLabel: string }) {
+  return (
+    <>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumb
-          aria-label={t("breadcrumb")}
+          aria-label={breadcrumbLabel}
           className={styles.breadcrumb}
           noTrailingSlash
         >
@@ -81,7 +138,15 @@ export function PageHeader({
       )}
       <div className={styles.titleRow}>
         <div className={styles.heading}>
-          <h1 className={styles.title}>{title}</h1>
+          {logo ? (
+            // O logo fica ao lado do título também quando o título quebra.
+            <div className={styles.named}>
+              {logo}
+              <h1 className={styles.title}>{title}</h1>
+            </div>
+          ) : (
+            <h1 className={styles.title}>{title}</h1>
+          )}
           {tags}
         </div>
         {(actions || overflow) && (
@@ -93,6 +158,6 @@ export function PageHeader({
       </div>
       {meta && <p className={styles.meta}>{meta}</p>}
       {children}
-    </header>
+    </>
   );
 }

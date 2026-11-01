@@ -204,7 +204,8 @@ pub async fn create_upload(
     let user = actor.user_id;
     let id = db::insert_upload(&mut tx, &at, &key, kind, body.size, user, expires_at).await?;
     tx.commit().await?;
-    let url = storage.put_url(&key, kind.mime(), body.size.into(), UPLOAD_EXPIRES, now);
+    let size = body.size.into();
+    let url = storage.put_url(&key, kind.mime(), size, None, UPLOAD_EXPIRES, now);
     let upload = ScreenshotUpload {
         id,
         url: url.into(),

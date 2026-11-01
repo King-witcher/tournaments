@@ -210,6 +210,14 @@
     "champion_taken": "Outro jogador escolheu esse campeão para a partida antes.",
     "step_changed": "A vez mudou antes do seu clique. Confira a tela."
   },
+  "images": {
+    "not_configured": "O envio de imagens está desligado no site.",
+    "size_invalid": "A imagem passa do tamanho máximo.",
+    "too_many_uploads": "Você chegou ao limite de {max} envios de imagem por hora. Tente de novo na próxima hora.",
+    "not_found": "Este envio não vale mais. Escolha a imagem de novo.",
+    "upload_missing": "A imagem não chegou ao armazenamento. Tente de novo.",
+    "upload_invalid": "A imagem que chegou não é a que foi pedida. Tente de novo."
+  },
   "screenshots": {
     "not_configured": "As capturas de tela estão desligadas no site.",
     "forbidden": "Só os jogadores da série e a organização anexam capturas de tela, e cada jogador só remove a própria.",

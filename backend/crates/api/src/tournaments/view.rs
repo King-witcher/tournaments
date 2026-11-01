@@ -1,6 +1,7 @@
 //! Torneio gravado → resposta da API, que `lifecycle` também devolve.
 
 use super::{db::StoredTournament, types::Tournament, veto::VetoSettings};
+use crate::shared::public_url;
 
 impl From<StoredTournament> for Tournament {
     fn from(t: StoredTournament) -> Self {
@@ -36,6 +37,7 @@ impl From<StoredTournament> for Tournament {
             screenshots_required: t.screenshots_required,
             translations: t.translations,
             created_at: t.created_at,
+            cover_url: t.cover_key.as_deref().and_then(public_url),
         }
     }
 }

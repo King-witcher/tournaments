@@ -8,6 +8,8 @@ use crate::{matches::NextMatch, teams::Team, tournaments::TournamentSummary};
 pub struct MyTournament {
     pub tenant_slug: String,
     pub tenant_name: String,
+    /// O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela).
+    pub tenant_logo_url: Option<String>,
     pub tournament: TournamentSummary,
     pub situation: Situation,
     /// Colocação de quem foi eliminado, desistiu ou venceu, quando já se

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AppContent } from "./app-content";
+import { Avatar } from "./avatar";
 import { Button } from "./button";
 import { OverflowActions } from "./overflow-actions";
 import { Page } from "./page";
@@ -54,6 +55,8 @@ const meta = {
     title: { control: "text" },
     meta: { control: "text" },
     tags: { control: false },
+    logo: { control: false },
+    image: { control: "text" },
     actions: { control: false },
     overflow: { control: false },
     children: { control: false },
@@ -103,6 +106,20 @@ export const Complete: Story = {
     actions,
     overflow,
   },
+};
+
+/** O logo da comunidade antes do título. */
+export const WithLogo: Story = {
+  args: {
+    title: "Arena Brasil",
+    logo: <Avatar shape="square" size="lg" src="/maps/crucible.webp" />,
+    tags: <StatusTag status="neutral">Owner</StatusTag>,
+  },
+};
+
+/** A capa do torneio à direita, do lg para cima; abaixo, ela some. */
+export const WithImage: Story = {
+  args: { ...Complete.args, image: "/maps/crucible.webp" },
 };
 
 /** O título quebra em qualquer ponto, mesmo sem espaços, e as tags descem junto. */

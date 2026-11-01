@@ -141,6 +141,8 @@ pub struct StoredInvite {
     pub tenant: TenantId,
     pub tenant_slug: String,
     pub tenant_name: String,
+    /// O objeto do logo da comunidade no bucket público.
+    pub tenant_logo_key: Option<String>,
     /// O apelido do dono atual na comunidade (a comunidade não grava quem a criou).
     pub owner_name: String,
     /// Membros ativos.
@@ -161,7 +163,7 @@ pub async fn find_by_token_hash(
 ) -> Result<Option<StoredInvite>, sqlx::Error> {
     let row = sqlx::query!(
         r#"select i.id, i.tenant_id, t.slug as tenant_slug, t.name as tenant_name, tr.slug as "tournament_slug?",
-                  i.expires_at,
+                  t.logo_key, i.expires_at,
                   i.revoked_at is not null as "revoked!",
                   coalesce(i.expires_at <= now(), false) as "expired!",
                   t.deletion_due_at is not null as "tenant_deleting!",
@@ -183,6 +185,7 @@ pub async fn find_by_token_hash(
         tenant: TenantId::new(r.tenant_id),
         tenant_slug: r.tenant_slug,
         tenant_name: r.tenant_name,
+        tenant_logo_key: r.logo_key,
         owner_name: r.owner_name,
         member_count: r.member_count,
         tournament: r.tournament_slug,

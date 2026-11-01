@@ -1,10 +1,21 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.slug, t.name, m.role, m.nickname, t.deletion_due_at\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
+  "query": "select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenants t\n           join tenant_members m on m.tenant_id = t.id\n           where t.slug = $1 and m.user_id = $2 and m.left_at is null",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
         "name": "slug",
         "type_info": "Text",
         "origin": {
@@ -15,7 +26,7 @@
         }
       },
       {
-        "ordinal": 1,
+        "ordinal": 2,
         "name": "name",
         "type_info": "Text",
         "origin": {
@@ -26,7 +37,7 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "role",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "deletion_due_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -57,10 +68,22 @@
             "name": "deletion_due_at"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "logo_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "logo_key"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Int8"
       ]
     },
@@ -69,8 +92,10 @@
       false,
       false,
       false,
+      false,
+      true,
       true
     ]
   },
-  "hash": "068b6c07ae3726ec2e2d99cec6d5f53259ee5ff4c038af230d78d45fa45c4407"
+  "hash": "cd99af15feea4254bc9c90f3e2b33bc05adf37b22a2c5f2a2646e00a37a100f7"
 }

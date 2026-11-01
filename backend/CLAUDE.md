@@ -20,7 +20,7 @@ crates/api/src/
   tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
   members/  invites/  tournaments/  participants/  teams/  lifecycle/
   matches/        chave, resultados mapa a mapa e o veto (veto/)
-  my_tournaments/ organizing/ notifications/ ratings/ screenshots/ push/ discord/
+  my_tournaments/ organizing/ notifications/ ratings/ screenshots/ images/ push/ discord/
   realtime/       WebSocket, despachante do outbox, agendador (acima de todos)
   health.rs  maps.rs   domínios pequenos, um arquivo cada
 ```

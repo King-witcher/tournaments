@@ -12,7 +12,7 @@ use crate::{
     AppState,
     auth::CurrentUser,
     participants::{self, Entry},
-    shared::{ApiError, ErrorBody, PathParams, token},
+    shared::{ApiError, ErrorBody, PathParams, public_url, token},
     tenants::{self, Organizer, TenantId, TenantMember, default_nickname},
     tournaments::{self, NameTranslation, StoredTournament},
 };
@@ -138,6 +138,7 @@ pub async fn preview_invite(
     Ok(Json(InvitePreview {
         tenant_slug: invite.tenant_slug,
         tenant_name: invite.tenant_name,
+        tenant_logo_url: invite.tenant_logo_key.as_deref().and_then(public_url),
         owner_name: invite.owner_name,
         member_count: invite.member_count,
         expires_at: invite.expires_at,
@@ -246,5 +247,6 @@ fn invited(found: Option<StoredTournament>) -> Result<InvitedTournament, ApiErro
         max_participants: t.setup.max_participants,
         participants: t.participants,
         starts_at: t.schedule.starts_at,
+        cover_url: t.cover_key.as_deref().and_then(public_url),
     })
 }

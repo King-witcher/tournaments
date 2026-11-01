@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: spacing.$spacing-05;
+}
+
+// A prévia no tamanho em que o site mostra: o logo pequeno, a capa na
+// largura da coluna.
+.logo {
+  inline-size: spacing.$spacing-13;
+  background-color: theme.$layer-01;
+}
+
+.cover {
+  inline-size: 100%;
+  background-color: theme.$layer-01;
+}
+
+.image {
+  object-fit: cover;
+}
+
+// Lado a lado, na largura do texto (o `ButtonSet` do Carbon estica cada um
+// e passava da tela do celular).
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}

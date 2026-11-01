@@ -1,10 +1,12 @@
-import { Layer, Stack, Tile } from "@carbon/react";
+import { AspectRatio, Layer, Stack, Tile } from "@carbon/react";
+import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { RequireLogin } from "@/features/auth/components/require-login";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
+import { Avatar } from "@/shared/ui/avatar";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { AcceptInviteButton } from "./accept-invite-button";
@@ -15,8 +17,9 @@ import styles from "./invite-view.module.scss";
 type InvitedTournament = components["schemas"]["InvitedTournament"];
 
 /**
- * Para qual comunidade (ou torneio, no link de inscrição) é o convite, num
- * `Tile` com o que ele é e a ação de cada caso: aceitar; entrar ou criar
+ * Para qual comunidade (ou torneio, no link de inscrição) é o convite, com o
+ * logo da comunidade no título e, no link de inscrição, a capa do torneio no
+ * topo do `Tile`, com o que ele é e a ação de cada caso: aceitar; entrar ou criar
  * conta, voltando para cá; já é membro (ou inscrito); inscrição fechada.
  * Convite expirado ou inválido: o erro e o caminho de volta (de comunidade
  * em exclusão, com o texto do convite, e não o da escrita recusada). Fica em
@@ -71,10 +74,26 @@ export async function InviteView({ token }: { token: string }) {
             ? t("tournamentTitle", { name: localizedName(tournament, locale) })
             : t("title", { name: invite.tenant_name })
         }
+        logo={
+          invite.tenant_logo_url && (
+            <Avatar shape="square" size="lg" src={invite.tenant_logo_url} />
+          )
+        }
       />
       <Tile>
         <Layer>
           <Stack gap={6}>
+            {tournament?.cover_url && (
+              <AspectRatio ratio="2x1" className={styles.cover}>
+                <Image
+                  src={tournament.cover_url}
+                  alt=""
+                  fill
+                  unoptimized
+                  className={styles.image}
+                />
+              </AspectRatio>
+            )}
             <InviteDetails invite={invite} />
             {notes.map((note) => (
               <p key={note} className={styles.note}>

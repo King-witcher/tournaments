@@ -3,10 +3,35 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-.header {
+.content {
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-04;
+  min-inline-size: 0;
+}
+
+// Com a capa, do lg para cima: o texto à esquerda e a capa à direita, num
+// quarto da largura (2:1 nessa largura tem mais ou menos a altura do texto,
+// e o cabeçalho não cresce), no meio da altura. Abaixo do lg, a capa some.
+.withImage {
+  @include breakpoint.breakpoint(lg) {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: spacing.$spacing-07;
+  }
+}
+
+.image {
+  background-color: theme.$layer-01;
+
+  @include breakpoint.breakpoint-down(lg) {
+    display: none;
+  }
+}
+
+.cover {
+  object-fit: cover;
 }
 
 // Título e tags à esquerda, ações à direita. No celular, o título e o ⋯ ficam
@@ -46,6 +71,17 @@
   @include type.type-style("heading-04");
 
   overflow-wrap: anywhere;
+}
+
+.named {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  min-inline-size: 0;
+
+  .title {
+    min-inline-size: 0;
+  }
 }
 
 // Os botões e o ⋯ lado a lado; quando não cabem, quebram os botões e o ⋯ fica

@@ -13,8 +13,18 @@
 //! - **Leitura** (`get_url`): assinada no começo da hora e válida por duas,
 //!   então a mesma página recarregada na mesma hora recebe a mesma URL (o
 //!   navegador usa o cache) e toda URL entregue vale pelo menos uma hora.
+//!
+//! Há dois buckets com as mesmas chaves: o privado (screenshots), lido só por
+//! URL assinada, e o público (logos e capas), que o CDN serve num endereço
+//! fixo (`public_url`). No público, o envio grava também o `Cache-Control`
+//! (`PUBLIC_CACHE`): o nome de cada objeto é aleatório e nunca muda de
+//! conteúdo, então o CDN e o navegador guardam por um ano e nada precisa ser
+//! invalidado.
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
 use anyhow::{Context, bail};
 use chrono::{DateTime, Utc};
@@ -36,6 +46,25 @@ const OWN_EXPIRES: Duration = Duration::from_secs(60);
 const TIMEOUT: Duration = Duration::from_secs(15);
 /// Chaves por `DeleteObjects` (o limite do S3).
 pub const DELETE_BATCH: usize = 1000;
+/// O `Cache-Control` de cada objeto do bucket público, gravado no envio.
+pub const PUBLIC_CACHE: &str = "public, max-age=31536000, immutable";
+
+/// Endereço do CDN do bucket público, definido uma vez na subida.
+static PUBLIC_URL: OnceLock<String> = OnceLock::new();
+
+/// Define o endereço do CDN do bucket público (`S3_PUBLIC_URL`), uma vez, na
+/// subida; chamadas seguintes não mudam nada. É configuração do processo,
+/// como o log: assim as respostas montam a URL de um logo ou de uma capa onde
+/// quer que sejam montadas, sem levar o estado até lá.
+pub fn set_public_url(base: &str) {
+    let _ = PUBLIC_URL.set(base.trim_end_matches('/').to_owned());
+}
+
+/// A URL de `key` no CDN do bucket público; `None` sem o bucket público
+/// configurado.
+pub fn public_url(key: &str) -> Option<String> {
+    PUBLIC_URL.get().map(|base| format!("{base}/{key}"))
+}
 
 /// As variáveis `S3_*`.
 #[derive(Debug, Clone)]
@@ -92,13 +121,15 @@ impl Storage {
 
     /// URL para o navegador mandar `key` por PUT, válida por `expires` a
     /// partir de `now`. A requisição precisa levar `Content-Type:
-    /// content_type` e `If-None-Match: *` e ter exatamente `size` bytes; o
-    /// bucket só grava se `key` ainda não existe.
+    /// content_type`, `If-None-Match: *` e, com `cache_control`, o
+    /// `Cache-Control` com esse valor (que o bucket grava no objeto), e ter
+    /// exatamente `size` bytes; o bucket só grava se `key` ainda não existe.
     pub fn put_url(
         &self,
         key: &str,
         content_type: &str,
         size: u64,
+        cache_control: Option<&str>,
         expires: Duration,
         now: DateTime<Utc>,
     ) -> Url {
@@ -108,6 +139,9 @@ impl Storage {
         headers.insert("content-length", size.to_string());
         headers.insert("content-type", content_type.to_owned());
         headers.insert("if-none-match", "*");
+        if let Some(value) = cache_control {
+            headers.insert("cache-control", value.to_owned());
+        }
         action.sign_with_time(expires, &timestamp(now))
     }
 
@@ -223,6 +257,7 @@ mod tests {
             "screenshots/1/2/abc.webp",
             "image/webp",
             1234,
+            None,
             Duration::from_secs(600),
             at("2026-10-28T12:34:56Z"),
         );
@@ -246,12 +281,29 @@ mod tests {
             "screenshots/1/2/abc.webp",
             "image/webp",
             1235,
+            None,
             Duration::from_secs(600),
             at("2026-10-28T12:34:56Z"),
         );
         assert_ne!(
             query(&url, "X-Amz-Signature"),
             query(&other, "X-Amz-Signature")
+        );
+    }
+
+    #[test]
+    fn the_public_upload_signs_the_cache() {
+        let url = storage(None).put_url(
+            "logos/quake-br/abc.webp",
+            "image/webp",
+            1234,
+            Some(PUBLIC_CACHE),
+            Duration::from_secs(600),
+            at("2026-10-28T12:34:56Z"),
+        );
+        assert_eq!(
+            query(&url, "X-Amz-SignedHeaders").as_deref(),
+            Some("cache-control;content-length;content-type;host;if-none-match")
         );
     }
 

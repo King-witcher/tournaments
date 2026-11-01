@@ -17,6 +17,7 @@ Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "séri
 | `decisions/veto.md` | Modo do mapa, pool, cronômetro, desfazer, draft de campeões da série, não repetição, orçamento de campeões, replay |
 | `decisions/ratings.md` | Elo por mapa, K que decai, times, recálculo derivado, ajustes, ranking |
 | `decisions/screenshots.md` | Regras do screenshot do placar, bucket S3, upload assinado, exclusão sem órfãos |
+| `decisions/images.md` | Logo da comunidade e capa do torneio: forma, onde aparecem, quem troca, bucket público e CDN, og:image do convite |
 | `decisions/realtime.md` | WebSocket, outbox, agendador, avisos, Web Push, aba escondida, sininho |
 | `decisions/discord.md` | Webhook por comunidade, fila, menções, catálogo de avisos |
 | `decisions/database.md` | O que o banco recusa por conta própria e o que fica de fora de propósito |
