@@ -155,19 +155,19 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
     );
     for (who, slug) in [
         (&p[1], "blood-covenant"),
-        (&p[0], "blood-run"),
-        (&p[1], "corrupted-keep"),
-        (&p[0], "molten-falls"),
+        (&p[0], "corrupted-keep"),
+        (&p[1], "molten-falls"),
+        (&p[0], "ruins-of-sarnath"),
     ] {
         ok_step(&app, who, map(slug)).await;
     }
-    let d = ok_step(&app, &p[1], map("ruins-of-sarnath")).await;
+    let d = ok_step(&app, &p[1], map("vale-of-pnath")).await;
     let games = &d["veto"]["games"];
-    assert_eq!(games[0]["map"]["slug"], "blood-run");
+    assert_eq!(games[0]["map"]["slug"], "corrupted-keep");
     assert_eq!(games[0]["picked_by"], "a");
     assert_eq!(
         d["veto"]["remaining"],
-        json!([{ "slug": "vale-of-pnath", "name": "Vale of Pnath" }])
+        json!([{ "slug": "deep-embrace", "name": "Deep Embrace" }])
     );
     // O draft da série inteira: o seed pior (b) bane primeiro.
     assert_eq!(turn(&d), (json!("ban"), json!("champion"), json!(["b"])));
@@ -223,14 +223,14 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
         report(&app, &p[0], "wb-1-1", 1, game("a", "awoken")).await,
         (StatusCode::UNPROCESSABLE_ENTITY, err("match.map_mismatch"))
     );
-    let (status, d) = report(&app, &p[0], "wb-1-1", 1, game("b", "blood-run")).await;
+    let (status, d) = report(&app, &p[0], "wb-1-1", 1, game("b", "corrupted-keep")).await;
     assert_eq!(status, StatusCode::OK, "{d}");
     // A partida 2 começou e não espera nada: o draft já foi feito.
     assert_eq!(d["veto"]["game"], 2);
     assert_eq!(d["veto"]["status"], "done");
     assert_eq!(d["veto"]["reportable"], true);
     assert_eq!(
-        report(&app, &p[0], "wb-1-1", 2, game("a", "blood-run")).await,
+        report(&app, &p[0], "wb-1-1", 2, game("a", "corrupted-keep")).await,
         (StatusCode::UNPROCESSABLE_ENTITY, err("match.map_mismatch"))
     );
     // O histórico guarda os passos, com a partida de cada pick.
@@ -572,8 +572,8 @@ async fn the_tournament_keeps_the_veto_settings() {
         created["veto"],
         json!({
             "map_mode": "veto",
-            "map_pool": ["awoken", "blood-covenant", "blood-run", "corrupted-keep",
-                         "molten-falls", "ruins-of-sarnath", "vale-of-pnath"],
+            "map_pool": ["awoken", "blood-covenant", "corrupted-keep", "molten-falls",
+                         "ruins-of-sarnath", "vale-of-pnath", "deep-embrace"],
             "champion_phase": true,
             "step_seconds": 30,
             "team_pick_seconds": 60

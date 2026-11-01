@@ -9,7 +9,7 @@ async fn maps_list_the_duel_pool_first() {
     let (status, maps) = call(&app, Method::GET, "/maps", None, None).await;
     assert_eq!(status, StatusCode::OK);
     let maps = maps.as_array().unwrap();
-    assert_eq!(maps.len(), 22);
+    assert_eq!(maps.len(), 20);
     let pool: Vec<&str> = maps
         .iter()
         .filter(|m| m["duel_pool"] == true)
@@ -21,13 +21,13 @@ async fn maps_list_the_duel_pool_first() {
         [
             "awoken",
             "blood-covenant",
-            "blood-run",
             "corrupted-keep",
             "molten-falls",
             "ruins-of-sarnath",
             "vale-of-pnath",
-            "crucible",
             "deep-embrace",
+            "blood-run",
+            "crucible",
             "exile",
             "insomnia"
         ]
@@ -53,11 +53,11 @@ async fn the_default_pool_is_marked_in_order() {
         [
             "awoken",
             "blood-covenant",
-            "blood-run",
             "corrupted-keep",
             "molten-falls",
             "ruins-of-sarnath",
-            "vale-of-pnath"
+            "vale-of-pnath",
+            "deep-embrace"
         ]
     );
 }

@@ -11,6 +11,8 @@ type Props = {
   pool: string[];
   disabled: boolean;
   onToggle: (slug: string, on: boolean) => void;
+  /** O `id` do subtítulo dos escolhidos, alvo do foco quando o controle que a pessoa usou some. */
+  headingId?: string;
 };
 
 /**
@@ -20,7 +22,13 @@ type Props = {
  * só, com os subtítulos como itens dela: o React move a caixa em vez de
  * recriá-la, e o foco do teclado continua no mapa.
  */
-export function MapPoolGrid({ maps, pool, disabled, onToggle }: Props) {
+export function MapPoolGrid({
+  maps,
+  pool,
+  disabled,
+  onToggle,
+  headingId,
+}: Props) {
   const t = useTranslations("TournamentForm.veto");
   const parts = [
     {
@@ -43,7 +51,12 @@ export function MapPoolGrid({ maps, pool, disabled, onToggle }: Props) {
         p.maps.length === 0
           ? []
           : [
-              <p key={p.key} className={styles.part}>
+              <p
+                key={p.key}
+                id={p.key === "in" ? headingId : undefined}
+                tabIndex={p.key === "in" && headingId ? -1 : undefined}
+                className={styles.part}
+              >
                 {t(p.title, { count: p.maps.length })}
               </p>,
               ...p.maps.map((m) => (

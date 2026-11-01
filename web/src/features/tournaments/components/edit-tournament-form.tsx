@@ -126,6 +126,7 @@ export function EditTournamentForm({ tenant, tournament, maps }: Props) {
                 </FormSection>
                 <FormSection legend={t("veto.title")}>
                   <TournamentVetoFields
+                    tenant={tenant}
                     values={values}
                     onChange={onChange}
                     errors={errors}

@@ -1,27 +1,25 @@
-import { FormGroup, SelectItem } from "@carbon/react";
+import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { ErrorText } from "@/shared/ui/error-text";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import {
   isTdm,
-  longestSeries,
-  poolOf,
   STEP_SECONDS,
   stepSecondsGroup,
   type TournamentValues,
 } from "../lib/form-values";
-import { MapPoolGrid } from "./map-pool-grid";
+import { MapPoolField } from "./map-pool-field";
 import { SecondsSelect } from "./seconds-select";
-import styles from "./tournament-veto-fields.module.scss";
 
 type Schemas = components["schemas"];
 
 const MODES: Schemas["MapMode"][] = ["veto", "vote", "random", "off"];
 
 type Props = {
+  /** A comunidade: o pool escolhido fica lembrado por comunidade. */
+  tenant: string;
   values: TournamentValues;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
@@ -39,18 +37,9 @@ type Props = {
  * Campeões.
  */
 export function TournamentVetoFields(props: Props) {
-  const { values, onChange, errors, maps, disabled } = props;
+  const { tenant, values, onChange, errors, maps, disabled } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
-  const pool = poolOf(values, maps);
-  const toggle = (slug: string, on: boolean) =>
-    onChange({
-      mapPool: on
-        ? maps
-            .filter((m) => pool.includes(m.slug) || m.slug === slug)
-            .map((m) => m.slug)
-        : pool.filter((s) => s !== slug),
-    });
 
   return (
     <>
@@ -73,21 +62,14 @@ export function TournamentVetoFields(props: Props) {
         ))}
       </Select>
       {values.mapMode !== "off" && (
-        <FormGroup
-          legendText={t("mapPool")}
-          invalid={errors.mapPool !== undefined}
-        >
-          <p className={styles.hint}>
-            {t("mapPoolHint", { min: longestSeries(values) })}
-          </p>
-          <MapPoolGrid
-            maps={maps}
-            pool={pool}
-            disabled={disabled}
-            onToggle={toggle}
-          />
-          {errors.mapPool && <ErrorText>{errors.mapPool}</ErrorText>}
-        </FormGroup>
+        <MapPoolField
+          tenant={tenant}
+          values={values}
+          onChange={onChange}
+          error={errors.mapPool}
+          maps={maps}
+          disabled={disabled}
+        />
       )}
       {stepSecondsGroup(values) === "maps" && (
         <SecondsSelect

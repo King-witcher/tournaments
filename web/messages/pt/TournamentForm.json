@@ -133,6 +133,7 @@
     "mapPoolHint": "A série mais longa pede pelo menos {min, plural, one {# mapa} other {# mapas}}.",
     "poolIn": "No pool ({count})",
     "poolOut": "Fora do pool ({count})",
+    "useDefaultPool": "Usar o pool padrão",
     "seconds": "Tempo de cada passo",
     "secondsHint": "Se o tempo acabar, a escolha é sorteada.",
     "secondsHintDraft": "Vale também para os campeões. Se o tempo acabar, a escolha é sorteada.",

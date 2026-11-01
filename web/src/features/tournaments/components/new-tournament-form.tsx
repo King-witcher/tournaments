@@ -2,7 +2,7 @@
 
 import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { groupOf } from "../lib/form-groups";
+import { rememberedPool } from "../lib/remembered-pool";
 import { FormAccordionItem } from "./form-accordion-item";
 import { TournamentChampionFields } from "./tournament-champion-fields";
 import { TournamentDescriptionField } from "./tournament-description-field";
@@ -76,6 +77,16 @@ export function NewTournamentForm({
     },
   });
   const { values, onChange, errors } = form;
+  // O pool lembrado entra depois da hidratação: o servidor não lê o
+  // `localStorage`, e o primeiro desenho tem de ser igual ao dele.
+  const restorePool = useEffectEvent(() => {
+    const pool = rememberedPool(
+      tenant,
+      maps.map((m) => m.slug),
+    );
+    if (pool) onChange({ mapPool: pool });
+  });
+  useEffect(() => restorePool(), []);
   const toggle = (group: Group) => (isOpen: boolean) =>
     setOpen((o) => ({ ...o, [group]: isOpen }));
   const send = (next: SubmitIntent) => {
@@ -140,6 +151,7 @@ export function NewTournamentForm({
             onToggle={toggle("veto")}
           >
             <TournamentVetoFields
+              tenant={tenant}
               values={values}
               onChange={onChange}
               errors={errors}
