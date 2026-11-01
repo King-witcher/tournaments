@@ -1,0 +1,30 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Os mapas em grade de caixas, com a imagem: tantas colunas quantas couberem
+// e, no celular, duas (dentro do acordeão não cabem duas do tamanho mínimo, e
+// uma só fazia rolar 20 imagens da largura da tela).
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-13, 1fr));
+  gap: spacing.$spacing-03;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// O subtítulo de cada parte ocupa a linha toda; o da segunda abre um espaço
+// maior que o entre as caixas, para as partes se separarem de relance.
+.part {
+  @include type.type-style("heading-compact-01");
+
+  grid-column: 1 / -1;
+  color: theme.$text-primary;
+
+  & ~ & {
+    margin-block-start: spacing.$spacing-05;
+  }
+}

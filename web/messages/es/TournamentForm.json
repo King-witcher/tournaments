@@ -130,7 +130,9 @@
       "off": "Sin repetir mapa en la serie."
     },
     "mapPool": "Pool de mapas",
-    "mapPoolHint": "{count, plural, one {# mapa elegido} other {# mapas elegidos}}; la serie más larga pide al menos {min}.",
+    "mapPoolHint": "La serie más larga pide al menos {min, plural, one {# mapa} other {# mapas}}.",
+    "poolIn": "En el pool ({count})",
+    "poolOut": "Fuera del pool ({count})",
     "seconds": "Tiempo de cada paso",
     "secondsHint": "Si se acaba el tiempo, la elección se sortea.",
     "secondsHintDraft": "También vale para los campeones. Si se acaba el tiempo, la elección se sortea.",

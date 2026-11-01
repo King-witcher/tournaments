@@ -13,7 +13,7 @@ import {
   stepSecondsGroup,
   type TournamentValues,
 } from "../lib/form-values";
-import { MapPoolOption } from "./map-pool-option";
+import { MapPoolGrid } from "./map-pool-grid";
 import { SecondsSelect } from "./seconds-select";
 import styles from "./tournament-veto-fields.module.scss";
 
@@ -78,24 +78,14 @@ export function TournamentVetoFields(props: Props) {
           invalid={errors.mapPool !== undefined}
         >
           <p className={styles.hint}>
-            {t("mapPoolHint", {
-              count: pool.length,
-              min: longestSeries(values),
-            })}
+            {t("mapPoolHint", { min: longestSeries(values) })}
           </p>
-          <div className={styles.pool}>
-            {maps.map((m, i) => (
-              <MapPoolOption
-                key={m.slug}
-                map={m}
-                // O foco do erro vai para a primeira caixa.
-                name={i === 0 ? "mapPool" : undefined}
-                checked={pool.includes(m.slug)}
-                disabled={disabled}
-                onChange={(on) => toggle(m.slug, on)}
-              />
-            ))}
-          </div>
+          <MapPoolGrid
+            maps={maps}
+            pool={pool}
+            disabled={disabled}
+            onToggle={toggle}
+          />
           {errors.mapPool && <ErrorText>{errors.mapPool}</ErrorText>}
         </FormGroup>
       )}
