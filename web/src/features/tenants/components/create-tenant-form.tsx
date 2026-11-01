@@ -4,6 +4,10 @@ import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
+import { ImageNotSent } from "@/features/images/components/image-not-sent";
+import { ImagePicker } from "@/features/images/components/image-picker";
+import { useImageOnCreate } from "@/features/images/hooks/use-image-on-create";
+import { useImageSettings } from "@/features/images/hooks/use-image-settings";
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
@@ -34,11 +38,15 @@ const FIELD_OF_ERROR: Partial<Record<string, Field>> = {
 };
 
 /**
- * Nome + endereço, com a prévia do link da comunidade. O endereço acompanha
- * o nome até a pessoa editá-lo.
+ * Nome + endereço, com a prévia do link da comunidade, e o logo opcional. O
+ * endereço acompanha o nome até a pessoa editá-lo. O logo só vai ao bucket
+ * depois de a comunidade ser criada (`useImageOnCreate`).
  */
 export function CreateTenantForm() {
   const t = useTranslations("NewTenant");
+  const tLogo = useTranslations("Images.logo");
+  const images = useImageSettings();
+  const logo = useImageOnCreate();
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
   const isClient = useIsClient();
@@ -59,7 +67,10 @@ export function CreateTenantForm() {
           field: FIELD_OF_ERROR[outcome.code],
         };
       }
-      router.push(`/${outcome.data.slug}`);
+      const created = outcome.data.slug;
+      if (await logo.send({ kind: "logo", tenant: created })) {
+        router.push(`/${created}`);
+      }
       return {};
     },
     {},
@@ -68,6 +79,15 @@ export function CreateTenantForm() {
   const general = formError(result);
   // O endereço completo só no navegador (a origem); no servidor, o caminho.
   const address = `${isClient ? window.location.origin : ""}/${slug || t("slugPlaceholder")}`;
+
+  if (logo.unsent) {
+    return (
+      <ImageNotSent
+        unsent={logo.unsent}
+        href={`/${logo.unsent.target.tenant}`}
+      />
+    );
+  }
 
   return (
     <Form ref={ref} action={submit}>
@@ -106,6 +126,16 @@ export function CreateTenantForm() {
           }}
           {...invalidProps(result, "slug")}
         />
+        {images?.enabled && (
+          <ImagePicker
+            kind="logo"
+            maxBytes={images.max_bytes}
+            value={logo.image}
+            onChange={logo.setImage}
+            label={tLogo("title")}
+            hint={tLogo("hint")}
+          />
+        )}
         {general && <FormError>{general}</FormError>}
         <FormActions
           submitLabel={t("submit")}

@@ -77,6 +77,11 @@ type Options = {
   source?: Schemas["Tournament"];
   /** Na criação: os mapas ativos, que limitam o pool copiado. */
   maps?: Schemas["Map"][];
+  /**
+   * Na criação: o que fazer com o torneio criado (`slug`) antes de ir para
+   * ele (mandar a capa). Falso fica na página.
+   */
+  afterCreate?: (slug: string) => Promise<boolean>;
 };
 
 /**
@@ -92,7 +97,7 @@ type Options = {
 export function useTournamentForm(
   tenant: string,
   tournament: Schemas["Tournament"] | undefined,
-  { reveal, source, maps }: Options,
+  { reveal, source, maps, afterCreate }: Options,
 ) {
   const uiLocale = useLocale() as Locale;
   const router = useRouter();
@@ -156,7 +161,9 @@ export function useTournamentForm(
           typeof at === "string" ? (at as Locale) : undefined,
         );
       }
-      router.push(`/${tenant}/${created.data.slug}`);
+      const slug = created.data.slug;
+      if (afterCreate && !(await afterCreate(slug))) return undefined;
+      router.push(`/${tenant}/${slug}`);
       router.refresh();
       return undefined;
     }

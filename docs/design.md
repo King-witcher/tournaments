@@ -53,7 +53,7 @@ Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **L
 
 ### Convite `/invite/[token]`, Nova comunidade `/new`
 
-Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço.
+Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço e o logo opcional (mandado depois de criar).
 
 ### Comunidade `/[tenant]`
 
@@ -71,7 +71,7 @@ Só para membros. `PageHeader`: avatar, apelido, `Tag` do papel, "membro desde";
 
 ### Novo torneio `/[tenant]/new` e Editar `/[tenant]/[tournament]/edit`
 
-Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade, cuja configuração vem junto; também pelo ⋯ do torneio, com `?from=`); à vista nome, endereço, início, modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; a capa, na Geral, salva sozinha; excluir rascunho fica no ⋯ do torneio.
+Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade, cuja configuração vem junto; também pelo ⋯ do torneio, com `?from=`); à vista nome, endereço, início, descrição, capa opcional (mandada depois de criar), modalidade, vagas, chave e séries; o resto (inclusive regras adicionais e outros idiomas) em acordeão com resumo no título. Botões: Cancelar, "Criar como rascunho" (primário) e "Criar e publicar" (com revisão). Detalhes do formulário em `decisions/tournaments-ui.md`. Editar tem abas (Geral, Formato, Inscrições e prazos, Resultados) e um Salvar; a capa, na Geral, salva sozinha; excluir rascunho fica no ⋯ do torneio.
 
 ### Torneio `/[tenant]/[tournament]`
 

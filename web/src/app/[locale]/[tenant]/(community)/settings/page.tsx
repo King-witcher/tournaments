@@ -3,9 +3,9 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { DiscordSection } from "@/features/discord/components/discord-section";
-import { LogoSection } from "@/features/images/components/logo-section";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
 import { MembershipSettings } from "@/features/members/components/membership-settings";
+import { LogoSection } from "@/features/tenants/components/logo-section";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**

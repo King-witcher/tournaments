@@ -1,10 +1,9 @@
 import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
-
-import { getTenant } from "@/features/tenants/server";
+import { ImageField } from "@/features/images/components/image-field";
+import { getImageSettings } from "@/features/images/server";
 import { Section } from "@/shared/ui/section";
-import { getImageSettings } from "../server";
-import { ImageField } from "./image-field";
+import { getTenant } from "../server";
 
 /**
  * Para o owner, na aba Configurações: o logo da comunidade, que se salva

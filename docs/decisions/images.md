@@ -13,7 +13,8 @@ O logo da comunidade e a capa do torneio (01/11). Decidido pelo usuário, salvo 
 ## Quem troca e como
 
 - **Logo: só o owner**, em Configurações (como o rating e o Discord). **Capa: organizer e owner**, na aba Geral de Editar torneio, em qualquer estado do torneio.
-- **Salva sozinho**, fora do "Salvar" do formulário: o envio acontece ao escolher o arquivo (como o file uploader do Carbon), e no formulário ficaria o estado "imagem enviada, formulário não salvo". Fica fora de Novo torneio: o torneio ainda não existe para dar nome ao objeto.
+- **Na edição, salva sozinho**, fora do "Salvar" do formulário: o envio acontece ao escolher o arquivo (como o file uploader do Carbon), e no formulário ficaria o estado "imagem enviada, formulário não salvo".
+- **Também na criação** (Criar comunidade e Novo torneio, 01/11), sem deixar nada perdido no bucket se a pessoa desistir: a imagem é cortada ao escolher e fica só no navegador (com a prévia) até a comunidade ou o torneio serem criados; aí segue o envio de sempre. Se ela não chega, a criação vale e a tela oferece "Tentar de novo" ou seguir sem a imagem. Pedir a URL antes, com o upload pendente sem dono, deixaria objetos para a rotina diária limpar e exigiria mudar a tabela; esperar a criação não deixa nenhum (a aba fechada no meio do envio cai no upload pendente, que a rotina já apaga).
 - **Sem recorte manual** (o Carbon não tem cropper): o navegador corta pelo centro e reduz para **256×256** (logo) e **1200×600** (capa), em **JPEG**, até **1 MB**. Só JPEG (a API recusa WebP): o `ImageResponse` da prévia dos links não desenha WebP. Sem transparência, o logo sai sobre branco, o que também evita um logo escuro transparente sumir no tema g100.
 
 ## Bucket e URL

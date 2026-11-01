@@ -9,6 +9,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { ImageNotSent } from "@/features/images/components/image-not-sent";
+import { ImagePicker } from "@/features/images/components/image-picker";
+import { useImageOnCreate } from "@/features/images/hooks/use-image-on-create";
+import { useImageSettings } from "@/features/images/hooks/use-image-settings";
 import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
@@ -65,7 +69,9 @@ const CLOSED = Object.fromEntries(GROUPS.map((g) => [g, false])) as Record<
  * idiomas). Os botões só liberam com todos os campos válidos. "Criar como
  * rascunho" é o primário (e o Enter): cria sem publicar. "Criar e publicar"
  * confere e mostra a revisão antes, porque publicado não volta a rascunho.
- * No topo, "Copiar de" começa da configuração de outro torneio.
+ * No topo, "Copiar de" começa da configuração de outro torneio. A capa
+ * opcional só vai ao bucket depois de o torneio ser criado
+ * (`useImageOnCreate`).
  */
 export function NewTournamentForm({
   tenant,
@@ -85,6 +91,9 @@ export function NewTournamentForm({
   const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
   const screenshots = useScreenshotSettings()?.enabled ?? false;
+  const tCover = useTranslations("Images.cover");
+  const images = useImageSettings();
+  const cover = useImageOnCreate();
   // A tradução copiada vem sem o nome, que é obrigatório: o grupo abre para
   // ele ficar à vista.
   const [open, setOpen] = useState(() => ({
@@ -101,6 +110,8 @@ export function NewTournamentForm({
     },
     source,
     maps,
+    afterCreate: (slug) =>
+      cover.send({ kind: "cover", tenant, tournament: slug }),
   });
   const { values, onChange, errors, copyFrom } = form;
   // O pool lembrado entra depois da hidratação: o servidor não lê o
@@ -132,6 +143,13 @@ export function NewTournamentForm({
   const languages = form.others
     .filter((l) => form.translationOf(l).enabled)
     .map((l) => tLocales(l));
+
+  if (cover.unsent?.target.kind === "cover") {
+    const { tournament } = cover.unsent.target;
+    return (
+      <ImageNotSent unsent={cover.unsent} href={`/${tenant}/${tournament}`} />
+    );
+  }
 
   return (
     <Form
@@ -172,6 +190,16 @@ export function NewTournamentForm({
             onChange={onChange}
             errors={errors}
           />
+          {images?.enabled && (
+            <ImagePicker
+              kind="cover"
+              maxBytes={images.max_bytes}
+              value={cover.image}
+              onChange={cover.setImage}
+              label={tCover("title")}
+              hint={tCover("hint")}
+            />
+          )}
         </FormSection>
         <FormSection legend={t("format")}>
           <TournamentModeFields

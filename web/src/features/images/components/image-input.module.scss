@@ -1,11 +1,28 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
 
 .field {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: spacing.$spacing-05;
+}
+
+// O título e a dica com a forma dos da área de soltar (`FileDropZone`), para
+// o campo não mudar de cara ao receber a imagem.
+.title {
+  @include type.type-style("heading-compact-01");
+
+  margin: 0 0 spacing.$spacing-03;
+  color: theme.$text-primary;
+}
+
+.description {
+  @include type.type-style("body-compact-01");
+
+  margin: 0;
+  color: theme.$text-secondary;
 }
 
 // A prévia no tamanho em que o site mostra: o logo pequeno, a capa na

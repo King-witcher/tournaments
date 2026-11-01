@@ -1,7 +1,12 @@
 import { type ApiErrorParams, callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
-import { type EncodeError, encodeImage } from "./encode-image";
+import {
+  type EncodedImage,
+  type EncodeError,
+  encodeImage,
+  type ImageKind,
+} from "./encode-image";
 
 /** De quem é a imagem: o logo da comunidade ou a capa de um torneio dela. */
 export type ImageTarget =
@@ -66,20 +71,40 @@ export function removeImage(target: ImageTarget) {
 
 /**
  * O caminho inteiro de um logo ou de uma capa: corta e converte no
- * navegador, pede a URL de upload à API, manda o arquivo direto ao bucket
- * (PUT, com o tipo, o `Cache-Control` e o `If-None-Match: *` que a URL
- * assinou: o bucket grava uma vez só) e registra na API, que confere o que
- * chegou e troca a imagem.
+ * navegador (`prepareImage`) e manda (`sendImage`).
  */
 export async function uploadImage(
   target: ImageTarget,
   file: Blob,
   maxBytes: number,
 ): Promise<ImageOutcome> {
-  if (!file.type.startsWith("image/")) return { ok: false, local: "notImage" };
-  const encoded = await encodeImage(file, target.kind, maxBytes);
-  if (typeof encoded === "string") return { ok: false, local: encoded };
+  const encoded = await prepareImage(file, target.kind, maxBytes);
+  return "blob" in encoded ? sendImage(target, encoded) : encoded;
+}
 
+/** Corta e converte no navegador, sem mandar nada. */
+export async function prepareImage(
+  file: Blob,
+  kind: ImageKind,
+  maxBytes: number,
+): Promise<EncodedImage | { ok: false; local: LocalError }> {
+  if (!file.type.startsWith("image/")) return { ok: false, local: "notImage" };
+  const encoded = await encodeImage(file, kind, maxBytes);
+  return typeof encoded === "string" ? { ok: false, local: encoded } : encoded;
+}
+
+/**
+ * Manda uma imagem já convertida: pede a URL de upload à API, manda o
+ * arquivo direto ao bucket (PUT, com o tipo, o `Cache-Control` e o
+ * `If-None-Match: *` que a URL assinou: o bucket grava uma vez só) e
+ * registra na API, que confere o que chegou e troca a imagem. Parado no
+ * meio (erro, aba fechada), o upload fica pendente e a rotina diária da API
+ * apaga o objeto.
+ */
+export async function sendImage(
+  target: ImageTarget,
+  encoded: EncodedImage,
+): Promise<ImageOutcome> {
   const body = { content_type: encoded.type, size: encoded.blob.size };
   const upload = await callApi(requestUpload(target, body));
   if (!upload.ok) return upload;
