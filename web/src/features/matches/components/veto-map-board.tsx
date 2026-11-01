@@ -3,13 +3,12 @@
 import { useTranslations } from "next-intl";
 
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
-import { ErrorText } from "@/shared/ui/error-text";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
 import { type PoolMapState, poolStates, type TileState } from "../lib/veto";
-import styles from "./veto-board.module.scss";
+import styles from "./veto-map-board.module.scss";
 import { VetoTile } from "./veto-tile";
 
 const TILE: Record<PoolMapState["kind"], TileState> = {
@@ -27,6 +26,7 @@ const TILE: Record<PoolMapState["kind"], TileState> = {
  */
 export function VetoMapBoard({ target }: { target: MatchTarget }) {
   const t = useTranslations("Match.veto.maps");
+  const tGame = useTranslations("Match.games");
   const { detail } = useLiveMatch();
   const names = useSideNames(detail);
   const action = useVetoAction(target);
@@ -62,7 +62,9 @@ export function VetoMapBoard({ target }: { target: MatchTarget }) {
               name={m.name}
               state={TILE[state.kind]}
               note={
-                "game" in state ? t("game", { game: state.game }) : undefined
+                "game" in state
+                  ? tGame("game", { number: state.game })
+                  : undefined
               }
               described={describe(state)}
               action={
@@ -71,6 +73,7 @@ export function VetoMapBoard({ target }: { target: MatchTarget }) {
                       kind,
                       text: t(kind),
                       label: t(`${kind}Map`, { map: m.name }),
+                      disabled: action.pending != null,
                       onClick: () => action.step({ map: m.slug }),
                     }
                   : undefined
@@ -79,7 +82,6 @@ export function VetoMapBoard({ target }: { target: MatchTarget }) {
           );
         })}
       </ul>
-      {action.error && <ErrorText>{action.error}</ErrorText>}
     </div>
   );
 }

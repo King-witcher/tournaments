@@ -13,17 +13,6 @@
   @include type.type-style("heading-02");
 }
 
-.ready {
-  @include type.type-style("body-01");
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-03;
-  align-items: center;
-}
-
 .note {
   @include type.type-style("helper-text-01");
 

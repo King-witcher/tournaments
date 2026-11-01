@@ -49,7 +49,8 @@
     },
     "lineup": "Jugaron: {a} contra {b}",
     "lateContest": "Puedes impugnarla hasta que empiece la próxima serie de {a} o de {b}.",
-    "game": "Partida {number}"
+    "game": "Partida {number}",
+    "games": "{count, plural, one {Partida {list}} other {Partidas {list}}}"
   },
   "respond": {
     "confirm": "Confirmar",
@@ -79,7 +80,6 @@
     "empty": "Todavía no pasó nada en esta serie.",
     "score": "{winner} ganó {winnerMaps} a {loserMaps}",
     "walkover": "W.O. para {winner}",
-    "game": "Partida {number}",
     "mapWinner": "ganó {winner}",
     "kinds": {
       "reported": "{actor} envió",
@@ -162,18 +162,16 @@
       "ban": "Banear",
       "pick": "Elegir",
       "banMap": "Banear {map}",
-      "pickMap": "Elegir {map}",
-      "game": "Partida {game}"
+      "pickMap": "Elegir {map}"
     },
     "vote": {
       "hint": "Votos iguales, es ese; distintos, sorteo entre los dos.",
       "votes": "Voto de {names}",
       "vote": "Votar",
-      "voteFor": "Votar {map}"
+      "voteFor": "Votar por {map}"
     },
     "champions": {
       "forGame": "Elegir para",
-      "game": "Partida {game}",
       "banChampion": "Banear {champion}",
       "pickChampion": "Elegir {champion} para la partida {game}",
       "reasons": {
@@ -185,7 +183,7 @@
           "stage": "ya usado en esta fase",
           "tournament": "ya usado en este torneo"
         },
-        "picked": "elegido por {name} ({games})"
+        "picked": "elegido por {name} {count, plural, one {en la partida {list}} other {en las partidas {list}}}"
       },
       "gaveWay": {
         "rule": "La regla de no repetición no dejaba ningún campeón para esta partida. Por eso, aquí no vale.",
@@ -193,8 +191,8 @@
       },
       "grid": "Campeones",
       "short": {
-        "teammate": "Del compañero",
-        "opponent": "Del rival",
+        "teammate": "Elegido por el compañero",
+        "opponent": "Elegido por el rival",
         "repeat": {
           "series": "Ya elegido",
           "stage": "Usado en la fase",
@@ -213,7 +211,6 @@
     },
     "history": {
       "title": "Historial del veto",
-      "game": "Partida {game}",
       "timeout": "sorteado por el fin del tiempo",
       "kinds": {
         "ready": "{name} está listo",
@@ -235,7 +232,6 @@
       "caption": "Campeones de cada lado por partida",
       "gameColumn": "Partida",
       "bans": "Bans",
-      "game": "Partida {game}",
       "toPick": "por elegir",
       "choosing": "eligiendo",
       "drawn": "sorteado",
@@ -256,7 +252,7 @@
   "card": {
     "pickedBy": "Elegido por {name}",
     "decider": "Decisivo",
-    "voted": "Votado",
+    "voted": "Salió en la votación",
     "drawn": "Sorteado"
   }
 }

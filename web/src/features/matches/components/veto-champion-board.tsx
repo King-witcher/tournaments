@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 
 import { ChampionPortrait } from "@/features/champions/components/champion-portrait";
 import type { components } from "@/shared/api/schema";
-import { ErrorText } from "@/shared/ui/error-text";
 import { Notice } from "@/shared/ui/notice";
 import { useChampionTileText } from "../hooks/use-champion-tile-text";
 import { useLiveMatch } from "../hooks/use-live-match";
@@ -12,7 +11,7 @@ import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import { championTiles } from "../lib/champion-tiles";
 import type { MatchTarget } from "../lib/match-target";
-import styles from "./veto-board.module.scss";
+import styles from "./veto-champion-board.module.scss";
 import { VetoTile } from "./veto-tile";
 
 type Schemas = components["schemas"];
@@ -78,6 +77,7 @@ export function VetoChampionBoard({ target, rule, slot }: Props) {
                       label: banning
                         ? t("banChampion", { champion: c.name })
                         : t("pickChampion", { champion: c.name, game }),
+                      disabled: action.pending != null,
                       onClick: () =>
                         action.step(
                           turn?.action === "team_pick"
@@ -91,7 +91,6 @@ export function VetoChampionBoard({ target, rule, slot }: Props) {
           );
         })}
       </ul>
-      {action.error && <ErrorText>{action.error}</ErrorText>}
     </div>
   );
 }

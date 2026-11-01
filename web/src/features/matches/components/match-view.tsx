@@ -1,9 +1,7 @@
-import { Accordion } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { getCurrentUser } from "@/features/auth/server";
-import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { loadMatchScreenshots } from "@/features/screenshots/server";
 import { getTeamName } from "@/features/teams/server";
 import { ErrorBack } from "@/features/tournaments/components/error-back";
@@ -12,16 +10,10 @@ import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
 import { loadBracket, loadMaps, loadMatch } from "../server";
-import { CorrectionNote } from "./correction-note";
-import { LiveMatchProvider } from "./live-match-provider";
-import { MatchGamesPanel } from "./match-games-panel";
+import { MatchAfter } from "./match-after";
 import { MatchHeader } from "./match-header";
-import { MatchHistory } from "./match-history";
+import { MatchLive } from "./match-live";
 import { MatchScoreboard } from "./match-scoreboard";
-import { MatchSteps } from "./match-steps";
-import { OrganizerPanel } from "./organizer-panel";
-import { PendingMatches } from "./pending-matches";
-import { VetoHistory } from "./veto-history";
 
 type Props = { tenant: string; slug: string; matchKey: string };
 
@@ -36,8 +28,8 @@ type Props = { tenant: string; slug: string; matchKey: string };
  * do veto). Lê a sessão: fica em `<Suspense>`.
  */
 export async function MatchView({ tenant, slug, matchKey }: Props) {
-  // Os screenshots de cada mapa (GameScreenshots) saem deste pedido: junto dos
-  // outros.
+  // Os screenshots de cada partida (GameScreenshots) saem deste pedido:
+  // junto dos outros.
   void loadMatchScreenshots(tenant, slug, matchKey);
   const [t, tNav, locale, loaded, found, bracket, maps, user, teamName] =
     await Promise.all([
@@ -73,9 +65,6 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
     a: detail.a ? teamName(detail.a) : "",
     b: detail.b ? teamName(detail.b) : "",
   };
-  const playable = s.state === "ready" || s.state === "completed";
-  const r = s.result;
-  const basePath = `/${tenant}/${slug}/matches`;
   return (
     <>
       <MatchHeader
@@ -86,58 +75,19 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         detail={detail}
       />
       <MatchScoreboard tenant={tenant} detail={detail} />
-      {s.state === "ready" && detail.veto && detail.veto.status !== "done" && (
-        // O veto anda ao vivo (cada passo tem 30 s): recarrega mais rápido.
-        <LiveUpdates tenant={tenant} tournament={slug} match={s.key} fast />
-      )}
-      <LiveMatchProvider
-        initial={detail}
+      <MatchLive
+        target={target}
+        detail={detail}
+        tournament={tournament}
+        maps={maps}
         viewerId={user?.id ?? null}
-        bansPerSeries={tournament.champion_rules.bans_per_series}
-        vetoOrder={tournament.veto.order}
-      >
-        <MatchSteps
-          target={target}
-          rule={tournament.champion_rules.no_repeat ?? null}
-          games={
-            <MatchGamesPanel
-              target={target}
-              detail={detail}
-              maps={maps}
-              titled={!detail.veto}
-            />
-          }
-        />
-      </LiveMatchProvider>
-      {detail.can_manage &&
-        s.state === "completed" &&
-        bracket.kind === "ok" && (
-          <CorrectionNote
-            bracket={bracket.data}
-            matchKey={s.key}
-            basePath={basePath}
-          />
-        )}
-      {bracket.kind === "ok" && (
-        // O que mais espera quem vê, para seguir depois de agir nesta.
-        <PendingMatches
-          bracket={bracket.data}
-          basePath={basePath}
-          exclude={matchKey}
-        />
-      )}
-      <Accordion>
-        {detail.can_manage && playable && (
-          // A chave muda a cada resultado: o bloco fecha depois de salvar.
-          <OrganizerPanel
-            key={`${r?.winner}:${r?.walkover}:${r?.a_wins}:${r?.b_wins}`}
-            target={target}
-            names={names}
-          />
-        )}
-        <MatchHistory detail={detail} />
-        {detail.veto && <VetoHistory veto={detail.veto} names={names} />}
-      </Accordion>
+      />
+      <MatchAfter
+        target={target}
+        detail={detail}
+        bracket={bracket.kind === "ok" ? bracket.data : null}
+        names={names}
+      />
     </>
   );
 }

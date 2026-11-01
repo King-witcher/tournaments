@@ -7,7 +7,7 @@ import { cn } from "@/shared/lib/cn";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
-import styles from "./game-card.module.scss";
+import styles from "./game-card-side.module.scss";
 import { SidePicks } from "./side-picks";
 
 type Props = {

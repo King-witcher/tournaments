@@ -3,6 +3,7 @@
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/components/button/tokens" as button;
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "./veto-state";
 
 .tile {
   display: flex;
@@ -29,41 +30,20 @@
   text-align: start;
 }
 
-// A borda do estado em volta da imagem: com a largura de um token, porque 1px
-// some numa miniatura; transparente no disponível, para nada pular de lugar.
 .frame {
-  position: relative;
-  display: block;
-  border: spacing.$spacing-01 solid transparent;
+  @include veto-state.frame;
 }
 
-.banned .frame {
-  border-color: theme.$support-error;
-}
-
-.picked .frame {
-  border-color: theme.$support-success;
-}
-
-// O ícone no canto da imagem, num quadrado do fundo da página: a cor dele
-// sobre a imagem não teria contraste garantido.
 .icon {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: spacing.$spacing-01;
-  background: theme.$background;
-  inset-block-start: 0;
-  inset-inline-start: 0;
+  @include veto-state.icon;
 }
 
-.banned .icon svg {
-  fill: theme.$support-error;
+.banned {
+  @include veto-state.banned(".frame", ".icon");
 }
 
-.picked .icon svg {
-  fill: theme.$support-success;
+.picked {
+  @include veto-state.picked(".frame", ".icon");
 }
 
 .name {
@@ -137,4 +117,15 @@
 
 .srOnly {
   @include visually-hidden;
+}
+
+// Outra ação do veto no ar: a ação fica no lugar, apagada, até a resposta.
+.button:disabled {
+  cursor: not-allowed;
+}
+
+.button:disabled .action {
+  background: button.$button-disabled;
+  box-shadow: none;
+  color: theme.$text-on-color-disabled;
 }

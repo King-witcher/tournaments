@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
-import styles from "./draft-summary.module.scss";
+import styles from "./draft-game-row.module.scss";
 import { SidePicks } from "./side-picks";
 
 type Schemas = components["schemas"];
@@ -18,7 +18,7 @@ type Props = {
 
 /** Uma partida no resumo do draft: [campeão de A] mapa [campeão de B]. */
 export function DraftGameRow({ veto, game, viewerId, current }: Props) {
-  const t = useTranslations("Match.veto.draft");
+  const t = useTranslations("Match.games");
   return (
     <tr className={cn(current && styles.current)}>
       <td>
@@ -32,7 +32,7 @@ export function DraftGameRow({ veto, game, viewerId, current }: Props) {
             <span aria-hidden className={styles.noMap} />
           )}
         </span>
-        <span className={styles.game}>{t("game", { game: game.game })}</span>
+        <span className={styles.game}>{t("game", { number: game.game })}</span>
         {game.map && <span className={styles.mapName}>{game.map.name}</span>}
       </th>
       <td>

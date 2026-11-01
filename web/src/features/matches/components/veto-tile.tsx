@@ -1,5 +1,5 @@
 import { CheckmarkFilled, Locked } from "@carbon/icons-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 import { cn } from "@/shared/lib/cn";
 import type { TileState } from "../lib/veto";
@@ -21,6 +21,8 @@ type Props = {
     text: string;
     /** Rótulo acessível com o nome ("Banir Awoken"). */
     label: string;
+    /** Outra ação do veto está no ar: o botão fica, sem responder. */
+    disabled?: boolean;
     onClick: () => void;
   };
 };
@@ -29,7 +31,8 @@ type Props = {
  * Um mapa ou um campeão no veto, na votação e no draft: a imagem com a borda
  * do estado (banido: vermelha, imagem em cinza e cadeado; escolhido: verde e
  * check), o nome, a etiqueta e, na vez de quem vê, a ação escrita no pé do
- * cartão, que inteiro é o botão (no celular não há hover que mostre).
+ * cartão, que inteiro é o botão (no celular não há hover que mostre); a
+ * etiqueta também descreve o botão para o leitor de tela.
  */
 export function VetoTile({
   image,
@@ -39,6 +42,7 @@ export function VetoTile({
   described,
   action,
 }: Props) {
+  const noteId = useId();
   const icon =
     state === "banned" ? (
       <Locked aria-hidden size={16} />
@@ -52,7 +56,11 @@ export function VetoTile({
         {icon && <span className={styles.icon}>{icon}</span>}
       </span>
       <span className={styles.name}>{name}</span>
-      {note && <span className={styles.note}>{note}</span>}
+      {note && (
+        <span id={noteId} className={styles.note}>
+          {note}
+        </span>
+      )}
     </>
   );
   return (
@@ -62,6 +70,8 @@ export function VetoTile({
           type="button"
           className={cn(styles.button, styles[action.kind])}
           aria-label={action.label}
+          aria-describedby={note ? noteId : undefined}
+          disabled={action.disabled}
           onClick={action.onClick}
         >
           {body}

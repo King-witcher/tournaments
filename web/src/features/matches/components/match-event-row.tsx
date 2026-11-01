@@ -14,6 +14,7 @@ type Props = { event: components["schemas"]["MatchEvent"] };
  */
 export function MatchEventRow({ event }: Props) {
   const t = useTranslations("Match.history");
+  const tGame = useTranslations("Match.games");
   const tMember = useTranslations("Member");
   const teamName = useTeamName();
   const o = event.outcome;
@@ -40,7 +41,7 @@ export function MatchEventRow({ event }: Props) {
     });
   }
   const parts = [
-    event.game != null ? t("game", { number: event.game }) : null,
+    event.game != null ? tGame("game", { number: event.game }) : null,
     kind,
     outcome,
   ].filter(Boolean);

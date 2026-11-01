@@ -13,8 +13,8 @@ import styles from "./veto-turn.module.scss";
  * De quem é a vez no veto e o tempo que falta, pela hora da API (no fim, a
  * escolha é sorteada: a página recarrega para mostrar o sorteio); na janela
  * simultânea do TDM, o tempo da janela. Some sem vez (o passo atual mostra o
- * resto), também no instante entre um passo marcado na hora e a resposta
- * quando a vez seguinte é de outra fase.
+ * resto) e no instante entre um passo marcado na hora e a resposta quando a
+ * vez seguinte é de outra fase (`sides` vazio).
  */
 export function VetoTurn() {
   const t = useTranslations("Match.veto");
@@ -23,7 +23,10 @@ export function VetoTurn() {
   const names = useSideNames(detail);
   const veto = detail.veto;
   const turn = veto?.turn;
-  if (!veto || !turn || veto.status !== "in_progress") return null;
+  // Sem ninguém na vez: o passo marcado na hora trocou de fase, e a vez de
+  // verdade vem com a resposta.
+  if (!veto || !turn || turn.sides.length === 0) return null;
+  if (veto.status !== "in_progress") return null;
   const mine = detail.viewer_side ?? null;
   const game = currentGame(veto);
 

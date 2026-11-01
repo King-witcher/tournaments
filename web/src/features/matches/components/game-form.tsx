@@ -22,7 +22,7 @@ import { ScoreFields } from "./score-fields";
 
 type Props = {
   target: MatchTarget;
-  /** Número do mapa na série. */
+  /** Número da partida na série. */
   number: number;
   /** `report`: jogador envia (fica pendente); `organizer`: lança, resolve ou corrige, já confirmado. */
   mode: "report" | "organizer";
@@ -50,7 +50,7 @@ type Props = {
 };
 
 /**
- * Um mapa da série: o mapa jogado e o placar, ambos obrigatórios. O vencedor
+ * Uma partida da série: o mapa jogado e o placar, ambos obrigatórios. O vencedor
  * é quem fez mais frags, para o jogador e para a organização, e o envio só
  * abre com o mapa, os dois frags na faixa e sem empate. Para a partida
  * seguinte, quem usa monta o formulário de novo (`key` com o número).

@@ -3,13 +3,12 @@
 import { useTranslations } from "next-intl";
 
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
-import { ErrorText } from "@/shared/ui/error-text";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
-import styles from "./veto-board.module.scss";
 import { VetoTile } from "./veto-tile";
+import styles from "./veto-vote-board.module.scss";
 
 type Props = {
   target: MatchTarget;
@@ -57,6 +56,7 @@ export function VetoVoteBoard({ target, game }: Props) {
                       kind: "pick",
                       text: t("vote"),
                       label: t("voteFor", { map: m.name }),
+                      disabled: action.pending != null,
                       onClick: () => action.step({ map: m.slug }),
                     }
                   : undefined
@@ -65,7 +65,6 @@ export function VetoVoteBoard({ target, game }: Props) {
           );
         })}
       </ul>
-      {action.error && <ErrorText>{action.error}</ErrorText>}
     </div>
   );
 }

@@ -1,0 +1,9 @@
+@use "./veto-grid";
+
+.board {
+  @include veto-grid.board;
+}
+
+.maps {
+  @include veto-grid.maps;
+}

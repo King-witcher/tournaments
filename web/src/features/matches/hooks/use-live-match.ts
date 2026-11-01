@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 
 import type { components } from "@/shared/api/schema";
+import type { VetoRequest } from "./use-veto-runner";
 
 type Schemas = components["schemas"];
 
@@ -16,10 +17,16 @@ export type LiveMatch = {
   bansPerSeries: number;
   /** A ordem do veto de mapas, do torneio. */
   vetoOrder: Schemas["VetoOrder"];
-  /** A série que uma ação devolveu (substitui o passo marcado na hora). */
-  adopt: (detail: Schemas["MatchDetail"]) => void;
-  /** Marca um passo na hora (`null` desfaz, no erro). */
-  preview: (veto: Schemas["VetoView"] | null) => void;
+  /** A ação do veto no ar (`"ready"`, `"step"`, `"undo"`...), uma por vez. */
+  pending: string | null;
+  /** A mensagem da ação que falhou, até a vez mudar. */
+  error: string | undefined;
+  /** Manda uma ação do veto, com o passo marcado na hora (`optimistic`). */
+  run: (
+    key: string,
+    request: VetoRequest,
+    optimistic?: Schemas["VetoView"],
+  ) => void;
 };
 
 export const LiveMatchContext = createContext<LiveMatch | null>(null);

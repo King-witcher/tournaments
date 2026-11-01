@@ -15,7 +15,10 @@ type Props = {
   game: Schemas["VetoGame"];
   side: Schemas["Side"];
   viewerId: number | null;
-  /** `md`: o resumo do draft; `lg`: o cartão da partida. */
+  /**
+   * `sm`: as partidas que faltam; `md`: o resumo do draft; `lg`: o cartão da
+   * partida, com o retrato quadrado (`big`), no duelo e no TDM.
+   */
   size?: "sm" | "md" | "lg";
 };
 
@@ -56,7 +59,7 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
       })),
   ];
   if (players.length === 0) {
-    return <ChampionFigure champion={null} empty={t("toPick")} size="sm" />;
+    return <ChampionFigure champion={null} empty={t("toPick")} size={size} />;
   }
   return (
     <ul className={cn(styles.players, styles[size])}>
@@ -67,7 +70,10 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
         >
           <span className={styles.portrait}>
             {p.champion ? (
-              <ChampionPortrait slug={p.champion.slug} />
+              <ChampionPortrait
+                slug={p.champion.slug}
+                shape={size === "lg" ? "big" : "roster"}
+              />
             ) : (
               <span aria-hidden className={styles.placeholder} />
             )}

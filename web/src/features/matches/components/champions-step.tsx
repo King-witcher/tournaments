@@ -30,6 +30,7 @@ type Props = {
  */
 export function ChampionsStep({ target, rule, done = false }: Props) {
   const t = useTranslations("Match.veto.champions");
+  const tGame = useTranslations("Match.games");
   const { detail } = useLiveMatch();
   const [chosen, setChosen] = useState<number | null>(null);
   const veto = detail.veto;
@@ -61,7 +62,7 @@ export function ChampionsStep({ target, rule, done = false }: Props) {
           value={String(slot.game)}
           options={slots.map((s) => ({
             value: String(s.game),
-            label: t("game", { game: s.game }),
+            label: tGame("game", { number: s.game }),
           }))}
           onChange={(g) => setChosen(Number(g))}
         />

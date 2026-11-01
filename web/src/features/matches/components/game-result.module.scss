@@ -1,0 +1,36 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 spacing.$spacing-03;
+  overflow-wrap: anywhere;
+}
+
+.settled {
+  @include type.font-weight("semibold");
+}
+
+.frags {
+  @include type.font-weight("regular");
+
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// TDM: quem jogou, embaixo do resultado.
+.lineup {
+  @include type.type-style("helper-text-01");
+  @include type.font-weight("regular");
+
+  flex-basis: 100%;
+  color: theme.$text-secondary;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

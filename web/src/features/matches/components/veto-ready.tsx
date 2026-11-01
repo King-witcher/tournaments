@@ -5,13 +5,12 @@ import { useTranslations } from "next-intl";
 import { shownNickname } from "@/features/members/lib/nickname";
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
-import { ErrorText } from "@/shared/ui/error-text";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
-import styles from "./veto-turn.module.scss";
+import styles from "./veto-ready.module.scss";
 
 type Props = {
   target: MatchTarget;
@@ -39,7 +38,7 @@ export function VetoReady({ target, done = false }: Props) {
   const forcedBy = veto.history.find((e) => e.kind === "begin")?.actor;
 
   return (
-    <div className={styles.turn}>
+    <div className={styles.ready}>
       {!done && (
         <p>
           {t(
@@ -49,7 +48,7 @@ export function VetoReady({ target, done = false }: Props) {
           )}
         </p>
       )}
-      <ul className={styles.ready}>
+      <ul className={styles.list}>
         {(["a", "b"] as const).map((side) => (
           <li key={side}>
             <IconIndicator
@@ -89,7 +88,6 @@ export function VetoReady({ target, done = false }: Props) {
           )}
         </div>
       )}
-      {action.error && <ErrorText>{action.error}</ErrorText>}
     </div>
   );
 }

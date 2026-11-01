@@ -50,7 +50,7 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
   return (
     // tabIndex -1: recebe o foco depois de anular a partida com este número.
     <li id={gameRowId(number)} tabIndex={-1} className={styles.item}>
-      <Tile className={styles.card}>
+      <Tile>
         <Layer className={styles.content}>
           <GameCardHead target={target} number={number} />
           {plays && reportable && (

@@ -1,0 +1,59 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/breakpoint";
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+}
+
+// Os dois lados de frente com o mapa no meio, como no resumo do draft; no
+// celular, o mapa em cima e os dois lados lado a lado embaixo. As colunas
+// dos lados são as do formulário de envio, que põe os frags de cada lado
+// embaixo do nome dele.
+.versus {
+  display: grid;
+  gap: spacing.$spacing-05;
+  grid-template-areas:
+    "map map"
+    "a b";
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @include breakpoint.breakpoint(md) {
+    align-items: stretch;
+    grid-template-areas: "a map b";
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-02;
+  grid-area: map;
+  text-align: center;
+}
+
+.image {
+  display: block;
+  inline-size: 100%;
+  margin-block-end: spacing.$spacing-03;
+}
+
+.number {
+  @include type.type-style("heading-03");
+}
+
+.mapName {
+  @include type.type-style("heading-compact-02");
+}
+
+.origin {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

@@ -9,13 +9,13 @@ import styles from "./countdown.module.scss";
 type Props = {
   /** Instante final em ISO (UTC). */
   until: string;
-  /** Chamado uma vez quando o tempo acaba. */
+  /** Chamado uma vez quando o tempo acaba (de novo para cada `until` novo). */
   onExpire?: () => void;
   /**
-   * A hora da API (ISO) na resposta que trouxe `until`, como o `now` do
-   * `MatchDetail`: corrige o relógio de quem vê, que pode estar atrasado ou
-   * adiantado. Fica para a aba toda (`shared/lib/server-clock`), então os
-   * outros prazos da página também contam pela hora da API.
+   * A hora da API (ISO) em que o servidor montou a página que trouxe
+   * `until`, como o `now` do `MatchDetail`: corrige um relógio errado de
+   * verdade (mais de 3 s). Fica para a aba toda (`shared/lib/server-clock`),
+   * que prefere as respostas de pedidos feitos do navegador.
    */
   serverNow?: string;
 };
@@ -39,7 +39,8 @@ export function Countdown({ until, onExpire, serverNow }: Props) {
   const isClient = useIsClient();
   const end = new Date(until).getTime();
   const [now, setNow] = useState(serverTime);
-  const expired = useRef(false);
+  // O prazo que já avisou: um `until` novo (o passo seguinte) avisa de novo.
+  const expired = useRef<string | null>(null);
 
   useEffect(() => {
     if (serverNow === undefined) return;
@@ -53,11 +54,11 @@ export function Countdown({ until, onExpire, serverNow }: Props) {
   }, []);
 
   useEffect(() => {
-    if (now >= end && !expired.current) {
-      expired.current = true;
+    if (now >= end && expired.current !== until) {
+      expired.current = until;
       onExpire?.();
     }
-  }, [now, end, onExpire]);
+  }, [now, end, until, onExpire]);
 
   if (!isClient) return null;
   return (

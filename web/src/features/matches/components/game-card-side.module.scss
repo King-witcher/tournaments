@@ -1,0 +1,41 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-04;
+  border: spacing.$spacing-01 solid theme.$border-subtle;
+  text-align: center;
+}
+
+// A coluna do lado na grade do alto do cartão (game-card-head).
+.a {
+  grid-area: a;
+}
+
+.b {
+  grid-area: b;
+}
+
+// O lado de quem vê: a borda de seleção e o fundo selecionado, além do
+// "Você" (a cor não vem sozinha).
+.mine {
+  border-color: theme.$border-interactive;
+  background: theme.$layer-selected;
+}
+
+.who {
+  @include type.type-style("heading-compact-02");
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-02;
+  overflow-wrap: anywhere;
+}

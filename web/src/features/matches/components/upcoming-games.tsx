@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
-import styles from "./game-row.module.scss";
 import { SidePicks } from "./side-picks";
+import styles from "./upcoming-games.module.scss";
 
 /**
  * As partidas depois da da vez que o veto já decidiu em parte, uma linha

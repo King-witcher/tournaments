@@ -16,20 +16,19 @@
   }
 }
 
-// Com `onSelect`: o nome do passo feito (o primeiro span do texto do botão do
-// Carbon) na cor de link, porque no celular não há hover que mostre que ele
-// abre; o escolhido fica no texto normal, em negrito, como uma aba ativa.
-.selectable > button > div > span:first-child {
-  color: theme.$link-primary;
+// Com `onSelect`, pelos tokens que o nome do passo do Carbon lê (sem depender
+// do HTML dele): o passo feito com o nome na cor de link, porque no celular
+// não há hover que mostre que ele abre; o escolhido no texto normal, em
+// negrito, como uma aba ativa.
+.selectable {
+  --cds-text-primary: #{theme.$link-primary};
 }
 
-.selected > button > div > span:first-child {
-  @include type.font-weight("semibold");
-
-  color: theme.$text-primary;
+.selected {
+  --cds-body-compact-01-font-weight: #{type.font-weight("semibold")};
 }
 
 // Os passos seguintes não abrem: sem o hover de link do Carbon.
-.inert > button {
+.inert {
   pointer-events: none;
 }

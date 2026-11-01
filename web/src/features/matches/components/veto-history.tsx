@@ -21,6 +21,7 @@ type Props = {
  */
 export function VetoHistory({ veto, names }: Props) {
   const t = useTranslations("Match.veto.history");
+  const tGame = useTranslations("Match.games");
   const tMember = useTranslations("Member");
   if (veto.history.length === 0) return null;
   const teams = veto.team_pick_seconds != null;
@@ -62,7 +63,9 @@ export function VetoHistory({ veto, names }: Props) {
             (e.kind === "ban" && e.champion != null) ||
             (e.map != null && veto.map_mode === "veto");
           const parts = [
-            game != null && !seriesWide ? t("game", { game }) : null,
+            game != null && !seriesWide
+              ? tGame("game", { number: game })
+              : null,
             text,
             e.timeout ? t("timeout") : null,
           ].filter(Boolean);

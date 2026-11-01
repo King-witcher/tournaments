@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Os botões numa linha (o pedido do adversário com aceitar e recusar ao lado).
+.undo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+  align-items: center;
+}
+
+.note {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

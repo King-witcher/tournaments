@@ -24,7 +24,7 @@
 }
 
 .lg .portrait {
-  inline-size: spacing.$spacing-09;
+  inline-size: spacing.$spacing-10;
 }
 
 // Ainda escolhendo: só o contorno do retrato.
@@ -32,6 +32,10 @@
   display: block;
   border: 1px dashed theme.$border-strong-01;
   aspect-ratio: 86 / 123;
+}
+
+.lg .placeholder {
+  aspect-ratio: 1;
 }
 
 .text {

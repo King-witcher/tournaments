@@ -13,6 +13,7 @@ import { type MatchTarget, VETO_ID } from "../lib/match-target";
 import { ChampionsStep } from "./champions-step";
 import { MapsStep } from "./maps-step";
 import styles from "./match-steps.module.scss";
+import { VetoError } from "./veto-error";
 import { VetoReady } from "./veto-ready";
 
 type Props = {
@@ -77,6 +78,7 @@ export function MatchSteps({ target, rule, games }: Props) {
         {shown === "champions" && (
           <ChampionsStep target={target} rule={rule} done={back} />
         )}
+        {shown !== "games" && !back && <VetoError />}
         <div hidden={shown !== "games"}>{games}</div>
       </div>
     </div>

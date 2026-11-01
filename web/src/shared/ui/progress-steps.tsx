@@ -77,7 +77,7 @@ export function ProgressSteps({
             secondaryLabel={step.secondaryLabel}
             translateWithId={translate}
             className={cn(
-              onSelect && done && styles.selectable,
+              onSelect && done && i !== selected && styles.selectable,
               onSelect && i === selected && styles.selected,
               onSelect && i > current && styles.inert,
             )}

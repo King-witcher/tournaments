@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
+import { seriesSteps } from "../lib/match-steps";
 import type { MatchTarget } from "../lib/match-target";
-import styles from "./game-card.module.scss";
+import styles from "./game-card-head.module.scss";
 import { GameCardSide } from "./game-card-side";
+import { VetoError } from "./veto-error";
 import { VetoTurn } from "./veto-turn";
 import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
@@ -29,8 +31,11 @@ export function GameCardHead({ target, number }: Props) {
   const veto = detail.veto;
   const game = veto?.games.find((g) => g.game === number);
   const map = game?.map;
+  // O veto só age aqui quando as Partidas são o passo atual (a votação da
+  // partida 1 com draft fica nos Campeões): um cronômetro só na página.
+  const here = (seriesSteps(detail)?.home ?? "games") === "games";
   const voting =
-    veto?.map_mode === "vote" && !map && veto.turn?.action === "vote";
+    here && veto?.map_mode === "vote" && !map && veto.turn?.action === "vote";
   const origin = !map
     ? null
     : game?.picked_by
@@ -61,7 +66,8 @@ export function GameCardHead({ target, number }: Props) {
       </div>
       {voting && <VetoTurn />}
       {voting && <VetoVoteBoard target={target} game={number} />}
-      <VetoUndo target={target} />
+      {here && <VetoUndo target={target} />}
+      {here && <VetoError />}
     </div>
   );
 }

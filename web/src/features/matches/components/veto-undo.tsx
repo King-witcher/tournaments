@@ -5,13 +5,12 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
-import { ErrorText } from "@/shared/ui/error-text";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
 import { otherSide } from "../lib/veto";
-import styles from "./veto-turn.module.scss";
+import styles from "./veto-undo.module.scss";
 
 /**
  * Desfazer o último passo do jogo em andamento: o jogador pede e o
@@ -26,7 +25,13 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
   const veto = detail.veto;
   const mine = detail.viewer_side ?? null;
   const canManage = detail.can_manage;
-  if (!veto?.can_undo || (!mine && !canManage)) return null;
+  const pending = action.pending;
+  // Com um passo no ar, os botões ficam (sem ação) até a resposta dizer se
+  // ainda há o que desfazer: sem pular de lugar.
+  const shown = veto?.can_undo || pending === "step";
+  if (!veto || !shown || (!mine && !canManage)) return null;
+  const busy = (key: string) =>
+    pending === key ? { pending: true } : { disabled: pending != null };
   const request = veto.undo_request;
 
   let player: ReactNode = null;
@@ -42,7 +47,7 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
         <p>{t("asked", { name: names[request] })}</p>
         <Button
           size="sm"
-          pending={action.pending === "accept"}
+          {...busy("accept")}
           onClick={() => action.answer(true)}
         >
           {t("accept")}
@@ -50,7 +55,7 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
         <Button
           size="sm"
           kind="secondary"
-          pending={action.pending === "decline"}
+          {...busy("decline")}
           onClick={() => action.answer(false)}
         >
           {t("decline")}
@@ -62,7 +67,7 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
       <Button
         size="sm"
         kind="ghost"
-        pending={action.pending === "request"}
+        {...busy("request")}
         onClick={action.request}
       >
         {t("request")}
@@ -71,21 +76,18 @@ export function VetoUndo({ target }: { target: MatchTarget }) {
   }
 
   return (
-    <div className={styles.turn}>
-      <div className={styles.buttons}>
-        {player}
-        {canManage && (
-          <ConfirmButton
-            question={t("organizerQuestion")}
-            onConfirm={action.undo}
-            pending={action.pending === "undo"}
-            size="sm"
-          >
-            {t("organizer")}
-          </ConfirmButton>
-        )}
-      </div>
-      {action.error && <ErrorText>{action.error}</ErrorText>}
+    <div className={styles.undo}>
+      {player}
+      {canManage && (
+        <ConfirmButton
+          question={t("organizerQuestion")}
+          onConfirm={action.undo}
+          {...busy("undo")}
+          size="sm"
+        >
+          {t("organizer")}
+        </ConfirmButton>
+      )}
     </div>
   );
 }

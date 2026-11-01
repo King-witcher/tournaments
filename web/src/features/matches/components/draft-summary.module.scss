@@ -1,7 +1,6 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
 
 // Três colunas iguais: lado A, a partida (o mapa) e lado B, como os dois
@@ -36,6 +35,12 @@
   inline-size: calc(100% / 3);
 }
 
+.middle {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
 .side {
   display: inline-flex;
   flex-wrap: wrap;
@@ -43,47 +48,6 @@
   justify-content: center;
   gap: spacing.$spacing-02;
   overflow-wrap: anywhere;
-}
-
-.middle {
-  @include type.type-style("label-01");
-
-  color: theme.$text-secondary;
-}
-
-.map {
-  display: block;
-  max-inline-size: spacing.$spacing-12;
-  margin-inline: auto;
-
-  @include breakpoint.breakpoint(md) {
-    max-inline-size: spacing.$spacing-13;
-  }
-}
-
-// Partida sem mapa ainda (votação, sorteio): só o contorno.
-.noMap {
-  display: block;
-  border: 1px dashed theme.$border-strong-01;
-  aspect-ratio: 16 / 9;
-}
-
-.game {
-  @include type.type-style("heading-compact-01");
-
-  display: block;
-  margin-block-start: spacing.$spacing-02;
-  color: theme.$text-primary;
-}
-
-.mapName {
-  display: block;
-  overflow-wrap: anywhere;
-}
-
-// A partida da vez no draft.
-.current > * {
-  background: theme.$layer-selected-01;
 }
 
 .bans {
