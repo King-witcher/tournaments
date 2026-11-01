@@ -2094,13 +2094,16 @@ export interface components {
             name: string;
             slug: string;
         };
-        /** @description As notificações vistas: as da lista que a pessoa abriu. */
+        /**
+         * @description As notificações vistas: até `up_to`, a mais recente da lista que a pessoa
+         *     abriu (as que chegaram depois continuam novas), ou só as `ids`, dos toasts
+         *     que ela fechou ou abriu.
+         */
         MarkRead: {
-            /**
-             * Format: int64
-             * @description O id da mais recente da lista: as que chegaram depois continuam novas.
-             */
+            /** Format: int64 */
             up_to: number;
+        } | {
+            ids: number[];
         };
         /** @description Uma partida com os lados, o detalhe por mapa e o histórico. */
         MatchDetail: {
@@ -2851,6 +2854,9 @@ export interface components {
             /** @enum {string} */
             type: "changed";
         }) | (components["schemas"]["Notice"] & {
+            /** Format: int64 */
+            id: number;
+        } & {
             /** @enum {string} */
             type: "notify";
         }) | {
@@ -5497,7 +5503,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description As notificações até `up_to` (as da lista aberta) foram vistas; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`) */
+            /** @description As notificações até `up_to` (as da lista aberta) ou as `ids` (os toasts fechados ou abertos) foram vistas, menos as de outra pessoa; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`) */
             200: {
                 headers: {
                     [name: string]: unknown;

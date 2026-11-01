@@ -28,7 +28,7 @@ use crate::AppState;
 
 pub use connection::MAX_TOPICS;
 pub use dispatcher::dispatch_once;
-pub use hub::{Realtime, wake_after_emit};
+pub use hub::{Published, Realtime, wake_after_emit};
 pub use scheduler::{Tick, tick};
 pub use types::{Changed, ClientMessage, ServerMessage, Topic};
 

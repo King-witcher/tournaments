@@ -5,7 +5,10 @@
 
 use std::collections::HashSet;
 
-use super::types::{Changed, ServerMessage, Topic};
+use super::{
+    hub::Published,
+    types::{Changed, ServerMessage, Topic},
+};
 use crate::outbox::Event;
 
 /// Assinaturas por conexão: uma aba assina o que a página mostra.
@@ -54,8 +57,8 @@ impl Connection {
         self.topics.remove(topic);
     }
 
-    pub fn deliver(&mut self, event: &Event) -> Delivery {
-        let message = match event {
+    pub fn deliver(&mut self, published: &Published) -> Delivery {
+        let message = match &published.event {
             Event::Tenant { tenant } if self.topics.iter().any(|t| t.tenant == *tenant) => {
                 ServerMessage::Changed(Changed::Tenant {
                     tenant: tenant.clone(),
@@ -90,9 +93,14 @@ impl Connection {
             {
                 return Delivery::Close;
             }
-            Event::Notice { users, notice } if users.contains(&self.user) => {
-                ServerMessage::Notify(notice.clone())
-            }
+            // Destinatário é quem tem a notificação guardada.
+            Event::Notice { notice, .. } => match published.notifications.get(&self.user) {
+                Some(&id) => ServerMessage::Notify {
+                    id,
+                    notice: notice.clone(),
+                },
+                None => return Delivery::Skip,
+            },
             Event::Unread { user, count } if *user == self.user => {
                 ServerMessage::Unread { count: *count }
             }
@@ -161,53 +169,65 @@ mod tests {
         let mut c = connection();
         let sent = |d: Delivery| matches!(d, Delivery::Send(_));
         assert_eq!(
-            c.deliver(&tournament("quake-br", "copa", Some("wb-1-1"))),
+            c.deliver(&tournament("quake-br", "copa", Some("wb-1-1")).into()),
             Delivery::Send(ServerMessage::Changed(Changed::Tournament {
                 tenant: "quake-br".into(),
                 tournament: "copa".into(),
                 match_key: Some("wb-1-1".into()),
             }))
         );
-        assert!(!sent(c.deliver(&tournament("quake-br", "liga", None))));
-        assert!(!sent(c.deliver(&tournament("quake-ar", "copa", None))));
+        assert!(!sent(
+            c.deliver(&tournament("quake-br", "liga", None).into())
+        ));
+        assert!(!sent(
+            c.deliver(&tournament("quake-ar", "copa", None).into())
+        ));
         // A comunidade chega para quem assina ela ou um torneio dela.
         for tenant in ["quake-br", "quake-ar"] {
             let event = Event::Tenant {
                 tenant: tenant.into(),
             };
-            assert!(sent(c.deliver(&event)), "{tenant}");
+            assert!(sent(c.deliver(&event.into())), "{tenant}");
         }
         let other = Event::Tenant {
             tenant: "outra".into(),
         };
-        assert!(!sent(c.deliver(&other)));
+        assert!(!sent(c.deliver(&other.into())));
     }
 
     #[test]
     fn what_is_for_the_person() {
         let mut c = Connection::new(7, "abcd".into());
         assert_eq!(
-            c.deliver(&Event::me([3, 7])),
+            c.deliver(&Event::me([3, 7]).into()),
             Delivery::Send(ServerMessage::Changed(Changed::Me))
         );
-        assert_eq!(c.deliver(&Event::me([3])), Delivery::Skip);
+        assert_eq!(c.deliver(&Event::me([3]).into()), Delivery::Skip);
         let notice = Notice {
             kind: NoticeKind::StartDue {
                 tournament: "Copa".into(),
             },
             path: "/quake-br/copa".into(),
         };
+        // Cada um recebe o id da própria notificação.
+        let published = |users: [i64; 2]| Published {
+            event: Event::notice(users, notice.clone()),
+            notifications: [(users[0], 41), (users[1], 42)].into(),
+        };
         assert_eq!(
-            c.deliver(&Event::notice([7], notice.clone())),
-            Delivery::Send(ServerMessage::Notify(notice.clone()))
+            c.deliver(&published([3, 7])),
+            Delivery::Send(ServerMessage::Notify {
+                id: 42,
+                notice: notice.clone()
+            })
         );
-        assert_eq!(c.deliver(&Event::notice([8], notice)), Delivery::Skip);
+        assert_eq!(c.deliver(&published([3, 8])), Delivery::Skip);
         let unread = |user| Event::Unread { user, count: 2 };
         assert_eq!(
-            c.deliver(&unread(7)),
+            c.deliver(&unread(7).into()),
             Delivery::Send(ServerMessage::Unread { count: 2 })
         );
-        assert_eq!(c.deliver(&unread(8)), Delivery::Skip);
+        assert_eq!(c.deliver(&unread(8).into()), Delivery::Skip);
     }
 
     #[test]
@@ -219,14 +239,14 @@ mod tests {
             tenant: "quake-br".into(),
         };
         assert_eq!(
-            c.deliver(&lost),
+            c.deliver(&lost.into()),
             Delivery::Send(ServerMessage::AccessLost {
                 tenant: "quake-br".into()
             })
         );
         assert!(!c.is_subscribed(&topic("quake-br", Some("copa"))));
         assert_eq!(
-            c.deliver(&tournament("quake-br", "copa", None)),
+            c.deliver(&tournament("quake-br", "copa", None).into()),
             Delivery::Skip
         );
         assert!(c.is_subscribed(&topic("quake-ar", None)));
@@ -236,7 +256,7 @@ mod tests {
             user: 8,
             tenant: "quake-br".into(),
         };
-        assert_eq!(c.deliver(&other), Delivery::Skip);
+        assert_eq!(c.deliver(&other.into()), Delivery::Skip);
         assert!(c.is_subscribed(&topic("quake-br", Some("copa"))));
     }
 
@@ -247,9 +267,9 @@ mod tests {
             user,
             sessions: vec!["0000".into(), session.into()],
         };
-        assert_eq!(c.deliver(&ended(7, "abcd")), Delivery::Close);
-        assert_eq!(c.deliver(&ended(7, "ffff")), Delivery::Skip);
-        assert_eq!(c.deliver(&ended(8, "abcd")), Delivery::Skip);
+        assert_eq!(c.deliver(&ended(7, "abcd").into()), Delivery::Close);
+        assert_eq!(c.deliver(&ended(7, "ffff").into()), Delivery::Skip);
+        assert_eq!(c.deliver(&ended(8, "abcd").into()), Delivery::Skip);
     }
 
     #[test]
@@ -307,9 +327,9 @@ mod tests {
             path: "/quake-br/copa".into(),
         };
         assert_eq!(
-            json(&ServerMessage::Notify(notice)),
+            json(&ServerMessage::Notify { id: 5, notice }),
             serde_json::json!({
-                "type": "notify", "code": "check_in.opened",
+                "type": "notify", "id": 5, "code": "check_in.opened",
                 "params": { "tournament": "Copa" }, "path": "/quake-br/copa"
             })
         );

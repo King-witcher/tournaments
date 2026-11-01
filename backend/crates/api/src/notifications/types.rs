@@ -15,11 +15,14 @@ pub struct Notification {
     pub read: bool,
 }
 
-/// As notificações vistas: as da lista que a pessoa abriu.
+/// As notificações vistas: até `up_to`, a mais recente da lista que a pessoa
+/// abriu (as que chegaram depois continuam novas), ou só as `ids`, dos toasts
+/// que ela fechou ou abriu.
 #[derive(Deserialize, ToSchema)]
-pub struct MarkRead {
-    /// O id da mais recente da lista: as que chegaram depois continuam novas.
-    pub up_to: i64,
+#[serde(untagged)]
+pub enum MarkRead {
+    UpTo { up_to: i64 },
+    Ids { ids: Vec<i64> },
 }
 
 /// Quantas notificações faltam ver.

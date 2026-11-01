@@ -41,8 +41,13 @@ pub enum ServerMessage {
     /// aqui).
     Changed(Changed),
     /// Aviso para quem está conectado (o mesmo do Web Push). Também fica no
-    /// sininho: some uma às não lidas.
-    Notify(Notice),
+    /// sininho, com este `id`: soma uma às não lidas, e fechar ou abrir o
+    /// toast a marca como vista (`POST /me/notifications/read`).
+    Notify {
+        id: i64,
+        #[serde(flatten)]
+        notice: Notice,
+    },
     /// Quantas notificações faltam ver: a primeira mensagem de toda conexão,
     /// e de novo quando a pessoa as vê noutra aba ou aparelho.
     Unread { count: i64 },

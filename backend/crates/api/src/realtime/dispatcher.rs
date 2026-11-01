@@ -1,11 +1,12 @@
-//! O despachante: lê o outbox em ordem, publica cada evento no canal dos
-//! sockets, guarda os avisos no sininho de cada destinatário, manda os Web
-//! Push e apaga o que saiu, tudo numa transação (outra instância pula as
-//! linhas travadas). Os avisos que a comunidade quer no Discord entram na
-//! fila dele nessa transação (o envio é da tarefa do `discord`). Roda quando
-//! acordado: depois de cada requisição que emitiu e a cada passada do
-//! agendador.
+//! O despachante: lê o outbox em ordem, guarda os avisos no sininho de cada
+//! destinatário, manda os Web Push e apaga o que saiu, tudo numa transação
+//! (outra instância pula as linhas travadas), e depois do commit publica cada
+//! evento no canal dos sockets (o `notify` leva o id de uma notificação que
+//! já existe). Os avisos que a comunidade quer no Discord entram na fila dele
+//! nessa transação (o envio é da tarefa do `discord`). Roda quando acordado:
+//! depois de cada requisição que emitiu e a cada passada do agendador.
 
+use super::hub::Published;
 use crate::{
     AppState, discord, notifications,
     outbox::{self, Event},
@@ -22,22 +23,27 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
     let mut queued = false;
     let mut tx = state.db.begin().await?;
     let batch = outbox::claim(&mut tx, BATCH).await?;
+    let mut published = Vec::with_capacity(batch.len());
     for stored in &batch {
         let Some(event) = &stored.event else {
             continue;
         };
         queued |= enqueue_discord(&mut tx, event).await?;
+        let mut out = Published::from(event.clone());
         if let Event::Notice { users, notice } = event {
-            notifications::store(&mut tx, users, notice).await?;
+            out.notifications = notifications::store(&mut tx, users, notice).await?;
             if let Some(sender) = &state.push {
                 push::deliver(&mut tx, sender.as_ref(), users, notice).await?;
             }
         }
-        state.realtime.publish(event.clone());
+        published.push(out);
     }
     let ids: Vec<i64> = batch.iter().map(|s| s.id).collect();
     outbox::remove(&mut tx, &ids).await?;
     tx.commit().await?;
+    for out in published {
+        state.realtime.publish(out);
+    }
     if queued {
         state.webhooks.wake();
     }

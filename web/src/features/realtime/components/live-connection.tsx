@@ -4,9 +4,10 @@ import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { playChime, unlockAudioOnGesture } from "@/shared/lib/chime";
+import { useMarkSeen } from "../hooks/use-mark-seen";
 import { useMissedNotices } from "../hooks/use-missed-notices";
-import type { Notice } from "../hooks/use-notice-text";
 import { useRealtimeHub } from "../hooks/use-realtime-hub";
+import type { NotifyMessage } from "../lib/realtime-client";
 import { createRefreshScheduler } from "../lib/refresh-scheduler";
 import { soundEnabled } from "../lib/sound-preference";
 import { NoticeToasts, type ShownNotice } from "./notice-toasts";
@@ -14,14 +15,9 @@ import { NoticeToasts, type ShownNotice } from "./notice-toasts";
 /** Avisos na tela ao mesmo tempo; o mais antigo sai. */
 const MAX_NOTICES = 3;
 
-let lastId = 0;
-
-/**
- * Põe na pilha os avisos que chegaram, cada um com um id (só os últimos
- * ficam). O id sai fora do updater, que o React pode chamar duas vezes.
- */
-function append(arrived: Notice[]) {
-  const shown = arrived.map((notice) => ({ id: String(++lastId), notice }));
+/** Põe na pilha os avisos que chegaram (só os últimos ficam). */
+function append(arrived: NotifyMessage[]) {
+  const shown = arrived.map((notice) => ({ id: String(notice.id), notice }));
   return (list: ShownNotice[]) => [...list, ...shown].slice(-MAX_NOTICES);
 }
 
@@ -36,24 +32,31 @@ function append(arrived: Notice[]) {
  *
  * Aviso para a pessoa (`notify`) com a aba visível: o toast e o som (se não
  * foi desligado). Com a aba escondida, `useMissedNotices`: o título da aba,
- * o som se não houver Web Push e o toast quando ela volta. Abrir a página de
- * um aviso o tira da tela.
+ * o som se não houver Web Push e o toast quando ela volta. Fechar o toast no
+ * X ou abrir a página do aviso (pelo link ou não) o tira da tela e marca a
+ * notificação como vista no sininho; o que sai pelo tempo continua nova.
  */
 export function LiveConnection() {
   const hub = useRealtimeHub();
   const router = useRouter();
   const pathname = usePathname();
   const [notices, setNotices] = useState<ShownNotice[]>([]);
-  const [seenPath, setSeenPath] = useState(pathname);
-  if (seenPath !== pathname) {
-    setSeenPath(pathname);
-    setNotices((list) => list.filter((n) => n.notice.path !== pathname));
-  }
+  const markSeen = useMarkSeen();
+
+  const open = useEffectEvent((path: string) => {
+    const opened = notices.filter((n) => n.notice.path === path);
+    if (opened.length === 0) return;
+    setNotices((list) => list.filter((n) => n.notice.path !== path));
+    markSeen(opened.map((n) => n.id));
+  });
+  useEffect(() => {
+    open(pathname);
+  }, [pathname]);
 
   const miss = useMissedNotices((missed) => setNotices(append(missed)));
 
   const refresh = useEffectEvent(() => router.refresh());
-  const show = useEffectEvent((notice: Notice) => {
+  const show = useEffectEvent((notice: NotifyMessage) => {
     if (document.visibilityState !== "visible") {
       miss(notice);
       return;
@@ -87,5 +90,11 @@ export function LiveConnection() {
     };
   }, [hub]);
 
-  return <NoticeToasts notices={notices} onClose={close} />;
+  return (
+    <NoticeToasts
+      notices={notices}
+      onClose={close}
+      onDismiss={(id) => markSeen([id])}
+    />
+  );
 }

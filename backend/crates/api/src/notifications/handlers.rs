@@ -36,7 +36,7 @@ pub async fn notifications(
     tag = "notifications",
     request_body = MarkRead,
     responses(
-        (status = OK, body = Unread, description = "As notificações até `up_to` (as da lista aberta) foram vistas; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`)"),
+        (status = OK, body = Unread, description = "As notificações até `up_to` (as da lista aberta) ou as `ids` (os toasts fechados ou abertos) foram vistas, menos as de outra pessoa; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )
@@ -47,7 +47,10 @@ pub async fn mark_read(
     JsonBody(body): JsonBody<MarkRead>,
 ) -> Result<Json<Unread>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let unread = db::mark_read(&mut tx, user.id, body.up_to).await?;
+    let unread = match body {
+        MarkRead::UpTo { up_to } => db::mark_read(&mut tx, user.id, up_to).await?,
+        MarkRead::Ids { ids } => db::mark_read_ids(&mut tx, user.id, &ids).await?,
+    };
     outbox::emit(
         &mut tx,
         Event::Unread {

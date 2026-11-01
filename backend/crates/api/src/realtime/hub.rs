@@ -2,7 +2,7 @@
 //! outbox e cada socket recebe todos e filtra os seus (`Connection`). E os
 //! sinais que acordam o despachante e o relógio do veto.
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Request, State},
@@ -17,11 +17,29 @@ use crate::outbox::{self, Event};
 /// (`Lagged`: ele recarrega tudo o que assina).
 const CAPACITY: usize = 1024;
 
+/// Um evento do outbox como sai para os sockets.
+#[derive(Debug)]
+pub struct Published {
+    pub event: Event,
+    /// Num aviso, o id da notificação que ele virou no sininho de cada
+    /// destinatário (o toast a marca como vista); vazio nos outros eventos.
+    pub notifications: HashMap<i64, i64>,
+}
+
+impl From<Event> for Published {
+    fn from(event: Event) -> Self {
+        Self {
+            event,
+            notifications: HashMap::new(),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Realtime(Arc<Inner>);
 
 struct Inner {
-    events: broadcast::Sender<Arc<Event>>,
+    events: broadcast::Sender<Arc<Published>>,
     wake: Notify,
     /// Acorda o relógio do veto: pode haver prazo novo.
     clock: Notify,
@@ -65,13 +83,13 @@ impl Realtime {
     }
 
     /// Os eventos publicados daqui em diante.
-    pub fn subscribe(&self) -> broadcast::Receiver<Arc<Event>> {
+    pub fn subscribe(&self) -> broadcast::Receiver<Arc<Published>> {
         self.0.events.subscribe()
     }
 
     /// Sem socket nenhum, o evento só não vai para ninguém.
-    pub(super) fn publish(&self, event: Event) {
-        let _ = self.0.events.send(Arc::new(event));
+    pub(super) fn publish(&self, published: Published) {
+        let _ = self.0.events.send(Arc::new(published));
     }
 }
 

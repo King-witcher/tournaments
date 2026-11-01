@@ -3,9 +3,10 @@ import { useEffect, useEffectEvent, useRef } from "react";
 
 import { receivesPush } from "@/features/push/lib/browser-subscription";
 import { playChime } from "@/shared/lib/chime";
+import type { NotifyMessage } from "../lib/realtime-client";
 import { soundEnabled } from "../lib/sound-preference";
 import { restoreTabTitle, showTabTitle } from "../lib/tab-title";
-import { type Notice, useNoticeText } from "./use-notice-text";
+import { useNoticeText } from "./use-notice-text";
 
 /**
  * Os avisos que chegam com a aba escondida, para quem deixa o site numa aba
@@ -15,10 +16,10 @@ import { type Notice, useNoticeText } from "./use-notice-text";
  * `onReturn` recebe os avisos guardados, para virarem toasts sem som.
  * Devolve a função que guarda um aviso.
  */
-export function useMissedNotices(onReturn: (notices: Notice[]) => void) {
+export function useMissedNotices(onReturn: (notices: NotifyMessage[]) => void) {
   const t = useTranslations("Notifications");
   const text = useNoticeText();
-  const missed = useRef<Notice[]>([]);
+  const missed = useRef<NotifyMessage[]>([]);
 
   const giveBack = useEffectEvent(() => {
     if (document.visibilityState !== "visible") return;
@@ -38,7 +39,7 @@ export function useMissedNotices(onReturn: (notices: Notice[]) => void) {
     };
   }, []);
 
-  return (notice: Notice) => {
+  return (notice: NotifyMessage) => {
     missed.current.push(notice);
     showTabTitle(
       t("tabTitle", {

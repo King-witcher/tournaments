@@ -1,6 +1,6 @@
 //! `/me/notifications`: os avisos que o despachante guardou para cada pessoa,
-//! o que abrir o sininho marca como visto (até a mais recente da lista) e o
-//! prazo de 30 dias. A contagem pelo WebSocket fica em `realtime::socket`.
+//! o que abrir o sininho (até a mais recente da lista) ou fechar um toast (só
+//! a dele) marca como visto e o prazo de 30 dias. A contagem pelo WebSocket fica em `realtime::socket`.
 
 use api::realtime;
 use axum::{
@@ -110,15 +110,28 @@ async fn dispatched_notices_stay_until_seen() {
         .collect();
     assert_eq!(read, [(first + 1, false), (first, true)]);
     // O id de outra pessoa não marca nada dela.
-    let (_, body) = post(
+    for body in [json!({ "up_to": first + 1 }), json!({ "ids": [first + 1] })] {
+        let (_, body) = post(&app, "/me/notifications/read", &ana, body).await;
+        assert_eq!(body, json!({ "unread": 0 }));
+    }
+    assert_eq!(notifications(&app, &bia).await[0]["read"], false);
+
+    // O toast fechado marca só a dele.
+    stored(&db, &bia, 0).await;
+    let (status, body) = post(
         &app,
         "/me/notifications/read",
-        &ana,
-        json!({ "up_to": first + 1 }),
+        &bia,
+        json!({ "ids": [first + 1] }),
     )
     .await;
-    assert_eq!(body, json!({ "unread": 0 }));
-    assert_eq!(notifications(&app, &bia).await[0]["read"], false);
+    assert_eq!((status, body), (StatusCode::OK, json!({ "unread": 1 })));
+    let read: Vec<bool> = notifications(&app, &bia)
+        .await
+        .iter()
+        .map(|n| n["read"].as_bool().unwrap())
+        .collect();
+    assert_eq!(read, [false, true, true]);
 }
 
 #[tokio::test]

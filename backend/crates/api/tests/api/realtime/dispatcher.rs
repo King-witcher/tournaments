@@ -1,6 +1,8 @@
 //! O despachante publica os eventos do outbox, em ordem, para os sockets e
 //! apaga o que saiu.
 
+use std::collections::HashMap;
+
 use api::{outbox::Event, realtime};
 use axum::http::StatusCode;
 
@@ -30,14 +32,22 @@ async fn publishes_in_order_and_deletes() {
     assert_eq!(outbox(&db).await, Vec::<serde_json::Value>::new());
     let mut published = Vec::new();
     while let Ok(event) = events.try_recv() {
-        published.push(serde_json::to_value(&*event).unwrap());
+        published.push(event);
     }
-    assert_eq!(published, stored);
-    let last: Event = serde_json::from_value(published.pop().unwrap()).unwrap();
-    let Event::Notice { users, .. } = last else {
+    let events: Vec<serde_json::Value> = published
+        .iter()
+        .map(|p| serde_json::to_value(&p.event).unwrap())
+        .collect();
+    assert_eq!(events, stored);
+    let last = published.pop().unwrap();
+    let Event::Notice { users, .. } = &last.event else {
         panic!("o último é o aviso do check-in: {last:?}");
     };
-    assert_eq!(users, [bia.id]);
+    assert_eq!(users, &[bia.id]);
+    // Com o id da notificação que ficou no sininho da Bia, para o toast.
+    let (_, list) = get(&app, "/me/notifications", &bia).await;
+    let id = list[0]["id"].as_i64().unwrap();
+    assert_eq!(last.notifications, HashMap::from([(bia.id, id)]));
 
     // Nada mais a sair.
     assert_eq!(realtime::dispatch_once(&state).await.unwrap(), 0);

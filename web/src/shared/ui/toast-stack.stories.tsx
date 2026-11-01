@@ -35,10 +35,12 @@ const meta = {
     label: "Avisos",
     timeout: 600000,
     onClose: fn(),
+    onDismiss: fn(),
   },
   argTypes: {
     items: { control: "object" },
     onClose: { control: false },
+    onDismiss: { control: false },
   },
 } satisfies Meta<typeof ToastStack>;
 

@@ -20,6 +20,8 @@ type Props = {
   items: ToastItem[];
   /** Tira o item da lista (o X ou o tempo). Estável (`useCallback`). */
   onClose: (id: string) => void;
+  /** A pessoa fechou o item no X (o tempo não chama), antes do `onClose`: ela viu o aviso. */
+  onDismiss?: (id: string) => void;
   /** Nome da região para leitor de tela ("Avisos"). */
   label: string;
   /** Cada item some depois disto (ms), contado de novo quando o ponteiro ou o foco saem da pilha. */
@@ -34,7 +36,13 @@ type Props = {
  * para o leitor de tela anunciar o que entra: monte a pilha uma vez e mude só
  * os `items`. Para "copiado" e afins, use `Toast`.
  */
-export function ToastStack({ items, onClose, label, timeout = 20000 }: Props) {
+export function ToastStack({
+  items,
+  onClose,
+  onDismiss,
+  label,
+  timeout = 20000,
+}: Props) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const leaveFocus = (event: FocusEvent<HTMLDivElement>) => {
@@ -58,6 +66,7 @@ export function ToastStack({ items, onClose, label, timeout = 20000 }: Props) {
           paused={hovered || focused}
           timeout={timeout}
           onClose={onClose}
+          onDismiss={onDismiss}
         />
       ))}
     </div>
@@ -69,9 +78,16 @@ type ToastProps = {
   paused: boolean;
   timeout: number;
   onClose: (id: string) => void;
+  onDismiss?: (id: string) => void;
 };
 
-function StackedToast({ item, paused, timeout, onClose }: ToastProps) {
+function StackedToast({
+  item,
+  paused,
+  timeout,
+  onClose,
+  onDismiss,
+}: ToastProps) {
   const t = useTranslations("Common");
   useEffect(() => {
     if (paused) return;
@@ -90,6 +106,7 @@ function StackedToast({ item, paused, timeout, onClose }: ToastProps) {
         title={item.title}
         subtitle={item.subtitle}
         onClose={() => {
+          onDismiss?.(item.id);
           onClose(item.id);
           return false;
         }}

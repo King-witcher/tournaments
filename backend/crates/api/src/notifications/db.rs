@@ -1,6 +1,8 @@
 //! SQL das notificações: gravar na transação do despachante, listar, contar
 //! as não lidas, marcar como vistas e apagar.
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{PgConnection, PgExecutor, PgPool, types::Json};
@@ -9,21 +11,23 @@ use super::types::Notification;
 use crate::outbox::Notice;
 
 /// Guarda `notice` para cada um de `users` que ainda existe (o despachante
-/// roda depois de quem emitiu). Roda na transação do despachante.
+/// roda depois de quem emitiu) e devolve o id da notificação de cada um. Roda
+/// na transação do despachante.
 pub async fn store(
     conn: &mut PgConnection,
     users: &[i64],
     notice: &Notice,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+) -> Result<HashMap<i64, i64>, sqlx::Error> {
+    let rows = sqlx::query!(
         "insert into notifications (user_id, notice)
-         select id, $2 from users where id = any($1)",
+         select id, $2 from users where id = any($1)
+         returning user_id, id",
         users,
         Json(notice) as _
     )
-    .execute(conn)
+    .fetch_all(conn)
     .await?;
-    Ok(())
+    Ok(rows.into_iter().map(|r| (r.user_id, r.id)).collect())
 }
 
 /// Quantas notificações de `user_id` faltam ver.
@@ -84,6 +88,24 @@ pub async fn mark_read(
          where user_id = $1 and id <= $2 and read_at is null",
         user_id,
         up_to
+    )
+    .execute(&mut *conn)
+    .await?;
+    unread_count(conn, user_id).await
+}
+
+/// Marca como vistas as notificações `ids` de `user_id` (as de outra pessoa
+/// não mudam) e devolve quantas ainda faltam.
+pub async fn mark_read_ids(
+    conn: &mut PgConnection,
+    user_id: i64,
+    ids: &[i64],
+) -> Result<i64, sqlx::Error> {
+    sqlx::query!(
+        "update notifications set read_at = now()
+         where user_id = $1 and id = any($2) and read_at is null",
+        user_id,
+        ids
     )
     .execute(&mut *conn)
     .await?;

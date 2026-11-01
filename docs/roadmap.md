@@ -63,7 +63,7 @@ Uma linha por área. Ao terminar um incremento, ajuste a linha da área (ou crie
 - **Veto e draft de campeões** (`veto.md`): modo do mapa por torneio (veto, votação, sorteio, desligado) com pool próprio, "Pronto", cronômetro com sorteio no fim, desfazer, draft da série inteira com regras de repetição, estado por replay no `engine`, tela ao vivo.
 - **Screenshots do placar** (`screenshots.md`): um de cada pessoa por mapa, direto do navegador ao bucket S3, obrigatório por torneio, rotina diária de exclusão.
 - **"Seus torneios" e pendências da organização** na home (`GET /me/tournaments`, `GET /me/organizing`).
-- **Tempo real e avisos** (`realtime.md`): `GET /ws`, outbox, agendador de 10 s, toast com som, Web Push, aba escondida, sininho com os avisos de 30 dias.
+- **Tempo real e avisos** (`realtime.md`): `GET /ws`, outbox, agendador de 10 s, toast com som, Web Push, aba escondida, sininho com os avisos de 30 dias (fechar ou abrir o toast marca como visto).
 - **Avisos no Discord** (`discord.md`): webhook por comunidade, avisos ligáveis, menções, fila que respeita o ritmo do Discord.
 - **Rating** (`ratings.md`): Elo por mapa com K que decai, um ranking por comunidade para todos os modos, derivado e refeito do zero, configuração pelo owner, ajustes manuais, ranking e página da pessoa, "Ordenar por rating".
 - **Organização e formar times** (30/10): links de inscrição na aba Inscritos, "Sua situação" sem repetir a situação, sugestão de notificações à parte, sorteio balanceado por variância mínima.

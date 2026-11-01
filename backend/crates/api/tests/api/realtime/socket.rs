@@ -258,10 +258,13 @@ async fn notices_and_ended_sessions() {
         next(&mut socket).await,
         json!({ "type": "changed", "scope": "me" })
     );
+    // Com o id do que ficou no sininho.
+    let (_, list) = get(&app, "/me/notifications", &bia).await;
+    let up_to = list[0]["id"].clone();
     assert_eq!(
         next(&mut socket).await,
         json!({
-            "type": "notify", "code": "check_in.opened",
+            "type": "notify", "id": up_to, "code": "check_in.opened",
             "params": { "tournament": "Copa de Outubro" }, "path": "/quake-br/copa"
         })
     );
@@ -273,8 +276,6 @@ async fn notices_and_ended_sessions() {
     // leva a contagem às outras.
     let (mut new_tab, unread) = open(&url, &bia).await;
     assert_eq!(unread, json!({ "type": "unread", "count": 1 }));
-    let (_, list) = get(&app, "/me/notifications", &bia).await;
-    let up_to = list[0]["id"].clone();
     let (status, _) = post(
         &app,
         "/me/notifications/read",

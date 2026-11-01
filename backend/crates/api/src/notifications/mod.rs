@@ -8,8 +8,9 @@
 //!   (`unread_count`); cada aviso que chega depois soma uma no front.
 //! - `GET /me/notifications`: as mais recentes. `POST /me/notifications/read`:
 //!   abrir o sininho marca como vistas as da lista (até um id: a que chegou
-//!   depois continua nova) e emite `Event::Unread`, que leva a contagem às
-//!   outras abas e aparelhos.
+//!   depois continua nova), e fechar ou abrir um toast, a dele (o id vem no
+//!   `notify`, do que `store` devolveu ao despachante); emite `Event::Unread`,
+//!   que leva a contagem às outras abas e aparelhos.
 //! - Ficam 30 dias (`delete_expired`, pelo agendador, em `retention`) e saem
 //!   com a conta excluída (`forget_user`, que `members` chama).
 //!

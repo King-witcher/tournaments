@@ -1,6 +1,8 @@
 import type { components } from "@/shared/api/schema";
 
 export type ServerMessage = components["schemas"]["ServerMessage"];
+/** Um aviso que chegou, com o `id` da notificação dele no sininho. */
+export type NotifyMessage = Extract<ServerMessage, { type: "notify" }>;
 type ClientMessage = components["schemas"]["ClientMessage"];
 
 /** O que uma aba assina: a comunidade, ou um torneio dela. */
