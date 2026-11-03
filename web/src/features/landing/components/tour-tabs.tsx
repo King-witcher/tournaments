@@ -15,7 +15,7 @@ type Props = {
 
 /**
  * As partes do site em abas, uma captura por vez, como a segunda faixa do
- * tutorial do Carbon: a página não desce três capturas uma embaixo da outra.
+ * tutorial do Carbon: a página não desce as capturas uma embaixo da outra.
  */
 export function TourTabs({ label, tabs }: Props) {
   return (

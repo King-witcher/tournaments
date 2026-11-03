@@ -7,7 +7,7 @@ import { TourPanel } from "./tour-panel";
 import { TourTabs } from "./tour-tabs";
 
 const TITLE_ID = "landing-tour";
-const PARTS = ["veto", "result", "ranking"] as const;
+const PARTS = ["veto", "draft", "result", "ranking"] as const;
 
 /** O que acontece numa série e depois dela, em abas com a captura de cada parte. */
 export async function LandingTour() {

@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { ProductShot } from "./product-shot";
 import styles from "./tour-panel.module.scss";
 
-type Props = { part: "veto" | "result" | "ranking" };
+type Props = { part: "veto" | "draft" | "result" | "ranking" };
 
 /**
  * Uma aba do tour: o texto e a captura, lado a lado a partir do xlg. Antes,

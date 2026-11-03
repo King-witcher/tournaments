@@ -25,10 +25,16 @@
   "tour": {
     "title": "Del veto al ranking",
     "veto": {
-      "tab": "Veto y draft",
-      "title": "Mapas y campeones decididos en vivo",
-      "body": "Veto, votación o sorteo de mapa, con cronómetro en cada paso. Después, cada lado banea y elige los campeones de la serie, dentro de las reglas de repetición del torneo.",
-      "shot": "El veto de una serie en curso, con los mapas baneados en gris."
+      "tab": "Mapas",
+      "title": "Los mapas decididos en vivo",
+      "body": "Veto, votación o sorteo, como lo defina el torneo. Cada paso tiene cronómetro. Si se acaba el tiempo, la elección se sortea.",
+      "shot": "El veto de una serie en curso: el turno de banear, el tiempo que queda y los mapas, con los baneados en gris."
+    },
+    "draft": {
+      "tab": "Campeones",
+      "title": "El draft de la serie antes de la primera partida",
+      "body": "Los bans valen para los dos lados en todas las partidas. Después, cada jugador elige el campeón de cada partida. El torneo define cuántos bans hay y qué se puede repetir.",
+      "shot": "El draft de una serie en curso: el turno de elegir, los retratos de los campeones, con los baneados en gris, y al lado los bans y los campeones de cada partida."
     },
     "result": {
       "tab": "Resultado",
