@@ -67,6 +67,29 @@ impl Connection {
         self.topics.remove(topic);
     }
 
+    /// Troca as assinaturas do endereço que mudou pelo novo: `to` é o slug novo
+    /// da comunidade `tenant` ou, com `tournament`, o desse torneio. `false` se
+    /// a conexão não assinava nada dele.
+    fn move_topics(&mut self, tenant: &str, tournament: Option<&str>, to: &str) -> bool {
+        let (moved, kept): (HashSet<Topic>, HashSet<Topic>) = self.topics.drain().partition(|t| {
+            t.tenant == tenant && tournament.is_none_or(|s| t.tournament.as_deref() == Some(s))
+        });
+        let any = !moved.is_empty();
+        self.topics = kept;
+        self.topics
+            .extend(moved.into_iter().map(|t| match tournament {
+                None => Topic {
+                    tenant: to.to_owned(),
+                    ..t
+                },
+                Some(_) => Topic {
+                    tournament: Some(to.to_owned()),
+                    ..t
+                },
+            }));
+        any
+    }
+
     pub fn deliver(&mut self, published: &Published) -> Delivery {
         let message = match &published.event {
             // A mudança de partida que esta aba pediu e cuja resposta ela já
@@ -75,6 +98,22 @@ impl Connection {
             Event::Tournament {
                 match_key: Some(_), ..
             } if self.own(published) => return Delivery::Skip,
+            // A assinatura muda em toda conexão; a aba que pediu a troca vai
+            // sozinha para o endereço novo, depois de salvar.
+            Event::Moved {
+                tenant,
+                tournament,
+                to,
+            } => {
+                if !self.move_topics(tenant, tournament.as_deref(), to) || self.own(published) {
+                    return Delivery::Skip;
+                }
+                ServerMessage::Moved {
+                    tenant: tenant.clone(),
+                    tournament: tournament.clone(),
+                    to: to.clone(),
+                }
+            }
             Event::Tenant { tenant } if self.topics.iter().any(|t| t.tenant == *tenant) => {
                 ServerMessage::Changed(Changed::Tenant {
                     tenant: tenant.clone(),
@@ -209,6 +248,55 @@ mod tests {
             tenant: "outra".into(),
         };
         assert!(!sent(c.deliver(&other.into())));
+    }
+
+    #[test]
+    fn a_new_address_moves_the_subscriptions() {
+        let moved = |tenant: &str, tournament: Option<&str>, to: &str| Event::Moved {
+            tenant: tenant.into(),
+            tournament: tournament.map(Into::into),
+            to: to.into(),
+        };
+        let mut c = connection();
+        assert_eq!(
+            c.deliver(&moved("quake-br", None, "quake-brasil").into()),
+            Delivery::Send(ServerMessage::Moved {
+                tenant: "quake-br".into(),
+                tournament: None,
+                to: "quake-brasil".into(),
+            })
+        );
+        assert!(c.is_subscribed(&topic("quake-brasil", Some("copa"))));
+        // Quem pegar o endereço antigo não chega a esta conexão.
+        assert!(!c.is_subscribed(&topic("quake-br", Some("copa"))));
+        let taken = Event::Tenant {
+            tenant: "quake-br".into(),
+        };
+        assert_eq!(c.deliver(&taken.into()), Delivery::Skip);
+        // O torneio: só ele, na comunidade dele.
+        assert_eq!(
+            c.deliver(&moved("quake-ar", Some("copa"), "liga").into()),
+            Delivery::Skip
+        );
+        let sent = c.deliver(&moved("quake-brasil", Some("copa"), "liga").into());
+        assert!(matches!(sent, Delivery::Send(_)));
+        assert!(c.is_subscribed(&topic("quake-brasil", Some("liga"))));
+        assert!(c.is_subscribed(&topic("quake-ar", None)));
+
+        // Quem não assina não recebe; a aba que pediu a troca assina o novo,
+        // mas não recebe a ida para ele (ela mesma vai).
+        let mut other = Connection::new(9, "efgh".into(), Some("aba-que-pediu-a-troca".into()));
+        assert!(other.subscribe(topic("outra", None)));
+        assert_eq!(
+            other.deliver(&moved("quake-br", None, "nova").into()),
+            Delivery::Skip
+        );
+        let own = Published {
+            origin: Some("aba-que-pediu-a-troca".into()),
+            ..Published::from(moved("outra", None, "nova"))
+        };
+        assert_eq!(other.deliver(&own), Delivery::Skip);
+        assert!(other.is_subscribed(&topic("nova", None)));
     }
 
     #[test]

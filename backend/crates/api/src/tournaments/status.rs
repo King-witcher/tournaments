@@ -9,7 +9,8 @@ use crate::shared::ApiError;
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TournamentStatus {
-    /// Só organizer e owner veem. Único status em que dá para excluir.
+    /// Só organizer e owner veem. Único status em que o endereço muda e em
+    /// que excluir não pede o endereço digitado.
     Draft,
     Registration,
     CheckIn,
@@ -54,9 +55,15 @@ impl TournamentStatus {
         matches!(self, Self::CheckIn)
     }
 
-    /// Textos, traduções e o tipo de inscrição mudam até o torneio encerrar.
-    pub const fn texts_editable(self) -> bool {
-        !matches!(self, Self::Finished)
+    /// Já começou: a chave existe. Daqui em diante, só o owner exclui.
+    pub const fn has_started(self) -> bool {
+        matches!(self, Self::InProgress | Self::Finished)
+    }
+
+    /// Encerrado: só o nome, a descrição (com as traduções deles) e a capa
+    /// ainda mudam.
+    pub const fn is_finished(self) -> bool {
+        matches!(self, Self::Finished)
     }
 
     /// O próprio membro se inscreve, sai ou entra por convite aqui: a
@@ -91,8 +98,12 @@ mod tests {
             [true, true, true, false, false]
         );
         assert_eq!(
-            allows(TournamentStatus::texts_editable),
-            [true, true, true, true, false]
+            allows(TournamentStatus::has_started),
+            [false, false, false, true, true]
+        );
+        assert_eq!(
+            allows(TournamentStatus::is_finished),
+            [false, false, false, false, true]
         );
         assert_eq!(
             allows(TournamentStatus::registration_open),

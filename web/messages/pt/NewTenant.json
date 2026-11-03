@@ -4,7 +4,7 @@
   "loginRequired": "Entre para criar uma comunidade.",
   "name": "Nome",
   "slug": "Endereço",
-  "slugHint": "O link da comunidade será {address}. Não muda depois.",
+  "slugHint": "O link da comunidade será {address}.",
   "slugInvalid": "Não pode terminar com hífen.",
   "slugPlaceholder": "seu-endereco",
   "submit": "Criar comunidade"

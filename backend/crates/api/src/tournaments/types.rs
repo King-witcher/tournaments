@@ -102,7 +102,8 @@ pub enum NoRepeatScope {
 
 #[derive(Deserialize, ToSchema)]
 pub struct CreateTournament {
-    /// a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Não muda depois.
+    /// a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Muda enquanto for
+    /// rascunho.
     #[schema(example = "copa-de-outubro")]
     pub slug: String,
     /// Idioma original dos textos. Não muda depois.
@@ -206,12 +207,17 @@ fn default_counts_for_rating() -> bool {
     true
 }
 
-/// Campos ausentes não mudam. Textos e inscrição podem mudar até o
-/// torneio encerrar; vagas, regra de campeões, fases, data de início e
-/// janela de check-in, até ele começar (e as vagas nunca abaixo do número de
-/// inscritos).
+/// Campos ausentes, ou iguais aos gravados, não mudam. O endereço muda só no
+/// rascunho; nome e descrição, sempre; regras e inscrição, até o torneio
+/// encerrar; vagas, regra de campeões, fases, data de início e janela de
+/// check-in, até ele começar (e as vagas nunca abaixo do número de inscritos).
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTournament {
+    /// O endereço novo, só no rascunho, com a validação da criação. O antigo
+    /// fica livre na hora, sem redirecionamento; links de inscrição continuam
+    /// valendo (usam o token).
+    #[schema(example = "copa-de-novembro")]
+    pub slug: Option<String>,
     /// Até o torneio começar. Trocar de modo (ou de tamanho) com inscritos
     /// refaz os times na mesma transação: no duelo, cada inscrito num time
     /// de um; no TDM, todos sem time (a formação começa de novo).
@@ -246,6 +252,15 @@ pub struct UpdateTournament {
     /// Screenshot obrigatório; muda até o torneio encerrar e vale para os
     /// envios seguintes. Ligar exige o bucket configurado.
     pub screenshots_required: Option<bool>,
+}
+
+/// Corpo de `DELETE /tenants/{slug}/tournaments/{tournament}`: o rascunho não
+/// precisa dele.
+#[derive(Deserialize, ToSchema)]
+pub struct DeleteTournament {
+    /// O slug do torneio, digitado para confirmar.
+    #[schema(example = "copa-de-outubro")]
+    pub confirm_slug: String,
 }
 
 /// Torneio completo, com os textos no idioma original e as traduções; o

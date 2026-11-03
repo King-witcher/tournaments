@@ -1,6 +1,6 @@
-# Excluir conta e excluir comunidade
+# Excluir conta, comunidade e torneio
 
-Do usuário: as duas são agendadas para 7 dias; a conta é anonimizada (não apagada), entrar de novo no prazo cancela, e quem é owner não pede (transfere a posse ou exclui a comunidade antes); a comunidade fica só leitura até a data, e só o owner pede, digitando o slug, e cancela. O "(assumido)" é decisão minha, fácil de mudar. Migration `20261114000000_account_and_tenant_deletion`.
+Excluir torneio é imediato (seção no fim). Conta e comunidade, do usuário: as duas são agendadas para 7 dias; a conta é anonimizada (não apagada), entrar de novo no prazo cancela, e quem é owner não pede (transfere a posse ou exclui a comunidade antes); a comunidade fica só leitura até a data, e só o owner pede, digitando o slug, e cancela. O "(assumido)" é decisão minha, fácil de mudar. Migration `20261114000000_account_and_tenant_deletion`.
 
 ## Conta
 
@@ -20,3 +20,15 @@ Do usuário: as duas são agendadas para 7 dias; a conta é anonimizada (não ap
 - Os membros veem o aviso com a data no topo (o owner, com o caminho para cancelar nas configurações, onde a transferência de posse some até lá); as páginas recarregam ao agendar e cancelar. Os membros não recebem aviso por push nem email (do usuário, 01/11). O owner recebe, na véspera (24 h antes), o aviso `tenant.deletion_due` (sininho, toast e Web Push, que leva às configurações), uma vez (`tenants.deletion_reminded_at`, limpo ao cancelar).
 - A página de convite de comunidade em exclusão diz que ela não aceita mais membros, não o texto da escrita recusada.
 - Na data o agendador apaga o tenant, um por transação, e a cascata leva tudo; antes, cada membro ativo recebe `access_lost`. Os screenshots no bucket saem pela fila (ver `screenshots.md`).
+
+## Torneio
+
+Do usuário, 03/11. `DELETE /tenants/{slug}/tournaments/{t}`, **na hora**, no ⋯ do torneio.
+
+- **Quem**: organizer e owner enquanto não começou (rascunho, inscrição, check-in); depois de começar, inclusive encerrado, só o owner (403 `tenant.forbidden`). Com a comunidade em exclusão agendada, a rota recusa como toda escrita.
+- **Confirmação**: no rascunho, o Modal basta. Fora dele, `confirm_slug` digitado no corpo (422 `tournament.confirmation_mismatch`).
+- **Não avisa ninguém**: nem sininho, nem push, nem Discord. As páginas abertas só recebem a recarga de sempre (`Event::Tournament`, `Event::Tenant`, `Event::Me`) e caem no "não encontrado"; a home da organização também (mapa contestado, hora de iniciar).
+- **O que some junto**: a cascata leva séries, mapas, veto, draft, escalações, times e inscritos, e o link de inscrição (a coluna dele) deixa de valer (nenhum trigger de recusa segura: eles reconhecem o torneio já apagado). O trigger `tournaments_path_forgotten` apaga as notificações que levam a ele e os avisos pendentes na fila do Discord e no outbox; quem perdeu uma notificação não vista recebe a contagem nova (`Event::Unread`). O endereço fica livre.
+- **Ranking**: apagar um mapa confirmado já marca o tenant (`rating_dirty`), e o agendador ou a próxima leitura refazem do zero, sem os mapas dele; em até 10 s, com a recarga das páginas abertas.
+- **Arquivos**: capa e uploads pendentes entram em `image_deletions`, screenshots em `screenshot_deletions`, e a rotina diária os apaga.
+- **Agendador**: `confirm_all_due`, o relógio do veto e a abertura do check-in procuram o torneio de novo antes de agir e seguem sem ele.

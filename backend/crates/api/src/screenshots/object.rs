@@ -1,10 +1,11 @@
 //! O arquivo de um screenshot: o nome do objeto no bucket,
 //! `screenshots/<comunidade>/<torneio>/<partida>/mapa-<n>-<aleatório>.<ext>`
 //! (`screenshots/quake-br/copa/wb-1-3/mapa-2-….webp`): no console da AWS, as
-//! pastas são os slugs (que não mudam), a partida e o mapa. Os 128 bits
-//! aleatórios fazem o nome impossível de adivinhar e únicos mesmo se uma
-//! comunidade apagada tiver o slug reaproveitado (a fila de exclusão apaga pelo
-//! nome exato, nunca pela pasta). A tabela confere o formato. O tipo de imagem
+//! pastas são os slugs de quando foi enviado (o objeto não se move se o endereço
+//! mudar: nada compara o nome com o slug de agora), a partida e o mapa. Os 128
+//! bits aleatórios fazem o nome impossível de adivinhar e único mesmo se outra
+//! comunidade pegar o slug (a fila de exclusão apaga pelo nome exato, nunca pela
+//! pasta). A tabela confere o formato. O tipo de imagem
 //! aceito é o `shared::ImageType`.
 
 use crate::shared::token::random_token;

@@ -1,4 +1,5 @@
 import type { components } from "@/shared/api/schema";
+import { setupEditable } from "./status";
 
 type Schemas = components["schemas"];
 type Locale = Schemas["Locale"];
@@ -377,13 +378,24 @@ export function createBody(
 }
 
 /**
- * Corpo do PATCH: o formulário inteiro (a API ignora o que não mudou). Com o
- * torneio já começado, formato, data e check-in não vão.
+ * Corpo do PATCH: o formulário inteiro (a API ignora o que não mudou). O
+ * endereço só vai no rascunho; com o torneio já começado, formato, data e
+ * check-in não vão; encerrado, só o nome e a descrição.
  */
-export function updateBody(values: TournamentValues, setupLocked: boolean) {
+export function updateBody(
+  values: TournamentValues,
+  status: Schemas["TournamentStatus"],
+) {
+  if (status === "finished") {
+    return { name: values.name, description: values.description };
+  }
   return {
     ...textsBody(values),
-    ...(!setupLocked && { ...setupBody(values), ...scheduleBody(values) }),
+    ...(status === "draft" && { slug: values.slug }),
+    ...(setupEditable(status) && {
+      ...setupBody(values),
+      ...scheduleBody(values),
+    }),
   };
 }
 

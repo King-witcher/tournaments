@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { MY_PARTICIPATION_ID } from "@/features/participants/lib/focus";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
+import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
@@ -13,6 +14,7 @@ import {
   OverflowActions,
 } from "@/shared/ui/overflow-actions";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
+import { hasStarted } from "../lib/status";
 
 type Props = {
   tenant: string;
@@ -27,14 +29,18 @@ type Props = {
   inviteOnly: boolean;
   /** Em andamento: desfazer o início apaga `results` partidas com mapa ou resultado. */
   undoStart?: { results: number; hasCheckIn: boolean };
-  deleteDraft: boolean;
+  /** Quem vê pode excluir o torneio, no `status` em que ele está. */
+  canDelete: boolean;
+  status: components["schemas"]["TournamentStatus"];
+  /** Excluir um torneio começado que conta para o rating refaz o ranking. */
+  countsForRating: boolean;
 };
 
 /**
  * O menu ⋯ do cabeçalho do torneio. Cancelar a inscrição e excluir
- * pedem confirmação; desfazer o início também, e pede o endereço do torneio
- * digitado quando há resultado a perder. Depois, o foco vai para "Sua
- * situação" (o que é de quem vê) ou para o título (o que é do ciclo).
+ * pedem confirmação, e excluir o que já foi publicado pede o endereço digitado;
+ * desfazer o início também, quando há resultado a perder. Depois, o foco vai
+ * para "Sua situação" (o que é de quem vê) ou para o título (o que é do ciclo).
  */
 export function TournamentOverflowMenu({
   tenant,
@@ -44,7 +50,9 @@ export function TournamentOverflowMenu({
   withdrawRegistration,
   inviteOnly,
   undoStart,
-  deleteDraft,
+  canDelete,
+  status,
+  countsForRating,
 }: Props) {
   const t = useTranslations("Tournament");
   const tParticipants = useTranslations("Participants");
@@ -127,16 +135,33 @@ export function TournamentOverflowMenu({
         ),
     });
   }
-  if (deleteDraft) {
+  if (canDelete) {
+    const draft = status === "draft";
+    const started = hasStarted(status);
+    const lost = t(
+      draft
+        ? "deleteConfirm"
+        : started
+          ? "deleteStartedConfirm"
+          : "deletePublishedConfirm",
+    );
     items.push({
-      label: t("delete"),
+      label: t(draft ? "delete" : "deleteTournament"),
       destructive: true,
-      confirm: { question: t("deleteConfirm") },
+      confirm: {
+        question:
+          started && countsForRating
+            ? `${lost} ${t("deleteRatingNote")}`
+            : lost,
+        // Fora do rascunho, o forte: há gente esperando por ele.
+        slug: draft ? undefined : slug,
+      },
       onSelect: () =>
         run(
           () =>
             api.DELETE("/tenants/{slug}/tournaments/{tournament}", {
               params,
+              body: draft ? undefined : { confirm_slug: slug },
             }),
           () => {
             router.push(`/${tenant}`);

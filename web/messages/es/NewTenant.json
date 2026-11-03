@@ -4,7 +4,7 @@
   "loginRequired": "Inicia sesión para crear una comunidad.",
   "name": "Nombre",
   "slug": "Dirección",
-  "slugHint": "El enlace de la comunidad será {address}. No cambia después.",
+  "slugHint": "El enlace de la comunidad será {address}.",
   "slugInvalid": "No puede terminar con guion.",
   "slugPlaceholder": "tu-direccion",
   "submit": "Crear comunidad"

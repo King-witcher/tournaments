@@ -9,9 +9,9 @@ export function setupEditable(status: Status) {
   );
 }
 
-/** Textos, traduções e o tipo de inscrição ainda mudam. */
-export function textsEditable(status: Status) {
-  return status !== "finished";
+/** Encerrado: só o nome, a descrição (com as traduções deles) e a capa mudam. */
+export function isFinished(status: Status) {
+  return status === "finished";
 }
 
 /** O organizador ainda inscreve e tira participantes (até começar). */

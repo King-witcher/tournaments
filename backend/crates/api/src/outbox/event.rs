@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Event {
     /// A comunidade mudou: membros, papéis, apelidos, link de convite ou a lista de
-    /// torneios. Só o slug, que não muda.
+    /// torneios. Só o slug.
     Tenant { tenant: String },
     /// O torneio mudou; `match` quando foi numa partida.
     Tournament {
@@ -20,6 +20,14 @@ pub enum Event {
         tournament: String,
         #[serde(rename = "match")]
         match_key: Option<String>,
+    },
+    /// O endereço mudou: o da comunidade `tenant` para `to` ou, com
+    /// `tournament`, o desse torneio dela para `to`. Quem assinava passa a
+    /// assinar o novo, e as abas vão para ele.
+    Moved {
+        tenant: String,
+        tournament: Option<String>,
+        to: String,
     },
     /// "Seus torneios" destas pessoas mudou.
     Me { users: Vec<i64> },

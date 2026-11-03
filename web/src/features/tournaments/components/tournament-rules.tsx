@@ -5,7 +5,7 @@ import { loadMaps } from "@/features/matches/server";
 import { Section } from "@/shared/ui/section";
 import { UserText } from "@/shared/ui/user-text";
 import { rulesSource } from "../lib/localize";
-import { textsEditable } from "../lib/status";
+import { isFinished } from "../lib/status";
 import { loadTournament } from "../server";
 import { RulesEditor } from "./rules-editor";
 import { TournamentAutoRules } from "./tournament-auto-rules";
@@ -32,7 +32,7 @@ export async function TournamentRules({ tenant, slug }: Props) {
 
   const { me, tournament } = loaded;
   const source = rulesSource(tournament, locale);
-  const editable = me.role !== "player" && textsEditable(tournament.status);
+  const editable = me.role !== "player" && !isFinished(tournament.status);
   return (
     <Stack gap={7}>
       <TournamentAutoRules

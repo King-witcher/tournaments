@@ -7,7 +7,6 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { localizedName } from "../lib/localize";
-import { textsEditable } from "../lib/status";
 import { loadTournament } from "../server";
 import { EditTournamentForm } from "./edit-tournament-form";
 
@@ -15,8 +14,8 @@ type Props = { tenant: string; slug: string };
 
 /**
  * Editar torneio e traduções, para organizer e owner: o cabeçalho com a
- * trilha até o torneio e o formulário. Sem permissão ou com o torneio
- * encerrado, o erro e a volta para o torneio. Fica em `<Suspense>`.
+ * trilha até o torneio e o formulário. Sem permissão, o erro e a volta para o
+ * torneio. Fica em `<Suspense>`.
  */
 export async function EditTournamentView({ tenant, slug }: Props) {
   const [t, tNav, locale, loaded] = await Promise.all([
@@ -52,12 +51,7 @@ export async function EditTournamentView({ tenant, slug }: Props) {
 
   const { me, tournament } = loaded;
   const path = `/${tenant}/${slug}`;
-  const blocked =
-    me.role === "player"
-      ? "tenant.forbidden"
-      : textsEditable(tournament.status)
-        ? undefined
-        : "tournament.finished";
+  const blocked = me.role === "player" ? "tenant.forbidden" : undefined;
 
   return (
     <>

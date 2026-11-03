@@ -72,13 +72,11 @@ fn token(i: usize) -> String {
 }
 
 #[tokio::test]
-async fn the_object_name_has_its_owner() {
+async fn the_object_name_has_its_match_and_map() {
     let (db, _lease) = crate::db::test_db().await;
     let (t, id) = started(&db).await;
     let webp = "image/webp";
     for bad in [
-        named("screenshots/outra/copa/wb-1-1/mapa-1", TOKEN, "webp"),
-        named("screenshots/quake-br/outro/wb-1-1/mapa-1", TOKEN, "webp"),
         named("screenshots/quake-br/copa/wb-1-2/mapa-1", TOKEN, "webp"),
         key(2, TOKEN, "webp"),
         key(1, "curto", "webp"),
@@ -91,6 +89,11 @@ async fn the_object_name_has_its_owner() {
             "{bad}"
         );
     }
+    // A pasta é a do endereço de quando foi enviado, não a de agora.
+    let moved = named("screenshots/outra/liga/wb-1-1/mapa-2", TOKEN, "webp");
+    exec(&db, &insert(t, id, 2, &moved, webp, true))
+        .await
+        .unwrap();
     let png = key(1, TOKEN, "png");
     assert_eq!(
         rejected(exec(&db, &insert(t, id, 1, &png, "image/jpeg", true)).await),

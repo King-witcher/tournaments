@@ -12,9 +12,13 @@
 //!   `notify`, do que `store` devolveu ao despachante); emite `Event::Unread`,
 //!   que leva a contagem às outras abas e aparelhos.
 //! - Ficam 30 dias (`delete_expired`, pelo agendador, em `retention`) e saem
-//!   com a conta excluída (`forget_user`, que `members` chama).
+//!   com a conta excluída (`forget_user`, que `members` chama) e com o torneio
+//!   a que levam (trigger `tournaments_path_forgotten`; `unread_under` e
+//!   `recount`, que `tournaments` chama, acertam a contagem). O caminho
+//!   acompanha a troca de endereço da comunidade (trigger `tenants_slug_moved`).
 //!
-//! Depende de `auth` (quem vê) e do `outbox` (o aviso e o evento).
+//! Depende de `auth` (quem vê), do `outbox` (o aviso e o evento) e de `tenants`
+//! (o `TenantId`).
 
 mod db;
 mod handlers;
@@ -25,7 +29,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::{forget_user, store, unread_count};
+pub use db::{forget_user, recount, store, unread_count, unread_under};
 pub use retention::delete_expired;
 
 pub fn router() -> OpenApiRouter<AppState> {

@@ -3,8 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/features/auth/server";
 import {
   hasStarted,
+  isFinished,
   participantsEditable,
-  textsEditable,
 } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
@@ -47,7 +47,7 @@ export async function TeamsSection({ tenant, slug }: Props) {
     return <Notice kind="error">{await apiErrorMessage("internal")}</Notice>;
   }
 
-  const editable = textsEditable(status);
+  const editable = !isFinished(status);
   const playing = new Set([
     ...formation.teams.flatMap((team) => team.members.map((m) => m.user_id)),
     ...formation.reserves.map((p) => p.user_id),

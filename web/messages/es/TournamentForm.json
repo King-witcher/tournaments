@@ -2,7 +2,14 @@
   "tournament": "Torneo",
   "name": "Nombre",
   "slug": "Dirección",
-  "slugHint": "El enlace del torneo será {address}. No cambia después.",
+  "slugHint": "El enlace del torneo será {address}. No cambia después de publicar.",
+  "slugLocked": "La dirección no cambia después de publicar. Solo cambia el nombre.",
+  "slugConfirm": {
+    "title": "Cambiar dirección",
+    "submit": "Guardar y cambiar dirección",
+    "text": "El borrador pasa a {address}. Los enlaces guardados con {old} dejan de funcionar. Otro torneo puede tomar esa dirección. Los enlaces de inscripción siguen valiendo."
+  },
+  "finishedLocked": "El torneo terminó. Solo el nombre, la descripción y la portada todavía cambian.",
   "slugInvalid": "No puede terminar con guion.",
   "slugPlaceholder": "tu-torneo",
   "startsAt": "Inicio",

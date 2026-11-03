@@ -104,6 +104,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
           tenant={tenant}
           tournament={tournament}
           organizer={organizer}
+          owner={me.role === "owner"}
         />
       }
     />

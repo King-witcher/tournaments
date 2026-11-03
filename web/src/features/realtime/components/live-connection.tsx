@@ -7,7 +7,8 @@ import { playChime, unlockAudioOnGesture } from "@/shared/lib/chime";
 import { useMarkSeen } from "../hooks/use-mark-seen";
 import { useMissedNotices } from "../hooks/use-missed-notices";
 import { useRealtimeHub } from "../hooks/use-realtime-hub";
-import type { NotifyMessage } from "../lib/realtime-client";
+import { movedPath } from "../lib/moved-path";
+import type { NotifyMessage, ServerMessage } from "../lib/realtime-client";
 import { createRefreshScheduler } from "../lib/refresh-scheduler";
 import { soundEnabled } from "../lib/sound-preference";
 import { NoticeToasts, type ShownNotice } from "./notice-toasts";
@@ -28,7 +29,8 @@ function append(arrived: NotifyMessage[]) {
  * algo que ela mostra, ao perder o acesso à comunidade dela e ao reconectar
  * depois de uma queda (o que mudou no meio se perdeu). Os avisos de ~1,5 s
  * (0,5 s numa página ao vivo, como o veto) viram uma recarga; com a aba
- * escondida, recarrega ao voltar.
+ * escondida, recarrega ao voltar. Se o endereço da página mudou (`moved`), vai
+ * para o novo, na mesma aba e sem aviso.
  *
  * Aviso para a pessoa (`notify`) com a aba visível: o toast e o som (se não
  * foi desligado). Com a aba escondida, `useMissedNotices`: o título da aba,
@@ -56,6 +58,12 @@ export function LiveConnection() {
   const miss = useMissedNotices((missed) => setNotices(append(missed)));
 
   const refresh = useEffectEvent(() => router.refresh());
+  const follow = useEffectEvent(
+    (moved: Extract<ServerMessage, { type: "moved" }>) => {
+      const target = movedPath(pathname, moved);
+      if (target) router.replace(`${target}${window.location.search}`);
+    },
+  );
   const show = useEffectEvent((notice: NotifyMessage) => {
     if (document.visibilityState !== "visible") {
       miss(notice);
@@ -76,6 +84,7 @@ export function LiveConnection() {
     const scheduler = createRefreshScheduler(refresh);
     const offMessage = hub.client.onMessage((message) => {
       if (message.type === "notify") show(message);
+      else if (message.type === "moved") follow(message);
       else if (hub.affectsPage(message))
         scheduler.request(hub.affectsLive(message));
     });

@@ -8,7 +8,10 @@ use serde_json::Value;
 use sqlx::{PgConnection, PgExecutor, PgPool, types::Json};
 
 use super::types::Notification;
-use crate::outbox::Notice;
+use crate::{
+    outbox::{self, Event, Notice},
+    tenants::TenantId,
+};
 
 /// Guarda `notice` para cada um de `users` que ainda existe (o despachante
 /// roda depois de quem emitiu) e devolve o id da notificação de cada um. Roda
@@ -110,6 +113,47 @@ pub async fn mark_read_ids(
     .execute(&mut *conn)
     .await?;
     unread_count(conn, user_id).await
+}
+
+/// Quem da comunidade `tenant` tem notificação não vista que leva a `root` (o
+/// caminho de um torneio, que vai ser excluído): a contagem dessas pessoas muda.
+pub async fn unread_under(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    root: &str,
+) -> Result<Vec<i64>, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select distinct user_id from notifications
+           where user_id in (select user_id from tenant_members where tenant_id = $1)
+             and read_at is null
+             and path_under(notice ->> 'path', $2)"#,
+        tenant.get(),
+        root
+    )
+    .fetch_all(conn)
+    .await
+}
+
+/// Diz a `users` quantas notificações faltam ver (depois de sumir alguma):
+/// `Event::Unread`, como ao ver numa outra aba.
+pub async fn recount(conn: &mut PgConnection, users: &[i64]) -> Result<(), sqlx::Error> {
+    if users.is_empty() {
+        return Ok(());
+    }
+    let rows = sqlx::query!(
+        r#"select u.id as "user!",
+                  (select count(*) from notifications n
+                   where n.user_id = u.id and n.read_at is null) as "count!"
+           from unnest($1::bigint[]) as u(id)"#,
+        users
+    )
+    .fetch_all(&mut *conn)
+    .await?;
+    let events = rows.into_iter().map(|r| Event::Unread {
+        user: r.user,
+        count: r.count,
+    });
+    outbox::emit_all(conn, events).await
 }
 
 /// Apaga as notificações criadas antes de `before` e devolve quantas.

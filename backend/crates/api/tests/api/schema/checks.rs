@@ -112,19 +112,20 @@ async fn tournaments_keep_state_and_shape() {
         .await
         .unwrap();
 
-    // Tenant, slug e idioma original não mudam.
-    for change in ["slug = 'outra'", "locale = 'es'"] {
-        let sql = format!("update tournaments set {change}");
-        assert_eq!(
-            rejected(exec(&db, &sql).await),
-            rule(CHECK, "tournaments_identity_immutable"),
-            "{change}"
-        );
-    }
+    // O idioma original não muda.
     assert_eq!(
-        rejected(exec(&db, "update tenants set slug = 'outro'").await),
-        rule(CHECK, "tenants_slug_immutable")
+        rejected(exec(&db, "update tournaments set locale = 'es'").await),
+        rule(CHECK, "tournaments_identity_immutable"),
     );
+    // O slug do torneio muda só no rascunho (este está publicado); o da
+    // comunidade, sempre.
+    assert_eq!(
+        rejected(exec(&db, "update tournaments set slug = 'outra'").await),
+        rule(CHECK, "tournaments_slug_after_draft"),
+    );
+    exec(&db, "update tenants set slug = 'outro'")
+        .await
+        .unwrap();
 }
 
 #[tokio::test]

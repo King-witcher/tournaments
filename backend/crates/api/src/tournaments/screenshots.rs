@@ -32,7 +32,7 @@ pub fn edit(
     let Some(required) = patch.filter(|&v| v != current) else {
         return Ok(None);
     };
-    if !status.texts_editable() {
+    if status.is_finished() {
         return Err(ApiError::conflict("tournament.finished"));
     }
     check_new(required, available)?;

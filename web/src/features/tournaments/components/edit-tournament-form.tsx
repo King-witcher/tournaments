@@ -2,9 +2,10 @@
 
 import { Form, Stack, Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { FormSection } from "@/shared/ui/form-section";
@@ -12,6 +13,7 @@ import { Notice } from "@/shared/ui/notice";
 import { TabList } from "@/shared/ui/tab-list";
 import { useTournamentForm } from "../hooks/use-tournament-form";
 import { groupOf } from "../lib/form-groups";
+import { isFinished } from "../lib/status";
 import { TournamentChampionFields } from "./tournament-champion-fields";
 import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentFormatFields } from "./tournament-format-fields";
@@ -45,11 +47,16 @@ type Props = {
  * mapas, campeões), Inscrições e prazos (início, inscrição, check-in) e
  * Resultados (contestação, captura de tela).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
- * de começar, o motivo dos campos travados vem no topo da aba deles.
+ * de começar, o motivo dos campos travados vem no topo da aba deles; encerrado
+ * o torneio, o mesmo motivo em todas, com o nome, a descrição e a capa ainda
+ * livres. O endereço só muda no rascunho, e salvar com ele trocado pede a
+ * confirmação do que isso quebra.
  */
 export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
   const t = useTranslations("TournamentForm");
   const [tab, setTab] = useState<EditTab>("general");
+  const [asking, setAsking] = useState(false);
+  const submitButton = useRef<HTMLButtonElement>(null);
   const form = useTournamentForm(tenant, tournament, {
     reveal: (control) => {
       const group = TABS.find((x) => x === groupOf(control));
@@ -57,6 +64,8 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
     },
   });
   const { values, onChange, errors, setupLocked } = form;
+  const finished = isFinished(tournament.status);
+  const locked = finished ? t("finishedLocked") : undefined;
 
   return (
     <Form
@@ -66,7 +75,9 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!form.pending && form.check()) form.submit("save");
+        if (form.pending || !form.check()) return;
+        if (form.movesAddress) setAsking(true);
+        else form.submit("save");
       }}
     >
       <Stack gap={7}>
@@ -82,6 +93,7 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
           <TabPanels>
             <TabPanel>
               <Stack gap={7} data-group="general">
+                {locked && <Notice kind="info">{locked}</Notice>}
                 <FormSection legend={t("tournament")}>
                   <TournamentIdentityFields
                     tenant={tenant}
@@ -89,6 +101,7 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
                     onChange={onChange}
                     errors={errors}
                     isNew={false}
+                    slugLocked={tournament.status !== "draft"}
                   />
                   <TournamentDescriptionField
                     values={values}
@@ -101,17 +114,19 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
                   values={values}
                   onChange={onChange}
                   errors={errors}
+                  disabled={finished}
                 />
                 <TournamentTranslations
                   form={form}
                   saved={tournament.translations.map((x) => x.locale)}
+                  rulesLocked={finished}
                 />
               </Stack>
             </TabPanel>
             <TabPanel>
               <Stack gap={7} data-group="format">
                 {setupLocked && (
-                  <Notice kind="info">{t("formatLocked")}</Notice>
+                  <Notice kind="info">{locked ?? t("formatLocked")}</Notice>
                 )}
                 <FormSection legend={t("format")}>
                   <TournamentModeFields
@@ -157,7 +172,9 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
             <TabPanel>
               <Stack gap={6} data-group="registration">
                 {setupLocked && (
-                  <Notice kind="info">{t("registrationLocked")}</Notice>
+                  <Notice kind="info">
+                    {locked ?? t("registrationLocked")}
+                  </Notice>
                 )}
                 <TournamentStartField
                   values={values}
@@ -171,17 +188,18 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
                   onChange={onChange}
                   errors={errors}
                   setupLocked={setupLocked}
-                  finished={false}
+                  finished={finished}
                 />
               </Stack>
             </TabPanel>
             <TabPanel>
               <Stack gap={6} data-group="results">
+                {locked && <Notice kind="info">{locked}</Notice>}
                 <TournamentResultsFields
                   values={values}
                   onChange={onChange}
                   errors={errors}
-                  finished={false}
+                  finished={finished}
                 />
               </Stack>
             </TabPanel>
@@ -189,11 +207,32 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
         </Tabs>
         {form.formError && <FormError>{form.formError}</FormError>}
         <FormActions
+          submitRef={submitButton}
           pending={form.pending}
           disabled={!form.canSubmit}
-          cancelHref={`/${tenant}/${tournament.slug}`}
+          cancelHref={`/${tenant}/${form.savedSlug}`}
         />
       </Stack>
+      <ConfirmModal
+        open={asking}
+        title={t("slugConfirm.title")}
+        confirmLabel={t("slugConfirm.submit")}
+        destructive={false}
+        onConfirm={() => {
+          setAsking(false);
+          form.submit("save");
+        }}
+        onClose={() => {
+          setAsking(false);
+          // O Modal sai da árvore e o foco cairia no body.
+          requestAnimationFrame(() => submitButton.current?.focus());
+        }}
+      >
+        {t("slugConfirm.text", {
+          old: form.savedSlug ?? tournament.slug,
+          address: values.slug,
+        })}
+      </ConfirmModal>
     </Form>
   );
 }

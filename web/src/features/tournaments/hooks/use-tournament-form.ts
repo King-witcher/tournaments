@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
 import { useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { type ApiErrorParams, callApi } from "@/shared/api/call";
@@ -91,8 +92,9 @@ type Options = {
  * tudo ou nada).
  * Editar faz o PATCH e, depois, grava cada tradução que mudou (PUT) ou apaga
  * a que foi desligada, tudo no mesmo "Salvar". Deu certo, vai para a página
- * do torneio. O erro de um campo vai para ele, que é mostrado (acordeão ou aba)
- * e recebe o foco; o resto é do formulário.
+ * do torneio, no endereço novo se ele mudou (as outras abas vão sozinhas, e
+ * esta não precisa do aviso: `originHeaders`). O erro de um campo vai para ele,
+ * que é mostrado (acordeão ou aba) e recebe o foco; o resto é do formulário.
  */
 export function useTournamentForm(
   tenant: string,
@@ -101,7 +103,11 @@ export function useTournamentForm(
 ) {
   const uiLocale = useLocale() as Locale;
   const router = useRouter();
+  const hub = useRealtimeHub();
   const errorMessage = useApiErrorMessage();
+  // O endereço gravado: uma tradução recusada depois de o PATCH trocar o
+  // endereço deixa o formulário na tela, e o próximo envio já vai pelo novo.
+  const [savedSlug, setSavedSlug] = useState(tournament?.slug);
   // `canSubmit`: todos os campos válidos (os de `shared/ui` declaram o que cobram).
   const { ref: formRef, canSubmit } = useFormValidity();
   const [values, setValues] = useState(() =>
@@ -167,14 +173,18 @@ export function useTournamentForm(
       router.refresh();
       return undefined;
     }
-    const path = { slug: tenant, tournament: tournament.slug };
     const saved = await callApi(
       api.PATCH("/tenants/{slug}/tournaments/{tournament}", {
-        params: { path },
-        body: updateBody(values, setupLocked),
+        params: {
+          path: { slug: tenant, tournament: savedSlug ?? tournament.slug },
+        },
+        body: updateBody(values, tournament.status),
+        headers: hub?.originHeaders(),
       }),
     );
     if (!saved.ok) return fail(saved.code, saved.params);
+    setSavedSlug(saved.data.slug);
+    const path = { slug: tenant, tournament: saved.data.slug };
     for (const l of others) {
       const draft = translations[l] ?? EMPTY_TRANSLATION;
       const change = translationChange(tournament, l, draft);
@@ -200,7 +210,7 @@ export function useTournamentForm(
       );
       if (!done.ok) return fail(done.code, done.params, l);
     }
-    router.push(`/${tenant}/${tournament.slug}`);
+    router.push(`/${tenant}/${saved.data.slug}`);
     router.refresh();
     return undefined;
   }, undefined);
@@ -341,6 +351,10 @@ export function useTournamentForm(
      */
     copyFrom,
     setupLocked,
+    /** Na edição, o endereço gravado agora. */
+    savedSlug,
+    /** Na edição: salvar troca o endereço, o que pede a confirmação. */
+    movesAddress: savedSlug !== undefined && values.slug !== savedSlug,
     check,
     /** Envia (depois de `check`). */
     submit: (intent: SubmitIntent) => {

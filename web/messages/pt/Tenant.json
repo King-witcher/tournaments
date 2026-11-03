@@ -22,6 +22,14 @@
     "descriptionHint": "Aparece na aba Sobre e na página do convite.",
     "saved": "Nome e descrição salvos."
   },
+  "address": {
+    "title": "Endereço",
+    "hint": "O link da comunidade será {address}.",
+    "invalid": "Não pode terminar com hífen.",
+    "placeholder": "seu-endereco",
+    "submit": "Trocar endereço",
+    "confirm": "A comunidade passa para {address}. Links salvos e mensagens já enviadas com {old}, como as do Discord, param de funcionar. Outra comunidade pode pegar esse endereço. Os links de convite continuam valendo."
+  },
   "members": {
     "label": "Membros da comunidade",
     "loading": "Carregando os membros…",

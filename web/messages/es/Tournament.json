@@ -188,6 +188,10 @@
   },
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
+  "deleteTournament": "Eliminar torneo",
+  "deletePublishedConfirm": "El torneo se elimina con las inscripciones. Nadie recibe aviso. No se puede deshacer.",
+  "deleteStartedConfirm": "El torneo se elimina con la llave, los resultados y las capturas de pantalla. Nadie recibe aviso. No se puede deshacer.",
+  "deleteRatingNote": "El ranking se recalcula sin él.",
   "copy": "Copiar torneo",
   "setup": {
     "title": "Formato",

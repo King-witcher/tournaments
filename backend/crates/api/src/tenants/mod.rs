@@ -1,5 +1,6 @@
-//! Tenants ("comunidades"): criar, listar os meus, ver um, editar nome e
-//! descrição (o owner; o slug não muda), transferir a posse (o owner rebaixa
+//! Tenants ("comunidades"): criar, listar os meus, ver um, editar nome,
+//! descrição e endereço (o owner; o antigo fica livre na hora, e o banco
+//! reescreve o caminho nos avisos guardados), transferir a posse (o owner rebaixa
 //! a si mesmo a organizer e promove outro membro, numa transação, dentro do
 //! limite de tenants por owner) e excluir (`deletion`:
 //! o owner agenda para 7 dias, a comunidade fica só leitura até lá, o

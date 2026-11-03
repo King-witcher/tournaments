@@ -55,6 +55,22 @@ async fn emit_changed(
     Ok(())
 }
 
+/// O rascunho `from` da comunidade `tenant` (o slug) agora é `to`: as abas da
+/// organização abertas nele vão para o endereço novo.
+pub async fn moved(
+    conn: &mut PgConnection,
+    tenant: &str,
+    from: &str,
+    to: &str,
+) -> Result<(), sqlx::Error> {
+    let moved = Event::Moved {
+        tenant: tenant.to_owned(),
+        tournament: Some(from.to_owned()),
+        to: to.to_owned(),
+    };
+    outbox::emit(conn, moved).await
+}
+
 /// O check-in abriu (pelo organizador, pela hora ao ler ou pelo agendador):
 /// a mudança e o aviso aos inscritos.
 pub async fn check_in_opened(conn: &mut PgConnection, id: TournamentId) -> Result<(), sqlx::Error> {

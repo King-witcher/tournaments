@@ -311,3 +311,44 @@ async fn uploads_per_hour_are_limited_even_when_removed() {
     let (status, _) = attach_screenshot(&c.app, &c.p2, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK);
 }
+
+/// O objeto não se move: o que foi enviado e o que foi pedido com o endereço de
+/// antes continuam valendo, e o próximo vai para a pasta do novo.
+#[tokio::test]
+async fn a_new_address_does_not_lose_what_was_sent() {
+    let (db, _lease) = crate::db::test_db().await;
+    let c = cup(&db, 3, json!({})).await;
+    let (status, sent) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
+    assert_eq!(status, StatusCode::OK, "{sent}");
+    let (status, pending) = request_upload(&c.app, &c.p2, FINAL, 1, "image/webp", 1000).await;
+    assert_eq!(status, StatusCode::CREATED, "{pending}");
+    let put = put_to_bucket(&pending, "image/webp", vec![7; 1000]).await;
+    assert_eq!(put, StatusCode::OK);
+
+    let moved = json!({ "slug": "quake-brasil" });
+    let (status, body) = patch(&c.app, "/tenants/quake-br", &c.ana, moved).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    const SERIES: &str = "/tenants/quake-brasil/tournaments/copa/matches/wb-1-1";
+    let id = &pending["id"];
+    let uri = format!("{SERIES}/games/1/screenshots/{id}/attach");
+    let (status, attached) = post_empty(&c.app, &uri, &c.p2).await;
+    assert_eq!(status, StatusCode::OK, "{attached}");
+    let (status, list) = get(&c.app, &format!("{SERIES}/screenshots"), &c.bia).await;
+    assert_eq!(status, StatusCode::OK, "{list}");
+    let shown = game(&list, 1)["screenshots"].as_array().unwrap().clone();
+    assert_eq!(shown.len(), 2, "{list}");
+    let image = reqwest::get(shown[0]["url"].as_str().unwrap())
+        .await
+        .unwrap();
+    assert_eq!(image.status(), StatusCode::OK);
+    let kept = object_key(&db, &attached["id"]).await;
+    assert!(kept.starts_with("screenshots/quake-br/copa/"), "{kept}");
+
+    let body = json!({ "content_type": "image/webp", "size": 1000 });
+    let uri = format!("{SERIES}/games/1/screenshots");
+    let (status, next) = post(&c.app, &uri, &c.ana, body).await;
+    assert_eq!(status, StatusCode::CREATED, "{next}");
+    let new = object_key(&db, &next["id"]).await;
+    assert!(new.starts_with("screenshots/quake-brasil/copa/"), "{new}");
+}

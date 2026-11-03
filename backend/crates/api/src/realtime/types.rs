@@ -6,7 +6,9 @@ use utoipa::ToSchema;
 
 use crate::outbox::Notice;
 
-/// O que uma aba assina: a comunidade, ou um torneio dela. Slugs não mudam.
+/// O que uma aba assina: a comunidade, ou um torneio dela, pelo slug de agora.
+/// Quando ele muda, a conexão troca as assinaturas (`Connection::deliver`), para
+/// não receber as mudanças de quem pegar o endereço antigo.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Topic {
     pub tenant: String,
@@ -54,6 +56,14 @@ pub enum ServerMessage {
     /// Quem está conectado saiu ou foi removido da comunidade: as assinaturas
     /// dela acabaram.
     AccessLost { tenant: String },
+    /// O endereço mudou: o da comunidade `tenant` para `to` ou, com
+    /// `tournament`, o desse torneio dela para `to`. A assinatura já foi
+    /// trocada; a aba que está lá vai para o endereço novo.
+    Moved {
+        tenant: String,
+        tournament: Option<String>,
+        to: String,
+    },
     /// Assinatura aceita.
     Subscribed {
         tenant: String,

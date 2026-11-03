@@ -109,12 +109,12 @@ pub async fn get_tenant(member: TenantMember) -> Json<MyTenant> {
     params(("slug" = String, Path, description = "Slug do tenant")),
     request_body = UpdateTenant,
     responses(
-        (status = OK, body = MyTenant, description = "Nome e descrição gravados. O slug não muda"),
+        (status = OK, body = MyTenant, description = "Nome, descrição e endereço gravados, e `slug` é o que vale. O endereço antigo fica livre na hora, sem redirecionamento"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tenant.name_invalid, tenant.description_invalid {max}, request.invalid_body"),
+        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled, tenant.slug_taken"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tenant.name_invalid, tenant.description_invalid {max}, tenant.slug_invalid, tenant.slug_reserved, request.invalid_body"),
     )
 )]
 pub async fn update_tenant(
@@ -122,6 +122,10 @@ pub async fn update_tenant(
     owner: TenantMember<Owner>,
     JsonBody(body): JsonBody<UpdateTenant>,
 ) -> Result<Json<MyTenant>, ApiError> {
+    let moved_to = body.slug.filter(|slug| *slug != owner.slug);
+    if let Some(slug) = &moved_to {
+        validate_slug(slug)?;
+    }
     let name = match &body.name {
         Some(raw) => clean_name(raw)?,
         None => owner.name.clone(),
@@ -135,9 +139,14 @@ pub async fn update_tenant(
     };
     let mut tx = state.db.begin().await?;
     db::update_details(&mut tx, owner.tenant, &name, description.as_deref()).await?;
+    if let Some(slug) = &moved_to {
+        db::rename(&mut tx, owner.tenant, slug).await?;
+        changes::moved(&mut tx, owner.tenant, &owner.slug, slug).await?;
+    }
     changes::changed(&mut tx, owner.tenant).await?;
     tx.commit().await?;
     Ok(Json(MyTenant {
+        slug: moved_to.unwrap_or_else(|| owner.slug.clone()),
         name,
         description,
         ..owner.into()

@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select u.id as \"user!\",\n                  (select count(*) from notifications n\n                   where n.user_id = u.id and n.read_at is null) as \"count!\"\n           from unnest($1::bigint[]) as u(id)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "6bf2cab68014cd1212c5579fedf138431cd55e6e4ab1cadf2c5467e48beaabcb"
+}

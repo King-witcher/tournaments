@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select distinct user_id from notifications\n           where user_id in (select user_id from tenant_members where tenant_id = $1)\n             and read_at is null\n             and path_under(notice ->> 'path', $2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "notifications",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b34150f80a3768920bd63aeaa9cfa09dc9b129aa2b9bb4ed07040f1b0bddc5e6"
+}

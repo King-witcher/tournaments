@@ -5,7 +5,7 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 ## Exclusões
 
 - **Excluir usuário** é recusado se for owner de algum tenant ou tiver participado de torneio iniciado (a chave antiga não perde um lado). Logins vão junto; as sessões no Redis ficam sem efeito até expirar. A autoria (quem inscreveu, marcou check-in, enviou, contestou, confirmou, agiu no histórico) fica nula. A "Excluir conta" da interface **anonimiza** em vez de apagar a linha (`deletion.md`).
-- **Excluir tenant** apaga tudo dentro (pela API, agendado: `deletion.md`). **Excluir torneio** também, com resultados, mapas e histórico (a API só exclui rascunho, mas o banco aceita qualquer um).
+- **Excluir tenant** apaga tudo dentro (pela API, agendado: `deletion.md`). **Excluir torneio** também, com resultados, mapas e histórico (quem pode é regra da API: `deletion.md`).
 - **Inscrito, time e fase de torneio iniciado** não saem avulsos, só com o torneio ou o tenant; também ninguém entra e seed e check-in não mudam. Por isso o membro inscrito num torneio iniciado não sai do tenant: sair mantendo o histórico é ficar inativo, não linha apagada.
 
 ## Regras de estado
@@ -16,7 +16,7 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 - **Owner**: exatamente um por tenant e membro. "No máximo um" vale na hora (índice único parcial); "pelo menos um", no commit.
 - Quem inscreveu e quem marcou check-in são membros do mesmo tenant (FK composta).
 - **Link de convite**: um por comunidade e um por torneio, sempre (`invite_token not null unique`, nas duas tabelas), em base58 de 22 caracteres.
-- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; slugs e idioma original fixos; JSON de regras de campeões e de fase com a forma do `engine`; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
+- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; JSON de regras de campeões e de fase com a forma do `engine`; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
 
 ## Fora do banco, de propósito
 

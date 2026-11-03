@@ -9,6 +9,7 @@ use super::{
     contest,
     schedule::Schedule,
     setup::Setup,
+    slug::validate_slug,
     status::TournamentStatus,
     texts::{self, Texts},
     types::UpdateTournament,
@@ -18,8 +19,10 @@ use crate::shared::ApiError;
 
 #[derive(Debug)]
 pub struct Edit {
+    /// `Some` só quando o endereço muda.
+    pub slug: Option<String>,
     pub texts: Texts,
-    /// `Some` quando veio no PATCH.
+    /// `Some` só quando o tipo de inscrição muda.
     pub admission: Option<Admission>,
     /// `Some` só quando vagas, regra de campeões ou fases mudam de fato.
     pub setup: Option<Setup>,
@@ -37,7 +40,9 @@ pub struct Edit {
 /// O torneio como está gravado, que o PATCH muda.
 pub struct Current<'a> {
     pub status: TournamentStatus,
+    pub slug: &'a str,
     pub texts: &'a Texts,
+    pub admission: Admission,
     pub setup: &'a Setup,
     pub schedule: Schedule,
     pub contest_minutes: i32,
@@ -46,12 +51,13 @@ pub struct Current<'a> {
     pub now: DateTime<Utc>,
 }
 
-/// Erros: 409 `tournament.finished` (texto, inscrição ou janela de contestação
-/// depois de encerrar), 409 `tournament.setup_locked`
+/// Erros: 409 `tournament.slug_locked` (endereço fora do rascunho), 409
+/// `tournament.finished` (regras, inscrição ou janela de contestação depois de
+/// encerrar; nome e descrição continuam), 409 `tournament.setup_locked`
 /// (configuração, inclusive o veto (`veto`, já resolvido), ou "conta para o
-/// rating" depois de começar), os de `Schedule::edit`, o de
-/// `contest::check` e os de validação dos textos. Mandar a configuração igual
-/// à atual não conta como mudança, então o front pode reenviar o formulário
+/// rating" depois de começar), os de `validate_slug`, os de `Schedule::edit`, o
+/// de `contest::check` e os de validação dos textos. Mandar um campo igual ao
+/// atual não conta como mudança, então o front pode reenviar o formulário
 /// inteiro.
 pub fn apply(
     current: Current<'_>,
@@ -60,19 +66,21 @@ pub fn apply(
 ) -> Result<Edit, ApiError> {
     let Current {
         status,
+        slug: current_slug,
         texts: current_texts,
+        admission: current_admission,
         setup: current_setup,
         schedule: current_schedule,
         contest_minutes: current_contest_minutes,
         counts_for_rating: current_counts_for_rating,
         now,
     } = current;
-    let touches_texts = patch.name.is_some()
-        || patch.description.is_some()
-        || patch.rules.is_some()
-        || patch.admission.is_some();
-    if touches_texts && !status.texts_editable() {
-        return Err(ApiError::conflict("tournament.finished"));
+    let slug = patch.slug.filter(|slug| slug != current_slug);
+    if let Some(slug) = &slug {
+        if status != TournamentStatus::Draft {
+            return Err(ApiError::conflict("tournament.slug_locked"));
+        }
+        validate_slug(slug)?;
     }
     let texts = Texts {
         name: match patch.name {
@@ -88,6 +96,10 @@ pub fn apply(
             None => current_texts.rules.clone(),
         },
     };
+    let admission = patch.admission.filter(|a| *a != current_admission);
+    if status.is_finished() && (texts.rules != current_texts.rules || admission.is_some()) {
+        return Err(ApiError::conflict("tournament.finished"));
+    }
 
     let mode = patch.mode.unwrap_or(current_setup.mode);
     let team_size = match (patch.team_size, patch.mode) {
@@ -121,7 +133,7 @@ pub fn apply(
         .contest_minutes
         .filter(|&minutes| minutes != current_contest_minutes);
     if let Some(minutes) = contest_minutes {
-        if !status.texts_editable() {
+        if status.is_finished() {
             return Err(ApiError::conflict("tournament.finished"));
         }
         contest::check(minutes)?;
@@ -133,8 +145,9 @@ pub fn apply(
         return Err(ApiError::conflict("tournament.setup_locked"));
     }
     Ok(Edit {
+        slug,
         texts,
-        admission: patch.admission,
+        admission,
         setup,
         schedule,
         contest_minutes,
@@ -198,6 +211,7 @@ mod tests {
 
     fn patch() -> UpdateTournament {
         UpdateTournament {
+            slug: None,
             mode: None,
             team_size: None,
             name: None,
@@ -219,7 +233,9 @@ mod tests {
     fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
         let current = Current {
             status,
+            slug: "copa",
             texts: &texts(),
+            admission: Admission::Open,
             setup: &setup(),
             schedule: schedule(),
             contest_minutes: 5,
@@ -267,7 +283,19 @@ mod tests {
     }
 
     #[test]
-    fn texts_lock_when_finished() {
+    fn name_and_description_outlive_the_end_but_rules_do_not() {
+        let p = UpdateTournament {
+            name: Some(" Copa 2 ".into()),
+            description: Some("Agora com descrição".into()),
+            // Reenviar as regras de agora não é mudança.
+            rules: Some("md3".into()),
+            admission: Some(Admission::Open),
+            ..patch()
+        };
+        let edit = run(TournamentStatus::Finished, p).unwrap();
+        assert_eq!(edit.texts.name, "Copa 2");
+        assert_eq!(edit.texts.description, "Agora com descrição");
+
         let p = UpdateTournament {
             rules: Some("x".into()),
             ..patch()
@@ -286,6 +314,28 @@ mod tests {
         assert_eq!(edit.admission, Some(Admission::InviteOnly));
         let err = run(TournamentStatus::Finished, p()).unwrap_err();
         assert_eq!(err.code, "tournament.finished");
+    }
+
+    #[test]
+    fn the_address_changes_only_in_a_draft() {
+        let p = |slug: &str| UpdateTournament {
+            slug: Some(slug.into()),
+            ..patch()
+        };
+        let edit = run(TournamentStatus::Draft, p("liga")).unwrap();
+        assert_eq!(edit.slug.as_deref(), Some("liga"));
+        // A validação da criação.
+        let err = run(TournamentStatus::Draft, p("new")).unwrap_err();
+        assert_eq!(err.code, "tournament.slug_reserved");
+        let err = run(TournamentStatus::Draft, p("X")).unwrap_err();
+        assert_eq!(err.code, "tournament.slug_invalid");
+        // O mesmo não é mudança; o novo, depois de publicar, é recusado.
+        use TournamentStatus::{CheckIn, Finished, InProgress, Registration};
+        for status in [Registration, CheckIn, InProgress, Finished] {
+            assert_eq!(run(status, p("copa")).unwrap().slug, None);
+            let err = run(status, p("liga")).unwrap_err();
+            assert_eq!(err.code, "tournament.slug_locked");
+        }
     }
 
     #[test]

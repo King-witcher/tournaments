@@ -188,6 +188,10 @@
   },
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",
+  "deleteTournament": "Excluir torneio",
+  "deletePublishedConfirm": "O torneio é excluído com as inscrições. Ninguém é avisado. Não dá para desfazer.",
+  "deleteStartedConfirm": "O torneio é excluído com a chave, os resultados e as capturas de tela. Ninguém é avisado. Não dá para desfazer.",
+  "deleteRatingNote": "O ranking é recalculado sem ele.",
   "copy": "Copiar torneio",
   "setup": {
     "title": "Formato",

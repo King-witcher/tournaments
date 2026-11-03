@@ -12,14 +12,14 @@ use super::{
     status::TournamentStatus,
     texts::Texts,
     types::{
-        CreateTournament, CreateTranslation, Tournament, TournamentPath, TournamentSummary,
-        UpdateTournament,
+        CreateTournament, CreateTranslation, DeleteTournament, Tournament, TournamentPath,
+        TournamentSummary, UpdateTournament,
     },
     veto,
     visibility::find_visible,
 };
 use crate::{
-    AppState,
+    AppState, notifications,
     shared::{ApiError, ErrorBody, JsonBody, Locale, PathParams},
     tenants::{self, Organizer, Role, TenantMember},
 };
@@ -176,12 +176,12 @@ pub async fn get_tournament(
     ),
     request_body = UpdateTournament,
     responses(
-        (status = OK, body = Tournament, description = "Torneio atualizado; a checagem de campeões roda de novo se a configuração mudou"),
+        (status = OK, body = Tournament, description = "Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (textos, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação, menos slug"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação"),
     )
 )]
 pub async fn update_tournament(
@@ -207,7 +207,9 @@ pub async fn update_tournament(
     )?;
     let stored = edit::Current {
         status: current.status,
+        slug: &current.slug,
         texts: &current.texts,
+        admission: current.admission,
         setup: &current.setup,
         schedule: current.schedule,
         contest_minutes: current.contest_minutes,
@@ -223,13 +225,18 @@ pub async fn update_tournament(
     if let Some(required) = screenshots_required {
         db::set_screenshots_required(&mut tx, current.id, required).await?;
     }
+    if let Some(slug) = &edit.slug {
+        db::rename(&mut tx, current.id, slug).await?;
+        changes::moved(&mut tx, &member.slug, &current.slug, slug).await?;
+    }
     changes::changed(&mut tx, current.id).await?;
     if current.schedule.start_due(current.status, Utc::now()) {
         // Adiado, sai do que espera a organização (se continua, o evento é o
         // mesmo de `changed` e entra uma vez).
         tenants::organizing_changed(&mut tx, member.tenant).await?;
     }
-    let updated = db::find(&mut tx, member.tenant, &path.tournament, viewer)
+    let slug = edit.slug.as_deref().unwrap_or(&current.slug);
+    let updated = db::find(&mut tx, member.tenant, slug, viewer)
         .await?
         .ok_or_else(ApiError::internal)?;
     tx.commit().await?;
@@ -287,28 +294,43 @@ pub async fn publish_tournament(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
+    request_body = Option<DeleteTournament>,
     responses(
-        (status = NO_CONTENT, description = "Rascunho excluído, com os inscritos e os links de inscrição dele"),
+        (status = NO_CONTENT, description = "Torneio excluído na hora, com tudo o que tem dentro; o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug`"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_draft (só rascunho pode ser excluído)"),
+        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.confirmation_mismatch (o slug digitado não confere), request.invalid_body"),
     )
 )]
 pub async fn delete_tournament(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentPath>,
+    body: Option<JsonBody<DeleteTournament>>,
 ) -> Result<StatusCode, ApiError> {
     let mut tx = state.db.begin().await?;
-    let found = db::find(&mut tx, member.tenant, &path.tournament, None)
+    let found = db::find_for_update(&mut tx, member.tenant, &path.tournament, None)
         .await?
         .ok_or(NOT_FOUND)?;
-    // Antes de excluir: os inscritos e o endereço ainda existem.
-    changes::changed(&mut tx, found.id).await?;
-    if !db::delete_draft(&mut tx, found.id).await? {
-        return Err(ApiError::conflict("tournament.not_draft"));
+    if found.status.has_started() && member.role < Role::Owner {
+        return Err(ApiError::forbidden("tenant.forbidden"));
     }
+    if found.status != TournamentStatus::Draft {
+        let typed = body.map(|JsonBody(b)| b.confirm_slug);
+        if typed.as_deref().map(str::trim) != Some(found.slug.as_str()) {
+            return Err(ApiError::invalid("tournament.confirmation_mismatch"));
+        }
+    }
+    // Antes de excluir: os inscritos e o endereço ainda existem. A home da
+    // organização também recarrega (mapa contestado, hora de iniciar).
+    let unread =
+        notifications::unread_under(&mut tx, member.tenant, &found.address().path()).await?;
+    changes::changed(&mut tx, found.id).await?;
+    tenants::organizing_changed(&mut tx, member.tenant).await?;
+    db::delete(&mut tx, found.id).await?;
+    notifications::recount(&mut tx, &unread).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }

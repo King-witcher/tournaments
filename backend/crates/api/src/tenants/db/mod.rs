@@ -206,7 +206,7 @@ pub async fn create_with_owner(
     Ok(())
 }
 
-/// Grava o nome e a descrição do tenant (o slug não muda).
+/// Grava o nome e a descrição do tenant.
 pub async fn update_details(
     conn: &mut PgConnection,
     tenant: TenantId,
@@ -222,6 +222,26 @@ pub async fn update_details(
     .execute(conn)
     .await?;
     Ok(())
+}
+
+/// Troca o slug do tenant; o antigo fica livre. O banco reescreve na mesma
+/// transação o caminho guardado nas notificações, na fila do Discord e nos
+/// avisos do outbox (trigger `tenants_slug_moved`). 409 `tenant.slug_taken`.
+pub async fn rename(conn: &mut PgConnection, tenant: TenantId, slug: &str) -> Result<(), ApiError> {
+    let done = sqlx::query!(
+        "update tenants set slug = $2 where id = $1",
+        tenant.get(),
+        slug
+    )
+    .execute(conn)
+    .await;
+    match done {
+        Ok(_) => Ok(()),
+        Err(sqlx::Error::Database(e)) if e.constraint() == Some("tenants_slug_key") => {
+            Err(ApiError::conflict("tenant.slug_taken"))
+        }
+        Err(e) => Err(e.into()),
+    }
 }
 
 /// Passa a posse do tenant de `from` para `to`, membro ativo que ainda não é

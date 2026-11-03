@@ -13,6 +13,8 @@ type Props = {
   saved?: Locale[];
   /** Dentro de um item de acordeão, que já dá o título: sem a seção em volta. */
   bare?: boolean;
+  /** Encerrado: as regras de cada idioma não mudam mais. */
+  rulesLocked?: boolean;
 };
 
 /**
@@ -23,6 +25,7 @@ export function TournamentTranslations({
   form,
   saved = [],
   bare = false,
+  rulesLocked = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const blocks = form.others.map((l) => (
@@ -34,6 +37,7 @@ export function TournamentTranslations({
       onChange={form.onTranslationChange}
       errors={form.translationErrors(l)}
       saved={saved.includes(l)}
+      rulesLocked={rulesLocked}
     />
   ));
 

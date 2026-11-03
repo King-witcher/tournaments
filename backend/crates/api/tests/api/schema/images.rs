@@ -12,20 +12,29 @@ async fn queued(db: &PgPool) -> Vec<String> {
 }
 
 #[tokio::test]
-async fn the_object_sits_in_its_owners_folder() {
+async fn the_object_has_the_form_but_the_folder_may_be_an_old_address() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
-    let other = format!("update tenants set logo_key = 'logos/outra/{TOKEN}.webp'");
+    let bad = format!("update tenants set logo_key = 'logos/Outra/{TOKEN}.webp'");
     assert_eq!(
-        rejected(exec(&db, &other).await),
+        rejected(exec(&db, &bad).await),
         rule(CHECK, "tenants_logo_key")
     );
-    let other = format!("update tournaments set cover_key = 'covers/quake-br/outro/{TOKEN}.webp'");
+    let bad = format!("update tournaments set cover_key = 'covers/quake-br/{TOKEN}.webp'");
     assert_eq!(
-        rejected(exec(&db, &other).await),
+        rejected(exec(&db, &bad).await),
         rule(CHECK, "tournaments_cover_key")
     );
+    // Objetos não se movem: a pasta é a do endereço de quando foi enviado.
+    let old = format!("update tenants set logo_key = 'logos/outra/{TOKEN}.webp'");
+    exec(&db, &old).await.unwrap();
+    let old = format!("update tournaments set cover_key = 'covers/outra/outro/{TOKEN}.webp'");
+    exec(&db, &old).await.unwrap();
+    exec(&db, "update tenants set slug = 'nova'").await.unwrap();
+    exec(&db, "update tournaments set slug = 'liga'")
+        .await
+        .unwrap();
 }
 
 #[tokio::test]

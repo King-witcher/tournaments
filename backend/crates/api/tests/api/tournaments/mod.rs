@@ -1,9 +1,11 @@
 //! Testes de `tournaments`; data de início e janela de check-in em
 //! `schedule`, janela de contestação em `contest`, criação com traduções e
-//! publicação em `create`.
+//! publicação em `create`, o endereço em `address` e a exclusão em `deletion`.
 
+mod address;
 mod contest;
 mod create;
+mod deletion;
 mod schedule;
 
 use axum::http::StatusCode;
@@ -279,57 +281,67 @@ async fn what_can_change_depends_on_the_status() {
         patch(&app, uri, &ana, json!({ "max_participants": 16 })).await,
         (StatusCode::CONFLICT, err("tournament.setup_locked"))
     );
-    assert_eq!(
-        delete(&app, uri, &ana).await,
-        (StatusCode::CONFLICT, err("tournament.not_draft"))
-    );
 
-    // Encerrado: nada muda.
+    // Com uma tradução, para o que segue.
+    let es = format!("{uri}/translations/es");
+    let saved = json!({ "name": "Copa", "description": "Antes", "rules": "Reglas" });
+    assert_eq!(put(&app, &es, &ana, saved).await.0, StatusCode::OK);
+
+    // Encerrado: o nome e a descrição, com as traduções deles.
     sqlx::query!("update tournaments set status = 'finished'")
         .execute(&db)
         .await
         .unwrap();
+    let (status, fixed) = patch(
+        &app,
+        uri,
+        &ana,
+        json!({ "name": "Copa certa", "description": "Sem erro" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{fixed}");
+    assert_eq!(fixed["name"], "Copa certa");
+    assert_eq!(fixed["description"], "Sem erro");
+    let same_rules = json!({ "name": "Copa bien", "description": "Después", "rules": "Reglas" });
+    let (status, body) = put(&app, &es, &ana, same_rules).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["name"], "Copa bien");
+
+    // As regras, e o resto, não.
     assert_eq!(
-        patch(&app, uri, &ana, json!({ "name": "x" })).await,
+        patch(&app, uri, &ana, json!({ "rules": "Outras" })).await,
         (StatusCode::CONFLICT, err("tournament.finished"))
     );
     assert_eq!(
-        put(
-            &app,
-            &format!("{uri}/translations/es"),
-            &ana,
-            json!({ "name": "Copa" })
-        )
-        .await,
+        patch(&app, uri, &ana, json!({ "admission": "invite_only" })).await,
+        (StatusCode::CONFLICT, err("tournament.finished"))
+    );
+    assert_eq!(
+        patch(&app, uri, &ana, json!({ "max_participants": 16 })).await,
+        (StatusCode::CONFLICT, err("tournament.setup_locked"))
+    );
+    let other_rules = json!({ "name": "Copa", "rules": "Otras" });
+    assert_eq!(
+        put(&app, &es, &ana, other_rules).await,
         (StatusCode::CONFLICT, err("tournament.finished"))
     );
     let (_, seen) = get(&app, uri, &ana).await;
     assert_eq!(seen["rules"], "Novas regras");
-}
+    assert_eq!(seen["translations"][0]["rules"], "Reglas");
 
-#[tokio::test]
-async fn only_drafts_are_deleted() {
-    let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, bia) = quake_br(&db).await;
-    create_tournament(&app, &ana, duel("copa")).await;
-    let uri = "/tenants/quake-br/tournaments/copa";
+    // Tirar a tradução volta ao original; pôr uma nova, sem regras, pode.
     assert_eq!(
-        delete(&app, uri, &bia).await,
-        (StatusCode::FORBIDDEN, err("tenant.forbidden"))
-    );
-    assert_eq!(
-        delete(&app, uri, &ana).await,
+        delete(&app, &es, &ana).await,
         (StatusCode::NO_CONTENT, Value::Null)
     );
     assert_eq!(
-        delete(&app, uri, &ana).await,
-        (StatusCode::NOT_FOUND, err("tournament.not_found"))
+        put(&app, &es, &ana, json!({ "name": "Copa" })).await.0,
+        StatusCode::OK
     );
-    let stages = sqlx::query_scalar!(r#"select count(*) as "count!" from tournament_stages"#)
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    assert_eq!(stages, 0);
+    assert_eq!(
+        put(&app, &es, &ana, json!({ "name": "Copa", "rules": "Otras" })).await,
+        (StatusCode::CONFLICT, err("tournament.finished"))
+    );
 }
 
 #[tokio::test]

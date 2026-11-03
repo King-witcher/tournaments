@@ -1773,7 +1773,8 @@ export interface components {
              */
             name: string;
             /**
-             * @description Identificador na URL: a-z, 0-9 e hífen, 3 a 32 caracteres. Não muda depois.
+             * @description Identificador na URL: a-z, 0-9 e hífen, 3 a 32 caracteres. O owner pode
+             *     trocar depois (`PATCH /tenants/{slug}`).
              * @example quake-br
              */
             slug: string;
@@ -1843,7 +1844,8 @@ export interface components {
              */
             screenshots_required?: boolean;
             /**
-             * @description a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Não muda depois.
+             * @description a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Muda enquanto for
+             *     rascunho.
              * @example copa-de-outubro
              */
             slug: string;
@@ -1912,6 +1914,17 @@ export interface components {
         };
         DeleteSubscription: {
             endpoint: string;
+        };
+        /**
+         * @description Corpo de `DELETE /tenants/{slug}/tournaments/{tournament}`: o rascunho não
+         *     precisa dele.
+         */
+        DeleteTournament: {
+            /**
+             * @description O slug do torneio, digitado para confirmar.
+             * @example copa-de-outubro
+             */
+            confirm_slug: string;
         };
         DiscordSettings: {
             /** @description Os avisos que existem, na ordem em que aparecem. */
@@ -3090,6 +3103,12 @@ export interface components {
             type: "access_lost";
         } | {
             tenant: string;
+            to: string;
+            tournament?: string | null;
+            /** @enum {string} */
+            type: "moved";
+        } | {
+            tenant: string;
             tournament?: string | null;
             /** @enum {string} */
             type: "subscribed";
@@ -3664,7 +3683,7 @@ export interface components {
              */
             name?: string | null;
         };
-        /** @description O que o owner edita na comunidade. O slug não muda. */
+        /** @description O que o owner edita na comunidade. */
         UpdateTenant: {
             /**
              * @description Descrição em texto simples, até 2000 caracteres (as quebras de linha
@@ -3676,12 +3695,20 @@ export interface components {
              * @example Quake BR
              */
             name?: string | null;
+            /**
+             * @description O endereço novo, com a validação da criação. O antigo fica livre na
+             *     hora, sem redirecionamento: links salvos e mensagens já enviadas com
+             *     ele param de funcionar. Links de convite continuam valendo (usam o
+             *     token). Ausente ou igual ao atual: não muda.
+             * @example quake-brasil
+             */
+            slug?: string | null;
         };
         /**
-         * @description Campos ausentes não mudam. Textos e inscrição podem mudar até o
-         *     torneio encerrar; vagas, regra de campeões, fases, data de início e
-         *     janela de check-in, até ele começar (e as vagas nunca abaixo do número de
-         *     inscritos).
+         * @description Campos ausentes, ou iguais aos gravados, não mudam. O endereço muda só no
+         *     rascunho; nome e descrição, sempre; regras e inscrição, até o torneio
+         *     encerrar; vagas, regra de campeões, fases, data de início e janela de
+         *     check-in, até ele começar (e as vagas nunca abaixo do número de inscritos).
          */
         UpdateTournament: {
             admission?: components["schemas"]["Admission"] | null;
@@ -3711,6 +3738,13 @@ export interface components {
              *     envios seguintes. Ligar exige o bucket configurado.
              */
             screenshots_required?: boolean | null;
+            /**
+             * @description O endereço novo, só no rascunho, com a validação da criação. O antigo
+             *     fica livre na hora, sem redirecionamento; links de inscrição continuam
+             *     valendo (usam o token).
+             * @example copa-de-novembro
+             */
+            slug?: string | null;
             stages?: components["schemas"]["StageFormat"][] | null;
             /**
              * Format: date-time
@@ -6144,7 +6178,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Nome e descrição gravados. O slug não muda */
+            /** @description Nome, descrição e endereço gravados, e `slug` é o que vale. O endereço antigo fica livre na hora, sem redirecionamento */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6180,7 +6214,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.deletion_scheduled */
+            /** @description tenant.deletion_scheduled, tenant.slug_taken */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -6189,7 +6223,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.name_invalid, tenant.description_invalid {max}, request.invalid_body */
+            /** @description tenant.name_invalid, tenant.description_invalid {max}, tenant.slug_invalid, tenant.slug_reserved, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -7700,9 +7734,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DeleteTournament"] | null;
+            };
+        };
         responses: {
-            /** @description Rascunho excluído, com os inscritos e os links de inscrição dele */
+            /** @description Torneio excluído na hora, com tudo o que tem dentro; o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug` */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -7736,8 +7774,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_draft (só rascunho pode ser excluído) */
+            /** @description tenant.deletion_scheduled */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7765,7 +7812,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio atualizado; a checagem de campeões roda de novo se a configuração mudou */
+            /** @description Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7801,7 +7848,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished (textos, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7810,7 +7857,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Os mesmos da criação, menos slug */
+            /** @description Os mesmos da criação */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -11012,7 +11059,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Tradução criada ou substituída */
+            /** @description Tradução criada ou substituída; encerrado o torneio, só o nome e a descrição mudam */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -11057,7 +11104,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.finished */
+            /** @description tournament.finished (regras diferentes das gravadas, com o torneio encerrado) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -11093,7 +11140,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Tradução removida; o idioma volta a mostrar o original */
+            /** @description Tradução removida; o idioma volta a mostrar o original. Vale também com o torneio encerrado */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -11129,15 +11176,6 @@ export interface operations {
             };
             /** @description tenant.not_found, tournament.not_found, tournament.translation_not_found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tournament.finished */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

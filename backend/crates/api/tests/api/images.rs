@@ -272,3 +272,81 @@ async fn without_the_bucket_there_are_no_uploads() {
         )
     );
 }
+
+/// Objetos não se movem: o que foi enviado com o endereço de antes continua
+/// valendo, e o que foi pedido antes da troca ainda pode ser registrado.
+#[tokio::test]
+async fn logo_and_cover_outlive_a_new_address() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, state, s3, ana) = app_with_bucket(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let logo = send(&app, &ana, LOGO).await;
+    let cover = send(&app, &ana, COVER).await;
+    let (_, pending_logo) = request(&app, &ana, LOGO, 1000).await;
+    let (_, pending_cover) = request(&app, &ana, COVER, 1000).await;
+    for upload in [&pending_logo, &pending_cover] {
+        assert_eq!(put_to_bucket(upload, vec![7; 1000]).await, StatusCode::OK);
+    }
+
+    let moved = json!({ "slug": "quake-brasil" });
+    let (status, body) = patch(&app, "/tenants/quake-br", &ana, moved).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["logo_url"], logo);
+    const NEW_LOGO: &str = "/tenants/quake-brasil/logo";
+    const DRAFT: &str = "/tenants/quake-brasil/tournaments/copa";
+    let (_, draft) = get(&app, DRAFT, &ana).await;
+    assert_eq!(draft["cover_url"], cover);
+    assert!(s3.object(&key(&logo)).is_some());
+
+    // O rascunho também troca, com a capa onde está.
+    let (status, body) = patch(&app, DRAFT, &ana, json!({ "slug": "liga" })).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["cover_url"], cover);
+    const NEW_COVER: &str = "/tenants/quake-brasil/tournaments/liga/cover";
+    assert!(queued(&db).await.is_empty());
+
+    // O pedido de antes da troca registra, na pasta que tinha.
+    let (status, image) = attach(&app, &ana, NEW_LOGO, &pending_logo["id"]).await;
+    assert_eq!(status, StatusCode::OK, "{image}");
+    let second_logo = image["url"].as_str().unwrap().to_owned();
+    assert!(
+        second_logo.starts_with(&format!("{CDN}/logos/quake-br/")),
+        "{second_logo}"
+    );
+    let (status, image) = attach(&app, &ana, NEW_COVER, &pending_cover["id"]).await;
+    assert_eq!(status, StatusCode::OK, "{image}");
+    let second_cover = image["url"].as_str().unwrap().to_owned();
+    assert!(
+        second_cover.starts_with(&format!("{CDN}/covers/quake-br/copa/")),
+        "{second_cover}"
+    );
+
+    // O que for enviado agora vai para a pasta do endereço novo.
+    let third_logo = send(&app, &ana, NEW_LOGO).await;
+    assert!(
+        third_logo.starts_with(&format!("{CDN}/logos/quake-brasil/")),
+        "{third_logo}"
+    );
+    let third_cover = send(&app, &ana, NEW_COVER).await;
+    assert!(
+        third_cover.starts_with(&format!("{CDN}/covers/quake-brasil/liga/")),
+        "{third_cover}"
+    );
+
+    // A fila leva todos pelo nome exato, de qualquer pasta, sem tocar na
+    // comunidade que pegar o endereço antigo.
+    let eva = user(&db, "Eva").await;
+    create(&app, &eva, "quake-br").await;
+    let hers = send(&app, &eva, LOGO).await;
+    assert!(
+        hers.starts_with(&format!("{CDN}/logos/quake-br/")),
+        "{hers}"
+    );
+    delete(&app, NEW_LOGO, &ana).await;
+    delete(&app, NEW_COVER, &ana).await;
+    let storage = state.public_storage.as_ref().unwrap();
+    let later = Utc::now() + Duration::hours(1);
+    let done = images::sweep(&db, storage, later).await.unwrap();
+    assert_eq!((done.deleted, done.drained), (6, true));
+    assert_eq!(s3.keys().into_iter().collect::<Vec<_>>(), [key(&hers)]);
+}

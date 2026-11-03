@@ -1,6 +1,7 @@
-//! Testes de `tenants`: criar, listar, ver e editar aqui; transferir a posse em
-//! `transfer`; excluir em `deletion`.
+//! Testes de `tenants`: criar, listar, ver e editar aqui; trocar o endereço em
+//! `address`; transferir a posse em `transfer`; excluir em `deletion`.
 
+mod address;
 mod deletion;
 mod transfer;
 

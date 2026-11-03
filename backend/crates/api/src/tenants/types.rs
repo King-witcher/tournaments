@@ -10,12 +10,13 @@ pub struct CreateTenant {
     /// Nome exibido, 1 a 64 caracteres.
     #[schema(example = "Quake BR")]
     pub name: String,
-    /// Identificador na URL: a-z, 0-9 e hífen, 3 a 32 caracteres. Não muda depois.
+    /// Identificador na URL: a-z, 0-9 e hífen, 3 a 32 caracteres. O owner pode
+    /// trocar depois (`PATCH /tenants/{slug}`).
     #[schema(example = "quake-br")]
     pub slug: String,
 }
 
-/// O que o owner edita na comunidade. O slug não muda.
+/// O que o owner edita na comunidade.
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateTenant {
     /// Nome exibido, 1 a 64 caracteres. Ausente: não muda.
@@ -24,6 +25,12 @@ pub struct UpdateTenant {
     /// Descrição em texto simples, até 2000 caracteres (as quebras de linha
     /// ficam). Vazia: a comunidade fica sem descrição. Ausente: não muda.
     pub description: Option<String>,
+    /// O endereço novo, com a validação da criação. O antigo fica livre na
+    /// hora, sem redirecionamento: links salvos e mensagens já enviadas com
+    /// ele param de funcionar. Links de convite continuam valendo (usam o
+    /// token). Ausente ou igual ao atual: não muda.
+    #[schema(example = "quake-brasil")]
+    pub slug: Option<String>,
 }
 
 #[derive(Deserialize, ToSchema)]

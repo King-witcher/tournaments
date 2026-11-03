@@ -33,6 +33,7 @@ const RESERVED_SLUGS: &[&str] = &[
     "users",
 ];
 
+/// Na criação e na troca de endereço.
 pub fn validate_slug(slug: &str) -> Result<(), ApiError> {
     if !is_well_formed(slug) {
         return Err(ApiError::invalid("tenant.slug_invalid"));

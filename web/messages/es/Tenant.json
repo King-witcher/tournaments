@@ -22,6 +22,14 @@
     "descriptionHint": "Aparece en la pestaña Acerca de y en la página de la invitación.",
     "saved": "Nombre y descripción guardados."
   },
+  "address": {
+    "title": "Dirección",
+    "hint": "El enlace de la comunidad será {address}.",
+    "invalid": "No puede terminar con guion.",
+    "placeholder": "tu-direccion",
+    "submit": "Cambiar dirección",
+    "confirm": "La comunidad pasa a {address}. Los enlaces guardados y los mensajes ya enviados con {old}, como los de Discord, dejan de funcionar. Otra comunidad puede tomar esa dirección. Los enlaces de invitación siguen valiendo."
+  },
   "members": {
     "label": "Miembros de la comunidad",
     "loading": "Cargando los miembros…",

@@ -277,13 +277,35 @@ pub async fn set_screenshots_required(
     Ok(())
 }
 
-/// Exclui o torneio se ainda for rascunho. `false` se não era.
-pub async fn delete_draft(conn: &mut PgConnection, id: TournamentId) -> Result<bool, sqlx::Error> {
-    let result = sqlx::query!(
-        "delete from tournaments where id = $1 and status = 'draft'",
-        id.0
+/// Troca o slug do torneio; o antigo fica livre. Quem chama confere que é
+/// rascunho (o banco também: um rascunho nunca avisou ninguém, então não há
+/// caminho a reescrever nas notificações). 409 `tournament.slug_taken`.
+pub async fn rename(conn: &mut PgConnection, id: TournamentId, slug: &str) -> Result<(), ApiError> {
+    let done = sqlx::query!(
+        "update tournaments set slug = $2, updated_at = now() where id = $1",
+        id.0,
+        slug
     )
     .execute(conn)
-    .await?;
-    Ok(result.rows_affected() > 0)
+    .await;
+    match done {
+        Ok(_) => Ok(()),
+        Err(sqlx::Error::Database(e))
+            if e.constraint() == Some("tournaments_tenant_id_slug_key") =>
+        {
+            Err(ApiError::conflict("tournament.slug_taken"))
+        }
+        Err(e) => Err(e.into()),
+    }
+}
+
+/// Exclui o torneio. A cascata leva tudo o que está dentro (o trigger
+/// `tournaments_path_forgotten`, também as notificações e os avisos pendentes
+/// dele; os objetos dos buckets entram nas filas de exclusão), e os mapas
+/// confirmados marcam o rating do tenant para recálculo.
+pub async fn delete(conn: &mut PgConnection, id: TournamentId) -> Result<(), sqlx::Error> {
+    sqlx::query!("delete from tournaments where id = $1", id.0)
+        .execute(conn)
+        .await?;
+    Ok(())
 }

@@ -24,12 +24,12 @@ use crate::{
     ),
     request_body = PutTranslation,
     responses(
-        (status = OK, body = TournamentTranslation, description = "Tradução criada ou substituída"),
+        (status = OK, body = TournamentTranslation, description = "Tradução criada ou substituída; encerrado o torneio, só o nome e a descrição mudam"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path (idioma desconhecido)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.finished (regras diferentes das gravadas, com o torneio encerrado)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, request.invalid_body"),
     )
 )]
@@ -43,13 +43,18 @@ pub async fn put_translation(
     let found = db::find(&mut tx, member.tenant, &path.tournament, None)
         .await?
         .ok_or(ApiError::not_found("tournament.not_found"))?;
-    if !found.status.texts_editable() {
-        return Err(ApiError::conflict("tournament.finished"));
-    }
     if path.locale == found.locale {
         return Err(ApiError::invalid("tournament.translation_same_locale"));
     }
     let texts = Texts::clean(&body.name, &body.description, &body.rules)?;
+    let saved_rules = found
+        .translations
+        .iter()
+        .find(|t| t.locale == path.locale)
+        .map_or("", |t| t.rules.as_str());
+    if found.status.is_finished() && texts.rules != saved_rules {
+        return Err(ApiError::conflict("tournament.finished"));
+    }
     db::put_translation(&mut tx, found.id, path.locale, &texts).await?;
     changes::changed(&mut tx, found.id).await?;
     tx.commit().await?;
@@ -71,12 +76,11 @@ pub async fn put_translation(
         ("locale" = crate::shared::Locale, Path, description = "Idioma da tradução"),
     ),
     responses(
-        (status = NO_CONTENT, description = "Tradução removida; o idioma volta a mostrar o original"),
+        (status = NO_CONTENT, description = "Tradução removida; o idioma volta a mostrar o original. Vale também com o torneio encerrado"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, tournament.translation_not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.finished"),
     )
 )]
 pub async fn delete_translation(
@@ -88,9 +92,6 @@ pub async fn delete_translation(
     let found = db::find(&mut tx, member.tenant, &path.tournament, None)
         .await?
         .ok_or(ApiError::not_found("tournament.not_found"))?;
-    if !found.status.texts_editable() {
-        return Err(ApiError::conflict("tournament.finished"));
-    }
     if !db::delete_translation(&mut tx, found.id, path.locale).await? {
         return Err(ApiError::not_found("tournament.translation_not_found"));
     }

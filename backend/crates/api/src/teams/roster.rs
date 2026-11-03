@@ -67,7 +67,7 @@ pub async fn update_team(
     if body.captain.is_some() && !organizer {
         return Err(ApiError::forbidden("tenant.forbidden"));
     }
-    if !tournament.status.texts_editable() {
+    if tournament.status.is_finished() {
         return Err(ApiError::conflict("tournament.finished"));
     }
     if let Some(name) = &body.name {

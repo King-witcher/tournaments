@@ -2,7 +2,14 @@
   "tournament": "Torneio",
   "name": "Nome",
   "slug": "Endereço",
-  "slugHint": "O link do torneio será {address}. Não muda depois.",
+  "slugHint": "O link do torneio será {address}. Não muda depois de publicar.",
+  "slugLocked": "O endereço não muda depois de publicar. Só o nome muda.",
+  "slugConfirm": {
+    "title": "Trocar endereço",
+    "submit": "Salvar e trocar endereço",
+    "text": "O rascunho passa para {address}. Links salvos com {old} param de funcionar. Outro torneio pode pegar esse endereço. Os links de inscrição continuam valendo."
+  },
+  "finishedLocked": "O torneio encerrou. Só o nome, a descrição e a capa ainda mudam.",
   "slugInvalid": "Não pode terminar com hífen.",
   "slugPlaceholder": "seu-torneio",
   "startsAt": "Início",

@@ -17,6 +17,8 @@ type Props = {
   errors: FieldErrors;
   /** Dentro de um item de acordeão, que já dá o título: sem a seção em volta. */
   bare?: boolean;
+  /** Encerrado: as regras não mudam mais. */
+  disabled?: boolean;
 };
 
 /**
@@ -31,6 +33,7 @@ export const TournamentRulesSection = memo(function TournamentRulesSection({
   onChange,
   errors,
   bare = false,
+  disabled = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const field = (
@@ -42,6 +45,7 @@ export const TournamentRulesSection = memo(function TournamentRulesSection({
       maxLength={20000}
       lang={values.locale}
       value={values.rules}
+      disabled={disabled}
       invalid={errors.rules !== undefined}
       invalidText={errors.rules}
       onChange={(e) => onChange({ rules: e.target.value })}

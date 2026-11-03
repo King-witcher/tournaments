@@ -361,3 +361,57 @@ async fn the_tab_that_acted_does_not_reload_its_own_match_change() {
     assert_eq!(next(&mut acting).await, me);
     silent(&mut acting).await;
 }
+
+#[tokio::test]
+async fn an_open_tab_goes_to_the_new_address() {
+    let (db, _lease) = crate::db::test_db().await;
+    let state = state(db.clone());
+    let app = app_from(state.clone());
+    let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
+    create(&app, &ana, "quake-br").await;
+    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
+    realtime::dispatch_once(&state).await.unwrap();
+
+    let url = serve(state.clone()).await;
+    let mut tab = connect(&url, &bia).await;
+    let topic = json!({ "type": "subscribe", "tenant": "quake-br" });
+    assert_eq!(send(&mut tab, topic).await, subscribed("quake-br", None));
+
+    let moved = json!({ "slug": "quake-brasil" });
+    let (status, body) = patch(&app, "/tenants/quake-br", &ana, moved).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    realtime::dispatch_once(&state).await.unwrap();
+    assert_eq!(
+        next(&mut tab).await,
+        json!({ "type": "moved", "tenant": "quake-br", "tournament": null, "to": "quake-brasil" })
+    );
+    assert_eq!(
+        next(&mut tab).await,
+        json!({ "type": "changed", "scope": "me" })
+    );
+    assert_eq!(
+        next(&mut tab).await,
+        json!({ "type": "changed", "scope": "tenant", "tenant": "quake-brasil" })
+    );
+
+    // A comunidade que pega o endereço antigo não chega a esta aba; a que ela
+    // assinava, sim, pelo novo.
+    let eva = user(&db, "Eva").await;
+    create(&app, &eva, "quake-br").await;
+    let edit = json!({ "name": "Outra" });
+    let (status, body) = patch(&app, "/tenants/quake-br", &eva, edit).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    realtime::dispatch_once(&state).await.unwrap();
+    silent(&mut tab).await;
+    let edit = json!({ "name": "Quake Brasil" });
+    let (status, body) = patch(&app, "/tenants/quake-brasil", &ana, edit).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    realtime::dispatch_once(&state).await.unwrap();
+    assert_eq!(
+        next(&mut tab).await,
+        json!({ "type": "changed", "scope": "tenant", "tenant": "quake-brasil" })
+    );
+    // De fora, ela não assina o endereço antigo pelo acesso de antes.
+    let topic = json!({ "type": "subscribe", "tenant": "quake-br" });
+    assert_eq!(send(&mut tab, topic).await["code"], "tenant.not_found");
+}

@@ -1,5 +1,6 @@
-//! Torneios de um tenant: criar (rascunho), listar, ver, editar, publicar,
-//! excluir rascunho e traduzir os textos. Formato e regra de campeões passam
+//! Torneios de um tenant: criar (rascunho), listar, ver, editar (o endereço, só
+//! no rascunho), publicar, excluir (na hora, sem aviso; depois de começar, só o
+//! owner) e traduzir os textos. Formato e regra de campeões passam
 //! pela checagem do `engine` ao criar, ao mudar e ao publicar (e, com os
 //! participantes reais, ao iniciar: `Setup::check_entrants`). Também decide
 //! quem vê cada torneio (`visibility`: só o rascunho some para os

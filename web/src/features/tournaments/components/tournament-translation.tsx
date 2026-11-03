@@ -23,6 +23,8 @@ type Props = {
   errors: FieldErrors<keyof TranslationValues>;
   /** O torneio já tem esta tradução salva: remover a apaga ao salvar. */
   saved: boolean;
+  /** Encerrado: as regras não mudam mais. */
+  rulesLocked: boolean;
 };
 
 /**
@@ -38,6 +40,7 @@ export const TournamentTranslation = memo(function TournamentTranslation({
   onChange,
   errors,
   saved,
+  rulesLocked,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const tLocales = useTranslations("Locales");
@@ -104,6 +107,7 @@ export const TournamentTranslation = memo(function TournamentTranslation({
           maxLength={20000}
           lang={locale}
           value={draft.rules}
+          disabled={rulesLocked}
           invalid={errors.rules !== undefined}
           invalidText={errors.rules}
           onChange={(e) => onChange(locale, { rules: e.target.value })}

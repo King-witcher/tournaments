@@ -1,9 +1,11 @@
 //! O nome do objeto de um logo ou de uma capa no bucket público:
 //! `logos/<comunidade>/<aleatório>.<ext>` e
 //! `covers/<comunidade>/<torneio>/<aleatório>.<ext>`. Como nos screenshots, as
-//! pastas são os slugs (que não mudam) e os 128 bits aleatórios fazem o nome
-//! impossível de adivinhar e único, então o objeto nunca muda de conteúdo e o
-//! CDN o guarda para sempre. A tabela confere o formato.
+//! pastas são os slugs de quando o objeto foi criado (ele não se move se o
+//! endereço mudar: o banco guarda o nome inteiro, e nada o compara com o slug
+//! de agora) e os 128 bits aleatórios fazem o nome impossível de adivinhar e
+//! único, então o objeto nunca muda de conteúdo e o CDN o guarda para sempre.
+//! A tabela confere o formato.
 
 use crate::shared::{ImageType, token::random_token};
 

@@ -25,6 +25,7 @@ const RESERVED_SLUGS: &[&str] = &[
     "tournaments",
 ];
 
+/// Na criação e na troca de endereço do rascunho.
 pub fn validate_slug(slug: &str) -> Result<(), ApiError> {
     if !is_well_formed(slug) {
         return Err(ApiError::invalid("tournament.slug_invalid"));
