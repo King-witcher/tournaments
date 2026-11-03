@@ -1,4 +1,10 @@
-import { type RefObject, useCallback, useEffect, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
 import { api } from "@/shared/api/client";
@@ -37,6 +43,8 @@ export function useNotificationLists(
     };
   });
   const [failed, setFailed] = useState(false);
+  // A última busca que vale: a resposta de uma anterior é descartada.
+  const latest = useRef(0);
 
   useEffect(() => hub?.openBell(), [hub]);
 
@@ -45,16 +53,15 @@ export function useNotificationLists(
   }, [saved, lists]);
 
   useEffect(() => {
-    let request = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = () => {
-      const current = ++request;
+      const current = ++latest.current;
       api
         .GET("/me/notifications", {
           params: { query: { read: view === "read" } },
         })
         .then(({ data }) => {
-          if (current !== request) return;
+          if (current !== latest.current) return;
           setFailed(!data);
           if (!data) return;
           setLists((all) => ({ ...all, [view]: data }));
@@ -63,7 +70,7 @@ export function useNotificationLists(
           }
         })
         .catch(() => {
-          if (current === request) setFailed(true);
+          if (current === latest.current) setFailed(true);
         });
     };
     load();
@@ -73,14 +80,18 @@ export function useNotificationLists(
       timer = setTimeout(load, REFRESH_DELAY_MS);
     });
     return () => {
-      request = -1;
+      latest.current++;
       clearTimeout(timer);
       off?.();
     };
   }, [view, hub]);
 
-  // As lidas guardadas ficam para trás; a troca de vista busca de novo.
-  const clearUnread = useCallback(() => setLists({ unread: [] }), []);
+  // As lidas guardadas ficam para trás; a troca de vista busca de novo. Uma
+  // busca que saiu antes de marcar traria as não lidas de volta: não vale mais.
+  const clearUnread = useCallback(() => {
+    latest.current++;
+    setLists({ unread: [] });
+  }, []);
 
   return { lists, failed, clearUnread };
 }

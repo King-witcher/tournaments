@@ -46,6 +46,8 @@ export function NotificationList({
       </h2>
       <div className={styles.views}>
         <ContentSwitcher
+          lowContrast
+          size="sm"
           aria-labelledby={titleId}
           options={[
             { value: "unread", text: t("unread"), id: tabId("unread") },
