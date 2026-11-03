@@ -18,6 +18,10 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 - **Link de convite**: um por comunidade e um por torneio, sempre (`invite_token not null unique`, nas duas tabelas), em base58 de 22 caracteres.
 - **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; JSON de regras de campeões e de fase com a forma do `engine`; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
 
+## Sala de veto
+
+Lugares de acordo com o modo (`team_size` por lado, no commit) e pool de acordo com o modo do mapa; um token por lugar; validade obrigatória; nome de 1 a 32 caracteres, sem espaço nas pontas, definido uma vez; configuração que não muda (o replay lê dela); histórico que só cresce, na forma do `match_veto_events`, com os lugares da própria sala. Apagar a sala leva tudo; excluir a conta deixa a sala sem autor. Uma migration que apague um mapa ou campeão precisa apagar antes as salas que os usam.
+
 ## Fora do banco, de propósito
 
 - Ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra) e datas agendadas no futuro; histórico imutável (os testes envelhecem essas datas direto no banco).

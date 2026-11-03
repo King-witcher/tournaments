@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use engine::core::{ChampionId, MapId, ParticipantId};
 use sqlx::{PgConnection, PgPool};
 
-use super::state::{Kind, VetoRow};
+use super::state::{Kind, MatchVetoRow, VetoRow};
 use crate::{
     matches::{db::MatchRef, result::Side},
     shared::ApiError,
@@ -46,7 +46,7 @@ pub async fn events(
     conn: &mut PgConnection,
     tournament: TournamentId,
     stage: i16,
-) -> Result<Vec<VetoRow>, ApiError> {
+) -> Result<Vec<MatchVetoRow>, ApiError> {
     let rows = sqlx::query!(
         r#"select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,
                   e.played_map_id, e.champion_id, e.player_id, e.pick_game, e.gave_way, e.seed,
@@ -66,26 +66,28 @@ pub async fn events(
     .await?;
     rows.into_iter()
         .map(|r| {
-            Ok(VetoRow {
-                id: r.id,
+            Ok(MatchVetoRow {
                 match_id: crate::matches::key::parse(&r.match_key)
                     .ok_or_else(|| crate::matches::result::unknown("match_key", &r.match_key))?,
                 sides: (ParticipantId(r.side_a), ParticipantId(r.side_b)),
-                game: r.game,
-                kind: Kind::from_db(&r.kind)?,
-                side: r.side.as_deref().map(Side::from_db).transpose()?,
-                map: r.map_id.map(MapId),
-                played_map: r.played_map_id.map(MapId),
-                champion: r.champion_id.map(ChampionId),
-                player: r.player_id,
-                player_name: r.player_name,
-                pick_game: r.pick_game,
-                gave_way: r.gave_way,
-                seed: r.seed,
-                timeout: r.timeout,
-                actor: r.actor,
-                actor_name: r.actor_name,
-                created_at: r.created_at,
+                row: VetoRow {
+                    id: r.id,
+                    game: r.game,
+                    kind: Kind::from_db(&r.kind)?,
+                    side: r.side.as_deref().map(Side::from_db).transpose()?,
+                    map: r.map_id.map(MapId),
+                    played_map: r.played_map_id.map(MapId),
+                    champion: r.champion_id.map(ChampionId),
+                    player: r.player_id,
+                    player_name: r.player_name,
+                    pick_game: r.pick_game,
+                    gave_way: r.gave_way,
+                    seed: r.seed,
+                    timeout: r.timeout,
+                    actor: r.actor,
+                    actor_name: r.actor_name,
+                    created_at: r.created_at,
+                },
             })
         })
         .collect()

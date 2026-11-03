@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into veto_room_maps (room_id, map_id, position)\n         select $1, map_id, position::smallint\n         from unnest($2::bigint[]) with ordinality as pool (map_id, position)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ff88d7f839073c7238928d58ec547764814b861a373c5610cb7c967b9ddd4d1a"
+}

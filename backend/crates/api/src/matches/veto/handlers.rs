@@ -7,8 +7,8 @@
 
 use axum::{Json, extract::State};
 use engine::{
-    core::{ParticipantId, PlayerId},
-    veto::{Action, Choice, Event, Picker, Turn, Veto},
+    core::ParticipantId,
+    veto::{Event, Veto},
 };
 use sqlx::PgConnection;
 
@@ -16,6 +16,7 @@ use super::{
     Ctx,
     db::{self, NewVetoEvent},
     state::{Kind, MatchVeto, ev_side, other, slot},
+    step,
     types::{UndoAnswer, VetoChoice, VetoSeen},
 };
 use crate::{
@@ -58,14 +59,9 @@ fn begun<'a>(stage: &'a Stage, m: &engine::core::Match) -> Result<&'a MatchVeto,
         .ok_or(NOT_BEGUN)
 }
 
-/// A vez que a tela de quem age mostrava (`step`, se veio) ainda é a de
-/// agora: um clique que chega depois de um sorteio ou do passo do outro não
-/// cai no passo seguinte. 409 `veto.step_changed`.
+/// A vez que a tela mostrava (`step::seen`) ainda é a de agora.
 fn seen(mv: &MatchVeto, step: Option<i64>) -> Result<(), ApiError> {
-    match step {
-        Some(step) if mv.step() != Some(step) => Err(ApiError::conflict("veto.step_changed")),
-        _ => Ok(()),
-    }
+    step::seen(&mv.log, step)
 }
 
 /// Começa o veto: o seed melhor começa; `actor` é o organizador que forçou.
@@ -137,7 +133,7 @@ pub async fn veto_ready(
     if mv.is_some_and(|v| v.state.begun()) {
         return Err(ApiError::conflict("veto.already_begun"));
     }
-    let ready = mv.map(MatchVeto::ready).unwrap_or_default();
+    let ready = mv.map(|v| v.ready()).unwrap_or_default();
     if !ready[slot(side)] {
         let at = actions::at(&member, &tournament, &stage, &path.key);
         let event = NewVetoEvent::new(Kind::Ready, None, Some(side), Some(member.user.id));
@@ -223,109 +219,30 @@ pub async fn veto_step(
     PathParams(path): PathParams<MatchPath>,
     JsonBody(body): JsonBody<VetoChoice>,
 ) -> Result<Json<MatchDetail>, ApiError> {
-    const INVALID: ApiError = ApiError::invalid("veto.option_invalid");
     let mut tx = state.db.begin().await?;
     let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let mv = begun(&stage, m)?;
     seen(mv, body.step)?;
-    let choice = choice(&stage, &body)?;
-    let (game, action, pick_for) = match mv.state.turn() {
-        Turn::Act {
-            game,
-            action,
-            pick_for,
-            ..
-        } => (game, action, pick_for),
-        Turn::Done { .. } => return Err(ApiError::conflict("veto.finished")),
-        Turn::NotBegun => return Err(NOT_BEGUN),
-        // A fase sempre informa o elenco (`stage::vetoes`).
-        Turn::RostersUnknown { .. } => return Err(ApiError::internal()),
-    };
+    let choice = step::choice(&stage.map_pool, &stage.champions, &body)?;
+    let turn = step::open_turn(&mv.state)?;
     let ctx = Ctx::of(&stage, mv);
     let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
-    let player = PlayerId(member.user.id);
-    let (event, pick_game, gave_way) = match (action, choice) {
-        (Action::TeamPick, Choice::Champion(champion)) => {
-            let target = body
-                .game
-                .and_then(|g| u8::try_from(g).ok())
-                .ok_or(INVALID)?;
-            let picker = Picker {
-                side: ev_side(side),
-                player: Some(player),
-            };
-            let gave_way = mv
-                .state
-                .pick_options(picker, target, &ctx.engine())
-                .gave_way
-                .is_some();
-            let event = Event::TeamPick {
-                side: ev_side(side),
-                player,
-                game: target,
-                champion,
-                gave_way,
-            };
-            (event, Some(target), gave_way)
-        }
-        (Action::TeamPick, Choice::Map(_)) => return Err(INVALID),
-        (_, _) => {
-            let event = Event::Step {
-                side: ev_side(side),
-                action,
-                choice,
-            };
-            let pick_game = pick_for.filter(|_| matches!(choice, Choice::Champion(_)));
-            (event, pick_game, false)
-        }
-    };
-    mv.state.clone().apply(event, Some(&ctx.engine()))?;
-
+    let row = step::planned(
+        &mv.state,
+        &ctx,
+        turn,
+        side,
+        member.user.id,
+        choice,
+        body.game,
+    )?;
     let at = actions::at(&member, &tournament, &stage, &path.key);
-    let (map, champion) = match choice {
-        Choice::Map(m) => (Some(m), None),
-        Choice::Champion(c) => (None, Some(c)),
-    };
-    let row = NewVetoEvent {
-        map,
-        champion,
-        player: (action == Action::TeamPick).then_some(member.user.id),
-        pick_game: pick_game.map(i16::from),
-        gave_way,
-        ..NewVetoEvent::new(
-            Kind::of(action),
-            Some(i16::from(game)),
-            Some(side),
-            Some(member.user.id),
-        )
-    };
     db::insert(&mut tx, &at, sides, &row).await?;
     let detail =
         actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
     Ok(Json(detail))
-}
-
-/// O mapa (do pool do torneio) ou o campeão (ativo) do passo, pelo slug. 422
-/// `veto.option_invalid` se não existe ou se não veio exatamente um.
-fn choice(stage: &Stage, body: &VetoChoice) -> Result<Choice, ApiError> {
-    const INVALID: ApiError = ApiError::invalid("veto.option_invalid");
-    match (&body.map, &body.champion) {
-        (Some(slug), None) => stage
-            .map_pool
-            .iter()
-            .find(|m| &m.slug == slug)
-            .map(|m| Choice::Map(m.id))
-            .ok_or(INVALID),
-        (None, Some(slug)) => stage
-            .champions
-            .iter()
-            .find(|c| c.active && &c.slug == slug)
-            .map(|c| Choice::Champion(c.id))
-            .ok_or(INVALID),
-        _ => Err(INVALID),
-    }
 }
 
 #[utoipa::path(

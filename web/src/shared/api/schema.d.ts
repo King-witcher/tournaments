@@ -1540,6 +1540,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/veto-rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_veto_room"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veto-rooms/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_veto_room"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veto-rooms/{token}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["join_veto_room"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veto-rooms/{token}/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_room_ready"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veto-rooms/{token}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["veto_room_step"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/veto-rooms/{token}/ws": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["veto_room_socket"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ws": {
         parameters: {
             query?: never;
@@ -2186,6 +2282,14 @@ export interface components {
             locale: components["schemas"]["Locale"];
             name: string;
         };
+        /** @description Quem entra num lugar. */
+        JoinVetoRoom: {
+            /**
+             * @description O nome, de 1 a 32 caracteres, de quem não está logado; logado, vale o da
+             *     conta.
+             */
+            name?: string | null;
+        };
         /** @description Token de um link mandado por email (cadastro, troca de email). */
         LinkToken: {
             token: string;
@@ -2532,6 +2636,23 @@ export interface components {
              * @example 245000
              */
             size: number;
+        };
+        /** @description Uma sala nova. */
+        NewVetoRoom: {
+            /**
+             * Format: int32
+             * @description Melhor de 1, 3 ou 5.
+             * @example 3
+             */
+            best_of: number;
+            champion_rules?: components["schemas"]["VetoRoomChampionRules"] | null;
+            /**
+             * Format: int32
+             * @description Jogadores por lado: 1 (duelo), 2, 3 ou 4.
+             * @example 1
+             */
+            team_size: number;
+            veto?: components["schemas"]["VetoInput"] | null;
         };
         /** @description A próxima partida de quem vê num torneio em andamento. */
         NextMatch: {
@@ -3013,6 +3134,11 @@ export interface components {
          * @enum {string}
          */
         Role: "player" | "organizer" | "owner";
+        /** @description Da API para o navegador, no socket de uma sala de veto. */
+        RoomMessage: {
+            /** @enum {string} */
+            type: "changed";
+        };
         /** @description Pedido de exclusão da conta logada. */
         ScheduleAccountDeletion: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
@@ -3916,6 +4042,95 @@ export interface components {
             side: components["schemas"]["Side"];
             /** Format: int64 */
             user_id: number;
+        };
+        /** @description As regras de campeões da sala; a repetição vale dentro da série. */
+        VetoRoomChampionRules: {
+            /**
+             * Format: int32
+             * @description Bans de campeão de cada lado, de 0 a 3 (padrão 1).
+             * @default 1
+             * @example 1
+             */
+            bans_per_series: number;
+            /**
+             * @description Adversários podem usar o mesmo campeão na mesma partida (padrão sim).
+             * @default true
+             */
+            mirror: boolean;
+            no_repeat?: components["schemas"]["NoRepeatWho"] | null;
+            /**
+             * @description Nos times: colegas podem usar o mesmo campeão na mesma partida (padrão
+             *     não).
+             */
+            same_team?: boolean;
+        };
+        /** @description A sala criada: `token` é o link de gestão. */
+        VetoRoomCreated: {
+            token: string;
+        };
+        /** @description A sala como este link a vê. */
+        VetoRoomDetail: {
+            /** Format: int32 */
+            bans_per_series: number;
+            /** Format: int32 */
+            best_of: number;
+            /**
+             * Format: date-time
+             * @description Quando a sala deixa de existir: 2 h depois de criada, se ninguém
+             *     começou; 24 h depois do início.
+             */
+            expires_at: string;
+            links?: components["schemas"]["VetoRoomLinks"] | null;
+            no_repeat?: components["schemas"]["NoRepeatWho"] | null;
+            /**
+             * Format: date-time
+             * @description A hora da API, para o cronômetro.
+             */
+            now: string;
+            order: components["schemas"]["VetoOrder"];
+            role: components["schemas"]["VetoRoomRole"];
+            seat?: components["schemas"]["VetoRoomSeat"] | null;
+            seats: components["schemas"]["VetoRoomSeat"][];
+            /** Format: int32 */
+            team_size: number;
+            /**
+             * @description O veto, do ponto de vista deste link. `user_id` e os ids do histórico são
+             *     lugares; nomes vazios são lugares em que ninguém entrou.
+             */
+            veto: components["schemas"]["VetoView"];
+        };
+        /** @description Todos os links da sala: só o de gestão os vê. */
+        VetoRoomLinks: {
+            manage: string;
+            seats: components["schemas"]["VetoRoomSeatLink"][];
+            spectator: string;
+        };
+        /**
+         * @description Quem entrou por este link.
+         * @enum {string}
+         */
+        VetoRoomRole: "manager" | "spectator" | "player";
+        /** @description Um lugar da sala. */
+        VetoRoomSeat: {
+            /**
+             * Format: int64
+             * @description O jogador no veto (`VetoTeamPick.user_id`, `VetoPlayer.user_id`).
+             */
+            id: number;
+            /** @description `null`: ninguém entrou neste lugar. */
+            name?: string | null;
+            /**
+             * Format: int32
+             * @description A posição no lado, de 1 em diante.
+             */
+            position: number;
+            side: components["schemas"]["Side"];
+        };
+        /** @description O link de um lugar. */
+        VetoRoomSeatLink: {
+            /** Format: int64 */
+            seat: number;
+            token: string;
         };
         /**
          * @description A vez que a tela de quem age mostrava (`VetoView::step`), no desfazer e
@@ -11263,6 +11478,316 @@ export interface operations {
             };
             /** @description tenant.confirmation_mismatch (o slug digitado não confere), request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_veto_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewVetoRoom"];
+            };
+        };
+        responses: {
+            /** @description A sala, com um link por jogador, um de espectador e um de gestão (`token`, que mostra todos). Qualquer um cria, sem login. Vale 2 h se ninguém começar e 24 h a partir do início */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomCreated"];
+                };
+            };
+            /** @description tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, champions.pool_exhausted {required, available}, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.rate_limited {minutes} (salas demais nesta hora, deste IP ou desta conta) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.anonymous_full (teto de salas sem login: com a conta, cria) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_veto_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Um link da sala: de gestão, de espectador ou de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sala como este link a vê: o veto com as opções de quem joga e, no de gestão, todos os links. O espectador lê da memória enquanto nada muda, por muitos que sejam. Não lê a sessão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomDetail"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    join_veto_room: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description O link de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["JoinVetoRoom"] | null;
+            };
+        };
+        responses: {
+            /** @description Quem abre o link entra no lugar: logado, com o nome da conta; sem login, com o nome que digitou. O nome é definido uma vez: quem reabre o link, ou o abre em outro aparelho, continua como aquele lugar, e o nome enviado é ignorado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomDetail"];
+                };
+            };
+            /** @description veto_room.not_player (link de gestão ou de espectador) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.name_invalid (sem login e sem nome, ou nome fora de 1 a 32 caracteres numa linha), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_room_ready: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description O link de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é sorteado, e a sala passa a valer 24 h. Repetir não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomDetail"];
+                };
+            };
+            /** @description veto_room.not_player (link de gestão ou de espectador) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_joined (falta entrar no lugar), veto.already_begun */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_room_step: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description O link de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VetoChoice"];
+            };
+        };
+        responses: {
+            /** @description O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. Na janela simultânea dos times (`team_pick`), cada lugar escolhe o próprio campeão de cada partida (`game`). Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomDetail"];
+                };
+            };
+            /** @description veto_room.not_player (link de gestão ou de espectador) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_joined (falta entrar no lugar), veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished, veto.not_your_turn, veto.already_picked, veto.champion_taken */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto.option_invalid, veto.champion_forbidden, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_room_socket: {
+        parameters: {
+            query?: {
+                /** @description Id que a aba dá à conexão, como em `GET /ws`: a ação que manda o mesmo id em `x-realtime-connection` não volta a esta conexão */
+                connection?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Um link da sala: de gestão, de espectador ou de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WebSocket aberto. O navegador recebe `RoomMessage` em JSON: `changed` a cada mudança da sala (peça a sala de novo; o dado não vem aqui). Ping a cada 30 s; quem não responde sai. Fechamento 4004: a sala venceu (não reconecte). Em qualquer outra queda, reconecte e recarregue */
+            101: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description realtime.origin_forbidden (o Origin não é o do site) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description realtime.upgrade_required (não é um pedido de WebSocket) */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.too_many_connections (a sala ou a API no teto de conexões: recarregue de tempos em tempos) */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -3,9 +3,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { useRouter } from "@/i18n/navigation";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { currentGame, nextMapPickGame, turnKey } from "../lib/veto";
 import { VetoTurnBar } from "./veto-turn-bar";
 
@@ -19,13 +17,9 @@ import { VetoTurnBar } from "./veto-turn-bar";
  */
 export function VetoTurn() {
   const t = useTranslations("Match.veto");
-  const router = useRouter();
-  const { detail } = useLiveMatch();
-  const names = useSideNames(detail);
-  const veto = detail.veto;
+  const { veto, now, mine, names, refresh } = useVetoBoard();
   const turn = veto?.turn;
   if (!veto || !turn || veto.status !== "in_progress") return null;
-  const mine = detail.viewer_side ?? null;
   const game = currentGame(veto);
   const teamPick = turn.action === "team_pick";
   const ours = teamPick
@@ -65,10 +59,10 @@ export function VetoTurn() {
       acting={ours}
       deadline={veto.deadline ?? null}
       seconds={(teamPick && veto.team_pick_seconds) || veto.step_seconds}
-      serverNow={detail.now}
+      serverNow={now}
       // O sorteio é feito pela API, que ainda aceita o clique por 2 s depois
       // do prazo: recarrega depois disso para mostrar.
-      onExpire={() => setTimeout(() => router.refresh(), 2500)}
+      onExpire={() => setTimeout(refresh, 2500)}
     />
   );
 }

@@ -14,10 +14,18 @@ type Props = {
   viewerId: number | null;
   /** A partida da vez no draft: em destaque. */
   current: boolean;
+  /** Sem mapa, não guarda o lugar dele. */
+  hideEmptyMap: boolean;
 };
 
 /** Uma partida no resumo do draft: [campeão de A] mapa [campeão de B]. */
-export function DraftGameRow({ veto, game, viewerId, current }: Props) {
+export function DraftGameRow({
+  veto,
+  game,
+  viewerId,
+  current,
+  hideEmptyMap,
+}: Props) {
   const t = useTranslations("Match.games");
   return (
     <tr className={cn(current && styles.current)}>
@@ -25,13 +33,15 @@ export function DraftGameRow({ veto, game, viewerId, current }: Props) {
         <SidePicks veto={veto} game={game} side="a" viewerId={viewerId} />
       </td>
       <th scope="row" className={styles.middle}>
-        <span className={styles.map}>
-          {game.map ? (
-            <MapThumbnail slug={game.map.slug} />
-          ) : (
-            <span aria-hidden className={styles.noMap} />
-          )}
-        </span>
+        {(game.map || !hideEmptyMap) && (
+          <span className={styles.map}>
+            {game.map ? (
+              <MapThumbnail slug={game.map.slug} />
+            ) : (
+              <span aria-hidden className={styles.noMap} />
+            )}
+          </span>
+        )}
         <span className={styles.game}>{t("game", { number: game.game })}</span>
         {game.map && <span className={styles.mapName}>{game.map.name}</span>}
       </th>

@@ -1,6 +1,8 @@
-//! O veto de uma partida como fica gravado (`match_veto_events`) e o estado
-//! que o `engine` refaz dele (`veto::Veto::replay`). O "pronto" de cada lado,
-//! o pedido de desfazer e o relógio do passo são da API: saem das linhas.
+//! O veto como fica gravado e o estado que o `engine` refaz dele
+//! (`veto::Veto::replay`): `VetoLog` serve à série de um torneio
+//! (`match_veto_events`, `MatchVeto`) e à sala de veto (`veto_rooms`). O
+//! "pronto" de cada lado, o pedido de desfazer e o relógio do passo são da API:
+//! saem das linhas.
 
 use chrono::{DateTime, Utc};
 use engine::{
@@ -13,12 +15,11 @@ use crate::{
     shared::ApiError,
 };
 
-/// Um evento gravado.
+/// Um evento gravado de um veto, sem dizer de quem é. `actor` e `player` são
+/// quem agiu: na série, a conta; na sala, o lugar.
 #[derive(Clone, Debug)]
 pub struct VetoRow {
     pub id: i64,
-    pub match_id: MatchId,
-    pub sides: (ParticipantId, ParticipantId),
     pub game: Option<i16>,
     pub kind: Kind,
     pub side: Option<Side>,
@@ -204,25 +205,45 @@ pub const fn slot(side: Side) -> usize {
     }
 }
 
-/// O veto de uma partida: as linhas e o estado refeito delas.
+/// Um evento gravado do veto de uma série de torneio.
+#[derive(Clone, Debug)]
+pub struct MatchVetoRow {
+    pub match_id: MatchId,
+    pub sides: (ParticipantId, ParticipantId),
+    pub row: VetoRow,
+}
+
+/// O veto de uma série de torneio. Lê como o `VetoLog` dela (`Deref`).
 #[derive(Clone, Debug)]
 pub struct MatchVeto {
     pub match_id: MatchId,
     pub sides: (ParticipantId, ParticipantId),
+    pub log: VetoLog,
+}
+
+impl std::ops::Deref for MatchVeto {
+    type Target = VetoLog;
+
+    fn deref(&self) -> &VetoLog {
+        &self.log
+    }
+}
+
+/// Um veto: as linhas e o estado refeito delas.
+#[derive(Clone, Debug)]
+pub struct VetoLog {
     pub rows: Vec<VetoRow>,
     pub state: Veto,
 }
 
-impl MatchVeto {
-    /// Refaz o veto de `rows` (os da partida, na ordem), com o que o
-    /// histórico não diz nos times (`rosters`: quem escolhe campeão de cada
-    /// lado agora, quantos mapas foram enviados e se a série acabou). Erro
-    /// interno se o histórico não fecha ou o elenco não vale.
+impl VetoLog {
+    /// Refaz o veto de `rows` (na ordem), com o que o histórico não diz nos
+    /// times (`rosters`: quem escolhe campeão de cada lado agora, quantos mapas
+    /// foram enviados e se a série acabou). Erro interno se o histórico não
+    /// fecha ou o elenco não vale.
     pub fn replay(
         rules: ev::VetoRules,
         best_of: u8,
-        match_id: MatchId,
-        sides: (ParticipantId, ParticipantId),
         rosters: Rosters,
         rows: Vec<VetoRow>,
     ) -> Result<Self, ApiError> {
@@ -233,19 +254,14 @@ impl MatchVeto {
             }
         }
         let mut state = Veto::replay(rules, best_of, events).map_err(|e| {
-            tracing::error!(%e, ?match_id, "histórico do veto não fecha");
+            tracing::error!(%e, "histórico do veto não fecha");
             ApiError::internal()
         })?;
         state.set_rosters(rosters).map_err(|e| {
-            tracing::error!(%e, ?match_id, "elenco do veto recusado");
+            tracing::error!(%e, "elenco do veto recusado");
             ApiError::internal()
         })?;
-        Ok(Self {
-            match_id,
-            sides,
-            rows,
-            state,
-        })
+        Ok(Self { rows, state })
     }
 
     /// Quem já disse que está pronto (`[a, b]`).

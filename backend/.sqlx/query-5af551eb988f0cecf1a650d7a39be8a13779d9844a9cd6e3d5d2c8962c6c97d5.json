@@ -1,0 +1,243 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with link as (\n                   select room_id, 'player' as kind, id as seat_id\n                   from veto_room_seats where token = $1\n                   union all\n                   select id, 'manager', null::bigint from veto_rooms where manage_token = $1\n                   union all\n                   select id, 'spectator', null::bigint from veto_rooms where spectator_token = $1\n               )\n               select r.id, r.manage_token, r.spectator_token, r.team_size, r.best_of, r.map_mode,\n                      r.veto_order, r.champion_phase, r.bans_per_series, r.mirror, r.same_team,\n                      r.no_repeat, r.step_seconds, r.team_pick_seconds, r.expires_at, r.due_at,\n                      link.kind as \"kind!\", link.seat_id as \"seat_id?\",\n                      (select coalesce(jsonb_agg(jsonb_build_object(\n                                  'id', s.id, 'side', s.side, 'position', s.position,\n                                  'token', s.token, 'name', s.name)\n                                  order by s.side, s.position), '[]'::jsonb)\n                       from veto_room_seats s where s.room_id = r.id)\n                          as \"seats!: Json<Vec<SeatRow>>\",\n                      (select coalesce(jsonb_agg(jsonb_build_object(\n                                  'id', m.id, 'slug', m.slug, 'name', m.name)\n                                  order by p.position), '[]'::jsonb)\n                       from veto_room_maps p join maps m on m.id = p.map_id\n                       where p.room_id = r.id)\n                          as \"maps!: Json<Vec<MapRow>>\",\n                      (select coalesce(jsonb_agg(jsonb_build_object(\n                                  'id', c.id, 'slug', c.slug, 'name', c.name, 'active', c.active)\n                                  order by c.id), '[]'::jsonb)\n                       from champions c where r.champion_phase)\n                          as \"champions!: Json<Vec<ChampionRow>>\"\n               from link join veto_rooms r on r.id = link.room_id\n               where r.expires_at > now() for update of r",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "manage_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "manage_token"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "spectator_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "spectator_token"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "team_size",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "team_size"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "best_of",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "best_of"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "map_mode",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "map_mode"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "veto_order",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "veto_order"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "champion_phase",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "champion_phase"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "bans_per_series",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "bans_per_series"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "mirror",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "mirror"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "same_team",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "same_team"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "no_repeat",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "no_repeat"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "step_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "step_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "team_pick_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "team_pick_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "due_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "due_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "kind!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 17,
+        "name": "seat_id?",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 18,
+        "name": "seats!: Json<Vec<SeatRow>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 19,
+        "name": "maps!: Json<Vec<MapRow>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 20,
+        "name": "champions!: Json<Vec<ChampionRow>>",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "5af551eb988f0cecf1a650d7a39be8a13779d9844a9cd6e3d5d2c8962c6c97d5"
+}

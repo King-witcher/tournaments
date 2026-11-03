@@ -59,8 +59,8 @@ export function MatchLive({
   const next = detail.next_game;
   if (next != null && !games[gameStep(next)]) {
     games[gameStep(next)] = (
-      <GameStep number={next} action={<VetoUndo target={target} />}>
-        <GameVeto target={target} number={next} />
+      <GameStep number={next} action={<VetoUndo />}>
+        <GameVeto number={next} />
         <GameCard
           target={target}
           detail={detail}
@@ -83,13 +83,13 @@ export function MatchLive({
         />
       )}
       <LiveMatchProvider
+        target={target}
         initial={detail}
         viewerId={viewerId}
         bansPerSeries={tournament.champion_rules.bans_per_series}
         vetoOrder={tournament.veto.order}
       >
         <MatchSteps
-          target={target}
           rule={tournament.champion_rules.no_repeat ?? null}
           games={games}
         />

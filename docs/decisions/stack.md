@@ -43,7 +43,8 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 - **Fora, por ora**:
   - cache de leitura: chave e torneio mudam com o tempo, parte da resposta depende de quem vê, e cada acerto também gasta cota. Só depois de medir;
   - locks: a concorrência já é `select ... for update` na transação, mais correto que um lock fora dela. O agendador do tempo real usa advisory lock do Postgres, que não gasta cota;
-  - tempo real entre instâncias (continua `tokio::broadcast`) e rate limit por conta nas escritas (não pedido).
+  - tempo real entre instâncias (continua `tokio::broadcast`) e rate limit por conta nas escritas (não pedido);
+  - a sala de veto (do usuário, 03/11): fica no Postgres. Cada comando conta na mesma cota das sessões, e um abuso de quem cria sala sem login derrubaria o login de todos; o Redis também não lista os prazos vencidos, que o relógio precisa achar.
 - **Sem Redis a API não sobe** (`REDIS_URL` obrigatória, `PING` ao subir) e, se cair, as rotas que leem a sessão respondem 500. O `/health` não consulta o Redis (o monitor de uptime gastaria a cota). A API confere o Redis antes das migrations: sem ele, o deploy falha sem mexer no banco e a instância antiga segue no ar.
 - **Conexão**: `ConnectionManager` do redis-rs (abre no primeiro comando, reconecta; o comando que falha por conexão parada tenta de novo uma vez). TLS (`rediss://`) pelo rustls com o provedor aws-lc instalado no `main`: com ring (sqlx) e aws-lc (reqwest) ativos o rustls não escolhe sozinho e entra em pânico.
 - **Database e prefixo**: um database só (local, o 1: os outros são de outros projetos do usuário; Upstash, o 0, o único). Toda chave passa por `Redis::key` com `REDIS_PREFIX` (padrão `telefrag:`), para checkout principal e worktrees dividirem o database. Os testes usam `test:{banco}:{empréstimo}:`; a execução seguinte, com o lock da suíte, apaga todo `test:*` antes do primeiro teste (senão chegaram a 39 mil chaves; hoje ~1.900).
@@ -56,6 +57,7 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 - **Identificador público e legível**: slug (tenant, torneio). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
 - **Segredos** (sessão, links por email): aleatórios, só o SHA-256 guardado, no Redis. Os links têm 128 bits em base58 (22 caracteres, sem `0/O/I/l`, para o duplo clique selecionar tudo); a sessão, 256 bits em base64url (só no cookie).
 - **Exceção: o token do link de convite fica em claro** (do usuário, 03/11): `tenants.invite_token` e `tournaments.invite_token`, para organizer e owner verem e copiarem a qualquer hora (`tenants.md`, "Convites"). O link não é credencial: é público, dá só entrada como player e se troca em dois cliques. Continua com 128 bits aleatórios, do mesmo gerador (`token::random_token`), para ninguém adivinhar um.
+- **Exceção: os tokens da sala de veto ficam em claro** (assumido, 03/11; `veto_rooms.manage_token`, `spectator_token`, `veto_room_seats.token`): a página de gestão mostra todos de novo, e recarregar não pode perdê-los. Diferente do convite, cada um é a credencial de um lugar, mas vive no máximo 24 h e não dá acesso a nada além da sala. 128 bits do mesmo gerador.
 - Se um dia houver ids gerados fora do banco: `uuidv7()`, nativo no PG18.
 
 ## Repositório e CI

@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into veto_room_events\n             (room_id, kind, game, side, map_id, champion_id, seed, timeout, actor, player_id,\n              pick_game, gave_way, created_at)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, coalesce($13, now()))\n         returning id, created_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        "Bool",
+        "Int8",
+        "Int8",
+        "Int2",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "c3b15c0e0749c043b2511a9acfd1942051bd0894562ddb17a40b0464ce9cf7a3"
+}

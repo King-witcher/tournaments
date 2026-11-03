@@ -39,6 +39,15 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      // A sala de veto tem o token na URL: nada de mandar o endereço a outro
+      // site nem de indexar (o último cabeçalho igual é o que vale).
+      ...["/veto/:token", "/:locale(pt|es)/veto/:token"].map((source) => ({
+        source,
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      })),
     ];
   },
   images: {

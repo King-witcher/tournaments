@@ -7,15 +7,11 @@ import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { Section } from "@/shared/ui/section";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
-import { useVetoAction } from "../hooks/use-veto-action";
-import type { MatchTarget } from "../lib/match-target";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { VetoError } from "./veto-error";
 import styles from "./veto-ready.module.scss";
 
 type Props = {
-  target: MatchTarget;
   /** Passo já feito, à vista para ver como terminou: só a lista. */
   done?: boolean;
 };
@@ -25,19 +21,15 @@ type Props = {
  * clicou e "Começar o veto agora" para a organização. Feito, a lista e quem
  * começou sem esperar, se foi a organização.
  */
-export function VetoReady({ target, done = false }: Props) {
+export function VetoReady({ done = false }: Props) {
   const t = useTranslations("Match.veto");
   const tSteps = useTranslations("Match.steps");
   const tMember = useTranslations("Member");
-  const { detail } = useLiveMatch();
-  const names = useSideNames(detail);
-  const action = useVetoAction(target);
-  const veto = detail.veto;
+  const { veto, mine, names, canManage, pending, actions } = useVetoBoard();
   if (!veto) return null;
-  const mine = detail.viewer_side ?? null;
   const ready = { a: veto.ready_a, b: veto.ready_b };
   const canReady = !done && mine != null && !ready[mine];
-  const canStart = !done && detail.can_manage;
+  const canStart = !done && canManage;
   const forcedBy = veto.history.find((e) => e.kind === "begin")?.actor;
 
   return (
@@ -74,15 +66,15 @@ export function VetoReady({ target, done = false }: Props) {
       {(canReady || canStart) && (
         <div className={styles.buttons}>
           {canReady && (
-            <Button pending={action.pending === "ready"} onClick={action.ready}>
+            <Button pending={pending === "ready"} onClick={actions.ready}>
               {t("readyButton")}
             </Button>
           )}
           {canStart && (
             <ConfirmButton
               question={t("forceStartQuestion")}
-              onConfirm={action.start}
-              pending={action.pending === "start"}
+              onConfirm={actions.start}
+              pending={pending === "start"}
               destructive={false}
               kind={mine ? "ghost" : "tertiary"}
             >

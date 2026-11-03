@@ -199,6 +199,17 @@
     "unreachable": "Não foi possível falar com o Discord. Tente de novo.",
     "rejected": "O Discord recusou a mensagem de teste. Confira as permissões do webhook."
   },
+  "veto_room": {
+    "not_found": "Esta sala venceu ou não existe.",
+    "not_player": "Este link não é de jogador.",
+    "not_joined": "Entre na sala primeiro.",
+    "name_invalid": "O nome precisa ter de 1 a 32 caracteres, numa linha só.",
+    "map_mode_invalid": "A sala só tem veto de mapas ou mapas combinados.",
+    "no_phases": "Com os mapas combinados, a escolha de campeões precisa ser no site.",
+    "rate_limited": "Muitas salas criadas nesta hora. Tente de novo em {minutes, plural, one {# minuto} other {# minutos}}.",
+    "anonymous_full": "Muitas salas sem conta abertas agora. Entre com a conta para criar a sua.",
+    "too_many_connections": "Muita gente nesta sala agora. A página atualiza de tempos em tempos."
+  },
   "veto": {
     "off": "Este torneio não tem veto.",
     "already_begun": "O veto já começou.",

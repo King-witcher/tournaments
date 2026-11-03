@@ -37,7 +37,7 @@ use crate::{
 
 /// Intervalo do ping: proxy derruba conexão parada, e quem não responde a um
 /// ping até o próximo sai.
-const PING_EVERY: Duration = Duration::from_secs(30);
+pub(super) const PING_EVERY: Duration = Duration::from_secs(30);
 /// Fechamento quando a sessão acaba (sair, encerrar a sessão, trocar a
 /// senha): o front não reconecta.
 const SESSION_ENDED: u16 = 4001;
@@ -94,7 +94,7 @@ pub async fn ws(
 }
 
 /// O `connection` da query, se tem a forma aceita (`connection_id`).
-fn tab_connection(query: &str) -> Option<String> {
+pub(super) fn tab_connection(query: &str) -> Option<String> {
     query
         .split('&')
         .find_map(|pair| pair.strip_prefix("connection="))

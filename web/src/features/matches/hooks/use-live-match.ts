@@ -24,7 +24,7 @@ export type LiveMatch = {
   /** Manda uma ação do veto, com o passo marcado na hora (`optimistic`). */
   run: (
     key: string,
-    request: VetoRequest,
+    request: VetoRequest<Schemas["MatchDetail"]>,
     optimistic?: Schemas["VetoView"],
   ) => void;
   /**

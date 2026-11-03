@@ -1,5 +1,5 @@
 //! O tempo de cada passo do veto. O prazo que a série mostra é o nominal
-//! (`MatchVeto::deadline`); a ação ainda vale até `GRACE` depois dele (o
+//! (`VetoLog::deadline`); a ação ainda vale até `GRACE` depois dele (o
 //! clique que sai no último segundo atravessa a rede), e só então o `engine`
 //! sorteia a escolha de quem deixou o tempo acabar (`random_choice`, pela
 //! seed da série), gravada como `timeout` e com a hora em que o sorteio
@@ -11,11 +11,12 @@
 //! e antes de cada ação (`any_due`, `apply_due`), e o relógio do `realtime`
 //! aplica nos torneios que ninguém leu (`clock`), dormindo até o próximo
 //! prazo. O mesmo sorteio completa o draft quando o organizador lança a
-//! partida 1 antes do fim dele (`draw_turn`, pelo `advance`).
+//! partida 1 antes do fim dele (`draw_turn`, pelo `advance`). `draw_turn` e
+//! `due_draws` só dizem o que gravar: a sala de veto (`veto_rooms`) usa os mesmos.
 
 use chrono::{DateTime, Utc};
 use engine::{
-    core::{MatchState, ParticipantId},
+    core::MatchState,
     veto::{Action, Choice, Event, Turn, Veto},
 };
 use sqlx::{PgConnection, PgPool};
@@ -59,13 +60,13 @@ fn waiting<'a>(
 }
 
 /// Quanto dura a vez de `state`: a janela da escolha simultânea ou um passo.
-fn seconds_of(stage: &stage::Stage, state: &Veto) -> chrono::Duration {
+fn seconds_of(state: &Veto, step_seconds: i32, team_pick_seconds: i32) -> chrono::Duration {
     let seconds = match state.turn() {
         Turn::Act {
             action: Action::TeamPick,
             ..
-        } => stage.team_pick_seconds,
-        _ => stage.veto_seconds,
+        } => team_pick_seconds,
+        _ => step_seconds,
     };
     chrono::Duration::seconds(i64::from(seconds))
 }
@@ -104,33 +105,57 @@ pub async fn apply_due(
             key: &key,
         };
         let mut state = mv.state.clone();
-        let mut deadline = first;
-        while deadline <= now {
-            let n = draw_turn(conn, &at, mv.sides, &mut state, &ctx, Some(deadline)).await?;
-            if n == 0 {
-                // Ninguém mais tem opção: não há o que sortear.
-                break;
-            }
-            written += n;
-            deadline += seconds_of(stage, &state) + GRACE;
+        let rows = due_draws(
+            &mut state,
+            &ctx,
+            first,
+            now,
+            stage.veto_seconds,
+            stage.team_pick_seconds,
+        )?;
+        written += rows.len() as u64;
+        for row in &rows {
+            db::insert(conn, &at, mv.sides, row).await?;
         }
     }
     Ok(written)
 }
 
+/// Os sorteios de `state` vencidos em `now`, em sequência, a partir do que vale
+/// em `first` (o prazo mais `GRACE`): aplica cada um em `state` e devolve o que
+/// gravar, cada um com a hora em que valeu.
+pub fn due_draws(
+    state: &mut Veto,
+    ctx: &Ctx,
+    first: DateTime<Utc>,
+    now: DateTime<Utc>,
+    step_seconds: i32,
+    team_pick_seconds: i32,
+) -> Result<Vec<NewVetoEvent>, ApiError> {
+    let mut rows = Vec::new();
+    let mut deadline = first;
+    while deadline <= now {
+        let drawn = draw_turn(state, ctx, Some(deadline))?;
+        if drawn.is_empty() {
+            // Ninguém mais tem opção: não há o que sortear.
+            break;
+        }
+        rows.extend(drawn);
+        deadline += seconds_of(state, step_seconds, team_pick_seconds) + GRACE;
+    }
+    Ok(rows)
+}
+
 /// Sorteia, como no fim do tempo, o que a vez de `state` espera agora (o
 /// passo de cada lado da vez; na janela simultânea, cada partida de cada um
 /// que falta, um de cada vez, na ordem de `missing`), aplica em `state` e
-/// grava como `timeout`, com a hora `when` (`None`: agora). Devolve quantos
-/// passos gravou: 0 sem vez ou sem opção.
-pub(super) async fn draw_turn(
-    conn: &mut PgConnection,
-    at: &MatchRef<'_>,
-    sides: (ParticipantId, ParticipantId),
+/// devolve o que gravar como `timeout`, com a hora `when` (`None`: agora).
+/// Vazio sem vez ou sem opção.
+pub(super) fn draw_turn(
     state: &mut Veto,
     ctx: &Ctx,
     when: Option<DateTime<Utc>>,
-) -> Result<u64, ApiError> {
+) -> Result<Vec<NewVetoEvent>, ApiError> {
     let Turn::Act {
         game,
         action,
@@ -139,13 +164,13 @@ pub(super) async fn draw_turn(
         ..
     } = state.turn()
     else {
-        return Ok(0);
+        return Ok(Vec::new());
     };
     let recused = |e: engine::veto::VetoError| {
-        tracing::error!(%e, key = at.key, "sorteio do veto recusado");
+        tracing::error!(%e, "sorteio do veto recusado");
         ApiError::internal()
     };
-    let mut written = 0;
+    let mut rows = Vec::new();
     if action == Action::TeamPick {
         for m in state.missing() {
             let options = state.team_options(m.side, m.player, m.game, &ctx.engine());
@@ -161,7 +186,7 @@ pub(super) async fn draw_turn(
                 gave_way: options.gave_way.is_some(),
             };
             state.apply(event, Some(&ctx.engine())).map_err(recused)?;
-            let row = NewVetoEvent {
+            rows.push(NewVetoEvent {
                 champion: Some(champion),
                 player: Some(m.player.0),
                 pick_game: Some(i16::from(m.game)),
@@ -174,11 +199,9 @@ pub(super) async fn draw_turn(
                     Some(api_side(m.side)),
                     None,
                 )
-            };
-            db::insert(conn, at, sides, &row).await?;
-            written += 1;
+            });
         }
-        return Ok(written);
+        return Ok(rows);
     }
     for side in acting {
         let Some(choice) = state.random_choice(side, &ctx.engine()) else {
@@ -194,7 +217,7 @@ pub(super) async fn draw_turn(
             Choice::Map(m) => (Some(m), None),
             Choice::Champion(c) => (None, Some(c)),
         };
-        let row = NewVetoEvent {
+        rows.push(NewVetoEvent {
             map,
             champion,
             pick_game: champion.and(pick_for).map(i16::from),
@@ -206,11 +229,9 @@ pub(super) async fn draw_turn(
                 Some(api_side(side)),
                 None,
             )
-        };
-        db::insert(conn, at, sides, &row).await?;
-        written += 1;
+        });
     }
-    Ok(written)
+    Ok(rows)
 }
 
 /// O relógio: aplica os passos vencidos em `now` em todos os torneios com

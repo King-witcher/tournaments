@@ -3,15 +3,11 @@
 import { useTranslations } from "next-intl";
 
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
-import { useVetoAction } from "../hooks/use-veto-action";
-import type { MatchTarget } from "../lib/match-target";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { VetoTile } from "./veto-tile";
 import styles from "./veto-vote-board.module.scss";
 
 type Props = {
-  target: MatchTarget;
   /** A partida votada. */
   game: number;
 };
@@ -22,12 +18,9 @@ type Props = {
  * botão de votar. Some com menos de dois oferecidos (sem votação) e quando o
  * mapa sai.
  */
-export function VetoVoteBoard({ target, game }: Props) {
+export function VetoVoteBoard({ game }: Props) {
   const t = useTranslations("Match.veto.vote");
-  const { detail } = useLiveMatch();
-  const names = useSideNames(detail);
-  const action = useVetoAction(target);
-  const veto = detail.veto;
+  const { veto, names, pending, actions } = useVetoBoard();
   const g = veto?.games.find((x) => x.game === game);
   if (!veto || !g || g.map || g.offered.length < 2) return null;
 
@@ -56,8 +49,8 @@ export function VetoVoteBoard({ target, game }: Props) {
                       kind: "pick",
                       text: t("vote"),
                       label: t("voteFor", { map: m.name }),
-                      disabled: action.pending != null,
-                      onClick: () => action.step({ map: m.slug }),
+                      disabled: pending != null,
+                      onClick: () => actions.step({ map: m.slug }),
                     }
                   : undefined
               }

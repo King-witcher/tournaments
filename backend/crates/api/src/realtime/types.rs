@@ -84,6 +84,14 @@ pub enum ServerMessage {
     },
 }
 
+/// Da API para o navegador, no socket de uma sala de veto.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum RoomMessage {
+    /// A sala mudou: peça de novo à API (o dado não vem aqui).
+    Changed,
+}
+
 /// O que mudou.
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "scope", rename_all = "snake_case")]

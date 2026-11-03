@@ -61,19 +61,19 @@ impl<S: Subscriber> Layer<S> for Log {
     }
 }
 
-struct Meter {
+pub struct Meter {
     pings: Arc<AtomicUsize>,
 }
 
-struct Cost {
-    queries: Vec<String>,
-    pings: usize,
-    micros: u128,
+pub struct Cost {
+    pub queries: Vec<String>,
+    pub pings: usize,
+    pub micros: u128,
 }
 
 impl Meter {
     /// Um pool como o da API (`main.rs`), que conta os pings.
-    async fn pool(db: &PgPool) -> (PgPool, Self) {
+    pub async fn pool(db: &PgPool) -> (PgPool, Self) {
         let pings = Arc::new(AtomicUsize::new(0));
         let counted = pings.clone();
         let pool = PgPoolOptions::new()
@@ -90,7 +90,7 @@ impl Meter {
 
     /// O que `fut` custou, nesta thread (o teste roda num runtime de uma
     /// thread só).
-    async fn measure<F: Future>(&self, fut: F) -> (F::Output, Cost) {
+    pub async fn measure<F: Future>(&self, fut: F) -> (F::Output, Cost) {
         let log = Log::default();
         let subscriber = Registry::default().with(log.clone());
         let guard = tracing::subscriber::set_default(subscriber);
@@ -134,7 +134,7 @@ fn median(mut micros: Vec<u128>) -> u128 {
 
 /// Imprime o custo (`cargo test matches::cost -- --nocapture`) e confere o
 /// teto de idas ao banco.
-fn check(label: &str, cost: &Cost, micros: Vec<u128>, max_queries: usize) {
+pub fn check(label: &str, cost: &Cost, micros: Vec<u128>, max_queries: usize) {
     println!(
         "{label}: {} queries + {} pings; mediana {} µs em {} pedidos",
         cost.queries.len(),

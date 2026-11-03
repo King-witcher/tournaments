@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select manage_token from veto_rooms\n         where due_at <= $1 and expires_at > $1 order by due_at limit $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "manage_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "manage_token"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2f69137ab45559c1fd79c0d1d82b873c8ec058ac7f2a67aeea27d3472b02c558"
+}

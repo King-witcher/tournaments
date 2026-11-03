@@ -104,6 +104,7 @@ async fn main() -> anyhow::Result<()> {
         mail,
         webhooks: Webhooks::new(discord_gate),
         limits: Default::default(),
+        veto_rooms: Default::default(),
     };
     realtime::spawn(state.clone());
     discord::spawn(state.clone());

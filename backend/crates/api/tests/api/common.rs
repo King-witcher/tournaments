@@ -170,6 +170,7 @@ pub fn state(db: PgPool) -> AppState {
         push: None,
         webhooks: Webhooks::new(discord_gate()),
         limits: Default::default(),
+        veto_rooms: Default::default(),
         storage: None,
         public_storage: None,
     }

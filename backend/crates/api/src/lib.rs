@@ -25,6 +25,7 @@ pub mod shared;
 mod teams;
 mod tenants;
 mod tournaments;
+pub mod veto_rooms;
 
 use std::{sync::Arc, time::Duration};
 
@@ -47,7 +48,11 @@ pub static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 #[derive(OpenApi)]
 #[openapi(
     info(title = "Telefrag API"),
-    components(schemas(realtime::ClientMessage, realtime::ServerMessage))
+    components(schemas(
+        realtime::ClientMessage,
+        realtime::ServerMessage,
+        realtime::RoomMessage
+    ))
 )]
 struct ApiDoc;
 
@@ -74,6 +79,8 @@ pub struct AppState {
     pub webhooks: discord::Webhooks,
     /// Limites em memória das rotas que chamam o Discord.
     pub limits: shared::WindowLimit,
+    /// O canal e os limites de conexão das salas de veto.
+    pub veto_rooms: veto_rooms::Live,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
@@ -100,6 +107,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(images::router())
         .merge(push::router())
         .merge(ratings::router())
+        .merge(veto_rooms::router())
         .merge(realtime::router())
         .with_state(state)
         .split_for_parts();

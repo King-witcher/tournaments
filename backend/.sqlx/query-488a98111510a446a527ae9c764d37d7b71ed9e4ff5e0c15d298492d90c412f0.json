@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with link as (\n               select room_id, false as spectator from veto_room_seats where token = $1\n               union all\n               select id, false from veto_rooms where manage_token = $1\n               union all\n               select id, true from veto_rooms where spectator_token = $1\n           )\n           select r.id, link.spectator as \"spectator!\", r.expires_at\n           from link join veto_rooms r on r.id = link.room_id\n           where r.expires_at > now()",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "spectator!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "488a98111510a446a527ae9c764d37d7b71ed9e4ff5e0c15d298492d90c412f0"
+}

@@ -5,14 +5,46 @@
 //! novo sempre emitem): então recalcula o próximo prazo, sorteando antes os
 //! passos que já venceram (`matches::veto_clock`). Sem veto aberto, ela só
 //! dorme. O sorteio também acontece ao ler e antes de cada ação, e o agendador
-//! passa a cada 10 s como rede de segurança.
+//! passa a cada 10 s como rede de segurança. As salas de veto têm o relógio
+//! delas (`run_rooms`): o clique numa sala não relê os torneios abertos.
 
 use chrono::Utc;
 
-use crate::{AppState, matches};
+use crate::{AppState, matches, veto_rooms};
 
 /// Folga depois do prazo, para a passada cair depois dele.
 const SLACK: std::time::Duration = std::time::Duration::from_millis(50);
+/// A pausa quando o prazo seguinte das salas já venceu: a passada gravou nada, e
+/// a sala que falhou continuaria vencida (o erro dela fica no log). Quem grava
+/// acorda o relógio na hora, então uma fila grande não espera por isto.
+const ROOMS_PAUSE: std::time::Duration = std::time::Duration::from_secs(10);
+
+pub(super) async fn run_rooms(state: AppState) {
+    loop {
+        let next = match veto_rooms::clock(&state, Utc::now()).await {
+            Ok((_, next)) => next,
+            Err(e) => {
+                tracing::error!(code = e.code, "relógio das salas de veto falhou");
+                None
+            }
+        };
+        let sleep = next.map(|at| {
+            let wait = (at - Utc::now())
+                .to_std()
+                .map_or(ROOMS_PAUSE, |d| d + SLACK);
+            tokio::time::sleep(wait)
+        });
+        match sleep {
+            Some(sleep) => {
+                tokio::select! {
+                    () = sleep => {}
+                    () = state.veto_rooms.clock_woken() => {}
+                }
+            }
+            None => state.veto_rooms.clock_woken().await,
+        }
+    }
+}
 
 pub(super) async fn run(state: AppState) {
     loop {

@@ -6,18 +6,14 @@ import { ChampionPortrait } from "@/features/champions/components/champion-portr
 import type { components } from "@/shared/api/schema";
 import { Notice } from "@/shared/ui/notice";
 import { useChampionTileText } from "../hooks/use-champion-tile-text";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
-import { useVetoAction } from "../hooks/use-veto-action";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { championTiles } from "../lib/champion-tiles";
-import type { MatchTarget } from "../lib/match-target";
 import styles from "./veto-champion-board.module.scss";
 import { VetoTile } from "./veto-tile";
 
 type Schemas = components["schemas"];
 
 type Props = {
-  target: MatchTarget;
   /** A regra de não repetição do torneio, para dizer o que ela tira. */
   rule: Schemas["NoRepeatRule"] | null;
   /** O pick de quem vê agora (na janela do TDM, a partida escolhida). */
@@ -31,14 +27,11 @@ type Props = {
  * ele pode banir ou escolher como botões. Um aviso diz quando uma regra
  * cedeu para ele ter campeão.
  */
-export function VetoChampionBoard({ target, rule, slot }: Props) {
+export function VetoChampionBoard({ rule, slot }: Props) {
   const t = useTranslations("Match.veto.champions");
   const tMaps = useTranslations("Match.veto.maps");
-  const { detail } = useLiveMatch();
-  const names = useSideNames(detail);
-  const action = useVetoAction(target);
+  const { veto, names, pending, actions } = useVetoBoard();
   const text = useChampionTileText(names, rule);
-  const veto = detail.veto;
   if (!veto) return null;
   const turn = veto.turn?.target === "champion" ? veto.turn : null;
   const banning = turn?.action === "ban";
@@ -78,9 +71,9 @@ export function VetoChampionBoard({ target, rule, slot }: Props) {
                       label: banning
                         ? t("banChampion", { champion: c.name })
                         : t("pickChampion", { champion: c.name, game }),
-                      disabled: action.pending != null,
+                      disabled: pending != null,
                       onClick: () =>
-                        action.step(
+                        actions.step(
                           turn?.action === "team_pick"
                             ? { champion: c.slug, game }
                             : { champion: c.slug },

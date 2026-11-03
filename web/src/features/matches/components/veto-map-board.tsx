@@ -3,10 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
-import { useVetoAction } from "../hooks/use-veto-action";
-import type { MatchTarget } from "../lib/match-target";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import {
   nextMapPickGame,
   type PoolMapState,
@@ -29,15 +26,12 @@ const TILE: Record<PoolMapState["kind"], TileState> = {
  * escolheu ou baniu fica para o leitor de tela) e, na vez de quem vê, os que
  * sobraram como botões de banir ou escolher.
  */
-export function VetoMapBoard({ target }: { target: MatchTarget }) {
+export function VetoMapBoard() {
   const t = useTranslations("Match.veto.maps");
   const tGame = useTranslations("Match.games");
-  const { detail } = useLiveMatch();
-  const names = useSideNames(detail);
-  const action = useVetoAction(target);
-  const veto = detail.veto;
+  const { veto, bestOf, names, pending, actions } = useVetoBoard();
   if (!veto) return null;
-  const states = poolStates(veto, detail.summary.best_of);
+  const states = poolStates(veto, bestOf);
   const kind = veto.turn?.action === "pick" ? "pick" : "ban";
 
   const describe = (s: PoolMapState) => {
@@ -84,8 +78,8 @@ export function VetoMapBoard({ target }: { target: MatchTarget }) {
                               game: nextMapPickGame(veto),
                             })
                           : t("banMap", { map: m.name }),
-                      disabled: action.pending != null,
-                      onClick: () => action.step({ map: m.slug }),
+                      disabled: pending != null,
+                      onClick: () => actions.step({ map: m.slug }),
                     }
                   : undefined
               }

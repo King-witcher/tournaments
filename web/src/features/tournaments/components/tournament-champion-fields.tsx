@@ -43,6 +43,8 @@ type Props = {
   errors: FieldErrors;
   /** O torneio já começou: tudo aqui fica travado. */
   disabled: boolean;
+  /** As escolhas de não repetição, fora do torneio (a sala de veto só tem a da série). */
+  repeatChoices?: NoRepeatChoice[];
 };
 
 /**
@@ -58,6 +60,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
   onChange,
   errors,
   disabled,
+  repeatChoices,
 }: Props) {
   const t = useTranslations("TournamentForm.championRules");
   const tVeto = useTranslations("TournamentForm.veto");
@@ -128,7 +131,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           onChange({ noRepeat: e.target.value as NoRepeatChoice })
         }
       >
-        {noRepeatChoices(values.noRepeat).map((choice) => (
+        {(repeatChoices ?? noRepeatChoices(values.noRepeat)).map((choice) => (
           <SelectItem
             key={choice}
             value={choice}

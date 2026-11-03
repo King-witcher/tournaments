@@ -1,24 +1,26 @@
-"use client";
-
 import { api } from "@/shared/api/client";
 import { serverTime } from "@/shared/lib/server-clock";
-import { type MatchTarget, matchParams } from "../lib/match-target";
-import { afterStep, type VetoChoice } from "../lib/veto-optimistic";
-import { useLiveMatch } from "./use-live-match";
+import type { LiveMatch } from "../hooks/use-live-match";
+import type { VetoActions } from "../hooks/use-veto-board";
+import { type MatchTarget, matchParams } from "./match-target";
+import { afterStep, type VetoChoice } from "./veto-optimistic";
 
 const VETO = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto";
 
 /**
- * As ações do veto de uma série (pronto, forçar o começo, um passo,
- * desfazer, pedir e responder o pedido de desfazer), pelo
- * `LiveMatchProvider`: `pending` é a chave da que está no ar, para só o
- * botão dela girar (\`"ready"\`, \`"undo"\`...; num passo, \`"step"\`, e os
- * cartões ficam sem ação até a resposta). O passo aparece marcado na hora.
- * Cada ação diz a vez que a tela mostrava: se ela mudou antes do clique
- * chegar, a API recusa em vez de cair na vez seguinte.
+ * As ações do veto de uma série (pronto, forçar o começo, um passo, desfazer,
+ * pedir e responder o pedido de desfazer): o `LiveMatchProvider` as põe no
+ * `VetoBoard`. O passo aparece marcado na hora. Cada ação diz a vez que a tela
+ * mostrava: se ela mudou antes do clique chegar, a API recusa em vez de cair
+ * na vez seguinte.
  */
-export function useVetoAction(target: MatchTarget) {
-  const live = useLiveMatch();
+export function matchVetoActions(
+  target: MatchTarget,
+  live: Pick<
+    LiveMatch,
+    "detail" | "viewerId" | "bansPerSeries" | "vetoOrder" | "run"
+  >,
+): VetoActions {
   const params = matchParams(target);
 
   function step(choice: VetoChoice) {
@@ -54,7 +56,6 @@ export function useVetoAction(target: MatchTarget) {
   }
 
   return {
-    pending: live.pending,
     step,
     ready: () =>
       live.run("ready", ({ headers }) =>

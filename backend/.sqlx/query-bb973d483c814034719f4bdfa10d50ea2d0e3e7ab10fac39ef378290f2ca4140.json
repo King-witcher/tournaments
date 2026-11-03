@@ -1,0 +1,172 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, game, kind, side, map_id, champion_id, seed, timeout, actor, player_id,\n                pick_game, gave_way, created_at\n         from veto_room_events where room_id = $1 order by id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "game",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "game"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "side",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "side"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "map_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "map_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "champion_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "champion_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "seed",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "seed"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "timeout",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "timeout"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "actor",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "actor"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "player_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "player_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "pick_game",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "pick_game"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "gave_way",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "gave_way"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_room_events",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "bb973d483c814034719f4bdfa10d50ea2d0e3e7ab10fac39ef378290f2ca4140"
+}

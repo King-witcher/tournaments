@@ -48,6 +48,7 @@ const pt = {
   TournamentForm: () => import("../../messages/pt/TournamentForm.json"),
   TournamentStatus: () => import("../../messages/pt/TournamentStatus.json"),
   Tournaments: () => import("../../messages/pt/Tournaments.json"),
+  VetoRoom: () => import("../../messages/pt/VetoRoom.json"),
 };
 
 /** O conteúdo de cada namespace, em português (a referência dos tipos). */
@@ -97,6 +98,7 @@ const es: Loaders = {
   TournamentForm: () => import("../../messages/es/TournamentForm.json"),
   TournamentStatus: () => import("../../messages/es/TournamentStatus.json"),
   Tournaments: () => import("../../messages/es/Tournaments.json"),
+  VetoRoom: () => import("../../messages/es/VetoRoom.json"),
 };
 
 const loaders: Record<"pt" | "es", Loaders> = { pt, es };

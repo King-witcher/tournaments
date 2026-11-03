@@ -4,6 +4,8 @@
     "lead": "Inscripción, check-in, llave, veto, resultado y ranking de los torneos de tu comunidad, en un solo lugar. En duelo o por equipos.",
     "signup": "Crear cuenta",
     "login": "Entrar",
+    "vetoRoomHint": "¿Solo el veto y el draft, sin torneo y sin cuenta?",
+    "vetoRoom": "Sala de veto",
     "invite": "¿Recibiste un enlace de invitación? Ábrelo, que te lleva al registro.",
     "shot": "La llave de un torneo de doble eliminación, con las series de la primera ronda decididas."
   },

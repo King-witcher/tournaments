@@ -9,7 +9,8 @@
 //! buckets os arquivos das comunidades excluídas), recalcula o rating das comunidades marcadas
 //! (depois das confirmações e das desistências desta passada) e apaga as
 //! notificações com mais de 30 dias; depois acorda o despachante. Aplicar ao ler e agir continua, para quem chega
-//! antes do agendador ver o estado certo.
+//! antes do agendador ver o estado certo. Também sorteia os passos vencidos das
+//! salas de veto e apaga as vencidas.
 
 use std::time::Duration;
 
@@ -18,7 +19,7 @@ use chrono::{DateTime, Utc};
 use super::db;
 use crate::{
     AppState, auth, images, matches, members, notifications, ratings, screenshots,
-    shared::ApiError, tenants, tournaments,
+    shared::ApiError, tenants, tournaments, veto_rooms,
 };
 
 pub const EVERY: Duration = Duration::from_secs(10);
@@ -50,6 +51,10 @@ pub struct Tick {
     pub rated: usize,
     /// Notificações que passaram do prazo e saíram.
     pub expired_notifications: u64,
+    /// Passos de sala de veto sorteados pelo fim do tempo.
+    pub veto_room_steps: u64,
+    /// Salas de veto vencidas que saíram.
+    pub expired_veto_rooms: u64,
 }
 
 /// Uma passada em `now`. `None` se outra instância está numa passada.
@@ -72,6 +77,8 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             swept_images: sweep_images(state, now).await,
             rated: ratings::refresh_stale(&state.db).await?,
             expired_notifications: notifications::delete_expired(&state.db, now).await?,
+            veto_room_steps: veto_rooms::clock(state, now).await?.0,
+            expired_veto_rooms: veto_rooms::delete_expired(state, now).await?,
         })
     }
     .await;

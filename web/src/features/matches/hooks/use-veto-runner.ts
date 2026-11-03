@@ -2,8 +2,6 @@
 
 import { useRef, useState } from "react";
 
-import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
-import { useRouter } from "@/i18n/navigation";
 import { type ApiResponse, callApi } from "@/shared/api/call";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
@@ -20,35 +18,45 @@ export type VetoRequestInit = {
   step: number | null;
 };
 
-export type VetoRequest = (
-  init: VetoRequestInit,
-) => Promise<ApiResponse<Schemas["MatchDetail"]>>;
+export type VetoRequest<T> = (init: VetoRequestInit) => Promise<ApiResponse<T>>;
 
-type Props = {
-  /** A série do servidor (muda a cada recarga). */
-  initial: Schemas["MatchDetail"];
-  /** A série que a tela mostra, sem o passo marcado na hora. */
-  shown: Schemas["MatchDetail"];
-  adopt: (detail: Schemas["MatchDetail"]) => void;
+/** O que a resposta de uma ação do veto traz: a série de um torneio ou a sala. */
+type VetoDetail = { now: string; veto?: Schemas["VetoView"] | null };
+
+type Props<T> = {
+  /** O que veio de fora (muda a cada recarga). */
+  initial: T;
+  /** O que a tela mostra, sem o passo marcado na hora. */
+  shown: T;
+  adopt: (detail: T) => void;
   preview: (veto: Schemas["VetoView"] | null) => void;
+  /** Os cabeçalhos da ação (a aba que aplica a resposta sozinha). */
+  headers: () => Record<string, string>;
+  /** Depois de cada ação (`ok`: ela deu certo): busca de novo o que for preciso. */
+  refresh: (ok: boolean) => void;
 };
 
 /**
- * As ações do veto da série, uma por vez para todos os tabuleiros (uma
- * segunda, com outra no ar, sairia com a vez velha): \`pending\` é a chave da
- * que está no ar e \`error\`, a mensagem da que falhou, que fica até a vez
- * mudar depois da recarga que o erro dispara (o "a vez mudou antes do seu
- * clique" fala justamente da vez nova), mesmo que o tabuleiro que agiu
- * tenha saído da tela. A resposta mede a hora da API pela ida e volta.
+ * As ações do veto, uma por vez para todos os tabuleiros (uma segunda, com
+ * outra no ar, sairia com a vez velha): \`pending\` é a chave da que está no ar
+ * e \`error\`, a mensagem da que falhou, que fica até a vez mudar depois da
+ * recarga que o erro dispara (o "a vez mudou antes do seu clique" fala
+ * justamente da vez nova), mesmo que o tabuleiro que agiu tenha saído da tela.
+ * A resposta mede a hora da API pela ida e volta.
  */
-export function useVetoRunner({ initial, shown, adopt, preview }: Props) {
-  const router = useRouter();
-  const hub = useRealtimeHub();
+export function useVetoRunner<T extends VetoDetail>({
+  initial,
+  shown,
+  adopt,
+  preview,
+  headers,
+  refresh,
+}: Props<T>) {
   const errorMessage = useApiErrorMessage();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<{
     message: string;
-    base: Schemas["MatchDetail"];
+    base: T;
     step?: number | null;
   }>();
   const busy = useRef(false);
@@ -61,7 +69,7 @@ export function useVetoRunner({ initial, shown, adopt, preview }: Props) {
 
   async function run(
     key: string,
-    request: VetoRequest,
+    request: VetoRequest<T>,
     optimistic?: Schemas["VetoView"],
   ) {
     if (busy.current) return;
@@ -69,9 +77,8 @@ export function useVetoRunner({ initial, shown, adopt, preview }: Props) {
     setPending(key);
     setError(undefined);
     if (optimistic) preview(optimistic);
-    const headers = hub?.originHeaders() ?? {};
     const sent = Date.now();
-    const outcome = await callApi(request({ headers, step }));
+    const outcome = await callApi(request({ headers: headers(), step }));
     const received = Date.now();
     busy.current = false;
     setPending(null);
@@ -90,7 +97,7 @@ export function useVetoRunner({ initial, shown, adopt, preview }: Props) {
     focusIfLost(VETO_ID, { preventScroll: true });
     // Em segundo plano: o resto da página e, no erro, a tela que ficou para
     // trás (o adversário agiu, o tempo acabou).
-    router.refresh();
+    refresh(outcome.ok);
   }
 
   return { pending, error: error?.message, run };

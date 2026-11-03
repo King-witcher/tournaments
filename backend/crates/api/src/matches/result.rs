@@ -29,7 +29,7 @@ impl Side {
         }
     }
 
-    pub(super) fn from_db(value: &str) -> Result<Self, ApiError> {
+    pub fn from_db(value: &str) -> Result<Self, ApiError> {
         match value {
             "a" => Ok(Self::A),
             "b" => Ok(Self::B),

@@ -31,6 +31,6 @@ pub(super) fn mark() {
 }
 
 /// A aba de onde veio a requisição em andamento, se ela disse.
-pub(super) fn origin() -> Option<String> {
+pub fn origin() -> Option<String> {
     ORIGIN.try_with(Clone::clone).ok().flatten()
 }

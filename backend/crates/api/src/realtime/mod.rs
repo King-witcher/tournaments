@@ -11,13 +11,16 @@
 //! como na leitura (`tenants`, `tournaments`), o socket e o despachante
 //! chamam `notifications`, e o agendador chama `tournaments`, `matches`,
 //! `tenants`, `members`, `screenshots`, `ratings` e `notifications`.
-//! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos.
+//! Quem muda o estado emite pelo `outbox`, que fica embaixo de todos. A sala de
+//! veto, sem login e sem avisos, tem o próprio socket por token (`room_socket`),
+//! o próprio canal (`veto_rooms::Live`) e o próprio relógio (`clock::run_rooms`).
 
 mod clock;
 mod connection;
 mod db;
 mod dispatcher;
 mod hub;
+mod room_socket;
 mod scheduler;
 mod socket;
 mod types;
@@ -30,13 +33,15 @@ pub use connection::MAX_TOPICS;
 pub use dispatcher::dispatch_once;
 pub use hub::{ORIGIN_HEADER, Published, Realtime, wake_after_emit};
 pub use scheduler::{Tick, tick};
-pub use types::{Changed, ClientMessage, ServerMessage, Topic};
+pub use types::{Changed, ClientMessage, RoomMessage, ServerMessage, Topic};
 
 pub fn router() -> OpenApiRouter<AppState> {
-    OpenApiRouter::new().routes(routes!(socket::ws))
+    OpenApiRouter::new()
+        .routes(routes!(socket::ws))
+        .routes(routes!(room_socket::veto_room_socket))
 }
 
-/// Sobe o despachante, o agendador e o relógio do veto (o `main`; os testes
+/// Sobe o despachante, o agendador e os relógios do veto (o `main`; os testes
 /// chamam `dispatch_once` e `tick` direto).
 pub fn spawn(state: AppState) {
     let dispatcher = state.clone();
@@ -47,6 +52,7 @@ pub fn spawn(state: AppState) {
         }
     });
     tokio::spawn(clock::run(state.clone()));
+    tokio::spawn(clock::run_rooms(state.clone()));
     tokio::spawn(async move {
         let mut every = tokio::time::interval(scheduler::EVERY);
         every.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);

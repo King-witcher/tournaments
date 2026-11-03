@@ -20,7 +20,7 @@ use super::{
     games::StoredGame,
     result::{Side, StoredResult},
     rounds,
-    veto::{self, Champion, MatchVeto, VetoRow},
+    veto::{self, Champion, MatchVeto, MatchVetoRow, VetoLog},
 };
 use crate::{
     shared::ApiError,
@@ -342,7 +342,18 @@ impl Stage {
                     tracing::error!(id = tournament.id.get(), "histórico gravado não fecha");
                     ApiError::internal()
                 })?;
-                let rows = self.vetoes.into_iter().flat_map(|v| v.rows).collect();
+                let rows = self
+                    .vetoes
+                    .into_iter()
+                    .flat_map(|v| {
+                        let (match_id, sides) = (v.match_id, v.sides);
+                        v.log.rows.into_iter().map(move |row| MatchVetoRow {
+                            match_id,
+                            sides,
+                            row,
+                        })
+                    })
+                    .collect();
                 (games, bracket, lineups, rows)
             }
         };
@@ -371,23 +382,27 @@ impl Stage {
 fn vetoes(
     bracket: &StageBracket,
     rules: &VetoRules,
-    rows: Vec<VetoRow>,
+    rows: Vec<MatchVetoRow>,
     entrants: &[StoredTeam],
     games: &[StoredGame],
     lineups: &[(MatchId, i16, Side, i64)],
 ) -> Result<Vec<MatchVeto>, ApiError> {
-    let mut by_match: Vec<(MatchId, Vec<VetoRow>)> = Vec::new();
-    for row in rows {
+    let mut by_match: Vec<(MatchId, (ParticipantId, ParticipantId), Vec<_>)> = Vec::new();
+    for MatchVetoRow {
+        match_id,
+        sides,
+        row,
+    } in rows
+    {
         match by_match.last_mut() {
-            Some((id, group)) if *id == row.match_id => group.push(row),
-            _ => by_match.push((row.match_id, vec![row])),
+            Some((id, _, group)) if *id == match_id => group.push(row),
+            _ => by_match.push((match_id, sides, vec![row])),
         }
     }
     by_match
         .into_iter()
-        .map(|(id, rows)| {
+        .map(|(id, sides, rows)| {
             let m = bracket.get(id).ok_or_else(ApiError::internal)?;
-            let sides = rows[0].sides;
             let sent = games.iter().filter(|g| g.match_id == id).count();
             let lineups = (1..=sent).map(|n| lineup(lineups, id, n)).collect();
             let rosters = Rosters {
@@ -395,8 +410,15 @@ fn vetoes(
                 lineups,
                 finished: matches!(m.state, MatchState::Completed { .. }),
             };
-            let best_of = m.best_of;
-            MatchVeto::replay(rules.clone(), best_of, id, sides, rosters, rows)
+            let log =
+                VetoLog::replay(rules.clone(), m.best_of, rosters, rows).inspect_err(|_| {
+                    tracing::error!(?id, "o veto desta série não fecha");
+                })?;
+            Ok(MatchVeto {
+                match_id: id,
+                sides,
+                log,
+            })
         })
         .collect()
 }

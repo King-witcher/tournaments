@@ -26,3 +26,4 @@ mod screenshots;
 mod teams;
 mod tenants;
 mod tournaments;
+mod veto_rooms;

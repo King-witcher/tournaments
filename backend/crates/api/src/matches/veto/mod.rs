@@ -30,12 +30,17 @@
 //!   mapa que ele deu (`check_report`). Quando o veto deixou enviar conta no
 //!   prazo de confirmação (`released_at`), e o veto começado de outra série
 //!   fecha a contestação tardia (`begun_at`).
+//!
+//! A sala de veto (`veto_rooms`) joga o mesmo veto sem torneio: usa o histórico
+//! refeito (`VetoLog`), o passo conferido (`step`), os sorteios do fim do tempo
+//! (`due_draws`) e a montagem da visão (`view::build`), e grava na tabela dela.
 
 mod advance;
 mod db;
 mod due;
 pub(super) mod handlers;
 mod state;
+pub mod step;
 mod types;
 mod view;
 
@@ -45,14 +50,13 @@ use engine::{
     core::{ChampionId, Match, MatchState, PlayerId},
     veto::{self as ev, Turn},
 };
-use state::Kind;
 
 pub use advance::advance;
-pub use db::{Champion, champions, events, lineups};
-pub use due::{any_due, apply_due, clock};
-pub use state::{MatchVeto, VetoRow, ev_side};
-pub use types::{VetoStatus, VetoView};
-pub use view::{next_map, status, view};
+pub use db::{Champion, NewVetoEvent, champions, events, lineups};
+pub use due::{GRACE, any_due, apply_due, clock, due_draws};
+pub use state::{Kind, MatchVeto, MatchVetoRow, VetoLog, VetoRow, ev_side};
+pub use types::{VetoChoice, VetoStatus, VetoView};
+pub use view::{Board, Shown, build, next_map, status, view};
 
 use super::stage::Stage;
 use crate::shared::ApiError;
@@ -117,6 +121,20 @@ impl Ctx {
                 .collect(),
             used,
             used_by,
+        }
+    }
+
+    /// Fora de um torneio (a sala de veto): os campeões ativos, e nada usado
+    /// fora da série.
+    pub fn alone(champions: &[Champion]) -> Self {
+        Self {
+            champions: champions
+                .iter()
+                .filter(|c| c.active)
+                .map(|c| c.id)
+                .collect(),
+            used: [Vec::new(), Vec::new()],
+            used_by: Vec::new(),
         }
     }
 

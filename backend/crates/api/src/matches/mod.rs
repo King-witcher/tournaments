@@ -60,7 +60,7 @@ mod slots;
 mod stage;
 mod tasks;
 mod types;
-mod veto;
+pub mod veto;
 mod view;
 mod withdrawals;
 
@@ -70,6 +70,7 @@ use crate::AppState;
 
 pub use due::{apply_due_confirmations, confirm_all_due};
 pub use mine::{Place, place, place_of};
+pub use result::Side;
 pub use slots::{MatchGames, games as match_games, lock_games as lock_match_games};
 pub use stage::{discard, start};
 pub use types::NextMatch;

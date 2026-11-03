@@ -3,8 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { StatusTag } from "@/shared/ui/status-tag";
-import { useLiveMatch } from "../hooks/use-live-match";
-import { useSideNames } from "../hooks/use-side-names";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { ChampionFigure } from "./champion-figure";
 import { DraftGameRow } from "./draft-game-row";
 import styles from "./draft-summary.module.scss";
@@ -17,11 +16,8 @@ import styles from "./draft-summary.module.scss";
  */
 export function DraftSummary({ current }: { current?: number }) {
   const t = useTranslations("Match.veto.draft");
-  const { detail, viewerId } = useLiveMatch();
-  const names = useSideNames(detail);
-  const veto = detail.veto;
+  const { veto, mine, names, viewerId, hideEmptyMaps } = useVetoBoard();
   if (!veto) return null;
-  const mine = detail.viewer_side;
   const head = (side: "a" | "b") => (
     <th scope="col">
       <div className={styles.side}>
@@ -80,6 +76,7 @@ export function DraftSummary({ current }: { current?: number }) {
             game={g}
             viewerId={viewerId}
             current={g.game === current}
+            hideEmptyMap={hideEmptyMaps}
           />
         ))}
       </tbody>

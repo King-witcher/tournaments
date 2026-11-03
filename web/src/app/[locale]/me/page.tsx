@@ -10,6 +10,7 @@ import { MyTenants } from "@/features/tenants/components/my-tenants";
 import { NoTenants } from "@/features/tenants/components/no-tenants";
 import { MyTournaments } from "@/features/tournaments/components/my-tournaments";
 import { OpenTournaments } from "@/features/tournaments/components/open-tournaments";
+import { VetoRoomEntry } from "@/features/veto-rooms/components/veto-room-entry";
 import { Page } from "@/shared/ui/page";
 import { PageColumns } from "@/shared/ui/page-columns";
 import { PageHeader } from "@/shared/ui/page-header";
@@ -64,7 +65,12 @@ export default async function SignedInHome({
               <OpenTournaments />
             </>
           }
-          aside={<MyTenants />}
+          aside={
+            <>
+              <MyTenants />
+              <VetoRoomEntry />
+            </>
+          }
         />
       </Suspense>
     </Page>

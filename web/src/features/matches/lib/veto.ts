@@ -78,9 +78,6 @@ export function pickAfter(
  * cada resposta; uma instância só). Uma recarga que saiu antes do clique
  * perde para a resposta do clique, e a do veto apagado e refeito ganha.
  */
-export function isNewer(
-  a: Schemas["MatchDetail"],
-  b: Schemas["MatchDetail"],
-): boolean {
+export function isNewer(a: { now: string }, b: { now: string }): boolean {
   return Date.parse(a.now) > Date.parse(b.now);
 }

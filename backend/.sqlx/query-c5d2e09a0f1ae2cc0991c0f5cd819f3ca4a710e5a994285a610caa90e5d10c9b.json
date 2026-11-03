@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from veto_rooms where expires_at <= $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c5d2e09a0f1ae2cc0991c0f5cd819f3ca4a710e5a994285a610caa90e5d10c9b"
+}

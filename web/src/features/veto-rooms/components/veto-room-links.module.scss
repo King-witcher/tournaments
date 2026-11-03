@@ -1,0 +1,29 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O rótulo em cima do link, como o de um campo; o link longo rola dentro do
+// próprio snippet, não na página.
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  min-inline-size: 0;
+}
+
+.label {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+// Quem entrou no lugar: é o que a gestão acompanha.
+.note {
+  color: theme.$text-primary;
+}
+
+.expires {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update veto_rooms set expires_at = now() + make_interval(hours => $2)\n         where id = $1 returning expires_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d697ecdf9a8973dbbb1584b12e9b3b59c9159be25ddf15c859f9409c769ef948"
+}

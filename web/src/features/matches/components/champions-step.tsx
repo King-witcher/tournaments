@@ -7,8 +7,7 @@ import { useState } from "react";
 import type { components } from "@/shared/api/schema";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Section } from "@/shared/ui/section";
-import { useLiveMatch } from "../hooks/use-live-match";
-import type { MatchTarget } from "../lib/match-target";
+import { useVetoBoard } from "../hooks/use-veto-board";
 import { currentGame } from "../lib/veto";
 import styles from "./champions-step.module.scss";
 import { DraftSummary } from "./draft-summary";
@@ -19,7 +18,6 @@ import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
 
 type Props = {
-  target: MatchTarget;
   rule: components["schemas"]["NoRepeatRule"] | null;
   /** Passo feito, à vista para ver como terminou: só o resumo. */
   done?: boolean;
@@ -33,13 +31,12 @@ type Props = {
  * a do mapa da partida 1 vem antes (o draft depende dele); na janela do
  * TDM, quem vê escolhe para qual partida está escolhendo.
  */
-export function ChampionsStep({ target, rule, done = false }: Props) {
+export function ChampionsStep({ rule, done = false }: Props) {
   const t = useTranslations("Match.veto.champions");
   const tGame = useTranslations("Match.games");
   const tSteps = useTranslations("Match.steps");
-  const { detail } = useLiveMatch();
+  const { veto } = useVetoBoard();
   const [chosen, setChosen] = useState<number | null>(null);
-  const veto = detail.veto;
   if (!veto) return null;
   const voting = !done && veto.turn?.action === "vote";
   const slots = veto.picks;
@@ -54,10 +51,10 @@ export function ChampionsStep({ target, rule, done = false }: Props) {
   return (
     <Section
       title={tSteps("champions")}
-      action={done ? undefined : <VetoUndo target={target} />}
+      action={done ? undefined : <VetoUndo />}
     >
       <VetoTurnArea turn={!done}>
-        {voting && <VetoVoteBoard target={target} game={currentGame(veto)} />}
+        {voting && <VetoVoteBoard game={currentGame(veto)} />}
         {!done && teamPick && slots.length > 1 && slot && (
           <RadioGroup
             legendText={t("forGame")}
@@ -88,7 +85,7 @@ export function ChampionsStep({ target, rule, done = false }: Props) {
               xlg={{ span: 10, start: 1 }}
               className={styles.board}
             >
-              <VetoChampionBoard target={target} rule={rule} slot={slot} />
+              <VetoChampionBoard rule={rule} slot={slot} />
             </Column>
           )}
         </Grid>

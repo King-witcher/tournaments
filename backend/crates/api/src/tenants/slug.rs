@@ -1,8 +1,8 @@
 use crate::shared::{ApiError, slug::is_well_formed};
 
 /// Slugs que colidem com rotas do front em `/{locale}/...` (hoje `new`,
-/// `invite`, `login`, `signup`, `account` e `email`) ou que ficam guardados
-/// para rotas futuras.
+/// `invite`, `login`, `signup`, `account`, `email` e `veto`) ou que ficam
+/// guardados para rotas futuras.
 const RESERVED_SLUGS: &[&str] = &[
     "about",
     "account",
@@ -31,6 +31,7 @@ const RESERVED_SLUGS: &[&str] = &[
     "torneos",
     "tournaments",
     "users",
+    "veto",
 ];
 
 /// Na criação e na troca de endereço.
@@ -55,9 +56,11 @@ mod tests {
             validate_slug("Quake").unwrap_err().code,
             "tenant.slug_invalid"
         );
-        assert_eq!(
-            validate_slug("invite").unwrap_err().code,
-            "tenant.slug_reserved"
-        );
+        for reserved in ["invite", "veto"] {
+            assert_eq!(
+                validate_slug(reserved).unwrap_err().code,
+                "tenant.slug_reserved"
+            );
+        }
     }
 }

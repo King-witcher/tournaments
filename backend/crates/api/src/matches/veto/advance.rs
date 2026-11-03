@@ -68,7 +68,14 @@ pub async fn advance(
         let mut current = usize::from(state.game().unwrap_or(1));
         if current < next && current == 1 && stage.veto_rules.champion_phase {
             let ctx = Ctx::of(stage, mv);
-            while due::draw_turn(conn, &at, (a, b), &mut state, &ctx, None).await? > 0 {
+            loop {
+                let rows = due::draw_turn(&mut state, &ctx, None)?;
+                if rows.is_empty() {
+                    break;
+                }
+                for row in &rows {
+                    db::insert(conn, &at, (a, b), row).await?;
+                }
                 changed = true;
             }
         }

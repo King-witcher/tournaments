@@ -2,12 +2,11 @@
 
 import { useLiveMatch } from "../hooks/use-live-match";
 import { vetoPhase } from "../lib/match-steps";
-import type { MatchTarget } from "../lib/match-target";
 import { VetoError } from "./veto-error";
 import { VetoTurnArea } from "./veto-turn-area";
 import { VetoVoteBoard } from "./veto-vote-board";
 
-type Props = { target: MatchTarget; number: number };
+type Props = { number: number };
 
 /**
  * O veto no passo da partida da vez: a votação do mapa dela (de quem é a
@@ -15,7 +14,7 @@ type Props = { target: MatchTarget; number: number };
  * veto está nas partidas (a votação da partida 1 com draft fica nos
  * Campeões): um cronômetro só na página.
  */
-export function GameVeto({ target, number }: Props) {
+export function GameVeto({ number }: Props) {
   const { detail } = useLiveMatch();
   const veto = detail.veto;
   if (!veto || vetoPhase(detail) !== "games") return null;
@@ -26,7 +25,7 @@ export function GameVeto({ target, number }: Props) {
     <>
       {voting && (
         <VetoTurnArea>
-          <VetoVoteBoard target={target} game={number} />
+          <VetoVoteBoard game={number} />
         </VetoTurnArea>
       )}
       <VetoError />

@@ -1,0 +1,48 @@
+{
+  "title": "Sala de veto",
+  "description": "Veto de mapas e draft de campeões, sem torneio e sem conta.",
+  "stepsLabel": "Passos da sala",
+  "result": "Resultado",
+  "resultText": "Resultado para o chat",
+  "bestOf": "Melhor de {count}",
+  "modes": {
+    "duel": "Duelo",
+    "teams": "{size}v{size}"
+  },
+  "roles": {
+    "manager": "Gestão",
+    "spectator": "Espectador"
+  },
+  "form": {
+    "mode": "Modo",
+    "duel": "Duelo",
+    "teams": "{size}v{size}",
+    "bestOf": "Melhor de",
+    "submit": "Criar sala",
+    "poolTooSmall": "O pool precisa de pelo menos {min, plural, one {# mapa} other {# mapas}}.",
+    "noPhases": "Com os mapas combinados, a escolha de campeões precisa ser no site."
+  },
+  "seats": {
+    "side": "Lado {side}",
+    "team": "Time de {name}",
+    "seat": "Lugar {side}{position}",
+    "empty": "Lugar vazio"
+  },
+  "join": {
+    "title": "Entrar na sala",
+    "name": "Seu nome",
+    "submit": "Entrar",
+    "entering": "Entrando…"
+  },
+  "links": {
+    "title": "Links",
+    "notJoined": "ainda não entrou",
+    "spectator": "Espectador",
+    "manage": "Gestão (esta página)",
+    "expires": "A sala vale até <date></date>."
+  },
+  "gone": {
+    "text": "Esta sala venceu ou não existe.",
+    "create": "Criar outra sala"
+  }
+}

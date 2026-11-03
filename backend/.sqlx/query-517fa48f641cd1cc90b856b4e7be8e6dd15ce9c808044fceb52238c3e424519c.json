@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select min(due_at) from veto_rooms where due_at is not null and expires_at > $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "min",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "517fa48f641cd1cc90b856b4e7be8e6dd15ce9c808044fceb52238c3e424519c"
+}

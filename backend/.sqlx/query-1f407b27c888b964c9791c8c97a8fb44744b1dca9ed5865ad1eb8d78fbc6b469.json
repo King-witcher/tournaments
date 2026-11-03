@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into veto_rooms\n             (created_by, manage_token, spectator_token, team_size, best_of, map_mode, veto_order,\n              champion_phase, bans_per_series, mirror, same_team, no_repeat, step_seconds,\n              team_pick_seconds, expires_at)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,\n                 now() + make_interval(hours => $15))\n         returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "veto_rooms",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Int2",
+        "Int2",
+        "Text",
+        "Text",
+        "Bool",
+        "Int2",
+        "Bool",
+        "Bool",
+        "Text",
+        "Int4",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1f407b27c888b964c9791c8c97a8fb44744b1dca9ed5865ad1eb8d78fbc6b469"
+}

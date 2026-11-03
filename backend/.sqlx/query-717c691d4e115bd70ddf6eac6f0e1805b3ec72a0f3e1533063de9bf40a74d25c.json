@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update veto_rooms set due_at = $2 where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "717c691d4e115bd70ddf6eac6f0e1805b3ec72a0f3e1533063de9bf40a74d25c"
+}

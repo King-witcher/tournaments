@@ -133,6 +133,10 @@
     "more": "Más acciones de la partida {number}"
   },
   "veto": {
+    "result": {
+      "copy": "Copiar el resultado del veto",
+      "copied": "Resultado copiado"
+    },
     "waitingReady": "El veto empieza cuando los dos hagan clic en “Listo”.",
     "isReady": "{name} está listo.",
     "notReady": "{name} todavía no está listo.",

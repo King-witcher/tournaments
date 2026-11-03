@@ -42,6 +42,34 @@ Como no regulamento da KeenCon 2023 (antes era por mapa). Com a partida 1 aberta
 - **Orçamento de campeões** (`champions::required_pool`): o último a escolher numa partida enfrenta os bans dos dois lados, o que a regra já tirou dele nas outras partidas, os colegas na mesma partida (sem repetir no time) e, sem espelho, os adversários: `2·bans + antes + colegas + adversários + 1`, com `antes` = 0 sem regra, `partidas − 1` pela do jogador e `(partidas − 1)·tamanho` pela do time, `colegas` = `tamanho − 1`, `adversários` = `tamanho`. No duelo com a regra: `2·bans + partidas` (+ 1 sem espelho). Roda ao criar, editar, publicar e iniciar, com os times reais (`champions.pool_exhausted {required, available}`); o veto não começa com campeões ativos de menos para os bans (`ChampionPoolExhausted`, `2·bans + 1`). O `engine` recusa tamanho de time fora de 1 a 4 e mais de 3 bans. **Limite conhecido**: no escopo torneio, o pior caso de uma fase posterior conta com todos os lados das vagas e superestima; com uma fase só, não faz diferença.
 - Validação na criação com mensagem com números ("no pior caso são necessários 24 campeões; o pool tem 16").
 
+## Sala de veto
+
+Veto de mapas e draft de campeões avulsos, sem torneio nem comunidade, para quem não usa o site para gerenciar a chave (`veto_rooms`; na interface, "Sala de veto", igual em pt e es). O veto é o mesmo da série (`engine` e `matches/veto`: `VetoLog`, `step`, `due_draws`, `view::build`, com a resposta no mesmo `VetoView`). Do usuário (03/11):
+
+- **Quem cria**: qualquer um, sem login. Não pertence a comunidade nenhuma.
+- **Links**: um por jogador e um de espectador (duelo 3, 2v2 5, 3v3 7, 4v4 9). O link é a credencial daquele lugar. Quem o abre logado entra com o nome da conta; quem não está, digita um nome.
+- **Escopo**: mapas e campeões em todos os modos, com o draft de times como no TDM.
+- **Limites, em constantes** (`veto_rooms/create.rs`), para os jogadores não caírem no teto: 5.000 salas ativas criadas sem login (conta logada nunca é barrada, e a sala dela não conta), 30 por hora por IP sem login (uma LAN sai pelo mesmo IP), 60 por hora por conta. O teto responde 503 `veto_room.anonymous_full` e fica no log; a interface oferece entrar com a conta. O limite por hora, 429 `veto_room.rate_limited {minutes}`.
+- **Validade**: 2 h se ninguém começou, 24 h a partir do início. Sala vencida não é lida, mesmo antes de a rotina do agendador apagá-la.
+- **Sem listagem nem indexação**: `noindex` e sem referrer nas páginas da sala (o token está na URL).
+- **No fim, copiar o resultado para o chat**: `Tower of Koth - Athena(king) Ranger(thallis) | Vestibule of Exile - Sorlag(king) Strogg(thallis) | Crucible - DOOM Slayer(king) Keel(thallis)`; nos times, todos os jogadores do mapa, lado A depois lado B; sem draft, só os mapas.
+
+Assumido:
+
+- Melhor de 1, 3 ou 5; pool padrão com edição; ordem do veto, prazos e faixas os do torneio; draft ligado ou desligado; bans, espelho, repetir no time e não repetição com escopo na série. Só o básico à vista, o resto numa seção recolhida.
+- **Mapas: veto ou desligado.** Votação e sorteio saem a cada partida, depois do envio da anterior, e a sala não tem envio (`veto_room.map_mode_invalid`). Desligado e sem draft não há o que fazer (`veto_room.no_phases`).
+- **Sem desfazer** na primeira versão: em caso de erro, cria-se outra sala (`can_undo` sempre falso).
+- **Gestão**: ao criar, a resposta é o token de gestão; a página dele tem URL própria, com todos os links e o andamento. Sem isso, recarregar perderia os links.
+- **Começa** quando cada lado marca "Pronto" (qualquer jogador do lado); lugar vazio não trava a sala. **Quem começa é sorteado** (a sala não tem seed melhor), e fica no histórico.
+- **Cada um age pelo lado**, como no TDM: qualquer jogador faz o passo do lado. Na janela simultânea, cada lugar escolhe os seus, e quem não apareceu é sorteado no fim do prazo; o elenco é sempre o de todos os lugares, com gente ou não. Para agir é preciso ter entrado (`veto_room.not_joined`).
+- **O nome** é definido uma vez por lugar, de 1 a 32 caracteres. Quem reabre o link, ou o abre em outro aparelho, continua como aquele lugar.
+- **O jogador do veto é o lugar**: nas respostas, `user_id` é o id do lugar, e o nome é vazio em quem ninguém entrou.
+- **Rotas do front** sob `/{locale}/veto`; `veto` é um slug reservado de comunidade.
+- **Fora**: o clique não lê a sessão (token basta); só criar e entrar a leem. Nenhum aviso, push ou Discord.
+- **Resultado sem veto de mapas**: `Partida 1 - Athena(king) Ranger(thallis) | Partida 2 - ...`: a mesma ideia, com o nome da partida no lugar do mapa ("partida" é igual em pt e es). O mesmo formatador (`lib/veto-result.ts`) serve à série de torneio, num botão discreto entre os passos e a partida, com o veto acabado.
+- **Nome de quem não entrou**: o lado é "Lado A" (nos times, "Time de {primeiro que entrou}", como no torneio) e o lugar, "Lugar B2", também no resultado copiado. Quem entra depois passa a aparecer com o nome no que foi sorteado para ele.
+- **Tela**: os tabuleiros são os da série, pelo `VetoBoard` (`LiveMatchProvider` e `VetoRoomProvider`); a gestão vê os links na coluna principal até começar e, depois, ao lado do veto. Logado entra sozinho, sem clicar; cookie de sessão vencida cai no campo de nome.
+
 ## Estado, prazos e banco
 
 - **Estado por replay**: `match_veto_events` guarda o histórico (pronto, começo com a seed e quem começa, início de cada partida com o mapa em que a anterior foi enviada, ban, pick (campeão com `pick_game` e, no TDM, `gave_way`), voto, desfazer, pedido e recusa), com autor e hora; nunca o estado. A `20261129030000_series_draft` apagou os torneios (produção vazia) em vez de converter. A configuração da série **não** fica nos eventos (o começo guarda só a seed e quem começa): o replay lê as regras da linha atual de `tournaments` (`setup.veto_rules()`), que o trigger `tournaments_veto_frozen` congela depois do início (modo do mapa, ordem do veto, fase de campeões e os dois tempos); por isso uma regra nova do veto precisa de coluna com um default que preserve o replay das séries já começadas. O `engine` (`veto::Veto::replay`) refaz a vez, as opções, o mapa e os campeões; no replay, a regra de não repetição e o pool não são conferidos de novo (valeram quando o passo entrou).

@@ -20,6 +20,7 @@ crates/api/src/
   tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
   members/  invites/  tournaments/  participants/  teams/  lifecycle/
   matches/        chave, resultados mapa a mapa e o veto (veto/)
+  veto_rooms/     sala de veto: o veto de matches/veto sem torneio nem login, por token
   my_tournaments/ organizing/ notifications/ ratings/ screenshots/ images/ push/ discord/
   realtime/       WebSocket, despachante do outbox, agendador (acima de todos)
   health.rs  maps.rs   domínios pequenos, um arquivo cada
@@ -30,6 +31,8 @@ O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//
 ### Tempo real: mudou estado visível, `emit` na mesma transação
 
 Toda função que muda algo que uma página mostra emite no outbox, na transação dela, antes do commit: `tournaments::changed(conn, id)` (dados, status, inscrições, check-in, seeding; `changed_with` também avisa quem saiu), `tenants::changed` (membros, papéis, apelidos, link de convite), `tenants::access_lost` (quem saiu); a chave emite sozinha pelo `settle` (passe a fase lida antes de gravar para `actions::respond`). Emita na função de domínio que faz a transição, não só no handler, para valer também quando outra função a chama (`lifecycle::leave_tournaments`). Escrita de uma linha que recebe `&PgPool` passa a receber `&mut PgConnection`, e o handler abre a transação. Aviso para pessoas é `outbox::Event::notice` com código e parâmetros, nunca texto. O que só vai ao canal do Discord (torneio iniciado, encerrado, série decidida) é `Event::Announce`; todo `Notice` e `Announce` vira mensagem no Discord se o código está no `CATALOG` de `discord/catalog.rs` (aviso novo: uma linha lá e a chave no `Discord.json` do front). O despachante acorda sozinho depois da requisição que emitiu; fora de requisição (socket, tarefa), `state.realtime.wake()`.
+
+A sala de veto é a exceção: sem aviso nem push, avisa pelo canal dela, depois do commit (`veto_rooms::Live::changed`; `docs/decisions/realtime.md`).
 
 ### Idas ao banco no caminho do clique
 

@@ -10,7 +10,7 @@
 mod bracket;
 mod contest;
 mod corrections;
-mod cost;
+pub mod cost;
 mod deadline;
 mod organizer;
 mod replay;
