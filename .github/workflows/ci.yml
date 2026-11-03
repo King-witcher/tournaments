@@ -1,11 +1,11 @@
 # Confere backend e front. Em pull request só roda o lado cujos arquivos
-# mudaram; em push na main roda os dois. Regras e motivos: "Repositório e CI" em
-# docs/decisions/stack.md.
+# mudaram; em push na main e no staging roda os dois. Regras e motivos:
+# "Repositório e CI" em docs/decisions/stack.md.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
 
 # Uma execução nova do mesmo ref cancela a anterior (economiza minutos).

@@ -17,7 +17,7 @@ Backend (em `backend/`):
 - `cargo test -p engine`: motores, rápidos, sem banco. `cargo test`: tudo, inclusive rotas (Postgres e Redis locais; dividem 8 bancos reaproveitados, e a suíte de outra sessão espera esta terminar).
 - `cargo clippy --all-targets -- -D warnings` e `cargo fmt`.
 - Nova migration: criar `migrations/AAAAMMDDHHMMSS_nome.sql` à mão e rodar `cargo run -p migrate` **antes** de compilar código com `query!` que use a tabela nova (as macros conferem o SQL contra o banco local). Não há sqlx-cli; não instale globalmente. **Migration aplicada não muda, nem em comentário**: o sqlx confere o checksum do arquivo inteiro e staging/produção falham ao subir.
-- `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/` (compila sem banco, `SQLX_OFFLINE=true`, como no Render). Rode e faça commit sempre que criar ou mudar um `query!`, senão o deploy falha.
+- `bun scripts/sqlx-prepare.ts`: regenera `.sqlx/` contra um banco novo, só com as migrations (a CI compara o resultado; o Render compila sem banco, `SQLX_OFFLINE=true`). Rode e faça commit sempre que criar ou mudar um `query!`, senão o deploy falha.
 - `.cargo/config.toml` define o `DATABASE_URL` local para as macros e, no Windows, o linker `rust-lld`.
 
 Frontend (em `web/`), sempre Bun (nada de npm/pnpm): `bun run dev`, `bun run build`, `bun run lint` e `bun run format` (Biome; ainda não há testes de frontend), `bun run gen:api` (regenera `src/shared/api/schema.d.ts` do OpenAPI, com a API rodando), `bun run storybook` (os componentes da `shared/ui` em http://localhost:6006).

@@ -75,8 +75,10 @@ fn key(url: &str) -> String {
     url.strip_prefix(&format!("{CDN}/")).unwrap().to_owned()
 }
 
+/// Na ordem de bytes, a do `sort` do Rust (os nomes têm letras aleatórias, e a
+/// collation do banco ordena maiúsculas de outro jeito).
 async fn queued(db: &PgPool) -> Vec<String> {
-    sqlx::query_scalar("select object_key from image_deletions order by object_key")
+    sqlx::query_scalar(r#"select object_key from image_deletions order by object_key collate "C""#)
         .fetch_all(db)
         .await
         .unwrap()

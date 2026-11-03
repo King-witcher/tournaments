@@ -73,6 +73,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 - Em `crates/api/tests/api/`, num binário só (`main.rs` declara os módulos; arquivo solto em `tests/` vira outro binário). Um arquivo por domínio, com o nome do módulo em `src/`; helpers comuns (app, usuário com sessão, `redis(&db)`, `get`/`post`, `create`/`invite`/`join`) em `common.rs`.
 - Teste com banco: `#[tokio::test]` e, na primeira linha, `let (db, _lease) = crate::db::test_db().await;` (nunca `#[sqlx::test]`). O `test_db` empresta um de poucos bancos reaproveitados, já esvaziado (por `delete`, nunca `truncate`); `_lease` segura o banco até o fim. Uma suíte por vez na máquina (lock de arquivo). Motivos em `docs/decisions/stack.md`, "Testes".
 - Antes de escrever um teste, veja se outro já cobre o caso: um teste novo exercita um caminho, regra, código de erro ou constraint que nenhum outro exercita.
+- Ordem do banco comparada com `sort()` do Rust: `order by ... collate "C"`. A collation do banco não é a ordem de bytes, e com texto aleatório o teste falha só de vez em quando.
 - Filtrar: `cargo test -p api invites::`. Regras do banco, por SQL direto: `schema/` para o schema inteiro, `matches/schema.rs` para resultados e histórico.
 - Tempo real: o app de teste não sobe despachante nem agendador. `state(db)` + `app_from(state)` dão acesso ao `Realtime`; o teste chama `realtime::dispatch_once` e `realtime::tick` (com o `now` que quiser) e lê o que uma ação emitiu no outbox (`realtime::outbox`).
 

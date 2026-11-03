@@ -61,8 +61,9 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 ## Repositório e CI
 
 - Privado agora, público depois: nenhum segredo no código (`.env.example` versionado), histórico limpo.
-- GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês). Em pull request roda só o lado cujos arquivos mudaram (`dorny/paths-filter`); em push na `main`, os dois; execução antiga do mesmo ref é cancelada.
+- GitHub Actions com cache de build Rust (o plano privado tem 2.000 min/mês). Em pull request roda só o lado cujos arquivos mudaram (`dorny/paths-filter`); em push na `main` e no `staging`, os dois (a integração vai para o `staging`; sem ele, um commit só via a suíte ao chegar na `main`); execução antiga do mesmo ref é cancelada.
 - A conferência do `.sqlx/` regrava as queries num diretório à parte e compara (`diff -r`), reaproveitando as dependências compiladas (~1 min), em vez de rodar `sqlx-prepare.ts` (compilaria tudo de novo). Existe porque `.sqlx/` sobrando ou diferente seria invisível ao clippy offline.
+- **`.sqlx/` sempre de um banco novo**, só com as migrations: o sqlx deduz a nulidade das colunas do plano da query (`EXPLAIN`), que muda com os dados. Gerado no banco de dev, a CI ficava vermelha sem nada errado (5 execuções seguidas em 01/11). Em banco novo, Windows e Linux deram os mesmos 312 arquivos.
 - Banco de dev: cluster Postgres local; usuário `telefrag` sem senha (`trust` no `pg_hba.conf`), restrito ao próprio banco e aos de teste.
 
 ## Organização do código

@@ -143,12 +143,16 @@ pub fn numbers(listing: &Value) -> Vec<i64> {
         .collect()
 }
 
-/// Nomes de objeto na fila de exclusão.
+/// Nomes de objeto na fila de exclusão, na ordem de bytes (a do `sort` do Rust,
+/// com que os testes comparam; a collation do banco ordena maiúsculas de outro
+/// jeito, e os nomes têm letras aleatórias).
 pub async fn queued(db: &PgPool) -> Vec<String> {
-    sqlx::query_scalar("select object_key from screenshot_deletions order by object_key")
-        .fetch_all(db)
-        .await
-        .unwrap()
+    sqlx::query_scalar(
+        r#"select object_key from screenshot_deletions order by object_key collate "C""#,
+    )
+    .fetch_all(db)
+    .await
+    .unwrap()
 }
 
 /// Nomes de objeto dos screenshots gravados (anexados ou não).
