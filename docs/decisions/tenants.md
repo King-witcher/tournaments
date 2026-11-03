@@ -10,12 +10,15 @@ Excluir a comunidade: `deletion.md`.
 - Página do tenant **só para membros**: para quem é de fora, a API responde 404 `tenant.not_found`, igual a tenant inexistente, para não revelar que existe. A prévia do convite (`GET /invites/{token}`, pública) é exceção: ter o token já é o convite.
 - **Perfil por tenant**: só o **apelido** (`tenant_members.nickname`), que começa com o nome exibido e o membro edita. **Pode repetir** dentro do tenant: as telas mostram o avatar ao lado e as rotas identificam por `user_id`.
 - **Configurações**: os parâmetros do Elo, pelo owner (ver `ratings.md`). Ranking ligado/desligado e outro sistema (Glicko-2) ficam para quando houver o que escolher.
+- **Nome e descrição** (assumido, 03/11): só o owner edita (`PATCH /tenants/{slug}`), com a validação de nome da criação; campo ausente não muda. A descrição é opcional, em um idioma só, no formato da do torneio: texto simples com as quebras de linha, até 2000 caracteres, exibida com `UserText`. Vazia vira nulo (o banco recusa string vazia). Com a exclusão agendada, a rota recusa como toda escrita e a seção some da aba Configurações. O slug continua sem mudar.
+- **Aba Sobre** (assumido, 03/11): sub-rota `/about`, antes de Configurações (`about` passa a ser slug reservado de torneio), para os membros lerem a descrição. Sem descrição, só o owner vê a aba, com o estado vazio e o link para Configurações; com a exclusão agendada, nem ele.
 
 ## Convites
 
 - Link **multiuso**, vale 7 dias, revogável. Owner e organizer geram; quem entra vira **player**. Só o hash do token fica no banco (o link aparece uma vez, na criação). Vai sem idioma (`/invite/{token}`); o proxy do next-intl manda cada pessoa para o seu. O link de inscrição de um torneio (ver `tournaments.md`) também faz entrar no tenant.
 - Aceitar sendo já membro não muda papel nem apelido. A prévia traz o slug da comunidade, o início do torneio (link de inscrição) e, para quem está logado, se já é membro, se saiu (e o apelido de antes) e se já está inscrito: a tela troca o botão por "você já é membro" com o link, "Inscrever-se" (membro no link de inscrição) ou diz que volta como jogador com apelido e histórico (quem saiu).
 - **Quem vai entrar vê o que importa para decidir**: a prévia traz `owner_name` (apelido do dono *de agora*: a comunidade não grava quem a criou) e `member_count` (ativos); a página não mostra a validade, que é informação de quem gerencia (a tabela da aba Convites continua com ela; `expires_at` segue na API).
+- **A descrição também** (assumido, 03/11): a prévia traz `tenant_description`, a página mostra em "Sobre a comunidade" (no link de inscrição também, porque aceitar faz entrar nela) e a prévia do link usa cortada em 300 caracteres; no link de inscrição, a do torneio vem primeiro, e a da comunidade só se ele não tiver.
 
 ## Membros
 

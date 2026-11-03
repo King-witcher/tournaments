@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenants t\n           join tenant_members m on m.tenant_id = t.id\n           where t.slug = $1 and m.user_id = $2 and m.left_at is null",
+  "query": "select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "role",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "deletion_due_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "logo_key",
         "type_info": "Text",
         "origin": {
@@ -83,7 +94,6 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
         "Int8"
       ]
     },
@@ -91,11 +101,12 @@
       false,
       false,
       false,
+      true,
       false,
       false,
       true,
       true
     ]
   },
-  "hash": "cd99af15feea4254bc9c90f3e2b33bc05adf37b22a2c5f2a2646e00a37a100f7"
+  "hash": "78a21c7ef360d3ecaeade83975bf79e3a94efd01d0f642edfa716a9c38e0fff3"
 }

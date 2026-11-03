@@ -116,6 +116,11 @@ async fn the_community_is_read_only_until_the_deletion() {
         post(&app, "/tenants/quake-br/transfer-ownership", &ana, transfer).await,
         scheduled()
     );
+    let edit = json!({ "name": "Outro nome", "description": "Outra." });
+    assert_eq!(
+        patch(&app, "/tenants/quake-br", &ana, edit).await,
+        scheduled()
+    );
     // O convite não vale, nem a prévia.
     let accept = format!("/invites/{token}/accept");
     let stranger = user(&db, "Zeca").await;

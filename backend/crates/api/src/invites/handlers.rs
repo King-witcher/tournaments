@@ -138,6 +138,7 @@ pub async fn preview_invite(
     Ok(Json(InvitePreview {
         tenant_slug: invite.tenant_slug,
         tenant_name: invite.tenant_name,
+        tenant_description: invite.tenant_description,
         tenant_logo_url: invite.tenant_logo_key.as_deref().and_then(public_url),
         owner_name: invite.owner_name,
         member_count: invite.member_count,

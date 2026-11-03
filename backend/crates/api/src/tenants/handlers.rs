@@ -4,18 +4,27 @@ use super::{
     MyTenant, Owner, Role, TenantMember, changes, db,
     nickname::default_nickname,
     slug::validate_slug,
-    types::{CreateTenant, TransferOwnership},
+    types::{CreateTenant, TransferOwnership, UpdateTenant},
 };
 use crate::{
     AppState,
     auth::CurrentUser,
     outbox::{self, Event},
-    shared::{ApiError, ErrorBody, JsonBody, text::clean_text},
+    shared::{
+        ApiError, ErrorBody, JsonBody,
+        text::{clean_long_text, clean_text},
+    },
 };
 
 /// Quantos tenants um usuário pode ter como owner (ser membro de outros não conta).
 const MAX_OWNED_TENANTS: i64 = 3;
 const NAME_MAX: usize = 64;
+/// O mesmo limite da descrição do torneio e do check da tabela.
+const DESCRIPTION_MAX: usize = 2000;
+
+fn clean_name(raw: &str) -> Result<String, ApiError> {
+    clean_text(raw, NAME_MAX, "tenant.name_invalid")
+}
 
 #[utoipa::path(
     post,
@@ -35,7 +44,7 @@ pub async fn create_tenant(
     JsonBody(body): JsonBody<CreateTenant>,
 ) -> Result<(StatusCode, Json<MyTenant>), ApiError> {
     validate_slug(&body.slug)?;
-    let name = clean_text(&body.name, NAME_MAX, "tenant.name_invalid")?;
+    let name = clean_name(&body.name)?;
     let nickname = default_nickname(&user.display_name);
 
     db::create_with_owner(
@@ -53,6 +62,7 @@ pub async fn create_tenant(
         Json(MyTenant {
             slug: body.slug,
             name,
+            description: None,
             role: Role::Owner,
             nickname,
             deletion_scheduled_for: None,
@@ -90,6 +100,48 @@ pub async fn list_my_tenants(
 )]
 pub async fn get_tenant(member: TenantMember) -> Json<MyTenant> {
     Json(member.into())
+}
+
+#[utoipa::path(
+    patch,
+    path = "/tenants/{slug}",
+    tag = "tenants",
+    params(("slug" = String, Path, description = "Slug do tenant")),
+    request_body = UpdateTenant,
+    responses(
+        (status = OK, body = MyTenant, description = "Nome e descrição gravados. O slug não muda"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tenant.name_invalid, tenant.description_invalid {max}, request.invalid_body"),
+    )
+)]
+pub async fn update_tenant(
+    State(state): State<AppState>,
+    owner: TenantMember<Owner>,
+    JsonBody(body): JsonBody<UpdateTenant>,
+) -> Result<Json<MyTenant>, ApiError> {
+    let name = match &body.name {
+        Some(raw) => clean_name(raw)?,
+        None => owner.name.clone(),
+    };
+    let description = match &body.description {
+        Some(raw) => {
+            let text = clean_long_text(raw, DESCRIPTION_MAX, "tenant.description_invalid")?;
+            (!text.is_empty()).then_some(text)
+        }
+        None => owner.description.clone(),
+    };
+    let mut tx = state.db.begin().await?;
+    db::update_details(&mut tx, owner.tenant, &name, description.as_deref()).await?;
+    changes::changed(&mut tx, owner.tenant).await?;
+    tx.commit().await?;
+    Ok(Json(MyTenant {
+        name,
+        description,
+        ..owner.into()
+    }))
 }
 
 #[utoipa::path(

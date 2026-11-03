@@ -6,11 +6,13 @@ import { DiscordSection } from "@/features/discord/components/discord-section";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
 import { MembershipSettings } from "@/features/members/components/membership-settings";
 import { LogoSection } from "@/features/tenants/components/logo-section";
+import { TenantDetailsSection } from "@/features/tenants/components/tenant-details-section";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**
- * Aba Configurações da comunidade: o que é de quem vê, o logo e o Discord
- * (só o owner) e, por último, a zona de perigo.
+ * Aba Configurações da comunidade: o que ela é, para o owner (nome, descrição
+ * e logo), o que é de quem vê, o Discord (só o owner) e, por último, a zona
+ * de perigo.
  */
 export default async function TenantSettingsPage({
   params,
@@ -18,6 +20,16 @@ export default async function TenantSettingsPage({
   const t = await getTranslations("Tenant.settings");
   return (
     <Stack gap={9}>
+      <Suspense fallback={null}>
+        {params.then(({ tenant }) => (
+          <TenantDetailsSection slug={tenant} />
+        ))}
+      </Suspense>
+      <Suspense fallback={null}>
+        {params.then(({ tenant }) => (
+          <LogoSection slug={tenant} />
+        ))}
+      </Suspense>
       <Suspense
         fallback={
           <TabLoading label={t("loading")}>
@@ -28,11 +40,6 @@ export default async function TenantSettingsPage({
       >
         {params.then(({ tenant }) => (
           <MembershipSettings slug={tenant} />
-        ))}
-      </Suspense>
-      <Suspense fallback={null}>
-        {params.then(({ tenant }) => (
-          <LogoSection slug={tenant} />
         ))}
       </Suspense>
       <Suspense fallback={null}>

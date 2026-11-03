@@ -58,6 +58,7 @@
     "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
     "slug_reserved": "Esa dirección está reservada. Elige otra.",
     "name_invalid": "El nombre debe tener de 1 a 64 caracteres.",
+    "description_invalid": "La descripción puede tener hasta {max} caracteres.",
     "confirmation_mismatch": "La dirección escrita no coincide con la de la comunidad.",
     "deletion_scheduled": "Esta comunidad se va a eliminar y, hasta entonces, nada cambia en ella.",
     "deletion_not_scheduled": "La eliminación de esta comunidad no está programada.",

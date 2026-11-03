@@ -19,17 +19,17 @@ export const getInvite = cache(async (token: string) => {
     .catch(() => undefined);
 });
 
-/** Até onde a descrição do torneio vai na prévia (o Discord mostra ~350). */
+/** Até onde a descrição vai na prévia (o Discord mostra ~350). */
 const PREVIEW_DESCRIPTION_MAX = 300;
 
 /**
  * A prévia do link de convite (Discord, WhatsApp): o título do convite e a
- * imagem inteira, sem moldura, e no link de inscrição a descrição do
- * torneio. Nada que muda com o tempo (membros, vagas): a rede guarda a
- * prévia na primeira vez. No link de inscrição com capa, a capa (2:1)
- * grande; senão o logo da comunidade (1:1) como miniatura, que o WhatsApp
- * não corta. Sem imagem nenhuma, a prévia do site. Convite que não vale
- * mais: a prévia do site inteira.
+ * imagem inteira, sem moldura, e a descrição da comunidade (no link de
+ * inscrição, a do torneio, se houver). Nada que muda com o tempo (membros,
+ * vagas): a rede guarda a prévia na primeira vez. No link de inscrição com
+ * capa, a capa (2:1) grande; senão o logo da comunidade (1:1) como miniatura,
+ * que o WhatsApp não corta. Sem imagem nenhuma, a prévia do site. Convite que
+ * não vale mais: a prévia do site inteira.
  */
 export async function inviteMetadata(
   token: string,
@@ -48,7 +48,10 @@ export async function inviteMetadata(
     : t("title", { name: invite.tenant_name });
   // `null`, e não `undefined`, para não herdar a do site.
   const description =
-    (tournament && shorten(localizedDescription(tournament, locale))) || null;
+    shorten(
+      (tournament && localizedDescription(tournament, locale)) ||
+        (invite.tenant_description ?? ""),
+    ) || null;
   // Os tamanhos do corte feito no envio (docs/decisions/images.md).
   const cover = tournament?.cover_url;
   const logo = invite.tenant_logo_url;

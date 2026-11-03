@@ -1,21 +1,10 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
+  "query": "select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.tenant_id = $1 and m.user_id = $2",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
-        "type_info": "Int8",
-        "origin": {
-          "Table": {
-            "table": "tenants",
-            "name": "id"
-          }
-        }
-      },
-      {
-        "ordinal": 1,
         "name": "slug",
         "type_info": "Text",
         "origin": {
@@ -26,13 +15,24 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 1,
         "name": "name",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "tenants",
             "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "description"
           }
         }
       },
@@ -83,18 +83,19 @@
     ],
     "parameters": {
       "Left": [
+        "Int8",
         "Int8"
       ]
     },
     "nullable": [
       false,
       false,
-      false,
+      true,
       false,
       false,
       true,
       true
     ]
   },
-  "hash": "d10978cfcfde260137c4d16a8231c582466a0b1fb5812036edc57b6d4c06f8b8"
+  "hash": "de9bcd6c6c201485e760c8c578c13b8f86b7f26d8f071081d09a3d3b39a8815d"
 }

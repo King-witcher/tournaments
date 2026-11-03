@@ -123,6 +123,12 @@ async fn members_and_invites() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(outbox(&db).await, [tenant("quake-br")]);
 
+    clear(&db).await;
+    let details = json!({ "name": "Quake Brasil", "description": "Duelos." });
+    let (status, _) = patch(&app, "/tenants/quake-br", &ana, details).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(outbox(&db).await, [tenant("quake-br")]);
+
     // Removida com inscrição aberta: sai do torneio e perde o acesso.
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;

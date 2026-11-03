@@ -4,6 +4,7 @@
   "tournamentTitle": "Inscripción en {name}",
   "unavailable": "Invitación no disponible",
   "details": "Sobre la invitación",
+  "about": "Acerca de la comunidad",
   "community": "Comunidad",
   "spots": "Cupos",
   "tournamentSpots": "{count, plural, =0 {{max} cupos, ninguno ocupado todavía} one {# inscrito de {max} cupos} other {# inscritos de {max} cupos}}",

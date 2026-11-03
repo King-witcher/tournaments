@@ -34,7 +34,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` com o logo do Telefrag (só o ícone abaixo do `md`); na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista e "Criar comunidade"; a atual sem marca visível, só para o leitor de tela), o sininho (o número das que faltam ver no `BadgeIndicator` do Carbon; painel com os avisos dos últimos 30 dias) e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema e o idioma, os dois como `ContentSwitcher`); sem sessão, o mesmo painel com "Entrar" e "Criar conta". Um painel aberto por vez. Sem `SideNav`: cada nível tem no máximo cinco seções, que cabem nas abas, e a chave precisa da largura toda.
+`Header` do UI Shell: `SkipToContent`; `HeaderName` com o logo do Telefrag (só o ícone abaixo do `md`); na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista e "Criar comunidade"; a atual sem marca visível, só para o leitor de tela), o sininho (o número das que faltam ver no `BadgeIndicator` do Carbon; painel com os avisos dos últimos 30 dias) e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema e o idioma, os dois como `ContentSwitcher`); sem sessão, o mesmo painel com "Entrar" e "Criar conta". Um painel aberto por vez. Sem `SideNav`: cada nível tem no máximo seis seções, que cabem nas abas, e a chave precisa da largura toda.
 
 ### Início `/`
 
@@ -53,7 +53,7 @@ Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **L
 
 ### Convite `/invite/[token]`, Nova comunidade `/new`
 
-Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço e o logo opcional (mandado depois de criar).
+Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros, a descrição (quando há) e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço e o logo opcional (mandado depois de criar).
 
 ### Comunidade `/[tenant]`
 
@@ -63,7 +63,8 @@ Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do
 - **Ranking** (todos): posição, membro, rating com `Tag` "provisório", mapas, V–D, último mapa; a linha abre a página da pessoa.
 - **Membros**: membro com avatar, papel, desde e, para a organização, "Entrou por"; a linha abre a página da pessoa; o owner troca papel e remove no ⋯.
 - **Convites** (organização): links (começo do link, criado por, validade, quantos entraram), "Gerar link", copiar e revogar por linha.
-- **Configurações**: apelido; owner: rating da comunidade (salvar recalcula todos), logo (salva sozinho), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
+- **Sobre**: a descrição da comunidade, em texto simples; sem descrição, a aba só existe para o owner, com o estado vazio e o link para Configurações.
+- **Configurações**: owner: nome e descrição, logo (salva sozinho); apelido; owner: rating da comunidade (salvar recalcula todos), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
 
 ### Pessoa na comunidade `/[tenant]/members/[user]`
 

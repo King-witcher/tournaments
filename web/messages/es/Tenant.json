@@ -8,7 +8,20 @@
     "ranking": "Ranking",
     "members": "Miembros",
     "invites": "Invitaciones",
+    "about": "Acerca de",
     "settings": "Configuración"
+  },
+  "about": {
+    "loading": "Cargando la descripción…",
+    "empty": "Sin descripción.",
+    "add": "Agregar descripción"
+  },
+  "details": {
+    "title": "Nombre y descripción",
+    "name": "Nombre",
+    "description": "Descripción",
+    "descriptionHint": "Aparece en la pestaña Acerca de y en las invitaciones.",
+    "saved": "Nombre y descripción guardados."
   },
   "members": {
     "label": "Miembros de la comunidad",
