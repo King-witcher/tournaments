@@ -76,7 +76,8 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const [scoreA, scoreB] = scores(m, t("walkover"));
   const confirmed = m.state === "completed";
   const winner = confirmed ? m.result?.winner : undefined;
-  const actionable = m.task != null && ACTIONABLE.includes(m.task);
+  const actionable =
+    m.task != null && ACTIONABLE.includes(m.task) && !m.opponent_playing;
   const name = (side: Schemas["MatchSide"]) => {
     const team = side.team_id != null ? entrants.get(side.team_id) : undefined;
     return team ? teamName(team) : placeholder(side);

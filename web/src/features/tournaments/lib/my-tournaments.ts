@@ -29,9 +29,13 @@ const OVER: Schemas["Situation"][] = [
   "champion",
 ];
 
-/** O que a próxima série espera de quem vê, se for dele a vez de agir. */
+/**
+ * O que a próxima série espera de quem vê, se for dele a vez de agir. Com o
+ * adversário ocupado em outra (round robin), ainda não é.
+ */
 export function playerTask(entry: Entry) {
   const task = entry.next_match?.task;
+  if (entry.next_match?.opponent_playing) return undefined;
   return task && isPlayerTask(task) ? task : undefined;
 }
 

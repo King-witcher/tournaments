@@ -164,6 +164,9 @@ pub struct NextMatch {
     /// votação ou o sorteio já o deu; `null` antes disso, sem veto de mapas e
     /// com a série decidida.
     pub next_map: Option<MapRef>,
+    /// Round robin: a série ainda não começou e o adversário está jogando
+    /// outra.
+    pub opponent_playing: bool,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -197,6 +200,12 @@ pub struct BracketMatch {
     /// votação ou o sorteio já o deu; `null` antes disso, sem veto de mapas e
     /// com a série decidida.
     pub next_map: Option<MapRef>,
+    /// Round robin: a série começou (veto ou mapa enviado) e ainda há mapa a
+    /// jogar.
+    pub in_progress: bool,
+    /// Round robin: quem vê joga a série, que ainda não começou, e o adversário
+    /// está jogando outra.
+    pub opponent_playing: bool,
 }
 
 /// Um lado da partida.

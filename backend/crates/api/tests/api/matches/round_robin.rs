@@ -24,6 +24,125 @@ async fn mine(app: &Router, who: &User) -> Value {
     body["registered"][0].clone()
 }
 
+/// Os `match.ready` do outbox em ordem de destinatário.
+async fn sorted_notices(db: &sqlx::PgPool) -> Vec<(i64, String)> {
+    let mut all = ready_notices(db).await;
+    all.sort();
+    all
+}
+
+/// Round robin de 4 em melhor de `best_of`, com P1 e P2 jogando a série deles,
+/// que é da rodada 3: P1 enviou o mapa 1.
+async fn p1_and_p2_playing(app: &Router, db: &sqlx::PgPool, ana: &User, best_of: u8) -> Vec<User> {
+    let p = players(app, db, ana, 4).await;
+    let body = copa(table("round_robin", json!({ "best_of": best_of })));
+    start(app, ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    let (status, body) = report(app, &p[0], "rr-3-1", 1, game("a", MAPS[0])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    p
+}
+
+#[tokio::test]
+async fn the_next_series_waits_for_an_opponent_who_finishes_soon() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = p1_and_p2_playing(&app, &db, &ana, 3).await;
+
+    // Quem está jogando fica na série dele, mesmo fora da ordem.
+    assert_eq!(mine(&app, &p[0]).await["next_match"]["key"], "rr-3-1");
+    let next = &mine(&app, &p[1]).await["next_match"];
+    assert_eq!(
+        (&next["key"], &next["task"]),
+        (&json!("rr-3-1"), &json!("respond"))
+    );
+
+    // Na md3, com 1 x 0, falta só um mapa: P4 espera P1, sem sair da ordem.
+    let next = &mine(&app, &p[3]).await["next_match"];
+    assert_eq!(
+        (&next["key"], &next["opponent_playing"]),
+        (&json!("rr-1-1"), &json!(true))
+    );
+    let b = bracket(&app, &p[3]).await;
+    assert_eq!(find(&b, "rr-3-1")["in_progress"], true);
+    assert_eq!(find(&b, "rr-1-1")["in_progress"], false);
+    assert_eq!(find(&b, "rr-1-1")["opponent_playing"], true);
+    assert_eq!(find(&b, "rr-3-2")["opponent_playing"], false);
+    // Quem não joga a série não vê a marca dela.
+    let other = bracket(&app, &p[2]).await;
+    assert_eq!(find(&other, "rr-1-1")["opponent_playing"], false);
+}
+
+#[tokio::test]
+async fn the_next_series_jumps_when_the_opponent_takes_long() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = p1_and_p2_playing(&app, &db, &ana, 5).await;
+
+    // Na md5, com 1 x 0, faltam dois mapas: P3 e P4, cujos adversários da vez
+    // vão demorar, jogam entre si, fora da ordem.
+    for who in [&p[2], &p[3]] {
+        let next = &mine(&app, who).await["next_match"];
+        assert_eq!(
+            (&next["key"], &next["opponent_playing"]),
+            (&json!("rr-3-2"), &json!(false))
+        );
+    }
+}
+
+#[tokio::test]
+async fn finishing_a_series_calls_the_free_opponent_too() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let body = copa(table("round_robin", json!({ "best_of": 3 })));
+    start(&app, &ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    favorite_wins(&app, &p, "rr-1-1", 2).await;
+    clear(&db).await;
+
+    // P2 e P3 terminam, e P1 e P4, que já sabiam da próxima, são chamados de
+    // novo: era por eles que esperavam.
+    favorite_wins(&app, &p, "rr-1-2", 2).await;
+    assert_eq!(
+        sorted_notices(&db).await,
+        [
+            (p[0].id, "rr-2-1".to_owned()),
+            (p[1].id, "rr-2-2".to_owned()),
+            (p[2].id, "rr-2-1".to_owned()),
+            (p[3].id, "rr-2-2".to_owned()),
+        ]
+    );
+}
+
+#[tokio::test]
+async fn whoever_is_already_playing_is_not_called() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let body = copa(table("round_robin", json!({ "best_of": 3 })));
+    start(&app, &ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    favorite_wins(&app, &p, "rr-1-1", 2).await;
+    let (status, body) = report(&app, &p[0], "rr-2-1", 1, game("a", MAPS[0])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    clear(&db).await;
+
+    // P3 termina a série dele já jogando contra P1: não recebe aviso. P2 e P4
+    // estão livres e são a vez um do outro.
+    favorite_wins(&app, &p, "rr-1-2", 2).await;
+    assert_eq!(
+        sorted_notices(&db).await,
+        [
+            (p[1].id, "rr-2-2".to_owned()),
+            (p[3].id, "rr-2-2".to_owned()),
+        ]
+    );
+
+    // W.O. numa série que ninguém começou e não era a da vez: nada muda.
+    clear(&db).await;
+    let (status, body) = set_result(&app, &ana, "rr-3-2", walkover("a"), Some("ausente")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(sorted_notices(&db).await, []);
+}
+
 #[tokio::test]
 async fn a_round_robin_plays_every_pair_and_ends_with_the_table() {
     let (db, _lease) = crate::db::test_db().await;

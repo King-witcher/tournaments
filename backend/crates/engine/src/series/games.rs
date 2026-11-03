@@ -152,6 +152,17 @@ pub fn check_next(
     check_map(games, None, map)
 }
 
+/// Quantos mapas ainda faltam, no mínimo, para a série acabar, contando o que
+/// está em jogo: as vitórias que faltam a quem está na frente. Mapa
+/// contestado não conta (como em `check_next`).
+pub fn games_left(best_of: u8, games: &[SeriesGame]) -> u8 {
+    let mut open = Tally::default();
+    for g in games.iter().filter(|g| g.status != GameStatus::Contested) {
+        open.add(g.winner);
+    }
+    wins_needed(best_of).saturating_sub(open.a.max(open.b))
+}
+
 /// Grava `game` no índice `index` (a partir de 0) da série: o próximo mapa
 /// (`index == games.len()`, com as regras de `check_next`) ou a troca de um
 /// já enviado (resolução ou correção). Devolve onde a série fica. Na troca,
@@ -284,6 +295,19 @@ mod tests {
             check_next(3, &[g(A, Pending), g(A, Contested)], None),
             Ok(())
         );
+    }
+
+    #[test]
+    fn games_left_counts_the_wins_the_leader_still_needs() {
+        assert_eq!(games_left(3, &[]), 2);
+        assert_eq!(games_left(3, &[g(A, Pending)]), 1);
+        assert_eq!(games_left(3, &[g(A, Confirmed), g(B, Confirmed)]), 1);
+        assert_eq!(games_left(1, &[]), 1);
+        assert_eq!(games_left(5, &[g(A, Confirmed), g(A, Pending)]), 1);
+        assert_eq!(games_left(3, &[g(A, Contested)]), 2);
+        assert_eq!(games_left(3, &[g(B, Confirmed), g(B, Confirmed)]), 0);
+        // Passou da maioria (mapas que vão sair): satura em 0.
+        assert_eq!(games_left(1, &[g(A, Pending), g(A, Pending)]), 0);
     }
 
     #[test]

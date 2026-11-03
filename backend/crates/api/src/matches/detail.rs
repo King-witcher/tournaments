@@ -7,7 +7,7 @@ use sqlx::PgConnection;
 use super::{
     contest, db,
     games::GameStatus,
-    key,
+    key, progress,
     stage::Stage,
     tasks,
     types::MatchDetail,
@@ -32,7 +32,8 @@ pub async fn load(
     viewer: &Viewer,
     m: &Match,
 ) -> Result<MatchDetail, ApiError> {
-    let summary = view::summary(tournament.status, stage, m, viewer);
+    let playing = progress::playing(stage);
+    let summary = view::summary(tournament.status, stage, m, viewer, &playing);
     let games = stage.games_of(m.id);
     let mine = view::viewer_side(stage, m, viewer);
     let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;

@@ -30,7 +30,8 @@
 //! de cada mapa, fica em `veto` (o relógio dos passos, `veto_clock`, é do
 //! `realtime`). O domínio `screenshots` lê a partida por `slots`; com
 //! screenshot obrigatório, o envio do jogador exige um screenshot anexado
-//! (`evidence`).
+//! (`evidence`). No round robin, `progress` diz quem está jogando e qual série
+//! sugerir a cada time, sem travar nada.
 
 mod actions;
 mod announce;
@@ -48,6 +49,7 @@ mod key;
 mod manage;
 mod mine;
 mod outcome;
+mod progress;
 mod release;
 mod replay;
 mod report;

@@ -106,6 +106,11 @@ function TaskTag({
   task: Schemas["ViewerTask"];
 }) {
   const tBracket = useTranslations("Bracket");
+  if (next.opponent_playing) {
+    return (
+      <StatusTag status="waiting">{tBracket("opponentPlaying")}</StatusTag>
+    );
+  }
   return (
     <StatusTag status={TASK_STATUS[task]}>
       {tBracket(`task.${taskKey(task, next.veto)}`)}

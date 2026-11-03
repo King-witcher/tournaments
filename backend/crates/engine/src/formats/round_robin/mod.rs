@@ -7,7 +7,10 @@
 //!   por rodada (cada um folga uma vez), que não vale ponto. A folga é uma
 //!   partida `Bye` (a última da rodada), só para a tela mostrar quem folga.
 //! - Todas as partidas ficam prontas desde o início: a rodada só agrupa, não
-//!   trava a ordem.
+//!   trava a ordem. `suggest` indica a cada time qual série jogar agora (a
+//!   ordem das rodadas, saltando só quando o adversário da vez ainda vai
+//!   demorar), a partir do progresso que a API informa; só indica, nada muda
+//!   em `replay`, `report` nem na tabela.
 //! - Uma série (melhor de N, ímpar) para todas as partidas; não há final.
 //! - Classificação e desempates em `formats::table`: pontos, confronto
 //!   direto, saldo de mapas, saldo de frags, seed.
@@ -16,8 +19,11 @@
 //! - Até `MAX_PARTICIPANTS` (são N(N − 1)/2 partidas).
 
 mod schedule;
+mod suggest;
 #[cfg(test)]
 mod tests;
+
+pub use suggest::{SeriesProgress, suggest};
 
 use serde::{Deserialize, Serialize};
 

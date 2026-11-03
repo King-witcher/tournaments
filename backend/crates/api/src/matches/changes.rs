@@ -4,10 +4,12 @@
 //! na que passou a ter os dois lados sem estar decidida, os dois (`match.ready`;
 //! a que vira W.O. na hora já chega decidida; no suíço, as partidas de cada
 //! rodada nova). No round robin, em que todas as partidas ficam prontas no
-//! início, `match.ready` vai para cada time só quando a próxima partida dele
-//! (a primeira pronta, pela ordem das rodadas) muda: a primeira no início e a
-//! seguinte quando ele termina uma série (`ready_notices`). Se o torneio
-//! encerra ou reabre,
+//! início, `match.ready` vai para cada time só com a série sugerida a ele: a
+//! primeira no início e a seguinte quando ele termina uma série, junto com o
+//! adversário livre que a esperava (`progress::notices`); como a sugestão e
+//! quem está jogando dependem das séries dos outros, quando mudam avisa "Seus
+//! torneios" de todos os times e, para as páginas das séries, o torneio
+//! inteiro. Se o torneio encerra ou reabre,
 //! avisa o torneio inteiro; se os mapas contestados mudam, a home da
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para a organização) saem de quem
@@ -17,7 +19,7 @@
 //! times) sai daqui, porque ela abre por qualquer caminho (o último ban, o
 //! tempo esgotado, o jogo seguinte, o desfazer).
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
 use chrono::{DateTime, Utc};
 use engine::{
@@ -27,7 +29,14 @@ use engine::{
 };
 use sqlx::PgConnection;
 
-use super::{announce, games::GameStatus, key, result::Confirmation, stage::Stage};
+use super::{
+    announce,
+    games::GameStatus,
+    key,
+    progress::{self, Notices, Suggested},
+    result::Confirmation,
+    stage::Stage,
+};
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
     shared::ApiError,
@@ -36,24 +45,31 @@ use crate::{
     tournaments::{self, Address, StoredTournament, TournamentStatus},
 };
 
-/// Como cada partida da fase estava antes de uma mudança.
-pub struct Snapshot(HashMap<MatchId, Mark>);
+/// Como cada partida da fase estava antes de uma mudança e, no round robin, a
+/// série sugerida a cada time e quem estava jogando.
+pub struct Snapshot {
+    marks: HashMap<MatchId, Mark>,
+    suggested: Suggested,
+    playing: BTreeSet<ParticipantId>,
+}
 
 impl Snapshot {
     pub fn of(stage: &Stage) -> Self {
-        Self(
-            stage
+        Self {
+            marks: stage
                 .bracket
                 .matches()
                 .iter()
                 .map(|m| (m.id, Mark::of(stage, m)))
                 .collect(),
-        )
+            suggested: progress::suggestions(stage),
+            playing: progress::playing(stage),
+        }
     }
 
     /// Os mapas contestados (pelo id).
     fn contested(&self) -> BTreeSet<i64> {
-        let games = self.0.values().flat_map(|m| &m.games);
+        let games = self.marks.values().flat_map(|m| &m.games);
         games
             .filter(|g| g.2 == GameStatus::Contested)
             .map(|g| g.0)
@@ -129,6 +145,11 @@ impl Mark {
             team_pick,
         }
     }
+
+    /// Ninguém enviou mapa nem mexeu no veto.
+    const fn untouched(&self) -> bool {
+        self.games.is_empty() && self.veto.0 == 0
+    }
 }
 
 const fn sides(state: MatchState) -> Option<(ParticipantId, ParticipantId)> {
@@ -161,7 +182,7 @@ pub async fn settled(
     let mut changed = Vec::new();
     for m in after.bracket.matches() {
         let now = Mark::of(after, m);
-        let was = before.0.get(&m.id);
+        let was = before.marks.get(&m.id);
         if was == Some(&now) {
             continue;
         }
@@ -190,7 +211,20 @@ pub async fn settled(
             announce::series_decided(conn, &audience, after, m).await?;
         }
     }
-    for (id, pair, to) in ready_notices(Some(before), &after.bracket) {
+    let suggested = progress::suggestions(after);
+    let playing = progress::playing(after);
+    let notices = if is_league(&after.bracket) {
+        progress::notices(
+            after,
+            &before.suggested,
+            |id| before.marks.get(&id).map(|m| (m.state, m.untouched())),
+            &suggested,
+            &playing,
+        )
+    } else {
+        ready_notices(Some(before), &after.bracket)
+    };
+    for (id, pair, to) in notices {
         match_ready(
             conn,
             &audience,
@@ -200,6 +234,16 @@ pub async fn settled(
             &to,
         )
         .await?;
+    }
+    if before.suggested != suggested || before.playing != playing {
+        players.extend(after.entrants.iter().flat_map(StoredTeam::user_ids));
+    }
+    if before.playing != playing {
+        changed.push(Event::Tournament {
+            tenant: audience.tenant.clone(),
+            tournament: audience.slug.clone(),
+            match_key: None,
+        });
     }
     changed.push(Event::me(players));
     outbox::emit_all(conn, changed).await?;
@@ -226,69 +270,37 @@ pub async fn started(
     entrants: &[StoredTeam],
 ) -> Result<(), ApiError> {
     let audience = tournament.address();
-    for (id, pair, to) in ready_notices(None, bracket) {
+    let notices = if is_league(bracket) {
+        progress::first_notices(bracket)
+    } else {
+        ready_notices(None, bracket)
+    };
+    for (id, pair, to) in notices {
         match_ready(conn, &audience, entrants, &key::format(id), pair, &to).await?;
     }
     announce::started(conn, &audience).await?;
     Ok(())
 }
 
-/// Quem recebe `match.ready` de qual partida (com os lados dela) depois de
-/// uma mudança de `before` (`None`: o início) para `after`. Na eliminação e
-/// no suíço, os dois lados da partida que passou a estar pronta com eles. No
-/// round robin, todas ficam prontas no início: cada time recebe só a próxima
-/// dele, quando ela muda (a primeira no início; a seguinte quando ele termina
-/// uma série; a reaberta por uma correção, se vem antes).
-fn ready_notices(
-    before: Option<&Snapshot>,
-    after: &StageBracket,
-) -> Vec<(MatchId, (ParticipantId, ParticipantId), Vec<ParticipantId>)> {
-    let was = |id: MatchId| before.and_then(|b| b.0.get(&id)).map(|m| m.state);
-    if !matches!(after.format(), ef::StageFormat::RoundRobin(_)) {
-        return after
-            .matches()
-            .iter()
-            .filter_map(|m| {
-                let pair = ready(m.state)?;
-                let fresh = was(m.id).and_then(ready) != Some(pair);
-                fresh.then(|| (m.id, pair, vec![pair.0, pair.1]))
-            })
-            .collect();
-    }
-    let old = next_ready(
-        before
-            .into_iter()
-            .flat_map(|b| b.0.iter().map(|(id, m)| (*id, m.state))),
-    );
-    let new = next_ready(after.matches().iter().map(|m| (m.id, m.state)));
-    let mut notices: Vec<(MatchId, (ParticipantId, ParticipantId), Vec<ParticipantId>)> =
-        Vec::new();
-    for (team, (id, pair)) in new {
-        if old.get(&team).map(|(id, _)| *id) == Some(id) {
-            continue;
-        }
-        match notices.iter_mut().find(|n| n.0 == id) {
-            Some(n) => n.2.push(team),
-            None => notices.push((id, pair, vec![team])),
-        }
-    }
-    notices
+fn is_league(bracket: &StageBracket) -> bool {
+    matches!(bracket.format(), ef::StageFormat::RoundRobin(_))
 }
 
-/// A próxima partida de cada time: a primeira pronta, pela ordem das rodadas.
-fn next_ready(
-    states: impl Iterator<Item = (MatchId, MatchState)>,
-) -> BTreeMap<ParticipantId, (MatchId, (ParticipantId, ParticipantId))> {
-    let mut ready: Vec<(MatchId, (ParticipantId, ParticipantId))> = states
-        .filter_map(|(id, state)| ready(state).map(|pair| (id, pair)))
-        .collect();
-    ready.sort_by_key(|(id, _)| *id);
-    let mut next = BTreeMap::new();
-    for (id, (a, b)) in ready {
-        next.entry(a).or_insert((id, (a, b)));
-        next.entry(b).or_insert((id, (a, b)));
-    }
-    next
+/// Na eliminação e no suíço, quem recebe `match.ready` de qual partida (com os
+/// lados dela) depois de uma mudança de `before` (`None`: o início) para
+/// `after`: os dois lados da partida que passou a estar pronta com eles. O
+/// round robin, com todas prontas desde o início, é `progress::notices`.
+fn ready_notices(before: Option<&Snapshot>, after: &StageBracket) -> Notices {
+    let was = |id: MatchId| before.and_then(|b| b.marks.get(&id)).map(|m| m.state);
+    after
+        .matches()
+        .iter()
+        .filter_map(|m| {
+            let pair = ready(m.state)?;
+            let fresh = was(m.id).and_then(ready) != Some(pair);
+            fresh.then(|| (m.id, pair, vec![pair.0, pair.1]))
+        })
+        .collect()
 }
 
 /// `match.ready` da partida `key`, de lados `(a, b)`, para os jogadores dos

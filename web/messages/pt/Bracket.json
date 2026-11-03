@@ -59,6 +59,8 @@
     "veto_in_progress": "Veto em andamento"
   },
   "yours": "Sua série",
+  "inProgress": "Em andamento",
+  "opponentPlaying": "Adversário jogando",
   "departure": {
     "left": "saiu",
     "withdrawn": "desistiu"

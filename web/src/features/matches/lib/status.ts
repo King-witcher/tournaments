@@ -12,13 +12,20 @@ export const ACTIONABLE: Schemas["ViewerTask"][] = [
   "veto",
 ];
 
-/** As séries que esperam uma ação de quem vê, menos a `exclude`. */
+/**
+ * As séries que esperam uma ação de quem vê, menos a `exclude`. Com o
+ * adversário ocupado em outra (round robin), a série ainda não espera ninguém.
+ */
 export function actionableMatches(
   bracket: Schemas["TournamentBracket"],
   exclude?: string,
 ) {
   return bracket.matches.filter(
-    (m) => m.key !== exclude && m.task != null && ACTIONABLE.includes(m.task),
+    (m) =>
+      m.key !== exclude &&
+      m.task != null &&
+      ACTIONABLE.includes(m.task) &&
+      !m.opponent_playing,
   );
 }
 

@@ -59,6 +59,8 @@
     "veto_in_progress": "Veto en curso"
   },
   "yours": "Tu serie",
+  "inProgress": "En curso",
+  "opponentPlaying": "Rival jugando",
   "departure": {
     "left": "salió",
     "withdrawn": "abandonó"

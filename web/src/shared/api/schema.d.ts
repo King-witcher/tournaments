@@ -1608,6 +1608,11 @@ export interface components {
              * @description Mapas contestados, esperando o organizador.
              */
             contested_maps: number;
+            /**
+             * @description Round robin: a série começou (veto ou mapa enviado) e ainda há mapa a
+             *     jogar.
+             */
+            in_progress: boolean;
             /** Format: int32 */
             index: number;
             /**
@@ -1616,6 +1621,11 @@ export interface components {
              */
             key: string;
             next_map?: components["schemas"]["MapRef"] | null;
+            /**
+             * @description Round robin: quem vê joga a série, que ainda não começou, e o adversário
+             *     está jogando outra.
+             */
+            opponent_playing: boolean;
             part: components["schemas"]["BracketPart"];
             /**
              * Format: int32
@@ -2557,6 +2567,11 @@ export interface components {
             next_map?: components["schemas"]["MapRef"] | null;
             opponent?: components["schemas"]["Team"] | null;
             opponent_from?: components["schemas"]["SideSource"] | null;
+            /**
+             * @description Round robin: a série ainda não começou e o adversário está jogando
+             *     outra.
+             */
+            opponent_playing: boolean;
             /** @description Eliminação simples: o código da partida não tem a parte da chave. */
             single: boolean;
             /**

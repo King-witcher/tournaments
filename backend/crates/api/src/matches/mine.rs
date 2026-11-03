@@ -10,11 +10,11 @@ use engine::{
 use sqlx::PgConnection;
 
 use super::{
-    due, key,
+    due, key, progress,
     result::Side,
     stage::Stage,
     tasks,
-    types::{MatchState, NextMatch, SideSource, SourceOutcome},
+    types::{MatchState, NextMatch, SideSource, SourceOutcome, ViewerTask},
     veto,
     view::{self, Viewer},
 };
@@ -107,6 +107,23 @@ fn locate(stage: &Stage, participant: Option<ParticipantId>) -> Place {
     }
 }
 
+/// Round robin: a série em que o adversário enviou um mapa, que tem prazo, ou a
+/// sugerida (`progress`). `None` nos outros formatos.
+fn league_next<'a>(
+    status: TournamentStatus,
+    stage: &'a Stage,
+    viewer: &Viewer,
+) -> Option<&'a ec::Match> {
+    let suggested = progress::suggestions(stage);
+    let me = suggested.get(&viewer.participant?)?;
+    let answer = stage.bracket.matches().iter().find(|m| {
+        let side = view::viewer_side(stage, m, viewer);
+        side.is_some()
+            && tasks::match_task(status, stage, m, side, viewer) == Some(ViewerTask::Respond)
+    });
+    answer.or_else(|| stage.bracket.get(*me))
+}
+
 /// A partida pronta de quem vê ou, sem nenhuma, a primeira em que ele já
 /// está e que espera o adversário sair de outra.
 fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Option<NextMatch> {
@@ -120,7 +137,9 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
             wanted && view::viewer_side(stage, m, viewer).is_some()
         })
     };
-    let m = mine(true).or_else(|| mine(false))?;
+    let m = league_next(status, stage, viewer)
+        .or_else(|| mine(true))
+        .or_else(|| mine(false))?;
     let side = view::viewer_side(stage, m, viewer)?;
     let (oa, ob) = view::occupants(stage, m);
     let (opponent, slot) = match side {
@@ -155,5 +174,11 @@ fn next_match(status: TournamentStatus, stage: &Stage, viewer: &Viewer) -> Optio
         task: tasks::match_task(status, stage, m, Some(side), viewer),
         veto: veto::status(stage, m),
         next_map: veto::next_map(status, stage, m, &stage.games_of(m.id)),
+        opponent_playing: progress::opponent_playing(
+            stage,
+            m,
+            Some(side),
+            &progress::playing(stage),
+        ),
     })
 }

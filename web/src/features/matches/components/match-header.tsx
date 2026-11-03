@@ -96,6 +96,11 @@ export function MatchHeader({
               {tBracket(`task.${taskKey(s.task, s.veto)}`)}
             </StatusTag>
           )}
+          {s.opponent_playing && (
+            <StatusTag status="waiting">
+              {tBracket("opponentPlaying")}
+            </StatusTag>
+          )}
         </>
       }
       meta={`${label} · ${t("bestOf", { count: s.best_of })}`}

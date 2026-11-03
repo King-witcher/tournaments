@@ -1,6 +1,7 @@
 //! Testes do round robin: rodadas, resultados e fim; propriedades em `props`.
 
 mod props;
+mod suggest;
 
 use std::collections::{HashMap, HashSet};
 

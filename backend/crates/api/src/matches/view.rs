@@ -1,6 +1,8 @@
 //! Fase refeita → resposta da API, do ponto de vista de quem vê (as partidas
 //! dele e o que cada uma espera dele, em `tasks`).
 
+use std::collections::BTreeSet;
+
 use engine::{
     core::{self as ec, Match, Occupant, ParticipantId, Slot},
     formats::{self as ef, table::Criterion},
@@ -9,7 +11,7 @@ use engine::{
 use super::{
     db::{EventRow, LineupRow},
     games::{GameStatus, StoredGame, confirmed_wins},
-    key,
+    key, progress,
     result::{Side, StoredResult},
     stage::Stage,
     tasks,
@@ -63,11 +65,12 @@ pub fn bracket(
             })
         })
         .collect::<Result<_, ApiError>>()?;
+    let playing = progress::playing(stage);
     let matches: Vec<BracketMatch> = stage
         .bracket
         .matches()
         .iter()
-        .map(|m| summary(tournament.status, stage, m, viewer))
+        .map(|m| summary(tournament.status, stage, m, viewer, &playing))
         .collect();
     let touched = stage
         .bracket
@@ -146,11 +149,14 @@ pub fn viewer_side(stage: &Stage, m: &Match, viewer: &Viewer) -> Option<Side> {
     }
 }
 
+/// A partida `m` na chave; `playing`, os times com uma série em jogo
+/// (`progress::playing`), que quem monta a chave inteira calcula uma vez só.
 pub fn summary(
     status: TournamentStatus,
     stage: &Stage,
     m: &Match,
     viewer: &Viewer,
+    playing: &BTreeSet<ParticipantId>,
 ) -> BracketMatch {
     let (oa, ob) = occupants(stage, m);
     let mine = viewer_side(stage, m, viewer);
@@ -187,6 +193,8 @@ pub fn summary(
         task: tasks::match_task(status, stage, m, mine, viewer),
         veto: veto::status(stage, m),
         next_map: veto::next_map(status, stage, m, &games),
+        in_progress: progress::in_progress(stage, m),
+        opponent_playing: progress::opponent_playing(stage, m, mine, playing),
     }
 }
 
