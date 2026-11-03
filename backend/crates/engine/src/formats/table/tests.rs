@@ -168,6 +168,87 @@ fn mini_table_is_redone_among_who_stays_tied() {
 }
 
 #[test]
+fn head_to_head_returns_after_map_diff() {
+    // Ciclo 3 > 2 > 1 > 3 (2 x 0), e 1, 2 e 3 vencem o 4 (1 por 2 x 0, 2 e 3
+    // por 2 x 1). Saldos de mapas: 1 = +2, 2 = 3 = +1. Os frags favorecem o
+    // 2 (+19 contra 0), mas 3 venceu a série entre os dois.
+    let pairs = [(3, 2), (2, 1), (1, 3), (1, 4), (2, 4), (3, 4)];
+    let mut l = league(ROUND_ROBIN, 4, &pairs, &[]);
+    won(&mut l, 1, 3, 0, (10, 9));
+    won(&mut l, 2, 2, 0, (30, 10));
+    won(&mut l, 3, 1, 0, (10, 9));
+    won(&mut l, 4, 1, 0, (0, 0));
+    won(&mut l, 5, 2, 1, (0, 0));
+    won(&mut l, 6, 3, 1, (0, 0));
+    assert_eq!(
+        (
+            row(&l, 1).map_diff,
+            row(&l, 2).map_diff,
+            row(&l, 3).map_diff
+        ),
+        (2, 1, 1)
+    );
+    assert!(row(&l, 2).frag_diff > row(&l, 3).frag_diff);
+    assert_eq!(order(&l), [1, 3, 2, 4]);
+    assert_eq!(
+        ahead(&l),
+        [Some(MapDiff), Some(HeadToHead), Some(Points), None]
+    );
+}
+
+#[test]
+fn head_to_head_returns_after_frag_diff() {
+    // O mesmo ciclo, todas as séries 2 x 0: os saldos de mapas empatam. O 1
+    // tem mais frags; 2 e 3 empatam em frags (0 e 0) e o seed poria o 2 na
+    // frente, mas 3 venceu a série entre os dois.
+    let pairs = [(3, 2), (2, 1), (1, 3), (1, 4), (2, 4), (3, 4)];
+    let mut l = league(ROUND_ROBIN, 4, &pairs, &[]);
+    won(&mut l, 1, 3, 0, (10, 9));
+    won(&mut l, 2, 2, 0, (10, 9));
+    won(&mut l, 3, 1, 0, (10, 9));
+    won(&mut l, 4, 1, 0, (50, 0));
+    won(&mut l, 5, 2, 0, (0, 0));
+    won(&mut l, 6, 3, 0, (0, 0));
+    assert_eq!(
+        (
+            row(&l, 1).map_diff,
+            row(&l, 2).map_diff,
+            row(&l, 3).map_diff
+        ),
+        (2, 2, 2)
+    );
+    assert_eq!(
+        (
+            row(&l, 1).frag_diff,
+            row(&l, 2).frag_diff,
+            row(&l, 3).frag_diff
+        ),
+        (50, 0, 0)
+    );
+    assert_eq!(order(&l), [1, 3, 2, 4]);
+    assert_eq!(
+        ahead(&l),
+        [Some(FragDiff), Some(HeadToHead), Some(Points), None]
+    );
+}
+
+#[test]
+fn head_to_head_returns_for_a_pair_in_a_partial_table() {
+    // 1, 2 e 3 com um ponto; 3 não enfrentou os outros, então o confronto
+    // direto não vale para o trio. O saldo de mapas põe o 3 na frente (+2
+    // contra +1 e +1); 1 e 2 voltam ao confronto direto, que 2 venceu, ainda
+    // que os frags e o seed favoreçam o 1.
+    let mut l = league(ROUND_ROBIN, 5, &[(1, 2), (3, 4), (1, 5)], &[]);
+    won(&mut l, 1, 2, 1, (30, 31));
+    won(&mut l, 2, 3, 0, (0, 0));
+    won(&mut l, 3, 1, 0, (10, 0));
+    assert!(row(&l, 1).frag_diff > row(&l, 2).frag_diff);
+    assert_eq!(order(&l)[..3], [3, 2, 1]);
+    assert_eq!(ahead(&l)[0], Some(MapDiff));
+    assert_eq!(ahead(&l)[1], Some(HeadToHead));
+}
+
+#[test]
 fn head_to_head_needs_everyone_to_have_met() {
     // 1, 2 e 3 com um ponto; 1 venceu 2, mas 3 não enfrentou nenhum dos
     // dois (no suíço, o comum): sem confronto direto, o saldo de mapas.

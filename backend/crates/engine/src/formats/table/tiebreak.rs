@@ -11,6 +11,8 @@ use super::Criterion;
 /// só vale quando todos do grupo já se enfrentaram. `usable` diz se um
 /// critério vale para um grupo (senão, o seguinte). Devolve a ordem e, para
 /// cada um, o critério que o pôs à frente do seguinte (`None` no último).
+/// Quando um critério depois do confronto direto separa um grupo, quem segue
+/// empatado volta ao confronto direto, só entre si.
 pub(super) fn order(
     n: usize,
     criteria: &[Criterion],
@@ -85,13 +87,18 @@ impl Ranker<'_> {
             debug_assert!(criterion != Criterion::Seed, "o seed separa todos");
             return self.rank(group, from + 1);
         }
-        // A mini-tabela é refeita entre os que continuam empatados nela; os
-        // outros critérios seguem para o próximo.
-        let next = if criterion == Criterion::HeadToHead {
-            from
-        } else {
-            from + 1
-        };
+        // Quem continua empatado volta ao confronto direto, agora só entre si,
+        // quando ele já passou na ordem (`h2h <= from`): vale para a
+        // mini-tabela refeita e para o grupo que o saldo de mapas ou de frags
+        // separou, antes de seguir. Pontos e Buchholz, que vêm antes dele,
+        // são globais e já iguais dentro do grupo. Sem confronto direto atrás
+        // de nós, segue o próximo critério.
+        let next = self
+            .criteria
+            .iter()
+            .position(|c| *c == Criterion::HeadToHead)
+            .filter(|&h2h| h2h <= from)
+            .unwrap_or(from + 1);
         let last = runs.len() - 1;
         let mut out = Vec::with_capacity(group.len());
         for (k, run) in runs.iter().enumerate() {

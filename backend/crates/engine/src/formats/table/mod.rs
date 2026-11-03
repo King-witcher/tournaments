@@ -25,7 +25,9 @@
 //!   (série decidida entre cada par; no suíço, é comum não terem jogado). É
 //!   uma mini-tabela com as séries entre eles (as que cada um venceu contra
 //!   os outros do grupo); se separa o grupo, é refeita só entre os que
-//!   continuam empatados; se não separa, vale o critério seguinte;
+//!   continuam empatados; se não separa, vale o critério seguinte. Quando o
+//!   saldo de mapas ou de frags separa um grupo, quem segue empatado volta ao
+//!   confronto direto, só entre si, antes dos critérios seguintes;
 //! - **saldo de frags**: só quando nenhum dos empatados tem série jogada sem
 //!   frags; senão, vale o seed (comparar frags de séries diferentes daria
 //!   vantagem a quem informa).
