@@ -15,6 +15,17 @@ pub struct CreateTenant {
     pub slug: String,
 }
 
+/// O que o owner edita na comunidade. O slug não muda.
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateTenant {
+    /// Nome exibido, 1 a 64 caracteres. Ausente: não muda.
+    #[schema(example = "Quake BR")]
+    pub name: Option<String>,
+    /// Descrição em texto simples, até 2000 caracteres (as quebras de linha
+    /// ficam). Vazia: a comunidade fica sem descrição. Ausente: não muda.
+    pub description: Option<String>,
+}
+
 #[derive(Deserialize, ToSchema)]
 pub struct TransferOwnership {
     /// Membro ativo que vira owner.
@@ -36,6 +47,8 @@ pub struct ScheduleTenantDeletion {
 pub struct MyTenant {
     pub slug: String,
     pub name: String,
+    /// A descrição, em texto simples. Nulo: sem descrição.
+    pub description: Option<String>,
     pub role: Role,
     /// Apelido do usuário neste tenant.
     pub nickname: String,
@@ -54,6 +67,7 @@ impl<R> From<TenantMember<R>> for MyTenant {
         Self {
             slug: m.slug,
             name: m.name,
+            description: m.description,
             role: m.role,
             nickname: m.nickname,
             deletion_scheduled_for: m.deletion_scheduled_for,

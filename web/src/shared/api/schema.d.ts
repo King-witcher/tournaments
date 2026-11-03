@@ -593,7 +593,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["update_tenant"];
         trace?: never;
     };
     "/tenants/{slug}/deletion": {
@@ -2138,6 +2138,8 @@ export interface components {
              *     criou).
              */
             owner_name: string;
+            /** @description A descrição da comunidade, em texto simples; nulo sem descrição. */
+            tenant_description?: string | null;
             /** @description O logo da comunidade, no CDN; nulo sem logo. */
             tenant_logo_url?: string | null;
             tenant_name: string;
@@ -2460,6 +2462,8 @@ export interface components {
              *     sair. Nulo: nenhuma exclusão agendada.
              */
             deletion_scheduled_for?: string | null;
+            /** @description A descrição, em texto simples. Nulo: sem descrição. */
+            description?: string | null;
             /**
              * @description O logo (quadrado), no CDN. Nulo: sem logo, ou a API sem o bucket
              *     público.
@@ -3701,6 +3705,19 @@ export interface components {
              * @description 1 a 40 caracteres, único no torneio sem diferenciar maiúsculas;
              *     `null` (ou vazio) tira o nome (a tela mostra "Time de {capitão}").
              *     O organizador e o capitão, até o torneio encerrar.
+             */
+            name?: string | null;
+        };
+        /** @description O que o owner edita na comunidade. O slug não muda. */
+        UpdateTenant: {
+            /**
+             * @description Descrição em texto simples, até 2000 caracteres (as quebras de linha
+             *     ficam). Vazia: a comunidade fica sem descrição. Ausente: não muda.
+             */
+            description?: string | null;
+            /**
+             * @description Nome exibido, 1 a 64 caracteres. Ausente: não muda.
+             * @example Quake BR
              */
             name?: string | null;
         };
@@ -6164,6 +6181,78 @@ export interface operations {
             };
             /** @description tenant.not_found (não existe ou o usuário não é membro) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_tenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTenant"];
+            };
+        };
+        responses: {
+            /** @description Nome e descrição gravados. O slug não muda */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTenant"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.name_invalid, tenant.description_invalid {max}, request.invalid_body */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

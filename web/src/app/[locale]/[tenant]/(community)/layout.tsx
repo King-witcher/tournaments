@@ -11,7 +11,7 @@ import {
 
 /**
  * A comunidade: o cabeçalho e as abas (Torneios, Ranking, Membros, Convites,
- * Configurações), com a aba aberta dentro. Novo torneio e as páginas de
+ * Sobre, Configurações), com a aba aberta dentro. Novo torneio e as páginas de
  * torneio ficam fora do grupo, sem as abas.
  */
 export default async function CommunityLayout({

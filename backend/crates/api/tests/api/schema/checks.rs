@@ -128,6 +128,25 @@ async fn tournaments_keep_state_and_shape() {
 }
 
 #[tokio::test]
+async fn tenant_description_is_null_or_within_the_limit() {
+    let (db, _lease) = crate::db::test_db().await;
+    let _ = quake_br(&db).await;
+
+    for value in ["''", "repeat('é', 2001)"] {
+        let sql = format!("update tenants set description = {value}");
+        assert_eq!(
+            rejected(exec(&db, &sql).await),
+            rule(CHECK, "tenants_description"),
+            "{value}"
+        );
+    }
+    for value in ["null", "repeat('é', 2000)"] {
+        let sql = format!("update tenants set description = {value}");
+        assert_eq!(exec(&db, &sql).await.unwrap(), 1, "{value}");
+    }
+}
+
+#[tokio::test]
 async fn every_tournament_has_a_stage() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;

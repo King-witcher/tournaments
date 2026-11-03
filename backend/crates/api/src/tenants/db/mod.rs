@@ -20,6 +20,7 @@ pub struct Membership {
     pub tenant: TenantId,
     pub slug: String,
     pub name: String,
+    pub description: Option<String>,
     pub role: Role,
     pub nickname: String,
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
@@ -32,7 +33,7 @@ pub async fn membership(
     user_id: i64,
 ) -> Result<Option<Membership>, ApiError> {
     let row = sqlx::query!(
-        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenants t
            join tenant_members m on m.tenant_id = t.id
            where t.slug = $1 and m.user_id = $2 and m.left_at is null"#,
@@ -47,6 +48,7 @@ pub async fn membership(
             tenant: TenantId::new(r.id),
             slug: r.slug,
             name: r.name,
+            description: r.description,
             role: Role::from_db(&r.role)?,
             nickname: r.nickname,
             deletion_scheduled_for: r.deletion_due_at,
@@ -66,7 +68,7 @@ pub async fn user_and_membership(
 ) -> Result<Option<(CurrentUser, Option<Membership>)>, ApiError> {
     let Some(r) = sqlx::query!(
         r#"select u.id, u.display_name, u.avatar_url, u.locale,
-                  t.id as "tenant_id?", t.slug as "slug?", t.name as "name?",
+                  t.id as "tenant_id?", t.slug as "slug?", t.name as "name?", t.description,
                   m.role as "role?", m.nickname as "nickname?", t.deletion_due_at, t.logo_key
            from users u
            left join tenant_members m
@@ -93,6 +95,7 @@ pub async fn user_and_membership(
             tenant: TenantId::new(id),
             slug,
             name,
+            description: r.description,
             role: Role::from_db(&role)?,
             nickname,
             deletion_scheduled_for: r.deletion_due_at,
@@ -130,7 +133,7 @@ pub async fn standing(
 /// As participações ativas de um usuário, na ordem em que entrou.
 pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.id, t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.user_id = $1 and m.left_at is null
@@ -146,6 +149,7 @@ pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, A
                 tenant: TenantId::new(r.id),
                 slug: r.slug,
                 name: r.name,
+                description: r.description,
                 role: Role::from_db(&r.role)?,
                 nickname: r.nickname,
                 deletion_scheduled_for: r.deletion_due_at,
@@ -197,6 +201,24 @@ pub async fn create_with_owner(
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
+    Ok(())
+}
+
+/// Grava o nome e a descrição do tenant (o slug não muda).
+pub async fn update_details(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    name: &str,
+    description: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "update tenants set name = $2, description = $3 where id = $1",
+        tenant.get(),
+        name,
+        description
+    )
+    .execute(conn)
+    .await?;
     Ok(())
 }
 
@@ -273,7 +295,7 @@ pub async fn transfer_ownership(
 /// entrou.
 pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.user_id = $1 and m.left_at is null
@@ -288,6 +310,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
             Ok(MyTenant {
                 slug: r.slug,
                 name: r.name,
+                description: r.description,
                 role: Role::from_db(&r.role)?,
                 nickname: r.nickname,
                 deletion_scheduled_for: r.deletion_due_at,
@@ -300,7 +323,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
 /// O tenant visto por um usuário que já é membro dele.
 pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<MyTenant, ApiError> {
     let row = sqlx::query!(
-        r#"select t.slug, t.name, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.tenant_id = $1 and m.user_id = $2"#,
@@ -312,6 +335,7 @@ pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<My
     Ok(MyTenant {
         slug: row.slug,
         name: row.name,
+        description: row.description,
         role: Role::from_db(&row.role)?,
         nickname: row.nickname,
         deletion_scheduled_for: row.deletion_due_at,

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\",\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\", t.description,\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,17 @@
       },
       {
         "ordinal": 7,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "role?",
         "type_info": "Text",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "nickname?",
         "type_info": "Text",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "deletion_due_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "logo_key",
         "type_info": "Text",
         "origin": {
@@ -142,8 +153,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "d2ccaf740c8fb377073d4c205af54ce12708950b204c723cbb685a2090394149"
+  "hash": "82e0a2ac61287013ae8e20b9d36295ab169b6f8c57f194207964dc2756bd6e82"
 }

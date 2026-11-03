@@ -36,9 +36,18 @@ async fn invite_link_adds_a_player() {
     // Quem vai entrar vê quem é o dono e quantos já estão lá.
     assert_eq!(preview["owner_name"], "Ana");
     assert_eq!(preview["member_count"], 1);
+    assert_eq!(preview["tenant_description"], Value::Null);
+    // E o que a comunidade diz de si.
+    let edit = json!({ "description": "Duelos às quintas." });
+    assert_eq!(
+        patch(&app, "/tenants/quake-br", &ana, edit).await.0,
+        StatusCode::OK
+    );
+    let (_, preview) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
+    assert_eq!(preview["tenant_description"], "Duelos às quintas.");
 
     let joined = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null, "logo_url": null },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": "Duelos às quintas.", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null, "logo_url": null },
         "tournament": null
     });
     assert_eq!(join(&app, &bia, token).await, joined);
@@ -224,6 +233,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
             json!({
                 "tenant_slug": "quake-br",
                 "tenant_name": "Tenant quake-br",
+                "tenant_description": null,
                 "tenant_logo_url": null,
                 "owner_name": "Ana",
                 "member_count": 2,
@@ -248,7 +258,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
 
     publish(&app, &ana, "copa").await;
     let accepted = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "role": "player", "nickname": "Caio", "deletion_scheduled_for": null, "logo_url": null },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": null, "role": "player", "nickname": "Caio", "deletion_scheduled_for": null, "logo_url": null },
         "tournament": "copa"
     });
     assert_eq!(join(&app, &caio, &token).await, accepted);

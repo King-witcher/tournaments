@@ -64,6 +64,8 @@ pub struct InvitePreview {
     /// Endereço da comunidade (para quem já é membro ir direto a ela).
     pub tenant_slug: String,
     pub tenant_name: String,
+    /// A descrição da comunidade, em texto simples; nulo sem descrição.
+    pub tenant_description: Option<String>,
     /// O logo da comunidade, no CDN; nulo sem logo.
     pub tenant_logo_url: Option<String>,
     /// O apelido do dono atual na comunidade (a comunidade não grava quem a

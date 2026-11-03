@@ -8,6 +8,8 @@ import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Section } from "@/shared/ui/section";
+import { UserText } from "@/shared/ui/user-text";
 import { getInvite, localizedName } from "../server";
 import { AcceptInviteButton } from "./accept-invite-button";
 import { InviteDetails } from "./invite-details";
@@ -19,8 +21,9 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
 /**
  * Para qual comunidade (ou torneio, no link de inscrição) é o convite, com o
  * logo da comunidade no título e, no link de inscrição, a capa do torneio no
- * topo do `Tile`, com o que ele é e a ação de cada caso: aceitar; entrar ou criar
- * conta, voltando para cá; já é membro (ou inscrito); inscrição fechada.
+ * topo do `Tile`, com o que ele é, a descrição da comunidade e a ação de cada
+ * caso: aceitar; entrar ou criar conta, voltando para cá; já é membro (ou
+ * inscrito); inscrição fechada.
  * Convite expirado ou inválido: o erro e o caminho de volta (de comunidade
  * em exclusão, com o texto do convite, e não o da escrita recusada). Fica em
  * `<Suspense>`.
@@ -92,6 +95,11 @@ export async function InviteView({ token }: { token: string }) {
               </AspectRatio>
             )}
             <InviteDetails invite={invite} />
+            {invite.tenant_description && (
+              <Section title={t("about")}>
+                <UserText>{invite.tenant_description}</UserText>
+              </Section>
+            )}
             {notes.map((note) => (
               <p key={note} className={styles.note}>
                 {note}
