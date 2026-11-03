@@ -20,8 +20,8 @@
 }
 
 // Uns 80px por retrato (quatro por linha no celular, sete nas 11 colunas ao
-// lado do resumo no lg) e, do xlg para cima, uns 100px, com o nome no tipo
-// normal (oito por linha em 1440px: os 16 campeões em duas).
+// lado do resumo no lg) e, do xlg para cima, uns 100px (oito por linha em
+// 1440px: os 16 campeões em duas).
 @mixin champions {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(spacing.$spacing-11, 1fr));

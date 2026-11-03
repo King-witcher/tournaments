@@ -2,6 +2,7 @@ import { CheckmarkFilled, ErrorFilled } from "@carbon/icons-react";
 import { type ReactNode, useId } from "react";
 
 import { cn } from "@/shared/lib/cn";
+import { Tooltip } from "@/shared/ui/tooltip";
 import type { TileState } from "../lib/veto";
 import styles from "./veto-tile.module.scss";
 
@@ -10,8 +11,8 @@ type Props = {
   image: ReactNode;
   name: string;
   state: TileState;
-  /** `narrow`: o retrato do campeão, estreito no celular (texto menor). */
-  size?: "narrow";
+  /** O retrato do campeão, estreito: o nome não aparece, só na dica. */
+  portrait?: boolean;
   /** Etiqueta curta embaixo do nome ("Partida 2", "Voto de Ana", "Já usado"). */
   note?: string;
   /** O estado por extenso para o leitor de tela ("Banido por Ana"), quando não é botão. */
@@ -40,13 +41,15 @@ type Props = {
  * pé, com a cara do botão terciário (o de perigo no ban), porque no celular
  * não há hover que a mostre; a etiqueta também descreve o botão para o leitor
  * de tela. Fora da vez, o disponível guarda o lugar da ação: a grade não anda
- * embaixo do dedo quando a vez chega.
+ * embaixo do dedo quando a vez chega. No retrato (`portrait`), o nome fica na
+ * dica do tile inteiro, que abre ao passar o mouse ou focar: fora da vez, o
+ * tile é focável só por causa dela.
  */
 export function VetoTile({
   image,
   name,
   state,
-  size,
+  portrait = false,
   note,
   described,
   action,
@@ -62,7 +65,7 @@ export function VetoTile({
     <>
       <span className={styles.image}>{image}</span>
       <span className={styles.text}>
-        <span className={styles.name}>{name}</span>
+        <span className={portrait ? styles.srOnly : styles.name}>{name}</span>
         {(note || Icon) && (
           <span className={styles.state}>
             <span id={noteId} className={styles.note}>
@@ -85,24 +88,31 @@ export function VetoTile({
       </span>
     </>
   );
+  const surface = action ? (
+    <button
+      type="button"
+      className={cn(styles.surface, styles.button, styles[action.kind])}
+      aria-label={action.label}
+      aria-describedby={note ? noteId : undefined}
+      disabled={action.disabled}
+      onClick={action.onClick}
+    >
+      {body}
+    </button>
+  ) : (
+    <div className={styles.surface} tabIndex={portrait ? 0 : undefined}>
+      {body}
+      {described && <span className={styles.srOnly}>{described}</span>}
+    </div>
+  );
   return (
-    <li className={cn(styles.tile, styles[state], size && styles[size])}>
-      {action ? (
-        <button
-          type="button"
-          className={cn(styles.surface, styles.button, styles[action.kind])}
-          aria-label={action.label}
-          aria-describedby={note ? noteId : undefined}
-          disabled={action.disabled}
-          onClick={action.onClick}
-        >
-          {body}
-        </button>
+    <li className={cn(styles.tile, styles[state], portrait && styles.portrait)}>
+      {portrait ? (
+        <Tooltip description={name} className={styles.tip}>
+          {surface}
+        </Tooltip>
       ) : (
-        <div className={styles.surface}>
-          {body}
-          {described && <span className={styles.srOnly}>{described}</span>}
-        </div>
+        surface
       )}
     </li>
   );

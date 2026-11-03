@@ -12,8 +12,8 @@ import styles from "./product-shot.module.scss";
 const SHOTS = {
   bracket: { width: 1800, height: 1051 },
   veto: { width: 1800, height: 514 },
-  draft: { width: 1800, height: 1029 },
-  result: { width: 1800, height: 810 },
+  draft: { width: 1800, height: 1006 },
+  result: { width: 1800, height: 893 },
   ranking: { width: 1800, height: 943 },
 };
 

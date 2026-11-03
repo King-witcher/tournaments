@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { cn } from "@/shared/lib/cn";
+import { Tooltip } from "@/shared/ui/tooltip";
 import styles from "./champion-portrait.module.scss";
 
 /**
@@ -35,6 +36,12 @@ const SIZES = {
 
 type Props = {
   slug: string;
+  /**
+   * O nome, na dica ao passar o mouse ou focar: o retrato passa a ser o único
+   * lugar dele. Sem isto, o retrato é decorativo e quem o contém dá o nome
+   * (o tile da grade do draft).
+   */
+  name?: string;
   /** `roster` (padrão): 3:4, para o draft e as miniaturas; `big`: quadrado, para o cartão da partida. */
   shape?: keyof typeof SIZES;
   /** Fora (banido no draft): em tons de cinza. */
@@ -42,19 +49,18 @@ type Props = {
 };
 
 /**
- * O retrato do campeão, na largura de quem o contém; decorativo (o nome
- * aparece ao lado ou no rótulo de quem o contém). Campeão sem retrato fica
+ * O retrato do campeão, na largura de quem o contém. Campeão sem retrato fica
  * com o fundo, do mesmo tamanho, para a grade não desalinhar. Não arrasta,
  * como a imagem do mapa: fica dentro do que se clica.
  */
 export function ChampionPortrait({
   slug,
+  name,
   shape = "roster",
   out = false,
 }: Props) {
   const className = cn(styles.portrait, styles[shape], out && styles.out);
-  if (!IMAGES.has(slug)) return <span aria-hidden className={className} />;
-  return (
+  const portrait = IMAGES.has(slug) ? (
     <Image
       src={`/champions/${shape}/${slug}.webp`}
       alt=""
@@ -63,5 +69,16 @@ export function ChampionPortrait({
       draggable={false}
       className={className}
     />
+  ) : (
+    <span aria-hidden className={className} />
+  );
+  if (!name) return portrait;
+  return (
+    <Tooltip label={name} className={styles.tip}>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: o nome só existe na dica, que precisa abrir também pelo teclado. */}
+      <span role="img" tabIndex={0} className={styles.trigger}>
+        {portrait}
+      </span>
+    </Tooltip>
   );
 }

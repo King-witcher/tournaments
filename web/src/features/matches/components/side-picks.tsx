@@ -23,9 +23,9 @@ type Props = {
 };
 
 /**
- * O campeão de um lado numa partida: no duelo, o retrato e o nome (ou o
- * quadro vazio, a escolher); no TDM, um por jogador, com quem ainda escolhe
- * na janela, e quem vê marcado como "Você".
+ * O campeão de um lado numa partida, só o retrato, com o nome na dica: no
+ * duelo, um (ou o quadro vazio, a escolher); no TDM, um por jogador, com quem
+ * ainda escolhe na janela, e quem vê marcado como "Você".
  */
 export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
   const t = useTranslations("Match.veto.draft");
@@ -72,6 +72,7 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
             {p.champion ? (
               <ChampionPortrait
                 slug={p.champion.slug}
+                name={p.champion.name}
                 shape={size === "lg" ? "big" : "roster"}
               />
             ) : (
@@ -87,15 +88,14 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
                 </StatusTag>
               )}
             </div>
-            <span
-              className={cn(styles.champion, !p.champion && styles.choosing)}
-            >
-              {p.champion
-                ? p.drawn
-                  ? t("drawnChampion", { champion: p.champion.name })
-                  : p.champion.name
-                : t("choosing")}
-            </span>
+            {!p.champion && (
+              <span className={cn(styles.status, styles.choosing)}>
+                {t("choosing")}
+              </span>
+            )}
+            {p.champion && p.drawn && (
+              <span className={styles.status}>{t("drawn")}</span>
+            )}
           </div>
         </li>
       ))}

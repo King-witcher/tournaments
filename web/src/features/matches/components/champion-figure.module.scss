@@ -52,20 +52,16 @@
   aspect-ratio: 1;
 }
 
-.name {
+.empty {
   @include type.type-style("label-01");
 
+  color: theme.$text-secondary;
   overflow-wrap: anywhere;
 }
 
-.lg .name {
+.lg .empty {
   @include type.type-style("body-compact-01");
   @include type.font-weight("semibold");
-}
-
-.banned .name,
-.empty {
-  color: theme.$text-secondary;
 }
 
 .note {

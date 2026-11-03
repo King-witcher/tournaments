@@ -21,10 +21,10 @@ type Props = {
 };
 
 /**
- * A grade do draft: os retratos lado a lado com o nome, o banido e o
- * escolhido marcados como no veto de mapas ("Partida N" no escolhido), o que
- * a regra tira do pick de quem vê com o motivo curto e, na vez dele, os que
- * ele pode banir ou escolher como botões. Um aviso diz quando uma regra
+ * A grade do draft: os retratos lado a lado, com o nome na dica, o banido e
+ * o escolhido marcados como no veto de mapas ("Partida N" no escolhido), o
+ * que a regra tira do pick de quem vê com o motivo curto e, na vez dele, os
+ * que ele pode banir ou escolher como botões. Um aviso diz quando uma regra
  * cedeu para ele ter campeão.
  */
 export function VetoChampionBoard({ rule, slot }: Props) {
@@ -60,7 +60,7 @@ export function VetoChampionBoard({ rule, slot }: Props) {
               }
               name={c.name}
               state={tile.state}
-              size="narrow"
+              portrait
               note={note(tile)}
               described={described(tile)}
               action={

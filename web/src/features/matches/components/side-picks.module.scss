@@ -2,8 +2,7 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-// TDM: um jogador por linha, o retrato à esquerda e o apelido e o campeão ao
-// lado.
+// TDM: um jogador por linha, o retrato à esquerda e o apelido ao lado.
 .players {
   display: flex;
   flex-direction: column;
@@ -62,14 +61,13 @@
   @include type.font-weight("semibold");
 }
 
-.champion {
+.status {
   @include type.type-style("label-01");
 
   color: theme.$text-secondary;
-  overflow-wrap: anywhere;
 }
 
-.you .champion {
+.you .status {
   color: theme.$text-primary;
 }
 

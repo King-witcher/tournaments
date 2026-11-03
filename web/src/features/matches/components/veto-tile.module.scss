@@ -25,6 +25,19 @@
   color: theme.$text-primary;
   font: inherit;
   text-align: start;
+
+  &:focus-visible {
+    @include focus-outline.focus-outline("outline");
+  }
+}
+
+// A dica em volta do retrato (a raiz e o invólucro do gatilho, que o Carbon põe
+// entre o `li` e o tile): o tile continua com a altura da linha da grade.
+.tip.tip,
+.tip > div {
+  display: flex;
+  flex: 1;
+  min-inline-size: 0;
 }
 
 .image {
@@ -42,14 +55,11 @@
 .name {
   @include type.type-style("heading-compact-01");
 
-  // No retrato estreito, "Scalebearer" quebra com hífen, não no meio.
-  hyphens: auto;
   overflow-wrap: break-word;
 }
 
 // A etiqueta e, no canto de baixo, o ícone do estado: fora da imagem (sobre
-// ela, a cor não teria contraste garantido) e fora da linha do nome, que no
-// retrato estreito do campeão quebraria. Sem espaço, o ícone desce, e a
+// ela, a cor não teria contraste garantido). Sem espaço, o ícone desce, e a
 // etiqueta não quebra no meio ("Partida / 1").
 .state {
   display: flex;
@@ -70,18 +80,11 @@
   color: theme.$text-secondary;
 }
 
-// O retrato do campeão abaixo do xlg (uns 80px): o nome no tipo menor e
-// menos margem, para "Scalebearer" e "Partida 1" caberem numa linha.
-.narrow .text {
+// O retrato do campeão abaixo do xlg (uns 80px): menos margem, para "Partida 1"
+// caber numa linha.
+.portrait .text {
   @include breakpoint.breakpoint-down(xlg) {
     padding-inline: spacing.$spacing-02;
-  }
-}
-
-.narrow .name {
-  @include breakpoint.breakpoint-down(xlg) {
-    @include type.type-style("label-01");
-    @include type.font-weight("semibold");
   }
 }
 
@@ -115,10 +118,6 @@
 .button {
   cursor: pointer;
 
-  &:focus-visible {
-    @include focus-outline.focus-outline("outline");
-  }
-
   &:active {
     background: theme.$layer-active;
   }
@@ -142,7 +141,7 @@
   color: button.$button-tertiary;
 }
 
-.narrow .action {
+.portrait .action {
   @include breakpoint.breakpoint-down(xlg) {
     padding-inline: spacing.$spacing-02;
   }
