@@ -33,6 +33,8 @@ Decidido pelo usuário:
 - **Desempate**: pontos (séries vencidas; a série é sempre melhor de N ímpar, não empata) → confronto direto → saldo de mapas → saldo de frags → seed. No suíço, **Buchholz** logo depois dos pontos.
 - **Desistência**: no suíço, quem desiste **mantém os pontos** e não é mais pareado; no round robin, vira **W.O. em tudo que faltava**.
 - **W.O. vale vitória sem perder mapa** (2 x 0 na md3, 3 x 0 na md5, no saldo de mapas; sem frags), para o vencedor não ficar atrás de quem jogou o mesmo adversário só pela ordem das partidas.
+- **Ordem das séries no round robin**: a ordem das rodadas continua como padrão; quando o adversário da vez acabou de começar outra série, o site sugere um adversário livre, e a chave marca quem está jogando. Só indica, nunca bloqueia: uma série contestada ou abandonada prenderia o time. Cada time joga N − 1 séries em sequência (8 jogadores em MD3: cerca de 5 h sem nenhuma espera), então, em simulação, sair da ordem não encurta com todos presentes (6 jogadores: de 4,2 h para 4,9 h) e só ajuda em torneio grande quando alguém some (16 jogadores com pausas: de 16,0 h para 14,9 h).
+- **Suíço sem pareamento contínuo**: a rodada continua esperando todas as séries, sem prazo por rodada nem aviso de atraso ao organizador. Em simulação, parear quem termina não encurta (16 jogadores: 3,8 h contra 3,9 h) e deixaria escolher o adversário atrasando o envio do resultado.
 
 No `engine` (assumido):
 
