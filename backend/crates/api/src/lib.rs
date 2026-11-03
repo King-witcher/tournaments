@@ -72,6 +72,8 @@ pub struct AppState {
     pub mail: mail::Mail,
     /// Webhooks do Discord das comunidades (a fila é esvaziada por `discord::spawn`).
     pub webhooks: discord::Webhooks,
+    /// Limites em memória das rotas que chamam o Discord.
+    pub limits: shared::WindowLimit,
 }
 
 /// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`

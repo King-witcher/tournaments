@@ -13,7 +13,7 @@ Organização do código. Siga ao criar arquivo, módulo, rota ou teste. Regras 
 ```
 crates/api/src/
   lib.rs, main.rs, config.rs   AppState/MIGRATOR/app() (junta o router() de cada domínio), subida, variáveis de ambiente
-  shared/         erro, extractors, tokens, texto, slug, idioma, Redis, Storage (S3), client_ip, origin; não conhece domínio nenhum
+  shared/         erro, extractors, tokens, texto, slug, idioma, Redis, Storage (S3), client_ip, origin, outbound_gate, window_limit; não conhece domínio nenhum
   outbox/         eventos de mudança e avisos, gravados na transação de quem muda (emit)
   mail/           email sem domínio: endereço canônico, layout, envio (Mailer), limites
   auth/           login, sessão, CurrentUser, cadastro, recuperação de senha, troca de email, avisos de segurança

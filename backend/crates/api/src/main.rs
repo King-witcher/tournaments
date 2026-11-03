@@ -3,7 +3,7 @@ use std::{net::SocketAddr, sync::Arc};
 
 use api::{
     AppState, MIGRATOR,
-    auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient, discord_gate},
     config::Config,
     discord::{self, Webhooks},
     mail::{LogMailer, Mail, Mailer, ResendMailer},
@@ -66,12 +66,14 @@ async fn main() -> anyhow::Result<()> {
     let web_origin = config.web_origin.parse().context("WEB_ORIGIN inválido")?;
     let web = config.web_origin.trim_end_matches('/');
     let push = web_push(&config)?;
+    let discord_gate = discord_gate();
     let state = AppState {
         db,
         redis,
         discord: Arc::new(HttpDiscord::new(
             config.discord_client_id.clone().unwrap_or_default(),
             config.discord_client_secret.clone().unwrap_or_default(),
+            discord_gate.clone(),
         )),
         google: Arc::new(HttpGoogle::new(
             config.google_client_id.clone().unwrap_or_default(),
@@ -100,7 +102,8 @@ async fn main() -> anyhow::Result<()> {
         storage,
         public_storage,
         mail,
-        webhooks: Webhooks::new(),
+        webhooks: Webhooks::new(discord_gate),
+        limits: Default::default(),
     };
     realtime::spawn(state.clone());
     discord::spawn(state.clone());

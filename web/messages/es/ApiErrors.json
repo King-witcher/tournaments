@@ -12,6 +12,8 @@
     "discord_denied": "Autorización cancelada en Discord.",
     "discord_failed": "No se pudo hablar con Discord. Inténtalo de nuevo.",
     "discord_rate_limited": "Discord bloqueó el inicio de sesión por ahora.",
+    "discord_busy": "Mucha gente está entrando con Discord ahora. Inténtalo de nuevo en unos segundos.",
+    "discord_login_limited": "Demasiados intentos de entrar con Discord. Inténtalo de nuevo en unos minutos.",
     "discord_taken": "Ese Discord ya lo usa otra cuenta. Entra en ella y desvincúlalo antes.",
     "discord_already_linked": "Tu cuenta ya tiene un Discord vinculado.",
     "discord_not_linked": "Tu cuenta no tiene Discord vinculado.",
@@ -190,6 +192,7 @@
     "event_unknown": "Ese aviso no existe.",
     "not_configured": "Esta comunidad aún no tiene un webhook de Discord.",
     "webhook_gone": "Discord ya no reconoce este webhook. Pega la dirección de otro.",
+    "test_limited": "Demasiadas pruebas seguidas. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
     "rate_limited": "Discord pidió esperar. Inténtalo de nuevo en {retry_after, plural, one {# segundo} other {# segundos}}.",
     "unreachable": "No fue posible hablar con Discord. Inténtalo de nuevo.",
     "rejected": "Discord rechazó el mensaje de prueba. Revisa los permisos del webhook."

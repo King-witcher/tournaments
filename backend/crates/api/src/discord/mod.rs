@@ -12,7 +12,8 @@
 //!   português e espanhol. Aviso novo = uma linha lá.
 //! - `queue`: o despachante do `realtime` chama `enqueue` para cada evento do
 //!   outbox, e uma tarefa própria (`spawn`) esvazia a fila em ordem,
-//!   respeitando o ritmo do Discord (`sender`); `render` monta o corpo, com
+//!   respeitando o ritmo do Discord (`sender`, que passa pela mesma saída do
+//!   login, `auth::discord_gate`); `render` monta o corpo, com
 //!   o código da série e o nome da conta excluída de `labels`. Webhook
 //!   apagado (401/404) fica `broken` e para de receber.
 //!

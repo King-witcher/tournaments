@@ -9,6 +9,8 @@ use reqwest::{StatusCode, header::HeaderMap};
 use serde_json::Value;
 use tokio::sync::Notify;
 
+use crate::{auth::DiscordLimit, shared::OutboundGate};
+
 const BASE: &str = "https://discord.com";
 /// Tempo máximo de uma ida ao Discord.
 const TIMEOUT: Duration = Duration::from_secs(10);
@@ -23,7 +25,8 @@ pub enum Outcome {
     /// 2xx. `wait`: o ritmo acabou (`X-RateLimit-Remaining: 0`) e a próxima
     /// mensagem espera esse tempo.
     Sent { wait: Option<Duration> },
-    /// 429: tentar de novo depois de `retry_after`.
+    /// 429, ou a saída para o Discord fechada (a chamada nem saiu): tentar de
+    /// novo depois de `retry_after`.
     RateLimited { retry_after: Duration },
     /// 401 ou 404: o webhook foi apagado (ou o token mudou).
     Gone,
@@ -33,21 +36,23 @@ pub enum Outcome {
     Failed(String),
 }
 
-/// O cliente HTTP dos webhooks, com o despertador da fila (`wake`).
+/// O cliente HTTP dos webhooks, com a saída para o Discord, a mesma do login
+/// (`auth::discord_gate`), e o despertador da fila (`wake`).
 #[derive(Clone)]
 pub struct Webhooks {
     client: reqwest::Client,
     base: Arc<str>,
+    gate: OutboundGate,
     wake: Arc<Notify>,
 }
 
 impl Webhooks {
-    pub fn new() -> Self {
-        Self::with_base(BASE)
+    pub fn new(gate: OutboundGate) -> Self {
+        Self::with_base(BASE, gate)
     }
 
     /// Para os testes: a base no lugar de `https://discord.com`.
-    pub fn with_base(base: &str) -> Self {
+    pub fn with_base(base: &str, gate: OutboundGate) -> Self {
         Self {
             client: reqwest::Client::builder()
                 .user_agent("telefrag-api")
@@ -57,6 +62,7 @@ impl Webhooks {
                 .build()
                 .expect("cliente HTTP"),
             base: base.trim_end_matches('/').into(),
+            gate,
             wake: Arc::default(),
         }
     }
@@ -72,33 +78,47 @@ impl Webhooks {
 
     /// Manda `body` (o JSON de "executar webhook") ao webhook `id`/`token`.
     pub async fn post(&self, id: &str, token: &str, body: &Value) -> Outcome {
+        if let Err(refused) = self.gate.admit().await {
+            return Outcome::RateLimited {
+                retry_after: refused.retry_after(),
+            };
+        }
         let url = format!("{}/api/webhooks/{id}/{token}", self.base);
         let res = match self.client.post(url).json(body).send().await {
             Ok(res) => res,
             Err(e) => return Outcome::Failed(e.without_url().to_string()),
         };
         let status = res.status();
-        let headers = res.headers().clone();
         if status.is_success() {
             return Outcome::Sent {
-                wait: exhausted(&headers),
+                wait: exhausted(res.headers()),
             };
         }
         match status {
             StatusCode::TOO_MANY_REQUESTS => {
-                let retry_after = retry_after(&headers, res.json().await.ok());
-                Outcome::RateLimited { retry_after }
+                let limit = DiscordLimit::read(res).await;
+                tracing::warn!(webhook = id, %limit, "o Discord respondeu 429 ao webhook");
+                Outcome::RateLimited {
+                    retry_after: self.wait_for(&limit),
+                }
             }
             StatusCode::UNAUTHORIZED | StatusCode::NOT_FOUND => Outcome::Gone,
             s if s.is_server_error() => Outcome::Failed(format!("o Discord respondeu {s}")),
             s => Outcome::Rejected(s),
         }
     }
-}
 
-impl Default for Webhooks {
-    fn default() -> Self {
-        Self::new()
+    /// A espera de um 429. O limite de um webhook só segura aquele webhook; o
+    /// que vale para o IP pausa toda a saída, inclusive o login.
+    fn wait_for(&self, limit: &DiscordLimit) -> Duration {
+        if limit.blocks_ip() {
+            let pause = limit.pause();
+            self.gate.pause(pause);
+            return pause;
+        }
+        limit
+            .retry_after
+            .map_or(DEFAULT_WAIT, |wait| wait.min(MAX_WAIT))
     }
 }
 
@@ -110,33 +130,16 @@ fn exhausted(headers: &HeaderMap) -> Option<Duration> {
         .then(|| seconds(number("x-ratelimit-reset-after").unwrap_or(1.0)))
 }
 
-/// A espera de um 429: `retry_after` do corpo (segundos, com fração) ou o
-/// cabeçalho `Retry-After`.
-fn retry_after(headers: &HeaderMap, body: Option<Value>) -> Duration {
-    let from_body = body.and_then(|b| b.get("retry_after")?.as_f64());
-    let from_header = || {
-        headers
-            .get("retry-after")?
-            .to_str()
-            .ok()?
-            .parse::<f64>()
-            .ok()
-    };
-    from_body.or_else(from_header).map_or(DEFAULT_WAIT, seconds)
-}
-
 fn seconds(value: f64) -> Duration {
-    if value.is_finite() && value > 0.0 {
-        Duration::from_secs_f64(value).min(MAX_WAIT)
-    } else {
-        DEFAULT_WAIT
-    }
+    Duration::try_from_secs_f64(value)
+        .ok()
+        .filter(|wait| !wait.is_zero())
+        .map_or(DEFAULT_WAIT, |wait| wait.min(MAX_WAIT))
 }
 
 #[cfg(test)]
 mod tests {
     use reqwest::header::HeaderValue;
-    use serde_json::json;
 
     use super::*;
 
@@ -157,17 +160,5 @@ mod tests {
             ("x-ratelimit-reset-after", "1.5"),
         ]);
         assert_eq!(exhausted(&spent), Some(Duration::from_millis(1500)));
-    }
-
-    #[test]
-    fn retry_after_comes_from_the_body_then_the_header() {
-        let none = headers(&[]);
-        let body = Some(json!({ "retry_after": 0.75 }));
-        assert_eq!(retry_after(&none, body), Duration::from_millis(750));
-        let header = headers(&[("retry-after", "3")]);
-        assert_eq!(retry_after(&header, None), Duration::from_secs(3));
-        assert_eq!(retry_after(&none, None), DEFAULT_WAIT);
-        let huge = Some(json!({ "retry_after": 1e12 }));
-        assert_eq!(retry_after(&none, huge), MAX_WAIT);
     }
 }

@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use api::shared::Refused;
 use axum::{
     body::Body,
     http::{Method, Request, StatusCode, header},
@@ -11,7 +12,7 @@ use serde_json::json;
 
 use super::{
     CHALLENGE, OTHER_VERIFIER, STATE, VERIFIER, app, authorize, body_text, discord_user, do_login,
-    exchange, get, json_request, pair, send, send_json, session_key, set_cookie,
+    exchange, gated_app, get, json_request, pair, send, send_json, session_key, set_cookie,
 };
 use crate::common::{self, err, redis};
 
@@ -35,6 +36,56 @@ async fn without_config_is_503() {
             StatusCode::SERVICE_UNAVAILABLE,
             err("auth.discord_not_configured")
         )
+    );
+}
+
+#[tokio::test]
+async fn a_closed_exit_answers_without_going_to_discord() {
+    let (db, _lease) = crate::db::test_db().await;
+    let wait = Duration::from_secs(1);
+    let cases = [
+        (
+            Refused::Paused { retry_after: wait },
+            StatusCode::SERVICE_UNAVAILABLE,
+            "auth.discord_rate_limited",
+        ),
+        (
+            Refused::Busy { retry_after: wait },
+            StatusCode::TOO_MANY_REQUESTS,
+            "auth.discord_busy",
+        ),
+    ];
+    for (refused, status, code) in cases {
+        let app = gated_app(db.clone(), refused);
+        let (got, body, _) = exchange(&app, "discord", "login", None, VERIFIER).await;
+        assert_eq!((got, body), (status, err(code)));
+    }
+}
+
+#[tokio::test]
+async fn logins_from_an_ip_are_limited() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone(), None, true);
+    let from_ip = |ip: &'static str| {
+        let body = json!({ "code": "", "code_verifier": VERIFIER });
+        let mut req = json_request(Method::POST, "/auth/discord/login", None, body);
+        req.headers_mut()
+            .insert("cf-connecting-ip", ip.parse().unwrap());
+        send(&app, req)
+    };
+    for _ in 0..20 {
+        assert_eq!(
+            from_ip("203.0.113.7").await.status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+    }
+    assert_eq!(
+        from_ip("203.0.113.7").await.status(),
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+        from_ip("203.0.113.8").await.status(),
+        StatusCode::UNPROCESSABLE_ENTITY
     );
 }
 

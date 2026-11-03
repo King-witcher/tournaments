@@ -253,6 +253,26 @@ async fn a_rate_limit_holds_the_webhook_and_the_message_goes_later() {
 }
 
 #[tokio::test]
+async fn a_cloudflare_block_stops_every_webhook_until_the_pause_ends() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["tournament.started"]).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    s.fake.reply(&[Reply::Blocked]);
+    start(&s.app, &s.ana, copa(single(1, 1)), &[&p[0], &p[1]]).await;
+    let now = Utc::now();
+
+    assert_eq!(pump(&s, now).await, 1);
+    assert_eq!(s.fake.hits().len(), 1);
+    assert_eq!(queued(&db).await, 1);
+    // O prazo do webhook passou, mas a saída segue pausada (o relógio dela é o
+    // de verdade): nada chega ao Discord, e a mensagem continua na fila.
+    let later = now + TimeDelta::minutes(6);
+    assert_eq!(discord::deliver_due(&s.state, later).await.unwrap(), 1);
+    assert_eq!(s.fake.hits().len(), 1);
+    assert_eq!(queued(&db).await, 1);
+}
+
+#[tokio::test]
 async fn a_spent_window_makes_the_next_message_wait() {
     let (db, _lease) = crate::db::test_db().await;
     let s = configured(&db, &["check_in.opened", "tournament.started"]).await;

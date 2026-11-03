@@ -226,6 +226,39 @@ async fn the_test_message_reaches_the_channel_in_the_chosen_language() {
 }
 
 #[tokio::test]
+async fn a_block_is_answered_without_calling_discord_again() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["match.ready"]).await;
+    let uri = format!("{URI}/test");
+    s.fake.reply(&[Reply::Blocked]);
+    for _ in 0..2 {
+        let (status, body) = common::post(&s.app, &uri, &s.ana, json!({})).await;
+        assert_eq!(status, StatusCode::TOO_MANY_REQUESTS, "{body}");
+        assert_eq!(body["error"], "discord.rate_limited");
+    }
+    assert_eq!(s.fake.hits().len(), 1);
+}
+
+#[tokio::test]
+async fn tests_of_a_webhook_are_limited_per_account() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["match.ready"]).await;
+    let uri = format!("{URI}/test");
+    let bad = json!({ "url": "https://example.com" });
+    for _ in 0..10 {
+        let (status, _) = common::post(&s.app, &uri, &s.ana, bad.clone()).await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    }
+    assert_eq!(
+        common::post(&s.app, &uri, &s.ana, bad).await,
+        (
+            StatusCode::TOO_MANY_REQUESTS,
+            json!({ "error": "discord.test_limited", "params": { "minutes": 10 } })
+        )
+    );
+}
+
+#[tokio::test]
 async fn a_failing_test_says_why() {
     let (db, _lease) = crate::db::test_db().await;
     let s = configured(&db, &["match.ready"]).await;

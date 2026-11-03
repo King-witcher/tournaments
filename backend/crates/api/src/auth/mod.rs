@@ -47,7 +47,7 @@ pub use db::{
     lock_due_deletion as lock_due_account_deletion,
 };
 pub use deletion::{end_all_sessions, remind_due_deletions as remind_due_account_deletions};
-pub use discord::{DiscordApi, DiscordUser, HttpDiscord};
+pub use discord::{DiscordApi, DiscordLimit, DiscordUser, HttpDiscord, discord_gate};
 pub use google::{GoogleApi, GoogleUser, HttpGoogle};
 /// Os testes criam sessões por aqui, sem passar pelo login.
 pub use kv::create_session;

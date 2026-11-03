@@ -4268,6 +4268,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description auth.discord_busy */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
             /** @description auth.discord_failed */
             502: {
                 headers: {
@@ -4319,6 +4328,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description auth.discord_login_limited (muitas entradas deste IP), auth.discord_busy (muitos logins com o Discord ao mesmo tempo: a espera pela saída passou do limite) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
             /** @description auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier) */
             502: {
                 headers: {
@@ -4328,7 +4346,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429: em produção, o IP de saída do Render bloqueado) */
+            /** @description auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429 há pouco, e a API não o chama até a pausa acabar: em produção, o IP de saída do Render bloqueado) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -6490,7 +6508,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description discord.rate_limited {retry_after} (segundos) */
+            /** @description discord.rate_limited {retry_after} (segundos; o Discord mandou esperar, ou a saída para ele está pausada ou ocupada), discord.test_limited {minutes} (muitos testes desta conta) */
             429: {
                 headers: {
                     [name: string]: unknown;

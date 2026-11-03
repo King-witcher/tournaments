@@ -23,7 +23,7 @@ use api::{
     auth::{AuthSettings, DiscordApi, DiscordUser, GoogleApi, GoogleUser, OAuthClient},
     mail::Email,
     shared::{
-        Redis,
+        Redis, Refused,
         token::{hash_token, hex},
     },
 };
@@ -77,6 +77,20 @@ struct FakeDiscord {
     user: Option<DiscordUser>,
 }
 
+/// O Discord atrás de uma saída fechada: nenhuma chamada sai.
+struct GatedDiscord(Refused);
+
+#[async_trait]
+impl DiscordApi for GatedDiscord {
+    async fn exchange_code(&self, _: &str, _: &str, _: &str) -> anyhow::Result<String> {
+        Err(self.0.into())
+    }
+
+    async fn fetch_user(&self, _: &str) -> anyhow::Result<DiscordUser> {
+        Err(self.0.into())
+    }
+}
+
 #[async_trait]
 impl DiscordApi for FakeDiscord {
     async fn exchange_code(
@@ -119,6 +133,26 @@ fn google_user(name: &str) -> GoogleUser {
 /// usuário, sempre falha.
 fn app(db: PgPool, user: Option<DiscordUser>, configured: bool) -> Router {
     providers_app(db, user, None, configured)
+}
+
+/// App cujo Discord está atrás de uma saída fechada.
+fn gated_app(db: PgPool, refused: Refused) -> Router {
+    let client = OAuthClient {
+        client_id: "client-1".into(),
+        redirect_uri: REDIRECT.into(),
+    };
+    app_from(AppState {
+        discord: Arc::new(GatedDiscord(refused)),
+        auth: Arc::new(AuthSettings {
+            discord: Some(client),
+            google: None,
+            web_origin: WEB.into(),
+            cookie_name: "session".into(),
+            cookie_domain: None,
+            cookie_secure: false,
+        }),
+        ..state(db)
+    })
 }
 
 /// App com os dois provedores: cada um responde com o usuário dado (`None`

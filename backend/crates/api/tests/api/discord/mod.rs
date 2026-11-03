@@ -10,7 +10,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use api::{AppState, discord::Webhooks};
+use api::{AppState, auth::discord_gate, discord::Webhooks};
 use axum::{
     Json, Router,
     extract::{Path, State},
@@ -38,6 +38,8 @@ pub enum Reply {
     Status(u16),
     /// 429 com `retry_after` em segundos.
     TooMany(f64),
+    /// O bloqueio do IP pelo Cloudflare: 429 em texto, sem dizer quanto esperar.
+    Blocked,
     /// 204, mas a janela de ritmo acabou: esperar `reset_after` segundos.
     Spent(f64),
 }
@@ -119,6 +121,9 @@ async fn receive(
             Json(json!({ "message": "You are being rate limited.", "retry_after": after, "global": false })),
         )
             .into_response(),
+        Some(Reply::Blocked) => {
+            (StatusCode::TOO_MANY_REQUESTS, "error code: 1015").into_response()
+        }
         Some(Reply::Spent(after)) => (
             StatusCode::NO_CONTENT,
             [
@@ -133,7 +138,7 @@ async fn receive(
 /// O estado do app de teste falando com o Discord de mentira.
 pub fn state_with(db: PgPool, fake: &Fake) -> AppState {
     AppState {
-        webhooks: Webhooks::with_base(&fake.base),
+        webhooks: Webhooks::with_base(&fake.base, discord_gate()),
         ..state(db)
     }
 }

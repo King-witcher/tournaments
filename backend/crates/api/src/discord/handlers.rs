@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use axum::{Json, extract::State, http::StatusCode};
 use chrono::Utc;
 
@@ -14,6 +16,11 @@ use crate::{
     shared::{ApiError, ErrorBody, JsonBody, Locale},
     tenants::{Owner, TenantMember},
 };
+
+/// Testes de webhook por conta: quem configura testa poucas vezes. O endereço
+/// vem no corpo, então a rota poderia gerar respostas 401 do Discord à vontade.
+const TESTS_PER_USER: u32 = 10;
+const TEST_WINDOW: Duration = Duration::from_secs(10 * 60);
 
 #[utoipa::path(
     get,
@@ -106,7 +113,7 @@ pub async fn delete_discord(
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, discord.not_configured (sem `url` e sem webhook salvo)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "discord.url_invalid (a `url` do corpo; só https://discord.com/api/webhooks/{id}/{token}), request.invalid_body"),
         (status = CONFLICT, body = ErrorBody, description = "discord.webhook_gone (o Discord não conhece o webhook; se era o salvo, a configuração fica marcada como quebrada)"),
-        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "discord.rate_limited {retry_after} (segundos)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "discord.rate_limited {retry_after} (segundos; o Discord mandou esperar, ou a saída para ele está pausada ou ocupada), discord.test_limited {minutes} (muitos testes desta conta)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "discord.unreachable (rede ou erro do Discord), discord.rejected (o Discord recusou a mensagem)"),
     )
 )]
@@ -115,6 +122,14 @@ pub async fn test_discord(
     owner: TenantMember<Owner>,
     JsonBody(body): JsonBody<TestDiscord>,
 ) -> Result<StatusCode, ApiError> {
+    let key = format!("discord_test:{}", owner.user.id);
+    if let Err(wait) = state.limits.hit(key, TESTS_PER_USER, TEST_WINDOW) {
+        let minutes = i64::try_from(wait.as_secs() / 60 + 1).unwrap_or(i64::MAX);
+        return Err(
+            ApiError::new(StatusCode::TOO_MANY_REQUESTS, "discord.test_limited")
+                .with_params([("minutes", minutes)]),
+        );
+    }
     let config = db::get(&state.db, owner.tenant).await?;
     // Com `url`, o teste é do endereço digitado (salvo ou não): nada do que
     // acontece nele muda o webhook salvo.

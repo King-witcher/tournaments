@@ -14,6 +14,8 @@
 //! dele para o fluxo comum, aqui embaixo; o que muda entre eles (URL de
 //! autorização, leitura do usuário) fica em `discord.rs` e `google.rs`.
 
+use std::time::Duration;
+
 use axum::{
     Json,
     extract::State,
@@ -36,7 +38,7 @@ use super::{
 };
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, JsonBody},
+    shared::{ApiError, ClientIp, ErrorBody, JsonBody, Refused},
 };
 
 /// Tamanho máximo do code que o front repassa (os dos provedores têm menos
@@ -46,6 +48,11 @@ const CODE_MAX: usize = 512;
 /// Prazo para voltar do provedor e ligar: o mesmo do fluxo guardado na aba
 /// (`features/auth/lib/oauth-flow.ts`, no front).
 const LINK_FLOW_SECS: u64 = 10 * 60;
+
+/// Entradas pelo Discord por IP: quem entra pede uma ou duas, e 20 cobrem uma
+/// LAN inteira atrás do mesmo IP. A rota é anônima e chama o Discord.
+const DISCORD_LOGINS_PER_IP: u32 = 20;
+const DISCORD_LOGIN_WINDOW: Duration = Duration::from_secs(10 * 60);
 
 #[utoipa::path(
     post,
@@ -79,17 +86,32 @@ pub async fn discord_authorize(
     responses(
         (status = OK, body = SignedIn, description = "Sessão criada no cookie (e a conta, se o Discord ainda não entrou aqui). Se a exclusão da conta estava agendada, entrar a cancelou (`deletion_cancelled`)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.discord_login_limited (muitas entradas deste IP), auth.discord_busy (muitos logins com o Discord ao mesmo tempo: a espera pela saída passou do limite)"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed (o Discord não respondeu ou recusou o code, por exemplo com outro verifier)"),
-        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429: em produção, o IP de saída do Render bloqueado)"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured, auth.discord_rate_limited (o Discord respondeu 429 há pouco, e a API não o chama até a pausa acabar: em produção, o IP de saída do Render bloqueado)"),
     )
 )]
 pub async fn discord_login(
     State(state): State<AppState>,
+    ip: ClientIp,
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
-    login(&state, Provider::Discord, &headers, jar, body).await
+    if let Some(bucket) = ip.bucket() {
+        let key = format!("discord_login:{bucket}");
+        if let Err(wait) = state
+            .limits
+            .hit(key, DISCORD_LOGINS_PER_IP, DISCORD_LOGIN_WINDOW)
+        {
+            tracing::warn!(ip = %bucket, ?wait, "limite de entradas pelo Discord por IP");
+            return Err(ApiError::new(
+                StatusCode::TOO_MANY_REQUESTS,
+                "auth.discord_login_limited",
+            ));
+        }
+    }
+    login(&state, Provider::Discord, &ip, &headers, jar, body).await
 }
 
 #[utoipa::path(
@@ -103,17 +125,19 @@ pub async fn discord_login(
         (status = FORBIDDEN, body = ErrorBody, description = "auth.state_mismatch (o verifier não é do fluxo que /auth/discord/authorize abriu para ligar nesta sessão nos últimos 10 minutos; a autorização vale uma vez)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.discord_taken (é login de outra conta), auth.discord_already_linked"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body (também code vazio ou verifier fora do formato)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.discord_busy"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "auth.discord_failed"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "auth.discord_not_configured, auth.discord_rate_limited"),
     )
 )]
 pub async fn discord_link(
     State(state): State<AppState>,
+    ip: ClientIp,
     user: CurrentUser,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    link(&state, &user, &jar, Provider::Discord, body).await
+    link(&state, &ip, &user, &jar, Provider::Discord, body).await
 }
 
 #[utoipa::path(
@@ -176,11 +200,12 @@ pub async fn google_authorize(
 )]
 pub async fn google_login(
     State(state): State<AppState>,
+    ip: ClientIp,
     headers: HeaderMap,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
-    login(&state, Provider::Google, &headers, jar, body).await
+    login(&state, Provider::Google, &ip, &headers, jar, body).await
 }
 
 #[utoipa::path(
@@ -200,11 +225,12 @@ pub async fn google_login(
 )]
 pub async fn google_link(
     State(state): State<AppState>,
+    ip: ClientIp,
     user: CurrentUser,
     jar: CookieJar,
     JsonBody(body): JsonBody<OAuthCode>,
 ) -> Result<Json<LoginMethods>, ApiError> {
-    link(&state, &user, &jar, Provider::Google, body).await
+    link(&state, &ip, &user, &jar, Provider::Google, body).await
 }
 
 #[utoipa::path(
@@ -285,11 +311,12 @@ async fn authorize(
 async fn login(
     state: &AppState,
     provider: Provider,
+    ip: &ClientIp,
     headers: &HeaderMap,
     jar: CookieJar,
     body: OAuthCode,
 ) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
-    let login = fetch_login(state, provider, &body).await?;
+    let login = fetch_login(state, provider, ip, &body).await?;
     let user_id = db::upsert_external_user(&state.db, &login).await?;
     start_session(state, headers, jar, user_id).await
 }
@@ -299,6 +326,7 @@ async fn login(
 /// challenge guardado), uma vez.
 async fn link(
     state: &AppState,
+    ip: &ClientIp,
     user: &CurrentUser,
     jar: &CookieJar,
     provider: Provider,
@@ -312,7 +340,7 @@ async fn link(
     if !kv::take_link_authorization(&state.redis, &session, provider.as_str(), &challenge).await? {
         return Err(ApiError::forbidden("auth.state_mismatch"));
     }
-    let login = fetch_login(state, provider, &body).await?;
+    let login = fetch_login(state, provider, ip, &body).await?;
     if db::link_external(&state.db, user.id, &login).await? {
         let notice = match provider {
             Provider::Discord => Notice::DiscordLinked {
@@ -331,6 +359,7 @@ async fn link(
 async fn fetch_login(
     state: &AppState,
     provider: Provider,
+    ip: &ClientIp,
     body: &OAuthCode,
 ) -> Result<ExternalLogin, ApiError> {
     let codes = provider.codes();
@@ -384,9 +413,20 @@ async fn fetch_login(
         }
     };
     result.map_err(|err| {
+        // Não saiu nada: nem é falha do provedor, nem vale uma linha por pedido.
+        match err.root_cause().downcast_ref::<Refused>() {
+            Some(Refused::Paused { .. }) => {
+                return ApiError::new(StatusCode::SERVICE_UNAVAILABLE, "auth.discord_rate_limited");
+            }
+            Some(Refused::Busy { .. }) => {
+                return ApiError::new(StatusCode::TOO_MANY_REQUESTS, "auth.discord_busy");
+            }
+            None => {}
+        }
         tracing::error!(
             error = format_args!("{err:#}"),
             provider = provider.as_str(),
+            ip = ip.bucket().as_deref().unwrap_or("-"),
             "provedor falhou na troca do code"
         );
         if err.root_cause().is::<discord::RateLimited>() {

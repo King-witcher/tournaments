@@ -13,7 +13,7 @@ use std::{
 
 use api::{
     AppState,
-    auth::{AuthSettings, HttpDiscord, HttpGoogle, create_session},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, create_session, discord_gate},
     discord::Webhooks,
     mail::{Email, Mail, Mailer},
     realtime::Realtime,
@@ -152,7 +152,11 @@ pub fn state(db: PgPool) -> AppState {
         redis: redis(&db),
         mail: Mail::new(mailbox(&db), DAILY_EMAILS, true),
         db,
-        discord: Arc::new(HttpDiscord::new(String::new(), String::new())),
+        discord: Arc::new(HttpDiscord::new(
+            String::new(),
+            String::new(),
+            discord_gate(),
+        )),
         google: Arc::new(HttpGoogle::new(String::new(), String::new())),
         auth: Arc::new(AuthSettings {
             discord: None,
@@ -164,7 +168,8 @@ pub fn state(db: PgPool) -> AppState {
         }),
         realtime: Realtime::new(),
         push: None,
-        webhooks: Webhooks::new(),
+        webhooks: Webhooks::new(discord_gate()),
+        limits: Default::default(),
         storage: None,
         public_storage: None,
     }

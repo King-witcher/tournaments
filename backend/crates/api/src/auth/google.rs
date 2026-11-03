@@ -70,6 +70,9 @@ pub trait GoogleApi: Send + Sync {
     ) -> anyhow::Result<GoogleUser>;
 }
 
+/// Tempo máximo de uma ida ao Google.
+const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
 pub struct HttpGoogle {
     client: reqwest::Client,
     client_id: String,
@@ -81,6 +84,7 @@ impl HttpGoogle {
         Self {
             client: reqwest::Client::builder()
                 .user_agent("telefrag-api")
+                .timeout(TIMEOUT)
                 .build()
                 .expect("cliente HTTP"),
             client_id,
