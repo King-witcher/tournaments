@@ -1,9 +1,8 @@
 import { useTranslations } from "next-intl";
 
-import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
-import { useMatchLabels } from "../hooks/use-match-labels";
+import { useNextMatchLabel } from "../hooks/use-next-match-label";
 import { ACTIONABLE, taskKey } from "../lib/status";
 
 type Props = {
@@ -18,17 +17,8 @@ type Props = {
  * da partida. O que pede uma ação de quem vê vai em negrito.
  */
 export function NextMatchLink({ next, tournamentPath }: Props) {
-  const t = useTranslations("Home.tournaments.next");
   const tBracket = useTranslations("Bracket");
-  const { code } = useMatchLabels(next.single);
-  const teamName = useTeamName();
-  const match = code(next.key);
-  const from = next.opponent_from;
-  const label = next.opponent
-    ? t("against", { match, opponent: teamName(next.opponent) })
-    : from
-      ? t(from.outcome, { match, source: code(from.match_key) })
-      : t("unknown", { match });
+  const label = useNextMatchLabel(next);
   const task = next.task && tBracket(`task.${taskKey(next.task, next.veto)}`);
   const urgent =
     next.task !== undefined &&

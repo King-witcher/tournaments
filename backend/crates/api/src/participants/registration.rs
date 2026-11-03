@@ -52,6 +52,18 @@ pub fn check_capacity(registered: i64, max_participants: i32) -> Result<(), ApiE
     Ok(())
 }
 
+/// Se um membro consegue se inscrever agora pelo botão: o que `register`
+/// confere para `Entry::Member`, para a lista dos torneios abertos a ele.
+pub fn open_to_members(
+    status: TournamentStatus,
+    admission: Admission,
+    registered: i64,
+    max_participants: i32,
+) -> bool {
+    check_open(status, admission, Entry::Member).is_ok()
+        && check_capacity(registered, max_participants).is_ok()
+}
+
 /// Inscreve `user_id` no torneio, que quem chama já travou
 /// (`find_for_update`), então a contagem de inscritos vale até o commit. Com
 /// o torneio em check-in, o inscrito entra com o check-in feito (de quem

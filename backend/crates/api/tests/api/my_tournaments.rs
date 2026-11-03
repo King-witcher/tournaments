@@ -15,7 +15,25 @@ use crate::matches::{
 async fn mine(app: &Router, who: &User) -> Value {
     let (status, body) = get(app, "/me/tournaments", who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    body
+    body["registered"].clone()
+}
+
+/// `comunidade/torneio` dos abertos à inscrição de `who`, na ordem.
+async fn open(app: &Router, who: &User) -> Vec<String> {
+    let (status, body) = get(app, "/me/tournaments", who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["open"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| {
+            format!(
+                "{}/{}",
+                t["tenant_slug"].as_str().unwrap(),
+                t["tournament"]["slug"].as_str().unwrap()
+            )
+        })
+        .collect()
 }
 
 /// `(comunidade/torneio, situação)` de cada item, na ordem.
@@ -44,6 +62,55 @@ async fn requires_login() {
     assert_eq!(
         (status, body),
         (StatusCode::UNAUTHORIZED, err("auth.unauthenticated"))
+    );
+}
+
+#[tokio::test]
+async fn open_lists_what_the_button_would_accept() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = member(&app, &db, &ana, "Caio").await;
+    // Rascunho e só por link ficam de fora, também para Ana, que vê os dois.
+    create_tournament(&app, &ana, duel("rascunho")).await;
+    let invite_only = with(duel("fechado"), json!({ "admission": "invite_only" }));
+    create_tournament(&app, &ana, invite_only).await;
+    publish(&app, &ana, "fechado").await;
+    // Pelo início, e o sem data por último, seja qual for a ordem de criação.
+    for (slug, starts_at) in [
+        ("sem-data", Value::Null),
+        ("depois", json!(FAR_START)),
+        ("antes", json!("2098-01-01T20:00:00Z")),
+    ] {
+        let body = with(duel(slug), json!({ "starts_at": starts_at }));
+        create_tournament(&app, &ana, body).await;
+        publish(&app, &ana, slug).await;
+    }
+    let all = ["quake-br/antes", "quake-br/depois", "quake-br/sem-data"];
+    assert_eq!(open(&app, &ana).await, all);
+    assert_eq!(open(&app, &bia).await, all);
+
+    // Quem já se inscreveu sai dos abertos e entra nos dele; o outro continua.
+    register(&app, "antes", &[&bia]).await;
+    assert_eq!(
+        open(&app, &bia).await,
+        ["quake-br/depois", "quake-br/sem-data"]
+    );
+    assert_eq!(open(&app, &caio).await, all);
+
+    // Sem vaga, sai dos abertos de quem não entrou.
+    let two = with(duel("lotado"), json!({ "max_participants": 2 }));
+    create_tournament(&app, &ana, two).await;
+    publish(&app, &ana, "lotado").await;
+    assert!(
+        open(&app, &caio)
+            .await
+            .contains(&"quake-br/lotado".to_owned())
+    );
+    register(&app, "lotado", &[&ana, &bia]).await;
+    assert!(
+        !open(&app, &caio)
+            .await
+            .contains(&"quake-br/lotado".to_owned())
     );
 }
 

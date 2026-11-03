@@ -20,7 +20,7 @@ Toda página, de cima para baixo:
 
 ## Padrões
 
-- **Listas grandes**: `DataTable` com busca, paginação no cliente (25 por página), coluna de estado com `Tag`, ações por linha num `OverflowMenu` (organização); até `md`, só a coluna principal e o estado. **Listas "minhas"** (seus torneios, suas comunidades): `ClickableTile` em grade.
+- **Listas grandes**: `DataTable` com busca, paginação no cliente (25 por página), coluna de estado com `Tag`, ações por linha num `OverflowMenu` (organização); até `md`, só a coluna principal e o estado. **Listas "minhas"** (seus torneios, suas comunidades): `ClickableTile` em grade. **Tarefas** ("Esperando você"): `Tile` com o botão, um por linha.
 - **Formulários**: `Form` com `FormGroup` por seção, `Stack gap={6}`, erro geral em `InlineNotification` acima dos botões, botões no fim (primário "Salvar" à esquerda, secundário "Cancelar" ao lado, como o Carbon pede em formulário de página). Campo travado: o motivo num `Callout` (kind `info`) **antes** dos campos.
 - **Confirmação**: `Modal` (kind `danger` quando apaga ou tira algo); texto diz o que vai acontecer, primário com o nome do botão que abriu, "Não" secundário, foco volta ao gatilho.
 - **Estado**: `Tag` com cor fixa por significado: rascunho `gray`, inscrições `blue`, check-in `purple`, em andamento `green`, encerrado `cool-gray`, cancelado/desistiu/saiu `red`, aguardando `teal`, contestado `magenta`, confirmado `green`.
@@ -39,7 +39,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 ### Início `/`
 
 - Sem sessão, a **apresentação** (estática), em faixas de parede a parede que alternam o fundo e a camada: abertura com o título expressivo (`fluid-heading-05`), uma frase, "Criar conta" (primário, leva à criação da comunidade depois do cadastro) e "Entrar", a frase do convite e a captura da chave; "Como funciona" em três passos; "Do veto ao ranking" em abas (veto e draft, resultado, ranking), texto e captura; "Para quem organiza" em quatro colunas; e "Criar conta" de novo no fim. As capturas são do próprio site, por idioma e por tema.
-- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e "Pendências da organização" (só para quem organiza e tem alguma), "Seus torneios" (tiles: a capa no topo quando a grade tem alguma, nome, comunidade, situação, próxima série como link separado, com o próximo mapa quando já saiu; encerrados numa `Accordion` fechada, os 5 mais recentes) e "Minhas comunidades" (o logo antes do nome quando alguma tem; + "Criar comunidade").
+- Com sessão (`/me`, servido em `/`): o título "Início", sem frase, e duas colunas (`PageColumns`; abaixo do `lg`, uma embaixo da outra). Na principal: "Esperando você" (some sem nada: um por linha, com o logo quando alguma tem, o torneio, a comunidade, o que é e o botão; primeiro as ações de quem joga, com o check-in feito ali mesmo, depois as da organização); "Seus torneios" (tiles: a capa no topo quando a grade tem alguma, nome, comunidade, o início ou a próxima série com o próximo mapa, e a etiqueta do que a série espera ou da situação; do que espera por quem vê ao que só espera a data; numa `Accordion` fechada, "Participações encerradas"); e "Inscrições abertas" (tiles com a capa: nome, comunidade, início, formato e vagas; some sem nada). Na lateral: "Suas comunidades" (o logo antes do nome quando alguma tem) e, depois da lista, "Criar comunidade" discreto. Sem comunidade nenhuma, só o estado vazio com "Criar comunidade", na principal.
 
 ### Entrar `/login`, Criar conta `/signup`, links por email
 

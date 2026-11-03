@@ -52,8 +52,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Três colunas no lg, duas no md e uma no celular. */
+/** Quantas colunas couberem na largura que a grade tem. */
 export const Default: Story = {};
+
+/** Uma coluna, com os tiles quase colados: a lista de `ActionTile`. */
+export const Stacked: Story = { args: { stacked: true } };
 
 export const SingleItem: Story = { args: { children: tiles[0] } };
 

@@ -2483,6 +2483,20 @@ export interface components {
             tenant_slug: string;
             tournament: components["schemas"]["TournamentSummary"];
         };
+        /** @description Os torneios de quem vê, em todas as comunidades de que participa. */
+        MyTournaments: {
+            /**
+             * @description Em que pode se inscrever agora pelo botão, pelo início (os sem data
+             *     por último).
+             */
+            open: components["schemas"]["OpenTournament"][];
+            /**
+             * @description Em que está inscrito: primeiro os que não encerraram (em andamento,
+             *     check-in, inscrição, rascunho; dentro de cada um, pelo início), depois
+             *     os 5 encerrados de início mais recente.
+             */
+            registered: components["schemas"]["MyTournament"][];
+        };
         NameTranslation: {
             locale: components["schemas"]["Locale"];
             name: string;
@@ -2724,6 +2738,17 @@ export interface components {
              *     é do fluxo desta aba: 22 a 128 caracteres de `A-Z a-z 0-9 - . _ ~`.
              */
             state: string;
+        };
+        /**
+         * @description Um torneio em que quem vê pode se inscrever agora pelo botão: inscrição
+         *     aberta a todos os membros e com vaga.
+         */
+        OpenTournament: {
+            /** @description O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela). */
+            tenant_logo_url?: string | null;
+            tenant_name: string;
+            tenant_slug: string;
+            tournament: components["schemas"]["TournamentSummary"];
         };
         /**
          * @description O que espera a organização nas comunidades em que quem vê é organizer ou
@@ -5869,13 +5894,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Torneios em que quem vê está inscrito, de todas as comunidades de que participa: primeiro os que não encerraram (em andamento, check-in, inscrição, rascunho; dentro de cada um, pelo início), depois os 5 encerrados de início mais recente. As confirmações por tempo vencidas são aplicadas antes */
+            /** @description Os torneios de quem vê, de todas as comunidades de que participa: em que está inscrito (`registered`, com a situação e a próxima partida) e em que pode se inscrever agora pelo botão (`open`). As confirmações por tempo vencidas são aplicadas antes */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyTournament"][];
+                    "application/json": components["schemas"]["MyTournaments"];
                 };
             };
             /** @description auth.unauthenticated */

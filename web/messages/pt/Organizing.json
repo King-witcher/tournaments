@@ -1,14 +1,13 @@
 {
-  "title": "Pendências da organização",
   "contested": {
-    "tag": "Partida contestada",
+    "action": "Resolver",
     "where": "{match}, partida {game}",
     "whereMap": "{match}, partida {game} ({map})",
     "by": "{player} contestou <ago></ago>",
     "byUnknown": "Contestada <ago></ago>"
   },
   "startDue": {
-    "tag": "Hora de iniciar",
+    "action": "Iniciar",
     "startedAt": "Início marcado para <date></date>",
     "checkedIn": "{checkedIn} de {registered} fizeram check-in",
     "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in"

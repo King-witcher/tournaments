@@ -128,7 +128,7 @@ pub async fn transfer_ownership(
     )
     .await?;
     changes::changed(&mut tx, owner.tenant).await?;
-    // A home do novo owner muda: o papel em "Minhas comunidades" e, se era
+    // A home do novo owner muda: o papel em "Suas comunidades" e, se era
     // player, o que espera a organização.
     outbox::emit(&mut tx, Event::me([body.user_id])).await?;
     tx.commit().await?;

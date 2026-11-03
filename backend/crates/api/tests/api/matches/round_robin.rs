@@ -21,7 +21,7 @@ async fn ready_notices(db: &sqlx::PgPool) -> Vec<(i64, String)> {
 async fn mine(app: &Router, who: &User) -> Value {
     let (status, body) = get(app, "/me/tournaments", who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    body[0].clone()
+    body["registered"][0].clone()
 }
 
 #[tokio::test]

@@ -1,7 +1,6 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/utilities/skeleton" as *;
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
 
@@ -55,18 +54,14 @@
   gap: spacing.$spacing-04;
 }
 
+// As mesmas colunas do `TileGrid`.
 .tileGrid {
   display: grid;
   gap: spacing.$spacing-05;
-  grid-template-columns: 1fr;
-
-  @include breakpoint.breakpoint(md) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @include breakpoint.breakpoint(lg) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(100%, spacing.$spacing-13 + spacing.$spacing-12), 1fr)
+    );
 }
 
 .sectionTitle {

@@ -1,37 +1,44 @@
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
-import { LinkTile } from "@/shared/ui/link-tile";
+import { ActionTile } from "@/shared/ui/action-tile";
+import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { StatusTag } from "@/shared/ui/status-tag";
-import { PendingMeta } from "./pending-meta";
+import { MetaLines } from "@/shared/ui/meta-lines";
 
 /**
- * Um torneio cujo início marcado chegou sem ser iniciado, como tile que
- * leva à aba Organização (onde se inicia, com o seeding, ou se muda a data):
- * o torneio, a comunidade, o início marcado e quantos entrariam na chave.
+ * Um torneio cujo início marcado chegou sem ser iniciado: a comunidade, o
+ * início marcado, quantos entrariam na chave e o botão que leva à aba
+ * Organização (onde se inicia, com o seeding, ou se muda a data).
  */
 export function StartDueTile({
   item,
+  avatar,
 }: {
   item: components["schemas"]["StartDue"];
+  /** O logo da comunidade, quando a lista leva. */
+  avatar: ReactNode;
 }) {
   const t = useTranslations("Organizing.startDue");
   const locale = useLocale();
   const { tournament } = item;
 
   return (
-    <LinkTile
-      href={`/${tournament.tenant_slug}/${tournament.slug}/manage`}
+    <ActionTile
+      avatar={avatar}
       title={localizedName(tournament, locale)}
       meta={
-        <PendingMeta
+        <MetaLines
           lines={[
-            tournament.tenant_name,
-            t.rich("startedAt", {
-              date: () => <LocalDateTime value={item.starts_at} />,
-            }),
+            <>
+              {tournament.tenant_name}
+              {" · "}
+              {t.rich("startedAt", {
+                date: () => <LocalDateTime value={item.starts_at} />,
+              })}
+            </>,
             item.has_check_in
               ? t("checkedIn", {
                   checkedIn: item.checked_in,
@@ -41,7 +48,15 @@ export function StartDueTile({
           ]}
         />
       }
-      tags={<StatusTag status="waiting">{t("tag")}</StatusTag>}
+      action={
+        <ButtonLink
+          href={`/${tournament.tenant_slug}/${tournament.slug}/manage`}
+          kind="tertiary"
+          size="sm"
+        >
+          {t("action")}
+        </ButtonLink>
+      }
     />
   );
 }

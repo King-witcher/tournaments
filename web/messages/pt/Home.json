@@ -10,10 +10,25 @@
     "unavailable": "O site está com problemas agora. Tente de novo daqui a pouco.",
     "offline": "Não foi possível conectar ao servidor. Tente de novo daqui a pouco."
   },
+  "waiting": {
+    "title": "Esperando você",
+    "checkInUntil": "Check-in até <date></date>",
+    "action": {
+      "veto": "Fazer o veto",
+      "ready": "Ficar pronto",
+      "respond": "Confirmar ou contestar",
+      "report": "Enviar partida"
+    }
+  },
+  "open": {
+    "title": "Inscrições abertas",
+    "spots": "{count} de {max} inscritos"
+  },
   "tournaments": {
     "title": "Seus torneios",
+    "none": "Você não está em nenhum torneio.",
     "noneActive": "Nenhum torneio seu em andamento ou com inscrição aberta.",
-    "finished": "Encerrados recentemente",
+    "over": "Participações encerradas",
     "rank": "{rank}º",
     "range": "{from}º–{to}º",
     "situation": {
@@ -37,7 +52,7 @@
     "team": "Time: {team}"
   },
   "tenants": {
-    "title": "Minhas comunidades",
+    "title": "Suas comunidades",
     "empty": "Você ainda não participa de nenhuma comunidade. Para entrar numa, peça o link de convite a quem organiza.",
     "create": "Criar comunidade"
   }

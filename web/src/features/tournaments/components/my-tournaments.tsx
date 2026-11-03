@@ -1,50 +1,46 @@
 import { getTranslations } from "next-intl/server";
 
-import { hasSessionCookie } from "@/features/auth/server";
-import { serverApi } from "@/shared/api/server";
+import { getMyTenants } from "@/features/tenants/server";
 import { Accordion } from "@/shared/ui/accordion";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { Section } from "@/shared/ui/section";
 import { TileGrid } from "@/shared/ui/tile-grid";
+import { splitMine } from "../lib/my-tournaments";
+import { getMyTournaments } from "../server";
 import { MyTournamentTile } from "./my-tournament-tile";
 
-/** Quantos encerrados aparecem (os mais recentes). */
-const FINISHED_SHOWN = 5;
-
 /**
- * Na home, os torneios em que quem vê está inscrito, de todas as
- * comunidades, com a situação dele e a próxima partida: o caminho curto até
- * o check-in e o envio dos mapas. Os encerrados recentes ficam num bloco
- * fechado embaixo. Sem nenhum (ou sem login), não mostra nada. Fica em
+ * Na home, os torneios em que quem vê está inscrito, de todas as comunidades,
+ * com a situação dele e a próxima série, do que espera por ele ao que só
+ * espera a data. Os em que a participação dele acabou ficam num bloco fechado
+ * embaixo. Sem nenhum, a seção só aparece, com o estado vazio, se também não
+ * há nada aberto: as "Inscrições abertas" já dizem o que fazer. Quem não
+ * participa de comunidade nenhuma não a vê (vê o `NoTenants`). Fica em
  * `<Suspense>`.
  */
 export async function MyTournaments() {
-  if (!(await hasSessionCookie())) return null;
-  const api = await serverApi();
-  const entries = await api
-    .GET("/me/tournaments")
-    .then(({ data }) => data ?? [])
-    .catch(() => []);
-  if (entries.length === 0) return null;
+  const [tenants, mine] = await Promise.all([
+    getMyTenants(),
+    getMyTournaments(),
+  ]);
+  if (!mine || !tenants?.length) return null;
+  if (mine.registered.length === 0 && mine.open.length > 0) return null;
 
-  const active = entries.filter((e) => e.tournament.status !== "finished");
-  const finished = entries
-    .filter((e) => e.tournament.status === "finished")
-    .slice(0, FINISHED_SHOWN);
+  const { active, over } = splitMine(mine.registered);
   const t = await getTranslations("Home.tournaments");
-  const key = (e: (typeof entries)[number]) =>
+  const key = (e: (typeof active)[number]) =>
     `${e.tenant_slug}/${e.tournament.slug}`;
   // Numa grade com alguma capa ou logo, todo tile leva o espaço da capa (com
   // o logo ou a inicial no lugar da que falta); sem nenhuma, nenhum leva.
-  const media = (list: typeof entries) =>
+  const media = (list: typeof active) =>
     list.some((e) => e.tournament.cover_url || e.tenant_logo_url);
   const activeMedia = media(active);
-  const finishedMedia = media(finished);
+  const overMedia = media(over);
 
   return (
     <Section title={t("title")}>
       {active.length === 0 ? (
-        <EmptyState>{t("noneActive")}</EmptyState>
+        <EmptyState>{over.length > 0 ? t("noneActive") : t("none")}</EmptyState>
       ) : (
         <TileGrid>
           {active.map((entry) => (
@@ -56,14 +52,14 @@ export async function MyTournaments() {
           ))}
         </TileGrid>
       )}
-      {finished.length > 0 && (
-        <Accordion title={t("finished")}>
+      {over.length > 0 && (
+        <Accordion title={t("over")}>
           <TileGrid>
-            {finished.map((entry) => (
+            {over.map((entry) => (
               <MyTournamentTile
                 key={key(entry)}
                 entry={entry}
-                media={finishedMedia}
+                media={overMedia}
               />
             ))}
           </TileGrid>

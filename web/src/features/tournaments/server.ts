@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { hasSessionCookie } from "@/features/auth/server";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 
@@ -39,6 +40,21 @@ export const loadTournament = cache(
 );
 
 /**
+ * Os torneios de quem vê, em todas as comunidades: em que está inscrito e em
+ * que pode se inscrever. `undefined` sem login ou com a API fora. Uma busca
+ * por requisição: a home usa em três seções. Lê a sessão: quem usa fica em
+ * `<Suspense>`.
+ */
+export const getMyTournaments = cache(async () => {
+  if (!(await hasSessionCookie())) return undefined;
+  const api = await serverApi();
+  return api
+    .GET("/me/tournaments")
+    .then(({ data }) => data)
+    .catch(() => undefined);
+});
+
+/**
  * A entrada de quem vê em "Seus torneios" para este torneio: a situação (na
  * chave, eliminado, campeão…), a colocação e a próxima partida. `undefined`
  * se ele não está inscrito, se o torneio não aparece ali (rascunho) ou se a
@@ -49,12 +65,8 @@ export const getMyTournamentEntry = cache(
     tenant: string,
     slug: string,
   ): Promise<Schemas["MyTournament"] | undefined> => {
-    const api = await serverApi();
-    const entries = await api
-      .GET("/me/tournaments")
-      .then(({ data }) => data ?? [])
-      .catch(() => []);
-    return entries.find(
+    const mine = await getMyTournaments();
+    return mine?.registered.find(
       (e) => e.tenant_slug === tenant && e.tournament.slug === slug,
     );
   },

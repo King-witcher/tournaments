@@ -21,7 +21,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use db::{delete as unregister, delete_departed, registrations_of};
-pub use registration::{Entry, register};
+pub use registration::{Entry, open_to_members, register};
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

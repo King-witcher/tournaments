@@ -7,21 +7,33 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
-import { Button, type ButtonKind } from "@/shared/ui/button";
+import { Button, type ButtonKind, type ButtonSize } from "@/shared/ui/button";
 import { MY_PARTICIPATION_ID } from "../lib/focus";
 
 type Props = {
   tenant: string;
   slug: string;
-  /** `primary` para quem joga; `tertiary` para a organização. */
+  /** `primary` para quem joga; `tertiary` para a organização e nas listas. */
   kind?: ButtonKind;
+  size?: ButtonSize;
+  /**
+   * Fora da página do torneio: o alvo do foco quando o botão some. Na página
+   * dele, o foco vai para "Sua situação" e, sem ela, para o título.
+   */
+  focusAfter?: string;
 };
 
 /**
  * O check-in de quem vê, durante o check-in. Desfazer fica no ⋯ do
- * cabeçalho. Feito, o botão some: o foco vai para "Sua situação".
+ * cabeçalho do torneio. Feito, o botão some, e o foco vai para o alvo.
  */
-export function CheckInButton({ tenant, slug, kind = "primary" }: Props) {
+export function CheckInButton({
+  tenant,
+  slug,
+  kind = "primary",
+  size,
+  focusAfter,
+}: Props) {
   const t = useTranslations("Participants.checkIn");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
@@ -30,6 +42,7 @@ export function CheckInButton({ tenant, slug, kind = "primary" }: Props) {
     <ActionWithNote error={error}>
       <Button
         kind={kind}
+        size={size}
         pending={pending}
         onClick={() =>
           run(
@@ -39,6 +52,10 @@ export function CheckInButton({ tenant, slug, kind = "primary" }: Props) {
               }),
             () => {
               router.refresh();
+              if (focusAfter) {
+                focusIfLost(focusAfter);
+                return;
+              }
               focusIfLost(MY_PARTICIPATION_ID);
               focusIfLost(TOURNAMENT_TITLE_ID);
             },

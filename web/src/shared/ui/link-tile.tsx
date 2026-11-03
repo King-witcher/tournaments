@@ -22,8 +22,6 @@ type Props = {
   meta?: ReactNode;
   /** `StatusTag`s da situação. */
   tags?: ReactNode;
-  /** Um link à parte, embaixo do tile (ex.: a próxima partida). */
-  footer?: ReactNode;
 };
 
 /**
@@ -33,36 +31,25 @@ type Props = {
  * navega (sem hover no celular, é ela que diz que o tile abre algo). Vai
  * dentro de `TileGrid`.
  */
-export function LinkTile({
-  href,
-  title,
-  avatar,
-  media,
-  meta,
-  tags,
-  footer,
-}: Props) {
+export function LinkTile({ href, title, avatar, media, meta, tags }: Props) {
   // O ClickableTile repassa `as` ao Link do Carbon (que o aceita), mas o tipo
   // dele só declara `href` como string.
   const link = { as: IntlLink, href } as unknown as { href: string };
   return (
-    <>
-      <ClickableTile {...link} className={styles.tile} renderIcon={ArrowRight}>
-        {media && (
-          <AspectRatio ratio="2x1" className={styles.media}>
-            {media}
-          </AspectRatio>
-        )}
-        <div className={styles.body}>
-          <div className={styles.name}>
-            {avatar}
-            <div className={styles.title}>{title}</div>
-          </div>
-          {meta && <div className={styles.meta}>{meta}</div>}
-          {tags && <div className={styles.tags}>{tags}</div>}
+    <ClickableTile {...link} className={styles.tile} renderIcon={ArrowRight}>
+      {media && (
+        <AspectRatio ratio="2x1" className={styles.media}>
+          {media}
+        </AspectRatio>
+      )}
+      <div className={styles.body}>
+        <div className={styles.name}>
+          {avatar}
+          <div className={styles.title}>{title}</div>
         </div>
-      </ClickableTile>
-      {footer && <div className={styles.footer}>{footer}</div>}
-    </>
+        {meta && <div className={styles.meta}>{meta}</div>}
+        {tags && <div className={styles.tags}>{tags}</div>}
+      </div>
+    </ClickableTile>
   );
 }

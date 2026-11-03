@@ -1,0 +1,39 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Classe dobrada: o próprio Carbon põe o display do tile. Numa linha só: o
+// botão fica ao lado do que ele resolve. No celular ele desce, porque dividir
+// a largura com o texto quebraria os dois.
+.tile.tile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-03 spacing.$spacing-05;
+}
+
+// Ocupa o que sobra e, com um nome longo, quebra em vez de alargar a linha.
+.text {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.title {
+  @include type.type-style("heading-compact-02");
+
+  color: theme.$text-primary;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+}
+
+.action {
+  @include breakpoint.breakpoint-down(md) {
+    flex-basis: 100%;
+  }
+}

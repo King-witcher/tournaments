@@ -3,7 +3,7 @@
 //! mapas contestados a resolver e torneios cujo início marcado chegou sem
 //! terem sido iniciados (o critério do aviso `tournament.start_due`). É o
 //! par de `/me/tournaments` para quem organiza, numa rota própria: só a home
-//! de quem organiza pede (o front sabe pelos papéis de "Minhas comunidades"),
+//! de quem organiza pede (o front sabe pelos papéis de "Suas comunidades"),
 //! e a resposta não depende de refazer chave nenhuma.
 //!
 //! Só leitura, em duas queries (`db`) que leem direto as tabelas de

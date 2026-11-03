@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import Image from "next/image";
 
 import { Avatar } from "./avatar";
-import { Link } from "./link";
 import { LinkTile } from "./link-tile";
 import { StatusTag } from "./status-tag";
 import { TileGrid } from "./tile-grid";
@@ -22,7 +21,6 @@ const meta = {
     tags: { control: false },
     avatar: { control: false },
     media: { control: false },
-    footer: { control: false },
   },
   // O tile vai sempre dentro do TileGrid, que dá a largura de uma coluna.
   render: (args) => (
@@ -50,14 +48,6 @@ export const WithTags: Story = {
 
 export const OnlyTitle: Story = { args: { meta: undefined } };
 
-/** O link à parte fica colado ao tile, fora do link dele. */
-export const WithFooter: Story = {
-  args: {
-    tags: <StatusTag status="in_progress">Em andamento</StatusTag>,
-    footer: <Link href="/arena-sul/copa/series/12">Série pronta</Link>,
-  },
-};
-
 /** O logo da comunidade antes do nome. */
 export const WithAvatar: Story = {
   args: {
@@ -84,7 +74,7 @@ export const LongTitle: Story = {
   },
 };
 
-/** Com e sem tags e rodapé: todos esticam até a altura da linha. */
+/** Com e sem tags: todos esticam até a altura da linha. */
 export const InGrid: Story = {
   render: () => (
     <TileGrid label="Seus torneios">
@@ -93,7 +83,6 @@ export const InGrid: Story = {
         title="Copa Arena Sul"
         meta="Arena Sul · hoje, 21h"
         tags={<StatusTag status="in_progress">Em andamento</StatusTag>}
-        footer={<Link href="/arena-sul/copa/series/12">Série pronta</Link>}
       />
       <LinkTile
         href="/arena-sul/duelo"
@@ -111,6 +100,6 @@ export const InGrid: Story = {
 };
 
 export const Phone: Story = {
-  ...WithFooter,
+  ...WithTags,
   globals: { viewport: { value: "phone", isRotated: false } },
 };

@@ -3,6 +3,29 @@ use utoipa::ToSchema;
 
 use crate::{matches::NextMatch, teams::Team, tournaments::TournamentSummary};
 
+/// Os torneios de quem vê, em todas as comunidades de que participa.
+#[derive(Serialize, ToSchema)]
+pub struct MyTournaments {
+    /// Em que está inscrito: primeiro os que não encerraram (em andamento,
+    /// check-in, inscrição, rascunho; dentro de cada um, pelo início), depois
+    /// os 5 encerrados de início mais recente.
+    pub registered: Vec<MyTournament>,
+    /// Em que pode se inscrever agora pelo botão, pelo início (os sem data
+    /// por último).
+    pub open: Vec<OpenTournament>,
+}
+
+/// Um torneio em que quem vê pode se inscrever agora pelo botão: inscrição
+/// aberta a todos os membros e com vaga.
+#[derive(Serialize, ToSchema)]
+pub struct OpenTournament {
+    pub tenant_slug: String,
+    pub tenant_name: String,
+    /// O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela).
+    pub tenant_logo_url: Option<String>,
+    pub tournament: TournamentSummary,
+}
+
 /// Um torneio em que quem vê está inscrito.
 #[derive(Serialize, ToSchema)]
 pub struct MyTournament {

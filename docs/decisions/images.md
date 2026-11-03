@@ -5,8 +5,8 @@ O logo da comunidade e a capa do torneio (01/11). Decidido pelo usuário, salvo 
 ## Forma e onde aparecem
 
 - **Logo quadrado (1:1), capa 2:1.** O logo é identidade e aparece pequeno, ao lado do nome. A capa é 2:1 porque é a proporção do `HeroImage` do `PageHeader` do Carbon no `lg` (3:2 abaixo), está no conjunto de proporções do 2x Grid, e a `og:image` (1,91:1) sai dela quase sem corte.
-- **Logo**: antes do título no cabeçalho da comunidade (o lugar do ícone do título no `PageHeader` do Carbon), nos tiles de "Minhas comunidades" e no título do convite. Fica fora do painel de comunidades do cabeçalho, porque o `Switcher` do Carbon é só texto (assumido).
-- **Capa**: à direita do cabeçalho do torneio, só do `lg` para cima (no celular empurraria a ação primária e "Sua situação" para baixo); no topo dos tiles de "Seus torneios" e no tile do link de inscrição. A aba Torneios da comunidade (`DataTable`) fica sem imagem: numa linha de 48 px a capa teria 96×48.
+- **Logo**: antes do título no cabeçalho da comunidade (o lugar do ícone do título no `PageHeader` do Carbon), nos tiles de "Suas comunidades", nas linhas de "Esperando você" e no título do convite. Fica fora do painel de comunidades do cabeçalho, porque o `Switcher` do Carbon é só texto (assumido).
+- **Capa**: à direita do cabeçalho do torneio, só do `lg` para cima (no celular empurraria a ação primária e "Sua situação" para baixo); no topo dos tiles de "Seus torneios" e de "Inscrições abertas" e no tile do link de inscrição. A aba Torneios da comunidade (`DataTable`) fica sem imagem: numa linha de 48 px a capa teria 96×48.
 - **Sem imagem**: numa grade com alguma capa ou logo, todo tile leva o espaço (sem capa, o logo da comunidade ou a inicial no centro), para as linhas não desalinharem; sem nenhuma, nenhum leva. Fora da grade, nada no lugar (assumido).
 - `alt=""` em todas: o nome já está em texto ao lado.
 

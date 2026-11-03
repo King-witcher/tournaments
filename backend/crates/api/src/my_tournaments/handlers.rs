@@ -1,10 +1,10 @@
 use axum::{Json, extract::State};
 
-use super::types::{MyTournament, Situation};
+use super::types::{MyTournament, MyTournaments, OpenTournament, Situation};
 use crate::{
     AppState,
     auth::CurrentUser,
-    matches,
+    matches, participants,
     shared::{ApiError, ErrorBody, public_url},
     teams::{self, Team},
     tenants::TenantId,
@@ -30,25 +30,43 @@ const ACTIVE_ORDER: [TournamentStatus; 4] = [
     path = "/me/tournaments",
     tag = "tournaments",
     responses(
-        (status = OK, body = Vec<MyTournament>, description = "Torneios em que quem vê está inscrito, de todas as comunidades de que participa: primeiro os que não encerraram (em andamento, check-in, inscrição, rascunho; dentro de cada um, pelo início), depois os 5 encerrados de início mais recente. As confirmações por tempo vencidas são aplicadas antes"),
+        (status = OK, body = MyTournaments, description = "Os torneios de quem vê, de todas as comunidades de que participa: em que está inscrito (`registered`, com a situação e a próxima partida) e em que pode se inscrever agora pelo botão (`open`). As confirmações por tempo vencidas são aplicadas antes"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
     )
 )]
 pub async fn my_tournaments(
     State(state): State<AppState>,
     user: CurrentUser,
-) -> Result<Json<Vec<MyTournament>>, ApiError> {
+) -> Result<Json<MyTournaments>, ApiError> {
     let members = TenantMember::all_of(&state.db, &user).await?;
     let mut found: Vec<(&TenantMember, TournamentSummary)> = Vec::new();
+    let mut open: Vec<(&TenantMember, TournamentSummary)> = Vec::new();
     for member in &members {
         let see_all = member.role >= Role::Organizer;
-        let list = tournaments::list(&state.db, member.tenant, user.id, see_all).await?;
-        found.extend(
-            list.into_iter()
-                .filter(|t| t.registered)
-                .map(|t| (member, t)),
-        );
+        for t in tournaments::list(&state.db, member.tenant, user.id, see_all).await? {
+            if t.registered {
+                found.push((member, t));
+            } else if participants::open_to_members(
+                t.status,
+                t.admission,
+                t.participants,
+                t.max_participants,
+            ) {
+                open.push((member, t));
+            }
+        }
     }
+    open.sort_by_key(|(_, t)| nulls_last(t.starts_at));
+    let open = open
+        .into_iter()
+        .map(|(member, tournament)| OpenTournament {
+            tenant_slug: member.slug.clone(),
+            tenant_name: member.name.clone(),
+            tenant_logo_url: member.logo_key.as_deref().and_then(public_url),
+            tournament,
+        })
+        .collect();
+
     let (mut finished, mut active): (Vec<_>, Vec<_>) = found
         .into_iter()
         .partition(|(_, t)| t.status == TournamentStatus::Finished);
@@ -62,7 +80,7 @@ pub async fn my_tournaments(
     finished.truncate(RECENT_FINISHED);
 
     let mut conn = state.db.acquire().await?;
-    let mut out = Vec::with_capacity(active.len() + finished.len());
+    let mut registered = Vec::with_capacity(active.len() + finished.len());
     for (member, mut tournament) in active.into_iter().chain(finished) {
         let team = team_of(&mut conn, member.tenant, &tournament, user.id).await?;
         let checked_in = tournament.checked_in;
@@ -78,7 +96,7 @@ pub async fn my_tournaments(
                 (situation, placement, place.next)
             }
         };
-        out.push(MyTournament {
+        registered.push(MyTournament {
             tenant_slug: member.slug.clone(),
             tenant_name: member.name.clone(),
             tenant_logo_url: member.logo_key.as_deref().and_then(public_url),
@@ -89,7 +107,7 @@ pub async fn my_tournaments(
             team,
         });
     }
-    Ok(Json(out))
+    Ok(Json(MyTournaments { registered, open }))
 }
 
 /// A situação antes da chave (`None` com ela), pelo status e pelo check-in.

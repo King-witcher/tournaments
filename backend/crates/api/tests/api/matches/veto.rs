@@ -634,7 +634,10 @@ async fn next_maps(app: &Router, who: &User) -> (Value, Value) {
     let in_bracket = find(&bracket(app, who).await, "wb-1-1")["next_map"].clone();
     let (status, mine) = get(app, "/me/tournaments", who).await;
     assert_eq!(status, StatusCode::OK, "{mine}");
-    (in_bracket, mine[0]["next_match"]["next_map"].clone())
+    (
+        in_bracket,
+        mine["registered"][0]["next_match"]["next_map"].clone(),
+    )
 }
 
 #[tokio::test]

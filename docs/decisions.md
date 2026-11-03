@@ -21,7 +21,7 @@ Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "séri
 | `decisions/realtime.md` | WebSocket, outbox, agendador, avisos, Web Push, aba escondida, sininho |
 | `decisions/discord.md` | Webhook por comunidade, fila, menções, catálogo de avisos |
 | `decisions/database.md` | O que o banco recusa por conta própria e o que fica de fora de propósito |
-| `decisions/interface.md` | Carbon, tema, confirmação, foco, validação, home, "Seus torneios", pendências da organização |
+| `decisions/interface.md` | Carbon, tema, confirmação, foco, validação, home ("Esperando você", "Seus torneios", "Inscrições abertas"), pendências da organização |
 | `decisions/tournaments-ui.md` | Página do torneio, tela da partida, formulário de torneio, aba Regras |
 
 As migrations já aplicadas citam este arquivo por nome de seção e não podem ser editadas (o sqlx confere o checksum do arquivo inteiro, comentário incluído). Seção antiga → arquivo: Ids, Redis, Repositório, Testes → `stack`; Autenticação → `auth`; Email → `mail`; Multi-tenant → `tenants`; Torneios → `tournaments`; Formatos, Times, TDM → `formats`; Resultados → `matches` (e `screenshots`); Veto e campeões → `veto`; Rating → `ratings`; Consistência do banco → `database`; Excluir conta e comunidade → `deletion`; Notificações → `discord` e `realtime`; Tempo real e avisos → `realtime`.

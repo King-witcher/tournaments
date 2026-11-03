@@ -1,11 +1,13 @@
 import { useLocale, useTranslations } from "next-intl";
 
-import { NextMatchLink } from "@/features/matches/components/next-match-link";
+import { useNextMatchLabel } from "@/features/matches/hooks/use-next-match-label";
+import { TASK_STATUS, taskKey } from "@/features/matches/lib/status";
 import { SITUATION_STATUS } from "@/features/participants/lib/situation";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { LinkTile } from "@/shared/ui/link-tile";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { MetaLines } from "@/shared/ui/meta-lines";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { localizedName } from "../lib/localize";
 import { TournamentMedia } from "./tournament-media";
@@ -13,10 +15,11 @@ import { TournamentMedia } from "./tournament-media";
 type Schemas = components["schemas"];
 
 /**
- * Um torneio de quem vê, como tile: com `media`, a capa no topo (ou o logo
- * da comunidade no lugar dela); nome, comunidade e início, a situação dele
- * (no TDM, com o time) e, se ainda joga, a próxima partida (link à parte,
- * embaixo).
+ * Um torneio de quem vê, como tile: com `media`, a capa no topo (ou o logo da
+ * comunidade no lugar dela); o nome, a comunidade (no TDM, com o time) e o que
+ * importa no momento: o início ou, em jogo, a próxima série. A etiqueta é o
+ * que a série espera ou, sem isso, a situação dele. O tile todo leva ao torneio;
+ * o caminho curto até a série está em "Esperando você".
  */
 export function MyTournamentTile({
   entry,
@@ -30,7 +33,6 @@ export function MyTournamentTile({
   const locale = useLocale();
   const teamName = useTeamName();
   const { tournament, placement } = entry;
-  const path = `/${entry.tenant_slug}/${tournament.slug}`;
   const place = placement
     ? placement.tied > 1
       ? t("range", {
@@ -39,10 +41,11 @@ export function MyTournamentTile({
         })
       : t("rank", { rank: placement.rank })
     : undefined;
+  const team = entry.team && ` · ${t("team", { team: teamName(entry.team) })}`;
 
   return (
     <LinkTile
-      href={path}
+      href={`/${entry.tenant_slug}/${tournament.slug}`}
       title={localizedName(tournament, locale)}
       media={
         media && (
@@ -54,27 +57,58 @@ export function MyTournamentTile({
         )
       }
       meta={
-        <>
-          {entry.tenant_name}
-          {" · "}
-          {tournament.starts_at ? (
-            <LocalDateTime value={tournament.starts_at} />
-          ) : (
-            t("noDate")
-          )}
-          {entry.team && ` · ${t("team", { team: teamName(entry.team) })}`}
-        </>
+        entry.next_match ? (
+          <MetaLines
+            lines={[
+              `${entry.tenant_name}${team ?? ""}`,
+              <NextMatchText key="next" next={entry.next_match} />,
+            ]}
+          />
+        ) : (
+          <>
+            {entry.tenant_name}
+            {" · "}
+            {tournament.starts_at ? (
+              <LocalDateTime value={tournament.starts_at} />
+            ) : (
+              t("noDate")
+            )}
+            {team}
+          </>
+        )
       }
       tags={
-        <StatusTag status={SITUATION_STATUS[entry.situation]}>
-          {t(`situation.${entry.situation}`, { place: place ?? "" })}
-        </StatusTag>
-      }
-      footer={
-        entry.next_match && (
-          <NextMatchLink next={entry.next_match} tournamentPath={path} />
+        entry.next_match?.task ? (
+          <TaskTag next={entry.next_match} task={entry.next_match.task} />
+        ) : (
+          <StatusTag status={SITUATION_STATUS[entry.situation]}>
+            {t(`situation.${entry.situation}`, { place: place ?? "" })}
+          </StatusTag>
         )
       }
     />
+  );
+}
+
+function NextMatchText({ next }: { next: Schemas["NextMatch"] }) {
+  const tBracket = useTranslations("Bracket");
+  const label = useNextMatchLabel(next);
+  return next.next_map
+    ? `${label} · ${tBracket("nextMap", { map: next.next_map.name })}`
+    : label;
+}
+
+function TaskTag({
+  next,
+  task,
+}: {
+  next: Schemas["NextMatch"];
+  task: Schemas["ViewerTask"];
+}) {
+  const tBracket = useTranslations("Bracket");
+  return (
+    <StatusTag status={TASK_STATUS[task]}>
+      {tBracket(`task.${taskKey(task, next.veto)}`)}
+    </StatusTag>
   );
 }
