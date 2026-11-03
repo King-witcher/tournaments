@@ -21,5 +21,20 @@
   "owner": "Criada por",
   "members": "Membros",
   "memberCount": "{count, plural, one {# membro} other {# membros}}",
-  "deletionScheduled": "Esta comunidade vai ser excluída e não aceita mais membros."
+  "deletionScheduled": "Esta comunidade vai ser excluída e não aceita mais membros.",
+  "rotate": "Gerar novo link",
+  "rotated": "Link novo gerado. O anterior não vale mais.",
+  "communityLink": {
+    "open": "Convidar",
+    "title": "Convidar para {name}",
+    "note": "Quem entra por este link vira jogador.",
+    "link": "Link de convite",
+    "rotateConfirm": "O link atual deixa de valer, e quem já entrou continua na comunidade."
+  },
+  "tournamentLink": {
+    "open": "Link de inscrição",
+    "note": "Inscreve no torneio e coloca na comunidade quem é de fora. Vale com a inscrição aberta.",
+    "full": "As vagas acabaram. O link só inscreve de novo quando abrir vaga.",
+    "rotateConfirm": "O link atual deixa de valer, e quem já se inscreveu continua inscrito."
+  }
 }

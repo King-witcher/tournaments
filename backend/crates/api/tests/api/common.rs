@@ -282,10 +282,10 @@ pub async fn create(app: &Router, owner: &User, slug: &str) -> Value {
     body
 }
 
-/// Gera um convite em `slug` e devolve o token.
+/// O token do link de convite de `slug`, como organizer ou owner o vê.
 pub async fn invite(app: &Router, by: &User, slug: &str) -> String {
-    let (status, body) = post_empty(app, &format!("/tenants/{slug}/invites"), by).await;
-    assert_eq!(status, StatusCode::CREATED, "{body}");
+    let (status, body) = get(app, &format!("/tenants/{slug}/invite"), by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     body["token"].as_str().unwrap().to_owned()
 }
 

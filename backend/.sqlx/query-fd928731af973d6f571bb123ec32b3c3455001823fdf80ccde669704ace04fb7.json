@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select invite_token from tournaments where tenant_id = $1 and id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "invite_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "invite_token"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fd928731af973d6f571bb123ec32b3c3455001823fdf80ccde669704ace04fb7"
+}

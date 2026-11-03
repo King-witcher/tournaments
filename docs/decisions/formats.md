@@ -15,7 +15,7 @@ Regras no `engine` (`formats/`, `teams.rs`); a API grava e sabe a hora. "Assumid
 
 Quem ocupa um lado da chave é um **time**, em todos os modos; no duelo, um time de um jogador, sem nada visível de diferente (a palavra "time" não aparece). A migration `20261119000000_teams` **apagou todos os torneios** em vez de convertê-los (produção sem usuários). O resto é assumido:
 
-- **Tabelas**: `teams` (id, torneio, nome opcional, capitão, seed único por torneio, `withdrawn_at`/`withdrawn_by`) é o `ParticipantId` da chave; `participants` continua a inscrição individual (check-in, convite, quem inscreveu) com `team_id` (nulo: sem time). Os lados de `match_results`, `match_games`, `match_events` e `match_veto_events` apontam para `teams`.
+- **Tabelas**: `teams` (id, torneio, nome opcional, capitão, seed único por torneio, `withdrawn_at`/`withdrawn_by`) é o `ParticipantId` da chave; `participants` continua a inscrição individual (check-in, quem inscreveu) com `team_id` (nulo: sem time). Os lados de `match_results`, `match_games`, `match_events` e `match_veto_events` apontam para `teams`.
 - **No duelo, o banco cria o time de um jogador** na inscrição (trigger `participants_solo_team`) e ele some com ela. Assim o seeding ordena times do mesmo jeito em todos os modos. Depois do início, nenhum time entra nem sai e o seed fica; nome e capitão ainda mudam.
 - **Elegível para o seeding**: time em que todos os jogadores fizeram check-in. A ordem "de inscrição" dos sem seed é a de criação do time.
 - **Fora do torneio** (leva ao W.O. automático): o time desistiu ou nenhum jogador dele continua na comunidade. **Desistência é do time** (`POST .../teams/{team}/withdrawal`). Quem sai da comunidade em torneio em andamento faz o time desistir se ninguém mais dele fica.

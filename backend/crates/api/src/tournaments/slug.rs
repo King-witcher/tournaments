@@ -1,15 +1,14 @@
 use crate::shared::{ApiError, slug::is_well_formed};
 
 /// Slugs que colidem com rotas do front em `/{locale}/{tenant}/...` (hoje
-/// `new`, `about`, `ranking`, `members`, `invites` e `settings`) ou que ficam
-/// guardados para rotas futuras do tenant.
+/// `new`, `about`, `ranking`, `members` e `settings`) ou que ficam guardados
+/// para rotas futuras do tenant.
 const RESERVED_SLUGS: &[&str] = &[
     "about",
     "admin",
     "ajustes",
     "configuracoes",
     "edit",
-    "invites",
     "members",
     "membros",
     "miembros",

@@ -147,11 +147,12 @@ async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     let order: String = sqlx::query_scalar(
-        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}')
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)
          returning veto_order",
     )
     .bind(tenant)
+    .bind(INVITE_TOKEN)
     .fetch_one(&mut *tx)
     .await
     .unwrap();

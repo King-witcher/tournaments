@@ -9,7 +9,7 @@ use sqlx::{PgConnection, PgPool};
 use super::{MyTenant, Role, TenantId};
 use crate::{
     auth::CurrentUser,
-    shared::{ApiError, public_url},
+    shared::{ApiError, public_url, token},
 };
 
 pub use deletion::*;
@@ -185,9 +185,11 @@ pub async fn create_with_owner(
     }
 
     let tenant_id = sqlx::query_scalar!(
-        "insert into tenants (slug, name) values ($1, $2) on conflict (slug) do nothing returning id",
+        r#"insert into tenants (slug, name, invite_token) values ($1, $2, $3)
+           on conflict (slug) do nothing returning id"#,
         slug,
-        name
+        name,
+        token::random_token()
     )
     .fetch_optional(&mut *tx)
     .await?

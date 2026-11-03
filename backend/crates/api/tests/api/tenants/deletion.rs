@@ -102,7 +102,7 @@ async fn the_community_is_read_only_until_the_deletion() {
         scheduled()
     );
     assert_eq!(
-        post_empty(&app, "/tenants/quake-br/invites", &ana).await,
+        post_empty(&app, "/tenants/quake-br/invite/rotate", &ana).await,
         scheduled()
     );
     assert_eq!(
@@ -269,12 +269,7 @@ async fn on_the_date_everything_inside_goes() {
         .await
         .unwrap();
     assert_eq!(left, ["outra"]);
-    for table in [
-        "tournaments",
-        "participants",
-        "tenant_invites",
-        "match_results",
-    ] {
+    for table in ["tournaments", "participants", "match_results"] {
         let sql = format!("select count(*) from {table}");
         let n: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
             .fetch_one(&db)

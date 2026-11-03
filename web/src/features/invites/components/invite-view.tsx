@@ -24,8 +24,8 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
  * topo do `Tile`, com o que ele é, a descrição da comunidade e a ação de cada
  * caso: aceitar; entrar ou criar conta, voltando para cá; já é membro (ou
  * inscrito); inscrição fechada.
- * Convite expirado ou inválido: o erro e o caminho de volta (de comunidade
- * em exclusão, com o texto do convite, e não o da escrita recusada). Fica em
+ * Link que não vale mais: o erro e o caminho de volta (de comunidade em
+ * exclusão, com o texto do convite, e não o da escrita recusada). Fica em
  * `<Suspense>`.
  */
 export async function InviteView({ token }: { token: string }) {

@@ -10,8 +10,8 @@ import {
 } from "@/shared/ui/skeleton";
 
 /**
- * A comunidade: o cabeçalho e as abas (Torneios, Ranking, Membros, Convites,
- * Sobre, Configurações), com a aba aberta dentro. Novo torneio e as páginas de
+ * A comunidade: o cabeçalho e as abas (Torneios, Ranking, Membros, Sobre,
+ * Configurações), com a aba aberta dentro. Novo torneio e as páginas de
  * torneio ficam fora do grupo, sem as abas.
  */
 export default async function CommunityLayout({

@@ -1,5 +1,5 @@
 //! O que a comunidade emite no outbox: a mudança (membros, papéis, apelidos,
-//! convites, lista de torneios), o acesso perdido de quem saiu e a mudança no
+//! link de convite, lista de torneios), o acesso perdido de quem saiu e a mudança no
 //! que espera a organização dela (a home de organizers e owner).
 
 use sqlx::PgConnection;

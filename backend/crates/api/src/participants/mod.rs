@@ -4,8 +4,8 @@
 //! Quem se inscreve durante o check-in já entra com o check-in feito. A
 //! inscrição é individual, por `user_id`; quem ocupa a chave é o time do
 //! inscrito (`teams`, que no duelo o banco cria e apaga junto com a
-//! inscrição). O link de convite de torneio fica em `invites`, que inscreve
-//! por `register`. Quem sai do tenant sai das inscrições abertas por
+//! inscrição). O link de inscrição fica em `invites`, que inscreve por
+//! `register`. Quem sai do tenant sai das inscrições abertas por
 //! `unregister`, e desfazer o início tira quem desistiu (pelo time) ou saiu
 //! por `delete_departed`. O perfil do membro (`members`) lê as inscrições
 //! dele por `registrations_of`.

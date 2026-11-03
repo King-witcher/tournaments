@@ -70,8 +70,8 @@ impl TournamentStatus {
         matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
     }
 
-    /// Gerar link de inscrição: já no rascunho (para mandar antes de
-    /// publicar) e até o início.
+    /// O link de inscrição aparece e se troca: já no rascunho (para mandar
+    /// antes de publicar) e até o início.
     pub const fn invites_allowed(self) -> bool {
         matches!(self, Self::Draft | Self::Registration | Self::CheckIn)
     }

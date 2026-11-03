@@ -256,22 +256,6 @@
     "noMirror": "sem campeão igual entre adversários",
     "sameTeam": "campeão igual no time permitido"
   },
-  "invites": {
-    "title": "Links de inscrição",
-    "description": "O link vale enquanto a inscrição estiver aberta.",
-    "full": "As vagas acabaram. Os links só inscrevem de novo quando abrir vaga.",
-    "create": "Gerar link de inscrição",
-    "createdTitle": "Link de inscrição gerado",
-    "empty": "Nenhum link de inscrição.",
-    "columns": {
-      "link": "Link",
-      "createdBy": "Criado por",
-      "createdAt": "Criado em",
-      "uses": "Inscrições"
-    },
-    "revoke": "Revogar",
-    "revokeConfirm": "Revogar {has, select, yes {o link de inscrição {link}} other {este link de inscrição}}? Quem já se inscreveu por ele continua inscrito."
-  },
   "startsAt": "Começa <date></date>",
   "startedAt": "Início marcado para <date></date>",
   "noStartDate": "Sem data de início"

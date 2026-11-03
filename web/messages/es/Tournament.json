@@ -256,22 +256,6 @@
     "noMirror": "sin campeón repetido entre rivales",
     "sameTeam": "campeón repetido en el equipo permitido"
   },
-  "invites": {
-    "title": "Enlaces de inscripción",
-    "description": "El enlace vale mientras la inscripción esté abierta.",
-    "full": "Los cupos se agotaron. Los enlaces solo inscriben de nuevo cuando se libere un cupo.",
-    "create": "Generar enlace de inscripción",
-    "createdTitle": "Enlace de inscripción generado",
-    "empty": "Ningún enlace de inscripción.",
-    "columns": {
-      "link": "Enlace",
-      "createdBy": "Creado por",
-      "createdAt": "Creado el",
-      "uses": "Inscripciones"
-    },
-    "revoke": "Revocar",
-    "revokeConfirm": "¿Revocar {has, select, yes {el enlace de inscripción {link}} other {este enlace de inscripción}}? Quien ya se inscribió por él sigue inscrito."
-  },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",
   "noStartDate": "Sin fecha de inicio"

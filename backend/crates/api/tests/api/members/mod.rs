@@ -63,7 +63,7 @@ async fn owner_promotes_and_demotes() {
         (StatusCode::OK, json!("player"))
     );
     assert_eq!(
-        post_empty(&app, "/tenants/quake-br/invites", &bia).await,
+        get(&app, "/tenants/quake-br/invite", &bia).await,
         (StatusCode::FORBIDDEN, err("tenant.forbidden"))
     );
 }
@@ -116,47 +116,4 @@ async fn member_edits_own_nickname() {
             "{bad}"
         );
     }
-}
-
-#[tokio::test]
-async fn organizers_see_which_link_each_member_came_by() {
-    let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, bia) = quake_br(&db).await;
-    create_tournament(&app, &ana, duel("copa")).await;
-    let caio = user(&db, "Caio").await;
-    let (status, created) =
-        post_empty(&app, "/tenants/quake-br/tournaments/copa/invites", &ana).await;
-    assert_eq!(status, StatusCode::CREATED, "{created}");
-    let link = created["token"].as_str().unwrap();
-    publish(&app, &ana, "copa").await;
-    join(&app, &caio, link).await;
-
-    let (status, list) = get(&app, "/tenants/quake-br/members", &ana).await;
-    assert_eq!(status, StatusCode::OK);
-    let via = |name: &str| {
-        list.as_array()
-            .unwrap()
-            .iter()
-            .find(|m| m["nickname"] == name)
-            .unwrap()["joined_via"]
-            .clone()
-    };
-    // O owner não entrou por convite; Bia, pelo da comunidade; Caio, pelo link do torneio.
-    assert_eq!(via("Ana"), serde_json::Value::Null);
-    let bia_via = via("Bia");
-    assert_eq!(bia_via["tournament"], serde_json::Value::Null);
-    assert_eq!(bia_via["hint"].as_str().unwrap().len(), 4);
-    assert_eq!(
-        via("Caio"),
-        json!({ "hint": &link[..4], "tournament": "Copa de Outubro" })
-    );
-
-    // Player não vê de onde cada um veio.
-    let (_, list) = get(&app, "/tenants/quake-br/members", &bia).await;
-    assert!(
-        list.as_array()
-            .unwrap()
-            .iter()
-            .all(|m| m["joined_via"].is_null())
-    );
 }

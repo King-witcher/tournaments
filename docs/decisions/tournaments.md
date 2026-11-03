@@ -4,7 +4,7 @@ Formatos e times: `formats.md`. Resultados: `matches.md`. Veto, campeões e mapa
 
 ## Criação e edição
 
-- Endereço `/{locale}/{tenant}/{torneio}`. Na interface o slug se chama "Id". Mesmas regras do slug de tenant (sugerido, ajustável na criação, a-z/0-9/hífen, 3 a 32), único dentro do tenant e **não muda**; palavras reservadas para as rotas do tenant (`new`, `members`, `invites`, `settings`, `ranking`...).
+- Endereço `/{locale}/{tenant}/{torneio}`. Na interface o slug se chama "Id". Mesmas regras do slug de tenant (sugerido, ajustável na criação, a-z/0-9/hífen, 3 a 32), único dentro do tenant e **não muda**; palavras reservadas para as rotas do tenant (`new`, `members`, `settings`, `ranking`...).
 - **Só membros** veem torneios; quem é de fora recebe 404 `tenant.not_found`. Rascunho só para organizer e owner (para player, 404 `tournament.not_found`).
 - **Inscrição aberta ou fechada** (substitui a visibilidade pública/privada: o anúncio de um torneio privado no Discord mostrou que o ganho real é controlar quem entra, não esconder): todo torneio publicado aparece para todos os membros, em todas as telas, no Discord e nos avisos. `admission` é `open` (padrão: botão de se inscrever) ou `invite_only` ("só por link ou pela organização": sem botão; link e inscrição manual continuam; o botão recusado responde 409 `tournament.invite_only`). Muda até o torneio encerrar.
 - Organizer e owner criam e editam. **Criar já publica** (abre a inscrição) ou, em "Criar como rascunho", gera um rascunho; só rascunho pode ser excluído. A criação recebe as traduções e o `publish` num POST só, numa transação (antes, uma falha na publicação deixava o rascunho e tentar de novo dava `tournament.slug_taken`). Erro de texto numa tradução volta com `params.locale`.
@@ -36,7 +36,7 @@ Sempre de membros do tenant, por três caminhos:
 
 - **botão**: o próprio membro, de qualquer papel (organizer e owner também: papéis cumulativos, rota com `TenantMember<Player>`), só com `open` e até o início;
 - **organizador**: inscreve qualquer membro, em qualquer tipo de inscrição, do rascunho até o início;
-- **link de inscrição**: um convite do tenant que também inscreve. Mesma tabela (`tenant_invites.tournament_id`), mesmo endereço, multiuso, revogável pela mesma rota. Sem data: vale até o início (também no check-in) e pode ser gerado no rascunho. Aceitar entra no tenant como player (quem já é membro mantém papel e apelido) e inscreve **numa transação só**: sem vaga ou fora da inscrição, não entra em nada.
+- **link de inscrição**: um por torneio, no modelo do convite da comunidade (`tournaments.invite_token`, mesmo endereço; `tenants.md`, "Convites"). Organizer e owner copiam e trocam na aba Inscritos, do rascunho até o início; quem já se inscreveu continua. Sem data: inscreve com a inscrição aberta (até o início, também no check-in), em qualquer tipo de inscrição. Aceitar entra no tenant como player (quem já é membro mantém papel e apelido) e inscreve **numa transação só**: sem vaga ou fora da inscrição, não entra em nada.
 
 Lotou, fecha (`tournament.full`). O inscrito sai sozinho até o início, também durante o check-in (no TDM com os times formados, sai do time e o time fica incompleto até a organização ajustar); depois de iniciar só o organizador tira (`tournament.participants_locked`). Inscrever de novo quem já está inscrito não dá erro.
 

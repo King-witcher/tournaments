@@ -6,6 +6,30 @@ use serde_json::{Value, json};
 
 use crate::common::*;
 
+const ROTATE: &str = "/tenants/quake-br/invite/rotate";
+
+fn not_found() -> (StatusCode, Value) {
+    (StatusCode::NOT_FOUND, err("invite.not_found"))
+}
+
+async fn preview(app: &Router, token: &str) -> (StatusCode, Value) {
+    call(app, Method::GET, &format!("/invites/{token}"), None, None).await
+}
+
+/// A prévia e o aceite de `token` respondem que o link não existe.
+async fn assert_dead(app: &Router, token: &str, who: &User) {
+    assert_eq!(preview(app, token).await, not_found(), "{token}");
+    let accept = post_empty(app, &format!("/invites/{token}/accept"), who).await;
+    assert_eq!(accept, not_found(), "{token}");
+}
+
+/// Troca o link em `uri` e devolve o token novo.
+async fn rotate(app: &Router, uri: &str, by: &User) -> String {
+    let (status, body) = post_empty(app, uri, by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["token"].as_str().unwrap().to_owned()
+}
+
 #[tokio::test]
 async fn invite_link_adds_a_player() {
     let (db, _lease) = crate::db::test_db().await;
@@ -15,36 +39,29 @@ async fn invite_link_adds_a_player() {
     let caio = user(&db, "Caio").await;
     create(&app, &ana, "quake-br").await;
 
-    let (status, created) = post_empty(&app, "/tenants/quake-br/invites", &ana).await;
-    assert_eq!(status, StatusCode::CREATED);
-    let token = created["token"].as_str().unwrap();
+    // A comunidade já nasce com o link, e ele não muda a cada leitura.
+    let token = invite(&app, &ana, "quake-br").await;
     assert_eq!(token.len(), 22);
     assert!(token.chars().all(|c| c.is_ascii_alphanumeric()), "{token}");
-
-    // O banco guarda só o hash do token.
-    let stored = sqlx::query_scalar!("select token_hash from tenant_invites")
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    assert_eq!(stored, api::shared::token::hash_token(token).to_vec());
+    assert_eq!(invite(&app, &ana, "quake-br").await, token);
+    let token = token.as_str();
 
     // Ver o convite não exige login.
-    let (status, preview) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
+    let (status, seen) = preview(&app, token).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(preview["tenant_name"], "Tenant quake-br");
-    assert_eq!(preview["expires_at"], created["expires_at"]);
+    assert_eq!(seen["tenant_name"], "Tenant quake-br");
     // Quem vai entrar vê quem é o dono e quantos já estão lá.
-    assert_eq!(preview["owner_name"], "Ana");
-    assert_eq!(preview["member_count"], 1);
-    assert_eq!(preview["tenant_description"], Value::Null);
+    assert_eq!(seen["owner_name"], "Ana");
+    assert_eq!(seen["member_count"], 1);
+    assert_eq!(seen["tenant_description"], Value::Null);
     // E o que a comunidade diz de si.
     let edit = json!({ "description": "Duelos às quintas." });
     assert_eq!(
         patch(&app, "/tenants/quake-br", &ana, edit).await.0,
         StatusCode::OK
     );
-    let (_, preview) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
-    assert_eq!(preview["tenant_description"], "Duelos às quintas.");
+    let (_, seen) = preview(&app, token).await;
+    assert_eq!(seen["tenant_description"], "Duelos às quintas.");
 
     let joined = json!({
         "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": "Duelos às quintas.", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null, "logo_url": null },
@@ -56,7 +73,7 @@ async fn invite_link_adds_a_player() {
     assert_eq!(join(&app, &bia, token).await, joined);
     // O owner aceitando o próprio link continua owner.
     assert_eq!(join(&app, &ana, token).await["tenant"]["role"], "owner");
-    let (_, after) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
+    let (_, after) = preview(&app, token).await;
     assert_eq!(after["member_count"], 3);
 
     let (_, members) = get(&app, "/tenants/quake-br/members", &bia).await;
@@ -70,45 +87,18 @@ async fn invite_link_adds_a_player() {
         names,
         [("Ana", "owner"), ("Bia", "player"), ("Caio", "player")]
     );
-
-    let (status, invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(invites.as_array().unwrap().len(), 1);
-    assert_eq!(invites[0]["id"], created["id"]);
-    assert_eq!(invites[0]["created_by"], "Ana");
-    assert_eq!(invites[0]["uses"], 2);
-    assert!(invites[0].get("token").is_none());
 }
 
 #[tokio::test]
-async fn only_organizers_and_owner_manage_invites() {
+async fn only_organizers_and_owner_see_and_rotate_the_link() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = app(db.clone());
-    let ana = user(&db, "Ana").await;
-    let bia = user(&db, "Bia").await;
-    create(&app, &ana, "quake-br").await;
+    let (app, ana, bia) = quake_br(&db).await;
     let token = invite(&app, &ana, "quake-br").await;
-    join(&app, &bia, &token).await;
-    let invite_id = get(&app, "/tenants/quake-br/invites", &ana).await.1[0]["id"].clone();
 
     let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
-    assert_eq!(
-        post_empty(&app, "/tenants/quake-br/invites", &bia).await,
-        forbidden
-    );
-    assert_eq!(
-        get(&app, "/tenants/quake-br/invites", &bia).await,
-        forbidden
-    );
-    assert_eq!(
-        delete(
-            &app,
-            &format!("/tenants/quake-br/invites/{invite_id}"),
-            &bia
-        )
-        .await,
-        forbidden
-    );
+    assert_eq!(get(&app, "/tenants/quake-br/invite", &bia).await, forbidden);
+    assert_eq!(post_empty(&app, ROTATE, &bia).await, forbidden);
+    assert_eq!(invite(&app, &ana, "quake-br").await, token);
 
     let (status, _) = put(
         &app,
@@ -118,69 +108,44 @@ async fn only_organizers_and_owner_manage_invites() {
     )
     .await;
     assert_eq!(status, StatusCode::OK);
-    let new_token = invite(&app, &bia, "quake-br").await;
-    assert_ne!(new_token, token);
+    assert_eq!(invite(&app, &bia, "quake-br").await, token);
+    let rotated = rotate(&app, ROTATE, &bia).await;
+    assert_ne!(rotated, token);
+    assert_eq!(invite(&app, &ana, "quake-br").await, rotated);
 
-    let (_, invites) = get(&app, "/tenants/quake-br/invites", &bia).await;
-    assert_eq!(invites[0]["created_by"], "Bia");
-    assert_eq!(
-        delete(
-            &app,
-            &format!("/tenants/quake-br/invites/{invite_id}"),
-            &bia
-        )
-        .await,
-        (StatusCode::NO_CONTENT, Value::Null)
-    );
+    // Nenhuma outra resposta da comunidade traz o token.
+    for uri in ["/tenants/quake-br", "/tenants", "/tenants/quake-br/members"] {
+        let (status, body) = get(&app, uri, &ana).await;
+        assert_eq!(status, StatusCode::OK, "{uri}");
+        assert!(!body.to_string().contains(&rotated), "{uri}: {body}");
+    }
 }
 
 #[tokio::test]
-async fn expired_revoked_and_unknown_invites() {
+async fn rotating_kills_the_old_link_and_keeps_who_joined() {
     let (db, _lease) = crate::db::test_db().await;
-    let app = app(db.clone());
-    let ana = user(&db, "Ana").await;
-    let bia = user(&db, "Bia").await;
-    create(&app, &ana, "quake-br").await;
-    let expired = invite(&app, &ana, "quake-br").await;
-    let revoked = invite(&app, &ana, "quake-br").await;
+    let (app, ana, bia) = quake_br(&db).await;
+    let caio = user(&db, "Caio").await;
+    let old = invite(&app, &ana, "quake-br").await;
 
-    sqlx::query!(
-        "update tenant_invites set expires_at = now() - interval '1 second' where token_hash = $1",
-        &api::shared::token::hash_token(&expired)[..]
-    )
-    .execute(&db)
-    .await
-    .unwrap();
-    let (_, invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
-    assert_eq!(invites.as_array().unwrap().len(), 1);
-    let revoke_uri = format!("/tenants/quake-br/invites/{}", invites[0]["id"]);
-    for _ in 0..2 {
-        // Revogar de novo também responde 204.
-        assert_eq!(
-            delete(&app, &revoke_uri, &ana).await.0,
-            StatusCode::NO_CONTENT
-        );
-    }
+    let new = rotate(&app, ROTATE, &ana).await;
+    assert_eq!(new.len(), 22);
+    assert_ne!(new, old);
+
+    assert_dead(&app, &old, &caio).await;
+    assert_eq!(get(&app, "/tenants", &caio).await.1, json!([]));
     assert_eq!(
-        get(&app, "/tenants/quake-br/invites", &ana).await.1,
-        json!([])
+        get(&app, "/tenants/quake-br", &bia).await.0,
+        StatusCode::OK,
+        "quem entrou pelo link antigo continua"
     );
+    assert_eq!(join(&app, &caio, &new).await["tenant"]["role"], "player");
 
-    for (token, status, code) in [
-        (expired.as_str(), StatusCode::GONE, "invite.expired"),
-        (revoked.as_str(), StatusCode::GONE, "invite.revoked"),
-        ("naoexiste", StatusCode::NOT_FOUND, "invite.not_found"),
-    ] {
-        let preview = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
-        assert_eq!(preview, (status, err(code)), "{token}");
-        let accept = post_empty(&app, &format!("/invites/{token}/accept"), &bia).await;
-        assert_eq!(accept, (status, err(code)), "{token}");
-    }
-    assert_eq!(get(&app, "/tenants", &bia).await.1, json!([]));
+    assert_dead(&app, "naoexiste", &caio).await;
 }
 
 #[tokio::test]
-async fn invite_ids_do_not_cross_tenants() {
+async fn each_community_has_its_own_link() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
@@ -188,32 +153,22 @@ async fn invite_ids_do_not_cross_tenants() {
     create(&app, &ana, "da-ana").await;
     create(&app, &eve, "da-eve").await;
     let token = invite(&app, &ana, "da-ana").await;
-    let ana_invite = get(&app, "/tenants/da-ana/invites", &ana).await.1[0]["id"].clone();
+    assert_ne!(invite(&app, &eve, "da-eve").await, token);
 
-    // Eve é owner do tenant dela, mas o convite é do tenant da Ana.
-    assert_eq!(
-        delete(&app, &format!("/tenants/da-eve/invites/{ana_invite}"), &eve).await,
-        (StatusCode::NOT_FOUND, err("invite.not_found"))
-    );
-    assert_eq!(
-        delete(&app, "/tenants/da-eve/invites/abc", &eve).await,
-        (StatusCode::BAD_REQUEST, err("request.invalid_path"))
-    );
-    let (status, _) = call(&app, Method::GET, &format!("/invites/{token}"), None, None).await;
+    // Eve é owner da comunidade dela, e trocar o link dela não mexe no da Ana.
+    rotate(&app, "/tenants/da-eve/invite/rotate", &eve).await;
+    assert_eq!(invite(&app, &ana, "da-ana").await, token);
+    let (status, _) = preview(&app, &token).await;
     assert_eq!(status, StatusCode::OK);
 }
 
 const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
-/// Gera um link de inscrição no torneio `copa` de `quake-br` e devolve o token.
+/// O link de inscrição do torneio `copa` de `quake-br`: o token.
 async fn copa_invite(app: &Router, by: &User) -> String {
-    let (status, body) = post_empty(app, &format!("{COPA}/invites"), by).await;
-    assert_eq!(status, StatusCode::CREATED, "{body}");
+    let (status, body) = get(app, &format!("{COPA}/invite"), by).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     body["token"].as_str().unwrap().to_owned()
-}
-
-async fn preview(app: &Router, token: &str) -> (StatusCode, Value) {
-    call(app, Method::GET, &format!("/invites/{token}"), None, None).await
 }
 
 #[tokio::test]
@@ -221,11 +176,13 @@ async fn tournament_link_joins_the_tenant_and_registers() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let caio = user(&db, "Caio").await;
+    let dani = user(&db, "Dani").await;
     let invite_only = with(duel("copa"), json!({ "admission": "invite_only" }));
     create_tournament(&app, &ana, invite_only).await;
 
-    // Já no rascunho, para mandar antes de publicar.
+    // O torneio nasce com o link, já no rascunho, para mandar antes de publicar.
     let token = copa_invite(&app, &ana).await;
+    assert_ne!(token, invite(&app, &ana, "quake-br").await);
     assert_eq!(
         preview(&app, &token).await,
         (
@@ -237,7 +194,6 @@ async fn tournament_link_joins_the_tenant_and_registers() {
                 "tenant_logo_url": null,
                 "owner_name": "Ana",
                 "member_count": 2,
-                "expires_at": null,
                 "tournament": {
                     "slug": "copa", "locale": "pt", "name": "Copa de Outubro",
                     "description": "Duelo **aberto**.", "translations": [],
@@ -266,34 +222,18 @@ async fn tournament_link_joins_the_tenant_and_registers() {
     let (status, seen) = get(&app, COPA, &caio).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(seen["registered"], true);
+    // A resposta do torneio não traz o token, nem para quem organiza.
+    let (_, seen) = get(&app, COPA, &ana).await;
+    assert!(!seen.to_string().contains(&token), "{seen}");
 
-    // O link fica no torneio, não na lista do tenant, e conta os inscritos por ele.
-    let (status, links) = get(&app, &format!("{COPA}/invites"), &ana).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(links.as_array().unwrap().len(), 1);
-    assert_eq!(links[0]["created_by"], "Ana");
-    assert_eq!(links[0]["uses"], 1);
-    assert!(links[0].get("token").is_none());
-    let (_, tenant_invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
-    let ids: Vec<_> = tenant_invites
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|i| &i["id"])
-        .collect();
-    assert!(!ids.contains(&&links[0]["id"]), "{tenant_invites}");
-
-    // Revoga pela rota de sempre.
-    let revoke = format!("/tenants/quake-br/invites/{}", links[0]["id"]);
-    assert_eq!(delete(&app, &revoke, &ana).await.0, StatusCode::NO_CONTENT);
-    assert_eq!(
-        preview(&app, &token).await,
-        (StatusCode::GONE, err("invite.revoked"))
-    );
-    assert_eq!(
-        get(&app, &format!("{COPA}/invites"), &ana).await.1,
-        json!([])
-    );
+    // Trocar o link: o antigo morre, e quem se inscreveu por ele continua.
+    let rotated = rotate(&app, &format!("{COPA}/invite/rotate"), &ana).await;
+    assert_ne!(rotated, token);
+    assert_eq!(copa_invite(&app, &ana).await, rotated);
+    assert_dead(&app, &token, &dani).await;
+    let (_, seen) = get(&app, COPA, &caio).await;
+    assert_eq!(seen["registered"], true);
+    assert_eq!(join(&app, &dani, &rotated).await["tournament"], "copa");
 }
 
 #[tokio::test]
@@ -332,12 +272,13 @@ async fn tournament_links_only_before_the_start() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     create_tournament(&app, &ana, duel("copa")).await;
-    let links = format!("{COPA}/invites");
+    let link = format!("{COPA}/invite");
+    let rotation = format!("{COPA}/invite/rotate");
     let forbidden = (StatusCode::FORBIDDEN, err("tenant.forbidden"));
-    assert_eq!(post_empty(&app, &links, &bia).await, forbidden);
-    assert_eq!(get(&app, &links, &bia).await, forbidden);
+    assert_eq!(get(&app, &link, &bia).await, forbidden);
+    assert_eq!(post_empty(&app, &rotation, &bia).await, forbidden);
     assert_eq!(
-        post_empty(&app, "/tenants/quake-br/tournaments/outra/invites", &ana).await,
+        get(&app, "/tenants/quake-br/tournaments/outra/invite", &ana).await,
         (StatusCode::NOT_FOUND, err("tournament.not_found"))
     );
 
@@ -352,25 +293,25 @@ async fn tournament_links_only_before_the_start() {
         (&seen["registered"], &seen["checked_in"]),
         (&json!(true), &json!(true))
     );
-    assert_eq!(post_empty(&app, &links, &ana).await.0, StatusCode::CREATED);
+    let token = rotate(&app, &rotation, &ana).await;
 
     set_status(&db, "copa", "in_progress").await;
     let closed = (StatusCode::CONFLICT, err("tournament.registration_closed"));
-    assert_eq!(post_empty(&app, &links, &ana).await, closed);
+    assert_eq!(post_empty(&app, &rotation, &ana).await, closed);
     let caio = user(&db, "Caio").await;
     assert_eq!(
         post_empty(&app, &format!("/invites/{token}/accept"), &caio).await,
         closed
     );
 
-    // Excluir o rascunho apaga os links dele.
+    // Excluir o rascunho apaga o link dele.
     create_tournament(&app, &ana, duel("rascunho")).await;
     let draft = "/tenants/quake-br/tournaments/rascunho";
-    let (_, created) = post_empty(&app, &format!("{draft}/invites"), &ana).await;
+    let (_, created) = get(&app, &format!("{draft}/invite"), &ana).await;
     assert_eq!(delete(&app, draft, &ana).await.0, StatusCode::NO_CONTENT);
     assert_eq!(
         preview(&app, created["token"].as_str().unwrap()).await,
-        (StatusCode::NOT_FOUND, err("invite.not_found"))
+        not_found()
     );
 }
 
@@ -424,24 +365,4 @@ async fn preview_knows_who_opens_it() {
         viewer(&app, &link, &ana).await,
         json!({ "membership": "member", "nickname": "Ana", "registered": true })
     );
-}
-
-#[tokio::test]
-async fn lists_show_the_first_characters_of_each_token() {
-    let (db, _lease) = crate::db::test_db().await;
-    let (app, ana, _) = quake_br(&db).await;
-    create_tournament(&app, &ana, duel("copa")).await;
-    let community = invite(&app, &ana, "quake-br").await;
-    let link = copa_invite(&app, &ana).await;
-
-    let (_, invites) = get(&app, "/tenants/quake-br/invites", &ana).await;
-    let hints: Vec<_> = invites
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|i| i["hint"].as_str().unwrap().to_owned())
-        .collect();
-    assert!(hints.contains(&community[..4].to_owned()), "{hints:?}");
-    let (_, links) = get(&app, &format!("{COPA}/invites"), &ana).await;
-    assert_eq!(links[0]["hint"], link[..4]);
 }

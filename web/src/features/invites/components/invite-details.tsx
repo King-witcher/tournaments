@@ -12,7 +12,7 @@ type Props = {
 /**
  * O que o convite é, em rótulo e valor, para quem vai entrar: a comunidade,
  * quem a criou e quantos membros tem e, no link de inscrição, as vagas e o
- * início. A validade do link é de quem gerencia, não aparece aqui.
+ * início.
  */
 export function InviteDetails({ invite }: Props) {
   const t = useTranslations("Invite");

@@ -78,7 +78,7 @@ pub enum ServerMessage {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "scope", rename_all = "snake_case")]
 pub enum Changed {
-    /// A comunidade: membros, papéis, apelidos, convites, a lista de
+    /// A comunidade: membros, papéis, apelidos, link de convite, a lista de
     /// torneios.
     Tenant { tenant: String },
     /// O torneio; `match` quando foi numa partida (a página da partida só

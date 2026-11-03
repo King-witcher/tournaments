@@ -232,7 +232,6 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
     let uri = format!("/tenants/quake-br/members/{}/role", rapha.id);
     let (status, _) = put(&app, &uri, &ana, json!({ "role": "organizer" })).await;
     assert_eq!(status, StatusCode::OK);
-    let link = invite(&app, &rapha, "quake-br").await;
     let bia = member(&app, &db, &ana, "Bia").await;
     // Em andamento com a Bia, e inscrito num que não começou.
     start(&app, &ana, copa(single(3, 3)), &[&rapha, &bia]).await;
@@ -299,9 +298,7 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
         events.contains(&json!({ "kind": "access_lost", "user": rapha.id, "tenant": "quake-br" }))
     );
 
-    // O convite dela saiu, e a inscrição do que não começou também.
-    let (status, body) = call(&app, Method::GET, &format!("/invites/{link}"), None, None).await;
-    assert_eq!((status, body), (StatusCode::GONE, err("invite.revoked")));
+    // A inscrição do que não começou saiu.
     let uri = "/tenants/quake-br/tournaments/aberta/participants";
     assert_eq!(
         common::get(&app, uri, &ana).await,

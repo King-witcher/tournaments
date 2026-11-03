@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { inviteHint } from "@/features/invites/lib/invite-hint";
+import { CommunityInviteButton } from "@/features/invites/components/community-invite-button";
 import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
@@ -11,7 +11,6 @@ import { MemberActions } from "./member-actions";
 import { MemberName } from "./member-name";
 
 type Role = components["schemas"]["Role"];
-type Member = components["schemas"]["Member"];
 
 /** A tabela, que recebe o foco quando um membro removido some dela. */
 const MEMBERS_ID = "members";
@@ -25,7 +24,8 @@ function canRemove(viewer: Role, member: Role) {
 /**
  * A aba Membros: a tabela (membro com avatar, papel, desde), com busca; a
  * linha abre a página da pessoa. O owner troca papéis e remove; o
- * organizador remove jogadores. Fica em `<Suspense>`.
+ * organizador remove jogadores. Para os dois, "Convidar" na barra (fora com a
+ * exclusão agendada, quando ninguém mais entra). Fica em `<Suspense>`.
  */
 export async function MemberList({ slug }: { slug: string }) {
   const [loaded, t, tRoles, members] = await Promise.all([
@@ -36,19 +36,9 @@ export async function MemberList({ slug }: { slug: string }) {
   ]);
   // Sem acesso, o cabeçalho da comunidade já mostra o erro.
   if (loaded.kind !== "ok") return null;
-  const viewer = loaded.tenant.role;
-  // A API só devolve de onde cada um veio para organizador e owner.
-  const showOrigin = viewer !== "player";
-
-  function joinedVia(via: Member["joined_via"]) {
-    if (!via) return "—";
-    const link = via.hint
-      ? t("viaLink", { hint: inviteHint(via.hint) ?? "" })
-      : t("viaLegacyLink");
-    return via.tournament
-      ? t("viaTournament", { via: link, tournament: via.tournament })
-      : link;
-  }
+  const { tenant } = loaded;
+  const viewer = tenant.role;
+  const canInvite = viewer !== "player" && !tenant.deletion_scheduled_for;
 
   return (
     <div id={MEMBERS_ID} tabIndex={-1}>
@@ -59,9 +49,6 @@ export async function MemberList({ slug }: { slug: string }) {
           { key: "member", header: t("member") },
           { key: "role", header: t("role") },
           { key: "since", header: t("since"), secondary: true },
-          ...(showOrigin
-            ? [{ key: "via", header: t("joinedVia"), secondary: true }]
-            : []),
         ]}
         rows={members.map((member) => {
           const changeRole = viewer === "owner" && member.role !== "owner";
@@ -76,7 +63,6 @@ export async function MemberList({ slug }: { slug: string }) {
                 <StatusTag status="neutral">{tRoles(member.role)}</StatusTag>
               ),
               since: <LocalDate value={member.joined_at} />,
-              via: joinedVia(member.joined_via),
             },
             actions:
               changeRole || remove ? (
@@ -90,6 +76,11 @@ export async function MemberList({ slug }: { slug: string }) {
               ) : undefined,
           };
         })}
+        toolbar={
+          canInvite ? (
+            <CommunityInviteButton slug={slug} name={tenant.name} />
+          ) : undefined
+        }
         empty={{ text: t("empty") }}
       />
     </div>

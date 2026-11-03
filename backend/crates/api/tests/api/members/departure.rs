@@ -155,7 +155,7 @@ async fn members_leave_but_the_owner_transfers_first() {
 }
 
 #[tokio::test]
-async fn leaving_drops_open_registrations_and_revokes_invites() {
+async fn leaving_drops_open_registrations_and_keeps_the_links() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
@@ -177,11 +177,11 @@ async fn leaving_drops_open_registrations_and_revokes_invites() {
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    // Convites dela: do tenant e link de inscrição.
+    // Os links que ela via e trocou são da comunidade e do torneio, não dela.
     let tenant_link = invite(&app, &olga, "quake-br").await;
-    let uri = "/tenants/quake-br/tournaments/aberta/invites";
-    let (status, link) = post_empty(&app, uri, &olga).await;
-    assert_eq!(status, StatusCode::CREATED, "{link}");
+    let uri = "/tenants/quake-br/tournaments/aberta/invite";
+    let (status, link) = get(&app, uri, &olga).await;
+    assert_eq!(status, StatusCode::OK, "{link}");
 
     assert_eq!(leave(&app, &olga).await, GONE);
 
@@ -199,7 +199,7 @@ async fn leaving_drops_open_registrations_and_revokes_invites() {
             None,
         )
         .await;
-        assert_eq!((status, body), (StatusCode::GONE, err("invite.revoked")));
+        assert_eq!(status, StatusCode::OK, "{body}");
     }
     // No torneio iniciado ela continua, marcada.
     let (_, list) = get(&app, &format!("{COPA}/participants"), &ana).await;

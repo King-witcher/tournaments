@@ -18,7 +18,7 @@ use super::{
     texts::Texts, types::TournamentTranslation, veto::PoolMap,
 };
 use crate::{
-    shared::{ApiError, Locale},
+    shared::{ApiError, Locale, token},
     tenants::TenantId,
 };
 
@@ -117,9 +117,9 @@ pub async fn create(
                (tenant_id, slug, locale, name, description, rules, mode, admission,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
-                team_size, team_pick_seconds, veto_order)
+                team_size, team_pick_seconds, veto_order, invite_token)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-                   $19, $20, $21)
+                   $19, $20, $21, $22)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -142,7 +142,8 @@ pub async fn create(
         new.screenshots_required,
         new.setup.team_size as i16,
         new.setup.veto.team_pick_seconds,
-        new.setup.veto.order.as_str()
+        new.setup.veto.order.as_str(),
+        token::random_token()
     )
     .fetch_optional(&mut *conn)
     .await?

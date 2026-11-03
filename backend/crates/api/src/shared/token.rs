@@ -1,6 +1,7 @@
-//! Segredos aleatórios e o hash que fica guardado (banco ou Redis): o valor
-//! só existe na resposta ou no cookie. A estratégia de ids do projeto está em
-//! "Ids" em `docs/decisions/stack.md`.
+//! Segredos aleatórios e o hash que fica guardado (Redis): o valor só existe
+//! na resposta ou no cookie. Exceção: o token dos links de convite, que fica
+//! em claro no banco. A estratégia de ids do projeto está em "Ids" em
+//! `docs/decisions/stack.md`.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use sha2::{Digest, Sha256};
@@ -32,15 +33,6 @@ pub fn random_code() -> String {
 /// `code` tem a forma de um código: `CODE_LEN` dígitos ASCII.
 pub fn is_code(code: &str) -> bool {
     code.len() == CODE_LEN && code.bytes().all(|b| b.is_ascii_digit())
-}
-
-/// Quantos caracteres do início do token ficam em claro (`token_hint`), só
-/// para reconhecer o link numa lista. Sobram ~105 bits de segredo.
-pub const TOKEN_HINT_LEN: usize = 4;
-
-/// Os primeiros `TOKEN_HINT_LEN` caracteres do token.
-pub fn hint(token: &str) -> &str {
-    &token[..TOKEN_HINT_LEN]
 }
 
 /// Segredo que só trafega entre máquinas (cookie de sessão, state do OAuth):

@@ -92,7 +92,7 @@
   "deletion": {
     "title": "Excluir conta",
     "description": "A conta é excluída 7 dias depois do pedido. Entrar de novo antes disso cancela a exclusão.",
-    "consequences": "Na data, você sai das comunidades e dos torneios (nos em andamento, suas séries pendentes viram W.O.), e os convites que você criou são revogados. Nos torneios que você jogou, seu nome vira “Conta excluída”.",
+    "consequences": "Na data, você sai das comunidades e dos torneios (nos em andamento, suas séries pendentes viram W.O.). Nos torneios que você jogou, seu nome vira “Conta excluída”.",
     "ownerTitle": "Você é dono de uma comunidade",
     "owner": "Antes de excluir a conta, transfira a posse ou exclua cada comunidade de que você é dono:",
     "ownerLink": "{name}: configurações",

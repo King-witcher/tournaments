@@ -11,7 +11,7 @@ use utoipa::ToSchema;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Event {
-    /// A comunidade mudou: membros, papéis, apelidos, convites ou a lista de
+    /// A comunidade mudou: membros, papéis, apelidos, link de convite ou a lista de
     /// torneios. Só o slug, que não muda.
     Tenant { tenant: String },
     /// O torneio mudou; `match` quando foi numa partida.

@@ -30,7 +30,7 @@ Toda página, de cima para baixo:
 
 ## Mapa de páginas
 
-Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e **partida**. Ficam como aba ou bloco: check-in (botão e prazo, em "Sua situação" e na tabela de inscritos), links de inscrição e convites (tabelas curtas), configurações da comunidade. Fora do MVP: perfil global entre comunidades e página pública de comunidade.
+Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e **partida**. Ficam como aba ou bloco: check-in (botão e prazo, em "Sua situação" e na tabela de inscritos), o link de convite e o de inscrição (botão que abre o Modal com o link), configurações da comunidade. Fora do MVP: perfil global entre comunidades e página pública de comunidade.
 
 ### Casca (todas)
 
@@ -61,8 +61,7 @@ Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do
 
 - **Torneios**: `DataTable` (nome, formato, estado, início, inscritos); jogador vê só os publicados.
 - **Ranking** (todos): posição, membro, rating com `Tag` "provisório", mapas, V–D, último mapa; a linha abre a página da pessoa.
-- **Membros**: membro com avatar, papel, desde e, para a organização, "Entrou por"; a linha abre a página da pessoa; o owner troca papel e remove no ⋯.
-- **Convites** (organização): links (começo do link, criado por, validade, quantos entraram), "Gerar link", copiar e revogar por linha.
+- **Membros**: membro com avatar, papel e desde; a linha abre a página da pessoa; o owner troca papel e remove no ⋯. Para a organização, "Convidar" na barra da tabela: o link único, para copiar, e "Gerar novo link".
 - **Sobre**: a descrição da comunidade, em texto simples; sem descrição, a aba só existe para o owner, com o estado vazio e o link para Configurações.
 - **Configurações**: owner: nome e descrição, logo (salva sozinho); apelido; owner: rating da comunidade (salvar recalcula todos), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
 
@@ -80,7 +79,7 @@ Uma página, coluna estreita; no topo, "Copiar de" (outro torneio da comunidade,
 
 - **Visão geral**: `ProgressIndicator`, "Séries que esperam você" (com o próximo mapa, nas que ele joga), descrição, resumo do formato (`StructuredList` com `InfoTip`) e "Ver as regras".
 - **Chave** (a partir do início): a chave em largura cheia (o único lugar com rolagem horizontal) e a classificação. Cada lado do cartão: seed, avatar, apelido e placar; linhas curvas ligam a partida ao lado que quem sai dela ocupa na seguinte. Na dupla, abas **Chave principal** (com a grande final) e **Repescagem**, abrindo na aba da partida de quem vê. No todos contra todos, a série começada diz "Em andamento" e a de quem vê diz "Adversário jogando" no lugar da tarefa, também no topo da série e em "Seus torneios".
-- **Inscritos**: `DataTable` (seed, apelido, estado, inscrito em) com busca; organização: "Inscrever alguém", check-in, tirar, desistência por linha e, depois da tabela, os links de inscrição.
+- **Inscritos**: `DataTable` (seed, apelido, estado, inscrito em) com busca; organização: "Link de inscrição" ao lado do título (o link único, para copiar, e "Gerar novo link"), "Inscrever alguém", check-in, tirar e desistência por linha.
 - **Regras** (sempre): "Como funciona" gerado da configuração e "Regras adicionais", editáveis ali pela organização.
 - **Organização**: quadro de estado com o próximo passo e o motivo quando não dá, resumo da ordem da chave com "Definir a ordem"; no TDM, o resumo dos times e o link da formação.
 

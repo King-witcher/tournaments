@@ -1,6 +1,6 @@
-//! Coerência e forma: estado, JSON, identidade imutável, vagas, autoria e
-//! convite dentro do tenant e do torneio, formato de logins e segredos, senha
-//! só com email.
+//! Coerência e forma: estado, JSON, identidade imutável, vagas, autoria dentro
+//! do tenant e do torneio, formato de logins e segredos, o token do link de
+//! convite de cada escopo, senha só com email.
 
 use serde_json::json;
 use sqlx::PgPool;
@@ -182,10 +182,11 @@ async fn every_tournament_has_a_stage() {
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     sqlx::query(
-        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}')",
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)",
     )
     .bind(tenant)
+    .bind(INVITE_TOKEN)
     .execute(&mut *tx)
     .await
     .unwrap();
@@ -274,47 +275,6 @@ async fn participants_fit_and_stay_inside_tenant_and_tournament() {
     assert_eq!(
         rejected(exec(&db, &sql).await),
         rule(CHECK, "participants_check")
-    );
-    let sql = format!(
-        "insert into tenant_invites (tenant_id, token_hash, created_by, expires_at)
-         values ({tenant}, sha256('x'), {}, now() + interval '1 day')",
-        zeca.id
-    );
-    assert_eq!(
-        rejected(exec(&db, &sql).await),
-        rule(FOREIGN_KEY, "tenant_invites_created_by_fkey")
-    );
-
-    // O convite da inscrição é um link deste torneio.
-    create_tournament(&app, &ana, duel("outra")).await;
-    for slug in ["copa", "outra"] {
-        let uri = format!("/tenants/quake-br/tournaments/{slug}/invites");
-        let (status, body) = post_empty(&app, &uri, &ana).await;
-        assert_eq!(status, axum::http::StatusCode::CREATED, "{body}");
-    }
-    let link = |slug: &'static str| {
-        format!(
-            "update participants set invite_id = (
-                 select i.id from tenant_invites i join tournaments t on t.id = i.tournament_id
-                 where t.slug = '{slug}')
-             where user_id = {}",
-            cleo.id
-        )
-    };
-    exec(&db, &link("copa")).await.unwrap();
-    assert_eq!(
-        rejected(exec(&db, &link("outra")).await),
-        rule(FOREIGN_KEY, "participants_invite_id_fkey")
-    );
-    let tenant_invite = format!(
-        "update participants set invite_id = (
-             select id from tenant_invites where tournament_id is null limit 1)
-         where user_id = {}",
-        cleo.id
-    );
-    assert_eq!(
-        rejected(exec(&db, &tenant_invite).await),
-        rule(FOREIGN_KEY, "participants_invite_id_fkey")
     );
 }
 
@@ -454,23 +414,46 @@ async fn password_needs_the_account_email() {
 }
 
 #[tokio::test]
-async fn invite_tokens_are_hashes() {
+async fn every_scope_has_one_well_formed_invite_token() {
     let (db, _lease) = crate::db::test_db().await;
-    let (_, ana, _) = quake_br(&db).await;
-    let tenant = tenant_id(&db, "quake-br").await;
-    let result = sqlx::query(
-        "insert into tenant_invites (tenant_id, token_hash, created_by, expires_at)
-         values ($1, $2, $3, now() + interval '1 day')",
-    )
-    .bind(tenant)
-    .bind(&[7u8; 16][..])
-    .bind(ana.id)
-    .execute(&db)
-    .await;
-    assert_eq!(
-        rejected(result),
-        rule(CHECK, "tenant_invites_token_hash_sha256")
-    );
+    let (app, ana, _) = quake_br(&db).await;
+    create(&app, &ana, "outra").await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    create_tournament(&app, &ana, duel("taca")).await;
+
+    let set = |table: &str, value: &str, slug: &str| {
+        format!("update {table} set invite_token = {value} where slug = '{slug}'")
+    };
+    for (table, one, other) in [
+        ("tenants", "quake-br", "outra"),
+        ("tournaments", "copa", "taca"),
+    ] {
+        // Sempre um.
+        assert_eq!(
+            rejected(exec(&db, &set(table, "null", one)).await),
+            rule(NOT_NULL, "")
+        );
+        // Base58 de 22 caracteres: sem `0`, `O`, `I` e `l`, sem tamanho curto.
+        for bad in [
+            "''",
+            "'abc'",
+            "'0Fq2xKpR9mWbTnVc3hJdYe'",
+            "'7Fq2xKpR9mWbTnVc3hJdY-'",
+        ] {
+            assert_eq!(
+                rejected(exec(&db, &set(table, bad, one)).await),
+                rule(CHECK, &format!("{table}_invite_token_format")),
+                "{bad}"
+            );
+        }
+        // Nunca repetido entre comunidades, nem entre torneios.
+        let literal = format!("'{INVITE_TOKEN}'");
+        exec(&db, &set(table, &literal, one)).await.unwrap();
+        assert_eq!(
+            rejected(exec(&db, &set(table, &literal, other)).await),
+            rule(UNIQUE, &format!("{table}_invite_token_key"))
+        );
+    }
 }
 
 #[tokio::test]

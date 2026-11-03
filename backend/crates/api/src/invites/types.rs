@@ -1,61 +1,15 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::{shared::Locale, tenants::MyTenant, tournaments::TournamentStatus};
 
+/// O link de convite de uma comunidade ou o de inscrição de um torneio.
 #[derive(Serialize, ToSchema)]
-pub struct CreatedInvite {
-    pub id: i64,
-    /// Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
+pub struct InviteLink {
+    /// Token do link `/invite/{token}`.
     #[schema(example = "7Fq2xKpR9mWbTnVc3hJdYe")]
     pub token: String,
-    pub expires_at: DateTime<Utc>,
-}
-
-/// Convite ativo (nem revogado nem expirado).
-#[derive(Serialize, ToSchema)]
-pub struct Invite {
-    pub id: i64,
-    /// Apelido, neste tenant, de quem criou.
-    pub created_by: String,
-    pub created_at: DateTime<Utc>,
-    /// Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
-    /// links criados antes desta mudança.
-    pub hint: Option<String>,
-    pub expires_at: DateTime<Utc>,
-    /// Quantas pessoas entraram por este link.
-    pub uses: i64,
-}
-
-/// Link de inscrição recém-criado. Sem validade: vale enquanto a inscrição
-/// do torneio estiver aberta.
-#[derive(Serialize, ToSchema)]
-pub struct CreatedTournamentInvite {
-    pub id: i64,
-    /// Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
-    #[schema(example = "7Fq2xKpR9mWbTnVc3hJdYe")]
-    pub token: String,
-}
-
-/// Link de inscrição não revogado de um torneio.
-#[derive(Serialize, ToSchema)]
-pub struct TournamentInvite {
-    pub id: i64,
-    /// Apelido, neste tenant, de quem criou.
-    pub created_by: String,
-    pub created_at: DateTime<Utc>,
-    /// Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
-    /// links criados antes desta mudança.
-    pub hint: Option<String>,
-    /// Quantas pessoas se inscreveram por este link.
-    pub uses: i64,
-}
-
-/// `{invite_id}` de `/tenants/{slug}/invites/{invite_id}` (o slug fica com `TenantMember`).
-#[derive(Deserialize)]
-pub struct InvitePath {
-    pub invite_id: i64,
 }
 
 /// O que quem recebeu o link vê antes de aceitar.
@@ -73,8 +27,6 @@ pub struct InvitePreview {
     pub owner_name: String,
     /// Membros ativos da comunidade.
     pub member_count: i64,
-    /// Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
-    pub expires_at: Option<DateTime<Utc>>,
     /// Link de inscrição: aceitar também inscreve neste torneio.
     pub tournament: Option<InvitedTournament>,
     /// Quem abre o link e está logado: se já é (ou foi) membro. `null` sem

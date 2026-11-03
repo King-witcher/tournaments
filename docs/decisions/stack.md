@@ -50,12 +50,12 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 
 ## Ids
 
-- **Chave interna**: `bigint generated always as identity` (users, tenants, convites e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não ajudam: 8 bytes contra 16, sequenciais (índice compacto) e cabem no `number` do JS. `tenant_id` também é bigint (num índice composto com outro bigint, um `int4` não economiza por causa do alinhamento).
+- **Chave interna**: `bigint generated always as identity` (users, tenants, torneios e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não ajudam: 8 bytes contra 16, sequenciais (índice compacto) e cabem no `number` do JS. `tenant_id` também é bigint (num índice composto com outro bigint, um `int4` não economiza por causa do alinhamento).
 - **Não escondemos esses ids**: toda rota que recebe um id confere a participação no tenant, então enumerar não dá acesso a nada.
 - **Tabela de ligação usa chave natural**: `tenant_members (tenant_id, user_id)`, `user_identities (provider, provider_user_id)`, `participants (tournament_id, user_id)`. Quem ocupa um lado da chave é o time (`teams`, id bigint), que vira o `ParticipantId` (`engine::core::ParticipantId(i64)`; o `engine` não depende de `uuid`).
 - **Identificador público e legível**: slug (tenant, torneio). Usuário não tem identificador público; se um dia tiver perfil público, ganha um handle.
-- **Segredos** (sessão, convite, links por email): aleatórios, só o SHA-256 guardado (convite no banco; sessão e links no Redis). Convite e links têm 128 bits em base58 (22 caracteres, sem `0/O/I/l`, para o duplo clique selecionar tudo); a sessão, 256 bits em base64url (só no cookie).
-- **Exceção: o começo do token de convite**. `tenant_invites.token_hint` guarda os 4 primeiros caracteres em claro, para a organização reconhecer o link na lista, saber qual revogar e ver por qual link cada membro entrou (`joined_via`, só para organizer e owner) se um link vazar. Sobram ~105 bits desconhecidos; o resto continua hash.
+- **Segredos** (sessão, links por email): aleatórios, só o SHA-256 guardado, no Redis. Os links têm 128 bits em base58 (22 caracteres, sem `0/O/I/l`, para o duplo clique selecionar tudo); a sessão, 256 bits em base64url (só no cookie).
+- **Exceção: o token do link de convite fica em claro** (do usuário, 03/11): `tenants.invite_token` e `tournaments.invite_token`, para organizer e owner verem e copiarem a qualquer hora (`tenants.md`, "Convites"). O link não é credencial: é público, dá só entrada como player e se troca em dois cliques. Continua com 128 bits aleatórios, do mesmo gerador (`token::random_token`), para ninguém adivinhar um.
 - Se um dia houver ids gerados fora do banco: `uuidv7()`, nativo no PG18.
 
 ## Repositório e CI

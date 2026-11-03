@@ -21,9 +21,9 @@ type Props = {
 
 /**
  * O topo da comunidade e as abas, com a aba aberta dentro: o logo (quando
- * há), nome, o papel de quem vê e, para a organização, "Novo torneio". A aba Convites só aparece
- * para a organização; o Ranking, para todos; Sobre, com descrição ou para o
- * dono que pode escrever uma. Com a exclusão agendada, o aviso com a data (e,
+ * há), nome, o papel de quem vê e, para a organização, "Novo torneio". O
+ * Ranking aparece para todos; Sobre, com descrição ou para o dono que pode
+ * escrever uma. Com a exclusão agendada, o aviso com a data (e,
  * para o dono, onde cancelar) entre o topo e as abas. Sem sessão, o convite a
  * entrar; sem acesso, o erro (e a aba nem é desenhada). Fica em `<Suspense>`.
  */
@@ -55,9 +55,6 @@ export async function TenantFrame({ slug, children }: Props) {
     { href: `/${slug}`, label: t("tabs.tournaments") },
     { href: `/${slug}/ranking`, label: t("tabs.ranking") },
     { href: `/${slug}/members`, label: t("tabs.members") },
-    ...(organizer
-      ? [{ href: `/${slug}/invites`, label: t("tabs.invites") }]
-      : []),
     ...(about ? [{ href: `/${slug}/about`, label: t("tabs.about") }] : []),
     { href: `/${slug}/settings`, label: t("tabs.settings") },
   ];

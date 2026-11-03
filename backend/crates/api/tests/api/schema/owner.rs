@@ -78,11 +78,12 @@ async fn ownership_moves_inside_one_transaction() {
 async fn a_tenant_is_born_with_its_owner() {
     let (db, _lease) = crate::db::test_db().await;
     let ana = user(&db, "Ana").await;
-    let new_tenant =
-        "insert into tenants (slug, name) values ('quake-br', 'Quake BR') returning id";
+    let new_tenant = "insert into tenants (slug, name, invite_token)
+         values ('quake-br', 'Quake BR', $1) returning id";
 
     let mut tx = db.begin().await.unwrap();
     sqlx::query_scalar::<_, i64>(new_tenant)
+        .bind(INVITE_TOKEN)
         .fetch_one(&mut *tx)
         .await
         .unwrap();
@@ -93,6 +94,7 @@ async fn a_tenant_is_born_with_its_owner() {
 
     let mut tx = db.begin().await.unwrap();
     let id = sqlx::query_scalar::<_, i64>(new_tenant)
+        .bind(INVITE_TOKEN)
         .fetch_one(&mut *tx)
         .await
         .unwrap();

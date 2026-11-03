@@ -1,11 +1,11 @@
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Json, extract::State};
 use sqlx::PgConnection;
 
 use super::{
     db::{self, StoredInvite},
     types::{
-        AcceptedInvite, CreatedInvite, Invite, InviteMembership, InvitePath, InvitePreview,
-        InviteViewer, InvitedTournament, InvitedTranslation,
+        AcceptedInvite, InviteLink, InviteMembership, InvitePreview, InviteViewer,
+        InvitedTournament, InvitedTranslation,
     },
 };
 use crate::{
@@ -17,91 +17,49 @@ use crate::{
     tournaments::{self, StoredTournament},
 };
 
-/// Validade de um link de convite do tenant (o de torneio vale enquanto a
-/// inscrição estiver aberta).
-const INVITE_DAYS: i32 = 7;
-
 #[utoipa::path(
-    post,
-    path = "/tenants/{slug}/invites",
+    get,
+    path = "/tenants/{slug}/invite",
     tag = "invites",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = CREATED, body = CreatedInvite, description = "Link multiuso, válido por 7 dias; quem entra por ele vira player"),
+        (status = OK, body = InviteLink, description = "O link de convite da comunidade: multiuso e sem validade; quem entra por ele vira player"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
     )
 )]
-pub async fn create_invite(
+pub async fn get_invite_link(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-) -> Result<(StatusCode, Json<CreatedInvite>), ApiError> {
-    let token = token::random_token();
-    let mut tx = state.db.begin().await?;
-    let (id, expires_at) =
-        db::create(&mut tx, member.tenant, &token, member.user.id, INVITE_DAYS).await?;
-    tenants::changed(&mut tx, member.tenant).await?;
-    tx.commit().await?;
-
-    Ok((
-        StatusCode::CREATED,
-        Json(CreatedInvite {
-            id,
-            token,
-            expires_at,
-        }),
-    ))
+) -> Result<Json<InviteLink>, ApiError> {
+    let token = db::tenant_token(&state.db, member.tenant).await?;
+    Ok(Json(InviteLink { token }))
 }
 
 #[utoipa::path(
-    get,
-    path = "/tenants/{slug}/invites",
+    post,
+    path = "/tenants/{slug}/invite/rotate",
     tag = "invites",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = OK, body = Vec<Invite>, description = "Convites ativos do tenant (os links de inscrição ficam em cada torneio), do mais novo ao mais antigo"),
+        (status = OK, body = InviteLink, description = "O link novo. O antigo deixa de valer (responde invite.not_found); quem já entrou continua"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
     )
 )]
-pub async fn list_invites(
+pub async fn rotate_invite_link(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-) -> Result<Json<Vec<Invite>>, ApiError> {
-    Ok(Json(db::list_active(&state.db, member.tenant).await?))
-}
-
-#[utoipa::path(
-    delete,
-    path = "/tenants/{slug}/invites/{invite_id}",
-    tag = "invites",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("invite_id" = i64, Path, description = "Id do convite (do tenant ou link de inscrição de um torneio)"),
-    ),
-    responses(
-        (status = NO_CONTENT, description = "Convite revogado (também se já estava)"),
-        (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, invite.not_found"),
-    )
-)]
-pub async fn revoke_invite(
-    State(state): State<AppState>,
-    member: TenantMember<Organizer>,
-    PathParams(path): PathParams<InvitePath>,
-) -> Result<StatusCode, ApiError> {
+) -> Result<Json<InviteLink>, ApiError> {
+    let token = token::random_token();
     let mut tx = state.db.begin().await?;
-    if !db::revoke(&mut tx, member.tenant, path.invite_id).await? {
-        return Err(ApiError::not_found("invite.not_found"));
-    }
-    // Também os links de inscrição: a aba do torneio recebe o aviso da comunidade.
+    db::set_tenant_token(&mut tx, member.tenant, &token).await?;
     tenants::changed(&mut tx, member.tenant).await?;
     tx.commit().await?;
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(InviteLink { token }))
 }
 
 #[utoipa::path(
@@ -110,10 +68,9 @@ pub async fn revoke_invite(
     tag = "invites",
     params(("token" = String, Path, description = "Token do link de convite")),
     responses(
-        (status = OK, body = InvitePreview, description = "Convite válido (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link"),
-        (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
+        (status = OK, body = InvitePreview, description = "Convite que vale (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link"),
+        (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found (também o link que foi trocado por outro)"),
         (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled (a comunidade vai ser excluída)"),
-        (status = GONE, body = ErrorBody, description = "invite.expired, invite.revoked"),
     )
 )]
 pub async fn preview_invite(
@@ -122,7 +79,7 @@ pub async fn preview_invite(
     PathParams(token): PathParams<String>,
 ) -> Result<Json<InvitePreview>, ApiError> {
     let mut conn = state.db.acquire().await?;
-    let invite = find_valid_invite(&mut conn, &token).await?;
+    let invite = find_invite(&mut conn, &token).await?;
     let user_id = user.as_ref().map(|u| u.id);
     let found = match &invite.tournament {
         Some(slug) => Some(tournaments::find(&mut conn, invite.tenant, slug, user_id).await?),
@@ -142,7 +99,6 @@ pub async fn preview_invite(
         tenant_logo_url: invite.tenant_logo_key.as_deref().and_then(public_url),
         owner_name: invite.owner_name,
         member_count: invite.member_count,
-        expires_at: invite.expires_at,
         tournament: found.map(invited).transpose()?,
         viewer,
     }))
@@ -175,9 +131,8 @@ async fn viewer(
     responses(
         (status = OK, body = AcceptedInvite, description = "Entrou como player (quem já era membro mantém papel e apelido; quem tinha saído volta como player, com o apelido e o histórico de antes) e, no link de inscrição, ficou inscrito no torneio. Se a inscrição falha, também não entra no tenant"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found"),
+        (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found (também o link que foi trocado por outro)"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída)"),
-        (status = GONE, body = ErrorBody, description = "invite.expired, invite.revoked"),
     )
 )]
 pub async fn accept_invite(
@@ -186,7 +141,7 @@ pub async fn accept_invite(
     PathParams(token): PathParams<String>,
 ) -> Result<Json<AcceptedInvite>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let invite = find_valid_invite(&mut tx, &token).await?;
+    let invite = find_invite(&mut tx, &token).await?;
     // Trava o torneio antes de entrar no tenant: a vaga conferida vale até o commit.
     let tournament = match &invite.tournament {
         Some(slug) => tournaments::find_for_update(&mut tx, invite.tenant, slug, Some(user.id))
@@ -196,11 +151,10 @@ pub async fn accept_invite(
         None => None,
     };
     let nickname = default_nickname(&user.display_name);
-    db::join_as_player(&mut tx, invite.tenant, user.id, &nickname, invite.id).await?;
+    db::join_as_player(&mut tx, invite.tenant, user.id, &nickname).await?;
     tenants::changed(&mut tx, invite.tenant).await?;
     if let Some(t) = &tournament {
-        let entry = Entry::Invite(invite.id);
-        participants::register(&mut tx, invite.tenant, t, user.id, entry).await?;
+        participants::register(&mut tx, invite.tenant, t, user.id, Entry::Invite).await?;
     }
     tx.commit().await?;
 
@@ -210,18 +164,12 @@ pub async fn accept_invite(
     }))
 }
 
-/// Convite pelo token: inexistente → 404, revogado ou expirado → 410, de
-/// comunidade com a exclusão agendada → 409.
-async fn find_valid_invite(conn: &mut PgConnection, token: &str) -> Result<StoredInvite, ApiError> {
-    let invite = db::find_by_token_hash(conn, &token::hash_token(token))
+/// Convite pelo token: inexistente ou trocado por outro → 404, de comunidade
+/// com a exclusão agendada → 409.
+async fn find_invite(conn: &mut PgConnection, token: &str) -> Result<StoredInvite, ApiError> {
+    let invite = db::find_by_token(conn, token)
         .await?
         .ok_or(ApiError::not_found("invite.not_found"))?;
-    if invite.revoked {
-        return Err(ApiError::gone("invite.revoked"));
-    }
-    if invite.expired {
-        return Err(ApiError::gone("invite.expired"));
-    }
     // A comunidade é só leitura até ser excluída.
     if invite.tenant_deleting {
         return Err(ApiError::conflict("tenant.deletion_scheduled"));

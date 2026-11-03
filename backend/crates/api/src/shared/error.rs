@@ -76,7 +76,7 @@ impl ApiError {
         Self::new(StatusCode::CONFLICT, code)
     }
 
-    /// Recurso que existiu mas não vale mais (convite expirado ou revogado).
+    /// Recurso que existiu mas não vale mais (link de email vencido).
     pub const fn gone(code: &'static str) -> Self {
         Self::new(StatusCode::GONE, code)
     }

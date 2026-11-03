@@ -1,7 +1,7 @@
 //! A exclusão de conta que venceu, pelo agendador. A conta sai de cada
 //! comunidade como quem sai sozinho (`departure::depart`: desiste dos
-//! torneios em andamento, com W.O. nas partidas dela, sai das inscrições dos
-//! que não começaram e tem os convites revogados), os apelidos dela viram o
+//! torneios em andamento, com W.O. nas partidas dela, e sai das inscrições dos
+//! que não começaram), os apelidos dela viram o
 //! marcador de conta excluída (o vazio), as inscrições de push e as
 //! notificações saem e `auth` anonimiza o resto. Cada conta na própria
 //! transação; o erro de uma fica no log e não para as outras.

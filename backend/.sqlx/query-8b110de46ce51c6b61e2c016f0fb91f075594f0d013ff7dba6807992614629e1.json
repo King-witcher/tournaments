@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into tenant_invites (tenant_id, tournament_id, token_hash, token_hint, created_by)\n           values ($1, $2, $3, $4, $5)\n           returning id",
+  "query": "insert into tenants (slug, name, invite_token) values ($1, $2, $3)\n           on conflict (slug) do nothing returning id",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenant_invites",
+            "table": "tenants",
             "name": "id"
           }
         }
@@ -17,16 +17,14 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8",
-        "Bytea",
         "Text",
-        "Int8"
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "4a8352f3df3d20f35c7943b69324351e2d862566689cd475bba26f906f04c628"
+  "hash": "8b110de46ce51c6b61e2c016f0fb91f075594f0d013ff7dba6807992614629e1"
 }

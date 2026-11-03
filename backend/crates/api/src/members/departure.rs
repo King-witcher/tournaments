@@ -1,14 +1,13 @@
 //! Sair da comunidade e remover um membro. A linha do membro fica (inativa),
 //! com o histórico: ele perde o acesso, sai das inscrições dos torneios que
-//! não começaram, desiste dos em andamento (W.O. nas partidas dele) e tem os
-//! convites que criou revogados. Voltar por convite reativa a mesma linha
-//! (`invites`).
+//! não começaram e desiste dos em andamento (W.O. nas partidas dele). Voltar
+//! por convite reativa a mesma linha (`invites`).
 
 use sqlx::PgConnection;
 
 use super::db;
 use crate::{
-    invites, lifecycle,
+    lifecycle,
     shared::ApiError,
     tenants::{self, Role, TenantId},
 };
@@ -48,7 +47,6 @@ pub async fn depart(
         .ok_or(ApiError::not_found("member.not_found"))?;
     allowed(role)?;
     lifecycle::leave_tournaments(conn, tenant, user_id, by).await?;
-    invites::revoke_created_by(conn, tenant, user_id).await?;
     db::deactivate(conn, tenant, user_id, by).await?;
     tenants::access_lost(conn, tenant, user_id).await?;
     Ok(())

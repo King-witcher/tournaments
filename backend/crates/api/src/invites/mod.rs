@@ -1,10 +1,10 @@
-//! Links de convite: organizer ou owner gera, lista e revoga; quem recebe vê
-//! a prévia sem login e aceita para entrar como player. O link de inscrição
-//! de um torneio (`tournament`) é um convite do tenant que também inscreve.
-//! Quem tinha saído do tenant volta por qualquer convite (`join_as_player`);
-//! quem sai tem os convites que criou revogados (`revoke_created_by`). Na
-//! comunidade com a exclusão agendada, nenhum convite vale (prévia e aceite
-//! respondem `tenant.deletion_scheduled`).
+//! O link de convite de cada comunidade e o de inscrição de cada torneio
+//! (`tournament`), que é um convite do tenant que também inscreve. Cada um é
+//! uma coluna da própria linha (`invite_token`): organizer ou owner vê e troca
+//! por outro; quem recebe vê a prévia sem login e aceita para entrar como
+//! player. Quem tinha saído do tenant volta por qualquer link
+//! (`join_as_player`). Na comunidade com a exclusão agendada, nenhum link vale
+//! (prévia e aceite respondem `tenant.deletion_scheduled`).
 
 mod db;
 mod handlers;
@@ -15,16 +15,12 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use db::revoke_created_by;
-
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
-        .routes(routes!(handlers::create_invite, handlers::list_invites))
-        .routes(routes!(handlers::revoke_invite))
+        .routes(routes!(handlers::get_invite_link))
+        .routes(routes!(handlers::rotate_invite_link))
         .routes(routes!(handlers::preview_invite))
         .routes(routes!(handlers::accept_invite))
-        .routes(routes!(
-            tournament::create_tournament_invite,
-            tournament::list_tournament_invites
-        ))
+        .routes(routes!(tournament::get_tournament_invite_link))
+        .routes(routes!(tournament::rotate_tournament_invite_link))
 }

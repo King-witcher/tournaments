@@ -1,13 +1,10 @@
-//! Handlers dos links de inscrição de um torneio. São convites do tenant que
-//! também inscrevem no torneio; revogar, ver a prévia e aceitar são as rotas
-//! de sempre (`/tenants/{slug}/invites/{id}` e `/invites/{token}`).
+//! Handlers do link de inscrição de um torneio, que é um por torneio e também
+//! faz entrar no tenant. A prévia e o aceite são as rotas de sempre
+//! (`/invites/{token}`).
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Json, extract::State};
 
-use super::{
-    db,
-    types::{CreatedTournamentInvite, TournamentInvite},
-};
+use super::{db, types::InviteLink};
 use crate::{
     AppState,
     shared::{ApiError, ErrorBody, PathParams, token},
@@ -16,66 +13,61 @@ use crate::{
 };
 
 #[utoipa::path(
-    post,
-    path = "/tenants/{slug}/tournaments/{tournament}/invites",
+    get,
+    path = "/tenants/{slug}/tournaments/{tournament}/invite",
     tag = "invites",
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = CREATED, body = CreatedTournamentInvite, description = "Link multiuso de inscrição, com qualquer tipo de inscrição: quem aceita entra no tenant como player e fica inscrito (com o check-in feito, se for durante o check-in). Vale até o início"),
+        (status = OK, body = InviteLink, description = "O link de inscrição, com qualquer tipo de inscrição: quem aceita entra no tenant como player e fica inscrito (com o check-in feito, se for durante o check-in). Só inscreve com a inscrição aberta"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só no rascunho ou até o início)"),
     )
 )]
-pub async fn create_tournament_invite(
+pub async fn get_tournament_invite_link(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentPath>,
-) -> Result<(StatusCode, Json<CreatedTournamentInvite>), ApiError> {
+) -> Result<Json<InviteLink>, ApiError> {
+    let found = find(&state, &member, &path.tournament).await?;
+    let token = db::tournament_token(&state.db, member.tenant, found.id).await?;
+    Ok(Json(InviteLink { token }))
+}
+
+#[utoipa::path(
+    post,
+    path = "/tenants/{slug}/tournaments/{tournament}/invite/rotate",
+    tag = "invites",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    responses(
+        (status = OK, body = InviteLink, description = "O link novo. O antigo deixa de valer (responde invite.not_found); quem já se inscreveu continua inscrito"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed (só no rascunho ou até o início), tenant.deletion_scheduled"),
+    )
+)]
+pub async fn rotate_tournament_invite_link(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+) -> Result<Json<InviteLink>, ApiError> {
     let found = find(&state, &member, &path.tournament).await?;
     if !found.status.invites_allowed() {
         return Err(ApiError::conflict("tournament.registration_closed"));
     }
     let token = token::random_token();
     let mut tx = state.db.begin().await?;
-    let id =
-        db::create_for_tournament(&mut tx, member.tenant, found.id, &token, member.user.id).await?;
+    db::set_tournament_token(&mut tx, member.tenant, found.id, &token).await?;
     tournaments::changed(&mut tx, found.id).await?;
     tx.commit().await?;
-    Ok((
-        StatusCode::CREATED,
-        Json(CreatedTournamentInvite { id, token }),
-    ))
-}
-
-#[utoipa::path(
-    get,
-    path = "/tenants/{slug}/tournaments/{tournament}/invites",
-    tag = "invites",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("tournament" = String, Path, description = "Slug do torneio"),
-    ),
-    responses(
-        (status = OK, body = Vec<TournamentInvite>, description = "Links de inscrição não revogados, do mais novo ao mais antigo"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-    )
-)]
-pub async fn list_tournament_invites(
-    State(state): State<AppState>,
-    member: TenantMember<Organizer>,
-    PathParams(path): PathParams<TournamentPath>,
-) -> Result<Json<Vec<TournamentInvite>>, ApiError> {
-    let found = find(&state, &member, &path.tournament).await?;
-    Ok(Json(
-        db::list_for_tournament(&state.db, member.tenant, found.id).await?,
-    ))
+    Ok(Json(InviteLink { token }))
 }
 
 /// O organizador vê todo torneio do tenant.

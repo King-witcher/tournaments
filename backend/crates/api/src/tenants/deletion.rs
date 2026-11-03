@@ -33,7 +33,7 @@ const REMINDER_HOURS: i64 = 24;
     params(("slug" = String, Path, description = "Slug do tenant")),
     request_body = ScheduleTenantDeletion,
     responses(
-        (status = OK, body = MyTenant, description = "Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os convites e links de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro"),
+        (status = OK, body = MyTenant, description = "Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os links de convite e de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),

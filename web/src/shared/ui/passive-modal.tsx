@@ -9,17 +9,19 @@ import { useReturnFocus } from "@/shared/hooks/use-return-focus";
 
 type Props = {
   title: ReactNode;
-  /** A informação (um link gerado para copiar). */
+  /** A informação (um link para copiar). */
   children: ReactNode;
   /** Fechou (X, Esc ou clique fora). O foco volta ao botão que abriu. */
   onClose: () => void;
   /** O botão que abriu, se o navegador não der foco a ele no clique; sem isso, quem tinha o foco. */
   returnFocusTo?: RefObject<HTMLElement | null>;
+  /** O que recebe o foco ao abrir (seletor CSS); sem ele, o X. */
+  selectorPrimaryFocus?: string;
 };
 
 /**
  * Modal só de informação, sem ação a confirmar: título, conteúdo e o X para
- * fechar (ex.: o link gerado, que a API só mostra uma vez). Ao fechar, o foco
+ * fechar (ex.: um link de convite, para copiar). Ao fechar, o foco
  * volta ao botão que abriu. Existe só enquanto aberto, fora da árvore (no
  * `body`): monte com `{link && <PassiveModal …>}`.
  */
@@ -27,7 +29,13 @@ export function PassiveModal(props: Props) {
   return createPortal(<OpenPassiveModal {...props} />, document.body);
 }
 
-function OpenPassiveModal({ title, children, onClose, returnFocusTo }: Props) {
+function OpenPassiveModal({
+  title,
+  children,
+  onClose,
+  returnFocusTo,
+  selectorPrimaryFocus,
+}: Props) {
   const t = useTranslations("Common");
   const returnFocus = useReturnFocus(returnFocusTo);
 
@@ -38,6 +46,7 @@ function OpenPassiveModal({ title, children, onClose, returnFocusTo }: Props) {
       size="sm"
       modalHeading={title}
       closeButtonLabel={t("close")}
+      selectorPrimaryFocus={selectorPrimaryFocus}
       onRequestClose={() => {
         onClose();
         returnFocus();

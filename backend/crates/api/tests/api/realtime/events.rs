@@ -109,7 +109,8 @@ async fn members_and_invites() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     clear(&db).await;
-    invite(&app, &ana, "quake-br").await;
+    let (status, _) = post_empty(&app, "/tenants/quake-br/invite/rotate", &ana).await;
+    assert_eq!(status, StatusCode::OK);
     assert_eq!(outbox(&db).await, [tenant("quake-br")]);
 
     clear(&db).await;
@@ -133,6 +134,14 @@ async fn members_and_invites() {
     create_tournament(&app, &ana, duel("copa")).await;
     publish(&app, &ana, "copa").await;
     register(&app, "copa", &[&bia]).await;
+
+    // Trocar o link de inscrição é mudança do torneio.
+    clear(&db).await;
+    let rotate = "/tenants/quake-br/tournaments/copa/invite/rotate";
+    let (status, _) = post_empty(&app, rotate, &ana).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(outbox(&db).await.contains(&tournament("copa", None)));
+
     clear(&db).await;
     let uri = format!("/tenants/quake-br/members/{}", bia.id);
     let (status, _) = delete(&app, &uri, &ana).await;

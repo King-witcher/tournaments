@@ -30,7 +30,7 @@ export async function TransferOwnershipSection({ slug, focusId }: Props) {
       {candidates.length === 0 ? (
         <EmptyState
           action={
-            <ButtonLink href={`/${slug}/invites`} kind="tertiary">
+            <ButtonLink href={`/${slug}/members`} kind="tertiary">
               {t("invite")}
             </ButtonLink>
           }

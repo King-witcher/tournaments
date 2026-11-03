@@ -644,23 +644,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{slug}/invites": {
+    "/tenants/{slug}/invite": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_invites"];
+        get: operations["get_invite_link"];
         put?: never;
-        post: operations["create_invite"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/tenants/{slug}/invites/{invite_id}": {
+    "/tenants/{slug}/invite/rotate": {
         parameters: {
             query?: never;
             header?: never;
@@ -669,8 +669,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        delete: operations["revoke_invite"];
+        post: operations["rotate_invite_link"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -980,16 +980,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{slug}/tournaments/{tournament}/invites": {
+    "/tenants/{slug}/tournaments/{tournament}/invite": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["list_tournament_invites"];
+        get: operations["get_tournament_invite_link"];
         put?: never;
-        post: operations["create_tournament_invite"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/invite/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rotate_tournament_invite_link"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1870,30 +1886,6 @@ export interface components {
              */
             rules?: string;
         };
-        CreatedInvite: {
-            /** Format: date-time */
-            expires_at: string;
-            /** Format: int64 */
-            id: number;
-            /**
-             * @description Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
-             * @example 7Fq2xKpR9mWbTnVc3hJdYe
-             */
-            token: string;
-        };
-        /**
-         * @description Link de inscrição recém-criado. Sem validade: vale enquanto a inscrição
-         *     do torneio estiver aberta.
-         */
-        CreatedTournamentInvite: {
-            /** Format: int64 */
-            id: number;
-            /**
-             * @description Token do link `/invite/{token}`. Só aparece nesta resposta: o banco guarda o hash.
-             * @example 7Fq2xKpR9mWbTnVc3hJdYe
-             */
-            token: string;
-        };
         Credentials: {
             /**
              * @description O email da conta, escrito de qualquer jeito que dê na forma canônica
@@ -2108,36 +2100,18 @@ export interface components {
             /** @description URL assinada para o PUT direto ao bucket. */
             url: string;
         };
-        /** @description Convite ativo (nem revogado nem expirado). */
-        Invite: {
-            /** Format: date-time */
-            created_at: string;
-            /** @description Apelido, neste tenant, de quem criou. */
-            created_by: string;
-            /** Format: date-time */
-            expires_at: string;
+        /** @description O link de convite de uma comunidade ou o de inscrição de um torneio. */
+        InviteLink: {
             /**
-             * @description Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
-             *     links criados antes desta mudança.
+             * @description Token do link `/invite/{token}`.
+             * @example 7Fq2xKpR9mWbTnVc3hJdYe
              */
-            hint?: string | null;
-            /** Format: int64 */
-            id: number;
-            /**
-             * Format: int64
-             * @description Quantas pessoas entraram por este link.
-             */
-            uses: number;
+            token: string;
         };
         /** @enum {string} */
         InviteMembership: "none" | "member" | "former";
         /** @description O que quem recebeu o link vê antes de aceitar. */
         InvitePreview: {
-            /**
-             * Format: date-time
-             * @description Nulo no link de inscrição, que vale enquanto a inscrição estiver aberta.
-             */
-            expires_at?: string | null;
             /**
              * Format: int64
              * @description Membros ativos da comunidade.
@@ -2198,19 +2172,6 @@ export interface components {
             description: string;
             locale: components["schemas"]["Locale"];
             name: string;
-        };
-        /** @description O link de convite pelo qual um membro entrou. */
-        JoinedVia: {
-            /**
-             * @description Os 4 primeiros caracteres do token do link; nulo nos links criados
-             *     antes de existir o `hint`.
-             */
-            hint?: string | null;
-            /**
-             * @description Nome (no idioma original) do torneio, quando o link era de inscrição;
-             *     nulo no convite da comunidade.
-             */
-            tournament?: string | null;
         };
         /** @description Token de um link mandado por email (cadastro, troca de email). */
         LinkToken: {
@@ -2384,7 +2345,6 @@ export interface components {
             display_name: string;
             /** Format: date-time */
             joined_at: string;
-            joined_via?: components["schemas"]["JoinedVia"] | null;
             nickname: string;
             role: components["schemas"]["Role"];
             /** Format: int64 */
@@ -3590,25 +3550,6 @@ export interface components {
              *     ser jogadas, não só as já pareadas); `null` na eliminação.
              */
             total_rounds?: number | null;
-        };
-        /** @description Link de inscrição não revogado de um torneio. */
-        TournamentInvite: {
-            /** Format: date-time */
-            created_at: string;
-            /** @description Apelido, neste tenant, de quem criou. */
-            created_by: string;
-            /**
-             * @description Os 4 primeiros caracteres do token, para reconhecer o link; nulo nos
-             *     links criados antes desta mudança.
-             */
-            hint?: string | null;
-            /** Format: int64 */
-            id: number;
-            /**
-             * Format: int64
-             * @description Quantas pessoas se inscreveram por este link.
-             */
-            uses: number;
         };
         /**
          * @description A modalidade: duelo (um contra um) ou TDM (times de 2 a 4, `team_size`).
@@ -5560,7 +5501,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Convite válido (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link */
+            /** @description Convite que vale (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5569,7 +5510,7 @@ export interface operations {
                     "application/json": components["schemas"]["InvitePreview"];
                 };
             };
-            /** @description invite.not_found */
+            /** @description invite.not_found (também o link que foi trocado por outro) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -5580,15 +5521,6 @@ export interface operations {
             };
             /** @description tenant.deletion_scheduled (a comunidade vai ser excluída) */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description invite.expired, invite.revoked */
-            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5628,7 +5560,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description invite.not_found */
+            /** @description invite.not_found (também o link que foi trocado por outro) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -5639,15 +5571,6 @@ export interface operations {
             };
             /** @description tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída) */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description invite.expired, invite.revoked */
-            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5761,7 +5684,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram, os convites dela são revogados) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o email, o Discord e o Google ficam livres */
+            /** @description Exclusão agendada para daqui a 7 dias. Todas as sessões da conta foram encerradas, esta também (o cookie sai); entrar de novo antes da data cancela. Se a conta tem email, ele recebe a data. Na data, a conta sai de todas as comunidades (desiste dos torneios em andamento, sai das inscrições dos que não começaram) e é anonimizada: nome e apelidos viram o marcador de conta excluída (vazio), avatar, email, logins e inscrições de push saem, e o email, o Discord e o Google ficam livres */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6293,7 +6216,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os convites e links de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro */
+            /** @description Exclusão agendada para daqui a 7 dias (`deletion_scheduled_for`). Até lá, a comunidade é só leitura: toda escrita responde 409 tenant.deletion_scheduled, menos cancelar a exclusão e sair; o check-in não abre sozinho, o aviso de hora de iniciar não sai, e os links de convite e de inscrição não valem. Na data, a comunidade é apagada com tudo o que tem dentro */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -6657,7 +6580,7 @@ export interface operations {
             };
         };
     };
-    list_invites: {
+    get_invite_link: {
         parameters: {
             query?: never;
             header?: never;
@@ -6669,63 +6592,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Convites ativos do tenant (os links de inscrição ficam em cada torneio), do mais novo ao mais antigo */
+            /** @description O link de convite da comunidade: multiuso e sem validade; quem entra por ele vira player */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"][];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    create_invite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Link multiuso, válido por 7 dias; quem entra por ele vira player */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreatedInvite"];
+                    "application/json": components["schemas"]["InviteLink"];
                 };
             };
             /** @description auth.unauthenticated */
@@ -6757,34 +6630,25 @@ export interface operations {
             };
         };
     };
-    revoke_invite: {
+    rotate_invite_link: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /** @description Slug do tenant */
                 slug: string;
-                /** @description Id do convite (do tenant ou link de inscrição de um torneio) */
-                invite_id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Convite revogado (também se já estava) */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description request.invalid_path */
-            400: {
+            /** @description O link novo. O antigo deixa de valer (responde invite.not_found); quem já entrou continua */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorBody"];
+                    "application/json": components["schemas"]["InviteLink"];
                 };
             };
             /** @description auth.unauthenticated */
@@ -6796,7 +6660,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.forbidden */
+            /** @description tenant.forbidden (só organizer ou owner) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -6805,8 +6669,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, invite.not_found */
+            /** @description tenant.not_found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7054,7 +6927,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada */
+            /** @description Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -7156,7 +7029,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Membros: owner, organizers e players, cada grupo por apelido. `joined_via` só vem para organizer e owner */
+            /** @description Membros: owner, organizers e players, cada grupo por apelido */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8384,7 +8257,7 @@ export interface operations {
             };
         };
     };
-    list_tournament_invites: {
+    get_tournament_invite_link: {
         parameters: {
             query?: never;
             header?: never;
@@ -8398,65 +8271,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Links de inscrição não revogados, do mais novo ao mais antigo */
+            /** @description O link de inscrição, com qualquer tipo de inscrição: quem aceita entra no tenant como player e fica inscrito (com o check-in feito, se for durante o check-in). Só inscreve com a inscrição aberta */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TournamentInvite"][];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    create_tournament_invite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Link multiuso de inscrição, com qualquer tipo de inscrição: quem aceita entra no tenant como player e fica inscrito (com o check-in feito, se for durante o check-in). Vale até o início */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreatedTournamentInvite"];
+                    "application/json": components["schemas"]["InviteLink"];
                 };
             };
             /** @description auth.unauthenticated */
@@ -8486,7 +8307,59 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.registration_closed (só no rascunho ou até o início) */
+        };
+    };
+    rotate_tournament_invite_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O link novo. O antigo deixa de valer (responde invite.not_found); quem já se inscreveu continua inscrito */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteLink"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.registration_closed (só no rascunho ou até o início), tenant.deletion_scheduled */
             409: {
                 headers: {
                     [name: string]: unknown;

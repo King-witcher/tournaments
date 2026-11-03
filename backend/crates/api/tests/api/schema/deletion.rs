@@ -14,10 +14,6 @@ async fn tenant_rows(db: &PgPool, tenant: i64) -> Vec<(&'static str, i64)> {
             "select count(*) from tenant_members where tenant_id = $1",
         ),
         (
-            "tenant_invites",
-            "select count(*) from tenant_invites where tenant_id = $1",
-        ),
-        (
             "tournaments",
             "select count(*) from tournaments where tenant_id = $1",
         ),
@@ -60,10 +56,6 @@ async fn tournament_rows(db: &PgPool, tournament: i64) -> Vec<(&'static str, i64
         (
             "tournament_stages",
             "select count(*) from tournament_stages where tournament_id = $1",
-        ),
-        (
-            "tenant_invites",
-            "select count(*) from tenant_invites where tournament_id = $1",
         ),
         (
             "participants",
@@ -162,18 +154,10 @@ async fn deleting_a_tournament_deletes_everything_inside() {
     );
     assert_eq!(count(&db, "select count(*) from match_games").await, 0);
     assert_eq!(tournament_rows(&db, other).await, other_before);
-    // Membros e convites do tenant ficam.
+    // Os membros do tenant ficam.
     assert_eq!(
         count(&db, "select count(*) from tenant_members").await,
         members
-    );
-    assert_eq!(
-        count(
-            &db,
-            "select count(*) from tenant_invites where tournament_id is null"
-        )
-        .await,
-        4
     );
 }
 
@@ -348,25 +332,6 @@ async fn deleting_an_author_keeps_what_they_did() {
             ("decided".to_owned(), None),
         ]
     );
-    // Os convites dela saem; quem entrou ou se inscreveu por eles fica.
-    let invites = format!("select count(*) from tenant_invites where created_by = {olga}");
-    assert_eq!(count(&db, &invites).await, 0);
-    let ze = sqlx::query_scalar!(
-        "select invite_id from tenant_members where user_id = $1",
-        cup.ze.id
-    )
-    .fetch_one(&db)
-    .await
-    .unwrap();
-    assert_eq!(ze, None);
-    let p2 = sqlx::query_scalar!(
-        "select invite_id from participants where user_id = $1",
-        cup.p2.id
-    )
-    .fetch_one(&db)
-    .await
-    .unwrap();
-    assert_eq!(p2, None);
     let members = format!("select count(*) from tenant_members where user_id = {olga}");
     assert_eq!(count(&db, &members).await, 0);
 }

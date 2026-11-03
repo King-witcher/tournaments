@@ -19,7 +19,7 @@ export function participantsEditable(status: Status) {
   return setupEditable(status);
 }
 
-/** Dá para gerar link de inscrição: no rascunho e até o início. */
+/** O link de inscrição aparece e se troca: no rascunho e até o início. */
 export function invitesAllowed(status: Status) {
   return (
     status === "draft" || status === "registration" || status === "check_in"

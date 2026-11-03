@@ -21,9 +21,8 @@ async fn tenant_routes_require_login() {
         (Method::PATCH, "/tenants/quake-br/me"),
         (Method::GET, "/tenants/quake-br/members"),
         (Method::PUT, "/tenants/quake-br/members/1/role"),
-        (Method::POST, "/tenants/quake-br/invites"),
-        (Method::GET, "/tenants/quake-br/invites"),
-        (Method::DELETE, "/tenants/quake-br/invites/1"),
+        (Method::GET, "/tenants/quake-br/invite"),
+        (Method::POST, "/tenants/quake-br/invite/rotate"),
         (Method::POST, "/invites/abc/accept"),
     ] {
         let (status, body) = call(&app, method.clone(), uri, None, None).await;
@@ -192,7 +191,7 @@ async fn outsiders_get_404() {
     for uri in [
         "/tenants/quake-br",
         "/tenants/quake-br/members",
-        "/tenants/quake-br/invites",
+        "/tenants/quake-br/invite",
         "/tenants/nao-existe",
     ] {
         assert_eq!(
@@ -201,7 +200,7 @@ async fn outsiders_get_404() {
             "{uri}"
         );
     }
-    let (status, body) = post_empty(&app, "/tenants/quake-br/invites", &eve).await;
+    let (status, body) = post_empty(&app, "/tenants/quake-br/invite/rotate", &eve).await;
     assert_eq!(
         (status, body),
         (StatusCode::NOT_FOUND, err("tenant.not_found"))

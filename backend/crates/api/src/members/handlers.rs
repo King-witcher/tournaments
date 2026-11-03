@@ -48,7 +48,7 @@ pub async fn update_my_membership(
     tag = "tenants",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram e os convites que criou são revogados. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada"),
+        (status = NO_CONTENT, description = "Saiu da comunidade: perde o acesso, sai das inscrições dos torneios que não começaram. Nos torneios iniciados, o nome continua na chave; nos em andamento, desiste: cada partida pronta com ele, agora ou depois, vira W.O. para o adversário. Volta por convite, como player, com o apelido de antes. Vale também com a exclusão da comunidade agendada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "member.owner_must_transfer (o owner transfere a posse antes)"),
@@ -116,7 +116,7 @@ pub async fn remove_member(
     tag = "tenants",
     params(("slug" = String, Path, description = "Slug do tenant")),
     responses(
-        (status = OK, body = Vec<Member>, description = "Membros: owner, organizers e players, cada grupo por apelido. `joined_via` só vem para organizer e owner"),
+        (status = OK, body = Vec<Member>, description = "Membros: owner, organizers e players, cada grupo por apelido"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
     )
@@ -125,14 +125,7 @@ pub async fn list_members(
     State(state): State<AppState>,
     member: TenantMember,
 ) -> Result<Json<Vec<Member>>, ApiError> {
-    db::list(
-        &state.db,
-        member.tenant,
-        None,
-        member.role >= Role::Organizer,
-    )
-    .await
-    .map(Json)
+    db::list(&state.db, member.tenant, None).await.map(Json)
 }
 
 #[utoipa::path(
@@ -162,8 +155,7 @@ pub async fn get_member(
         avatar_url,
         role,
         joined_at,
-        joined_via: _,
-    } = db::list(&state.db, member.tenant, Some(path.user_id), false)
+    } = db::list(&state.db, member.tenant, Some(path.user_id))
         .await?
         .pop()
         .ok_or(ApiError::not_found("member.not_found"))?;
@@ -219,7 +211,7 @@ pub async fn set_member_role(
     outbox::emit(&mut tx, Event::me([user_id])).await?;
     tx.commit().await?;
 
-    db::list(&state.db, owner.tenant, Some(user_id), true)
+    db::list(&state.db, owner.tenant, Some(user_id))
         .await?
         .pop()
         .map(Json)

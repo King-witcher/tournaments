@@ -37,6 +37,9 @@ use crate::matches::{COPA, confirm, contest, copa, report, set_game, single};
 pub const CHECK: &str = "23514";
 pub const FOREIGN_KEY: &str = "23503";
 pub const UNIQUE: &str = "23505";
+pub const NOT_NULL: &str = "23502";
+/// Um token de link de convite bem formado, para quem insere direto por SQL.
+pub const INVITE_TOKEN: &str = "7Fq2xKpR9mWbTnVc3hJdYe";
 
 /// Código do Postgres e nome da regra do erro (ex.: `("23503",
 /// "users_owner_delete")`).
@@ -119,8 +122,8 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
     )
     .await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
-    let (status, link) = post_empty(&app, &format!("{COPA}/invites"), &olga).await;
-    assert_eq!(status, StatusCode::CREATED, "{link}");
+    let (status, link) = get(&app, &format!("{COPA}/invite"), &olga).await;
+    assert_eq!(status, StatusCode::OK, "{link}");
     let p2 = user(db, "P2").await;
     join(&app, &p2, link["token"].as_str().unwrap()).await;
     // Check-in marcado pela organizadora (este torneio não tem janela, mas a

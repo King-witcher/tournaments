@@ -21,5 +21,20 @@
   "owner": "Creada por",
   "members": "Miembros",
   "memberCount": "{count, plural, one {# miembro} other {# miembros}}",
-  "deletionScheduled": "Esta comunidad se va a eliminar y ya no acepta miembros."
+  "deletionScheduled": "Esta comunidad se va a eliminar y ya no acepta miembros.",
+  "rotate": "Generar enlace nuevo",
+  "rotated": "Enlace nuevo generado. El anterior ya no vale.",
+  "communityLink": {
+    "open": "Invitar",
+    "title": "Invitar a entrar en {name}",
+    "note": "Quien entra con este enlace queda como jugador.",
+    "link": "Enlace de invitación",
+    "rotateConfirm": "El enlace actual deja de valer, y quien ya entró sigue en la comunidad."
+  },
+  "tournamentLink": {
+    "open": "Enlace de inscripción",
+    "note": "Inscribe en el torneo y suma a la comunidad a quien es de afuera. Vale con la inscripción abierta.",
+    "full": "Los cupos se agotaron. El enlace solo inscribe de nuevo cuando se libere un cupo.",
+    "rotateConfirm": "El enlace actual deja de valer, y quien ya se inscribió sigue inscrito."
+  }
 }

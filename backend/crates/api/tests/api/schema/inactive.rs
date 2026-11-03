@@ -1,6 +1,5 @@
-//! Membro inativo (saiu ou foi removido): a linha fica, sem acesso, sem
-//! convite aberto e sem inscrição em torneio que não começou; o owner não
-//! fica inativo.
+//! Membro inativo (saiu ou foi removido): a linha fica, sem acesso e sem
+//! inscrição em torneio que não começou; o owner não fica inativo.
 
 use super::*;
 use crate::common::*;
@@ -18,10 +17,8 @@ async fn inactive_members_keep_their_row_and_their_rules() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
     let olga = organizer(&app, &db, &ana, "Olga").await;
-    let revoke_all = "update tenant_invites set revoked_at = now()";
 
     // O owner transfere a posse antes de sair.
-    exec(&db, revoke_all).await.unwrap();
     assert_eq!(
         rejected(exec(&db, &leave_sql(&ana)).await),
         rule(CHECK, "tenant_members_owner_active")
@@ -49,34 +46,8 @@ async fn inactive_members_keep_their_row_and_their_rules() {
         rule(FOREIGN_KEY, "tenant_members_removed_by_fkey")
     );
 
-    // Não sai com convite aberto (a API revoga antes).
-    invite(&app, &olga, "quake-br").await;
-    assert_eq!(
-        rejected(exec(&db, &leave_sql(&olga)).await),
-        rule(CHECK, "tenant_members_left_invites_open")
-    );
-    exec(&db, revoke_all).await.unwrap();
-    exec(&db, &removed_by(&olga, &ana, true)).await.unwrap();
-    // Inativo não abre convite, nem reabre um revogado.
-    let tenant = sqlx::query_scalar!("select id from tenants")
-        .fetch_one(&db)
-        .await
-        .unwrap();
-    let new_invite = format!(
-        "insert into tenant_invites (tenant_id, token_hash, created_by, expires_at)
-         values ({tenant}, sha256('olga'), {}, now() + interval '1 day')",
-        olga.id
-    );
-    assert_eq!(
-        rejected(exec(&db, &new_invite).await),
-        rule(CHECK, "tenant_invites_creator_active")
-    );
-    assert_eq!(
-        rejected(exec(&db, "update tenant_invites set revoked_at = null").await),
-        rule(CHECK, "tenant_invites_creator_active")
-    );
-
     // Apagar quem removeu deixa a remoção sem autor.
+    exec(&db, &removed_by(&olga, &ana, true)).await.unwrap();
     exec(&db, &removed_by(&bia, &olga, true)).await.unwrap();
     exec(&db, &format!("delete from users where id = {}", olga.id))
         .await

@@ -16,8 +16,8 @@ use crate::{
 pub enum Entry {
     /// O próprio membro, pelo botão: só com a inscrição aberta (`Admission::Open`).
     Member,
-    /// Link de convite de torneio (o id do convite).
-    Invite(i64),
+    /// O link de inscrição do torneio.
+    Invite,
     /// O organizador inscrevendo um membro (o id de quem inscreveu).
     Organizer(i64),
 }
@@ -33,7 +33,7 @@ pub fn check_open(
         Entry::Member if admission == Admission::InviteOnly => {
             Err(ApiError::conflict("tournament.invite_only"))
         }
-        Entry::Member | Entry::Invite(_) if !status.registration_open() => {
+        Entry::Member | Entry::Invite if !status.registration_open() => {
             Err(ApiError::conflict("tournament.registration_closed"))
         }
         Entry::Organizer(_) if !status.participants_editable() => {
@@ -82,24 +82,14 @@ pub async fn register(
     }
     check_open(tournament.status, tournament.admission, entry)?;
     check_capacity(tournament.participants, tournament.setup.max_participants)?;
-    let (invite_id, added_by) = match entry {
-        Entry::Member => (None, None),
-        Entry::Invite(invite_id) => (Some(invite_id), None),
-        Entry::Organizer(by) => (None, Some(by)),
+    let added_by = match entry {
+        Entry::Member | Entry::Invite => None,
+        Entry::Organizer(by) => Some(by),
     };
     // Durante o check-in a inscrição fica aberta, e quem entra já entra com o
     // check-in feito (o banco exige: `participants_check_in_on_entry`).
     let checked_in = tournament.status.check_in_open();
-    let entered = db::insert(
-        conn,
-        tenant,
-        tournament.id,
-        user_id,
-        invite_id,
-        added_by,
-        checked_in,
-    )
-    .await?;
+    let entered = db::insert(conn, tenant, tournament.id, user_id, added_by, checked_in).await?;
     if !entered {
         return Err(ApiError::not_found("member.not_found"));
     }
@@ -140,11 +130,11 @@ mod tests {
     fn invite_links_work_until_the_start_in_any_admission() {
         for admission in [Open, InviteOnly] {
             for status in [Registration, CheckIn] {
-                assert_eq!(code(status, admission, Entry::Invite(1)), "ok");
+                assert_eq!(code(status, admission, Entry::Invite), "ok");
             }
             for status in [Draft, InProgress, Finished] {
                 assert_eq!(
-                    code(status, admission, Entry::Invite(1)),
+                    code(status, admission, Entry::Invite),
                     "tournament.registration_closed"
                 );
             }

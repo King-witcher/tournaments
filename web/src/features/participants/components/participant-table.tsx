@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
+import { TournamentInviteButton } from "@/features/invites/components/tournament-invite-button";
 import { shownNickname } from "@/features/members/lib/nickname";
 import {
   hasStarted,
+  invitesAllowed,
   participantsEditable,
 } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
@@ -22,10 +24,11 @@ type Props = { tenant: string; slug: string };
 /**
  * A aba Inscritos: a tabela com seed (depois de iniciar, na ordem da chave),
  * apelido (link para a pessoa na comunidade), estado e data de inscrição,
- * com busca e paginação. Para a organização, "Inscrever alguém" na barra e,
- * por linha, marcar ou desmarcar o check-in, tirar do torneio (até começar)
- * e, no duelo, marcar a desistência (em andamento; no TDM, ela é do time e
- * fica no ⋯ dele). Fica em `<Suspense>`.
+ * com busca e paginação. Para a organização, "Link de inscrição" ao lado do
+ * título (no rascunho e até o início), "Inscrever alguém" na barra e, por
+ * linha, marcar ou desmarcar o check-in, tirar do torneio (até começar) e, no
+ * duelo, marcar a desistência (em andamento; no TDM, ela é do time e fica no
+ * ⋯ dele). Fica em `<Suspense>`.
  */
 export async function ParticipantTable({ tenant, slug }: Props) {
   const loaded = await loadTournament(tenant, slug);
@@ -134,7 +137,16 @@ export async function ParticipantTable({ tenant, slug }: Props) {
   return (
     // tabIndex -1: recebe o foco quando a linha da ação some (tirar alguém).
     <div id={PARTICIPANTS_ID} tabIndex={-1}>
-      <Section title={t("title", { count: participants.length, max })}>
+      <Section
+        title={t("title", { count: participants.length, max })}
+        action={
+          organizer &&
+          invitesAllowed(status) &&
+          !me.deletion_scheduled_for && (
+            <TournamentInviteButton tenant={tenant} tournament={tournament} />
+          )
+        }
+      >
         <DataTable
           label={t("title", { count: participants.length, max })}
           primaryColumn="name"

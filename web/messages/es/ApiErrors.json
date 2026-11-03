@@ -65,9 +65,7 @@
     "tournament_in_progress": "Hay un torneo en curso. Termínalo o deshaz el inicio antes."
   },
   "invite": {
-    "not_found": "Invitación no encontrada. Revisa el enlace.",
-    "expired": "Esta invitación venció. Pide un enlace nuevo.",
-    "revoked": "Esta invitación fue revocada. Pide un enlace nuevo."
+    "not_found": "Este enlace de invitación ya no vale. Pide uno nuevo."
   },
   "member": {
     "not_found": "Miembro no encontrado.",

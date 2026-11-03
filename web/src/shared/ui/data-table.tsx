@@ -50,7 +50,7 @@ type Props = {
   description?: ReactNode;
   /** A coluna que vira link quando a linha tem `href`; padrão, a primeira. */
   primaryColumn?: string;
-  /** Ação da barra (ex.: "Gerar link", primária), à direita da busca; a barra fica no lugar também sem linhas. */
+  /** Ação da barra (ex.: "Convidar", primária), à direita da busca; a barra fica no lugar também sem linhas. */
   toolbar?: ReactNode;
   /** Sem nenhuma linha: o que falta e o próximo passo (a ação da barra, se houver, continua nela). Sem ele, só a barra aparece (quando a ação dela basta). */
   empty?: { text: ReactNode; action?: ReactNode };
@@ -68,7 +68,7 @@ function normalize(text: string) {
 }
 
 /**
- * Lista grande (inscritos, membros, convites, torneios da comunidade):
+ * Lista grande (inscritos, membros, torneios da comunidade):
  * `DataTable` do Carbon com busca na barra, paginação no cliente (25, 50 ou
  * 100 por página; a API não pagina), linha que abre página, ações por linha
  * e estado vazio com o próximo passo. As células chegam prontas (Server
