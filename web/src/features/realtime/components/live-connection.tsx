@@ -4,7 +4,9 @@ import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { playChime, unlockAudioOnGesture } from "@/shared/lib/chime";
-import { useMarkSeen } from "../hooks/use-mark-seen";
+import { useBellOpen } from "../hooks/use-bell-open";
+import { useMarkPageRead } from "../hooks/use-mark-page-read";
+import { useMarkVisitedPageRead } from "../hooks/use-mark-visited-page-read";
 import { useMissedNotices } from "../hooks/use-missed-notices";
 import { useRealtimeHub } from "../hooks/use-realtime-hub";
 import { movedPath } from "../lib/moved-path";
@@ -34,28 +36,37 @@ function append(arrived: NotifyMessage[]) {
  *
  * Aviso para a pessoa (`notify`) com a aba visível: o toast e o som (se não
  * foi desligado). Com a aba escondida, `useMissedNotices`: o título da aba,
- * o som se não houver Web Push e o toast quando ela volta. Fechar o toast no
- * X ou abrir a página do aviso (pelo link ou não) o tira da tela e marca a
- * notificação como vista no sininho; o que sai pelo tempo continua nova.
+ * o som se não houver Web Push e o toast quando ela volta. Abrir a página do
+ * aviso, pelo link ou não, tira o toast da tela e marca a notificação como
+ * lida, e o aviso da página em que a pessoa já está nasce lido; fechar no X ou
+ * sair pelo tempo não marca, porque pode não ter sido lido. Com o sininho
+ * aberto não há toast: o aviso entra na lista à vista, e o som continua.
  */
 export function LiveConnection() {
   const hub = useRealtimeHub();
   const router = useRouter();
   const pathname = usePathname();
   const [notices, setNotices] = useState<ShownNotice[]>([]);
-  const markSeen = useMarkSeen();
+  const markPageRead = useMarkPageRead();
+  useMarkVisitedPageRead(pathname);
+
+  // O aviso já está na lista aberta, e o toast cobriria o topo do painel.
+  const bellOpen = useBellOpen();
+  if (bellOpen && notices.length > 0) setNotices([]);
 
   const open = useEffectEvent((path: string) => {
-    const opened = notices.filter((n) => n.notice.path === path);
-    if (opened.length === 0) return;
     setNotices((list) => list.filter((n) => n.notice.path !== path));
-    markSeen(opened.map((n) => n.id));
   });
   useEffect(() => {
     open(pathname);
   }, [pathname]);
 
-  const miss = useMissedNotices((missed) => setNotices(append(missed)));
+  const miss = useMissedNotices((missed) => {
+    setNotices(append(missed));
+    if (missed.some((notice) => notice.path === pathname)) {
+      markPageRead(pathname);
+    }
+  });
 
   const refresh = useEffectEvent(() => router.refresh());
   const follow = useEffectEvent(
@@ -70,6 +81,7 @@ export function LiveConnection() {
       return;
     }
     setNotices(append([notice]));
+    if (notice.path === pathname) markPageRead(pathname);
     if (soundEnabled()) playChime();
   });
   const close = useCallback(
@@ -99,11 +111,5 @@ export function LiveConnection() {
     };
   }, [hub]);
 
-  return (
-    <NoticeToasts
-      notices={notices}
-      onClose={close}
-      onDismiss={(id) => markSeen([id])}
-    />
-  );
+  return <NoticeToasts notices={notices} onClose={close} />;
 }

@@ -69,7 +69,7 @@ impl FromRequestParts<AppState> for SameOrigin {
         ("connection" = Option<String>, Query, description = "Id que a aba dá à conexão (16 a 64 de A-Z, a-z, 0-9, _ e -; um UUID serve). A ação que manda o mesmo id no cabeçalho `x-realtime-connection` diz que a aba aplica a resposta sozinha: as mudanças de partida que ela emitir não voltam a esta conexão (as outras abas recebem). Fora da forma, é ignorado"),
     ),
     responses(
-        (status = 101, description = "WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ver; depois, mudanças do que assinou e de \"Seus torneios\", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu"),
+        (status = 101, description = "WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ler; depois, mudanças do que assinou e de \"Seus torneios\", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "realtime.origin_forbidden (o Origin não é o do site)"),
         (status = UPGRADE_REQUIRED, body = ErrorBody, description = "realtime.upgrade_required (não é um pedido de WebSocket)"),
@@ -176,7 +176,7 @@ async fn send(sink: &mut Sink, message: &ServerMessage) -> Result<(), axum::Erro
     sink.send(Message::Text(text.into())).await
 }
 
-/// Quantas notificações faltam ver (`unread`). Se o banco falha, a conexão
+/// Quantas notificações faltam ler (`unread`). Se o banco falha, a conexão
 /// segue sem a contagem, com log.
 async fn send_unread(state: &AppState, sink: &mut Sink, user: i64) -> Result<(), axum::Error> {
     match notifications::unread_count(&state.db, user).await {

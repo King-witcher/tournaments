@@ -22,6 +22,8 @@ type Props = {
   meta?: ReactNode;
   /** `StatusTag`s da situação. */
   tags?: ReactNode;
+  /** Ao abrir, além de navegar. */
+  onClick?: () => void;
 };
 
 /**
@@ -31,12 +33,25 @@ type Props = {
  * navega (sem hover no celular, é ela que diz que o tile abre algo). Vai
  * dentro de `TileGrid`.
  */
-export function LinkTile({ href, title, avatar, media, meta, tags }: Props) {
+export function LinkTile({
+  href,
+  title,
+  avatar,
+  media,
+  meta,
+  tags,
+  onClick,
+}: Props) {
   // O ClickableTile repassa `as` ao Link do Carbon (que o aceita), mas o tipo
   // dele só declara `href` como string.
   const link = { as: IntlLink, href } as unknown as { href: string };
   return (
-    <ClickableTile {...link} className={styles.tile} renderIcon={ArrowRight}>
+    <ClickableTile
+      {...link}
+      className={styles.tile}
+      renderIcon={ArrowRight}
+      onClick={onClick}
+    >
       {media && (
         <AspectRatio ratio="2x1" className={styles.media}>
           {media}

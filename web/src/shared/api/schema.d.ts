@@ -2245,15 +2245,15 @@ export interface components {
             slug: string;
         };
         /**
-         * @description As notificações vistas: até `up_to`, a mais recente da lista que a pessoa
-         *     abriu (as que chegaram depois continuam novas), ou só as `ids`, dos toasts
-         *     que ela fechou ou abriu.
+         * @description As notificações lidas: até `up_to`, a mais recente que a pessoa tem à vista
+         *     em "Marcar todas como lidas" (as que chegaram depois continuam não lidas),
+         *     ou as do `path` exato, a página que ela abriu.
          */
         MarkRead: {
             /** Format: int64 */
             up_to: number;
         } | {
-            ids: number[];
+            path: string;
         };
         /** @description Uma partida com os lados, o detalhe por mapa e o histórico. */
         MatchDetail: {
@@ -2696,7 +2696,10 @@ export interface components {
             id: number;
             /** @description O aviso, como chega pelo WebSocket (`notify`) e pelo Web Push. */
             notice: components["schemas"]["Notice"];
-            /** @description Se a pessoa já abriu o sininho com ele na lista. */
+            /**
+             * @description Se a pessoa já marcou como lida: abrindo a página dele ou com "Marcar
+             *     todas como lidas".
+             */
             read: boolean;
         };
         /** @description O code que o provedor mandou ao callback do front, com o verifier da aba. */
@@ -3650,7 +3653,7 @@ export interface components {
             /** @description Senha atual: obrigatória se a conta tem senha. */
             current_password?: string | null;
         };
-        /** @description Quantas notificações faltam ver. */
+        /** @description Quantas notificações faltam ler. */
         Unread: {
             /** Format: int64 */
             unread: number;
@@ -5776,20 +5779,32 @@ export interface operations {
     };
     notifications: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description `false`: só as não lidas. `true`: só as lidas. Sem ele, todas. */
+                read?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description As 50 notificações mais recentes de quem vê (ficam 30 dias), da mais nova, cada uma dizendo se já foi vista. Quantas faltam ver chega pelo WebSocket (`unread` ao conectar e ao ver noutra aba; cada `notify` soma uma) */
+            /** @description As 50 notificações mais recentes de quem vê, da mais nova, cada uma dizendo se já foi lida. O filtro vale antes do limite: uma não lida antiga não fica atrás das recentes. Quantas faltam ler chega pelo WebSocket (`unread` ao conectar e ao ler noutra aba; cada `notify` soma uma) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["Notification"][];
+                };
+            };
+            /** @description request.invalid_query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
             /** @description auth.unauthenticated */
@@ -5816,7 +5831,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description As notificações até `up_to` (as da lista aberta) ou as `ids` (os toasts fechados ou abertos) foram vistas, menos as de outra pessoa; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`) */
+            /** @description As notificações até `up_to` ("Marcar todas como lidas") ou as do `path` exato (a página que a pessoa abriu) foram lidas, menos as de outra pessoa; devolve quantas ainda faltam, que também chega às outras abas pelo WebSocket (`unread`), se alguma mudou */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -11269,7 +11284,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ver; depois, mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
+            /** @description WebSocket aberto. Mensagens em JSON: o navegador manda `ClientMessage` (assinar ou desfazer a assinatura de uma comunidade ou de um torneio) e recebe `ServerMessage` (a primeira é `unread`, quantas notificações faltam ler; depois, mudanças do que assinou e de "Seus torneios", avisos, acesso perdido, respostas). Ping a cada 30 s; quem não responde sai. Fechamento 4001: a sessão acabou (não reconecte). Em qualquer outra queda, reconecte, assine de novo e recarregue, porque o que mudou no meio se perdeu */
             101: {
                 headers: {
                     [name: string]: unknown;

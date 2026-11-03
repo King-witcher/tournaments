@@ -17,6 +17,8 @@ type Option<V extends string> = {
   disabled?: boolean;
   /** Idioma do texto, quando não é o da página (o nome de um idioma). */
   lang?: string;
+  /** `id` do botão: o alvo do foco ou o nome do conteúdo (`aria-labelledby`). */
+  id?: string;
 };
 
 // O nome do grupo, lido pelo leitor de tela: o texto ou o `id` de um rótulo
@@ -58,7 +60,7 @@ export function ContentSwitcher<V extends string>({
         if (index !== undefined) onChange(options[index].value);
       }}
     >
-      {options.map(({ value: name, text, icon: Icon, disabled, lang }) =>
+      {options.map(({ value: name, text, icon: Icon, disabled, lang, id }) =>
         Icon ? (
           <IconSwitch
             key={name}
@@ -66,6 +68,7 @@ export function ContentSwitcher<V extends string>({
             text={text}
             disabled={disabled}
             lang={lang}
+            id={id}
           >
             <Icon />
           </IconSwitch>
@@ -76,6 +79,7 @@ export function ContentSwitcher<V extends string>({
             text={text}
             disabled={disabled}
             lang={lang}
+            id={id}
           />
         ),
       )}

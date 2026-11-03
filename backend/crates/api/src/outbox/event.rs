@@ -39,8 +39,8 @@ pub enum Event {
     /// Aviso para pessoas, pelo WebSocket e pelo Web Push (e guardado no
     /// sininho de cada uma pelo despachante).
     Notice { users: Vec<i64>, notice: Notice },
-    /// `user` viu as notificações (abriu o sininho numa aba ou noutro
-    /// aparelho): `count` é quantas ainda faltam, para as outras abas.
+    /// `user` leu notificações (numa aba ou noutro aparelho): `count` é quantas
+    /// ainda faltam, para as outras abas.
     Unread { user: i64, count: i64 },
     /// Aviso só para o canal do Discord da comunidade (ninguém o recebe no
     /// site nem no Web Push).

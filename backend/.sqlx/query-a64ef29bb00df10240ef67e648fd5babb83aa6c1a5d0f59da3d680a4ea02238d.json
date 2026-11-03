@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update notifications set read_at = now()\n         where user_id = $1 and read_at is null and notice ->> 'path' = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a64ef29bb00df10240ef67e648fd5babb83aa6c1a5d0f59da3d680a4ea02238d"
+}

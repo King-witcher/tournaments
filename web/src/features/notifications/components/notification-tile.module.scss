@@ -1,5 +1,4 @@
 @use "@carbon/react/scss/spacing";
-@use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
 // A frase e, embaixo, quando chegou: duas linhas do metadado do tile.
@@ -10,16 +9,6 @@
 .when {
   @include type.type-style("helper-text-01");
 
-  display: flex;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-03;
+  display: block;
   margin-block-start: spacing.$spacing-03;
-}
-
-// "Nova" em peso e na cor do texto principal: o que distingue as que
-// faltavam ver é a palavra, não só a cor.
-.new {
-  @include type.font-weight("semibold");
-
-  color: theme.$text-primary;
 }

@@ -5,14 +5,16 @@ import { RealtimeClient, type ServerMessage } from "./realtime-client";
  * A conexão da aba e o que as páginas abertas mostram. Cada página declara o
  * que mostra (`watch`, pelo `LiveUpdates`): a comunidade ou o torneio viram
  * assinatura no socket, e o conjunto decide quais mudanças recarregam.
- * Guarda também quantas notificações faltam ver (`getUnread`), para o
- * sininho do cabeçalho.
+ * Guarda também, para o sininho do cabeçalho, quantas notificações faltam ler
+ * (`getUnread`) e se ele está aberto (`isBellOpen`).
  */
 export class RealtimeHub {
   readonly client: RealtimeClient;
   private readonly interests = new Set<Interest>();
   private unread: number | undefined;
   private readonly unreadListeners = new Set<() => void>();
+  private bellOpen = false;
+  private readonly bellListeners = new Set<() => void>();
 
   constructor(url: string) {
     this.client = new RealtimeClient(url);
@@ -73,8 +75,8 @@ export class RealtimeHub {
   }
 
   /**
-   * Quantas notificações faltam ver: a API manda ao conectar e quando a
-   * pessoa as vê noutra aba (`unread`), e cada aviso (`notify`) soma uma.
+   * Quantas notificações faltam ler: a API manda ao conectar e quando a
+   * pessoa as lê noutra aba (`unread`), e cada aviso (`notify`) soma uma.
    * `undefined` sem conexão. Estável, para o `useSyncExternalStore`.
    */
   getUnread = () => this.unread;
@@ -87,10 +89,32 @@ export class RealtimeHub {
     };
   };
 
+  /** Se o sininho está aberto. Estável, para o `useSyncExternalStore`. */
+  isBellOpen = () => this.bellOpen;
+
+  /** Passa a ouvir as mudanças de `isBellOpen`; devolve a função que desfaz. */
+  onBell = (listener: () => void) => {
+    this.bellListeners.add(listener);
+    return () => {
+      this.bellListeners.delete(listener);
+    };
+  };
+
+  /** O sininho abriu; devolve a função que registra que ele fechou. */
+  openBell() {
+    this.setBellOpen(true);
+    return () => this.setBellOpen(false);
+  }
+
+  private setBellOpen(open: boolean) {
+    this.bellOpen = open;
+    for (const listener of this.bellListeners) listener();
+  }
+
   /**
-   * A contagem que a API devolveu ao marcar como vistas, sem esperar o
-   * socket; `undefined` ao fechar a conexão (a próxima pode ser de outra
-   * conta).
+   * A contagem que a API devolveu ao marcar como lidas, ou a da lista das não
+   * lidas, sem esperar o socket; `undefined` ao fechar a conexão (a próxima
+   * pode ser de outra conta).
    */
   setUnread(count: number | undefined) {
     if (count === this.unread) return;

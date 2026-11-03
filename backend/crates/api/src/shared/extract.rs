@@ -1,6 +1,6 @@
-//! `Json` e `Path` do axum com a rejeição convertida em `ApiError`, para que
-//! corpo ou caminho inválido também saia como `{"error": "<código>"}` e não
-//! como texto puro.
+//! `Json`, `Path` e `Query` do axum com a rejeição convertida em `ApiError`,
+//! para que corpo, caminho ou query inválidos também saiam como
+//! `{"error": "<código>"}` e não como texto puro.
 
 use axum::{
     extract::{FromRequest, FromRequestParts, OptionalFromRequest, Request},
@@ -59,5 +59,19 @@ impl<S: Send + Sync, T: DeserializeOwned + Send> FromRequestParts<S> for PathPar
             .await
             .map(|axum::extract::Path(value)| Self(value))
             .map_err(|rej| ApiError::new(rej.status(), "request.invalid_path"))
+    }
+}
+
+/// Parâmetros da query. Inválido (ex.: `read=talvez`) → 400 `request.invalid_query`.
+pub struct QueryParams<T>(pub T);
+
+impl<S: Send + Sync, T: DeserializeOwned> FromRequestParts<S> for QueryParams<T> {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        axum::extract::Query::<T>::from_request_parts(parts, state)
+            .await
+            .map(|axum::extract::Query(value)| Self(value))
+            .map_err(|rej| ApiError::new(rej.status(), "request.invalid_query"))
     }
 }

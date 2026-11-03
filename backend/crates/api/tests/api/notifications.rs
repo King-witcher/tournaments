@@ -1,6 +1,7 @@
 //! `/me/notifications`: os avisos que o despachante guardou para cada pessoa,
-//! o que abrir o sininho (até a mais recente da lista) ou fechar um toast (só
-//! a dele) marca como visto e o prazo de 30 dias. A contagem pelo WebSocket fica em `realtime::socket`.
+//! o filtro entre lidas e não lidas, o que abrir a página de um aviso (pelo
+//! caminho) ou "Marcar todas como lidas" (até a mais recente da lista) marca e
+//! o prazo de 30 dias. A contagem pelo WebSocket fica em `realtime::socket`.
 
 use api::realtime;
 use axum::{
@@ -17,9 +18,29 @@ use crate::realtime::{clear, outbox};
 use crate::schema::{CHECK, exec, rejected, rule};
 
 async fn notifications(app: &Router, who: &User) -> Vec<Value> {
-    let (status, body) = get(app, "/me/notifications", who).await;
+    listed(app, who, "").await
+}
+
+async fn listed(app: &Router, who: &User, query: &str) -> Vec<Value> {
+    let (status, body) = get(app, &format!("/me/notifications{query}"), who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     body.as_array().unwrap().clone()
+}
+
+/// Um aviso direto no banco que leva a `path`.
+async fn stored_at(db: &PgPool, who: &User, path: &str) {
+    sqlx::query(
+        r#"insert into notifications (user_id, notice)
+           values ($1, jsonb_build_object(
+               'code', 'tournament.start_due',
+               'params', jsonb_build_object('tournament', 'Liga'),
+               'path', $2::text))"#,
+    )
+    .bind(who.id)
+    .bind(path)
+    .execute(db)
+    .await
+    .unwrap();
 }
 
 /// Um aviso direto no banco, criado há `days` dias.
@@ -109,29 +130,83 @@ async fn dispatched_notices_stay_until_seen() {
         .map(|n| (n["id"].as_i64().unwrap(), n["read"].as_bool().unwrap()))
         .collect();
     assert_eq!(read, [(first + 1, false), (first, true)]);
-    // O id de outra pessoa não marca nada dela.
-    for body in [json!({ "up_to": first + 1 }), json!({ "ids": [first + 1] })] {
+    // Nada de outra pessoa muda, e nada muda: as abas não precisam saber.
+    clear(&db).await;
+    for body in [
+        json!({ "up_to": first + 1 }),
+        json!({ "path": "/quake-br/liga" }),
+    ] {
         let (_, body) = post(&app, "/me/notifications/read", &ana, body).await;
         assert_eq!(body, json!({ "unread": 0 }));
     }
+    assert_eq!(outbox(&db).await, Vec::<Value>::new());
     assert_eq!(notifications(&app, &bia).await[0]["read"], false);
+}
 
-    // O toast fechado marca só a dele.
-    stored(&db, &bia, 0).await;
+#[tokio::test]
+async fn opening_a_page_marks_only_the_notices_of_that_exact_path() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let (ana, bia) = (user(&db, "Ana").await, user(&db, "Bia").await);
+    stored_at(&db, &ana, "/quake-br/liga").await;
+    stored_at(&db, &ana, "/quake-br/liga").await;
+    stored_at(&db, &ana, "/quake-br/liga/matches/wb-1-1").await;
+    stored_at(&db, &bia, "/quake-br/liga").await;
+
     let (status, body) = post(
         &app,
         "/me/notifications/read",
-        &bia,
-        json!({ "ids": [first + 1] }),
+        &ana,
+        json!({ "path": "/quake-br/liga" }),
     )
     .await;
     assert_eq!((status, body), (StatusCode::OK, json!({ "unread": 1 })));
-    let read: Vec<bool> = notifications(&app, &bia)
+    assert_eq!(
+        outbox(&db).await,
+        [json!({ "kind": "unread", "user": ana.id, "count": 1 })]
+    );
+    let unread = listed(&app, &ana, "?read=false").await;
+    assert_eq!(unread.len(), 1);
+    assert_eq!(unread[0]["notice"]["path"], "/quake-br/liga/matches/wb-1-1");
+    assert_eq!(listed(&app, &bia, "?read=false").await.len(), 1);
+}
+
+#[tokio::test]
+async fn the_filter_comes_before_the_limit() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let ana = user(&db, "Ana").await;
+    stored(&db, &ana, 2).await;
+    let old = notifications(&app, &ana).await[0]["id"].as_i64().unwrap();
+    for _ in 0..50 {
+        stored(&db, &ana, 1).await;
+    }
+    sqlx::query("update notifications set read_at = now() where id > $1")
+        .bind(old)
+        .execute(&db)
         .await
-        .iter()
-        .map(|n| n["read"].as_bool().unwrap())
-        .collect();
-    assert_eq!(read, [false, true, true]);
+        .unwrap();
+
+    // A não lida antiga não fica atrás das 50 recentes.
+    let unread = listed(&app, &ana, "?read=false").await;
+    assert_eq!(unread.len(), 1);
+    assert_eq!(unread[0]["id"], old);
+    assert_eq!(unread[0]["read"], false);
+    let read = listed(&app, &ana, "?read=true").await;
+    assert_eq!(read.len(), 50);
+    assert!(read.iter().all(|n| n["read"] == true));
+    assert!(
+        notifications(&app, &ana)
+            .await
+            .iter()
+            .all(|n| n["id"] != old)
+    );
+
+    let (status, body) = get(&app, "/me/notifications?read=talvez", &ana).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::BAD_REQUEST, err("request.invalid_query"))
+    );
 }
 
 #[tokio::test]

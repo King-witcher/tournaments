@@ -2,101 +2,102 @@
 
 import { InlineLoading } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type RefObject, useId, useState } from "react";
 
-import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
-import { api } from "@/shared/api/client";
-import type { components } from "@/shared/api/schema";
+import { focusIfLost } from "@/shared/lib/focus";
+import { ContentSwitcher } from "@/shared/ui/content-switcher";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { ErrorText } from "@/shared/ui/error-text";
+import {
+  type NotificationLists,
+  type NotificationView,
+  useNotificationLists,
+} from "../hooks/use-notification-lists";
+import { MarkAllReadButton } from "./mark-all-read-button";
 import styles from "./notification-list.module.scss";
 import { NotificationTile } from "./notification-tile";
 
-export type NotificationEntry = components["schemas"]["Notification"];
-
-type Props = {
-  /** O que chegou na última abertura, se houve (já como visto). */
-  notifications?: NotificationEntry[];
-  /** Estável (o `setState` do painel): a busca sai uma vez por abertura. */
-  onLoad: (notifications: NotificationEntry[]) => void;
-};
-
 /**
- * O conteúdo do sininho, montado a cada abertura: busca a lista de novo e,
- * enquanto ela não chega, mostra a da abertura anterior (ou o carregando, na
- * primeira). Se alguma não tinha sido vista, marca como vistas até a mais
- * recente da lista (a que chegar depois continua nova); a contagem volta na
- * resposta e, nas outras abas, pelo WebSocket. As que eram novas continuam
- * marcadas até o painel fechar.
+ * O conteúdo do sininho, montado a cada abertura: as não lidas por padrão e,
+ * no `ContentSwitcher` (filtro da mesma lista, como o Carbon recomenda no
+ * lugar de abas), as lidas. O título e o filtro não esperam a busca, então as
+ * lidas estão ao alcance também sem nada não lido. O leitor de tela ouve
+ * quantas há a cada troca de vista; depois de "Marcar todas", que some, o foco
+ * vai para o filtro.
  */
-export function NotificationList({ notifications, onLoad }: Props) {
+export function NotificationList({
+  saved,
+}: {
+  saved: RefObject<NotificationLists>;
+}) {
   const t = useTranslations("Notifications.bell");
-  const hub = useRealtimeHub();
-  const [fresh, setFresh] = useState<NotificationEntry[]>();
-  const [failed, setFailed] = useState(false);
+  const [view, setView] = useState<NotificationView>("unread");
+  const { lists, failed, clearUnread } = useNotificationLists(view, saved);
+  const id = useId();
+  const titleId = `${id}-title`;
+  const tabId = (name: NotificationView) => `${id}-${name}`;
+  const list = lists[view];
+  const empty = t(view === "read" ? "emptyRead" : "emptyUnread");
 
-  useEffect(() => {
-    let live = true;
-    api
-      .GET("/me/notifications")
-      .then(({ data }) => {
-        if (!live) return;
-        if (!data) {
-          setFailed(true);
-          return;
-        }
-        setFresh(data);
-        onLoad(data.map((n) => ({ ...n, read: true })));
-        if (!data.some((n) => !n.read)) return;
-        api
-          .POST("/me/notifications/read", { body: { up_to: data[0].id } })
-          .then(({ data: result }) => {
-            if (result) hub?.setUnread(result.unread);
-          })
-          // Sem a resposta, a contagem continua e a próxima abertura tenta.
-          .catch(() => {});
-      })
-      .catch(() => {
-        if (live) setFailed(true);
-      });
-    return () => {
-      live = false;
-    };
-  }, [onLoad, hub]);
-
-  const list = fresh ?? notifications;
-  if (!list) {
-    return (
-      <div className={styles.status}>
-        {failed ? (
-          <ErrorText>{t("failed")}</ErrorText>
-        ) : (
-          <InlineLoading description={t("loading")} />
-        )}
-      </div>
-    );
-  }
   return (
     <>
-      <h2 className={styles.title}>{t("title")}</h2>
-      {failed && (
-        <div className={styles.status}>
-          <ErrorText>{t("failed")}</ErrorText>
-        </div>
-      )}
-      {list.length === 0 ? (
-        <p className={styles.status}>{t("empty")}</p>
-      ) : (
-        <>
-          <ul className={styles.list}>
-            {list.map((notification) => (
-              <li key={notification.id}>
-                <NotificationTile notification={notification} />
-              </li>
-            ))}
-          </ul>
-          <p className={styles.kept}>{t("kept")}</p>
-        </>
-      )}
+      <h2 id={titleId} className={styles.title}>
+        {t("title")}
+      </h2>
+      <div className={styles.views}>
+        <ContentSwitcher
+          aria-labelledby={titleId}
+          options={[
+            { value: "unread", text: t("unread"), id: tabId("unread") },
+            { value: "read", text: t("read"), id: tabId("read") },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      </div>
+      <div role="tabpanel" aria-labelledby={tabId(view)}>
+        <p role="status" className={styles.announce}>
+          {list &&
+            (list.length === 0
+              ? empty
+              : t(view === "read" ? "countRead" : "countUnread", {
+                  count: list.length,
+                }))}
+        </p>
+        {failed && (
+          <div className={styles.status}>
+            <ErrorText>{t("failed")}</ErrorText>
+          </div>
+        )}
+        {!list ? (
+          !failed && (
+            <div className={styles.status}>
+              <InlineLoading description={t("loading")} />
+            </div>
+          )
+        ) : list.length === 0 ? (
+          <EmptyState>{empty}</EmptyState>
+        ) : (
+          <>
+            {view === "unread" && (
+              <MarkAllReadButton
+                upTo={list[0].id}
+                onDone={() => {
+                  clearUnread();
+                  focusIfLost(tabId("unread"));
+                }}
+              />
+            )}
+            <ul className={styles.list}>
+              {list.map((notification) => (
+                <li key={notification.id}>
+                  <NotificationTile notification={notification} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </>
   );
 }

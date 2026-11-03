@@ -86,8 +86,12 @@
     "title": "Notificações",
     "loading": "Carregando as notificações…",
     "failed": "Não deu para carregar as notificações. Feche e abra de novo.",
-    "empty": "Nenhuma notificação nos últimos 30 dias.",
-    "new": "Nova",
-    "kept": "As notificações ficam aqui por 30 dias."
+    "unread": "Não lidas",
+    "read": "Lidas",
+    "emptyUnread": "Nenhuma notificação nova.",
+    "emptyRead": "Nenhuma notificação lida.",
+    "countUnread": "{count, plural, one {# notificação não lida.} other {# notificações não lidas.}}",
+    "countRead": "{count, plural, one {# notificação lida.} other {# notificações lidas.}}",
+    "markAll": "Marcar todas como lidas"
   }
 }

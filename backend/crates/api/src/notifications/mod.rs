@@ -1,16 +1,16 @@
 //! Notificações: os avisos para pessoas (`outbox::Notice`) guardados um por
 //! destinatário, para o sininho do cabeçalho mostrar os que já passaram (o
 //! toast some sozinho, e com o site fechado só chega o Web Push) e quantos a
-//! pessoa ainda não viu.
+//! pessoa ainda não leu.
 //!
 //! - O despachante do `realtime` grava cada aviso que publica (`store`, na
 //!   transação dele), e o WebSocket manda as não lidas ao abrir
 //!   (`unread_count`); cada aviso que chega depois soma uma no front.
-//! - `GET /me/notifications`: as mais recentes. `POST /me/notifications/read`:
-//!   abrir o sininho marca como vistas as da lista (até um id: a que chegou
-//!   depois continua nova), e fechar ou abrir um toast, a dele (o id vem no
-//!   `notify`, do que `store` devolveu ao despachante); emite `Event::Unread`,
-//!   que leva a contagem às outras abas e aparelhos.
+//! - `GET /me/notifications`: as mais recentes, todas, só as lidas ou só as não
+//!   lidas. `POST /me/notifications/read`: abrir a página de um aviso marca os
+//!   dela (pelo `path` exato) e "Marcar todas como lidas" marca até um id (a
+//!   que chegou depois continua não lida); se alguma mudou, emite
+//!   `Event::Unread`, que leva a contagem às outras abas e aparelhos.
 //! - Ficam 30 dias (`delete_expired`, pelo agendador, em `retention`) e saem
 //!   com a conta excluída (`forget_user`, que `members` chama) e com o torneio
 //!   a que levam (trigger `tournaments_path_forgotten`; `unread_under` e

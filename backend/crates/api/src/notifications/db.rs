@@ -1,5 +1,5 @@
 //! SQL das notificações: gravar na transação do despachante, listar, contar
-//! as não lidas, marcar como vistas e apagar.
+//! as não lidas, marcar como lidas e apagar.
 
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ pub async fn store(
     Ok(rows.into_iter().map(|r| (r.user_id, r.id)).collect())
 }
 
-/// Quantas notificações de `user_id` faltam ver.
+/// Quantas notificações de `user_id` faltam ler.
 pub async fn unread_count(db: impl PgExecutor<'_>, user_id: i64) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"select count(*) as "count!" from notifications
@@ -44,11 +44,14 @@ pub async fn unread_count(db: impl PgExecutor<'_>, user_id: i64) -> Result<i64, 
     .await
 }
 
-/// As `limit` notificações mais recentes de `user_id`. A que a API não
-/// entende mais (um código que saiu) fica de fora, com log.
+/// As `limit` notificações mais recentes de `user_id`; com `read`, só as lidas
+/// ou só as não lidas. A que a API não entende mais fica de fora, com log, mas
+/// continua na contagem das não lidas: quem tira um código do `NoticeKind`
+/// apaga as linhas dele na migration.
 pub async fn recent(
     db: &PgPool,
     user_id: i64,
+    read: Option<bool>,
     limit: i64,
 ) -> Result<Vec<Notification>, sqlx::Error> {
     let rows = sqlx::query!(
@@ -56,9 +59,11 @@ pub async fn recent(
                   read_at is not null as "read!"
            from notifications
            where user_id = $1
+             and ($2::bool is null or (read_at is not null) = $2)
            order by id desc
-           limit $2"#,
+           limit $3"#,
         user_id,
+        read,
         limit
     )
     .fetch_all(db)
@@ -79,40 +84,40 @@ pub async fn recent(
         .collect())
 }
 
-/// Marca como vistas as notificações de `user_id` até `up_to` e devolve
-/// quantas ainda faltam.
+/// Marca como lidas as notificações de `user_id` até `up_to` e devolve quantas
+/// mudaram.
 pub async fn mark_read(
     conn: &mut PgConnection,
     user_id: i64,
     up_to: i64,
-) -> Result<i64, sqlx::Error> {
-    sqlx::query!(
+) -> Result<u64, sqlx::Error> {
+    let done = sqlx::query!(
         "update notifications set read_at = now()
          where user_id = $1 and id <= $2 and read_at is null",
         user_id,
         up_to
     )
-    .execute(&mut *conn)
+    .execute(conn)
     .await?;
-    unread_count(conn, user_id).await
+    Ok(done.rows_affected())
 }
 
-/// Marca como vistas as notificações `ids` de `user_id` (as de outra pessoa
-/// não mudam) e devolve quantas ainda faltam.
-pub async fn mark_read_ids(
+/// Marca como lidas as notificações de `user_id` que levam a `path`, sem
+/// olhar as de outra página, e devolve quantas mudaram.
+pub async fn mark_read_at_path(
     conn: &mut PgConnection,
     user_id: i64,
-    ids: &[i64],
-) -> Result<i64, sqlx::Error> {
-    sqlx::query!(
+    path: &str,
+) -> Result<u64, sqlx::Error> {
+    let done = sqlx::query!(
         "update notifications set read_at = now()
-         where user_id = $1 and id = any($2) and read_at is null",
+         where user_id = $1 and read_at is null and notice ->> 'path' = $2",
         user_id,
-        ids
+        path
     )
-    .execute(&mut *conn)
+    .execute(conn)
     .await?;
-    unread_count(conn, user_id).await
+    Ok(done.rows_affected())
 }
 
 /// Quem da comunidade `tenant` tem notificação não vista que leva a `root` (o

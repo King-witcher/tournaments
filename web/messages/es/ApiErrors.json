@@ -3,6 +3,7 @@
   "request": {
     "invalid_body": "Datos inválidos.",
     "invalid_path": "Dirección inválida.",
+    "invalid_query": "Dirección inválida.",
     "cross_origin": "Solicitud rechazada. No vino de este sitio."
   },
   "auth": {

@@ -1,6 +1,7 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
 
 // O nome do painel, como o nome da pessoa no painel dela.
 .title {
@@ -10,8 +11,17 @@
   color: theme.$text-primary;
 }
 
-// Carregando, erro e "nenhuma notificação": com a margem dos tiles, para não
-// colar na borda do painel.
+// O filtro, com a margem dos tiles, para não colar na borda do painel.
+.views {
+  padding: 0 spacing.$spacing-05 spacing.$spacing-03;
+}
+
+// Quantas há, para o leitor de tela: quem vê tem a lista.
+.announce {
+  @include visually-hidden;
+}
+
+// Carregando e erro: com a margem dos tiles.
 .status {
   @include type.type-style("body-compact-01");
 
@@ -22,12 +32,4 @@
 // Os tiles têm a cor do painel: a linha entre eles separa um aviso do outro.
 .list > li + li {
   border-block-start: 1px solid theme.$border-subtle-01;
-}
-
-// Por que as mais antigas não estão aqui.
-.kept {
-  @include type.type-style("helper-text-01");
-
-  padding: spacing.$spacing-05;
-  color: theme.$text-secondary;
 }

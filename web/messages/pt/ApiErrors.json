@@ -3,6 +3,7 @@
   "request": {
     "invalid_body": "Dados inválidos.",
     "invalid_path": "Endereço inválido.",
+    "invalid_query": "Endereço inválido.",
     "cross_origin": "Pedido recusado. Ele não veio deste site."
   },
   "auth": {

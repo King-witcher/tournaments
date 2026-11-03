@@ -1,5 +1,5 @@
 //! O que todos os domínios usam: erro da API (inclusive a conversão dos erros
-//! do `engine`), extractors de corpo e caminho, o IP de quem pede
+//! do `engine`), extractors de corpo, caminho e query, o IP de quem pede
 //! (`client_ip`), tokens e códigos, idiomas, formato de slug, validação de
 //! texto, a conexão com o Redis, os buckets S3 (`storage`, com a URL pública
 //! do bucket público), o tipo das imagens enviadas (`image`), a recusa de
@@ -25,7 +25,7 @@ pub mod window_limit;
 pub use self::redis::Redis;
 pub use client_ip::ClientIp;
 pub use error::{ApiError, ErrorBody, ParamValue};
-pub use extract::{JsonBody, PathParams, nullable};
+pub use extract::{JsonBody, PathParams, QueryParams, nullable};
 pub use image::ImageType;
 pub use locale::Locale;
 pub use outbound_gate::{OutboundGate, Refused};
