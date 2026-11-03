@@ -50,7 +50,7 @@ async fn after_the_expected_duration_the_window_counts_from_the_report() {
     assert_eq!(body["games"][0]["confirmed_via"], "opponent");
 
     // A 2, liberada agora (no envio da 1): a duração dela e a janela.
-    let (status, body) = report(&app, &p[0], "wb-1-1", 2, game("b", "exile")).await;
+    let (status, body) = report(&app, &p[0], "wb-1-1", 2, game("b", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(deadlines(&db).await[1], 25 * 60);
 }

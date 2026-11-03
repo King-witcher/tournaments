@@ -72,10 +72,18 @@ async fn the_player_reports_only_with_a_screenshot() {
     let (status, body) = report(&c.app, &c.p1, FINAL, 1, map("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // O mapa seguinte precisa do dele.
-    let (status, _) = report(&c.app, &c.p1, FINAL, 2, map("a", "exile")).await;
+    let (status, _) = report(&c.app, &c.p1, FINAL, 2, map("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::CONFLICT);
     // A organização lança sem screenshot.
-    let (status, body) = set_game(&c.app, &c.ana, FINAL, 2, map("a", "exile"), None).await;
+    let (status, body) = set_game(
+        &c.app,
+        &c.ana,
+        FINAL,
+        2,
+        map("a", "vestibule-of-exile"),
+        None,
+    )
+    .await;
     assert_eq!(status, StatusCode::OK, "{body}");
 }
 
@@ -127,7 +135,11 @@ async fn with_the_veto_the_map_comes_first_then_the_screenshot() {
     let (status, body) = attach_screenshot(&c.app, &c.p1, FINAL, 1).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // Outro mapa que o do veto continua recusado, com screenshot ou sem.
-    let other = if drawn == "awoken" { "exile" } else { "awoken" };
+    let other = if drawn == "awoken" {
+        "vestibule-of-exile"
+    } else {
+        "awoken"
+    };
     let (status, body) = report(&c.app, &c.p1, FINAL, 1, map("a", other)).await;
     assert_eq!(
         (status, body),

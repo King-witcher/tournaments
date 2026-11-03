@@ -117,7 +117,7 @@ async fn veto_events_keep_their_shape_and_order() {
         t,
         "ban",
         ", game, side, map_id, timeout, actor",
-        ", 1, 'b', (select id from maps where slug = 'exile'), true, (select min(id) from users)",
+        ", 1, 'b', (select id from maps where slug = 'vestibule-of-exile'), true, (select min(id) from users)",
     );
     assert_eq!(
         rejected(exec(&db, &timeout_with_actor).await),

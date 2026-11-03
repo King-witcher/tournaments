@@ -136,7 +136,7 @@ async fn a_pending_report_gives_way_to_the_walkover() {
     )
     .await;
     assert_eq!(status, StatusCode::OK);
-    let (status, _) = report(&app, &p[3], "wb-1-1", 2, game("b", "exile")).await;
+    let (status, _) = report(&app, &p[3], "wb-1-1", 2, game("b", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
 
     ok(&app, &ana, &p[0]).await;
@@ -230,7 +230,7 @@ async fn walkovers_follow_confirmations_by_deadline() {
         "pending"
     );
 
-    for (n, map) in [(1, "awoken"), (2, "exile")] {
+    for (n, map) in [(1, "awoken"), (2, "vestibule-of-exile")] {
         let (status, _) = report(&app, &p[1], "wb-1-2", n, game("a", map)).await;
         assert_eq!(status, StatusCode::OK);
     }

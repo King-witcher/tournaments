@@ -155,7 +155,7 @@ async fn the_organizer_substitutes_a_player_during_the_tournament() {
     // O mapa 1 continua com quem jogou; o 2 já é com os novos.
     let (status, _) = confirm(&app, &p[2], "wb-1-1", 1).await;
     assert_eq!(status, StatusCode::OK);
-    let (status, body) = report(&app, &p[4], "wb-1-1", 2, game("a", "exile")).await;
+    let (status, body) = report(&app, &p[4], "wb-1-1", 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let d = detail(&app, &ana, "wb-1-1").await;
     let lineup = |n: usize, side: &str| -> Vec<i64> {

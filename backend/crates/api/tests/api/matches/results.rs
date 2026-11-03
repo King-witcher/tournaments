@@ -70,7 +70,7 @@ async fn maps_are_confirmed_one_by_one_and_the_series_closes_on_the_majority() {
     assert_eq!(side_player(&b, "wb-2-1", "a"), Value::Null);
 
     // O mapa 2, enviado por P1 e confirmado por P4, fecha a série.
-    let (status, _) = report(&app, &p[0], "wb-1-1", 2, game("a", "exile")).await;
+    let (status, _) = report(&app, &p[0], "wb-1-1", 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         side_player(&bracket(&app, &p[0]).await, "wb-2-1", "a"),
@@ -222,7 +222,7 @@ async fn reporting_rules() {
     let (status, _) = report(&app, &p[0], k, 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
-        report(&app, &p[3], k, 1, game("b", "exile")).await,
+        report(&app, &p[3], k, 1, game("b", "vestibule-of-exile")).await,
         conflict("match.game_already_reported")
     );
     // Mapa repetido na série.
@@ -242,7 +242,7 @@ async fn reporting_rules() {
 
     // O segundo mapa de A, ainda pendente, já decide pela soma dos enviados:
     // não há terceiro.
-    let (status, _) = report(&app, &p[3], k, 2, game("a", "exile")).await;
+    let (status, _) = report(&app, &p[3], k, 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         report(&app, &p[3], k, 3, game("b", "insomnia")).await,
@@ -269,7 +269,7 @@ async fn unanswered_maps_confirm_when_the_deadline_ends() {
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
-    for (n, map) in [(1, "awoken"), (2, "exile")] {
+    for (n, map) in [(1, "awoken"), (2, "vestibule-of-exile")] {
         let (status, body) = report(&app, &p[0], "wb-1-1", n, game("a", map)).await;
         assert_eq!(status, StatusCode::OK, "{body}");
     }

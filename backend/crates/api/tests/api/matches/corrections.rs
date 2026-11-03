@@ -85,7 +85,15 @@ async fn a_valid_correction_rebuilds_the_bracket() {
     assert_eq!(final_["games"], json!([]));
 
     // O 2 também: P4 vence 2 x 0 e vai à final.
-    let (status, fixed) = set_game(&app, &ana, "wb-1-1", 2, game("b", "exile"), None).await;
+    let (status, fixed) = set_game(
+        &app,
+        &ana,
+        "wb-1-1",
+        2,
+        game("b", "vestibule-of-exile"),
+        None,
+    )
+    .await;
     assert_eq!(status, StatusCode::OK, "{fixed}");
     assert_eq!(fixed["summary"]["result"]["b_wins"], 2);
     let b = bracket(&app, &ana).await;

@@ -20,7 +20,15 @@ async fn a_correction_changes_the_past() {
     assert_eq!(table(&ranking(&f.app, &f.bia).await)[0].1, 1569);
     // O mapa 2 passa a ser do P2: a série reabre em 1 x 1, e o segundo mapa
     // vira a zebra (+46 para quem tinha 1460).
-    let (status, body) = set_game(&f.app, &f.ana, "wb-1-1", 2, game("b", "exile"), None).await;
+    let (status, body) = set_game(
+        &f.app,
+        &f.ana,
+        "wb-1-1",
+        2,
+        game("b", "vestibule-of-exile"),
+        None,
+    )
+    .await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         table(&ranking(&f.app, &f.bia).await),

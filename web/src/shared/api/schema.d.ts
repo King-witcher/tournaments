@@ -2246,10 +2246,10 @@ export interface components {
             losses: number;
             /**
              * @description Nome próprio do mapa, igual em todos os idiomas.
-             * @example Exile
+             * @example Vestibule of Exile
              */
             name: string;
-            /** @example exile */
+            /** @example vestibule-of-exile */
             slug: string;
             /** Format: int32 */
             wins: number;

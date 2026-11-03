@@ -235,7 +235,7 @@ async fn contests_reach_the_organization_home() {
     assert!(!has_me(&db, &staff).await);
 
     // Desfazer o início apaga os contestados.
-    let (status, body) = report(&app, &p[1], "wb-1-1", 2, game("b", "exile")).await;
+    let (status, body) = report(&app, &p[1], "wb-1-1", 2, game("b", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = contest(&app, &p[0], "wb-1-1", 2, "não").await;
     assert_eq!(status, StatusCode::OK, "{body}");

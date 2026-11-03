@@ -28,8 +28,8 @@ async fn maps_list_the_duel_pool_first() {
             "deep-embrace",
             "blood-run",
             "crucible",
-            "exile",
-            "insomnia"
+            "insomnia",
+            "vestibule-of-exile"
         ]
     );
     assert!(maps[..11].iter().all(|m| m["duel_pool"] == true));

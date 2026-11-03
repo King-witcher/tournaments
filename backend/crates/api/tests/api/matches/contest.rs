@@ -70,7 +70,7 @@ async fn a_confirmed_game_is_contested_until_either_side_starts_another_series()
     let (status, body) = report(&app, &p[0], k, 1, game("a", "awoken")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     age(&db, 26).await;
-    let (status, body) = report(&app, &p[0], k, 2, game("a", "exile")).await;
+    let (status, body) = report(&app, &p[0], k, 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = confirm(&app, &p[3], k, 2).await;
     assert_eq!(status, StatusCode::OK, "{body}");

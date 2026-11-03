@@ -809,12 +809,12 @@ async fn the_tournament_keeps_the_veto_settings() {
             Value::Null,
         ),
         bad(
-            json!({ "map_pool": ["awoken", "exile", "insomnia", "lockbox"] }),
+            json!({ "map_pool": ["awoken", "vestibule-of-exile", "insomnia", "lockbox"] }),
             "tournament.map_pool_too_small",
             json!({ "min": 5 }),
         ),
         bad(
-            json!({ "map_pool": ["awoken", "exile", "awoken", "lockbox", "insomnia"] }),
+            json!({ "map_pool": ["awoken", "vestibule-of-exile", "awoken", "lockbox", "insomnia"] }),
             "tournament.map_pool_repeated",
             Value::Null,
         ),
@@ -834,7 +834,7 @@ async fn the_tournament_keeps_the_veto_settings() {
         &app,
         tournament,
         &ana,
-        json!({ "veto": { "map_mode": "vote", "order": "alternating", "map_pool": ["lockbox", "exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
+        json!({ "veto": { "map_mode": "vote", "order": "alternating", "map_pool": ["lockbox", "vestibule-of-exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{edited}");

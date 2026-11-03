@@ -67,7 +67,7 @@ async fn a_contested_map_waits_for_the_organizer_without_holding_the_next() {
     );
 
     // A contestação não trava o resto: os mapas 2 e 3 seguem.
-    for (n, side, map) in [(2, "b", "exile"), (3, "a", "insomnia")] {
+    for (n, side, map) in [(2, "b", "vestibule-of-exile"), (3, "a", "insomnia")] {
         let (status, body) = report(&app, &p[0], k, n, game(side, map)).await;
         assert_eq!(status, StatusCode::OK, "{n}: {body}");
         let (status, body) = confirm(&app, &p[3], k, n).await;
@@ -134,7 +134,7 @@ async fn maps_after_the_decision_are_voided_and_organizers_confirm_right_away() 
     assert_eq!(status, StatusCode::OK);
     let (status, _) = contest(&app, &p[1], k, 1, "Não foi assim").await;
     assert_eq!(status, StatusCode::OK);
-    let (status, _) = report(&app, &p[0], k, 2, game("a", "exile")).await;
+    let (status, _) = report(&app, &p[0], k, 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
     let (status, _) = report(&app, &p[1], k, 3, game("b", "insomnia")).await;
     assert_eq!(status, StatusCode::OK);
@@ -228,7 +228,7 @@ async fn organizers_enter_maps_and_walkovers() {
     );
 
     // Lançados direto, sem ninguém ter enviado: já confirmados.
-    for (n, map) in [(1, "awoken"), (2, "exile")] {
+    for (n, map) in [(1, "awoken"), (2, "vestibule-of-exile")] {
         let (status, body) = set_game(&app, &ana, "wb-1-2", n, game("b", map), None).await;
         assert_eq!(status, StatusCode::OK, "{body}");
     }

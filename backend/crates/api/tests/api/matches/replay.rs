@@ -103,7 +103,7 @@ async fn only_the_last_map_without_confirmation_is_voided() {
     assert_eq!(status, StatusCode::OK);
     let (status, _) = contest(&app, &p[1], k, 1, "Não foi assim").await;
     assert_eq!(status, StatusCode::OK);
-    let (status, _) = report(&app, &p[0], k, 2, game("b", "exile")).await;
+    let (status, _) = report(&app, &p[0], k, 2, game("b", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         replay(&app, &ana, k, 1, None).await,

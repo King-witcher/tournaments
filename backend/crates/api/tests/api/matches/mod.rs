@@ -30,7 +30,13 @@ use crate::common::*;
 pub const COPA: &str = "/tenants/quake-br/tournaments/copa";
 
 /// Mapas do pool de duelo, um para cada mapa de uma série.
-pub const MAPS: [&str; 5] = ["awoken", "exile", "insomnia", "blood-run", "deep-embrace"];
+pub const MAPS: [&str; 5] = [
+    "awoken",
+    "vestibule-of-exile",
+    "insomnia",
+    "blood-run",
+    "deep-embrace",
+];
 
 /// Torneio `copa` sem check-in: `duel` com `changes`.
 pub fn copa(changes: Value) -> Value {

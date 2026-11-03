@@ -155,7 +155,7 @@ async fn players_and_staff_attach_to_sent_maps_and_the_next() {
     assert_eq!(status, StatusCode::OK, "{body}");
     // Confirmada pela organização, não se contesta mais: o jogador não anexa;
     // a organização sim (trocando o dela: um de cada pessoa).
-    let (status, _) = report(&c.app, &c.p1, FINAL, 2, map("b", "exile")).await;
+    let (status, _) = report(&c.app, &c.p1, FINAL, 2, map("b", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK);
     let (status, _) = confirm(&c.app, &c.ana, FINAL, 2).await;
     assert_eq!(status, StatusCode::OK);

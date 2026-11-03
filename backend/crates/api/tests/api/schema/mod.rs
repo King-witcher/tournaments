@@ -145,7 +145,7 @@ pub async fn finished_cup(db: &PgPool) -> Cup {
     };
     ok(report(&app, &p1, "wb-1-1", 1, game("awoken", 20, 10)).await);
     ok(confirm(&app, &p2, "wb-1-1", 1).await);
-    ok(report(&app, &p2, "wb-1-1", 2, game("exile", 5, 10)).await);
+    ok(report(&app, &p2, "wb-1-1", 2, game("vestibule-of-exile", 5, 10)).await);
     ok(confirm(&app, &p1, "wb-1-1", 2).await);
     let third = game("insomnia", 30, 2);
     ok(report(&app, &p1, "wb-1-1", 3, third.clone()).await);

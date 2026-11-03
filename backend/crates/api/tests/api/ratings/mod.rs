@@ -178,7 +178,7 @@ async fn member_rating_with_the_last_maps() {
     // O mais recente primeiro.
     assert_eq!(games[0]["game"], 2);
     assert_eq!(games[0]["match"], "wb-1-1");
-    assert_eq!(games[0]["map"], "Exile");
+    assert_eq!(games[0]["map"], "Vestibule of Exile");
     assert_eq!(games[0]["won"], false);
     assert_eq!(games[0]["delta"], -29);
     assert_eq!(games[0]["rating_after"], 1431);

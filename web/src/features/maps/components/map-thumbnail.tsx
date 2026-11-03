@@ -21,7 +21,6 @@ const IMAGES = new Set([
   "cursed-soul",
   "dark-zone",
   "deep-embrace",
-  "exile",
   "insomnia",
   "lockbox",
   "molten-falls",
@@ -30,6 +29,7 @@ const IMAGES = new Set([
   "the-longest-yard",
   "tower-of-koth",
   "vale-of-pnath",
+  "vestibule-of-exile",
 ]);
 
 type Props = {

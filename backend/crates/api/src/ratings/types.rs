@@ -67,10 +67,10 @@ pub struct MemberRating {
 /// As vitórias e derrotas de alguém numa arena.
 #[derive(Serialize, ToSchema)]
 pub struct MapRecord {
-    #[schema(example = "exile")]
+    #[schema(example = "vestibule-of-exile")]
     pub slug: String,
     /// Nome próprio do mapa, igual em todos os idiomas.
-    #[schema(example = "Exile")]
+    #[schema(example = "Vestibule of Exile")]
     pub name: String,
     pub wins: i32,
     pub losses: i32,

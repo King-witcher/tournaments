@@ -56,19 +56,19 @@ async fn confirmed_maps_count_by_map_even_without_rating() {
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = confirm(&app, &p[0], "wb-2-1", 1).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    // Mapa 2: P1 vence no exile.
-    let (status, body) = report(&app, &p[0], "wb-2-1", 2, game("a", "exile")).await;
+    // Mapa 2: P1 vence no vestibule-of-exile.
+    let (status, body) = report(&app, &p[0], "wb-2-1", 2, game("a", "vestibule-of-exile")).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let (status, body) = confirm(&app, &p[1], "wb-2-1", 2).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     // Do mais jogado ao menos.
     assert_eq!(
         records(&app, &bia, &p[0]).await,
-        [record("awoken", 1, 1), record("exile", 1, 0)]
+        [record("awoken", 1, 1), record("vestibule-of-exile", 1, 0)]
     );
     assert_eq!(
         records(&app, &bia, &p[1]).await,
-        [record("awoken", 2, 0), record("exile", 0, 1)]
+        [record("awoken", 2, 0), record("vestibule-of-exile", 0, 1)]
     );
 
     // Mapa 3 enviado e ainda sem resposta: não conta. Confirmado, conta, e o
@@ -82,8 +82,8 @@ async fn confirmed_maps_count_by_map_even_without_rating() {
         records(&app, &bia, &p[0]).await,
         [
             record("awoken", 1, 1),
-            record("exile", 1, 0),
-            record("insomnia", 1, 0)
+            record("insomnia", 1, 0),
+            record("vestibule-of-exile", 1, 0)
         ]
     );
     // Quem perdeu a semifinal só tem o mapa dela.
@@ -138,14 +138,14 @@ async fn a_confirmed_map_voided_by_a_correction_stops_counting() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         records(&app, &bia, &p[0]).await,
-        [record("awoken", 1, 1), record("exile", 1, 0)]
+        [record("awoken", 1, 1), record("vestibule-of-exile", 1, 0)]
     );
     assert_eq!(
         records(&app, &bia, &p[1]).await,
         [
             record("awoken", 1, 1),
-            record("exile", 1, 0),
-            record("insomnia", 1, 0)
+            record("insomnia", 1, 0),
+            record("vestibule-of-exile", 1, 0)
         ]
     );
 
@@ -157,14 +157,14 @@ async fn a_confirmed_map_voided_by_a_correction_stops_counting() {
     assert_eq!(final_["games"], json!([]));
     assert_eq!(
         records(&app, &bia, &p[0]).await,
-        [record("awoken", 0, 1), record("exile", 1, 0)]
+        [record("awoken", 0, 1), record("vestibule-of-exile", 1, 0)]
     );
     assert_eq!(
         records(&app, &bia, &p[1]).await,
         [
             record("awoken", 0, 1),
-            record("exile", 1, 0),
-            record("insomnia", 1, 0)
+            record("insomnia", 1, 0),
+            record("vestibule-of-exile", 1, 0)
         ]
     );
 }
@@ -252,7 +252,7 @@ async fn only_the_maps_of_this_community_count() {
         quake["by_map"],
         json!([
             { "slug": "awoken", "name": "Awoken", "wins": 0, "losses": 1 },
-            { "slug": "exile", "name": "Exile", "wins": 0, "losses": 1 }
+            { "slug": "vestibule-of-exile", "name": "Vestibule of Exile", "wins": 0, "losses": 1 }
         ])
     );
     let (status, argentina) = get(&f.app, &of("argentina"), &f.ana).await;

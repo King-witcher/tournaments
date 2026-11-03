@@ -231,7 +231,7 @@ async fn maps_must_be_valid() {
         )
     );
     let again = Game {
-        map: Some("exile"),
+        map: Some("vestibule-of-exile"),
         ..base()
     };
     assert_eq!(
@@ -245,7 +245,7 @@ async fn maps_must_be_valid() {
     let flipped = Game {
         sides: (b, a),
         number: 3,
-        map: Some("exile"),
+        map: Some("vestibule-of-exile"),
         frags: (Some(1), Some(9)),
         ..base()
     };
@@ -269,7 +269,7 @@ async fn the_decided_series_agrees_with_its_maps() {
     let (tenant, tournament, seeded) = ids(&db, "copa").await;
     let t = (tenant, tournament);
     let (a, b) = (seeded[0], seeded[1]);
-    for (number, map) in [(1, "awoken"), (2, "exile")] {
+    for (number, map) in [(1, "awoken"), (2, "vestibule-of-exile")] {
         let g = Game {
             sides: (a, b),
             number,
