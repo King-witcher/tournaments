@@ -62,6 +62,14 @@ export function MatchSteps({ target, rule, games }: Props) {
     if (focusTurn === 0) return;
     clearMine();
     focusIfLost(VETO_ID);
+    // O foco da ação do veto já pode estar no passo, sem ter rolado: o passo
+    // novo começa do topo, se o topo ficou para cima.
+    const panel = document.getElementById(VETO_ID);
+    if (!panel) return;
+    const margin = Number.parseFloat(
+      getComputedStyle(panel).scrollMarginBlockStart,
+    );
+    if (panel.getBoundingClientRect().top < margin) panel.scrollIntoView();
   }, [focusTurn, clearMine]);
   if (flow.steps.length === 0) return null;
   const shown =

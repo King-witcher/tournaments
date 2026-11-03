@@ -10,5 +10,7 @@
 // O contorno de foco do passo que recebe o foco depois de uma ação fica no
 // bloco inteiro; sem margem, ele ficaria colado no conteúdo.
 .panel {
+  // Ao rolar até o passo, o título fica fora do cabeçalho fixo (48px).
+  scroll-margin-block-start: spacing.$spacing-10;
   outline-offset: spacing.$spacing-02;
 }

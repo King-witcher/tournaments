@@ -23,9 +23,10 @@ export function focusWhenShown(element: HTMLElement, then?: () => void) {
  * elemento `id` se ele caiu no `body`. Tenta a cada quadro por alguns
  * segundos, até o refresh trocar o conteúdo e o alvo estar à vista (um alvo
  * escondido não recebe o foco); se a pessoa já foi para outro controle, não
- * mexe.
+ * mexe. `options`: as do `focus()` (`preventScroll`, quando a tela segue no
+ * mesmo lugar e a rolagem não deve pular).
  */
-export function focusIfLost(id: string) {
+export function focusIfLost(id: string, options?: FocusOptions) {
   const until = performance.now() + 3000;
   const tick = () => {
     const active = document.activeElement;
@@ -34,7 +35,7 @@ export function focusIfLost(id: string) {
       (active == null || active === document.body) &&
       target?.checkVisibility()
     ) {
-      target.focus();
+      target.focus(options);
       return;
     }
     if (performance.now() < until) requestAnimationFrame(tick);

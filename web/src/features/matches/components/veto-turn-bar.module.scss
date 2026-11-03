@@ -1,0 +1,81 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "@carbon/react/scss/utilities/z-index";
+
+// Preso embaixo do cabeçalho do Carbon (48px) ao rolar a lista. Fica sobre a
+// grade, abaixo do cabeçalho e dos menus.
+.bar {
+  position: sticky;
+  z-index: z-index.z("overlay");
+  inset-block-start: spacing.$spacing-09;
+}
+
+// A largura da página, e não o limite do aviso do Carbon; à direita, o lugar
+// do tempo. Classe dobrada para vencer a regra dele (mesmo peso).
+.callout.callout {
+  max-inline-size: none;
+  padding-inline-end: spacing.$spacing-07;
+
+  @include breakpoint.breakpoint(md) {
+    padding-inline-end: spacing.$spacing-12;
+  }
+}
+
+// No celular, o lugar de duas linhas da frase e uma da nota: "Sua vez" cabe em
+// uma e "Vez de Giuseppe" em duas, e a grade não pode andar embaixo do dedo
+// quando a vez chega.
+.text {
+  @include breakpoint.breakpoint-down(md) {
+    min-block-size: calc(
+      #{spacing.$spacing-09} + #{spacing.$spacing-05} + #{spacing.$spacing-02}
+    );
+  }
+}
+
+// Sem peso próprio: o negrito fica só no verbo, que é o que muda.
+.sentence {
+  @include type.type-style("body-02");
+
+  // Um apelido longo quebra, em vez de passar por baixo do tempo.
+  overflow-wrap: anywhere;
+
+  @include breakpoint.breakpoint(md) {
+    @include type.type-style("heading-03");
+  }
+}
+
+.note {
+  @include type.type-style("body-compact-01");
+
+  margin-block-start: spacing.$spacing-02;
+}
+
+// Os dígitos com a mesma largura: o relógio não balança a cada segundo.
+.clock {
+  @include type.type-style("heading-04");
+
+  position: absolute;
+  color: theme.$text-primary;
+  font-variant-numeric: tabular-nums;
+  inset-block-start: spacing.$spacing-03;
+  inset-inline-end: spacing.$spacing-05;
+}
+
+// Sobre o fundo invertido do aviso de alto contraste.
+.warn {
+  color: theme.$text-inverse;
+}
+
+// A barra no pé do bloco, de ponta a ponta.
+.time {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+}
+
+.srOnly {
+  @include visually-hidden;
+}

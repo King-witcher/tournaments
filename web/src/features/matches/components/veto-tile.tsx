@@ -36,9 +36,11 @@ type Props = {
  * notificações: check verde no escolhido, X vermelho no banido, com a imagem
  * em cinza; fora da imagem, onde a cor tem contraste garantido). O
  * escolhido ganha a borda de selecionado. Na vez de quem vê, o tile inteiro é
- * o botão (o tile clicável: fundo de hover, contorno de foco), com a ação
- * escrita no pé, porque no celular não há hover que a mostre; a etiqueta
- * também descreve o botão para o leitor de tela.
+ * o botão (o tile clicável: fundo de hover, contorno de foco), com a ação no
+ * pé, com a cara do botão terciário (o de perigo no ban), porque no celular
+ * não há hover que a mostre; a etiqueta também descreve o botão para o leitor
+ * de tela. Fora da vez, o disponível guarda o lugar da ação: a grade não anda
+ * embaixo do dedo quando a vez chega.
  */
 export function VetoTile({
   image,
@@ -69,10 +71,16 @@ export function VetoTile({
             {Icon && <Icon aria-hidden size={16} className={styles.icon} />}
           </span>
         )}
-        {action && (
+        {action ? (
           <span aria-hidden className={styles.action}>
             {action.text}
           </span>
+        ) : (
+          state === "available" && (
+            <span aria-hidden className={cn(styles.action, styles.reserved)}>
+              &nbsp;
+            </span>
+          )
         )}
       </span>
     </>

@@ -14,7 +14,7 @@ import styles from "./champions-step.module.scss";
 import { DraftSummary } from "./draft-summary";
 import { VetoChampionBoard } from "./veto-champion-board";
 import { VetoError } from "./veto-error";
-import { VetoTurn } from "./veto-turn";
+import { VetoTurnArea } from "./veto-turn-area";
 import { VetoUndo } from "./veto-undo";
 import { VetoVoteBoard } from "./veto-vote-board";
 
@@ -56,42 +56,43 @@ export function ChampionsStep({ target, rule, done = false }: Props) {
       title={tSteps("champions")}
       action={done ? undefined : <VetoUndo target={target} />}
     >
-      {!done && <VetoTurn />}
-      {voting && <VetoVoteBoard target={target} game={currentGame(veto)} />}
-      {!done && teamPick && slots.length > 1 && slot && (
-        <RadioGroup
-          legendText={t("forGame")}
-          orientation="horizontal"
-          value={String(slot.game)}
-          options={slots.map((s) => ({
-            value: String(s.game),
-            label: tGame("game", { number: s.game }),
-          }))}
-          onChange={(g) => setChosen(Number(g))}
-        />
-      )}
-      <Grid>
-        <Column
-          sm={4}
-          md={8}
-          lg={board ? { span: 5, start: 12 } : 8}
-          xlg={board ? { span: 6, start: 11 } : 8}
-          className={styles.summary}
-        >
-          <DraftSummary current={current} />
-        </Column>
-        {board && (
+      <VetoTurnArea turn={!done}>
+        {voting && <VetoVoteBoard target={target} game={currentGame(veto)} />}
+        {!done && teamPick && slots.length > 1 && slot && (
+          <RadioGroup
+            legendText={t("forGame")}
+            orientation="horizontal"
+            value={String(slot.game)}
+            options={slots.map((s) => ({
+              value: String(s.game),
+              label: tGame("game", { number: s.game }),
+            }))}
+            onChange={(g) => setChosen(Number(g))}
+          />
+        )}
+        <Grid>
           <Column
             sm={4}
             md={8}
-            lg={{ span: 11, start: 1 }}
-            xlg={{ span: 10, start: 1 }}
-            className={styles.board}
+            lg={board ? { span: 5, start: 12 } : 8}
+            xlg={board ? { span: 6, start: 11 } : 8}
+            className={styles.summary}
           >
-            <VetoChampionBoard target={target} rule={rule} slot={slot} />
+            <DraftSummary current={current} />
           </Column>
-        )}
-      </Grid>
+          {board && (
+            <Column
+              sm={4}
+              md={8}
+              lg={{ span: 11, start: 1 }}
+              xlg={{ span: 10, start: 1 }}
+              className={styles.board}
+            >
+              <VetoChampionBoard target={target} rule={rule} slot={slot} />
+            </Column>
+          )}
+        </Grid>
+      </VetoTurnArea>
       {!done && <VetoError />}
     </Section>
   );

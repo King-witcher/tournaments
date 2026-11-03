@@ -139,21 +139,25 @@
     "readyButton": "Listo",
     "forceStart": "Empezar el veto ahora",
     "forceStartQuestion": "¿Empezar el veto sin esperar a que los dos hagan clic en “Listo”? Quien no elija a tiempo recibe una elección sorteada.",
-    "yourTurn": "Tu turno: {action}.",
-    "theirTurn": "Turno de {name}: {action}.",
-    "bothVote": "Los dos votan el mapa de la partida {game}.",
+    "yourTurn": "Tu turno: <action></action>.",
+    "theirTurn": "Turno de {name}: <action></action>.",
+    "bothVote": "Los dos <b>votan</b> el mapa de la partida {game}.",
     "votedWaiting": "Votaste. Esperando el voto de {name}.",
     "action": {
-      "ban_map": "banear un mapa",
-      "pick_map": "elegir un mapa",
-      "vote_map": "votar el mapa de la partida {game}",
-      "ban_champion": "banear un campeón",
-      "pick_champion": "elegir el campeón de la partida {game}",
-      "vote_champion": "votar",
-      "team_pick_map": "elegir el campeón de la partida {game}",
-      "team_pick_champion": "elegir el campeón de la partida {game}"
+      "ban_map": "<b>banear</b> un mapa",
+      "pick_map": "<b>elegir</b> el mapa de la partida {game}",
+      "vote_map": "<b>votar</b> el mapa de la partida {game}",
+      "ban_champion": "<b>banear</b> un campeón",
+      "pick_champion": "<b>elegir</b> el campeón de la partida {game}",
+      "vote_champion": "<b>votar</b>",
+      "team_pick_map": "<b>elegir</b> el campeón de la partida {game}",
+      "team_pick_champion": "<b>elegir</b> el campeón de la partida {game}"
     },
-    "deadline": "Tiempo: <time></time>. Si se termina, la elección se sortea.",
+    "deadline": "Al final del tiempo, hay sorteo.",
+    "ending": "Menos de {seconds} segundos. Al final del tiempo, hay sorteo.",
+    "drawing": "Tiempo agotado. Sorteando.",
+    "sending": "Enviando.",
+    "timeLeft": "Tiempo restante",
     "maps": {
       "banned": "Baneado por {name}",
       "picked": "Elegido por {name} para la partida {game}",
@@ -161,7 +165,7 @@
       "ban": "Banear",
       "pick": "Elegir",
       "banMap": "Banear {map}",
-      "pickMap": "Elegir {map}"
+      "pickMap": "Elegir {map} para la partida {game}"
     },
     "vote": {
       "hint": "Votos iguales, es ese; distintos, sorteo entre los dos.",
@@ -223,9 +227,9 @@
         "undo_declined": "{name} rechazó deshacer"
       }
     },
-    "teamPick": "Todos los jugadores eligen los campeones al mismo tiempo, uno para cada partida.",
-    "teamPickYours": "Elige un campeón para cada partida. La elección es definitiva.",
-    "teamDeadline": "Tiempo: <time></time>. Lo que falte al final se sortea.",
+    "teamPick": "Todos los jugadores <b>eligen</b> los campeones al mismo tiempo, uno para cada partida.",
+    "teamPickYours": "<b>Elige</b> un campeón para cada partida. La elección es definitiva.",
+    "teamDeadline": "Al final, lo que falte se sortea.",
     "waitingReadyTeams": "El veto empieza cuando los dos equipos hagan clic en “Listo”. Cualquier jugador del equipo puede hacerlo.",
     "draft": {
       "caption": "Campeones de cada lado por partida",

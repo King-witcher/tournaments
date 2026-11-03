@@ -6,7 +6,7 @@ import { Section } from "@/shared/ui/section";
 import type { MatchTarget } from "../lib/match-target";
 import { VetoError } from "./veto-error";
 import { VetoMapBoard } from "./veto-map-board";
-import { VetoTurn } from "./veto-turn";
+import { VetoTurnArea } from "./veto-turn-area";
 import { VetoUndo } from "./veto-undo";
 
 type Props = {
@@ -26,8 +26,9 @@ export function MapsStep({ target, done = false }: Props) {
       title={t("maps")}
       action={done ? undefined : <VetoUndo target={target} />}
     >
-      {!done && <VetoTurn />}
-      <VetoMapBoard target={target} />
+      <VetoTurnArea turn={!done}>
+        <VetoMapBoard target={target} />
+      </VetoTurnArea>
       {!done && <VetoError />}
     </Section>
   );

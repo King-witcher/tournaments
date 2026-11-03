@@ -4,7 +4,7 @@ import { useLiveMatch } from "../hooks/use-live-match";
 import { vetoPhase } from "../lib/match-steps";
 import type { MatchTarget } from "../lib/match-target";
 import { VetoError } from "./veto-error";
-import { VetoTurn } from "./veto-turn";
+import { VetoTurnArea } from "./veto-turn-area";
 import { VetoVoteBoard } from "./veto-vote-board";
 
 type Props = { target: MatchTarget; number: number };
@@ -24,8 +24,11 @@ export function GameVeto({ target, number }: Props) {
     veto.map_mode === "vote" && !game?.map && veto.turn?.action === "vote";
   return (
     <>
-      {voting && <VetoTurn />}
-      {voting && <VetoVoteBoard target={target} game={number} />}
+      {voting && (
+        <VetoTurnArea>
+          <VetoVoteBoard target={target} game={number} />
+        </VetoTurnArea>
+      )}
       <VetoError />
     </>
   );

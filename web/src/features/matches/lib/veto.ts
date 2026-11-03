@@ -51,6 +51,28 @@ export const currentGame = (veto: Veto) => veto.game ?? 1;
 /** O lado adversário. */
 export const otherSide = (side: Side): Side => (side === "a" ? "b" : "a");
 
+/** A partida do próximo pick do veto de mapas: cada pick é o mapa de uma, na ordem. */
+export const nextMapPickGame = (veto: Veto) =>
+  veto.map_steps.filter((s) => s.action === "pick").length + 1;
+
+/**
+ * O pick de campeão do duelo depois do de `side` na partida `game`: o do
+ * adversário na mesma partida ou, se ele já escolheu, o de `side` na seguinte
+ * (quem escolhe por último numa partida escolhe primeiro na outra); `null`
+ * depois da última.
+ */
+export function pickAfter(
+  veto: Veto,
+  game: number,
+  side: Side,
+  bestOf: number,
+): { side: Side; game: number } | null {
+  const other = otherSide(side);
+  const second = veto.games.some((g) => g.game === game && g[`pick_${other}`]);
+  if (!second) return { side: other, game };
+  return game < bestOf ? { side, game: game + 1 } : null;
+}
+
 /**
  * `a` é mais nova que `b`: a API montou `a` depois (`now`, a hora dela em
  * cada resposta; uma instância só). Uma recarga que saiu antes do clique

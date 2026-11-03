@@ -130,22 +130,27 @@
   }
 }
 
-// A ação, com o recuo do botão fantasma (o texto alinhado ao nome).
+// A ação com a cara do botão terciário do Carbon (o de perigo no ban): a ênfase
+// que ele indica quando a mesma ação se repete numa lista, e com contorno, para
+// a troca de ban para escolha não ficar só na cor de uma palavra.
 .action {
   @include type.type-style("body-compact-01");
 
-  align-self: flex-start;
   padding: spacing.$spacing-02 spacing.$spacing-03;
+  border: 1px solid currentcolor;
   margin-block-start: auto;
-  margin-inline-start: -1 * spacing.$spacing-03;
-  color: theme.$link-primary;
+  color: button.$button-tertiary;
 }
 
 .narrow .action {
   @include breakpoint.breakpoint-down(xlg) {
     padding-inline: spacing.$spacing-02;
-    margin-inline-start: -1 * spacing.$spacing-02;
   }
+}
+
+// Fora da vez, o lugar da ação: a mesma altura, sem nada à vista.
+.reserved {
+  visibility: hidden;
 }
 
 // Com a etiqueta (o voto), a ação vem logo embaixo dela.
@@ -157,21 +162,30 @@
   color: button.$button-danger-secondary;
 }
 
-// No hover, o que o Carbon faz no botão fantasma: o link no tom de hover; o
-// ban com o fundo de perigo e o texto branco (o vermelho de hover sobre o
-// fundo de hover do tile não tem contraste no tema escuro).
+// No hover e ao apertar, o que o Carbon faz nesses botões: o fundo cheio, sem
+// o contorno de outra cor.
 @media (any-hover: hover) {
   .pick:hover .action {
-    color: theme.$link-primary-hover;
+    border-color: button.$button-tertiary-hover;
+    background: button.$button-tertiary-hover;
+    color: theme.$text-inverse;
   }
 
   .ban:hover .action {
+    border-color: button.$button-danger-hover;
     background: button.$button-danger-hover;
     color: theme.$text-on-color;
   }
 }
 
+.pick:active .action {
+  border-color: button.$button-tertiary-active;
+  background: button.$button-tertiary-active;
+  color: theme.$text-inverse;
+}
+
 .ban:active .action {
+  border-color: button.$button-danger-active;
   background: button.$button-danger-active;
   color: theme.$text-on-color;
 }
@@ -183,6 +197,7 @@
 }
 
 .button:disabled .action {
+  border-color: theme.$text-disabled;
   background: none;
   color: theme.$text-disabled;
 }

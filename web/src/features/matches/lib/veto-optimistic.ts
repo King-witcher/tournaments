@@ -1,6 +1,6 @@
 import { mapSequence } from "@/features/tournaments/lib/veto-sequence";
 import type { components } from "@/shared/api/schema";
-import { otherSide } from "./veto";
+import { otherSide, pickAfter } from "./veto";
 
 type Schemas = components["schemas"];
 type Veto = Schemas["VetoView"];
@@ -126,13 +126,12 @@ function afterPick(
   ctx: StepContext,
 ) {
   const game = turn.pick_for ?? 1;
-  const other = otherSide(ctx.mine);
-  const second = veto.games.some((g) => g.game === game && g[`pick_${other}`]);
-  const next = !second
-    ? { ...turn, sides: [other] }
-    : game < ctx.bestOf
-      ? { ...turn, sides: [ctx.mine], pick_for: game + 1 }
-      : null;
+  const after = pickAfter(veto, game, ctx.mine, ctx.bestOf);
+  const next = after && {
+    ...turn,
+    sides: [after.side],
+    pick_for: after.game,
+  };
   return {
     ...pass(veto, turn, next, ctx),
     picks: [],

@@ -85,8 +85,9 @@ export function useVetoRunner({ initial, shown, adopt, preview }: Props) {
         base: initial,
       });
     }
-    // O botão clicado some (o passo marcado) ou volta como outro elemento.
-    focusIfLost(VETO_ID);
+    // O botão clicado some (o passo marcado) ou volta como outro elemento. Sem
+    // rolar: quem desceu a lista no celular continua onde estava.
+    focusIfLost(VETO_ID, { preventScroll: true });
     // Em segundo plano: o resto da página e, no erro, a tela que ficou para
     // trás (o adversário agiu, o tempo acabou).
     router.refresh();

@@ -7,7 +7,12 @@ import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
 import { useVetoAction } from "../hooks/use-veto-action";
 import type { MatchTarget } from "../lib/match-target";
-import { type PoolMapState, poolStates, type TileState } from "../lib/veto";
+import {
+  nextMapPickGame,
+  type PoolMapState,
+  poolStates,
+  type TileState,
+} from "../lib/veto";
 import styles from "./veto-map-board.module.scss";
 import { VetoTile } from "./veto-tile";
 
@@ -72,7 +77,13 @@ export function VetoMapBoard({ target }: { target: MatchTarget }) {
                   ? {
                       kind,
                       text: t(kind),
-                      label: t(`${kind}Map`, { map: m.name }),
+                      label:
+                        kind === "pick"
+                          ? t("pickMap", {
+                              map: m.name,
+                              game: nextMapPickGame(veto),
+                            })
+                          : t("banMap", { map: m.name }),
                       disabled: action.pending != null,
                       onClick: () => action.step({ map: m.slug }),
                     }
