@@ -2,8 +2,10 @@
 
 import { ToastNotification } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { type FocusEvent, type ReactNode, useEffect, useState } from "react";
+import { type FocusEvent, useEffect, useState } from "react";
 
+import type { Href } from "@/i18n/navigation";
+import { Link } from "./link";
 import styles from "./toast-stack.module.scss";
 
 export type ToastItem = {
@@ -12,8 +14,8 @@ export type ToastItem = {
   title: string;
   /** Uma frase com o detalhe. */
   subtitle?: string;
-  /** Um link para onde resolver (`Link` de `shared/ui`). */
-  action?: ReactNode;
+  /** Para onde o aviso leva: o aviso inteiro vira este link. Sem ele (a pessoa já está lá), não é clicável. */
+  link?: { href: Href; label: string };
 };
 
 type Props = {
@@ -30,43 +32,42 @@ type Props = {
 
 /**
  * Avisos que chegam sozinhos (de outra pessoa, do servidor), empilhados no
- * canto de cima, à direita, com o X e, se houver, o link para resolver.
- * Somem depois de `timeout`, mas não enquanto o ponteiro ou o foco estão na
- * pilha (quem vai clicar no link não perde o aviso). A região (`role="log"`) existe sempre,
- * para o leitor de tela anunciar o que entra: monte a pilha uma vez e mude só
- * os `items`. Para "copiado" e afins, use `Toast`.
+ * canto de cima, à direita, com o X e, se houver destino, clicáveis por
+ * inteiro. Somem depois de `timeout`, mas não enquanto o ponteiro ou o foco
+ * estão num deles. A região (`role="log"`) existe sempre, para o leitor de
+ * tela anunciar o que entra: monte a pilha uma vez e mude só os `items`. Para
+ * "copiado" e afins, use `Toast`.
  */
 export function ToastStack({
   items,
   onClose,
   onDismiss,
   label,
-  timeout = 20000,
+  timeout = 10000,
 }: Props) {
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const leaveFocus = (event: FocusEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
-  };
+  // Qual aviso tem o ponteiro e qual tem o foco, não "sim ou não": quando o
+  // elemento sai da tela (o X, o link, o aviso sob o ponteiro), `onBlur` e
+  // `onPointerLeave` não chegam, e a pausa precisa acabar junto com o aviso.
+  const [hovered, setHovered] = useState<string>();
+  const [focused, setFocused] = useState<string>();
+  const paused = items.some(({ id }) => id === hovered || id === focused);
   return (
     <div
       className={styles.stack}
       // Região viva (educada) que existe antes do aviso: o que entra é lido.
       role="log"
       aria-label={label}
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
-      onBlur={leaveFocus}
     >
       {items.map((item) => (
         <StackedToast
           key={item.id}
           item={item}
-          paused={hovered || focused}
+          paused={paused}
           timeout={timeout}
           onClose={onClose}
           onDismiss={onDismiss}
+          onHover={setHovered}
+          onFocusChange={setFocused}
         />
       ))}
     </div>
@@ -79,6 +80,8 @@ type ToastProps = {
   timeout: number;
   onClose: (id: string) => void;
   onDismiss?: (id: string) => void;
+  onHover: (id?: string) => void;
+  onFocusChange: (id?: string) => void;
 };
 
 function StackedToast({
@@ -87,6 +90,8 @@ function StackedToast({
   timeout,
   onClose,
   onDismiss,
+  onHover,
+  onFocusChange,
 }: ToastProps) {
   const t = useTranslations("Common");
   useEffect(() => {
@@ -94,11 +99,18 @@ function StackedToast({
     const timer = setTimeout(() => onClose(item.id), timeout);
     return () => clearTimeout(timer);
   }, [paused, timeout, item.id, onClose]);
+  const leaveFocus = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) onFocusChange();
+  };
   return (
-    // O link fica fora do ToastNotification, colado embaixo: o Carbon recusa
-    // conteúdo interativo dentro dele (lança no efeito, também no build de
-    // produção, e a página cai).
-    <div className={styles.item}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: só observa o ponteiro e o foco, para segurar o tempo; quem interage é o X e o link.
+    <div
+      className={styles.item}
+      onPointerEnter={() => onHover(item.id)}
+      onPointerLeave={() => onHover()}
+      onFocus={() => onFocusChange(item.id)}
+      onBlur={leaveFocus}
+    >
       <ToastNotification
         kind="info"
         className={styles.notification}
@@ -114,7 +126,14 @@ function StackedToast({
         aria-label={t("close")}
         statusIconDescription={t("notice.info")}
       />
-      {item.action && <div className={styles.action}>{item.action}</div>}
+      {/* Fora do ToastNotification, que recusa conteúdo interativo (lança no efeito). */}
+      {item.link && (
+        <div className={styles.action}>
+          <Link href={item.link.href} className={styles.link}>
+            {item.link.label}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

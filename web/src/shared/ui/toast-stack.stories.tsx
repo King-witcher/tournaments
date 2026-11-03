@@ -3,7 +3,6 @@ import { useCallback, useState } from "react";
 import { fn, userEvent, within } from "storybook/test";
 
 import { Button } from "./button";
-import { Link } from "./link";
 import { type ToastItem, ToastStack } from "./toast-stack";
 
 const items: ToastItem[] = [
@@ -16,7 +15,7 @@ const items: ToastItem[] = [
     id: "2",
     title: "Check-in aberto",
     subtitle: "Faça o check-in para entrar no torneio.",
-    action: <Link href="/login">Ir para o check-in</Link>,
+    link: { href: "/login", label: "Ir para o check-in" },
   },
   { id: "3", title: "Resultado enviado" },
 ];
@@ -51,8 +50,8 @@ export const Default: Story = {};
 
 export const Single: Story = { args: { items: items.slice(0, 1) } };
 
-/** Com `action`, o link fica colado embaixo do aviso. */
-export const WithAction: Story = { args: { items: items.slice(1, 2) } };
+/** Com `link`, o aviso inteiro leva ao destino (é um link só, o da faixa de baixo). O X só fecha. */
+export const WithLink: Story = { args: { items: items.slice(1, 2) } };
 
 /** Sem itens a região (`role="log"`) continua montada, para o leitor de tela anunciar o que entra. */
 export const Empty: Story = { args: { items: [] } };
@@ -78,7 +77,7 @@ function ArrivalDemo() {
   );
 }
 
-/** Os avisos entram sozinhos, fecham pelo X e somem em 8 segundos (parados enquanto o ponteiro ou o foco estão na pilha). */
+/** Os avisos entram sozinhos, fecham pelo X e somem em 8 segundos (parados enquanto o ponteiro ou o foco estão num deles). */
 export const Arriving: Story = {
   render: () => <ArrivalDemo />,
   play: async ({ canvasElement }) => {

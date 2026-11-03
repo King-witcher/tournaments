@@ -24,6 +24,7 @@
 
 // O aviso e, colado embaixo, o link para resolver, na largura do aviso.
 .item {
+  position: relative;
   display: flex;
   flex-direction: column;
 
@@ -38,6 +39,12 @@
   @include breakpoint.breakpoint-down(md) {
     inline-size: 100%;
   }
+
+  // O X fica acima da área de clique do link: só fecha.
+  button {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 // Faixa do link, separada do aviso pela borda, como o rodapé do `LinkTile`.
@@ -45,4 +52,11 @@
   padding: spacing.$spacing-03 spacing.$spacing-05;
   background-color: theme.$layer-01;
   border-block-start: 1px solid theme.$border-subtle-01;
+}
+
+// Um link só: a área de clique dele se estende ao aviso inteiro (`.item`).
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }

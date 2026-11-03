@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 
 import { usePathname } from "@/i18n/navigation";
-import { Link } from "@/shared/ui/link";
 import { ToastStack } from "@/shared/ui/toast-stack";
 import { type Notice, useNoticeText } from "../hooks/use-notice-text";
 
@@ -19,8 +18,8 @@ type Props = {
 };
 
 /**
- * Os avisos que chegaram (com a aba escondida, quando ela volta), traduzidos,
- * com o link para a partida ou o torneio (menos quando a página já é essa).
+ * Os avisos que chegaram (com a aba escondida, quando ela volta), traduzidos.
+ * O aviso inteiro leva à partida ou ao torneio (menos quando a página já é essa).
  */
 export function NoticeToasts({ notices, onClose, onDismiss }: Props) {
   const t = useTranslations("Notifications");
@@ -37,9 +36,10 @@ export function NoticeToasts({ notices, onClose, onDismiss }: Props) {
           id,
           title,
           subtitle: body,
-          action: notice.path !== pathname && (
-            <Link href={notice.path}>{open}</Link>
-          ),
+          link:
+            notice.path === pathname
+              ? undefined
+              : { href: notice.path, label: open },
         };
       })}
     />
