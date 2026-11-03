@@ -4,7 +4,8 @@
 //! assinatura SigV4 refeita com as mesmas chaves e os cabeçalhos assinados
 //! com os valores que chegaram (um PUT com outro tamanho ou outro tipo é
 //! recusado), validade, o `If-None-Match: *` do PUT (412 com o objeto já
-//! gravado) e o `Content-MD5` do DeleteObjects.
+//! gravado) e o `Content-MD5` do DeleteObjects, que precisa estar na
+//! assinatura (a AWS recusa com `HeadersNotSigned`).
 
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap},
@@ -191,6 +192,9 @@ fn verify(method: &Method, url: &Url, headers: &HeaderMap) -> Result<(), String>
         return Err("URL vencida".into());
     }
     let signed = get("X-Amz-SignedHeaders")?;
+    if headers.contains_key("content-md5") && !signed.split(';').any(|n| n == "content-md5") {
+        return Err("HeadersNotSigned: content-md5".into());
+    }
     let mut values = Vec::new();
     for name in signed.split(';').filter(|n| *n != "host") {
         let value = headers

@@ -197,8 +197,11 @@ impl Storage {
             .bucket
             .delete_objects(Some(&inner.credentials), objects.iter());
         action.set_quiet(true);
+        // Numa URL assinada, a AWS recusa o `Content-MD5` fora da assinatura
+        // (`HeadersNotSigned`). `body_with_md5` consome a ação, daí o clone.
+        let (body, md5) = action.clone().body_with_md5();
+        action.headers_mut().insert("content-md5", md5.clone());
         let url = action.sign(OWN_EXPIRES);
-        let (body, md5) = action.body_with_md5();
         let res = inner
             .http
             .post(url)
