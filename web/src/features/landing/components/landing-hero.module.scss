@@ -43,20 +43,12 @@
   }
 }
 
-.invite {
+// A sala de veto: um caminho a mais, abaixo dos dois de quem vai organizar.
+.room {
   @include type.type-style("body-01");
 
   margin-block-start: spacing.$spacing-05;
   color: theme.$text-secondary;
-}
-
-// A frase e o botão da sala de veto: um caminho a mais, abaixo dos dois de
-// quem vai organizar. O botão fica colado na frase que o explica.
-.room {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: spacing.$spacing-03;
 }
 
 .shot {

@@ -4,9 +4,7 @@
     "lead": "Inscrição, check-in, chave, veto, resultado e ranking dos torneios da sua comunidade, num lugar só. Em duelo ou em times.",
     "signup": "Criar conta",
     "login": "Entrar",
-    "vetoRoomHint": "Só o veto e o draft, sem torneio e sem conta?",
-    "vetoRoom": "Sala de veto",
-    "invite": "Recebeu um link de convite? Abra-o, que ele leva ao cadastro.",
+    "room": "Só quer o veto e o draft? <link>Abra uma sala de veto</link>, sem conta.",
     "shot": "A chave de um torneio em eliminação dupla, com as séries da primeira rodada decididas."
   },
   "steps": {
@@ -26,6 +24,7 @@
   },
   "tour": {
     "title": "Do veto ao ranking",
+    "room": "Testar numa sala de veto",
     "veto": {
       "tab": "Mapas",
       "title": "Os mapas decididos ao vivo",

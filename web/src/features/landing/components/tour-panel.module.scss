@@ -5,6 +5,7 @@
 .text {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: spacing.$spacing-05;
   margin-block-end: spacing.$spacing-07;
 

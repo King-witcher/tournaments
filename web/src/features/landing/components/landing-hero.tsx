@@ -2,6 +2,7 @@ import { ButtonSet, Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Link } from "@/shared/ui/link";
 import { SIGNUP_HREF } from "../lib/signup-href";
 import styles from "./landing-hero.module.scss";
 import { ProductShot } from "./product-shot";
@@ -10,10 +11,10 @@ const TITLE_ID = "landing-title";
 
 /**
  * A abertura da apresentação: o que o site é, criar conta (primário) e
- * entrar, o caminho de quem recebeu convite, a sala de veto (para quem só quer
- * o veto, sem conta) e a chave de um torneio. O
- * título é o momento expressivo do Carbon (`fluid-heading-05`), fora de
- * qualquer caixa; o resto do site segue no produtivo.
+ * entrar, a sala de veto (um caminho a mais, em link, para quem só quer o veto,
+ * sem conta) e a chave de um torneio. O título é o momento expressivo do Carbon
+ * (`fluid-heading-05`), fora de qualquer caixa; o resto do site segue no
+ * produtivo.
  */
 export async function LandingHero() {
   const t = await getTranslations("Landing.hero");
@@ -37,13 +38,15 @@ export async function LandingHero() {
               {t("login")}
             </ButtonLink>
           </ButtonSet>
-          <p className={styles.invite}>{t("invite")}</p>
-          <div className={styles.room}>
-            <p className={styles.invite}>{t("vetoRoomHint")}</p>
-            <ButtonLink href="/veto" kind="secondary">
-              {t("vetoRoom")}
-            </ButtonLink>
-          </div>
+          <p className={styles.room}>
+            {t.rich("room", {
+              link: (chunks) => (
+                <Link href="/veto" inline>
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         </Column>
         <Column sm={4} md={8} lg={16} xlg={10} className={styles.shot}>
           <ProductShot name="bracket" alt={t("shot")} />
