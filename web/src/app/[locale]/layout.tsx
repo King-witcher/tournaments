@@ -2,7 +2,7 @@
 // para os .module.scss virem depois deles na ordem do CSS.
 import "../globals.scss";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -18,6 +18,7 @@ import { TenantSwitcher } from "@/features/tenants/components/tenant-switcher";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 import { plexMono, plexSans } from "@/shared/lib/fonts";
+import { SITE_ORIGIN, siteOpenGraph } from "@/shared/lib/link-preview";
 import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
@@ -27,12 +28,37 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+/**
+ * A cor do Carbon no fundo de cada tema (white e gray 100), na barra do
+ * navegador do celular e na faixa da prévia no Discord.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#161616" },
+  ],
+};
+
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("Metadata");
+  const [t, tLanding] = await Promise.all([
+    getTranslations("Metadata"),
+    getTranslations("Landing"),
+  ]);
   return {
+    metadataBase: SITE_ORIGIN,
     title: t("title"),
     description: t("description"),
-    // A prévia (opengraph-image.tsx) grande no Discord e no X, não a miniatura.
+    // Só as páginas abertas pedem busca (`publicPageMetadata`): o resto é
+    // login, conta ou link com token.
+    robots: { index: false, follow: false },
+    // A imagem é a de opengraph-image.tsx. O nome já está nela e em
+    // `og:site_name`, então o título da prévia não o repete.
+    openGraph: {
+      ...(await siteOpenGraph()),
+      title: tLanding("hero.title"),
+      description: tLanding("hero.lead"),
+    },
+    // Grande no Discord e no X, não a miniatura.
     twitter: { card: "summary_large_image" },
   };
 }

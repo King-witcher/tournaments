@@ -2,7 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::{shared::Locale, tenants::MyTenant, tournaments::TournamentStatus};
+use crate::{
+    shared::Locale,
+    tenants::MyTenant,
+    tournaments::{TournamentMode, TournamentStatus},
+};
 
 /// O link de convite de uma comunidade ou o de inscrição de um torneio.
 #[derive(Serialize, ToSchema)]
@@ -67,6 +71,11 @@ pub struct InvitedTournament {
     pub name: String,
     /// A descrição do organizador, em texto simples; vazia sem descrição.
     pub description: String,
+    /// As regras do organizador, em texto simples; vazias sem regras.
+    pub rules: String,
+    pub mode: TournamentMode,
+    /// Jogadores por time (1 no duelo).
+    pub team_size: i32,
     pub translations: Vec<InvitedTranslation>,
     pub status: TournamentStatus,
     pub max_participants: i32,
@@ -77,12 +86,13 @@ pub struct InvitedTournament {
     pub cover_url: Option<String>,
 }
 
-/// Nome e descrição do torneio do link numa tradução.
+/// Nome, descrição e regras do torneio do link numa tradução.
 #[derive(Serialize, ToSchema)]
 pub struct InvitedTranslation {
     pub locale: Locale,
     pub name: String,
     pub description: String,
+    pub rules: String,
 }
 
 #[derive(Serialize, ToSchema)]

@@ -196,7 +196,8 @@ async fn tournament_link_joins_the_tenant_and_registers() {
                 "member_count": 2,
                 "tournament": {
                     "slug": "copa", "locale": "pt", "name": "Copa de Outubro",
-                    "description": "Duelo **aberto**.", "translations": [],
+                    "description": "Duelo **aberto**.", "rules": "- md3\n- md5 na grande final",
+                    "mode": "duel", "team_size": 1, "translations": [],
                     "status": "draft", "max_participants": 16, "participants": 0,
                     "starts_at": "2099-01-01T20:00:00Z", "cover_url": null
                 },

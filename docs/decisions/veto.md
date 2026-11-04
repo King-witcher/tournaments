@@ -81,6 +81,7 @@ Veto de mapas e draft de campeões avulsos, sem torneio nem comunidade, para que
 - **Limites, em constantes** (`veto_rooms/create.rs`), para os jogadores não caírem no teto: 5.000 salas ativas criadas sem login (conta logada nunca é barrada, e a sala dela não conta), 30 por hora por IP sem login (uma LAN sai pelo mesmo IP), 60 por hora por conta. O teto responde 503 `veto_room.anonymous_full` e fica no log; a interface oferece entrar com a conta. O limite por hora, 429 `veto_room.rate_limited {minutes}`.
 - **Validade**: 2 h se ninguém começou, 24 h a partir do início. Sala vencida não é lida, mesmo antes de a rotina do agendador apagá-la.
 - **Sem listagem nem indexação**: `noindex` e sem referrer nas páginas da sala (o token está na URL).
+- **Prévia do link** (04/11, assumido): o título diz de quem é o link ("Sala de veto · Lado A", "Capitão: Lado A", "Lugar A2", "Espectador", "Gestão"), para ninguém clicar no link do outro; a descrição é o modo e o melhor de; a imagem é o ícone em miniatura (`summary`), porque saem de 3 a 9 links no mesmo chat, e a imagem grande em cada um tomaria a conversa. Sem o nome de quem entrou: é livre, muda, e a rede guarda a prévia.
 - **No fim, copiar o resultado para o chat**: `Tower of Koth - Athena(king) Ranger(thallis) | Vestibule of Exile - Sorlag(king) Strogg(thallis) | Crucible - DOOM Slayer(king) Keel(thallis)`; nos times, todos os jogadores do mapa, lado A depois lado B; sem draft, só os mapas.
 
 Assumido:

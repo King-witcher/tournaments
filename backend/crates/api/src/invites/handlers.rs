@@ -185,6 +185,9 @@ fn invited(found: Option<StoredTournament>) -> Result<InvitedTournament, ApiErro
         locale: t.locale,
         name: t.texts.name,
         description: t.texts.description,
+        rules: t.texts.rules,
+        mode: t.setup.mode,
+        team_size: t.setup.team_size,
         translations: t
             .translations
             .into_iter()
@@ -192,6 +195,7 @@ fn invited(found: Option<StoredTournament>) -> Result<InvitedTournament, ApiErro
                 locale: tr.locale,
                 name: tr.name,
                 description: tr.description,
+                rules: tr.rules,
             })
             .collect(),
         status: t.status,

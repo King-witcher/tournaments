@@ -2440,9 +2440,12 @@ export interface components {
             locale: components["schemas"]["Locale"];
             /** Format: int32 */
             max_participants: number;
+            mode: components["schemas"]["TournamentMode"];
             name: string;
             /** Format: int64 */
             participants: number;
+            /** @description As regras do organizador, em texto simples; vazias sem regras. */
+            rules: string;
             slug: string;
             /**
              * Format: date-time
@@ -2450,13 +2453,19 @@ export interface components {
              */
             starts_at?: string | null;
             status: components["schemas"]["TournamentStatus"];
+            /**
+             * Format: int32
+             * @description Jogadores por time (1 no duelo).
+             */
+            team_size: number;
             translations: components["schemas"]["InvitedTranslation"][];
         };
-        /** @description Nome e descrição do torneio do link numa tradução. */
+        /** @description Nome, descrição e regras do torneio do link numa tradução. */
         InvitedTranslation: {
             description: string;
             locale: components["schemas"]["Locale"];
             name: string;
+            rules: string;
         };
         /** @description Quem entra num lugar. */
         JoinVetoRoom: {
