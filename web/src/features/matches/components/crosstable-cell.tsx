@@ -1,4 +1,4 @@
-import { CircleDash, Incomplete } from "@carbon/icons-react";
+import { CheckmarkOutline, CircleDash, Incomplete } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -27,11 +27,11 @@ function scoreText(own: number, other: number, frags = false) {
 
 /**
  * Uma célula da tabela cruzada, que inteira é o link da série: o resultado de
- * quem está na linha. A série encerrada é o placar sobre um fundo teal (vitória)
- * ou roxo (derrota), a paleta divergente do Carbon para desempenho; a em
- * andamento, o parcial sobre cinza, com o mesmo ícone do cartão; a pendente, só
- * o ícone do cartão, sem fundo. A cor não fala sozinha: o nome do link diz o
- * resultado por extenso.
+ * quem está na linha. A série encerrada é o check e o placar sobre um fundo teal
+ * (vitória) ou roxo (derrota), a paleta divergente do Carbon para desempenho;
+ * a em andamento, o parcial sobre cinza, com o meio círculo; a pendente, só o
+ * ícone de pendente, sem fundo: os três estados têm o símbolo do cartão. A cor
+ * não fala sozinha: o nome do link diz o resultado por extenso.
  */
 export function CrosstableCell({ match, team, row, column, href }: Props) {
   const t = useTranslations("Bracket");
@@ -55,13 +55,23 @@ export function CrosstableCell({ match, team, row, column, href }: Props) {
     tone = result.won ? styles.won : styles.lost;
     if (result.kind === "walkover") {
       said = tSaid(result.won ? "wonWalkover" : "lostWalkover");
-      content = t("walkover");
+      content = (
+        <>
+          <CheckmarkOutline />
+          {t("walkover")}
+        </>
+      );
     } else {
       const score = scoreText(result.own, result.other, result.frags);
       said = tSaid(result.won ? "won" : "lost", {
         score: result.frags ? tSaid("frags", { score }) : score,
       });
-      content = score;
+      content = (
+        <>
+          <CheckmarkOutline />
+          {score}
+        </>
+      );
     }
   }
   const label = `${t("matchSides", { a: row, b: column })}, ${said}`;
