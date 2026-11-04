@@ -6,15 +6,21 @@ import { loadTournament } from "@/features/tournaments/server";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { BracketSection } from "./bracket-section";
+import { StandingsSection } from "./standings-section";
 
-type Props = { tenant: string; slug: string };
+type Props = {
+  tenant: string;
+  slug: string;
+  /** Qual das abas que saem da chave. */
+  view: "bracket" | "standings";
+};
 
 /**
- * A aba Chave do torneio: a chave e a classificação a partir do início;
- * antes, o aviso de quando ela aparece, com o caminho para os inscritos.
+ * As abas Chave e Classificação do torneio, a partir do início; antes, o
+ * aviso de quando elas têm conteúdo, com o caminho para os inscritos.
  * Lê a sessão: fica em `<Suspense>`.
  */
-export async function BracketTab({ tenant, slug }: Props) {
+export async function BracketTab({ tenant, slug, view }: Props) {
   const [t, loaded] = await Promise.all([
     getTranslations("Bracket"),
     loadTournament(tenant, slug),
@@ -35,9 +41,13 @@ export async function BracketTab({ tenant, slug }: Props) {
           </ButtonLink>
         }
       >
-        {t("notStarted")}
+        {t(view === "standings" ? "standings.notStarted" : "notStarted")}
       </EmptyState>
     );
   }
-  return <BracketSection tenant={tenant} tournament={tournament} />;
+  return view === "standings" ? (
+    <StandingsSection tenant={tenant} tournament={tournament} />
+  ) : (
+    <BracketSection tenant={tenant} tournament={tournament} />
+  );
 }

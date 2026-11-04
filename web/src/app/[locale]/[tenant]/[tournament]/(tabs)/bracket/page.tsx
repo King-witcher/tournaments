@@ -15,7 +15,7 @@ export default async function BracketPage({
   return (
     <Suspense fallback={<BracketSkeleton label={t("loading")} />}>
       {params.then(({ tenant, tournament }) => (
-        <BracketTab tenant={tenant} slug={tournament} />
+        <BracketTab tenant={tenant} slug={tournament} view="bracket" />
       ))}
     </Suspense>
   );

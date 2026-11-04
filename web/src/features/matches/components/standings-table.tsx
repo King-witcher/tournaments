@@ -24,11 +24,10 @@ type Props = {
 };
 
 /**
- * A classificação embaixo da chave, quando o torneio encerra: posição
- * (empatados dividem a faixa, 5º–8º), o time (no duelo, o jogador, com link
- * para a pessoa) e o
- * resultado (quem venceu o torneio, quem desistiu ou saiu, e a série que
- * eliminou cada um, com link). Antes disso, diz quando ela aparece.
+ * A classificação da eliminação, quando o torneio encerra: posição (empatados
+ * dividem a faixa, 5º–8º), o time (no duelo, o jogador, com link para a
+ * pessoa) e o resultado (quem venceu o torneio, quem desistiu ou saiu, e a
+ * série que eliminou cada um, com link). Antes disso, diz quando ela aparece.
  */
 export function StandingsTable({ tenant, bracket, basePath }: Props) {
   const t = useTranslations("Bracket.standings");

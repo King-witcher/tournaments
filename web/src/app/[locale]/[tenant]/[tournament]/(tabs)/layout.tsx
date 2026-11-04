@@ -11,8 +11,8 @@ import {
 
 /**
  * O torneio: o cabeçalho, "Sua situação" e as abas (Visão geral, Chave,
- * Inscritos, Regras, Organização), com a aba aberta dentro. Editar, seeding
- * e a partida ficam fora do grupo, sem as abas.
+ * Classificação, Inscritos, Regras, Organização), com a aba aberta dentro.
+ * Editar, seeding e a partida ficam fora do grupo, sem as abas.
  */
 export default async function TournamentLayout({
   params,

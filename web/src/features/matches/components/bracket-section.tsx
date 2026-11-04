@@ -1,4 +1,3 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { isTable } from "@/features/tournaments/lib/format";
@@ -9,9 +8,7 @@ import { Section } from "@/shared/ui/section";
 import { loadBracket } from "../server";
 import styles from "./bracket-section.module.scss";
 import { BracketView } from "./bracket-view";
-import { StandingsTable } from "./standings-table";
 import { TableMatches } from "./table-matches";
-import { TableStandings } from "./table-standings";
 
 type Props = {
   tenant: string;
@@ -19,8 +16,8 @@ type Props = {
 };
 
 /**
- * A chave do torneio em andamento ou encerrado, em largura cheia, e embaixo
- * a classificação (no round robin e no suíço, a tabela e as séries). Antes do
+ * A chave do torneio em andamento ou encerrado, em largura cheia (no round
+ * robin e no suíço, as séries). A classificação tem a aba dela. Antes do
  * início não mostra nada (a aba mostra o aviso).
  * Busca a chave, então fica em `<Suspense>`.
  */
@@ -36,49 +33,38 @@ export async function BracketSection({ tenant, tournament }: Props) {
     return <Notice kind="error">{await apiErrorMessage(loaded.code)}</Notice>;
   }
   const bracket = loaded.data;
-  // Round robin e suíço: a tabela em cima (é ela que classifica) e as
-  // partidas por rodada embaixo, sem a grade da chave.
+  // Round robin e suíço: as partidas por rodada, sem a grade da chave.
   if (isTable(bracket.format)) {
     return (
-      <Stack gap={7}>
-        <TableStandings tenant={tenant} bracket={bracket} />
-        <TableMatches
-          tenant={tenant}
-          tournament={tournament.slug}
-          bracket={bracket}
-        />
-      </Stack>
+      <TableMatches
+        tenant={tenant}
+        tournament={tournament.slug}
+        bracket={bracket}
+      />
     );
   }
   const manyRounds = bracket.matches.some((m) => m.round > 1);
 
   return (
-    <Stack gap={7}>
-      <Section
-        title={t("title")}
-        description={
-          (bracket.status === "in_progress" || manyRounds) && (
-            <>
-              {bracket.status === "in_progress" && t("hint")}
-              {manyRounds && (
-                // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
-                <span className={styles.mobileOnly}> {t("scrollHint")}</span>
-              )}
-            </>
-          )
-        }
-      >
-        <BracketView
-          tenant={tenant}
-          tournament={tournament.slug}
-          bracket={bracket}
-        />
-      </Section>
-      <StandingsTable
+    <Section
+      title={t("title")}
+      description={
+        (bracket.status === "in_progress" || manyRounds) && (
+          <>
+            {bracket.status === "in_progress" && t("hint")}
+            {manyRounds && (
+              // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
+              <span className={styles.mobileOnly}> {t("scrollHint")}</span>
+            )}
+          </>
+        )
+      }
+    >
+      <BracketView
         tenant={tenant}
+        tournament={tournament.slug}
         bracket={bracket}
-        basePath={`/${tenant}/${tournament.slug}/matches`}
       />
-    </Stack>
+    </Section>
   );
 }

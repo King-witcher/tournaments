@@ -21,15 +21,16 @@ type Props = {
 
 /**
  * A tabela do round robin e do suíço: posição, o time (no duelo, o jogador,
- * com link para a pessoa), pontos, vitórias e derrotas (com os byes do
- * suíço), mapas com o saldo, o saldo de frags (é ele que desempata, não o
- * total; pró e contra vêm ao lado, marcados como incompletos quando alguma
- * série veio sem eles, porque aí não desempatam; "sem frags" quando nenhuma
- * veio), o Buchholz no suíço (explicado uma vez, na descrição), e quem venceu,
- * desistiu ou saiu. Embaixo, os desempates que não foram pelos pontos, um por
- * linha ("2º à frente do 3º pelo confronto direto"), visíveis também no
- * celular, onde as colunas de saldo somem. Enquanto a fase corre, é a ordem de
- * agora; no fim, a classificação.
+ * com link para a pessoa), pontos, séries vencidas e perdidas (com os byes do
+ * suíço), partidas com o saldo (na md1 não: seriam as mesmas contas das
+ * séries), o saldo de frags (é ele que desempata, não o total; pró e contra
+ * vêm ao lado, marcados como incompletos quando alguma série veio sem eles,
+ * porque aí não desempatam; "sem frags" quando nenhuma veio), o Buchholz no
+ * suíço (explicado uma vez, na descrição), e quem venceu, desistiu ou saiu.
+ * Embaixo, os desempates que não foram pelos pontos, um por linha ("2º à
+ * frente do 3º pelo confronto direto"), visíveis também no celular, onde as
+ * colunas de saldo somem. Enquanto a fase corre, é a ordem de agora; no fim,
+ * a definitiva.
  */
 export function TableStandings({ tenant, bracket }: Props) {
   const t = useTranslations("Bracket.table");
@@ -50,7 +51,9 @@ export function TableStandings({ tenant, bracket }: Props) {
     { key: "team", header: t("team") },
     { key: "points", header: t("points") },
     { key: "record", header: t("record") },
-    { key: "maps", header: t("maps"), secondary: true },
+    ...(bracket.format.best_of === 1
+      ? []
+      : [{ key: "maps", header: t("maps"), secondary: true }]),
     { key: "frags", header: t("frags"), secondary: true },
     ...(swiss
       ? [{ key: "buchholz", header: t("buchholz"), secondary: true }]
@@ -139,7 +142,7 @@ export function TableStandings({ tenant, bracket }: Props) {
 
   return (
     <Section
-      title={finished ? t("finalTitle") : t("title")}
+      title={t("title")}
       description={
         [!finished && t("current"), swiss && t("buchholzMeaning")]
           .filter(Boolean)
@@ -147,7 +150,7 @@ export function TableStandings({ tenant, bracket }: Props) {
       }
     >
       <DataTable
-        label={finished ? t("finalTitle") : t("title")}
+        label={t("title")}
         primaryColumn="team"
         columns={columns}
         rows={tableRows}
