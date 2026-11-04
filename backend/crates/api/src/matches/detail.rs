@@ -14,7 +14,11 @@ use super::{
     veto,
     view::{self, Viewer},
 };
-use crate::{shared::ApiError, teams::StoredTeam, tournaments::StoredTournament};
+use crate::{
+    shared::ApiError,
+    teams::StoredTeam,
+    tournaments::{StoredTournament, TeamAction},
+};
 
 const NOT_FOUND: ApiError = ApiError::not_found("match.not_found");
 
@@ -80,6 +84,7 @@ pub async fn load(
             .collect(),
         next_game: tasks::next_game(tournament.status, m, &games),
         viewer_side: mine,
+        can_report: mine.is_some() && viewer.may(TeamAction::Report),
         history: events
             .into_iter()
             .map(|e| view::event(stage, e))

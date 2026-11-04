@@ -106,7 +106,8 @@
       "champions": "Campeones",
       "languages": "Idiomas",
       "veto": "Mapas",
-      "results": "Resultados"
+      "results": "Resultados",
+      "teamRules": "Quién actúa por el equipo"
     },
     "noDate": "Sin fecha"
   },
@@ -233,5 +234,33 @@
   "source": {
     "label": "Copiar de",
     "none": "Ningún torneo"
+  },
+  "teamRules": {
+    "title": "Equipos",
+    "label": "Quién actúa por el equipo",
+    "presets": {
+      "captain": "Centrado en el capitán",
+      "everyone": "Todos los jugadores",
+      "custom": "Personalizado"
+    },
+    "hints": {
+      "captain": "El capitán marca “Listo”, veta, banea, elige los campeones de todos y envía el resultado.",
+      "everyone": "Cualquier jugador veta, banea y envía el resultado, y cada uno elige su propio campeón. Todos marcan “Listo”.",
+      "custom": "Todos los jugadores marcan “Listo”."
+    },
+    "fields": {
+      "veto": "Vetar mapas",
+      "ban": "Banear campeones",
+      "pick": "Elegir campeones",
+      "report": "Enviar resultado"
+    },
+    "actor": {
+      "captain": "Capitán",
+      "anyone": "Cualquiera"
+    },
+    "picker": {
+      "captain": "Capitán",
+      "each_player": "Cada jugador"
+    }
   }
 }

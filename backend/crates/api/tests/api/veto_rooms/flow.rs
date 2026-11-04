@@ -22,12 +22,19 @@ async fn ready_of_each_side_starts_and_the_room_is_valid_for_a_day() {
     let app = app(db);
     let links = links_of(&app, room(2, 1)).await;
     for (i, seat) in links.seats.iter().enumerate() {
-        // Um lugar de cada lado fica vazio: não trava a sala.
-        if i % 2 == 0 {
-            enter(&app, seat, &format!("P{i}")).await;
-        }
+        enter(&app, seat, &format!("P{i}")).await;
     }
+    // Todos os lugares marcam: o lado fica pronto com os dois.
     let (status, body) = ready(&app, &links.seats[0]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["ready_a"], false);
+    assert_eq!(body["veto"]["ready_waiting"].as_array().unwrap().len(), 3);
+    assert_eq!(body["veto"]["can_act"]["ready"], false);
+    assert_eq!(
+        detail(&app, &links.seats[1]).await["veto"]["can_act"]["ready"],
+        true
+    );
+    let (status, body) = ready(&app, &links.seats[1]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["veto"]["ready_a"], true);
     assert_eq!(body["veto"]["ready_b"], false);
@@ -35,9 +42,12 @@ async fn ready_of_each_side_starts_and_the_room_is_valid_for_a_day() {
     // Repetir não muda nada.
     let (status, body) = ready(&app, &links.seats[0]).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["veto"]["history"].as_array().unwrap().len(), 1);
+    assert_eq!(body["veto"]["history"].as_array().unwrap().len(), 2);
 
     let (status, body) = ready(&app, &links.seats[2]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["status"], "waiting_ready");
+    let (status, body) = ready(&app, &links.seats[3]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["veto"]["status"], "in_progress");
     assert_eq!(body["veto"]["turn"]["action"], "ban");
@@ -50,8 +60,8 @@ async fn ready_of_each_side_starts_and_the_room_is_valid_for_a_day() {
     );
     // Quem começa foi sorteado e fica no histórico.
     let history = detail(&app, &links.manage).await["veto"]["history"].clone();
-    assert_eq!(history[2]["kind"], "begin");
-    assert!(history[2]["side"].is_string());
+    assert_eq!(history[4]["kind"], "begin");
+    assert!(history[4]["side"].is_string());
 }
 
 #[tokio::test]

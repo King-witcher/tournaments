@@ -33,7 +33,8 @@ export function sideNames(
 
 /**
  * O veto com o lugar vazio escrito: a API manda o nome vazio, e os tabuleiros
- * são os da série, em que vazio quer dizer conta excluída.
+ * são os da série, em que vazio quer dizer conta excluída. Na sala sem nomes
+ * (`nameless`), o lugar sem link fica sem nome, e a tela mostra só os campeões.
  */
 export function withSeatNames(
   veto: Schemas["VetoView"],
@@ -47,8 +48,10 @@ export function withSeatNames(
     const seat = seats.find((s) => s.id === player.user_id);
     return { ...player, nickname: seat ? labels.seat(seat) : labels.empty };
   };
+  if (veto.nameless) return veto;
   return {
     ...veto,
+    ready_waiting: veto.ready_waiting.map(named),
     missing: veto.missing.map(named),
     games: veto.games.map((g) => ({
       ...g,

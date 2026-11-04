@@ -26,14 +26,17 @@ use crate::{
     shared::ApiError,
     teams::{StoredTeam, TeamMember},
     tenants::{Role, TenantMember},
-    tournaments::{StoredTournament, TournamentStatus},
+    tournaments::{StoredTournament, TeamAction, TeamRules, TournamentStatus},
 };
 
-/// Quem vê: o participante dele na chave, se joga, e se organiza.
+/// Quem vê: o participante dele na chave, se joga, se organiza e o que a regra
+/// do torneio deixa ele fazer pelo time.
 pub struct Viewer {
     pub user_id: i64,
     pub participant: Option<ParticipantId>,
     pub organizer: bool,
+    pub captain: bool,
+    pub rules: TeamRules,
 }
 
 impl Viewer {
@@ -43,7 +46,14 @@ impl Viewer {
             user_id: member.user.id,
             participant,
             organizer: member.role >= Role::Organizer,
+            captain: stage.is_captain(member.user.id),
+            rules: stage.team_rules,
         }
+    }
+
+    /// A regra deixa quem vê fazer `action` pelo time dele.
+    pub const fn may(&self, action: TeamAction) -> bool {
+        self.rules.allows(action, self.captain)
     }
 }
 

@@ -20,7 +20,7 @@ import { VetoRoomResult } from "./veto-room-result";
 export function VetoRoomSteps() {
   const t = useTranslations("Match.steps");
   const tRoom = useTranslations("VetoRoom");
-  const { veto, mine, pending } = useVetoBoard();
+  const { veto, pending } = useVetoBoard();
   const { room, isMine, clearMine } = useVetoRoom();
   // Sempre há veto na sala; o `VetoBoard` também serve à série, que pode não ter.
   const shownVeto = veto ?? room.veto;
@@ -30,7 +30,7 @@ export function VetoRoomSteps() {
     pending,
     isMine,
     clearMine,
-    asks: (key) => roomAsks(shownVeto, mine, key),
+    asks: (key) => roomAsks(shownVeto, key),
   });
   const steps = roomSteps(shownVeto);
   const current = steps.indexOf(phase);
@@ -53,7 +53,7 @@ export function VetoRoomSteps() {
       onSelect={(i) => view.show(steps[i])}
       selected={index}
     >
-      {view.shown === "ready" && <VetoReady done={done} />}
+      {view.shown === "ready" && <VetoReady done={done} room />}
       {view.shown === "maps" && <MapsStep done={done} />}
       {view.shown === "champions" && <ChampionsStep rule={rule} done={done} />}
       {view.shown === "result" && <VetoRoomResult />}

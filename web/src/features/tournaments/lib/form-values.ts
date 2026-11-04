@@ -1,5 +1,6 @@
 import type { components } from "@/shared/api/schema";
 import { setupEditable } from "./status";
+import { TEAM_PRESETS } from "./team-rules";
 
 type Schemas = components["schemas"];
 type Locale = Schemas["Locale"];
@@ -47,6 +48,8 @@ export type TournamentValues = {
   sameTeam: boolean;
   /** Início em ISO (UTC); `null` sem data, só no rascunho. */
   startsAt: string | null;
+  /** Quem age pelo time: só vale nos times, e no duelo vai como está. */
+  teamRules: Schemas["TeamRules"];
   /** Janela de check-in em minutos; `null` sem check-in. */
   checkInMinutes: number | null;
   /** Janela de contestação de resultado, em minutos. */
@@ -101,8 +104,8 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
  * vagas, 1 ban por série, espelho permitido, check-in de 30 min, 10 min para
  * contestar, veto de mapas no pool padrão, draft de campeões no site e 30 s
  * por passo, com as escolhas alternadas. Trocado para o TDM: times de 2, a regra
- * de não repetição por jogador e sem campeão igual no time. Às cegas, 60 s para
- * a janela simultânea.
+ * de não repetição por jogador, sem campeão igual no time e o capitão agindo pelo
+ * time. Às cegas, 60 s para a janela simultânea.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -126,6 +129,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     noRepeat: "off",
     noRepeatWho: "player",
     sameTeam: false,
+    teamRules: TEAM_PRESETS.captain,
     startsAt: null,
     checkInMinutes: 30,
     contestMinutes: 10,
@@ -171,6 +175,7 @@ export function valuesFrom(
     noRepeat: rules.no_repeat?.scope ?? "off",
     noRepeatWho: rules.no_repeat?.who ?? "player",
     sameTeam: rules.same_team,
+    teamRules: tournament.team_rules,
     startsAt: tournament.starts_at ?? null,
     checkInMinutes: tournament.check_in_minutes ?? null,
     contestMinutes: tournament.contest_minutes,
@@ -205,6 +210,8 @@ export function valuesFromSource(
     slug: "",
     startsAt: null,
     mapPool: pool.length > 0 ? pool : null,
+    // No duelo as regras não valem: virando TDM aqui, começa como todo time novo.
+    teamRules: source.mode === "tdm" ? source.team_rules : TEAM_PRESETS.captain,
     // A janela aberta só fica em quem já a tinha: não se escolhe mais.
     pickOrder:
       source.veto.pick_order === "open"
@@ -473,6 +480,7 @@ function setupBody(values: TournamentValues) {
     mode: values.mode,
     team_size: teamSizeOf(values),
     counts_for_rating: values.countsForRating,
+    team_rules: values.teamRules,
     veto: {
       map_mode: values.mapMode,
       order: values.vetoOrder,

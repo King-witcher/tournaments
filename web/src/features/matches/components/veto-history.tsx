@@ -37,7 +37,7 @@ export function VetoHistory({ veto, names }: Props) {
               ? shownNickname(e.actor, tMember("deletedAccount"))
               : null;
           const who =
-            e.player != null
+            e.player != null && e.player !== ""
               ? shownNickname(e.player, tMember("deletedAccount"))
               : e.side
                 ? teams && actor
@@ -62,11 +62,17 @@ export function VetoHistory({ veto, names }: Props) {
             e.kind === "begin" ||
             (e.kind === "ban" && e.champion != null) ||
             (e.map != null && veto.map_mode === "veto");
+          // O capitão escolheu por um colega: o campeão é do colega.
+          const pickedBy =
+            e.player && actor && e.player !== e.actor
+              ? t("pickedBy", { actor })
+              : null;
           const parts = [
             game != null && !seriesWide
               ? tGame("game", { number: game })
               : null,
             text,
+            pickedBy,
             e.timeout ? t("timeout") : null,
           ].filter(Boolean);
           return (

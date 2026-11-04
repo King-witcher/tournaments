@@ -132,8 +132,8 @@ async fn an_empty_seat_is_covered_by_the_draw_at_the_end_of_the_window() {
     // Só um de cada lado entra.
     enter(&app, &links.seats[0], "king").await;
     enter(&app, &links.seats[2], "thallis").await;
-    assert_eq!(ready(&app, &links.seats[0]).await.0, StatusCode::OK);
-    let (_, body) = ready(&app, &links.seats[2]).await;
+    // Quem falta não trava: a gestão começa.
+    let body = begin(&app, &links.manage).await;
     assert_eq!(body["veto"]["turn"]["action"], "team_pick");
     let names: Vec<&Value> = body["veto"]["missing"]
         .as_array()

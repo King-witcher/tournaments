@@ -74,6 +74,15 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
         : t("labels.mode"),
       value: modeLabel(tournament.mode, tournament.team_size),
     },
+    ...(tdm
+      ? [
+          {
+            key: "teamRules",
+            label: t("labels.teamRules"),
+            value: summary.teamRules(values),
+          },
+        ]
+      : []),
     {
       key: "bracket",
       // "Chave" só na eliminação; round robin e suíço são "Formato".
@@ -144,9 +153,16 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
       key: "contest",
       label: tip(
         "contest",
-        t(tdm ? "tips.contestTextTdm" : "tips.contestText", {
-          duration: formatMinutes(GAME_MINUTES),
-        }),
+        t(
+          tdm && tournament.team_rules.report === "captain"
+            ? "tips.contestTextCaptain"
+            : tdm
+              ? "tips.contestTextTdm"
+              : "tips.contestText",
+          {
+            duration: formatMinutes(GAME_MINUTES),
+          },
+        ),
       ),
       value: formatMinutes(tournament.contest_minutes),
     },

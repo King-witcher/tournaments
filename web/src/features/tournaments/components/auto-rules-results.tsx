@@ -19,15 +19,19 @@ export function AutoRulesResults({ tournament }: Props) {
   const tdm = tournament.mode === "tdm";
   const [stage] = tournament.stages;
   const severalGames = Math.max(stage.best_of, finalsBestOf(stage) ?? 0) > 1;
+  const byCaptain = tdm && tournament.team_rules.report === "captain";
 
   return (
     <AutoRulesBlock title={t("title")}>
       <AutoRulesList
         items={[
-          [t(tdm ? "reportTdm" : "report"), severalGames && t("next")],
+          [
+            t(byCaptain ? "reportCaptain" : tdm ? "reportTdm" : "report"),
+            severalGames && t("next"),
+          ],
           [tournament.screenshots_required && t("screenshot")],
           [
-            t(tdm ? "confirmTdm" : "confirm", {
+            t(byCaptain ? "confirmCaptain" : tdm ? "confirmTdm" : "confirm", {
               window: formatMinutes(tournament.contest_minutes),
               duration: formatMinutes(GAME_MINUTES),
             }),

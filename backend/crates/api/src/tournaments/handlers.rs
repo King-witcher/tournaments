@@ -57,6 +57,7 @@ pub async fn create_tournament(
         body.champion_rules,
         body.stages,
         veto,
+        body.team_rules.unwrap_or_default(),
     );
     setup.check(db::champion_pool(&mut *conn).await?, 0)?;
     drop(conn);

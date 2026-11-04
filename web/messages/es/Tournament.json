@@ -39,7 +39,29 @@
     "teams": {
       "title": "Equipos",
       "formation": "Los equipos son de {size} jugadores, armados por la organización antes del inicio. Quien sobra queda como suplente.",
-      "changes": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad. Si alguien sale de la comunidad, el equipo sigue con menos jugadores."
+      "changes": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad. Si alguien sale de la comunidad, el equipo sigue con menos jugadores.",
+      "actors": {
+        "captain": "El capitán hace todo por el equipo: marca “Listo”, veta los mapas, banea y elige los campeones de todos y envía, confirma o impugna el resultado. Si no aparece, el plazo sortea lo que falte, y la organización puede cambiar al capitán.",
+        "everyone": "Cualquier jugador veta los mapas, banea y envía, confirma o impugna el resultado por el equipo, y vale el primer clic. Cada uno elige su propio campeón.",
+        "custom": {
+          "veto": {
+            "captain": "El capitán veta los mapas.",
+            "anyone": "Cualquier jugador veta los mapas, y vale el primer clic."
+          },
+          "ban": {
+            "captain": "El capitán banea los campeones.",
+            "anyone": "Cualquier jugador banea los campeones, y vale el primer clic."
+          },
+          "pick": {
+            "captain": "El capitán elige los campeones de todos.",
+            "each_player": "Cada jugador elige su propio campeón."
+          },
+          "report": {
+            "captain": "El capitán envía, confirma e impugna el resultado.",
+            "anyone": "Cualquier jugador envía, confirma e impugna el resultado."
+          }
+        }
+      }
     },
     "format": {
       "title": {
@@ -78,7 +100,7 @@
     "series": {
       "title": "Cada serie",
       "ready": "Cuando la serie esté lista, abre su página y haz clic en “Listo”.",
-      "readyTdm": "Cuando la serie esté lista, un jugador de cada equipo abre su página y hace clic en “Listo”. En el veto, cualquier jugador actúa por el equipo, y vale el primer clic.",
+      "readyTdm": "Cuando la serie esté lista, todos los jugadores de los dos equipos abren su página y hacen clic en “Listo”.",
       "vetoStarts": "El veto empieza cuando los dos estén listos.",
       "vetoStartsTdm": "El veto empieza cuando los dos equipos estén listos.",
       "timer": "Cada elección del veto tiene {time}. Si se acaba el tiempo, se sortea.",
@@ -99,7 +121,8 @@
         "random": "El mapa de cada partida se sortea cuando empieza.",
         "off": "Los equipos acuerdan el mapa de cada partida, sin repetir en la serie.",
         "offOne": "Los equipos acuerdan el mapa."
-      }
+      },
+      "readyCaptains": "Cuando la serie esté lista, el capitán de cada equipo abre su página y hace clic en “Listo”."
     },
     "pool": {
       "title": "Mapas"
@@ -114,7 +137,9 @@
       "confirmTdm": "El otro equipo tiene {window} para confirmar o impugnar, y el compañero de quien envió también puede impugnar. Sin respuesta, la partida se confirma sola. Si el resultado llega antes de que la partida cumpla {duration}, los {window} solo empiezan a contar a los {duration}.",
       "late": "Una partida confirmada todavía se puede impugnar hasta que empiece la próxima serie de alguno de los dos.",
       "lateTdm": "Una partida confirmada todavía se puede impugnar hasta que empiece la próxima serie de alguno de los dos equipos.",
-      "organizer": "La organización decide las impugnaciones."
+      "organizer": "La organización decide las impugnaciones.",
+      "reportCaptain": "Después de cada partida, el capitán envía el marcador en la página de la serie.",
+      "confirmCaptain": "El capitán del otro equipo tiene {window} para confirmar o impugnar. Sin respuesta, la partida se confirma sola. Si el resultado llega antes de que la partida cumpla {duration}, los {window} solo empiezan a contar a los {duration}."
     },
     "absence": {
       "title": "W.O. y abandono",
@@ -141,8 +166,10 @@
         "open": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea.",
         "blind": {
           "duel": "Después, todavía antes de la partida 1, eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que elige cada uno solo aparece cuando los dos terminan. Lo que falte al final se sortea.",
-          "tdm": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que elige un equipo solo aparece cuando todos terminan. Lo que falte al final se sortea."
-        }
+          "tdm": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que elige un equipo solo aparece cuando todos terminan. Lo que falte al final se sortea.",
+          "captain": "Después, todavía antes de la partida 1, los capitanes eligen al mismo tiempo el campeón de cada jugador en cada partida, en una ventana de {window}. Lo que elige un equipo solo aparece cuando todos terminan. Lo que falte al final se sortea."
+        },
+        "captain": "Después, todavía antes de la partida 1, los capitanes eligen el campeón de cada jugador en cada partida, uno por vez, en A, B, B, A, alternando quién abre en cada partida."
       },
       "mirror": {
         "duel": {
@@ -211,7 +238,8 @@
       "veto": "Mapas",
       "format": "Formato",
       "rounds": "Rondas",
-      "mode": "Modalidad"
+      "mode": "Modalidad",
+      "teamRules": "Quién actúa por el equipo"
     },
     "bracket": {
       "single": "Eliminación simple",
@@ -246,7 +274,8 @@
       "mode": "¿Cómo funcionan los equipos?",
       "checkInTextTdm": "En el check-in confirmas, en la página del torneo, que vas a jugar. Solo quien hace check-in entra en un equipo.",
       "noCheckInTextTdm": "En el check-in, los inscritos confirman cerca del inicio que van a jugar. Sin él, cualquier inscrito puede entrar en un equipo.",
-      "contestTextTdm": "Después de cada partida, un jugador envía el resultado, y el otro equipo tiene este plazo para confirmarlo o impugnarlo (el compañero de quien lo envió también puede impugnarlo). Si el resultado llega antes de que la partida cumpla {duration}, el plazo solo empieza a contar a los {duration}. Sin respuesta, el resultado vale; si hay impugnación, decide la organización."
+      "contestTextTdm": "Después de cada partida, un jugador envía el resultado, y el otro equipo tiene este plazo para confirmarlo o impugnarlo (el compañero de quien lo envió también puede impugnarlo). Si el resultado llega antes de que la partida cumpla {duration}, el plazo solo empieza a contar a los {duration}. Sin respuesta, el resultado vale; si hay impugnación, decide la organización.",
+      "contestTextCaptain": "Después de cada partida, el capitán envía el resultado, y el capitán del otro equipo tiene este plazo para confirmarlo o impugnarlo. Si el resultado llega antes de que la partida cumpla {duration}, el plazo solo empieza a contar a los {duration}. Sin respuesta, el resultado vale; si hay impugnación, decide la organización."
     },
     "seeRules": "Ver las reglas",
     "rounds": {

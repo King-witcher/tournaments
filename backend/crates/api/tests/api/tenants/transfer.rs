@@ -108,7 +108,7 @@ async fn the_transfer_needs_the_slug_and_an_active_member() {
 async fn the_new_owner_stays_within_the_limit() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;
-    for slug in ["bia-1", "bia-2", "bia-3"] {
+    for slug in ["bia-1", "bia-2", "bia-3", "bia-4", "bia-5"] {
         create(&app, &bia, slug).await;
     }
 
@@ -117,7 +117,7 @@ async fn the_new_owner_stays_within_the_limit() {
         (status, body),
         (
             StatusCode::CONFLICT,
-            json!({ "error": "member.owner_limit_reached", "params": { "max": 3 } })
+            json!({ "error": "member.owner_limit_reached", "params": { "max": 5 } })
         )
     );
     assert_eq!(role(&app, &ana).await, "owner");

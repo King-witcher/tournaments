@@ -12,9 +12,10 @@ import { useVetoRoom } from "../hooks/use-veto-room";
 import styles from "./veto-room-links.module.scss";
 
 /**
- * Os links da sala, para a gestão: um por lugar, com o nome de quem entrou, o
- * de espectador e o desta página, cada um com o botão de copiar do Carbon. Vão
- * sem idioma: o proxy do next-intl manda cada pessoa para o seu.
+ * Os links da sala, para a gestão: um por lugar (centrada no capitão, um por
+ * time), com o nome de quem entrou, o de espectador e o desta página, cada um com
+ * o botão de copiar do Carbon. Vão sem idioma: o proxy do next-intl manda cada
+ * pessoa para o seu.
  */
 export function VetoRoomLinks() {
   const t = useTranslations("VetoRoom.links");
@@ -44,7 +45,11 @@ export function VetoRoomLinks() {
           return (
             link &&
             row(
-              room.team_size === 1 ? labels.side(seat.side) : labels.seat(seat),
+              room.team_size === 1
+                ? labels.side(seat.side)
+                : room.who_acts === "captain"
+                  ? t("captain", { side: labels.side(seat.side) })
+                  : labels.seat(seat),
               link.token,
               seat.name ?? t("notJoined"),
             )

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into veto_rooms\n             (created_by, manage_token, spectator_token, team_size, best_of, map_mode, veto_order,\n              champion_phase, bans_per_series, mirror, same_team, no_repeat, step_seconds,\n              team_pick_seconds, expires_at, pick_order, who_starts)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,\n                 now() + make_interval(hours => $15), $16, $17)\n         returning id",
+  "query": "insert into veto_rooms\n             (created_by, manage_token, spectator_token, team_size, best_of, map_mode, veto_order,\n              champion_phase, bans_per_series, mirror, same_team, no_repeat, step_seconds,\n              team_pick_seconds, expires_at, pick_order, who_starts, team_actors)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,\n                 now() + make_interval(hours => $15), $16, $17, $18)\n         returning id",
   "describe": {
     "columns": [
       {
@@ -33,6 +33,7 @@
         "Int4",
         "Int4",
         "Text",
+        "Text",
         "Text"
       ]
     },
@@ -40,5 +41,5 @@
       false
     ]
   },
-  "hash": "92eadc1b0262c8170c4f43fb1d42faf257b9a4bed2c7e4417dcb999372dee2ef"
+  "hash": "9e775ee182b8b353f92e270ee641a7cb73520bb95f447a9f01ce4b561f98ed20"
 }

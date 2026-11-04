@@ -1,8 +1,9 @@
 //! Quem contesta uma partida e até quando (o envio e as respostas ficam em
 //! `report`).
 //!
-//! - Pendente: qualquer jogador da série menos quem a enviou, também o colega
-//!   que discorda do que o próprio time enviou. Confirmar é só do outro time.
+//! - Pendente: quem a regra do torneio deixa (`acting`) entre os jogadores da
+//!   série, menos quem a enviou, também o colega que discorda do que o próprio
+//!   time enviou. Confirmar é só do outro time.
 //! - Confirmada pelo adversário ou pelo fim do prazo (a contestação tardia):
 //!   as mesmas pessoas, até a próxima série de um dos dois lados começar
 //!   (veto começado ou partida enviada depois do envio desta), com o torneio
@@ -21,7 +22,10 @@ use super::{
     stage::Stage,
     veto,
 };
-use crate::{shared::ApiError, tournaments::TournamentStatus};
+use crate::{
+    shared::ApiError,
+    tournaments::{TeamAction, TournamentStatus},
+};
 
 /// 409: a contestação tardia já não vale.
 pub const CLOSED: ApiError = ApiError::conflict("match.contest_closed");
@@ -38,7 +42,11 @@ pub fn allowed(
         .participant_of(user_id)
         .and_then(|p| g.side_of(p))
         .is_some();
-    if !plays || g.reported_by == Some(user_id) || status != TournamentStatus::InProgress {
+    if !plays
+        || !stage.may(user_id, TeamAction::Report)
+        || g.reported_by == Some(user_id)
+        || status != TournamentStatus::InProgress
+    {
         return false;
     }
     match g.status {

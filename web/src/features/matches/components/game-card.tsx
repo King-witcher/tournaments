@@ -24,11 +24,12 @@ type Props = {
 
 /**
  * A partida da vez num cartão: o alto (os lados, o mapa e os campeões) e,
- * embaixo, o envio. Para quem joga, o formulário depois do veto da partida
- * (no mapa que ele deu, com os frags embaixo de cada lado e a captura de
- * tela no fim; sem veto, com a escolha do mapa); para os outros, os
- * screenshots e "aguardando envio" e, para a organização que não joga, o
- * lançamento fechado num bloco (é exceção). Durante a votação, sem nada a
+ * embaixo, o envio. Para quem joga e pode enviar, o formulário depois do veto
+ * da partida (no mapa que ele deu, com os frags embaixo de cada lado e a captura
+ * de tela no fim; sem veto, com a escolha do mapa); para os outros, os
+ * screenshots e "aguardando envio" (ao colega, que é o capitão quem envia) e,
+ * para a organização que não envia, o lançamento fechado num bloco (é exceção).
+ * Durante a votação, sem nada a
  * mostrar ainda, quem joga não vê o cartão (`GameCardGate`, pela série ao
  * vivo).
  */
@@ -36,7 +37,8 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
   const t = useTranslations("Match.games");
   const tForm = useTranslations("Match.form");
   const plays = detail.viewer_side != null;
-  const enters = detail.can_manage && !plays;
+  const sends = detail.can_report;
+  const enters = detail.can_manage && !sends;
   const veto = detail.veto;
   // Sem o veto da partida (a votação, no passo), nem se sabe o mapa.
   const reportable = !veto || veto.reportable;
@@ -45,7 +47,7 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
     <GameScreenshots
       target={target}
       number={number}
-      reporting={plays}
+      reporting={sends}
       focusId={gameRowId(number)}
     />
   );
@@ -55,7 +57,7 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
       <Tile>
         <Layer className={styles.content}>
           <GameVersus number={number} />
-          {plays && reportable && (
+          {sends && reportable && (
             // A chave monta o formulário de novo a cada partida: o mapa e o
             // placar da anterior não vão para a seguinte.
             <GameForm
@@ -71,8 +73,12 @@ export function GameCard({ target, detail, number, names, maps }: Props) {
               card={fixedMap != null}
             />
           )}
-          {!plays && reportable && screenshots}
-          {!plays && <p className={styles.awaiting}>{t("awaiting")}</p>}
+          {!sends && reportable && screenshots}
+          {!sends && (
+            <p className={styles.awaiting}>
+              {t(plays ? "captainReports" : "awaiting")}
+            </p>
+          )}
           {/* A chave reinicia o bloco (fechado) a cada partida nova. */}
           {enters && (
             <Accordion key={number} title={tForm("enter", { number })}>

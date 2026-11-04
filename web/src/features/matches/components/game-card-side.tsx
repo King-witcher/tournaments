@@ -22,7 +22,7 @@ type Props = {
 /**
  * Um lado no cartão da partida, na coluna dele (a mesma do placar embaixo):
  * o nome, com "Você" no de quem vê e a marca de quem saiu, e o campeão (no
- * TDM, o de cada jogador; sem draft, os jogadores do time).
+ * TDM, o de cada jogador; sem draft, os jogadores do time, com o capitão marcado).
  */
 export function GameCardSide({ side, number }: Props) {
   const t = useTranslations("Match.veto.draft");
@@ -62,6 +62,14 @@ export function GameCardSide({ side, number }: Props) {
           {team.members.map((m) => (
             <li key={m.user_id}>
               {shownNickname(m.nickname, tMember("deletedAccount"))}
+              {m.user_id === team.captain && (
+                <>
+                  {" "}
+                  <StatusTag status="neutral" size="sm">
+                    {t("captain")}
+                  </StatusTag>
+                </>
+              )}
             </li>
           ))}
         </ul>

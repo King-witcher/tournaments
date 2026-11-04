@@ -183,9 +183,10 @@ async fn a_team_pick_is_of_a_player_of_that_side() {
     );
     let teams = started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
     let uri = format!("{COPA}/matches/wb-1-1/veto/ready");
-    post_empty(&app, &uri, &p[0]).await;
-    let (status, body) = post_empty(&app, &uri, &p[2]).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
+    for who in &p {
+        let (status, body) = post_empty(&app, &uri, who).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+    }
     let (tenant, tournament) = ids(&db).await;
     let anarki: i64 = sqlx::query_scalar("select id from champions where slug = 'anarki'")
         .fetch_one(&db)

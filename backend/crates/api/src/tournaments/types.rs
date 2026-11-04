@@ -8,6 +8,7 @@ use super::{
     schedule::DEFAULT_CHECK_IN_MINUTES,
     setup::TournamentMode,
     status::TournamentStatus,
+    team_rules::TeamRules,
     veto::{VetoInput, VetoSettings},
 };
 use crate::shared::{Locale, nullable};
@@ -154,6 +155,10 @@ pub struct CreateTournament {
     /// pool de duelo, campeões ligados, 30 s).
     #[serde(default)]
     pub veto: Option<VetoInput>,
+    /// Quem age pelo time. Ausente: todos os jogadores. O formulário de um
+    /// torneio novo manda o capitão. No duelo, não muda nada.
+    #[serde(default)]
+    pub team_rules: Option<TeamRules>,
     /// Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
     /// original. Erro de texto numa delas (`tournament.name_invalid`,
     /// `tournament.description_invalid`, `tournament.rules_invalid`) e
@@ -249,6 +254,9 @@ pub struct UpdateTournament {
     /// Veto das partidas, até o torneio começar; campo ausente não muda.
     #[serde(default)]
     pub veto: Option<VetoInput>,
+    /// Quem age pelo time, até o torneio começar; ausente não muda.
+    #[serde(default)]
+    pub team_rules: Option<TeamRules>,
     /// Screenshot obrigatório; muda até o torneio encerrar e vale para os
     /// envios seguintes. Ligar exige o bucket configurado.
     pub screenshots_required: Option<bool>,
@@ -299,6 +307,8 @@ pub struct Tournament {
     /// Se os mapas do torneio contam para o rating da comunidade.
     pub counts_for_rating: bool,
     pub veto: VetoSettings,
+    /// Quem age pelo time.
+    pub team_rules: TeamRules,
     /// O envio do jogador exige screenshot do placar (sem o bucket configurado,
     /// fica gravado e não vale).
     pub screenshots_required: bool,

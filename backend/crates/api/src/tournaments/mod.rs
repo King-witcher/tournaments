@@ -8,8 +8,8 @@
 //! `matches` usam, e guarda a data de início e a janela de check-in
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
 //! contestação de resultado (`contest`), a configuração do veto das partidas
-//! (`veto`: modo do mapa, pool, campeões, tempo por passo) e o screenshot
-//! obrigatório (`screenshots`). As transições manuais depois de
+//! (`veto`: modo do mapa, pool, campeões, tempo por passo), quem age pelo time
+//! (`team_rules`) e o screenshot obrigatório (`screenshots`). As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
 //! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
 //! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
@@ -29,6 +29,7 @@ mod screenshots;
 mod setup;
 mod slug;
 mod status;
+mod team_rules;
 mod texts;
 mod translations;
 mod types;
@@ -49,6 +50,7 @@ pub use db::{
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;
 pub use status::TournamentStatus;
+pub use team_rules::{TeamAction, TeamPicker, TeamRules};
 pub use types::{
     NameTranslation, NoRepeatWho, StageFormat, Tournament, TournamentPath, TournamentSummary,
 };

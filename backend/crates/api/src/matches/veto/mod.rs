@@ -4,13 +4,15 @@
 //! gravado (`db`, `state`), o "Pronto" dos lados, o pedido de desfazer e o
 //! relógio.
 //!
-//! - A série pronta, num torneio com alguma fase de veto, pede que os dois
-//!   lados cliquem em "Pronto" (`handlers::ready`); o veto começa quando os
-//!   dois confirmaram, ou quando o organizador força (`handlers::start`).
-//! - Tudo o que é do lado (Pronto, veto de mapas, bans, voto, pick do duelo,
-//!   pedir e responder o desfazer) é de qualquer jogador do time: vale o
-//!   primeiro clique, e o histórico grava quem fez. O pick por jogador é de
-//!   cada um (`PickOrder`: alternado nos times, ou a janela simultânea).
+//! - A série pronta, num torneio com alguma fase de veto, pede "Pronto"
+//!   (`handlers::ready`): com tudo no capitão, dele; senão, de todos do elenco de
+//!   agora (`Readiness`). O veto começa com os dois lados prontos, ou quando o
+//!   organizador força (`handlers::start`).
+//! - O que é do lado (veto de mapas, bans, voto, pick do duelo, pedir e responder
+//!   o desfazer) é de quem a regra do torneio deixa (`acting`): vale o primeiro
+//!   clique, e o histórico grava quem fez. O pick por jogador é de cada um ou do
+//!   capitão, por todos (`PickOrder`: alternado nos times, ou a janela
+//!   simultânea); `player` é de quem é o campeão, e `actor`, quem clicou.
 //! - Às cegas, o que um lado escolheu fica escondido de quem não é dele até a
 //!   janela fechar: quem monta o que sai é `view::build`, num ponto só.
 //! - Cada passo (`handlers::step`) passa pelo `engine` com as opções de agora
@@ -56,9 +58,9 @@ use engine::{
 pub use advance::advance;
 pub use db::{Champion, NewVetoEvent, champions, events, lineups};
 pub use due::{GRACE, any_due, apply_due, clock, due_draws};
-pub use state::{Kind, MatchVeto, MatchVetoRow, VetoLog, VetoRow, ev_side};
-pub use types::{VetoChoice, VetoStatus, VetoView};
-pub use view::{Board, Shown, build, next_map, status, view};
+pub use state::{Kind, MatchVeto, MatchVetoRow, Readiness, VetoLog, VetoRow, ev_side, turn_action};
+pub use types::{VetoChoice, VetoReadyBy, VetoStatus, VetoView};
+pub use view::{Board, Permissions, Shown, build, next_map, status, view};
 
 use super::stage::Stage;
 use crate::shared::ApiError;

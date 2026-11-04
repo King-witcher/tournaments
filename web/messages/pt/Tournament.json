@@ -39,7 +39,29 @@
     "teams": {
       "title": "Times",
       "formation": "Os times são de {size} jogadores, formados pela organização antes do início. Quem sobra fica de reserva.",
-      "changes": "Durante o torneio, a organização pode trocar um jogador por um reserva ou por outro membro da comunidade. Se alguém sair da comunidade, o time continua com menos jogadores."
+      "changes": "Durante o torneio, a organização pode trocar um jogador por um reserva ou por outro membro da comunidade. Se alguém sair da comunidade, o time continua com menos jogadores.",
+      "actors": {
+        "captain": "O capitão faz tudo pelo time: marca “Pronto”, veta os mapas, bane e escolhe os campeões de todos e envia, confirma ou contesta o resultado. Se ele não aparecer, o prazo sorteia o que faltar, e a organização pode trocar o capitão.",
+        "everyone": "Qualquer jogador veta os mapas, bane e envia, confirma ou contesta o resultado pelo time, e vale o primeiro clique. Cada um escolhe o próprio campeão.",
+        "custom": {
+          "veto": {
+            "captain": "O capitão veta os mapas.",
+            "anyone": "Qualquer jogador veta os mapas, e vale o primeiro clique."
+          },
+          "ban": {
+            "captain": "O capitão bane os campeões.",
+            "anyone": "Qualquer jogador bane os campeões, e vale o primeiro clique."
+          },
+          "pick": {
+            "captain": "O capitão escolhe os campeões de todos.",
+            "each_player": "Cada jogador escolhe o próprio campeão."
+          },
+          "report": {
+            "captain": "O capitão envia, confirma e contesta o resultado.",
+            "anyone": "Qualquer jogador envia, confirma e contesta o resultado."
+          }
+        }
+      }
     },
     "format": {
       "title": {
@@ -78,7 +100,7 @@
     "series": {
       "title": "Cada série",
       "ready": "Quando a série estiver pronta, abra a página dela e clique em “Pronto”.",
-      "readyTdm": "Quando a série estiver pronta, um jogador de cada time abre a página dela e clica em “Pronto”. No veto, qualquer jogador age pelo time, e vale o primeiro clique.",
+      "readyTdm": "Quando a série estiver pronta, todos os jogadores dos dois times abrem a página dela e clicam em “Pronto”.",
       "vetoStarts": "O veto começa quando os dois estiverem prontos.",
       "vetoStartsTdm": "O veto começa quando os dois times estiverem prontos.",
       "timer": "Cada escolha do veto tem {time}. Se o tempo acabar, ela é sorteada.",
@@ -99,7 +121,8 @@
         "random": "O mapa de cada partida é sorteado quando ela começa.",
         "off": "Os times combinam o mapa de cada partida, sem repetir na série.",
         "offOne": "Os times combinam o mapa."
-      }
+      },
+      "readyCaptains": "Quando a série estiver pronta, o capitão de cada time abre a página dela e clica em “Pronto”."
     },
     "pool": {
       "title": "Mapas"
@@ -114,7 +137,9 @@
       "confirmTdm": "O outro time tem {window} para confirmar ou contestar, e o colega de quem enviou também pode contestar. Sem resposta, a partida se confirma sozinha. Se o resultado chegar antes de a partida completar {duration}, os {window} só começam a contar aos {duration}.",
       "late": "Uma partida confirmada ainda pode ser contestada até a próxima série de um de vocês começar.",
       "lateTdm": "Uma partida confirmada ainda pode ser contestada até a próxima série de um dos dois times começar.",
-      "organizer": "A organização decide as contestações."
+      "organizer": "A organização decide as contestações.",
+      "reportCaptain": "Depois de cada partida, o capitão envia o placar na página da série.",
+      "confirmCaptain": "O capitão do outro time tem {window} para confirmar ou contestar. Sem resposta, a partida se confirma sozinha. Se o resultado chegar antes de a partida completar {duration}, os {window} só começam a contar aos {duration}."
     },
     "absence": {
       "title": "W.O. e desistência",
@@ -141,8 +166,10 @@
         "open": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que faltar no fim é sorteado.",
         "blind": {
           "duel": "Depois, ainda antes da partida 1, vocês escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que cada um escolhe só aparece quando os dois terminarem. O que faltar no fim é sorteado.",
-          "tdm": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que um time escolhe só aparece quando todos terminarem. O que faltar no fim é sorteado."
-        }
+          "tdm": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que um time escolhe só aparece quando todos terminarem. O que faltar no fim é sorteado.",
+          "captain": "Depois, ainda antes da partida 1, os capitães escolhem ao mesmo tempo o campeão de cada jogador em cada partida, numa janela de {window}. O que um time escolhe só aparece quando todos terminarem. O que faltar no fim é sorteado."
+        },
+        "captain": "Depois, ainda antes da partida 1, os capitães escolhem o campeão de cada jogador em cada partida, um por vez, em A, B, B, A, alternando quem abre a cada partida."
       },
       "mirror": {
         "duel": {
@@ -211,7 +238,8 @@
       "veto": "Mapas",
       "format": "Formato",
       "rounds": "Rodadas",
-      "mode": "Modalidade"
+      "mode": "Modalidade",
+      "teamRules": "Quem age pelo time"
     },
     "bracket": {
       "single": "Eliminação simples",
@@ -246,7 +274,8 @@
       "mode": "Como funcionam os times?",
       "checkInTextTdm": "No check-in, você confirma na página do torneio que vai jogar. Só quem faz check-in entra num time.",
       "noCheckInTextTdm": "No check-in, os inscritos confirmam perto do início que vão jogar. Sem ele, qualquer inscrito pode entrar num time.",
-      "contestTextTdm": "Depois de cada partida, um jogador envia o resultado, e o outro time tem esse prazo para confirmar ou contestar (o colega de quem enviou também pode contestar). Se o resultado chegar antes de a partida completar {duration}, o prazo só começa a contar aos {duration}. Sem resposta, o resultado vale; se houver contestação, a organização decide."
+      "contestTextTdm": "Depois de cada partida, um jogador envia o resultado, e o outro time tem esse prazo para confirmar ou contestar (o colega de quem enviou também pode contestar). Se o resultado chegar antes de a partida completar {duration}, o prazo só começa a contar aos {duration}. Sem resposta, o resultado vale; se houver contestação, a organização decide.",
+      "contestTextCaptain": "Depois de cada partida, o capitão envia o resultado, e o capitão do outro time tem esse prazo para confirmar ou contestar. Se o resultado chegar antes de a partida completar {duration}, o prazo só começa a contar aos {duration}. Sem resposta, o resultado vale; se houver contestação, a organização decide."
     },
     "seeRules": "Ver as regras",
     "rounds": {

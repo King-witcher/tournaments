@@ -62,8 +62,9 @@ async fn two_v_two(db: &PgPool, changes: Value) -> (Router, User, User, Vec<User
     let p = players(&app, db, &ana, 4).await;
     let body = tdm(2, changes);
     started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
-    ready(&app, &p[0], KEY).await;
-    ready(&app, &p[2], KEY).await;
+    for who in &p {
+        ready(&app, who, KEY).await;
+    }
     (app, ana, bia, p)
 }
 
@@ -724,8 +725,9 @@ async fn a_game_already_sent_stays_in_view_when_the_window_reopens() {
     let p = players(&app, &db, &ana, 4).await;
     let body = tdm(2, setup("blind", 0, 3));
     let teams = started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
-    ready(&app, &p[0], KEY).await;
-    ready(&app, &p[2], KEY).await;
+    for who in &p {
+        ready(&app, who, KEY).await;
+    }
     let slugs = [
         "anarki",
         "athena",

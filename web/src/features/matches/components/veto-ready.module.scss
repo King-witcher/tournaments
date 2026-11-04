@@ -1,4 +1,5 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
 // Quem está pronto, um por linha com o ícone do estado.
@@ -8,6 +9,14 @@
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-03;
+}
+
+// Quem falta, por nome, embaixo do lado.
+.waiting {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+  margin-top: spacing.$spacing-02;
 }
 
 .buttons {

@@ -39,7 +39,7 @@ fn of(stage: &Stage, m: &Match) -> SeriesProgress {
     let games = stage.games_of(m.id);
     let veto = stage.veto_of(m.id);
     if games.is_empty() && !veto.is_some_and(|v| v.state.begun()) {
-        return if veto.is_some_and(|v| v.ready().contains(&true)) {
+        return if veto.is_some_and(|v| v.clicked().contains(&true)) {
             SeriesProgress::Called
         } else {
             SeriesProgress::Open

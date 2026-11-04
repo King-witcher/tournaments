@@ -1,7 +1,6 @@
 import type { components } from "@/shared/api/schema";
 
-type Schemas = components["schemas"];
-type Veto = Schemas["VetoView"];
+type Veto = components["schemas"]["VetoView"];
 
 /** Um passo da sala: "Pronto", o veto de mapas, o draft e o resultado. */
 export type RoomStep = "ready" | "maps" | "champions" | "result";
@@ -24,14 +23,8 @@ export function roomPhase(veto: Veto): RoomStep {
 }
 
 /** O passo ainda pede algo de quem vê: o "Pronto" que ele não deu ou a vez dele. */
-export function roomAsks(
-  veto: Veto,
-  mine: Schemas["Side"] | null,
-  key: RoomStep,
-): boolean {
+export function roomAsks(veto: Veto, key: RoomStep): boolean {
   if (key === "result" || roomPhase(veto) !== key) return false;
-  if (key === "ready") {
-    return mine != null && !(mine === "a" ? veto.ready_a : veto.ready_b);
-  }
+  if (key === "ready") return veto.can_act.ready;
   return veto.options.length > 0 || veto.picks.length > 0;
 }

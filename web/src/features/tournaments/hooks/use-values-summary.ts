@@ -10,6 +10,7 @@ import {
   teamSizeOf,
 } from "../lib/form-values";
 import { teamsIn } from "../lib/format";
+import { teamPresetOf } from "../lib/team-rules";
 import { useFormatSeconds } from "./use-format-seconds";
 import { useModeLabel } from "./use-mode-label";
 
@@ -26,6 +27,7 @@ export function useValuesSummary() {
   const t = useTranslations("TournamentForm.summary");
   const tForm = useTranslations("TournamentForm");
   const tSetup = useTranslations("Tournament.setup");
+  const tTeam = useTranslations("TournamentForm.teamRules");
   const locale = useLocale();
   const formatMinutes = useFormatMinutes();
   const formatSeconds = useFormatSeconds();
@@ -69,6 +71,9 @@ export function useValuesSummary() {
           : undefined,
       ]);
     },
+    /** Quem age pelo time: o preset que as regras formam. */
+    teamRules: (v: Pick<TournamentValues, "teamRules">) =>
+      tTeam(`presets.${teamPresetOf(v.teamRules)}`),
     registration: (v: TournamentValues) =>
       line([
         tForm(`admissionOptions.${v.admission}`),

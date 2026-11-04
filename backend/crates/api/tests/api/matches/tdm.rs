@@ -1,5 +1,5 @@
-//! A série no TDM: qualquer jogador do time age pelo lado, a janela
-//! simultânea aberta de campeões (cada um escolhe o de cada partida, ao vivo,
+//! A série no TDM, com a regra que deixa tudo com todos: qualquer jogador do time
+//! age pelo lado, todos marcam "Pronto", a janela simultânea aberta de campeões (cada um escolhe o de cada partida, ao vivo,
 //! com o sorteio no fim e sem repetir no time) e o rating de uma partida pela
 //! escalação. A janela aberta não se escolhe mais: fica o torneio que já tinha
 //! começado nela (`open_window`). As ordens de hoje estão em `pick_order`.
@@ -121,15 +121,19 @@ fn picks(detail: &Value, game: usize) -> Vec<(i64, String)> {
 async fn anyone_of_the_team_acts_for_the_side() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, _, p) = final_2v2(&db, 1, json!({})).await;
-    // Sem capitão nas ações: P2 também está "pronto" pelo time.
+    // Sem capitão nas ações: cada um marca "Pronto", e o lado fica pronto com todos.
     assert_eq!(detail(&app, &p[1], KEY).await["summary"]["task"], "ready");
     let (status, body) = ready(&app, &p[1]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["ready_a"], false);
+    assert_eq!(body["summary"]["task"], "await_team");
+    assert_eq!(detail(&app, &p[0], KEY).await["summary"]["task"], "ready");
+    let (status, body) = ready(&app, &p[0]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["veto"]["ready_a"], true);
-    assert_eq!(
-        detail(&app, &p[0], KEY).await["summary"]["task"],
-        "await_opponent"
-    );
+    assert_eq!(body["summary"]["task"], "await_opponent");
+    let (status, _) = ready(&app, &p[2]).await;
+    assert_eq!(status, StatusCode::OK);
     clear(&db).await;
     let (status, body) = ready(&app, &p[3]).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -194,8 +198,9 @@ async fn anyone_of_the_team_acts_for_the_side() {
 async fn everyone_picks_every_game_at_once_without_repeating_in_the_team() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, _, p) = final_2v2(&db, 1, single(3, 3)).await;
-    ready(&app, &p[0]).await;
-    ready(&app, &p[2]).await;
+    for who in &p {
+        ready(&app, who).await;
+    }
     ok_ban(&app, &p[2], "anarki").await;
     clear(&db).await;
     let d = ok_ban(&app, &p[0], "athena").await;
@@ -289,8 +294,9 @@ async fn the_team_can_be_allowed_to_repeat() {
     let (db, _lease) = crate::db::test_db().await;
     let extra = json!({ "champion_rules": rules(0, true) });
     let (app, _, p) = final_2v2(&db, 0, extra).await;
-    ready(&app, &p[0]).await;
-    ready(&app, &p[2]).await;
+    for who in &p {
+        ready(&app, who).await;
+    }
     ok(&app, &p[0], 1, "clutch").await;
     ok(&app, &p[1], 1, "clutch").await;
 }
@@ -306,8 +312,9 @@ async fn the_window_closes_with_a_draw_for_whoever_did_not_pick() {
     } }),
     )
     .await;
-    ready(&app, &p[0]).await;
-    ready(&app, &p[2]).await;
+    for who in &p {
+        ready(&app, who).await;
+    }
     ok(&app, &p[0], 1, "anarki").await;
     // O prazo é um só para a janela: o pick de P1 não o reinicia.
     let d = detail(&app, &p[0], KEY).await;
@@ -416,8 +423,9 @@ async fn a_sent_game_does_not_reopen_the_picks_for_a_substitute() {
     open_window(&db).await;
     let substitution = format!("{COPA}/teams/{}/substitution", teams[0]);
     let sub = |out: &User, sub: &User| json!({ "out": out.id, "in": sub.id });
-    ready(&app, &p[0]).await;
-    ready(&app, &p[2]).await;
+    for who in &p {
+        ready(&app, who).await;
+    }
     for (who, champion) in [(&p[0], "anarki"), (&p[1], "athena"), (&p[2], "anarki")] {
         ok(&app, who, 1, champion).await;
     }
@@ -487,8 +495,9 @@ async fn the_screen_says_when_the_rule_gave_way() {
         .execute(&db)
         .await
         .unwrap();
-    ready(&app, &p[0]).await;
-    ready(&app, &p[2]).await;
+    for who in &p {
+        ready(&app, who).await;
+    }
     ok(&app, &p[0], 1, "anarki").await;
     ok(&app, &p[1], 1, "athena").await;
 

@@ -97,28 +97,23 @@ export function seriesSteps(detail: Detail): SeriesFlow {
 
 /**
  * O passo ainda pede algo de quem vê: o "Pronto" que ele não deu, a vez dele
- * no veto (no passo em que o veto está), a partida da vez para quem joga, a
- * enviada que ele confirma ou resolve.
+ * no veto (no passo em que o veto está), a partida da vez para quem pode enviar,
+ * a enviada que ele confirma ou resolve.
  */
 export function asks(detail: Detail, key: StepKey | null): boolean {
   const veto = detail.veto;
-  const side = detail.viewer_side;
   const number = key ? stepGame(key) : null;
   if (key == null) return false;
   if (number == null) {
     if (!veto || veto.status === "done") return false;
     if (key === "ready")
-      return (
-        veto.status === "waiting_ready" &&
-        side != null &&
-        !(side === "a" ? veto.ready_a : veto.ready_b)
-      );
+      return veto.status === "waiting_ready" && veto.can_act.ready;
     return vetoPhase(detail) === key && vetoTurnIsMine(detail);
   }
   const game = detail.games.find((g) => g.number === number);
   if (game) return game.task != null && GAME_ACTIONS.includes(game.task);
   return (
-    side != null &&
+    detail.can_report &&
     detail.summary.state === "ready" &&
     detail.next_game === number
   );

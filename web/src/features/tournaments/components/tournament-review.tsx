@@ -7,6 +7,7 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StructuredList } from "@/shared/ui/structured-list";
 import type { TournamentFormState } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
+import { isTdm } from "../lib/form-values";
 
 type Props = {
   form: TournamentFormState;
@@ -18,6 +19,7 @@ type Row =
   | "name"
   | "startsAt"
   | "format"
+  | "teamRules"
   | "registration"
   | "veto"
   | "champions"
@@ -26,7 +28,8 @@ type Row =
 
 /**
  * O que vai ser publicado, para conferir antes de "Criar": nome, início,
- * formato, inscrições, mapas, campeões, resultados e idiomas.
+ * formato, quem age pelo time (só nos times), inscrições, mapas, campeões,
+ * resultados e idiomas.
  */
 export function TournamentReview({ form, maps }: Props) {
   const t = useTranslations("TournamentForm.review");
@@ -49,6 +52,9 @@ export function TournamentReview({ form, maps }: Props) {
       ),
     ],
     ["format", summary.format(values)],
+    ...(isTdm(values)
+      ? ([["teamRules", summary.teamRules(values)]] as [Row, ReactNode][])
+      : []),
     ["registration", summary.registration(values)],
     ["veto", summary.veto(values, maps)],
     ["champions", summary.champions(values)],

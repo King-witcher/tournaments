@@ -8,7 +8,9 @@ type Turn = Schemas["VetoTurn"];
 type Champion = Schemas["ChampionRef"];
 
 /** O passo que quem vê manda: um mapa, ou um campeão (no pick por jogador, com a partida). */
-export type VetoChoice = { map: string } | { champion: string; game?: number };
+export type VetoChoice =
+  | { map: string }
+  | { champion: string; game?: number; player?: number };
 
 /** O que o passo otimista precisa saber além do veto. */
 export type StepContext = {
@@ -54,7 +56,7 @@ export function afterStep(
   const champion = { slug: found.slug, name: found.name };
   if (turn.action === "ban") return afterBan(base, turn, champion, ctx);
   if (turn.action === "pick") return afterPick(base, turn, champion, ctx);
-  const picked = afterTeamPick(base, champion, choice.game, ctx);
+  const picked = afterTeamPick(veto, base, champion, choice, ctx);
   // Nos picks alternados, a vez seguinte depende de quem falta: vem na resposta.
   return turn.pick_for == null ? picked : pass(picked, turn, null, ctx);
 }
@@ -143,28 +145,37 @@ function afterPick(
   };
 }
 
-/** O pick por jogador: a partida escolhida sai do que falta; na janela, a vez fica. */
+/**
+ * O pick por jogador: a partida escolhida sai do que falta; na janela, a vez fica.
+ * O jogador é o que a escolha diz (o capitão escolhendo por um colega) ou quem vê.
+ */
 function afterTeamPick(
+  shown: Veto,
   veto: Veto,
   champion: Champion,
-  game: number | undefined,
+  choice: { game?: number; player?: number },
   ctx: StepContext,
 ) {
-  const viewer = ctx.viewer;
-  if (game == null || !viewer) return veto;
+  const game = choice.game;
+  const slot = shown.picks.find(
+    (s) => s.game === game && s.player === choice.player,
+  );
+  const id = choice.player ?? ctx.viewer?.id;
+  const nickname = slot?.nickname ?? ctx.viewer?.nickname;
+  if (game == null || id == null || nickname == null) return veto;
   const pick = {
     champion,
     side: ctx.mine,
-    nickname: viewer.nickname,
-    user_id: viewer.id,
+    nickname,
+    user_id: id,
     timeout: false,
   };
   return {
     ...veto,
-    picks: veto.picks.filter((p) => p.game !== game),
+    picks: veto.picks.filter((p) => !(p.game === game && p.player === id)),
     missing: veto.missing
       .map((p) =>
-        p.user_id === viewer.id
+        p.user_id === id
           ? { ...p, games: p.games.filter((g) => g !== game) }
           : p,
       )

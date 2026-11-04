@@ -10,8 +10,8 @@ import { otherSide } from "../lib/veto";
 import styles from "./veto-undo.module.scss";
 
 /**
- * Desfazer o último passo do jogo em andamento: o jogador pede e o
- * adversário aceita ou recusa (um passo novo cancela o pedido); a
+ * Desfazer o último passo do jogo em andamento: quem pode fazer aquele tipo de
+ * passo pede e, do outro lado, responde (um passo novo cancela o pedido); a
  * organização desfaz direto (inclusive o passo sorteado pelo fim do tempo).
  * Fica ao lado do título do passo: botões fantasma, para não competir com a
  * escolha.
@@ -34,15 +34,16 @@ export function VetoUndo() {
   const busy = (key: string) =>
     pending === key ? { pending: true } : { disabled: pending != null };
   const request = veto.undo_request;
+  const can = veto.can_act.undo || pending === "step";
 
   let player: ReactNode = null;
-  if (mine && request === mine) {
+  if (mine && can && request === mine) {
     player = (
       <p className={styles.note}>
         {t("waiting", { name: names[otherSide(mine)] })}
       </p>
     );
-  } else if (mine && request) {
+  } else if (mine && can && request) {
     player = (
       <>
         <p>{t("asked", { name: names[request] })}</p>
@@ -63,7 +64,7 @@ export function VetoUndo() {
         </Button>
       </>
     );
-  } else if (mine) {
+  } else if (mine && can) {
     player = (
       <Button
         size="sm"
@@ -75,6 +76,8 @@ export function VetoUndo() {
       </Button>
     );
   }
+
+  if (!player && !canManage) return null;
 
   return (
     <div className={styles.undo}>

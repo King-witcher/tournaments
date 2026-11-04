@@ -4,15 +4,21 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { shownNickname } from "@/features/members/lib/nickname";
 import { useVetoBoard } from "../hooks/use-veto-board";
-import { currentGame, isWindow, nextMapPickGame, turnKey } from "../lib/veto";
+import {
+  currentGame,
+  isWindow,
+  nextMapPickGame,
+  turnKey,
+  turnRule,
+} from "../lib/veto";
 import { VetoTurnBar } from "./veto-turn-bar";
 
 /**
  * De quem é a vez no veto, o que ele faz e o tempo que falta pela hora da API
  * (no fim, a escolha é sorteada: a página recarrega para mostrar o sorteio; na
  * janela simultânea, o tempo da janela). Nos picks alternados, quem já escolheu
- * naquela partida vê quem do lado dele falta. Some sem vez (o passo atual
- * mostra o resto). No instante entre um passo marcado na
+ * naquela partida vê quem do lado dele falta, e quem a regra do torneio não deixa
+ * agir vê que é o capitão quem faz. Some sem vez (o passo atual mostra o resto). No instante entre um passo marcado na
  * hora e a resposta, quando a vez seguinte é de outra fase (`sides` vazio),
  * fica no lugar dizendo que enviou, para a grade não pular embaixo do dedo.
  */
@@ -25,9 +31,10 @@ export function VetoTurn() {
   const game = currentGame(veto);
   const teamPick = turn.action === "team_pick";
   const window = isWindow(turn);
-  const ours = teamPick
-    ? veto.picks.length > 0
-    : mine != null && turn.sides.includes(mine);
+  const allowed = veto.can_act[turnRule(turn)];
+  const sideTurn = mine != null && turn.sides.includes(mine);
+  const ours = teamPick ? veto.picks.length > 0 : sideTurn && allowed;
+  const forTeam = veto.can_act.pick_for_team;
   const blind = veto.pick_order === "blind";
   // O verbo em negrito: é ele que muda de "banir" para "escolher".
   const b = (verb: ReactNode) => <strong>{verb}</strong>;
@@ -44,11 +51,24 @@ export function VetoTurn() {
   let sentence: ReactNode;
   if (turn.sides.length === 0) {
     sentence = t("sending");
+  } else if (sideTurn && !allowed) {
+    // A vez é do lado dele, e a regra deixa com o capitão.
+    const rule = turnRule(turn);
+    sentence = t(`captainActs.${turn.action === "vote" ? "vote" : rule}`);
   } else if (window) {
     sentence = blind
-      ? t.rich(ours ? "blindPickYours" : "blindPick", { b })
+      ? t.rich(
+          forTeam && ours
+            ? "blindPickCaptain"
+            : ours
+              ? "blindPickYours"
+              : veto.picks_by_captain
+                ? "blindPickCaptains"
+                : "blindPick",
+          { b },
+        )
       : t.rich(ours ? "teamPickYours" : "teamPick", { b });
-  } else if (teamPick && !ours && mine != null && turn.sides.includes(mine)) {
+  } else if (teamPick && !ours && sideTurn) {
     // É a vez do lado dele, e ele já escolheu nesta partida.
     const left = veto.missing
       .filter((p) => p.side === mine && p.games.includes(turn.pick_for ?? game))

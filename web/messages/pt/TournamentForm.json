@@ -106,7 +106,8 @@
       "champions": "Campeões",
       "languages": "Idiomas",
       "veto": "Mapas",
-      "results": "Resultados"
+      "results": "Resultados",
+      "teamRules": "Quem age pelo time"
     },
     "noDate": "Sem data"
   },
@@ -233,5 +234,33 @@
   "source": {
     "label": "Copiar de",
     "none": "Nenhum torneio"
+  },
+  "teamRules": {
+    "title": "Times",
+    "label": "Quem age pelo time",
+    "presets": {
+      "captain": "Centrado no capitão",
+      "everyone": "Todos os jogadores",
+      "custom": "Personalizado"
+    },
+    "hints": {
+      "captain": "O capitão marca “Pronto”, veta, bane, escolhe os campeões de todos e envia o resultado.",
+      "everyone": "Qualquer jogador veta, bane e envia o resultado, e cada um escolhe o próprio campeão. Todos marcam “Pronto”.",
+      "custom": "Todos os jogadores marcam “Pronto”."
+    },
+    "fields": {
+      "veto": "Vetar mapas",
+      "ban": "Banir campeões",
+      "pick": "Escolher campeões",
+      "report": "Enviar resultado"
+    },
+    "actor": {
+      "captain": "Capitão",
+      "anyone": "Qualquer um"
+    },
+    "picker": {
+      "captain": "Capitão",
+      "each_player": "Cada jogador"
+    }
   }
 }

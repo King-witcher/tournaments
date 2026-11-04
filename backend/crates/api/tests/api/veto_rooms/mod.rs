@@ -1,7 +1,8 @@
 //! Testes de `veto_rooms`: criar e os limites (`create`), entrar num lugar e os
 //! papéis (`seats`), o veto até o fim, no duelo e nos times (`flow`), a ordem das
 //! escolhas, quem começa e o que fica escondido às cegas (`pick_order`), os
-//! prazos, a validade e a limpeza (`time`), o socket por token (`socket`), quantas
+//! prazos, a validade e a limpeza (`time`), quem age pelo time e "Começar agora"
+//! (`who_acts`), o socket por token (`socket`), quantas
 //! idas ao banco custa cada clique e a leitura do espectador (`cost`) e as regras
 //! do banco (`schema`).
 
@@ -13,6 +14,7 @@ mod schema;
 mod seats;
 mod socket;
 mod time;
+mod who_acts;
 
 use axum::{
     Router,
@@ -99,6 +101,13 @@ pub async fn ready(app: &Router, token: &str) -> (StatusCode, Value) {
     act(app, token, "ready", None).await
 }
 
+/// A gestão começa sem esperar os prontos.
+pub async fn begin(app: &Router, manage: &str) -> Value {
+    let (status, body) = act(app, manage, "begin", None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}
+
 pub async fn step(app: &Router, token: &str, choice: Value) -> (StatusCode, Value) {
     act(app, token, "steps", Some(choice)).await
 }
@@ -116,12 +125,13 @@ pub async fn started(app: &Router, links: &Links) -> Value {
     for (i, seat) in links.seats.iter().enumerate() {
         enter(app, seat, &format!("P{}", i + 1)).await;
     }
-    let half = links.seats.len() / 2;
-    assert_eq!(ready(app, &links.seats[0]).await.0, StatusCode::OK);
-    let (status, body) = ready(app, &links.seats[half]).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    assert_eq!(body["veto"]["status"], "in_progress");
-    detail(app, &links.seats[0]).await
+    for seat in &links.seats {
+        let (status, body) = ready(app, seat).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+    }
+    let room = detail(app, &links.seats[0]).await;
+    assert_eq!(room["veto"]["status"], "in_progress");
+    room
 }
 
 /// O primeiro lugar do lado da vez (nos dois lados, o A).

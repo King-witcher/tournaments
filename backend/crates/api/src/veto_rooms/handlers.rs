@@ -1,6 +1,7 @@
 //! Ler, entrar e agir na sala de veto. O token do caminho é a credencial; só
 //! entrar lê a sessão (para o nome da conta). As ações devolvem a sala como
-//! ficou, sem reler o banco.
+//! ficou, sem reler o banco. A sala centrada no capitão só tem o link dele, que
+//! faz tudo pelo lado; a gestão não age, fora começar sem esperar.
 
 use axum::{
     Json,
@@ -13,7 +14,9 @@ use sqlx::PgConnection;
 
 use super::{
     room::Room,
-    types::{JoinVetoRoom, VetoRoomDetail, VetoRoomPath, VetoRoomRole, VetoRoomStart},
+    types::{
+        JoinVetoRoom, VetoRoomActors, VetoRoomDetail, VetoRoomPath, VetoRoomRole, VetoRoomStart,
+    },
 };
 use crate::{
     AppState,
@@ -163,7 +166,7 @@ pub async fn join_veto_room(
     tag = "veto_rooms",
     params(("token" = String, Path, description = "O link de um lugar")),
     responses(
-        (status = OK, body = VetoRoomDetail, description = "O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Repetir não muda nada"),
+        (status = OK, body = VetoRoomDetail, description = "O lugar de quem clica está pronto. O lado fica pronto quando todo lugar com link marcou (centrada no capitão, ele). Com os dois prontos, o veto começa: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Repetir não muda nada"),
         (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador)"),
         (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
         (status = CONFLICT, body = ErrorBody, description = "veto_room.not_joined (falta entrar no lugar), veto.already_begun"),
@@ -179,19 +182,46 @@ pub async fn veto_room_ready(
     if room.log.state.begun() {
         return Err(ApiError::conflict("veto.already_begun"));
     }
-    let [ready_a, ready_b] = room.log.ready();
-    let (mine, theirs) = match side {
-        Side::A => (ready_a, ready_b),
-        Side::B => (ready_b, ready_a),
-    };
-    if !mine {
+    let readiness = room.readiness();
+    if readiness.awaits(seat) {
         let mut events = vec![NewVetoEvent::new(Kind::Ready, None, Some(side), Some(seat))];
-        if theirs {
+        if readiness.without(seat).both() {
             events.push(begin(&room)?);
             room.extend(&mut tx, STARTED_HOURS).await?;
         }
         room.record(&mut tx, events).await?;
     }
+    finish(&state, tx, &room).await
+}
+
+#[utoipa::path(
+    post,
+    path = "/veto-rooms/{token}/begin",
+    tag = "veto_rooms",
+    params(("token" = String, Path, description = "O link de gestão")),
+    responses(
+        (status = OK, body = VetoRoomDetail, description = "A gestão começa o veto sem esperar os prontos: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Quem não marcou é sorteado no fim do prazo"),
+        (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_manager (só o link de gestão)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
+        (status = CONFLICT, body = ErrorBody, description = "veto.already_begun"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted {required, available}"),
+    )
+)]
+pub async fn veto_room_begin(
+    State(state): State<AppState>,
+    PathParams(path): PathParams<VetoRoomPath>,
+) -> Result<Json<VetoRoomDetail>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let mut room = opened(&mut tx, &path.token).await?;
+    if room.role != VetoRoomRole::Manager {
+        return Err(ApiError::forbidden("veto_room.not_manager"));
+    }
+    if room.log.state.begun() {
+        return Err(ApiError::conflict("veto.already_begun"));
+    }
+    let event = begin(&room)?;
+    room.extend(&mut tx, STARTED_HOURS).await?;
+    room.record(&mut tx, vec![event]).await?;
     finish(&state, tx, &room).await
 }
 
@@ -235,8 +265,8 @@ fn begin(room: &Room) -> Result<NewVetoEvent, ApiError> {
     params(("token" = String, Path, description = "O link de um lugar")),
     request_body = VetoChoice,
     responses(
-        (status = OK, body = VetoRoomDetail, description = "O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. No pick por jogador (`team_pick`), cada lugar escolhe o próprio campeão: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão"),
-        (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador)"),
+        (status = OK, body = VetoRoomDetail, description = "O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. No pick por jogador (`team_pick`), cada lugar escolhe o próprio campeão, ou o capitão, o de cada lugar do lado (`player`; sem ele, o próximo sem escolha): na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão"),
+        (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador), veto.not_your_pick (cada lugar escolhe o próprio)"),
         (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
         (status = CONFLICT, body = ErrorBody, description = "veto_room.not_joined (falta entrar no lugar), veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished, veto.not_your_turn, veto.already_picked, veto.champion_taken"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "veto.option_invalid, veto.champion_forbidden, request.invalid_body"),
@@ -258,7 +288,20 @@ pub async fn veto_room_step(
     let choice = step::choice(&room.maps, &room.champions, &body)?;
     let turn = step::open_turn(state_now)?;
     let ctx = Ctx::alone(&room.champions);
-    let event = step::planned(state_now, &ctx, turn, side, seat, choice, body.game)?;
+    let player = step::target_player(
+        state_now,
+        turn,
+        (side, seat),
+        room.who_acts == VetoRoomActors::Captain,
+        body.player,
+        body.game,
+    )?;
+    let acting = step::Acting {
+        side,
+        actor: seat,
+        player,
+    };
+    let event = step::planned(state_now, &ctx, turn, acting, choice, body.game)?;
     room.record(&mut tx, vec![event]).await?;
     finish(&state, tx, &room).await
 }

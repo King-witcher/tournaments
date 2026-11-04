@@ -4,6 +4,7 @@ import { Column, Grid } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Section } from "@/shared/ui/section";
@@ -30,19 +31,28 @@ type Props = {
  * 5 no lg, 10 e 6 do xlg para cima), e o erro da última ação. Na votação,
  * a do mapa da partida 1 vem antes (o draft depende dele); na janela, quem vê
  * escolhe para qual partida está escolhendo. Nos picks alternados, a partida é a
- * da vez.
+ * da vez. O capitão que escolhe pelo time diz para qual colega é o campeão, com o
+ * próximo sem escolha já marcado; na sala sem nomes, os lugares são iguais, e vai
+ * para o próximo sem perguntar.
  */
 export function ChampionsStep({ rule, done = false }: Props) {
   const t = useTranslations("Match.veto.champions");
   const tGame = useTranslations("Match.games");
   const tSteps = useTranslations("Match.steps");
+  const tMember = useTranslations("Member");
   const { veto } = useVetoBoard();
-  const [chosen, setChosen] = useState<number | null>(null);
+  const [chosenGame, setChosenGame] = useState<number | null>(null);
+  const [chosenPlayer, setChosenPlayer] = useState<number | null>(null);
   if (!veto) return null;
   const voting = !done && veto.turn?.action === "vote";
   const slots = veto.picks;
-  const slot = slots.find((s) => s.game === chosen) ?? slots[0];
+  const games = [...new Set(slots.map((s) => s.game))];
+  const game = games.includes(chosenGame ?? 0) ? chosenGame : games[0];
+  const ofGame = slots.filter((s) => s.game === game);
+  const slot = ofGame.find((s) => s.player === chosenPlayer) ?? ofGame[0];
   const teamPick = veto.turn?.action === "team_pick";
+  const asksPlayer =
+    !done && teamPick && !veto.nameless && veto.can_act.pick_for_team;
   const current =
     done || voting
       ? undefined
@@ -56,16 +66,28 @@ export function ChampionsStep({ rule, done = false }: Props) {
     >
       <VetoTurnArea turn={!done}>
         {voting && <VetoVoteBoard game={currentGame(veto)} />}
-        {!done && teamPick && slots.length > 1 && slot && (
+        {!done && teamPick && games.length > 1 && slot && (
           <RadioGroup
             legendText={t("forGame")}
             orientation="horizontal"
             value={String(slot.game)}
-            options={slots.map((s) => ({
-              value: String(s.game),
-              label: tGame("game", { number: s.game }),
+            options={games.map((g) => ({
+              value: String(g),
+              label: tGame("game", { number: g }),
             }))}
-            onChange={(g) => setChosen(Number(g))}
+            onChange={(g) => setChosenGame(Number(g))}
+          />
+        )}
+        {asksPlayer && slot && (
+          <RadioGroup
+            legendText={t("forPlayer")}
+            orientation="horizontal"
+            value={String(slot.player)}
+            options={ofGame.map((s) => ({
+              value: String(s.player),
+              label: shownNickname(s.nickname ?? "", tMember("deletedAccount")),
+            }))}
+            onChange={(p) => setChosenPlayer(Number(p))}
           />
         )}
         <Grid>

@@ -11,7 +11,7 @@ use sqlx::PgConnection;
 
 use super::{
     db::{self, NewRoom},
-    types::{NewVetoRoom, VetoRoomCreated, VetoRoomStart},
+    types::{NewVetoRoom, VetoRoomActors, VetoRoomCreated, VetoRoomStart},
 };
 use crate::{
     AppState,
@@ -80,7 +80,7 @@ async fn check_anonymous_ceiling(conn: &mut PgConnection) -> Result<(), ApiError
     tag = "veto_rooms",
     request_body = NewVetoRoom,
     responses(
-        (status = CREATED, body = VetoRoomCreated, description = "A sala, com um link por jogador, um de espectador e um de gestão (`token`, que mostra todos). Qualquer um cria, sem login. Vale 2 h se ninguém começar e 24 h a partir do início"),
+        (status = CREATED, body = VetoRoomCreated, description = "A sala, com um link por jogador (centrada no capitão, um por time), um de espectador e um de gestão (`token`, que mostra todos). Qualquer um cria, sem login. Vale 2 h se ninguém começar e 24 h a partir do início"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), champions.pool_exhausted {required, available}, request.invalid_body"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "veto_room.rate_limited {minutes} (salas demais nesta hora, deste IP ou desta conta)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "veto_room.anonymous_full (teto de salas sem login: com a conta, cria)"),
@@ -103,7 +103,16 @@ pub async fn create_veto_room(
     let seats = [Side::A, Side::B]
         .into_iter()
         .flat_map(|side| (1..=settings.team_size).map(move |position| (side, position)))
-        .map(|(side, position)| (side, position, token::random_token()))
+        .map(|(side, position)| {
+            // Centrada no capitão, só o lugar 1 de cada lado tem link.
+            let link = settings.who_acts == VetoRoomActors::All || position == 1;
+            let token = if link {
+                token::random_token()
+            } else {
+                String::new()
+            };
+            (side, position, token)
+        })
         .collect();
     db::create(
         &mut tx,
@@ -117,6 +126,7 @@ pub async fn create_veto_room(
             veto_order: settings.veto.order.as_str(),
             pick_order: settings.veto.pick_order.as_str(),
             who_starts: settings.who_starts.as_str(),
+            team_actors: settings.who_acts.as_str(),
             champion_phase: settings.veto.champion_phase,
             bans_per_series: i16::from(settings.bans_per_series),
             mirror: settings.mirror,
@@ -152,6 +162,7 @@ struct Settings {
     same_team: bool,
     no_repeat: Option<NoRepeatWho>,
     who_starts: VetoRoomStart,
+    who_acts: VetoRoomActors,
 }
 
 async fn settings(conn: &mut PgConnection, body: NewVetoRoom) -> Result<Settings, ApiError> {
@@ -209,5 +220,11 @@ async fn settings(conn: &mut PgConnection, body: NewVetoRoom) -> Result<Settings
         same_team,
         no_repeat: rules.no_repeat,
         who_starts: body.who_starts,
+        // No duelo, um lugar por lado: o mesmo nos dois.
+        who_acts: if body.team_size > 1 {
+            body.who_acts
+        } else {
+            VetoRoomActors::All
+        },
     })
 }

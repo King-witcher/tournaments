@@ -42,6 +42,45 @@ pub enum VetoTarget {
     Champion,
 }
 
+/// Quem marca "Pronto".
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoReadyBy {
+    /// Só o capitão de cada time, e um basta por lado.
+    Captain,
+    /// Todos os jogadores do elenco atual.
+    Everyone,
+}
+
+/// Quem ainda falta marcar "Pronto".
+#[derive(Serialize, ToSchema)]
+pub struct VetoReadyPlayer {
+    pub side: Side,
+    pub user_id: i64,
+    /// Apelido; vazio quando a conta foi excluída (na sala, lugar sem nome).
+    pub nickname: String,
+}
+
+/// O que quem vê pode fazer pelo lado dele, pela regra do torneio, para a tela não
+/// recalcular a regra. Sem lado (espectador, gestão, organizador que não joga),
+/// tudo falso.
+#[derive(Serialize, ToSchema, Debug, Clone, Copy, Default)]
+pub struct VetoCanAct {
+    /// Marcar "Pronto" agora: ainda falta ele, e a regra deixa.
+    pub ready: bool,
+    /// Vetar mapas e votar, na vez do lado.
+    pub map: bool,
+    /// Banir campeões, na vez do lado.
+    pub ban: bool,
+    /// Escolher campeões.
+    pub pick: bool,
+    /// Ele escolhe os campeões de todos do lado: `picks` traz um por jogador.
+    pub pick_for_team: bool,
+    /// Pedir ou responder o desfazer do último passo agora: há passo para desfazer
+    /// e o tipo dele é um que ele pode fazer.
+    pub undo: bool,
+}
+
 /// O passo esperado agora.
 #[derive(Serialize, ToSchema)]
 pub struct VetoTurn {
@@ -177,10 +216,15 @@ pub enum VetoGaveWay {
 }
 
 /// Um pick que quem vê pode fazer agora: no duelo alternado, o da vez dele; no
-/// pick por jogador, cada partida em que ele falta e pode escolher agora.
+/// pick por jogador, cada partida em que ele falta e pode escolher agora; com o
+/// capitão escolhendo pelo time, um por partida e por colega que falta.
 #[derive(Serialize, ToSchema)]
 pub struct VetoPickSlot {
     pub game: i16,
+    /// No pick por jogador: de quem é o campeão.
+    pub player: Option<i64>,
+    /// O apelido dele; vazio quando a conta foi excluída (na sala, lugar sem nome).
+    pub nickname: Option<String>,
     /// Os slugs que ele pode escolher.
     pub options: Vec<String>,
     /// Os campeões que não estão nas opções, com o motivo (sem contar o que
@@ -249,8 +293,23 @@ pub struct VetoView {
     /// O pool de mapas do torneio, na ordem.
     pub pool: Vec<MapRef>,
     pub status: VetoStatus,
+    /// O lado está pronto: todos os que precisam marcar marcaram. Com o veto
+    /// começado, alguém do lado marcou (ele pode ter sido forçado).
     pub ready_a: bool,
     pub ready_b: bool,
+    /// Quem marca "Pronto".
+    pub ready_by: VetoReadyBy,
+    /// Quem ainda falta marcar, antes de começar.
+    pub ready_waiting: Vec<VetoReadyPlayer>,
+    /// Os capitães dos lados, nos times (na sala, só a centrada no capitão).
+    pub captains: Vec<i64>,
+    /// Sala centrada no capitão: os lugares sem link não têm nome, e os campeões
+    /// aparecem sem o de ninguém.
+    pub nameless: bool,
+    /// Os capitães escolhem os campeões de todos.
+    pub picks_by_captain: bool,
+    /// O que quem vê pode fazer pelo lado dele.
+    pub can_act: VetoCanAct,
     /// A partida em andamento.
     pub game: Option<i16>,
     pub turn: Option<VetoTurn>,
@@ -308,6 +367,12 @@ pub struct VetoChoice {
     /// picks com vez, vale a que a vez diz, e outra é 409 `veto.step_changed`.
     #[serde(default)]
     pub game: Option<i16>,
+    /// No pick por jogador, de quem é o campeão: só o capitão, na regra em que ele
+    /// escolhe pelo time, manda outro (`VetoPickSlot::player`); sem ele, vale o
+    /// próximo colega sem escolha. Na regra de cada jogador, outro que não ele é
+    /// 403 `veto.not_your_pick`.
+    #[serde(default)]
+    pub player: Option<i64>,
     /// A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de
     /// agora.
     #[serde(default)]

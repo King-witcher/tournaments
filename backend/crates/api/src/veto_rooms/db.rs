@@ -23,6 +23,7 @@ pub(super) struct RoomRow {
     pub veto_order: String,
     pub pick_order: String,
     pub who_starts: String,
+    pub team_actors: String,
     pub champion_phase: bool,
     pub bans_per_series: i16,
     pub mirror: bool,
@@ -44,7 +45,8 @@ pub(super) struct SeatRow {
     pub id: i64,
     pub side: Side,
     pub position: i16,
-    pub token: String,
+    /// `None`: o lugar sem link, na sala centrada no capitão.
+    pub token: Option<String>,
     pub name: Option<String>,
 }
 
@@ -78,7 +80,7 @@ macro_rules! room_by_token {
                    select id, 'spectator', null::bigint from veto_rooms where spectator_token = $1
                )
                select r.id, r.manage_token, r.spectator_token, r.team_size, r.best_of, r.map_mode,
-                      r.veto_order, r.pick_order, r.who_starts, r.champion_phase,
+                      r.veto_order, r.pick_order, r.who_starts, r.team_actors, r.champion_phase,
                       r.bans_per_series, r.mirror, r.same_team,
                       r.no_repeat, r.step_seconds, r.team_pick_seconds, r.expires_at, r.due_at,
                       link.kind as "kind!", link.seat_id as "seat_id?",
@@ -259,6 +261,7 @@ pub(super) struct NewRoom<'a> {
     pub veto_order: &'a str,
     pub pick_order: &'a str,
     pub who_starts: &'a str,
+    pub team_actors: &'a str,
     pub champion_phase: bool,
     pub bans_per_series: i16,
     pub mirror: bool,
@@ -270,7 +273,7 @@ pub(super) struct NewRoom<'a> {
     pub valid_hours: i32,
     /// O pool, na ordem.
     pub pool: &'a [MapId],
-    /// Os lugares: lado e posição, com o token de cada um.
+    /// Os lugares: lado e posição, com o token de cada um (vazio: sem link).
     pub seats: Vec<(Side, i16, String)>,
 }
 
@@ -280,9 +283,9 @@ pub(super) async fn create(conn: &mut PgConnection, new: &NewRoom<'_>) -> Result
         "insert into veto_rooms
              (created_by, manage_token, spectator_token, team_size, best_of, map_mode, veto_order,
               champion_phase, bans_per_series, mirror, same_team, no_repeat, step_seconds,
-              team_pick_seconds, expires_at, pick_order, who_starts)
+              team_pick_seconds, expires_at, pick_order, who_starts, team_actors)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                 now() + make_interval(hours => $15), $16, $17)
+                 now() + make_interval(hours => $15), $16, $17, $18)
          returning id",
         new.created_by,
         new.manage_token,
@@ -300,7 +303,8 @@ pub(super) async fn create(conn: &mut PgConnection, new: &NewRoom<'_>) -> Result
         new.team_pick_seconds,
         new.valid_hours,
         new.pick_order,
-        new.who_starts
+        new.who_starts,
+        new.team_actors
     )
     .fetch_one(&mut *conn)
     .await?;
@@ -309,7 +313,8 @@ pub(super) async fn create(conn: &mut PgConnection, new: &NewRoom<'_>) -> Result
     let tokens: Vec<String> = new.seats.iter().map(|s| s.2.clone()).collect();
     sqlx::query!(
         "insert into veto_room_seats (room_id, side, position, token)
-         select $1, * from unnest($2::text[], $3::smallint[], $4::text[])",
+         select $1, s, p, nullif(t, '')
+         from unnest($2::text[], $3::smallint[], $4::text[]) as seats (s, p, t)",
         room,
         &sides,
         &positions,

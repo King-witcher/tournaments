@@ -18,16 +18,17 @@ use engine::{
 use super::{
     Ctx,
     db::Champion,
-    state::{Kind, MatchVeto, VetoLog, VetoRow, api_side, ev_side},
+    state::{Kind, MatchVeto, Readiness, VetoLog, VetoRow, api_side, ev_side, turn_action},
     types::{
-        ChampionRef, VetoAction, VetoBan, VetoChampion, VetoEvent, VetoEventKind, VetoGame,
-        VetoGaveWay, VetoHiddenPick, VetoMapStep, VetoPickSlot, VetoPlayer, VetoStatus, VetoTarget,
-        VetoTeamPick, VetoTurn, VetoUnavailable, VetoUnavailableReason, VetoView,
+        ChampionRef, VetoAction, VetoBan, VetoCanAct, VetoChampion, VetoEvent, VetoEventKind,
+        VetoGame, VetoGaveWay, VetoHiddenPick, VetoMapStep, VetoPickSlot, VetoPlayer, VetoReadyBy,
+        VetoReadyPlayer, VetoStatus, VetoTarget, VetoTeamPick, VetoTurn, VetoUnavailable,
+        VetoUnavailableReason, VetoView,
     },
 };
 use crate::{
     matches::{games::StoredGame, result::Side, stage::Stage, tasks, types::MapRef},
-    tournaments::{MapMode, PoolMap, TournamentStatus},
+    tournaments::{MapMode, PoolMap, TeamAction, TeamPicker, TeamRules, TournamentStatus},
 };
 
 /// O que o veto joga: as regras, os tempos, o pool de mapas e os campeões.
@@ -67,6 +68,37 @@ impl Board<'_> {
     }
 }
 
+/// O que quem vê pode fazer pelo lado dele. Sem lado, nada.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Permissions {
+    pub map: bool,
+    pub ban: bool,
+    pub pick: bool,
+    /// Escolhe os campeões de todos do lado.
+    pub pick_for_team: bool,
+}
+
+impl Permissions {
+    /// Para um jogador do time, sendo o capitão ou não.
+    pub const fn of(rules: TeamRules, captain: bool) -> Self {
+        Self {
+            map: rules.allows(TeamAction::Veto, captain),
+            ban: rules.allows(TeamAction::Ban, captain),
+            pick: rules.allows(TeamAction::Pick, captain),
+            pick_for_team: captain && matches!(rules.pick, TeamPicker::Captain),
+        }
+    }
+
+    const fn allows(self, action: TeamAction) -> bool {
+        match action {
+            TeamAction::Veto => self.map,
+            TeamAction::Ban => self.ban,
+            TeamAction::Pick => self.pick,
+            TeamAction::Report => false,
+        }
+    }
+}
+
 /// O veto a mostrar e para quem.
 pub struct Shown<'a> {
     /// O histórico; `None` na série pronta em que ninguém agiu.
@@ -84,6 +116,19 @@ pub struct Shown<'a> {
     pub viewer: Option<Side>,
     /// O nome de um jogador.
     pub names: &'a dyn Fn(PlayerId) -> String,
+    /// O que quem vê pode fazer pelo lado dele.
+    pub can: Permissions,
+    /// Quem vê, se tem lado: a conta, ou o lugar em que entrou.
+    pub me: Option<i64>,
+    /// Quem falta marcar "Pronto".
+    pub readiness: Readiness,
+    pub ready_by: VetoReadyBy,
+    /// Os capitães dos lados, nos times.
+    pub captains: Vec<i64>,
+    /// Sala centrada no capitão: os lugares não têm nome.
+    pub nameless: bool,
+    /// Os capitães escolhem os campeões de todos.
+    pub picks_by_captain: bool,
 }
 
 /// O que quem vê não enxerga agora (ver o `//!`): os picks, das partidas
@@ -204,6 +249,25 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Op
         (Some(ctx), Some(side), Some(me)) if ready_match => Some((ctx, side, PlayerId(me))),
         _ => None,
     };
+    let sides = match m.state {
+        MatchState::Ready { a, b } | MatchState::Completed { a, b, .. } => Some((a, b)),
+        _ => mv.map(|mv| mv.sides),
+    };
+    let readiness = sides.map_or_else(Readiness::default, |s| stage.readiness(m.id, s));
+    let captains = sides
+        .filter(|_| stage.veto_rules.teams())
+        .map(|(a, b)| {
+            [a, b]
+                .iter()
+                .filter_map(|p| stage.entrant(*p))
+                .map(|t| t.captain)
+                .collect()
+        })
+        .unwrap_or_default();
+    let plays = mine.and(me);
+    let can = plays.map_or_else(Permissions::default, |me| {
+        Permissions::of(stage.team_rules, stage.is_captain(me))
+    });
     let board = Board {
         rules: &stage.veto_rules,
         step_seconds: stage.veto_seconds,
@@ -222,6 +286,18 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Op
             acting,
             viewer: mine,
             names: &|player| nickname(stage, mv, player),
+            can,
+            me: plays,
+            readiness,
+            ready_by: if stage.team_rules.captain_only() {
+                VetoReadyBy::Captain
+            } else {
+                VetoReadyBy::Everyone
+            },
+            captains,
+            nameless: false,
+            picks_by_captain: stage.veto_rules.teams()
+                && stage.team_rules.pick == TeamPicker::Captain,
         },
     ))
 }
@@ -232,9 +308,16 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
     let log = shown.log;
     let turn = state.turn();
     let sealed = Sealed::of(shown);
-    let ready = log.map(VetoLog::ready).unwrap_or_default();
+    let begun = state.begun();
+    let readiness = &shown.readiness;
+    let ready = if begun {
+        log.map(VetoLog::clicked).unwrap_or_default()
+    } else {
+        [readiness.side(Side::A), readiness.side(Side::B)]
+    };
     let options = shown
         .acting
+        .filter(|_| turn_action(&turn).is_some_and(|a| shown.can.allows(a)))
         .map(|(ctx, side, _)| {
             state
                 .options(ev_side(side), &ctx.engine())
@@ -266,6 +349,26 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
         status,
         ready_a: ready[0],
         ready_b: ready[1],
+        ready_by: shown.ready_by,
+        ready_waiting: if shown.open && !begun {
+            ready_waiting(shown)
+        } else {
+            Vec::new()
+        },
+        captains: shown.captains.clone(),
+        nameless: shown.nameless,
+        picks_by_captain: shown.picks_by_captain,
+        can_act: VetoCanAct {
+            ready: shown.open && !begun && shown.me.is_some_and(|me| readiness.awaits(me)),
+            map: shown.can.map,
+            ban: shown.can.ban,
+            pick: shown.can.pick,
+            pick_for_team: shown.can.pick_for_team,
+            undo: shown.can_undo
+                && log
+                    .and_then(VetoLog::last_step)
+                    .is_some_and(|a| shown.can.allows(a)),
+        },
         game: state.game().map(i16::from),
         turn: match &turn {
             Turn::Act {
@@ -317,7 +420,7 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
         options,
         picks: shown
             .acting
-            .map(|(ctx, side, me)| picks(board, state, &turn, ctx, side, me))
+            .map(|acting| picks(board, shown, &turn, acting))
             .unwrap_or_default(),
         missing: if shown.open {
             missing(shown)
@@ -338,6 +441,21 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
             })
             .unwrap_or_default(),
     }
+}
+
+/// Quem falta marcar "Pronto", lado A primeiro.
+fn ready_waiting(shown: &Shown<'_>) -> Vec<VetoReadyPlayer> {
+    [Side::A, Side::B]
+        .into_iter()
+        .zip(&shown.readiness.waiting)
+        .flat_map(|(side, players)| {
+            players.iter().map(move |who| VetoReadyPlayer {
+                side,
+                user_id: *who,
+                nickname: (shown.names)(PlayerId(*who)),
+            })
+        })
+        .collect()
 }
 
 /// Os jogadores podem enviar a próxima partida: o veto dela acabou (ou ela
@@ -458,48 +576,59 @@ fn missing(shown: &Shown<'_>) -> Vec<VetoPlayer> {
 
 /// Os picks que quem vê (`me`, do lado `side`) pode fazer agora: no duelo
 /// alternado, o da vez do lado dele; no pick por jogador, as partidas em que ele
-/// falta e pode escolher agora (`pickable`).
+/// falta e pode escolher agora (`pickable`); com o capitão escolhendo pelo time,
+/// os de todos do lado, por partida e, nela, na ordem do elenco, para o próximo
+/// colega sem escolha vir primeiro.
 fn picks(
     board: &Board<'_>,
-    state: &Veto,
+    shown: &Shown<'_>,
     turn: &Turn,
-    ctx: &Ctx,
-    side: Side,
-    me: PlayerId,
+    (ctx, side, me): (&Ctx, Side, PlayerId),
 ) -> Vec<VetoPickSlot> {
+    if !shown.can.pick {
+        return Vec::new();
+    }
+    let state = shown.state;
     let side = ev_side(side);
-    let (picker, games): (ev::Picker, Vec<u8>) = match turn {
+    let slots: Vec<(ev::Picker, u8)> = match turn {
         Turn::Act {
             action: ev::Action::Pick,
             target: ev::Target::Champion,
             sides,
             pick_for: Some(game),
             ..
-        } if sides.contains(&side) => (ev::Picker { side, player: None }, vec![*game]),
+        } if sides.contains(&side) => vec![(ev::Picker { side, player: None }, *game)],
         Turn::Act {
             action: ev::Action::TeamPick,
             ..
-        } => (
-            ev::Picker {
-                side,
-                player: Some(me),
-            },
-            state
+        } => {
+            let mut open: Vec<ev::Missing> = state
                 .pickable()
                 .into_iter()
-                .filter(|m| m.side == side && m.player == me)
-                .map(|m| m.game)
-                .collect(),
-        ),
+                .filter(|m| m.side == side && (shown.can.pick_for_team || m.player == me))
+                .collect();
+            open.sort_by_key(|m| m.game);
+            open.into_iter()
+                .map(|m| {
+                    let picker = ev::Picker {
+                        side,
+                        player: Some(m.player),
+                    };
+                    (picker, m.game)
+                })
+                .collect()
+        }
         _ => return Vec::new(),
     };
     let ctx = ctx.engine();
-    games
+    slots
         .into_iter()
-        .map(|game| {
+        .map(|(picker, game)| {
             let options = state.pick_options(picker, game, &ctx);
             VetoPickSlot {
                 game: i16::from(game),
+                player: picker.player.map(|p| p.0),
+                nickname: picker.player.map(|p| (shown.names)(p)),
                 options: options
                     .champions
                     .iter()

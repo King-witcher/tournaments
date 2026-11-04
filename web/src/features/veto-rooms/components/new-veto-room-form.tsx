@@ -1,6 +1,6 @@
 "use client";
 
-import { Accordion, Form, Stack } from "@carbon/react";
+import { Accordion, Form, SelectItem, Stack } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState, useEffect, useState } from "react";
 
@@ -32,11 +32,13 @@ import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
 import { RadioGroup } from "@/shared/ui/radio-group";
+import { Select } from "@/shared/ui/select";
 
 const TEAM_SIZES = ["1", "2", "3", "4"];
 const BEST_OF = ["1", "3", "5"];
 const MAP_MODES = ["veto", "off"] as const;
 const WHO_STARTS: components["schemas"]["VetoRoomStart"][] = ["draw", "a"];
+const WHO_ACTS: components["schemas"]["VetoRoomActors"][] = ["captain", "all"];
 /** Na sala, a repetição só vale dentro da série. */
 const REPEAT_CHOICES: NoRepeatChoice[] = ["off", "series"];
 const NO_ERRORS: FieldErrors = {};
@@ -55,9 +57,10 @@ type Props = {
 type Failure = { message: string; login: boolean };
 
 /**
- * Criar uma sala: o modo e o melhor de N à vista, e o resto (os mesmos campos
- * do formulário de torneio, e quem começa) em dois grupos fechados, com o resumo
- * no título. Criada, a pessoa vai para a página de gestão, com os links.
+ * Criar uma sala: o modo, o melhor de N e, nos times, quem age por eles à vista
+ * (muda quantos links a sala tem), e o resto (os mesmos campos do formulário de
+ * torneio, e quem começa) em dois grupos fechados, com o resumo no título. Criada,
+ * a pessoa vai para a página de gestão, com os links.
  */
 export function NewVetoRoomForm({ maps, signedIn }: Props) {
   const t = useTranslations("VetoRoom.form");
@@ -76,6 +79,8 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
   const [open, setOpen] = useState({ maps: false, champions: false });
   const [whoStarts, setWhoStarts] =
     useState<components["schemas"]["VetoRoomStart"]>("draw");
+  const [whoActs, setWhoActs] =
+    useState<components["schemas"]["VetoRoomActors"]>("captain");
   const onChange = (patch: Partial<TournamentValues>) =>
     setValues((v) => ({ ...v, ...patch }));
 
@@ -98,6 +103,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
             team_size: teamSizeOf(values),
             best_of: values.bestOf,
             who_starts: whoStarts,
+            who_acts: whoActs,
             veto: {
               map_mode: values.mapMode,
               order: values.vetoOrder,
@@ -159,6 +165,27 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
               onChange({ bestOf: Number(n), finalsBestOf: Number(n) })
             }
           />
+          {teamSizeOf(values) > 1 && (
+            <Select
+              labelText={t("whoActs")}
+              helperText={t(`whoActsHints.${whoActs}`)}
+              name="whoActs"
+              value={whoActs}
+              onChange={(e) =>
+                setWhoActs(
+                  e.target.value as components["schemas"]["VetoRoomActors"],
+                )
+              }
+            >
+              {WHO_ACTS.map((value) => (
+                <SelectItem
+                  key={value}
+                  value={value}
+                  text={t(`whoActsOptions.${value}`)}
+                />
+              ))}
+            </Select>
+          )}
         </Stack>
         <Accordion>
           {/* Mapas antes de Campeões: a ordem em que a sala os decide. */}

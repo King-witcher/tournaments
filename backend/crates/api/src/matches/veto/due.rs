@@ -15,6 +15,8 @@
 //! prazo. O mesmo sorteio completa o draft quando o organizador lança a
 //! partida 1 antes do fim dele (`draw_turn`, pelo `advance`). `draw_turn` e
 //! `due_draws` só dizem o que gravar: a sala de veto (`veto_rooms`) usa os mesmos.
+//! A série cujo elenco mudou e deixou os dois lados prontos também conta como
+//! vencida (`ready_to_begin`): quem começa é o `advance`, pelo `settle`.
 
 use chrono::{DateTime, Utc};
 use engine::{
@@ -76,9 +78,23 @@ pub fn next_deadline(status: TournamentStatus, stage: &stage::Stage) -> Option<D
     waiting(status, stage).map(|(_, d)| d).min()
 }
 
-/// Há passo com o prazo (mais `GRACE`) vencido em `now`.
+/// Há passo com o prazo (mais `GRACE`) vencido em `now`, ou série para começar.
 pub fn any_due(status: TournamentStatus, stage: &stage::Stage, now: DateTime<Utc>) -> bool {
-    next_deadline(status, stage).is_some_and(|d| d <= now)
+    next_deadline(status, stage).is_some_and(|d| d <= now) || ready_to_begin(status, stage)
+}
+
+/// Há série pronta, sem veto começado, com os dois lados prontos: quem faltava
+/// saiu do elenco (substituição, saiu da comunidade, troca de capitão), e ninguém
+/// mais vai clicar.
+fn ready_to_begin(status: TournamentStatus, stage: &stage::Stage) -> bool {
+    status == TournamentStatus::InProgress
+        && stage.vetoes.iter().any(|mv| {
+            !mv.state.begun()
+                && stage.bracket.get(mv.match_id).is_some_and(
+                    |m| matches!(m.state, MatchState::Ready { a, b } if (a, b) == mv.sides),
+                )
+                && stage.readiness(mv.match_id, mv.sides).both()
+        })
 }
 
 /// Sorteia e grava os passos vencidos em `now`, em sequência: cada sorteio

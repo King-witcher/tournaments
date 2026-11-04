@@ -11,12 +11,12 @@ use sqlx::PgConnection;
 
 use super::{
     db::{self, RoomRow},
-    types::{VetoRoomRole, VetoRoomStart},
+    types::{VetoRoomActors, VetoRoomRole, VetoRoomStart},
 };
 use crate::{
     matches::{
         Side,
-        veto::{Champion, Ctx, GRACE, NewVetoEvent, VetoLog, VetoRow, due_draws},
+        veto::{Champion, Ctx, GRACE, NewVetoEvent, Readiness, VetoLog, VetoRow, due_draws},
     },
     shared::ApiError,
     tournaments::{NoRepeatWho, PickOrder, PoolMap, VetoOrder},
@@ -29,7 +29,8 @@ pub(super) struct Seat {
     pub id: i64,
     pub side: Side,
     pub position: i16,
-    pub token: String,
+    /// `None`: o lugar sem link, na sala centrada no capitão.
+    pub token: Option<String>,
     pub name: Option<String>,
 }
 
@@ -44,6 +45,7 @@ pub(super) struct Room {
     pub order: VetoOrder,
     pub no_repeat: Option<NoRepeatWho>,
     pub who_starts: VetoRoomStart,
+    pub who_acts: VetoRoomActors,
     pub rules: ev::VetoRules,
     pub step_seconds: i32,
     pub team_pick_seconds: i32,
@@ -158,6 +160,7 @@ impl Room {
             order,
             no_repeat,
             who_starts: VetoRoomStart::from_db(&row.who_starts),
+            who_acts: VetoRoomActors::from_db(&row.team_actors),
             rules,
             step_seconds: row.step_seconds,
             team_pick_seconds: row.team_pick_seconds,
@@ -208,6 +211,20 @@ impl Room {
             return Err(ApiError::conflict("veto_room.not_joined"));
         }
         Ok((seat.id, seat.side))
+    }
+
+    /// Quem falta marcar "Pronto": todo lugar com link. Na sala centrada no
+    /// capitão, são os dois capitães; nas outras, todos os lugares, com gente ou não
+    /// (a gestão começa sem esperar quem não apareceu).
+    pub fn readiness(&self) -> Readiness {
+        let of = |side: Side| {
+            self.seats
+                .iter()
+                .filter(|s| s.side == side && s.token.is_some())
+                .map(|s| s.id)
+                .collect()
+        };
+        Readiness::of(Some(&self.log), [of(Side::A), of(Side::B)])
     }
 
     /// Grava `events`, refaz o veto com eles e acerta o próximo prazo.

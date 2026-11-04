@@ -1,4 +1,5 @@
 import { Layer, Tile } from "@carbon/react";
+import { useTranslations } from "next-intl";
 
 import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
@@ -27,8 +28,9 @@ type Props = {
 /**
  * Uma partida enviada, no mesmo cartão da da vez: o alto (os lados, o mapa
  * e os campeões), os frags embaixo de cada lado, o que ela diz (quem venceu,
- * o estado) e o que quem vê pode fazer nela (confirmar, contestar, as ações
- * da organização) e os screenshots.
+ * o estado), o que quem vê pode fazer nela (confirmar, contestar, as ações
+ * da organização; ao colega que não pode, que é o capitão quem responde) e os
+ * screenshots.
  */
 export function GamePlayed({
   target,
@@ -38,6 +40,7 @@ export function GamePlayed({
   canManage,
   last,
 }: Props) {
+  const t = useTranslations("Match.games");
   const responds = g.task === "respond";
   const contests = responds || g.can_contest;
   return (
@@ -46,6 +49,7 @@ export function GamePlayed({
         <GameVersus number={g.number} map={g.map} />
         {g.map && <GameFrags game={g} names={names} />}
         <GameOutcome game={g} names={names} inlineFrags={!g.map} />
+        {g.task === "await_captain" && <p>{t("captainResponds")}</p>}
         {(contests || canManage) && (
           // Uma linha só: as de jogador e as da organização, com o raro no ⋯.
           <div className={playedStyles.actions}>

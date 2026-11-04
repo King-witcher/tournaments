@@ -200,7 +200,7 @@ pub async fn open_tournaments(db: &PgPool) -> Result<Vec<(TenantId, String)>, sq
         r#"select t.tenant_id, t.slug from tournaments t
            where t.status = 'in_progress'
              and exists(select 1 from match_veto_events e
-                        where e.tournament_id = t.id and e.kind = 'begin'
+                        where e.tournament_id = t.id and e.kind in ('begin', 'ready')
                           and not exists(select 1 from match_results r
                                          where r.tournament_id = e.tournament_id
                                            and r.stage = e.stage

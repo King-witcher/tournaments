@@ -48,6 +48,12 @@ export const perPlayer = (veto: Veto) =>
 export const isWindow = (turn: Schemas["VetoTurn"]) =>
   turn.action === "team_pick" && turn.pick_for == null;
 
+/** A regra que cobre o passo esperado (`can_act` do veto). */
+export function turnRule(turn: Schemas["VetoTurn"]): "map" | "ban" | "pick" {
+  if (turn.target === "map") return "map";
+  return turn.action === "ban" ? "ban" : "pick";
+}
+
 /** A chave de texto do passo esperado (`ban_map`, `pick_champion`, `vote_map`...). */
 export function turnKey(turn: Schemas["VetoTurn"]) {
   return `${turn.action}_${turn.target}` as const;

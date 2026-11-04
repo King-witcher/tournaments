@@ -1,12 +1,13 @@
 //! Sala de veto: veto de mapas e draft de campeões avulsos, sem torneio nem
 //! comunidade, para quem não usa o site para gerenciar a chave. Qualquer um
-//! cria, sem login; o link é a credencial (um por jogador, um de espectador e
-//! um de gestão, que mostra todos). O veto é o mesmo da série de um torneio:
+//! cria, sem login; o link é a credencial (um por jogador, ou um por time na sala
+//! centrada no capitão, um de espectador e um de gestão, que mostra todos e pode
+//! começar sem esperar). O veto é o mesmo da série de um torneio:
 //! as regras são do `engine`, e o histórico, o passo, os sorteios e a visão vêm
 //! de `matches::veto`; daqui é só o que muda sem o torneio.
 //!
 //! - `create`: criar, com os limites de quem cria (constantes lá).
-//! - `handlers`: ler, entrar num lugar, "Pronto", um passo.
+//! - `handlers`: ler, entrar num lugar, "Pronto", começar sem esperar, um passo.
 //! - `room`: a sala carregada e refeita (`Room`), o que grava (eventos e o
 //!   próximo prazo) e os sorteios vencidos. A sala é o escopo da trava: toda
 //!   escrita passa por `Room::lock` (`select ... for update`).
@@ -47,5 +48,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::get_veto_room))
         .routes(routes!(handlers::join_veto_room))
         .routes(routes!(handlers::veto_room_ready))
+        .routes(routes!(handlers::veto_room_begin))
         .routes(routes!(handlers::veto_room_step))
 }

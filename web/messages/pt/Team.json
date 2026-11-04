@@ -72,7 +72,7 @@
   "captain": {
     "open": "Trocar capitão",
     "title": "Trocar o capitão de {name}",
-    "hint": "O capitão dá nome ao time e pode renomeá-lo.",
+    "hint": "O capitão dá nome ao time, pode renomeá-lo e, conforme as regras do torneio, age por ele nas séries.",
     "label": "Capitão",
     "submit": "Salvar capitão"
   },

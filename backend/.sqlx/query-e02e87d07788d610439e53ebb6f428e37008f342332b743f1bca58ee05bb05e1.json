@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.tenant_id, t.slug from tournaments t\n           where t.status = 'in_progress'\n             and exists(select 1 from match_veto_events e\n                        where e.tournament_id = t.id and e.kind in ('begin', 'ready')\n                          and not exists(select 1 from match_results r\n                                         where r.tournament_id = e.tournament_id\n                                           and r.stage = e.stage\n                                           and r.match_key = e.match_key))\n           order by t.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "e02e87d07788d610439e53ebb6f428e37008f342332b743f1bca58ee05bb05e1"
+}

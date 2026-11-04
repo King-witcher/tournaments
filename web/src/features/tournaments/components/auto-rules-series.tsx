@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { useFormatSeconds } from "../hooks/use-format-seconds";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
 import { finalsBestOf } from "../lib/format";
+import { teamPresetOf } from "../lib/team-rules";
 import { AutoRulesBlock } from "./auto-rules-block";
 import { AutoRulesList } from "./auto-rules-list";
 import { Sentences } from "./sentences";
@@ -45,6 +46,8 @@ export function AutoRulesSeries({ tournament }: Props) {
           : mapMode;
   const maps = t(`${tdm ? "mapsTdm" : "maps"}.${mapKey}`);
   const champions = rules.champions(tournament);
+  // Só o preset todo no capitão deixa o "Pronto" com ele.
+  const byCaptain = teamPresetOf(tournament.team_rules) === "captain";
 
   if (!phases) {
     return (
@@ -62,7 +65,7 @@ export function AutoRulesSeries({ tournament }: Props) {
         ordered
         items={[
           [
-            t(tdm ? "readyTdm" : "ready"),
+            t(tdm ? (byCaptain ? "readyCaptains" : "readyTdm") : "ready"),
             choices && t(tdm ? "vetoStartsTdm" : "vetoStarts"),
           ],
           [maps],

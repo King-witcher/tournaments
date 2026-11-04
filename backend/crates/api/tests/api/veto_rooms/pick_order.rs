@@ -186,8 +186,7 @@ async fn a_seat_nobody_joined_still_sees_as_its_side() {
     let links = links_of(&app, picks_only(2, 1, "blind")).await;
     enter(&app, &links.seats[0], "king").await;
     enter(&app, &links.seats[2], "thallis").await;
-    assert_eq!(ready(&app, &links.seats[0]).await.0, StatusCode::OK);
-    assert_eq!(ready(&app, &links.seats[2]).await.0, StatusCode::OK);
+    begin(&app, &links.manage).await;
     ok_step(
         &app,
         &links.seats[0],

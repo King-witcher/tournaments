@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { ChampionPortrait } from "@/features/champions/components/champion-portrait";
+import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { Notice } from "@/shared/ui/notice";
 import { useChampionTileText } from "../hooks/use-champion-tile-text";
@@ -29,6 +30,7 @@ type Props = {
  */
 export function VetoChampionBoard({ rule, slot }: Props) {
   const t = useTranslations("Match.veto.champions");
+  const tMember = useTranslations("Member");
   const tMaps = useTranslations("Match.veto.maps");
   const { veto, names, pending, actions } = useVetoBoard();
   const text = useChampionTileText(names, rule);
@@ -40,6 +42,19 @@ export function VetoChampionBoard({ rule, slot }: Props) {
   const tiles = championTiles(veto, pickSlot);
   const game = pickSlot?.game ?? turn?.pick_for ?? 1;
   const { hint, described } = text;
+  // O capitão escolhendo por um colega: é o que diz para quem é o campeão.
+  const forTeam = veto.can_act.pick_for_team && pickSlot?.player != null;
+  const pickLabel = (champion: string) =>
+    forTeam && !veto.nameless
+      ? t("pickChampionFor", {
+          champion,
+          game,
+          player: shownNickname(
+            pickSlot?.nickname ?? "",
+            tMember("deletedAccount"),
+          ),
+        })
+      : t("pickChampion", { champion, game });
 
   return (
     <div className={styles.board}>
@@ -67,12 +82,16 @@ export function VetoChampionBoard({ rule, slot }: Props) {
                       text: banning ? tMaps("ban") : tMaps("pick"),
                       label: banning
                         ? t("banChampion", { champion: c.name })
-                        : t("pickChampion", { champion: c.name, game }),
+                        : pickLabel(c.name),
                       disabled: pending != null,
                       onClick: () =>
                         actions.step(
                           turn?.action === "team_pick"
-                            ? { champion: c.slug, game }
+                            ? {
+                                champion: c.slug,
+                                game,
+                                player: pickSlot?.player ?? undefined,
+                              }
                             : { champion: c.slug },
                         ),
                     }

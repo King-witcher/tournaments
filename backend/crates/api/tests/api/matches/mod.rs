@@ -5,9 +5,11 @@
 //! do banco para mapas, séries e histórico (`schema`), quantas idas ao banco
 //! custa cada clique (`cost`), o veto de mapas e
 //! campeões (`veto`), a ordem das escolhas de campeão e o que fica escondido às
-//! cegas (`pick_order`) e os formatos de tabela (`round_robin`, `swiss`).
+//! cegas (`pick_order`), quem age pelo time (`acting`) e os formatos de tabela
+//! (`round_robin`, `swiss`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
+mod acting;
 mod bracket;
 mod contest;
 mod corrections;

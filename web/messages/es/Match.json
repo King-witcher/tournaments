@@ -53,7 +53,9 @@
     },
     "lineup": "Jugaron: {a} contra {b}",
     "lateContest": "Puedes impugnarla hasta que empiece la próxima serie de {a} o de {b}.",
-    "game": "Partida {number}"
+    "game": "Partida {number}",
+    "captainReports": "El capitán envía el resultado por el equipo.",
+    "captainResponds": "El capitán responde por el equipo."
   },
   "respond": {
     "confirm": "Confirmar",
@@ -196,7 +198,9 @@
           "stage": "Usado en la fase",
           "tournament": "Usado en el torneo"
         }
-      }
+      },
+      "forPlayer": "Jugador",
+      "pickChampionFor": "Elegir {champion} para {player} en la partida {game}"
     },
     "undo": {
       "request": "Pedir deshacer el último paso",
@@ -220,12 +224,13 @@
         "undo": "{actor} deshizo el último paso",
         "undo_request": "{name} pidió deshacer el último paso",
         "undo_declined": "{name} rechazó deshacer"
-      }
+      },
+      "pickedBy": "por {actor}"
     },
     "teamPick": "Todos los jugadores <b>eligen</b> los campeones al mismo tiempo, uno para cada partida.",
     "teamPickYours": "<b>Elige</b> un campeón para cada partida. La elección es definitiva.",
     "teamDeadline": "Al final, lo que falte se sortea.",
-    "waitingReadyTeams": "El veto empieza cuando los dos equipos hagan clic en “Listo”. Cualquier jugador del equipo puede hacerlo.",
+    "waitingReadyTeams": "El veto empieza cuando todos los jugadores de los dos equipos hagan clic en “Listo”.",
     "draft": {
       "caption": "Campeones de cada lado por partida",
       "gameColumn": "Partida",
@@ -234,11 +239,25 @@
       "choosing": "eligiendo",
       "drawn": "sorteado",
       "you": "Tú",
-      "hidden": "eligió"
+      "hidden": "eligió",
+      "captain": "Capitán"
     },
     "blindPick": "Todos <b>eligen</b> al mismo tiempo. Los campeones aparecen cuando todos terminan.",
     "blindPickYours": "<b>Elige</b> un campeón para cada partida. La elección es definitiva, y el otro lado solo la ve cuando todos terminan.",
-    "pickedWaitingMate": "Ya elegiste en la partida {game}. Falta {names}."
+    "pickedWaitingMate": "Ya elegiste en la partida {game}. Falta {names}.",
+    "waitingReadyCaptains": "El veto empieza cuando los dos capitanes hagan clic en “Listo”.",
+    "waitingFor": "Falta: {names}.",
+    "forceStartNow": "Empezar ahora",
+    "forceStartRoomQuestion": "¿Empezar sin esperar a quien falta? Quien no elija a tiempo recibe una elección sorteada.",
+    "captainActs": {
+      "ready": "El capitán marca “Listo” por el equipo.",
+      "map": "El capitán veta por el equipo.",
+      "vote": "El capitán vota por el equipo.",
+      "ban": "El capitán banea por el equipo.",
+      "pick": "El capitán elige por el equipo."
+    },
+    "blindPickCaptain": "<b>Elige</b> los campeones del equipo, uno por jugador en cada partida. La elección es definitiva, y el otro lado solo la ve cuando todos terminan.",
+    "blindPickCaptains": "Los capitanes <b>eligen</b> al mismo tiempo. Los campeones aparecen cuando todos terminan."
   },
   "labelTable": "Ronda {round} de {total} · serie {index}",
   "steps": {

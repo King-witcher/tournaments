@@ -34,6 +34,41 @@ pub struct NewVetoRoom {
     /// Quem faz o primeiro passo da sala: sorteado (padrão) ou o lado A.
     #[serde(default)]
     pub who_starts: VetoRoomStart,
+    /// Quem age pelo time. Ausente: todos os jogadores; o formulário manda o
+    /// capitão. No duelo, não muda nada.
+    #[serde(default)]
+    pub who_acts: VetoRoomActors,
+}
+
+/// Quem age pelo time na sala. Não há resultado: só valem o veto, os bans e os picks.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoRoomActors {
+    /// Um link por time: o capitão faz tudo, e escolhe os campeões de todos os
+    /// lugares do lado.
+    Captain,
+    /// Um link por lugar: qualquer um faz o que é do lado, cada um escolhe o
+    /// próprio campeão, e todos marcam "Pronto".
+    #[default]
+    All,
+}
+
+impl VetoRoomActors {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Captain => "captain",
+            Self::All => "all",
+        }
+    }
+
+    /// Lê `veto_rooms.team_actors` (garantida pelo check da tabela).
+    pub fn from_db(value: &str) -> Self {
+        if value == Self::Captain.as_str() {
+            Self::Captain
+        } else {
+            Self::All
+        }
+    }
 }
 
 /// Quem faz o primeiro passo da sala. Os lados continuam fixos.
@@ -162,6 +197,8 @@ pub struct VetoRoomDetail {
     pub bans_per_series: i16,
     pub order: VetoOrder,
     pub no_repeat: Option<NoRepeatWho>,
+    /// Quem age pelo time.
+    pub who_acts: VetoRoomActors,
     pub seats: Vec<VetoRoomSeat>,
     /// Só para o link de gestão.
     pub links: Option<VetoRoomLinks>,

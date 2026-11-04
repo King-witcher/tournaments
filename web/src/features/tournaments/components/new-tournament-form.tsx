@@ -26,6 +26,7 @@ import {
 } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { groupOf } from "../lib/form-groups";
+import { isTdm } from "../lib/form-values";
 import { rememberedPool } from "../lib/remembered-pool";
 import { FormAccordionItem } from "./form-accordion-item";
 import { TournamentChampionFields } from "./tournament-champion-fields";
@@ -40,11 +41,13 @@ import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentSlotsField } from "./tournament-slots-field";
 import { TournamentSourceField } from "./tournament-source-field";
 import { TournamentStartField } from "./tournament-start-field";
+import { TournamentTeamRulesFields } from "./tournament-team-rules-fields";
 import { TournamentTranslations } from "./tournament-translations";
 import { TournamentVetoFields } from "./tournament-veto-fields";
 
 /** Os grupos que começam fechados: têm padrão bom ou são opcionais, e o resumo no título. */
 const GROUPS = [
+  "teams",
   "veto",
   "champions",
   "registration",
@@ -64,9 +67,9 @@ const CLOSED = Object.fromEntries(GROUPS.map((g) => [g, false])) as Record<
 /**
  * Criar torneio, numa página só: à vista o que se decide sempre (nome,
  * endereço, início, descrição, modalidade, vagas, chave e séries); fechados,
- * com o resumo no título, os grupos que já vêm com padrão (mapas, campeões,
- * inscrições e prazos, resultados) e os opcionais (regras adicionais e outros
- * idiomas). Os botões só liberam com todos os campos válidos. "Criar como
+ * com o resumo no título, os grupos que já vêm com padrão (nos times, quem age
+ * por eles; mapas, campeões, inscrições e prazos, resultados) e os opcionais
+ * (regras adicionais e outros idiomas). Os botões só liberam com todos os campos válidos. "Criar como
  * rascunho" é o primário (e o Enter): cria sem publicar. "Criar e publicar"
  * confere e mostra a revisão antes, porque publicado não volta a rascunho.
  * No topo, "Copiar de" começa da configuração de outro torneio. A capa
@@ -222,6 +225,21 @@ export function NewTournamentForm({
           />
         </FormSection>
         <Accordion>
+          {isTdm(values) && (
+            <FormAccordionItem
+              title={t("teamRules.title")}
+              summary={summary.teamRules(values)}
+              group="teams"
+              open={open.teams}
+              onToggle={toggle("teams")}
+            >
+              <TournamentTeamRulesFields
+                values={values}
+                onChange={onChange}
+                disabled={false}
+              />
+            </FormAccordionItem>
+          )}
           {/* Mapas antes de Campeões: a ordem em que a série os decide. */}
           <FormAccordionItem
             title={t("veto.title")}

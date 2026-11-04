@@ -75,6 +75,8 @@ export const TASK_STATUS: Record<Schemas["ViewerTask"], Status> = {
   resolve: "contested",
   await_opponent: "waiting",
   await_organizer: "waiting",
+  await_captain: "waiting",
+  await_team: "waiting",
   ready: "check_in",
   veto: "check_in",
 };

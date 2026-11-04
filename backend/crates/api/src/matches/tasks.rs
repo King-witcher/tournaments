@@ -1,6 +1,8 @@
 //! O que uma partida, e cada mapa dela, espera de quem vê: enviar o próximo
 //! mapa, responder ao mapa do adversário, o veto ("Pronto" ou o passo da
-//! vez), esperar, ou (organizador) resolver uma contestação. Só com o torneio em andamento e a partida pronta.
+//! vez), esperar, ou (organizador) resolver uma contestação. Só com o torneio em
+//! andamento e a partida pronta. Não cobra de quem a regra do torneio não deixa
+//! agir: para ele, é esperar o capitão.
 
 use engine::{
     core::{Match, MatchState, PlayerId},
@@ -16,7 +18,7 @@ use super::{
     veto,
     view::Viewer,
 };
-use crate::tournaments::TournamentStatus;
+use crate::tournaments::{TeamAction, TeamPicker, TournamentStatus};
 
 /// A partida está aberta para mapas: torneio em andamento e partida pronta
 /// (a série ainda sem decisão).
@@ -50,16 +52,17 @@ pub fn game_task(
         GameStatus::Pending if mine.is_some() && mine == g.reported_side => {
             Some(ViewerTask::AwaitOpponent)
         }
-        GameStatus::Pending => mine.map(|_| ViewerTask::Respond),
+        GameStatus::Pending if viewer.may(TeamAction::Report) => mine.map(|_| ViewerTask::Respond),
+        GameStatus::Pending => mine.map(|_| ViewerTask::AwaitCaptain),
         GameStatus::Confirmed => None,
     }
 }
 
 /// O que o veto da próxima partida espera de quem joga (do lado `mine`):
-/// "Pronto" antes de começar, o passo da vez do lado dele (qualquer jogador
-/// do time age pelo time) ou esperar o adversário; no pick por jogador, cada um
-/// escolhe os seus, quando pode. `None` sem veto no torneio, ou com o veto da
-/// próxima partida concluído.
+/// "Pronto" antes de começar, o passo da vez do lado dele (quem a regra deixa)
+/// ou esperar; no pick por jogador, cada um escolhe os seus, quando pode, ou o
+/// capitão, os de todos. `None` sem veto no torneio, ou com o veto da próxima
+/// partida concluído.
 fn veto_task(
     status: TournamentStatus,
     stage: &Stage,
@@ -73,14 +76,21 @@ fn veto_task(
     }
     let next = next_game(status, m, games)?;
     let Some(mv) = stage.veto_of(m.id).filter(|v| v.state.begun()) else {
-        let ready = stage.veto_of(m.id).map(|v| v.ready()).unwrap_or_default();
-        let me = usize::from(mine == Side::B);
-        return Some(if ready[me] {
-            ViewerTask::AwaitOpponent
-        } else {
+        let MatchState::Ready { a, b } = m.state else {
+            return None;
+        };
+        let readiness = stage.readiness(m.id, (a, b));
+        return Some(if readiness.awaits(viewer.user_id) {
             ViewerTask::Ready
+        } else if readiness.side(mine) {
+            ViewerTask::AwaitOpponent
+        } else if viewer.rules.captain_only() {
+            ViewerTask::AwaitCaptain
+        } else {
+            ViewerTask::AwaitTeam
         });
     };
+    let side = veto::ev_side(mine);
     match mv.state.turn() {
         Turn::Act {
             game,
@@ -89,19 +99,26 @@ fn veto_task(
         } if i16::from(game) == next => {
             let me = PlayerId(viewer.user_id);
             let pickable = mv.state.pickable();
-            Some(if pickable.iter().any(|m| m.player == me) {
-                ViewerTask::Veto
-            } else {
-                ViewerTask::AwaitOpponent
+            let team_open = pickable.iter().any(|m| m.side == side);
+            Some(match viewer.rules.pick {
+                TeamPicker::EachPlayer if pickable.iter().any(|m| m.player == me) => {
+                    ViewerTask::Veto
+                }
+                TeamPicker::EachPlayer => ViewerTask::AwaitOpponent,
+                TeamPicker::Captain if !team_open => ViewerTask::AwaitOpponent,
+                TeamPicker::Captain if viewer.captain => ViewerTask::Veto,
+                TeamPicker::Captain => ViewerTask::AwaitCaptain,
             })
         }
-        Turn::Act { game, sides, .. } if i16::from(game) == next => {
-            Some(if sides.contains(&veto::ev_side(mine)) {
-                ViewerTask::Veto
-            } else {
-                ViewerTask::AwaitOpponent
-            })
-        }
+        ref turn @ Turn::Act {
+            game, ref sides, ..
+        } if i16::from(game) == next => Some(if !sides.contains(&side) {
+            ViewerTask::AwaitOpponent
+        } else if veto::turn_action(turn).is_none_or(|a| viewer.may(a)) {
+            ViewerTask::Veto
+        } else {
+            ViewerTask::AwaitCaptain
+        }),
         _ => None,
     }
 }
@@ -132,11 +149,17 @@ pub fn match_task(
     } else if let Some(task) = veto_task(status, stage, m, games, side, viewer) {
         Some(task)
     } else if next_game(status, m, games).is_some() {
-        Some(ViewerTask::Report)
+        Some(if viewer.may(TeamAction::Report) {
+            ViewerTask::Report
+        } else {
+            ViewerTask::AwaitCaptain
+        })
     } else if has(ViewerTask::AwaitOrganizer) {
         Some(ViewerTask::AwaitOrganizer)
     } else if has(ViewerTask::AwaitOpponent) {
         Some(ViewerTask::AwaitOpponent)
+    } else if has(ViewerTask::AwaitCaptain) {
+        Some(ViewerTask::AwaitCaptain)
     } else {
         None
     }

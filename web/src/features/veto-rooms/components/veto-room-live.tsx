@@ -58,7 +58,7 @@ export function VetoRoomLive({ signedIn }: { signedIn: boolean }) {
           {history}
         </>
       ) : waiting ? (
-        <PageColumns main={<VetoRoomLinks />} aside={<VetoReady />} />
+        <PageColumns main={<VetoRoomLinks />} aside={<VetoReady room />} />
       ) : (
         <>
           <VetoRoomSteps />

@@ -122,6 +122,7 @@ pub fn apply(
             None => current_setup.stages.clone(),
         },
         veto: veto.unwrap_or_else(|| current_setup.veto.clone()),
+        team_rules: patch.team_rules.unwrap_or(current_setup.team_rules),
     };
     let setup = (setup != *current_setup).then_some(setup);
     if setup.is_some() && !status.setup_editable() {
@@ -199,6 +200,7 @@ mod tests {
             rules(),
             vec![stage(Bracket::Single, false)],
             VetoSetup::off(),
+            Default::default(),
         )
     }
 
@@ -226,6 +228,7 @@ mod tests {
             contest_minutes: None,
             counts_for_rating: None,
             veto: None,
+            team_rules: None,
             screenshots_required: None,
         }
     }
@@ -390,6 +393,25 @@ mod tests {
         let edit = run(TournamentStatus::InProgress, p(TournamentMode::Duel, None)).unwrap();
         assert!(edit.setup.is_none());
         let err = run(TournamentStatus::InProgress, p(TournamentMode::Tdm, None)).unwrap_err();
+        assert_eq!(err.code, "tournament.setup_locked");
+    }
+
+    #[test]
+    fn who_acts_for_the_team_locks_once_started() {
+        use crate::tournaments::team_rules::{TeamActor, TeamRules};
+        let p = |report| UpdateTournament {
+            team_rules: Some(TeamRules {
+                report,
+                ..TeamRules::EVERYONE
+            }),
+            ..patch()
+        };
+        let edit = run(TournamentStatus::CheckIn, p(TeamActor::Captain)).unwrap();
+        assert_eq!(edit.setup.unwrap().team_rules.report, TeamActor::Captain);
+        // O mesmo valor não é mudança; a de resultado também trava.
+        let edit = run(TournamentStatus::InProgress, p(TeamActor::Anyone)).unwrap();
+        assert!(edit.setup.is_none());
+        let err = run(TournamentStatus::InProgress, p(TeamActor::Captain)).unwrap_err();
         assert_eq!(err.code, "tournament.setup_locked");
     }
 

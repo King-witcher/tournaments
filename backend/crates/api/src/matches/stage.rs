@@ -25,7 +25,7 @@ use super::{
 use crate::{
     shared::ApiError,
     teams::{self, StoredTeam},
-    tournaments::{self, PoolMap, StoredTournament, TournamentStatus},
+    tournaments::{self, PoolMap, StoredTournament, TeamRules, TournamentStatus},
 };
 
 /// A primeira (e por enquanto única) fase.
@@ -54,6 +54,8 @@ pub struct Stage {
     pub champions: Vec<Champion>,
     pub map_pool: Vec<PoolMap>,
     pub vetoes: Vec<MatchVeto>,
+    /// Quem age pelo time.
+    pub team_rules: TeamRules,
     /// TDM com o draft: quem jogou cada partida enviada (o elenco do veto);
     /// vazio nos outros casos.
     lineups: Vec<(MatchId, i16, Side, i64)>,
@@ -77,8 +79,8 @@ impl Stage {
 
     /// O time da chave em que `user_id` joga. "Jogador da partida" é membro do
     /// time de um dos lados: é por aqui que as ações dos jogadores (envio,
-    /// resposta, veto, screenshot) acham o lado de quem age; nos times,
-    /// qualquer jogador do time age pelo lado.
+    /// resposta, veto, screenshot) acham o lado de quem age; quem do time pode
+    /// agir é a regra do torneio (`acting`).
     pub fn participant_of(&self, user_id: i64) -> Option<ParticipantId> {
         self.entrants
             .iter()
@@ -305,6 +307,7 @@ pub async fn load(
         champions,
         map_pool: tournament.map_pool.clone(),
         vetoes,
+        team_rules: tournament.setup.team_rules,
         lineups,
     })
 }

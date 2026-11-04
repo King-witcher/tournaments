@@ -17,7 +17,9 @@
 //! quem fica pronto ou força o começo. A abertura dos picks por jogador
 //! (`match.team_pick_open`, para os jogadores dos dois times, sem dizer nada do
 //! que foi escolhido) sai daqui, porque ela abre por qualquer caminho (o último
-//! ban, o tempo esgotado, o jogo seguinte, o desfazer).
+//! ban, o tempo esgotado, o jogo seguinte, o desfazer). O aviso que pede ação vai
+//! só para quem pode agir pela regra do torneio (`acting`); `match.ready` só diz
+//! que a série está pronta, e vai para o time.
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -30,7 +32,7 @@ use engine::{
 use sqlx::PgConnection;
 
 use super::{
-    announce,
+    acting, announce,
     games::GameStatus,
     key,
     progress::{self, Notices, Suggested},
@@ -42,7 +44,7 @@ use crate::{
     shared::ApiError,
     teams::StoredTeam,
     tenants,
-    tournaments::{self, Address, StoredTournament, TournamentStatus},
+    tournaments::{self, Address, StoredTournament, TeamAction, TournamentStatus},
 };
 
 /// Como cada partida da fase estava antes de uma mudança e, no round robin, a
@@ -331,8 +333,8 @@ async fn match_ready(
     Ok(())
 }
 
-/// Os picks por jogador da partida `game` abriram: aviso para os jogadores dos
-/// dois times que estão na comunidade (todos escolhem).
+/// Os picks por jogador da partida `game` abriram: aviso para quem escolhe nos
+/// dois times e está na comunidade (todos, ou só o capitão, pela regra).
 async fn team_pick_open(
     conn: &mut PgConnection,
     audience: &Address,
@@ -341,10 +343,16 @@ async fn team_pick_open(
     (a, b): (ParticipantId, ParticipantId),
     game: u8,
 ) -> Result<(), sqlx::Error> {
+    let rule_open = stage.team_rules.open_to_all(TeamAction::Pick);
     let players = [a, b]
         .into_iter()
         .filter_map(|p| stage.entrant(p))
-        .flat_map(|t| t.members.iter().filter(|m| !m.left).map(|m| m.user_id));
+        .flat_map(|t| {
+            t.members
+                .iter()
+                .filter(move |m| !m.left && (rule_open || m.user_id == t.captain))
+                .map(|m| m.user_id)
+        });
     let notice = Notice {
         kind: NoticeKind::TeamPickOpen {
             tournament: audience.name.clone(),
@@ -360,8 +368,8 @@ fn match_path(audience: &Address, key: &str) -> String {
     format!("{}/matches/{key}", audience.path())
 }
 
-/// O time `from` enviou o mapa `game` da partida `key`: aviso para os
-/// jogadores de `to`, o adversário, com o prazo para confirmar ou contestar.
+/// O time `from` enviou o mapa `game` da partida `key`: aviso para quem responde
+/// por `to`, o adversário, com o prazo para confirmar ou contestar.
 pub async fn game_reported(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
@@ -381,7 +389,8 @@ pub async fn game_reported(
         },
         path: match_path(&audience, key),
     };
-    outbox::emit(conn, Event::notice(to.user_ids(), notice)).await
+    let actors = acting::audience(to, tournament.setup.team_rules, TeamAction::Report);
+    outbox::emit(conn, Event::notice(actors, notice)).await
 }
 
 /// `player` (apelido; `by`, o usuário) contestou o mapa `game` da partida
@@ -408,7 +417,7 @@ pub async fn game_contested(
     outbox::emit(conn, Event::notice(to, notice)).await
 }
 
-/// O veto da partida `key` começou: aviso para os jogadores dos dois lados,
+/// O veto da partida `key` começou: aviso para quem age nele pelos dois lados,
 /// com o nome do outro.
 pub async fn veto_started(
     conn: &mut PgConnection,
@@ -430,24 +439,24 @@ pub async fn veto_started(
             },
             path: match_path(&audience, key),
         };
-        outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
+        outbox::emit(
+            conn,
+            Event::notice(acting::veto_audience(stage, to), notice),
+        )
+        .await?;
     }
     Ok(())
 }
 
 /// `opponent` (o nome do time) está pronto para o veto da partida `key`:
-/// aviso para os jogadores de `to`, o outro lado.
+/// aviso para `to`, quem ainda falta marcar "Pronto" do outro lado.
 pub async fn opponent_ready(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
-    stage: &Stage,
     key: &str,
-    to: ParticipantId,
+    to: &[i64],
     opponent: &str,
 ) -> Result<(), ApiError> {
-    let Some(to) = stage.entrant(to) else {
-        return Ok(());
-    };
     let audience = tournament.address();
     let notice = Notice {
         kind: NoticeKind::OpponentReady {
@@ -457,6 +466,6 @@ pub async fn opponent_ready(
         },
         path: match_path(&audience, key),
     };
-    outbox::emit(conn, Event::notice(to.user_ids(), notice)).await?;
+    outbox::emit(conn, Event::notice(to.iter().copied(), notice)).await?;
     Ok(())
 }

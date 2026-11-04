@@ -35,6 +35,7 @@ impl From<StoredTournament> for Tournament {
                 step_seconds: t.setup.veto.step_seconds,
                 team_pick_seconds: t.setup.veto.team_pick_seconds,
             },
+            team_rules: t.setup.team_rules,
             screenshots_required: t.screenshots_required,
             translations: t.translations,
             created_at: t.created_at,

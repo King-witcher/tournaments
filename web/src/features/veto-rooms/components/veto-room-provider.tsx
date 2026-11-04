@@ -34,7 +34,8 @@ type Props = {
  * a cada aviso do socket, direto do navegador. O `router.refresh()` da série
  * passaria pelo servidor do Next, e um espectador custaria uma renderização a
  * cada passo. Vale a que a API montou por último (`now`). Os tabuleiros do veto
- * são os da série e leem o `VetoBoard`.
+ * são os da série e leem o `VetoBoard`. A gestão não age, fora começar sem esperar
+ * (`canManage`; o desfazer a sala não tem).
  */
 export function VetoRoomProvider({ token, initial, children }: Props) {
   const [room, setRoom] = useState(initial);
@@ -109,8 +110,11 @@ export function VetoRoomProvider({ token, initial, children }: Props) {
       go("ready", ({ headers }) =>
         api.POST("/veto-rooms/{token}/ready", { params, headers }),
       ),
-    // A sala não tem organização nem desfazer.
-    start: () => {},
+    start: () =>
+      go("start", ({ headers }) =>
+        api.POST("/veto-rooms/{token}/begin", { params, headers }),
+      ),
+    // A sala não tem desfazer.
     undo: () => {},
     request: () => {},
     answer: () => {},
@@ -136,7 +140,7 @@ export function VetoRoomProvider({ token, initial, children }: Props) {
           bestOf: room.best_of,
           names,
           viewerId: seat?.id ?? null,
-          canManage: false,
+          canManage: room.role === "manager",
           hasUndo: false,
           hideEmptyMaps: true,
           pending,

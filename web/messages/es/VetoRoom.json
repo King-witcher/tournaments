@@ -26,7 +26,16 @@
       "draw": "Sorteo",
       "a": "Lado A"
     },
-    "whoStartsSummary": "empieza el lado A"
+    "whoStartsSummary": "empieza el lado A",
+    "whoActs": "Quién actúa por el equipo",
+    "whoActsOptions": {
+      "captain": "Centrado en el capitán",
+      "all": "Todos los jugadores"
+    },
+    "whoActsHints": {
+      "captain": "Un enlace por equipo. El capitán marca “Listo”, veta, banea y elige los campeones de todos. Los demás miran por el enlace de espectador.",
+      "all": "Un enlace por jugador. Todos marcan “Listo”, cualquiera veta y banea, y cada uno elige su propio campeón."
+    }
   },
   "seats": {
     "side": "Lado {side}",
@@ -45,7 +54,8 @@
     "notJoined": "todavía no entró",
     "spectator": "Espectador",
     "manage": "Gestión (esta página)",
-    "expires": "La sala vale hasta <date></date>."
+    "expires": "La sala vale hasta <date></date>.",
+    "captain": "Capitán: {side}"
   },
   "gone": {
     "text": "Esta sala venció o no existe.",

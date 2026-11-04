@@ -117,9 +117,10 @@ pub async fn create(
                (tenant_id, slug, locale, name, description, rules, mode, admission,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
-                team_size, team_pick_seconds, veto_order, pick_order, invite_token)
+                team_size, team_pick_seconds, veto_order, pick_order, invite_token,
+                veto_by, ban_by, pick_by, report_by)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-                   $19, $20, $21, $22, $23)
+                   $19, $20, $21, $22, $23, $24, $25, $26, $27)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -144,7 +145,11 @@ pub async fn create(
         new.setup.veto.team_pick_seconds,
         new.setup.veto.order.as_str(),
         new.setup.veto.pick_order.as_str(),
-        token::random_token()
+        token::random_token(),
+        new.setup.team_rules.veto.as_str(),
+        new.setup.team_rules.ban.as_str(),
+        new.setup.team_rules.pick.as_str(),
+        new.setup.team_rules.report.as_str()
     )
     .fetch_optional(&mut *conn)
     .await?
@@ -234,7 +239,8 @@ pub async fn update(
         r#"update tournaments
            set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,
                veto_seconds = $6, mode = $7, team_size = $8, team_pick_seconds = $9,
-               veto_order = $10, pick_order = $11
+               veto_order = $10, pick_order = $11, veto_by = $12, ban_by = $13, pick_by = $14,
+               report_by = $15
            where id = $1"#,
         id.0,
         setup.max_participants,
@@ -246,7 +252,11 @@ pub async fn update(
         setup.team_size as i16,
         setup.veto.team_pick_seconds,
         setup.veto.order.as_str(),
-        setup.veto.pick_order.as_str()
+        setup.veto.pick_order.as_str(),
+        setup.team_rules.veto.as_str(),
+        setup.team_rules.ban.as_str(),
+        setup.team_rules.pick.as_str(),
+        setup.team_rules.report.as_str()
     )
     .execute(&mut *conn)
     .await?;

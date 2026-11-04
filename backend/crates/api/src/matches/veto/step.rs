@@ -1,7 +1,8 @@
 //! Um passo do veto, antes de gravar: confere a vez que a tela mostrava, acha o
 //! mapa ou o campeão pelo slug e passa pelo `engine`, que recusa o que não vale.
 //! Serve à série de um torneio (`handlers::veto_step`) e à sala de veto
-//! (`veto_rooms`): quem chama trava o escopo, diz o lado de quem age e grava.
+//! (`veto_rooms`): quem chama trava o escopo, confere quem pode agir, diz o lado
+//! dele e grava. De quem é o campeão no pick por jogador sai de `target_player`.
 
 use engine::{
     core::PlayerId,
@@ -79,17 +80,59 @@ pub fn open_turn(state: &Veto) -> Result<OpenTurn, ApiError> {
     }
 }
 
-/// O passo de `who`, do lado `side`, na vez `turn`, conferido pelo `engine`, e
-/// o que gravar. `target`: na janela simultânea, a partida para a qual ele
-/// escolhe (nos picks com vez, é a que a vez diz, e outra é 409
-/// `veto.step_changed`). Erros: os do `engine` e 422 `veto.option_invalid` (mapa
-/// no pick por jogador, janela sem a partida).
+/// De quem é o campeão no pick por jogador de `who`. Quem escolhe só por si
+/// (`for_team` falso) escolhe o próprio: pedir outro é 403 `veto.not_your_pick`.
+/// Quem escolhe pelo time diz o colega (`asked`; o `engine` recusa quem não é do
+/// lado) ou fica com o próximo do lado sem escolha na partida `game`.
+pub fn target_player(
+    state: &Veto,
+    turn: OpenTurn,
+    (side, who): (Side, i64),
+    for_team: bool,
+    asked: Option<i64>,
+    game: Option<i16>,
+) -> Result<PlayerId, ApiError> {
+    if turn.action != Action::TeamPick {
+        return Ok(PlayerId(who));
+    }
+    if !for_team {
+        return match asked {
+            Some(other) if other != who => Err(ApiError::forbidden("veto.not_your_pick")),
+            _ => Ok(PlayerId(who)),
+        };
+    }
+    if let Some(asked) = asked {
+        return Ok(PlayerId(asked));
+    }
+    let game = turn
+        .pick_for
+        .or_else(|| game.and_then(|g| u8::try_from(g).ok()));
+    Ok(state
+        .pickable()
+        .into_iter()
+        .find(|m| m.side == ev_side(side) && game.is_none_or(|g| m.game == g))
+        .map_or(PlayerId(who), |m| m.player))
+}
+
+/// Quem faz o passo: o lado, quem clica (`actor`) e, no pick por jogador, de quem é
+/// o campeão.
+#[derive(Clone, Copy)]
+pub struct Acting {
+    pub side: Side,
+    pub actor: i64,
+    pub player: PlayerId,
+}
+
+/// O passo de `acting` na vez `turn`, conferido pelo `engine`, e o que gravar.
+/// `target`: na janela simultânea, a partida para a qual ele escolhe (nos picks com
+/// vez, é a que a vez diz, e outra é 409 `veto.step_changed`). Erros: os do
+/// `engine` e 422 `veto.option_invalid` (mapa no pick por jogador, janela sem a
+/// partida).
 pub fn planned(
     state: &Veto,
     ctx: &Ctx,
     turn: OpenTurn,
-    side: Side,
-    who: i64,
+    acting: Acting,
     choice: Choice,
     target: Option<i16>,
 ) -> Result<NewVetoEvent, ApiError> {
@@ -98,8 +141,11 @@ pub fn planned(
         action,
         pick_for,
     } = turn;
-    // O jogador-alvo do pick por jogador: hoje, sempre quem age (`actor`).
-    let player = PlayerId(who);
+    let Acting {
+        side,
+        actor: who,
+        player,
+    } = acting;
     let (event, pick_game, gave_way) = match (action, choice) {
         (Action::TeamPick, Choice::Champion(champion)) => {
             let asked = target.and_then(|g| u8::try_from(g).ok());

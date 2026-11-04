@@ -1,18 +1,19 @@
 //! O veto como fica gravado e o estado que o `engine` refaz dele
 //! (`veto::Veto::replay`): `VetoLog` serve à série de um torneio
 //! (`match_veto_events`, `MatchVeto`) e à sala de veto (`veto_rooms`). O
-//! "pronto" de cada lado, o pedido de desfazer e o relógio do passo são da API:
+//! "pronto" de cada jogador, o pedido de desfazer e o relógio do passo são da API:
 //! saem das linhas.
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::{ChampionId, MapId, MatchId, ParticipantId, PlayerId},
-    veto::{self as ev, Event, Rosters, Turn, Veto},
+    veto::{self as ev, Event, Rosters, Target, Turn, Veto},
 };
 
 use crate::{
     matches::result::{Side, unknown},
     shared::ApiError,
+    tournaments::TeamAction,
 };
 
 /// Um evento gravado de um veto, sem dizer de quem é. `actor` e `player` são
@@ -206,6 +207,72 @@ pub const fn slot(side: Side) -> usize {
     }
 }
 
+/// A regra que cobre a vez `turn`; `None` sem vez.
+pub const fn turn_action(turn: &Turn) -> Option<TeamAction> {
+    match turn {
+        Turn::Act {
+            target: Target::Map,
+            ..
+        } => Some(TeamAction::Veto),
+        Turn::Act {
+            action: ev::Action::Ban,
+            ..
+        } => Some(TeamAction::Ban),
+        Turn::Act { .. } => Some(TeamAction::Pick),
+        Turn::NotBegun | Turn::Done { .. } | Turn::RostersUnknown { .. } => None,
+    }
+}
+
+/// Quem ainda falta marcar "Pronto", por lado (`[a, b]`).
+#[derive(Clone, Debug, Default)]
+pub struct Readiness {
+    pub waiting: [Vec<i64>; 2],
+}
+
+impl Readiness {
+    /// De `required`, quem precisa marcar por lado (o elenco de agora, ou o
+    /// capitão), sai quem já marcou no histórico `log`. Marcou e saiu do elenco:
+    /// não conta. Saiu e voltou: continua marcado.
+    pub fn of(log: Option<&VetoLog>, required: [Vec<i64>; 2]) -> Self {
+        let marked = |side: Side, who: i64| {
+            log.is_some_and(|l| {
+                l.rows
+                    .iter()
+                    .any(|r| r.kind == Kind::Ready && r.side == Some(side) && r.actor == Some(who))
+            })
+        };
+        let [a, b] = required;
+        Self {
+            waiting: [
+                a.into_iter().filter(|w| !marked(Side::A, *w)).collect(),
+                b.into_iter().filter(|w| !marked(Side::B, *w)).collect(),
+            ],
+        }
+    }
+
+    /// O lado está pronto.
+    pub fn side(&self, side: Side) -> bool {
+        self.waiting[slot(side)].is_empty()
+    }
+
+    pub fn both(&self) -> bool {
+        self.side(Side::A) && self.side(Side::B)
+    }
+
+    /// `who` ainda precisa marcar.
+    pub fn awaits(&self, who: i64) -> bool {
+        self.waiting.iter().flatten().any(|w| *w == who)
+    }
+
+    /// Como fica depois de `who` marcar.
+    pub fn without(mut self, who: i64) -> Self {
+        for side in &mut self.waiting {
+            side.retain(|w| *w != who);
+        }
+        self
+    }
+}
+
 /// Um evento gravado do veto de uma série de torneio.
 #[derive(Clone, Debug)]
 pub struct MatchVetoRow {
@@ -265,8 +332,9 @@ impl VetoLog {
         Ok(Self { rows, state })
     }
 
-    /// Quem já disse que está pronto (`[a, b]`).
-    pub fn ready(&self) -> [bool; 2] {
+    /// Os lados em que alguém marcou "Pronto" (`[a, b]`): o que a tela mostra do
+    /// veto já começado, que não pede mais nada.
+    pub fn clicked(&self) -> [bool; 2] {
         let mut ready = [false, false];
         for r in self.rows.iter().filter(|r| r.kind == Kind::Ready) {
             if let Some(side) = r.side {
@@ -274,6 +342,28 @@ impl VetoLog {
             }
         }
         ready
+    }
+
+    /// A regra que cobre o último passo da partida em andamento, o que o desfazer
+    /// tiraria; `None` sem passo.
+    pub fn last_step(&self) -> Option<TeamAction> {
+        let mut steps = Vec::new();
+        for r in &self.rows {
+            match r.kind {
+                Kind::Ban | Kind::Pick | Kind::Vote => steps.push(r),
+                Kind::Undo => {
+                    steps.pop();
+                }
+                Kind::Begin | Kind::Game => steps.clear(),
+                Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined => {}
+            }
+        }
+        let last = steps.last()?;
+        Some(match (last.kind, last.map) {
+            (_, Some(_)) => TeamAction::Veto,
+            (Kind::Ban, None) => TeamAction::Ban,
+            _ => TeamAction::Pick,
+        })
     }
 
     /// O lado com um pedido de desfazer à espera da resposta do outro: o

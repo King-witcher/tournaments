@@ -156,14 +156,14 @@ async fn owner_limit_counts_only_owned_tenants() {
     let token = invite(&app, &bia, "da-bia").await;
     join(&app, &ana, &token).await;
 
-    for slug in ["um-1", "dois-2", "tres-3"] {
+    for slug in ["um-1", "dois-2", "tres-3", "quatro-4", "cinco-5"] {
         create(&app, &ana, slug).await;
     }
     let (status, body) = post(
         &app,
         "/tenants",
         &ana,
-        json!({ "name": "Quarto", "slug": "quatro-4" }),
+        json!({ "name": "Sexto", "slug": "seis-6" }),
     )
     .await;
     assert_eq!(
@@ -177,7 +177,7 @@ async fn owner_limit_counts_only_owned_tenants() {
             .as_array()
             .unwrap()
             .len(),
-        4
+        6
     );
 }
 

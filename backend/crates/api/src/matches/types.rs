@@ -139,6 +139,10 @@ pub enum ViewerTask {
     /// Fazer o passo do veto que está na vez dele (na escolha simultânea do
     /// TDM, escolher o próprio campeão).
     Veto,
+    /// O lado dele tem o que fazer, e a regra do torneio deixa com o capitão.
+    AwaitCaptain,
+    /// Ele já marcou "Pronto"; faltam colegas.
+    AwaitTeam,
 }
 
 /// A próxima partida de quem vê num torneio em andamento.
@@ -280,6 +284,9 @@ pub struct MatchDetail {
     pub next_game: Option<i16>,
     /// O lado de quem vê, se joga a partida.
     pub viewer_side: Option<Side>,
+    /// Quem vê joga a partida, e a regra do torneio deixa ele enviar, confirmar e
+    /// contestar pelo time.
+    pub can_report: bool,
     /// Do mais antigo ao mais novo.
     pub history: Vec<MatchEvent>,
     /// Quem vê é organizer ou owner (lança, corrige, resolve, dá W.O.).
@@ -319,9 +326,9 @@ pub struct GameDetail {
     /// Contestada: o apelido de quem contestou (pode ser do time de quem
     /// enviou); `null` se a conta foi excluída.
     pub contested_by: Option<String>,
-    /// Quem vê pode contestar agora: pendente e não foi ele quem enviou, ou
-    /// confirmada e a contestação tardia ainda vale (até a próxima série de
-    /// um dos lados começar).
+    /// Quem vê pode contestar agora: a regra do torneio deixa e a partida está
+    /// pendente e não foi ele quem enviou, ou confirmada e a contestação tardia
+    /// ainda vale (até a próxima série de um dos lados começar).
     pub can_contest: bool,
     pub confirmed_via: Option<Confirmation>,
     pub confirmed_at: Option<DateTime<Utc>>,

@@ -65,13 +65,23 @@ async fn veto_events_keep_their_shape_and_order() {
         rejected(exec(&db, &ban).await),
         rule(CHECK, "match_veto_events_order")
     );
+    // Um pronto por jogador em cada lado (sem autor, conta excluída, não conta).
+    let actor: i64 = sqlx::query_scalar("select id from users order by id limit 1")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    let ready = event(t, "ready", ", side, actor", &format!(", 'a', {actor}"));
+    exec(&db, &ready).await.unwrap();
+    assert_eq!(
+        rejected(exec(&db, &ready).await),
+        rule(UNIQUE, "match_veto_events_ready_once")
+    );
     exec(&db, &event(t, "ready", ", side", ", 'a'"))
         .await
         .unwrap();
-    assert_eq!(
-        rejected(exec(&db, &event(t, "ready", ", side", ", 'a'")).await),
-        rule(UNIQUE, "match_veto_events_ready_once")
-    );
+    exec(&db, &event(t, "ready", ", side", ", 'a'"))
+        .await
+        .unwrap();
     // O começo tem a seed e é o jogo 1.
     assert_eq!(
         rejected(exec(&db, &event(t, "begin", ", game, side", ", 1, 'a'")).await),

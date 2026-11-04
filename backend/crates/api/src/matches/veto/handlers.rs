@@ -1,34 +1,30 @@
 //! As rotas do veto: "Pronto", o organizador forçar o começo, cada passo,
 //! desfazer (o organizador, ou o jogador com o aceite do adversário). Todas
-//! devolvem a série como ficou. O que é do lado (Pronto, veto de mapas, bans,
-//! pick do duelo, pedir e responder o desfazer) é de qualquer jogador do
-//! time: vale o primeiro clique. No pick por jogador, cada um escolhe os seus.
+//! devolvem a série como ficou. Quem do time faz o que é do lado é a regra do
+//! torneio (`acting`), e vale o primeiro clique. No pick por jogador, cada um
+//! escolhe os seus, ou o capitão, os de todos. Pedir e responder o desfazer é de
+//! quem pode fazer aquele tipo de passo.
 
 use axum::{Json, extract::State};
-use engine::{
-    core::ParticipantId,
-    veto::{Event, Veto},
-};
-use sqlx::PgConnection;
+use engine::core::ParticipantId;
 
 use super::{
-    Ctx,
+    Ctx, advance,
     db::{self, NewVetoEvent},
-    state::{Kind, MatchVeto, ev_side, other, slot},
+    state::{Kind, MatchVeto, other, slot},
     step,
     types::{UndoAnswer, VetoChoice, VetoSeen},
 };
 use crate::{
     AppState,
     matches::{
-        actions, changes, detail, due,
-        result::Side,
+        acting, actions, changes, detail, due,
         stage::{Stage, Wrote},
         types::{MatchDetail, MatchPath},
     },
     shared::{ApiError, ErrorBody, JsonBody, PathParams},
     tenants::{Organizer, TenantMember},
-    tournaments::StoredTournament,
+    tournaments::{StoredTournament, TeamPicker},
 };
 
 const NOT_PLAYER: ApiError = ApiError::forbidden("match.not_player");
@@ -63,44 +59,6 @@ fn seen(mv: &MatchVeto, step: Option<i64>) -> Result<(), ApiError> {
     step::seen(&mv.log, step)
 }
 
-/// Começa o veto: o seed melhor começa; `actor` é o organizador que forçou.
-/// 422 `champions.pool_exhausted` `{required, available}` com campeões
-/// ativos de menos para os bans da série.
-async fn begin<R>(
-    conn: &mut PgConnection,
-    member: &TenantMember<R>,
-    tournament: &StoredTournament,
-    stage: &Stage,
-    m: &engine::core::Match,
-    sides: (ParticipantId, ParticipantId),
-    actor: Option<i64>,
-) -> Result<(), ApiError> {
-    let seed_of = |p: ParticipantId| stage.entrant(p).and_then(|e| e.seed).unwrap_or(i32::MAX);
-    let first = if seed_of(sides.0) <= seed_of(sides.1) {
-        Side::A
-    } else {
-        Side::B
-    };
-    let seed: u64 = rand::random();
-    let ctx = Ctx::between(stage, m.id, sides);
-    Veto::new(stage.veto_rules.clone(), m.best_of).apply(
-        Event::Begin {
-            seed,
-            first: ev_side(first),
-        },
-        Some(&ctx.engine()),
-    )?;
-    let key = &crate::matches::key::format(m.id);
-    let at = actions::at(member, tournament, stage, key);
-    let event = NewVetoEvent {
-        // O u64 gravado bit a bit num bigint.
-        seed: Some(seed as i64),
-        ..NewVetoEvent::new(Kind::Begin, Some(1), Some(first), actor)
-    };
-    db::insert(conn, &at, sides, &event).await?;
-    changes::veto_started(conn, tournament, stage, key, sides).await
-}
-
 #[utoipa::path(
     post,
     path = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/ready",
@@ -111,9 +69,9 @@ async fn begin<R>(
         ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
     ),
     responses(
-        (status = OK, body = MatchDetail, description = "O lado de quem clica está pronto (no TDM, qualquer jogador do time responde pelo time). Com os dois prontos, o veto começa (aviso `match.veto_started` para os dois); senão, o adversário recebe `match.opponent_ready`. Repetir não muda nada"),
+        (status = OK, body = MatchDetail, description = "Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto, quem falta do adversário recebe `match.opponent_ready`. Repetir não muda nada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (tudo no capitão, e ele não é)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off (torneio sem veto), veto.already_begun"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "champions.pool_exhausted `{required, available}` (com os dois prontos: campeões ativos de menos para os bans da série)"),
@@ -128,26 +86,27 @@ pub async fn veto_ready(
     let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
-    let mv = stage.veto_of(m.id);
-    if mv.is_some_and(|v| v.state.begun()) {
+    if stage.veto_of(m.id).is_some_and(|v| v.state.begun()) {
         return Err(ApiError::conflict("veto.already_begun"));
     }
-    let ready = mv.map(|v| v.ready()).unwrap_or_default();
-    if !ready[slot(side)] {
+    let who = member.user.id;
+    acting::require_ready(&stage, who)?;
+    let before = stage.readiness(m.id, sides);
+    if before.awaits(who) {
         let at = actions::at(&member, &tournament, &stage, &path.key);
-        let event = NewVetoEvent::new(Kind::Ready, None, Some(side), Some(member.user.id));
+        let event = NewVetoEvent::new(Kind::Ready, None, Some(side), Some(who));
         db::insert(&mut tx, &at, sides, &event).await?;
-        if ready[slot(other(side))] {
-            begin(&mut tx, &member, &tournament, &stage, m, sides, None).await?;
-        } else {
-            let (mine, to) = match side {
-                Side::A => sides,
-                Side::B => (sides.1, sides.0),
-            };
+        let side_was_ready = before.side(side);
+        let after = before.without(who);
+        if after.both() {
+            advance::begin(&mut tx, &tournament, &stage, m, sides, None).await?;
+        } else if after.side(side) && !side_was_ready {
+            let (mine, _) = acting::of_side(side, sides);
             let name = stage
                 .entrant(mine)
                 .map_or_else(|| member.nickname.clone(), |t| t.display_name());
-            changes::opponent_ready(&mut tx, &tournament, &stage, &path.key, to, &name).await?;
+            let to = &after.waiting[slot(other(side))];
+            changes::opponent_ready(&mut tx, &tournament, &path.key, to, &name).await?;
         }
     }
     let detail =
@@ -186,7 +145,7 @@ pub async fn veto_begin(
         return Err(ApiError::conflict("veto.already_begun"));
     }
     let actor = Some(member.user.id);
-    begin(&mut tx, &member, &tournament, &stage, m, sides, actor).await?;
+    advance::begin(&mut tx, &tournament, &stage, m, sides, actor).await?;
     let detail =
         actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
     tx.commit().await?;
@@ -204,9 +163,9 @@ pub async fn veto_begin(
     ),
     request_body = VetoChoice,
     responses(
-        (status = OK, body = MatchDetail, description = "O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. No pick por jogador (`team_pick`), cada um escolhe o próprio campeão, uma vez por partida: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada"),
+        (status = OK, body = MatchDetail, description = "O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Quem do time faz o passo é a regra do torneio (`team_rules`). No pick por jogador (`team_pick`), cada um escolhe o próprio campeão, uma vez por partida, ou o capitão, o de cada colega (`player`): na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (a regra do torneio deixa este passo com o capitão), veto.not_your_pick (cada jogador escolhe o próprio)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; no pick por jogador, também quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "veto.option_invalid (mapa ou campeão fora das opções, já banido, a partida fora da série ou faltando na janela simultânea, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body"),
@@ -227,15 +186,22 @@ pub async fn veto_step(
     let turn = step::open_turn(&mv.state)?;
     let ctx = Ctx::of(&stage, mv);
     let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
-    let row = step::planned(
+    let who = member.user.id;
+    acting::require_turn(&stage, who, &mv.state.turn())?;
+    let player = step::target_player(
         &mv.state,
-        &ctx,
         turn,
-        side,
-        member.user.id,
-        choice,
+        (side, who),
+        stage.team_rules.pick == TeamPicker::Captain,
+        body.player,
         body.game,
     )?;
+    let by = step::Acting {
+        side,
+        actor: who,
+        player,
+    };
+    let row = step::planned(&mv.state, &ctx, turn, by, choice, body.game)?;
     let at = actions::at(&member, &tournament, &stage, &path.key);
     db::insert(&mut tx, &at, sides, &row).await?;
     let detail =
@@ -284,6 +250,15 @@ pub async fn veto_undo(
     Ok(Json(detail))
 }
 
+/// 403 `match.not_captain`: quem pede ou responde o desfazer é quem pode fazer o
+/// tipo de passo que ele tiraria.
+fn may_undo(stage: &Stage, mv: &MatchVeto, who: i64) -> Result<(), ApiError> {
+    match mv.last_step() {
+        Some(action) => acting::require(stage, who, action),
+        None => Ok(()),
+    }
+}
+
 /// O jogo em andamento, se tem passo para desfazer. 409
 /// `veto.nothing_to_undo`.
 fn undoable(mv: &MatchVeto) -> Result<i16, ApiError> {
@@ -304,9 +279,9 @@ fn undoable(mv: &MatchVeto) -> Result<i16, ApiError> {
     ),
     request_body = Option<VetoSeen>,
     responses(
-        (status = OK, body = MatchDetail, description = "Um jogador (no TDM, qualquer um do time, pelo lado) pede para desfazer o último passo da partida em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para"),
+        (status = OK, body = MatchDetail, description = "Um jogador que pode fazer aquele tipo de passo pela regra do torneio pede, pelo lado, para desfazer o último passo da partida em andamento; o adversário aceita ou recusa. Um passo novo, antes da resposta, cancela o pedido. O tempo do passo não para"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (a regra deixa aquele tipo de passo com o capitão)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa), veto.nothing_to_undo, veto.undo_requested (já há um pedido esperando resposta)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
@@ -325,6 +300,7 @@ pub async fn veto_undo_request(
     let mv = begun(&stage, m)?;
     seen(mv, body.and_then(|JsonBody(b)| b.step))?;
     let game = undoable(mv)?;
+    may_undo(&stage, mv, member.user.id)?;
     if mv.undo_request().is_some() {
         return Err(ApiError::conflict("veto.undo_requested"));
     }
@@ -353,9 +329,9 @@ pub async fn veto_undo_request(
     ),
     request_body = UndoAnswer,
     responses(
-        (status = OK, body = MatchDetail, description = "Um jogador do lado adversário ao que pediu aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer"),
+        (status = OK, body = MatchDetail, description = "Um jogador do lado adversário ao que pediu, que pode fazer aquele tipo de passo pela regra do torneio, aceita (o último passo é desfeito e a vez volta para quem o fez) ou recusa o pedido de desfazer"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, veto.own_request (o lado que pediu não responde)"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, veto.own_request (o lado que pediu não responde), match.not_captain (a regra deixa aquele tipo de passo com o capitão)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa), veto.no_undo_request"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
@@ -380,6 +356,7 @@ pub async fn veto_undo_answer(
         return Err(ApiError::forbidden("veto.own_request"));
     }
     let game = undoable(mv)?;
+    may_undo(&stage, mv, member.user.id)?;
     let at = actions::at(&member, &tournament, &stage, &path.key);
     let event = if body.accept {
         NewVetoEvent::new(Kind::Undo, Some(game), None, Some(member.user.id))

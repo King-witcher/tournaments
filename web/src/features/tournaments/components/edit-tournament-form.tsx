@@ -13,6 +13,7 @@ import { Notice } from "@/shared/ui/notice";
 import { TabList } from "@/shared/ui/tab-list";
 import { useTournamentForm } from "../hooks/use-tournament-form";
 import { groupOf } from "../lib/form-groups";
+import { isTdm } from "../lib/form-values";
 import { isFinished } from "../lib/status";
 import { TournamentChampionFields } from "./tournament-champion-fields";
 import { TournamentDescriptionField } from "./tournament-description-field";
@@ -24,6 +25,7 @@ import { TournamentResultsFields } from "./tournament-results-fields";
 import { TournamentRulesSection } from "./tournament-rules-section";
 import { TournamentSlotsField } from "./tournament-slots-field";
 import { TournamentStartField } from "./tournament-start-field";
+import { TournamentTeamRulesFields } from "./tournament-team-rules-fields";
 import { TournamentTranslations } from "./tournament-translations";
 import { TournamentVetoFields } from "./tournament-veto-fields";
 
@@ -44,7 +46,7 @@ type Props = {
 /**
  * Editar torneio, uma aba por assunto: Geral (nome, descrição, capa, regras
  * adicionais e outros idiomas), Formato (modalidade, vagas, chave, séries,
- * mapas, campeões), Inscrições e prazos (início, inscrição, check-in) e
+ * quem age pelo time, mapas, campeões), Inscrições e prazos (início, inscrição, check-in) e
  * Resultados (contestação, captura de tela).
  * Um "Salvar" para todas as abas; o campo recusado abre a aba dele. Depois
  * de começar, o motivo dos campos travados vem no topo da aba deles; encerrado
@@ -149,6 +151,15 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
                     disabled={setupLocked}
                   />
                 </FormSection>
+                {isTdm(values) && (
+                  <FormSection legend={t("teamRules.title")}>
+                    <TournamentTeamRulesFields
+                      values={values}
+                      onChange={onChange}
+                      disabled={setupLocked}
+                    />
+                  </FormSection>
+                )}
                 <FormSection legend={t("veto.title")}>
                   <TournamentVetoFields
                     tenant={tenant}

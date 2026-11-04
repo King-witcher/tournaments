@@ -1,24 +1,35 @@
 //! A sala como cada link a vê: o veto pela mesma montagem da série de um torneio
 //! (`matches::veto::build`), do ponto de vista do lugar; os links só para a
-//! gestão.
+//! gestão. Na sala centrada no capitão, quem tem link faz tudo pelo lado, as regras
+//! são as do preset do torneio, e os lugares não têm nome.
 
 use chrono::{DateTime, Utc};
 use engine::core::PlayerId;
 
 use super::{
     room::{Room, Seat},
-    types::{VetoRoomDetail, VetoRoomLinks, VetoRoomRole, VetoRoomSeat, VetoRoomSeatLink},
+    types::{
+        VetoRoomActors, VetoRoomDetail, VetoRoomLinks, VetoRoomRole, VetoRoomSeat, VetoRoomSeatLink,
+    },
 };
-use crate::matches::veto::{Board, Ctx, Shown, build};
+use crate::{
+    matches::veto::{Board, Ctx, Permissions, Shown, VetoReadyBy, build},
+    tournaments::TeamRules,
+};
 
 impl Room {
     /// A sala como este link a vê.
     pub fn detail(&self, now: DateTime<Utc>) -> VetoRoomDetail {
         let ctx = Ctx::alone(&self.champions);
-        let acting = self
-            .seat()
-            .filter(|s| s.name.is_some())
-            .map(|s| (&ctx, s.side, PlayerId(s.id)));
+        let joined = self.seat().filter(|s| s.name.is_some());
+        let acting = joined.map(|s| (&ctx, s.side, PlayerId(s.id)));
+        let captain = self.who_acts == VetoRoomActors::Captain;
+        let rules = if captain {
+            TeamRules::CAPTAIN
+        } else {
+            TeamRules::EVERYONE
+        };
+        let teams = self.team_size > 1;
         let board = Board {
             rules: &self.rules,
             step_seconds: self.step_seconds,
@@ -44,6 +55,22 @@ impl Room {
                 acting,
                 viewer: self.seat().map(|s| s.side),
                 names: &names,
+                can: joined.map_or_else(Permissions::default, |_| Permissions::of(rules, captain)),
+                me: joined.map(|s| s.id),
+                readiness: self.readiness(),
+                ready_by: if captain {
+                    VetoReadyBy::Captain
+                } else {
+                    VetoReadyBy::Everyone
+                },
+                captains: self
+                    .seats
+                    .iter()
+                    .filter(|s| captain && teams && s.position == 1)
+                    .map(|s| s.id)
+                    .collect(),
+                nameless: captain && teams,
+                picks_by_captain: captain && teams,
             },
         );
         VetoRoomDetail {
@@ -56,6 +83,7 @@ impl Room {
             bans_per_series: self.bans_per_series,
             order: self.order,
             no_repeat: self.no_repeat,
+            who_acts: self.who_acts,
             seats: self.seats.iter().map(public_seat).collect(),
             links: (self.role == VetoRoomRole::Manager).then(|| VetoRoomLinks {
                 manage: self.manage_token.clone(),
@@ -63,9 +91,11 @@ impl Room {
                 seats: self
                     .seats
                     .iter()
-                    .map(|s| VetoRoomSeatLink {
-                        seat: s.id,
-                        token: s.token.clone(),
+                    .filter_map(|s| {
+                        Some(VetoRoomSeatLink {
+                            seat: s.id,
+                            token: s.token.clone()?,
+                        })
                     })
                     .collect(),
             }),

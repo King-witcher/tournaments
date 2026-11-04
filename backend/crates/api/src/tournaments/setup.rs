@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{
+    team_rules::TeamRules,
     types::{ChampionRules, StageFormat},
     veto::VetoSetup,
 };
@@ -83,6 +84,8 @@ pub struct Setup {
     pub champion_rules: ec::ChampionRules,
     pub stages: Vec<ef::StageFormat>,
     pub veto: VetoSetup,
+    /// Quem age pelo time.
+    pub team_rules: TeamRules,
 }
 
 impl Setup {
@@ -93,6 +96,7 @@ impl Setup {
         rules: ChampionRules,
         stages: Vec<StageFormat>,
         veto: VetoSetup,
+        team_rules: TeamRules,
     ) -> Self {
         Self {
             mode,
@@ -101,6 +105,7 @@ impl Setup {
             champion_rules: rules.into(),
             stages: stages.into_iter().map(Into::into).collect(),
             veto,
+            team_rules,
         }
     }
 
@@ -244,6 +249,7 @@ mod tests {
             rules,
             stages,
             VetoSetup::off(),
+            TeamRules::default(),
         )
     }
 

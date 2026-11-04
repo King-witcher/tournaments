@@ -56,7 +56,7 @@
   "tenant": {
     "not_found": "Comunidad no encontrada, o no formas parte de ella.",
     "forbidden": "No tienes permiso para hacer esto en esta comunidad.",
-    "limit_reached": "Ya eres dueño del máximo de 3 comunidades.",
+    "limit_reached": "Ya eres dueño del máximo de 5 comunidades.",
     "slug_taken": "Esa dirección ya está en uso.",
     "slug_invalid": "Usa de 3 a 32 minúsculas, números o guiones, sin guion al principio, al final ni repetido.",
     "slug_reserved": "Esa dirección está reservada. Elige otra.",
@@ -177,7 +177,8 @@
     "map_required": "Elige el mapa jugado.",
     "veto_pending": "El veto todavía no terminó.",
     "map_mismatch": "Envía el mapa que salió del veto.",
-    "screenshot_required": "Adjunta la captura de pantalla del marcador antes de enviar."
+    "screenshot_required": "Adjunta la captura de pantalla del marcador antes de enviar.",
+    "not_captain": "Según la regla del torneo, solo el capitán hace esto por el equipo."
   },
   "push": {
     "not_configured": "Las notificaciones con el sitio cerrado están desactivadas por ahora.",
@@ -212,7 +213,8 @@
     "no_phases": "Con los mapas acordados, la elección de campeones tiene que ser en el sitio.",
     "rate_limited": "Muchas salas creadas en esta hora. Intenta de nuevo en {minutes, plural, one {# minuto} other {# minutos}}.",
     "anonymous_full": "Muchas salas sin cuenta abiertas ahora. Entra con tu cuenta para crear la tuya.",
-    "too_many_connections": "Mucha gente en esta sala ahora. La página se actualiza cada tanto."
+    "too_many_connections": "Mucha gente en esta sala ahora. La página se actualiza cada tanto.",
+    "not_manager": "Solo el enlace de gestión empieza la sala."
   },
   "veto": {
     "off": "Este torneo no tiene veto.",
@@ -228,7 +230,8 @@
     "own_request": "Quien pidió deshacer no responde. Espera al rival.",
     "already_picked": "Ya elegiste el campeón de esta partida.",
     "champion_taken": "Otro jugador eligió ese campeón para la partida antes.",
-    "step_changed": "El turno cambió antes de tu clic. Revisa la pantalla."
+    "step_changed": "El turno cambió antes de tu clic. Revisa la pantalla.",
+    "not_your_pick": "Cada jugador elige su propio campeón."
   },
   "images": {
     "not_configured": "El envío de imágenes está desactivado en el sitio.",

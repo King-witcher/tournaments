@@ -31,8 +31,10 @@
 //! `realtime`). O domínio `screenshots` lê a partida por `slots`; com
 //! screenshot obrigatório, o envio do jogador exige um screenshot anexado
 //! (`evidence`). No round robin, `progress` diz quem está jogando e qual série
-//! sugerir a cada time, sem travar nada.
+//! sugerir a cada time, sem travar nada. Quem do time pode agir, pela regra do
+//! torneio, e quem marca "Pronto" ficam em `acting`, num lugar só.
 
+mod acting;
 mod actions;
 mod announce;
 mod changes;

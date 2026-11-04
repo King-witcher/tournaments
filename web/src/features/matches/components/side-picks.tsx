@@ -27,7 +27,8 @@ type Props = {
  * O campeão de um lado numa partida, só o retrato (o nome fica para o leitor de tela): no
  * duelo alternado, um (ou o quadro vazio, a escolher); no pick por jogador, um por
  * jogador, com quem está escolhendo agora, quem falta e quem já escolheu às cegas
- * (sem dizer o quê), e quem vê marcado como "Você".
+ * (sem dizer o quê), com quem vê marcado como "Você" e o capitão marcado. Na sala
+ * sem nomes (`nameless`), só os retratos: os lugares não têm dono.
  */
 export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
   const t = useTranslations("Match.veto.draft");
@@ -99,14 +100,21 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
             )}
           </span>
           <div className={styles.text}>
-            <div className={styles.nick}>
-              {nick(p.nickname)}
-              {p.id === viewerId && (
-                <StatusTag status="neutral" size="sm">
-                  {t("you")}
-                </StatusTag>
-              )}
-            </div>
+            {!veto.nameless && (
+              <div className={styles.nick}>
+                {nick(p.nickname)}
+                {p.id === viewerId && (
+                  <StatusTag status="neutral" size="sm">
+                    {t("you")}
+                  </StatusTag>
+                )}
+                {veto.captains.includes(p.id) && (
+                  <StatusTag status="neutral" size="sm">
+                    {t("captain")}
+                  </StatusTag>
+                )}
+              </div>
+            )}
             {p.status && (
               <span
                 className={cn(
