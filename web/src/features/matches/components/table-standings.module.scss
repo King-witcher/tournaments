@@ -14,6 +14,28 @@
   overflow-wrap: anywhere;
 }
 
+// O saldo, que é o que desempata, é o que se lê primeiro, em coluna: os números
+// alinham de uma linha para a outra. Pró e contra ficam ao lado, em segundo
+// plano.
+.frags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 spacing.$spacing-03;
+  font-variant-numeric: tabular-nums;
+}
+
+.fragDiff {
+  min-inline-size: spacing.$spacing-07;
+  color: theme.$text-primary;
+}
+
+.fragDetail {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
 .notes {
   display: flex;
   flex-wrap: wrap;

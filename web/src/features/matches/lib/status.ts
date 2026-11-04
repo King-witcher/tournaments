@@ -12,6 +12,24 @@ export const ACTIONABLE: Schemas["ViewerTask"][] = [
   "veto",
 ];
 
+/** Onde a série está, para achar de relance o que falta jogar. */
+export type MatchProgress = "completed" | "in_progress" | "pending";
+
+/**
+ * Concluída (também no W.O.), em andamento (veto começado, mapa enviado ou
+ * confirmado, série em jogo) ou pendente. Bye e reset que não precisou não se
+ * jogam: quem mostra não pergunta por eles.
+ */
+export function matchProgress(m: Schemas["BracketMatch"]): MatchProgress {
+  if (m.state === "completed") return "completed";
+  const begun =
+    m.in_progress ||
+    m.veto === "in_progress" ||
+    m.veto === "done" ||
+    m.a_maps + m.b_maps + m.pending_maps + m.contested_maps > 0;
+  return begun ? "in_progress" : "pending";
+}
+
 /**
  * As séries que esperam uma ação de quem vê, menos a `exclude`. Com o
  * adversário ocupado em outra (round robin), a série ainda não espera ninguém.

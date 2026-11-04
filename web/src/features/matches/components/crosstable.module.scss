@@ -1,0 +1,58 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/utilities/visually-hidden" as *;
+@use "./crosstable-layout" as layout;
+
+.crosstable {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-04;
+  min-inline-size: 0;
+}
+
+.legend {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}
+
+// As classes dobradas vencem as do `Table` do Carbon, que têm dois níveis. Com
+// bordas separadas, a coluna fixa leva as dela ao rolar.
+.table.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.corner.corner {
+  @include layout.first-column;
+}
+
+.cornerLabel {
+  @include visually-hidden;
+}
+
+// A largura da coluna é a da célula; o nome corta nela.
+.columnHeader.columnHeader {
+  padding-inline: spacing.$spacing-03;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.columnPosition {
+  display: block;
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.columnName {
+  @include type.type-style("label-01");
+
+  display: block;
+  overflow: hidden;
+  max-inline-size: layout.$column - 2 * spacing.$spacing-03;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

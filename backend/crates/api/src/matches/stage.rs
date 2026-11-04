@@ -100,6 +100,17 @@ impl Stage {
         self.vetoes.iter().find(|v| v.match_id == id)
     }
 
+    /// Os frags da série decidida `id` por lado (`a`, `b`), os mesmos que
+    /// entram na tabela. `None` antes da decisão e nos casos de `frags`.
+    pub fn series_frags(&self, id: MatchId) -> Option<(i32, i32)> {
+        let r = self.result(id)?;
+        let sum = frags(r, &self.games)?;
+        Some(match r.winner_side() {
+            Side::A => (sum.winner, sum.loser),
+            Side::B => (sum.loser, sum.winner),
+        })
+    }
+
     /// O que entra no replay, com outros resultados (a correção confere a
     /// fase com a série corrigida antes de gravar).
     pub fn history<'a>(&'a self, results: &'a [StoredResult]) -> History<'a> {

@@ -163,6 +163,7 @@ pub fn summary(
     let games = stage.games_of(m.id);
     let (a_maps, b_maps) = confirmed_wins(&games);
     let count = |s: GameStatus| games.iter().filter(|g| g.status == s).count() as u8;
+    let (a_frags, b_frags) = stage.series_frags(m.id).unzip();
     BracketMatch {
         key: key::format(m.id),
         part: match m.id.side {
@@ -187,6 +188,8 @@ pub fn summary(
         result: stage.result(m.id).map(match_result),
         a_maps,
         b_maps,
+        a_frags,
+        b_frags,
         pending_maps: count(GameStatus::Pending),
         contested_maps: count(GameStatus::Contested),
         yours: mine.is_some(),

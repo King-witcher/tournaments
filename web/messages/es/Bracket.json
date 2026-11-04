@@ -59,7 +59,33 @@
     "veto_in_progress": "Veto en curso"
   },
   "yours": "Tu serie",
-  "inProgress": "En curso",
+  "progress": {
+    "completed": "Terminada",
+    "in_progress": "En curso",
+    "pending": "Pendiente"
+  },
+  "views": {
+    "label": "Cómo ver las series",
+    "rounds": "Rondas",
+    "crosstable": "Enfrentamientos"
+  },
+  "crosstable": {
+    "label": "Enfrentamientos entre los participantes",
+    "legend": "Cada fila muestra los resultados de quien está en ella. G es ganada y P, perdida.",
+    "legendFrags": "En las series de una partida, el marcador es de frags.",
+    "corner": "Participante",
+    "won": "G",
+    "lost": "P",
+    "described": {
+      "pending": "pendiente",
+      "playing": "en curso, {score}",
+      "won": "ganada, {score}",
+      "lost": "perdida, {score}",
+      "frags": "{score} en frags",
+      "wonWalkover": "ganada por W.O.",
+      "lostWalkover": "perdida por W.O."
+    }
+  },
   "opponentPlaying": "Rival jugando",
   "departure": {
     "left": "salió",
@@ -99,9 +125,9 @@
     "recordValue": "{wins}–{losses}",
     "recordByes": "{wins}–{losses} (+{byes} bye)",
     "maps": "Partidas",
-    "frags": "Frags",
+    "frags": "Diferencia de frags",
     "diff": "{won}–{lost} ({diff})",
-    "fragsDiff": "{won} – {lost} ({diff})",
+    "fragsDetail": "{won} – {lost}",
     "incomplete": "{frags}, incompletos",
     "buchholz": "Buchholz",
     "notes": "Situación",

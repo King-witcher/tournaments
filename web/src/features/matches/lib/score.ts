@@ -6,6 +6,11 @@
 export const MIN_FRAGS = -999;
 export const MAX_FRAGS = 999;
 
+/** Negativo com o sinal de menos (−), que não se confunde com o traço do placar. */
+export function fragsText(n: number) {
+  return n < 0 ? `−${-n}` : String(n);
+}
+
 /** Os dois lados preenchidos e iguais: não há vencedor. */
 export function isTied(a: number | null, b: number | null) {
   return a !== null && b !== null && a === b;

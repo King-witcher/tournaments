@@ -1,0 +1,12 @@
+@use "@carbon/react/scss/theme";
+
+// Cinza para o que não está acontecendo; o azul, que o Carbon usa para o
+// andamento, só na série em jogo.
+.icon {
+  flex-shrink: 0;
+  fill: theme.$icon-secondary;
+}
+
+.active {
+  fill: theme.$interactive;
+}

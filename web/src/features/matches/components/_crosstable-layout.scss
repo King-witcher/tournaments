@@ -1,0 +1,25 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// A largura da primeira coluna, fixa ao rolar: no celular, ela precisa deixar
+// lugar para duas colunas ao lado.
+$row-header: spacing.$spacing-13 + spacing.$spacing-10;
+$row-header-phone: spacing.$spacing-12 + spacing.$spacing-08;
+
+// A largura mínima de uma coluna.
+$column: spacing.$spacing-11;
+
+// A primeira coluna fica no lugar ao rolar. O fundo opaco vem de quem usa, para
+// a rolagem não aparecer por trás.
+@mixin first-column {
+  position: sticky;
+  z-index: 1;
+  inset-inline-start: 0;
+  border-inline-end: 1px solid theme.$border-subtle-01;
+  padding-inline: spacing.$spacing-04;
+
+  @include breakpoint.breakpoint-down(md) {
+    padding-inline: spacing.$spacing-03;
+  }
+}

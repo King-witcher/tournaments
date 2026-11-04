@@ -1,0 +1,47 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "./crosstable-layout" as layout;
+
+// O link ocupa a célula inteira, na altura da linha (48px no celular, pelo
+// token). A classe dobrada vence o `display` do link solto no celular.
+.cell.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-02;
+  min-inline-size: layout.$column;
+  min-block-size: var(--cds-layout-size-height-md);
+  padding-inline: spacing.$spacing-03;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  // Ao rolar até o foco, a célula não fica embaixo da primeira coluna fixa.
+  scroll-margin-inline-start: layout.$row-header;
+
+  @include breakpoint.breakpoint-down(md) {
+    scroll-margin-inline-start: layout.$row-header-phone;
+  }
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: theme.$layer-accent-hover;
+    }
+  }
+
+  // Dentro da célula, para o contorno não ser cortado pela rolagem.
+  &:focus {
+    outline: spacing.$spacing-01 solid theme.$focus;
+    outline-offset: -1 * spacing.$spacing-01;
+  }
+}
+
+.won {
+  @include type.font-weight("semibold");
+}
+
+// O mesmo placar provisório do cartão: sem o peso de resultado.
+.playing {
+  font-style: italic;
+}

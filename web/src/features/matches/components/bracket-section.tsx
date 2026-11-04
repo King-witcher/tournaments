@@ -9,8 +9,8 @@ import { Section } from "@/shared/ui/section";
 import { loadBracket } from "../server";
 import styles from "./bracket-section.module.scss";
 import { BracketView } from "./bracket-view";
-import { RoundsList } from "./rounds-list";
 import { StandingsTable } from "./standings-table";
+import { TableMatches } from "./table-matches";
 import { TableStandings } from "./table-standings";
 
 type Props = {
@@ -20,8 +20,8 @@ type Props = {
 
 /**
  * A chave do torneio em andamento ou encerrado, em largura cheia, e embaixo
- * a classificação (no round robin e no suíço, a tabela e as partidas por
- * rodada). Antes do início não mostra nada (a aba mostra o aviso).
+ * a classificação (no round robin e no suíço, a tabela e as séries). Antes do
+ * início não mostra nada (a aba mostra o aviso).
  * Busca a chave, então fica em `<Suspense>`.
  */
 export async function BracketSection({ tenant, tournament }: Props) {
@@ -42,7 +42,7 @@ export async function BracketSection({ tenant, tournament }: Props) {
     return (
       <Stack gap={7}>
         <TableStandings tenant={tenant} bracket={bracket} />
-        <RoundsList
+        <TableMatches
           tenant={tenant}
           tournament={tournament.slug}
           bracket={bracket}

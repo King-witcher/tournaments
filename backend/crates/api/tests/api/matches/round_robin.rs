@@ -90,6 +90,50 @@ async fn the_next_series_jumps_when_the_opponent_takes_long() {
 }
 
 #[tokio::test]
+async fn the_bracket_gives_the_frags_of_each_decided_series_by_side() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let body = copa(table("round_robin", json!({ "best_of": 3 })));
+    start(&app, &ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    let frags = |m: &Value| (m["a_frags"].clone(), m["b_frags"].clone());
+    let none = (Value::Null, Value::Null);
+
+    // Antes da decisão, sem frags, mesmo com mapa confirmado.
+    let (status, body) = report(&app, &p[0], "rr-1-1", 1, game("a", MAPS[0])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = confirm(&app, &p[3], "rr-1-1", 1).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(frags(find(&bracket(&app, &p[0]).await, "rr-1-1")), none);
+
+    // Decidida: 10 x 5 em cada mapa, cada soma no lado que a fez, seja qual
+    // for o lado do vencedor.
+    let (status, body) = report(&app, &p[0], "rr-1-1", 2, game("a", MAPS[1])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = confirm(&app, &p[3], "rr-1-1", 2).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = report(&app, &p[2], "rr-1-2", 1, game("b", MAPS[0])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = confirm(&app, &p[1], "rr-1-2", 1).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = report(&app, &p[2], "rr-1-2", 2, game("b", MAPS[1])).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = confirm(&app, &p[1], "rr-1-2", 2).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let b = bracket(&app, &p[0]).await;
+    assert_eq!(frags(find(&b, "rr-1-1")), (json!(20), json!(10)));
+    assert_eq!(frags(find(&b, "rr-1-2")), (json!(10), json!(20)));
+
+    // Um mapa sem frags (série antiga) tira os frags da série inteira.
+    sqlx::query("update match_games set a_frags = null, b_frags = null where number = 2")
+        .execute(&db)
+        .await
+        .unwrap();
+    let b = bracket(&app, &p[0]).await;
+    assert_eq!(frags(find(&b, "rr-1-1")), none);
+}
+
+#[tokio::test]
 async fn finishing_a_series_calls_the_free_opponent_too() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
@@ -310,6 +354,7 @@ async fn a_withdrawal_is_a_walkover_in_everything_left() {
         ),
         (&json!(1), &json!(2), &json!(0), &json!(0))
     );
+    assert_eq!(find(&b, "rr-1-1")["a_frags"], Value::Null);
     let out = table_row(&b, &p[3]);
     assert_eq!(
         (

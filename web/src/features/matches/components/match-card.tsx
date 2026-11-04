@@ -5,10 +5,11 @@ import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { ACTIONABLE } from "../lib/status";
+import { ACTIONABLE, matchProgress } from "../lib/status";
 import styles from "./match-card.module.scss";
 import { MatchCardSide } from "./match-card-side";
 import { MatchCardStatus } from "./match-card-status";
+import { MatchProgressIcon } from "./match-progress-icon";
 
 type Schemas = components["schemas"];
 
@@ -39,10 +40,11 @@ function scores(
 }
 
 /**
- * Uma partida na chave: o código (o link da partida, que cobre o cartão
- * inteiro), os dois lados (seed, apelido como link para a pessoa, placar) e
- * o que ela espera de quem vê. As de quem vê têm a borda na cor de
- * interação; as que pedem ação, também a faixa à esquerda. Bye e reset que
+ * Uma partida na chave: o ícone do estado e o código (o link da partida, que
+ * cobre o cartão inteiro), os dois lados (seed, apelido como link para a
+ * pessoa, placar) e o que ela espera de quem vê. As de quem vê têm a borda na
+ * cor de interação; as que pedem ação, também a faixa à esquerda. A concluída
+ * fica sem preenchimento, para o olho achar o que falta jogar. Bye e reset que
  * não precisou ficam discretos, sem link.
  */
 export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
@@ -75,6 +77,7 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
 
   const [scoreA, scoreB] = scores(m, t("walkover"));
   const confirmed = m.state === "completed";
+  const progress = matchProgress(m);
   const winner = confirmed ? m.result?.winner : undefined;
   const actionable =
     m.task != null && ACTIONABLE.includes(m.task) && !m.opponent_playing;
@@ -89,20 +92,25 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
         styles.card,
         m.yours && styles.yours,
         actionable && styles.actionable,
+        confirmed && styles.completed,
       )}
     >
       <div className={styles.head}>
-        {/* O código sublinhado na cor de link mostra que o cartão abre a
-            partida; quem usa leitor de tela ouve também os dois lados. */}
-        <Link
-          href={href}
-          inline
-          size="sm"
-          className={styles.open}
-          aria-label={`${code(m.key)} ${t("matchSides", { a: name(m.a), b: name(m.b) })}`}
-        >
-          {code(m.key)}
-        </Link>
+        <span className={styles.code}>
+          <MatchProgressIcon progress={progress} />
+          {/* O código sublinhado na cor de link mostra que o cartão abre a
+              partida; quem usa leitor de tela ouve também os dois lados e o
+              estado (quem anda de link em link não passa pelo ícone). */}
+          <Link
+            href={href}
+            inline
+            size="sm"
+            className={styles.open}
+            aria-label={`${code(m.key)} ${t("matchSides", { a: name(m.a), b: name(m.b) })}, ${t(`progress.${progress}`)}`}
+          >
+            {code(m.key)}
+          </Link>
+        </span>
         <span className={styles.bestOf}>
           {t("bestOf", { count: m.best_of })}
         </span>

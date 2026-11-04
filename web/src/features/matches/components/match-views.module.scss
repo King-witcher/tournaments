@@ -1,0 +1,23 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Na grade do `Stack`, um filho largo alargaria a coluna e a página: quem rola
+// é a tabela.
+.views {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// O `ContentSwitcher` ocupa a largura que recebe: duas opções curtas; no
+// celular, a linha toda.
+.switcher {
+  max-inline-size: spacing.$spacing-13 + spacing.$spacing-12 +
+    spacing.$spacing-11;
+
+  @include breakpoint.breakpoint-down(md) {
+    max-inline-size: none;
+  }
+}
+
+.panel {
+  min-inline-size: 0;
+}

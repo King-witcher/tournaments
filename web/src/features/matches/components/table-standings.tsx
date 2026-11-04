@@ -8,6 +8,7 @@ import { Avatar } from "@/shared/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
+import { fragsText } from "../lib/score";
 import { DepartureTag } from "./departure-tag";
 import styles from "./table-standings.module.scss";
 
@@ -21,13 +22,14 @@ type Props = {
 /**
  * A tabela do round robin e do suíço: posição, o time (no duelo, o jogador,
  * com link para a pessoa), pontos, vitórias e derrotas (com os byes do
- * suíço), mapas e frags com o saldo (os frags marcados como incompletos
- * quando alguma série veio sem eles, porque aí não desempatam; "sem frags"
- * quando nenhuma veio), o Buchholz no suíço (explicado uma vez, na
- * descrição), e quem venceu, desistiu ou saiu. Embaixo, os desempates que não
- * foram pelos pontos, um por linha ("2º à frente do 3º pelo confronto
- * direto"), visíveis também no celular, onde as colunas de saldo somem.
- * Enquanto a fase corre, é a ordem de agora; no fim, a classificação.
+ * suíço), mapas com o saldo, o saldo de frags (é ele que desempata, não o
+ * total; pró e contra vêm ao lado, marcados como incompletos quando alguma
+ * série veio sem eles, porque aí não desempatam; "sem frags" quando nenhuma
+ * veio), o Buchholz no suíço (explicado uma vez, na descrição), e quem venceu,
+ * desistiu ou saiu. Embaixo, os desempates que não foram pelos pontos, um por
+ * linha ("2º à frente do 3º pelo confronto direto"), visíveis também no
+ * celular, onde as colunas de saldo somem. Enquanto a fase corre, é a ordem de
+ * agora; no fim, a classificação.
  */
 export function TableStandings({ tenant, bracket }: Props) {
   const t = useTranslations("Bracket.table");
@@ -37,10 +39,7 @@ export function TableStandings({ tenant, bracket }: Props) {
   const swiss = bracket.format.format === "swiss";
   const finished = bracket.status === "finished";
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
-  // Negativo com o sinal de menos (−), que não se confunde com o traço entre
-  // pró e contra: os frags podem ser negativos (suicídio e queda tiram frag).
-  const minus = (n: number) => (n < 0 ? `−${-n}` : String(n));
-  const signed = (n: number) => (n > 0 ? `+${n}` : minus(n));
+  const signed = (n: number) => (n > 0 ? `+${n}` : fragsText(n));
   const nameOf = (teamId: number) => {
     const team = byId.get(teamId);
     return team ? teamName(team) : "";
@@ -63,10 +62,9 @@ export function TableStandings({ tenant, bracket }: Props) {
     const team = byId.get(r.team_id);
     const name = nameOf(r.team_id);
     const solo = team ? soloMember(team) : null;
-    const frags = t("fragsDiff", {
-      won: minus(r.frags_for),
-      lost: minus(r.frags_against),
-      diff: signed(r.frag_diff),
+    const frags = t("fragsDetail", {
+      won: fragsText(r.frags_for),
+      lost: fragsText(r.frags_against),
     });
     return {
       id: String(r.team_id),
@@ -93,11 +91,17 @@ export function TableStandings({ tenant, bracket }: Props) {
         }),
         // Sem nenhum frag enviado, "sem frags" em vez de 0–0 incompleto (com
         // negativos, a soma dá 0 com frags; os dois em 0, quase nunca).
-        frags: r.frags_complete
-          ? frags
-          : r.frags_for === 0 && r.frags_against === 0
-            ? t("noFrags")
-            : t("incomplete", { frags }),
+        frags:
+          !r.frags_complete && r.frags_for === 0 && r.frags_against === 0 ? (
+            t("noFrags")
+          ) : (
+            <span className={styles.frags}>
+              <span className={styles.fragDiff}>{signed(r.frag_diff)}</span>
+              <span className={styles.fragDetail}>
+                {r.frags_complete ? frags : t("incomplete", { frags })}
+              </span>
+            </span>
+          ),
         buchholz: String(r.buchholz ?? 0),
         notes: (
           <span className={styles.notes}>

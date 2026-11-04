@@ -9,9 +9,10 @@ type Props = { match: components["schemas"]["BracketMatch"] };
 
 /**
  * Rodapé do cartão: o adversário ocupado em outra série (round robin), o que a
- * partida espera de quem vê ou, para os outros, o veto em andamento, se há mapa
- * esperando confirmação ou contestado, ou a série em andamento. Sem o que
- * dizer, o espaço fica vazio, para os cartões da rodada terem a mesma altura.
+ * partida espera de quem vê ou, para os outros, o veto em andamento ou se há
+ * mapa esperando confirmação ou contestado. A série em andamento sem nada disso
+ * não tem etiqueta: o ícone do topo já diz. Sem o que dizer, o espaço fica
+ * vazio, para os cartões da rodada terem a mesma altura.
  */
 export function MatchCardStatus({ match: m }: Props) {
   const t = useTranslations("Bracket");
@@ -45,12 +46,6 @@ export function MatchCardStatus({ match: m }: Props) {
     tag = (
       <StatusTag status="waiting" size="sm">
         {t("result.pending")}
-      </StatusTag>
-    );
-  } else if (m.in_progress) {
-    tag = (
-      <StatusTag status="in_progress" size="sm">
-        {t("inProgress")}
       </StatusTag>
     );
   } else if (m.yours && m.state === "ready") {

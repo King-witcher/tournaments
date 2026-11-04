@@ -23,6 +23,14 @@
   }
 }
 
+// Concluída: recua sem o preenchimento, para o olho achar o que falta jogar.
+// Sem opacidade, que no Carbon é desabilitado: continua clicável e legível.
+// O fundo é o da página, e não transparente, porque as linhas da chave passam
+// atrás dos cartões.
+.completed {
+  background-color: theme.$background;
+}
+
 // Partida de quem vê.
 .yours {
   border-color: theme.$border-interactive;
@@ -38,16 +46,27 @@
 
 .head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: spacing.$spacing-03;
   padding: spacing.$spacing-03 spacing.$spacing-04 0;
+}
+
+.code {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
 }
 
 .open::after {
   position: absolute;
   content: "";
   inset: 0;
+}
+
+// A faixa é borda: o ::after para no lado de dentro e ela ficaria sem clique.
+.actionable .open::after {
+  inset-inline-start: -1 * spacing.$spacing-02;
 }
 
 .bestOf {

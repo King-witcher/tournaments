@@ -1,0 +1,70 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "./crosstable-layout" as layout;
+
+// A classe vem três vezes porque o Carbon põe `position: static` em
+// `.cds--data-table th:last-of-type`, e este é o último (e único) `th` da
+// linha. No fundo da linha, e não no do cabeçalho, para o avatar se destacar.
+.rowHeader.rowHeader.rowHeader {
+  @include layout.first-column;
+
+  background-color: theme.$layer;
+  color: theme.$text-primary;
+}
+
+// Por ser opaca, a coluna não pega sozinha o fundo do hover da linha.
+@media (any-hover: hover) {
+  .row:hover .rowHeader.rowHeader.rowHeader {
+    background-color: theme.$layer-hover;
+  }
+}
+
+// Com largura definida, para o nome cortar nela: numa tabela, a coluna cresce
+// até caber o conteúdo.
+.label {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  inline-size: layout.$row-header - 2 * spacing.$spacing-04;
+
+  @include breakpoint.breakpoint-down(md) {
+    inline-size: layout.$row-header-phone - 2 * spacing.$spacing-03;
+  }
+}
+
+.position {
+  flex-shrink: 0;
+  min-inline-size: spacing.$spacing-04;
+  color: theme.$text-secondary;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+// No celular, o lugar do avatar vai para o nome.
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.name {
+  overflow: hidden;
+  min-inline-size: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// O link ocupa a célula.
+.cell.cell {
+  padding: 0;
+}
+
+// Sem conteúdo: ninguém enfrenta a si mesmo.
+.diagonal.diagonal {
+  padding: 0;
+  background-color: theme.$layer-accent;
+}

@@ -1707,10 +1707,19 @@ export interface components {
             a: components["schemas"]["MatchSide"];
             /**
              * Format: int32
+             * @description Frags somados da série decidida, de cada lado (os que entram na
+             *     tabela); `null` antes da decisão, no W.O. e se algum mapa veio sem
+             *     frags. Podem ser negativos.
+             */
+            a_frags?: number | null;
+            /**
+             * Format: int32
              * @description Mapas confirmados vencidos por cada lado (o placar da série até agora).
              */
             a_maps: number;
             b: components["schemas"]["MatchSide"];
+            /** Format: int32 */
+            b_frags?: number | null;
             /** Format: int32 */
             b_maps: number;
             /** Format: int32 */

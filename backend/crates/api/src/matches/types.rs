@@ -186,6 +186,11 @@ pub struct BracketMatch {
     /// Mapas confirmados vencidos por cada lado (o placar da série até agora).
     pub a_maps: u8,
     pub b_maps: u8,
+    /// Frags somados da série decidida, de cada lado (os que entram na
+    /// tabela); `null` antes da decisão, no W.O. e se algum mapa veio sem
+    /// frags. Podem ser negativos.
+    pub a_frags: Option<i32>,
+    pub b_frags: Option<i32>,
     /// Mapas enviados esperando o adversário (ou o fim da janela).
     pub pending_maps: u8,
     /// Mapas contestados, esperando o organizador.
