@@ -5,13 +5,14 @@
 mod deletion;
 mod discord;
 mod email;
+mod email_login;
+mod email_proof;
 mod google;
 mod ip_limit;
 mod link;
 mod notices;
 mod password;
 mod profile;
-mod recovery;
 mod sessions;
 mod signup;
 mod signup_code;
@@ -311,11 +312,13 @@ async fn session_count(app: &Router, who: &User) -> usize {
     body.as_array().unwrap().len()
 }
 
-/// Libera um envio novo para `address` antes da espera entre envios.
+/// Libera um envio novo para `address` antes das esperas entre envios.
 async fn skip_cooldown(db: &PgPool, address: &str) {
     let redis = redis(db);
-    let key = redis.key(format_args!("email_cooldown:{address}"));
-    redis.query::<()>(&Cmd::del(key)).await.unwrap();
+    for prefix in ["email_cooldown", "email_quiet_cooldown"] {
+        let key = redis.key(format_args!("{prefix}:{address}"));
+        redis.query::<()>(&Cmd::del(key)).await.unwrap();
+    }
 }
 
 /// Abre o OAuth de `provider` (`discord` ou `google`) para ligar à conta da

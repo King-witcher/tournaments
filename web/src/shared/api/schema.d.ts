@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/email/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_email_by_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/email/confirm": {
         parameters: {
             query?: never;
@@ -94,6 +110,86 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["confirm_email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["request_email_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/login/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["email_login_by_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/login/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["email_login_by_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["email_proof_status"];
+        put?: never;
+        post: operations["request_email_proof"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email/proof/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_email_proof"];
         delete?: never;
         options?: never;
         head?: never;
@@ -228,38 +324,6 @@ export interface paths {
         patch: operations["change_password"];
         trace?: never;
     };
-    "/auth/password/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["request_password_reset"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/password/reset/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["reset_password"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/sessions": {
         parameters: {
             query?: never;
@@ -271,6 +335,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["end_other_sessions"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessions/clear-expired": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["clear_expired_session"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2044,6 +2124,60 @@ export interface components {
         DrawTeams: {
             method: components["schemas"]["DrawMethod"];
         };
+        /**
+         * @description O código de um email mandado à conta logada: o da troca, ou o que prova o
+         *     email de agora.
+         */
+        EmailCode: {
+            /**
+             * @description 6 dígitos.
+             * @example 042917
+             */
+            code: string;
+        };
+        /** @description Entrar com o código do email. */
+        EmailLoginCode: {
+            /**
+             * @description 6 dígitos.
+             * @example 042917
+             */
+            code: string;
+            /**
+             * @description O email do pedido, escrito de qualquer jeito que dê na forma canônica.
+             * @example rapha@gmail.com
+             */
+            email: string;
+            /**
+             * @description Senha nova, de 8 a 128 caracteres: com ela, as outras sessões da conta
+             *     são encerradas.
+             */
+            password?: string | null;
+        };
+        /** @description Entrar com o link do email. */
+        EmailLoginLink: {
+            /**
+             * @description Senha nova, de 8 a 128 caracteres: com ela, as outras sessões da conta
+             *     são encerradas.
+             */
+            password?: string | null;
+            /** @description Token do link do email. */
+            token: string;
+        };
+        /** @description Pedido do link e do código para entrar por email. */
+        EmailLoginRequest: {
+            /** @example rapha@gmail.com */
+            email: string;
+        };
+        /** @description A conta só entra pelo email? */
+        EmailProofStatus: {
+            /**
+             * @description Mudar os logins da conta pede o código mandado ao email de agora: ela não
+             *     tem senha nem provedor.
+             */
+            needed: boolean;
+            /** @description Esta sessão digitou o código há pouco. */
+            proven: boolean;
+        };
         /** @description Para onde o link foi (ou iria, se a conta já existe). */
         EmailSent: {
             /**
@@ -2306,15 +2440,14 @@ export interface components {
         /** @enum {string} */
         Locale: "pt" | "es";
         /**
-         * @description Formas de login da conta, e o email que recupera a senha. Sempre sobra
-         *     pelo menos um login.
+         * @description Formas de login da conta. Sempre sobra pelo menos uma: o email confirmado
+         *     já conta.
          */
         LoginMethods: {
             discord: boolean;
             /**
-             * @description Email confirmado, na forma canônica. Toda conta com senha tem (é o
-             *     login dela e por ele a senha esquecida volta); só a conta sem senha
-             *     fica sem.
+             * @description Email confirmado, na forma canônica: entra com um código ou link mandado
+             *     a ele. Toda conta com senha tem; só a conta sem senha pode ficar sem.
              */
             email?: string | null;
             google: boolean;
@@ -2933,16 +3066,6 @@ export interface components {
              */
             withdrawn: boolean;
         };
-        PasswordReset: {
-            /** @description Senha nova, de 8 a 128 caracteres. */
-            password: string;
-            /** @description Token do link do email. */
-            token: string;
-        };
-        PasswordResetRequest: {
-            /** @example rapha@gmail.com */
-            email: string;
-        };
         /** @description O torneio de um item: a comunidade, o endereço e o nome. */
         PendingTournament: {
             /** @description No idioma original. */
@@ -3310,7 +3433,7 @@ export interface components {
             match_key: string;
             outcome: components["schemas"]["SourceOutcome"];
         };
-        /** @description Quem acabou de entrar (login, cadastro confirmado, senha nova pelo link). */
+        /** @description Quem acabou de entrar (login, cadastro confirmado, entrar por email). */
         SignedIn: components["schemas"]["CurrentUser"] & {
             /** @description Entrar cancelou a exclusão da conta, que estava agendada. */
             deletion_cancelled: boolean;
@@ -4401,7 +4524,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.last_login (a conta não tem senha nem Google), auth.discord_not_linked */
+            /** @description auth.last_login (a conta não tem email nem Google), auth.discord_not_linked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4668,7 +4791,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Link de confirmação enviado ao email novo (vale 1 hora; um pedido novo derruba o anterior). O email da conta só muda quando ele é aberto. Se o email já é de outra conta, o dono dela recebe um aviso no lugar do link, e a resposta é a mesma, para não revelar quem tem conta */
+            /** @description Link e código de confirmação enviados ao email novo (valem 1 hora, enquanto durar a sessão que pediu; um pedido novo derruba o anterior). O email da conta só muda com um dos dois. Se o email já é de outra conta, o dono dela recebe um aviso no lugar do link, o pedido anterior cai e a resposta é a mesma, para não revelar quem tem conta */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -4686,7 +4809,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere) */
+            /** @description auth.wrong_password (a conta tem senha, e a atual não veio ou não confere), auth.email_proof_required (a conta só entra pelo email, e esta sessão não digitou o código mandado a ele) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4713,7 +4836,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.too_many_attempts {minutes}, email.too_soon {seconds} */
+            /** @description auth.too_many_attempts {minutes}, email.too_soon {seconds}, email.ip_limited {minutes}, email.account_limited {minutes} */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -4751,7 +4874,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Email tirado da conta; o link de troca que estava valendo deixa de valer */
+            /** @description Email tirado da conta; o link e o código que estavam valendo deixam de valer */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4769,8 +4892,57 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.no_email, auth.password_needs_email (a conta tem senha, que só se recupera por ele) */
+            /** @description auth.no_email, auth.password_needs_email (a conta tem senha, que entra com ele), auth.last_login (é o único jeito de entrar) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm_email_by_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailCode"];
+            };
+        };
+        responses: {
+            /** @description Email da conta trocado, e o link do mesmo email para de valer. A sessão que pediu a troca precisa continuar aberta */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.email_taken (outra conta confirmou este email antes) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.code_rejected (código errado, vencido, sem tentativas, sem troca pedida ou com a sessão que pediu encerrada: a resposta é uma só, porque pôr o email de outra conta não deixa pedido, e isso não pode aparecer; a 5ª errada mata o código, e o link continua valendo), request.invalid_body (o código não tem 6 dígitos) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4793,7 +4965,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Email da conta trocado. Não pede login: o link prova que quem abriu recebe no email novo */
+            /** @description Email da conta trocado, e o código do mesmo email para de valer. Não pede login: o link prova que quem abriu recebe no email novo, e abre em outro navegador. A sessão que pediu a troca precisa continuar aberta */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -4809,7 +4981,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
+            /** @description auth.link_expired (expirou, já foi usado, o código já confirmou, foi trocado por um mais novo ou a sessão que pediu foi encerrada) */
             410: {
                 headers: {
                     [name: string]: unknown;
@@ -4819,6 +4991,244 @@ export interface operations {
                 };
             };
             /** @description request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    request_email_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Se a conta existe, o email dela recebe um link e um código de 6 dígitos (valem 15 minutos, e o que vier primeiro gasta os dois; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio do endereço, para não revelar quem tem conta */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description email.invalid (fora do formato de email; não conta no limite), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com o cadastro; conta todo pedido, exista a conta ou não) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    email_login_by_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailLoginCode"];
+            };
+        };
+        responses: {
+            /** @description Como entrar pelo link: sessão no cookie, o link do mesmo email para de valer e, com `password`, a senha nova */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedIn"];
+                };
+            };
+            /** @description auth.code_rejected (código errado, vencido, sem tentativas ou de um email sem conta: a resposta é uma só, para não revelar quem tem conta; a 5ª errada mata o código, e o link continua valendo), auth.password_invalid (não gasta tentativa), email.invalid, request.invalid_body (o código não tem 6 dígitos) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    email_login_by_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailLoginLink"];
+            };
+        };
+        responses: {
+            /** @description Sessão criada no cookie, e o código do mesmo email para de valer. Com `password`, a senha da conta passa a ser essa, todas as outras sessões são encerradas e o email recebe um aviso. Se a exclusão da conta estava agendada, entrar a cancelou */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedIn"];
+                };
+            };
+            /** @description auth.link_expired (expirou, já foi usado, o código já entrou ou foi trocado por um mais novo) */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.password_invalid (não gasta o link), request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    email_proof_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Se a conta só entra pelo email e se esta sessão já digitou o código (vale 10 minutos) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailProofStatus"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    request_email_proof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Código de 6 dígitos mandado ao email da conta (vale 15 minutos; um pedido novo derruba o anterior). Dentro da espera de 60 s do endereço, o email só não sai, e o código anterior continua */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.email_proof_not_needed (a conta entra de outro jeito além do email) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.ip_limited {minutes}, email.account_limited {minutes} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description email.send_failed (o provedor de email falhou; o código não fica valendo, e pedir de novo não espera os 60 s) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    confirm_email_proof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailCode"];
+            };
+        };
+        responses: {
+            /** @description Esta sessão pode mudar os logins da conta pelos próximos 10 minutos */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.code_rejected (código errado, vencido ou sem tentativas), request.invalid_body (o código não tem 6 dígitos) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4869,7 +5279,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.last_login (a conta não tem senha nem Discord), auth.google_not_linked */
+            /** @description auth.last_login (a conta não tem email nem Discord), auth.google_not_linked */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5234,7 +5644,16 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.password_exists, auth.email_required (a conta não tem email, que é o login e recuperaria a senha) */
+            /** @description auth.email_proof_required (a conta só entra pelo email, e esta sessão não digitou o código mandado a ele) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description auth.password_exists, auth.email_required (a conta não tem email, que é o login com a senha) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5267,7 +5686,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Senha removida; a conta continua entrando pelo Discord ou pelo Google */
+            /** @description Senha removida; a conta continua entrando pelo email, que toda conta com senha tem, e pelo que vinculou */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -5294,7 +5713,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.no_password, auth.last_login (a conta não tem Discord nem Google) */
+            /** @description auth.no_password */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -5392,97 +5811,6 @@ export interface operations {
             };
         };
     };
-    request_password_reset: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PasswordResetRequest"];
-            };
-        };
-        responses: {
-            /** @description Se a conta existe e tem senha e email, o link foi para o email dela (vale 1 hora; um pedido novo derruba o anterior). A resposta é a mesma em todos os casos, até fora dos limites de envio do endereço, para não revelar quem tem conta */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description email.invalid (fora do formato de email; não conta no limite), request.invalid_body */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com o cadastro; conta todo pedido, exista a conta ou não) */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    reset_password: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PasswordReset"];
-            };
-        };
-        responses: {
-            /** @description Senha trocada. Todas as sessões da conta foram encerradas, e esta entra numa nova (cookie); se a exclusão da conta estava agendada, entrar a cancelou */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SignedIn"];
-                };
-            };
-            /** @description auth.no_password (a senha foi removida depois do pedido) */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.link_expired (expirou, já foi usado ou foi trocado por um mais novo) */
-            410: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.password_invalid, request.invalid_body */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
     sessions: {
         parameters: {
             query?: never;
@@ -5536,6 +5864,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
+            };
+        };
+    };
+    clear_expired_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tira o cookie se a sessão dele não vale mais. A sessão que vale fica, com o cookie: o front chama isto depois de um 401, e outra aba pode ter entrado nesse meio tempo */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -5609,7 +5955,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com a recuperação de senha), email.too_soon {seconds} */
+            /** @description email.ip_limited {minutes} (pedidos de email deste IP, somados com entrar por email), email.too_soon {seconds} */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -5669,16 +6015,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description auth.code_expired (sem cadastro esperando para o email: expirou, o link já criou a conta, foi trocado por um mais novo ou as tentativas acabaram) */
-            410: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description auth.code_invalid {attempts_left} (código errado; com 0, ele morreu, e sobra o link ou pedir de novo), email.invalid, request.invalid_body (o código não tem 6 dígitos) */
+            /** @description auth.code_rejected (código errado, vencido, sem tentativas ou de um email sem cadastro esperando: a resposta é uma só, porque email com conta não tem cadastro esperando, e isso não pode aparecer; a 5ª errada mata o código, e o link continua valendo), email.invalid, request.invalid_body (o código não tem 6 dígitos) */
             422: {
                 headers: {
                     [name: string]: unknown;

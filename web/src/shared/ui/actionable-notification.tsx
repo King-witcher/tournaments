@@ -27,7 +27,8 @@ const STATUS = {
  * `inline` fica no fluxo da página, junto do que trata; sem ele, tem o
  * formato de toast (a posição fixa é de quem usa). Só informar: `Notice` na
  * página ou `Toast` passageiro; destaque que carrega com a página e não se
- * fecha: `Callout`.
+ * fecha: `Callout`. Aviso que fica na página e dá para fechar: `inline`
+ * `lowContrast` e `role="status"`, que não move nem prende o foco.
  *
  * Traduz o nome do botão de fechar e o do ícone de estado, e prende o foco
  * sem os elementos sentinela do Carbon (que o leitor de tela lê em inglês).

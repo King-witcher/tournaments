@@ -1,13 +1,11 @@
 //! Login com email e senha (`password_credentials`, no máximo um por conta,
 //! só com o hash; o email é o da conta): cadastro, criar, trocar, remover e
-//! achar pelo email.
+//! achar pelo email. Tirar a senha nunca deixa a conta sem login: o banco só a
+//! aceita com email, e o email entra sozinho.
 
 use sqlx::{PgConnection, PgPool};
 
-use super::{
-    emails::has_email,
-    logins::{has_identity_except, lock_user},
-};
+use super::{emails::has_email, logins::lock_user};
 use crate::{shared::ApiError, shared::Locale};
 
 /// Login com senha de um usuário.
@@ -81,7 +79,7 @@ pub async fn create_password_user(db: &PgPool, user: NewPasswordUser<'_>) -> Res
 }
 
 /// Dá senha a uma conta que ainda não tem. Sem email → 409
-/// `auth.email_required`: é o login e por ele a senha esquecida volta.
+/// `auth.email_required`: é o login com ela.
 pub async fn add_password(db: &PgPool, user_id: i64, password_hash: &str) -> Result<(), ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
@@ -115,24 +113,36 @@ pub async fn update_password(
     Ok(())
 }
 
-/// Tira a senha. Sem senha → 409 `auth.no_password`; sem Discord nem Google →
-/// 409 `auth.last_login`.
-pub async fn remove_password(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
-    let mut tx = db.begin().await?;
-    lock_user(&mut tx, user_id).await?;
-    if !password_login_exists(&mut tx, user_id).await? {
-        return Err(ApiError::conflict("auth.no_password"));
-    }
-    if !has_identity_except(&mut tx, user_id, None).await? {
-        return Err(ApiError::conflict("auth.last_login"));
-    }
+/// A senha da conta passa a ser esta, tenha ela senha ou não (quem entrou pelo
+/// email). A conta sem email é recusada pelo banco, e quem chama já sabe que
+/// ela tem.
+pub async fn set_password(
+    db: &PgPool,
+    user_id: i64,
+    password_hash: &str,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
+        "insert into password_credentials (user_id, password_hash) values ($1, $2)
+         on conflict (user_id) do update set password_hash = excluded.password_hash",
+        user_id,
+        password_hash
+    )
+    .execute(db)
+    .await?;
+    Ok(())
+}
+
+/// Tira a senha. Sem senha → 409 `auth.no_password`.
+pub async fn remove_password(db: &PgPool, user_id: i64) -> Result<(), ApiError> {
+    let done = sqlx::query!(
         "delete from password_credentials where user_id = $1",
         user_id
     )
-    .execute(&mut *tx)
+    .execute(db)
     .await?;
-    tx.commit().await?;
+    if done.rows_affected() == 0 {
+        return Err(ApiError::conflict("auth.no_password"));
+    }
     Ok(())
 }
 

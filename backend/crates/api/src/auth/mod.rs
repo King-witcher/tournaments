@@ -1,19 +1,22 @@
-//! Login com Discord e com Google (OAuth2) e com email e senha, sessão em
-//! cookie e o extractor `CurrentUser`. A conta pode ter os três logins, ligar
-//! e desligar cada um, mas nunca fica sem nenhum, e com senha tem sempre email
-//! (o login e a recuperação; o banco também confere). Os provedores (`provider.rs`)
+//! Login com Discord e com Google (OAuth2), com email e senha e só com o email
+//! (`email_login.rs`, que também recupera a senha), sessão em cookie e o
+//! extractor `CurrentUser`. Email confirmado é um jeito de entrar: a conta liga
+//! e desliga cada login, mas nunca fica sem nenhum, e com senha tem sempre email
+//! (o banco também confere). Os provedores (`provider.rs`)
 //! dividem o fluxo de `oauth.rs`, com PKCE gerado no navegador (o formato do
 //! state, do verifier e do challenge em `pkce.rs`); o que é de cada um fica em
 //! `discord.rs` e `google.rs`. O cadastro com senha exige email e só cria a
 //! conta quando o link é aberto ou o código do mesmo email é digitado
-//! (`signup.rs`); a recuperação de senha (`recovery.rs`) e a troca de email
-//! (`email_change.rs`) vão só por link, com os textos em `emails/`. O cadastro
-//! e a recuperação, que mandam email sem login, contam por IP
-//! (`Mail::limit_ip`). Toda mudança de login ou de email manda um aviso ao email da
-//! conta (`notify.rs`). Sessões, erros de senha, cadastros por confirmar e
-//! links ficam no Redis (`kv/`); contas, logins e email, no banco (`db/`).
+//! (`signup.rs`); entrar por email e a troca de email (`email_change.rs`) também
+//! aceitam os dois, com os textos em `emails/`. Na conta que só entra pelo email,
+//! mudar os logins pede antes o código mandado a ele (`email_proof.rs`). O que
+//! manda email por pedido da pessoa conta por IP e, com login, por conta
+//! (`Mail::limit_ip`, `Mail::limit_account`). Toda mudança de
+//! login ou de email manda um aviso ao email da conta (`notify.rs`). Sessões,
+//! erros de senha, cadastros por confirmar, links e códigos ficam no Redis
+//! (`kv/`); contas, logins e email, no banco (`db/`).
 //! Excluir a conta (`deletion.rs`) agenda para 7 dias, e entrar de novo antes
-//! (pela senha ou por qualquer provedor) cancela; na data, `members` a tira
+//! (por qualquer login) cancela; na data, `members` a tira
 //! das comunidades e daqui sai a anonimização.
 
 mod attempts;
@@ -23,6 +26,8 @@ mod db;
 mod deletion;
 mod discord;
 mod email_change;
+mod email_login;
+mod email_proof;
 mod emails;
 mod google;
 mod handlers;
@@ -32,7 +37,6 @@ mod oauth;
 mod password;
 mod pkce;
 mod provider;
-mod recovery;
 mod session;
 mod signup;
 mod types;
@@ -72,16 +76,24 @@ pub fn router() -> OpenApiRouter<AppState> {
             credentials::change_password,
             credentials::remove_password
         ))
-        .routes(routes!(recovery::request_password_reset))
-        .routes(routes!(recovery::reset_password))
+        .routes(routes!(email_login::request_email_login))
+        .routes(routes!(email_login::email_login_by_link))
+        .routes(routes!(email_login::email_login_by_code))
         .routes(routes!(
             email_change::change_email,
             email_change::remove_email
         ))
         .routes(routes!(email_change::confirm_email))
+        .routes(routes!(email_change::confirm_email_by_code))
+        .routes(routes!(
+            email_proof::email_proof_status,
+            email_proof::request_email_proof
+        ))
+        .routes(routes!(email_proof::confirm_email_proof))
         .routes(routes!(handlers::me, handlers::update_me))
         .routes(routes!(handlers::logins))
         .routes(routes!(handlers::logout))
+        .routes(routes!(handlers::clear_expired_session))
         .routes(routes!(handlers::sessions, handlers::end_other_sessions))
         .routes(routes!(handlers::end_session))
         .routes(routes!(deletion::schedule_account_deletion))

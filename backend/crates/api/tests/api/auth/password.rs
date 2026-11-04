@@ -241,18 +241,11 @@ async fn change_password_needs_current_and_ends_other_sessions() {
 }
 
 #[tokio::test]
-async fn password_is_removed_only_with_discord_left() {
+async fn password_is_removed_because_the_email_stays() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let me = signup(&app, &db, "Rapha", PASSWORD).await;
 
-    let (status, body) = remove(&app, "/auth/password", &me, PASSWORD).await;
-    assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.last_login"))
-    );
-
-    add_discord(&db, me.id).await;
     let (status, body) = remove(&app, "/auth/password", &me, "errada!!").await;
     assert_eq!(
         (status, body),
@@ -260,10 +253,10 @@ async fn password_is_removed_only_with_discord_left() {
     );
     let (status, body) = remove(&app, "/auth/password", &me, PASSWORD).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    // O email fica: é o login se a senha voltar.
+    // O email fica: a conta entra por ele, mesmo sem provedor nenhum.
     assert_eq!(
         body,
-        json!({ "discord": true, "google": false, "password": false, "email": "rapha@example.com" })
+        json!({ "discord": false, "google": false, "password": false, "email": "rapha@example.com" })
     );
     assert_eq!(
         login(&app, "rapha@example.com", PASSWORD).await.0,

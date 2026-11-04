@@ -120,6 +120,11 @@ pub async fn user_sessions(redis: &Redis, user_id: i64) -> RedisResult<Vec<Store
     Ok(sessions)
 }
 
+/// A sessão de hash `hash` (em hexadecimal) ainda existe.
+pub async fn session_exists(redis: &Redis, hash: &str) -> RedisResult<bool> {
+    redis.query(&Cmd::exists(session_key(redis, hash))).await
+}
+
 /// Encerra a sessão com este hash e devolve o dono; sem sessão, nada
 /// acontece.
 pub async fn delete_session(redis: &Redis, hash: &[u8; 32]) -> RedisResult<Option<i64>> {

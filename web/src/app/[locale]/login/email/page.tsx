@@ -1,15 +1,17 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { ForgotPasswordView } from "@/features/auth/components/forgot-password-view";
+import { EmailLoginView } from "@/features/auth/components/email-login-view";
 import { Page } from "@/shared/ui/page";
 import { PageHeader } from "@/shared/ui/page-header";
 import { FormSkeleton } from "@/shared/ui/skeleton";
 
-/** Esqueci a senha: pede o link de recuperação ao email da conta. */
-export default async function ForgotPasswordPage({
+/** Entrar por email: pede o link e o código, e recebe o código. */
+export default async function EmailLoginPage({
   searchParams,
-}: PageProps<"/[locale]/login/forgot">) {
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const [t, tNav] = await Promise.all([
     getTranslations("Login"),
     getTranslations("Nav"),
@@ -21,11 +23,11 @@ export default async function ForgotPasswordPage({
           { href: "/", label: tNav("home") },
           { href: "/login", label: t("title") },
         ]}
-        title={t("forgot.title")}
-        meta={t("forgot.text")}
+        title={t("email.title")}
+        meta={t("email.text")}
       />
       <Suspense fallback={<FormSkeleton tile />}>
-        <ForgotPasswordView searchParams={searchParams} />
+        <EmailLoginView searchParams={searchParams} />
       </Suspense>
     </Page>
   );

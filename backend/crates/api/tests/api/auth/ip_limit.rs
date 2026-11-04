@@ -1,5 +1,5 @@
 //! Limite por IP dos pedidos sem login que mandam email: o cadastro (e o
-//! reenvio, que é pedir de novo) e o esqueci a senha, somados.
+//! reenvio, que é pedir de novo) e entrar por email, somados.
 
 use axum::{
     Router,
@@ -37,7 +37,7 @@ async fn signup(app: &Router, ip: &str, name: &str) -> (StatusCode, Value) {
 }
 
 async fn forgot(app: &Router, ip: &str, email: &str) -> (StatusCode, Value) {
-    from_ip(app, ip, "/auth/password/reset", json!({ "email": email })).await
+    from_ip(app, ip, "/auth/email/login", json!({ "email": email })).await
 }
 
 fn assert_limited((status, body): (StatusCode, Value), max_minutes: i64) {
@@ -48,7 +48,7 @@ fn assert_limited((status, body): (StatusCode, Value), max_minutes: i64) {
 }
 
 #[tokio::test]
-async fn signups_and_resets_share_five_per_hour() {
+async fn signups_and_email_logins_share_five_per_hour() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ip = "203.0.113.7";
@@ -65,7 +65,7 @@ async fn signups_and_resets_share_five_per_hour() {
         assert_eq!(signup(&app, ip, name).await.0, StatusCode::ACCEPTED);
         mailbox(&db).next().await;
     }
-    // A recuperação conta mesmo sem conta (a resposta não diz nada).
+    // Entrar por email conta mesmo sem conta (a resposta não diz nada).
     assert_eq!(
         forgot(&app, ip, "ninguem@outlook.com").await.0,
         StatusCode::ACCEPTED
@@ -95,6 +95,30 @@ async fn signups_and_resets_share_five_per_hour() {
         forgot(&app, "2001:db8:1:2:ffff::1", "ninguem@outlook.com").await,
         60,
     );
+}
+
+/// A troca de email exige login, mas gasta o mesmo teto do dia.
+#[tokio::test]
+async fn changing_the_email_counts_for_the_ip() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let ip = "203.0.113.9";
+    for _ in 0..5 {
+        assert_eq!(
+            forgot(&app, ip, "ninguem@outlook.com").await.0,
+            StatusCode::ACCEPTED
+        );
+    }
+    let me = crate::common::user(&db, "Quaker").await;
+    super::add_discord(&db, me.id).await;
+    let body = json!({ "email": "q@outlook.com" });
+    let mut req = json_request(Method::PUT, "/auth/email", Some(&me.cookie), body);
+    req.headers_mut()
+        .insert(IP_HEADER, HeaderValue::from_str(ip).unwrap());
+    let res = send(&app, req).await;
+    let status = res.status();
+    let json: Value = serde_json::from_str(&body_text(res).await).unwrap();
+    assert_limited((status, json), 60);
 }
 
 #[tokio::test]

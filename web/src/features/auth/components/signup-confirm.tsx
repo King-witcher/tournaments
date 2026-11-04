@@ -1,11 +1,12 @@
 "use client";
 
-import { InlineLoading, Layer, Stack, Tile } from "@carbon/react";
+import { Layer, Stack, Tile } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { Button } from "@/shared/ui/button";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
 import { useEnterAccount } from "../hooks/use-enter-account";
@@ -13,47 +14,55 @@ import { useLinkToken } from "../hooks/use-link-token";
 import { takeSignupReturnTo } from "../lib/signup-return-to";
 
 /**
- * O link do email de cadastro (`#token`): ao carregar no navegador, cria a
- * conta e entra, indo para onde o cadastro voltaria (`takeSignupReturnTo`),
- * sem clique. A confirmação é um POST do script da página: o token vem
- * depois do `#`, que não vai ao servidor, então o verificador de links do
- * provedor de email que só baixa a página (GET) não gasta o link. Recusado
- * (link vencido ou já usado, nome ou email tomados nesse meio tempo) ou sem
- * token, o motivo e os caminhos: criar conta ou entrar.
+ * O link do email de cadastro (`#token`): um botão "Confirmar" cria a conta e
+ * entra, indo para onde o cadastro voltaria (`takeSignupReturnTo`). Não confirma
+ * sozinho ao abrir: um verificador de links que roda o script da página criaria
+ * a conta que um atacante pediu com o email da vítima e a senha dele, e a vítima
+ * depois entraria nela por email. Recusado (link vencido ou já usado, email
+ * tomado nesse meio tempo) ou sem token, o motivo e os caminhos: criar conta ou
+ * entrar.
  */
 export function SignupConfirm() {
   const t = useTranslations("Signup.confirm");
   const tAuth = useTranslations("Auth");
   const token = useLinkToken();
   const enter = useEnterAccount();
-  const { run, error } = useApiAction();
-  // Uma vez só, também no efeito dobrado do modo estrito: o link vale uma vez.
-  const started = useRef(false);
+  const { run, pending, error } = useApiAction();
+  // Enquanto a página da conta carrega, o botão continua pendente.
+  const [leaving, setLeaving] = useState(false);
 
-  useEffect(() => {
-    if (!token || started.current) return;
-    started.current = true;
+  const confirm = () => {
+    if (!token) return;
     run(
       () => api.POST("/auth/signup/confirm", { body: { token } }),
-      () => enter(takeSignupReturnTo()),
+      () => {
+        setLeaving(true);
+        enter(takeSignupReturnTo());
+      },
     );
-  }, [token, run, enter]);
-
+  };
   const problem = token === "" ? tAuth("linkIncomplete") : error;
 
   return (
     <Tile>
       <Layer>
-        {problem ? (
-          <Stack gap={5}>
-            <Notice kind="error">{problem}</Notice>
-            <Link href="/signup">{t("signup")}</Link>
-            <Link href="/login">{t("login")}</Link>
-          </Stack>
-        ) : (
-          // Até a página da conta abrir (ou o erro chegar).
-          <InlineLoading status="active" description={t("creating")} />
-        )}
+        <Stack gap={6}>
+          {token !== "" && (
+            <Button
+              pending={pending || leaving || token === undefined}
+              onClick={confirm}
+            >
+              {t("submit")}
+            </Button>
+          )}
+          {problem && (
+            <Stack gap={5}>
+              <Notice kind="error">{problem}</Notice>
+              <Link href="/signup">{t("signup")}</Link>
+              <Link href="/login">{t("login")}</Link>
+            </Stack>
+          )}
+        </Stack>
       </Layer>
     </Tile>
   );

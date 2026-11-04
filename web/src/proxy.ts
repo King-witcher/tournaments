@@ -14,8 +14,10 @@ const SIGNED_IN_HOME = "me";
  * O idioma (next-intl) e, no início, quem vê o quê. Sem o cookie de sessão,
  * a apresentação do site, estática (`app/[locale]/(home)`), sai pronta sem
  * esperar nada; com ele, o mesmo endereço mostra o início de quem entrou
- * (`/me`, que não aparece na barra: aberto direto, volta para `/`). Cookie de
- * sessão vencida também cai em `/me`, que convida a entrar de novo.
+ * (`/me`, que não aparece na barra: aberto direto, volta para `/`). Aqui não se
+ * pergunta à API, para a apresentação não esperar por ela: cookie de sessão
+ * vencida também cai em `/me`, e sai de lá (`ClearExpiredSession`), o que traz a
+ * apresentação.
  */
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { AnonymousIntro } from "@/features/auth/components/anonymous-intro";
 import { AuthError } from "@/features/auth/components/auth-error";
-import { ApiStatus } from "@/features/health/components/api-status";
+import { BackupLoginReminder } from "@/features/auth/components/backup-login-reminder";
+import { HomeSessionGate } from "@/features/auth/components/home-session-gate";
 import { WaitingForYou } from "@/features/organizing/components/waiting-for-you";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { MyTenants } from "@/features/tenants/components/my-tenants";
@@ -18,6 +18,13 @@ import { SectionSkeleton } from "@/shared/ui/skeleton";
 
 /** Alvo do foco quando a ação usada some da página (`tabIndex={-1}`). */
 const TITLE_ID = "home-title";
+
+const SKELETON = (
+  <PageColumns
+    main={<SectionSkeleton tiles={3} />}
+    aside={<SectionSkeleton tiles={2} />}
+  />
+);
 
 /**
  * O início de quem entrou. O proxy a serve em `/` quando há cookie de
@@ -42,36 +49,27 @@ export default async function SignedInHome({
       />
       {/* "Esperando você" e "Seus torneios" recarregam sozinhos. */}
       <LiveUpdates me />
-      <Suspense fallback={null}>
-        <ApiStatus />
-      </Suspense>
-      {/* Uma espera só: quem não entrou vê o convite a entrar, quem entrou vê as
-          listas, e a página troca o esqueleto uma vez em vez de pular três. */}
-      <Suspense
-        fallback={
+      {/* Uma espera só: a página troca o esqueleto uma vez em vez de pular três. */}
+      <Suspense fallback={SKELETON}>
+        <HomeSessionGate pending={SKELETON}>
+          <BackupLoginReminder />
           <PageColumns
-            main={<SectionSkeleton tiles={3} />}
-            aside={<SectionSkeleton tiles={2} />}
+            main={
+              <>
+                <WaitingForYou focusAfter={TITLE_ID} />
+                <NoTenants />
+                <MyTournaments />
+                <OpenTournaments />
+              </>
+            }
+            aside={
+              <>
+                <MyTenants />
+                <VetoRoomEntry />
+              </>
+            }
           />
-        }
-      >
-        <AnonymousIntro />
-        <PageColumns
-          main={
-            <>
-              <WaitingForYou focusAfter={TITLE_ID} />
-              <NoTenants />
-              <MyTournaments />
-              <OpenTournaments />
-            </>
-          }
-          aside={
-            <>
-              <MyTenants />
-              <VetoRoomEntry />
-            </>
-          }
-        />
+        </HomeSessionGate>
       </Suspense>
     </Page>
   );

@@ -13,14 +13,16 @@ type Props = {
   linked: boolean;
   /** A conta tem senha: vincular e desvincular pedem a atual. */
   hasPassword: boolean;
-  /** Sobra outro jeito de entrar (a senha ou o outro provedor). */
+  /** Sobra outro jeito de entrar (o email ou o outro provedor). */
   canUnlink: boolean;
+  /** A conta só entra pelo email, e esta sessão não digitou o código dele. */
+  locked: boolean;
 };
 
 /**
  * Um provedor da conta (Discord ou Google): vincular (com a senha atual, se
- * a conta tem), ou desvincular se sobrar outro jeito de entrar. Sem outro, o
- * motivo no lugar do formulário.
+ * a conta tem), ou desvincular se sobrar outro jeito de entrar. Sem outro, ou
+ * com `locked`, o motivo no lugar do formulário.
  * O bloco recebe o foco quando o formulário some (`tabIndex={-1}`).
  */
 export async function ProviderLoginSection({
@@ -28,6 +30,7 @@ export async function ProviderLoginSection({
   linked,
   hasPassword,
   canUnlink,
+  locked,
 }: Props) {
   const t = await getTranslations("Account");
 
@@ -39,7 +42,9 @@ export async function ProviderLoginSection({
           linked ? t(`${provider}.linked`) : t(`${provider}.notLinked`)
         }
       >
-        {!linked && hasPassword ? (
+        {locked ? (
+          <Notice kind="info">{t("email.proofFirst")}</Notice>
+        ) : !linked && hasPassword ? (
           <LinkProviderForm provider={provider} returnTo="/account/logins" />
         ) : !linked ? (
           <OAuthButton

@@ -2,22 +2,22 @@
   "title": "Entrar",
   "noAccount": "Não tem conta?",
   "signup": "Criar conta",
-  "forgot": {
-    "title": "Esqueci a senha",
-    "text": "Mandamos um link para o email da conta, para você criar uma senha nova.",
-    "email": "Email",
-    "submit": "Enviar link",
-    "sentTitle": "Pedido recebido",
-    "sent": "Se “{email}” for de uma conta com senha, enviamos o link para ele. Ele vale 1 hora. Não chegou? Confira a caixa de spam.",
-    "again": "Pedir outro link",
+  "email": {
+    "title": "Entrar por email",
+    "text": "Mandamos um código e um link para o email da conta.",
+    "address": "Email",
+    "submit": "Enviar código",
+    "expired": "Esse link expirou. Peça outro aqui.",
+    "sentTitle": "Confira seu email",
+    "sent": "Se “{email}” for de uma conta, enviamos um código e um link. Valem 15 minutos. Não chegou? Confira a caixa de spam.",
+    "resend": "Reenviar email",
+    "resendIn": "Reenviar em {seconds} s",
+    "back": "Usar outro email",
+    "newPassword": "Definir uma senha nova",
+    "newPasswordHint": "As outras sessões da conta são encerradas.",
+    "requestAgain": "Pedir outro email",
     "remembered": "Lembrou a senha?",
     "backToLogin": "Entrar"
-  },
-  "reset": {
-    "title": "Nova senha",
-    "text": "Ao salvar, as outras sessões da conta são encerradas.",
-    "submit": "Salvar e entrar",
-    "requestAgain": "Pedir outro link"
   },
   "deletionScheduledTitle": "Exclusão da conta agendada",
   "deletionScheduled": "Sua conta vai ser excluída em <date></date>, e você saiu de todos os aparelhos. Para cancelar, entre de novo antes disso."

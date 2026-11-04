@@ -187,20 +187,18 @@ async fn discord_account_links_google_and_drops_discord() {
         body,
         json!({ "discord": false, "google": true, "password": false, "email": "quaker@example.com" })
     );
-    // O aviso diz por onde a conta continua entrando.
     let notice = mailbox(&db).next().await;
-    assert!(notice.text.contains("só pelo Google"), "{}", notice.text);
+    assert!(
+        notice.text.contains("Entre por este email"),
+        "{}",
+        notice.text
+    );
     let avatar = sqlx::query_scalar!("select avatar_url from users where id = $1", id)
         .fetch_one(&db)
         .await
         .unwrap();
     assert_eq!(avatar, None, "o avatar vinha do Discord");
 
-    let (status, body) = unlink("/auth/google").await;
-    assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.last_login"))
-    );
     let (status, body) = unlink("/auth/discord").await;
     assert_eq!(
         (status, body),
@@ -243,7 +241,7 @@ async fn password_account_with_google() {
         );
     }
 
-    // O Google basta para tirar a senha.
+    // O email basta para tirar a senha e, depois, o Google.
     let (status, body) = call(
         &app,
         Method::DELETE,
@@ -258,8 +256,26 @@ async fn password_account_with_google() {
         json!({ "discord": false, "google": true, "password": false, "email": "rapha@example.com" })
     );
     let (status, body) = unlink(json!({})).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
-        (status, body),
-        (StatusCode::CONFLICT, err("auth.last_login"))
+        body,
+        json!({ "discord": false, "google": false, "password": false, "email": "rapha@example.com" })
     );
+}
+
+/// Sem email nem outro provedor, o provedor é o último login.
+#[tokio::test]
+async fn last_login_stays() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = providers_app(db.clone(), None, Some(google_user("Ana")), true);
+    let me = google_login(&app).await;
+    let unlink = call(
+        &app,
+        Method::DELETE,
+        "/auth/google",
+        Some(&me),
+        Some(json!({})),
+    )
+    .await;
+    assert_eq!(unlink, (StatusCode::CONFLICT, err("auth.last_login")));
 }

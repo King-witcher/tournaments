@@ -2,33 +2,46 @@ import { getTranslations } from "next-intl/server";
 
 import { Section } from "@/shared/ui/section";
 import { LOGIN_SECTION } from "../lib/login-sections";
-import { ChangeEmailForm } from "./change-email-form";
+import { EmailForms } from "./email-forms";
+import { EmailProofForm } from "./email-proof-form";
 
-type Props = { email?: string; hasPassword: boolean };
+type Props = {
+  email?: string;
+  hasPassword: boolean;
+  providerLinked: boolean;
+  /** A conta só entra pelo email, e esta sessão não digitou o código dele. */
+  locked: boolean;
+};
 
 /**
- * O email da conta, que recupera a senha e é exigido para criá-la: o campo
- * já vem com o de agora, para trocar, cadastrar ou remover. A `key` remonta o
- * formulário quando o email da conta muda (o refresh mantém o estado do
- * campo). O bloco recebe o foco quando o botão de remover some
- * (`tabIndex={-1}`).
+ * O email da conta, que já é um jeito de entrar (com um código ou link) e é
+ * exigido para criar a senha: o campo já vem com o de agora, para trocar,
+ * cadastrar ou remover. Com `locked`, antes a prova do email. O bloco recebe o
+ * foco quando o botão de remover some (`tabIndex={-1}`).
  */
-export async function EmailLoginSection({ email, hasPassword }: Props) {
+export async function EmailLoginSection({
+  email,
+  hasPassword,
+  providerLinked,
+  locked,
+}: Props) {
   const t = await getTranslations("Account.email");
 
   return (
     <div id={LOGIN_SECTION.email} tabIndex={-1}>
       <Section
         title={t("title")}
-        description={
-          !email ? t("none") : hasPassword ? t("recovers") : t("optional")
-        }
+        description={email ? t("signsIn") : t("none")}
       >
-        <ChangeEmailForm
-          key={email ?? ""}
-          current={email}
-          hasPassword={hasPassword}
-        />
+        {locked && email ? (
+          <EmailProofForm email={email} />
+        ) : (
+          <EmailForms
+            current={email}
+            hasPassword={hasPassword}
+            providerLinked={providerLinked}
+          />
+        )}
       </Section>
     </div>
   );

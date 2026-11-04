@@ -16,7 +16,7 @@ crates/api/src/
   shared/         erro, extractors, tokens, texto, slug, idioma, Redis, Storage (S3), client_ip, origin, outbound_gate, window_limit; não conhece domínio nenhum
   outbox/         eventos de mudança e avisos, gravados na transação de quem muda (emit)
   mail/           email sem domínio: endereço canônico, layout, envio (Mailer), limites
-  auth/           login, sessão, CurrentUser, cadastro, recuperação de senha, troca de email, avisos de segurança
+  auth/           login, sessão, CurrentUser, cadastro, entrar por email, troca de email, avisos de segurança
   tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
   members/  invites/  tournaments/  participants/  teams/  lifecycle/
   matches/        chave, resultados mapa a mapa e o veto (veto/)

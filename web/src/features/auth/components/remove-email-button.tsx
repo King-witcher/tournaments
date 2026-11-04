@@ -11,14 +11,14 @@ import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { LOGIN_SECTION } from "../lib/login-sections";
 
 type Props = {
-  /** A conta tem senha, que só se recupera pelo email: o botão vem travado, com o motivo. */
-  blocked: boolean;
+  /** Por que o email não sai (a senha entra com ele, ou é o último login): o botão vem travado, com o motivo. */
+  blocked?: string;
 };
 
 /**
- * Tira o email da conta, depois do `ConfirmButton` dizer o que se perde. Com
- * senha na conta, travado e com o motivo embaixo (a API também recusa). O
- * botão some no refresh, e o foco vai para o bloco do email.
+ * Tira o email da conta, depois do `ConfirmButton` dizer o que se perde.
+ * Travado, com o motivo embaixo, quando a API também recusaria. O botão some no
+ * refresh, e o foco vai para o bloco do email.
  */
 export function RemoveEmailButton({ blocked }: Props) {
   const t = useTranslations("Account.email");
@@ -26,12 +26,12 @@ export function RemoveEmailButton({ blocked }: Props) {
   const { run, pending, error } = useApiAction();
 
   return (
-    <ActionWithNote note={blocked && t("removeBlocked")} error={error}>
+    <ActionWithNote note={blocked} error={error}>
       <ConfirmButton
         size="md"
         question={t("removeConfirm")}
         pending={pending}
-        disabled={blocked}
+        disabled={Boolean(blocked)}
         onConfirm={() =>
           run(
             () => api.DELETE("/auth/email"),

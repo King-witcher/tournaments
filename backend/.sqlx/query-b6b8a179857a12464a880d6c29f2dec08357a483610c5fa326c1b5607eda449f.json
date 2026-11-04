@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id as user_id, u.email,\n                  p.user_id is not null as \"has_password!\", u.locale\n           from users u\n           left join password_credentials p on p.user_id = u.id\n           where u.id = $1",
+  "query": "select id as user_id, email, locale from users where email = $1",
   "describe": {
     "columns": [
       {
@@ -27,12 +27,6 @@
       },
       {
         "ordinal": 2,
-        "name": "has_password!",
-        "type_info": "Bool",
-        "origin": "Expression"
-      },
-      {
-        "ordinal": 3,
         "name": "locale",
         "type_info": "Text",
         "origin": {
@@ -45,15 +39,14 @@
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Text"
       ]
     },
     "nullable": [
       false,
       true,
-      null,
       false
     ]
   },
-  "hash": "153f59ca3c79158e52f492dcf06301deb8a9a4fec1a175e12c250f9235fb8d9c"
+  "hash": "b6b8a179857a12464a880d6c29f2dec08357a483610c5fa326c1b5607eda449f"
 }

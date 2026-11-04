@@ -1,5 +1,8 @@
 //! Sessões da conta: listar, encerrar uma e encerrar as outras.
 
+use std::sync::Arc;
+
+use api::{AppState, auth::AuthSettings};
 use axum::{
     Router,
     body::Body,
@@ -9,7 +12,7 @@ use chrono::{DateTime, TimeDelta};
 use serde_json::{Value, json};
 
 use super::{body_text, pair, send, set_cookie, signup};
-use crate::common::{User, app, call, delete, err, get, user};
+use crate::common::{User, WEB, app, app_from, call, delete, err, get, state, user};
 
 const PASSWORD: &str = "senha forte 1";
 
@@ -129,6 +132,52 @@ async fn sessions_end_one_by_one_or_all_others() {
     assert_eq!(res.status(), StatusCode::NO_CONTENT);
     assert!(set_cookie(&res, "session").unwrap().contains("Max-Age=0"));
     assert_eq!(me_status(&app, &pc).await, StatusCode::UNAUTHORIZED);
+}
+
+/// O front chama esta rota para tirar o cookie que a API recusou: ele sai com o
+/// domínio e o caminho que o navegador guardou.
+#[tokio::test]
+async fn clearing_removes_the_cookie_of_a_dead_session() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app_from(AppState {
+        auth: Arc::new(AuthSettings {
+            discord: None,
+            google: None,
+            web_origin: WEB.into(),
+            cookie_name: "session_staging".into(),
+            cookie_domain: Some(".staging.telefrag.com.br".into()),
+            cookie_secure: true,
+        }),
+        ..state(db)
+    });
+    let req = Request::post("/auth/sessions/clear-expired")
+        .header(header::COOKIE, "session=da-producao; session_staging=morta")
+        .body(Body::empty())
+        .unwrap();
+    let res = send(&app, req).await;
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
+    let removal = set_cookie(&res, "session_staging").unwrap();
+    for part in ["Max-Age=0", "Domain=staging.telefrag.com.br", "Path=/"] {
+        assert!(removal.contains(part), "{removal}");
+    }
+    assert_eq!(set_cookie(&res, "session"), None, "o da produção fica");
+}
+
+/// Entre o servidor ver o cookie morto e o navegador pedir a limpeza, outra aba
+/// pode ter entrado: a sessão nova fica, e o cookie dela também.
+#[tokio::test]
+async fn clearing_keeps_a_live_session() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let me = user(&db, "Some").await;
+    let req = Request::post("/auth/sessions/clear-expired")
+        .header(header::COOKIE, &me.cookie)
+        .body(Body::empty())
+        .unwrap();
+    let res = send(&app, req).await;
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
+    assert_eq!(set_cookie(&res, "session"), None);
+    assert_eq!(me_status(&app, &me).await, StatusCode::OK);
 }
 
 #[tokio::test]

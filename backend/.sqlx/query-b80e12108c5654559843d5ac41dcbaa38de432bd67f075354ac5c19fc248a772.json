@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select password_hash from password_credentials where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "password_hash",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "password_credentials",
+            "name": "password_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b80e12108c5654559843d5ac41dcbaa38de432bd67f075354ac5c19fc248a772"
+}

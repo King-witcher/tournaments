@@ -1,13 +1,14 @@
-//! Limites de envio, no Redis: `email_cooldown:{endereço}` existe por um tempo
-//! depois de cada envio para o endereço, e `email_sent:{AAAA-MM-DD}` conta os
+//! Limites de envio, no Redis. Duas esperas por endereço, uma por fila
+//! (`Lane`): `email_cooldown:{endereço}` e `email_quiet_cooldown:{endereço}`
+//! existem por um tempo depois de cada envio. `email_sent:{AAAA-MM-DD}` conta os
 //! envios do dia (UTC) e expira dois dias depois. Juntos, seguram quem pede
 //! email sem parar para o mesmo endereço e o teto do plano do provedor. Os
 //! avisos (`reserve_today`) só contam no dia. O envio que falha no provedor
 //! devolve a reserva (`release`): a espera sai e o dia volta um.
 //!
-//! Os pedidos sem login que mandam email contam também por IP (`count_ip`):
-//! `email_ip:{ip}:{AAAA-MM-DDTHH}` na hora e `email_ip:{ip}:{AAAA-MM-DD}` no
-//! dia (UTC), cada um com o TTL do seu período.
+//! Os pedidos de quem chama contam também por período (`count_requests`):
+//! `email_ip:{ip}:{período}` e `email_account:{conta}:{período}`, na hora
+//! (`AAAA-MM-DDTHH`) e no dia (`AAAA-MM-DD`, UTC), cada um com o TTL dele.
 
 use chrono::{DateTime, Timelike, Utc};
 use redis::{Cmd, RedisResult};
@@ -16,6 +17,20 @@ use crate::shared::Redis;
 
 /// Dois dias: o contador do dia vive além da virada em qualquer fuso.
 const DAY_KEY_TTL_SECS: i64 = 2 * 24 * 60 * 60;
+
+/// Qual espera entre envios um email usa.
+#[derive(Clone, Copy)]
+pub enum Lane {
+    /// O que responde `email.too_soon`: o cadastro e a troca de email, com o
+    /// link e com o aviso de que o endereço já tem dono. Os dois ramos marcam a
+    /// mesma espera, para a resposta não dizer qual foi.
+    Requests,
+    /// O que nenhuma resposta mostra: entrar por email e o que só vai à própria
+    /// conta. Fica à parte para nada aqui aparecer num `email.too_soon` (só conta
+    /// existente envia) e para os avisos da outra fila não segurarem o email que
+    /// entra.
+    Quiet,
+}
 
 pub enum Slot {
     /// Reservado no dia `day` (`AAAA-MM-DD`, UTC), o que `release` devolve.
@@ -27,14 +42,15 @@ pub enum Slot {
 }
 
 /// Reserva um envio para `to`: uma espera de `cooldown_secs` para o endereço
-/// e um a menos no teto do dia (`daily_limit`).
+/// nesta fila e um a menos no teto do dia (`daily_limit`).
 pub async fn reserve(
     redis: &Redis,
     to: &str,
+    lane: Lane,
     cooldown_secs: u64,
     daily_limit: u32,
 ) -> RedisResult<Slot> {
-    let cooldown = cooldown_key(redis, to);
+    let cooldown = cooldown_key(redis, lane, to);
     let started: Option<String> = redis
         .query(
             redis::cmd("SET")
@@ -74,38 +90,36 @@ pub async fn reserve_today(redis: &Redis, daily_limit: u32) -> RedisResult<Slot>
 }
 
 /// Devolve a reserva de um envio que não saiu: a espera do endereço `to` (se
-/// o envio a marcou) e um no contador do dia `day`.
-pub async fn release(redis: &Redis, to: Option<&str>, day: &str) -> RedisResult<()> {
+/// o envio a marcou, nesta fila) e um no contador do dia `day`.
+pub async fn release(redis: &Redis, to: Option<(Lane, &str)>, day: &str) -> RedisResult<()> {
     let mut pipe = redis::pipe();
-    if let Some(to) = to {
-        pipe.del(cooldown_key(redis, to)).ignore();
+    if let Some((lane, to)) = to {
+        pipe.del(cooldown_key(redis, lane, to)).ignore();
     }
     pipe.decr(day_key(redis, day), 1).ignore();
     redis.query_pipe(&pipe).await
 }
 
-/// Pedidos de um IP: dentro dos limites ou, fora, quantos segundos até o
-/// período que estourou acabar.
-pub enum IpSlot {
+/// Pedidos de um IP ou de uma conta: dentro dos limites ou, fora, quantos
+/// segundos até o período que estourou acabar.
+pub enum RequestSlot {
     Granted,
     Limited { seconds: i64 },
 }
 
-/// Conta mais um pedido do IP `bucket` na hora e no dia, e diz se ele passou
-/// de `hourly` na hora ou de `daily` no dia. Dois comandos por pedido; o
-/// primeiro pedido de cada período faz mais um, que põe o TTL.
-pub async fn count_ip(
+/// Conta mais um pedido de `scope` (`email_ip:{ip}`, `email_account:{conta}`) na
+/// hora e no dia, e diz se ele passou de `hourly` na hora ou de `daily` no dia.
+/// Dois comandos por pedido; o primeiro pedido de cada período faz mais um, que
+/// põe o TTL.
+pub async fn count_requests(
     redis: &Redis,
-    bucket: &str,
+    scope: &str,
     hourly: u32,
     daily: u32,
     now: DateTime<Utc>,
-) -> RedisResult<IpSlot> {
-    let hour = redis.key(format_args!(
-        "email_ip:{bucket}:{}",
-        now.format("%Y-%m-%dT%H")
-    ));
-    let day = redis.key(format_args!("email_ip:{bucket}:{}", now.format("%Y-%m-%d")));
+) -> RedisResult<RequestSlot> {
+    let hour = redis.key(format_args!("{scope}:{}", now.format("%Y-%m-%dT%H")));
+    let day = redis.key(format_args!("{scope}:{}", now.format("%Y-%m-%d")));
     let (in_hour, in_day): (u32, u32) = redis
         .query_pipe(redis::pipe().incr(&hour, 1).incr(&day, 1))
         .await?;
@@ -122,20 +136,23 @@ pub async fn count_ip(
     let into_hour = i64::from(now.minute() * 60 + now.second());
     let into_day = i64::from(now.num_seconds_from_midnight());
     Ok(if in_day > daily {
-        IpSlot::Limited {
+        RequestSlot::Limited {
             seconds: 24 * 60 * 60 - into_day,
         }
     } else if in_hour > hourly {
-        IpSlot::Limited {
+        RequestSlot::Limited {
             seconds: 60 * 60 - into_hour,
         }
     } else {
-        IpSlot::Granted
+        RequestSlot::Granted
     })
 }
 
-fn cooldown_key(redis: &Redis, to: &str) -> String {
-    redis.key(format_args!("email_cooldown:{to}"))
+fn cooldown_key(redis: &Redis, lane: Lane, to: &str) -> String {
+    match lane {
+        Lane::Requests => redis.key(format_args!("email_cooldown:{to}")),
+        Lane::Quiet => redis.key(format_args!("email_quiet_cooldown:{to}")),
+    }
 }
 
 fn day_key(redis: &Redis, day: &str) -> String {

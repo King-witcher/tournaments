@@ -188,7 +188,7 @@ async fn email_in_use_warns_its_owner_without_revealing_it() {
         "{}",
         email.subject
     );
-    assert!(email.text.contains("/pt/login/forgot"));
+    assert!(email.text.contains("/pt/login/email\n"), "{}", email.text);
     assert!(!email.text.contains('#'), "não leva link de cadastro");
     let pending: bool = redis(&db)
         .query(&Cmd::exists(redis(&db).key("signup:dona@outlook.com")))
@@ -202,7 +202,7 @@ async fn email_in_use_warns_its_owner_without_revealing_it() {
     assert_eq!(body["error"], "email.too_soon");
     mailbox(&db).assert_empty().await;
 
-    // Conta só com Discord: o aviso leva ao login, não à recuperação.
+    // Conta só com Discord: também entra pelo email.
     let discord = user(&db, "Discord").await;
     set_email(&db, discord.id, "discord@outlook.com").await;
     assert_eq!(
@@ -210,12 +210,7 @@ async fn email_in_use_warns_its_owner_without_revealing_it() {
         StatusCode::ACCEPTED
     );
     let email = mailbox(&db).next().await;
-    assert!(email.text.contains("Discord"), "{}", email.text);
-    assert!(
-        email.text.contains("http://localhost:4001/pt/login\n"),
-        "{}",
-        email.text
-    );
+    assert!(email.text.contains("/pt/login/email\n"), "{}", email.text);
 }
 
 #[tokio::test]

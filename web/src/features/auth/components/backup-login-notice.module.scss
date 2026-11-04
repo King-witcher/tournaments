@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Como no `Notice`: o Carbon limita o aviso a 288px abaixo do `md`. No celular
+// ele ocupa a largura da página. Classe dobrada para vencer a regra dele.
+.notice.notice {
+  @include breakpoint.breakpoint-down(md) {
+    max-inline-size: none;
+  }
+}

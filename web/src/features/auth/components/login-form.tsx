@@ -20,9 +20,9 @@ import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
  * Email e senha; entrando, vai para `returnTo`. O erro (senha errada,
  * tentativas demais) é do formulário todo: dizer qual campo errou revelaria
  * quem tem conta. Entrar numa conta com a exclusão agendada a cancela e leva
- * à conta, que avisa. Embaixo do botão, o link para recuperar a senha
- * (depois dele na ordem do Tab, para não ficar entre a senha e o "Entrar"),
- * que leva o email digitado.
+ * à conta, que avisa. Embaixo do botão, o link para entrar por email, que é
+ * como a senha esquecida volta (depois dele na ordem do Tab, para não ficar
+ * entre a senha e o "Entrar"), que leva o email digitado.
  */
 export function LoginForm({ returnTo }: { returnTo: string }) {
   const t = useTranslations("Auth");
@@ -66,8 +66,11 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         </Button>
         <Link
           href={{
-            pathname: "/login/forgot",
-            query: email.trim() ? { email: email.trim() } : undefined,
+            pathname: "/login/email",
+            query: {
+              return_to: returnTo,
+              ...(email.trim() ? { email: email.trim() } : {}),
+            },
           }}
         >
           {t("forgotPassword")}

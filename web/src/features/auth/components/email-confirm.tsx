@@ -13,7 +13,8 @@ import { Notice } from "@/shared/ui/notice";
 import { useLinkToken } from "../hooks/use-link-token";
 
 /**
- * O link do email mandado ao trocar o email da conta (`#token`). Não exige
+ * O link do email mandado ao trocar o email da conta (`#token`; o código do
+ * mesmo email entra na aba Logins, em `EmailChangeCodeForm`). Não exige
  * login (pode ser aberto em outro aparelho) e não confirma sozinho ao abrir:
  * os verificadores de link dos provedores de email gastariam o link. Feito,
  * o aviso (que recebe o foco, no lugar do botão) e o caminho para a conta;

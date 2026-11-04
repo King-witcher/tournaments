@@ -16,6 +16,10 @@
     "saved": "Guardado."
   },
   "currentPassword": "Contraseña actual",
+  "backup": {
+    "title": "Si {provider} deja de estar disponible, no podrás entrar.",
+    "action": "Agregar email"
+  },
   "discord": {
     "title": "Discord",
     "notLinked": "Vincúlalo para entrar con Discord y usar su avatar aquí.",
@@ -25,7 +29,7 @@
     "unlinkHint": "Para desvincularlo, confirma tu contraseña.",
     "unlink": "Desvincular Discord",
     "unlinkConfirm": "Dejas de entrar con Discord, y su avatar sale de la cuenta. Puedes vincularlo de nuevo después.",
-    "needsOther": "Para desvincular Discord, crea antes una contraseña o vincula Google."
+    "needsOther": "Para desvincular Discord, registra antes un email o vincula Google."
   },
   "google": {
     "title": "Google",
@@ -36,7 +40,7 @@
     "unlinkHint": "Para desvincularla, confirma tu contraseña.",
     "unlink": "Desvincular Google",
     "unlinkConfirm": "Dejas de entrar con tu cuenta de Google. Puedes vincularla de nuevo después.",
-    "needsOther": "Para desvincular Google, crea antes una contraseña o vincula Discord."
+    "needsOther": "Para desvincular Google, registra antes un email o vincula Discord."
   },
   "password": {
     "title": "Contraseña",
@@ -46,26 +50,30 @@
     "newPasswordHint": "Cambiar la contraseña cierra tus otras sesiones.",
     "saved": "Guardado.",
     "remove": "Quitar contraseña",
-    "removeConfirm": "Pasas a entrar solo con el Discord o el Google que vinculaste. Puedes crear otra contraseña después.",
-    "needsProvider": "Para quitar la contraseña, vincula antes Discord o Google.",
+    "removeConfirm": "Dejas de entrar con la contraseña, y la cuenta sigue entrando por email. Puedes crear otra después.",
     "needsEmail": "Para crear una contraseña, registra antes un email, en la sección de arriba.",
-    "resetDoneTitle": "Contraseña cambiada",
-    "resetDone": "Entraste con la contraseña nueva, y las otras sesiones de la cuenta se cerraron."
+    "resetDoneTitle": "Contraseña nueva guardada",
+    "resetDone": "Las otras sesiones de la cuenta se cerraron."
   },
   "email": {
     "title": "Email",
-    "recovers": "Con él entras con la contraseña y la recuperas.",
-    "optional": "Con él, puedes crear una contraseña.",
-    "none": "Necesario para crear una contraseña.",
+    "signsIn": "Entras con un código o enlace enviado a él.",
+    "proofNeeded": "Para cambiar el email, crear una contraseña o vincular Discord o Google, confirma antes que eres tú.",
+    "proofSend": "Enviar código",
+    "proofSent": "Enviamos un código a {email}. Vale 15 minutos. ¿No llegó? Revisa la carpeta de spam.",
+    "proofSubmit": "Confirmar",
+    "proofFirst": "Confirma antes que eres tú, en la sección del email.",
+    "none": "Con él, entras con un código o enlace y puedes crear una contraseña.",
     "label": "Email",
     "add": "Registrar email",
     "change": "Cambiar email",
     "sentTitle": "Revisa tu email",
-    "sent": "Enviamos un enlace a {email}. Ábrelo antes de 1 hora para confirmar. ¿No llegó? Revisa la carpeta de spam.",
-    "sentChange": "Enviamos un enlace a {email}. Ábrelo antes de 1 hora para confirmar el cambio. ¿No llegó? Revisa la carpeta de spam.",
+    "sent": "Enviamos un código y un enlace a {email}. Valen 1 hora. ¿No llegó? Revisa la carpeta de spam.",
+    "requestAgain": "Pedir otro email",
     "remove": "Quitar email",
-    "removeConfirm": "El email sale de la cuenta. Para crear una contraseña después, vas a necesitar un email de nuevo.",
-    "removeBlocked": "Para quitar el email, quita antes la contraseña. Con el email entras con ella."
+    "removeConfirm": "Dejas de entrar con este email y de recibir los avisos de la cuenta. Para crear una contraseña después, vas a necesitar un email de nuevo.",
+    "removeBlocked": "Para quitar el email, quita antes la contraseña. Con el email entras con ella.",
+    "removeLastLogin": "Para quitar el email, vincula antes Discord o Google."
   },
   "emailConfirm": {
     "title": "Confirmar email",

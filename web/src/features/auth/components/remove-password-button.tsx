@@ -7,16 +7,10 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
 import { FormModal } from "@/shared/ui/form-modal";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { LOGIN_SECTION } from "../lib/login-sections";
-
-type Props = {
-  /** Sem o Discord nem o Google vinculado: o botão vem travado, com o motivo. */
-  blocked: boolean;
-};
 
 /** Erros que são da senha digitada (vão no campo); o resto vai acima dos botões. */
 const PASSWORD_ERRORS = new Set([
@@ -26,22 +20,21 @@ const PASSWORD_ERRORS = new Set([
 
 /**
  * "Remover senha", ao lado de "Trocar senha": abre o `FormModal` que diz o
- * que muda e pede a senha atual (a API confere). Sem outro jeito de entrar,
- * travado e com o motivo embaixo (a API também recusa). Removida, a página
- * recarrega e o foco vai para o bloco da senha (o botão some).
+ * que muda e pede a senha atual (a API confere). A senha sempre pode sair: a
+ * conta que a tem tem email, que entra sozinho. Removida, a página recarrega e o
+ * foco vai para o bloco da senha (o botão some).
  */
-export function RemovePasswordButton({ blocked }: Props) {
+export function RemovePasswordButton() {
   const t = useTranslations("Account.password");
   const router = useRouter();
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
   return (
-    <ActionWithNote note={blocked && t("needsProvider")}>
+    <>
       <Button
         ref={trigger}
         kind="danger--tertiary"
-        disabled={blocked}
         onClick={() => setOpen(true)}
       >
         {t("remove")}
@@ -57,7 +50,7 @@ export function RemovePasswordButton({ blocked }: Props) {
           }}
         />
       )}
-    </ActionWithNote>
+    </>
   );
 }
 

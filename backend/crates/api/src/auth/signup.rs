@@ -15,7 +15,7 @@ use super::{
     db::{self, NewPasswordUser},
     emails::{self, LINK_TTL_SECS},
     handlers::DISPLAY_NAME_MAX,
-    kv::{self, CodeCheck, PendingSignup},
+    kv::{self, PendingSignup},
     password::{hash_password, validate_password},
     types::{EmailSent, LinkToken, SignedIn, Signup, SignupCode},
 };
@@ -23,10 +23,6 @@ use crate::{
     AppState,
     shared::{ApiError, ClientIp, ErrorBody, JsonBody, Locale, text::clean_text, token},
 };
-
-/// Códigos errados que um cadastro aceita antes de o código morrer (o link
-/// continua valendo; pedir de novo manda outro código).
-const CODE_ATTEMPTS: u32 = 5;
 
 #[utoipa::path(
     post,
@@ -36,7 +32,7 @@ const CODE_ATTEMPTS: u32 = 5;
     responses(
         (status = ACCEPTED, body = EmailSent, description = "Email enviado com o link e um código de 6 dígitos (os dois valem 1 hora); a conta só é criada pelo link aberto ou pelo código digitado. Pedir de novo com o mesmo email troca o link e o código (os anteriores param de valer). Se o email já é de uma conta, o dono recebe um aviso no lugar do link, e a resposta é a mesma"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.display_name_invalid, auth.password_invalid, email.invalid, email.disposable, request.invalid_body"),
-        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.ip_limited {minutes} (pedidos de email deste IP, somados com a recuperação de senha), email.too_soon {seconds}"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "email.ip_limited {minutes} (pedidos de email deste IP, somados com entrar por email), email.too_soon {seconds}"),
         (status = BAD_GATEWAY, body = ErrorBody, description = "email.send_failed (o provedor de email falhou; nada fica guardado, e pedir de novo não espera os 60 s)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "email.unavailable (teto de envios do dia)"),
     )
@@ -70,7 +66,7 @@ pub async fn signup(
     let message = match owner {
         Some(owner) => {
             let locale = Locale::from_db(&owner.locale)?;
-            emails::account_exists(web, locale, &email, owner.has_password)
+            emails::account_exists(web, locale, &email)
         }
         None => {
             let pending = PendingSignup {
@@ -125,8 +121,7 @@ pub async fn confirm_signup(
     request_body = SignupCode,
     responses(
         (status = CREATED, body = SignedIn, description = "Conta criada, já com a sessão no cookie, e o link do mesmo email para de valer"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.code_invalid {attempts_left} (código errado; com 0, ele morreu, e sobra o link ou pedir de novo), email.invalid, request.invalid_body (o código não tem 6 dígitos)"),
-        (status = GONE, body = ErrorBody, description = "auth.code_expired (sem cadastro esperando para o email: expirou, o link já criou a conta, foi trocado por um mais novo ou as tentativas acabaram)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.code_rejected (código errado, vencido, sem tentativas ou de um email sem cadastro esperando: a resposta é uma só, porque email com conta não tem cadastro esperando, e isso não pode aparecer; a 5ª errada mata o código, e o link continua valendo), email.invalid, request.invalid_body (o código não tem 6 dígitos)"),
         (status = CONFLICT, body = ErrorBody, description = "auth.email_taken (outra conta pegou o email desde o pedido)"),
     )
 )]
@@ -140,15 +135,9 @@ pub async fn confirm_signup_code(
         return Err(ApiError::invalid("request.invalid_body"));
     }
     let email = state.mail.normalize(&body.email)?;
-    let check = kv::take_signup_by_code(&state.redis, &email, &body.code, CODE_ATTEMPTS).await?;
-    let pending = match check {
-        CodeCheck::Confirmed(pending) => pending,
-        CodeCheck::Wrong { attempts_left } => {
-            return Err(ApiError::invalid("auth.code_invalid")
-                .with_params([("attempts_left", i64::from(attempts_left))]));
-        }
-        CodeCheck::Expired => return Err(ApiError::gone("auth.code_expired")),
-    };
+    let pending = kv::take_signup_by_code(&state.redis, &email, &body.code)
+        .await?
+        .ok_or(ApiError::invalid("auth.code_rejected"))?;
     create_account(&state, &headers, jar, pending).await
 }
 

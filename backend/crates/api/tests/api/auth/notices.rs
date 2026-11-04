@@ -53,14 +53,14 @@ async fn password_changes() {
         patch(&app, "/auth/password", &me, change).await.0,
         StatusCode::OK
     );
-    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/forgot").await;
+    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/email").await;
 
     let change = json!({ "current_password": NEW_PASSWORD, "password": PASSWORD });
     assert_eq!(
         patch(&app, "/auth/password", &me, change).await.0,
         StatusCode::OK
     );
-    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/forgot").await;
+    expect_notice(&db, to, "Sua senha foi trocada", "/pt/login/email").await;
 
     assert_eq!(remove(&app, "/auth/password", &me).await, StatusCode::OK);
     expect_notice(
@@ -85,7 +85,7 @@ async fn creating_a_password() {
         post(&app, "/auth/password", &me, body).await.0,
         StatusCode::CREATED
     );
-    let text = expect_notice(&db, "q@outlook.com", "agora tem senha", "/pt/login/forgot").await;
+    let text = expect_notice(&db, "q@outlook.com", "agora tem senha", "/pt/login/email").await;
     assert!(text.contains("com este email e a senha"), "{text}");
 }
 
@@ -111,7 +111,7 @@ async fn discord_link_and_unlink() {
         &db,
         "rapha@example.com",
         "Discord foi desvinculado",
-        "/pt/login/forgot",
+        "/pt/login/email",
     )
     .await;
 }
@@ -177,7 +177,7 @@ async fn first_email_and_email_removal() {
 }
 
 #[tokio::test]
-async fn reset_by_link_right_after_the_link() {
+async fn new_password_right_after_the_link() {
     let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     signup(&app, &db, "Rapha", PASSWORD).await;
@@ -189,23 +189,17 @@ async fn reset_by_link_right_after_the_link() {
     // O link acabou de sair para o mesmo endereço: o aviso não espera.
     super::skip_cooldown(&db, "rapha@example.com").await;
     let body = json!({ "email": "rapha@example.com" });
-    send_json(&app, Method::POST, "/auth/password/reset", None, body).await;
+    send_json(&app, Method::POST, "/auth/email/login", None, body).await;
     let link = mailbox(&db).next().await;
     let body = json!({ "token": link_token(&link), "password": NEW_PASSWORD });
-    let (status, _, _) = send_json(
-        &app,
-        Method::POST,
-        "/auth/password/reset/confirm",
-        None,
-        body,
-    )
-    .await;
+    let (status, _, _) =
+        send_json(&app, Method::POST, "/auth/email/login/confirm", None, body).await;
     assert_eq!(status, StatusCode::OK);
     expect_notice(
         &db,
         "rapha@example.com",
-        "Tu contraseña fue cambiada",
-        "/es/login/forgot",
+        "Tu cuenta tiene una contraseña nueva",
+        "/es/login/email",
     )
     .await;
 }

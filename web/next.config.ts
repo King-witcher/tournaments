@@ -24,6 +24,30 @@ const sassLoader = {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // A recuperação de senha virou entrar por email. Os emails já mandados
+  // continuam levando a algum lugar: o link de antes vale menos que o pedido
+  // novo, e a página diz que ele expirou (a query e o `#token` vão junto, sem uso).
+  // A aba Sobre da comunidade saiu (a descrição ficou no cabeçalho): o endereço
+  // antigo leva à página dela. Sem idioma, o proxy acrescenta o prefixo e cai aqui.
+  async redirects() {
+    return [
+      {
+        source: "/:locale(pt|es)/login/forgot",
+        destination: "/:locale/login/email",
+        permanent: false,
+      },
+      {
+        source: "/:locale(pt|es)/login/reset",
+        destination: "/:locale/login/email?expired=1",
+        permanent: false,
+      },
+      {
+        source: "/:locale(pt|es)/:tenant/about",
+        destination: "/:locale/:tenant",
+        permanent: false,
+      },
+    ];
+  },
   // Nenhuma página abre dentro de um iframe (clickjacking: outro site
   // esconderia a página e faria a pessoa clicar nela sem ver). O
   // `frame-ancestors` é o atual; o `X-Frame-Options`, o dos navegadores
@@ -48,18 +72,6 @@ const nextConfig: NextConfig = {
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       })),
-    ];
-  },
-  // A aba Sobre da comunidade saiu (a descrição ficou no cabeçalho): o
-  // endereço antigo leva à página dela. Sem idioma, o proxy acrescenta o
-  // prefixo e cai aqui.
-  async redirects() {
-    return [
-      {
-        source: "/:locale(pt|es)/:tenant/about",
-        destination: "/:locale/:tenant",
-        permanent: false,
-      },
     ];
   },
   images: {

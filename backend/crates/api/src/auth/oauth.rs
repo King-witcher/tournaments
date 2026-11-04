@@ -29,6 +29,7 @@ use super::{
     credentials::start_session,
     db::{self, ExternalLogin},
     discord,
+    email_proof::require_email_proof,
     emails::Notice,
     google, kv,
     notify::notify,
@@ -149,7 +150,7 @@ pub async fn discord_link(
         (status = OK, body = LoginMethods, description = "Discord desligado; o avatar, que vinha dele, sai junto"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem senha nem Google), auth.discord_not_linked"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem email nem Google), auth.discord_not_linked"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )
@@ -242,7 +243,7 @@ pub async fn google_link(
         (status = OK, body = LoginMethods, description = "Google desligado"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password (a conta tem senha, e a atual não veio ou não confere)"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem senha nem Discord), auth.google_not_linked"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.last_login (a conta não tem email nem Discord), auth.google_not_linked"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )
@@ -289,6 +290,8 @@ async fn authorize(
     // Com senha, quem pegou a sessão não põe o próprio login na conta (para
     // entrar depois por ele, mesmo com a senha trocada).
     confirm_password_if_set(state, user.id, body.current_password).await?;
+    // Na conta só com email, um provedor a mais livraria a troca dele do código.
+    require_email_proof(state, &methods, jar).await?;
     kv::authorize_link(
         &state.redis,
         &session,
@@ -447,7 +450,7 @@ async fn unlink(
     confirm_password_if_set(state, user.id, body.current_password).await?;
     db::unlink_external(&state.db, user.id, provider).await?;
     let methods = db::login_methods(&state.db, user.id).await?;
-    // Sem senha, o aviso diz que a conta segue pelo outro provedor.
+    // O aviso só chega a quem tem email: a conta segue por ele, com ou sem senha.
     let password = methods.password;
     let notice = match provider {
         Provider::Discord => Notice::DiscordUnlinked { password },

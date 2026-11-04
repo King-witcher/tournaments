@@ -1,16 +1,17 @@
-//! Os emails com link: confirmar o cadastro (que leva também o código),
-//! avisar que o email já tem conta
-//! (no cadastro e na troca de email de outra conta), recuperar a senha e
-//! confirmar o email novo.
+//! Os emails com link e código: confirmar o cadastro, entrar por email e
+//! confirmar o email novo. O código que prova o email de agora. E avisar que o
+//! email já tem conta (no cadastro e na troca de email de outra conta), com o
+//! caminho de entrar por email.
 
-use super::{VALID_FOR, compose, page};
+use super::{LOGIN_VALID_FOR, VALID_FOR, compose, page};
 use crate::{
-    mail::{Action, Content, Email},
+    mail::{Action, Alert, Content, Email},
     shared::Locale,
 };
 
 /// Confirmação do cadastro com senha: o código, para digitar na página do
-/// cadastro, e o link, que cria a conta ao abrir. Vale o que vier primeiro.
+/// cadastro, e o link, que abre a página com o botão que cria a conta. Vale o que
+/// vier primeiro.
 pub fn signup_confirmation(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/signup/confirm"));
     let content = match locale {
@@ -51,53 +52,27 @@ pub fn signup_confirmation(web: &str, locale: Locale, to: &str, token: &str, cod
 }
 
 /// Alguém tentou criar conta com um email que já é de uma conta: o dono fica
-/// sabendo, sem a resposta do cadastro revelar nada. Conta com senha recebe o
-/// caminho da recuperação; só com Discord ou Google, o login.
-pub fn account_exists(web: &str, locale: Locale, to: &str, has_password: bool) -> Email {
-    let url = page(
-        web,
-        locale,
-        if has_password {
-            "/login/forgot"
-        } else {
-            "/login"
-        },
-    );
-    let (title, paragraphs, label, note) = match (locale, has_password) {
-        (Locale::Pt, true) => (
+/// sabendo, sem a resposta do cadastro revelar nada, e recebe o caminho de
+/// entrar por email, que serve a toda conta com email.
+pub fn account_exists(web: &str, locale: Locale, to: &str) -> Email {
+    let url = page(web, locale, "/login/email");
+    let (title, paragraphs, label, note) = match locale {
+        Locale::Pt => (
             "Você já tem uma conta",
             [
                 "Alguém tentou criar uma conta com este email, mas ele já é da sua conta.",
-                "Se foi você e esqueceu a senha, crie uma nova pelo botão abaixo.",
+                "Se foi você, entre por este email pelo botão abaixo. Lá também dá para definir uma senha nova.",
             ],
-            "Recuperar a senha",
+            "Entrar por email",
             "Se não foi você, ignore este email. Nada muda na sua conta.",
         ),
-        (Locale::Pt, false) => (
-            "Você já tem uma conta",
-            [
-                "Alguém tentou criar uma conta com este email, mas ele já é da sua conta, que entra pelo Discord ou pelo Google.",
-                "Se foi você, é só entrar pelo que você vinculou.",
-            ],
-            "Entrar",
-            "Se não foi você, ignore este email. Nada muda na sua conta.",
-        ),
-        (Locale::Es, true) => (
+        Locale::Es => (
             "Ya tienes una cuenta",
             [
                 "Alguien intentó crear una cuenta con este email, pero ya es de tu cuenta.",
-                "Si fuiste tú y olvidaste la contraseña, crea una nueva con el botón de abajo.",
+                "Si fuiste tú, entra con este email usando el botón de abajo. Ahí también puedes definir una contraseña nueva.",
             ],
-            "Recuperar la contraseña",
-            "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
-        ),
-        (Locale::Es, false) => (
-            "Ya tienes una cuenta",
-            [
-                "Alguien intentó crear una cuenta con este email, pero ya es de tu cuenta, que entra con Discord o con Google.",
-                "Si fuiste tú, solo tienes que entrar con el que vinculaste.",
-            ],
-            "Entrar",
+            "Entrar por email",
             "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
     };
@@ -117,32 +92,24 @@ pub fn account_exists(web: &str, locale: Locale, to: &str, has_password: bool) -
 
 /// Alguém tentou pôr na própria conta um email que já é de outra: o dono fica
 /// sabendo, sem a resposta da troca revelar nada. O email continua com ele.
-pub fn email_in_use(web: &str, locale: Locale, to: &str, has_password: bool) -> Email {
+pub fn email_in_use(web: &str, locale: Locale, to: &str) -> Email {
     let (title, paragraphs, label, note) = match locale {
         Locale::Pt => (
             "Este email já é da sua conta",
             [
-                if has_password {
-                    "Alguém tentou pôr este email em outra conta daqui, mas ele já é da sua conta e continua nela."
-                } else {
-                    "Alguém tentou pôr este email em outra conta daqui, mas ele já é da sua conta, que entra pelo Discord ou pelo Google, e continua nela."
-                },
+                "Alguém tentou pôr este email em outra conta daqui, mas ele já é da sua conta e continua nela.",
                 "Um email fica em uma conta só. Se foi você e quer usá-lo na outra, troque antes o email desta, na aba Logins.",
             ],
-            "Entrar",
+            "Entrar por email",
             "Se não foi você, ignore este email. Nada muda na sua conta.",
         ),
         Locale::Es => (
             "Este email ya es de tu cuenta",
             [
-                if has_password {
-                    "Alguien intentó poner este email en otra cuenta de aquí, pero ya es de tu cuenta y sigue en ella."
-                } else {
-                    "Alguien intentó poner este email en otra cuenta de aquí, pero ya es de tu cuenta, que entra con Discord o con Google, y sigue en ella."
-                },
+                "Alguien intentó poner este email en otra cuenta de aquí, pero ya es de tu cuenta y sigue en ella.",
                 "Un email está en una sola cuenta. Si fuiste tú y quieres usarlo en la otra, cambia antes el email de esta, en la pestaña Accesos.",
             ],
-            "Entrar",
+            "Entrar por email",
             "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
     };
@@ -153,75 +120,131 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str, has_password: bool) -> 
         alert: None,
         action: Action {
             label: label.into(),
-            url: page(web, locale, "/login"),
+            url: page(web, locale, "/login/email"),
         },
         note: Some(note.into()),
     };
     compose(web, locale, to, content)
 }
 
-/// Link para criar uma senha nova.
-pub fn password_reset(web: &str, locale: Locale, to: &str, token: &str) -> Email {
-    let url = format!("{}#{token}", page(web, locale, "/login/reset"));
+/// Entrar por email: o código, para digitar na página de entrar, e o link, que
+/// abre uma página com o botão de entrar. Vale o que vier primeiro.
+pub fn email_login(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
+    let url = format!("{}#{token}", page(web, locale, "/login/email/confirm"));
     let content = match locale {
         Locale::Pt => Content {
-            title: "Crie uma senha nova".into(),
-            paragraphs: vec!["Recebemos um pedido de senha nova para a sua conta.".into()],
-            code: None,
+            title: "Entre na sua conta".into(),
+            paragraphs: vec![
+                "Para entrar, digite este código na página de entrar ou use o botão abaixo.".into(),
+            ],
+            code: Some(code.into()),
             alert: None,
             action: Action {
-                label: "Criar senha nova".into(),
+                label: "Entrar".into(),
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR} e só uma vez. Se não foi você, ignore este email. A senha continua a mesma."
+                "O código e o link valem por {LOGIN_VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
             )),
         },
         Locale::Es => Content {
-            title: "Crea una contraseña nueva".into(),
-            paragraphs: vec!["Recibimos un pedido de contraseña nueva para tu cuenta.".into()],
-            code: None,
+            title: "Entra en tu cuenta".into(),
+            paragraphs: vec![
+                "Para entrar, escribe este código en la página de entrar o usa el botón de abajo."
+                    .into(),
+            ],
+            code: Some(code.into()),
             alert: None,
             action: Action {
-                label: "Crear contraseña nueva".into(),
+                label: "Entrar".into(),
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR} y una sola vez. Si no fuiste tú, ignora este email. La contraseña sigue igual."
+                "El código y el enlace valen por {LOGIN_VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
             )),
         },
     };
     compose(web, locale, to, content)
 }
 
-/// Link que confirma o email novo da conta.
-pub fn email_change(web: &str, locale: Locale, to: &str, token: &str) -> Email {
+/// O código que prova o email de agora, na conta que só entra por ele, antes de
+/// mudar os logins. Sem link: é digitado na aba Logins, na sessão que o pediu. É
+/// também o aviso de que alguém tentou, se não foi a pessoa.
+pub fn email_proof(web: &str, locale: Locale, to: &str, code: &str) -> Email {
+    let url = page(web, locale, "/account/sessions");
+    let content = match locale {
+        Locale::Pt => Content {
+            title: "Confirme que é você".into(),
+            paragraphs: vec![
+                "Para mudar os logins da sua conta, digite este código na aba Logins.".into(),
+            ],
+            code: Some(code.into()),
+            alert: Some(Alert {
+                title: "Não foi você?".into(),
+                text: "Alguém está com a sua conta aberta. Encerre as sessões que você não reconhecer, e sem este código ele não muda os logins.".into(),
+            }),
+            action: Action {
+                label: "Ver as sessões".into(),
+                url,
+            },
+            note: Some(format!("O código vale por {LOGIN_VALID_FOR}.")),
+        },
+        Locale::Es => Content {
+            title: "Confirma que eres tú".into(),
+            paragraphs: vec![
+                "Para cambiar los accesos de tu cuenta, escribe este código en la pestaña Accesos."
+                    .into(),
+            ],
+            code: Some(code.into()),
+            alert: Some(Alert {
+                title: "¿No fuiste tú?".into(),
+                text: "Alguien tiene tu cuenta abierta. Cierra las sesiones que no reconozcas; sin este código no puede cambiar los accesos.".into(),
+            }),
+            action: Action {
+                label: "Ver las sesiones".into(),
+                url,
+            },
+            note: Some(format!("El código vale por {LOGIN_VALID_FOR}.")),
+        },
+    };
+    compose(web, locale, to, content)
+}
+
+/// O código, para digitar na aba Logins, e o link que confirmam o email novo da
+/// conta. Vale o que vier primeiro.
+pub fn email_change(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/email/confirm"));
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme seu email".into(),
-            paragraphs: vec!["Confirme para que este passe a ser o email da sua conta.".into()],
-            code: None,
+            paragraphs: vec![
+                "Para que este passe a ser o email da sua conta, digite este código na aba Logins ou use o botão abaixo."
+                    .into(),
+            ],
+            code: Some(code.into()),
             alert: None,
             action: Action {
                 label: "Confirmar email".into(),
                 url,
             },
             note: Some(format!(
-                "O link vale por {VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
+                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
             )),
         },
         Locale::Es => Content {
             title: "Confirma tu email".into(),
-            paragraphs: vec!["Confirma para que este pase a ser el email de tu cuenta.".into()],
-            code: None,
+            paragraphs: vec![
+                "Para que este pase a ser el email de tu cuenta, escribe este código en la pestaña Accesos o usa el botón de abajo."
+                    .into(),
+            ],
+            code: Some(code.into()),
             alert: None,
             action: Action {
                 label: "Confirmar email".into(),
                 url,
             },
             note: Some(format!(
-                "El enlace vale por {VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
+                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
             )),
         },
     };

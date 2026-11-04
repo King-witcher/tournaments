@@ -8,29 +8,32 @@ import { CredentialsForm } from "./credentials-form";
 
 type Props = {
   hasPassword: boolean;
-  /** O Discord ou o Google está vinculado: sem senha, a conta ainda entra. */
-  providerLinked: boolean;
   hasEmail: boolean;
+  /** A conta só entra pelo email, e esta sessão não digitou o código dele. */
+  locked: boolean;
 };
 
 /**
  * A senha da conta, que entra com ela e o email: criar, se houver email, ou
- * trocar e remover (remover só com o Discord ou o Google vinculado). Sem
- * email, o motivo no lugar do formulário. O bloco recebe o foco quando o
- * formulário some (`tabIndex={-1}`).
+ * trocar e remover (o email fica, e a conta continua entrando por ele). Sem
+ * email ou com `locked`, o motivo no lugar do formulário. O bloco recebe o foco
+ * quando o formulário some (`tabIndex={-1}`).
  */
 export async function PasswordLoginSection({
   hasPassword,
-  providerLinked,
   hasEmail,
+  locked,
 }: Props) {
   const t = await getTranslations("Account.password");
+  const tEmail = await getTranslations("Account.email");
 
   return (
     <div id={LOGIN_SECTION.password} tabIndex={-1}>
       <Section title={t("title")}>
-        {hasPassword ? (
-          <ChangePasswordForm canRemove={providerLinked} />
+        {locked ? (
+          <Notice kind="info">{tEmail("proofFirst")}</Notice>
+        ) : hasPassword ? (
+          <ChangePasswordForm />
         ) : hasEmail ? (
           <CredentialsForm />
         ) : (

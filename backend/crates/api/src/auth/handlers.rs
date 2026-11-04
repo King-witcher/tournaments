@@ -92,6 +92,25 @@ pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Result<Res
     Ok((jar, StatusCode::NO_CONTENT).into_response())
 }
 
+#[utoipa::path(
+    post,
+    path = "/auth/sessions/clear-expired",
+    tag = "auth",
+    responses((status = NO_CONTENT, description = "Tira o cookie se a sessão dele não vale mais. A sessão que vale fica, com o cookie: o front chama isto depois de um 401, e outra aba pode ter entrado nesse meio tempo"))
+)]
+pub async fn clear_expired_session(
+    State(state): State<AppState>,
+    user: Option<CurrentUser>,
+    jar: CookieJar,
+) -> Response {
+    let jar = if user.is_some() {
+        jar
+    } else {
+        jar.remove(state.auth.clear_session_cookie())
+    };
+    (jar, StatusCode::NO_CONTENT).into_response()
+}
+
 /// Sessões de `user` encerradas (hashes em hexadecimal): os sockets delas
 /// fecham, pelo outbox.
 pub(super) async fn sessions_ended(

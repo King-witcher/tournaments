@@ -10,13 +10,9 @@
     "resent": "Email nuevo enviado. El código y el enlace anteriores dejaron de valer.",
     "back": "Usar otro email"
   },
-  "code": {
-    "label": "Código del email",
-    "incomplete": "Escribe los 6 dígitos del código."
-  },
   "confirm": {
     "title": "Confirmar email",
-    "creating": "Creando tu cuenta…",
+    "submit": "Confirmar",
     "signup": "Crear cuenta",
     "login": "Entrar"
   }

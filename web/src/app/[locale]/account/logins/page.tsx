@@ -24,7 +24,7 @@ export default async function AccountLoginsPage({
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />
       </Suspense>
-      {/* A recuperação pelo email volta para cá, com ?password_reset=1. */}
+      {/* Quem define uma senha nova ao entrar por email volta para cá, com ?password_reset=1. */}
       <Suspense fallback={null}>
         <PasswordResetDone searchParams={searchParams} />
       </Suspense>

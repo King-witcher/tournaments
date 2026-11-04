@@ -49,6 +49,8 @@ export function CredentialsForm() {
         api.POST("/auth/password", { body: { password } }),
       );
       if (!outcome.ok) {
+        // A prova venceu com a tela aberta: a página volta a pedir o código.
+        if (outcome.code === "auth.email_proof_required") router.refresh();
         return {
           error: errorMessage(outcome.code, outcome.params),
           field: errorField(outcome.code),

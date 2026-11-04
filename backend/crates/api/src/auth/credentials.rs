@@ -12,6 +12,7 @@ use super::{
     CurrentUser,
     attempts::{check_password, confirm_password},
     db,
+    email_proof::require_email_proof,
     emails::Notice,
     handlers::sessions_ended,
     kv,
@@ -87,16 +88,20 @@ pub(super) async fn start_session(
     responses(
         (status = CREATED, body = LoginMethods, description = "Senha criada para a conta logada, que passa a entrar também com o email dela e a senha"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.email_required (a conta não tem email, que é o login e recuperaria a senha)"),
+        (status = FORBIDDEN, body = ErrorBody, description = "auth.email_proof_required (a conta só entra pelo email, e esta sessão não digitou o código mandado a ele)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.password_exists, auth.email_required (a conta não tem email, que é o login com a senha)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "auth.password_invalid, request.invalid_body"),
     )
 )]
 pub async fn create_password(
     State(state): State<AppState>,
     user: CurrentUser,
+    jar: CookieJar,
     JsonBody(body): JsonBody<NewPassword>,
 ) -> Result<(StatusCode, Json<LoginMethods>), ApiError> {
     validate_password(&body.password)?;
+    let methods = db::login_methods(&state.db, user.id).await?;
+    require_email_proof(&state, &methods, &jar).await?;
     let hash = hash_password(body.password).await?;
     db::add_password(&state.db, user.id, &hash).await?;
     notify(&state, user.id, Notice::PasswordCreated);
@@ -129,9 +134,9 @@ pub async fn change_password(
 
     let hash = hash_password(body.password).await?;
     db::update_password(&state.db, user.id, &hash).await?;
-    // Quem sabia a senha antiga sai, e os links que ele possa ter pedido (a
-    // recuperação, a troca de email) param de valer.
-    kv::cancel_password_reset(&state.redis, user.id).await?;
+    // Quem sabia a senha antiga sai, e o que ele possa ter pedido (entrar por
+    // email, a troca de email) para de valer.
+    kv::cancel_email_login(&state.redis, user.id).await?;
     kv::cancel_email_change(&state.redis, user.id).await?;
     if let Some(current) = state.auth.session_token(&jar) {
         let keep = token::hash_token(current);
@@ -148,10 +153,10 @@ pub async fn change_password(
     tag = "auth",
     request_body = CurrentPassword,
     responses(
-        (status = OK, body = LoginMethods, description = "Senha removida; a conta continua entrando pelo Discord ou pelo Google"),
+        (status = OK, body = LoginMethods, description = "Senha removida; a conta continua entrando pelo email, que toda conta com senha tem, e pelo que vinculou"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "auth.wrong_password"),
-        (status = CONFLICT, body = ErrorBody, description = "auth.no_password, auth.last_login (a conta não tem Discord nem Google)"),
+        (status = CONFLICT, body = ErrorBody, description = "auth.no_password"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "auth.too_many_attempts {minutes}"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "request.invalid_body"),
     )

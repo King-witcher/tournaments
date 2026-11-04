@@ -7,9 +7,9 @@ type Props = {
 };
 
 /**
- * Na aba Logins, para quem acabou de trocar a senha pelo link do email
- * (`?password_reset=1`, de `PasswordResetForm`): diz que trocou e que as
- * outras sessões saíram. Fica em `<Suspense>`.
+ * Na aba Logins, para quem acabou de definir uma senha nova ao entrar por email
+ * (`?password_reset=1`, de `afterEmailLogin`): diz que salvou e que as outras
+ * sessões saíram. Fica em `<Suspense>`.
  */
 export async function PasswordResetDone({ searchParams }: Props) {
   const { password_reset } = await searchParams;

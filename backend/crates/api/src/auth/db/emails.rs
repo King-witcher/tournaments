@@ -1,31 +1,38 @@
 //! Email da conta (`users.email`): só confirmado e na forma canônica, único.
-//! A conta com senha sempre tem (o banco recusa o contrário).
+//! É um jeito de entrar. A conta com senha sempre tem (o banco recusa o
+//! contrário).
 
 use sqlx::{PgConnection, PgPool};
 
-use super::{logins::lock_user, passwords::password_login_exists};
+use super::{
+    logins::{has_identity_except, lock_user},
+    passwords::password_login_exists,
+};
 use crate::shared::ApiError;
 
-/// Conta como a recuperação de senha e os avisos a veem.
+/// Conta como os emails a veem: para onde vão e em que idioma.
 pub struct AccountContact {
     pub user_id: i64,
     pub email: Option<String>,
-    /// Entra com o email e a senha.
-    pub has_password: bool,
     pub locale: String,
 }
 
-/// Grava o email confirmado e devolve o de antes (para o aviso), com a conta
-/// ter senha ou não. Em uso por outra conta → 409 `auth.email_taken`.
-pub async fn set_email(
-    db: &PgPool,
-    user_id: i64,
-    email: &str,
-) -> Result<(Option<String>, bool), ApiError> {
+/// O que o aviso da troca precisa saber.
+pub struct EmailSet {
+    /// O email de antes.
+    pub before: Option<String>,
+    pub has_password: bool,
+    /// A conta entra pelo Discord ou pelo Google.
+    pub has_provider: bool,
+}
+
+/// Grava o email confirmado. Em uso por outra conta → 409 `auth.email_taken`.
+pub async fn set_email(db: &PgPool, user_id: i64, email: &str) -> Result<EmailSet, ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
     let before = current_email(&mut tx, user_id).await?;
     let has_password = password_login_exists(&mut tx, user_id).await?;
+    let has_provider = has_identity_except(&mut tx, user_id, None).await?;
     let result = sqlx::query!("update users set email = $2 where id = $1", user_id, email)
         .execute(&mut *tx)
         .await;
@@ -37,12 +44,16 @@ pub async fn set_email(
         Err(err) => return Err(err.into()),
     }
     tx.commit().await?;
-    Ok((before, has_password))
+    Ok(EmailSet {
+        before,
+        has_password,
+        has_provider,
+    })
 }
 
 /// Tira o email da conta e devolve o que saiu (para o aviso). Sem email → 409
-/// `auth.no_email`; com senha → 409 `auth.password_needs_email`: é por ele
-/// que a senha esquecida volta.
+/// `auth.no_email`; com senha → 409 `auth.password_needs_email`: ela entra com
+/// ele; sem Discord nem Google → 409 `auth.last_login`.
 pub async fn remove_email(db: &PgPool, user_id: i64) -> Result<String, ApiError> {
     let mut tx = db.begin().await?;
     lock_user(&mut tx, user_id).await?;
@@ -51,6 +62,9 @@ pub async fn remove_email(db: &PgPool, user_id: i64) -> Result<String, ApiError>
         .ok_or(ApiError::conflict("auth.no_email"))?;
     if password_login_exists(&mut tx, user_id).await? {
         return Err(ApiError::conflict("auth.password_needs_email"));
+    }
+    if !has_identity_except(&mut tx, user_id, None).await? {
+        return Err(ApiError::conflict("auth.last_login"));
     }
     sqlx::query!("update users set email = null where id = $1", user_id)
         .execute(&mut *tx)
@@ -79,11 +93,7 @@ pub async fn contact_by_id(
 ) -> Result<Option<AccountContact>, sqlx::Error> {
     sqlx::query_as!(
         AccountContact,
-        r#"select u.id as user_id, u.email,
-                  p.user_id is not null as "has_password!", u.locale
-           from users u
-           left join password_credentials p on p.user_id = u.id
-           where u.id = $1"#,
+        "select id as user_id, email, locale from users where id = $1",
         user_id
     )
     .fetch_optional(db)
@@ -97,11 +107,7 @@ pub async fn contact_by_email(
 ) -> Result<Option<AccountContact>, sqlx::Error> {
     sqlx::query_as!(
         AccountContact,
-        r#"select u.id as "user_id!", u.email,
-                  p.user_id is not null as "has_password!", u.locale as "locale!"
-           from users u
-           left join password_credentials p on p.user_id = u.id
-           where u.email = $1"#,
+        "select id as user_id, email, locale from users where email = $1",
         email
     )
     .fetch_optional(db)

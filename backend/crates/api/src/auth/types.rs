@@ -102,18 +102,54 @@ pub struct LinkToken {
     pub token: String,
 }
 
+/// Pedido do link e do código para entrar por email.
 #[derive(Deserialize, ToSchema)]
-pub struct PasswordResetRequest {
+pub struct EmailLoginRequest {
     #[schema(example = "rapha@gmail.com")]
     pub email: String,
 }
 
+/// A conta só entra pelo email?
+#[derive(Serialize, ToSchema)]
+pub struct EmailProofStatus {
+    /// Mudar os logins da conta pede o código mandado ao email de agora: ela não
+    /// tem senha nem provedor.
+    pub needed: bool,
+    /// Esta sessão digitou o código há pouco.
+    pub proven: bool,
+}
+
+/// Entrar com o código do email.
 #[derive(Deserialize, ToSchema)]
-pub struct PasswordReset {
+pub struct EmailLoginCode {
+    /// O email do pedido, escrito de qualquer jeito que dê na forma canônica.
+    #[schema(example = "rapha@gmail.com")]
+    pub email: String,
+    /// 6 dígitos.
+    #[schema(example = "042917")]
+    pub code: String,
+    /// Senha nova, de 8 a 128 caracteres: com ela, as outras sessões da conta
+    /// são encerradas.
+    pub password: Option<String>,
+}
+
+/// Entrar com o link do email.
+#[derive(Deserialize, ToSchema)]
+pub struct EmailLoginLink {
     /// Token do link do email.
     pub token: String,
-    /// Senha nova, de 8 a 128 caracteres.
-    pub password: String,
+    /// Senha nova, de 8 a 128 caracteres: com ela, as outras sessões da conta
+    /// são encerradas.
+    pub password: Option<String>,
+}
+
+/// O código de um email mandado à conta logada: o da troca, ou o que prova o
+/// email de agora.
+#[derive(Deserialize, ToSchema)]
+pub struct EmailCode {
+    /// 6 dígitos.
+    #[schema(example = "042917")]
+    pub code: String,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -172,7 +208,7 @@ pub struct AccountDeletion {
     pub scheduled_for: DateTime<Utc>,
 }
 
-/// Quem acabou de entrar (login, cadastro confirmado, senha nova pelo link).
+/// Quem acabou de entrar (login, cadastro confirmado, entrar por email).
 #[derive(Serialize, ToSchema)]
 pub struct SignedIn {
     #[serde(flatten)]
@@ -187,16 +223,15 @@ pub struct SessionPath {
     pub id: String,
 }
 
-/// Formas de login da conta, e o email que recupera a senha. Sempre sobra
-/// pelo menos um login.
+/// Formas de login da conta. Sempre sobra pelo menos uma: o email confirmado
+/// já conta.
 #[derive(Serialize, ToSchema)]
 pub struct LoginMethods {
     pub discord: bool,
     pub google: bool,
     /// Entra com o email e a senha.
     pub password: bool,
-    /// Email confirmado, na forma canônica. Toda conta com senha tem (é o
-    /// login dela e por ele a senha esquecida volta); só a conta sem senha
-    /// fica sem.
+    /// Email confirmado, na forma canônica: entra com um código ou link mandado
+    /// a ele. Toda conta com senha tem; só a conta sem senha pode ficar sem.
     pub email: Option<String>,
 }

@@ -160,7 +160,7 @@ async fn unlink_needs_password() {
         (StatusCode::CONFLICT, err("auth.last_login"))
     );
 
-    // A senha vem com o email que a recupera.
+    // O email já é outro login, e a senha vem com ele.
     set_email(&db, id, "quaker@example.com").await;
     let (status, _) = post(&app, "/auth/password", &me, json!({ "password": PASSWORD })).await;
     assert_eq!(status, StatusCode::CREATED);

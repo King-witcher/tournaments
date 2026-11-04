@@ -15,6 +15,7 @@ import { AcceptInviteButton } from "./accept-invite-button";
 import { InviteDetails } from "./invite-details";
 import { InviteMembership } from "./invite-membership";
 import styles from "./invite-view.module.scss";
+import { RetryInviteButton } from "./retry-invite-button";
 
 type InvitedTournament = components["schemas"]["InvitedTournament"];
 
@@ -42,11 +43,17 @@ export async function InviteView({ token }: { token: string }) {
     return (
       <>
         <PageHeader title={t("unavailable")} />
-        <PageError href="/" label={tNav("backHome")}>
-          {code === "tenant.deletion_scheduled"
-            ? t("deletionScheduled")
-            : await apiErrorMessage(code)}
-        </PageError>
+        <Stack gap={5}>
+          <PageError href="/" label={tNav("backHome")}>
+            {code === "tenant.deletion_scheduled"
+              ? t("deletionScheduled")
+              : await apiErrorMessage(code)}
+          </PageError>
+          {/* A API não respondeu: não é o link que não vale. */}
+          {(!preview || preview.response.status >= 500) && (
+            <RetryInviteButton />
+          )}
+        </Stack>
       </>
     );
   }

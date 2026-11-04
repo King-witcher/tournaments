@@ -38,7 +38,7 @@
 
 Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da cota faz os comandos falharem até o mês virar.
 
-- **Só dado efêmero, que some sozinho com TTL**: sessões e tentativas de senha, o cadastro esperando confirmação (conta que ninguém confirma não chega ao banco), links de recuperação e de troca de email, limites de envio de email e por IP, o vínculo de provedor autorizado por 10 minutos. Sessão no Postgres sobrevivia a deploy, mas a tabela só crescia; no Redis expira sozinha, tem índice por conta e tira as escritas de login do banco.
+- **Só dado efêmero, que some sozinho com TTL**: sessões e tentativas de senha, o cadastro esperando confirmação (conta que ninguém confirma não chega ao banco), links e códigos de entrar por email e de troca de email, limites de envio de email e por IP, o vínculo de provedor autorizado por 10 minutos. Sessão no Postgres sobrevivia a deploy, mas a tabela só crescia; no Redis expira sozinha, tem índice por conta e tira as escritas de login do banco.
 - **Cota**: a sessão é o único comando no caminho de toda requisição logada (um `HGET`). Referência: noite de torneio com 32 jogadores recarregando a chave a cada 30 s por 3 horas, ~4 chamadas por página, dá ~46 mil comandos. Se apertar: pago por uso (US$ 0,20 por 100 mil comandos) ou o fixo de 250 MB (US$ 10/mês). Pipe e MULTI juntam idas e voltas, mas cada comando deles conta.
 - **Fora, por ora**:
   - cache de leitura: chave e torneio mudam com o tempo, parte da resposta depende de quem vê, e cada acerto também gasta cota. Só depois de medir;

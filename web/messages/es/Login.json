@@ -2,22 +2,22 @@
   "title": "Entrar",
   "noAccount": "¿No tienes cuenta?",
   "signup": "Crear cuenta",
-  "forgot": {
-    "title": "Olvidé mi contraseña",
-    "text": "Enviamos un enlace al email de la cuenta para que crees una contraseña nueva.",
-    "email": "Email",
-    "submit": "Enviar enlace",
-    "sentTitle": "Pedido recibido",
-    "sent": "Si “{email}” es de una cuenta con contraseña, le enviamos el enlace. Vale 1 hora. ¿No llegó? Revisa la carpeta de spam.",
-    "again": "Pedir otro enlace",
+  "email": {
+    "title": "Entrar por email",
+    "text": "Enviamos un código y un enlace al email de la cuenta.",
+    "address": "Email",
+    "submit": "Enviar código",
+    "expired": "Ese enlace expiró. Pide otro aquí.",
+    "sentTitle": "Revisa tu email",
+    "sent": "Si “{email}” es de una cuenta, enviamos un código y un enlace. Valen 15 minutos. ¿No llegó? Revisa la carpeta de spam.",
+    "resend": "Reenviar email",
+    "resendIn": "Reenviar en {seconds} s",
+    "back": "Usar otro email",
+    "newPassword": "Definir una contraseña nueva",
+    "newPasswordHint": "Las otras sesiones de la cuenta se cierran.",
+    "requestAgain": "Pedir otro email",
     "remembered": "¿Recordaste la contraseña?",
     "backToLogin": "Entrar"
-  },
-  "reset": {
-    "title": "Nueva contraseña",
-    "text": "Al guardar, se cierran las otras sesiones de la cuenta.",
-    "submit": "Guardar y entrar",
-    "requestAgain": "Pedir otro enlace"
   },
   "deletionScheduledTitle": "Eliminación de la cuenta programada",
   "deletionScheduled": "Tu cuenta se eliminará el <date></date>, y saliste de todos los dispositivos. Para cancelar, vuelve a entrar antes de esa fecha."

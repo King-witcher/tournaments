@@ -1,15 +1,6 @@
 {
   "title": "Inicio",
   "loading": "Cargando el inicio…",
-  "anonymous": {
-    "hint": "¿Recibiste un enlace de invitación? Ábrelo, que te lleva al registro.",
-    "login": "Entrar",
-    "signup": "Crear cuenta"
-  },
-  "status": {
-    "unavailable": "El sitio tiene problemas ahora. Inténtalo de nuevo en un rato.",
-    "offline": "No se pudo conectar con el servidor. Inténtalo de nuevo en un rato."
-  },
   "waiting": {
     "title": "Esperando tu acción",
     "checkInUntil": "Check-in hasta <date></date>",

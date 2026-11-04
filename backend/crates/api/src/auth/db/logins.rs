@@ -1,10 +1,11 @@
 //! Formas de login da conta: os provedores externos (Discord e Google, em
-//! `user_identities`) e a senha (`passwords.rs`). Ligar e desligar cada uma
-//! sem que a conta fique sem nenhuma, nem sem como recuperar o acesso.
+//! `user_identities`), o email (`emails.rs`) e a senha (`passwords.rs`), que
+//! sempre vem com o email. Ligar e desligar cada uma sem que a conta fique sem
+//! nenhuma.
 
 use sqlx::{PgConnection, PgPool};
 
-use super::passwords::password_login_exists;
+use super::emails::has_email;
 use crate::{
     auth::{provider::Provider, types::LoginMethods},
     shared::ApiError,
@@ -126,9 +127,8 @@ pub async fn link_external(
 }
 
 /// Desliga o provedor e, se é o Discord, tira o avatar que vinha dele. Sem o
-/// provedor → 409 `not_linked` (o código dele); sem outro login (senha ou
-/// outro provedor) → 409 `auth.last_login`. A senha que fica sempre tem o
-/// email da conta para recuperá-la (regra do banco).
+/// provedor → 409 `not_linked` (o código dele); sem outro login (o email, que
+/// toda conta com senha tem, ou outro provedor) → 409 `auth.last_login`.
 pub async fn unlink_external(
     db: &PgPool,
     user_id: i64,
@@ -139,7 +139,7 @@ pub async fn unlink_external(
     if !has_identity(&mut tx, user_id, provider).await? {
         return Err(ApiError::conflict(provider.codes().not_linked));
     }
-    if !password_login_exists(&mut tx, user_id).await?
+    if !has_email(&mut tx, user_id).await?
         && !has_identity_except(&mut tx, user_id, Some(provider)).await?
     {
         return Err(ApiError::conflict("auth.last_login"));
