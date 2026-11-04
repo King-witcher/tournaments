@@ -42,6 +42,7 @@
       "changes": "Durante o torneio, a organização pode trocar um jogador por um reserva ou por outro membro da comunidade. Se alguém sair da comunidade, o time continua com menos jogadores.",
       "actors": {
         "captain": "O capitão faz tudo pelo time: marca “Pronto”, veta os mapas, bane e escolhe os campeões de todos e envia, confirma ou contesta o resultado. Se ele não aparecer, o prazo sorteia o que faltar, e a organização pode trocar o capitão.",
+        "balanced": "O capitão veta os mapas e bane os campeões. Cada jogador escolhe o próprio campeão. Qualquer jogador envia, confirma ou contesta o resultado, e vale o primeiro clique.",
         "everyone": "Qualquer jogador veta os mapas, bane e envia, confirma ou contesta o resultado pelo time, e vale o primeiro clique. Cada um escolhe o próprio campeão.",
         "custom": {
           "veto": {
@@ -137,7 +138,8 @@
       "confirmTdm": "O outro time tem {window} para confirmar ou contestar, e o colega de quem enviou também pode contestar. Sem resposta, a partida se confirma sozinha. Se o resultado chegar antes de a partida completar {duration}, os {window} só começam a contar aos {duration}.",
       "late": "Uma partida confirmada ainda pode ser contestada até a próxima série de um de vocês começar.",
       "lateTdm": "Uma partida confirmada ainda pode ser contestada até a próxima série de um dos dois times começar.",
-      "organizer": "A organização decide as contestações.",
+      "organizer": "O adversário pode aceitar a contestação e corrigir o placar. Senão, a organização decide.",
+      "organizerTdm": "O capitão do time adversário de quem contestou pode aceitar e corrigir o placar. Senão, a organização decide.",
       "reportCaptain": "Depois de cada partida, o capitão envia o placar na página da série.",
       "confirmCaptain": "O capitão do outro time tem {window} para confirmar ou contestar. Sem resposta, a partida se confirma sozinha. Se o resultado chegar antes de a partida completar {duration}, os {window} só começam a contar aos {duration}."
     },

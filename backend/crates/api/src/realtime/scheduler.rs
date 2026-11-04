@@ -1,7 +1,8 @@
 //! O agendador: a cada 10 s, numa instância só (advisory lock do Postgres),
 //! abre o check-in que chegou na hora, avisa a hora de iniciar, confirma os
 //! mapas com a janela vencida, sorteia os passos de veto vencidos (rede de
-//! segurança do relógio preciso, `clock`), avisa na véspera as exclusões de
+//! segurança do relógio preciso, `clock`), avisa a organização das contestações
+//! que ninguém resolveu a tempo, avisa na véspera as exclusões de
 //! comunidade (ao owner) e de conta (por email) e executa as que venceram,
 //! cada torneio, comunidade ou conta na própria
 //! transação e emitindo pelo outbox; uma vez por dia roda as rotinas dos
@@ -35,6 +36,8 @@ pub struct Tick {
     pub confirmed: u64,
     /// Passos de veto sorteados pelo fim do tempo.
     pub vetoed: u64,
+    /// Contestações que a organização foi avisada de resolver.
+    pub contest_notices: u64,
     /// Owners avisados da exclusão da comunidade na véspera.
     pub tenant_reminders: usize,
     /// Lembretes por email da exclusão da conta que saíram.
@@ -69,6 +72,7 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             reminded: tournaments::remind_due_starts(&state.db, now).await?,
             confirmed: matches::confirm_all_due(&state.db, now).await?,
             vetoed: matches::veto_clock(&state.db, now).await?.0,
+            contest_notices: matches::notify_contested(&state.db, now).await?,
             tenant_reminders: tenants::remind_due_deletions(&state.db, now).await?,
             account_reminders: auth::remind_due_account_deletions(state, now).await?,
             deleted_tenants: tenants::delete_due(&state.db, now).await?,

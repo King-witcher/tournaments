@@ -62,6 +62,7 @@ async fn a_new_community_has_no_webhook_and_lists_the_notices() {
             ("match.veto_started", false),
             ("tournament.start_due", true),
             ("match.game_contested", true),
+            ("match.contest_received", true),
             ("tournament.finished", true),
             ("match.series_decided", false),
         ]

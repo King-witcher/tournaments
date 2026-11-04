@@ -33,6 +33,7 @@
       "opponent_ready": "Rival listo para el veto",
       "veto_started": "Empezó el veto",
       "game_contested": "Partida impugnada, para la organización",
+      "contest_received": "Partida impugnada, para el capitán rival",
       "series_decided": "Resultado de cada serie (muchos mensajes)"
     }
   },

@@ -8,6 +8,7 @@ export const ACTIONABLE: Schemas["ViewerTask"][] = [
   "report",
   "respond",
   "resolve",
+  "accept_contest",
   "ready",
   "veto",
 ];
@@ -66,13 +67,14 @@ export function taskKey(
 /**
  * Cor da etiqueta do que a partida espera de quem vê. A ação que falta a
  * quem joga tem o destaque do check-in que falta (roxo); a contestação para
- * a organização resolver, o do contestado; esperar o outro lado, o de
- * aguardando.
+ * a organização resolver ou o capitão aceitar, o do contestado; esperar o
+ * outro lado, o de aguardando.
  */
 export const TASK_STATUS: Record<Schemas["ViewerTask"], Status> = {
   report: "check_in",
   respond: "check_in",
   resolve: "contested",
+  accept_contest: "contested",
   await_opponent: "waiting",
   await_organizer: "waiting",
   await_captain: "waiting",

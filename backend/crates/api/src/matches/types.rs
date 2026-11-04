@@ -130,10 +130,13 @@ pub enum ViewerTask {
     Respond,
     /// Enviou e espera o adversário (ou o fim da janela).
     AwaitOpponent,
-    /// Mapa contestado: espera o organizador.
+    /// Mapa contestado: espera o capitão adversário de quem contestou ou o
+    /// organizador.
     AwaitOrganizer,
     /// Organizer ou owner: resolver um mapa contestado.
     Resolve,
+    /// Capitão do time adversário de quem contestou: pode aceitar a contestação.
+    AcceptContest,
     /// Clicar em "Pronto" para o veto começar.
     Ready,
     /// Fazer o passo do veto que está na vez dele (na escolha simultânea do

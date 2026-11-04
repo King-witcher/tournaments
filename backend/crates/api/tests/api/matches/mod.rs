@@ -257,6 +257,17 @@ pub async fn contest(
     .await
 }
 
+/// O capitão adversário aceita a contestação do mapa `n`, com o resultado certo.
+pub async fn accept(
+    app: &Router,
+    who: &User,
+    key: &str,
+    n: u8,
+    body: Value,
+) -> (StatusCode, Value) {
+    post(app, &game_uri(key, n, "/contest/accept"), who, body).await
+}
+
 /// O organizador lança ou corrige o mapa `n`.
 pub async fn set_game(
     app: &Router,

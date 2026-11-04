@@ -1,12 +1,12 @@
-//! Mapas da série (`match_games`): ler, enviar, confirmar, contestar, o
-//! organizador lançar e anular.
+//! Mapas da série (`match_games`): ler, enviar, confirmar, contestar, aceitar a
+//! contestação, o organizador lançar e anular, e o aviso atrasado à organização.
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::{MapId, ParticipantId},
     series,
 };
-use sqlx::PgConnection;
+use sqlx::{PgConnection, PgPool};
 
 use super::MatchRef;
 use crate::{
@@ -15,6 +15,7 @@ use crate::{
         result::{Confirmation, Side},
     },
     shared::ApiError,
+    tenants::TenantId,
     tournaments::TournamentId,
 };
 
@@ -55,8 +56,8 @@ pub async fn games(
         GameRow,
         r#"select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,
                   m.slug as "map_slug?", m.name as "map_name?", g.a_frags, g.b_frags, g.status,
-                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_at,
-                  g.contest_comment, g.confirmed_via, g.confirmed_at
+                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_by,
+                  g.contested_at, g.contest_comment, g.confirmed_via, g.confirmed_at
            from match_games g
            left join maps m on m.id = g.map_id
            where g.tournament_id = $1 and g.stage = $2
@@ -143,8 +144,9 @@ pub async fn put_game(
                map_id = excluded.map_id, a_frags = excluded.a_frags, b_frags = excluded.b_frags,
                status = 'confirmed', reported_side = null, reported_by = excluded.reported_by,
                reported_at = now(), confirm_by = null, contested_by = null,
-               contested_at = null, contest_comment = null, confirmed_via = 'organizer',
-               confirmed_by = excluded.confirmed_by, confirmed_at = now()"#,
+               contested_at = null, contest_comment = null, contest_notify_at = null,
+               confirmed_via = 'organizer', confirmed_by = excluded.confirmed_by,
+               confirmed_at = now()"#,
         at.tenant.get(),
         at.tournament.get(),
         at.stage,
@@ -174,7 +176,8 @@ pub async fn confirm_game(
     sqlx::query!(
         r#"update match_games
            set status = 'confirmed', confirmed_via = $2, confirmed_by = $3, confirmed_at = now(),
-               contested_by = null, contested_at = null, contest_comment = null
+               contested_by = null, contested_at = null, contest_comment = null,
+               contest_notify_at = null
            where id = $1 and status in ('pending', 'contested')"#,
         id,
         via.as_str(),
@@ -187,25 +190,122 @@ pub async fn confirm_game(
 
 /// Um jogador da série (`by`) contesta a partida `id`, pendente ou já
 /// confirmada (a contestação tardia): sai do prazo, perde a confirmação e
-/// espera o organizador.
+/// espera o capitão adversário ou o organizador, que é avisado depois de
+/// `notify_after` segundos.
 pub async fn contest_game(
     conn: &mut PgConnection,
     id: i64,
     by: i64,
     comment: &str,
+    notify_after: f64,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"update match_games
            set status = 'contested', contested_by = $2, contested_at = now(), contest_comment = $3,
+               contest_notify_at = now() + make_interval(secs => $4),
                confirmed_via = null, confirmed_by = null, confirmed_at = null
            where id = $1 and status in ('pending', 'confirmed')"#,
         id,
         by,
-        comment
+        comment,
+        notify_after
     )
     .execute(conn)
     .await?;
     Ok(())
+}
+
+/// O capitão `by`, do lado `side`, aceita a contestação da partida `id`: ela
+/// passa a valer com o resultado que ele deu, confirmada como resposta do
+/// adversário. O prazo gravado é o que uma partida enviada agora teria, para a
+/// linha continuar dizendo que foi enviada por um jogador.
+pub async fn accept_contest(
+    conn: &mut PgConnection,
+    id: i64,
+    game: &NewGame,
+    side: Side,
+    by: i64,
+    contest_minutes: i32,
+) -> Result<(), sqlx::Error> {
+    let (a_frags, b_frags) = game.frags;
+    sqlx::query!(
+        r#"update match_games
+           set winner = $2, map_id = $3, a_frags = $4, b_frags = $5, reported_side = $6,
+               reported_by = $7, reported_at = now(),
+               confirm_by = now() + make_interval(mins => $8), contested_by = null,
+               contested_at = null, contest_comment = null, contest_notify_at = null,
+               status = 'confirmed', confirmed_via = 'opponent', confirmed_by = $7,
+               confirmed_at = now()
+           where id = $1 and status = 'contested'"#,
+        id,
+        game.winner_id().0,
+        game.map.0,
+        a_frags,
+        b_frags,
+        side.as_str(),
+        by,
+        contest_minutes
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
+/// Os torneios com partida contestada cujo aviso à organização venceu em `now`.
+pub async fn contest_notices_due(
+    db: &PgPool,
+    now: DateTime<Utc>,
+) -> Result<Vec<(TenantId, String)>, sqlx::Error> {
+    Ok(sqlx::query!(
+        r#"select distinct t.id, t.tenant_id, t.slug
+           from match_games g
+           join tournaments t on t.id = g.tournament_id
+           where g.contest_notify_at <= $1
+           order by t.id"#,
+        now
+    )
+    .fetch_all(db)
+    .await?
+    .into_iter()
+    .map(|r| (TenantId::new(r.tenant_id), r.slug))
+    .collect())
+}
+
+/// Uma partida contestada cujo aviso à organização venceu.
+pub struct ContestNotice {
+    pub game: i64,
+    pub match_key: String,
+    pub number: i16,
+    /// Quem contestou; `None` se a conta foi excluída.
+    pub contested_by: Option<i64>,
+    /// O apelido de quem contestou.
+    pub player: Option<String>,
+}
+
+/// Tira da fila os avisos à organização do torneio vencidos em `now` e os
+/// devolve: cada um sai uma vez só.
+pub async fn take_contest_notices(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    now: DateTime<Utc>,
+) -> Result<Vec<ContestNotice>, sqlx::Error> {
+    sqlx::query_as!(
+        ContestNotice,
+        r#"with due as (
+               update match_games set contest_notify_at = null
+               where tournament_id = $1 and contest_notify_at <= $2
+               returning id, tenant_id, match_key, number, contested_by
+           )
+           select d.id as game, d.match_key, d.number, d.contested_by as "contested_by?",
+                  m.nickname as "player?"
+           from due d
+           left join tenant_members m on m.tenant_id = d.tenant_id and m.user_id = d.contested_by
+           order by d.match_key, d.number"#,
+        tournament.get(),
+        now
+    )
+    .fetch_all(conn)
+    .await
 }
 
 /// Apaga os mapas `ids` (anulados).

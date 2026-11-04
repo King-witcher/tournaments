@@ -29,7 +29,7 @@
     "whoStartsSummary": "lado A começa",
     "whoActs": "Quem age pelo time",
     "whoActsOptions": {
-      "captain": "Centrado no capitão",
+      "captain": "Só o capitão",
       "all": "Todos os jogadores"
     },
     "whoActsHints": {

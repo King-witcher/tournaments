@@ -18,6 +18,7 @@ export function stepGame(key: StepKey): number | null {
 const GAME_ACTIONS: components["schemas"]["ViewerTask"][] = [
   "respond",
   "resolve",
+  "accept_contest",
 ];
 
 /** Os passos da série, o atual e o que abre (`seriesSteps`). */

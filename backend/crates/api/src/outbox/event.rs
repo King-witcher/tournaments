@@ -119,8 +119,8 @@ pub enum NoticeKind {
         opponent: String,
         confirm_by: DateTime<Utc>,
     },
-    /// Um mapa foi contestado e espera a organização (para organizers e
-    /// owner).
+    /// Um mapa foi contestado e ninguém resolveu a tempo: espera a organização
+    /// (para organizers e owner).
     #[serde(rename = "match.game_contested")]
     GameContested {
         tournament: String,
@@ -128,6 +128,28 @@ pub enum NoticeKind {
         match_key: String,
         game: i16,
         /// Quem contestou.
+        player: String,
+    },
+    /// Um mapa foi contestado e quem recebe pode aceitar (para o capitão do time
+    /// adversário de quem contestou, na hora).
+    #[serde(rename = "match.contest_received")]
+    ContestReceived {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        game: i16,
+        /// Quem contestou.
+        player: String,
+    },
+    /// A contestação foi aceita, e o mapa ficou com o resultado que o capitão
+    /// adversário deu (para quem contestou).
+    #[serde(rename = "match.contest_accepted")]
+    ContestAccepted {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        game: i16,
+        /// O capitão que aceitou.
         player: String,
     },
     /// O adversário está pronto para o veto e espera quem recebe.

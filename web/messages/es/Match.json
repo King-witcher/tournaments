@@ -38,7 +38,7 @@
     "pending": "Se confirma sola a las <at></at> (faltan <time></time>).",
     "notCounted": "Todavía no cuenta en el marcador.",
     "contested": "{name} impugnó: “{comment}”",
-    "notCountedContested": "Queda fuera del marcador hasta que la resuelva la organización.",
+    "notCountedContested": "Queda fuera del marcador hasta que se resuelva la impugnación.",
     "confirmed": {
       "opponent": "Confirmada por el rival.",
       "deadline": "Confirmada al terminar el plazo.",
@@ -61,9 +61,12 @@
     "confirm": "Confirmar",
     "contest": "Impugnar",
     "comment": "¿Qué está mal?",
-    "commentHint": "La resuelve la organización.",
+    "commentHint": "El rival puede aceptar. Si no, la resuelve la organización.",
     "submitContest": "Enviar impugnación",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "acceptContest": "Aceptar impugnación",
+    "acceptHint": "Da el marcador correcto. La partida queda confirmada con él.",
+    "acceptSubmit": "Aceptar y corregir"
   },
   "organizer": {
     "title": "Organización",

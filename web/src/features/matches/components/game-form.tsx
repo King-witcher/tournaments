@@ -24,8 +24,8 @@ type Props = {
   target: MatchTarget;
   /** Número da partida na série. */
   number: number;
-  /** `report`: jogador envia (fica pendente); `organizer`: lança, resolve ou corrige, já confirmado. */
-  mode: "report" | "organizer";
+  /** `report`: jogador envia (fica pendente); `organizer`: lança, resolve ou corrige, já confirmado; `accept`: o capitão aceita a contestação, já confirmado. */
+  mode: "report" | "organizer" | "accept";
   names: { a: string; b: string };
   /** Os mapas que cabem na escolha (sem os já jogados na série). */
   maps: components["schemas"]["Map"][];

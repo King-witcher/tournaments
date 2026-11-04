@@ -38,7 +38,7 @@
     "pending": "Confirma sozinha às <at></at> (faltam <time></time>).",
     "notCounted": "Ainda não conta no placar.",
     "contested": "{name} contestou: “{comment}”",
-    "notCountedContested": "Fica fora do placar até a organização resolver.",
+    "notCountedContested": "Fica fora do placar até a contestação ser resolvida.",
     "confirmed": {
       "opponent": "Confirmada pelo adversário.",
       "deadline": "Confirmada pelo fim do prazo.",
@@ -61,9 +61,12 @@
     "confirm": "Confirmar",
     "contest": "Contestar",
     "comment": "O que está errado?",
-    "commentHint": "A organização resolve.",
+    "commentHint": "O adversário pode aceitar. Senão, a organização resolve.",
     "submitContest": "Enviar contestação",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "acceptContest": "Aceitar contestação",
+    "acceptHint": "Dê o placar certo. A partida fica confirmada com ele.",
+    "acceptSubmit": "Aceitar e corrigir"
   },
   "organizer": {
     "title": "Organização",

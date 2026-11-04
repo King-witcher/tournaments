@@ -1156,6 +1156,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/contest/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["accept_contest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/replay": {
         parameters: {
             query?: never;
@@ -2915,14 +2931,44 @@ export interface components {
             /** @enum {string} */
             code: "match.game_contested";
             /**
-             * @description Um mapa foi contestado e espera a organização (para organizers e
-             *     owner).
+             * @description Um mapa foi contestado e ninguém resolveu a tempo: espera a organização
+             *     (para organizers e owner).
              */
             params: {
                 /** Format: int32 */
                 game: number;
                 match: string;
                 /** @description Quem contestou. */
+                player: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.contest_received";
+            /**
+             * @description Um mapa foi contestado e quem recebe pode aceitar (para o capitão do time
+             *     adversário de quem contestou, na hora).
+             */
+            params: {
+                /** Format: int32 */
+                game: number;
+                match: string;
+                /** @description Quem contestou. */
+                player: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "match.contest_accepted";
+            /**
+             * @description A contestação foi aceita, e o mapa ficou com o resultado que o capitão
+             *     adversário deu (para quem contestou).
+             */
+            params: {
+                /** Format: int32 */
+                game: number;
+                match: string;
+                /** @description O capitão que aceitou. */
                 player: string;
                 tournament: string;
             };
@@ -4580,7 +4626,7 @@ export interface components {
          * @description O que a partida (ou um mapa dela) espera de quem vê.
          * @enum {string}
          */
-        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "ready" | "veto" | "await_captain" | "await_team";
+        ViewerTask: "report" | "respond" | "await_opponent" | "await_organizer" | "resolve" | "accept_contest" | "ready" | "veto" | "await_captain" | "await_team";
         /** @description O webhook como a API devolve ao owner: sem o endereço nem o token. */
         WebhookSettings: {
             /**
@@ -9370,7 +9416,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e espera o organizador, e a próxima continua podendo ser enviada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita */
+            /** @description Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9416,6 +9462,84 @@ export interface operations {
                 };
             };
             /** @description match.comment_invalid, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    accept_contest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                match: string;
+                /** @description Número da partida na série, a partir de 1 */
+                game: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GameInput"];
+            };
+        };
+        responses: {
+            /** @description O capitão do time adversário de quem contestou aceita a contestação e dá o resultado certo: a partida fica confirmada com ele, e quem contestou é avisado e ainda pode contestar de novo. Se as partidas confirmadas dão a maioria, a série fecha */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_accepter (só o capitão do time adversário de quem contestou) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.series_decided, match.not_ready, match.not_contested */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.contest_unchanged (o resultado é igual ao enviado), match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch (outro mapa que o do veto), match.frags_invalid {min, max}, match.game_tied {game}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,\n                  m.slug as \"map_slug?\", m.name as \"map_name?\", g.a_frags, g.b_frags, g.status,\n                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_at,\n                  g.contest_comment, g.confirmed_via, g.confirmed_at\n           from match_games g\n           left join maps m on m.id = g.map_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number",
+  "query": "select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,\n                  m.slug as \"map_slug?\", m.name as \"map_name?\", g.a_frags, g.b_frags, g.status,\n                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_by,\n                  g.contested_at, g.contest_comment, g.confirmed_via, g.confirmed_at\n           from match_games g\n           left join maps m on m.id = g.map_id\n           where g.tournament_id = $1 and g.stage = $2\n           order by g.match_key, g.number",
   "describe": {
     "columns": [
       {
@@ -181,6 +181,17 @@
       },
       {
         "ordinal": 16,
+        "name": "contested_by",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "contested_by"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
         "name": "contested_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -191,7 +202,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "contest_comment",
         "type_info": "Text",
         "origin": {
@@ -202,7 +213,7 @@
         }
       },
       {
-        "ordinal": 18,
+        "ordinal": 19,
         "name": "confirmed_via",
         "type_info": "Text",
         "origin": {
@@ -213,7 +224,7 @@
         }
       },
       {
-        "ordinal": 19,
+        "ordinal": 20,
         "name": "confirmed_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -250,8 +261,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "eb63c52655ea9fa35cbc1c45ee39dd1cecd93db473902c312becaa3b393ad419"
+  "hash": "deb016abb45968c97cf3001b90f15bb2558f9414c2cfc16d2f6c3d36f22fc769"
 }

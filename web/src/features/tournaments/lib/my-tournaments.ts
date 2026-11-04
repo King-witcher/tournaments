@@ -11,6 +11,7 @@ type Entry = Schemas["MyTournament"];
 const PLAYER_TASKS = [
   "veto",
   "ready",
+  "accept_contest",
   "respond",
   "report",
 ] as const satisfies Schemas["ViewerTask"][];

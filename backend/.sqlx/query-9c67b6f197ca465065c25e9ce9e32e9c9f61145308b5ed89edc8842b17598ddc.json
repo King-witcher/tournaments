@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select distinct t.id, t.tenant_id, t.slug\n           from match_games g\n           join tournaments t on t.id = g.tournament_id\n           where g.contest_notify_at <= $1\n           order by t.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "9c67b6f197ca465065c25e9ce9e32e9c9f61145308b5ed89edc8842b17598ddc"
+}

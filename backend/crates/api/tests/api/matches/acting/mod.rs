@@ -7,6 +7,7 @@
 //! Em todos: A = P1 (capitão) e P2; B = P3 (capitão) e P4. `ana` organiza e não
 //! joga; `bia` é da comunidade e não joga.
 
+mod accept;
 mod ready;
 mod report;
 mod rules;

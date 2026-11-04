@@ -50,6 +50,10 @@ export function MatchLive({
           game={game}
           names={names}
           maps={freeMaps(maps, detail.games, game.number)}
+          fixedMap={
+            detail.veto?.games.find((g) => g.game === game.number)?.map ??
+            undefined
+          }
           canManage={detail.can_manage}
           last={game.number === detail.games.length}
         />

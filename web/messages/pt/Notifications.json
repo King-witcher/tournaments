@@ -19,6 +19,14 @@
         "title": "Partida contestada",
         "body": "{tournament}: {player} contestou a partida {game}. Resolva na série."
       },
+      "contest_received": {
+        "title": "{player} contestou a partida {game}",
+        "body": "{tournament}: aceite e corrija o placar, ou a organização resolve."
+      },
+      "contest_accepted": {
+        "title": "{player} aceitou sua contestação",
+        "body": "{tournament}: confira o placar da partida {game}. Se continuar errado, conteste de novo."
+      },
       "opponent_ready": {
         "title": "{opponent} está pronto",
         "body": "{tournament}: clique em “Pronto” para o veto começar."

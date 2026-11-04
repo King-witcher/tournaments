@@ -12,8 +12,9 @@
 //! inteiro. Se o torneio encerra ou reabre,
 //! avisa o torneio inteiro; se os mapas contestados mudam, a home da
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
-//! (para o adversário) e de contestação (para a organização) saem de quem
-//! envia e de quem contesta; os do veto (adversário pronto, veto começou), de
+//! (para o adversário) e de contestação (para o capitão adversário) saem de quem
+//! envia e de quem contesta; o da contestação para a organização, do agendador
+//! (`contest_notice`); os do veto (adversário pronto, veto começou), de
 //! quem fica pronto ou força o começo. A abertura dos picks por jogador
 //! (`match.team_pick_open`, para os jogadores dos dois times, sem dizer nada do
 //! que foi escolhido) sai daqui, porque ela abre por qualquer caminho (o último
@@ -393,14 +394,61 @@ pub async fn game_reported(
     outbox::emit(conn, Event::notice(actors, notice)).await
 }
 
-/// `player` (apelido; `by`, o usuário) contestou o mapa `game` da partida
-/// `key`: aviso para organizers e owner, menos quem contestou.
+/// `player` (o apelido) contestou o mapa `game` da partida `key`: aviso na hora
+/// para `captain`, o capitão adversário, que pode aceitar.
+pub async fn contest_received(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    key: &str,
+    game: i16,
+    player: &str,
+    captain: i64,
+) -> Result<(), sqlx::Error> {
+    let audience = tournament.address();
+    let notice = Notice {
+        kind: NoticeKind::ContestReceived {
+            tournament: audience.name.clone(),
+            match_key: key.to_owned(),
+            game,
+            player: player.to_owned(),
+        },
+        path: match_path(&audience, key),
+    };
+    outbox::emit(conn, Event::notice([captain], notice)).await
+}
+
+/// `captain` (o apelido) aceitou a contestação do mapa `game` da partida `key`:
+/// aviso para `to`, quem contestou, conferir o resultado que ficou.
+pub async fn contest_accepted(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    key: &str,
+    game: i16,
+    to: i64,
+    captain: &str,
+) -> Result<(), sqlx::Error> {
+    let audience = tournament.address();
+    let notice = Notice {
+        kind: NoticeKind::ContestAccepted {
+            tournament: audience.name.clone(),
+            match_key: key.to_owned(),
+            game,
+            player: captain.to_owned(),
+        },
+        path: match_path(&audience, key),
+    };
+    outbox::emit(conn, Event::notice([to], notice)).await
+}
+
+/// O mapa `game` da partida `key`, contestado por `player` (o apelido), continua
+/// sem resposta: aviso para organizers e owner, menos os de `except`.
 pub async fn game_contested(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
     key: &str,
     game: i16,
-    (by, player): (i64, &str),
+    player: &str,
+    except: [Option<i64>; 2],
 ) -> Result<(), sqlx::Error> {
     let audience = tournament.address();
     let staff = tenants::staff(conn, tournament.tenant).await?;
@@ -413,7 +461,7 @@ pub async fn game_contested(
         },
         path: match_path(&audience, key),
     };
-    let to = staff.into_iter().filter(|u| *u != by);
+    let to = staff.into_iter().filter(|u| !except.contains(&Some(*u)));
     outbox::emit(conn, Event::notice(to, notice)).await
 }
 

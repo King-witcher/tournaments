@@ -239,12 +239,14 @@
     "title": "Times",
     "label": "Quem age pelo time",
     "presets": {
-      "captain": "Centrado no capitão",
+      "captain": "Só o capitão",
+      "balanced": "Balanceado",
       "everyone": "Todos os jogadores",
       "custom": "Personalizado"
     },
     "hints": {
       "captain": "O capitão marca “Pronto”, veta, bane, escolhe os campeões de todos e envia o resultado.",
+      "balanced": "O capitão veta e bane. Cada jogador escolhe o próprio campeão. Qualquer um envia o resultado. Todos marcam “Pronto”.",
       "everyone": "Qualquer jogador veta, bane e envia o resultado, e cada um escolhe o próprio campeão. Todos marcam “Pronto”.",
       "custom": "Todos os jogadores marcam “Pronto”."
     },

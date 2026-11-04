@@ -107,8 +107,9 @@ fn locate(stage: &Stage, participant: Option<ParticipantId>) -> Place {
     }
 }
 
-/// Round robin: a série em que o adversário enviou um mapa, que tem prazo, ou a
-/// sugerida (`progress`). `None` nos outros formatos.
+/// Round robin: a série em que o adversário enviou um mapa, que tem prazo, ou que
+/// tem uma contestação para ele aceitar, ou a sugerida (`progress`). `None` nos
+/// outros formatos.
 fn league_next<'a>(
     status: TournamentStatus,
     stage: &'a Stage,
@@ -119,7 +120,10 @@ fn league_next<'a>(
     let answer = stage.bracket.matches().iter().find(|m| {
         let side = view::viewer_side(stage, m, viewer);
         side.is_some()
-            && tasks::match_task(status, stage, m, side, viewer) == Some(ViewerTask::Respond)
+            && matches!(
+                tasks::match_task(status, stage, m, side, viewer),
+                Some(ViewerTask::Respond | ViewerTask::AcceptContest)
+            )
     });
     answer.or_else(|| stage.bracket.get(*me))
 }

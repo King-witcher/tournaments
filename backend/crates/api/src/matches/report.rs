@@ -1,7 +1,8 @@
 //! O que os jogadores da série fazem, partida a partida, e quem do time faz é a
 //! regra do torneio (`acting`): um envia a partida e o outro time confirma;
 //! qualquer um deles menos quem enviou contesta, também depois de confirmada, até
-//! a próxima série de um dos lados começar (`contest`). Sem resposta, a partida confirma sozinha no fim do prazo: a
+//! a próxima série de um dos lados começar (`contest`), e o capitão adversário pode
+//! aceitar a contestação (`accept`). Sem resposta, a partida confirma sozinha no fim do prazo: a
 //! janela de contestação depois do envio, ou depois da duração prevista da
 //! partida, contada de quando ela foi liberada (`release`), o que vier por
 //! último. O organizador também confirma, na hora: o pendente, ou o
@@ -197,7 +198,7 @@ pub async fn confirm(
     ),
     request_body = ContestReport,
     responses(
-        (status = OK, body = MatchDetail, description = "Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e espera o organizador, e a próxima continua podendo ser enviada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita"),
+        (status = OK, body = MatchDetail, description = "Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (a regra do torneio deixa a contestação com o capitão), match.own_report (quem enviou não contesta)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found"),
@@ -233,9 +234,13 @@ pub async fn contest(
     let comment = actions::comment(&body.comment)?;
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
-    db::contest_game(&mut tx, g.id, member.user.id, &comment).await?;
-    let by = (member.user.id, member.nickname.as_str());
-    changes::game_contested(&mut tx, &tournament, &path.key, g.number, by).await?;
+    let delay = rules::STAFF_NOTICE_SECONDS;
+    db::contest_game(&mut tx, g.id, member.user.id, &comment, delay).await?;
+    if let Some(captain) = rules::opposing_captain(&stage, g.sides(), member.user.id) {
+        let player = member.nickname.as_str();
+        changes::contest_received(&mut tx, &tournament, &path.key, g.number, player, captain)
+            .await?;
+    }
     let event = NewEvent::game(EventKind::Contested, Some(member.user.id), g.number, None)
         .with_comment(Some(&comment));
     db::insert_event(&mut tx, &at, &event).await?;

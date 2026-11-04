@@ -126,6 +126,13 @@ pub const CATALOG: &[Spec] = &[
         "{to} {player} impugnó la partida {game} de la serie {match} de **{tournament}**. La organización debe resolverla.\n{link}",
     ),
     spec(
+        "match.contest_received",
+        true,
+        To::Players,
+        "{to}: {player} contestou a partida {game} da série {match} de **{tournament}**. Você pode aceitar e corrigir o placar.\n{link}",
+        "{to}: {player} impugnó la partida {game} de la serie {match} de **{tournament}**. Puedes aceptar y corregir el marcador.\n{link}",
+    ),
+    spec(
         "tournament.finished",
         true,
         To::Nobody,

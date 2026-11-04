@@ -6,7 +6,7 @@ use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
-use crate::schema::{CHECK, FOREIGN_KEY, UNIQUE, rejected, rule};
+use crate::schema::{CHECK, FOREIGN_KEY, UNIQUE, exec, rejected, rule};
 
 /// `(tenant_id, tournament_id, [time do seed 1, do seed 2])` do torneio
 /// `slug`.
@@ -94,6 +94,20 @@ async fn insert_series(
     .bind(wins.1)
     .execute(db)
     .await
+}
+
+#[tokio::test]
+async fn only_a_contested_map_waits_for_the_notice() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
+    let (status, body) = report(&app, &p[0], "wb-1-1", 1, game("a", "awoken")).await;
+    assert_eq!(status, axum::http::StatusCode::OK, "{body}");
+    assert_eq!(
+        rejected(exec(&db, "update match_games set contest_notify_at = now()").await),
+        rule(CHECK, "match_games_contest_notify")
+    );
 }
 
 #[tokio::test]

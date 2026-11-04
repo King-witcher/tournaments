@@ -53,6 +53,73 @@ async fn a_teammate_contests_but_only_the_other_team_confirms() {
 }
 
 #[tokio::test]
+async fn accepting_a_late_contest_decides_the_series_again() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    // wb-1-1: P1 x P4.
+    start(
+        &app,
+        &ana,
+        copa(single(1, 1)),
+        &[&p[0], &p[1], &p[2], &p[3]],
+    )
+    .await;
+    let k = "wb-1-1";
+    let (status, body) = report(&app, &p[0], k, 1, game("a", "awoken")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = confirm(&app, &p[3], k, 1).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = contest(&app, &p[3], k, 1, "Eu venci").await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["summary"]["state"], "ready");
+
+    // No duelo, o capitão é o adversário: quem enviou reconhece o erro.
+    assert_eq!(body["games"][0]["task"], "await_organizer");
+    let right = json!({ "map": "awoken", "a_frags": 5, "b_frags": 10 });
+    let (status, body) = accept(&app, &p[0], k, 1, right).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(
+        (
+            &body["summary"]["state"],
+            &body["summary"]["result"]["winner"]
+        ),
+        (&json!("completed"), &json!("b"))
+    );
+    let b = bracket(&app, &ana).await;
+    assert_eq!(side_player(&b, "wb-2-1", "a"), p[3].id);
+}
+
+#[tokio::test]
+async fn accepting_keeps_the_games_after_the_contested_one() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
+    let k = "wb-1-1";
+    let (status, body) = report(&app, &p[0], k, 1, game("a", "awoken")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = contest(&app, &p[1], k, 1, "Eu venci").await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    // Contestar não trava a próxima.
+    let (status, body) = report(&app, &p[0], k, 2, game("a", "vestibule-of-exile")).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let right = json!({ "map": "awoken", "a_frags": 5, "b_frags": 10 });
+    let (status, body) = accept(&app, &p[0], k, 1, right).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let games = body["games"].as_array().unwrap();
+    assert_eq!(
+        (
+            &games[0]["status"],
+            &games[0]["winner"],
+            &games[1]["status"]
+        ),
+        (&json!("confirmed"), &json!("b"), &json!("pending"))
+    );
+}
+
+#[tokio::test]
 async fn a_confirmed_game_is_contested_until_either_side_starts_another_series() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;

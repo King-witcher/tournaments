@@ -194,6 +194,11 @@ async fn the_organization_is_mentioned_on_a_contested_map() {
     let (status, body) = crate::matches::contest(&s.app, &p[0], "wb-1-1", 1, "foi meu").await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
+    // A organização é avisada depois de o capitão adversário ter tempo de aceitar.
+    pump(&s, Utc::now()).await;
+    assert!(s.fake.hits().is_empty());
+    let later = Utc::now() + chrono::Duration::seconds(61);
+    realtime::tick(&s.state, later).await.unwrap().unwrap();
     pump(&s, Utc::now()).await;
     let hit = &s.fake.hits()[0];
     assert_eq!(

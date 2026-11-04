@@ -17,8 +17,8 @@ use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
 pub use events::{EventRow, events, insert_event};
 pub use games::{
-    Deadline, LineupRow, NewGame, confirm_game, contest_game, games, insert_report, lineups,
-    put_game, void_games,
+    Deadline, LineupRow, NewGame, accept_contest, confirm_game, contest_game, contest_notices_due,
+    games, insert_report, lineups, put_game, take_contest_notices, void_games,
 };
 pub use pairings::{insert_round, pairings};
 pub use screenshots::has_screenshot;

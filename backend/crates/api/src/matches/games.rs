@@ -64,6 +64,8 @@ pub struct StoredGame {
     pub reported_by: Option<i64>,
     pub reported_at: DateTime<Utc>,
     pub confirm_by: Option<DateTime<Utc>>,
+    /// Quem contestou; `None` sem contestação ou se a conta foi excluída.
+    pub contested_by: Option<i64>,
     pub contested_at: Option<DateTime<Utc>>,
     pub contest_comment: Option<String>,
     pub confirmed_via: Option<Confirmation>,
@@ -95,6 +97,7 @@ pub(super) struct GameRow {
     pub reported_by: Option<i64>,
     pub reported_at: DateTime<Utc>,
     pub confirm_by: Option<DateTime<Utc>>,
+    pub contested_by: Option<i64>,
     pub contested_at: Option<DateTime<Utc>>,
     pub contest_comment: Option<String>,
     pub confirmed_via: Option<String>,
@@ -128,6 +131,7 @@ impl TryFrom<GameRow> for StoredGame {
             reported_by: r.reported_by,
             reported_at: r.reported_at,
             confirm_by: r.confirm_by,
+            contested_by: r.contested_by,
             contested_at: r.contested_at,
             contest_comment: r.contest_comment,
             confirmed_via: r

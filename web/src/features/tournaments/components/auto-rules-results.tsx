@@ -36,7 +36,7 @@ export function AutoRulesResults({ tournament }: Props) {
               duration: formatMinutes(GAME_MINUTES),
             }),
           ],
-          [t(tdm ? "lateTdm" : "late"), t("organizer")],
+          [t(tdm ? "lateTdm" : "late"), t(tdm ? "organizerTdm" : "organizer")],
         ]}
       />
     </AutoRulesBlock>

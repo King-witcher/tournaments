@@ -75,7 +75,7 @@ pub async fn load(
                     })
                     .flatten();
                 let extra = view::GameExtra {
-                    task: tasks::game_task(tournament.status, m, g, mine, viewer),
+                    task: tasks::game_task(tournament.status, stage, m, g, mine, viewer),
                     can_contest: contest::allowed(viewer.user_id, tournament.status, stage, m, g),
                     contested_by,
                 };

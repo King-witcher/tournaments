@@ -29,7 +29,7 @@
     "whoStartsSummary": "empieza el lado A",
     "whoActs": "Quién actúa por el equipo",
     "whoActsOptions": {
-      "captain": "Centrado en el capitán",
+      "captain": "Solo el capitán",
       "all": "Todos los jugadores"
     },
     "whoActsHints": {

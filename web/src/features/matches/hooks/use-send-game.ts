@@ -21,7 +21,8 @@ type Sent = {
 
 /**
  * Envia o mapa `number`: `report` é o jogador (fica pendente), `organizer` a
- * organização (lança, resolve ou corrige, já confirmado, com a nota). Depois
+ * organização (lança, resolve ou corrige, já confirmado, com a nota), `accept`
+ * o capitão que aceita a contestação (já confirmado). Depois
  * de gravar, chama `onSent`, marca a mudança como de quem vê e recarrega a
  * página, com o foco no passo da partida; o erro volta traduzido.
  * `send` entra num `submitAction`.
@@ -29,7 +30,7 @@ type Sent = {
 export function useSendGame(
   target: MatchTarget,
   number: number,
-  mode: "report" | "organizer",
+  mode: "report" | "organizer" | "accept",
   onSent?: () => void,
 ) {
   const errorMessage = useApiErrorMessage();
@@ -47,15 +48,22 @@ export function useSendGame(
                 { params, body },
               ),
             )
-          : await callApi(
-              api.PUT(
-                "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}",
-                {
-                  params,
-                  body: { game: body, comment: comment.trim() || null },
-                },
-              ),
-            );
+          : mode === "accept"
+            ? await callApi(
+                api.POST(
+                  "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/contest/accept",
+                  { params, body },
+                ),
+              )
+            : await callApi(
+                api.PUT(
+                  "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}",
+                  {
+                    params,
+                    body: { game: body, comment: comment.trim() || null },
+                  },
+                ),
+              );
       if (!result.ok) return errorMessage(result.code, result.params);
       onSent?.();
       markMine();

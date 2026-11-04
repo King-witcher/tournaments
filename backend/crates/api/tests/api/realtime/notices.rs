@@ -1,7 +1,8 @@
 //! Os avisos e quem recebe cada um: check-in aberto (inscritos), partida
 //! pronta (os dois lados, também ao iniciar, nunca na que vira W.O.), mapa
-//! enviado (o adversário, com o prazo) e contestado (organizers e owner). A
-//! hora de iniciar sai do agendador (`scheduler`).
+//! enviado (o adversário, com o prazo) e contestado (o capitão adversário, na
+//! hora). A hora de iniciar e a contestação para a organização saem do agendador
+//! (`scheduler`).
 
 use axum::http::StatusCode;
 use serde_json::json;
@@ -71,7 +72,7 @@ async fn starting_tells_both_sides_of_each_ready_match() {
 async fn reported_and_contested_maps() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
-    let olga = organizer(&app, &db, &ana, "Olga").await;
+    organizer(&app, &db, &ana, "Olga").await;
     let p = players(&app, &db, &ana, 2).await;
     start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
     clear(&db).await;
@@ -97,8 +98,8 @@ async fn reported_and_contested_maps() {
     assert_eq!(
         notices(&outbox(&db).await),
         [(
-            "match.game_contested".to_owned(),
-            ids(&[&ana, &olga]),
+            "match.contest_received".to_owned(),
+            ids(&[&p[1]]),
             json!({ "tournament": "Copa de Outubro", "match": "wb-1-1", "game": 1, "player": "P1" })
         )]
     );

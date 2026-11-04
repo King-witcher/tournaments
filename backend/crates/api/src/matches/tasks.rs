@@ -1,8 +1,8 @@
 //! O que uma partida, e cada mapa dela, espera de quem vê: enviar o próximo
 //! mapa, responder ao mapa do adversário, o veto ("Pronto" ou o passo da
-//! vez), esperar, ou (organizador) resolver uma contestação. Só com o torneio em
-//! andamento e a partida pronta. Não cobra de quem a regra do torneio não deixa
-//! agir: para ele, é esperar o capitão.
+//! vez), esperar, aceitar uma contestação (o capitão adversário) ou (organizador)
+//! resolvê-la. Só com o torneio em andamento e a partida pronta. Não cobra de quem
+//! a regra do torneio não deixa agir: para ele, é esperar o capitão.
 
 use engine::{
     core::{Match, MatchState, PlayerId},
@@ -11,6 +11,7 @@ use engine::{
 };
 
 use super::{
+    contest,
     games::{GameStatus, StoredGame, series_games},
     result::Side,
     stage::Stage,
@@ -38,6 +39,7 @@ pub fn next_game(status: TournamentStatus, m: &Match, games: &[&StoredGame]) -> 
 /// O que o mapa `g` espera de quem vê (do lado `mine`, se joga).
 pub fn game_task(
     status: TournamentStatus,
+    stage: &Stage,
     m: &Match,
     g: &StoredGame,
     mine: Option<Side>,
@@ -48,6 +50,9 @@ pub fn game_task(
     }
     match g.status {
         GameStatus::Contested if viewer.organizer => Some(ViewerTask::Resolve),
+        GameStatus::Contested if contest::accepter(stage, g) == Some(viewer.user_id) => {
+            Some(ViewerTask::AcceptContest)
+        }
         GameStatus::Contested => mine.map(|_| ViewerTask::AwaitOrganizer),
         GameStatus::Pending if mine.is_some() && mine == g.reported_side => {
             Some(ViewerTask::AwaitOpponent)
@@ -124,8 +129,9 @@ fn veto_task(
 }
 
 /// O que a partida espera de quem vê, pela ordem de urgência: resolver
-/// (organizador), responder a um mapa, o veto ("Pronto" ou o passo da vez),
-/// enviar o próximo, esperar o organizador, esperar o adversário.
+/// (organizador), a contestação que ele pode aceitar, responder a um mapa, o veto
+/// ("Pronto" ou o passo da vez), enviar o próximo, esperar o organizador, esperar
+/// o adversário.
 pub fn match_task(
     status: TournamentStatus,
     stage: &Stage,
@@ -137,14 +143,16 @@ pub fn match_task(
     let games = games.as_slice();
     let tasks: Vec<ViewerTask> = games
         .iter()
-        .filter_map(|g| game_task(status, m, g, mine, viewer))
+        .filter_map(|g| game_task(status, stage, m, g, mine, viewer))
         .collect();
     let has = |t: ViewerTask| tasks.contains(&t);
     if has(ViewerTask::Resolve) {
         return Some(ViewerTask::Resolve);
     }
     let side = mine?;
-    if has(ViewerTask::Respond) {
+    if has(ViewerTask::AcceptContest) {
+        Some(ViewerTask::AcceptContest)
+    } else if has(ViewerTask::Respond) {
         Some(ViewerTask::Respond)
     } else if let Some(task) = veto_task(status, stage, m, games, side, viewer) {
         Some(task)

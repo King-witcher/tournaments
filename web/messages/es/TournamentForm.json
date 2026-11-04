@@ -239,12 +239,14 @@
     "title": "Equipos",
     "label": "Quién actúa por el equipo",
     "presets": {
-      "captain": "Centrado en el capitán",
+      "captain": "Solo el capitán",
+      "balanced": "Equilibrado",
       "everyone": "Todos los jugadores",
       "custom": "Personalizado"
     },
     "hints": {
       "captain": "El capitán marca “Listo”, veta, banea, elige los campeones de todos y envía el resultado.",
+      "balanced": "El capitán veta y banea. Cada jugador elige su propio campeón. Cualquiera envía el resultado. Todos marcan “Listo”.",
       "everyone": "Cualquier jugador veta, banea y envía el resultado, y cada uno elige su propio campeón. Todos marcan “Listo”.",
       "custom": "Todos los jugadores marcan “Listo”."
     },

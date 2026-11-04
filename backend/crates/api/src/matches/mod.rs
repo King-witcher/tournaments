@@ -1,7 +1,9 @@
 //! Chave e resultados, mapa a mapa: ver a chave e uma partida, enviar um
 //! mapa, confirmar ou contestar (`report`; o prazo conta de quando o mapa
 //! foi liberado, `release`; quem contesta e até quando, também depois de
-//! confirmado, `contest`), e o organizador lançar ou corrigir mapas e dar
+//! confirmado, `contest`), o capitão adversário aceitar a contestação (`accept`;
+//! a organização é avisada depois, se ninguém resolver, pelo agendador,
+//! `contest_notice`), e o organizador lançar ou corrigir mapas e dar
 //! W.O. na série (`manage`) ou anular um mapa para ser jogado de novo
 //! (`replay`). A série decidida que muda (correção ou contestação tardia) é
 //! conferida e gravada em `correction`.
@@ -34,11 +36,13 @@
 //! sugerir a cada time, sem travar nada. Quem do time pode agir, pela regra do
 //! torneio, e quem marca "Pronto" ficam em `acting`, num lugar só.
 
+mod accept;
 mod acting;
 mod actions;
 mod announce;
 mod changes;
 mod contest;
+mod contest_notice;
 mod correction;
 mod db;
 mod detail;
@@ -70,6 +74,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use contest_notice::notify_contested;
 pub use due::{apply_due_confirmations, confirm_all_due};
 pub use mine::{Place, place, place_of};
 pub use result::Side;
@@ -86,6 +91,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(report::report))
         .routes(routes!(report::confirm))
         .routes(routes!(report::contest))
+        .routes(routes!(accept::accept_contest))
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
         .routes(routes!(replay::replay))

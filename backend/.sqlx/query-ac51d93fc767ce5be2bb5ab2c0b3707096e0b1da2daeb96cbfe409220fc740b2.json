@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with due as (\n               update match_games set contest_notify_at = null\n               where tournament_id = $1 and contest_notify_at <= $2\n               returning id, tenant_id, match_key, number, contested_by\n           )\n           select d.id as game, d.match_key, d.number, d.contested_by as \"contested_by?\",\n                  m.nickname as \"player?\"\n           from due d\n           left join tenant_members m on m.tenant_id = d.tenant_id and m.user_id = d.contested_by\n           order by d.match_key, d.number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "game",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "match_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "number",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "number"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "contested_by?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "match_games",
+            "name": "contested_by"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "player?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "ac51d93fc767ce5be2bb5ab2c0b3707096e0b1da2daeb96cbfe409220fc740b2"
+}

@@ -19,6 +19,14 @@
         "title": "Partida impugnada",
         "body": "{tournament}: {player} impugnó la partida {game}. Resuélvelo en la serie."
       },
+      "contest_received": {
+        "title": "{player} impugnó la partida {game}",
+        "body": "{tournament}: acepta y corrige el marcador, o la resuelve la organización."
+      },
+      "contest_accepted": {
+        "title": "{player} aceptó tu impugnación",
+        "body": "{tournament}: revisa el marcador de la partida {game}. Si sigue mal, impúgnala de nuevo."
+      },
       "opponent_ready": {
         "title": "{opponent} está listo",
         "body": "{tournament}: haz clic en “Listo” para que empiece el veto."

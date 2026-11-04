@@ -42,6 +42,7 @@
       "changes": "Durante el torneo, la organización puede cambiar a un jugador por un suplente o por otro miembro de la comunidad. Si alguien sale de la comunidad, el equipo sigue con menos jugadores.",
       "actors": {
         "captain": "El capitán hace todo por el equipo: marca “Listo”, veta los mapas, banea y elige los campeones de todos y envía, confirma o impugna el resultado. Si no aparece, el plazo sortea lo que falte, y la organización puede cambiar al capitán.",
+        "balanced": "El capitán veta los mapas y banea los campeones. Cada jugador elige su propio campeón. Cualquier jugador envía, confirma o impugna el resultado, y vale el primer clic.",
         "everyone": "Cualquier jugador veta los mapas, banea y envía, confirma o impugna el resultado por el equipo, y vale el primer clic. Cada uno elige su propio campeón.",
         "custom": {
           "veto": {
@@ -137,7 +138,8 @@
       "confirmTdm": "El otro equipo tiene {window} para confirmar o impugnar, y el compañero de quien envió también puede impugnar. Sin respuesta, la partida se confirma sola. Si el resultado llega antes de que la partida cumpla {duration}, los {window} solo empiezan a contar a los {duration}.",
       "late": "Una partida confirmada todavía se puede impugnar hasta que empiece la próxima serie de alguno de los dos.",
       "lateTdm": "Una partida confirmada todavía se puede impugnar hasta que empiece la próxima serie de alguno de los dos equipos.",
-      "organizer": "La organización decide las impugnaciones.",
+      "organizer": "El rival puede aceptar la impugnación y corregir el marcador. Si no, decide la organización.",
+      "organizerTdm": "El capitán del equipo rival de quien impugnó puede aceptar y corregir el marcador. Si no, decide la organización.",
       "reportCaptain": "Después de cada partida, el capitán envía el marcador en la página de la serie.",
       "confirmCaptain": "El capitán del otro equipo tiene {window} para confirmar o impugnar. Sin respuesta, la partida se confirma sola. Si el resultado llega antes de que la partida cumpla {duration}, los {window} solo empiezan a contar a los {duration}."
     },

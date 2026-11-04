@@ -12,8 +12,15 @@
 //!   quando reabrir contradiz uma série decidida depois (um W.O. na seguinte,
 //!   por exemplo), quando a série acabou em W.O. e quando a organização
 //!   confirmou ou lançou a partida (ela já olhou).
+//!
+//! Contestada, a partida espera o capitão do time adversário de quem contestou,
+//! que pode aceitar (`accept`), e a organização, avisada só depois de
+//! `STAFF_NOTICE_SECONDS` (`contest_notice`), para não ser incomodada à toa.
 
-use engine::{core::Match, series};
+use engine::{
+    core::{Match, ParticipantId},
+    series,
+};
 
 use super::{
     correction::{self, Change},
@@ -29,6 +36,38 @@ use crate::{
 
 /// 409: a contestação tardia já não vale.
 pub const CLOSED: ApiError = ApiError::conflict("match.contest_closed");
+
+/// Quanto tempo o capitão adversário tem antes de a organização ser avisada. O
+/// aceite pede o placar certo: menos que isso venceria com ele ainda digitando.
+pub const STAFF_NOTICE_SECONDS: f64 = 60.0;
+
+/// O capitão que responde a uma contestação de `by` na partida de lados `sides`:
+/// o do outro time. `None` se `by` não está mais em nenhum dos dois.
+pub fn opposing_captain(
+    stage: &Stage,
+    (a, b): (ParticipantId, ParticipantId),
+    by: i64,
+) -> Option<i64> {
+    let side = stage.participant_of(by)?;
+    let other = if side == a {
+        b
+    } else if side == b {
+        a
+    } else {
+        return None;
+    };
+    stage.entrant(other).map(|t| t.captain)
+}
+
+/// Quem pode aceitar agora a contestação da partida `g`; `None` se ela não está
+/// contestada, ou se só a organização pode resolver (quem contestou excluiu a
+/// conta ou saiu do time).
+pub fn accepter(stage: &Stage, g: &StoredGame) -> Option<i64> {
+    if g.status != GameStatus::Contested {
+        return None;
+    }
+    opposing_captain(stage, g.sides(), g.contested_by?)
+}
 
 /// `user_id` pode contestar agora a partida `g` da série `m`.
 pub fn allowed(

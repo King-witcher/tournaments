@@ -11,7 +11,7 @@ import { TEAM_PRESETS, type TeamPreset, teamPresetOf } from "../lib/team-rules";
 type Schemas = components["schemas"];
 type TeamRules = Schemas["TeamRules"];
 
-const PRESETS: TeamPreset[] = ["captain", "everyone", "custom"];
+const PRESETS: TeamPreset[] = ["captain", "balanced", "everyone", "custom"];
 const ACTORS: Schemas["TeamActor"][] = ["captain", "anyone"];
 const PICKERS: Schemas["TeamPicker"][] = ["captain", "each_player"];
 
