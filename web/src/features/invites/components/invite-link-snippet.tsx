@@ -31,7 +31,12 @@ export function InviteLinkSnippet({ token, label, disabled }: Props) {
 
   return (
     <div ref={wrapper} className={styles.link}>
-      <CodeSnippet type="single" aria-label={label} disabled={disabled}>
+      <CodeSnippet
+        type="single"
+        align="bottom-end"
+        aria-label={label}
+        disabled={disabled}
+      >
         {`${window.location.origin}/invite/${token}`}
       </CodeSnippet>
     </div>

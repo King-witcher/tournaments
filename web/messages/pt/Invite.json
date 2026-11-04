@@ -5,6 +5,7 @@
   "unavailable": "Convite indisponível",
   "details": "Sobre o convite",
   "about": "Sobre a comunidade",
+  "aboutTournament": "Sobre o torneio",
   "community": "Comunidade",
   "spots": "Vagas",
   "tournamentSpots": "{count, plural, =0 {{max} vagas, nenhuma ocupada ainda} one {# inscrito de {max} vagas} other {# inscritos de {max} vagas}}",

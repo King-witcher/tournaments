@@ -12,6 +12,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { PageTabs } from "@/shared/ui/page-tabs";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { getTenant } from "../server";
+import { TenantDescription } from "./tenant-description";
 
 type Props = {
   slug: string;
@@ -21,9 +22,9 @@ type Props = {
 
 /**
  * O topo da comunidade e as abas, com a aba aberta dentro: o logo (quando
- * há), nome, o papel de quem vê e, para a organização, "Novo torneio". O
- * Ranking aparece para todos; Sobre, com descrição ou para o dono que pode
- * escrever uma. Com a exclusão agendada, o aviso com a data (e,
+ * há), nome, o papel de quem vê, para a organização, "Novo torneio" e, quando
+ * há, a descrição (`TenantDescription`, em todas as abas). Com a exclusão
+ * agendada, o aviso com a data (e,
  * para o dono, onde cancelar) entre o topo e as abas. Sem sessão, o convite a
  * entrar; sem acesso, o erro (e a aba nem é desenhada). Fica em `<Suspense>`.
  */
@@ -48,14 +49,10 @@ export async function TenantFrame({ slug, children }: Props) {
 
   const { tenant } = loaded;
   const organizer = tenant.role !== "player";
-  const about =
-    tenant.description ||
-    (tenant.role === "owner" && !tenant.deletion_scheduled_for);
   const tabs = [
     { href: `/${slug}`, label: t("tabs.tournaments") },
     { href: `/${slug}/ranking`, label: t("tabs.ranking") },
     { href: `/${slug}/members`, label: t("tabs.members") },
-    ...(about ? [{ href: `/${slug}/about`, label: t("tabs.about") }] : []),
     { href: `/${slug}/settings`, label: t("tabs.settings") },
   ];
 
@@ -75,7 +72,11 @@ export async function TenantFrame({ slug, children }: Props) {
             <ButtonLink href={`/${slug}/new`}>{t("newTournament")}</ButtonLink>
           )
         }
-      />
+      >
+        {tenant.description && (
+          <TenantDescription>{tenant.description}</TenantDescription>
+        )}
+      </PageHeader>
       {tenant.deletion_scheduled_for && (
         <DeletionNotice
           date={tenant.deletion_scheduled_for}

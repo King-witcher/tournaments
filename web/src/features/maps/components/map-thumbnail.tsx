@@ -5,9 +5,9 @@ import styles from "./map-thumbnail.module.scss";
 
 /**
  * Os mapas com imagem em `public/maps/<slug>.webp`: a tela de carregamento do
- * jogo, recortada em 16:9, em 480×270. Já sai em WebP e no tamanho em que
- * aparece, então não passa pela otimização do Next (que gastaria a cota da
- * Vercel para nada).
+ * jogo, recortada em 16:9, em 960×540: sobra para a tela 2x na largura em que
+ * a grade a mostra. Já sai em WebP e no tamanho final, então não passa
+ * pela otimização do Next (que gastaria a cota da Vercel para nada).
  */
 const IMAGES = new Set([
   "awoken",
@@ -51,8 +51,8 @@ export function MapThumbnail({ slug, out = false }: Props) {
     <Image
       src={`/maps/${slug}.webp`}
       alt=""
-      width={480}
-      height={270}
+      width={960}
+      height={540}
       unoptimized
       draggable={false}
       className={className}

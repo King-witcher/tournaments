@@ -24,7 +24,7 @@ Toda página, de cima para baixo:
 - **Formulários**: `Form` com `FormGroup` por seção, `Stack gap={6}`, erro geral em `InlineNotification` acima dos botões, botões no fim (primário "Salvar" à esquerda, secundário "Cancelar" ao lado, como o Carbon pede em formulário de página). Campo travado: o motivo num `Callout` (kind `info`) **antes** dos campos.
 - **Confirmação**: `Modal` (kind `danger` quando apaga ou tira algo); texto diz o que vai acontecer, primário com o nome do botão que abriu, "Não" secundário, foco volta ao gatilho.
 - **Estado**: `Tag` com cor fixa por significado: rascunho `gray`, inscrições `blue`, check-in `purple`, em andamento `green`, encerrado `cool-gray`, cancelado/desistiu/saiu `red`, aguardando `teal`, contestado `magenta`, confirmado `green`.
-- **Ciclo do torneio**: `ProgressIndicator` (Rascunho → Inscrições → Check-in → Em andamento → Encerrado); só leitura para quem joga, e na aba Organização vem com o próximo passo como botão.
+- **Ciclo do torneio**: `ProgressIndicator` (Rascunho → Inscrições → Check-in → Em andamento → Encerrado); só leitura (nenhum passo tem hover, mão ou foco do Tab), e na aba Organização vem com o próximo passo como botão.
 - **Mensagens**: `Callout` para informação e cuidado que carregam com a página (fixos, sem fechar); `InlineNotification` para erro e sucesso, o retorno de algo que aconteceu; `ToastNotification`, no canto de cima à direita, só para "copiado" e para os avisos que chegam sozinhos.
 - **Texto do organizador** (descrição, regras): texto simples (`UserText`), coluna estreita. **Larguras**: `Page width="narrow"` (texto e formulário) e `"wide"` (tabela e chave).
 
@@ -53,16 +53,15 @@ Abas: **Perfil** (nome exibido e, no fim, a zona de perigo "Excluir conta"), **L
 
 ### Convite `/invite/[token]`, Nova comunidade `/new`
 
-Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros, a descrição (quando há) e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço e o logo opcional (mandado depois de criar).
+Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do torneio no topo, no link de inscrição) com o nome da comunidade, o dono, o número de membros, "Sobre o torneio" (no link de inscrição) e "Sobre a comunidade" (cada uma só se tiver descrição) e "Entrar na comunidade" (ou "Criar conta"/"Entrar" sem sessão). Nova comunidade: nome e slug com prévia do endereço e o logo opcional (mandado depois de criar).
 
 ### Comunidade `/[tenant]`
 
-`PageHeader`: logo (quando há), nome, `Tag` do papel, "Novo torneio" (organização). Abas por sub-rota:
+`PageHeader`: logo (quando há), nome, `Tag` do papel, "Novo torneio" (organização) e, quando há, a descrição em até 2 linhas, em todas as abas, com "Ver mais"/"Ver menos" (só aparece se o texto passa de 2 linhas, medido, também ao redimensionar). Abas por sub-rota:
 
 - **Torneios**: `DataTable` (nome, formato, estado, início, inscritos); jogador vê só os publicados.
 - **Ranking** (todos): posição, membro, rating com `Tag` "provisório", mapas, V–D, último mapa; a linha abre a página da pessoa.
 - **Membros**: membro com avatar, papel e desde; a linha abre a página da pessoa; o owner troca papel e remove no ⋯. Para a organização, "Convidar" na barra da tabela: o link único, para copiar, e "Gerar novo link".
-- **Sobre**: a descrição da comunidade, em texto simples; sem descrição, a aba só existe para o owner, com o estado vazio e o link para Configurações.
 - **Configurações**: owner: nome e descrição, endereço (com a confirmação do que ele quebra), logo (salva sozinho); apelido; owner: rating da comunidade (salvar recalcula todos), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).
 
 ### Pessoa na comunidade `/[tenant]/members/[user]`
@@ -89,7 +88,7 @@ Organização, antes do início: quantos entram na chave, a lista com campo de p
 
 ### Partida `/[tenant]/[tournament]/matches/[match]`
 
-Título com o código (C2.1), os dois lados e, depois da primeira partida enviada, o placar entre eles; `Tag` de estado e, embaixo, só quando a série terminou ou não começou, como e quando. Embaixo, os passos (`ProgressSteps` navegável: os feitos e o atual abrem; sem espaço, vertical ou, com mais de 4, a lista num `Dropdown`): Pronto, Mapas e Campeões (com veto no torneio) e uma partida por passo, até o melhor de N, cada uma com o placar ou o estado embaixo do nome. Um passo por tela, com título; abre no que pede ação de quem vê. Mapas e campeões em tiles como o pool do formulário (imagem, nome, etiqueta e o ícone de estado no canto: check no escolhido, X no banido, em cinza; na vez de quem vê, o tile clicável com a ação escrita; o campeão só diz se dá para escolher: banido com o X, o que quem vê não pode escolher apagado com o motivo numa dica, o resto disponível), Campeões com o resumo do draft ao lado (uma coluna por lado e, por partida, campeão, mapa, campeão). Cada partida num cartão (`Tile`: lado A, mapa, lado B, com os campeões e "Você"; embaixo, os frags de cada lado, no envio ou no resultado), com o estado, as ações e os screenshots. Organização: `Accordion` fechada "Organização" (W.O.) e "Histórico" no fim.
+Título com o código (C2.1), os dois lados e, depois da primeira partida enviada, o placar entre eles; `Tag` de estado e, embaixo, só quando a série terminou ou não começou, como e quando. Embaixo, os passos (`ProgressSteps` navegável: os feitos e o atual abrem, o atual com o mesmo hover sublinhado e acessível pelo teclado; sem espaço, vertical ou, com mais de 4, a lista num `Dropdown`): Pronto, Mapas e Campeões (com veto no torneio) e uma partida por passo, até o melhor de N, cada uma com o placar ou o estado embaixo do nome. Um passo por tela, com título; abre no que pede ação de quem vê. Mapas e campeões em tiles como o pool do formulário (imagem, nome, etiqueta e o ícone de estado no canto: check no escolhido, X no banido, em cinza; na vez de quem vê, o tile clicável com a ação escrita; o campeão só diz se dá para escolher: banido com o X, o que quem vê não pode escolher apagado com o motivo numa dica, o resto disponível), Campeões com o resumo do draft ao lado (uma coluna por lado e, por partida, campeão, mapa, campeão). Cada partida num cartão (`Tile`: lado A, mapa, lado B, com os campeões e "Você"; embaixo, os frags de cada lado, no envio ou no resultado), com o estado, as ações e os screenshots. Organização: `Accordion` fechada "Organização" (W.O.) e "Histórico" no fim.
 
 ### Sala de veto `/veto` e `/veto/[token]`
 

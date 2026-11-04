@@ -50,6 +50,18 @@ const nextConfig: NextConfig = {
       })),
     ];
   },
+  // A aba Sobre da comunidade saiu (a descrição ficou no cabeçalho): o
+  // endereço antigo leva à página dela. Sem idioma, o proxy acrescenta o
+  // prefixo e cai aqui.
+  async redirects() {
+    return [
+      {
+        source: "/:locale(pt|es)/:tenant/about",
+        destination: "/:locale/:tenant",
+        permanent: false,
+      },
+    ];
+  },
   images: {
     // Avatares do Discord.
     remotePatterns: [

@@ -1,0 +1,14 @@
+@use "@carbon/react/scss/spacing";
+
+.description {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-inline-size: 0;
+}
+
+// O botão fantasma tem o recuo dele: puxa de volta para o texto ficar
+// alinhado à esquerda com a descrição.
+.toggle {
+  margin-inline-start: calc(-1 * #{spacing.$spacing-05});
+}

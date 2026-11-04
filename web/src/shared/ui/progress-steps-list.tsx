@@ -21,7 +21,8 @@ type Props = {
  * O `ProgressIndicator` do Carbon de um `ProgressSteps`, lado a lado ou
  * vertical, com os textos de estado traduzidos e, navegável, os passos
  * feitos e o atual como botões (nome na cor de link, o à vista em negrito)
- * e os seguintes inertes. Usado pelo `ProgressSteps`; não serve sozinho.
+ * e os seguintes inertes. Só leitura, nenhum passo responde (sem hover, mão
+ * nem foco do Tab). Usado pelo `ProgressSteps`; não serve sozinho.
  */
 export function ProgressStepsList({
   steps,
@@ -48,7 +49,9 @@ export function ProgressStepsList({
       vertical={vertical}
       spaceEqually={!vertical}
       aria-label={label}
-      onChange={choose}
+      // Só leitura: sem `onChange`, o Carbon trata todos os passos como sem
+      // ação (sem hover nem cursor de mão).
+      onChange={onSelect && choose}
     >
       {steps.map((step, i) => (
         <ProgressStep
@@ -60,13 +63,16 @@ export function ProgressStepsList({
           className={cn(
             reachable(i) && i !== selected && styles.selectable,
             reachable(i) && i === selected && styles.selected,
+            onSelect && i === current && styles.current,
             onSelect && i > current && styles.inert,
           )}
           {...(reachable(i) ? { "aria-pressed": i === selected } : {})}
-          {...(onSelect && i > current
-            ? { tabIndex: -1, "aria-disabled": true }
+          // Sem ação (só leitura, ou os seguintes), fora da ordem do Tab.
+          {...(!onSelect || i > current
+            ? { tabIndex: -1, ...(onSelect && { "aria-disabled": true }) }
             : {})}
-          // O Carbon não põe o clique no passo atual: volta para ele.
+          // O Carbon não põe o clique no passo atual: volta para ele (o
+          // teclado já chega pelo `onKeyDown` dele).
           {...(onSelect && i === current
             ? { onClickCapture: () => choose(i) }
             : {})}

@@ -48,3 +48,9 @@ export const Phone: Story = {
   ...Default,
   globals: { viewport: { value: "phone", isRotated: false } },
 };
+
+/** `clamp`: duas linhas com reticências, para o resumo de um texto longo. */
+export const Clamped: Story = {
+  ...LongText,
+  args: { ...LongText.args, clamp: true },
+};

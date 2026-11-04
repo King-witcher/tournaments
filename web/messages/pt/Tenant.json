@@ -7,19 +7,17 @@
     "tournaments": "Torneios",
     "ranking": "Ranking",
     "members": "Membros",
-    "about": "Sobre",
     "settings": "Configurações"
   },
-  "about": {
-    "loading": "Carregando a descrição…",
-    "empty": "Sem descrição.",
-    "add": "Adicionar descrição"
+  "description": {
+    "more": "Ver mais",
+    "less": "Ver menos"
   },
   "details": {
     "title": "Nome e descrição",
     "name": "Nome",
     "description": "Descrição",
-    "descriptionHint": "Aparece na aba Sobre e na página do convite.",
+    "descriptionHint": "Aparece no cabeçalho da comunidade e na página do convite.",
     "saved": "Nome e descrição salvos."
   },
   "address": {

@@ -84,7 +84,10 @@ export function localizedName(tournament: InvitedTournament, locale: string) {
   );
 }
 
-function localizedDescription(tournament: InvitedTournament, locale: string) {
+export function localizedDescription(
+  tournament: InvitedTournament,
+  locale: string,
+) {
   return (
     tournament.translations.find((tr) => tr.locale === locale)?.description ||
     tournament.description

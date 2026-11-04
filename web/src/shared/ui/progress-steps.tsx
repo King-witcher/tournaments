@@ -23,8 +23,9 @@ type Props = {
   label: string;
   /**
    * Escolher o que ver: com isto, os passos feitos e o atual viram botões
-   * (nome na cor de link) e o clique devolve o índice; os seguintes não
-   * respondem.
+   * (nome na cor de link, o atual também com o hover de link e o teclado) e
+   * o clique devolve o índice; os seguintes não respondem. Sem isto, nenhum
+   * passo responde.
    */
   onSelect?: (index: number) => void;
   /** O passo à vista (com `onSelect`): em negrito, como uma aba ativa. */

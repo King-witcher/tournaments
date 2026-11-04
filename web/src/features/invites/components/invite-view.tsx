@@ -10,7 +10,7 @@ import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Section } from "@/shared/ui/section";
 import { UserText } from "@/shared/ui/user-text";
-import { getInvite, localizedName } from "../server";
+import { getInvite, localizedDescription, localizedName } from "../server";
 import { AcceptInviteButton } from "./accept-invite-button";
 import { InviteDetails } from "./invite-details";
 import { InviteMembership } from "./invite-membership";
@@ -21,8 +21,8 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
 /**
  * Para qual comunidade (ou torneio, no link de inscrição) é o convite, com o
  * logo da comunidade no título e, no link de inscrição, a capa do torneio no
- * topo do `Tile`, com o que ele é, a descrição da comunidade e a ação de cada
- * caso: aceitar; entrar ou criar conta, voltando para cá; já é membro (ou
+ * topo do `Tile`, com o que ele é, a descrição do torneio (no link de
+ * inscrição) e a da comunidade, cada uma só se existir, e a ação de cada caso: aceitar; entrar ou criar conta, voltando para cá; já é membro (ou
  * inscrito); inscrição fechada.
  * Link que não vale mais: o erro e o caminho de volta (de comunidade em
  * exclusão, com o texto do convite, e não o da escrita recusada). Fica em
@@ -52,6 +52,8 @@ export async function InviteView({ token }: { token: string }) {
   }
   const { tournament, viewer } = invite;
   const closed = tournament && (await closedReason(tournament));
+  const tournamentAbout =
+    tournament && localizedDescription(tournament, locale);
   const member = viewer?.membership === "member";
   // Já é membro e não há o que aceitar (nem inscrição a fazer).
   const done = member && (!tournament || viewer.registered);
@@ -95,6 +97,11 @@ export async function InviteView({ token }: { token: string }) {
               </AspectRatio>
             )}
             <InviteDetails invite={invite} />
+            {tournamentAbout && (
+              <Section title={t("aboutTournament")}>
+                <UserText>{tournamentAbout}</UserText>
+              </Section>
+            )}
             {invite.tenant_description && (
               <Section title={t("about")}>
                 <UserText>{invite.tenant_description}</UserText>

@@ -15,7 +15,7 @@ Excluir a comunidade: `deletion.md`.
 - **Perfil por tenant**: só o **apelido** (`tenant_members.nickname`), que começa com o nome exibido e o membro edita. **Pode repetir** dentro do tenant: as telas mostram o avatar ao lado e as rotas identificam por `user_id`.
 - **Configurações**: os parâmetros do Elo, pelo owner (ver `ratings.md`). Ranking ligado/desligado e outro sistema (Glicko-2) ficam para quando houver o que escolher.
 - **Nome e descrição** (assumido, 03/11): só o owner edita (`PATCH /tenants/{slug}`), com a validação de nome da criação; campo ausente não muda. A descrição é opcional, em um idioma só, no formato da do torneio: texto simples com as quebras de linha, até 2000 caracteres, exibida com `UserText`. Vazia vira nulo (o banco recusa string vazia). Com a exclusão agendada, a rota recusa como toda escrita e a seção some da aba Configurações.
-- **Aba Sobre** (assumido, 03/11): sub-rota `/about`, antes de Configurações (`about` passa a ser slug reservado de torneio), para os membros lerem a descrição. Sem descrição, só o owner vê a aba, com o estado vazio e o link para Configurações; com a exclusão agendada, nem ele.
+- **Descrição no cabeçalho** (do usuário, 04/11; no lugar da aba Sobre, de 03/11): a descrição aparece abaixo do título, em todas as abas, em até 2 linhas, com "Ver mais" que expande ali mesmo e "Ver menos"; o controle só existe quando o texto passa de 2 linhas (medido, inclusive ao redimensionar). Sem descrição, o cabeçalho não mostra nada; o owner escreve em Configurações. `/{slug}/about` redireciona para a página da comunidade (redirect do `next.config.ts`); `about` continua slug reservado de torneio.
 
 ## Convites
 

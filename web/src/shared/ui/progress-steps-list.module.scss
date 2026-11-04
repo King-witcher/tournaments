@@ -17,3 +17,26 @@
 .inert {
   pointer-events: none;
 }
+
+// O passo atual abre como os feitos, mas o Carbon o trata como sem ação
+// (cursor e hover de texto parado): aqui ele recebe o mesmo cursor e o mesmo
+// hover sublinhado dos feitos. O nome é o primeiro `span` do texto do botão;
+// a classe dobrada vence o seletor do Carbon.
+.current.current {
+  button {
+    cursor: pointer;
+  }
+
+  @media (any-hover: hover) {
+    button > div > span:first-child:hover {
+      box-shadow: 0 1px theme.$link-primary-hover;
+      color: theme.$link-primary-hover;
+      cursor: pointer;
+    }
+  }
+
+  button:active > div > span:first-child {
+    box-shadow: 0 1px 0 0 theme.$text-primary;
+    color: theme.$text-primary;
+  }
+}
