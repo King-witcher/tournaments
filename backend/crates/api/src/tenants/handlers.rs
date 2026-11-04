@@ -17,7 +17,7 @@ use crate::{
 };
 
 /// Quantos tenants um usuário pode ter como owner (ser membro de outros não conta).
-const MAX_OWNED_TENANTS: i64 = 3;
+const MAX_OWNED_TENANTS: i64 = 5;
 const NAME_MAX: usize = 64;
 /// O mesmo limite da descrição do torneio e do check da tabela.
 const DESCRIPTION_MAX: usize = 2000;
