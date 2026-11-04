@@ -6,6 +6,7 @@ import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
+import { InfoTip } from "@/shared/ui/info-tip";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { fragsText } from "../lib/score";
@@ -26,11 +27,12 @@ type Props = {
  * séries), o saldo de frags (é ele que desempata, não o total; pró e contra
  * vêm ao lado, marcados como incompletos quando alguma série veio sem eles,
  * porque aí não desempatam; "sem frags" quando nenhuma veio), o Buchholz no
- * suíço (explicado uma vez, na descrição), e quem venceu, desistiu ou saiu.
+ * suíço (explicado no (i) da coluna), e quem venceu, desistiu ou saiu.
  * Embaixo, os desempates que não foram pelos pontos, um por linha ("2º à
  * frente do 3º pelo confronto direto"), visíveis também no celular, onde as
- * colunas de saldo somem. Enquanto a fase corre, é a ordem de agora; no fim,
- * a definitiva.
+ * colunas de saldo somem (e, com a do Buchholz, o (i): a explicação vem depois
+ * dos desempates, se algum foi por ele). Enquanto a fase corre, é a ordem de
+ * agora; no fim, a definitiva.
  */
 export function TableStandings({ tenant, bracket }: Props) {
   const t = useTranslations("Bracket.table");
@@ -56,7 +58,17 @@ export function TableStandings({ tenant, bracket }: Props) {
       : [{ key: "maps", header: t("maps"), secondary: true }]),
     { key: "frags", header: t("frags"), secondary: true },
     ...(swiss
-      ? [{ key: "buchholz", header: t("buchholz"), secondary: true }]
+      ? [
+          {
+            key: "buchholz",
+            header: (
+              <InfoTip term={t("buchholz")} label={t("buchholzTip")}>
+                {t("buchholzMeaning")}
+              </InfoTip>
+            ),
+            secondary: true,
+          },
+        ]
       : []),
     { key: "notes", header: t("notes"), secondary: true },
   ];
@@ -143,11 +155,7 @@ export function TableStandings({ tenant, bracket }: Props) {
   return (
     <Section
       title={t("title")}
-      description={
-        [!finished && t("current"), swiss && t("buchholzMeaning")]
-          .filter(Boolean)
-          .join(" ") || undefined
-      }
+      description={finished ? undefined : t("current")}
     >
       <DataTable
         label={t("title")}
@@ -164,6 +172,9 @@ export function TableStandings({ tenant, bracket }: Props) {
               <li key={text}>{text}</li>
             ))}
           </ul>
+          {rows.some((r) => r.ahead_by === "buchholz") && (
+            <p className={styles.buchholzNote}>{t("buchholzMeaning")}</p>
+          )}
         </div>
       )}
     </Section>

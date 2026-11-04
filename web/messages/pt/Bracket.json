@@ -140,6 +140,7 @@
       "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave. Empataram em todo o resto."
     },
     "noFrags": "sem frags",
-    "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um."
+    "buchholzTip": "O que é o Buchholz?",
+    "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um. Entre quem tem os mesmos pontos, fica à frente quem enfrentou adversários mais fortes."
   }
 }

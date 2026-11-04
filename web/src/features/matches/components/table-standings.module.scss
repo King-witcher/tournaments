@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
@@ -64,4 +65,17 @@
   color: theme.$text-secondary;
   list-style: disc;
   padding-inline-start: spacing.$spacing-05;
+}
+
+// No celular, a coluna do Buchholz some com o (i), e o termo continua nos
+// desempates: a explicação fica embaixo deles.
+.buchholzNote {
+  @include type.type-style("helper-text-01");
+
+  margin-block-start: spacing.$spacing-03;
+  color: theme.$text-secondary;
+
+  @include breakpoint.breakpoint(md) {
+    display: none;
+  }
 }

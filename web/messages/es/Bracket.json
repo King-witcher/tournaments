@@ -140,6 +140,7 @@
       "seed": "{position}º ({name}) por delante del {next}º ({other}) por el orden de la llave. Empataron en todo lo demás."
     },
     "noFrags": "sin frags",
-    "buchholzMeaning": "El Buchholz es la suma de los puntos de los rivales de cada uno."
+    "buchholzTip": "¿Qué es el Buchholz?",
+    "buchholzMeaning": "El Buchholz es la suma de los puntos de los rivales de cada uno. Entre quienes tienen los mismos puntos, queda por delante quien enfrentó a rivales más fuertes."
   }
 }
