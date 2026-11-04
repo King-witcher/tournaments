@@ -100,6 +100,19 @@ async fn signup_uses_the_locale_and_refuses_bad_input() {
     let me = confirm_signup(&app, &email).await;
     assert_eq!(get(&app, "/me", &me).await.1["locale"], "es");
 
+    let body = json!({ "display_name": "Sam", "password": PASSWORD, "email": "s@outlook.com", "locale": "en" });
+    let (status, _, _) = send_json(&app, Method::POST, "/auth/signup", None, body).await;
+    assert_eq!(status, StatusCode::ACCEPTED);
+    let email = mailbox(&db).next().await;
+    assert!(email.text.contains("/en/signup/confirm#"));
+    assert!(
+        email.subject.contains("Confirm your email"),
+        "{}",
+        email.subject
+    );
+    let me = confirm_signup(&app, &email).await;
+    assert_eq!(get(&app, "/me", &me).await.1["locale"], "en");
+
     for (name, password, address, code) in [
         ("  ", PASSWORD, "a@outlook.com", "auth.display_name_invalid"),
         (

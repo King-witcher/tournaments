@@ -1,0 +1,148 @@
+{
+  "loading": "Loading…",
+  "no": "No",
+  "duration": {
+    "minutes": "{minutes} min",
+    "hours": "{hours} h",
+    "hoursMinutes": "{hours} h {minutes} min"
+  },
+  "dayTime": {
+    "hour": "{hour12} {period}",
+    "hourMinute": "{hour12}:{minute} {period}",
+    "at": "at {time}",
+    "yesterday": "yesterday at {time}",
+    "today": "today at {time}",
+    "tomorrow": "tomorrow at {time}",
+    "date": "on {date} at {time}"
+  },
+  "close": "Close",
+  "cancel": "Cancel",
+  "save": "Save",
+  "moreActions": "More actions",
+  "typeToConfirm": "Type {slug} to confirm",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "increment": "Increase",
+  "decrement": "Decrease",
+  "breadcrumb": "You are here",
+  "breadcrumbMore": "Pages above",
+  "notice": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "success": "Done"
+  },
+  "progress": {
+    "complete": "Done",
+    "current": "Now",
+    "incomplete": "Not yet",
+    "invalid": "Has a problem"
+  },
+  "table": {
+    "search": "Search",
+    "clearSearch": "Clear search",
+    "actions": "Actions",
+    "noResults": "Nothing found for “{query}”.",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "itemsPerPage": "Per page:",
+    "pageNumber": "Page number",
+    "itemRange": "{min}–{max} of {total}",
+    "pageRange": "of {total, plural, one {# page} other {# pages}}",
+    "pageSelect": "Page, of {total}"
+  },
+  "toggle": {
+    "on": "On",
+    "off": "Off"
+  },
+  "dangerZone": "Danger zone",
+  "validation": {
+    "required": "Fill in this field.",
+    "requiredHidden": "(required)",
+    "minLength": "Minimum of {min} characters.",
+    "maxLength": "Maximum of {max} characters.",
+    "pattern": "Invalid format.",
+    "mismatch": "The passwords don't match.",
+    "email": "Invalid email.",
+    "range": "Use {min} to {max}.",
+    "atLeast": "The minimum is {min}.",
+    "atMost": "The maximum is {max}."
+  },
+  "counter": {
+    "remaining": "{count, plural, one {# character left.} other {# characters left.}}",
+    "maxReached": "Character limit reached.",
+    "limit": "Limit of {max} characters."
+  },
+  "pagination": {
+    "items": "{min}–{max}",
+    "page": "Page {page}"
+  },
+  "paginationNav": {
+    "page": "Page",
+    "active": "Current",
+    "of": "of",
+    "selectPage": "Choose a page"
+  },
+  "listBox": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "clearSelection": "Clear selection",
+    "clearAll": "Clear all selected"
+  },
+  "multiSelect": {
+    "selected": "Selected items:",
+    "clearHint": "To clear the selection, press Delete or Backspace",
+    "cleared": "The selection was cleared."
+  },
+  "slider": {
+    "lower": "Minimum value",
+    "upper": "Maximum value",
+    "corrected": "The value {value} was adjusted to the nearest allowed one."
+  },
+  "expandableTile": {
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "fileUploader": {
+    "add": "Add file",
+    "drop": "Drag files here or click to choose",
+    "remove": "Remove file",
+    "uploading": "Uploading file",
+    "uploaded": "File uploaded"
+  },
+  "copy": {
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "codeSnippet": {
+    "label": "Code snippet",
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
+  "notification": {
+    "close": "Close notification"
+  },
+  "tag": {
+    "dismiss": "Remove",
+    "dismissTag": "Remove tag"
+  },
+  "aiLabel": {
+    "text": "AI",
+    "showInformation": "Show information",
+    "revert": "Revert to AI content"
+  },
+  "datePicker": {
+    "format": "mm/dd/yyyy",
+    "pattern": "Use the mm/dd/yyyy format.",
+    "nonexistent": "That day doesn't exist.",
+    "calendar": "Calendar",
+    "nextMonth": "Next month",
+    "previousMonth": "Previous month"
+  },
+  "timePicker": {
+    "label": "Time",
+    "format": "hh:mm",
+    "pattern": "Use a time from 00:00 to 23:59.",
+    "timeZone": "Time zone"
+  }
+}

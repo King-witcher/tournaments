@@ -1,5 +1,6 @@
 import { serviceWorkerScript } from "@/features/push/lib/service-worker-script";
 import { routing } from "@/i18n/routing";
+import en from "../../../messages/en/Notifications.json";
 import es from "../../../messages/es/Notifications.json";
 import pt from "../../../messages/pt/Notifications.json";
 
@@ -15,7 +16,7 @@ export function GET() {
     deletedAccount: messages.deletedAccount,
   });
   const script = serviceWorkerScript(
-    { pt: texts(pt), es: texts(es) },
+    { pt: texts(pt), es: texts(es), en: texts(en) },
     routing.defaultLocale,
   );
   return new Response(script, {

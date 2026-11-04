@@ -1,6 +1,6 @@
-//! Os avisos que o Discord recebe e o texto de cada um, em português e
-//! espanhol. É a exceção à regra de a API devolver só códigos (como o email,
-//! em `auth/emails.rs`): a mensagem sai da API direto para outro serviço, sem
+//! Os avisos que o Discord recebe e o texto de cada um, em português,
+//! espanhol e inglês. É a exceção à regra de a API devolver só códigos (como o
+//! email, em `auth/emails.rs`): a mensagem sai da API direto para outro serviço, sem
 //! passar pelo front, que só traduz o que a pessoa lê no site.
 //!
 //! Um aviso novo (como os do veto) entra aqui com uma linha em
@@ -39,6 +39,7 @@ pub struct Spec {
     pub merge: bool,
     pt: &'static str,
     es: &'static str,
+    en: &'static str,
 }
 
 impl Spec {
@@ -46,6 +47,7 @@ impl Spec {
         match locale {
             Locale::Pt => self.pt,
             Locale::Es => self.es,
+            Locale::En => self.en,
         }
     }
 }
@@ -56,6 +58,7 @@ const fn spec(
     to: To,
     pt: &'static str,
     es: &'static str,
+    en: &'static str,
 ) -> Spec {
     Spec {
         code,
@@ -64,6 +67,7 @@ const fn spec(
         merge: false,
         pt,
         es,
+        en,
     }
 }
 
@@ -74,6 +78,7 @@ pub const CATALOG: &[Spec] = &[
         To::Nobody,
         "O check-in de **{tournament}** abriu. Faça o seu para jogar.\n{link}",
         "El check-in de **{tournament}** está abierto. Haz el tuyo para jugar.\n{link}",
+        "Check-in for **{tournament}** is open. Check in to play.\n{link}",
     ),
     spec(
         "tournament.started",
@@ -81,6 +86,7 @@ pub const CATALOG: &[Spec] = &[
         To::Nobody,
         "**{tournament}** começou. A chave está aqui: {link}",
         "**{tournament}** empezó. La llave está aquí: {link}",
+        "**{tournament}** has started. The bracket is here: {link}",
     ),
     Spec {
         merge: true,
@@ -90,6 +96,7 @@ pub const CATALOG: &[Spec] = &[
             To::Players,
             "Série pronta em **{tournament}** ({match}): {to}\n{link}",
             "Serie lista en **{tournament}** ({match}): {to}\n{link}",
+            "Match ready in **{tournament}** ({match}): {to}\n{link}",
         )
     },
     spec(
@@ -98,6 +105,7 @@ pub const CATALOG: &[Spec] = &[
         To::Players,
         "{to}: {opponent} está pronto para o veto da série {match} de **{tournament}** e espera você.\n{link}",
         "{to}: {opponent} está listo para el veto de la serie {match} de **{tournament}** y te espera.\n{link}",
+        "{to}: {opponent} is ready for the veto of match {match} in **{tournament}** and is waiting for you.\n{link}",
     ),
     // Desligado numa configuração nova: quem clicou em "Pronto" já está na
     // página; serve mais para o começo forçado pela organização.
@@ -109,6 +117,7 @@ pub const CATALOG: &[Spec] = &[
             To::Players,
             "O veto da série {match} de **{tournament}** começou: {to}\n{link}",
             "Empezó el veto de la serie {match} de **{tournament}**: {to}\n{link}",
+            "The veto for match {match} in **{tournament}** has started: {to}\n{link}",
         )
     },
     spec(
@@ -117,6 +126,7 @@ pub const CATALOG: &[Spec] = &[
         To::Staff,
         "{to} **{tournament}** chegou ao horário marcado e ainda não foi iniciado.\n{link}",
         "{to} **{tournament}** llegó a la hora marcada y aún no se inició.\n{link}",
+        "{to} **{tournament}** has reached its scheduled time and hasn't started yet.\n{link}",
     ),
     spec(
         "match.game_contested",
@@ -124,6 +134,7 @@ pub const CATALOG: &[Spec] = &[
         To::Staff,
         "{to} {player} contestou a partida {game} da série {match} de **{tournament}**. A organização precisa resolver.\n{link}",
         "{to} {player} impugnó la partida {game} de la serie {match} de **{tournament}**. La organización debe resolverla.\n{link}",
+        "{to} {player} contested game {game} of match {match} in **{tournament}**. The organizers need to resolve it.\n{link}",
     ),
     spec(
         "match.contest_received",
@@ -131,6 +142,7 @@ pub const CATALOG: &[Spec] = &[
         To::Players,
         "{to}: {player} contestou a partida {game} da série {match} de **{tournament}**. Você pode aceitar e corrigir o placar.\n{link}",
         "{to}: {player} impugnó la partida {game} de la serie {match} de **{tournament}**. Puedes aceptar y corregir el marcador.\n{link}",
+        "{to}: {player} contested game {game} of match {match} in **{tournament}**. You can accept and fix the score.\n{link}",
     ),
     spec(
         "tournament.finished",
@@ -138,6 +150,7 @@ pub const CATALOG: &[Spec] = &[
         To::Nobody,
         "**{tournament}** terminou. Pódio:\n{podium}\n{link}",
         "**{tournament}** terminó. Podio:\n{podium}\n{link}",
+        "**{tournament}** has finished. Podium:\n{podium}\n{link}",
     ),
     spec(
         "match.series_decided",
@@ -145,6 +158,7 @@ pub const CATALOG: &[Spec] = &[
         To::Nobody,
         "**{tournament}**, série {match}: {winner} venceu {loser}{score_part}.\n{link}",
         "**{tournament}**, serie {match}: {winner} venció a {loser}{score_part}.\n{link}",
+        "**{tournament}**, match {match}: {winner} beat {loser}{score_part}.\n{link}",
     ),
 ];
 
@@ -160,6 +174,9 @@ pub const fn test_text(locale: Locale) -> &'static str {
         }
         Locale::Es => {
             "Prueba de **{community}**. Los avisos de la comunidad llegarán a este canal.\n{link}"
+        }
+        Locale::En => {
+            "Test from **{community}**. The community's notices will arrive in this channel.\n{link}"
         }
     }
 }
@@ -270,13 +287,14 @@ mod tests {
     }
 
     #[test]
-    fn every_code_is_listed_once_with_both_languages() {
+    fn every_code_is_listed_once_with_every_language() {
         let mut codes: Vec<_> = CATALOG.iter().map(|s| s.code).collect();
         codes.sort_unstable();
         codes.dedup();
         assert_eq!(codes.len(), CATALOG.len());
         for s in CATALOG {
-            assert!(!s.pt.is_empty() && !s.es.is_empty(), "{}", s.code);
+            let all = !s.pt.is_empty() && !s.es.is_empty() && !s.en.is_empty();
+            assert!(all, "{}", s.code);
         }
     }
 }

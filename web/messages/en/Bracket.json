@@ -1,0 +1,149 @@
+{
+  "title": "Bracket",
+  "loading": "Loading bracket…",
+  "loginRequired": "Sign in to view the bracket.",
+  "notStarted": "The bracket appears here when the tournament starts.",
+  "seeParticipants": "View registrations",
+  "hint": "Open a match to report or view the result.",
+  "scrollHint": "Drag the bracket sideways to see other rounds.",
+  "scrollLabel": "Tournament bracket (scrolls sideways)",
+  "partsLabel": "Bracket sections",
+  "parts": {
+    "winners": "Winners bracket",
+    "losers": "Losers bracket",
+    "grand_final": "Grand final",
+    "round_robin": "Round robin",
+    "swiss": "Swiss"
+  },
+  "rounds": {
+    "final": "Final",
+    "semifinal": "Semifinal",
+    "quarterfinal": "Quarterfinals",
+    "round": "Round {round}",
+    "grandFinal": "Grand final",
+    "reset": "Reset"
+  },
+  "short": {
+    "single": "{round}.{index}",
+    "winners": "W{round}.{index}",
+    "losers": "L{round}.{index}",
+    "grand_final": "GF{round}",
+    "round_robin": "{round}.{index}",
+    "swiss": "{round}.{index}"
+  },
+  "from": {
+    "winner": "Winner of {match}",
+    "loser": "Loser of {match}"
+  },
+  "bye": "bye",
+  "tbd": "TBD",
+  "bestOf": "Bo{count}",
+  "walkover": "Walkover",
+  "notNeeded": "Not needed",
+  "advances": "<name></name> advances without playing",
+  "matchSides": "{a} × {b}",
+  "nextMap": "Next map: {map}",
+  "result": {
+    "pending": "Game waiting for confirmation",
+    "contested": "Game disputed"
+  },
+  "task": {
+    "report": "Report the next game",
+    "respond": "Confirm or dispute the game",
+    "await_opponent": "Waiting for the opponent",
+    "await_organizer": "Dispute waiting for a response",
+    "resolve": "Resolve dispute",
+    "accept_contest": "Respond to the dispute",
+    "ready": "Click “Ready” for the veto",
+    "veto": "Your turn in the veto",
+    "await_ready": "Waiting for the opponent to get ready",
+    "veto_in_progress": "Veto in progress",
+    "await_captain": "Waiting for the captain",
+    "await_team": "Waiting for your team to get ready"
+  },
+  "yours": "Your match",
+  "progress": {
+    "completed": "Completed",
+    "in_progress": "In progress",
+    "pending": "Pending"
+  },
+  "views": {
+    "label": "How to view matches",
+    "rounds": "Rounds",
+    "crosstable": "Matchups"
+  },
+  "crosstable": {
+    "label": "Matchups between participants",
+    "legend": "Each row shows the results of the participant in it.",
+    "legendFrags": "In matches with one game, the score is in frags.",
+    "corner": "Participant",
+    "described": {
+      "pending": "pending",
+      "playing": "in progress, {score}",
+      "won": "win, {score}",
+      "lost": "loss, {score}",
+      "frags": "{score} in frags",
+      "wonWalkover": "win by walkover",
+      "lostWalkover": "loss by walkover"
+    }
+  },
+  "opponentPlaying": "Opponent playing",
+  "departure": {
+    "left": "left",
+    "withdrawn": "withdrew"
+  },
+  "pending": {
+    "title": "Matches waiting for you",
+    "item": "{match} · {a} × {b}: {task}"
+  },
+  "standings": {
+    "title": "Standings",
+    "loading": "Loading standings…",
+    "notStarted": "Standings appear here when the tournament starts.",
+    "rank": "{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "range": "{from, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}–{to, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "position": "Position",
+    "player": "Player",
+    "result": "Result",
+    "champion": "Won the tournament",
+    "eliminated": "Eliminated: <match></match> ({score})",
+    "empty": "Standings appear here when the last match in the bracket is decided."
+  },
+  "rest": "<name></name> sits out this round",
+  "swissBye": "<name></name> gets the bye (counts as a win)",
+  "matchesTitle": "Matches",
+  "roundOf": "Round {round} of {total}",
+  "roundRobinHint": "All matches are open, and each is played when both sides agree. Open a match to report or view the result.",
+  "swissProgress": "Round {round} of {total}. Open a match to report or view the result.",
+  "nextRound": "Round {round} of {total} starts when all matches in round {previous} are finished.",
+  "table": {
+    "title": "Standings",
+    "current": "The current order. It becomes final when the last match finishes.",
+    "position": "Pos.",
+    "place": "#{position}",
+    "team": "Player",
+    "points": "Points",
+    "record": "Matches",
+    "recordValue": "{wins}–{losses}",
+    "recordByes": "{wins}–{losses} (+{byes} bye)",
+    "maps": "Games",
+    "frags": "Frag difference",
+    "diff": "{won}–{lost} ({diff})",
+    "fragsDetail": "{won} – {lost}",
+    "incomplete": "{frags}, incomplete",
+    "buchholz": "Buchholz",
+    "notes": "Status",
+    "empty": "No participants.",
+    "tiebreaks": "Tiebreakers",
+    "aheadBy": {
+      "buchholz": "#{position} ({name}) ahead of #{next} ({other}) on Buchholz.",
+      "head_to_head": "#{position} ({name}) ahead of #{next} ({other}) on head-to-head.",
+      "map_diff": "#{position} ({name}) ahead of #{next} ({other}) on game difference.",
+      "frag_diff": "#{position} ({name}) ahead of #{next} ({other}) on frag difference.",
+      "seed": "#{position} ({name}) ahead of #{next} ({other}) on seeding. They tied on everything else."
+    },
+    "noFrags": "no frags",
+    "buchholzTip": "What is Buchholz?",
+    "buchholzMeaning": "Buchholz is the sum of each player's opponents' points. Among players with the same points, the one who faced stronger opponents ranks higher."
+  }
+}

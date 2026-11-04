@@ -81,7 +81,7 @@ cd web
 bun run dev
 ```
 
-- Site: http://localhost:4001 (redireciona para `/pt` ou `/es` conforme o navegador)
+- Site: http://localhost:4001 (redireciona para `/pt`, `/es` ou `/en` conforme o navegador)
 
 ## Bucket dos screenshots
 

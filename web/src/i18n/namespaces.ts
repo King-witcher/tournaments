@@ -3,9 +3,9 @@
  * namespace de primeiro nível (o primeiro argumento de `useTranslations` e
  * `getTranslations`), para cada fluxo de telas mexer só nos seus.
  *
- * Namespace novo: crie o arquivo nos dois idiomas e acrescente uma linha em
+ * Namespace novo: crie o arquivo nos três idiomas e acrescente uma linha em
  * cada lista abaixo, em ordem alfabética. Os tipos do next-intl saem de `pt`;
- * `es` precisa ter as mesmas chaves (falta de chave em `es` é erro de
+ * `es` e `en` precisam ter as mesmas chaves (falta de chave é erro de
  * compilação). Os imports são estáticos (nada de fs em runtime) e cada
  * arquivo vira um módulo à parte, carregado só no servidor.
  */
@@ -101,10 +101,53 @@ const es: Loaders = {
   VetoRoom: () => import("../../messages/es/VetoRoom.json"),
 };
 
-const loaders: Record<"pt" | "es", Loaders> = { pt, es };
+const en: Loaders = {
+  Account: () => import("../../messages/en/Account.json"),
+  Admission: () => import("../../messages/en/Admission.json"),
+  ApiErrors: () => import("../../messages/en/ApiErrors.json"),
+  Auth: () => import("../../messages/en/Auth.json"),
+  Bracket: () => import("../../messages/en/Bracket.json"),
+  Common: () => import("../../messages/en/Common.json"),
+  Discord: () => import("../../messages/en/Discord.json"),
+  Errors: () => import("../../messages/en/Errors.json"),
+  Home: () => import("../../messages/en/Home.json"),
+  Images: () => import("../../messages/en/Images.json"),
+  Invite: () => import("../../messages/en/Invite.json"),
+  Landing: () => import("../../messages/en/Landing.json"),
+  Lifecycle: () => import("../../messages/en/Lifecycle.json"),
+  LocaleSwitcher: () => import("../../messages/en/LocaleSwitcher.json"),
+  Locales: () => import("../../messages/en/Locales.json"),
+  Login: () => import("../../messages/en/Login.json"),
+  Match: () => import("../../messages/en/Match.json"),
+  Member: () => import("../../messages/en/Member.json"),
+  Metadata: () => import("../../messages/en/Metadata.json"),
+  Nav: () => import("../../messages/en/Nav.json"),
+  NewTenant: () => import("../../messages/en/NewTenant.json"),
+  NewTournament: () => import("../../messages/en/NewTournament.json"),
+  NotFound: () => import("../../messages/en/NotFound.json"),
+  Notifications: () => import("../../messages/en/Notifications.json"),
+  Organizing: () => import("../../messages/en/Organizing.json"),
+  Participants: () => import("../../messages/en/Participants.json"),
+  Screenshots: () => import("../../messages/en/Screenshots.json"),
+  Ratings: () => import("../../messages/en/Ratings.json"),
+  Roles: () => import("../../messages/en/Roles.json"),
+  Signup: () => import("../../messages/en/Signup.json"),
+  Team: () => import("../../messages/en/Team.json"),
+  Tenant: () => import("../../messages/en/Tenant.json"),
+  ThemeSwitcher: () => import("../../messages/en/ThemeSwitcher.json"),
+  Tournament: () => import("../../messages/en/Tournament.json"),
+  TournamentForm: () => import("../../messages/en/TournamentForm.json"),
+  TournamentStatus: () => import("../../messages/en/TournamentStatus.json"),
+  Tournaments: () => import("../../messages/en/Tournaments.json"),
+  VetoRoom: () => import("../../messages/en/VetoRoom.json"),
+};
+
+const loaders: Record<"pt" | "es" | "en", Loaders> = { pt, es, en };
 
 /** Todos os namespaces de `locale`, no formato que o next-intl espera. */
-export async function loadMessages(locale: "pt" | "es"): Promise<Messages> {
+export async function loadMessages(
+  locale: "pt" | "es" | "en",
+): Promise<Messages> {
   const entries = await Promise.all(
     Object.entries(loaders[locale]).map(
       async ([namespace, load]) => [namespace, (await load()).default] as const,

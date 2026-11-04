@@ -1,0 +1,308 @@
+{
+  "loading": "Loading the tournament…",
+  "loginRequired": "Log in to view this tournament.",
+  "draftHint": "Only the organizers can see the draft.",
+  "edit": "Edit",
+  "sections": "Tournament sections",
+  "tabs": {
+    "overview": "Overview",
+    "bracket": "Bracket",
+    "standings": "Standings",
+    "participants": "Registered",
+    "rules": "Rules",
+    "manage": "Organizers"
+  },
+  "meta": {
+    "bestOf": "Best of {bestOf}",
+    "participants": "{count}/{max} registered"
+  },
+  "progress": "Tournament progress",
+  "description": "Description",
+  "autoRules": {
+    "title": "How it works",
+    "generated": "This text comes from the tournament format and updates on its own when you edit it.",
+    "entry": {
+      "title": "Registration and check-in",
+      "titleNoCheckIn": "Registration",
+      "start": "The tournament starts <when></when>.",
+      "registration": "Registration runs until the start or until the {max} spots fill up.",
+      "inviteOnly": "Only players with the registration link, or registered by the organizers, can register.",
+      "checkInAt": "Check-in opens <when></when> and runs until the start.",
+      "checkIn": "Check-in opens {window} before the start and runs until then.",
+      "checkInOpen": "Check-in is open and runs until the start.",
+      "checkInDo": "Check in on the tournament page to confirm you'll play. Players who don't check in are left out of the bracket.",
+      "checkInDoTdm": "Check in on the tournament page to confirm you'll play. Players who don't check in aren't placed on any team.",
+      "lateEntry": "Players who register during check-in are already checked in.",
+      "noCheckIn": "There is no check-in. All registered players go into the bracket.",
+      "noCheckInTdm": "There is no check-in."
+    },
+    "teams": {
+      "title": "Teams",
+      "formation": "Teams have {size} players, formed by the organizers before the start. Players left over are reserves.",
+      "changes": "During the tournament, the organizers can swap a player for a reserve or for another community member. If someone leaves the community, the team keeps playing with fewer players.",
+      "actors": {
+        "captain": "The captain does everything for the team: marks “Ready”, vetoes maps, bans and picks champions for everyone, and submits, confirms or disputes the result. If they don't show up, the deadline draws whatever is missing, and the organizers can replace the captain.",
+        "balanced": "The captain vetoes maps and bans champions. Each player picks their own champion. Any player can submit, confirm or dispute the result, and the first click counts.",
+        "everyone": "Any player vetoes maps, bans, and submits, confirms or disputes the result for the team, and the first click counts. Each player picks their own champion.",
+        "custom": {
+          "veto": {
+            "captain": "The captain vetoes maps.",
+            "anyone": "Any player vetoes maps, and the first click counts."
+          },
+          "ban": {
+            "captain": "The captain bans champions.",
+            "anyone": "Any player bans champions, and the first click counts."
+          },
+          "pick": {
+            "captain": "The captain picks champions for everyone.",
+            "each_player": "Each player picks their own champion."
+          },
+          "report": {
+            "captain": "The captain submits, confirms and disputes the result.",
+            "anyone": "Any player submits, confirms and disputes the result."
+          }
+        }
+      }
+    },
+    "format": {
+      "title": {
+        "elimination": "Bracket",
+        "table": "Format"
+      },
+      "single": "The bracket is single elimination.",
+      "double": "The bracket is double elimination.",
+      "round_robin": "The format is round robin. Each player faces every other player once.",
+      "round_robinTdm": "The format is round robin. Each team faces every other team once.",
+      "swiss": "The format is Swiss. The number of rounds depends on registrations: 3 for up to 8, 4 for up to 16, 5 for up to 32.",
+      "swissTdm": "The format is Swiss. The number of rounds depends on teams: 3 for up to 8, 4 for up to 16, 5 for up to 32.",
+      "swissRounds": "The format is Swiss, with {rounds, plural, one {# round} other {# rounds}}.",
+      "series": "{bestOf, plural, =1 {Matches are a single game.} other {Matches are best of #.}}",
+      "finals": {
+        "single": "{bestOf, plural, =1 {Matches are a single game} other {Matches are best of #}}, and the final is {finals, plural, =1 {a single game} other {best of #}}.",
+        "double": "{bestOf, plural, =1 {Matches are a single game} other {Matches are best of #}}, and the grand final is {finals, plural, =1 {a single game} other {best of #}}."
+      }
+    },
+    "bracketRule": {
+      "single": "Losing a match knocks you out of the tournament.",
+      "double": "Losing a match drops you to the losers' bracket, and losing again eliminates you. The winners of the upper bracket and the losers' bracket play the grand final, and the winner is the champion, even if they came through the losers' bracket.",
+      "doubleReset": "Losing a match drops you to the losers' bracket, and losing again eliminates you. The winners of the upper bracket and the losers' bracket play the grand final. If the player from the losers' bracket wins, the grand final is played again.",
+      "round_robin": "Matches stay open from the start, and you play each one when you agree on a time with your opponent. Rounds only set the order. With an odd number of registered players, each player gets one round off.",
+      "swiss": "In the first round, pairings come from the seeding. After that, players with the same score face each other, without repeating an opponent. Each round starts when all matches in the previous one finish. With an odd number of players, the lowest-ranked player who hasn't had a bye yet gets one, and a bye counts as a win."
+    },
+    "table": {
+      "title": "Standings",
+      "points": "Each won match is worth 1 point. Ties on points are broken in this order:",
+      "buchholz": "Buchholz (the sum of your opponents' points)",
+      "headToHead": "Head-to-head",
+      "games": "Game difference",
+      "frags": "Frag difference",
+      "seed": "Seeding"
+    },
+    "series": {
+      "title": "Each match",
+      "ready": "When the match is ready, open its page and click “Ready”.",
+      "readyTdm": "When the match is ready, all players from both teams open its page and click “Ready”.",
+      "vetoStarts": "The veto starts when both sides are ready.",
+      "vetoStartsTdm": "The veto starts when both teams are ready.",
+      "timer": "Each veto choice has {time}. If time runs out, it's drawn at random.",
+      "maps": {
+        "veto": "Before the first game, you ban and pick maps, one at a time, until each game's map is set.",
+        "vetoBansFirst": "Before the first game, you ban maps, one at a time, until only the match's maps are left. Then you choose the order they're played in.",
+        "vetoOne": "Before the game, you ban maps, one at a time, until one is left.",
+        "vote": "Before each game, each player votes for one of 3 random maps. If the votes differ, the map is drawn between the two.",
+        "random": "Each game's map is drawn when it starts.",
+        "off": "You agree on each game's map, without repeating within the match.",
+        "offOne": "You agree on the map."
+      },
+      "mapsTdm": {
+        "veto": "Before the first game, the teams ban and pick maps, one at a time, until each game's map is set.",
+        "vetoBansFirst": "Before the first game, the teams ban maps, one at a time, until only the match's maps are left. Then they choose the order they're played in.",
+        "vetoOne": "Before the game, the teams ban maps, one at a time, until one is left.",
+        "vote": "Before each game, each team votes for one of 3 random maps. If the votes differ, the map is drawn between the two.",
+        "random": "Each game's map is drawn when it starts.",
+        "off": "The teams agree on each game's map, without repeating within the match.",
+        "offOne": "The teams agree on the map."
+      },
+      "readyCaptains": "When the match is ready, each team's captain opens its page and clicks “Ready”."
+    },
+    "pool": {
+      "title": "Maps"
+    },
+    "results": {
+      "title": "Result",
+      "report": "After each game, one of you submits the score on the match page.",
+      "reportTdm": "After each game, any player submits the score on the match page.",
+      "next": "You don't need to wait for confirmation to play the next game.",
+      "screenshot": "Take a screenshot of the scoreboard before leaving the game. Submitting requires the screenshot.",
+      "confirm": "The other player has {window} to confirm or dispute. If there's no response, the game confirms on its own. If the result arrives before the game reaches {duration}, the {window} only starts counting at {duration}.",
+      "confirmTdm": "The other team has {window} to confirm or dispute, and the teammate of whoever submitted can also dispute. If there's no response, the game confirms on its own. If the result arrives before the game reaches {duration}, the {window} only starts counting at {duration}.",
+      "late": "A confirmed game can still be disputed until the next match of one of you starts.",
+      "lateTdm": "A confirmed game can still be disputed until the next match of either team starts.",
+      "organizer": "The opponent can accept the dispute and correct the score. Otherwise, the organizers decide.",
+      "organizerTdm": "The captain of the team opposing whoever disputed can accept and correct the score. Otherwise, the organizers decide.",
+      "reportCaptain": "After each game, the captain submits the score on the match page.",
+      "confirmCaptain": "The other team's captain has {window} to confirm or dispute. If there's no response, the game confirms on its own. If the result arrives before the game reaches {duration}, the {window} only starts counting at {duration}."
+    },
+    "absence": {
+      "title": "Walkover and withdrawal",
+      "walkover": "If your opponent doesn't show up, or if you need to leave the tournament, tell the organizers. A player who doesn't play loses by walkover.",
+      "walkoverTdm": "If the other team doesn't show up, or if yours needs to leave the tournament, tell the organizers. A team that doesn't play loses by walkover.",
+      "score": "A walkover counts as a win by {wins} to 0.",
+      "withdrawal": {
+        "round_robin": "A player who leaves the tournament loses by walkover the matches they still had to play, and the points they already earned stay in the standings.",
+        "swiss": "A player who leaves the tournament is no longer paired, and the points they already earned stay in the standings."
+      }
+    },
+    "tdm": {
+      "roundRobinRule": "Matches stay open from the start, and your team plays each one when you agree on a time with the opponent. Rounds only set the order. With an odd number of teams, each team gets one round off."
+    },
+    "noBans": "There are no champion bans.",
+    "champions": {
+      "bans": {
+        "duel": "{count, plural, one {Before game 1, each player bans # champion, taking turns. The banned champion is out for the whole match, for both players.} other {Before game 1, each player bans # champions, taking turns. Banned champions are out for the whole match, for both players.}}",
+        "tdm": "{count, plural, one {Before game 1, each team bans # champion, taking turns. The banned champion is out for the whole match, for both teams.} other {Before game 1, each team bans # champions, taking turns. Banned champions are out for the whole match, for both teams.}}"
+      },
+      "pick": {
+        "duel": "Then, still before game 1, you pick each game's champion one at a time, taking turns on who picks first.",
+        "tdm": "Then, still before game 1, each player picks each game's champion, one at a time, in A, B, B, A order, switching who goes first each game. On a team's turn, a player who hasn't picked in that game yet makes the pick.",
+        "open": "Then, still before game 1, everyone picks each game's champion at the same time, within a {window} window. Whatever is left at the end is drawn at random.",
+        "blind": {
+          "duel": "Then, still before game 1, you both pick each game's champion at the same time, within a {window} window. What each player picks is only revealed when both are done. Whatever is left at the end is drawn at random.",
+          "tdm": "Then, still before game 1, everyone picks each game's champion at the same time, within a {window} window. What a team picks is only revealed when everyone is done. Whatever is left at the end is drawn at random.",
+          "captain": "Then, still before game 1, the captains pick each player's champion for each game at the same time, within a {window} window. What a team picks is only revealed when everyone is done. Whatever is left at the end is drawn at random."
+        },
+        "captain": "Then, still before game 1, the captains pick each player's champion for each game, one at a time, in A, B, B, A order, switching who goes first each game."
+      },
+      "mirror": {
+        "duel": {
+          "on": "You both can use the same champion in the game.",
+          "off": "You both can't use the same champion in the game. Whoever picks first keeps it."
+        },
+        "tdm": {
+          "on": "Both teams can use the same champion in the game.",
+          "off": "Both teams can't use the same champion in the game. Whoever picks first keeps it."
+        }
+      },
+      "sameTeam": {
+        "on": "Teammates can use the same champion in the game.",
+        "off": "Teammates can't use the same champion in the game."
+      },
+      "repeat": {
+        "off": "From one game to the next, the champion can repeat.",
+        "duel": {
+          "series": "Within the match, you can't repeat a champion.",
+          "stage": "In this stage, you can't repeat a champion. Only played games count.",
+          "tournament": "In the tournament, you can't repeat a champion. Only played games count."
+        },
+        "player": {
+          "series": "Within the match, each player can't repeat a champion.",
+          "stage": "In this stage, each player can't repeat a champion. Only played games count.",
+          "tournament": "In the tournament, each player can't repeat a champion. Only played games count."
+        },
+        "team": {
+          "series": "Within the match, the team can't repeat a champion. A champion picked by someone on the team for one game can't be used by anyone on the team in another game.",
+          "stage": "In this stage, the team can't repeat a champion. A champion anyone on the team has used can't be used by anyone on the team again. Only played games count.",
+          "tournament": "In the tournament, the team can't repeat a champion. A champion anyone on the team has used can't be used by anyone on the team again. Only played games count."
+        }
+      }
+    }
+  },
+  "extraRules": "Additional rules",
+  "rulesEditor": {
+    "edit": "Edit additional rules",
+    "write": "Write additional rules",
+    "empty": "No additional rules.",
+    "labelOriginal": "Additional rules ({language}, original)",
+    "labelTranslation": "Additional rules ({language}, translation)"
+  },
+  "publish": "Publish and open registration",
+  "publishConfirm": "Publish the tournament? Registration opens and the community can see it. Once published, it can't go back to draft or be deleted.",
+  "publishBlocked": {
+    "past": "The start date has already passed. Change it under Edit to publish.",
+    "window": "The start is closer than the check-in window. Change the date under Edit to publish."
+  },
+  "delete": "Delete draft",
+  "deleteConfirm": "Delete this draft? This can't be undone.",
+  "deleteTournament": "Delete tournament",
+  "deletePublishedConfirm": "The tournament is deleted along with its registrations. No one is notified. This can't be undone.",
+  "deleteStartedConfirm": "The tournament is deleted along with the bracket, results and screenshots. No one is notified. This can't be undone.",
+  "deleteRatingNote": "The ranking is recalculated without it.",
+  "copy": "Copy tournament",
+  "setup": {
+    "title": "Format",
+    "labels": {
+      "bracket": "Bracket",
+      "series": "Matches",
+      "slots": "Spots",
+      "champions": "Champions",
+      "checkIn": "Check-in",
+      "contest": "Dispute deadline",
+      "veto": "Maps",
+      "format": "Format",
+      "rounds": "Rounds",
+      "mode": "Mode",
+      "teamRules": "Who acts for the team"
+    },
+    "bracket": {
+      "single": "Single elimination",
+      "double": "Double elimination",
+      "doubleReset": "Double elimination, with a reset in the grand final",
+      "round_robin": "Round robin",
+      "swiss": "Swiss"
+    },
+    "series": {
+      "single": "Best of {bestOf}; final best of {finals}",
+      "double": "Best of {bestOf}; grand final best of {finals}",
+      "table": "Best of {bestOf}"
+    },
+    "bans": "{count, plural, =0 {no bans} one {# ban per match} other {# bans per match}}",
+    "noRepeat": {
+      "off": "can repeat",
+      "series": "no repeats in the match",
+      "stage": "no repeats in the stage",
+      "tournament": "no repeats in the tournament"
+    },
+    "checkIn": "opens {window} before the start",
+    "noCheckIn": "no check-in",
+    "tips": {
+      "bracket": "How does the bracket work?",
+      "champions": "How do the champion rules work?",
+      "checkIn": "What is check-in?",
+      "checkInText": "At check-in, you confirm on the tournament page that you'll play. Only players who check in make it into the bracket.",
+      "noCheckInText": "At check-in, registered players confirm close to the start that they'll play. Without it, all registered players make it into the bracket.",
+      "contest": "What is the dispute deadline?",
+      "contestText": "After each game, one player submits the result, and the other has this deadline to confirm or dispute. If the result arrives before the game reaches {duration}, the deadline only starts counting at {duration}. Without a response, the result stands; if there's a dispute, the organizers decide.",
+      "format": "How does the format work?",
+      "mode": "How do teams work?",
+      "checkInTextTdm": "At check-in, you confirm on the tournament page that you'll play. Only players who check in make it onto a team.",
+      "noCheckInTextTdm": "At check-in, registered players confirm close to the start that they'll play. Without it, any registered player can join a team.",
+      "contestTextTdm": "After each game, one player submits the result, and the other team has this deadline to confirm or dispute (the teammate of whoever submitted can also dispute). If the result arrives before the game reaches {duration}, the deadline only starts counting at {duration}. Without a response, the result stands; if there's a dispute, the organizers decide.",
+      "contestTextCaptain": "After each game, the captain submits the result, and the other team's captain has this deadline to confirm or dispute. If the result arrives before the game reaches {duration}, the deadline only starts counting at {duration}. Without a response, the result stands; if there's a dispute, the organizers decide."
+    },
+    "seeRules": "See the rules",
+    "rounds": {
+      "auto": "rounds set by registrations",
+      "fixed": "{count, plural, one {# round} other {# rounds}}",
+      "autoTeams": "rounds set by teams"
+    },
+    "roundsValue": {
+      "auto": "Automatic: 3 for up to 8 registered, 4 for up to 16, 5 for up to 32",
+      "fixed": "{count} (at most one fewer than the registered players)",
+      "autoTeams": "Automatic: 3 for up to 8 teams, 4 for up to 16, 5 for up to 32",
+      "fixedTeams": "{count} (at most one fewer than the teams)"
+    },
+    "noRepeatWho": "{rule}, {who, select, team {per team} other {per player}}",
+    "slotsTeams": "{slots} ({teams, plural, one {# team} other {# teams}} of {size})",
+    "offSite": "champions picked off-site",
+    "noMirror": "no matching champions between opponents",
+    "sameTeam": "same champion allowed within a team",
+    "pickOrder": {
+      "alternating": "alternating picks",
+      "blind": "blind picks",
+      "open": "open window"
+    }
+  },
+  "startsAt": "Starts <date></date>",
+  "startedAt": "Start set for <date></date>",
+  "noStartDate": "No start date"
+}

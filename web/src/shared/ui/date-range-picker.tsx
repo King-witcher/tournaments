@@ -10,16 +10,7 @@ import {
   useMemo,
 } from "react";
 
-import { dayFirstDigits } from "@/shared/lib/input-filters";
-import {
-  DAY_FIRST_FORMAT,
-  DAY_FIRST_REGEX,
-  dateOfPlain,
-  fromDayFirst,
-  parseDayFirst,
-  plainDateOf,
-  toDayFirst,
-} from "@/shared/lib/plain-date";
+import { dateOfPlain, dateText, plainDateOf } from "@/shared/lib/plain-date";
 import { RequiredLabel } from "./required-label";
 
 type Range = [start: string | null, end: string | null];
@@ -46,7 +37,8 @@ type Props = Pick<
 };
 
 /**
- * O `DatePicker` do Carbon no modo `range`: dois campos ("dd/mm/aaaa") e um
+ * O `DatePicker` do Carbon no modo `range`: dois campos ("dd/mm/aaaa" ou
+ * "mm/dd/yyyy" em inglês) e um
  * calendário que marca o começo e o fim, para agenda e filtro por período.
  * As pontas entram e saem em "AAAA-MM-DD"; enquanto só o começo foi
  * escolhido, o fim vem `null`. O erro da API vai em `invalid` + `invalidText`
@@ -67,6 +59,7 @@ export function DateRangePicker({
 }: Props) {
   const t = useTranslations("Common.datePicker");
   const locale = useLocale();
+  const text = dateText(locale);
   const generated = useId();
   const startId = id ?? generated;
   const [start, end] = value;
@@ -88,9 +81,9 @@ export function DateRangePicker({
     // Carbon não lê o que foi digitado (só no modo `single`) e o flatpickr o
     // apaga ao sair do campo: a ponta completa e válida vira valor na hora.
     onChange: (event: ChangeEvent<HTMLInputElement>) => {
-      const clean = dayFirstDigits(event.target.value);
+      const clean = text.digits(event.target.value);
       if (clean !== event.target.value) event.target.value = clean;
-      const typed = DAY_FIRST_REGEX.test(clean) ? fromDayFirst(clean) : null;
+      const typed = text.regex.test(clean) ? text.fromText(clean) : null;
       if (typed && typed !== value[point]) {
         onChange(point === 0 ? [typed, end] : [start, typed]);
       }
@@ -102,12 +95,12 @@ export function DateRangePicker({
   return (
     <CarbonDatePicker
       datePickerType="range"
-      dateFormat={DAY_FIRST_FORMAT}
-      parseDate={parseDayFirst}
+      dateFormat={text.format}
+      parseDate={text.parse}
       locale={locale}
       value={dates}
-      minDate={minDate && toDayFirst(minDate)}
-      maxDate={maxDate && toDayFirst(maxDate)}
+      minDate={minDate && text.toText(minDate)}
+      maxDate={maxDate && text.toText(maxDate)}
       readOnly={readOnly}
       nextMonthAriaLabel={t("nextMonth")}
       prevMonthAriaLabel={t("previousMonth")}

@@ -32,17 +32,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/:locale(pt|es)/login/forgot",
+        source: "/:locale(pt|es|en)/login/forgot",
         destination: "/:locale/login/email",
         permanent: false,
       },
       {
-        source: "/:locale(pt|es)/login/reset",
+        source: "/:locale(pt|es|en)/login/reset",
         destination: "/:locale/login/email?expired=1",
         permanent: false,
       },
       {
-        source: "/:locale(pt|es)/:tenant/about",
+        source: "/:locale(pt|es|en)/:tenant/about",
         destination: "/:locale/:tenant",
         permanent: false,
       },
@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
       },
       // A sala de veto tem o token na URL: nada de mandar o endereço a outro
       // site nem de indexar (o último cabeçalho igual é o que vale).
-      ...["/veto/:token", "/:locale(pt|es)/veto/:token"].map((source) => ({
+      ...["/veto/:token", "/:locale(pt|es|en)/veto/:token"].map((source) => ({
         source,
         headers: [
           { key: "Referrer-Policy", value: "no-referrer" },

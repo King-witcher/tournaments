@@ -1,0 +1,19 @@
+{
+  "title": "Create account",
+  "submit": "Create account",
+  "hasAccount": "Already have an account?",
+  "login": "Sign in",
+  "sent": {
+    "title": "Check your email",
+    "text": "We sent a code and a link to {email}. Both are valid for 1 hour. Didn't arrive? Check your spam folder.",
+    "resend": "Resend email",
+    "resent": "New email sent. The previous code and link no longer work.",
+    "back": "Use another email"
+  },
+  "confirm": {
+    "title": "Confirm email",
+    "submit": "Confirm",
+    "signup": "Create account",
+    "login": "Sign in"
+  }
+}

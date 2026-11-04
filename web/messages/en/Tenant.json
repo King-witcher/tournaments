@@ -1,0 +1,84 @@
+{
+  "loading": "Loading the community…",
+  "loginRequired": "Log in to see this community.",
+  "sections": "Community sections",
+  "newTournament": "New tournament",
+  "tabs": {
+    "tournaments": "Tournaments",
+    "ranking": "Ranking",
+    "members": "Members",
+    "settings": "Settings"
+  },
+  "description": {
+    "more": "Show more",
+    "less": "Show less"
+  },
+  "details": {
+    "title": "Name and description",
+    "name": "Name",
+    "description": "Description",
+    "descriptionHint": "Shows in the community header and on the invite page.",
+    "saved": "Name and description saved."
+  },
+  "address": {
+    "title": "Address",
+    "hint": "The community link will be {address}.",
+    "invalid": "Can't end with a hyphen.",
+    "placeholder": "your-address",
+    "submit": "Change address",
+    "confirm": "The community moves to {address}. Saved links and messages already sent with {old}, such as Discord ones, stop working. Another community can claim this address. Invite links keep working."
+  },
+  "members": {
+    "label": "Community members",
+    "loading": "Loading members…",
+    "count": "{count, plural, one {# member} other {# members}}",
+    "member": "Member",
+    "role": "Role",
+    "since": "Since",
+    "empty": "No one in the community yet.",
+    "actions": "Actions for {name}",
+    "makeOrganizer": "Make organizer",
+    "makePlayer": "Make player",
+    "remove": "Remove",
+    "removeTitle": "Remove {name}",
+    "removeConfirm": "Remove {name} from the community? {name} loses access, leaves registrations in tournaments that haven't started and, in tournaments in progress, loses pending matches by walkover. History stays, and {name} can rejoin with an invite, as a player."
+  },
+  "settings": {
+    "loading": "Loading settings…"
+  },
+  "nickname": {
+    "title": "Your nickname",
+    "label": "Nickname in this community",
+    "saved": "Nickname saved."
+  },
+  "leave": {
+    "title": "Leave community",
+    "submit": "Leave community",
+    "confirm": "You lose access, leave registrations in tournaments that haven't started and, in tournaments in progress, lose pending matches by walkover. Your name stays in the bracket of the tournaments you played, and you can rejoin with an invite, as a player, with the same nickname."
+  },
+  "transfer": {
+    "title": "Transfer ownership",
+    "description": "The chosen member becomes the owner and you become an organizer.",
+    "member": "New owner",
+    "choose": "Choose a member…",
+    "chooseFirst": "Choose who will receive ownership.",
+    "submit": "Transfer ownership",
+    "confirm": "{name} becomes the community owner and you become an organizer. To get ownership back, {name} has to transfer it to you.",
+    "empty": "There's no other member to receive ownership yet.",
+    "invite": "Invite someone"
+  },
+  "deletion": {
+    "title": "Delete community",
+    "description": "The community is deleted 7 days after the request, with everything in it. Until then, it's read-only, and you can cancel. If any tournament is in progress, end it or undo its start first.",
+    "submit": "Delete community",
+    "confirm": "Schedule the community's deletion? On that date, it's permanently erased, with everything in it.",
+    "scheduledTitle": "Deletion scheduled",
+    "scheduled": "The community will be deleted on <date></date>, with everything in it. Until then, it's read-only.",
+    "cancel": "Cancel deletion"
+  },
+  "deletionNotice": {
+    "title": "Community being deleted",
+    "text": "This community will be deleted on <date></date>, with its tournaments and everything in it. Until then, it's read-only.",
+    "ownerHint": "To cancel, use the Settings tab."
+  }
+}

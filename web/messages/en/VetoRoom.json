@@ -1,0 +1,64 @@
+{
+  "title": "Veto room",
+  "description": "Map veto and champion draft, without a tournament or an account.",
+  "stepsLabel": "Room steps",
+  "result": "Result",
+  "resultText": "Result for chat",
+  "bestOf": "Best of {count}",
+  "modes": {
+    "duel": "Duel",
+    "teams": "{size}v{size}"
+  },
+  "roles": {
+    "manager": "Manager",
+    "spectator": "Spectator"
+  },
+  "form": {
+    "mode": "Mode",
+    "duel": "Duel",
+    "teams": "{size}v{size}",
+    "bestOf": "Best of",
+    "submit": "Create room",
+    "poolTooSmall": "The pool needs at least {min, plural, one {# map} other {# maps}}.",
+    "noPhases": "With combined maps, champion picks must be made on the site.",
+    "whoStarts": "Who starts",
+    "whoStartsOptions": {
+      "draw": "Draw",
+      "a": "Side A"
+    },
+    "whoStartsSummary": "side A starts",
+    "whoActs": "Who acts for the team",
+    "whoActsOptions": {
+      "captain": "Captain only",
+      "all": "All players"
+    },
+    "whoActsHints": {
+      "captain": "One link per team. The captain marks “Ready,” vetoes, bans, and picks champions for everyone. Others watch through the spectator link.",
+      "all": "One link per player. Everyone marks “Ready,” anyone can veto and ban, and each player picks their own champion."
+    }
+  },
+  "seats": {
+    "side": "Side {side}",
+    "team": "Team {name}",
+    "seat": "Seat {side}{position}",
+    "empty": "Empty seat"
+  },
+  "join": {
+    "title": "Join room",
+    "name": "Your name",
+    "submit": "Join",
+    "entering": "Joining…"
+  },
+  "links": {
+    "title": "Links",
+    "notJoined": "hasn't joined yet",
+    "spectator": "Spectator",
+    "manage": "Manager (this page)",
+    "expires": "The room is valid until <date></date>.",
+    "captain": "Captain: {side}"
+  },
+  "gone": {
+    "text": "This room has expired or doesn't exist.",
+    "create": "Create another room"
+  }
+}

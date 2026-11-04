@@ -1,0 +1,30 @@
+{
+  "logo": {
+    "title": "Logo",
+    "hint": "The image is cropped to a square, from the center."
+  },
+  "cover": {
+    "title": "Cover",
+    "hint": "The image is cropped to 2:1, from the center."
+  },
+  "drop": "Drag an image here or click to choose one",
+  "change": "Change",
+  "remove": "Remove",
+  "errors": {
+    "notImage": "Choose an image (PNG, JPEG, or WebP).",
+    "unreadable": "Couldn't read this image. Try another file.",
+    "tooLarge": "Even after conversion, the image is over the maximum size. Try another one.",
+    "uploadFailed": "Image upload failed. Check your connection and try again."
+  },
+  "notSent": {
+    "logo": {
+      "title": "The community was created, but the logo wasn't uploaded.",
+      "skip": "Continue without the logo"
+    },
+    "cover": {
+      "title": "The tournament was created, but the cover wasn't uploaded.",
+      "skip": "Continue without the cover"
+    },
+    "retry": "Try again"
+  }
+}

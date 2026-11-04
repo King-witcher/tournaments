@@ -76,7 +76,7 @@ async fn push_subscriptions_keep_their_format() {
             "push_subscriptions_auth_format",
         ),
         (
-            insert(ok, P256DH, AUTH, "en"),
+            insert(ok, P256DH, AUTH, "fr"),
             "push_subscriptions_locale_check",
         ),
     ] {

@@ -13,16 +13,7 @@ import {
 } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
-import { dayFirstDigits } from "@/shared/lib/input-filters";
-import {
-  DAY_FIRST_FORMAT,
-  DAY_FIRST_PATTERN,
-  DAY_FIRST_REGEX,
-  fromDayFirst,
-  parseDayFirst,
-  plainDateOf,
-  toDayFirst,
-} from "@/shared/lib/plain-date";
+import { dateText, plainDateOf } from "@/shared/lib/plain-date";
 import { RequiredLabel } from "./required-label";
 
 type Props = Pick<
@@ -61,7 +52,7 @@ type Props = Pick<
 
 /**
  * O `DatePicker` do Carbon (flatpickr por baixo) para uma data, em
- * "dd/mm/aaaa", com o calendário no idioma da página. O valor entra e sai
+ * "dd/mm/aaaa" ("mm/dd/yyyy" em inglês), com o calendário no idioma da página. O valor entra e sai
  * em "AAAA-MM-DD", sem fuso. A dica embaixo é o formato, como pede o
  * Carbon, a não ser que venha outra em `helperText` (o formato continua no
  * placeholder). Dá para digitar a data: só entram dígitos, e as barras entram
@@ -89,6 +80,7 @@ export function DatePicker({
 }: Props) {
   const t = useTranslations("Common.datePicker");
   const locale = useLocale();
+  const text = dateText(locale);
   const generated = useId();
   const wrapper = useRef<HTMLDivElement>(null);
   // Sem calendário, "31/02/2026" passa no formato mas não é um dia: erro na
@@ -96,12 +88,12 @@ export function DatePicker({
   const [typed, setTyped] = useState("");
   const nonexistent =
     datePickerType === "simple" &&
-    DAY_FIRST_REGEX.test(typed) &&
-    fromDayFirst(typed) === null;
+    text.regex.test(typed) &&
+    text.fromText(typed) === null;
   const check = useFieldCheck<HTMLInputElement>({
     required,
-    filter: dayFirstDigits,
-    pattern: DAY_FIRST_PATTERN,
+    filter: text.digits,
+    pattern: text.pattern,
     patternMessage: t("pattern"),
     problem: problem ?? (nonexistent ? t("nonexistent") : undefined),
     invalid,
@@ -127,14 +119,14 @@ export function DatePicker({
     <div ref={wrapper}>
       <CarbonDatePicker
         datePickerType={datePickerType}
-        dateFormat={DAY_FIRST_FORMAT}
-        parseDate={parseDayFirst}
+        dateFormat={text.format}
+        parseDate={text.parse}
         locale={locale}
         // Sem data, `undefined`: com "" o modo `simple` apagaria o que a
         // pessoa ainda está digitando.
-        value={value ? toDayFirst(value) : undefined}
-        minDate={minDate && toDayFirst(minDate)}
-        maxDate={maxDate && toDayFirst(maxDate)}
+        value={value ? text.toText(value) : undefined}
+        minDate={minDate && text.toText(minDate)}
+        maxDate={maxDate && text.toText(maxDate)}
         readOnly={readOnly}
         nextMonthAriaLabel={t("nextMonth")}
         prevMonthAriaLabel={t("previousMonth")}
@@ -158,7 +150,7 @@ export function DatePicker({
             // Sem calendário, quem lê o que foi digitado é o campo.
             if (datePickerType === "simple") {
               setTyped(event.target.value);
-              onChange(fromDayFirst(event.target.value));
+              onChange(text.fromText(event.target.value));
             }
           }}
           onBlur={check.onBlur}

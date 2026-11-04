@@ -1,14 +1,10 @@
 // Data sem hora nem fuso ("AAAA-MM-DD"), como a guardam os campos de data, e
-// o "dd/mm/aaaa" que eles mostram (pt e es escrevem o dia primeiro).
+// o texto que eles mostram: "dd/mm/aaaa" em pt e es (dia primeiro) e
+// "mm/dd/yyyy" em en.
+
+import { dateDigits } from "./input-filters";
 
 const pad = (n: number) => String(n).padStart(2, "0");
-
-/** O formato do flatpickr (o calendário do `DatePicker`) para "dd/mm/aaaa". */
-export const DAY_FIRST_FORMAT = "d/m/Y";
-
-/** O que o campo aceita ao digitar: dia e mês com um ou dois dígitos. */
-export const DAY_FIRST_PATTERN = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}";
-export const DAY_FIRST_REGEX = new RegExp(`^${DAY_FIRST_PATTERN}$`);
 
 /** "AAAA-MM-DD" do dia que a data marca no fuso do navegador (o que o calendário escolheu). */
 export function plainDateOf(date: Date) {
@@ -21,32 +17,71 @@ export function dateOfPlain(plain: string) {
   return new Date(year, month - 1, day);
 }
 
-/** "AAAA-MM-DD" → "dd/mm/aaaa". */
-export function toDayFirst(plain: string) {
-  const [year, month, day] = plain.split("-");
-  return `${day}/${month}/${year}`;
+/** Como o campo de data escreve, lê e filtra o texto de uma data. */
+export type DateText = {
+  /** O mês vem antes do dia ("mm/dd/yyyy"). */
+  monthFirst: boolean;
+  /** O formato do flatpickr (o calendário do `DatePicker`). */
+  format: string;
+  /** O que o campo aceita ao digitar: dia e mês com um ou dois dígitos. */
+  pattern: string;
+  regex: RegExp;
+  /** O que se digita: só dígitos, com as barras postas sozinhas. */
+  digits: (value: string) => string;
+  /** "AAAA-MM-DD" → o texto do campo. */
+  toText: (plain: string) => string;
+  /** O texto do campo → "AAAA-MM-DD"; `null` se não for um dia que existe. */
+  fromText: (text: string) => string | null;
+  /**
+   * O `parseDate` do flatpickr, como o que o Carbon traz para "mm/dd/aaaa":
+   * dia ou mês fora da faixa vira 1, em vez da data estranha que o flatpickr
+   * montaria (32/01 em 01/02).
+   */
+  parse: (text: string) => Date | false;
+};
+
+const PATTERN = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}";
+const REGEX = new RegExp(`^${PATTERN}$`);
+
+function build(monthFirst: boolean): DateText {
+  // Os dois primeiros números do texto, na ordem em que o idioma os escreve.
+  const parts = (text: string) => {
+    const [a, b, year] = text.split("/").map(Number);
+    return monthFirst ? { year, month: a, day: b } : { year, month: b, day: a };
+  };
+  return {
+    monthFirst,
+    format: monthFirst ? "m/d/Y" : "d/m/Y",
+    pattern: PATTERN,
+    regex: REGEX,
+    digits: (value) => dateDigits(value, monthFirst),
+    toText(plain) {
+      const [year, month, day] = plain.split("-");
+      return monthFirst ? `${month}/${day}/${year}` : `${day}/${month}/${year}`;
+    },
+    fromText(text) {
+      const trimmed = text.trim();
+      if (!REGEX.test(trimmed)) return null;
+      const { year, month, day } = parts(trimmed);
+      const date = new Date(year, month - 1, day);
+      if (date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+      return plainDateOf(date);
+    },
+    parse(text) {
+      const { year, month: m, day: d } = parts(text);
+      if (!year) return false;
+      const month = m >= 1 && m <= 12 ? m : 1;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const day = d >= 1 && d <= daysInMonth ? d : 1;
+      return new Date(year, month - 1, day);
+    },
+  };
 }
 
-/** "dd/mm/aaaa" → "AAAA-MM-DD"; `null` se não for um dia que existe. */
-export function fromDayFirst(text: string) {
-  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim());
-  if (!match) return null;
-  const [day, month, year] = match.slice(1).map(Number);
-  const date = new Date(year, month - 1, day);
-  if (date.getMonth() !== month - 1 || date.getDate() !== day) return null;
-  return plainDateOf(date);
-}
+const DAY_FIRST = build(false);
+const MONTH_FIRST = build(true);
 
-/**
- * O `parseDate` do flatpickr para "dd/mm/aaaa", como o que o Carbon traz para
- * "mm/dd/aaaa": dia ou mês fora da faixa vira 1, em vez da data estranha que o
- * flatpickr montaria (32/01 em 01/02).
- */
-export function parseDayFirst(text: string): Date | false {
-  const [d, m, y] = text.split("/").map(Number);
-  if (!y) return false;
-  const month = m >= 1 && m <= 12 ? m : 1;
-  const daysInMonth = new Date(y, month, 0).getDate();
-  const day = d >= 1 && d <= daysInMonth ? d : 1;
-  return new Date(y, month - 1, day);
+/** O texto de data de `locale`: mês primeiro em `en`, dia primeiro nos outros. */
+export function dateText(locale: string): DateText {
+  return locale === "en" ? MONTH_FIRST : DAY_FIRST;
 }

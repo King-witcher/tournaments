@@ -3,7 +3,7 @@
 //! email já tem conta (no cadastro e na troca de email de outra conta), com o
 //! caminho de entrar por email.
 
-use super::{LOGIN_VALID_FOR, VALID_FOR, compose, page};
+use super::{compose, login_valid_for, page, valid_for};
 use crate::{
     mail::{Action, Alert, Content, Email},
     shared::Locale,
@@ -14,6 +14,7 @@ use crate::{
 /// vier primeiro.
 pub fn signup_confirmation(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/signup/confirm"));
+    let valid = valid_for(locale);
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme seu email".into(),
@@ -28,7 +29,7 @@ pub fn signup_confirmation(web: &str, locale: Locale, to: &str, token: &str, cod
                 url,
             },
             note: Some(format!(
-                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email, e a conta não é criada."
+                "O código e o link valem por {valid}. Se não foi você, ignore este email, e a conta não é criada."
             )),
         },
         Locale::Es => Content {
@@ -44,7 +45,23 @@ pub fn signup_confirmation(web: &str, locale: Locale, to: &str, token: &str, cod
                 url,
             },
             note: Some(format!(
-                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email, y la cuenta no se crea."
+                "El código y el enlace valen por {valid}. Si no fuiste tú, ignora este email, y la cuenta no se crea."
+            )),
+        },
+        Locale::En => Content {
+            title: "Confirm your email".into(),
+            paragraphs: vec![
+                "To create your account, enter this code on the sign-up page or use the button below."
+                    .into(),
+            ],
+            code: Some(code.into()),
+            alert: None,
+            action: Action {
+                label: "Create account".into(),
+                url,
+            },
+            note: Some(format!(
+                "The code and the link are valid for {valid}. If this wasn't you, ignore this email and no account will be created."
             )),
         },
     };
@@ -74,6 +91,15 @@ pub fn account_exists(web: &str, locale: Locale, to: &str) -> Email {
             ],
             "Entrar por email",
             "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
+        ),
+        Locale::En => (
+            "You already have an account",
+            [
+                "Someone tried to create an account with this email, but it already belongs to your account.",
+                "If it was you, sign in with this email using the button below. You can also set a new password there.",
+            ],
+            "Sign in with email",
+            "If this wasn't you, ignore this email. Nothing changes on your account.",
         ),
     };
     let content = Content {
@@ -112,6 +138,15 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str) -> Email {
             "Entrar por email",
             "Si no fuiste tú, ignora este email. Nada cambia en tu cuenta.",
         ),
+        Locale::En => (
+            "This email is already on your account",
+            [
+                "Someone tried to add this email to another account here, but it already belongs to your account and stays there.",
+                "An email can belong to only one account. If it was you and you want to use it on the other account, first change the email on this one, in the Logins tab.",
+            ],
+            "Sign in with email",
+            "If this wasn't you, ignore this email. Nothing changes on your account.",
+        ),
     };
     let content = Content {
         title: title.into(),
@@ -131,6 +166,7 @@ pub fn email_in_use(web: &str, locale: Locale, to: &str) -> Email {
 /// abre uma página com o botão de entrar. Vale o que vier primeiro.
 pub fn email_login(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/login/email/confirm"));
+    let login_valid = login_valid_for(locale);
     let content = match locale {
         Locale::Pt => Content {
             title: "Entre na sua conta".into(),
@@ -144,7 +180,7 @@ pub fn email_login(web: &str, locale: Locale, to: &str, token: &str, code: &str)
                 url,
             },
             note: Some(format!(
-                "O código e o link valem por {LOGIN_VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
+                "O código e o link valem por {login_valid}. Se não foi você, ignore este email. Nada muda na conta."
             )),
         },
         Locale::Es => Content {
@@ -160,7 +196,22 @@ pub fn email_login(web: &str, locale: Locale, to: &str, token: &str, code: &str)
                 url,
             },
             note: Some(format!(
-                "El código y el enlace valen por {LOGIN_VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
+                "El código y el enlace valen por {login_valid}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
+            )),
+        },
+        Locale::En => Content {
+            title: "Sign in to your account".into(),
+            paragraphs: vec![
+                "To sign in, enter this code on the sign-in page or use the button below.".into(),
+            ],
+            code: Some(code.into()),
+            alert: None,
+            action: Action {
+                label: "Sign in".into(),
+                url,
+            },
+            note: Some(format!(
+                "The code and the link are valid for {login_valid}. If this wasn't you, ignore this email. Nothing changes on the account."
             )),
         },
     };
@@ -172,6 +223,7 @@ pub fn email_login(web: &str, locale: Locale, to: &str, token: &str, code: &str)
 /// também o aviso de que alguém tentou, se não foi a pessoa.
 pub fn email_proof(web: &str, locale: Locale, to: &str, code: &str) -> Email {
     let url = page(web, locale, "/account/sessions");
+    let login_valid = login_valid_for(locale);
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme que é você".into(),
@@ -187,7 +239,7 @@ pub fn email_proof(web: &str, locale: Locale, to: &str, code: &str) -> Email {
                 label: "Ver as sessões".into(),
                 url,
             },
-            note: Some(format!("O código vale por {LOGIN_VALID_FOR}.")),
+            note: Some(format!("O código vale por {login_valid}.")),
         },
         Locale::Es => Content {
             title: "Confirma que eres tú".into(),
@@ -204,7 +256,23 @@ pub fn email_proof(web: &str, locale: Locale, to: &str, code: &str) -> Email {
                 label: "Ver las sesiones".into(),
                 url,
             },
-            note: Some(format!("El código vale por {LOGIN_VALID_FOR}.")),
+            note: Some(format!("El código vale por {login_valid}.")),
+        },
+        Locale::En => Content {
+            title: "Confirm it's you".into(),
+            paragraphs: vec![
+                "To change your account's logins, enter this code in the Logins tab.".into(),
+            ],
+            code: Some(code.into()),
+            alert: Some(Alert {
+                title: "Wasn't you?".into(),
+                text: "Someone has your account open. End the sessions you don't recognize; without this code they can't change the logins.".into(),
+            }),
+            action: Action {
+                label: "View sessions".into(),
+                url,
+            },
+            note: Some(format!("The code is valid for {login_valid}.")),
         },
     };
     compose(web, locale, to, content)
@@ -214,6 +282,7 @@ pub fn email_proof(web: &str, locale: Locale, to: &str, code: &str) -> Email {
 /// conta. Vale o que vier primeiro.
 pub fn email_change(web: &str, locale: Locale, to: &str, token: &str, code: &str) -> Email {
     let url = format!("{}#{token}", page(web, locale, "/email/confirm"));
+    let valid = valid_for(locale);
     let content = match locale {
         Locale::Pt => Content {
             title: "Confirme seu email".into(),
@@ -228,7 +297,7 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str, code: &str
                 url,
             },
             note: Some(format!(
-                "O código e o link valem por {VALID_FOR}. Se não foi você, ignore este email. Nada muda na conta."
+                "O código e o link valem por {valid}. Se não foi você, ignore este email. Nada muda na conta."
             )),
         },
         Locale::Es => Content {
@@ -244,7 +313,23 @@ pub fn email_change(web: &str, locale: Locale, to: &str, token: &str, code: &str
                 url,
             },
             note: Some(format!(
-                "El código y el enlace valen por {VALID_FOR}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
+                "El código y el enlace valen por {valid}. Si no fuiste tú, ignora este email. Nada cambia en la cuenta."
+            )),
+        },
+        Locale::En => Content {
+            title: "Confirm your email".into(),
+            paragraphs: vec![
+                "To make this the email on your account, enter this code in the Logins tab or use the button below."
+                    .into(),
+            ],
+            code: Some(code.into()),
+            alert: None,
+            action: Action {
+                label: "Confirm email".into(),
+                url,
+            },
+            note: Some(format!(
+                "The code and the link are valid for {valid}. If this wasn't you, ignore this email. Nothing changes on the account."
             )),
         },
     };

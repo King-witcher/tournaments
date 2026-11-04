@@ -77,6 +77,7 @@ pub fn notice(web: &str, locale: Locale, to: &str, notice: &Notice) -> Email {
     let (title, what, remedy, step) = match locale {
         Locale::Pt => pt(notice),
         Locale::Es => es(notice),
+        Locale::En => en(notice),
     };
     let (label, path) = match (locale, step) {
         (Locale::Pt, Remedy::Recover) => ("Entrar por email", "/login/email"),
@@ -87,8 +88,17 @@ pub fn notice(web: &str, locale: Locale, to: &str, notice: &Notice) -> Email {
         (Locale::Es, Remedy::Sessions) => ("Ver las sesiones", "/account/sessions"),
         (Locale::Es, Remedy::Logins) => ("Ver los accesos", "/account/logins"),
         (Locale::Es, Remedy::Account) => ("Ir a la cuenta", "/account"),
+        (Locale::En, Remedy::Recover) => ("Sign in with email", "/login/email"),
+        (Locale::En, Remedy::Sessions) => ("View sessions", "/account/sessions"),
+        (Locale::En, Remedy::Logins) => ("View logins", "/account/logins"),
+        (Locale::En, Remedy::Account) => ("Go to account", "/account"),
     };
     let (fine, not_you, why) = match locale {
+        Locale::En => (
+            "If this was you, you don't need to do anything.",
+            "Wasn't you?",
+            "We send this notice whenever something changes in your account's access.",
+        ),
         Locale::Pt => (
             "Se foi você, não precisa fazer nada.",
             "Não foi você?",
@@ -117,6 +127,15 @@ pub fn notice(web: &str, locale: Locale, to: &str, notice: &Notice) -> Email {
     compose(web, locale, to, content)
 }
 
+/// A data e a hora (UTC) como cada idioma escreve: dia/mês no pt e no es,
+/// mês/dia no en.
+const fn date_format(locale: Locale) -> &'static str {
+    match locale {
+        Locale::Pt | Locale::Es => "%d/%m/%Y %H:%M",
+        Locale::En => "%m/%d/%Y %H:%M",
+    }
+}
+
 /// A exclusão da conta foi agendada: a data (em UTC: a API não sabe o fuso de
 /// quem lê) e que entrar de novo antes cancela. O botão leva ao login.
 pub fn account_deletion_scheduled(
@@ -126,7 +145,7 @@ pub fn account_deletion_scheduled(
     due: DateTime<Utc>,
 ) -> Email {
     let url = page(web, locale, "/login");
-    let when = due.format("%d/%m/%Y %H:%M");
+    let when = due.format(date_format(locale));
     let content = match locale {
         Locale::Pt => Content {
             title: "Exclusão da conta agendada".into(),
@@ -167,6 +186,25 @@ pub fn account_deletion_scheduled(
             },
             note: None,
         },
+        Locale::En => Content {
+            title: "Account deletion scheduled".into(),
+            paragraphs: vec![
+                format!(
+                    "Your account will be deleted on {when} (UTC), and all of its sessions were ended."
+                ),
+                "To cancel, sign in to the site again before then, using the button below.".into(),
+            ],
+            code: None,
+            alert: Some(Alert {
+                title: "Didn't you request this?".into(),
+                text: "Sign in now. The deletion is canceled.".into(),
+            }),
+            action: Action {
+                label: "Sign in".into(),
+                url,
+            },
+            note: None,
+        },
     };
     compose(web, locale, to, content)
 }
@@ -175,7 +213,7 @@ pub fn account_deletion_scheduled(
 /// cancela. O botão leva ao login.
 pub fn account_deletion_reminder(web: &str, locale: Locale, to: &str, due: DateTime<Utc>) -> Email {
     let url = page(web, locale, "/login");
-    let when = due.format("%d/%m/%Y %H:%M");
+    let when = due.format(date_format(locale));
     let content = match locale {
         Locale::Pt => Content {
             title: "Sua conta vai ser excluída".into(),
@@ -202,6 +240,21 @@ pub fn account_deletion_reminder(web: &str, locale: Locale, to: &str, due: DateT
             alert: None,
             action: Action {
                 label: "Entrar".into(),
+                url,
+            },
+            note: None,
+        },
+        Locale::En => Content {
+            title: "Your account is about to be deleted".into(),
+            paragraphs: vec![
+                format!("Your account is scheduled to be deleted on {when} (UTC)."),
+                "To keep your account, sign in to the site before then, using the button below."
+                    .into(),
+            ],
+            code: None,
+            alert: None,
+            action: Action {
+                label: "Sign in".into(),
                 url,
             },
             note: None,
@@ -399,5 +452,116 @@ fn es(notice: &Notice) -> Text {
             "Entra con el que vinculaste, cierra las sesiones que no reconozcas y vuelve a registrar este email en la pestaña Accesos.",
             Remedy::Sessions,
         ),
+    }
+}
+
+fn en(notice: &Notice) -> Text {
+    const KNEW_PASSWORD: &str = "Whoever did this knew your password. Sign in with this email using the button below and set a new password. Your account's other sessions are ended, and only the new password works.";
+    match notice {
+        Notice::PasswordCreated => (
+            "Your account now has a password",
+            "A password was created for your account, which can now also sign in with this email and the password.".into(),
+            "Someone may have your account open. Sign in with this email using the button below and set a new password. The password that was created stops working, and your account's other sessions are ended.",
+            Remedy::Recover,
+        ),
+        Notice::PasswordChanged => (
+            "Your password was changed",
+            "Your account's password was changed, and the other open sessions were ended.".into(),
+            KNEW_PASSWORD,
+            Remedy::Recover,
+        ),
+        Notice::PasswordSetByEmail => (
+            "Your account has a new password",
+            "A new password was set while signing in with a code or link sent to this email, and the other sessions were ended.".into(),
+            "That means someone has access to this email. Change your email password, then sign in again with the button below and set another password.",
+            Remedy::Recover,
+        ),
+        Notice::PasswordRemoved => (
+            "Your account's password was removed",
+            "Your account's password was removed. It now signs in with a code or link sent to this email and with whatever you have linked.".into(),
+            "Sign in with this email and end the sessions you don't recognize. Then, if you want, create a password again in the Logins tab.",
+            Remedy::Sessions,
+        ),
+        Notice::DiscordLinked { discord } => (
+            "A Discord account was linked to your account",
+            format!(
+                "The Discord account {discord} was linked to your account, which can now also sign in with it."
+            ),
+            "Whoever linked it can sign in to your account with Discord. Sign in, unlink Discord in the Logins tab and end the sessions you don't recognize.",
+            Remedy::Logins,
+        ),
+        Notice::GoogleLinked { google } => (
+            "A Google account was linked to your account",
+            format!(
+                "The Google account of {google} was linked to your account, which can now also sign in with it."
+            ),
+            "Whoever linked it can sign in to your account with Google. Sign in, unlink Google in the Logins tab and end the sessions you don't recognize.",
+            Remedy::Logins,
+        ),
+        Notice::DiscordUnlinked { password: true } => (
+            "Discord was unlinked from your account",
+            "Your account no longer signs in with Discord. The Discord avatar was removed too.".into(),
+            "Whoever did this knew your password. Sign in with this email using the button below, set a new password, which ends the account's other sessions, and then link Discord again.",
+            Remedy::Recover,
+        ),
+        Notice::DiscordUnlinked { password: false } => (
+            "Discord was unlinked from your account",
+            "Your account no longer signs in with Discord. The Discord avatar was removed too.".into(),
+            "Whoever did this had your account open. Sign in with this email, end the sessions you don't recognize and link Discord again in the Logins tab.",
+            Remedy::Sessions,
+        ),
+        Notice::GoogleUnlinked { password: true } => (
+            "Google was unlinked from your account",
+            "Your account no longer signs in with Google.".into(),
+            "Whoever did this knew your password. Sign in with this email using the button below, set a new password, which ends the account's other sessions, and then link Google again.",
+            Remedy::Recover,
+        ),
+        Notice::GoogleUnlinked { password: false } => (
+            "Google was unlinked from your account",
+            "Your account no longer signs in with Google.".into(),
+            "Whoever did this had your account open. Sign in with this email, end the sessions you don't recognize and link Google again in the Logins tab.",
+            Remedy::Sessions,
+        ),
+        Notice::EmailChanged {
+            new,
+            has_password,
+            has_provider,
+            ..
+        } => (
+            "Your account's email was changed",
+            format!(
+                "Your account's email is now {new}. This address can no longer be used to sign in and no longer receives the account's notices."
+            ),
+            if *has_password {
+                "Whoever did this knew your password. Sign in and, in the Logins tab, change the password (this ends the other sessions) and put this email back."
+            } else if *has_provider {
+                "Sign in with the Discord or Google account you linked, end the sessions you don't recognize and put this email back in the Logins tab."
+            } else {
+                "Whoever did this used a code sent to this email, so they have access to it. Change your email password. The account has no other way to sign in."
+            },
+            Remedy::Account,
+        ),
+        Notice::EmailRemoved { .. } => (
+            "This email was removed from your account",
+            "Your account, which signs in with Discord or Google, no longer has an email. This address no longer receives its notices.".into(),
+            "Sign in with what you linked, end the sessions you don't recognize and add this email again in the Logins tab.",
+            Remedy::Sessions,
+        ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::TimeZone;
+
+    use super::*;
+
+    #[test]
+    fn the_deletion_date_follows_the_language() {
+        let due = Utc.with_ymd_and_hms(2026, 12, 25, 18, 30, 0).unwrap();
+        let text =
+            |locale| account_deletion_reminder("https://site.test", locale, "a@b.com", due).text;
+        assert!(text(Locale::Pt).contains("25/12/2026 18:30 (UTC)"));
+        assert!(text(Locale::En).contains("12/25/2026 18:30 (UTC)"));
     }
 }

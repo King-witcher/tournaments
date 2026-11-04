@@ -1,0 +1,105 @@
+{
+  "notices": {
+    "check_in": {
+      "opened": {
+        "title": "Check-in open",
+        "body": "{tournament}: check in to play."
+      }
+    },
+    "match": {
+      "ready": {
+        "title": "Your match is ready",
+        "body": "{tournament}: you vs. {opponent}."
+      },
+      "game_reported": {
+        "title": "{opponent} submitted game {game}",
+        "body": "{tournament}: confirm or dispute by {deadline}. Without a response, the game counts."
+      },
+      "game_contested": {
+        "title": "Game disputed",
+        "body": "{tournament}: {player} disputed game {game}. Resolve it in the match."
+      },
+      "contest_received": {
+        "title": "{player} disputed game {game}",
+        "body": "{tournament}: accept and correct the score, or the organizers will resolve it."
+      },
+      "contest_accepted": {
+        "title": "{player} accepted your dispute",
+        "body": "{tournament}: check the score for game {game}. If it's still wrong, dispute it again."
+      },
+      "opponent_ready": {
+        "title": "{opponent} is ready",
+        "body": "{tournament}: click “Ready” to start the veto."
+      },
+      "veto_started": {
+        "title": "The veto has started",
+        "body": "{tournament}: against {opponent}. If a step's time runs out, the pick is drawn at random."
+      },
+      "team_pick_open": {
+        "title": "Pick your champions",
+        "body": "{tournament}: one champion for each game in the match. Whatever is missing at the end is drawn at random."
+      }
+    },
+    "tournament": {
+      "start_due": {
+        "title": "Time to start",
+        "body": "{tournament} has reached its scheduled time and hasn't started yet."
+      }
+    },
+    "tenant": {
+      "deletion_due": {
+        "title": "{tenant} will be deleted",
+        "body": "To keep the community, cancel the deletion in settings by {deadline}."
+      }
+    }
+  },
+  "open": {
+    "match": "Open match",
+    "tournament": "Open tournament",
+    "settings": "Open settings"
+  },
+  "deletedAccount": "Deleted account",
+  "region": "Notifications",
+  "tabTitle": "({count}) {title}",
+  "push": {
+    "title": "Notifications with the site closed",
+    "description": "Check-in open, match ready, and game submitted by the opponent. For organizers, also game disputed and time to start.",
+    "loading": "Checking this browser…",
+    "on": "Turned on in this browser.",
+    "off": "Turned off in this browser. Each device is turned on separately.",
+    "enable": "Turn on notifications",
+    "disable": "Turn off notifications",
+    "failed": "Couldn't change notifications in this browser. Try again.",
+    "deniedTitle": "Notifications blocked in this browser.",
+    "denied": "To turn them on, allow notifications for this site in your browser settings (the icon next to the address bar) and reload the page.",
+    "unsupported": "This browser doesn't receive notifications with the site closed.",
+    "serverOff": "Unavailable for now.",
+    "installTitle": "On iPhone and iPad, install the site first.",
+    "install": "Tap Share, then Add to Home Screen. Then open the site from the new icon and turn it on here.",
+    "prompt": "Get alerted about what happens in the tournament, like your match being ready, even with the site closed.",
+    "dismiss": "Not now",
+    "promptInstall": "To get notifications on iPhone with the site closed, install the site via Share → Add to Home Screen.",
+    "enabled": "Notifications turned on in this browser.",
+    "blocked": "Notifications blocked in this browser.",
+    "settings": "How to change"
+  },
+  "sound": {
+    "title": "Sound",
+    "description": "Plays while the site is open, even in another tab. Applies to this browser.",
+    "label": "Play sound with notifications",
+    "test": "Test sound"
+  },
+  "bell": {
+    "label": "Notifications",
+    "title": "Notifications",
+    "loading": "Loading notifications…",
+    "failed": "Couldn't load notifications. Close and reopen.",
+    "unread": "Unread",
+    "read": "Read",
+    "emptyUnread": "No new notifications.",
+    "emptyRead": "No read notifications.",
+    "countUnread": "{count, plural, one {# unread notification.} other {# unread notifications.}}",
+    "countRead": "{count, plural, one {# read notification.} other {# read notifications.}}",
+    "markAll": "Mark all as read"
+  }
+}

@@ -54,11 +54,13 @@ export function timeDigits(value: string) {
   return splitDigits(value, [{ length: 2, max: 23 }, { length: 2 }], ":");
 }
 
-/** Data "dd/mm/aaaa", com as barras postas sozinhas. */
-export function dayFirstDigits(value: string) {
+/** Data "dd/mm/aaaa" ("mm/dd/aaaa" com `monthFirst`), com as barras postas sozinhas. */
+export function dateDigits(value: string, monthFirst: boolean) {
+  const day = { length: 2, max: 31 };
+  const month = { length: 2, max: 12 };
   return splitDigits(
     value,
-    [{ length: 2, max: 31 }, { length: 2, max: 12 }, { length: 4 }],
+    monthFirst ? [month, day, { length: 4 }] : [day, month, { length: 4 }],
     "/",
   );
 }

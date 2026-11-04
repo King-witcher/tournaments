@@ -1,0 +1,23 @@
+{
+  "label": "Community tournaments",
+  "loading": "Loading tournaments…",
+  "columns": {
+    "name": "Tournament",
+    "format": "Format",
+    "status": "Status",
+    "starts": "Start",
+    "participants": "Registered"
+  },
+  "mode": {
+    "duel": "Duel",
+    "tdm": "TDM"
+  },
+  "modeTeams": "TDM {size}v{size}",
+  "noDate": "No date",
+  "participants": "{count}/{max}",
+  "registered": "You're registered",
+  "checkInPending": "Your check-in is pending",
+  "create": "Create tournament",
+  "empty": "No tournaments yet.",
+  "emptyPlayer": "No tournaments published."
+}

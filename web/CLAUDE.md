@@ -4,7 +4,7 @@
 
 - Só apresentação: nunca acessa o banco. Os dados vêm da API Rust pelo client `api` (`src/shared/api/client.ts`, openapi-fetch).
 - Bun para pacotes e scripts; Biome para lint e formatação (não ESLint/Prettier; confere também os `.scss`). `src/shared/api/schema.d.ts` é gerado: não edite à mão, rode `bun run gen:api`.
-- Todo texto visível vem de `messages/<idioma>/<Namespace>.json` (next-intl), nada de texto no JSX; chave nova entra em `pt` e `es`. Códigos da API (status, erros) são traduzidos aqui.
+- Todo texto visível vem de `messages/<idioma>/<Namespace>.json` (next-intl), nada de texto no JSX; chave nova entra em `pt`, `es` e `en`. Códigos da API (status, erros) são traduzidos aqui.
 - O idioma é o segmento raiz `[locale]`; no servidor, `getTranslations` já lê o idioma de `next/root-params` (não passe locale à mão).
 - Links e redirects pelo `src/i18n/navigation.ts`, não por `next/link`/`next/navigation`, para manter o prefixo de idioma. Link visível: `Link`/`ButtonLink` de `shared/ui`. Tipo de destino: `Href`, de `@/i18n/navigation`.
 - Cache Components está ligado: dado buscado a cada requisição fica dentro de `<Suspense>`.
@@ -25,7 +25,7 @@ src/
   shared/               serve a qualquer domínio; nunca importa de features/
     ui/  hooks/  api/  lib/
   i18n/                 next-intl: routing, navigation, request, namespaces
-messages/<pt|es>/       um JSON por namespace
+messages/<pt|es|en>/    um JSON por namespace
 ```
 
 - Componente que conhece um domínio (chama a API, usa tipo do schema, tem texto próprio) fica em `features/<domínio>/components/`; em `shared/ui` só entra o que serviria a qualquer domínio. Nada de `components/`, `utils/` ou `helpers/` soltos em `src/`: se não sabe onde pôr, falta nomear o domínio.
@@ -92,20 +92,20 @@ Formulário grande com um estado só (o de torneio): cada bloco é `memo(Compone
 
 ## Textos (messages)
 
-- Um arquivo por namespace de primeiro nível (`messages/pt/Tenant.json` e `messages/es/Tenant.json`); chave nova vai no namespace do seu fluxo, nos dois idiomas. `es` precisa ter as mesmas chaves de `pt` (o `tsc` e o `build` acusam).
-- Namespace novo: crie os dois arquivos e acrescente uma linha em cada lista (`pt` e `es`) de `src/i18n/namespaces.ts`, em ordem alfabética.
+- Um arquivo por namespace de primeiro nível (`messages/pt/Tenant.json`, `messages/es/Tenant.json` e `messages/en/Tenant.json`); chave nova vai no namespace do seu fluxo, nos três idiomas. `es` e `en` precisam ter as mesmas chaves de `pt` (o `tsc` e o `build` acusam).
+- Namespace novo: crie os três arquivos e acrescente uma linha em cada lista (`pt`, `es` e `en`) de `src/i18n/namespaces.ts`, em ordem alfabética.
 - `Common` (textos da biblioteca) e `Nav` são da base. Num namespace que outro fluxo também usa, só acrescente chaves: não reordene nem reformate o arquivo.
-- Código novo de aviso da API: `Notifications.notices.<código>` (`title` e `body`) nos dois idiomas, os mesmos na página e no service worker. Só `{param}` simples (o service worker não entende plural do ICU); o prazo `confirm_by` entra como `{deadline}`.
-- O espanhol é em "tú".
+- Código novo de aviso da API: `Notifications.notices.<código>` (`title` e `body`) nos três idiomas, os mesmos na página e no service worker. Só `{param}` simples (o service worker não entende plural do ICU); o prazo `confirm_by` entra como `{deadline}`.
+- O espanhol é em "tú". O inglês é americano (en-US), em "you", com as mesmas regras de "Como escrever". Plural do ICU em inglês só tem `one` e `other`; ordinal (`selectordinal`) tem `one`/`two`/`few`/`other`. Data digitada `mm/dd/yyyy` (`dateText` em `shared/lib/plain-date.ts`).
 
 ### Termos da interface
 
-| Conceito                                                              | pt      | es      | No código    |
-| --------------------------------------------------------------------- | ------- | ------- | ------------ |
-| Um jogo só, num mapa                                                  | partida | partida | `game`       |
-| Md3, md5 (o confronto entre dois lados)                               | série   | serie   | `match`      |
-| O todo                                                                | torneio | torneo  | `tournament` |
-| A arena (pool, veto, ban e pick de mapa, mapa decisivo, nome do mapa) | mapa    | mapa    | `map`        |
+| Conceito                                                              | pt      | es      | en         | No código    |
+| --------------------------------------------------------------------- | ------- | ------- | ---------- | ------------ |
+| Um jogo só, num mapa                                                  | partida | partida | game       | `game`       |
+| Md3, md5 (o confronto entre dois lados)                               | série   | serie   | match      | `match`      |
+| O todo                                                                | torneio | torneo  | tournament | `tournament` |
+| A arena (pool, veto, ban e pick de mapa, mapa decisivo, nome do mapa) | mapa    | mapa    | map        | `map`        |
 - "Mapa" só quando é a arena. "Mapa enviado", "rating por mapa", "mapas jogados" e "placar mapa a mapa" são partidas. "Partida pronta", "Partidas que esperam você" e "C1 · partida 3" são séries.
 - Concordância: a partida foi enviada, a série foi decidida.
 - Outros termos já decididos: "ordem da chave" (seeding, nunca "seed"), "captura de tela", "W.O.", "check-in", "chave", "rating", "todos contra todos" (nunca "round robin"), "queda do K".

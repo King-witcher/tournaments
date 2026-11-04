@@ -138,20 +138,22 @@ fn addressed(to: To, people: &[Person], mention: bool, locale: Locale) -> Addres
     Addressed { text, mentioned }
 }
 
-/// O nome de um time no texto: o dele ou "Time de {capitão}".
+/// O nome de um time no texto: o dele ou "Time de {capitão}" ("{capitão}'s
+/// team" em inglês).
 fn team_name(team: &db::PersonTeam, locale: Locale) -> String {
     match &team.name {
         Some(name) => escape(name),
         None => {
-            let of = match locale {
-                Locale::Pt => "Time de",
-                Locale::Es => "Equipo de",
-            };
             let captain = match team.captain.as_str() {
                 "" => labels::deleted_account(locale),
                 captain => captain,
             };
-            format!("{of} {}", escape(captain))
+            let captain = escape(captain);
+            match locale {
+                Locale::Pt => format!("Time de {captain}"),
+                Locale::Es => format!("Equipo de {captain}"),
+                Locale::En => format!("{captain}'s team"),
+            }
         }
     }
 }
@@ -211,6 +213,8 @@ mod tests {
         assert_eq!(got.mentioned, ["111", "444"]);
         let es = addressed(To::Players, &people, false, Locale::Es).text;
         assert!(es.ends_with("**Equipo de Caio**: Caio Duda"), "{es}");
+        let en = addressed(To::Players, &people, false, Locale::En).text;
+        assert!(en.ends_with("**Caio's team**: Caio Duda"), "{en}");
     }
 
     #[test]
@@ -229,6 +233,8 @@ mod tests {
         ];
         let got = addressed(To::Players, &people, false, PT);
         assert_eq!(got.text, "**Time de Conta excluída**: Bia");
+        let en = addressed(To::Players, &people, false, Locale::En);
+        assert_eq!(en.text, "**Deleted account's team**: Bia");
     }
 
     #[test]

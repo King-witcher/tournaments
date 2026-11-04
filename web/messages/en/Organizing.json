@@ -1,0 +1,15 @@
+{
+  "contested": {
+    "action": "Resolve",
+    "where": "{match}, game {game}",
+    "whereMap": "{match}, game {game} ({map})",
+    "by": "{player} disputed <ago></ago>",
+    "byUnknown": "Disputed <ago></ago>"
+  },
+  "startDue": {
+    "action": "Start",
+    "startedAt": "Start scheduled for <date></date>",
+    "checkedIn": "{checkedIn} of {registered} checked in",
+    "registered": "{registered, plural, =0 {No registered players} one {# registered player} other {# registered players}}, no check-in"
+  }
+}

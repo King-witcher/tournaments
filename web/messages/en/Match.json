@@ -1,0 +1,280 @@
+{
+  "loading": "Loading match…",
+  "loginRequired": "Sign in to view this match.",
+  "title": "{code}: {a} × {b}",
+  "titleScore": "{code}: {a} {aScore} × {bScore} {b}",
+  "label": "{part} · {round} · match {index}",
+  "bestOf": "Best of {count}",
+  "stateTag": {
+    "pending": "Waiting for sides",
+    "ready": "Ready to play",
+    "bye": "No opponent",
+    "completed": "Decided",
+    "not_needed": "Not needed"
+  },
+  "state": {
+    "pending": "Sides still depend on other matches.",
+    "ready": "Ready to play.",
+    "bye": "Advances without playing.",
+    "completed": "Finished.",
+    "not_needed": "The winners bracket side won the grand final."
+  },
+  "confirmedVia": {
+    "opponent": "Confirmed by the opponent <time></time>.",
+    "deadline": "Confirmed when the dispute window closed <time></time>.",
+    "organizer": "Set by the organizers <time></time>.",
+    "withdrawal": "Automatic walkover. The loser withdrew or left the community <time></time>.",
+    "maps": "Decided <time></time>."
+  },
+  "walkover": {
+    "organizer": "{name} won by walkover, set by the organizers <time></time>.",
+    "withdrawal": "{name} won by walkover. The opponent withdrew or left the community <time></time>."
+  },
+  "games": {
+    "won": "{name} won.",
+    "fragsInline": "{a} × {b}",
+    "claim": "{self, select, yes {{reporter} reported a win.} other {{reporter} reported that {winner} won.}}",
+    "awaiting": "Waiting for report.",
+    "pending": "Confirms automatically at <at></at> (<time></time> left).",
+    "notCounted": "Not counted in the score yet.",
+    "contested": "{name} disputed: “{comment}”",
+    "notCountedContested": "Stays out of the score until the dispute is resolved.",
+    "confirmed": {
+      "opponent": "Confirmed by the opponent.",
+      "deadline": "Confirmed when the deadline passed.",
+      "organizer": "Confirmed by the organizers.",
+      "withdrawal": "Confirmed.",
+      "maps": "Confirmed."
+    },
+    "badge": {
+      "pending": "Waiting",
+      "contested": "Disputed",
+      "confirmed": "Confirmed"
+    },
+    "lineup": "Played: {a} vs {b}",
+    "lateContest": "You can dispute until the next match for {a} or {b} starts.",
+    "game": "Game {number}",
+    "captainReports": "The captain reports the result for the team.",
+    "captainResponds": "The captain responds for the team."
+  },
+  "respond": {
+    "confirm": "Confirm",
+    "contest": "Dispute",
+    "comment": "What's wrong?",
+    "commentHint": "The opponent can accept. Otherwise, the organizers decide.",
+    "submitContest": "Submit dispute",
+    "cancel": "Cancel",
+    "acceptContest": "Accept dispute",
+    "acceptHint": "Enter the correct score. The game is confirmed with it.",
+    "acceptSubmit": "Accept and correct"
+  },
+  "organizer": {
+    "title": "Organizers",
+    "hint": "To enter or correct a game, use its row above.",
+    "walkover": "Walkover for {name}",
+    "walkoverTitle": "Award walkover for match",
+    "walkoverConfirm": "Award walkover to {name}? The match ends without a score. Confirmed games stay, and pending ones are removed.",
+    "comment": "Note in history"
+  },
+  "correction": {
+    "title": "Before correcting this match",
+    "why": "A side that has moved on from this match already played <matches></matches>, which is decided. So a correction that changes this match's result is rejected.",
+    "how": "To change the result, first correct a game in <matches></matches> until it is no longer decided, then come back here. Its games are voided when the sides change. If it led to another decided match, start with the latest one.",
+    "howWalkover": "<matches></matches> was decided by walkover, and correcting games doesn't undo the walkover. To change this match's result, you can only undo the start of the tournament.",
+    "allowed": "You can still correct the map or frags without changing the result."
+  },
+  "history": {
+    "title": "History",
+    "empty": "Nothing has happened in this match yet.",
+    "score": "{winner} won {winnerMaps} to {loserMaps}",
+    "walkover": "Walkover for {winner}",
+    "mapWinner": "{winner} won",
+    "kinds": {
+      "reported": "{actor} reported",
+      "confirmed": "{actor} confirmed",
+      "auto_confirmed": "Confirmed when the deadline passed",
+      "contested": "{actor} disputed",
+      "resolved": "{actor} resolved the dispute",
+      "entered": "{actor} entered",
+      "corrected": "{actor} corrected",
+      "walkover": "{actor} awarded a walkover",
+      "auto_walkover": "Automatic walkover. One side withdrew or left the community",
+      "voided": "{actor} voided it. The game came after the match was decided, or the sides changed",
+      "replay": "{actor} voided the game to replay it",
+      "voided_auto": "Voided. The match became a walkover.",
+      "decided": "Match decided by confirmed games",
+      "reopened": "{actor} reopened the match. The correction left it undecided."
+    }
+  },
+  "labelSingle": "{round} · match {index}",
+  "labelPart": "{part} · {round}",
+  "vs": "×",
+  "score": {
+    "sr": "{a}: {aScore}; {b}: {bScore}"
+  },
+  "form": {
+    "map": "Map played",
+    "chooseMap": "Choose the map…",
+    "score": "Score",
+    "fragsRange": "From {min} to {max}.",
+    "tied": "The score can't be tied.",
+    "submit": "Submit game {number}",
+    "enter": "Enter game {number}",
+    "save": "Save game {number}",
+    "comment": "Note in history",
+    "vetoedMap": "Map played: {map}."
+  },
+  "gameOrganizer": {
+    "confirmNow": "Confirm now",
+    "accept": "Confirm win for {name}",
+    "other": "Enter another result",
+    "replay": "Void and replay",
+    "replayQuestion": "The result is removed from the match, and the players play and report game {number} again.",
+    "replaySubmit": "Void game {number}",
+    "note": "Note in history",
+    "correct": "Correct",
+    "correctHint": "The bracket follows the correction. Games that fall after the match is decided are voided.",
+    "more": "More actions for game {number}"
+  },
+  "veto": {
+    "result": {
+      "copy": "Copy veto result",
+      "copied": "Result copied"
+    },
+    "waitingReady": "The veto starts when both players click “Ready.”",
+    "isReady": "{name} is ready.",
+    "notReady": "{name} is not ready yet.",
+    "readyButton": "Ready",
+    "forceStart": "Start the veto now",
+    "forceStartQuestion": "Start the veto without waiting for both players to click “Ready”? Anyone who doesn't choose in time gets a random choice.",
+    "yourTurn": "Your turn: <action></action>.",
+    "theirTurn": "{name}'s turn: <action></action>.",
+    "bothVote": "Both players <b>vote</b> on the map for game {game}.",
+    "votedWaiting": "You voted. Waiting for {name}'s vote.",
+    "action": {
+      "ban_map": "<b>ban</b> a map",
+      "pick_map": "<b>pick</b> the map for game {game}",
+      "vote_map": "<b>vote</b> on the map for game {game}",
+      "ban_champion": "<b>ban</b> a champion",
+      "pick_champion": "<b>pick</b> the champion for game {game}",
+      "vote_champion": "<b>vote</b>",
+      "team_pick_map": "<b>pick</b> the champion for game {game}",
+      "team_pick_champion": "<b>pick</b> the champion for game {game}"
+    },
+    "deadline": "When time runs out, a draw decides.",
+    "ending": "Less than {seconds} seconds left. When time runs out, a draw decides.",
+    "drawing": "Time is up. Drawing.",
+    "sending": "Sending.",
+    "timeLeft": "Time left",
+    "maps": {
+      "banned": "Banned by {name}",
+      "picked": "Picked by {name} for game {game}",
+      "decider": "Decider map, game {game}",
+      "ban": "Ban",
+      "pick": "Pick",
+      "banMap": "Ban {map}",
+      "pickMap": "Pick {map} for game {game}"
+    },
+    "vote": {
+      "hint": "If votes match, that map is picked. If not, a draw between the two.",
+      "votes": "Vote by {names}",
+      "vote": "Vote",
+      "voteFor": "Vote for {map}"
+    },
+    "champions": {
+      "forGame": "Pick for",
+      "banChampion": "Ban {champion}",
+      "pickChampion": "Pick {champion} for game {game}",
+      "reasons": {
+        "banned": "banned by {name}"
+      },
+      "gaveWay": {
+        "rule": "The no-repeat rule left no champion for this game. So it doesn't apply here.",
+        "game": "No champion was left that didn't repeat another player's in this game. Any champion is allowed, without a ban."
+      },
+      "grid": "Champions",
+      "short": {
+        "teammate": "Picked by a teammate",
+        "opponent": "Picked by the opponent",
+        "repeat": {
+          "series": "Already picked",
+          "stage": "Used in this stage",
+          "tournament": "Used in the tournament"
+        }
+      },
+      "forPlayer": "Player",
+      "pickChampionFor": "Pick {champion} for {player} in game {game}"
+    },
+    "undo": {
+      "request": "Ask to undo the last step",
+      "waiting": "You asked to undo the last step. Waiting for {name}.",
+      "asked": "{name} asked to undo the last step.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "organizer": "Undo the last step",
+      "organizerQuestion": "Undo the last veto step? The turn goes back to whoever made it, with full time."
+    },
+    "history": {
+      "title": "Veto history",
+      "timeout": "drawn when time ran out",
+      "kinds": {
+        "ready": "{name} marked ready.",
+        "begin": "{forced, select, yes {{actor} started the veto} other {The veto started}}",
+        "game": "Game {game} started",
+        "ban": "{name} banned {map}{champion}",
+        "pick": "{name} picked {map}{champion}",
+        "vote": "{name} voted for {map}",
+        "undo": "{actor} undid the last step",
+        "undo_request": "{name} asked to undo the last step",
+        "undo_declined": "{name} declined the undo"
+      },
+      "pickedBy": "by {actor}"
+    },
+    "teamPick": "All players <b>pick</b> champions at the same time, one for each game.",
+    "teamPickYours": "<b>Pick</b> a champion for each game. Your picks are final.",
+    "teamDeadline": "At the end, whatever is missing gets drawn.",
+    "waitingReadyTeams": "The veto starts when all players on both teams click “Ready.”",
+    "draft": {
+      "caption": "Champions for each side, by game",
+      "gameColumn": "Game",
+      "bans": "Bans",
+      "toPick": "to pick",
+      "choosing": "choosing",
+      "drawn": "drawn",
+      "you": "You",
+      "hidden": "picked",
+      "captain": "Captain"
+    },
+    "blindPick": "Everyone <b>picks</b> at the same time. Champions appear when everyone finishes.",
+    "blindPickYours": "<b>Pick</b> a champion for each game. Your picks are final, and the other side only sees them when everyone finishes.",
+    "pickedWaitingMate": "You already picked for game {game}. Waiting for {names}.",
+    "waitingReadyCaptains": "The veto starts when both captains click “Ready.”",
+    "waitingFor": "Waiting for: {names}.",
+    "forceStartNow": "Start now",
+    "forceStartRoomQuestion": "Start without waiting for the others? Anyone who doesn't choose in time gets a random choice.",
+    "captainActs": {
+      "ready": "The captain marks “Ready” for the team.",
+      "map": "The captain vetoes for the team.",
+      "vote": "The captain votes for the team.",
+      "ban": "The captain bans for the team.",
+      "pick": "The captain picks for the team."
+    },
+    "blindPickCaptain": "<b>Pick</b> the team's champions, one per player in each game. Your picks are final, and the other side only sees them when everyone finishes.",
+    "blindPickCaptains": "The captains <b>pick</b> at the same time. Champions appear when everyone finishes."
+  },
+  "labelTable": "Round {round} of {total} · match {index}",
+  "steps": {
+    "label": "Match steps",
+    "ready": "Ready",
+    "maps": "Maps",
+    "champions": "Champions",
+    "now": "Now",
+    "score": "{a} × {b}"
+  },
+  "card": {
+    "pickedBy": "Picked by {name}",
+    "decider": "Decider",
+    "voted": "Chosen by vote",
+    "drawn": "Drawn"
+  }
+}

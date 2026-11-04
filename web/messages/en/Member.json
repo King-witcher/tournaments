@@ -1,0 +1,34 @@
+{
+  "loading": "Loading member…",
+  "loginRequired": "Log in to see this community's members.",
+  "members": "Members",
+  "backToMembers": "See members",
+  "since": "Member since <date></date>",
+  "editNickname": "Edit nickname",
+  "deletedAccount": "Deleted account",
+  "tournaments": {
+    "title": "Tournaments in this community",
+    "tournament": "Tournament",
+    "status": "Status",
+    "situation": "Situation",
+    "placement": "Placement",
+    "noPlacement": "—",
+    "rank": "{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "range": "{from, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}–{to, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "situations": {
+      "registered": "Registered",
+      "check_in_pending": "Check-in pending",
+      "checked_in": "Checked in",
+      "missed_check_in": "Left out, no check-in",
+      "playing": "In bracket",
+      "eliminated": "Finished in {place}",
+      "withdrawn": "Withdrew",
+      "champion": "1st place",
+      "reserve": "Reserve, no team"
+    },
+    "empty": "{name} hasn't played here yet.",
+    "emptyYou": "You haven't played here yet.",
+    "browse": "Browse tournaments",
+    "withTeam": "{tournament} · team: {team}"
+  }
+}

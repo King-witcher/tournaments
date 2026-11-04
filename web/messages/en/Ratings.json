@@ -1,0 +1,98 @@
+{
+  "ranking": {
+    "loading": "Loading ranking…",
+    "label": "Community ranking",
+    "position": "Position",
+    "member": "Member",
+    "rating": "Rating",
+    "games": "Games",
+    "record": "W–L",
+    "lastGame": "Last game",
+    "noGame": "—",
+    "empty": "No one has a rating yet. Play at least one game to be ranked."
+  },
+  "provisional": "Provisional",
+  "record": "{wins} W – {losses} L",
+  "member": {
+    "positionShort": "#{position}",
+    "title": "Rating",
+    "summaryLabel": "Rating summary",
+    "rating": "Rating",
+    "position": "Position",
+    "positionValue": "#{position} of {total}",
+    "games": "Games",
+    "gamesValue": "{count, plural, one {# game} other {# games}} ({wins} W – {losses} L)",
+    "lastGame": "Last game",
+    "noGame": "None yet",
+    "adjusted": "Organizer adjustments",
+    "adjustedValue": "{points} (already added to the rating)",
+    "none": "No rating yet.",
+    "provisionalHint": "With fewer than {count} games, the rating still changes a lot."
+  },
+  "byMap": {
+    "title": "By map",
+    "description": "Includes tournaments that don't count toward the rating."
+  },
+  "games": {
+    "title": "Recent games",
+    "description": "The most recent games that counted toward the rating, up to {count}.",
+    "label": "Recent games that counted",
+    "tournament": "Tournament",
+    "opponent": "Opponent",
+    "map": "Map",
+    "mapValue": "{map} (game {number})",
+    "noMap": "Game {number}",
+    "result": "Result",
+    "won": "Win",
+    "lost": "Loss",
+    "points": "Points",
+    "after": "Rating after",
+    "when": "When",
+    "left": "left"
+  },
+  "adjustments": {
+    "title": "Manual adjustments",
+    "description": "Only the organizers see this list.",
+    "label": "Manual rating adjustments",
+    "when": "When",
+    "points": "Points",
+    "reason": "Reason",
+    "by": "By",
+    "unknownAuthor": "—",
+    "empty": "No adjustments.",
+    "open": "Adjust rating",
+    "modalTitle": "Adjust rating for {name}",
+    "hint": "Doesn't count as a game. It's recorded with the reason and your name.",
+    "delta": "Points",
+    "deltaHint": "Negative removes points.",
+    "reasonLabel": "Reason",
+    "reasonHint": "For example, a rating from another league or a penalty.",
+    "submit": "Adjust"
+  },
+  "settings": {
+    "title": "Community rating",
+    "initial": "Starting rating",
+    "kMax": "Starting K-factor",
+    "kMaxHint": "The K-factor is how much a game moves the rating. It starts at this value and drops exponentially to the minimum as the rating becomes more accurate. Between players with the same rating, a win is worth half of the K-factor.",
+    "kMin": "Minimum K-factor",
+    "kMinHint": "If it's the same as the starting K-factor, the K-factor doesn't drop.",
+    "kDecay": "K-factor drop, in games",
+    "kDecayHint": "After this many games, the K-factor has dropped about 63% of the way to the minimum.",
+    "saved": "Saved. Ratings have been recalculated.",
+    "recompute": {
+      "title": "Save and recalculate",
+      "text": "The entire history will be recalculated with these values, and everyone's rating changes.",
+      "submit": "Save and recalculate"
+    }
+  },
+  "seeding": {
+    "sort": "Sort by rating",
+    "rating": "Rating {rating}",
+    "unrated": "Unrated"
+  },
+  "tournament": {
+    "label": "Rating",
+    "counts": "Each game updates the rating",
+    "doesNotCount": "Doesn't change the rating"
+  }
+}

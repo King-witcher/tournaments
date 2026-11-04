@@ -11,6 +11,7 @@ use super::ApiError;
 pub enum Locale {
     Pt,
     Es,
+    En,
 }
 
 impl Locale {
@@ -18,6 +19,7 @@ impl Locale {
         match self {
             Self::Pt => "pt",
             Self::Es => "es",
+            Self::En => "en",
         }
     }
 
@@ -26,6 +28,7 @@ impl Locale {
         match value {
             "pt" => Ok(Self::Pt),
             "es" => Ok(Self::Es),
+            "en" => Ok(Self::En),
             other => {
                 tracing::error!(locale = other, "idioma desconhecido no banco");
                 Err(ApiError::internal())

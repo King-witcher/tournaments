@@ -44,6 +44,21 @@ async fn create_with_publish_without_a_date_stays_in_registration() {
 }
 
 #[tokio::test]
+async fn create_in_english_keeps_the_locale() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let body = with(
+        duel("copa"),
+        json!({ "locale": "en", "name": "October Cup", "translations": [es("Copa de Octubre")] }),
+    );
+    let created = create_tournament(&app, &ana, body).await;
+    assert_eq!(created["locale"], "en");
+    let (_, seen) = get(&app, &format!("{URI}/copa"), &ana).await;
+    assert_eq!(seen["locale"], "en");
+    assert_eq!(seen["name"], "October Cup");
+}
+
+#[tokio::test]
 async fn create_stores_the_translations() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;

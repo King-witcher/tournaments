@@ -1,0 +1,51 @@
+{
+  "title": "Home",
+  "loading": "Loading home…",
+  "waiting": {
+    "title": "Waiting for you",
+    "checkInUntil": "Check-in until <date></date>",
+    "action": {
+      "veto": "Do the veto",
+      "ready": "Mark ready",
+      "respond": "Confirm or dispute",
+      "accept_contest": "View dispute",
+      "report": "Submit game"
+    }
+  },
+  "open": {
+    "title": "Registration open",
+    "spots": "{count} of {max} registered"
+  },
+  "tournaments": {
+    "title": "Your tournaments",
+    "none": "You're not in any tournament.",
+    "noneActive": "No tournaments of yours are in progress or open for registration.",
+    "over": "Finished",
+    "rank": "{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "range": "{from, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}–{to, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "situation": {
+      "registered": "Registered",
+      "check_in_pending": "Check-in pending",
+      "checked_in": "Checked in",
+      "missed_check_in": "Out of the bracket, no check-in",
+      "playing": "In the bracket",
+      "eliminated": "Finished in {place}",
+      "withdrawn": "Withdrew",
+      "champion": "1st place, you won",
+      "reserve": "Reserve, no team"
+    },
+    "next": {
+      "against": "Next match: {match} against {opponent}",
+      "winner": "Next match: {match} against the winner of {source}",
+      "loser": "Next match: {match} against the loser of {source}",
+      "unknown": "Next match: {match}"
+    },
+    "noDate": "No date",
+    "team": "Team: {team}"
+  },
+  "tenants": {
+    "title": "Your communities",
+    "empty": "You're not in any community yet. To join one, ask its organizers for the invite link.",
+    "create": "Create community"
+  }
+}

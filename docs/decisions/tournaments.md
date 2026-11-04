@@ -57,3 +57,4 @@ Na interface, **"Ordem da chave"** ("seeding" sozinho não diz nada a quem não 
 - A API devolve **códigos**, nunca texto; status, formatos e fases são enums traduzidos no front. Datas em UTC no banco, exibidas no fuso de quem vê.
 - Seletor de idioma no cabeçalho, mantém a página; cada idioma aparece no próprio nome ("Español" também para quem lê em português).
 - Espanhol: a chave do torneio é sempre **llave** (mais comum na Argentina que "cuadro").
+- Inglês: a chave do torneio é **bracket** (winners bracket e losers bracket; códigos `W1.2` e `L1.2`).

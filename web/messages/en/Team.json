@@ -1,0 +1,103 @@
+{
+  "teamOf": "Team of {captain}",
+  "loading": "Loading teams…",
+  "pageTitle": "Teams",
+  "howToEdit": "Drag and drop players to form teams.",
+  "form": "Form teams",
+  "backToManage": "Back to organization",
+  "seeding": "Seeding",
+  "summary": {
+    "counts": "{complete, plural, =0 {No complete teams} one {# complete team} other {# complete teams}}, {incomplete, plural, =0 {no incomplete teams} one {# incomplete team} other {# incomplete teams}}, and {reserves, plural, =0 {no reserves} one {# reserve} other {# reserves}}.",
+    "started": "{teams, plural, one {# team} other {# teams}} in the bracket and {reserves, plural, =0 {no reserves} one {# reserve} other {# reserves}}.",
+    "rule": "The tournament starts with at least {min} complete teams."
+  },
+  "draw": {
+    "title": "Draw teams",
+    "what": "Redoes all teams. Whoever registered last and doesn't complete a team becomes a reserve.",
+    "whatCheckIn": "Redoes all teams with players who checked in. Whoever registered last and doesn't complete a team becomes a reserve.",
+    "random": "Draw",
+    "randomHint": "Players and captains at random.",
+    "balanced": "Balanced draw",
+    "balancedHint": "Teams with similar average rating, based on the community rating. The captain is the highest-rated player.",
+    "confirm": "Draw again? Current teams, with names and captains, and the seeding will be undone.",
+    "short": "The draw needs at least {size} registered; {count, plural, =0 {none so far} one {only # is registered} other {only # are registered}}.",
+    "shortCheckIn": "The draw uses only players who checked in and needs at least {size}; {count, plural, =0 {nobody has yet} one {only # has} other {only # have}}."
+  },
+  "teams": {
+    "title": "Teams ({count})",
+    "empty": "No teams yet.",
+    "emptyReadOnly": "Teams haven't been formed yet.",
+    "newTeam": "Drop here to create a new team"
+  },
+  "reserves": {
+    "title": "Reserves ({count})",
+    "what": "In registration order.",
+    "empty": "No reserves."
+  },
+  "state": {
+    "complete": "complete",
+    "missing": "{count, plural, one {# player missing} other {# players missing}}",
+    "checkInPending": "check-in pending",
+    "withdrawn": "withdrew",
+    "out": "out: no one in the community"
+  },
+  "member": {
+    "captain": "captain",
+    "checkedIn": "checked in",
+    "notCheckedIn": "not checked in",
+    "left": "left"
+  },
+  "seed": "#{seed}",
+  "saving": "Saving…",
+  "playerActions": "Actions for {name}",
+  "teamActions": "Actions for team {name}",
+  "move": {
+    "open": "Move to…",
+    "title": "Move {name}",
+    "label": "Destination",
+    "choose": "Choose…",
+    "team": "{name} ({count} of {size})",
+    "newTeam": "New team, with {name} as captain",
+    "reserve": "Reserve",
+    "submit": "Move"
+  },
+  "makeCaptain": "Make captain",
+  "rename": {
+    "open": "Rename",
+    "title": "Rename {name}",
+    "label": "Team name",
+    "helper": "Without a name, the team appears as “{fallback}”.",
+    "submit": "Save name"
+  },
+  "captain": {
+    "open": "Change captain",
+    "title": "Change captain of {name}",
+    "hint": "The captain names the team, can rename it, and, per the tournament rules, acts for it in matches.",
+    "label": "Captain",
+    "submit": "Save captain"
+  },
+  "substitute": {
+    "open": "Substitute player",
+    "title": "Substitute player in {name}",
+    "hint": "Applies from the next submitted game. The player leaving becomes a reserve.",
+    "out": "Leaving",
+    "in": "Joining",
+    "choose": "Choose…",
+    "reserves": "Reserves",
+    "members": "Other community members",
+    "left": "{name} (left)",
+    "submit": "Substitute",
+    "noCandidates": "There are no reserves or other active community members to join."
+  },
+  "withdraw": {
+    "open": "Mark withdrawal",
+    "confirm": "Mark {name} as withdrawn? The team's current and upcoming matches become walkovers for the opponent. This can't be undone."
+  },
+  "manage": {
+    "title": "Teams",
+    "started": "Substitutions and captain changes are in the Registered tab.",
+    "unavailable": "Couldn't load teams right now. Reload the page.",
+    "view": "View teams"
+  },
+  "howToEditTouch": "Use the ⋯ menu on each player to form teams."
+}

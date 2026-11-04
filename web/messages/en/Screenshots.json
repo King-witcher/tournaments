@@ -1,0 +1,22 @@
+{
+  "attach": "Attach screenshot",
+  "attachTo": "Attach screenshot to game {number}",
+  "hint": "Scoreboard image. On a computer, you can also paste with the button focused (Ctrl+V).",
+  "requiredHint": "This tournament requires a scoreboard screenshot. On a computer, you can also paste with the button focused (Ctrl+V).",
+  "open": "Screenshot {index} of game {number}, by {name}, full size",
+  "openNoAuthor": "Screenshot {index} of game {number}, full size",
+  "by": "by {name}",
+  "remove": "Remove",
+  "removeTitle": "Remove screenshot {index} from game {number}",
+  "removeQuestion": "The screenshot is removed from the game for everyone. This can't be undone.",
+  "errors": {
+    "notImage": "Choose or paste an image (PNG, JPEG, or WebP).",
+    "unreadable": "Couldn't read this image. Try another file.",
+    "tooLarge": "Even after conversion, the image exceeds the maximum size. Crop to just the scoreboard and try again.",
+    "uploadFailed": "The image upload failed. Check your connection and try again."
+  },
+  "field": {
+    "label": "Require scoreboard screenshot",
+    "hint": "The organizers can enter and correct games without a screenshot."
+  }
+}

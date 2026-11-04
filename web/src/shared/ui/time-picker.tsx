@@ -57,7 +57,7 @@ type Props = Omit<
 
 /**
  * O `TimePicker` do Carbon: hora e minuto em 24 horas ("hh:mm"), como se
- * escreve em pt e es (o seletor AM/PM do Carbon só existe no formato de 12
+ * escreve em pt e es, e vale também em en (o seletor AM/PM do Carbon só existe no formato de 12
  * horas e fica de fora). Com `timeZone`, o seletor de fuso, que o Carbon pede
  * para toda hora marcada. Só entram dígitos, e os dois-pontos entram sozinhos
  * quando o dígito não cabe mais na hora ("133" vira "13:3"): o teclado

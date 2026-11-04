@@ -215,6 +215,7 @@ async fn translations_are_never_in_the_original_locale() {
 
     assert_eq!(rejected(translate("pt").await), original);
     translate("es").await.unwrap();
+    translate("en").await.unwrap();
     assert_eq!(
         rejected(exec(&db, "update tournament_translations set locale = 'pt'").await),
         original

@@ -128,10 +128,10 @@ async fn a_browser_belongs_to_whoever_subscribed_last() {
             )
         );
     }
-    let english =
-        json!({ "endpoint": endpoint, "keys": { "p256dh": P256DH, "auth": AUTH }, "locale": "en" });
+    let french =
+        json!({ "endpoint": endpoint, "keys": { "p256dh": P256DH, "auth": AUTH }, "locale": "fr" });
     assert_eq!(
-        put(&app, "/push/subscriptions", &ana, english).await.1,
+        put(&app, "/push/subscriptions", &ana, french).await.1,
         err("request.invalid_body")
     );
 }

@@ -392,7 +392,7 @@ async fn translations() {
     assert_eq!(
         put(
             &app,
-            &format!("{uri}/translations/en"),
+            &format!("{uri}/translations/fr"),
             &ana,
             json!({ "name": "Cup" })
         )

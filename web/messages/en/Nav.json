@@ -1,0 +1,15 @@
+{
+  "home": "Home",
+  "backHome": "Go to home",
+  "backToCommunity": "Back to community",
+  "backToTournament": "Back to tournament",
+  "brand": "Telefrag",
+  "skipToContent": "Skip to content",
+  "tenants": {
+    "label": "Your communities",
+    "loading": "Loading your communities…",
+    "failed": "Couldn't load your communities. Close and reopen the page.",
+    "empty": "You're not part of any community yet.",
+    "create": "Create community"
+  }
+}

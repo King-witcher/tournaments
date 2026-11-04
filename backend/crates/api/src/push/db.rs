@@ -54,7 +54,7 @@ pub async fn of_users(conn: &mut PgConnection, users: &[i64]) -> Result<Vec<Targ
     .await?;
     rows.into_iter()
         .map(|r| {
-            // O check da tabela só deixa pt e es.
+            // O check da tabela só deixa pt, es e en.
             let locale = Locale::from_db(&r.locale)
                 .map_err(|_| sqlx::Error::Decode(format!("locale {}", r.locale).into()))?;
             Ok(Target {

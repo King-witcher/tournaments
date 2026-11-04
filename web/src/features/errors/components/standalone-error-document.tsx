@@ -6,6 +6,10 @@ import { plexMono, plexSans } from "@/shared/lib/fonts";
 import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
+import commonEn from "../../../../messages/en/Common.json";
+import errorsEn from "../../../../messages/en/Errors.json";
+import navEn from "../../../../messages/en/Nav.json";
+import notFoundEn from "../../../../messages/en/NotFound.json";
 import commonEs from "../../../../messages/es/Common.json";
 import errorsEs from "../../../../messages/es/Errors.json";
 import navEs from "../../../../messages/es/Nav.json";
@@ -16,7 +20,7 @@ import navPt from "../../../../messages/pt/Nav.json";
 import notFoundPt from "../../../../messages/pt/NotFound.json";
 import { ErrorPage } from "./error-page";
 
-type Locale = "pt" | "es";
+type Locale = "pt" | "es" | "en";
 
 // Só os textos que a página usa, importados direto: aqui não há o provider
 // nem o `request.ts` do layout, que é justamente o que falhou (ou o que não
@@ -24,6 +28,7 @@ type Locale = "pt" | "es";
 const messages = {
   pt: { Common: commonPt, Errors: errorsPt, Nav: navPt, NotFound: notFoundPt },
   es: { Common: commonEs, Errors: errorsEs, Nav: navEs, NotFound: notFoundEs },
+  en: { Common: commonEn, Errors: errorsEn, Nav: navEn, NotFound: notFoundEn },
 };
 
 type Props = {

@@ -31,6 +31,7 @@ impl PendingSignup {
     fn from_fields(email: String, mut fields: HashMap<String, String>) -> Option<Self> {
         let locale = match fields.get("locale").map(String::as_str) {
             Some("es") => Locale::Es,
+            Some("en") => Locale::En,
             _ => Locale::Pt,
         };
         Some(Self {

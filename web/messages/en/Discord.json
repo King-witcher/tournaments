@@ -1,0 +1,49 @@
+{
+  "title": "Discord alerts",
+  "description": "The site posts in a Discord server channel when something happens in the community's tournaments.",
+  "loading": "Loading Discord alerts…",
+  "current": "Webhook {id}",
+  "broken": {
+    "title": "Discord no longer recognizes this webhook",
+    "body": "It was deleted or its address changed, and no alerts are going out. Paste another webhook's address."
+  },
+  "url": {
+    "label": "Webhook address",
+    "newLabel": "New webhook address",
+    "hint": "Anyone with this address can post in the channel. Don't share it.",
+    "tipLabel": "How to create the webhook",
+    "tip": "In Discord, open Server Settings, Integrations, Webhooks, create a webhook for the channel, and paste its address here.",
+    "invalid": "Use the address of a Discord webhook."
+  },
+  "replace": "Replace webhook",
+  "keep": "Keep webhook",
+  "language": "Message language",
+  "events": {
+    "legend": "Alerts the site posts",
+    "check_in": {
+      "opened": "Check-in opened"
+    },
+    "tournament": {
+      "started": "Tournament started, with the bracket link",
+      "start_due": "Time to start, for the organizers",
+      "finished": "Tournament ended, with the podium"
+    },
+    "match": {
+      "ready": "Match ready",
+      "opponent_ready": "Opponent ready for the veto",
+      "veto_started": "Veto started",
+      "game_contested": "Game disputed, for the organizers",
+      "contest_received": "Game disputed, for the opposing captain",
+      "series_decided": "Result of each match (many messages)"
+    }
+  },
+  "mention": {
+    "label": "Mention whoever linked Discord to the account with @",
+    "hint": "In match and organizer alerts. Anyone who hasn't linked Discord appears by nickname."
+  },
+  "saved": "Settings saved.",
+  "test": "Send test",
+  "tested": "Test message sent to the channel.",
+  "remove": "Remove webhook",
+  "removeConfirm": "Remove the webhook? Alerts stop going out, including the ones waiting in the queue. The webhook still exists in Discord."
+}

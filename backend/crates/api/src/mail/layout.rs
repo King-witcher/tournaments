@@ -7,7 +7,7 @@
 //! estilo inline, que é o que os leitores de email respeitam; a fonte é a
 //! IBM Plex Sans de quem a tem instalada, sem buscar fora (a Helvetica ou a
 //! Arial no lugar). O texto vem de quem manda, no idioma de quem recebe; aqui
-//! só ficam o nome do site (o mesmo nos dois idiomas) e o rodapé.
+//! só ficam o nome do site (o mesmo nos três idiomas) e o rodapé.
 
 use super::Email;
 use crate::shared::Locale;
@@ -72,6 +72,10 @@ fn chrome(locale: Locale) -> Chrome {
         Locale::Es => Chrome {
             fallback: "Si el botón no se abre, copia esta dirección en el navegador:",
             sent_to: "Este email se envió a",
+        },
+        Locale::En => Chrome {
+            fallback: "If the button doesn't open, copy this address into your browser:",
+            sent_to: "This email was sent to",
         },
     }
 }
@@ -277,6 +281,20 @@ mod tests {
         );
         assert!(email.html.contains("Este email se envió a a@b.com."));
         assert!(email.html.contains(">042917</td>"));
+    }
+
+    #[test]
+    fn english_footer_and_language() {
+        let email = compose(
+            Locale::En,
+            "https://site.test/en",
+            "a@b.com",
+            content(false),
+        );
+        assert!(email.html.starts_with("<!doctype html><html lang=\"en\">"));
+        assert!(email.html.contains("This email was sent to a@b.com."));
+        assert!(email.html.contains("If the button doesn&#39;t open"));
+        assert!(email.text.contains("This email was sent to a@b.com."));
     }
 
     #[test]

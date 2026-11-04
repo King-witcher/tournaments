@@ -1,0 +1,41 @@
+{
+  "loading": "Loading invite…",
+  "title": "Invite to join {name}",
+  "tournamentTitle": "Registration for {name}",
+  "unavailable": "Invite unavailable",
+  "details": "About this invite",
+  "about": "About the community",
+  "aboutTournament": "About the tournament",
+  "community": "Community",
+  "spots": "Spots",
+  "tournamentSpots": "{count, plural, =0 {{max} spots, none taken yet} one {# registered of {max} spots} other {# registered of {max} spots}}",
+  "startsAt": "Expected start",
+  "loginRequired": "Sign in or create an account to accept the invite.",
+  "accept": "Join the community",
+  "acceptTournament": "Join and register",
+  "register": "Register",
+  "alreadyMember": "You're already a member of {tenant}.",
+  "alreadyRegistered": "You're already registered for this tournament.",
+  "goToTenant": "Go to the community",
+  "goToTournament": "Go to the tournament",
+  "returning": "You were a member of {tenant} before. Rejoining, you come back as a player with the nickname \"{nickname}\" and your history.",
+  "owner": "Created by",
+  "members": "Members",
+  "memberCount": "{count, plural, one {# member} other {# members}}",
+  "deletionScheduled": "This community is being deleted and no longer accepts members.",
+  "rotate": "Generate new link",
+  "rotated": "New link generated. The previous one no longer works.",
+  "communityLink": {
+    "open": "Invite",
+    "title": "Invite to {name}",
+    "note": "Anyone who joins through this link becomes a player.",
+    "link": "Invite link",
+    "rotateConfirm": "The current link will stop working. Anyone who already joined stays in the community."
+  },
+  "tournamentLink": {
+    "open": "Registration link",
+    "note": "Registers people in the tournament and adds outsiders to the community. Works while registration is open.",
+    "full": "All spots are taken. The link will register people again when a spot opens.",
+    "rotateConfirm": "The current link will stop working. Anyone who already registered stays registered."
+  }
+}

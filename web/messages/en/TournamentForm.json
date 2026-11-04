@@ -1,0 +1,268 @@
+{
+  "tournament": "Tournament",
+  "name": "Name",
+  "slug": "Address",
+  "slugHint": "The tournament link will be {address}. It doesn't change after you publish.",
+  "slugLocked": "The address doesn't change after publishing. Only the name can change.",
+  "slugConfirm": {
+    "title": "Change address",
+    "submit": "Save and change address",
+    "text": "The draft moves to {address}. Links saved with {old} stop working. Another tournament can take this address. Registration links still work."
+  },
+  "finishedLocked": "The tournament has ended. Only the name, description and cover image can still change.",
+  "slugInvalid": "Can't end with a hyphen.",
+  "slugPlaceholder": "your-tournament",
+  "startsAt": "Start",
+  "startsAtCheckIn": "Check-in opens {opens}.",
+  "startError": {
+    "past": "The start date has already passed.",
+    "soon": "Pick a start from {from} on, so check-in can open first."
+  },
+  "format": "Format",
+  "formatLocked": "The tournament has started. Format, slots, maps and champions can't change anymore.",
+  "mode": "Mode",
+  "teamSize": "Team size",
+  "teamSizeOption": "{size}v{size}",
+  "teamsReset": {
+    "fromDuel": "When you save, {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams in the Organization tab before starting.",
+    "toDuel": "When you save, teams are dissolved and {count, plural, one {the registered player plays} other {each of the # registered players plays}} solo.",
+    "resize": "When you save, the formed teams are dissolved and {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams of {size} again in the Organization tab."
+  },
+  "grandFinalReset": "Grand final reset",
+  "grandFinalResetHint": "If the side from the losers' bracket wins the grand final, the two play one more match.",
+  "bestOf": "Matches",
+  "finalsBestOf": {
+    "single": "Final",
+    "double": "Grand final"
+  },
+  "bestOfOption": "Best of {count}",
+  "champions": "Champions",
+  "registration": "Registration and deadlines",
+  "registrationLocked": "The tournament has started. Start and check-in can't change anymore.",
+  "results": "Results",
+  "countsForRating": "Affects rating",
+  "countsForRatingHint": "Each game updates players' rating.",
+  "maxParticipants": "Slots",
+  "maxParticipantsTdm": "Slots (players)",
+  "slotsTeams": "{slots} slots = {teams, plural, one {# team} other {# teams}} of {size}{reserves, plural, =0 {} one { and # reserve} other { and # reserves}}.",
+  "admission": "Registration",
+  "admissionOptions": {
+    "open": "Open",
+    "invite_only": "Only by link or by organizers"
+  },
+  "checkIn": "Check-in",
+  "checkInOff": "No check-in",
+  "checkInOption": "Opens {minutes} min before start",
+  "checkInOffHint": "All registered players enter the bracket.",
+  "checkInHint": "Only players who confirm attendance on the site enter the bracket.",
+  "checkInOffHintTdm": "All registered players can join a team.",
+  "checkInHintTdm": "Only players who confirm attendance on the site can join a team.",
+  "contest": "Dispute window",
+  "contestOption": "{minutes, plural, one {# minute} other {# minutes}}",
+  "contestHint": "Time for the opponent to confirm or dispute the submitted game. Without a response, it counts.",
+  "summary": {
+    "slots": "{count, plural, one {# slot} other {# slots}}",
+    "slotsTeams": "{count, plural, one {# slot} other {# slots}} ({teams, plural, one {# team} other {# teams}} of {size})",
+    "checkIn": "check-in {window} before",
+    "noCheckIn": "no check-in",
+    "contest": "{window} to dispute",
+    "maps": "{count, plural, one {# map} other {# maps}}",
+    "vetoOrder": {
+      "bans_first": "bans first",
+      "alternating": "alternating"
+    },
+    "seconds": "{time} per step",
+    "teamPick": "{time} to pick champions",
+    "screenshotsRequired": "screenshot required",
+    "noRules": "None",
+    "noLanguages": "None"
+  },
+  "duration": {
+    "seconds": "{seconds} s",
+    "minutes": "{minutes} min",
+    "minutesSeconds": "{minutes} min {seconds} s"
+  },
+  "description": "Description",
+  "rules": "Additional rules",
+  "rulesHint": "The Rules tab already covers format, check-in and results. Write the rest here, such as conduct and disconnections.",
+  "otherLanguages": "Other languages",
+  "translationOff": "The name, description and rules above are in {original}. Users of the site in {language} see them as they are.",
+  "translationHint": "A blank description or rules show the original.",
+  "addLanguage": "Add {language}",
+  "removeLanguage": "Remove {language}",
+  "willDelete": "The saved translation will be deleted when you save. To keep it, add the language again before saving.",
+  "create": "Create and publish",
+  "createDraft": "Create as draft",
+  "review": {
+    "title": "Create and publish",
+    "question": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",
+    "confirm": "Create and publish",
+    "label": "Tournament summary",
+    "labels": {
+      "name": "Name",
+      "startsAt": "Start",
+      "format": "Format",
+      "registration": "Registration",
+      "champions": "Champions",
+      "languages": "Languages",
+      "veto": "Maps",
+      "results": "Results",
+      "teamRules": "Who acts for the team"
+    },
+    "noDate": "No date"
+  },
+  "tabs": {
+    "label": "Tournament sections",
+    "general": "General",
+    "format": "Format",
+    "registration": "Registration and deadlines",
+    "results": "Results"
+  },
+  "edit": {
+    "title": "Edit tournament",
+    "loading": "Loading tournament…",
+    "loginRequired": "Log in to edit this tournament."
+  },
+  "veto": {
+    "title": "Maps",
+    "mapMode": "Map for each game",
+    "mapModes": {
+      "veto": "Map veto",
+      "vote": "Vote for each game",
+      "random": "Draw for each game",
+      "off": "Agreed between players"
+    },
+    "mapModeHint": {
+      "veto": "Before the first game, both sides ban and pick maps.",
+      "vote": "For each game, each side votes for one of 3 maps drawn from the pool. If the votes differ, a draw picks between the two.",
+      "random": "The map is drawn from the pool, without repeating within the match.",
+      "off": "No map repeats within the match."
+    },
+    "mapModeHintTdm": {
+      "veto": "Before the first game, teams ban and pick maps.",
+      "vote": "For each game, each team votes for one of 3 maps drawn from the pool. If the votes differ, a draw picks between the two.",
+      "random": "The map is drawn from the pool, without repeating within the match.",
+      "off": "No map repeats within the match."
+    },
+    "order": "Veto order",
+    "orders": {
+      "bans_first": "Bans first",
+      "alternating": "Alternating"
+    },
+    "sequence": "Best of {bestOf} with {maps, plural, one {# map} other {# maps}}: {steps}.",
+    "steps": {
+      "ban": "ban",
+      "pick": "pick",
+      "decider": "decider"
+    },
+    "run": "{step} ×{count}",
+    "mapPool": "Map pool",
+    "mapPoolHint": "The longest match needs at least {min, plural, one {# map} other {# maps}}.",
+    "poolIn": "In pool ({count})",
+    "poolOut": "Out of pool ({count})",
+    "showPoolOut": "Show {count, plural, one {the map} other {# maps}} out of pool",
+    "useDefaultPool": "Use default pool",
+    "seconds": "Time per step",
+    "secondsHint": "If time runs out, the pick is drawn at random.",
+    "secondsHintDraft": "Also applies to champions. If time runs out, the pick is drawn at random.",
+    "teamPickSeconds": "Blind pick time",
+    "teamPickSecondsHint": "Applies to the whole window, one champion per game. Whatever is missing at the end is drawn at random."
+  },
+  "stageFormat": "Bracket",
+  "stageFormats": {
+    "double": "Double elimination",
+    "single": "Single elimination",
+    "round_robin": "Round robin",
+    "swiss": "Swiss"
+  },
+  "stageFormatHints": {
+    "double": "Whoever loses drops to the losers' bracket. Losing again eliminates them.",
+    "single": "Whoever loses a match is out.",
+    "round_robin": "Everyone plays every other participant once. Up to {max} participants.",
+    "swiss": "Each round, players with the same score face each other, without repeating opponents. Up to {max} participants."
+  },
+  "swissRounds": "Rounds",
+  "swissRoundsHint": "Automatic: 3 rounds for up to 8 registered, 4 for up to 16, and 5 for up to 32. With few registered, at most one less than their number.",
+  "swissRoundsHintTdm": "Automatic: 3 rounds for up to 8 teams, 4 for up to 16, and 5 for up to 32. With few teams, at most one less than their number.",
+  "swissRoundsAuto": "Automatic (based on registered)",
+  "swissRoundsAutoTdm": "Automatic (based on teams)",
+  "swissRoundsOption": "{count, plural, one {# round} other {# rounds}}",
+  "championRules": {
+    "phase": "Champion picks",
+    "phaseOptions": {
+      "site": "On the site",
+      "off": "Off site"
+    },
+    "bans": "Bans per match",
+    "bansHint": "A banned champion is out for both sides.",
+    "bansOption": "{count, plural, =0 {No bans} one {# per side} other {# per side}}",
+    "pickOrder": "Pick order",
+    "pickOrderOptions": {
+      "alternating": "Alternating",
+      "blind": "Blind",
+      "open": "Open window"
+    },
+    "pickOrderHints": {
+      "alternating": "One at a time, alternating sides. The side that goes first switches each game.",
+      "blind": "Everyone at the same time. What a side picks only shows when everyone finishes.",
+      "open": "Everyone at the same time, seeing the others' picks."
+    },
+    "pickOrderBlindNeedsMirror": "Blind requires that opponents can use the same champion.",
+    "repeat": "Repeat champion",
+    "mirror": "Opponents can use the same champion in the game",
+    "mirrorOff": "The first to pick gets the champion.",
+    "sameTeam": "Teammates can use the same champion in the game",
+    "otherGames": "In other games",
+    "otherGamesOptions": {
+      "off": "Can repeat",
+      "series": "Doesn't repeat in the match",
+      "stage": "Doesn't repeat in the stage",
+      "tournament": "Doesn't repeat in the tournament"
+    },
+    "otherGamesHints": {
+      "stage": "Counts only games played. Needs more champions, which limits slots and matches.",
+      "tournament": "Counts only games played. Needs more champions, which limits slots and matches."
+    },
+    "who": "Who doesn't repeat",
+    "whoOptions": {
+      "player": "Each player",
+      "team": "The team"
+    },
+    "whoTeam": "A player's champion is out for the whole team in other games."
+  },
+  "admissionOpenHint": "Any member can register until the start.",
+  "source": {
+    "label": "Copy from",
+    "none": "No tournament"
+  },
+  "teamRules": {
+    "title": "Teams",
+    "label": "Who acts for the team",
+    "presets": {
+      "captain": "Captain only",
+      "balanced": "Balanced",
+      "everyone": "All players",
+      "custom": "Custom"
+    },
+    "hints": {
+      "captain": "The captain marks “Ready”, vetoes, bans, picks champions for everyone and submits the result.",
+      "balanced": "The captain vetoes and bans. Each player picks their own champion. Anyone can submit the result. Everyone marks “Ready”.",
+      "everyone": "Any player can veto, ban and submit the result, and each picks their own champion. Everyone marks “Ready”.",
+      "custom": "All players mark “Ready”."
+    },
+    "fields": {
+      "veto": "Veto maps",
+      "ban": "Ban champions",
+      "pick": "Pick champions",
+      "report": "Submit result"
+    },
+    "actor": {
+      "captain": "Captain",
+      "anyone": "Anyone"
+    },
+    "picker": {
+      "captain": "Captain",
+      "each_player": "Each player"
+    }
+  }
+}

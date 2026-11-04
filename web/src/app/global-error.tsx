@@ -10,8 +10,9 @@ import { digestOf } from "@/features/errors/lib/digest";
 const subscribe = () => () => {};
 
 /** O idioma pelo primeiro segmento do endereço; sem ele (ou no servidor), português. */
-function currentLocale(): "pt" | "es" {
-  return window.location.pathname.split("/")[1] === "es" ? "es" : "pt";
+function currentLocale(): "pt" | "es" | "en" {
+  const first = window.location.pathname.split("/")[1];
+  return first === "es" || first === "en" ? first : "pt";
 }
 
 /**
@@ -26,7 +27,7 @@ export default function GlobalError({
   error: unknown;
   retry: () => void;
 }) {
-  const locale = useSyncExternalStore<"pt" | "es">(
+  const locale = useSyncExternalStore<"pt" | "es" | "en">(
     subscribe,
     currentLocale,
     () => "pt",

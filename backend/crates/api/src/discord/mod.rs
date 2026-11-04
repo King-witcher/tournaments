@@ -9,7 +9,7 @@
 //! - `url`: a única forma de endereço aceita (só os hosts do Discord).
 //! - `catalog`: os avisos que existem (o código é o do `Notice`/`Announce` do
 //!   outbox), se vêm ligados, a quem se dirigem e o texto de cada um em
-//!   português e espanhol. Aviso novo = uma linha lá.
+//!   português, espanhol e inglês. Aviso novo = uma linha lá.
 //! - `queue`: o despachante do `realtime` chama `enqueue` para cada evento do
 //!   outbox, e uma tarefa própria (`spawn`) esvazia a fila em ordem,
 //!   respeitando o ritmo do Discord (`sender`, que passa pela mesma saída do

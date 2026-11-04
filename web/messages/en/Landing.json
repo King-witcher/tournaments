@@ -1,0 +1,76 @@
+{
+  "hero": {
+    "title": "Quake Champions tournaments",
+    "lead": "Registration, check-in, bracket, veto, results and ranking for your community's tournaments, all in one place. In duels or teams.",
+    "signup": "Create account",
+    "login": "Log in",
+    "room": "Just want the veto and the draft? <link>Open a veto room</link>, no account needed.",
+    "shot": "The bracket of a double-elimination tournament, with the first-round matches decided."
+  },
+  "steps": {
+    "title": "How it works",
+    "community": {
+      "title": "Create the community",
+      "body": "Players join through its invite link."
+    },
+    "tournament": {
+      "title": "Set up the tournament",
+      "body": "Choose the format, map pool and date. Check-in opens on its own before the start."
+    },
+    "play": {
+      "title": "Let the bracket run",
+      "body": "Players veto and submit each game. The organizers only handle what's disputed."
+    }
+  },
+  "tour": {
+    "title": "From veto to ranking",
+    "room": "Try it in a veto room",
+    "veto": {
+      "tab": "Maps",
+      "title": "Maps decided live",
+      "body": "Veto, vote or draw, however the tournament sets it. Each step has a timer. If time runs out, the choice is drawn at random.",
+      "shot": "A match veto in progress: whose turn it is to ban, the time left, and the maps, with banned maps in gray."
+    },
+    "draft": {
+      "tab": "Champions",
+      "title": "The match's draft before game 1",
+      "body": "Bans apply to both sides in every game. After that, each player picks the champion for each game. The tournament sets how many bans there are and what can repeat.",
+      "shot": "A match draft in progress: whose turn it is to pick, the champion portraits with banned ones in gray, and beside them the bans and each game's champions."
+    },
+    "result": {
+      "tab": "Result",
+      "title": "One side submits, the other confirms",
+      "body": "Each game is entered with its frags and a screenshot of the scoreboard. Without a response by the deadline, the submitted result stands. If disputed, it goes to the organizers.",
+      "shot": "A match with each game's scoreboard and the next game waiting to be submitted, with each side's map and champion."
+    },
+    "ranking": {
+      "tab": "Ranking",
+      "title": "The community's Elo rating",
+      "body": "Each confirmed game changes the rating of the players involved, in duels and in teams. With it, the organizers set the seeding and balance the teams.",
+      "shot": "A community's ranking, with each member's rating, games and wins."
+    }
+  },
+  "features": {
+    "title": "For organizers",
+    "formats": {
+      "title": "Formats",
+      "body": "Single or double elimination, round robin and Swiss."
+    },
+    "teams": {
+      "title": "Teams of 2 to 4",
+      "body": "Formed by draw or balanced by rating, with a captain and substitutions during the tournament."
+    },
+    "notices": {
+      "title": "Notices",
+      "body": "Match ready, disputed game, and start time reach the site, your phone and the community's Discord."
+    },
+    "languages": {
+      "title": "English, Portuguese and Spanish",
+      "body": "The site, notices and tournament text in all three languages."
+    }
+  },
+  "closing": {
+    "title": "Set up your community's first tournament",
+    "action": "Create account"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Create community",
+  "loading": "Loading the form…",
+  "loginRequired": "Log in to create a community.",
+  "name": "Name",
+  "slug": "Address",
+  "slugHint": "The community link will be {address}.",
+  "slugInvalid": "Can't end with a hyphen.",
+  "slugPlaceholder": "your-address",
+  "submit": "Create community"
+}

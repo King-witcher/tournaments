@@ -170,6 +170,29 @@ async fn any_account_with_email_enters_and_in_its_language() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["id"], discord.id);
     assert!(session.is_some());
+
+    // Em inglês, com a validade no idioma.
+    sqlx::query!("update users set locale = 'en'")
+        .execute(&db)
+        .await
+        .unwrap();
+    super::skip_cooldown(&db, "joaosilva@gmail.com").await;
+    assert_eq!(
+        request(&app, "joaosilva@gmail.com").await,
+        StatusCode::ACCEPTED
+    );
+    let email = mailbox(&db).next().await;
+    assert!(
+        email.subject.contains("Sign in to your account"),
+        "{}",
+        email.subject
+    );
+    assert!(email.text.contains("/en/login/email/confirm#"));
+    assert!(
+        email.text.contains("valid for 15 minutes"),
+        "{}",
+        email.text
+    );
 }
 
 #[tokio::test]

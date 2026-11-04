@@ -19,6 +19,7 @@ export const SITE_ORIGIN = new URL(
 const OG_LOCALES: Record<Locale, string> = {
   pt: "pt_BR",
   es: "es_LA",
+  en: "en_US",
 };
 
 /**

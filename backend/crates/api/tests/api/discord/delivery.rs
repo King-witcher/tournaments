@@ -230,6 +230,23 @@ async fn the_text_follows_the_language_and_the_translated_name() {
 }
 
 #[tokio::test]
+async fn the_text_in_english_without_a_translation_uses_the_original_name() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["tournament.started"]).await;
+    let en = json!({ "events": ["tournament.started"], "locale": "en", "mention_players": true });
+    put(&s.app, URI, &s.ana, en).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    start(&s.app, &s.ana, copa(single(1, 1)), &[&p[0], &p[1]]).await;
+    pump(&s, Utc::now()).await;
+    assert_eq!(
+        s.fake.texts(),
+        [
+            "**Copa de Outubro** has started. The bracket is here: http://localhost:4001/en/quake-br/copa"
+        ]
+    );
+}
+
+#[tokio::test]
 async fn a_rate_limit_holds_the_webhook_and_the_message_goes_later() {
     let (db, _lease) = crate::db::test_db().await;
     let s = configured(&db, &["tournament.started"]).await;

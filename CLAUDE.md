@@ -1,6 +1,6 @@
 # Telefrag
 
-Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA por pontos/frags, 2v2, 3v3), em português e espanhol. Decisões e motivos, por área: `docs/decisions.md` (índice) e `docs/decisions/`.
+Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA por pontos/frags, 2v2, 3v3), em português, espanhol e inglês (en-US). Decisões e motivos, por área: `docs/decisions.md` (índice) e `docs/decisions/`.
 
 ## Estrutura
 
@@ -31,7 +31,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - Todo acesso a dados de tenant recebe um `TenantId` tipado; nunca filtre tenant com string solta.
 - Rota que exige login recebe `CurrentUser` (`auth/current_user.rs`); rota pública que muda para quem está logado, `Option<CurrentUser>`. Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenants/access.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
 - Erros saem por `ApiError` (`shared/error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`shared/extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
-- A API devolve códigos (`match.already_reported`), nunca texto para o usuário; as traduções ficam em `web/`. Exceções: emails (`auth/emails/`, layout em `mail/layout.rs`) e avisos do Discord (`discord/catalog.rs`), em pt e es.
+- A API devolve códigos (`match.already_reported`), nunca texto para o usuário; as traduções ficam em `web/`. Exceções: emails (`auth/emails/`, layout em `mail/layout.rs`) e avisos do Discord (`discord/catalog.rs`), em pt, es e en.
 - Ids: chave interna `bigint` identity; identificador público é slug; segredo é token aleatório com só o hash guardado, no banco ou no Redis; exceção: o token dos links de convite (`invite_token`), em claro porque não é credencial (`docs/decisions/stack.md`, "Ids"). Datas em UTC no banco.
 - O Next nunca acessa o banco. Supabase é só host de Postgres: nada de Supabase Auth, Realtime, Storage nem supabase-js.
 - Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL (`auth/kv/`, `mail/kv.rs`). Cada comando conta na cota: nada de Redis novo no caminho de toda requisição, nem cache ou lock sem medir antes (`docs/decisions/stack.md`, "Redis"). Localmente, sempre no database 1 (os outros são de outros projetos do usuário; no Upstash, o 0), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.

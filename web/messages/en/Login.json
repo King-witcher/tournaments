@@ -1,0 +1,24 @@
+{
+  "title": "Sign in",
+  "noAccount": "No account?",
+  "signup": "Create account",
+  "email": {
+    "title": "Sign in by email",
+    "text": "We'll send a code and a link to the account email.",
+    "address": "Email",
+    "submit": "Send code",
+    "expired": "This link has expired. Request another here.",
+    "sentTitle": "Check your email",
+    "sent": "If “{email}” belongs to an account, we sent a code and a link. They're valid for 15 minutes. Didn't arrive? Check your spam folder.",
+    "resend": "Resend email",
+    "resendIn": "Resend in {seconds} s",
+    "back": "Use another email",
+    "newPassword": "Set a new password",
+    "newPasswordHint": "Other sessions on the account will be signed out.",
+    "requestAgain": "Request another email",
+    "remembered": "Remembered your password?",
+    "backToLogin": "Sign in"
+  },
+  "deletionScheduledTitle": "Account deletion scheduled",
+  "deletionScheduled": "Your account will be deleted on <date></date>, and you've been signed out of all devices. To cancel, sign in again before then."
+}

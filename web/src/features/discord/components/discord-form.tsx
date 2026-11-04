@@ -36,7 +36,7 @@ type Locale = components["schemas"]["Locale"];
 /** Os códigos que são erro do campo do endereço (vão no `invalidText`). */
 const URL_ERRORS = ["discord.url_invalid", "discord.url_required"];
 
-const LOCALES: Locale[] = ["pt", "es"];
+const LOCALES: Locale[] = ["pt", "es", "en"];
 
 /** O endereço que a API aceita (ver `discord/url.rs`), para o campo cobrar enquanto se digita. */
 const URL_PATTERN =

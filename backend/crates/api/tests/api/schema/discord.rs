@@ -44,7 +44,7 @@ async fn webhooks_keep_their_format() {
             "discord_webhooks_token_format",
         ),
         (
-            webhook(t, "1", TOKEN, ok_events, "en"),
+            webhook(t, "1", TOKEN, ok_events, "fr"),
             "discord_webhooks_locale_check",
         ),
         (

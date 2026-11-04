@@ -1,0 +1,113 @@
+{
+  "title": "Your account",
+  "loading": "Loading account…",
+  "loginRequired": "Log in to see your account.",
+  "sections": "Account sections",
+  "tabs": {
+    "profile": "Profile",
+    "logins": "Logins",
+    "sessions": "Sessions",
+    "notifications": "Notifications"
+  },
+  "name": {
+    "title": "Display name",
+    "label": "Name",
+    "hint": "Shows in the header and becomes your nickname in communities you join later.",
+    "saved": "Saved."
+  },
+  "currentPassword": "Current password",
+  "backup": {
+    "title": "If {provider} becomes unavailable, you can't log in.",
+    "action": "Add email"
+  },
+  "discord": {
+    "title": "Discord",
+    "notLinked": "Link to log in with Discord and use your Discord avatar here.",
+    "link": "Link Discord",
+    "linkHint": "To link, confirm your password.",
+    "linked": "Linked. You can log in with Discord.",
+    "unlinkHint": "To unlink, confirm your password.",
+    "unlink": "Unlink Discord",
+    "unlinkConfirm": "You can no longer log in with Discord, and your avatar is removed from the account. You can link it again later.",
+    "needsOther": "To unlink Discord, first add an email or link Google."
+  },
+  "google": {
+    "title": "Google",
+    "notLinked": "The site only receives the name on your Google account, not the email or photo.",
+    "link": "Link Google",
+    "linkHint": "To link, confirm your password.",
+    "linked": "Linked. You can log in with your Google account.",
+    "unlinkHint": "To unlink, confirm your password.",
+    "unlink": "Unlink Google",
+    "unlinkConfirm": "You can no longer log in with your Google account. You can link it again later.",
+    "needsOther": "To unlink Google, first add an email or link Discord."
+  },
+  "password": {
+    "title": "Password",
+    "create": "Create password",
+    "change": "Change password",
+    "newPassword": "New password",
+    "newPasswordHint": "Changing your password ends your other sessions.",
+    "saved": "Saved.",
+    "remove": "Remove password",
+    "removeConfirm": "You can no longer log in with a password, and the account still logs in by email. You can create one again later.",
+    "needsEmail": "To create a password, first add an email in the section above.",
+    "resetDoneTitle": "New password saved",
+    "resetDone": "Other sessions on the account were ended."
+  },
+  "email": {
+    "title": "Email",
+    "signsIn": "You log in with a code or link sent to that email.",
+    "proofNeeded": "To change your email, create a password or link Discord or Google, first confirm it's you.",
+    "proofSend": "Send code",
+    "proofSent": "We sent a code to {email}. It's valid for 15 minutes. Didn't arrive? Check your spam folder.",
+    "proofSubmit": "Confirm",
+    "proofFirst": "First confirm it's you, in the email section.",
+    "none": "With it, you can log in with a code or link and create a password.",
+    "label": "Email",
+    "add": "Add email",
+    "change": "Change email",
+    "sentTitle": "Check your email",
+    "sent": "We sent a code and a link to {email}. They're valid for 1 hour. Didn't arrive? Check your spam folder.",
+    "requestAgain": "Request another email",
+    "remove": "Remove email",
+    "removeConfirm": "You can no longer log in with this email or get account alerts. To create a password later, you'll need an email again.",
+    "removeBlocked": "To remove the email, first remove the password. The password logs in with this email.",
+    "removeLastLogin": "To remove the email, first link Discord or Google."
+  },
+  "emailConfirm": {
+    "title": "Confirm email",
+    "text": "Confirm to make this your account's email.",
+    "submit": "Confirm email",
+    "doneTitle": "Email confirmed",
+    "done": "It's now your account's email.",
+    "goToAccount": "Go to account"
+  },
+  "sessions": {
+    "title": "Open sessions",
+    "description": "End any you don't recognize. To log out of this one, use Log out in the menu.",
+    "deviceHeader": "Browser",
+    "sinceHeader": "Logged in",
+    "device": "{browser} on {os}",
+    "unknownDevice": "Unknown browser",
+    "current": "This session",
+    "end": "End",
+    "endConfirm": "That session's browser will be logged out of the account.",
+    "endOthers": "End the others",
+    "endOthersConfirm": "The other browsers will be logged out of the account, and only this session stays active.",
+    "onlyThis": "Your account is open only in this session."
+  },
+  "deletion": {
+    "title": "Delete account",
+    "description": "The account is deleted 7 days after the request. Logging in again before then cancels the deletion.",
+    "consequences": "On that date, you leave communities and tournaments (in ongoing ones, your pending matches become walkovers). In tournaments you played, your name becomes “Deleted account”.",
+    "ownerTitle": "You own a community",
+    "owner": "Before deleting your account, transfer ownership or delete each community you own:",
+    "ownerLink": "{name}: settings",
+    "submit": "Delete account",
+    "passwordHint": "To delete, confirm your password.",
+    "confirm": "Schedule your account for deletion? You'll be logged out of all devices now.",
+    "cancelledTitle": "Deletion cancelled",
+    "cancelled": "You logged in again, and the account deletion was cancelled."
+  }
+}

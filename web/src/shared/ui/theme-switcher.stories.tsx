@@ -17,3 +17,4 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const Spanish: Story = { globals: { locale: "es" } };
+export const English: Story = { globals: { locale: "en" } };

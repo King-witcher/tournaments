@@ -2480,7 +2480,7 @@ export interface components {
             token: string;
         };
         /** @enum {string} */
-        Locale: "pt" | "es";
+        Locale: "pt" | "es" | "en";
         /**
          * @description Formas de login da conta. Sempre sobra pelo menos uma: o email confirmado
          *     já conta.
