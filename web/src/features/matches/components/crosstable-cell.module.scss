@@ -1,11 +1,14 @@
 @use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/colors";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
-@use "@carbon/react/scss/type";
 @use "./crosstable-layout" as layout;
 
 // O link ocupa a célula inteira, na altura da linha (48px no celular, pelo
-// token). A classe dobrada vence o `display` do link solto no celular.
+// token). A classe dobrada vence o `display` do link solto no celular. O texto
+// é o do link no hover (blue 70 no claro, blue 30 no escuro) em todos os
+// estados do link: o azul comum não chega a 4,5:1 sobre estes fundos no tema
+// claro.
 .cell.cell {
   display: flex;
   align-items: center;
@@ -14,6 +17,8 @@
   min-inline-size: layout.$column;
   min-block-size: var(--cds-layout-size-height-md);
   padding-inline: spacing.$spacing-03;
+  background-color: var(--tone, transparent);
+  color: theme.$link-primary-hover;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 
@@ -24,9 +29,16 @@
     scroll-margin-inline-start: layout.$row-header-phone;
   }
 
+  &:visited,
+  &:visited:hover {
+    color: theme.$link-primary-hover;
+  }
+
+  // O fundo do hover é o do próprio estado (`--tone-hover`); a pendente, sem
+  // fundo, usa o da linha.
   @media (any-hover: hover) {
     &:hover {
-      background-color: theme.$layer-accent-hover;
+      background-color: var(--tone-hover, theme.$layer-accent-hover);
     }
   }
 
@@ -37,11 +49,57 @@
   }
 }
 
-.won {
-  @include type.font-weight("semibold");
+// Os fundos são a paleta divergente 2 do Carbon (teal e roxo, para
+// desempenho) e o cinza do andamento: o passo 20 no claro e o 80 no escuro,
+// cada um com o hover que o Carbon define para ele.
+@mixin tones($won, $won-hover, $lost, $lost-hover, $playing, $playing-hover) {
+  .won {
+    --tone: #{$won};
+    --tone-hover: #{$won-hover};
+  }
+
+  .lost {
+    --tone: #{$lost};
+    --tone-hover: #{$lost-hover};
+  }
+
+  .playing {
+    --tone: #{$playing};
+    --tone-hover: #{$playing-hover};
+  }
 }
 
-// O mesmo placar provisório do cartão: sem o peso de resultado.
-.playing {
-  font-style: italic;
+@include tones(
+  colors.$teal-20,
+  colors.$teal-20-hover,
+  colors.$purple-20,
+  colors.$purple-20-hover,
+  colors.$gray-20,
+  colors.$gray-20-hover
+);
+
+// Os mesmos temas de `globals.scss`: o do sistema, e a escolha da pessoa
+// (`data-theme`) acima dele.
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) {
+    @include tones(
+      colors.$teal-80,
+      colors.$teal-80-hover,
+      colors.$purple-80,
+      colors.$purple-80-hover,
+      colors.$gray-80,
+      colors.$gray-80-hover
+    );
+  }
+}
+
+:global(:root[data-theme="dark"]) {
+  @include tones(
+    colors.$teal-80,
+    colors.$teal-80-hover,
+    colors.$purple-80,
+    colors.$purple-80-hover,
+    colors.$gray-80,
+    colors.$gray-80-hover
+  );
 }

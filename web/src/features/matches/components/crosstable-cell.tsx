@@ -1,5 +1,6 @@
-import { Incomplete } from "@carbon/icons-react";
+import { CircleDash, Incomplete } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import type { Href } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
@@ -26,22 +27,24 @@ function scoreText(own: number, other: number, frags = false) {
 
 /**
  * Uma célula da tabela cruzada, que inteira é o link da série: o resultado de
- * quem está na linha. Vitória e derrota se distinguem pela letra e pelo peso,
- * não só pela cor; a série em andamento, pelo ícone e pelo itálico, como o
- * placar provisório do cartão; a pendente é um traço na cor de link, sem
- * resultado, para ainda parecer clicável no celular, sem hover.
+ * quem está na linha. A série encerrada é o placar sobre um fundo teal (vitória)
+ * ou roxo (derrota), a paleta divergente do Carbon para desempenho; a em
+ * andamento, o parcial sobre cinza, com o mesmo ícone do cartão; a pendente, só
+ * o ícone do cartão, sem fundo. A cor não fala sozinha: o nome do link diz o
+ * resultado por extenso.
  */
 export function CrosstableCell({ match, team, row, column, href }: Props) {
   const t = useTranslations("Bracket");
   const tSaid = useTranslations("Bracket.crosstable.described");
   const result = crossResult(match, team);
 
-  let won = false;
+  let tone: string | undefined;
   let said = tSaid("pending");
-  let content = <span aria-hidden>—</span>;
+  let content: ReactNode = <CircleDash />;
   if (result.kind === "playing") {
     const score = scoreText(result.own, result.other);
     said = tSaid("playing", { score });
+    tone = styles.playing;
     content = (
       <>
         <Incomplete />
@@ -49,27 +52,16 @@ export function CrosstableCell({ match, team, row, column, href }: Props) {
       </>
     );
   } else if (result.kind === "walkover" || result.kind === "score") {
-    won = result.won;
-    const mark = t(won ? "crosstable.won" : "crosstable.lost");
+    tone = result.won ? styles.won : styles.lost;
     if (result.kind === "walkover") {
-      said = tSaid(won ? "wonWalkover" : "lostWalkover");
-      content = (
-        <>
-          <span>{mark}</span>
-          {t("walkover")}
-        </>
-      );
+      said = tSaid(result.won ? "wonWalkover" : "lostWalkover");
+      content = t("walkover");
     } else {
       const score = scoreText(result.own, result.other, result.frags);
-      said = tSaid(won ? "won" : "lost", {
+      said = tSaid(result.won ? "won" : "lost", {
         score: result.frags ? tSaid("frags", { score }) : score,
       });
-      content = (
-        <>
-          <span>{mark}</span>
-          {score}
-        </>
-      );
+      content = score;
     }
   }
   const label = `${t("matchSides", { a: row, b: column })}, ${said}`;
@@ -79,11 +71,7 @@ export function CrosstableCell({ match, team, row, column, href }: Props) {
       href={href}
       aria-label={label}
       title={label}
-      className={cn(
-        styles.cell,
-        won && styles.won,
-        result.kind === "playing" && styles.playing,
-      )}
+      className={cn(styles.cell, tone)}
     >
       {content}
     </Link>

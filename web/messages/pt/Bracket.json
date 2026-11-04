@@ -71,11 +71,9 @@
   },
   "crosstable": {
     "label": "Confrontos entre os participantes",
-    "legend": "Cada linha mostra os resultados de quem está nela. V é vitória e D, derrota.",
+    "legend": "Cada linha mostra os resultados de quem está nela.",
     "legendFrags": "Nas séries de uma partida, o placar é de frags.",
     "corner": "Participante",
-    "won": "V",
-    "lost": "D",
     "described": {
       "pending": "pendente",
       "playing": "em andamento, {score}",

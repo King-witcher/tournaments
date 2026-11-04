@@ -71,11 +71,9 @@
   },
   "crosstable": {
     "label": "Enfrentamientos entre los participantes",
-    "legend": "Cada fila muestra los resultados de quien está en ella. G es ganada y P, perdida.",
+    "legend": "Cada fila muestra los resultados de quien está en ella.",
     "legendFrags": "En las series de una partida, el marcador es de frags.",
     "corner": "Participante",
-    "won": "G",
-    "lost": "P",
     "described": {
       "pending": "pendiente",
       "playing": "en curso, {score}",
