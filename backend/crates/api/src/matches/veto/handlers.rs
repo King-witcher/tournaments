@@ -2,8 +2,7 @@
 //! desfazer (o organizador, ou o jogador com o aceite do adversário). Todas
 //! devolvem a série como ficou. O que é do lado (Pronto, veto de mapas, bans,
 //! pick do duelo, pedir e responder o desfazer) é de qualquer jogador do
-//! time: vale o primeiro clique. Na janela simultânea do TDM, cada jogador
-//! escolhe os seus.
+//! time: vale o primeiro clique. No pick por jogador, cada um escolhe os seus.
 
 use axum::{Json, extract::State};
 use engine::{
@@ -205,11 +204,11 @@ pub async fn veto_begin(
     ),
     request_body = VetoChoice,
     responses(
-        (status = OK, body = MatchDetail, description = "O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. Na janela simultânea do TDM (`team_pick`), cada jogador escolhe o próprio campeão de cada partida (`game`), uma vez por partida. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada"),
+        (status = OK, body = MatchDetail, description = "O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. No pick por jogador (`team_pick`), cada um escolhe o próprio campeão, uma vez por partida: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; na janela simultânea, quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time)"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; no pick por jogador, também quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time)"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "veto.option_invalid (mapa ou campeão fora das opções, já banido, a partida fora da série ou faltando na janela simultânea, ou o tipo errado para o passo), veto.champion_forbidden (a regra de não repetição o tira), request.invalid_body"),
     )
 )]
@@ -256,7 +255,7 @@ pub async fn veto_step(
     ),
     request_body = Option<VetoSeen>,
     responses(
-        (status = OK, body = MatchDetail, description = "O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz"),
+        (status = OK, body = MatchDetail, description = "O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz, nem o pick às cegas (`veto.nothing_to_undo`)"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),

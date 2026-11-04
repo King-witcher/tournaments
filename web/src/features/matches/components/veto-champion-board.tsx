@@ -16,7 +16,7 @@ type Schemas = components["schemas"];
 type Props = {
   /** A regra de não repetição do torneio, para dizer o que ela tira. */
   rule: Schemas["NoRepeatRule"] | null;
-  /** O pick de quem vê agora (na janela do TDM, a partida escolhida). */
+  /** O pick de quem vê agora (no pick por jogador, a partida da vez ou a escolhida). */
   slot: Schemas["VetoPickSlot"] | undefined;
 };
 

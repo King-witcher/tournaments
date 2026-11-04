@@ -14,13 +14,14 @@ use crate::series::Side;
 pub enum Action {
     /// Tira um mapa do pool (veto) ou um campeão da série, para os dois.
     Ban,
-    /// Escolhe o mapa de uma partida (veto) ou, no duelo, o próprio campeão
-    /// de uma partida.
+    /// Escolhe o mapa de uma partida (veto) ou, no duelo alternado, o próprio
+    /// campeão de uma partida.
     Pick,
     /// Vota num dos mapas oferecidos (modo votação).
     Vote,
-    /// Nos times: cada jogador escolhe o próprio campeão de cada partida,
-    /// todos ao mesmo tempo (a janela simultânea, depois dos bans).
+    /// Um jogador escolhe o próprio campeão de uma partida (`PickOrder`): na
+    /// janela simultânea, todos ao mesmo tempo; na ordem alternada, um por
+    /// vez, quem for do lado da vez.
     TeamPick,
 }
 
@@ -62,13 +63,13 @@ pub struct DraftStep {
 /// cada lado; `first` é o seed melhor, que começou o veto de mapas.
 ///
 /// Primeiro os bans da série, alternados, começando pelo seed pior. No
-/// duelo, depois, um pick de cada lado por partida, na ordem das partidas:
-/// nas ímpares escolhe primeiro o seed melhor e nas pares o pior, e quem
-/// escolhe por último numa partida vê o campeão do outro. Num md3 com 1 ban:
-/// pior bane, melhor bane; partida 1, melhor e pior; partida 2, pior e
-/// melhor; partida 3, melhor e pior. Nos times, só os bans: os picks são a
-/// janela simultânea (`Action::TeamPick`), que não tem ordem.
-pub fn draft_sequence(bans: u8, best_of: u8, first: Side, teams: bool) -> Vec<DraftStep> {
+/// duelo alternado, depois, um pick de cada lado por partida, na ordem das
+/// partidas: nas ímpares escolhe primeiro o seed melhor e nas pares o pior, e
+/// quem escolhe por último numa partida vê o campeão do outro. Num md3 com 1
+/// ban: pior bane, melhor bane; partida 1, melhor e pior; partida 2, pior e
+/// melhor; partida 3, melhor e pior. Com o pick por jogador (`per_player`),
+/// só os bans: a ordem depende do elenco (`Action::TeamPick`, ver `team.rs`).
+pub fn draft_sequence(bans: u8, best_of: u8, first: Side, per_player: bool) -> Vec<DraftStep> {
     let worse = other(first);
     let mut steps: Vec<DraftStep> = (0..usize::from(bans) * 2)
         .map(|i| DraftStep {
@@ -77,9 +78,9 @@ pub fn draft_sequence(bans: u8, best_of: u8, first: Side, teams: bool) -> Vec<Dr
             game: None,
         })
         .collect();
-    if !teams {
+    if !per_player {
         for game in 1..=best_of {
-            let opener = if game % 2 == 1 { first } else { worse };
+            let opener = game_opener(first, game);
             for side in [opener, other(opener)] {
                 steps.push(DraftStep {
                     action: Action::Pick,
@@ -90,6 +91,22 @@ pub fn draft_sequence(bans: u8, best_of: u8, first: Side, teams: bool) -> Vec<Dr
         }
     }
     steps
+}
+
+/// Quem abre as escolhas da partida `game`: nas ímpares o seed melhor
+/// (`first`), nas pares o outro.
+pub(super) const fn game_opener(first: Side, game: u8) -> Side {
+    if game % 2 == 1 { first } else { other(first) }
+}
+
+/// O lado da posição `i` (a partir de 0) nas escolhas de uma partida que
+/// `opener` abre: O, X, X, O, O, X, X, O... Com um jogador por lado, O, X.
+pub(super) const fn pick_side(opener: Side, i: usize) -> Side {
+    if i.div_ceil(2).is_multiple_of(2) {
+        opener
+    } else {
+        other(opener)
+    }
 }
 
 #[cfg(test)]
@@ -249,12 +266,22 @@ mod tests {
     }
 
     #[test]
-    fn teams_only_ban() {
+    fn picks_per_player_only_ban() {
         assert_eq!(draft(1, 3, true), [(Ban, B, None), (Ban, A, None)]);
         assert!(draft(0, 5, true).is_empty());
         // Com B no seed melhor, A bane primeiro.
         let steps = draft_sequence(1, 1, B, false);
         assert_eq!(steps[0].side, A);
         assert_eq!(steps[2].side, B);
+    }
+
+    #[test]
+    fn the_pick_pattern_by_team_size() {
+        let pattern =
+            |size: usize| -> Vec<Side> { (0..2 * size).map(|i| pick_side(A, i)).collect() };
+        assert_eq!(pattern(1), [A, B]);
+        assert_eq!(pattern(2), [A, B, B, A]);
+        assert_eq!(pattern(3), [A, B, B, A, A, B]);
+        assert_eq!(pattern(4), [A, B, B, A, A, B, B, A]);
     }
 }

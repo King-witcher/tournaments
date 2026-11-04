@@ -19,7 +19,7 @@ use crate::{
         status::TournamentStatus,
         texts::Texts,
         types::{NameTranslation, TournamentSummary, TournamentTranslation},
-        veto::{MapMode, PoolMap, VetoOrder, VetoSetup},
+        veto::{MapMode, PickOrder, PoolMap, VetoOrder, VetoSetup},
     },
 };
 
@@ -156,7 +156,7 @@ pub async fn find(
                   t.starts_at, t.check_in_minutes, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
                   t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
-                  t.started_at, t.cover_key,
+                  t.pick_order, t.started_at, t.cover_key,
                   (select n.slug from tenants n where n.id = t.tenant_id) as "tenant_slug!",
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
@@ -250,6 +250,7 @@ pub async fn find(
                 order: VetoOrder::from_db(&row.veto_order)?,
                 pool: map_pool.iter().map(|m| m.id).collect(),
                 champion_phase: row.champion_phase,
+                pick_order: PickOrder::from_db(&row.pick_order)?,
                 step_seconds: row.veto_seconds,
                 team_pick_seconds: row.team_pick_seconds,
             },

@@ -87,6 +87,7 @@ impl From<VetoError> for ApiError {
             E::PoolTooSmall { best_of, .. } => Self::invalid("tournament.map_pool_too_small")
                 .with_params([("min", i64::from(best_of))]),
             E::PoolRepeated(_) => Self::invalid("tournament.map_pool_repeated"),
+            E::BlindNeedsMirror => Self::invalid("tournament.blind_needs_mirror"),
             // Só o histórico gravado e o elenco que a fase monta erram assim (ver
             // `MatchVeto::replay`); a API completa o draft antes de começar a
             // partida seguinte (`advance`).

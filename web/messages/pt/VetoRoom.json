@@ -20,7 +20,13 @@
     "bestOf": "Melhor de",
     "submit": "Criar sala",
     "poolTooSmall": "O pool precisa de pelo menos {min, plural, one {# mapa} other {# mapas}}.",
-    "noPhases": "Com os mapas combinados, a escolha de campeões precisa ser no site."
+    "noPhases": "Com os mapas combinados, a escolha de campeões precisa ser no site.",
+    "whoStarts": "Quem começa",
+    "whoStartsOptions": {
+      "draw": "Sorteio",
+      "a": "Lado A"
+    },
+    "whoStartsSummary": "lado A começa"
   },
   "seats": {
     "side": "Lado {side}",

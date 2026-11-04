@@ -233,8 +233,12 @@
       "toPick": "a escolher",
       "choosing": "escolhendo",
       "drawn": "sorteado",
-      "you": "Você"
-    }
+      "you": "Você",
+      "hidden": "escolheu"
+    },
+    "blindPick": "Todos <b>escolhem</b> ao mesmo tempo. Os campeões aparecem quando todos terminarem.",
+    "blindPickYours": "<b>Escolha</b> um campeão para cada partida. A escolha é definitiva, e o outro lado só a vê quando todos terminarem.",
+    "pickedWaitingMate": "Você já escolheu na partida {game}. Falta {names}."
   },
   "labelTable": "Rodada {round} de {total} · série {index}",
   "steps": {

@@ -14,10 +14,10 @@
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para a organização) saem de quem
 //! envia e de quem contesta; os do veto (adversário pronto, veto começou), de
-//! quem fica pronto ou força o começo. A abertura da escolha simultânea de
-//! campeões do TDM (`match.team_pick_open`, para os jogadores dos dois
-//! times) sai daqui, porque ela abre por qualquer caminho (o último ban, o
-//! tempo esgotado, o jogo seguinte, o desfazer).
+//! quem fica pronto ou força o começo. A abertura dos picks por jogador
+//! (`match.team_pick_open`, para os jogadores dos dois times, sem dizer nada do
+//! que foi escolhido) sai daqui, porque ela abre por qualquer caminho (o último
+//! ban, o tempo esgotado, o jogo seguinte, o desfazer).
 
 use std::collections::{BTreeSet, HashMap};
 
@@ -89,8 +89,7 @@ fn contested(stage: &Stage) -> BTreeSet<i64> {
 }
 
 /// O que se vê de uma partida: estado na chave, mapas, série decidida e o
-/// veto (quantos eventos e o último, e o jogo com a escolha simultânea do
-/// TDM aberta).
+/// veto (quantos eventos e o último, e o jogo com os picks por jogador abertos).
 #[derive(PartialEq)]
 struct Mark {
     state: MatchState,
@@ -332,8 +331,8 @@ async fn match_ready(
     Ok(())
 }
 
-/// TDM: a escolha simultânea de campeões do mapa `game` abriu: aviso para os
-/// jogadores dos dois times que estão na comunidade (todos escolhem).
+/// Os picks por jogador da partida `game` abriram: aviso para os jogadores dos
+/// dois times que estão na comunidade (todos escolhem).
 async fn team_pick_open(
     conn: &mut PgConnection,
     audience: &Address,

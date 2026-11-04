@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::{
     matches::{result::Side, types::MapRef},
-    tournaments::MapMode,
+    tournaments::{MapMode, PickOrder},
 };
 
 /// Onde o veto da série está (só na série pronta de um torneio com veto).
@@ -28,8 +28,10 @@ pub enum VetoAction {
     Ban,
     Pick,
     Vote,
-    /// TDM: cada jogador escolhe o próprio campeão de cada partida, todos ao
-    /// mesmo tempo, numa janela só (`team_pick_seconds`).
+    /// Um jogador escolhe o próprio campeão. Sem `pick_for`, é a janela: todos
+    /// ao mesmo tempo, cada um para cada partida (`team_pick_seconds`). Com
+    /// `pick_for`, é a ordem alternada: qualquer um do lado da vez que ainda não
+    /// escolheu para aquela partida, com o tempo de um passo.
     TeamPick,
 }
 
@@ -49,11 +51,11 @@ pub struct VetoTurn {
     /// enquanto nenhum votou e na janela simultânea enquanto falta alguém de
     /// cada um.
     pub sides: Vec<Side>,
-    /// Pick de campeão do duelo: a partida a que ele se destina.
+    /// Pick de campeão com vez: a partida a que ele se destina.
     pub pick_for: Option<i16>,
 }
 
-/// TDM: um jogador que falta na janela simultânea.
+/// Um jogador que ainda falta escolher, no pick por jogador.
 #[derive(Serialize, ToSchema)]
 pub struct VetoPlayer {
     pub side: Side,
@@ -64,15 +66,24 @@ pub struct VetoPlayer {
     pub games: Vec<i16>,
 }
 
-/// TDM: o campeão de um jogador numa partida.
+/// O campeão de um jogador numa partida, no pick por jogador.
 #[derive(Serialize, ToSchema)]
 pub struct VetoTeamPick {
     pub side: Side,
     pub user_id: i64,
     pub nickname: String,
     pub champion: ChampionRef,
-    /// Sorteado pelo fim da janela.
+    /// Sorteado pelo fim do tempo.
     pub timeout: bool,
+}
+
+/// Às cegas: um jogador de outro lado já escolheu para a partida, sem dizer o
+/// quê, até a janela fechar.
+#[derive(Serialize, ToSchema)]
+pub struct VetoHiddenPick {
+    pub side: Side,
+    pub user_id: i64,
+    pub nickname: String,
 }
 
 #[derive(Serialize, ToSchema, Clone)]
@@ -111,12 +122,16 @@ pub struct VetoGame {
     pub offered: Vec<MapRef>,
     pub vote_a: Option<String>,
     pub vote_b: Option<String>,
-    /// Duelo: o campeão de cada lado.
+    /// Duelo alternado: o campeão de cada lado.
     pub pick_a: Option<ChampionRef>,
     pub pick_b: Option<ChampionRef>,
-    /// TDM: o campeão de cada jogador, na ordem em que escolheram (só o que
-    /// conta: numa partida enviada, de quem a jogou).
+    /// No pick por jogador: o campeão de cada um, na ordem em que escolheram (só
+    /// o que conta: numa partida enviada, de quem a jogou). Às cegas, com a
+    /// janela aberta, só os do lado de quem vê.
     pub team_picks: Vec<VetoTeamPick>,
+    /// Às cegas, com a janela aberta: quem já escolheu, sem o campeão, dos lados
+    /// que não são o de quem vê.
+    pub hidden_picks: Vec<VetoHiddenPick>,
 }
 
 /// Um campeão ativo do torneio, com o ban da série.
@@ -161,8 +176,8 @@ pub enum VetoGaveWay {
     Game,
 }
 
-/// Um pick que quem vê pode fazer agora: no duelo, o da vez dele; no TDM,
-/// cada partida em que ele falta na janela simultânea.
+/// Um pick que quem vê pode fazer agora: no duelo alternado, o da vez dele; no
+/// pick por jogador, cada partida em que ele falta e pode escolher agora.
 #[derive(Serialize, ToSchema)]
 pub struct VetoPickSlot {
     pub game: i16,
@@ -212,7 +227,7 @@ pub struct VetoEvent {
     pub timeout: bool,
     /// Apelido de quem agiu; `null` no que acontece sozinho.
     pub actor: Option<String>,
-    /// TDM: na janela simultânea, o apelido do jogador (também no sorteado).
+    /// No pick por jogador, o apelido do jogador (também no sorteado).
     pub player: Option<String>,
     pub at: DateTime<Utc>,
 }
@@ -223,9 +238,13 @@ pub struct VetoView {
     pub map_mode: MapMode,
     /// Draft de campeões no site.
     pub champion_phase: bool,
+    /// A ordem das escolhas de campeão.
+    pub pick_order: PickOrder,
+    /// Jogadores por lado.
+    pub team_size: i16,
     /// Segundos de cada passo.
     pub step_seconds: i32,
-    /// TDM: segundos da janela simultânea de campeões; `null` no duelo.
+    /// Segundos da janela simultânea de campeões; `null` sem janela.
     pub team_pick_seconds: Option<i32>,
     /// O pool de mapas do torneio, na ordem.
     pub pool: Vec<MapRef>,
@@ -257,14 +276,13 @@ pub struct VetoView {
     /// todas aparecem antes da partida 1).
     pub games: Vec<VetoGame>,
     /// O que quem vê pode escolher no passo do lado dele agora (slugs de
-    /// mapas ou de campeões: veto de mapas, voto, ban, pick do duelo); vazio
-    /// se não é a vez do lado dele e na janela simultânea, que é por partida
-    /// (`picks`).
+    /// mapas ou de campeões: veto de mapas, voto, ban, pick do duelo alternado);
+    /// vazio se não é a vez do lado dele e no pick por jogador (`picks`).
     pub options: Vec<String>,
     /// Os picks de campeão que quem vê pode fazer agora, com o motivo de cada
     /// campeão fora.
     pub picks: Vec<VetoPickSlot>,
-    /// TDM: quem ainda falta na janela simultânea, e em quais partidas.
+    /// No pick por jogador: quem ainda falta, e em quais partidas.
     pub missing: Vec<VetoPlayer>,
     /// Os campeões ativos do torneio (com o draft no site), com os bans.
     pub champions: Vec<VetoChampion>,
@@ -274,7 +292,8 @@ pub struct VetoView {
     pub can_undo: bool,
     /// Os jogadores podem enviar a próxima partida (o veto dela acabou).
     pub reportable: bool,
-    /// Do mais antigo ao mais novo.
+    /// Do mais antigo ao mais novo. Às cegas, com a janela aberta, sem as
+    /// escolhas dos lados que não são o de quem vê.
     pub history: Vec<VetoEvent>,
 }
 
@@ -285,8 +304,8 @@ pub struct VetoChoice {
     pub map: Option<String>,
     #[serde(default)]
     pub champion: Option<String>,
-    /// TDM, na janela simultânea: a partida para a qual o campeão é
-    /// escolhido.
+    /// Na janela simultânea: a partida para a qual o campeão é escolhido. Nos
+    /// picks com vez, vale a que a vez diz, e outra é 409 `veto.step_changed`.
     #[serde(default)]
     pub game: Option<i16>,
     /// A vez que a tela mostrava (`VetoView::step`); sem ela, vale a de

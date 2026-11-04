@@ -109,7 +109,9 @@ async fn advanced_settings_are_kept() {
     assert_eq!(d["bans_per_series"], 2);
     assert_eq!(d["no_repeat"], "team");
     assert_eq!(d["veto"]["step_seconds"], 45);
-    assert_eq!(d["veto"]["team_pick_seconds"], 90);
+    // Sem janela, o tempo dela não aparece.
+    assert_eq!(d["veto"]["pick_order"], "alternating");
+    assert_eq!(d["veto"]["team_pick_seconds"], Value::Null);
     let pool: Vec<&str> = d["veto"]["pool"]
         .as_array()
         .unwrap()

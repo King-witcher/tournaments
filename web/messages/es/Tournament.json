@@ -136,7 +136,12 @@
       },
       "pick": {
         "duel": "Después, todavía antes de la partida 1, tú y tu rival eligen el campeón de cada partida, una por vez, alternando quién elige primero.",
-        "tdm": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea."
+        "tdm": "Después, todavía antes de la partida 1, cada jugador elige el campeón de cada partida, uno por vez, en A, B, B, A, alternando quién abre en cada partida. En el turno del equipo, elige quien todavía no eligió en ella.",
+        "open": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que falte al final se sortea.",
+        "blind": {
+          "duel": "Después, todavía antes de la partida 1, eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que elige cada uno solo aparece cuando los dos terminan. Lo que falte al final se sortea.",
+          "tdm": "Después, todavía antes de la partida 1, todos eligen al mismo tiempo el campeón de cada partida, en una ventana de {window}. Lo que elige un equipo solo aparece cuando todos terminan. Lo que falte al final se sortea."
+        }
       },
       "mirror": {
         "duel": {
@@ -258,7 +263,12 @@
     "slotsTeams": "{slots} ({teams, plural, one {# equipo} other {# equipos}} de {size})",
     "offSite": "campeones fuera del sitio",
     "noMirror": "sin campeón repetido entre rivales",
-    "sameTeam": "campeón repetido en el equipo permitido"
+    "sameTeam": "campeón repetido en el equipo permitido",
+    "pickOrder": {
+      "alternating": "elecciones alternadas",
+      "blind": "elecciones a ciegas",
+      "open": "ventana abierta"
+    }
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",

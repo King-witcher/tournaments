@@ -2662,6 +2662,8 @@ export interface components {
              */
             team_size: number;
             veto?: components["schemas"]["VetoInput"] | null;
+            /** @description Quem faz o primeiro passo da sala: sorteado (padrão) ou o lado A. */
+            who_starts?: components["schemas"]["VetoRoomStart"];
         };
         /** @description A próxima partida de quem vê num torneio em andamento. */
         NextMatch: {
@@ -2786,8 +2788,8 @@ export interface components {
             /** @enum {string} */
             code: "match.team_pick_open";
             /**
-             * @description TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
-             *     jogadores dos dois times).
+             * @description Os picks por jogador da partida `game` abriram (para os jogadores dos
+             *     dois times).
              */
             params: {
                 /** Format: int32 */
@@ -2951,6 +2953,11 @@ export interface components {
             /** @description Nome nas traduções que existem. */
             translations: components["schemas"]["NameTranslation"][];
         };
+        /**
+         * @description A ordem das escolhas de campeão, depois dos bans.
+         * @enum {string}
+         */
+        PickOrder: "alternating" | "blind" | "open";
         /** @description O logo ou a capa registrados. */
         PublicImage: {
             /** @description A imagem no CDN. */
@@ -3920,8 +3927,8 @@ export interface components {
             champion?: string | null;
             /**
              * Format: int32
-             * @description TDM, na janela simultânea: a partida para a qual o campeão é
-             *     escolhido.
+             * @description Na janela simultânea: a partida para a qual o campeão é escolhido. Nos
+             *     picks com vez, vale a que a vez diz, e outra é 409 `veto.step_changed`.
              */
             game?: number | null;
             map?: string | null;
@@ -3951,7 +3958,7 @@ export interface components {
              * @description Pick de campeão: a partida a que ele se destina.
              */
             pick_game?: number | null;
-            /** @description TDM: na janela simultânea, o apelido do jogador (também no sorteado). */
+            /** @description No pick por jogador, o apelido do jogador (também no sorteado). */
             player?: string | null;
             side?: components["schemas"]["Side"] | null;
             /** @description Escolha sorteada pelo fim do tempo. */
@@ -3963,6 +3970,11 @@ export interface components {
         VetoGame: {
             /** Format: int32 */
             game: number;
+            /**
+             * @description Às cegas, com a janela aberta: quem já escolheu, sem o campeão, dos lados
+             *     que não são o de quem vê.
+             */
+            hidden_picks: components["schemas"]["VetoHiddenPick"][];
             map?: components["schemas"]["MapRef"] | null;
             /** @description Votação: os mapas oferecidos e o voto de cada lado. */
             offered: components["schemas"]["MapRef"][];
@@ -3970,8 +3982,9 @@ export interface components {
             pick_b?: components["schemas"]["ChampionRef"] | null;
             picked_by?: components["schemas"]["Side"] | null;
             /**
-             * @description TDM: o campeão de cada jogador, na ordem em que escolheram (só o que
-             *     conta: numa partida enviada, de quem a jogou).
+             * @description No pick por jogador: o campeão de cada um, na ordem em que escolheram (só
+             *     o que conta: numa partida enviada, de quem a jogou). Às cegas, com a
+             *     janela aberta, só os do lado de quem vê.
              */
             team_picks: components["schemas"]["VetoTeamPick"][];
             vote_a?: string | null;
@@ -3983,6 +3996,16 @@ export interface components {
          * @enum {string}
          */
         VetoGaveWay: "rule" | "game";
+        /**
+         * @description Às cegas: um jogador de outro lado já escolheu para a partida, sem dizer o
+         *     quê, até a janela fechar.
+         */
+        VetoHiddenPick: {
+            nickname: string;
+            side: components["schemas"]["Side"];
+            /** Format: int64 */
+            user_id: number;
+        };
         /**
          * @description A configuração do veto que chega: o que vier no lugar do atual (na
          *     criação, do padrão).
@@ -4001,6 +4024,7 @@ export interface components {
              */
             map_pool?: string[] | null;
             order?: components["schemas"]["VetoOrder"] | null;
+            pick_order?: components["schemas"]["PickOrder"] | null;
             /**
              * Format: int32
              * @description Segundos de cada passo, de 10 a 300 (padrão 30); no fim, a escolha é
@@ -4009,9 +4033,9 @@ export interface components {
             step_seconds?: number | null;
             /**
              * Format: int32
-             * @description TDM: segundos da janela simultânea de campeões (cada jogador escolhe
-             *     um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no
-             *     fim, o que faltou é sorteado.
+             * @description Segundos da janela simultânea de campeões (`blind`: cada jogador escolhe
+             *     um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no fim,
+             *     o que faltou é sorteado.
              */
             team_pick_seconds?: number | null;
         };
@@ -4027,8 +4051,8 @@ export interface components {
          */
         VetoOrder: "bans_first" | "alternating";
         /**
-         * @description Um pick que quem vê pode fazer agora: no duelo, o da vez dele; no TDM,
-         *     cada partida em que ele falta na janela simultânea.
+         * @description Um pick que quem vê pode fazer agora: no duelo alternado, o da vez dele; no
+         *     pick por jogador, cada partida em que ele falta e pode escolher agora.
          */
         VetoPickSlot: {
             /** Format: int32 */
@@ -4042,7 +4066,7 @@ export interface components {
              */
             unavailable: components["schemas"]["VetoUnavailable"][];
         };
-        /** @description TDM: um jogador que falta na janela simultânea. */
+        /** @description Um jogador que ainda falta escolher, no pick por jogador. */
         VetoPlayer: {
             /** @description As partidas para as quais ele ainda não escolheu. */
             games: number[];
@@ -4142,6 +4166,11 @@ export interface components {
             token: string;
         };
         /**
+         * @description Quem faz o primeiro passo da sala. Os lados continuam fixos.
+         * @enum {string}
+         */
+        VetoRoomStart: "draw" | "a";
+        /**
          * @description A vez que a tela de quem age mostrava (`VetoView::step`), no desfazer e
          *     no pedido de desfazer. O corpo é opcional; sem ele, vale a de agora.
          */
@@ -4157,11 +4186,12 @@ export interface components {
             map_pool: string[];
             /** @description Só vale no modo `veto`. */
             order: components["schemas"]["VetoOrder"];
+            pick_order: components["schemas"]["PickOrder"];
             /** Format: int32 */
             step_seconds: number;
             /**
              * Format: int32
-             * @description TDM: segundos da escolha simultânea de campeões.
+             * @description Segundos da escolha simultânea de campeões.
              */
             team_pick_seconds: number;
         };
@@ -4172,12 +4202,12 @@ export interface components {
         VetoStatus: "waiting_ready" | "in_progress" | "done";
         /** @enum {string} */
         VetoTarget: "map" | "champion";
-        /** @description TDM: o campeão de um jogador numa partida. */
+        /** @description O campeão de um jogador numa partida, no pick por jogador. */
         VetoTeamPick: {
             champion: components["schemas"]["ChampionRef"];
             nickname: string;
             side: components["schemas"]["Side"];
-            /** @description Sorteado pelo fim da janela. */
+            /** @description Sorteado pelo fim do tempo. */
             timeout: boolean;
             /** Format: int64 */
             user_id: number;
@@ -4187,7 +4217,7 @@ export interface components {
             action: components["schemas"]["VetoAction"];
             /**
              * Format: int32
-             * @description Pick de campeão do duelo: a partida a que ele se destina.
+             * @description Pick de campeão com vez: a partida a que ele se destina.
              */
             pick_for?: number | null;
             /**
@@ -4234,20 +4264,24 @@ export interface components {
              *     todas aparecem antes da partida 1).
              */
             games: components["schemas"]["VetoGame"][];
-            /** @description Do mais antigo ao mais novo. */
+            /**
+             * @description Do mais antigo ao mais novo. Às cegas, com a janela aberta, sem as
+             *     escolhas dos lados que não são o de quem vê.
+             */
             history: components["schemas"]["VetoEvent"][];
             map_mode: components["schemas"]["MapMode"];
             /** @description Modo veto: os passos do veto de mapas, na ordem. */
             map_steps: components["schemas"]["VetoMapStep"][];
-            /** @description TDM: quem ainda falta na janela simultânea, e em quais partidas. */
+            /** @description No pick por jogador: quem ainda falta, e em quais partidas. */
             missing: components["schemas"]["VetoPlayer"][];
             /**
              * @description O que quem vê pode escolher no passo do lado dele agora (slugs de
-             *     mapas ou de campeões: veto de mapas, voto, ban, pick do duelo); vazio
-             *     se não é a vez do lado dele e na janela simultânea, que é por partida
-             *     (`picks`).
+             *     mapas ou de campeões: veto de mapas, voto, ban, pick do duelo alternado);
+             *     vazio se não é a vez do lado dele e no pick por jogador (`picks`).
              */
             options: string[];
+            /** @description A ordem das escolhas de campeão. */
+            pick_order: components["schemas"]["PickOrder"];
             /**
              * @description Os picks de campeão que quem vê pode fazer agora, com o motivo de cada
              *     campeão fora.
@@ -4280,9 +4314,14 @@ export interface components {
             step_seconds: number;
             /**
              * Format: int32
-             * @description TDM: segundos da janela simultânea de campeões; `null` no duelo.
+             * @description Segundos da janela simultânea de campeões; `null` sem janela.
              */
             team_pick_seconds?: number | null;
+            /**
+             * Format: int32
+             * @description Jogadores por lado.
+             */
+            team_size: number;
             turn?: components["schemas"]["VetoTurn"] | null;
             undo_request?: components["schemas"]["Side"] | null;
         };
@@ -7907,7 +7946,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -9609,7 +9648,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. Na janela simultânea do TDM (`team_pick`), cada jogador escolhe o próprio campeão de cada partida (`game`), uma vez por partida. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada */
+            /** @description O passo do lado da vez: ban, pick ou voto de mapa, ou ban ou pick de campeão (o tipo é o da vez; o pick do duelo é para a partida que a vez diz). Qualquer jogador do time faz o passo do lado. No pick por jogador (`team_pick`), cada um escolhe o próprio campeão, uma vez por partida: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a série mostra. Quando o veto da partida acaba, ela pode ser enviada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9645,7 +9684,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; na janela simultânea, quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time) */
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off, veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished (o veto da partida já acabou, ou a partida pedida já foi enviada), veto.not_your_turn (não é a vez do lado; no pick por jogador, também quem saiu da comunidade), veto.already_picked (já escolheu para esta partida), veto.champion_taken (outro escolheu o mesmo campeão para a partida antes: sem espelho, ou sem repetir no time) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -9685,7 +9724,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz */
+            /** @description O organizador desfaz o último passo da partida em andamento (inclusive o sorteado pelo fim do tempo): a vez volta para quem o fez, com o tempo inteiro. Partida enviada não se desfaz, nem o pick às cegas (`veto.nothing_to_undo`) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10279,7 +10318,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data do rascunho ficou para trás) */
+            /** @description champions.pool_exhausted {required, available} (o pool mudou desde a criação), tournament.blind_needs_mirror, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data do rascunho ficou para trás) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -11518,7 +11557,7 @@ export interface operations {
                     "application/json": components["schemas"]["VetoRoomCreated"];
                 };
             };
-            /** @description tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -11645,7 +11684,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é sorteado, e a sala passa a valer 24 h. Repetir não muda nada */
+            /** @description O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Repetir não muda nada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -11699,7 +11738,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. Na janela simultânea dos times (`team_pick`), cada lugar escolhe o próprio campeão de cada partida (`game`). Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão */
+            /** @description O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. No pick por jogador (`team_pick`), cada lugar escolhe o próprio campeão: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão */
             200: {
                 headers: {
                     [name: string]: unknown;

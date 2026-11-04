@@ -124,7 +124,7 @@ async fn an_empty_seat_is_covered_by_the_draw_at_the_end_of_the_window() {
         json!({
             "team_size": 2,
             "best_of": 1,
-            "veto": { "map_mode": "off" },
+            "veto": { "map_mode": "off", "pick_order": "blind" },
             "champion_rules": { "bans_per_series": 0 }
         }),
     )

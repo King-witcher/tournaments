@@ -17,8 +17,14 @@ pub async fn set_status(
     id: TournamentId,
     status: TournamentStatus,
 ) -> Result<(), sqlx::Error> {
+    // Desfeito o início, não há mais série a refazer: a janela aberta, que só
+    // existe para isso, passa ao padrão (o formulário não a oferece).
     sqlx::query!(
-        "update tournaments set status = $2, updated_at = now() where id = $1",
+        "update tournaments
+         set status = $2, updated_at = now(),
+             pick_order = case when pick_order = 'open' and $2 not in ('in_progress', 'finished')
+                               then 'alternating' else pick_order end
+         where id = $1",
         id.get(),
         status.as_str()
     )

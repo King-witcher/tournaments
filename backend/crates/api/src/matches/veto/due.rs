@@ -4,10 +4,12 @@
 //! sorteia a escolha de quem deixou o tempo acabar (`random_choice`, pela
 //! seed da série), gravada como `timeout` e com a hora em que o sorteio
 //! valeu (prazo + `GRACE`): o passo seguinte conta dali, com o tempo inteiro,
-//! como se alguém tivesse esperado. Na janela simultânea dos
-//! times, o prazo é um só (`team_pick_seconds`) e, no fim, cada partida de
-//! cada um que não escolheu recebe um campeão sorteado (`random_team_choice`),
-//! um de cada vez, na ordem do elenco. A API aplica ao ler a série ou a chave
+//! como se alguém tivesse esperado. Na janela simultânea, o prazo é um só
+//! (`team_pick_seconds`) e, no fim, cada partida de cada um que não escolheu
+//! recebe um campeão sorteado (`random_team_choice`), um de cada vez, na ordem
+//! do elenco; nos picks alternados por jogador, cada pick é um passo, e o
+//! sorteio é do primeiro do lado da vez sem escolha. A API aplica ao ler a série
+//! ou a chave
 //! e antes de cada ação (`any_due`, `apply_due`), e o relógio do `realtime`
 //! aplica nos torneios que ninguém leu (`clock`), dormindo até o próximo
 //! prazo. O mesmo sorteio completa o draft quando o organizador lança a
@@ -61,12 +63,10 @@ fn waiting<'a>(
 
 /// Quanto dura a vez de `state`: a janela da escolha simultânea ou um passo.
 fn seconds_of(state: &Veto, step_seconds: i32, team_pick_seconds: i32) -> chrono::Duration {
-    let seconds = match state.turn() {
-        Turn::Act {
-            action: Action::TeamPick,
-            ..
-        } => team_pick_seconds,
-        _ => step_seconds,
+    let seconds = if state.turn().is_window() {
+        team_pick_seconds
+    } else {
+        step_seconds
     };
     chrono::Duration::seconds(i64::from(seconds))
 }
@@ -147,10 +147,9 @@ pub fn due_draws(
 }
 
 /// Sorteia, como no fim do tempo, o que a vez de `state` espera agora (o
-/// passo de cada lado da vez; na janela simultânea, cada partida de cada um
-/// que falta, um de cada vez, na ordem de `missing`), aplica em `state` e
-/// devolve o que gravar como `timeout`, com a hora `when` (`None`: agora).
-/// Vazio sem vez ou sem opção.
+/// passo de cada lado da vez; no pick por jogador, o que `due_picks` diz, um de
+/// cada vez), aplica em `state` e devolve o que gravar como `timeout`, com a
+/// hora `when` (`None`: agora). Vazio sem vez ou sem opção.
 pub(super) fn draw_turn(
     state: &mut Veto,
     ctx: &Ctx,
@@ -172,7 +171,7 @@ pub(super) fn draw_turn(
     };
     let mut rows = Vec::new();
     if action == Action::TeamPick {
-        for m in state.missing() {
+        for m in state.due_picks() {
             let options = state.team_options(m.side, m.player, m.game, &ctx.engine());
             let Some(champion) = state.random_team_choice(m.side, m.player, m.game, &ctx.engine())
             else {

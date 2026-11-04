@@ -1,7 +1,8 @@
 //! A série no TDM: qualquer jogador do time age pelo lado, a janela
-//! simultânea de campeões (cada um escolhe o de cada partida, ao vivo, com o
-//! sorteio no fim e sem repetir no time) e o rating de uma partida pela
-//! escalação.
+//! simultânea aberta de campeões (cada um escolhe o de cada partida, ao vivo,
+//! com o sorteio no fim e sem repetir no time) e o rating de uma partida pela
+//! escalação. A janela aberta não se escolhe mais: fica o torneio que já tinha
+//! começado nela (`open_window`). As ordens de hoje estão em `pick_order`.
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
@@ -69,7 +70,21 @@ async fn final_2v2(db: &PgPool, bans: u8, extra: Value) -> (Router, User, Vec<Us
         ),
     );
     started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    open_window(db).await;
     (app, ana, p)
+}
+
+/// Põe o torneio iniciado na janela aberta, como o que começou antes de a ordem
+/// das escolhas existir (a regra do banco congela a configuração depois do
+/// início, e a API não a oferece).
+pub async fn open_window(db: &PgPool) {
+    for sql in [
+        "alter table tournaments disable trigger tournaments_veto_frozen",
+        "update tournaments set pick_order = 'open'",
+        "alter table tournaments enable trigger tournaments_veto_frozen",
+    ] {
+        sqlx::query(sql).execute(db).await.unwrap();
+    }
 }
 
 /// Volta `seconds` segundos no relógio de todos os eventos de veto.
@@ -398,6 +413,7 @@ async fn a_sent_game_does_not_reopen_the_picks_for_a_substitute() {
         }),
     );
     let teams = started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    open_window(&db).await;
     let substitution = format!("{COPA}/teams/{}/substitution", teams[0]);
     let sub = |out: &User, sub: &User| json!({ "out": out.id, "in": sub.id });
     ready(&app, &p[0]).await;
@@ -465,6 +481,7 @@ async fn the_screen_says_when_the_rule_gave_way() {
         ),
     );
     started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    open_window(&db).await;
     // Depois de iniciar (a criação e o início conferem o pool).
     sqlx::query("update champions set active = slug in ('anarki', 'athena', 'clutch')")
         .execute(&db)

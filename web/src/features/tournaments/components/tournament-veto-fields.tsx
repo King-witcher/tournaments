@@ -6,6 +6,7 @@ import type { components } from "@/shared/api/schema";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import {
+  draftHasSteps,
   isTdm,
   STEP_SECONDS,
   stepSecondsGroup,
@@ -27,6 +28,8 @@ const KEYS = [
   "mode",
   "mapPool",
   "championPhase",
+  "pickOrder",
+  "bansPerSeries",
   "vetoSeconds",
   "stageFormat",
   "bestOf",
@@ -101,7 +104,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
         <SecondsSelect
           labelText={t("seconds")}
           helperText={t(
-            values.championPhase ? "secondsHintDraft" : "secondsHint",
+            draftHasSteps(values) ? "secondsHintDraft" : "secondsHint",
           )}
           name="vetoSeconds"
           options={STEP_SECONDS}

@@ -164,8 +164,8 @@
     "seconds": "Tempo de cada passo",
     "secondsHint": "Se o tempo acabar, a escolha é sorteada.",
     "secondsHintDraft": "Vale também para os campeões. Se o tempo acabar, a escolha é sorteada.",
-    "teamPickSeconds": "Tempo da escolha de campeões",
-    "teamPickSecondsHint": "Todos escolhem ao mesmo tempo, um campeão por partida. O que faltar no fim é sorteado."
+    "teamPickSeconds": "Tempo da escolha às cegas",
+    "teamPickSecondsHint": "Vale para a janela inteira, um campeão por partida. O que faltar no fim é sorteado."
   },
   "stageFormat": "Chaveamento",
   "stageFormats": {
@@ -195,6 +195,18 @@
     "bans": "Bans por série",
     "bansHint": "O campeão banido fica fora para os dois lados.",
     "bansOption": "{count, plural, =0 {Sem bans} one {# de cada lado} other {# de cada lado}}",
+    "pickOrder": "Ordem das escolhas",
+    "pickOrderOptions": {
+      "alternating": "Alternado",
+      "blind": "Às cegas",
+      "open": "Janela aberta"
+    },
+    "pickOrderHints": {
+      "alternating": "Um por vez, alternando os lados. Quem abre troca a cada partida.",
+      "blind": "Todos ao mesmo tempo. O que um lado escolhe só aparece quando todos terminarem.",
+      "open": "Todos ao mesmo tempo, vendo as escolhas dos outros."
+    },
+    "pickOrderBlindNeedsMirror": "Às cegas exige que adversários possam usar o mesmo campeão.",
     "repeat": "Repetir campeão",
     "mirror": "Adversários podem usar o mesmo campeão na partida",
     "mirrorOff": "Fica com o campeão quem escolher primeiro.",

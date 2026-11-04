@@ -31,6 +31,7 @@ impl From<StoredTournament> for Tournament {
                 order: t.setup.veto.order,
                 map_pool: t.map_pool.into_iter().map(|m| m.slug).collect(),
                 champion_phase: t.setup.veto.champion_phase,
+                pick_order: t.setup.veto.pick_order,
                 step_seconds: t.setup.veto.step_seconds,
                 team_pick_seconds: t.setup.veto.team_pick_seconds,
             },

@@ -21,6 +21,8 @@ pub(super) struct RoomRow {
     pub best_of: i16,
     pub map_mode: String,
     pub veto_order: String,
+    pub pick_order: String,
+    pub who_starts: String,
     pub champion_phase: bool,
     pub bans_per_series: i16,
     pub mirror: bool,
@@ -76,7 +78,8 @@ macro_rules! room_by_token {
                    select id, 'spectator', null::bigint from veto_rooms where spectator_token = $1
                )
                select r.id, r.manage_token, r.spectator_token, r.team_size, r.best_of, r.map_mode,
-                      r.veto_order, r.champion_phase, r.bans_per_series, r.mirror, r.same_team,
+                      r.veto_order, r.pick_order, r.who_starts, r.champion_phase,
+                      r.bans_per_series, r.mirror, r.same_team,
                       r.no_repeat, r.step_seconds, r.team_pick_seconds, r.expires_at, r.due_at,
                       link.kind as "kind!", link.seat_id as "seat_id?",
                       (select coalesce(jsonb_agg(jsonb_build_object(
@@ -254,6 +257,8 @@ pub(super) struct NewRoom<'a> {
     pub best_of: i16,
     pub map_mode: &'a str,
     pub veto_order: &'a str,
+    pub pick_order: &'a str,
+    pub who_starts: &'a str,
     pub champion_phase: bool,
     pub bans_per_series: i16,
     pub mirror: bool,
@@ -275,9 +280,9 @@ pub(super) async fn create(conn: &mut PgConnection, new: &NewRoom<'_>) -> Result
         "insert into veto_rooms
              (created_by, manage_token, spectator_token, team_size, best_of, map_mode, veto_order,
               champion_phase, bans_per_series, mirror, same_team, no_repeat, step_seconds,
-              team_pick_seconds, expires_at)
+              team_pick_seconds, expires_at, pick_order, who_starts)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                 now() + make_interval(hours => $15))
+                 now() + make_interval(hours => $15), $16, $17)
          returning id",
         new.created_by,
         new.manage_token,
@@ -293,7 +298,9 @@ pub(super) async fn create(conn: &mut PgConnection, new: &NewRoom<'_>) -> Result
         new.no_repeat,
         new.step_seconds,
         new.team_pick_seconds,
-        new.valid_hours
+        new.valid_hours,
+        new.pick_order,
+        new.who_starts
     )
     .fetch_one(&mut *conn)
     .await?;

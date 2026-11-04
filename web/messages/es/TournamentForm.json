@@ -164,8 +164,8 @@
     "seconds": "Tiempo de cada paso",
     "secondsHint": "Si se acaba el tiempo, la elección se sortea.",
     "secondsHintDraft": "También vale para los campeones. Si se acaba el tiempo, la elección se sortea.",
-    "teamPickSeconds": "Tiempo de la elección de campeones",
-    "teamPickSecondsHint": "Todos eligen al mismo tiempo, un campeón por partida. Lo que falte al final se sortea."
+    "teamPickSeconds": "Tiempo de la elección a ciegas",
+    "teamPickSecondsHint": "Vale para toda la ventana, un campeón por partida. Lo que falte al final se sortea."
   },
   "stageFormat": "Sistema",
   "stageFormats": {
@@ -195,6 +195,18 @@
     "bans": "Bans por serie",
     "bansHint": "El campeón baneado queda fuera para los dos lados.",
     "bansOption": "{count, plural, =0 {Sin bans} one {# por lado} other {# por lado}}",
+    "pickOrder": "Orden de las elecciones",
+    "pickOrderOptions": {
+      "alternating": "Alternado",
+      "blind": "A ciegas",
+      "open": "Ventana abierta"
+    },
+    "pickOrderHints": {
+      "alternating": "Uno por vez, alternando los lados. Quien abre cambia en cada partida.",
+      "blind": "Todos al mismo tiempo. Lo que elige un lado solo aparece cuando todos terminan.",
+      "open": "Todos al mismo tiempo, viendo las elecciones de los demás."
+    },
+    "pickOrderBlindNeedsMirror": "A ciegas exige que los adversarios puedan usar el mismo campeón.",
     "repeat": "Repetir campeón",
     "mirror": "Los rivales pueden usar el mismo campeón en la partida",
     "mirrorOff": "Se queda con el campeón quien elija primero.",

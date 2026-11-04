@@ -12,6 +12,7 @@ export type TournamentField = keyof Pick<
   | "bestOf"
   | "swissRounds"
   | "bansPerSeries"
+  | "pickOrder"
   | "noRepeat"
   | "startsAt"
   | "checkInMinutes"
@@ -61,6 +62,8 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.map_pool_too_large": "mapPool",
   "tournament.veto_seconds_invalid": "vetoSeconds",
   "tournament.team_pick_seconds_invalid": "teamPickSeconds",
+  "tournament.blind_needs_mirror": "pickOrder",
+  "tournament.pick_order_invalid": "pickOrder",
 };
 
 /** O campo do torneio que o erro aponta, ou `undefined` se é do formulário. */

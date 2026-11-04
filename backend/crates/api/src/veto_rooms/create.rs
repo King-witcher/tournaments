@@ -11,7 +11,7 @@ use sqlx::PgConnection;
 
 use super::{
     db::{self, NewRoom},
-    types::{NewVetoRoom, VetoRoomCreated},
+    types::{NewVetoRoom, VetoRoomCreated, VetoRoomStart},
 };
 use crate::{
     AppState,
@@ -81,7 +81,7 @@ async fn check_anonymous_ceiling(conn: &mut PgConnection) -> Result<(), ApiError
     request_body = NewVetoRoom,
     responses(
         (status = CREATED, body = VetoRoomCreated, description = "A sala, com um link por jogador, um de espectador e um de gestão (`token`, que mostra todos). Qualquer um cria, sem login. Vale 2 h se ninguém começar e 24 h a partir do início"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.team_size_invalid {min, max}, format.invalid_best_of {best_of}, veto_room.map_mode_invalid (votação e sorteio ficam de fora), veto_room.no_phases (sem veto de mapas nem draft), tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.bans_invalid {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), champions.pool_exhausted {required, available}, request.invalid_body"),
         (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "veto_room.rate_limited {minutes} (salas demais nesta hora, deste IP ou desta conta)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "veto_room.anonymous_full (teto de salas sem login: com a conta, cria)"),
     )
@@ -115,6 +115,8 @@ pub async fn create_veto_room(
             best_of: settings.best_of,
             map_mode: settings.veto.map_mode.as_str(),
             veto_order: settings.veto.order.as_str(),
+            pick_order: settings.veto.pick_order.as_str(),
+            who_starts: settings.who_starts.as_str(),
             champion_phase: settings.veto.champion_phase,
             bans_per_series: i16::from(settings.bans_per_series),
             mirror: settings.mirror,
@@ -149,6 +151,7 @@ struct Settings {
     mirror: bool,
     same_team: bool,
     no_repeat: Option<NoRepeatWho>,
+    who_starts: VetoRoomStart,
 }
 
 async fn settings(conn: &mut PgConnection, body: NewVetoRoom) -> Result<Settings, ApiError> {
@@ -178,6 +181,7 @@ async fn settings(conn: &mut PgConnection, body: NewVetoRoom) -> Result<Settings
             .with_params([("max", i64::from(max_bans))]));
     }
     let same_team = rules.same_team && body.team_size > 1;
+    engine::veto::PickOrder::from(veto.pick_order).check(rules.mirror)?;
     if veto.champion_phase {
         let rule = rules.no_repeat.map(|who| NoRepeatRule {
             who: match who {
@@ -204,5 +208,6 @@ async fn settings(conn: &mut PgConnection, body: NewVetoRoom) -> Result<Settings
         mirror: rules.mirror,
         same_team,
         no_repeat: rules.no_repeat,
+        who_starts: body.who_starts,
     })
 }

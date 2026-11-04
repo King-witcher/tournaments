@@ -1,6 +1,6 @@
 //! O veto até o fim: "Pronto", o duelo md3 com draft, o 2v2 com a janela de
-//! campeões e as escolhas recusadas. O `engine` já cobre as regras; aqui é o
-//! caminho pela sala.
+//! campeões (às cegas, a que se escolhe hoje) e as escolhas recusadas. O
+//! `engine` já cobre as regras; aqui é o caminho pela sala.
 
 use axum::http::StatusCode;
 use chrono::{DateTime, Duration, Utc};
@@ -152,7 +152,11 @@ async fn maps_only_ends_after_the_decider() {
 async fn a_two_on_two_with_the_champion_window() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
-    let links = links_of(&app, room(2, 3)).await;
+    let links = links_of(
+        &app,
+        with(room(2, 3), json!({ "veto": { "pick_order": "blind" } })),
+    )
+    .await;
     started(&app, &links).await;
     let (at_window, steps) = run_steps(&app, &links, Some("team_pick")).await;
     // 6 de mapa e 2 bans de campeão.

@@ -57,9 +57,9 @@ pub fn game_task(
 
 /// O que o veto da próxima partida espera de quem joga (do lado `mine`):
 /// "Pronto" antes de começar, o passo da vez do lado dele (qualquer jogador
-/// do time age pelo time) ou esperar o adversário; na janela simultânea do
-/// TDM, cada um escolhe os seus. `None` sem veto no torneio, ou com o veto
-/// da próxima partida concluído.
+/// do time age pelo time) ou esperar o adversário; no pick por jogador, cada um
+/// escolhe os seus, quando pode. `None` sem veto no torneio, ou com o veto da
+/// próxima partida concluído.
 fn veto_task(
     status: TournamentStatus,
     stage: &Stage,
@@ -88,8 +88,8 @@ fn veto_task(
             ..
         } if i16::from(game) == next => {
             let me = PlayerId(viewer.user_id);
-            let missing = mv.state.missing();
-            Some(if missing.iter().any(|m| m.player == me) {
+            let pickable = mv.state.pickable();
+            Some(if pickable.iter().any(|m| m.player == me) {
                 ViewerTask::Veto
             } else {
                 ViewerTask::AwaitOpponent

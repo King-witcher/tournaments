@@ -24,14 +24,14 @@ export function VetoHistory({ veto, names }: Props) {
   const tGame = useTranslations("Match.games");
   const tMember = useTranslations("Member");
   if (veto.history.length === 0) return null;
-  const teams = veto.team_pick_seconds != null;
+  const teams = veto.team_size > 1;
 
   return (
     <AccordionItem title={t("title")}>
       <ol className={styles.events}>
         {veto.history.map((e, i) => {
-          // TDM: na janela simultânea, o jogador (também no sorteado); no passo
-          // do lado, o time e quem agiu por ele.
+          // No pick por jogador, o jogador (também no sorteado); no passo do
+          // lado, nos times, o time e quem agiu por ele.
           const actor =
             e.actor != null
               ? shownNickname(e.actor, tMember("deletedAccount"))

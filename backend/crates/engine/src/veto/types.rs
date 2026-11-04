@@ -34,6 +34,40 @@ pub enum VetoOrder {
     Alternating,
 }
 
+/// A ordem das escolhas de campeão, depois dos bans (ver `team.rs`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PickOrder {
+    /// Um por vez, partida a partida, alternando os lados: O, X, X, O, O, X,
+    /// X, O..., com quem abre (O) trocando a cada partida. No duelo, um passo
+    /// por lado (`Event::Step`); nos times, um por jogador (`Event::TeamPick`).
+    Alternating,
+    /// A janela simultânea em qualquer tamanho, inclusive no duelo, com as
+    /// escolhas de um lado escondidas dos outros até ela fechar. Só com
+    /// espelho (`check`).
+    Blind,
+    /// A janela simultânea aberta, nos times: fica só para refazer as séries
+    /// que começaram antes de a ordem existir.
+    Open,
+}
+
+impl PickOrder {
+    /// As escolhas são uma janela simultânea, sem vez.
+    pub const fn window(self) -> bool {
+        !matches!(self, Self::Alternating)
+    }
+
+    /// Às cegas exige espelho: sem ele, os dois lados poderiam pegar o mesmo
+    /// campeão, e não há regra para isso. Erro: `BlindNeedsMirror`.
+    pub const fn check(self, mirror: bool) -> Result<(), VetoError> {
+        if matches!(self, Self::Blind) && !mirror {
+            Err(VetoError::BlindNeedsMirror)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 /// O que o torneio define para o veto das séries.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VetoRules {
@@ -44,8 +78,10 @@ pub struct VetoRules {
     pub pool: Vec<MapId>,
     /// Draft de campeões no site, antes da partida 1.
     pub champion_phase: bool,
-    /// Jogadores por lado: 1 no duelo; nos times, a escolha de campeões é a
-    /// janela simultânea, um por jogador por partida.
+    /// A ordem das escolhas de campeão.
+    pub pick_order: PickOrder,
+    /// Jogadores por lado: 1 no duelo; nos times, a escolha é por jogador, um
+    /// campeão por partida.
     pub team_size: u8,
     /// As regras de campeões do torneio: bans da série, espelho, repetir no
     /// time e não repetição (o escopo dela fica com a API, que monta
@@ -59,9 +95,15 @@ impl VetoRules {
         self.map_mode != MapMode::Off || self.champion_phase
     }
 
-    /// Nos times, a escolha de campeões é simultânea.
+    /// São times (mais de um jogador por lado).
     pub const fn teams(&self) -> bool {
         self.team_size > 1
+    }
+
+    /// Cada jogador escolhe o próprio campeão (`Event::TeamPick`): nos times
+    /// e em toda janela. Só o duelo alternado escolhe por lado (`Event::Step`).
+    pub const fn per_player(&self) -> bool {
+        self.teams() || self.pick_order.window()
     }
 
     /// Bans de campeão de cada lado na série.
@@ -121,9 +163,11 @@ pub enum Event {
         action: Action,
         choice: Choice,
     },
-    /// Nos times: `player`, do lado `side`, escolhe o próprio campeão da
-    /// partida `game` na janela simultânea. `gave_way`: as opções vieram com
-    /// algo cedido (ao vivo, o engine calcula; no `replay`, vale o gravado).
+    /// O pick por jogador (`VetoRules::per_player`): `player`, do lado `side`,
+    /// fica com `champion` na partida `game`. `player` é o jogador-alvo, de
+    /// quem é o campeão, que quem grava guarda à parte de quem agiu (`actor`).
+    /// `gave_way`: as opções vieram com algo cedido (ao vivo, o engine calcula;
+    /// no `replay`, vale o gravado).
     TeamPick {
         side: Side,
         player: PlayerId,
@@ -141,12 +185,12 @@ pub struct Applied {
     pub side: Side,
     pub action: Action,
     pub choice: Choice,
-    /// Na janela simultânea dos times, o jogador.
+    /// No pick por jogador, o jogador.
     pub player: Option<PlayerId>,
     /// No pick de campeão, a partida a que ele se destina.
     pub game: Option<u8>,
-    /// Na janela simultânea: as opções vieram com algo cedido (a escolha
-    /// pode repetir a de outro sem que uma das duas esteja errada).
+    /// No pick por jogador: as opções vieram com algo cedido (a escolha pode
+    /// repetir a de outro sem que uma das duas esteja errada).
     pub gave_way: bool,
 }
 
@@ -174,9 +218,10 @@ pub enum Turn {
     /// Ainda não começou.
     NotBegun,
     /// A partida `game` espera `action` sobre `target` de `sides` (os dois
-    /// na votação, enquanto nenhum votou; na janela simultânea dos times, os
-    /// lados em que falta alguém: `Veto::missing`). `pick_for`: no pick do
-    /// duelo, a partida a que ele se destina.
+    /// na votação, enquanto nenhum votou; na janela simultânea, os lados em
+    /// que falta alguém: `Veto::missing`). `pick_for`: no pick com vez, a
+    /// partida a que ele se destina; `None` na janela, em que cada um escolhe
+    /// a partida (`is_window`).
     Act {
         game: u8,
         action: Action,
@@ -186,11 +231,26 @@ pub enum Turn {
     },
     /// O veto da partida `game` acabou: espera o envio dela.
     Done { game: u8 },
-    /// Nos times, a partida `game` chegou à janela simultânea, mas o elenco
-    /// de agora não foi informado (`Veto::set_rosters`): sem ele, não se sabe
-    /// quem falta nem o que já foi enviado. O `replay` sozinho para aqui; a
-    /// API sempre informa.
+    /// A partida `game` chegou aos picks por jogador, mas o elenco de agora
+    /// não foi informado (`Veto::set_rosters`): sem ele, não se sabe quem
+    /// falta nem o que já foi enviado. O `replay` sozinho para aqui; a API
+    /// sempre informa.
     RostersUnknown { game: u8 },
+}
+
+impl Turn {
+    /// É a janela simultânea: sem vez, com o prazo único dela. O pick
+    /// alternado por jogador é `TeamPick` com `pick_for`, e cada um é um passo.
+    pub const fn is_window(&self) -> bool {
+        matches!(
+            self,
+            Self::Act {
+                action: Action::TeamPick,
+                pick_for: None,
+                ..
+            }
+        )
+    }
 }
 
 /// O que as opções de campeão precisam saber de fora da série.
@@ -215,6 +275,8 @@ pub enum VetoError {
     PoolRepeated(MapId),
     #[error("o draft precisa de {required} campeões; o pool tem {available}")]
     ChampionPoolExhausted { required: usize, available: usize },
+    #[error("escolha às cegas sem espelho")]
+    BlindNeedsMirror,
     #[error("o veto já começou")]
     AlreadyBegun,
     #[error("o veto ainda não começou")]

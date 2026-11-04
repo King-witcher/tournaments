@@ -7,7 +7,7 @@ type Veto = Schemas["VetoView"];
 type Turn = Schemas["VetoTurn"];
 type Champion = Schemas["ChampionRef"];
 
-/** O passo que quem vê manda: um mapa, ou um campeão (na janela do TDM, com a partida). */
+/** O passo que quem vê manda: um mapa, ou um campeão (no pick por jogador, com a partida). */
 export type VetoChoice = { map: string } | { champion: string; game?: number };
 
 /** O que o passo otimista precisa saber além do veto. */
@@ -18,7 +18,7 @@ export type StepContext = {
   bansPerSeries: number;
   /** A ordem do veto de mapas (do torneio). */
   order: Schemas["VetoOrder"];
-  /** Quem vê, para o pick da janela do TDM. */
+  /** Quem vê, para o pick por jogador. */
   viewer: { id: number; nickname: string } | null;
   now: number;
 };
@@ -54,7 +54,9 @@ export function afterStep(
   const champion = { slug: found.slug, name: found.name };
   if (turn.action === "ban") return afterBan(base, turn, champion, ctx);
   if (turn.action === "pick") return afterPick(base, turn, champion, ctx);
-  return afterTeamPick(base, champion, choice.game, ctx);
+  const picked = afterTeamPick(base, champion, choice.game, ctx);
+  // Nos picks alternados, a vez seguinte depende de quem falta: vem na resposta.
+  return turn.pick_for == null ? picked : pass(picked, turn, null, ctx);
 }
 
 /** A vez seguinte, com um tempo inteiro a partir de agora; sem ela, a troca de fase. */
@@ -141,7 +143,7 @@ function afterPick(
   };
 }
 
-/** Janela simultânea do TDM: a partida escolhida sai do que falta; a vez fica. */
+/** O pick por jogador: a partida escolhida sai do que falta; na janela, a vez fica. */
 function afterTeamPick(
   veto: Veto,
   champion: Champion,

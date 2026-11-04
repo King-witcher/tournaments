@@ -53,6 +53,7 @@ export function withSeatNames(
     games: veto.games.map((g) => ({
       ...g,
       team_picks: g.team_picks.map(named),
+      hidden_picks: g.hidden_picks.map(named),
     })),
     history: veto.history.map((e) =>
       e.player === "" ? { ...e, player: labels.empty } : e,

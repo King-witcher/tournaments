@@ -136,7 +136,12 @@
       },
       "pick": {
         "duel": "Depois, ainda antes da partida 1, vocês escolhem o campeão de cada partida, uma por vez, alternando quem escolhe primeiro.",
-        "tdm": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que faltar no fim é sorteado."
+        "tdm": "Depois, ainda antes da partida 1, cada jogador escolhe o campeão de cada partida, um por vez, em A, B, B, A, alternando quem abre a cada partida. Na vez do time, escolhe quem ainda não escolheu nela.",
+        "open": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que faltar no fim é sorteado.",
+        "blind": {
+          "duel": "Depois, ainda antes da partida 1, vocês escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que cada um escolhe só aparece quando os dois terminarem. O que faltar no fim é sorteado.",
+          "tdm": "Depois, ainda antes da partida 1, todos escolhem ao mesmo tempo o campeão de cada partida, numa janela de {window}. O que um time escolhe só aparece quando todos terminarem. O que faltar no fim é sorteado."
+        }
       },
       "mirror": {
         "duel": {
@@ -258,7 +263,12 @@
     "slotsTeams": "{slots} ({teams, plural, one {# time} other {# times}} de {size})",
     "offSite": "campeões fora do site",
     "noMirror": "sem campeão igual entre adversários",
-    "sameTeam": "campeão igual no time permitido"
+    "sameTeam": "campeão igual no time permitido",
+    "pickOrder": {
+      "alternating": "escolhas alternadas",
+      "blind": "escolhas às cegas",
+      "open": "janela aberta"
+    }
   },
   "startsAt": "Começa <date></date>",
   "startedAt": "Início marcado para <date></date>",

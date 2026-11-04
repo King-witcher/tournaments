@@ -52,7 +52,9 @@ pub use status::TournamentStatus;
 pub use types::{
     NameTranslation, NoRepeatWho, StageFormat, Tournament, TournamentPath, TournamentSummary,
 };
-pub use veto::{MapMode, PoolMap, VetoInput, VetoOrder, VetoSetup, resolve as resolve_veto};
+pub use veto::{
+    MapMode, PickOrder, PoolMap, VetoInput, VetoOrder, VetoSetup, resolve as resolve_veto,
+};
 pub use visibility::{find_visible, find_visible_for_update};
 
 pub fn router() -> OpenApiRouter<AppState> {

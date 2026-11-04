@@ -1,6 +1,8 @@
 mod draft;
 mod draft_props;
 mod maps;
+mod pick_alternating;
+mod pick_blind;
 mod rosters;
 mod team;
 mod team_ban;
@@ -24,13 +26,15 @@ pub fn champions(n: i64) -> Vec<ChampionId> {
 }
 
 /// Duelo, com espelho e sem regra de não repetição, no veto alternado (a ordem
-/// que os testes mais antigos usam; `bans_first` troca para bans primeiro).
+/// que os testes mais antigos usam; `bans_first` troca para bans primeiro) e
+/// com os picks alternados.
 pub fn rules(mode: MapMode, maps: i64, champion_phase: bool, bans: u8) -> VetoRules {
     VetoRules {
         map_mode: mode,
         order: VetoOrder::Alternating,
         pool: pool(maps),
         champion_phase,
+        pick_order: PickOrder::Alternating,
         team_size: 1,
         champions: crate::champions::ChampionRules {
             bans_per_series: u32::from(bans),
@@ -183,13 +187,21 @@ pub const P3: PlayerId = PlayerId(3);
 pub const P4: PlayerId = PlayerId(4);
 pub const P5: PlayerId = PlayerId(5);
 
-/// Times de `size`, mapa combinado fora, com espelho.
+/// Times de `size`, mapa combinado fora, com espelho, na janela aberta (a que
+/// os testes da janela usam; `ordered` troca a ordem das escolhas).
 pub fn team_rules(bans: u8, size: u8, same_team: bool) -> VetoRules {
     let mut r = VetoRules {
         team_size: size,
+        pick_order: PickOrder::Open,
         ..rules(MapMode::Off, 0, true, bans)
     };
     r.champions.same_team = same_team;
+    r
+}
+
+/// As regras `r` com as escolhas na ordem `order`.
+pub fn ordered(mut r: VetoRules, order: PickOrder) -> VetoRules {
+    r.pick_order = order;
     r
 }
 

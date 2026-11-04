@@ -11,7 +11,7 @@ use sqlx::PgConnection;
 
 use super::{
     db::{self, RoomRow},
-    types::VetoRoomRole,
+    types::{VetoRoomRole, VetoRoomStart},
 };
 use crate::{
     matches::{
@@ -19,7 +19,7 @@ use crate::{
         veto::{Champion, Ctx, GRACE, NewVetoEvent, VetoLog, VetoRow, due_draws},
     },
     shared::ApiError,
-    tournaments::{NoRepeatWho, PoolMap, VetoOrder},
+    tournaments::{NoRepeatWho, PickOrder, PoolMap, VetoOrder},
 };
 
 pub(super) const NOT_FOUND: ApiError = ApiError::not_found("veto_room.not_found");
@@ -43,6 +43,7 @@ pub(super) struct Room {
     pub bans_per_series: i16,
     pub order: VetoOrder,
     pub no_repeat: Option<NoRepeatWho>,
+    pub who_starts: VetoRoomStart,
     pub rules: ev::VetoRules,
     pub step_seconds: i32,
     pub team_pick_seconds: i32,
@@ -118,6 +119,7 @@ impl Room {
             order: order.into(),
             pool: maps.iter().map(|m| m.id).collect(),
             champion_phase: row.champion_phase,
+            pick_order: PickOrder::from_db(&row.pick_order)?.into(),
             team_size: u8::try_from(row.team_size).unwrap_or(1),
             champions: ChampionRules {
                 bans_per_series: u32::try_from(row.bans_per_series).unwrap_or(0),
@@ -155,6 +157,7 @@ impl Room {
             bans_per_series: row.bans_per_series,
             order,
             no_repeat,
+            who_starts: VetoRoomStart::from_db(&row.who_starts),
             rules,
             step_seconds: row.step_seconds,
             team_pick_seconds: row.team_pick_seconds,
@@ -310,7 +313,7 @@ impl Room {
 }
 
 /// O elenco de cada lado: todos os lugares, com gente ou não. Quem não apareceu
-/// fica para o sorteio do fim da janela, como no TDM.
+/// fica para o sorteio do fim do prazo, como no TDM.
 fn rosters(seats: &[Seat]) -> Rosters {
     let of = |side: Side| {
         seats

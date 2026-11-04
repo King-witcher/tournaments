@@ -1,10 +1,22 @@
-//! A janela simultânea de campeões nos times (TDM): depois dos bans da série
-//! (alternados entre os lados, como no duelo), cada jogador do elenco de
-//! cada lado escolhe o próprio campeão de cada partida da série, sem vez e
-//! em qualquer ordem, vendo as escolhas dos outros. A janela fecha quando
-//! todo o elenco escolheu para todas as partidas; quem a API vê sem
-//! escolher no fim do prazo recebe um campeão sorteado para cada partida que
-//! falta (`random_team_choice`).
+//! Os picks por jogador (`VetoRules::per_player`): depois dos bans da série
+//! (alternados entre os lados), cada jogador do elenco escolhe o próprio
+//! campeão de cada partida da série, na ordem de `PickOrder`:
+//!
+//! - **Alternado**, nos times: partida a partida, um pick por vez, os lados
+//!   em O, X, X, O, O, X, X, O... (`alternating_turn`), com quem abre (O)
+//!   trocando a cada partida, como no duelo. Na vez do lado, qualquer um dele
+//!   que ainda não escolheu naquela partida escolhe o próprio campeão; cada
+//!   pick é um passo, com o prazo do passo, e no fim do prazo é sorteado para
+//!   o primeiro do lado sem escolha, na ordem do elenco (`due_picks`). Um lado
+//!   desfalcado perde as posições que não tem quem ocupe.
+//! - **Janela** (`Blind`, `Open`): sem vez e em qualquer ordem, num prazo só.
+//!   Ela fecha quando todo o elenco escolheu para todas as partidas; no fim do
+//!   prazo, cada escolha que falta é sorteada (`random_team_choice`). Às
+//!   cegas, em qualquer tamanho e só com espelho, os picks de um lado ficam
+//!   escondidos dos outros até ela fechar (`sealed_games`, que a API aplica ao
+//!   montar o que cada um vê) e não se desfazem (`can_undo`): quem desfez teria
+//!   de reabrir uma janela já vista. Aberta (`Open`), só nas séries que
+//!   começaram antes de a ordem existir, todos veem tudo.
 //!
 //! - **Elenco** (`Veto::set_rosters`, `Rosters`): quem escolhe de cada lado
 //!   agora, que a API passa (os jogadores do time que estão na comunidade),
@@ -12,7 +24,7 @@
 //!   `Turn::RostersUnknown`, nunca uma partida acabada. A escolha de quem
 //!   saiu do elenco continua no histórico, mas não conta (ver "Pick que
 //!   conta" em `draft.rs`); quem entrou passa a faltar nas partidas ainda
-//!   abertas (da em andamento até a última), e a janela reabre para ele na
+//!   abertas (da em andamento até a última), e os picks reabrem para ele na
 //!   partida em andamento: partida enviada, ou a série encerrada, não reabre.
 //! - **Opções de um jogador** (`team_options`): as de `pick_options` (ver
 //!   `draft.rs`). Cada jogador cede sozinho, na hora em que escolhe: com o
@@ -23,18 +35,19 @@
 use std::collections::HashSet;
 
 use super::{
-    Action, Applied, Choice, Context, Phase, Side, Target, Turn, Veto, VetoError, draw, index,
+    Action, Applied, Choice, Context, Phase, PickOptions, PickOrder, Picker, Side, Target, Turn,
+    Veto, VetoError, draw, index,
+    sequence::{game_opener, pick_side},
 };
-use super::{PickOptions, Picker};
 use crate::core::{ChampionId, PlayerId};
 
 /// O que só a API sabe agora: o histórico do veto não diz quem está no time
 /// nem o que já foi enviado.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rosters {
-    /// Quem escolhe campeão de cada lado (`[a, b]`) nos times: os jogadores
-    /// do time que estão na comunidade, na ordem do sorteio do tempo
-    /// esgotado. Cada um uma vez só, no máximo `team_size` por lado.
+    /// Quem escolhe campeão de cada lado (`[a, b]`) no pick por jogador: os
+    /// jogadores do time que estão na comunidade, na ordem do sorteio do
+    /// tempo esgotado. Cada um uma vez só, no máximo `team_size` por lado.
     pub players: [Vec<PlayerId>; 2],
     /// As partidas já enviadas, na ordem: quem jogou cada uma por lado (a
     /// escalação gravada no envio). A janela não reabre nelas, e o pick de
@@ -44,7 +57,7 @@ pub struct Rosters {
     pub finished: bool,
 }
 
-/// Quem falta escolher na janela simultânea, e para qual partida.
+/// Quem falta escolher, e para qual partida.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Missing {
     pub side: Side,
@@ -76,7 +89,7 @@ impl Veto {
         Ok(())
     }
 
-    /// A partida em andamento, se ela chegou à janela simultânea, sem olhar
+    /// A partida em andamento, se ela chegou aos picks por jogador, sem olhar
     /// o elenco: o `replay` aplica as escolhas sem ele.
     fn team_phase(&self) -> Option<u8> {
         match self.phase() {
@@ -85,24 +98,60 @@ impl Veto {
         }
     }
 
-    /// A vez da partida `game`, na janela simultânea (ver o `//!`).
+    /// A vez da partida `game`, nos picks por jogador (ver o `//!`).
     pub(super) fn team_turn(&self, game: u8) -> Turn {
         if self.rosters.is_none() {
             return Turn::RostersUnknown { game };
         }
-        let mut sides: Vec<Side> = self.missing_now().iter().map(|m| m.side).collect();
-        sides.dedup();
-        if sides.is_empty() {
-            Turn::Done { game }
-        } else {
-            Turn::Act {
-                game,
-                action: Action::TeamPick,
-                target: Target::Champion,
-                sides,
-                pick_for: None,
+        let missing = self.missing_now();
+        if missing.is_empty() {
+            return Turn::Done { game };
+        }
+        let (sides, pick_for) = match self.alternating_turn(&missing) {
+            Some((side, pick_for)) => (vec![side], Some(pick_for)),
+            None => {
+                let mut sides: Vec<Side> = missing.iter().map(|m| m.side).collect();
+                sides.dedup();
+                (sides, None)
+            }
+        };
+        Turn::Act {
+            game,
+            action: Action::TeamPick,
+            target: Target::Champion,
+            sides,
+            pick_for,
+        }
+    }
+
+    /// Na ordem alternada, de quem é a vez com `missing` por escolher, e para
+    /// qual partida: a primeira em que falta alguém e, nela, o lado que o
+    /// padrão (`pick_side`) pede depois do que já foi escolhido. A posição de
+    /// um lado sem ninguém por escolher fica para o outro. `None` na janela.
+    fn alternating_turn(&self, missing: &[Missing]) -> Option<(Side, u8)> {
+        if self.rules.pick_order != PickOrder::Alternating {
+            return None;
+        }
+        let first = self.begin?.first;
+        let game = missing.iter().map(|m| m.game).min()?;
+        let opener = game_opener(first, game);
+        let mut done = [0usize; 2];
+        for a in self.counted_picks(game) {
+            done[index(a.side)] += 1;
+        }
+        let positions = usize::from(self.rules.team_size) * 2;
+        for side in (0..positions).map(|i| pick_side(opener, i)) {
+            if done[index(side)] > 0 {
+                done[index(side)] -= 1;
+            } else if missing.iter().any(|m| m.side == side && m.game == game) {
+                return Some((side, game));
             }
         }
+        // O elenco não passa do tamanho do time: o padrão cobre todos.
+        missing
+            .iter()
+            .find(|m| m.game == game)
+            .map(|m| (m.side, game))
     }
 
     /// A partida `game` não aceita mais escolha: veio outra depois dela, foi
@@ -129,8 +178,8 @@ impl Veto {
         self.rosters.as_ref()?.lineups.get(i)
     }
 
-    /// As escolhas da janela simultânea para a partida `game` que contam
-    /// (ver "Pick que conta" em `draft.rs`), na ordem.
+    /// Os picks por jogador para a partida `game` que contam (ver "Pick que
+    /// conta" em `draft.rs`), na ordem.
     pub fn team_picks(&self, game: u8) -> Vec<Applied> {
         self.counted_picks(game)
             .into_iter()
@@ -167,8 +216,8 @@ impl Veto {
         missing
     }
 
-    /// Quem ainda falta na janela simultânea, e para qual partida; vazio fora
-    /// dela (outra fase, duelo) e sem o elenco informado.
+    /// Quem ainda falta nos picks por jogador, e para qual partida; vazio fora
+    /// deles (outra fase, duelo alternado) e sem o elenco informado.
     pub fn missing(&self) -> Vec<Missing> {
         if self.team_phase().is_some() && self.rosters.is_some() {
             self.missing_now()
@@ -177,12 +226,55 @@ impl Veto {
         }
     }
 
+    /// Quem pode escolher agora, e para qual partida: na janela, todos os que
+    /// faltam; na ordem alternada, os do lado da vez sem escolha na partida da
+    /// vez, na ordem do elenco.
+    pub fn pickable(&self) -> Vec<Missing> {
+        let missing = self.missing();
+        match self.alternating_turn(&missing) {
+            Some((side, game)) => missing
+                .into_iter()
+                .filter(|m| m.side == side && m.game == game)
+                .collect(),
+            None => missing,
+        }
+    }
+
+    /// O que o fim do prazo sorteia agora, na ordem em que aplicar: na janela,
+    /// tudo o que falta; na ordem alternada, o pick do primeiro do lado da vez.
+    pub fn due_picks(&self) -> Vec<Missing> {
+        let mut picks = self.pickable();
+        if self.rules.pick_order == PickOrder::Alternating {
+            picks.truncate(1);
+        }
+        picks
+    }
+
+    /// As partidas cujos picks ficam escondidos de quem não é do lado (só à
+    /// vista dele, ver o `//!`): com a janela às cegas aberta, as que ainda
+    /// aceitam escolha. Vazio nas outras ordens e com a janela fechada. Sem o
+    /// elenco informado, que a API sempre informa, a janela conta como aberta.
+    pub fn sealed_games(&self) -> Vec<u8> {
+        if self.rules.pick_order != PickOrder::Blind || !self.begun() {
+            return Vec::new();
+        }
+        let open = match self.turn() {
+            Turn::RostersUnknown { .. } => true,
+            turn => turn.is_window(),
+        };
+        if !open {
+            return Vec::new();
+        }
+        (1..=self.best_of).filter(|g| !self.closed(*g)).collect()
+    }
+
     /// A escolha de `player` para a partida `game` (ver o `//!`). Sem `ctx`
     /// (no `replay`), só a fase, a partida e o ban são conferidos, e vale o
     /// `gave_way` gravado; com ele, antes, o elenco (`RostersUnknown`), a
     /// partida fechada (`Finished`), se o jogador é do elenco do lado
-    /// (`NotYourTurn`) e se ele já tem pick que conta para a partida
-    /// (`AlreadyPicked`), e depois as opções, que dizem o que cedeu.
+    /// (`NotYourTurn`), se ele já tem pick que conta para a partida
+    /// (`AlreadyPicked`) e, na ordem alternada, se é a vez do lado nessa
+    /// partida (`NotYourTurn`), e depois as opções, que dizem o que cedeu.
     pub(super) fn team_step(
         &mut self,
         side: Side,
@@ -227,6 +319,12 @@ impl Veto {
                 {
                     return Err(VetoError::AlreadyPicked);
                 }
+                if self
+                    .alternating_turn(&self.missing_now())
+                    .is_some_and(|turn| turn != (side, game))
+                {
+                    return Err(VetoError::NotYourTurn);
+                }
                 let options = self.pick_options(picker, game, ctx);
                 if !options.champions.contains(&champion) {
                     return Err(self.rejection(picker, game, champion, ctx));
@@ -253,7 +351,8 @@ impl Veto {
     }
 
     /// O que `player`, do lado `side`, pode escolher agora para a partida
-    /// `game` (vazio se não falta ele nela) e o que cedeu.
+    /// `game` (vazio se não falta ele nela ou, na ordem alternada, se não é a
+    /// vez dele) e o que cedeu.
     pub fn team_options(
         &self,
         side: Side,
@@ -262,7 +361,7 @@ impl Veto {
         ctx: &Context,
     ) -> PickOptions {
         let wanted = Missing { side, player, game };
-        if !self.missing().contains(&wanted) {
+        if !self.pickable().contains(&wanted) {
             return PickOptions::default();
         }
         self.pick_options(
@@ -275,10 +374,10 @@ impl Veto {
         )
     }
 
-    /// O campeão de `player` para a partida `game` quando o prazo da janela
-    /// acaba: uma das `team_options`, sorteada pela seed da série e pela
-    /// posição no histórico (quem chama aplica um de cada vez, então cada
-    /// sorteio tem a sua). `None` se não falta ele nela.
+    /// O campeão de `player` para a partida `game` quando o prazo acaba: uma
+    /// das `team_options`, sorteada pela seed da série e pela posição no
+    /// histórico (quem chama aplica um de cada vez, então cada sorteio tem a
+    /// sua). `None` se ele não pode escolher agora.
     pub fn random_team_choice(
         &self,
         side: Side,

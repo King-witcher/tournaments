@@ -1,5 +1,6 @@
-//! Propriedades da janela simultânea: qualquer ordem, regra, espelho, uso de
-//! fora da série e troca de elenco no meio da série fecham o draft sem
+//! Propriedades dos picks por jogador: qualquer ordem de escolhas (a janela
+//! aberta, às cegas e, entre os que podem na vez, a alternada), regra, espelho,
+//! uso de fora da série e troca de elenco no meio da série fecham o draft sem
 //! campeão banido, com um campeão por jogador do elenco em cada partida
 //! aberta, sem repetir no time nem entre times quando não vale (salvo o que
 //! cedeu), respeitando a regra quando ela não cede, e o histórico refeito dá
@@ -61,6 +62,11 @@ proptest! {
         best_of in prop_oneof![Just(1u8), Just(3)],
         played in 1u8..=3,
         order in proptest::collection::vec(any::<Index>(), 0..80),
+        pick_order in prop_oneof![
+            Just(PickOrder::Alternating),
+            Just(PickOrder::Blind),
+            Just(PickOrder::Open),
+        ],
         changes in proptest::collection::vec(change(), 0..3),
     ) {
         let played = played.min(best_of);
@@ -75,7 +81,9 @@ proptest! {
             used: [&used[0], &used[1]],
             used_by: &used_by,
         };
-        let mut rules = team_rules(bans, 4, same_team);
+        let mut rules = ordered(team_rules(bans, 4, same_team), pick_order);
+        // Às cegas só existe com espelho.
+        let mirror = mirror || pick_order == PickOrder::Blind;
         rules.champions.mirror = mirror;
         if let Some(who) = who {
             rules = with_rule(rules, who);
@@ -128,12 +136,20 @@ proptest! {
                         v.apply(e, Some(&ctx)).unwrap();
                         events.push(e);
                     }
-                    Turn::Act { action: Action::TeamPick, .. } => {
-                        let missing = v.missing();
+                    Turn::Act { action: Action::TeamPick, sides, pick_for, .. } => {
+                        let missing = v.pickable();
+                        prop_assert!(!missing.is_empty());
                         let m = match order.next() {
                             Some(i) => missing[i.index(missing.len())],
                             None => missing[0],
                         };
+                        // Na ordem alternada, a vez é de um lado e uma partida.
+                        if pick_order == PickOrder::Alternating {
+                            prop_assert_eq!(sides, vec![m.side]);
+                            prop_assert_eq!(pick_for, Some(m.game));
+                        } else {
+                            prop_assert_eq!(pick_for, None);
+                        }
                         let options = v.team_options(m.side, m.player, m.game, &ctx);
                         let c = v.random_team_choice(m.side, m.player, m.game, &ctx).unwrap();
                         prop_assert!(options.champions.contains(&c));

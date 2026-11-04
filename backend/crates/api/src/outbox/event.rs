@@ -146,8 +146,8 @@ pub enum NoticeKind {
         match_key: String,
         opponent: String,
     },
-    /// TDM: a escolha simultânea de campeões do mapa `game` abriu (para os
-    /// jogadores dos dois times).
+    /// Os picks por jogador da partida `game` abriram (para os jogadores dos
+    /// dois times).
     #[serde(rename = "match.team_pick_open")]
     TeamPickOpen {
         tournament: String,

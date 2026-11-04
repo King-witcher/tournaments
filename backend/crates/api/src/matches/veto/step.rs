@@ -81,8 +81,9 @@ pub fn open_turn(state: &Veto) -> Result<OpenTurn, ApiError> {
 
 /// O passo de `who`, do lado `side`, na vez `turn`, conferido pelo `engine`, e
 /// o que gravar. `target`: na janela simultânea, a partida para a qual ele
-/// escolhe. Erros: os do `engine` e 422 `veto.option_invalid` (mapa na janela,
-/// janela sem a partida).
+/// escolhe (nos picks com vez, é a que a vez diz, e outra é 409
+/// `veto.step_changed`). Erros: os do `engine` e 422 `veto.option_invalid` (mapa
+/// no pick por jogador, janela sem a partida).
 pub fn planned(
     state: &Veto,
     ctx: &Ctx,
@@ -97,10 +98,20 @@ pub fn planned(
         action,
         pick_for,
     } = turn;
+    // O jogador-alvo do pick por jogador: hoje, sempre quem age (`actor`).
     let player = PlayerId(who);
     let (event, pick_game, gave_way) = match (action, choice) {
         (Action::TeamPick, Choice::Champion(champion)) => {
-            let target = target.and_then(|g| u8::try_from(g).ok()).ok_or(INVALID)?;
+            let asked = target.and_then(|g| u8::try_from(g).ok());
+            let target = match (pick_for, asked) {
+                // A vez mudou sem evento (o elenco): a tela mostrava outra partida.
+                (Some(turn), Some(asked)) if turn != asked => {
+                    return Err(ApiError::conflict("veto.step_changed"));
+                }
+                (Some(turn), _) => turn,
+                (None, Some(asked)) => asked,
+                (None, None) => return Err(INVALID),
+            };
             let picker = Picker {
                 side: ev_side(side),
                 player: Some(player),
@@ -137,7 +148,7 @@ pub fn planned(
     Ok(NewVetoEvent {
         map,
         champion,
-        player: (action == Action::TeamPick).then_some(who),
+        player: (action == Action::TeamPick).then_some(player.0),
         pick_game: pick_game.map(i16::from),
         gave_way,
         ..NewVetoEvent::new(

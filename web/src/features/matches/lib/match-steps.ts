@@ -144,7 +144,12 @@ function vetoReached(veto: Veto): "ready" | "maps" | "champions" | "games" {
     return "maps";
   const drafted =
     veto.missing.length === 0 &&
-    veto.games.every((g) => (g.pick_a && g.pick_b) || g.team_picks.length > 0);
+    veto.games.every(
+      (g) =>
+        (g.pick_a && g.pick_b) ||
+        g.team_picks.length > 0 ||
+        g.hidden_picks.length > 0,
+    );
   return veto.champion_phase && !drafted ? "champions" : "games";
 }
 
@@ -164,7 +169,11 @@ export function vetoPhase(
   if (turn.target === "champion") return "champions";
   if (veto.map_mode === "veto") return "maps";
   const first = veto.games.find((g) => g.game === 1);
-  const drafted = first?.pick_a || first?.pick_b || first?.team_picks.length;
+  const drafted =
+    first?.pick_a ||
+    first?.pick_b ||
+    first?.team_picks.length ||
+    first?.hidden_picks.length;
   return veto.champion_phase && (veto.game ?? 1) === 1 && !drafted
     ? "champions"
     : "games";

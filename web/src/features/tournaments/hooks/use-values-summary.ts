@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import {
+  hasPickWindow,
   isTdm,
   poolOf,
   stepSecondsGroup,
@@ -101,6 +102,7 @@ export function useValuesSummary() {
       return line([
         !v.championPhase && tSetup("offSite"),
         tSetup("bans", { count: v.bansPerSeries }),
+        v.championPhase && tSetup(`pickOrder.${v.pickOrder}`),
         !v.mirror && tSetup("noMirror"),
         tdm && v.sameTeam && tSetup("sameTeam"),
         tdm && v.noRepeat !== "off"
@@ -108,8 +110,7 @@ export function useValuesSummary() {
           : repeat,
         stepSecondsGroup(v) === "champions" &&
           t("seconds", { time: formatSeconds(v.vetoSeconds) }),
-        tdm &&
-          v.championPhase &&
+        hasPickWindow(v) &&
           t("teamPick", { time: formatSeconds(v.teamPickSeconds) }),
       ]);
     },

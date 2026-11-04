@@ -28,8 +28,9 @@ type Props = {
  * grade e, ao lado dela (em cima no celular), o resumo do draft (bans e cada
  * partida, com a da vez em destaque), nas colunas da grade da página (11 e
  * 5 no lg, 10 e 6 do xlg para cima), e o erro da última ação. Na votação,
- * a do mapa da partida 1 vem antes (o draft depende dele); na janela do
- * TDM, quem vê escolhe para qual partida está escolhendo.
+ * a do mapa da partida 1 vem antes (o draft depende dele); na janela, quem vê
+ * escolhe para qual partida está escolhendo. Nos picks alternados, a partida é a
+ * da vez.
  */
 export function ChampionsStep({ rule, done = false }: Props) {
   const t = useTranslations("Match.veto.champions");

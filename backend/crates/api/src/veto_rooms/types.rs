@@ -31,6 +31,36 @@ pub struct NewVetoRoom {
     /// Campeões, quando `veto.champion_phase` está ligado; ausente, o padrão.
     #[serde(default)]
     pub champion_rules: Option<VetoRoomChampionRules>,
+    /// Quem faz o primeiro passo da sala: sorteado (padrão) ou o lado A.
+    #[serde(default)]
+    pub who_starts: VetoRoomStart,
+}
+
+/// Quem faz o primeiro passo da sala. Os lados continuam fixos.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum VetoRoomStart {
+    #[default]
+    Draw,
+    A,
+}
+
+impl VetoRoomStart {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Draw => "draw",
+            Self::A => "a",
+        }
+    }
+
+    /// Lê `veto_rooms.who_starts` (garantida pelo check da tabela).
+    pub fn from_db(value: &str) -> Self {
+        if value == Self::A.as_str() {
+            Self::A
+        } else {
+            Self::Draw
+        }
+    }
 }
 
 /// As regras de campeões da sala; a repetição vale dentro da série.

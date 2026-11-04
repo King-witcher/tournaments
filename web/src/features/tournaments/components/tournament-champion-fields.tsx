@@ -8,9 +8,11 @@ import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import {
+  hasPickWindow,
   isTdm,
   type NoRepeatChoice,
   noRepeatChoices,
+  pickOrderChoices,
   STEP_SECONDS,
   stepSecondsGroup,
   TEAM_PICK_SECONDS,
@@ -27,6 +29,7 @@ const WHO: components["schemas"]["NoRepeatWho"][] = ["player", "team"];
 const KEYS = [
   "championPhase",
   "bansPerSeries",
+  "pickOrder",
   "mirror",
   "sameTeam",
   "noRepeat",
@@ -48,12 +51,13 @@ type Props = {
 };
 
 /**
- * O draft de campeões da série: se é feito no site, os bans de cada lado e o
- * que pode repetir (na partida, entre adversários e, no TDM, entre colegas;
- * em outras partidas, pela regra de não repetição e, no TDM, quem não
- * repete). Com o draft no site: o tempo de cada passo, quando o mapa não
- * tem passo (com veto ou votação, ele fica no grupo Mapas), e, no TDM, o da
- * janela simultânea.
+ * O draft de campeões da série: se é feito no site, os bans de cada lado, a ordem
+ * das escolhas e o que pode repetir (na partida, entre adversários e, no TDM,
+ * entre colegas; em outras partidas, pela regra de não repetição e, no TDM, quem
+ * não repete). Com o draft no site: o tempo de cada passo, quando o mapa não
+ * tem passo (com veto ou votação, ele fica no grupo Mapas), e, às cegas, o da
+ * janela. Às cegas exige espelho: sem ele, a opção fica desabilitada, e desligar
+ * o espelho com ela escolhida volta ao alternado.
  */
 export const TournamentChampionFields = memo(function TournamentChampionFields({
   values,
@@ -94,6 +98,36 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           <SelectItem key={n} value={n} text={t("bansOption", { count: n })} />
         ))}
       </Select>
+      {values.championPhase && (
+        <Select
+          labelText={t("pickOrder")}
+          helperText={[
+            t(`pickOrderHints.${values.pickOrder}`),
+            !values.mirror && t("pickOrderBlindNeedsMirror"),
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          name="pickOrder"
+          value={values.pickOrder}
+          disabled={disabled}
+          invalid={errors.pickOrder !== undefined}
+          invalidText={errors.pickOrder}
+          onChange={(e) =>
+            onChange({
+              pickOrder: e.target.value as components["schemas"]["PickOrder"],
+            })
+          }
+        >
+          {pickOrderChoices(values.pickOrder).map((order) => (
+            <SelectItem
+              key={order}
+              value={order}
+              text={t(`pickOrderOptions.${order}`)}
+              disabled={order === "blind" && !values.mirror}
+            />
+          ))}
+        </Select>
+      )}
       <FormGroup legendText={t("repeat")}>
         <Checkbox
           labelText={t("mirror")}
@@ -101,7 +135,13 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           name="mirror"
           checked={values.mirror}
           disabled={disabled}
-          onChange={(mirror) => onChange({ mirror })}
+          onChange={(mirror) =>
+            onChange(
+              !mirror && values.pickOrder === "blind"
+                ? { mirror, pickOrder: "alternating" }
+                : { mirror },
+            )
+          }
         />
         {tdm && (
           <Checkbox
@@ -166,7 +206,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           onChange={(vetoSeconds) => onChange({ vetoSeconds })}
         />
       )}
-      {tdm && values.championPhase && (
+      {hasPickWindow(values) && (
         <SecondsSelect
           labelText={tVeto("teamPickSeconds")}
           helperText={tVeto("teamPickSecondsHint")}

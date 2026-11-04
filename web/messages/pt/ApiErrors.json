@@ -122,7 +122,9 @@
     "team_size_invalid": "O time precisa ter de {min} a {max} jogadores.",
     "team_pick_seconds_invalid": "O tempo da escolha de campeões precisa ficar entre {min} e {max} segundos.",
     "teams_incomplete": "{teams, plural, one {Um time está incompleto} other {# times estão incompletos}} ou com alguém sem check-in. Ajuste os times antes de iniciar.",
-    "not_tdm": "Isso só vale em torneios de TDM."
+    "not_tdm": "Isso só vale em torneios de TDM.",
+    "blind_needs_mirror": "Às cegas exige que adversários possam usar o mesmo campeão.",
+    "pick_order_invalid": "Escolha a ordem alternada ou às cegas."
   },
   "participant": {
     "already_registered": "Esse membro já está inscrito.",

@@ -18,13 +18,14 @@
 //! - **Draft de campeões** da série inteira, antes da partida 1, depois do
 //!   mapa dela (`draft.rs`, `draft_sequence`): os bans da série, alternados
 //!   a partir do seed pior, valem para os dois lados em todas as partidas.
-//!   No duelo, depois, um pick de cada lado por partida, na ordem das
-//!   partidas, alternando quem escolhe primeiro. Nos times (TDM,
-//!   `team_size` > 1), no lugar dos picks há uma **janela simultânea**
-//!   (`team.rs`): cada jogador do elenco de cada lado (`set_rosters`)
-//!   escolhe o próprio campeão de cada partida, em qualquer ordem. Ninguém
-//!   volta ao veto entre as partidas, salvo para votar o mapa (modo votação)
-//!   ou, nos times, quem entrou no elenco depois do draft.
+//!   Depois, os picks, na ordem de `PickOrder`: **alternados**, na ordem das
+//!   partidas, alternando quem escolhe primeiro (no duelo, um pick de cada
+//!   lado; nos times, `team_size` > 1, um por jogador, em O, X, X, O...), ou
+//!   numa **janela simultânea** (às cegas; aberta só em séries antigas). No
+//!   pick por jogador (`team.rs`), cada um do elenco de cada lado
+//!   (`set_rosters`) escolhe o próprio campeão de cada partida. Ninguém volta
+//!   ao veto entre as partidas, salvo para votar o mapa (modo votação) ou, nos
+//!   times, quem entrou no elenco depois do draft.
 //! - **O que pode repetir** (`VetoRules::champions`): adversários na mesma
 //!   partida (`mirror`; sem ele, fica com o campeão quem escolhe primeiro),
 //!   colegas na mesma partida (`same_team`) e, pela regra de não repetição,
@@ -44,14 +45,15 @@
 //! - Os passos da partida em andamento se desfazem do último para o
 //!   primeiro (`Event::Undo`), o draft inteiro e o veto de mapas inclusive,
 //!   enquanto a partida 1 não foi enviada; partida enviada, ou a série
-//!   encerrada, não se desfaz.
+//!   encerrada, não se desfaz. O pick às cegas também não, e fica no caminho
+//!   do que veio antes dele.
 //! - Os sorteios (mapas oferecidos, desempate, mapa aleatório e a escolha de
 //!   quem deixou o tempo acabar) saem da seed gravada no começo: o mesmo
 //!   histórico dá sempre o mesmo resultado (`draw.rs`).
 //! - No `replay`, as regras de repetição e o pool de campeões não são
 //!   conferidos de novo (valeram quando o passo foi gravado); a vez, o tipo
-//!   do passo e o ban, sim. Na janela simultânea, o elenco também não: quem
-//!   escolheu pode ter saído do time depois, e quem voltou pode ter
+//!   do passo e o ban, sim. No pick por jogador, o elenco e a ordem também
+//!   não: quem escolheu pode ter saído do time depois, e quem voltou pode ter
 //!   escolhido de novo.
 
 mod draft;
@@ -70,8 +72,8 @@ pub use draft::{GaveWay, PickOptions, Picker, Unavailable};
 pub use sequence::{Action, DraftStep, draft_sequence, map_sequence};
 pub use team::{Missing, Rosters};
 pub use types::{
-    Applied, Choice, Context, Event, MapMode, Target, Turn, VOTE_OPTIONS, VetoError, VetoOrder,
-    VetoRules,
+    Applied, Choice, Context, Event, MapMode, PickOrder, Target, Turn, VOTE_OPTIONS, VetoError,
+    VetoOrder, VetoRules,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -144,10 +146,10 @@ pub struct Veto {
 
 /// Onde a partida em andamento está, sem olhar o elenco.
 enum Phase {
-    /// Fora da janela simultânea: a vez é esta.
+    /// Fora dos picks por jogador: a vez é esta.
     Turn(Turn),
-    /// Nos times, a partida chegou à janela simultânea (o veto de mapa dela
-    /// e, na partida 1, os bans acabaram): quem falta depende do elenco.
+    /// A partida chegou aos picks por jogador (o veto de mapa dela e, na
+    /// partida 1, os bans acabaram): quem falta depende do elenco.
     TeamPick(u8),
 }
 
@@ -187,8 +189,9 @@ impl Veto {
     /// `NotYourTurn`, `WrongAction`, `OptionInvalid`, `ChampionForbidden` (a
     /// regra de não repetição o tira), `ChampionTaken` (outro já o escolheu
     /// para a partida, sem espelho ou sem repetir no time), `AlreadyPicked`,
-    /// `RostersUnknown` (janela simultânea com `ctx` sem o elenco informado)
-    /// e `NothingToUndo`.
+    /// `RostersUnknown` (pick por jogador com `ctx` sem o elenco informado),
+    /// `BlindNeedsMirror` (no começo) e `NothingToUndo` (também no pick às
+    /// cegas, que não se desfaz).
     pub fn apply(&mut self, event: Event, ctx: Option<&Context>) -> Result<(), VetoError> {
         match event {
             Event::Begin { seed, first } => self.begin(seed, first, ctx)?,
@@ -226,15 +229,23 @@ impl Veto {
                 if self.undo_closed() {
                     return Err(VetoError::Finished);
                 }
+                let sealed = self.rules.pick_order == PickOrder::Blind;
                 let game = self.games.last_mut().ok_or(VetoError::NotBegun)?;
-                game.steps.pop().ok_or(VetoError::NothingToUndo)?;
+                match game.steps.last() {
+                    None => return Err(VetoError::NothingToUndo),
+                    Some(last) if sealed && last.action == Action::TeamPick => {
+                        return Err(VetoError::NothingToUndo);
+                    }
+                    Some(_) => {}
+                }
+                game.steps.pop();
             }
         }
         self.events += 1;
         // O voto que espera o do outro lado e cada escolha da janela
         // simultânea respondem à mesma vez que os outros: não abrem outra.
         let shared = match event {
-            Event::TeamPick { .. } => true,
+            Event::TeamPick { .. } => self.rules.pick_order.window(),
             Event::Step {
                 action: Action::Vote,
                 ..
@@ -259,7 +270,8 @@ impl Veto {
     /// simultânea não abrem vez nova (o voto que fecha a votação, sim). Quem
     /// mostra a vez guarda esse número e, com ele, sabe se a vez mudou antes
     /// de a escolha chegar, inclusive quando o mesmo lado age duas vezes
-    /// seguidas (o draft do duelo, um sorteio pelo tempo). 0 antes do começo.
+    /// seguidas (os picks alternados, um sorteio pelo tempo). 0 antes do
+    /// começo.
     pub fn turn_opened(&self) -> u32 {
         self.opened
     }
@@ -278,12 +290,14 @@ impl Veto {
         let required = usize::from(self.rules.bans()) * 2 + 1;
         if let Some(ctx) = ctx
             && self.rules.champion_phase
-            && ctx.champions.len() < required
         {
-            return Err(VetoError::ChampionPoolExhausted {
-                required,
-                available: ctx.champions.len(),
-            });
+            self.rules.pick_order.check(self.rules.champions.mirror)?;
+            if ctx.champions.len() < required {
+                return Err(VetoError::ChampionPoolExhausted {
+                    required,
+                    available: ctx.champions.len(),
+                });
+            }
         }
         self.begin = Some(Begin { seed, first });
         self.games.push(GameVeto {
@@ -295,9 +309,9 @@ impl Veto {
     }
 
     /// Com a partida 1 aberta e o draft de campeões ligado, ainda falta
-    /// algum passo antes do fim dele (o mapa da partida 1 e o draft; na
-    /// janela simultânea, com o elenco informado, alguém para alguma partida
-    /// ainda aberta).
+    /// algum passo antes do fim dele (o mapa da partida 1 e o draft; no pick
+    /// por jogador, com o elenco informado, alguém para alguma partida ainda
+    /// aberta).
     fn draft_pending(&self) -> bool {
         if !self.rules.champion_phase || self.game() != Some(1) {
             return false;
@@ -323,13 +337,13 @@ impl Veto {
         ctx: Option<&Context>,
     ) -> Result<(), VetoError> {
         if action == Action::TeamPick {
-            // A janela simultânea é por jogador: `Event::TeamPick`.
+            // O pick por jogador é `Event::TeamPick`.
             return Err(VetoError::WrongAction);
         }
         let (game, expected, target, sides, pick_for) = match self.turn() {
             Turn::NotBegun => return Err(VetoError::NotBegun),
             Turn::Done { .. } => return Err(VetoError::Finished),
-            // A partida está na janela simultânea, que é por jogador.
+            // A partida está nos picks por jogador.
             Turn::RostersUnknown { .. } => return Err(VetoError::WrongAction),
             Turn::Act {
                 game,
@@ -376,7 +390,8 @@ impl Veto {
         self.begin.is_some()
     }
 
-    /// Quem começou o veto (o seed melhor).
+    /// Quem começou o veto de mapas (o seed melhor, que abre as partidas
+    /// ímpares do draft).
     pub fn first(&self) -> Option<Side> {
         self.begin.map(|b| b.first)
     }
@@ -402,7 +417,7 @@ impl Veto {
         }
     }
 
-    /// A vez sem o elenco: na janela simultânea dos times, só a partida.
+    /// A vez sem o elenco: nos picks por jogador, só a partida.
     fn phase(&self) -> Phase {
         let (Some(begin), Some(current)) = (self.begin, self.games.last()) else {
             return Phase::Turn(Turn::NotBegun);
@@ -426,22 +441,29 @@ impl Veto {
                 pick_for: step.game,
             });
         }
-        if self.rules.teams() {
+        if self.rules.per_player() {
             Phase::TeamPick(game)
         } else {
             Phase::Turn(Turn::Done { game })
         }
     }
 
-    /// Há passo para desfazer na partida em andamento.
+    /// Há passo para desfazer na partida em andamento: o último não é um pick
+    /// às cegas, que não se desfaz.
     pub fn can_undo(&self) -> bool {
-        !self.undo_closed() && self.games.last().is_some_and(|g| !g.steps.is_empty())
+        let sealed = self.rules.pick_order == PickOrder::Blind;
+        !self.undo_closed()
+            && self.games.last().is_some_and(|g| {
+                g.steps
+                    .last()
+                    .is_some_and(|last| !(sealed && last.action == Action::TeamPick))
+            })
     }
 
-    /// O que `side` pode escolher agora (vazio se não é a vez dele, e na
-    /// janela simultânea dos times, que é por jogador: `team_options`): no
-    /// veto de mapas, os que sobraram; na votação, os oferecidos; no draft,
-    /// os bans e os picks do duelo (`draft.rs`).
+    /// O que `side` pode escolher agora (vazio se não é a vez dele, e no pick
+    /// por jogador: `pickable`, `team_options`): no veto de mapas, os que
+    /// sobraram; na votação, os oferecidos; no draft, os bans e os picks do
+    /// duelo alternado (`draft.rs`).
     pub fn options(&self, side: Side, ctx: &Context) -> Vec<Choice> {
         let Turn::Act {
             game,

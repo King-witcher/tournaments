@@ -789,6 +789,7 @@ async fn the_tournament_keeps_the_veto_settings() {
             "map_pool": ["awoken", "blood-covenant", "corrupted-keep", "molten-falls",
                          "ruins-of-sarnath", "vale-of-pnath", "deep-embrace"],
             "champion_phase": true,
+            "pick_order": "alternating",
             "step_seconds": 30,
             "team_pick_seconds": 60
         })

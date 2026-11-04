@@ -101,11 +101,12 @@ pub struct NewVetoEvent {
     pub map: Option<MapId>,
     pub played_map: Option<MapId>,
     pub champion: Option<ChampionId>,
-    /// TDM: o jogador da janela simultânea.
+    /// No pick por jogador, o jogador-alvo: de quem é o campeão. `actor` é quem
+    /// clicou; nulo no sorteado.
     pub player: Option<i64>,
     /// Pick de campeão: a partida a que ele se destina.
     pub pick_game: Option<i16>,
-    /// TDM: o pick veio com alguma regra cedida.
+    /// No pick por jogador: veio com alguma regra cedida.
     pub gave_way: bool,
     pub seed: Option<i64>,
     pub timeout: bool,

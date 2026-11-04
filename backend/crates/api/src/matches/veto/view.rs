@@ -2,6 +2,11 @@
 //! opções e os picks são só de quem joga e pode agir agora). A montagem
 //! (`build`) não sabe de onde o veto veio: a série de um torneio (`view`) e a
 //! sala de veto (`veto_rooms`) dizem o que ela precisa (`Board`, `Shown`).
+//!
+//! **Às cegas**: todo pick que sai daqui passa por `Sealed`, o ponto único que
+//! esconde o de um lado de quem não é dele enquanto a janela está aberta. Nada
+//! mais expõe um pick: as opções e os motivos só olham o outro lado sem espelho,
+//! e às cegas exige espelho.
 
 use std::borrow::Cow;
 
@@ -16,8 +21,8 @@ use super::{
     state::{Kind, MatchVeto, VetoLog, VetoRow, api_side, ev_side},
     types::{
         ChampionRef, VetoAction, VetoBan, VetoChampion, VetoEvent, VetoEventKind, VetoGame,
-        VetoGaveWay, VetoMapStep, VetoPickSlot, VetoPlayer, VetoStatus, VetoTarget, VetoTeamPick,
-        VetoTurn, VetoUnavailable, VetoUnavailableReason, VetoView,
+        VetoGaveWay, VetoHiddenPick, VetoMapStep, VetoPickSlot, VetoPlayer, VetoStatus, VetoTarget,
+        VetoTeamPick, VetoTurn, VetoUnavailable, VetoUnavailableReason, VetoView,
     },
 };
 use crate::{
@@ -71,10 +76,47 @@ pub struct Shown<'a> {
     pub open: bool,
     pub can_undo: bool,
     pub reportable: bool,
-    /// Quem vê, se joga: as opções (`Ctx`), o lado e quem é.
+    /// Quem vê, se pode agir: as opções (`Ctx`), o lado e quem é.
     pub acting: Option<(&'a Ctx, Side, PlayerId)>,
+    /// O lado de quem vê, se é de um (mesmo sem poder agir agora): é o único
+    /// que ele enxerga com a janela às cegas aberta. Espectador, gestão e
+    /// organizador que não joga não têm lado.
+    pub viewer: Option<Side>,
     /// O nome de um jogador.
     pub names: &'a dyn Fn(PlayerId) -> String,
+}
+
+/// O que quem vê não enxerga agora (ver o `//!`): os picks, das partidas
+/// `games` (`Veto::sealed_games`), dos lados que não são o dele.
+struct Sealed {
+    games: Vec<u8>,
+    viewer: Option<Side>,
+}
+
+impl Sealed {
+    fn of(shown: &Shown<'_>) -> Self {
+        Self {
+            games: shown.state.sealed_games(),
+            viewer: shown.viewer,
+        }
+    }
+
+    /// O pick de `side` para a partida `game` fica escondido de quem vê.
+    fn hides(&self, side: Side, game: u8) -> bool {
+        self.games.contains(&game) && self.viewer != Some(side)
+    }
+
+    /// A linha gravada `r` é um pick escondido de quem vê. Sem o lado ou a
+    /// partida, que todo pick de campeão tem, fica escondida também.
+    fn hides_row(&self, r: &VetoRow) -> bool {
+        if self.games.is_empty() || r.kind != Kind::Pick || r.champion.is_none() {
+            return false;
+        }
+        match (r.side, r.pick_game.and_then(|g| u8::try_from(g).ok())) {
+            (Some(side), Some(game)) => self.hides(side, game),
+            _ => true,
+        }
+    }
 }
 
 /// Onde o veto da série pronta `m` está; `None` sem fase de veto no torneio
@@ -178,6 +220,7 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Op
             can_undo: ready_match && state.can_undo(),
             reportable: ready_match && reportable(stage, m, &state),
             acting,
+            viewer: mine,
             names: &|player| nickname(stage, mv, player),
         },
     ))
@@ -188,6 +231,7 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
     let state = shown.state;
     let log = shown.log;
     let turn = state.turn();
+    let sealed = Sealed::of(shown);
     let ready = log.map(VetoLog::ready).unwrap_or_default();
     let options = shown
         .acting
@@ -210,8 +254,14 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
     VetoView {
         map_mode: board.mode(),
         champion_phase: board.rules.champion_phase,
+        pick_order: board.rules.pick_order.into(),
+        team_size: i16::from(board.rules.team_size),
         step_seconds: board.step_seconds,
-        team_pick_seconds: board.rules.teams().then_some(board.team_pick_seconds),
+        team_pick_seconds: board
+            .rules
+            .pick_order
+            .window()
+            .then_some(board.team_pick_seconds),
         pool: board.maps.iter().map(|p| board.map_ref(p.id)).collect(),
         status,
         ready_a: ready[0],
@@ -262,7 +312,7 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
         },
         bans: bans(board, log, state),
         games: (1..=state.best_of())
-            .map(|g| game(board, shown, g))
+            .map(|g| game(board, shown, &sealed, g))
             .collect(),
         options,
         picks: shown
@@ -279,7 +329,13 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
         can_undo: shown.can_undo,
         reportable: shown.reportable,
         history: log
-            .map(|log| log.rows.iter().map(|r| event(board, r)).collect())
+            .map(|log| {
+                log.rows
+                    .iter()
+                    .filter(|r| !sealed.hides_row(r))
+                    .map(|r| event(board, r))
+                    .collect()
+            })
             .unwrap_or_default(),
     }
 }
@@ -316,9 +372,14 @@ fn bans(board: &Board<'_>, log: Option<&VetoLog>, state: &Veto) -> Vec<VetoBan> 
         .collect()
 }
 
-fn game(board: &Board<'_>, shown: &Shown<'_>, g: u8) -> VetoGame {
+fn game(board: &Board<'_>, shown: &Shown<'_>, sealed: &Sealed, g: u8) -> VetoGame {
     let state = shown.state;
     let picks = state.picks(g);
+    let side_pick = |side: Side, pick: Option<ChampionId>| {
+        pick.filter(|_| !sealed.hides(side, g))
+            .map(|c| board.champion_ref(c))
+    };
+    let (team_picks, hidden_picks) = team_picks(board, shown, sealed, g);
     let votes = state.votes(g);
     let slug = |m: Option<MapId>| m.map(|id| board.map_ref(id).slug);
     VetoGame {
@@ -332,40 +393,53 @@ fn game(board: &Board<'_>, shown: &Shown<'_>, g: u8) -> VetoGame {
             .collect(),
         vote_a: slug(votes[0]),
         vote_b: slug(votes[1]),
-        pick_a: picks[0].map(|c| board.champion_ref(c)),
-        pick_b: picks[1].map(|c| board.champion_ref(c)),
-        team_picks: team_picks(board, shown, g),
+        pick_a: side_pick(Side::A, picks[0]),
+        pick_b: side_pick(Side::B, picks[1]),
+        team_picks,
+        hidden_picks,
     }
 }
 
-/// TDM: a escolha que conta de cada jogador para a partida `g`, com o
-/// sorteio do fim da janela marcado (pela linha gravada).
-fn team_picks(board: &Board<'_>, shown: &Shown<'_>, g: u8) -> Vec<VetoTeamPick> {
-    shown
-        .state
-        .team_picks(g)
-        .into_iter()
-        .filter_map(|a| {
-            let (Some(c), Some(player)) = (a.champion(), a.player) else {
-                return None;
-            };
-            let timeout = timed_out(shown.log, |r| {
-                r.kind == Kind::Pick
-                    && r.pick_game == Some(i16::from(g))
-                    && r.player == Some(player.0)
-            });
-            Some(VetoTeamPick {
-                side: api_side(a.side),
+/// No pick por jogador: a escolha que conta de cada um para a partida `g`, com
+/// o sorteio do fim do tempo marcado (pela linha gravada), e, à parte, quem
+/// escolheu sem que quem vê possa saber o quê (`Sealed`).
+fn team_picks(
+    board: &Board<'_>,
+    shown: &Shown<'_>,
+    sealed: &Sealed,
+    g: u8,
+) -> (Vec<VetoTeamPick>, Vec<VetoHiddenPick>) {
+    let mut seen = Vec::new();
+    let mut hidden = Vec::new();
+    for a in shown.state.team_picks(g) {
+        let (Some(c), Some(player)) = (a.champion(), a.player) else {
+            continue;
+        };
+        let side = api_side(a.side);
+        let nickname = (shown.names)(player);
+        if sealed.hides(side, g) {
+            hidden.push(VetoHiddenPick {
+                side,
                 user_id: player.0,
-                nickname: (shown.names)(player),
-                champion: board.champion_ref(c),
-                timeout,
-            })
-        })
-        .collect()
+                nickname,
+            });
+            continue;
+        }
+        let timeout = timed_out(shown.log, |r| {
+            r.kind == Kind::Pick && r.pick_game == Some(i16::from(g)) && r.player == Some(player.0)
+        });
+        seen.push(VetoTeamPick {
+            side,
+            user_id: player.0,
+            nickname,
+            champion: board.champion_ref(c),
+            timeout,
+        });
+    }
+    (seen, hidden)
 }
 
-/// TDM: quem falta na janela simultânea, com as partidas de cada um.
+/// No pick por jogador: quem falta, com as partidas de cada um.
 fn missing(shown: &Shown<'_>) -> Vec<VetoPlayer> {
     let mut players: Vec<VetoPlayer> = Vec::new();
     for m in shown.state.missing() {
@@ -382,8 +456,9 @@ fn missing(shown: &Shown<'_>) -> Vec<VetoPlayer> {
     players
 }
 
-/// Os picks que quem vê (`me`, do lado `side`) pode fazer agora: no duelo, o
-/// da vez do lado dele; no TDM, cada partida em que ele falta.
+/// Os picks que quem vê (`me`, do lado `side`) pode fazer agora: no duelo
+/// alternado, o da vez do lado dele; no pick por jogador, as partidas em que ele
+/// falta e pode escolher agora (`pickable`).
 fn picks(
     board: &Board<'_>,
     state: &Veto,
@@ -410,7 +485,7 @@ fn picks(
                 player: Some(me),
             },
             state
-                .missing()
+                .pickable()
                 .into_iter()
                 .filter(|m| m.side == side && m.player == me)
                 .map(|m| m.game)

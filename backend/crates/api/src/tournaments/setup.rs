@@ -193,7 +193,9 @@ impl Setup {
     /// na edição; ao iniciar, os dos times que entram na chave, todos
     /// completos (com o pool de campeões de agora, que pode ter mudado desde
     /// a criação). Os lados são os times que eles formam, `⌊players/tamanho⌋`.
+    /// Às cegas exige espelho: 422 `tournament.blind_needs_mirror`.
     pub fn check_entrants(&self, champion_pool: u32, players: usize) -> Result<(), ApiError> {
+        engine::veto::PickOrder::from(self.veto.pick_order).check(self.champion_rules.mirror)?;
         TournamentSetup {
             team_size: self.team_size(),
             slots: players,
@@ -360,6 +362,35 @@ mod tests {
             (err.code, err.params),
             ("format.not_enough_players", vec![("min", 8), ("got", 7)])
         );
+    }
+
+    #[test]
+    fn blind_needs_a_mirror_at_every_check() {
+        use crate::tournaments::veto::PickOrder;
+        let blind = |mirror: bool| {
+            let mut s = setup(8, 1, None, vec![double(3)]);
+            s.veto.pick_order = PickOrder::Blind;
+            s.champion_rules.mirror = mirror;
+            s
+        };
+        assert_eq!(check(blind(true)), Ok(()));
+        assert_eq!(
+            check(blind(false)),
+            Err(("tournament.blind_needs_mirror", vec![]))
+        );
+        // Ao iniciar, é a checagem dos que entram que roda.
+        let err = blind(false).check_entrants(17, 8).unwrap_err();
+        assert_eq!(err.code, "tournament.blind_needs_mirror");
+        // Em qualquer tamanho, e sem espelho as outras ordens continuam.
+        let mut team = blind(false);
+        team.mode = TournamentMode::Tdm;
+        team.team_size = 2;
+        assert_eq!(
+            check(team.clone()),
+            Err(("tournament.blind_needs_mirror", vec![]))
+        );
+        team.veto.pick_order = PickOrder::Alternating;
+        assert_eq!(check(team), Ok(()));
     }
 
     #[test]

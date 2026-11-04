@@ -1,12 +1,14 @@
 //! Testes de `veto_rooms`: criar e os limites (`create`), entrar num lugar e os
-//! papéis (`seats`), o veto até o fim, no duelo e nos times (`flow`), os prazos,
-//! a validade e a limpeza (`time`), o socket por token (`socket`), quantas idas
-//! ao banco custa cada clique e a leitura do espectador (`cost`) e as regras do
-//! banco (`schema`).
+//! papéis (`seats`), o veto até o fim, no duelo e nos times (`flow`), a ordem das
+//! escolhas, quem começa e o que fica escondido às cegas (`pick_order`), os
+//! prazos, a validade e a limpeza (`time`), o socket por token (`socket`), quantas
+//! idas ao banco custa cada clique e a leitura do espectador (`cost`) e as regras
+//! do banco (`schema`).
 
 mod cost;
 mod create;
 mod flow;
+mod pick_order;
 mod schema;
 mod seats;
 mod socket;

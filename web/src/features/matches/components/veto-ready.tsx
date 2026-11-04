@@ -35,13 +35,7 @@ export function VetoReady({ done = false }: Props) {
   return (
     <Section title={tSteps("ready")}>
       {!done && (
-        <p>
-          {t(
-            veto.team_pick_seconds != null
-              ? "waitingReadyTeams"
-              : "waitingReady",
-          )}
-        </p>
+        <p>{t(veto.team_size > 1 ? "waitingReadyTeams" : "waitingReady")}</p>
       )}
       <ul className={styles.list}>
         {(["a", "b"] as const).map((side) => (

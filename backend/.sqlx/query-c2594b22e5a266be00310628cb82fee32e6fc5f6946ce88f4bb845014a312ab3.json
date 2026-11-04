@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments\n         set status = $2, updated_at = now(),\n             pick_order = case when pick_order = 'open' and $2 not in ('in_progress', 'finished')\n                               then 'alternating' else pick_order end\n         where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c2594b22e5a266be00310628cb82fee32e6fc5f6946ce88f4bb845014a312ab3"
+}

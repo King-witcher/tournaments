@@ -61,9 +61,11 @@ export type TournamentValues = {
   mapPool: string[] | null;
   /** Draft de campeões da série no site (`false`: fora do site). */
   championPhase: boolean;
+  /** A ordem das escolhas de campeão, depois dos bans. */
+  pickOrder: Schemas["PickOrder"];
   /** Segundos de cada passo do veto. */
   vetoSeconds: number;
-  /** TDM: segundos da janela simultânea de campeões. */
+  /** Segundos da janela simultânea de campeões (às cegas). */
   teamPickSeconds: number;
   /** O envio do jogador exige captura de tela do placar (o campo só aparece com capturas na API). */
   screenshotsRequired: boolean;
@@ -98,8 +100,9 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
  * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
  * vagas, 1 ban por série, espelho permitido, check-in de 30 min, 10 min para
  * contestar, veto de mapas no pool padrão, draft de campeões no site e 30 s
- * por passo. Trocado para o TDM: times de 2, a regra de não repetição por
- * jogador, sem campeão igual no time e 60 s para a janela simultânea.
+ * por passo, com as escolhas alternadas. Trocado para o TDM: times de 2, a regra
+ * de não repetição por jogador e sem campeão igual no time. Às cegas, 60 s para
+ * a janela simultânea.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -131,6 +134,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     vetoOrder: "bans_first",
     mapPool: null,
     championPhase: true,
+    pickOrder: "alternating",
     vetoSeconds: 30,
     teamPickSeconds: 60,
     screenshotsRequired: false,
@@ -175,6 +179,7 @@ export function valuesFrom(
     vetoOrder: tournament.veto.order,
     mapPool: tournament.veto.map_pool,
     championPhase: tournament.veto.champion_phase,
+    pickOrder: tournament.veto.pick_order,
     vetoSeconds: tournament.veto.step_seconds,
     teamPickSeconds: tournament.veto.team_pick_seconds,
     screenshotsRequired: tournament.screenshots_required,
@@ -200,10 +205,15 @@ export function valuesFromSource(
     slug: "",
     startsAt: null,
     mapPool: pool.length > 0 ? pool : null,
+    // A janela aberta só fica em quem já a tinha: não se escolhe mais.
+    pickOrder:
+      source.veto.pick_order === "open"
+        ? "alternating"
+        : source.veto.pick_order,
   };
 }
 
-/** É TDM: times, capitão e escolha simultânea de campeões. */
+/** É TDM: times, capitão e escolha de campeões por jogador. */
 export const isTdm = (values: Pick<TournamentValues, "mode">) =>
   values.mode === "tdm";
 
@@ -225,8 +235,38 @@ export function poolOf(
 /** As opções do tempo de cada passo do veto e do draft (a API aceita de 10 a 300). */
 export const STEP_SECONDS = [15, 20, 30, 45, 60, 90, 120];
 
-/** A janela da escolha simultânea do TDM (a API aceita de 15 a 300). */
+/** A janela da escolha simultânea (a API aceita de 15 a 300). */
 export const TEAM_PICK_SECONDS = [15, 30, 45, 60, 90, 120, 180, 300];
+
+/** O draft no site tem passos, com o tempo de cada passo: bans ou picks alternados. */
+export function draftHasSteps(
+  values: Pick<
+    TournamentValues,
+    "championPhase" | "pickOrder" | "bansPerSeries"
+  >,
+) {
+  return (
+    values.championPhase &&
+    (values.pickOrder === "alternating" || values.bansPerSeries > 0)
+  );
+}
+
+/** As escolhas de campeão são uma janela, com o tempo próprio dela. */
+export const hasPickWindow = (
+  values: Pick<TournamentValues, "championPhase" | "pickOrder">,
+) => values.championPhase && values.pickOrder !== "alternating";
+
+/**
+ * As ordens das escolhas. A janela aberta só aparece para quem já a tem, o
+ * torneio que começou antes de a ordem existir.
+ */
+export function pickOrderChoices(
+  current: Schemas["PickOrder"],
+): Schemas["PickOrder"][] {
+  return current === "open"
+    ? ["alternating", "blind", "open"]
+    : ["alternating", "blind"];
+}
 
 /**
  * O grupo do formulário em que fica o tempo de cada passo: Mapas, com veto
@@ -234,10 +274,13 @@ export const TEAM_PICK_SECONDS = [15, 30, 45, 60, 90, 120, 180, 300];
  * no site tem passos; nenhum, sem passo (o sorteio do mapa não tem).
  */
 export function stepSecondsGroup(
-  values: Pick<TournamentValues, "mapMode" | "championPhase">,
+  values: Pick<
+    TournamentValues,
+    "mapMode" | "championPhase" | "pickOrder" | "bansPerSeries"
+  >,
 ) {
   if (values.mapMode === "veto" || values.mapMode === "vote") return "maps";
-  return values.championPhase ? "champions" : null;
+  return draftHasSteps(values) ? "champions" : null;
 }
 
 /** Os melhor de N que o torneio usa, sem repetir, do menor para o maior. */
@@ -436,6 +479,7 @@ function setupBody(values: TournamentValues) {
       // Sem mexer, na criação, vale o pool padrão da API.
       map_pool: values.mapPool ?? undefined,
       champion_phase: values.championPhase,
+      pick_order: values.pickOrder,
       step_seconds: values.vetoSeconds,
       team_pick_seconds: values.teamPickSeconds,
     },

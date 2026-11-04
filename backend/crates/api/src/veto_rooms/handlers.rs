@@ -13,7 +13,7 @@ use sqlx::PgConnection;
 
 use super::{
     room::Room,
-    types::{JoinVetoRoom, VetoRoomDetail, VetoRoomPath, VetoRoomRole},
+    types::{JoinVetoRoom, VetoRoomDetail, VetoRoomPath, VetoRoomRole, VetoRoomStart},
 };
 use crate::{
     AppState,
@@ -163,7 +163,7 @@ pub async fn join_veto_room(
     tag = "veto_rooms",
     params(("token" = String, Path, description = "O link de um lugar")),
     responses(
-        (status = OK, body = VetoRoomDetail, description = "O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é sorteado, e a sala passa a valer 24 h. Repetir não muda nada"),
+        (status = OK, body = VetoRoomDetail, description = "O lado de quem clica está pronto (qualquer jogador do lado responde por ele). Com os dois prontos, o veto começa: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Repetir não muda nada"),
         (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador)"),
         (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
         (status = CONFLICT, body = ErrorBody, description = "veto_room.not_joined (falta entrar no lugar), veto.already_begun"),
@@ -195,15 +195,23 @@ pub async fn veto_room_ready(
     finish(&state, tx, &room).await
 }
 
-/// O começo: a seed da série e quem começa, por sorteio (a sala não tem seed
-/// melhor). 422 `champions.pool_exhausted` `{required, available}` com campeões
-/// ativos de menos para os bans.
+/// O lado a gravar no começo (o seed melhor do `engine`) para `Side::A` fazer o
+/// primeiro passo da sala: é quem começa o veto de mapas e abre os picks; sem
+/// veto de mapas, os bans de campeão vêm primeiro, e eles começam pelo outro.
+fn first_for_side_a(room: &Room) -> Side {
+    let bans_first = room.rules.map_mode == engine::veto::MapMode::Off && room.rules.bans() > 0;
+    if bans_first { Side::B } else { Side::A }
+}
+
+/// O começo: a seed da série e quem começa, sorteado (a sala não tem seed
+/// melhor) ou, se foi pedido, o lado A. 422 `champions.pool_exhausted`
+/// `{required, available}` com campeões ativos de menos para os bans.
 fn begin(room: &Room) -> Result<NewVetoEvent, ApiError> {
     let seed: u64 = rand::random();
-    let first = if rand::random::<bool>() {
-        Side::A
-    } else {
-        Side::B
+    let first = match room.who_starts {
+        VetoRoomStart::A => first_for_side_a(room),
+        VetoRoomStart::Draw if rand::random::<bool>() => Side::A,
+        VetoRoomStart::Draw => Side::B,
     };
     let ctx = Ctx::alone(&room.champions);
     engine::veto::Veto::new(room.rules.clone(), room.best_of()).apply(
@@ -227,7 +235,7 @@ fn begin(room: &Room) -> Result<NewVetoEvent, ApiError> {
     params(("token" = String, Path, description = "O link de um lugar")),
     request_body = VetoChoice,
     responses(
-        (status = OK, body = VetoRoomDetail, description = "O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. Na janela simultânea dos times (`team_pick`), cada lugar escolhe o próprio campeão de cada partida (`game`). Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão"),
+        (status = OK, body = VetoRoomDetail, description = "O passo do lado da vez, como na série de um torneio: ban ou pick de mapa, ban ou pick de campeão; qualquer jogador do lado faz o passo dele. No pick por jogador (`team_pick`), cada lugar escolhe o próprio campeão: na janela simultânea, para a partida que disser (`game`); na ordem alternada, se é do lado da vez, para a partida que a vez diz. Vale até 2 s depois do prazo que a sala mostra; depois, é sorteado. Não lê a sessão"),
         (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador)"),
         (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
         (status = CONFLICT, body = ErrorBody, description = "veto_room.not_joined (falta entrar no lugar), veto.not_begun, veto.step_changed (veio `step` e a vez já não é essa: o tempo acabou ou o outro lado agiu), veto.finished, veto.not_your_turn, veto.already_picked, veto.champion_taken"),

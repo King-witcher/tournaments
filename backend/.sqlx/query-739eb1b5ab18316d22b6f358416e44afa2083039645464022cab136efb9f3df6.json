@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, admission,\n                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,\n                counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,\n                team_size, team_pick_seconds, veto_order, invite_token)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,\n                   $19, $20, $21, $22)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
+  "query": "insert into tournaments\n               (tenant_id, slug, locale, name, description, rules, mode, admission,\n                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,\n                counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,\n                team_size, team_pick_seconds, veto_order, pick_order, invite_token)\n           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,\n                   $19, $20, $21, $22, $23)\n           on conflict (tenant_id, slug) do nothing\n           returning id",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,7 @@
         "Int2",
         "Int4",
         "Text",
+        "Text",
         "Text"
       ]
     },
@@ -45,5 +46,5 @@
       false
     ]
   },
-  "hash": "82f3a02de6e95ba74b8b6f913d60684b5c16c1dbd3cd37faa65b7e75459a7565"
+  "hash": "739eb1b5ab18316d22b6f358416e44afa2083039645464022cab136efb9f3df6"
 }

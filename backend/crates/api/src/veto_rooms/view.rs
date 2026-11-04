@@ -42,6 +42,7 @@ impl Room {
                 can_undo: false,
                 reportable: false,
                 acting,
+                viewer: self.seat().map(|s| s.side),
                 names: &names,
             },
         );

@@ -9,8 +9,10 @@
 //!   dois confirmaram, ou quando o organizador força (`handlers::start`).
 //! - Tudo o que é do lado (Pronto, veto de mapas, bans, voto, pick do duelo,
 //!   pedir e responder o desfazer) é de qualquer jogador do time: vale o
-//!   primeiro clique, e o histórico grava quem fez. A janela simultânea do
-//!   TDM é de cada jogador.
+//!   primeiro clique, e o histórico grava quem fez. O pick por jogador é de
+//!   cada um (`PickOrder`: alternado nos times, ou a janela simultânea).
+//! - Às cegas, o que um lado escolheu fica escondido de quem não é dele até a
+//!   janela fechar: quem monta o que sai é `view::build`, num ponto só.
 //! - Cada passo (`handlers::step`) passa pelo `engine` com as opções de agora
 //!   (`Ctx`: os campeões do torneio e os já usados fora da série, pelo escopo
 //!   da regra) e entra no histórico. O draft de campeões é da série inteira,

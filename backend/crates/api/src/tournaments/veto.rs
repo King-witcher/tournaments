@@ -1,6 +1,7 @@
 //! A configuração do veto das séries: como sai o mapa de cada partida (veto,
 //! votação, sorteio ou desligado), a ordem dos bans e picks do veto, o pool de
-//! mapas do torneio, o draft de campeões e o tempo de cada passo. Faz parte da
+//! mapas do torneio, o draft de campeões, a ordem das escolhas e o tempo de cada
+//! passo. Faz parte da
 //! configuração (`Setup`): muda até o torneio começar. O veto de cada partida
 //! fica em `matches`.
 
@@ -113,6 +114,65 @@ impl From<VetoOrder> for ev::VetoOrder {
     }
 }
 
+/// A ordem das escolhas de campeão, depois dos bans.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum PickOrder {
+    /// Uma por vez, partida a partida, alternando os lados, com `step_seconds`
+    /// por passo. Nos times, por jogador: O, X, X, O, O, X, X, O...
+    Alternating,
+    /// Todos ao mesmo tempo, em `team_pick_seconds`, com as escolhas de um lado
+    /// escondidas dos outros até todos terminarem. Só com espelho.
+    Blind,
+    /// Todos ao mesmo tempo, vendo as escolhas dos outros. Só de torneio ou sala
+    /// em time que começou antes de a ordem existir: não se escolhe mais.
+    Open,
+}
+
+impl PickOrder {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Alternating => "alternating",
+            Self::Blind => "blind",
+            Self::Open => "open",
+        }
+    }
+
+    /// Lê `pick_order` (garantida pelo check da tabela).
+    pub fn from_db(value: &str) -> Result<Self, ApiError> {
+        [Self::Alternating, Self::Blind, Self::Open]
+            .into_iter()
+            .find(|o| o.as_str() == value)
+            .ok_or_else(|| {
+                tracing::error!(
+                    pick_order = value,
+                    "ordem das escolhas desconhecida no banco"
+                );
+                ApiError::internal()
+            })
+    }
+}
+
+impl From<PickOrder> for ev::PickOrder {
+    fn from(order: PickOrder) -> Self {
+        match order {
+            PickOrder::Alternating => Self::Alternating,
+            PickOrder::Blind => Self::Blind,
+            PickOrder::Open => Self::Open,
+        }
+    }
+}
+
+impl From<ev::PickOrder> for PickOrder {
+    fn from(order: ev::PickOrder) -> Self {
+        match order {
+            ev::PickOrder::Alternating => Self::Alternating,
+            ev::PickOrder::Blind => Self::Blind,
+            ev::PickOrder::Open => Self::Open,
+        }
+    }
+}
+
 /// A configuração do veto que chega: o que vier no lugar do atual (na
 /// criação, do padrão).
 #[derive(Deserialize, ToSchema, Default)]
@@ -133,13 +193,17 @@ pub struct VetoInput {
     /// de `champion_rules`. Padrão ligado; vale com qualquer modo de mapa.
     #[serde(default)]
     pub champion_phase: Option<bool>,
+    /// A ordem das escolhas de campeão: `alternating` (padrão) ou `blind`, que
+    /// exige espelho. `open` só vale para quem já a tem.
+    #[serde(default)]
+    pub pick_order: Option<PickOrder>,
     /// Segundos de cada passo, de 10 a 300 (padrão 30); no fim, a escolha é
     /// sorteada.
     #[serde(default)]
     pub step_seconds: Option<i32>,
-    /// TDM: segundos da janela simultânea de campeões (cada jogador escolhe
-    /// um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no
-    /// fim, o que faltou é sorteado.
+    /// Segundos da janela simultânea de campeões (`blind`: cada jogador escolhe
+    /// um para cada partida, depois dos bans), de 15 a 300 (padrão 60); no fim,
+    /// o que faltou é sorteado.
     #[serde(default)]
     pub team_pick_seconds: Option<i32>,
 }
@@ -152,8 +216,9 @@ pub struct VetoSetup {
     /// O pool, na ordem.
     pub pool: Vec<MapId>,
     pub champion_phase: bool,
+    pub pick_order: PickOrder,
     pub step_seconds: i32,
-    /// TDM: segundos da escolha simultânea de campeões.
+    /// Segundos da escolha simultânea de campeões.
     pub team_pick_seconds: i32,
 }
 
@@ -166,8 +231,9 @@ pub struct VetoSettings {
     /// Slugs do pool, na ordem.
     pub map_pool: Vec<String>,
     pub champion_phase: bool,
+    pub pick_order: PickOrder,
     pub step_seconds: i32,
-    /// TDM: segundos da escolha simultânea de campeões.
+    /// Segundos da escolha simultânea de campeões.
     pub team_pick_seconds: i32,
 }
 
@@ -188,6 +254,7 @@ impl VetoSetup {
             order: VetoOrder::BansFirst,
             pool: Vec::new(),
             champion_phase: false,
+            pick_order: PickOrder::Alternating,
             step_seconds: DEFAULT_STEP_SECONDS,
             team_pick_seconds: DEFAULT_TEAM_PICK_SECONDS,
         }
@@ -200,6 +267,7 @@ impl VetoSetup {
             order: self.order.into(),
             pool: self.pool.clone(),
             champion_phase: self.champion_phase,
+            pick_order: self.pick_order.into(),
             team_size: u8::try_from(team_size).unwrap_or(1),
             champions,
         }
@@ -250,12 +318,19 @@ impl VetoSetup {
 }
 
 /// O que `input` deixa, sobre `current` (na criação, `None`: o padrão). Os
-/// slugs viram ids dos mapas ativos. Erro: 422 `tournament.map_unknown`.
+/// slugs viram ids dos mapas ativos. Erros: 422 `tournament.map_unknown` e
+/// `tournament.pick_order_invalid` (a janela aberta, que só fica em quem já a
+/// tem).
 pub async fn resolve(
     conn: &mut PgConnection,
     input: VetoInput,
     current: Option<&VetoSetup>,
 ) -> Result<VetoSetup, ApiError> {
+    if input.pick_order == Some(PickOrder::Open)
+        && current.map(|c| c.pick_order) != Some(PickOrder::Open)
+    {
+        return Err(ApiError::invalid("tournament.pick_order_invalid"));
+    }
     let pool = match (input.map_pool, current) {
         (Some(slugs), _) => {
             let ids: HashMap<String, MapId> = maps::active_ids(conn, &slugs).await?;
@@ -282,6 +357,10 @@ pub async fn resolve(
             .champion_phase
             .or(current.map(|c| c.champion_phase))
             .unwrap_or(true),
+        pick_order: input
+            .pick_order
+            .or(current.map(|c| c.pick_order))
+            .unwrap_or(PickOrder::Alternating),
         step_seconds: input
             .step_seconds
             .or(current.map(|c| c.step_seconds))
@@ -303,6 +382,7 @@ mod tests {
             order: VetoOrder::BansFirst,
             pool: (1..=maps).map(MapId).collect(),
             champion_phase: true,
+            pick_order: PickOrder::Alternating,
             step_seconds: seconds,
             team_pick_seconds: DEFAULT_TEAM_PICK_SECONDS,
         }

@@ -40,6 +40,14 @@ export function poolStates(
   return states;
 }
 
+/** Os picks são por jogador (`team_picks`): nos times e em toda janela. */
+export const perPlayer = (veto: Veto) =>
+  veto.team_size > 1 || veto.pick_order !== "alternating";
+
+/** O passo esperado é a janela simultânea: sem vez, cada um escolhe a partida. */
+export const isWindow = (turn: Schemas["VetoTurn"]) =>
+  turn.action === "team_pick" && turn.pick_for == null;
+
 /** A chave de texto do passo esperado (`ban_map`, `pick_champion`, `vote_map`...). */
 export function turnKey(turn: Schemas["VetoTurn"]) {
   return `${turn.action}_${turn.target}` as const;

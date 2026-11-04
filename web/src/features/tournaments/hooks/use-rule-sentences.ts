@@ -26,10 +26,9 @@ export function useRuleSentences() {
     },
 
     /**
-     * O draft de campeões da série: os bans, os picks (no duelo, partida a
-     * partida; no TDM, a janela simultânea, com o draft no site), o que pode
-     * repetir na partida e entre partidas. No TDM, qualquer jogador age pelo
-     * time.
+     * O draft de campeões da série: os bans, os picks, pela ordem das escolhas
+     * (com o draft no site), o que pode repetir na partida e entre partidas. No
+     * TDM, qualquer jogador age pelo time.
      */
     champions: (tournament: Tournament): string[] => {
       const rules = tournament.champion_rules;
@@ -39,14 +38,16 @@ export function useRuleSentences() {
       const tdm = tournament.mode === "tdm";
       const who = rules.no_repeat?.who ?? "player";
       const mode = tdm ? "tdm" : "duel";
+      const order = tournament.veto.pick_order;
+      const window = formatSeconds(tournament.veto.team_pick_seconds);
       return [
         bans > 0 ? t(`champions.bans.${mode}`, { count: bans }) : t("noBans"),
         site &&
-          (tdm
-            ? t("champions.pick.tdm", {
-                window: formatSeconds(tournament.veto.team_pick_seconds),
-              })
-            : t("champions.pick.duel")),
+          (order === "alternating"
+            ? t(`champions.pick.${mode}`)
+            : order === "blind"
+              ? t(`champions.pick.blind.${mode}`, { window })
+              : t("champions.pick.open", { window })),
         t(`champions.mirror.${mode}.${rules.mirror ? "on" : "off"}`),
         tdm &&
           t(

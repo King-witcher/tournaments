@@ -117,9 +117,9 @@ pub async fn create(
                (tenant_id, slug, locale, name, description, rules, mode, admission,
                 max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
-                team_size, team_pick_seconds, veto_order, invite_token)
+                team_size, team_pick_seconds, veto_order, pick_order, invite_token)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-                   $19, $20, $21, $22)
+                   $19, $20, $21, $22, $23)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -143,6 +143,7 @@ pub async fn create(
         new.setup.team_size as i16,
         new.setup.veto.team_pick_seconds,
         new.setup.veto.order.as_str(),
+        new.setup.veto.pick_order.as_str(),
         token::random_token()
     )
     .fetch_optional(&mut *conn)
@@ -233,7 +234,7 @@ pub async fn update(
         r#"update tournaments
            set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,
                veto_seconds = $6, mode = $7, team_size = $8, team_pick_seconds = $9,
-               veto_order = $10
+               veto_order = $10, pick_order = $11
            where id = $1"#,
         id.0,
         setup.max_participants,
@@ -244,7 +245,8 @@ pub async fn update(
         setup.mode.as_str(),
         setup.team_size as i16,
         setup.veto.team_pick_seconds,
-        setup.veto.order.as_str()
+        setup.veto.order.as_str(),
+        setup.veto.pick_order.as_str()
     )
     .execute(&mut *conn)
     .await?;

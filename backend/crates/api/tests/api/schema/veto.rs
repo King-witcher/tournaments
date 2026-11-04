@@ -1,8 +1,9 @@
 //! Veto: o histórico só cresce, com a forma de cada tipo e os mesmos lados;
 //! pronto antes do começo e o resto depois dele, um começo por partida; o
 //! pool de mapas com mapas para a série mais longa e, como a configuração do
-//! veto (inclusive a ordem dele, `veto_order`: as duas ordens e o padrão),
-//! congelado depois do início; tudo sai com o torneio.
+//! veto (inclusive a ordem dele, `veto_order`: as duas ordens e o padrão, e a
+//! das escolhas, `pick_order`, que às cegas exige espelho), congelado depois do
+//! início; tudo sai com o torneio.
 
 use serde_json::json;
 use sqlx::PgPool;
@@ -167,6 +168,62 @@ async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
 }
 
 #[tokio::test]
+async fn the_pick_order_is_one_of_three_and_blind_needs_a_mirror() {
+    let (db, _lease) = crate::db::test_db().await;
+    let _ = quake_br(&db).await;
+    // Uma linha que não diz a ordem (o código anterior à coluna, durante o
+    // deploy) nasce alternada, o padrão novo.
+    let tenant = tenant_id(&db, "quake-br").await;
+    let mut tx = db.begin().await.unwrap();
+    let order: String = sqlx::query_scalar(
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)
+         returning pick_order",
+    )
+    .bind(tenant)
+    .bind(INVITE_TOKEN)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    assert_eq!(order, "alternating");
+    let unknown = sqlx::query("update tournaments set pick_order = 'random'")
+        .execute(&mut *tx)
+        .await;
+    assert_eq!(
+        rejected(unknown),
+        rule(CHECK, "tournaments_pick_order_check")
+    );
+    tx.rollback().await.unwrap();
+
+    let (app, ana) = {
+        let ana = user(&db, "Outra").await;
+        let app = app(db.clone());
+        create(&app, &ana, "outra").await;
+        (app, ana)
+    };
+    let (status, created) = post(&app, "/tenants/outra/tournaments", &ana, duel("copa")).await;
+    assert_eq!(status, StatusCode::CREATED, "{created}");
+    exec(&db, "update tournaments set pick_order = 'blind'")
+        .await
+        .unwrap();
+    // Às cegas sem espelho, por qualquer das duas colunas.
+    let mirror_off =
+        "update tournaments set champion_rules = jsonb_set(champion_rules, '{mirror}', 'false')";
+    assert_eq!(
+        rejected(exec(&db, mirror_off).await),
+        rule(CHECK, "tournaments_blind_needs_mirror")
+    );
+    exec(&db, "update tournaments set pick_order = 'alternating'")
+        .await
+        .unwrap();
+    exec(&db, mirror_off).await.unwrap();
+    assert_eq!(
+        rejected(exec(&db, "update tournaments set pick_order = 'blind'").await),
+        rule(CHECK, "tournaments_blind_needs_mirror")
+    );
+}
+
+#[tokio::test]
 async fn the_pool_fits_the_series_and_freezes_with_the_start() {
     let (db, _lease) = crate::db::test_db().await;
     let (tournament, _, _, _) = started(&db).await;
@@ -186,6 +243,13 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
         format!("update tournaments set veto_order = 'alternating' where id = {tournament}");
     assert_eq!(
         rejected(exec(&db, &veto_order).await),
+        rule(CHECK, "tournaments_veto_started_frozen")
+    );
+
+    // A das escolhas também: o replay lê da linha.
+    let pick_order = format!("update tournaments set pick_order = 'blind' where id = {tournament}");
+    assert_eq!(
+        rejected(exec(&db, &pick_order).await),
         rule(CHECK, "tournaments_veto_started_frozen")
     );
 

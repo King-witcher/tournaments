@@ -13,6 +13,7 @@ import { useValuesSummary } from "@/features/tournaments/hooks/use-values-summar
 import type { FieldErrors } from "@/features/tournaments/lib/form-errors";
 import {
   defaultValues,
+  draftHasSteps,
   type NoRepeatChoice,
   poolOf,
   STEP_SECONDS,
@@ -35,6 +36,7 @@ import { RadioGroup } from "@/shared/ui/radio-group";
 const TEAM_SIZES = ["1", "2", "3", "4"];
 const BEST_OF = ["1", "3", "5"];
 const MAP_MODES = ["veto", "off"] as const;
+const WHO_STARTS: components["schemas"]["VetoRoomStart"][] = ["draw", "a"];
 /** Na sala, a repetição só vale dentro da série. */
 const REPEAT_CHOICES: NoRepeatChoice[] = ["off", "series"];
 const NO_ERRORS: FieldErrors = {};
@@ -54,8 +56,8 @@ type Failure = { message: string; login: boolean };
 
 /**
  * Criar uma sala: o modo e o melhor de N à vista, e o resto (os mesmos campos
- * do formulário de torneio) em dois grupos fechados, com o resumo no título.
- * Criada, a pessoa vai para a página de gestão, com os links.
+ * do formulário de torneio, e quem começa) em dois grupos fechados, com o resumo
+ * no título. Criada, a pessoa vai para a página de gestão, com os links.
  */
 export function NewVetoRoomForm({ maps, signedIn }: Props) {
   const t = useTranslations("VetoRoom.form");
@@ -72,6 +74,8 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
     finalsBestOf: 3,
   }));
   const [open, setOpen] = useState({ maps: false, champions: false });
+  const [whoStarts, setWhoStarts] =
+    useState<components["schemas"]["VetoRoomStart"]>("draw");
   const onChange = (patch: Partial<TournamentValues>) =>
     setValues((v) => ({ ...v, ...patch }));
 
@@ -93,11 +97,13 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
           body: {
             team_size: teamSizeOf(values),
             best_of: values.bestOf,
+            who_starts: whoStarts,
             veto: {
               map_mode: values.mapMode,
               order: values.vetoOrder,
               map_pool: values.mapMode === "veto" ? pool : undefined,
               champion_phase: values.championPhase,
+              pick_order: values.pickOrder,
               step_seconds: values.vetoSeconds,
               team_pick_seconds: values.teamPickSeconds,
             },
@@ -158,7 +164,12 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
           {/* Mapas antes de Campeões: a ordem em que a sala os decide. */}
           <FormAccordionItem
             title={tTournament("veto.title")}
-            summary={summary.veto(values, maps)}
+            summary={[
+              summary.veto(values, maps),
+              whoStarts === "a" && t("whoStartsSummary"),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             group="maps"
             open={open.maps || poolTooSmall}
             onToggle={(next) => setOpen((o) => ({ ...o, maps: next }))}
@@ -173,6 +184,17 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
                 label: tTournament(`veto.mapModes.${value}`),
               }))}
               onChange={(mapMode) => onChange({ mapMode })}
+            />
+            <RadioGroup
+              legendText={t("whoStarts")}
+              name="whoStarts"
+              orientation="horizontal"
+              value={whoStarts}
+              options={WHO_STARTS.map((value) => ({
+                value,
+                label: t(`whoStartsOptions.${value}`),
+              }))}
+              onChange={setWhoStarts}
             />
             {values.mapMode === "veto" && (
               <>
@@ -196,7 +218,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
               <SecondsSelect
                 labelText={tTournament("veto.seconds")}
                 helperText={tTournament(
-                  values.championPhase
+                  draftHasSteps(values)
                     ? "veto.secondsHintDraft"
                     : "veto.secondsHint",
                 )}

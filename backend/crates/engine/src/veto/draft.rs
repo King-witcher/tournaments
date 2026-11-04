@@ -1,6 +1,6 @@
 //! O draft de campeões da série: os bans, os picks do duelo e o que cada um
-//! pode escolher para uma partida (o mesmo vale na janela simultânea dos
-//! times, `team.rs`).
+//! pode escolher para uma partida (o mesmo vale nos picks por jogador,
+//! `team.rs`).
 //!
 //! - **Opções de um pick** (`pick_options`): os campeões sem ban na série,
 //!   menos os que outro já escolheu para a mesma partida (o adversário, sem
@@ -107,7 +107,8 @@ impl Veto {
     /// Os passos do draft de campeões desta série (ver `draft_sequence`).
     pub(super) fn draft_sequence(&self) -> Vec<DraftStep> {
         let first = self.first().unwrap_or(Side::A);
-        draft_sequence(self.rules.bans(), self.best_of, first, self.rules.teams())
+        let per_player = self.rules.per_player();
+        draft_sequence(self.rules.bans(), self.best_of, first, per_player)
     }
 
     /// Os passos de campeão da série, na ordem: o draft (feito com a partida

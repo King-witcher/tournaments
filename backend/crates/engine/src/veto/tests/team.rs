@@ -443,6 +443,7 @@ fn the_map_veto_comes_first_in_teams() {
     let ctx = free(&champions);
     let rules = VetoRules {
         team_size: 2,
+        pick_order: PickOrder::Open,
         ..rules(MapMode::Veto, 3, true, 1)
     };
     let mut v = two_v_two(rules, 1);
@@ -470,6 +471,7 @@ fn the_vote_of_each_game_comes_back_in_teams() {
     let ctx = free(&champions);
     let rules = VetoRules {
         team_size: 2,
+        pick_order: PickOrder::Open,
         ..rules(MapMode::Vote, 5, true, 0)
     };
     let mut v = two_v_two(rules, 3);
