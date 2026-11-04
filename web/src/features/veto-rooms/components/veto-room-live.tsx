@@ -18,7 +18,8 @@ import { VetoRoomSteps } from "./veto-room-steps";
 /**
  * A página da sala, que se adapta ao link: quem joga entra no lugar e faz os
  * passos; o espectador assiste; a gestão vê os links e o andamento (antes do
- * começo, os links são a tarefa e vêm na coluna principal; depois, ao lado).
+ * começo, os links são a tarefa e vêm na coluna principal; depois, o veto
+ * ocupa a largura toda, como no link de quem joga, e os links ficam embaixo).
  */
 export function VetoRoomLive({ signedIn }: { signedIn: boolean }) {
   const t = useTranslations("VetoRoom");
@@ -59,15 +60,11 @@ export function VetoRoomLive({ signedIn }: { signedIn: boolean }) {
       ) : waiting ? (
         <PageColumns main={<VetoRoomLinks />} aside={<VetoReady />} />
       ) : (
-        <PageColumns
-          main={
-            <>
-              <VetoRoomSteps />
-              {history}
-            </>
-          }
-          aside={<VetoRoomLinks />}
-        />
+        <>
+          <VetoRoomSteps />
+          {history}
+          <VetoRoomLinks />
+        </>
       )}
     </>
   );

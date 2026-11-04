@@ -11,10 +11,19 @@ type Props = {
   image: ReactNode;
   name: string;
   state: TileState;
-  /** O retrato do campeão, estreito: o nome não aparece, só na dica. */
+  /**
+   * O campeão: o retrato estreito, sem nome nem etiqueta à vista (só o banido
+   * leva a marca), com a altura fixa. O nome fica para o leitor de tela.
+   */
   portrait?: boolean;
-  /** Etiqueta curta embaixo do nome ("Partida 2", "Voto de Ana", "Já usado"). */
+  /** Etiqueta curta embaixo do nome ("Partida 2", "Voto de Ana"); só nos mapas. */
   note?: string;
+  /**
+   * O motivo de quem vê não poder escolher o campeão, na dica discreta do
+   * tile (`state="unavailable"`): ele fica apagado, mas focável e lido como
+   * botão desabilitado, para o motivo abrir também pelo teclado e pelo toque.
+   */
+  hint?: string;
   /** O estado por extenso para o leitor de tela ("Banido por Ana"), quando não é botão. */
   described?: string;
   /** Na vez de quem vê: o cartão inteiro vira o botão, com a ação escrita nele. */
@@ -41,9 +50,12 @@ type Props = {
  * pé, com a cara do botão terciário (o de perigo no ban), porque no celular
  * não há hover que a mostre; a etiqueta também descreve o botão para o leitor
  * de tela. Fora da vez, o disponível guarda o lugar da ação: a grade não anda
- * embaixo do dedo quando a vez chega. No retrato (`portrait`), o nome fica na
- * dica do tile inteiro, que abre ao passar o mouse ou focar: fora da vez, o
- * tile é focável só por causa dela.
+ * embaixo do dedo quando a vez chega.
+ *
+ * O campeão (`portrait`) só responde "posso escolher agora?": sem etiqueta
+ * nem check de escolhido (quem escolheu o quê está no resumo do draft), o
+ * banido com a marca e o que quem vê não pode escolher apagado, com o motivo
+ * numa dica (`hint`). O pé tem sempre a altura da ação, com ela ou sem.
  */
 export function VetoTile({
   image,
@@ -51,6 +63,7 @@ export function VetoTile({
   state,
   portrait = false,
   note,
+  hint,
   described,
   action,
 }: Props) {
@@ -58,15 +71,32 @@ export function VetoTile({
   const Icon =
     state === "banned"
       ? ErrorFilled
-      : state === "picked"
+      : state === "picked" && !portrait
         ? CheckmarkFilled
         : null;
+  const reserved = (
+    <span aria-hidden className={cn(styles.action, styles.reserved)}>
+      &nbsp;
+    </span>
+  );
+  const foot = action ? (
+    <span aria-hidden className={styles.action}>
+      {action.text}
+    </span>
+  ) : portrait ? (
+    <span className={styles.slot}>
+      {reserved}
+      {Icon && <Icon aria-hidden size={16} className={styles.icon} />}
+    </span>
+  ) : (
+    state === "available" && reserved
+  );
   const body = (
     <>
       <span className={styles.image}>{image}</span>
       <span className={styles.text}>
         <span className={portrait ? styles.srOnly : styles.name}>{name}</span>
-        {(note || Icon) && (
+        {!portrait && (note || Icon) && (
           <span className={styles.state}>
             <span id={noteId} className={styles.note}>
               {note}
@@ -74,20 +104,11 @@ export function VetoTile({
             {Icon && <Icon aria-hidden size={16} className={styles.icon} />}
           </span>
         )}
-        {action ? (
-          <span aria-hidden className={styles.action}>
-            {action.text}
-          </span>
-        ) : (
-          state === "available" && (
-            <span aria-hidden className={cn(styles.action, styles.reserved)}>
-              &nbsp;
-            </span>
-          )
-        )}
+        {foot}
       </span>
     </>
   );
+  const disabled = !action && hint != null;
   const surface = action ? (
     <button
       type="button"
@@ -99,16 +120,32 @@ export function VetoTile({
     >
       {body}
     </button>
+  ) : disabled ? (
+    // biome-ignore lint/a11y/useSemanticElements: o `button` desabilitado sairia da ordem do teclado, e a dica com o motivo precisa abrir no foco e no toque.
+    <div
+      role="button"
+      tabIndex={0}
+      aria-disabled="true"
+      aria-label={name}
+      className={styles.surface}
+    >
+      {body}
+    </div>
   ) : (
-    <div className={styles.surface} tabIndex={portrait ? 0 : undefined}>
+    <div className={styles.surface}>
       {body}
       {described && <span className={styles.srOnly}>{described}</span>}
     </div>
   );
   return (
     <li className={cn(styles.tile, styles[state], portrait && styles.portrait)}>
-      {portrait ? (
-        <Tooltip description={name} className={styles.tip}>
+      {disabled ? (
+        <Tooltip
+          description={hint}
+          highContrast={false}
+          autoAlign
+          className={styles.tip}
+        >
           {surface}
         </Tooltip>
       ) : (

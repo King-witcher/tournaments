@@ -68,7 +68,7 @@ Assumido:
 - **Fora**: o clique não lê a sessão (token basta); só criar e entrar a leem. Nenhum aviso, push ou Discord.
 - **Resultado sem veto de mapas**: `Partida 1 - Athena(king) Ranger(thallis) | Partida 2 - ...`: a mesma ideia, com o nome da partida no lugar do mapa ("partida" é igual em pt e es). O mesmo formatador (`lib/veto-result.ts`) serve à série de torneio, num botão discreto entre os passos e a partida, com o veto acabado.
 - **Nome de quem não entrou**: o lado é "Lado A" (nos times, "Time de {primeiro que entrou}", como no torneio) e o lugar, "Lugar B2", também no resultado copiado. Quem entra depois passa a aparecer com o nome no que foi sorteado para ele.
-- **Tela**: os tabuleiros são os da série, pelo `VetoBoard` (`LiveMatchProvider` e `VetoRoomProvider`); a gestão vê os links na coluna principal até começar e, depois, ao lado do veto. Logado entra sozinho, sem clicar; cookie de sessão vencida cai no campo de nome.
+- **Tela**: os tabuleiros são os da série, pelo `VetoBoard` (`LiveMatchProvider` e `VetoRoomProvider`); a gestão vê os links na coluna principal, ao lado de "Pronto", até começar e, depois, o veto na largura toda, como no link de quem joga, e os links embaixo (o tabuleiro de campeões tem a grade própria de 16 colunas e não cabe numa coluna de 11). Logado entra sozinho, sem clicar; cookie de sessão vencida cai no campo de nome.
 
 ## Estado, prazos e banco
 

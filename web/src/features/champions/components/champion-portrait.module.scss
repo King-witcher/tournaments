@@ -1,5 +1,4 @@
 @use "@carbon/react/scss/theme";
-@use "@carbon/react/scss/utilities/focus-outline";
 
 // Na largura de quem contém, na proporção do retrato; o fundo aparece
 // enquanto a imagem carrega e no campeão sem retrato.
@@ -22,17 +21,4 @@
 // Banido no draft: o cinza mostra de relance o que está fora.
 .out {
   filter: grayscale(1);
-}
-
-// A dica ocupa a largura do retrato, não a do conteúdo (o `inline-block` dela).
-.tip.tip {
-  display: block;
-}
-
-.trigger {
-  display: block;
-
-  &:focus-visible {
-    @include focus-outline.focus-outline("outline");
-  }
 }

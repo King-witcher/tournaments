@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 import { cn } from "@/shared/lib/cn";
-import { Tooltip } from "@/shared/ui/tooltip";
 import styles from "./champion-portrait.module.scss";
 
 /**
@@ -37,7 +36,7 @@ const SIZES = {
 type Props = {
   slug: string;
   /**
-   * O nome, na dica ao passar o mouse ou focar: o retrato passa a ser o único
+   * O nome, para o leitor de tela (o texto alternativo): o retrato é o único
    * lugar dele. Sem isto, o retrato é decorativo e quem o contém dá o nome
    * (o tile da grade do draft).
    */
@@ -60,25 +59,18 @@ export function ChampionPortrait({
   out = false,
 }: Props) {
   const className = cn(styles.portrait, styles[shape], out && styles.out);
-  const portrait = IMAGES.has(slug) ? (
+  return IMAGES.has(slug) ? (
     <Image
       src={`/champions/${shape}/${slug}.webp`}
-      alt=""
+      alt={name ?? ""}
       {...SIZES[shape]}
       unoptimized
       draggable={false}
       className={className}
     />
+  ) : name ? (
+    <span role="img" aria-label={name} className={className} />
   ) : (
     <span aria-hidden className={className} />
-  );
-  if (!name) return portrait;
-  return (
-    <Tooltip label={name} className={styles.tip}>
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: o nome só existe na dica, que precisa abrir também pelo teclado. */}
-      <span role="img" tabIndex={0} className={styles.trigger}>
-        {portrait}
-      </span>
-    </Tooltip>
   );
 }

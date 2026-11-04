@@ -18,8 +18,8 @@ type Props = {
 };
 
 /**
- * Um campeão no resumo do draft e nos cartões: só o retrato, com o nome na
- * dica. O lugar de quem ainda não escolheu fica com o contorno tracejado, do
+ * Um campeão no resumo do draft e nos cartões: só o retrato (o nome fica para
+ * o leitor de tela). O lugar de quem ainda não escolheu fica com o contorno tracejado, do
  * mesmo tamanho, e embaixo o que falta.
  */
 export function ChampionFigure({

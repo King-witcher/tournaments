@@ -80,8 +80,8 @@
   color: theme.$text-secondary;
 }
 
-// O retrato do campeão abaixo do xlg (uns 80px): menos margem, para "Partida 1"
-// caber numa linha.
+// O retrato do campeão abaixo do xlg (uns 80px): menos margem, para a ação
+// caber na largura.
 .portrait .text {
   @include breakpoint.breakpoint-down(xlg) {
     padding-inline: spacing.$spacing-02;
@@ -101,15 +101,40 @@
   color: theme.$text-primary;
 }
 
-// Banido (com a imagem em cinza) ou fora pela regra: o nome em cinza legível
-// (nunca opacidade); o banido com o X vermelho.
+// Banido (com a imagem em cinza): o nome em cinza legível (nunca opacidade em
+// texto) e o X vermelho.
 .banned .icon {
   fill: theme.$support-error;
 }
 
-.banned .name,
-.unavailable .name {
+.banned .name {
   color: theme.$text-secondary;
+}
+
+// O pé do campeão: a ação, ou o lugar dela com a marca do banido por cima (as
+// duas na mesma célula), para a altura do tile não mudar de um estado a outro.
+.slot {
+  display: grid;
+  margin-block-start: auto;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+
+  .icon {
+    align-self: center;
+    justify-self: center;
+  }
+}
+
+// O campeão que quem vê não pode escolher: a imagem apagada (o texto não leva
+// opacidade) e o cursor de desabilitado; o motivo vem na dica.
+.unavailable .image {
+  opacity: 0.4;
+}
+
+.unavailable .surface {
+  cursor: not-allowed;
 }
 
 // Na vez de quem vê, o tile clicável do Carbon: fundo de hover, contorno de

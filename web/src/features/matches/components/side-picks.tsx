@@ -23,7 +23,7 @@ type Props = {
 };
 
 /**
- * O campeão de um lado numa partida, só o retrato, com o nome na dica: no
+ * O campeão de um lado numa partida, só o retrato (o nome fica para o leitor de tela): no
  * duelo, um (ou o quadro vazio, a escolher); no TDM, um por jogador, com quem
  * ainda escolhe na janela, e quem vê marcado como "Você".
  */

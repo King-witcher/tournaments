@@ -21,11 +21,11 @@ type Props = {
 };
 
 /**
- * A grade do draft: os retratos lado a lado, com o nome na dica, o banido e
- * o escolhido marcados como no veto de mapas ("Partida N" no escolhido), o
- * que a regra tira do pick de quem vê com o motivo curto e, na vez dele, os
- * que ele pode banir ou escolher como botões. Um aviso diz quando uma regra
- * cedeu para ele ter campeão.
+ * A grade do draft: os retratos lado a lado, cada um só com a resposta a "posso
+ * escolher agora?": o banido com a marca, o que a regra tira do pick de quem
+ * vê apagado, com o motivo numa dica, e, na vez dele, os que pode banir ou
+ * escolher como botões. Quem escolheu o quê fica no resumo do draft. Um aviso
+ * diz quando uma regra cedeu para ele ter campeão.
  */
 export function VetoChampionBoard({ rule, slot }: Props) {
   const t = useTranslations("Match.veto.champions");
@@ -39,7 +39,7 @@ export function VetoChampionBoard({ rule, slot }: Props) {
   const options = banning ? veto.options : (pickSlot?.options ?? []);
   const tiles = championTiles(veto, pickSlot);
   const game = pickSlot?.game ?? turn?.pick_for ?? 1;
-  const { note, described } = text;
+  const { hint, described } = text;
 
   return (
     <div className={styles.board}>
@@ -53,15 +53,12 @@ export function VetoChampionBoard({ rule, slot }: Props) {
             <VetoTile
               key={c.slug}
               image={
-                <ChampionPortrait
-                  slug={c.slug}
-                  out={tile.state !== "available" && tile.state !== "picked"}
-                />
+                <ChampionPortrait slug={c.slug} out={tile.state === "banned"} />
               }
               name={c.name}
               state={tile.state}
               portrait
-              note={note(tile)}
+              hint={hint(tile)}
               described={described(tile)}
               action={
                 options.includes(c.slug)

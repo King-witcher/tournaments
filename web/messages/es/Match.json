@@ -53,8 +53,7 @@
     },
     "lineup": "Jugaron: {a} contra {b}",
     "lateContest": "Puedes impugnarla hasta que empiece la próxima serie de {a} o de {b}.",
-    "game": "Partida {number}",
-    "games": "{count, plural, one {Partida {list}} other {Partidas {list}}}"
+    "game": "Partida {number}"
   },
   "respond": {
     "confirm": "Confirmar",
@@ -182,15 +181,7 @@
       "banChampion": "Banear {champion}",
       "pickChampion": "Elegir {champion} para la partida {game}",
       "reasons": {
-        "banned": "baneado por {name}",
-        "teammate": "un compañero lo eligió para esta partida",
-        "opponent": "el rival lo eligió para esta partida",
-        "repeat": {
-          "series": "elegido para otra partida",
-          "stage": "ya usado en esta fase",
-          "tournament": "ya usado en este torneo"
-        },
-        "picked": "elegido por {name} {count, plural, one {en la partida {list}} other {en las partidas {list}}}"
+        "banned": "baneado por {name}"
       },
       "gaveWay": {
         "rule": "La regla de no repetición no dejaba ningún campeón para esta partida. Por eso, aquí no vale.",
