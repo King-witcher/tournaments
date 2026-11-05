@@ -16,7 +16,6 @@ use super::{
     attempts::confirm_password,
     db, emails,
     handlers::sessions_ended,
-    kv,
     types::{AccountDeletion, ScheduleAccountDeletion},
 };
 use crate::{
@@ -122,6 +121,6 @@ async fn remind(
 
 /// Encerra todas as sessões da conta; os sockets delas fecham.
 pub async fn end_all_sessions(state: &AppState, user_id: i64) -> Result<(), ApiError> {
-    let ended = kv::delete_all_sessions(&state.redis, user_id).await?;
+    let ended = state.sessions.end_all(user_id).await?;
     sessions_ended(state, user_id, &ended).await
 }

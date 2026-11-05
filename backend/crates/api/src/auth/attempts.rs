@@ -2,37 +2,38 @@
 //! mexe nos próprios logins. O limite é por email, na forma canônica (exista
 //! a conta ou não), não por IP: não depende do proxy, mas quem sabe o email
 //! de outro e erra de propósito bloqueia o login com senha dele por um tempo
-//! (Discord e Google continuam entrando). A contagem fica no Redis
-//! (`kv::begin_password_attempt`), e cada tentativa conta antes da
+//! (Discord e Google continuam entrando). A contagem fica em memória
+//! (`AppState::password_attempts`): um deploy a zera, e quem insiste com emails
+//! inventados não gasta a cota do Redis. Cada tentativa conta antes da
 //! conferência: pedidos ao mesmo tempo não passam do limite.
 
-use axum::http::StatusCode;
-use chrono::{TimeDelta, Utc};
+use std::time::Duration;
 
-use super::{db, kv, password::verify_password};
+use axum::http::StatusCode;
+
+use super::{db, password::verify_password};
 use crate::{
     AppState,
-    shared::{ApiError, Redis},
+    shared::{ApiError, WindowLimit},
 };
 
 /// Erros de senha que a janela aceita; o seguinte é recusado sem conferir.
-const MAX_PASSWORD_FAILURES: usize = 5;
-const FAILURE_WINDOW: TimeDelta = TimeDelta::minutes(15);
+const MAX_PASSWORD_FAILURES: u32 = 5;
+/// Começa no primeiro erro.
+const FAILURE_WINDOW: Duration = Duration::from_secs(15 * 60);
 
 /// Confere `password` contra o hash do login de `email` (canônico).
 /// Bloqueado → 429 `auth.too_many_attempts` com `{"minutes"}`, sem nem olhar
 /// a senha. A tentativa conta antes de conferir e fica como erro; o acerto
 /// zera a contagem.
 pub async fn check_password(
-    redis: &Redis,
+    attempts: &WindowLimit,
     email: &str,
     hash: Option<String>,
     password: String,
 ) -> Result<bool, ApiError> {
-    if let Some(until) =
-        kv::begin_password_attempt(redis, email, MAX_PASSWORD_FAILURES, FAILURE_WINDOW).await?
-    {
-        let minutes = ((until - Utc::now()).num_seconds() + 59) / 60;
+    if let Err(wait) = attempts.hit(email.to_owned(), MAX_PASSWORD_FAILURES, FAILURE_WINDOW) {
+        let minutes = (wait.as_secs() as i64 + 59) / 60;
         return Err(
             ApiError::new(StatusCode::TOO_MANY_REQUESTS, "auth.too_many_attempts")
                 .with_params([("minutes", minutes.max(1))]),
@@ -41,7 +42,7 @@ pub async fn check_password(
 
     let ok = verify_password(hash, password).await?;
     if ok {
-        kv::clear_password_failures(redis, email).await?;
+        attempts.forget(email);
     }
     Ok(ok)
 }
@@ -82,7 +83,7 @@ async fn confirm_login(
     current_password: String,
 ) -> Result<(), ApiError> {
     if check_password(
-        &state.redis,
+        &state.password_attempts,
         &login.email,
         Some(login.password_hash),
         current_password,

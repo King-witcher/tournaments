@@ -1,7 +1,8 @@
 //! Conexão com o Redis e o prefixo que separa as chaves de cada ambiente (e de
 //! cada teste) no mesmo servidor. O que cada domínio guarda nele fica no `kv/`
 //! do domínio. No Upstash grátis cada comando conta na cota do mês: nada de
-//! comando no caminho de toda requisição sem necessidade.
+//! comando no caminho de toda requisição (a sessão, que seria o caso, fica em
+//! memória, `auth/session_store.rs`).
 
 use std::{fmt::Display, sync::Arc, time::Duration};
 
@@ -29,11 +30,6 @@ impl Redis {
             conn: ConnectionManager::new_lazy_with_config(Client::open(url)?, config)?,
             prefix: prefix.into(),
         })
-    }
-
-    /// Confere a conexão (a API faz uma vez, ao subir).
-    pub async fn ping(&self) -> RedisResult<()> {
-        self.query::<String>(&redis::cmd("PING")).await.map(drop)
     }
 
     /// `key` com o prefixo do ambiente.

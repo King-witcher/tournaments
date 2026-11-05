@@ -64,8 +64,8 @@ pub async fn change_email(
     require_email_proof(&state, &methods, &jar).await?;
     // A espera de 60 s é por endereço: sem isto, uma conta gasta o teto do dia
     // mudando de endereço.
-    state.mail.limit_ip(&state.redis, &ip).await?;
-    state.mail.limit_account(&state.redis, user.id).await?;
+    state.mail.limit_ip(&ip)?;
+    state.mail.limit_account(user.id)?;
     let session = state
         .auth
         .current_hash(&jar)
@@ -192,7 +192,7 @@ async fn apply_change(
     change: ConfirmedChange,
     refused: ApiError,
 ) -> Result<(), ApiError> {
-    if !kv::session_exists(&state.redis, &change.session).await? {
+    if !state.sessions.exists(&change.session) {
         return Err(refused);
     }
     let email = change.email;

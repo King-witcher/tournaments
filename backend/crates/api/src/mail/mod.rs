@@ -1,8 +1,9 @@
 //! Email: o endereço na forma que é gravada (`Mail::normalize`: a canônica,
 //! sem descartáveis nem apelidos, ou, com `EMAIL_STRICT` desligado, como foi
 //! escrito), o layout no visual do site (`compose`), o envio atrás da trait
-//! `Mailer` e os limites de envio no Redis (por endereço, por dia e, nos
-//! pedidos sem login, por IP). Não tem rota, e do texto só o nome
+//! `Mailer` e os limites de envio: por endereço e por dia no Redis, e por IP e
+//! por conta em memória (um deploy os zera, mas o teto do dia continua; e quem
+//! insiste não gasta a cota do Redis). Não tem rota, e do texto só o nome
 //! do site e o rodapé: quem manda (`auth`) escreve o email no idioma de quem
 //! recebe, reserva o envio e chama `Ticket::send`. Só depende de `shared`.
 
@@ -12,12 +13,14 @@ mod kv;
 mod layout;
 mod sender;
 
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use axum::http::StatusCode;
-use chrono::Utc;
 
-use crate::shared::{ApiError, ClientIp, Redis};
+use crate::shared::{ApiError, ClientIp, Redis, WindowLimit};
 
 pub use layout::{Action, Alert, Content, compose};
 pub use sender::{Email, LogMailer, Mailer, ResendMailer};
@@ -29,10 +32,13 @@ const COOLDOWN_SECS: u64 = 60;
 /// do plano grátis do Resend.
 pub const DEFAULT_DAILY_LIMIT: u32 = 90;
 
+const HOUR: Duration = Duration::from_secs(60 * 60);
+const DAY: Duration = Duration::from_secs(24 * 60 * 60);
+
 /// Pedidos sem login que mandam email (cadastro e o reenvio dele, entrar por
-/// email), somados, por IP: na hora cheia e no dia (UTC). Quem se cadastra
-/// pede um ou dois; mais que isso de um IP só é abuso, e o teto do dia (90)
-/// não acaba na mão de um IP só.
+/// email), somados, por IP: em uma hora e em um dia, contados do primeiro
+/// pedido. Quem se cadastra pede um ou dois; mais que isso de um IP só é abuso,
+/// e o teto do dia (90) não acaba na mão de um IP só.
 const IP_HOURLY_LIMIT: u32 = 5;
 const IP_DAILY_LIMIT: u32 = 20;
 
@@ -51,6 +57,8 @@ pub struct Mail {
     mailer: Arc<dyn Mailer>,
     daily_limit: u32,
     strict: bool,
+    /// Pedidos por IP e por conta.
+    requests: WindowLimit,
 }
 
 impl Mail {
@@ -59,6 +67,7 @@ impl Mail {
             mailer,
             daily_limit,
             strict,
+            requests: WindowLimit::default(),
         }
     }
 
@@ -105,14 +114,17 @@ impl Mail {
     /// O pedido conta mesmo que o envio depois não saia (o mesmo endereço há
     /// menos de 60 s), para quem insiste não passar do limite. Sem IP (só no
     /// app dos testes), não conta.
-    pub async fn limit_ip(&self, redis: &Redis, ip: &ClientIp) -> Result<(), ApiError> {
+    pub fn limit_ip(&self, ip: &ClientIp) -> Result<(), ApiError> {
         let Some(bucket) = ip.bucket() else {
             return Ok(());
         };
-        let scope = format!("email_ip:{bucket}");
-        let slot =
-            kv::count_requests(redis, &scope, IP_HOURLY_LIMIT, IP_DAILY_LIMIT, Utc::now()).await?;
-        limited(slot, "email.ip_limited").inspect_err(|_| {
+        let wait = self.count_request(
+            &format!("ip:{bucket}"),
+            IP_HOURLY_LIMIT,
+            IP_DAILY_LIMIT,
+            Instant::now(),
+        );
+        limited(wait, "email.ip_limited").inspect_err(|_| {
             tracing::warn!(ip = %bucket, "limite de emails por IP atingido");
         })
     }
@@ -120,19 +132,34 @@ impl Mail {
     /// Conta um pedido de uma conta logada que manda email: passou de
     /// `ACCOUNT_HOURLY_LIMIT` na hora ou de `ACCOUNT_DAILY_LIMIT` no dia → 429
     /// `email.account_limited` com `{"minutes"}` até o período acabar.
-    pub async fn limit_account(&self, redis: &Redis, user_id: i64) -> Result<(), ApiError> {
-        let scope = format!("email_account:{user_id}");
-        let slot = kv::count_requests(
-            redis,
-            &scope,
+    pub fn limit_account(&self, user_id: i64) -> Result<(), ApiError> {
+        let wait = self.count_request(
+            &format!("account:{user_id}"),
             ACCOUNT_HOURLY_LIMIT,
             ACCOUNT_DAILY_LIMIT,
-            Utc::now(),
-        )
-        .await?;
-        limited(slot, "email.account_limited").inspect_err(|_| {
+            Instant::now(),
+        );
+        limited(wait, "email.account_limited").inspect_err(|_| {
             tracing::warn!(user = user_id, "limite de emails por conta atingido");
         })
+    }
+
+    /// Conta mais um pedido de `scope` na hora e no dia. Passou de um deles: quanto
+    /// falta para o período acabar, o do dia primeiro.
+    fn count_request(
+        &self,
+        scope: &str,
+        hourly: u32,
+        daily: u32,
+        now: Instant,
+    ) -> Result<(), Duration> {
+        let hit = |period: &str, limit, window| {
+            self.requests
+                .hit_at(format!("{scope}:{period}"), limit, window, now)
+        };
+        let in_hour = hit("hour", hourly, HOUR);
+        hit("day", daily, DAY)?;
+        in_hour
     }
 
     /// Reserva um envio que nenhuma resposta mostra (entrar por email, o que só
@@ -189,15 +216,12 @@ impl Mail {
 }
 
 /// O limite de pedidos como resposta: fora dele, 429 `code` com `{"minutes"}`.
-fn limited(slot: kv::RequestSlot, code: &'static str) -> Result<(), ApiError> {
-    match slot {
-        kv::RequestSlot::Granted => Ok(()),
-        kv::RequestSlot::Limited { seconds } => {
-            let minutes = (seconds + 59) / 60;
-            Err(ApiError::new(StatusCode::TOO_MANY_REQUESTS, code)
-                .with_params([("minutes", minutes.max(1))]))
-        }
-    }
+fn limited(wait: Result<(), Duration>, code: &'static str) -> Result<(), ApiError> {
+    wait.map_err(|wait| {
+        let minutes = (wait.as_secs() as i64 + 59) / 60;
+        ApiError::new(StatusCode::TOO_MANY_REQUESTS, code)
+            .with_params([("minutes", minutes.max(1))])
+    })
 }
 
 /// Um envio reservado para um endereço. Quem pediu e espera a resposta (o
@@ -253,5 +277,40 @@ impl Ticket {
             tracing::error!(error = ?err, "reserva do email que falhou não foi devolvida");
         }
         false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mail() -> Mail {
+        Mail::new(Arc::new(LogMailer), DEFAULT_DAILY_LIMIT, true)
+    }
+
+    #[test]
+    fn the_hour_limit_ends_with_its_hour() {
+        let mail = mail();
+        let start = Instant::now();
+        let count = |at| mail.count_request("ip", 2, 20, at);
+        assert!(count(start).is_ok());
+        assert!(count(start).is_ok());
+        let later = start + Duration::from_secs(10 * 60);
+        assert_eq!(count(later), Err(HOUR - (later - start)));
+        assert!(count(start + HOUR).is_ok());
+    }
+
+    /// Com 5 por hora, os 20 do dia só acabam na quinta hora.
+    #[test]
+    fn the_day_limit_holds_across_hours() {
+        let mail = mail();
+        let start = Instant::now();
+        let count = |at| mail.count_request("ip", 5, 20, at);
+        for hour in 0..4 {
+            for _ in 0..5 {
+                assert!(count(start + hour * HOUR).is_ok());
+            }
+        }
+        assert_eq!(count(start + 4 * HOUR), Err(DAY - 4 * HOUR));
     }
 }

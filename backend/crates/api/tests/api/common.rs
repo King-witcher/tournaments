@@ -13,7 +13,7 @@ use std::{
 
 use api::{
     AppState,
-    auth::{AuthSettings, HttpDiscord, HttpGoogle, create_session, discord_gate},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, SessionStore, discord_gate},
     discord::Webhooks,
     mail::{Email, Mail, Mailer},
     realtime::Realtime,
@@ -76,6 +76,19 @@ pub fn redis(db: &PgPool) -> Redis {
     LazyLock::force(&SWEPT);
     let key = crate::db::test_key(db);
     Redis::open(&redis_url(), &format!("{TEST_PREFIX}{key}:")).unwrap()
+}
+
+/// Sessões do app de teste deste teste: o app e os helpers do mesmo teste veem as
+/// mesmas, como o processo da API, em que a memória é uma só.
+pub fn sessions(db: &PgPool) -> SessionStore {
+    static STORES: LazyLock<Mutex<HashMap<String, SessionStore>>> = LazyLock::new(Default::default);
+    let key = crate::db::test_key(db);
+    STORES
+        .lock()
+        .unwrap()
+        .entry(key)
+        .or_insert_with(|| SessionStore::new(redis(db)))
+        .clone()
 }
 
 /// Teto de emails por dia do app de teste.
@@ -144,12 +157,14 @@ pub fn link_token(email: &Email) -> String {
 }
 
 /// Estado do app de teste: login do Discord e do Google desligado (os testes
-/// criam sessões direto no Redis), Web Push desligado, emails na
+/// criam sessões direto em `sessions(&db)`), Web Push desligado, emails na
 /// `mailbox(&db)` e nenhuma tarefa em segundo plano (os testes do tempo real
 /// chamam o despachante e o agendador direto).
 pub fn state(db: PgPool) -> AppState {
     AppState {
         redis: redis(&db),
+        sessions: sessions(&db),
+        password_attempts: Default::default(),
         mail: Mail::new(mailbox(&db), DAILY_EMAILS, true),
         db,
         discord: Arc::new(HttpDiscord::new(
@@ -189,7 +204,7 @@ pub struct User {
     pub cookie: String,
 }
 
-/// Cria um usuário direto no banco, com sessão no Redis, sem passar pelo login.
+/// Cria um usuário direto no banco, com sessão, sem passar pelo login.
 pub async fn user(db: &PgPool, display_name: &str) -> User {
     let id = sqlx::query_scalar!(
         "insert into users (display_name) values ($1) returning id",
@@ -198,7 +213,7 @@ pub async fn user(db: &PgPool, display_name: &str) -> User {
     .fetch_one(db)
     .await
     .unwrap();
-    let token = create_session(&redis(db), id, None).await.unwrap();
+    let token = sessions(db).create(id, None).await.unwrap();
     User {
         id,
         cookie: format!("session={token}"),

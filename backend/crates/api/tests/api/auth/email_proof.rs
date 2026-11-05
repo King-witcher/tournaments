@@ -2,14 +2,14 @@
 //! nos logins sem o código mandado ao email de agora. Sem isso, trocaria o único
 //! login e o dono ficaria sem saída.
 
-use api::{auth::create_session, mail::Email};
+use api::mail::Email;
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use super::{add_discord, app, authorize, discord_user, set_email, skip_cooldown};
 use crate::common::{
-    self, User, err, get, link_token, mailbox, post, post_empty, put, redis, user,
+    self, User, err, get, link_token, mailbox, post, post_empty, put, sessions, user,
 };
 
 const ADDRESS: &str = "q@outlook.com";
@@ -153,7 +153,7 @@ async fn the_proof_belongs_to_the_session_that_typed_the_code() {
     let (db, _lease) = crate::db::test_db().await;
     let app = common::app(db.clone());
     let owner = only_email(&db).await;
-    let token = create_session(&redis(&db), owner.id, None).await.unwrap();
+    let token = sessions(&db).create(owner.id, None).await.unwrap();
     let stolen = User {
         id: owner.id,
         cookie: format!("session={token}"),

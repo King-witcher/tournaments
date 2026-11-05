@@ -234,11 +234,12 @@ async fn login_creates_user_identity_and_session() {
 
     // O Redis guarda a sessão pelo hash, nunca pelo token.
     let redis = redis(&db);
-    let owner: Option<i64> = redis
-        .query(&Cmd::hget(session_key(&redis, &session), "user_id"))
+    let saved: String = redis
+        .query(&Cmd::get(session_key(&redis, &session)))
         .await
         .unwrap();
-    assert_eq!(owner, Some(user.id));
+    let saved: serde_json::Value = serde_json::from_str(&saved).unwrap();
+    assert_eq!(saved["user_id"], user.id);
     let token = session.strip_prefix("session=").unwrap();
     let by_token: bool = redis
         .query(&Cmd::exists(redis.key(format_args!("session:{token}"))))
@@ -297,10 +298,6 @@ async fn me_requires_valid_session() {
     let key = session_key(&redis, &session);
     let ttl: i64 = redis.query(&Cmd::ttl(&key)).await.unwrap();
     assert!((30 * 86_400 - 60..=30 * 86_400).contains(&ttl), "{ttl}");
-    let _: bool = redis.query(&Cmd::pexpire(&key, 1)).await.unwrap();
-    tokio::time::sleep(Duration::from_millis(5)).await;
-    let res = send(&app, get("/me", Some(&session))).await;
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]
@@ -320,21 +317,13 @@ async fn logout_removes_session() {
     let res = send(&app, post(Some(&session))).await;
     assert_eq!(res.status(), StatusCode::NO_CONTENT);
     assert!(set_cookie(&res, "session").unwrap().contains("Max-Age=0"));
-    // Sai a sessão e sai do índice da conta.
+    // Sai também do Redis, para não voltar no próximo boot.
     let redis = redis(&db);
-    let user_id = sqlx::query_scalar!("select id from users")
-        .fetch_one(&db)
+    let left: bool = redis
+        .query(&Cmd::exists(session_key(&redis, &session)))
         .await
         .unwrap();
-    let left: (bool, i64) = redis
-        .query_pipe(
-            redis::pipe()
-                .exists(session_key(&redis, &session))
-                .zcard(redis.key(format_args!("user_sessions:{user_id}"))),
-        )
-        .await
-        .unwrap();
-    assert_eq!(left, (false, 0));
+    assert!(!left);
 
     let res = send(&app, get("/me", Some(&session))).await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);

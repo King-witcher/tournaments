@@ -12,9 +12,11 @@
 //! mudar os logins pede antes o código mandado a ele (`email_proof.rs`). O que
 //! manda email por pedido da pessoa conta por IP e, com login, por conta
 //! (`Mail::limit_ip`, `Mail::limit_account`). Toda mudança de
-//! login ou de email manda um aviso ao email da conta (`notify.rs`). Sessões,
-//! erros de senha, cadastros por confirmar, links e códigos ficam no Redis
-//! (`kv/`); contas, logins e email, no banco (`db/`).
+//! login ou de email manda um aviso ao email da conta (`notify.rs`). Sessões
+//! ficam em memória, com cópia no Redis para sobreviver a um boot
+//! (`session_store.rs`), e os erros de senha, só em memória (`attempts.rs`);
+//! cadastros por confirmar, links e códigos, no Redis (`kv/`); contas, logins e
+//! email, no banco (`db/`).
 //! Excluir a conta (`deletion.rs`) agenda para 7 dias, e entrar de novo antes
 //! (por qualquer login) cancela; na data, `members` a tira
 //! das comunidades e daqui sai a anonimização.
@@ -38,6 +40,7 @@ mod password;
 mod pkce;
 mod provider;
 mod session;
+mod session_store;
 mod signup;
 mod types;
 
@@ -53,9 +56,8 @@ pub use db::{
 pub use deletion::{end_all_sessions, remind_due_deletions as remind_due_account_deletions};
 pub use discord::{DiscordApi, DiscordLimit, DiscordUser, HttpDiscord, discord_gate};
 pub use google::{GoogleApi, GoogleUser, HttpGoogle};
-/// Os testes criam sessões por aqui, sem passar pelo login.
-pub use kv::create_session;
 pub use session::{AuthSettings, OAuthClient};
+pub use session_store::SessionStore;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

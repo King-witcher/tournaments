@@ -2,7 +2,7 @@
 //! cancela, e a execução pelo agendador (sai das comunidades, desiste dos
 //! torneios em andamento, anonimiza e libera email e Discord).
 
-use api::{auth::create_session, realtime};
+use api::realtime;
 use axum::{
     Router,
     http::{Method, StatusCode},
@@ -37,7 +37,7 @@ async fn scheduling_ends_every_session_and_emails_the_date() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone(), None, false);
     let rapha = signup(&app, &db, "Rapha", PASSWORD).await;
-    let token = create_session(&redis(&db), rapha.id, None).await.unwrap();
+    let token = sessions(&db).create(rapha.id, None).await.unwrap();
     let other = User {
         id: rapha.id,
         cookie: format!("session={token}"),

@@ -1,7 +1,7 @@
 //! Entrar por email: o link ou o código, o que vier primeiro, com a senha nova
 //! opcional. Nada revela quem tem conta.
 
-use api::mail::Email;
+use api::{AppState, mail::Email, shared::Redis};
 use axum::{
     Router,
     http::{Method, StatusCode},
@@ -11,7 +11,9 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 
 use super::{add_discord, send_json, session_count, set_email, signup, skip_cooldown};
-use crate::common::{User, app, err, get, link_token, mailbox, patch, post, put, redis, user};
+use crate::common::{
+    User, app, app_from, err, get, link_token, mailbox, patch, post, put, redis, state, user,
+};
 
 const PASSWORD: &str = "senha forte 1";
 const NEW_PASSWORD: &str = "senha nova 22";
@@ -539,14 +541,19 @@ async fn a_new_password_is_only_saved_after_the_sessions_end() {
     };
     let before = hash().await.unwrap();
 
-    // O índice das sessões com outro tipo: `delete_all_sessions` falha.
-    let redis = redis(&db);
-    let index = redis.key(format_args!("user_sessions:{}", me.id));
-    redis.query::<()>(&Cmd::set(&index, "x")).await.unwrap();
+    // O Redis das sessões fora do ar: um database que não existe recusa a conexão.
+    let state = state(db.clone());
+    let down = Redis::open("redis://127.0.0.1:6379/9999", "fora-do-ar:").unwrap();
+    let app = app_from(AppState {
+        sessions: state.sessions.with_redis(down),
+        ..state
+    });
 
     let (status, _, _) = by_link(&app, &email, Some(NEW_PASSWORD)).await;
     assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
     assert_eq!(hash().await.unwrap(), before, "a senha fica");
+    let (status, _) = get(&app, "/me", &me).await;
+    assert_eq!(status, StatusCode::OK, "a sessão também: nada mudou");
 }
 
 /// Pedido criado logo depois de uma troca de email (o mesmo instante em que ela

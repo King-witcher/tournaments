@@ -64,7 +64,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 ### db.rs e kv.rs
 
 - `db.rs` recebe `&PgPool` (ou `&mut PgConnection`, passo de transação maior) e `TenantId` para dado de tenant. Devolve tipo do domínio, nunca o record anônimo do `query!`; erro `sqlx::Error` quando só o banco pode falhar, `ApiError` quando aplica regra (conflito, limite) ou lê enum do banco (`Role::from_db`). Número de regra é constante no `handlers.rs` e entra como parâmetro (`create_with_owner(.., MAX_OWNED_TENANTS)`).
-- `kv.rs` recebe `&Redis`; toda chave sai de `redis.key(..)` (prefixo do ambiente e de cada teste). Comandos por `redis.query`/`redis.query_pipe`, nunca pela conexão crua (eles reconectam); escrita que precisa ir junto (sessão + índice) vai num pipe `atomic()` (MULTI). Erro `RedisError` vira 500 pelo `ApiError`. Pense na cota: no máximo uma leitura por requisição, e só onde não tem jeito (a sessão).
+- `kv.rs` recebe `&Redis`; toda chave sai de `redis.key(..)` (prefixo do ambiente e de cada teste). Comandos por `redis.query`/`redis.query_pipe`, nunca pela conexão crua (eles reconectam); escrita que precisa ir junto vai num pipe `atomic()` (MULTI). Erro `RedisError` vira 500 pelo `ApiError`. Pense na cota: nenhum comando no caminho de toda requisição (a sessão fica em memória, `auth/session_store.rs`), e limite que um abuso chamaria sem parar fica em memória (`shared::WindowLimit`).
 
 ### Tamanho
 
@@ -73,7 +73,7 @@ Crie o arquivo só quando houver o que pôr nele, mas com esses nomes. Submódul
 
 ### Testes de rota
 
-- Em `crates/api/tests/api/`, num binário só (`main.rs` declara os módulos; arquivo solto em `tests/` vira outro binário). Um arquivo por domínio, com o nome do módulo em `src/`; helpers comuns (app, usuário com sessão, `redis(&db)`, `get`/`post`, `create`/`invite`/`join`) em `common.rs`.
+- Em `crates/api/tests/api/`, num binário só (`main.rs` declara os módulos; arquivo solto em `tests/` vira outro binário). Um arquivo por domínio, com o nome do módulo em `src/`; helpers comuns (app, usuário com sessão, `redis(&db)`, `sessions(&db)`, `get`/`post`, `create`/`invite`/`join`) em `common.rs`.
 - Teste com banco: `#[tokio::test]` e, na primeira linha, `let (db, _lease) = crate::db::test_db().await;` (nunca `#[sqlx::test]`). O `test_db` empresta um de poucos bancos reaproveitados, já esvaziado (por `delete`, nunca `truncate`); `_lease` segura o banco até o fim. Uma suíte por vez na máquina (lock de arquivo). Motivos em `docs/decisions/stack.md`, "Testes".
 - Antes de escrever um teste, veja se outro já cobre o caso: um teste novo exercita um caminho, regra, código de erro ou constraint que nenhum outro exercita.
 - Ordem do banco comparada com `sort()` do Rust: `order by ... collate "C"`. A collation do banco não é a ordem de bytes, e com texto aleatório o teste falha só de vez em quando.

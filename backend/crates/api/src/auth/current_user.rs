@@ -6,7 +6,7 @@ use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::{db, kv};
+use super::db;
 use crate::{
     AppState,
     shared::{ApiError, token::hash_token},
@@ -23,19 +23,19 @@ pub struct CurrentUser {
 }
 
 impl CurrentUser {
-    /// Dono da sessão com este hash: o dono vem do Redis e o usuário, do
+    /// Dono da sessão com este hash: o dono vem da memória e o usuário, do
     /// banco. Sessão vencida ou conta que não existe mais → `None`.
     pub(super) async fn of_session(
         state: &AppState,
         hash: &[u8; 32],
     ) -> Result<Option<Self>, ApiError> {
-        let Some(user_id) = kv::session_user(&state.redis, hash).await? else {
+        let Some(user_id) = state.sessions.owner(hash).await? else {
             return Ok(None);
         };
         Ok(db::find_user(&state.db, user_id).await?)
     }
 
-    /// O id do dono da sessão do cookie, só pelo Redis, sem ler o usuário:
+    /// O id do dono da sessão do cookie, sem ler o usuário:
     /// para quem lê o usuário na mesma query de outra coisa (`TenantMember`,
     /// uma ida ao banco a menos por requisição). Quem chama confere que a
     /// conta existe. 401 `auth.unauthenticated` sem sessão válida.
@@ -45,7 +45,9 @@ impl CurrentUser {
             .auth
             .session_token(&jar)
             .ok_or(ApiError::unauthenticated())?;
-        kv::session_user(&state.redis, &hash_token(token))
+        state
+            .sessions
+            .owner(&hash_token(token))
             .await?
             .ok_or(ApiError::unauthenticated())
     }

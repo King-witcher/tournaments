@@ -5,12 +5,10 @@ use axum::{
     Router,
     http::{HeaderValue, Method, StatusCode},
 };
-use chrono::Utc;
-use redis::Cmd;
 use serde_json::{Value, json};
 
 use super::{body_text, json_request, send};
-use crate::common::{app, err, mailbox, redis};
+use crate::common::{app, err, mailbox};
 
 /// O cabeçalho que o Cloudflare do Render põe com o IP de quem pede.
 const IP_HEADER: &str = "cf-connecting-ip";
@@ -119,19 +117,4 @@ async fn changing_the_email_counts_for_the_ip() {
     let status = res.status();
     let json: Value = serde_json::from_str(&body_text(res).await).unwrap();
     assert_limited((status, json), 60);
-}
-
-#[tokio::test]
-async fn twenty_per_day_even_across_hours() {
-    let (db, _lease) = crate::db::test_db().await;
-    let app = app(db.clone());
-    let ip = "203.0.113.8";
-    // Como se as horas anteriores do dia já tivessem gastado 20.
-    let redis = redis(&db);
-    let day = redis.key(format_args!(
-        "email_ip:{ip}:{}",
-        Utc::now().format("%Y-%m-%d")
-    ));
-    redis.query::<()>(&Cmd::set_ex(&day, 20, 60)).await.unwrap();
-    assert_limited(forgot(&app, ip, "ninguem@outlook.com").await, 24 * 60);
 }

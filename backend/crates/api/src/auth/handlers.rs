@@ -7,7 +7,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use super::{
-    CurrentUser, db, kv,
+    CurrentUser, db,
     session::{SESSION_ID_LEN, session_id},
     types::{LoginMethods, SessionInfo, SessionPath, UpdateMe},
 };
@@ -84,7 +84,7 @@ pub async fn logins(
 pub async fn logout(State(state): State<AppState>, jar: CookieJar) -> Result<Response, ApiError> {
     if let Some(current) = state.auth.session_token(&jar) {
         let hash = token::hash_token(current);
-        if let Some(user) = kv::delete_session(&state.redis, &hash).await? {
+        if let Some(user) = state.sessions.end(&hash).await? {
             sessions_ended(&state, user, &[token::hex(&hash)]).await?;
         }
     }
@@ -139,15 +139,16 @@ pub async fn sessions(
     jar: CookieJar,
 ) -> Result<Json<Vec<SessionInfo>>, ApiError> {
     let current = state.auth.current_hash(&jar);
-    let sessions = kv::user_sessions(&state.redis, user.id).await?;
     Ok(Json(
-        sessions
+        state
+            .sessions
+            .of_user(user.id)
             .into_iter()
             .map(|s| SessionInfo {
                 id: session_id(&s.hash),
                 current: current.as_ref() == Some(&s.hash),
                 created_at: s.created_at,
-                expires_at: s.expires_at,
+                expires_at: s.expires_at(),
                 user_agent: s.user_agent,
             })
             .collect(),
@@ -173,7 +174,7 @@ pub async fn end_other_sessions(
         .session_token(&jar)
         .ok_or(ApiError::unauthenticated())?;
     let keep = token::hash_token(current);
-    let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
+    let ended = state.sessions.end_others(user.id, &keep).await?;
     sessions_ended(&state, user.id, &ended).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -195,12 +196,14 @@ pub async fn end_session(
     jar: CookieJar,
     PathParams(path): PathParams<SessionPath>,
 ) -> Result<Response, ApiError> {
-    let hash = kv::session_hashes(&state.redis, user.id)
-        .await?
+    let hash = state
+        .sessions
+        .of_user(user.id)
         .into_iter()
+        .map(|s| s.hash)
         .find(|h| path.id.len() == SESSION_ID_LEN && h.starts_with(&path.id))
         .ok_or(ApiError::not_found("auth.session_not_found"))?;
-    kv::delete_sessions(&state.redis, user.id, std::slice::from_ref(&hash)).await?;
+    state.sessions.end_listed(&hash).await?;
     sessions_ended(&state, user.id, std::slice::from_ref(&hash)).await?;
     let jar = if state.auth.current_hash(&jar) == Some(hash) {
         jar.remove(state.auth.clear_session_cookie())

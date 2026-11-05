@@ -60,6 +60,11 @@ struct ApiDoc;
 pub struct AppState {
     pub db: PgPool,
     pub redis: shared::Redis,
+    /// As sessões em memória, que dispensam o Redis a cada requisição.
+    pub sessions: auth::SessionStore,
+    /// Erros de senha por email, à parte de `limits`: emails inventados enchem
+    /// o mapa, e isso não pode zerar os outros limites.
+    pub password_attempts: shared::WindowLimit,
     pub discord: Arc<dyn auth::DiscordApi>,
     pub google: Arc<dyn auth::GoogleApi>,
     pub auth: Arc<auth::AuthSettings>,

@@ -170,9 +170,7 @@ async fn code_needs_the_session_and_six_digits() {
 
 /// Outra sessão da mesma conta, como a que alguém roubou.
 async fn another_session(db: &sqlx::PgPool, id: i64) -> User {
-    let token = api::auth::create_session(&crate::common::redis(db), id, None)
-        .await
-        .unwrap();
+    let token = crate::common::sessions(db).create(id, None).await.unwrap();
     User {
         id,
         cookie: format!("session={token}"),

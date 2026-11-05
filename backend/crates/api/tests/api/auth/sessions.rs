@@ -1,18 +1,30 @@
-//! Sessões da conta: listar, encerrar uma e encerrar as outras.
+//! Sessões da conta: listar, encerrar uma e encerrar as outras; a memória que
+//! responde às requisições e o Redis que a guarda entre os boots.
 
 use std::sync::Arc;
 
-use api::{AppState, auth::AuthSettings};
+use api::{
+    AppState,
+    auth::{AuthSettings, SessionStore},
+    shared::{
+        Redis,
+        token::{hash_token, hex},
+    },
+};
 use axum::{
     Router,
     body::Body,
     http::{Method, Request, StatusCode, header},
 };
-use chrono::{DateTime, TimeDelta};
+use chrono::{DateTime, TimeDelta, Utc};
+use redis::Cmd;
 use serde_json::{Value, json};
+use sqlx::PgPool;
 
 use super::{body_text, pair, send, set_cookie, signup};
-use crate::common::{User, WEB, app, app_from, call, delete, err, get, state, user};
+use crate::common::{
+    User, WEB, app, app_from, call, delete, err, get, redis, sessions, state, user,
+};
 
 const PASSWORD: &str = "senha forte 1";
 
@@ -65,11 +77,9 @@ async fn sessions_are_listed_newest_first_with_the_browser() {
     let id = sessions[0]["id"].as_str().unwrap();
     assert_eq!(id.len(), 16);
     assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
-    // Dura 30 dias (a expiração é em segundos; a criação, em milissegundos).
     let at =
         |field: &str| DateTime::parse_from_rfc3339(sessions[0][field].as_str().unwrap()).unwrap();
-    let lasts = at("expires_at") - at("created_at");
-    assert!(lasts <= TimeDelta::days(30) && lasts > TimeDelta::days(30) - TimeDelta::seconds(1));
+    assert_eq!(at("expires_at") - at("created_at"), TimeDelta::days(30));
 
     // Cada conta vê só as próprias.
     let other = user(&db, "Outro").await;
@@ -192,4 +202,118 @@ async fn session_of_a_deleted_account_lets_no_one_in() {
         .await
         .unwrap();
     assert_eq!(me_status(&app, &gone).await, StatusCode::UNAUTHORIZED);
+}
+
+/// O app de um processo novo: a memória dele sobe do Redis.
+async fn booted(db: &PgPool, read_through: bool) -> Router {
+    let sessions = SessionStore::load(redis(db), read_through).await.unwrap();
+    app_from(AppState {
+        sessions,
+        ..state(db.clone())
+    })
+}
+
+/// Grava uma sessão como as de antes (hash do Redis), que ainda vivem por até 30
+/// dias, e como os scripts locais criam, e devolve o cookie dela.
+async fn old_format_session(redis: &Redis, user_id: i64, token: &str) -> User {
+    let key = redis.key(format_args!("session:{}", hex(&hash_token(token))));
+    let created = Utc::now().timestamp_millis();
+    let fields = [
+        ("user_id", user_id.to_string()),
+        ("created_at", created.to_string()),
+        ("user_agent", "Firefox/140".to_owned()),
+    ];
+    redis
+        .query::<()>(&Cmd::hset_multiple(&key, &fields))
+        .await
+        .unwrap();
+    User {
+        id: user_id,
+        cookie: format!("session={token}"),
+    }
+}
+
+/// O que importa do Redis: o boot traz quem estava logado, e não traz quem saiu.
+#[tokio::test]
+async fn a_boot_brings_back_what_redis_kept() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let stays = user(&db, "Fica").await;
+    let leaves = user(&db, "Sai").await;
+    let (status, _) = call(&app, Method::POST, "/auth/logout", Some(&leaves), None).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let old = old_format_session(&redis(&db), stays.id, "sessao-de-antes").await;
+
+    let rebooted = booted(&db, false).await;
+    assert_eq!(me_status(&rebooted, &stays).await, StatusCode::OK);
+    assert_eq!(
+        me_status(&rebooted, &leaves).await,
+        StatusCode::UNAUTHORIZED
+    );
+
+    assert_eq!(me_status(&rebooted, &old).await, StatusCode::OK);
+    let listed = list(&rebooted, &old).await;
+    assert_eq!(listed.len(), 2);
+    assert_eq!(listed[0]["user_agent"], "Firefox/140");
+    let (status, _) = delete(&rebooted, "/auth/sessions", &stays).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let again = booted(&db, false).await;
+    assert_eq!(me_status(&again, &old).await, StatusCode::UNAUTHORIZED);
+}
+
+/// A instância antiga atende até a nova ficar no ar: o que ela grava no Redis só
+/// chega à nova na segunda leitura, e até lá o Redis não é consultado.
+#[tokio::test]
+async fn reloading_brings_what_the_old_instance_wrote() {
+    let (db, _lease) = crate::db::test_db().await;
+    let ended = user(&db, "Encerrada").await;
+    let new = SessionStore::load(redis(&db), false).await.unwrap();
+    let new_app = app_from(AppState {
+        sessions: new.clone(),
+        ..state(db.clone())
+    });
+    assert_eq!(me_status(&new_app, &ended).await, StatusCode::OK);
+
+    let old_app = app(db.clone());
+    let (status, _) = call(&old_app, Method::POST, "/auth/logout", Some(&ended), None).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let token = sessions(&db).create(ended.id, None).await.unwrap();
+    let created = User {
+        id: ended.id,
+        cookie: format!("session={token}"),
+    };
+    assert_eq!(me_status(&new_app, &ended).await, StatusCode::OK);
+    assert_eq!(
+        me_status(&new_app, &created).await,
+        StatusCode::UNAUTHORIZED
+    );
+
+    new.reload().await.unwrap();
+    assert_eq!(me_status(&new_app, &ended).await, StatusCode::UNAUTHORIZED);
+    assert_eq!(me_status(&new_app, &created).await, StatusCode::OK);
+}
+
+/// Em desenvolvimento, os scripts locais criam sessão direto no Redis com a API
+/// no ar.
+#[tokio::test]
+async fn in_development_an_unknown_session_is_looked_up_in_redis() {
+    let (db, _lease) = crate::db::test_db().await;
+    let me = user(&db, "Some").await;
+    let development = booted(&db, true).await;
+    let production = booted(&db, false).await;
+
+    let script = old_format_session(&redis(&db), me.id, "sessao-de-script").await;
+    assert_eq!(me_status(&development, &script).await, StatusCode::OK);
+    assert_eq!(
+        me_status(&production, &script).await,
+        StatusCode::UNAUTHORIZED
+    );
+    let invented = User {
+        id: me.id,
+        cookie: "session=inventada".into(),
+    };
+    assert_eq!(
+        me_status(&development, &invented).await,
+        StatusCode::UNAUTHORIZED
+    );
 }

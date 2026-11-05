@@ -49,7 +49,7 @@ pub async fn request_email_login(
     // O formato não diz nada sobre quem tem conta.
     let email = state.mail.canonical(&body.email)?;
     // Todo pedido conta, antes de saber se a conta existe: o 429 não diz nada.
-    state.mail.limit_ip(&state.redis, &ip).await?;
+    state.mail.limit_ip(&ip)?;
     if let Some(contact) = db::contact_by_email(&state.db, &email).await? {
         // Em segundo plano: a resposta sai no mesmo tempo, exista a conta ou não.
         tokio::spawn(async move {
@@ -213,10 +213,10 @@ async fn set_new_password(
 ) -> Result<(), ApiError> {
     let hash = hash_password(password).await?;
     kv::cancel_email_change(&state.redis, user_id).await?;
-    let ended = kv::delete_all_sessions(&state.redis, user_id).await?;
+    let ended = state.sessions.end_all(user_id).await?;
     sessions_ended(state, user_id, &ended).await?;
     db::set_password(&state.db, user_id, &hash).await?;
-    kv::clear_password_failures(&state.redis, email).await?;
+    state.password_attempts.forget(email);
     notify(state, user_id, Notice::PasswordSetByEmail);
     Ok(())
 }

@@ -3,7 +3,7 @@ use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use api::{
     AppState, MIGRATOR,
-    auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient, discord_gate},
+    auth::{AuthSettings, HttpDiscord, HttpGoogle, OAuthClient, SessionStore, discord_gate},
     config::Config,
     discord::{self, Webhooks},
     mail::{LogMailer, Mail, Mailer, ResendMailer},
@@ -59,9 +59,9 @@ async fn main() -> anyhow::Result<()> {
     let redis =
         Redis::open(&config.redis_url, &config.redis_prefix).context("REDIS_URL inválida")?;
     // Antes das migrations: um deploy sem Redis falha sem mexer no banco, e a
-    // instância antiga continua com o schema que conhece.
-    redis
-        .ping()
+    // instância antiga continua com o schema que conhece. Sem `COOKIE_SECURE`
+    // (desenvolvimento), sessão criada por script também entra.
+    let sessions = SessionStore::load(redis.clone(), !config.cookie_secure)
         .await
         .context("falha ao conectar no Redis (confira REDIS_URL)")?;
 
@@ -77,6 +77,8 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         db,
         redis,
+        sessions,
+        password_attempts: Default::default(),
         discord: Arc::new(HttpDiscord::new(
             config.discord_client_id.clone().unwrap_or_default(),
             config.discord_client_secret.clone().unwrap_or_default(),
@@ -115,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
     };
     realtime::spawn(state.clone());
     discord::spawn(state.clone());
+    state.sessions.reload_after_boot();
     let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;

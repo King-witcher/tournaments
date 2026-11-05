@@ -31,7 +31,12 @@ impl WindowLimit {
         self.hit_at(key, limit, window, Instant::now())
     }
 
-    fn hit_at(
+    /// Zera a contagem de `key`.
+    pub fn forget(&self, key: &str) {
+        self.windows.lock().expect("trava dos limites").remove(key);
+    }
+
+    pub(crate) fn hit_at(
         &self,
         key: String,
         limit: u32,
@@ -78,6 +83,18 @@ mod tests {
         assert_eq!(hit("a", later), Err(Duration::from_secs(50)));
         assert!(hit("b", now).is_ok());
         assert!(hit("a", now + MINUTE).is_ok());
+    }
+
+    #[test]
+    fn forgetting_a_key_starts_it_over() {
+        let limit = WindowLimit::default();
+        let hit = |key: &str| limit.hit(key.into(), 1, MINUTE);
+        assert!(hit("a").is_ok());
+        assert!(hit("b").is_ok());
+        assert!(hit("a").is_err());
+        limit.forget("a");
+        assert!(hit("a").is_ok());
+        assert!(hit("b").is_err());
     }
 
     #[test]

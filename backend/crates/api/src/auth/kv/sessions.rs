@@ -1,181 +1,137 @@
-//! Sessões. `session:{hash}` é um hash com o dono (`user_id`), a criação (em
-//! milissegundos) e o `user_agent`, e expira sozinho com a sessão.
-//! `user_sessions:{user_id}` é o índice das sessões de cada conta (zset com a
-//! expiração, em segundos, como score), para listar e encerrar as outras. Só o
-//! hash do token chega ao Redis.
+//! Sessões no Redis, só para sobreviverem a um boot: quem responde às requisições
+//! é a memória (`session_store.rs`). `session:{hash}` é um JSON com o dono, a
+//! criação (em milissegundos) e o `user_agent`, e expira sozinho com a sessão. Só
+//! o hash do token chega ao Redis. Ler tudo custa um SCAN e um MGET por página de
+//! chaves, seja quantas forem as sessões.
 
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc, serde::ts_milliseconds};
 use redis::{Cmd, RedisResult};
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    auth::session::SESSION_DAYS,
-    shared::{Redis, token},
-};
+use crate::{auth::session::SESSION_DAYS, shared::Redis};
 
-/// Uma sessão viva, como a lista mostra.
+/// Chaves por página do SCAN. O padrão, 10, é uma ida e volta a cada 10 chaves.
+const SCAN_PAGE: usize = 1000;
+
+/// Uma sessão, como fica na memória e, sem o hash (que é a chave), no Redis.
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StoredSession {
     /// Hash do token em hexadecimal.
+    #[serde(skip)]
     pub hash: String,
+    pub user_id: i64,
+    #[serde(with = "ts_milliseconds")]
     pub created_at: DateTime<Utc>,
-    pub expires_at: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub user_agent: Option<String>,
+}
+
+impl StoredSession {
+    /// Toda sessão dura o mesmo, contado da criação.
+    pub fn expires_at(&self) -> DateTime<Utc> {
+        self.created_at + TimeDelta::days(SESSION_DAYS)
+    }
 }
 
 fn session_key(redis: &Redis, hash: &str) -> String {
     redis.key(format_args!("session:{hash}"))
 }
 
-fn index_key(redis: &Redis, user_id: i64) -> String {
-    redis.key(format_args!("user_sessions:{user_id}"))
-}
-
-/// Cria a sessão e devolve o token. Sessão e índice entram juntos (MULTI):
-/// sessão fora do índice escaparia de "encerrar as outras".
-pub async fn create_session(
-    redis: &Redis,
-    user_id: i64,
-    user_agent: Option<&str>,
-) -> RedisResult<String> {
-    let token = token::random_secret();
-    let hash = token::hex(&token::hash_token(&token));
-    let now = Utc::now();
-    let expires_at = (now + chrono::Duration::days(SESSION_DAYS)).timestamp();
-
-    let mut fields = vec![
-        ("user_id", user_id.to_string()),
-        ("created_at", now.timestamp_millis().to_string()),
-    ];
-    if let Some(agent) = user_agent {
-        fields.push(("user_agent", agent.to_owned()));
-    }
-    let key = session_key(redis, &hash);
-    let index = index_key(redis, user_id);
+pub async fn save_session(redis: &Redis, session: &StoredSession) -> RedisResult<()> {
+    let json = serde_json::to_string(session).expect("sessão vira JSON");
+    let ttl = SESSION_DAYS as u64 * 24 * 60 * 60;
     redis
-        .query_pipe::<()>(
-            redis::pipe()
-                .atomic()
-                .hset_multiple(&key, &fields)
-                .ignore()
-                .expire_at(&key, expires_at)
-                .ignore()
-                .zadd(&index, &hash, expires_at)
-                .ignore()
-                .zrembyscore(&index, "-inf", now.timestamp())
-                .ignore()
-                // Toda sessão dura o mesmo: a nova é a última a expirar.
-                .expire_at(&index, expires_at)
-                .ignore(),
-        )
-        .await?;
-    Ok(token)
-}
-
-/// Dono da sessão com este hash, se ela não expirou. É o único comando no
-/// caminho de cada requisição logada.
-pub async fn session_user(redis: &Redis, hash: &[u8; 32]) -> RedisResult<Option<i64>> {
-    redis
-        .query(&Cmd::hget(session_key(redis, &token::hex(hash)), "user_id"))
+        .query(&Cmd::set_ex(session_key(redis, &session.hash), json, ttl))
         .await
 }
 
-/// Sessões vivas da conta, da mais nova para a mais antiga. As vencidas saem
-/// do índice.
-pub async fn user_sessions(redis: &Redis, user_id: i64) -> RedisResult<Vec<StoredSession>> {
-    let index = index_key(redis, user_id);
-    let (entries,): (Vec<(String, f64)>,) = redis
-        .query_pipe(
-            redis::pipe()
-                .zrembyscore(&index, "-inf", Utc::now().timestamp())
-                .ignore()
-                .zrange_withscores(&index, 0, -1),
-        )
-        .await?;
-    if entries.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    let mut details = redis::pipe();
-    for (hash, _) in &entries {
-        details.hgetall(session_key(redis, hash));
-    }
-    let details: Vec<HashMap<String, String>> = redis.query_pipe(&details).await?;
-
-    let mut sessions: Vec<StoredSession> = entries
-        .into_iter()
-        .zip(details)
-        .filter_map(|((hash, expires_at), mut fields)| {
-            Some(StoredSession {
-                hash,
-                created_at: DateTime::from_timestamp_millis(
-                    fields.get("created_at")?.parse().ok()?,
-                )?,
-                expires_at: DateTime::from_timestamp(expires_at as i64, 0)?,
-                user_agent: fields.remove("user_agent"),
-            })
-        })
-        .collect();
-    sessions.sort_by_key(|s| std::cmp::Reverse(s.created_at));
-    Ok(sessions)
-}
-
-/// A sessão de hash `hash` (em hexadecimal) ainda existe.
-pub async fn session_exists(redis: &Redis, hash: &str) -> RedisResult<bool> {
-    redis.query(&Cmd::exists(session_key(redis, hash))).await
-}
-
-/// Encerra a sessão com este hash e devolve o dono; sem sessão, nada
-/// acontece.
-pub async fn delete_session(redis: &Redis, hash: &[u8; 32]) -> RedisResult<Option<i64>> {
-    let user_id = session_user(redis, hash).await?;
-    if let Some(user_id) = user_id {
-        delete_sessions(redis, user_id, &[token::hex(hash)]).await?;
-    }
-    Ok(user_id)
-}
-
-/// Hashes (em hexadecimal) das sessões no índice da conta.
-pub async fn session_hashes(redis: &Redis, user_id: i64) -> RedisResult<Vec<String>> {
-    redis
-        .query(&Cmd::zrange(index_key(redis, user_id), 0, -1))
-        .await
-}
-
-/// Encerra todas as sessões da conta e devolve os hashes (em hexadecimal).
-pub async fn delete_all_sessions(redis: &Redis, user_id: i64) -> RedisResult<Vec<String>> {
-    let all = session_hashes(redis, user_id).await?;
-    delete_sessions(redis, user_id, &all).await?;
-    Ok(all)
-}
-
-/// Encerra as sessões da conta, menos a de hash `keep`, e devolve os hashes
-/// (em hexadecimal) das que encerrou.
-pub async fn delete_other_sessions(
-    redis: &Redis,
-    user_id: i64,
-    keep: &[u8; 32],
-) -> RedisResult<Vec<String>> {
-    let keep = token::hex(keep);
-    let others: Vec<String> = session_hashes(redis, user_id)
-        .await?
-        .into_iter()
-        .filter(|h| *h != keep)
-        .collect();
-    delete_sessions(redis, user_id, &others).await?;
-    Ok(others)
-}
-
-/// Encerra as sessões da conta com estes hashes (em hexadecimal).
-pub async fn delete_sessions(redis: &Redis, user_id: i64, hashes: &[String]) -> RedisResult<()> {
+/// Apaga as sessões com estes hashes (em hexadecimal).
+pub async fn delete_sessions(redis: &Redis, hashes: &[String]) -> RedisResult<()> {
     if hashes.is_empty() {
         return Ok(());
     }
-    let mut pipe = redis::pipe();
-    pipe.atomic();
-    for hash in hashes {
-        pipe.del(session_key(redis, hash)).ignore();
+    let keys: Vec<String> = hashes.iter().map(|h| session_key(redis, h)).collect();
+    redis.query(&Cmd::del(keys)).await
+}
+
+/// Todas as sessões que ainda não expiraram. O SCAN pode repetir uma chave.
+pub async fn load_sessions(redis: &Redis) -> RedisResult<Vec<StoredSession>> {
+    let pattern = session_key(redis, "*");
+    let mut sessions = Vec::new();
+    let mut cursor = 0u64;
+    loop {
+        let (next, keys): (u64, Vec<String>) = redis
+            .query(
+                redis::cmd("SCAN")
+                    .arg(cursor)
+                    .arg("MATCH")
+                    .arg(&pattern)
+                    .arg("COUNT")
+                    .arg(SCAN_PAGE),
+            )
+            .await?;
+        if !keys.is_empty() {
+            sessions.extend(read_sessions(redis, &keys).await?);
+        }
+        if next == 0 {
+            return Ok(sessions);
+        }
+        cursor = next;
     }
-    pipe.zrem(index_key(redis, user_id), hashes).ignore();
-    redis.query_pipe(&pipe).await
+}
+
+/// A sessão com este hash (em hexadecimal), se existe.
+pub async fn load_session(redis: &Redis, hash: &str) -> RedisResult<Option<StoredSession>> {
+    let found = read_sessions(redis, &[session_key(redis, hash)]).await?;
+    Ok(found.into_iter().next())
+}
+
+async fn read_sessions(redis: &Redis, keys: &[String]) -> RedisResult<Vec<StoredSession>> {
+    let prefix = session_key(redis, "");
+    let hash_of = |key: &str| key.strip_prefix(&prefix).unwrap_or(key).to_owned();
+    let values: Vec<Option<String>> = redis.query(redis::cmd("MGET").arg(keys)).await?;
+
+    let mut sessions = Vec::new();
+    let mut old_format = Vec::new();
+    for (key, value) in keys.iter().zip(values) {
+        // O MGET lê como nada o que não é texto.
+        let Some(json) = value else {
+            old_format.push(key);
+            continue;
+        };
+        match serde_json::from_str::<StoredSession>(&json) {
+            Ok(session) => sessions.push(StoredSession {
+                hash: hash_of(key),
+                ..session
+            }),
+            Err(err) => tracing::warn!(error = %err, "sessão ilegível no Redis, ignorada"),
+        }
+    }
+    if !old_format.is_empty() {
+        let mut pipe = redis::pipe();
+        for key in &old_format {
+            pipe.hgetall(*key);
+        }
+        let fields: Vec<HashMap<String, String>> = redis.query_pipe(&pipe).await?;
+        sessions.extend(
+            old_format
+                .into_iter()
+                .zip(fields)
+                .filter_map(|(key, fields)| from_old_format(hash_of(key), fields)),
+        );
+    }
+    Ok(sessions)
+}
+
+/// A sessão gravada como hash do Redis, o formato até novembro de 2026, que
+/// expira sozinho em 30 dias.
+fn from_old_format(hash: String, mut fields: HashMap<String, String>) -> Option<StoredSession> {
+    Some(StoredSession {
+        hash,
+        user_id: fields.get("user_id")?.parse().ok()?,
+        created_at: DateTime::from_timestamp_millis(fields.get("created_at")?.parse().ok()?)?,
+        user_agent: fields.remove("user_agent"),
+    })
 }

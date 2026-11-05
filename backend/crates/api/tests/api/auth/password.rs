@@ -5,11 +5,10 @@ use axum::{
     Router,
     http::{Method, StatusCode},
 };
-use redis::Cmd;
 use serde_json::{Value, json};
 
 use super::{add_discord, send_json, session_count, set_email, signup};
-use crate::common::{User, app, call, err, get, patch, post, redis, user};
+use crate::common::{User, app, call, err, get, patch, post, user};
 
 const PASSWORD: &str = "senha forte 1";
 
@@ -99,28 +98,26 @@ async fn wrong_passwords_block_the_email() {
         login(&app, "ninguem@example.com", PASSWORD).await.0,
         StatusCode::TOO_MANY_REQUESTS
     );
+}
 
-    // Com os erros fora da janela, entra, e o acerto zera a contagem.
-    let redis = redis(&db);
-    let failures = redis.key("password_failures:rapha@example.com");
-    let recent: Vec<(String, f64)> = redis
-        .query(&Cmd::zrange_withscores(&failures, 0, -1))
-        .await
-        .unwrap();
-    assert_eq!(recent.len(), 5);
-    for (failure, at) in recent {
-        let fifteen_minutes = 15.0 * 60_000.0;
-        let _: i64 = redis
-            .query(&Cmd::zadd(&failures, failure, at - fifteen_minutes))
-            .await
-            .unwrap();
+/// O acerto zera a contagem: os erros de antes dele não somam com os de depois.
+#[tokio::test]
+async fn the_right_password_clears_the_count() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    signup(&app, &db, "Rapha", PASSWORD).await;
+    for _ in 0..2 {
+        for _ in 0..4 {
+            assert_eq!(
+                login(&app, "rapha@example.com", "senha errada").await.0,
+                StatusCode::UNAUTHORIZED
+            );
+        }
+        assert_eq!(
+            login(&app, "rapha@example.com", PASSWORD).await.0,
+            StatusCode::OK
+        );
     }
-    assert_eq!(
-        login(&app, "rapha@example.com", PASSWORD).await.0,
-        StatusCode::OK
-    );
-    let left: bool = redis.query(&Cmd::exists(&failures)).await.unwrap();
-    assert!(!left);
 }
 
 /// A tentativa conta antes da conferência: pedidos ao mesmo tempo não

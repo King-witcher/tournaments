@@ -89,8 +89,8 @@ pub async fn request_email_proof(
     let Some(email) = methods.email.as_deref().filter(|_| only_email(&methods)) else {
         return Err(ApiError::conflict("auth.email_proof_not_needed"));
     };
-    state.mail.limit_ip(&state.redis, &ip).await?;
-    state.mail.limit_account(&state.redis, user.id).await?;
+    state.mail.limit_ip(&ip)?;
+    state.mail.limit_account(user.id)?;
     let Some(ticket) = state.mail.reserve_quietly(&state.redis, email).await? else {
         return Ok(StatusCode::ACCEPTED);
     };

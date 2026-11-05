@@ -54,7 +54,7 @@ pub async fn login(
     let found = db::password_login_by_email(&state.db, &email).await?;
     // Sem conta, confere contra um hash fixo: mesmo tempo e mesma contagem.
     let hash = found.as_ref().map(|f| f.password_hash.clone());
-    let ok = check_password(&state.redis, &email, hash, body.password).await?;
+    let ok = check_password(&state.password_attempts, &email, hash, body.password).await?;
     match found {
         Some(login) if ok => start_session(&state, &headers, jar, login.user_id).await,
         _ => Err(invalid),
@@ -70,7 +70,7 @@ pub(super) async fn start_session(
     user_id: i64,
 ) -> Result<(CookieJar, Json<SignedIn>), ApiError> {
     let agent = user_agent(headers);
-    let token = kv::create_session(&state.redis, user_id, agent.as_deref()).await?;
+    let token = state.sessions.create(user_id, agent.as_deref()).await?;
     let deletion_cancelled = db::cancel_deletion(&state.db, user_id).await?;
     let user = db::user_by_id(&state.db, user_id).await?;
     let signed_in = SignedIn {
@@ -140,7 +140,7 @@ pub async fn change_password(
     kv::cancel_email_change(&state.redis, user.id).await?;
     if let Some(current) = state.auth.session_token(&jar) {
         let keep = token::hash_token(current);
-        let ended = kv::delete_other_sessions(&state.redis, user.id, &keep).await?;
+        let ended = state.sessions.end_others(user.id, &keep).await?;
         sessions_ended(&state, user.id, &ended).await?;
     }
     notify(&state, user.id, Notice::PasswordChanged);

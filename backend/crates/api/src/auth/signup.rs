@@ -53,7 +53,7 @@ pub async fn signup(
 
     // Antes do que gasta (o hash da senha, o envio), e igual para email novo
     // e de uma conta.
-    state.mail.limit_ip(&state.redis, &ip).await?;
+    state.mail.limit_ip(&ip)?;
     // Daqui em diante, email novo e email de uma conta passam pelos mesmos
     // limites e pelo mesmo hash da senha: nem a resposta nem o tempo dizem
     // se o email já tem conta.

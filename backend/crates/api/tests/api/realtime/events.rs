@@ -5,8 +5,6 @@
 use axum::http::StatusCode;
 use serde_json::json;
 
-use api::auth::create_session;
-
 use super::*;
 use crate::common::*;
 use crate::matches::{COPA, copa, game, players, report, single, start};
@@ -162,7 +160,7 @@ async fn ended_sessions() {
     let (db, _lease) = crate::db::test_db().await;
     let app = app(db.clone());
     let ana = user(&db, "Ana").await;
-    let other = create_session(&redis(&db), ana.id, None).await.unwrap();
+    let other = sessions(&db).create(ana.id, None).await.unwrap();
     let id = |token: &str| token_id(token);
 
     let (status, _) = delete(&app, "/auth/sessions", &ana).await;
