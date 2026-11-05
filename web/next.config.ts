@@ -22,6 +22,8 @@ const sassLoader = {
 };
 
 const nextConfig: NextConfig = {
+  // Nada de anunciar a stack (`X-Powered-By: Next.js`).
+  poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
   // A recuperação de senha virou entrar por email. Os emails já mandados

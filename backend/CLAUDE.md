@@ -23,6 +23,7 @@ crates/api/src/
   veto_rooms/     sala de veto: o veto de matches/veto sem torneio nem login, por token
   my_tournaments/ organizing/ notifications/ ratings/ screenshots/ images/ push/ discord/
   realtime/       WebSocket, despachante do outbox, agendador (acima de todos)
+  scanners/       banimento de scanners de vulnerabilidade: middleware na frente de tudo e a rota que não existe
   health.rs  maps.rs   domínios pequenos, um arquivo cada
 ```
 

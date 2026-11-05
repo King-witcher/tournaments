@@ -57,6 +57,22 @@ Upstash grátis: 256 MB e 500 mil comandos por mês (~16 mil por dia); passar da
 - **Conexão**: `ConnectionManager` do redis-rs (abre no primeiro comando, reconecta; o comando que falha por conexão parada tenta de novo uma vez). TLS (`rediss://`) pelo rustls com o provedor aws-lc instalado no `main`: com ring (sqlx) e aws-lc (reqwest) ativos o rustls não escolhe sozinho e entra em pânico.
 - **Database e prefixo**: um database só (local, o 1: os outros são de outros projetos do usuário; Upstash, o 0, o único). Toda chave passa por `Redis::key` com `REDIS_PREFIX` (padrão `telefrag:`), para checkout principal e worktrees dividirem o database. Os testes usam `test:{banco}:{empréstimo}:`; a execução seguinte, com o lock da suíte, apaga todo `test:*` antes do primeiro teste (senão chegaram a 39 mil chaves; hoje ~1.900).
 
+## Scanners
+
+Quem pede `/.env`, `/wp-login.php` e afins tem o IP banido por 7 dias, e dali em diante toda rota responde 404 vazio, sem dizer que houve ban (do usuário, 05/11). Na API, `scanners/`; no front, `features/scanners`, no proxy. Sem `INTERNAL_API_SECRET` nos dois, fica tudo desligado.
+
+- **404 seco, sem honeypot**: `.env` falsa ou `wp-admin` falso marcam o site como alvo nas listas de quem varre e trazem mais tráfego; o valor de um honeypot está em alguém ler o que ele colhe, e ninguém lê; o repositório é público, então a isca também é. Na API, a resposta do banido é a de uma rota que não existe, cabeçalho a cabeçalho (teste); `/internal/bans` sem o segredo, também.
+- **Só o que nenhum cliente legítimo pede**: um pedaço do caminho que começa com ponto (menos `/.well-known`), extensões de outras stacks e de backup, nomes como `wp-admin` e `phpmyadmin`. Na API, só rota que não existe denuncia; no front, nada depois do idioma (`/pt/solr` pode ser uma comunidade). As listas estão repetidas em `traps.rs` e `traps.ts`.
+- **Navegador nunca é banido** (`Sec-Fetch-*`): sem isto, um link ou um `<img>` para `/wp-admin` tiraria o site de um adversário no dia do torneio. **Crawler que diz o nome também não**: um link em qualquer site baniria o Google (o site sairia da busca) e o Discord (sem prévia). Quem forja um dos dois só escapa do ban.
+- **Sessão válida passa pelo ban** (no front, a presença do cookie): é quem divide o IP com o scanner (CGNAT), que veria o site sumir sem explicação. O scanner não tem sessão.
+- **Servidor do Next nunca é banido** (`x-internal-secret`, em `serverApi`): ele sai pelos IPs da Vercel, divididos com outros clientes dela; sem isto, o scanner de um deles derrubaria as páginas do site. Pedido novo do servidor à API passa por `serverApi` ou leva `internalHeaders()`.
+- **7 dias**: quem volta depois disso se bane de novo no primeiro pedido, então mais tempo não compra nada, e o IP pode já ser de outra pessoa.
+- **Memória e cota**: lido da memória a cada requisição; a cópia no Redis é um sorted set, gravado a cada 5 minutos num ZADD só (no máximo ~17 mil comandos por mês, com ban novo o tempo todo) e lido ao subir. Teto de 50 mil IPs; passando dele, os novos só recebem o 404 do caminho.
+- **Front**: a lista vem da API a cada 5 minutos, em segundo plano e por instância, numa variável do módulo (o proxy não espera a API, e a instância nova deixa passar até a primeira leitura). O IP vem do `x-real-ip`, que a Vercel grava por cima do que o cliente manda.
+- **Tirar um ban**: `curl -X DELETE -H "x-internal-secret: $SEGREDO" -d <ip> https://api.telefrag.com.br/internal/bans` (o log do Render diz `scanner banido`, com o IP e o caminho). `GET` no mesmo endereço lista.
+- **`/openapi.json` e `/docs`** só sem `COOKIE_SECURE`, ou com `API_DOCS=true`: num ambiente publicado, são o mapa da API para quem varre.
+- **O que não dá para esconder**: antes do primeiro pedido denunciado, o site é uma página Next como qualquer outra; a Vercel, o Render e o Cloudflare põem cabeçalhos próprios (`server`, `x-vercel-id`, `rndr-id`, `cf-ray`) em toda resposta, inclusive no 404; e o que está no build (`/_next/static`) segue acessível a quem souber o endereço. Quem comparar de outro IP descobre o ban: o alvo são os robôs.
+
 ## Ids
 
 - **Chave interna**: `bigint generated always as identity` (users, tenants, torneios e o que vier). O Postgres é um só e gera os ids, então UUID/ULID não ajudam: 8 bytes contra 16, sequenciais (índice compacto) e cabem no `number` do JS. `tenant_id` também é bigint (num índice composto com outro bigint, um `int4` não economiza por causa do alinhamento).

@@ -17,6 +17,7 @@ use api::{
     discord::Webhooks,
     mail::{Email, Mail, Mailer},
     realtime::Realtime,
+    scanners::Bans,
     shared::Redis,
 };
 use async_trait::async_trait;
@@ -156,6 +157,9 @@ pub fn link_token(email: &Email) -> String {
     rest.split_whitespace().next().unwrap().to_owned()
 }
 
+/// O `INTERNAL_API_SECRET` do app de teste.
+pub const INTERNAL_SECRET: &str = "segredo-do-next";
+
 /// Estado do app de teste: login do Discord e do Google desligado (os testes
 /// criam sessões direto em `sessions(&db)`), Web Push desligado, emails na
 /// `mailbox(&db)` e nenhuma tarefa em segundo plano (os testes do tempo real
@@ -164,6 +168,8 @@ pub fn state(db: PgPool) -> AppState {
     AppState {
         redis: redis(&db),
         sessions: sessions(&db),
+        bans: Bans::new(redis(&db), Some(INTERNAL_SECRET)),
+        api_docs: true,
         password_attempts: Default::default(),
         mail: Mail::new(mailbox(&db), DAILY_EMAILS, true),
         db,

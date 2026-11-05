@@ -9,6 +9,7 @@ use api::{
     mail::{LogMailer, Mail, Mailer, ResendMailer},
     push::{HttpWebPush, WebPush},
     realtime::{self, Realtime},
+    scanners::Bans,
     shared::{self, Redis, Storage},
 };
 use sqlx::postgres::PgPoolOptions;
@@ -64,6 +65,10 @@ async fn main() -> anyhow::Result<()> {
     let sessions = SessionStore::load(redis.clone(), !config.cookie_secure)
         .await
         .context("falha ao conectar no Redis (confira REDIS_URL)")?;
+    if config.internal_secret.is_none() {
+        tracing::warn!("INTERNAL_API_SECRET ausente: banimento de scanners desligado");
+    }
+    let bans = Bans::load(redis.clone(), config.internal_secret.as_deref()).await;
 
     MIGRATOR
         .run(&db)
@@ -114,10 +119,13 @@ async fn main() -> anyhow::Result<()> {
         webhooks: Webhooks::new(discord_gate),
         limits: Default::default(),
         veto_rooms: Default::default(),
+        bans: bans.clone(),
+        api_docs: config.api_docs,
     };
     realtime::spawn(state.clone());
     discord::spawn(state.clone());
     state.sessions.reload_after_boot();
+    bans.spawn_saver();
     let app = api::app(state, web_origin);
 
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
@@ -130,6 +138,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .with_graceful_shutdown(shutdown_signal())
     .await?;
+    bans.save().await;
     Ok(())
 }
 

@@ -20,6 +20,7 @@ mod participants;
 pub mod push;
 mod ratings;
 pub mod realtime;
+pub mod scanners;
 pub mod screenshots;
 pub mod shared;
 mod teams;
@@ -86,12 +87,18 @@ pub struct AppState {
     pub limits: shared::WindowLimit,
     /// O canal e os limites de conexão das salas de veto.
     pub veto_rooms: veto_rooms::Live,
+    /// IPs de scanners de vulnerabilidade, que recebem 404 em tudo.
+    pub bans: scanners::Bans,
+    /// Serve `/openapi.json` e `/docs` (`API_DOCS`).
+    pub api_docs: bool,
 }
 
-/// Monta o app completo: rotas, OpenAPI em `/openapi.json` (lido pelo `gen:api`
-/// do front) e Scalar em `/docs`.
+/// Monta o app completo: rotas e, com `api_docs`, OpenAPI em `/openapi.json` (lido
+/// pelo `gen:api` do front) e Scalar em `/docs`.
 pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
     let realtime = state.realtime.clone();
+    let api_docs = state.api_docs;
+    let scanner_state = state.clone();
     let (router, openapi) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .merge(health::router())
         .merge(auth::router())
@@ -114,6 +121,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(ratings::router())
         .merge(veto_rooms::router())
         .merge(realtime::router())
+        .merge(scanners::router())
         .with_state(state)
         .split_for_parts();
 
@@ -133,10 +141,16 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         // Virgínia). 2 h é o teto do Chrome.
         .max_age(Duration::from_secs(7200));
 
-    let spec = Json(openapi.clone());
+    let refuse_state = (scanner_state, scanners::no_routes(cors.clone()));
+    let router = if api_docs {
+        let spec = Json(openapi.clone());
+        router
+            .route("/openapi.json", get(move || async move { spec }))
+            .merge(Scalar::with_url("/docs", openapi))
+    } else {
+        router
+    };
     router
-        .route("/openapi.json", get(move || async move { spec }))
-        .merge(Scalar::with_url("/docs", openapi))
         .layer(middleware::from_fn_with_state(
             realtime,
             realtime::wake_after_emit,
@@ -147,4 +161,8 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         ))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
+        .layer(middleware::from_fn_with_state(
+            refuse_state,
+            scanners::refuse_banned,
+        ))
 }

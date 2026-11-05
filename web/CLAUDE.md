@@ -35,7 +35,7 @@ messages/<pt|es|en>/    um JSON por namespace
 ### Dados e mutações
 
 - Server Component por padrão; `"use client"` só na folha que precisa de estado ou evento (o botão, não a seção).
-- Busca: componente async que busca o próprio dado, dentro de `<Suspense>`; busca usada em mais de um lugar vai para `features/<domínio>/server.ts`, com `cache()` do React.
+- Busca: componente async que busca o próprio dado, dentro de `<Suspense>`; busca usada em mais de um lugar vai para `features/<domínio>/server.ts`, com `cache()` do React. No servidor, sempre por `serverApi` (leva o segredo que livra o Next do banimento de scanners; `stack.md`, "Scanners"), nunca pelo `api`.
 - Busca em série: o `layout.tsx` e a `page.tsx` rodam juntos no servidor (o `children` do layout é outra parte da resposta), mas os filhos que um componente devolve só começam depois do `await` dele. Componente que espera uma busca antes de devolver os filhos começa antes a deles: `preload(getX(...))` (`shared/lib/preload.ts`), com os mesmos argumentos do uso e só para o que o filho buscaria de qualquer jeito (modelo: `HomeSessionGate`).
 - Mutação de botão: `useApiAction` (`run(chamada, aoDarCerto)` com `pending` e `error` já traduzido). Formulário: `useActionState` + `callApi`. Nunca mostre o código cru da API.
 - Server Component não passa função para Client Component (`onClick`, `onSelect`, `renderIcon`, `as`). Lista do servidor com ação por linha: o servidor monta as linhas e põe em cada uma um componente de cliente da feature (`<MemberActions member={m} />`).

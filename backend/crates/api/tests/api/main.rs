@@ -21,6 +21,7 @@ mod origin;
 mod participants;
 mod ratings;
 mod realtime;
+mod scanners;
 mod schema;
 mod screenshots;
 mod teams;

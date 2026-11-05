@@ -7,7 +7,9 @@ use serde_json::Value;
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-use crate::common::app;
+use api::AppState;
+
+use crate::common::{app, app_from, state};
 
 async fn fetch(db: PgPool, uri: &str) -> (StatusCode, Vec<u8>) {
     let response = app(db)
@@ -17,6 +19,24 @@ async fn fetch(db: PgPool, uri: &str) -> (StatusCode, Vec<u8>) {
     let status = response.status();
     let body = response.into_body().collect().await.unwrap().to_bytes();
     (status, body.to_vec())
+}
+
+/// Num ambiente publicado (`API_DOCS`), nem o mapa da API nem a página dele.
+#[tokio::test]
+async fn docs_can_be_turned_off() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app_from(AppState {
+        api_docs: false,
+        ..state(db)
+    });
+    for uri in ["/openapi.json", "/docs"] {
+        let response = app
+            .clone()
+            .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND, "{uri}");
+    }
 }
 
 /// O `gen:api` do front lê daqui.

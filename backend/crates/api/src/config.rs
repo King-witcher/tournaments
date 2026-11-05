@@ -50,6 +50,12 @@ pub struct Config {
     /// Bucket público, o dos logos e das capas, com as mesmas chaves; `None`
     /// sem `S3_PUBLIC_BUCKET`: logos e capas ficam desligados.
     pub public_storage: Option<PublicStorageConfig>,
+    /// Identifica o servidor do Next para a API; `None`: o banimento de scanners
+    /// fica desligado (`scanners/`).
+    pub internal_secret: Option<String>,
+    /// Serve `/openapi.json` e `/docs` (`API_DOCS`). Por padrão, só sem
+    /// `COOKIE_SECURE`: num ambiente publicado, é o mapa da API para um scanner.
+    pub api_docs: bool,
 }
 
 /// O bucket público e o endereço do CDN que o serve.
@@ -63,6 +69,12 @@ pub struct PublicStorageConfig {
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         let (storage, public_storage) = storage_from_env()?;
+        let cookie_secure = matches!(
+            env_or("COOKIE_SECURE", "false")
+                .to_ascii_lowercase()
+                .as_str(),
+            "1" | "true"
+        );
         Ok(Self {
             database_url: std::env::var("DATABASE_URL").context("DATABASE_URL não definida")?,
             redis_url: std::env::var("REDIS_URL").context("REDIS_URL não definida")?,
@@ -77,12 +89,7 @@ impl Config {
             google_client_secret: env_opt("GOOGLE_CLIENT_SECRET"),
             cookie_name: cookie_name_from_env()?,
             cookie_domain: env_opt("COOKIE_DOMAIN"),
-            cookie_secure: matches!(
-                env_or("COOKIE_SECURE", "false")
-                    .to_ascii_lowercase()
-                    .as_str(),
-                "1" | "true"
-            ),
+            cookie_secure,
             vapid_public_key: env_opt("VAPID_PUBLIC_KEY"),
             vapid_private_key: env_opt("VAPID_PRIVATE_KEY"),
             vapid_subject: env_opt("VAPID_SUBJECT"),
@@ -95,6 +102,8 @@ impl Config {
             email_strict: env_flag("EMAIL_STRICT", true)?,
             storage,
             public_storage,
+            internal_secret: env_opt("INTERNAL_API_SECRET"),
+            api_docs: env_flag("API_DOCS", !cookie_secure)?,
         })
     }
 }

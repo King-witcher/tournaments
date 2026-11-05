@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import createClient from "openapi-fetch";
 
+import { internalHeaders } from "./internal";
 import type { paths } from "./schema";
 import { API_URL } from "./url";
 
@@ -22,7 +23,7 @@ export async function serverApi() {
   const cookieStore = await cookies();
   return createClient<paths>({
     baseUrl: API_URL,
-    headers: { cookie: cookieStore.toString() },
+    headers: { cookie: cookieStore.toString(), ...internalHeaders() },
     fetch: (request) =>
       fetch(request, { signal: AbortSignal.timeout(TIMEOUT_MS) }),
   });

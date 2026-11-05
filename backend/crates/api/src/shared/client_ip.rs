@@ -54,6 +54,32 @@ impl ClientIp {
             }
         })
     }
+
+    /// `bucket` de um endereço público; o de rede interna, `None`.
+    pub fn public_bucket(&self) -> Option<String> {
+        self.0.filter(|ip| is_public(*ip))?;
+        self.bucket()
+    }
+}
+
+fn is_public(ip: IpAddr) -> bool {
+    match ip.to_canonical() {
+        IpAddr::V4(v4) => {
+            let [a, b, ..] = v4.octets();
+            let shared = a == 100 && b & 0xc0 == 64;
+            !(shared
+                || v4.is_private()
+                || v4.is_loopback()
+                || v4.is_link_local()
+                || v4.is_unspecified())
+        }
+        IpAddr::V6(v6) => {
+            !(v6.is_loopback()
+                || v6.is_unspecified()
+                || v6.is_unique_local()
+                || v6.is_unicast_link_local())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -95,5 +121,32 @@ mod tests {
         // IPv4 escrito como IPv6 conta como o IPv4.
         let mapped = extract(Some("::ffff:203.0.113.7"), None).await;
         assert_eq!(mapped.bucket().as_deref(), Some("203.0.113.7"));
+    }
+
+    #[tokio::test]
+    async fn only_public_addresses_have_a_public_bucket() {
+        for ip in [
+            "10.0.0.1",
+            "172.16.0.1",
+            "192.168.0.1",
+            "127.0.0.1",
+            "169.254.0.1",
+            "100.64.0.1",
+            "0.0.0.0",
+            "::1",
+            "::",
+            "fd00::1",
+            "fe80::1",
+            "::ffff:10.0.0.1",
+        ] {
+            let ip = extract(Some(ip), None).await;
+            assert_eq!(ip.public_bucket(), None, "{:?}", ip.0);
+        }
+        for ip in ["203.0.113.7", "100.128.0.1", "2001:db8::1"] {
+            let ip = extract(Some(ip), None).await;
+            assert_eq!(ip.public_bucket(), ip.bucket());
+            assert!(ip.public_bucket().is_some());
+        }
+        assert_eq!(extract(None, None).await.public_bucket(), None);
     }
 }
