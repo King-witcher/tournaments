@@ -5,10 +5,14 @@
 //! tempo real abre pelo mesmo caminho (`current_status`) os que ninguém leu.
 
 use chrono::{DateTime, Utc};
-use engine::{champions as ec, core::MapId, formats as ef};
+use engine::core::MapId;
 use sqlx::{Acquire, PgConnection, PgPool, types::Json};
 
-use super::{StoredTournament, TournamentId, status::open_due_check_in};
+use super::{
+    StoredTournament, TournamentId,
+    columns::{ChampionColumns, StageRow},
+    status::open_due_check_in,
+};
 use crate::{
     shared::{ApiError, Locale, public_url},
     tenants::TenantId,
@@ -186,8 +190,8 @@ pub async fn find(
 ) -> Result<Option<StoredTournament>, ApiError> {
     let Some(row) = sqlx::query!(
         r#"select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,
-                  t.admission, t.max_participants,
-                  t.champion_rules as "champion_rules: Json<ec::ChampionRules>",
+                  t.admission, t.max_participants, t.bans_per_series, t.mirror, t.same_team,
+                  t.no_repeat_who, t.no_repeat_scope,
                   t.starts_at, t.check_in_minutes, t.contest_minutes,
                   t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,
                   t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,
@@ -200,10 +204,12 @@ pub async fn find(
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $3
                            and p.checked_in_at is not null) as "checked_in!",
-                  coalesce((select jsonb_agg(s.config order by s.position)
-                            from tournament_stages s
-                            where s.tournament_id = t.id), '[]')
-                      as "stages!: Json<Vec<ef::StageFormat>>",
+                  coalesce((select jsonb_agg(s order by s.position)
+                            from (select position, format, best_of, finals_best_of, bracket,
+                                         grand_final_reset, rounds
+                                  from tournament_stages
+                                  where tournament_id = t.id) s), '[]')
+                      as "stages!: Json<Vec<StageRow>>",
                   coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,
                                                                 'name', m.name)
                                              order by p.position)
@@ -261,6 +267,20 @@ pub async fn find(
             })
         })
         .collect::<Result<_, ApiError>>()?;
+    let stages = row
+        .stages
+        .0
+        .iter()
+        .map(StageRow::read)
+        .collect::<Result<_, _>>()?;
+    let champion_rules = ChampionColumns {
+        bans_per_series: row.bans_per_series,
+        mirror: row.mirror,
+        same_team: row.same_team,
+        no_repeat_who: row.no_repeat_who,
+        no_repeat_scope: row.no_repeat_scope,
+    }
+    .read()?;
 
     Ok(Some(StoredTournament {
         id,
@@ -279,8 +299,8 @@ pub async fn find(
             mode: TournamentMode::from_db(&row.mode)?,
             team_size: i32::from(row.team_size),
             max_participants: row.max_participants,
-            champion_rules: row.champion_rules.0,
-            stages: row.stages.0,
+            champion_rules,
+            stages,
             veto: VetoSetup {
                 map_mode: MapMode::from_db(&row.map_mode)?,
                 order: VetoOrder::from_db(&row.veto_order)?,

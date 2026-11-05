@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select format, best_of, finals_best_of, bracket, grand_final_reset, rounds\n         from tournament_stages where position = 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "format",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "format"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "best_of",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "best_of"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "finals_best_of",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "finals_best_of"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "bracket",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "bracket"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "grand_final_reset",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "grand_final_reset"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "rounds",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "rounds"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "502cfde23f9bdfe7f7f8ed19f0265c3da29f59e0466507b349727f5c997e0496"
+}

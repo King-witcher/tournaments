@@ -16,7 +16,13 @@ O banco recusa estado inválido e entidade órfã mesmo que a API erre; a API co
 - **Owner**: exatamente um por tenant e membro. "No máximo um" vale na hora (índice único parcial); "pelo menos um", no commit.
 - Quem inscreveu e quem marcou check-in são membros do mesmo tenant (FK composta).
 - **Link de convite**: um por comunidade e um por torneio, sempre (`invite_token not null unique`, nas duas tabelas), em base58 de 22 caracteres.
-- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; JSON de regras de campeões e de fase com a forma do `engine`; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
+- **Estado e forma**: status check-in só com janela; tradução nunca no idioma original; ao menos uma fase por torneio; vagas nunca abaixo dos inscritos; idioma original fixo; slug do torneio só muda no rascunho; regras de campeões e cada formato de fase com as suas colunas; senha só como hash argon2id, avatar só por https, nome exibido não vazio, campeão com nome único.
+
+## Configuração em colunas
+
+As regras de campeões (`tournaments`) e as fases (`tournament_stages`, em que `format` diz quais colunas valem) ficam em colunas, não em jsonb (05/11). Em JSON, um campo novo no `engine` compilava e passava nos testes, porque o banco de teste nasce vazio, e só os torneios já gravados davam 500. Em coluna, a tradução (`tournaments/db/columns.rs`) não compila sem ela e recriar um check confere as linhas gravadas. jsonb fica só no que é passageiro e varia por código: `notifications.notice` (30 dias), `outbox.event` e `discord_messages.params` (até 1 h).
+
+Mudar o comportamento do `engine` ainda pode mudar um torneio gravado, que sai do replay; coluna não resolve isso, e o teste `engine/tests/replay_golden` avisa.
 
 ## Sala de veto
 
@@ -27,3 +33,4 @@ Lugares de acordo com o modo (`team_size` por lado, no commit) e pool de acordo 
 - Ordem entre horários de ações de transações diferentes (cada uma grava o próprio `now()`, e uma pode ter começado antes da outra) e datas agendadas no futuro; histórico imutável (os testes envelhecem essas datas direto no banco).
 - O mesmo token numa comunidade e num torneio: 128 bits aleatórios não se repetem, e um trigger para isso não se paga (`tenants.md`, "Convites").
 - O limite de 3 tenants por owner e o pool de campeões: regras da API, que mudam sem migration.
+- O "pronto" do veto sem autor pode repetir: não conta para ninguém, e exigir o autor colidiria com o `set null` de quando a conta é apagada.

@@ -39,10 +39,6 @@ async fn mode_and_team_size_go_together() {
             "update tournaments set team_pick_seconds = 10",
             "tournaments_team_pick_seconds_check",
         ),
-        (
-            r#"update tournaments set champion_rules = '{"bans_per_series": 1, "mirror": true, "same_team": 1, "no_repeat": null}'"#,
-            "tournaments_champion_rules_shape",
-        ),
     ] {
         assert_eq!(rejected(exec(&db, sql).await), rule(CHECK, name), "{sql}");
     }

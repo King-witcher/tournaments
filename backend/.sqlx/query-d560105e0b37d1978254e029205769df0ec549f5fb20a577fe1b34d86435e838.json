@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.admission, t.max_participants,\n                  t.champion_rules as \"champion_rules: Json<ec::ChampionRules>\",\n                  t.starts_at, t.check_in_minutes, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,\n                  t.pick_order, t.started_at, t.cover_key, t.veto_by, t.ban_by, t.pick_by,\n                  t.report_by,\n                  (select n.slug from tenants n where n.id = t.tenant_id) as \"tenant_slug!\",\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce((select jsonb_agg(s.config order by s.position)\n                            from tournament_stages s\n                            where s.tournament_id = t.id), '[]')\n                      as \"stages!: Json<Vec<ef::StageFormat>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,\n                                                                'name', m.name)\n                                             order by p.position)\n                            from tournament_maps p\n                            join maps m on m.id = p.map_id\n                            where p.tournament_id = t.id), '[]')\n                      as \"map_pool!: Json<Vec<PoolMapRow>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('locale', r.locale,\n                                                                'name', r.name,\n                                                                'description', r.description,\n                                                                'rules', r.rules)\n                                             order by r.locale)\n                            from tournament_translations r\n                            where r.tournament_id = t.id), '[]')\n                      as \"translations!: Json<Vec<TranslationRow>>\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
+  "query": "select t.id, t.slug, t.locale, t.name, t.description, t.rules, t.mode, t.status,\n                  t.admission, t.max_participants, t.bans_per_series, t.mirror, t.same_team,\n                  t.no_repeat_who, t.no_repeat_scope,\n                  t.starts_at, t.check_in_minutes, t.contest_minutes,\n                  t.counts_for_rating, t.map_mode, t.champion_phase, t.veto_seconds,\n                  t.screenshots_required, t.created_at, t.team_size, t.team_pick_seconds, t.veto_order,\n                  t.pick_order, t.started_at, t.cover_key, t.veto_by, t.ban_by, t.pick_by,\n                  t.report_by,\n                  (select n.slug from tenants n where n.id = t.tenant_id) as \"tenant_slug!\",\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $3\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce((select jsonb_agg(s order by s.position)\n                            from (select position, format, best_of, finals_best_of, bracket,\n                                         grand_final_reset, rounds\n                                  from tournament_stages\n                                  where tournament_id = t.id) s), '[]')\n                      as \"stages!: Json<Vec<StageRow>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'slug', m.slug,\n                                                                'name', m.name)\n                                             order by p.position)\n                            from tournament_maps p\n                            join maps m on m.id = p.map_id\n                            where p.tournament_id = t.id), '[]')\n                      as \"map_pool!: Json<Vec<PoolMapRow>>\",\n                  coalesce((select jsonb_agg(jsonb_build_object('locale', r.locale,\n                                                                'name', r.name,\n                                                                'description', r.description,\n                                                                'rules', r.rules)\n                                             order by r.locale)\n                            from tournament_translations r\n                            where r.tournament_id = t.id), '[]')\n                      as \"translations!: Json<Vec<TranslationRow>>\"\n           from tournaments t\n           where t.tenant_id = $1 and t.slug = $2",
   "describe": {
     "columns": [
       {
@@ -115,17 +115,61 @@
       },
       {
         "ordinal": 10,
-        "name": "champion_rules: Json<ec::ChampionRules>",
-        "type_info": "Jsonb",
+        "name": "bans_per_series",
+        "type_info": "Int2",
         "origin": {
           "Table": {
             "table": "tournaments",
-            "name": "champion_rules"
+            "name": "bans_per_series"
           }
         }
       },
       {
         "ordinal": 11,
+        "name": "mirror",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "mirror"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "same_team",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "same_team"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "no_repeat_who",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "no_repeat_who"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "no_repeat_scope",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "no_repeat_scope"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
         "name": "starts_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -136,7 +180,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 16,
         "name": "check_in_minutes",
         "type_info": "Int4",
         "origin": {
@@ -147,7 +191,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 17,
         "name": "contest_minutes",
         "type_info": "Int4",
         "origin": {
@@ -158,7 +202,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 18,
         "name": "counts_for_rating",
         "type_info": "Bool",
         "origin": {
@@ -169,7 +213,7 @@
         }
       },
       {
-        "ordinal": 15,
+        "ordinal": 19,
         "name": "map_mode",
         "type_info": "Text",
         "origin": {
@@ -180,7 +224,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 20,
         "name": "champion_phase",
         "type_info": "Bool",
         "origin": {
@@ -191,7 +235,7 @@
         }
       },
       {
-        "ordinal": 17,
+        "ordinal": 21,
         "name": "veto_seconds",
         "type_info": "Int4",
         "origin": {
@@ -202,7 +246,7 @@
         }
       },
       {
-        "ordinal": 18,
+        "ordinal": 22,
         "name": "screenshots_required",
         "type_info": "Bool",
         "origin": {
@@ -213,7 +257,7 @@
         }
       },
       {
-        "ordinal": 19,
+        "ordinal": 23,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -224,7 +268,7 @@
         }
       },
       {
-        "ordinal": 20,
+        "ordinal": 24,
         "name": "team_size",
         "type_info": "Int2",
         "origin": {
@@ -235,7 +279,7 @@
         }
       },
       {
-        "ordinal": 21,
+        "ordinal": 25,
         "name": "team_pick_seconds",
         "type_info": "Int4",
         "origin": {
@@ -246,7 +290,7 @@
         }
       },
       {
-        "ordinal": 22,
+        "ordinal": 26,
         "name": "veto_order",
         "type_info": "Text",
         "origin": {
@@ -257,7 +301,7 @@
         }
       },
       {
-        "ordinal": 23,
+        "ordinal": 27,
         "name": "pick_order",
         "type_info": "Text",
         "origin": {
@@ -268,7 +312,7 @@
         }
       },
       {
-        "ordinal": 24,
+        "ordinal": 28,
         "name": "started_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -279,7 +323,7 @@
         }
       },
       {
-        "ordinal": 25,
+        "ordinal": 29,
         "name": "cover_key",
         "type_info": "Text",
         "origin": {
@@ -290,7 +334,7 @@
         }
       },
       {
-        "ordinal": 26,
+        "ordinal": 30,
         "name": "veto_by",
         "type_info": "Text",
         "origin": {
@@ -301,7 +345,7 @@
         }
       },
       {
-        "ordinal": 27,
+        "ordinal": 31,
         "name": "ban_by",
         "type_info": "Text",
         "origin": {
@@ -312,7 +356,7 @@
         }
       },
       {
-        "ordinal": 28,
+        "ordinal": 32,
         "name": "pick_by",
         "type_info": "Text",
         "origin": {
@@ -323,7 +367,7 @@
         }
       },
       {
-        "ordinal": 29,
+        "ordinal": 33,
         "name": "report_by",
         "type_info": "Text",
         "origin": {
@@ -334,43 +378,43 @@
         }
       },
       {
-        "ordinal": 30,
+        "ordinal": 34,
         "name": "tenant_slug!",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 31,
+        "ordinal": 35,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 32,
+        "ordinal": 36,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 33,
+        "ordinal": 37,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 34,
-        "name": "stages!: Json<Vec<ef::StageFormat>>",
+        "ordinal": 38,
+        "name": "stages!: Json<Vec<StageRow>>",
         "type_info": "Jsonb",
         "origin": "Expression"
       },
       {
-        "ordinal": 35,
+        "ordinal": 39,
         "name": "map_pool!: Json<Vec<PoolMapRow>>",
         "type_info": "Jsonb",
         "origin": "Expression"
       },
       {
-        "ordinal": 36,
+        "ordinal": 40,
         "name": "translations!: Json<Vec<TranslationRow>>",
         "type_info": "Jsonb",
         "origin": "Expression"
@@ -395,6 +439,10 @@
       false,
       false,
       false,
+      false,
+      false,
+      true,
+      true,
       true,
       true,
       false,
@@ -423,5 +471,5 @@
       null
     ]
   },
-  "hash": "f980494d67e55af9add142dc06815c2e796524205b3ac2139d529b5089acd0d5"
+  "hash": "d560105e0b37d1978254e029205769df0ec549f5fb20a577fe1b34d86435e838"
 }

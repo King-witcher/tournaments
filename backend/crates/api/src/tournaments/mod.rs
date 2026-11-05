@@ -44,8 +44,8 @@ use crate::AppState;
 pub use admission::Admission;
 pub use changes::{changed, changed_with, check_in_opened};
 pub use db::{
-    Address, Listed, StoredTournament, TournamentId, champion_pool, find, find_for_update, list_in,
-    set_status, slugs_for_member, sync_finished,
+    Address, Listed, StageRow, StoredTournament, TournamentId, champion_pool, find,
+    find_for_update, list_in, set_status, slugs_for_member, sync_finished,
 };
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;

@@ -45,7 +45,7 @@ pub const MAX_PARTICIPANTS: usize = 128;
 /// Teto de rodadas configuradas; na fase, vale no máximo N − 1.
 pub const MAX_ROUNDS: u16 = MAX_PARTICIPANTS as u16 - 1;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SwissConfig {
     /// Melhor de N de todas as partidas.
     pub best_of: u8,

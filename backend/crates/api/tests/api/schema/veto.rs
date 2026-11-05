@@ -158,8 +158,8 @@ async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     let order: String = sqlx::query_scalar(
-        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, bans_per_series, mirror, same_team, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, 1, true, false, $2)
          returning veto_order",
     )
     .bind(tenant)
@@ -186,8 +186,8 @@ async fn the_pick_order_is_one_of_three_and_blind_needs_a_mirror() {
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     let order: String = sqlx::query_scalar(
-        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, bans_per_series, mirror, same_team, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, 1, true, false, $2)
          returning pick_order",
     )
     .bind(tenant)
@@ -217,8 +217,7 @@ async fn the_pick_order_is_one_of_three_and_blind_needs_a_mirror() {
         .await
         .unwrap();
     // Às cegas sem espelho, por qualquer das duas colunas.
-    let mirror_off =
-        "update tournaments set champion_rules = jsonb_set(champion_rules, '{mirror}', 'false')";
+    let mirror_off = "update tournaments set mirror = false";
     assert_eq!(
         rejected(exec(&db, mirror_off).await),
         rule(CHECK, "tournaments_blind_needs_mirror")
@@ -262,6 +261,20 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
         rejected(exec(&db, &pick_order).await),
         rule(CHECK, "tournaments_veto_started_frozen")
     );
+    // E as regras de campeões, que o replay do veto também lê da linha.
+    for set in [
+        "bans_per_series = bans_per_series + 1",
+        "mirror = not mirror",
+        "same_team = not same_team",
+        "no_repeat_who = 'player', no_repeat_scope = 'series'",
+    ] {
+        let sql = format!("update tournaments set {set} where id = {tournament}");
+        assert_eq!(
+            rejected(exec(&db, &sql).await),
+            rule(CHECK, "tournaments_veto_started_frozen"),
+            "{sql}"
+        );
+    }
 
     // Num torneio que não começou: md3 precisa de 3 mapas no pool, fora do
     // modo desligado (conferido no commit).
@@ -303,6 +316,27 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
         ),
         rule(CHECK, "tournament_maps_pool_size")
     );
+
+    // As fases de tabela contam igual. O pool ficou com 4 mapas: md3 cabe, md5
+    // não, ao ligar o veto e ao aumentar a série com ele ligado.
+    let pool_size = rule(CHECK, "tournament_maps_pool_size");
+    let vote = format!("update tournaments set map_mode = 'vote' where id = {liga}");
+    let off = format!("update tournaments set map_mode = 'off' where id = {liga}");
+    let longer = format!("update tournament_stages set best_of = 5 where tournament_id = {liga}");
+    for table in ["round_robin", "swiss"] {
+        let stage = format!(
+            "update tournament_stages
+             set format = '{table}', best_of = 3, finals_best_of = null, bracket = null,
+                 grand_final_reset = null
+             where tournament_id = {liga}"
+        );
+        exec(&db, &stage).await.unwrap();
+        exec(&db, &vote).await.unwrap();
+        assert_eq!(rejected(exec(&db, &longer).await), pool_size, "{table}");
+        exec(&db, &off).await.unwrap();
+        exec(&db, &longer).await.unwrap();
+        assert_eq!(rejected(exec(&db, &vote).await), pool_size, "{table}");
+    }
 }
 
 #[tokio::test]

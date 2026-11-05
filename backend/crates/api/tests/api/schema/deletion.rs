@@ -222,11 +222,15 @@ async fn started_participants_and_stages_only_leave_with_the_tournament() {
         rule(FOREIGN_KEY, "tournament_stages_started_delete")
     );
     let stage_frozen = rule(CHECK, "tournament_stages_started_frozen");
-    let sql = "update tournament_stages set config = config || '{\"series\": {\"default\": 1, \"finals\": 1}}'";
+    let sql = "update tournament_stages set best_of = 1";
     assert_eq!(rejected(exec(&db, sql).await), stage_frozen);
     let sql = format!(
-        "insert into tournament_stages (tournament_id, position, config)
-         select tournament_id, 2, config from tournament_stages where tournament_id = {}",
+        "insert into tournament_stages
+             (tournament_id, position, format, best_of, finals_best_of, bracket,
+              grand_final_reset, rounds)
+         select tournament_id, 2, format, best_of, finals_best_of, bracket,
+                grand_final_reset, rounds
+         from tournament_stages where tournament_id = {}",
         cup.tournament
     );
     assert_eq!(rejected(exec(&db, &sql).await), stage_frozen);

@@ -15,17 +15,14 @@ pub use stage::{StageBracket, StageHistory};
 
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize};
-
 use crate::core::{EngineError, ParticipantId};
 use elimination::{EliminationBracket, EliminationConfig};
 use round_robin::RoundRobinConfig;
 use swiss::SwissConfig;
 
-/// Formato de uma fase do torneio: é o que a fase guarda (em JSON). O estado
-/// da fase nunca é guardado; vem do `replay` do formato.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "format", rename_all = "snake_case")]
+/// Formato de uma fase do torneio: é o que a fase guarda (a API grava em
+/// colunas). O estado da fase nunca é guardado; vem do `replay` do formato.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum StageFormat {
     Elimination(EliminationConfig),
     RoundRobin(RoundRobinConfig),

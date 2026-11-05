@@ -22,7 +22,7 @@ use crate::{
         veto::{Champion, Kind, MatchVetoRow, VetoRow},
     },
     shared::ApiError,
-    tournaments::TournamentId,
+    tournaments::{StageRow, TournamentId},
 };
 
 /// O que ler da fase. O que fica de fora vem vazio.
@@ -75,9 +75,12 @@ pub async fn stage_rows(
     let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
     let rows = sqlx::query!(
         r#"select q.id as "id!",
-                  case when (select $3::bool) then (select s.config from tournament_stages s
-                                     where s.tournament_id = q.id and s.position = $2)
-                  end as "config: Json<ef::StageFormat>",
+                  case when (select $3::bool) then (
+                      select to_json(s) from (
+                          select format, best_of, finals_best_of, bracket, grand_final_reset, rounds
+                          from tournament_stages
+                          where tournament_id = q.id and position = $2) s)
+                  end as "config: Json<StageRow>",
                   case when (select $4::bool) then (
                       select json_agg(r order by r.position) from (
                           select id, match_key, side_a, side_b, winner, a_wins, b_wins,
@@ -143,7 +146,7 @@ pub async fn stage_rows(
     rows.into_iter()
         .map(|r| {
             Ok(StageRows {
-                config: r.config.map(|c| c.0),
+                config: r.config.map(|c| c.0.read()).transpose()?,
                 results: list(r.results)
                     .into_iter()
                     .map(StoredResult::try_from)

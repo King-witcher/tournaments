@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournaments\n           set max_participants = $2, bans_per_series = $3, mirror = $4, same_team = $5,\n               no_repeat_who = $6, no_repeat_scope = $7, map_mode = $8, champion_phase = $9,\n               veto_seconds = $10, mode = $11, team_size = $12, team_pick_seconds = $13,\n               veto_order = $14, pick_order = $15, veto_by = $16, ban_by = $17, pick_by = $18,\n               report_by = $19\n           where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int4",
+        "Int2",
+        "Bool",
+        "Bool",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Int4",
+        "Text",
+        "Int2",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dc24e613d746692726f24f2d9e1e27a291afeabdbe07f58accedcafd55c54fed"
+}

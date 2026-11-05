@@ -1,9 +1,11 @@
 //! SQL dos torneios: criar, editar e excluir aqui; leitura em `read`,
 //! mudanças de status em `status`, traduções em `translations`, os
-//! destinatários do tempo real em `audience` e o que o agendador procura em
-//! `scheduled`.
+//! destinatários do tempo real em `audience`, o que o agendador procura em
+//! `scheduled` e a tradução entre as colunas e os tipos do `engine` em
+//! `columns`.
 
 mod audience;
+mod columns;
 mod read;
 mod scheduled;
 mod status;
@@ -11,8 +13,9 @@ mod translations;
 
 use chrono::{DateTime, Utc};
 use engine::{core::MapId, formats as ef};
-use sqlx::{PgConnection, PgExecutor, types::Json};
+use sqlx::{PgConnection, PgExecutor};
 
+use self::columns::ChampionColumns;
 use super::{
     admission::Admission, edit::Edit, schedule::Schedule, setup::Setup, status::TournamentStatus,
     texts::Texts, types::TournamentTranslation, veto::PoolMap,
@@ -23,6 +26,7 @@ use crate::{
 };
 
 pub use audience::{Address, Audience, audience};
+pub use columns::StageRow;
 pub use read::{Listed, current_status, find, find_for_update, list, list_in, slugs_for_member};
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use status::{publish, set_status, sync_finished};
@@ -113,15 +117,17 @@ pub async fn create(
     tenant: TenantId,
     new: NewTournament<'_>,
 ) -> Result<TournamentId, ApiError> {
+    let champions = ChampionColumns::from(new.setup.champion_rules);
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, admission,
-                max_participants, champion_rules, starts_at, check_in_minutes, contest_minutes,
+                max_participants, bans_per_series, mirror, same_team, no_repeat_who,
+                no_repeat_scope, starts_at, check_in_minutes, contest_minutes,
                 counts_for_rating, map_mode, champion_phase, veto_seconds, screenshots_required,
                 team_size, team_pick_seconds, veto_order, pick_order, invite_token,
                 veto_by, ban_by, pick_by, report_by)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-                   $19, $20, $21, $22, $23, $24, $25, $26, $27)
+                   $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
            on conflict (tenant_id, slug) do nothing
            returning id"#,
         tenant.get(),
@@ -133,7 +139,11 @@ pub async fn create(
         new.setup.mode.as_str(),
         new.admission.as_str(),
         new.setup.max_participants,
-        Json(new.setup.champion_rules) as _,
+        champions.bans_per_series,
+        champions.mirror,
+        champions.same_team,
+        champions.no_repeat_who,
+        champions.no_repeat_scope,
         new.schedule.starts_at,
         new.schedule.check_in_minutes,
         new.contest_minutes,
@@ -185,11 +195,20 @@ async fn insert_stages(
     stages: &[ef::StageFormat],
 ) -> Result<(), sqlx::Error> {
     for (position, stage) in (1..).zip(stages) {
+        let row = StageRow::from(*stage);
         sqlx::query!(
-            "insert into tournament_stages (tournament_id, position, config) values ($1, $2, $3)",
+            "insert into tournament_stages
+                 (tournament_id, position, format, best_of, finals_best_of, bracket,
+                  grand_final_reset, rounds)
+             values ($1, $2, $3, $4, $5, $6, $7, $8)",
             id.0,
             position as i16,
-            Json(stage) as _
+            row.format,
+            row.best_of,
+            row.finals_best_of,
+            row.bracket,
+            row.grand_final_reset,
+            row.rounds
         )
         .execute(&mut *conn)
         .await?;
@@ -236,16 +255,22 @@ pub async fn update(
     let Some(setup) = &edit.setup else {
         return Ok(());
     };
+    let champions = ChampionColumns::from(setup.champion_rules);
     sqlx::query!(
         r#"update tournaments
-           set max_participants = $2, champion_rules = $3, map_mode = $4, champion_phase = $5,
-               veto_seconds = $6, mode = $7, team_size = $8, team_pick_seconds = $9,
-               veto_order = $10, pick_order = $11, veto_by = $12, ban_by = $13, pick_by = $14,
-               report_by = $15
+           set max_participants = $2, bans_per_series = $3, mirror = $4, same_team = $5,
+               no_repeat_who = $6, no_repeat_scope = $7, map_mode = $8, champion_phase = $9,
+               veto_seconds = $10, mode = $11, team_size = $12, team_pick_seconds = $13,
+               veto_order = $14, pick_order = $15, veto_by = $16, ban_by = $17, pick_by = $18,
+               report_by = $19
            where id = $1"#,
         id.0,
         setup.max_participants,
-        Json(setup.champion_rules) as _,
+        champions.bans_per_series,
+        champions.mirror,
+        champions.same_team,
+        champions.no_repeat_who,
+        champions.no_repeat_scope,
         setup.veto.map_mode.as_str(),
         setup.veto.champion_phase,
         setup.veto.step_seconds,

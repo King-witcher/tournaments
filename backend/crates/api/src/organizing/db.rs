@@ -3,8 +3,7 @@
 //! traduções de cada torneio na mesma linha.
 
 use chrono::{DateTime, Utc};
-use engine::formats::{self as ef, elimination::EliminationKind};
-use sqlx::{PgPool, types::Json};
+use sqlx::PgPool;
 
 use super::types::{ContestedGame, PendingTournament, StartDue};
 use crate::{
@@ -25,7 +24,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                   coalesce((select array_agg(tr.name order by tr.locale)
                             from tournament_translations tr where tr.tournament_id = t.id),
                            '{}') as "translation_names!",
-                  s.config as "config: Json<ef::StageFormat>",
+                  coalesce(s.bracket = 'single', false) as "single!",
                   g.match_key, g.number, mp.name as "map?", c.nickname as "contested_by?",
                   g.contested_at as "contested_at!"
            from tenant_members m
@@ -53,10 +52,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                 translations: translations(r.translation_locales, r.translation_names)?,
             },
             key: r.match_key,
-            single: matches!(
-                r.config.0,
-                ef::StageFormat::Elimination(c) if c.kind == EliminationKind::Single
-            ),
+            single: r.single,
             game: r.number,
             map: r.map,
             contested_by: r.contested_by,

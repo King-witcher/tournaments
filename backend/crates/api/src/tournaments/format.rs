@@ -1,5 +1,5 @@
 //! Conversão entre os DTOs de formato e regra de campeões e os tipos do
-//! `engine`, que são os que ficam gravados (JSON) e os que validam.
+//! `engine`, que são os que validam. Como eles ficam gravados: `db::columns`.
 
 use engine::{
     champions as ec,

@@ -39,7 +39,7 @@ Decidido pelo usuário:
 No `engine` (assumido):
 
 - **Round robin**: cada par uma vez, método do círculo (Berger). N ímpar: cada um folga uma vez, e a folga **não vale ponto** (partida `bye`, a última da rodada, só para a tela). **Todas as partidas ficam prontas desde o início** (a interface agrupa por rodada). Até **32 participantes** (496 partidas; `format.too_many_participants {max}`).
-- **Uma série** (melhor de N ímpar) para todas as partidas da fase; não há final. JSON: `{"format":"round_robin","best_of":3}` e `{"format":"swiss","best_of":3,"rounds":null}` (nulo = automático).
+- **Uma série** (melhor de N ímpar) para todas as partidas da fase; não há final. Rodadas do suíço nulas = automático.
 - **Suíço**: rodadas de 1 a 127 (`format.invalid_rounds {max, got}`), no máximo N − 1 com os N do início (com menos inscritos, valem N − 1, sem erro). Até **128 participantes** (pareamento medido em 4 ms na pior rodada).
 - **Pareamentos gravados**: o `engine` gera o pareamento de cada rodada (`next_round`) quando todas as séries das rodadas pareadas estão decididas, e a API grava; o replay usa os gravados. Corrigir um resultado antigo muda a tabela, **nunca refaz rodadas pareadas**; uma correção que reabre série segura a rodada seguinte. Pareamento determinístico (sem sorteio; o seed desempata).
 - **Como pareia**: na ordem da tabela, com todos os desempates. Dentro do grupo de mesma pontuação, metades do sistema holandês (seed 1 contra N/2 + 1...); o que sobra de grupo ímpar desce e enfrenta o melhor do grupo de baixo (simplificação do holandês). O lado `a` é o melhor colocado.

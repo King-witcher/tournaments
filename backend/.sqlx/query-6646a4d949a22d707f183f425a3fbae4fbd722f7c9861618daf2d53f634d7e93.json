@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  s.config as \"config: Json<ef::StageFormat>\",\n                  g.match_key, g.number, mp.name as \"map?\", c.nickname as \"contested_by?\",\n                  g.contested_at as \"contested_at!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           join match_games g on g.tournament_id = t.id\n           join tournament_stages s on s.tournament_id = g.tournament_id and s.position = g.stage\n           left join maps mp on mp.id = g.map_id\n           left join tenant_members c on c.tenant_id = g.tenant_id and c.user_id = g.contested_by\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and g.status = 'contested'\n           order by g.contested_at, g.id",
+  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  coalesce(s.bracket = 'single', false) as \"single!\",\n                  g.match_key, g.number, mp.name as \"map?\", c.nickname as \"contested_by?\",\n                  g.contested_at as \"contested_at!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           join match_games g on g.tournament_id = t.id\n           join tournament_stages s on s.tournament_id = g.tournament_id and s.position = g.stage\n           left join maps mp on mp.id = g.map_id\n           left join tenant_members c on c.tenant_id = g.tenant_id and c.user_id = g.contested_by\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             and g.status = 'contested'\n           order by g.contested_at, g.id",
   "describe": {
     "columns": [
       {
@@ -61,14 +61,9 @@
       },
       {
         "ordinal": 6,
-        "name": "config: Json<ef::StageFormat>",
-        "type_info": "Jsonb",
-        "origin": {
-          "Table": {
-            "table": "tournament_stages",
-            "name": "config"
-          }
-        }
+        "name": "single!",
+        "type_info": "Bool",
+        "origin": "Expression"
       },
       {
         "ordinal": 7,
@@ -138,7 +133,7 @@
       false,
       null,
       null,
-      false,
+      null,
       false,
       false,
       false,
@@ -146,5 +141,5 @@
       true
     ]
   },
-  "hash": "2884c046812cc3af384dbef280c1d3676af7dde3eefb30aa69b34b9f3123e817"
+  "hash": "6646a4d949a22d707f183f425a3fbae4fbd722f7c9861618daf2d53f634d7e93"
 }

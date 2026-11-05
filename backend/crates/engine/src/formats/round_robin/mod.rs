@@ -25,8 +25,6 @@ mod tests;
 
 pub use suggest::{SeriesProgress, suggest};
 
-use serde::{Deserialize, Serialize};
-
 use super::check_count;
 use super::table::{self, League, TableRow};
 use crate::core::{EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport};
@@ -35,7 +33,7 @@ use crate::series::validate_best_of;
 /// Teto de participantes: 32 dá 496 partidas e 31 séries por participante.
 pub const MAX_PARTICIPANTS: usize = 32;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RoundRobinConfig {
     /// Melhor de N de todas as partidas.
     pub best_of: u8,

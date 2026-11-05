@@ -389,7 +389,7 @@ pub async fn tournament(
         r#"select tr.name as "name?",
                   exists (select 1 from tournament_stages s
                           where s.tournament_id = t.id
-                            and s.config #>> '{kind,kind}' = 'single') as "single!"
+                            and s.bracket = 'single') as "single!"
            from tournaments t
            left join tournament_translations tr on tr.tournament_id = t.id and tr.locale = $3
            where t.tenant_id = $1 and t.slug = $2"#,

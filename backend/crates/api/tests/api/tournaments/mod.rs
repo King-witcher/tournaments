@@ -66,39 +66,61 @@ async fn draft_is_only_for_organizers_until_published() {
 }
 
 #[tokio::test]
-async fn stage_and_champion_rules_are_stored_as_engine_json() {
+async fn stage_and_champion_rules_are_stored_in_columns_and_read_back() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
-    let body = with(
-        duel("copa"),
-        json!({ "champion_rules": { "bans_per_series": 1, "mirror": false, "same_team": true, "no_repeat": { "who": "player", "scope": "series" } } }),
-    );
+    let rules = json!({ "bans_per_series": 1, "mirror": false, "same_team": true, "no_repeat": { "who": "player", "scope": "series" } });
+    let body = with(duel("copa"), json!({ "champion_rules": rules }));
     create_tournament(&app, &ana, body).await;
 
-    let config = sqlx::query_scalar!("select config from tournament_stages where position = 1")
-        .fetch_one(&db)
-        .await
-        .unwrap();
+    let stage = sqlx::query!(
+        "select format, best_of, finals_best_of, bracket, grand_final_reset, rounds
+         from tournament_stages where position = 1"
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
     assert_eq!(
-        config,
-        json!({
-            "format": "elimination",
-            "kind": { "kind": "double", "grand_final_reset": true },
-            "series": { "default": 3, "finals": 5 }
-        })
+        (
+            stage.format.as_str(),
+            stage.best_of,
+            stage.finals_best_of,
+            stage.bracket.as_deref(),
+            stage.grand_final_reset,
+            stage.rounds
+        ),
+        ("elimination", 3, Some(5), Some("double"), Some(true), None)
     );
-    let rules = sqlx::query_scalar!("select champion_rules from tournaments")
-        .fetch_one(&db)
-        .await
-        .unwrap();
+    let row = sqlx::query!(
+        "select bans_per_series, mirror, same_team, no_repeat_who, no_repeat_scope
+         from tournaments"
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
     assert_eq!(
-        rules,
-        json!({
-            "bans_per_series": 1,
-            "mirror": false,
-            "same_team": true,
-            "no_repeat": { "who": "player", "scope": "series" }
-        })
+        (
+            row.bans_per_series,
+            row.mirror,
+            row.same_team,
+            row.no_repeat_who.as_deref(),
+            row.no_repeat_scope.as_deref()
+        ),
+        (1, false, true, Some("player"), Some("series"))
+    );
+
+    let (status, read) = get(&app, "/tenants/quake-br/tournaments/copa", &ana).await;
+    assert_eq!(status, StatusCode::OK, "{read}");
+    assert_eq!(read["champion_rules"], rules);
+    assert_eq!(
+        read["stages"],
+        json!([{
+            "format": "elimination",
+            "bracket": "double",
+            "grand_final_reset": true,
+            "best_of": 3,
+            "finals_best_of": 5
+        }])
     );
 }
 

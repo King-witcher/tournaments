@@ -1,5 +1,4 @@
 use super::*;
-use crate::champions::{ChampionRules, NoRepeatRule, NoRepeatScope, NoRepeatWho};
 use crate::formats::elimination::EliminationKind;
 use crate::series::SeriesLength;
 
@@ -23,76 +22,6 @@ fn kinds() -> [StageFormat; 3] {
             grand_final_reset: false,
         }),
     ]
-}
-
-#[test]
-fn stage_format_json_is_stable() {
-    let f = stage(EliminationKind::Double {
-        grand_final_reset: true,
-    });
-    let json = r#"{"format":"elimination","kind":{"kind":"double","grand_final_reset":true},"series":{"default":3,"finals":5}}"#;
-    assert_eq!(serde_json::to_string(&f).unwrap(), json);
-    assert_eq!(serde_json::from_str::<StageFormat>(json).unwrap(), f);
-}
-
-#[test]
-fn table_formats_json_is_stable() {
-    let cases = [
-        (
-            StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
-            r#"{"format":"round_robin","best_of":3}"#,
-        ),
-        (
-            StageFormat::Swiss(SwissConfig {
-                best_of: 1,
-                rounds: None,
-            }),
-            r#"{"format":"swiss","best_of":1,"rounds":null}"#,
-        ),
-        (
-            StageFormat::Swiss(SwissConfig {
-                best_of: 5,
-                rounds: Some(6),
-            }),
-            r#"{"format":"swiss","best_of":5,"rounds":6}"#,
-        ),
-    ];
-    for (f, json) in cases {
-        assert_eq!(serde_json::to_string(&f).unwrap(), json);
-        assert_eq!(serde_json::from_str::<StageFormat>(json).unwrap(), f);
-    }
-}
-
-#[test]
-fn champion_rules_json_is_stable() {
-    let with = ChampionRules {
-        bans_per_series: 1,
-        mirror: true,
-        same_team: false,
-        no_repeat: Some(NoRepeatRule {
-            who: NoRepeatWho::Player,
-            scope: NoRepeatScope::Series,
-        }),
-    };
-    let json = r#"{"bans_per_series":1,"mirror":true,"same_team":false,"no_repeat":{"who":"player","scope":"series"}}"#;
-    assert_eq!(serde_json::to_string(&with).unwrap(), json);
-    assert_eq!(serde_json::from_str::<ChampionRules>(json).unwrap(), with);
-    let without = ChampionRules {
-        bans_per_series: 0,
-        mirror: false,
-        same_team: true,
-        no_repeat: None,
-    };
-    let json = r#"{"bans_per_series":0,"mirror":false,"same_team":true,"no_repeat":null}"#;
-    assert_eq!(serde_json::to_string(&without).unwrap(), json);
-    assert_eq!(
-        serde_json::from_str::<ChampionRules>(json).unwrap(),
-        without
-    );
-    // O formato de antes do draft da série não é mais lido (a migration
-    // apagou os torneios).
-    let old = r#"{"bans_per_game":0,"no_repeat":null,"team_duplicates":false}"#;
-    assert!(serde_json::from_str::<ChampionRules>(old).is_err());
 }
 
 #[test]

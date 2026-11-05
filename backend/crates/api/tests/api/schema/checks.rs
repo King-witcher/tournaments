@@ -1,6 +1,7 @@
-//! Coerência e forma: estado, JSON, identidade imutável, vagas, autoria dentro
-//! do tenant e do torneio, formato de logins e segredos, o token do link de
-//! convite de cada escopo, senha só com email.
+//! Coerência e forma: estado, regras de campeões e colunas de cada formato de
+//! fase, identidade imutável, vagas, autoria dentro do tenant e do torneio,
+//! formato de logins e segredos, o token do link de convite de cada escopo,
+//! senha só com email.
 
 use serde_json::json;
 use sqlx::PgPool;
@@ -52,65 +53,86 @@ async fn tournaments_keep_state_and_shape() {
         rule(CHECK, "tournaments_check_in_window")
     );
 
-    // O JSON tem a forma do engine.
-    for rules in [
-        json!({ "bans_per_series": 4, "mirror": true, "same_team": false, "no_repeat": null }),
-        json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": { "who": "player", "scope": "season" } }),
-        json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": { "who": "player", "scope": "match" } }),
-        json!({ "bans_per_series": 1, "mirror": "yes", "same_team": false, "no_repeat": null }),
-        json!({ "bans_per_series": 1 }),
-        json!({ "bans_per_game": 1, "no_repeat": null, "team_duplicates": false }),
-        json!([]),
+    // As regras de campeões: faixa, valores e o par da não repetição.
+    for (set, name) in [
+        ("bans_per_series = 4", "tournaments_bans_per_series"),
+        ("bans_per_series = -1", "tournaments_bans_per_series"),
+        (
+            "no_repeat_who = 'squad', no_repeat_scope = 'series'",
+            "tournaments_no_repeat_who",
+        ),
+        (
+            "no_repeat_who = 'player', no_repeat_scope = 'match'",
+            "tournaments_no_repeat_scope",
+        ),
+        ("no_repeat_who = 'player'", "tournaments_no_repeat_pair"),
+        ("no_repeat_scope = 'series'", "tournaments_no_repeat_pair"),
     ] {
-        let result = sqlx::query("update tournaments set champion_rules = $1")
-            .bind(&rules)
-            .execute(&db)
-            .await;
-        assert_eq!(
-            rejected(result),
-            rule(CHECK, "tournaments_champion_rules_shape"),
-            "{rules}"
-        );
+        let sql = format!("update tournaments set {set}");
+        assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{sql}");
     }
-    let single = |series: serde_json::Value| json!({ "format": "elimination", "kind": { "kind": "single" }, "series": series });
-    for config in [
-        single(json!({ "default": 2, "finals": 3 })),
-        single(json!({ "default": 3 })),
-        json!({ "format": "elimination", "kind": { "kind": "double" },
-                "series": { "default": 3, "finals": 5 } }),
-        json!({ "format": "swiss" }),
-        json!({ "format": "swiss", "best_of": 3, "rounds": 0 }),
-        json!({ "format": "swiss", "best_of": 3, "rounds": 128 }),
-        json!({ "format": "swiss", "best_of": 3, "rounds": "3" }),
-        json!({ "format": "round_robin", "best_of": 2 }),
-        json!({ "format": "round_robin" }),
+    exec(
+        &db,
+        "update tournaments set no_repeat_who = 'team', no_repeat_scope = 'stage'",
+    )
+    .await
+    .unwrap();
+
+    // Cada formato com as suas colunas (a fase nasce em eliminação dupla).
+    let single = "format = 'elimination', bracket = 'single', grand_final_reset = null, \
+                  best_of = 1, finals_best_of = 3, rounds = null";
+    let round_robin = "format = 'round_robin', bracket = null, grand_final_reset = null, \
+                       finals_best_of = null";
+    let swiss = "format = 'swiss', bracket = null, grand_final_reset = null, \
+                 finals_best_of = null";
+    for (set, name) in [
+        ("format = 'ladder'".to_owned(), "tournament_stages_format"),
+        ("best_of = 2".to_owned(), "tournament_stages_best_of"),
+        ("best_of = 0".to_owned(), "tournament_stages_best_of"),
+        ("best_of = 257".to_owned(), "tournament_stages_best_of"),
+        (
+            "finals_best_of = 4".to_owned(),
+            "tournament_stages_finals_best_of",
+        ),
+        ("bracket = 'triple'".to_owned(), "tournament_stages_bracket"),
+        (
+            "finals_best_of = null".to_owned(),
+            "tournament_stages_shape",
+        ),
+        ("bracket = null".to_owned(), "tournament_stages_shape"),
+        // Reset só na dupla, e sempre nela.
+        ("bracket = 'single'".to_owned(), "tournament_stages_shape"),
+        (
+            "grand_final_reset = null".to_owned(),
+            "tournament_stages_shape",
+        ),
+        // Rodadas só no suíço.
+        ("rounds = 3".to_owned(), "tournament_stages_shape"),
+        (
+            format!("{round_robin}, rounds = 3"),
+            "tournament_stages_shape",
+        ),
+        // A fase de tabela sem as colunas da eliminação.
+        (
+            "format = 'round_robin'".to_owned(),
+            "tournament_stages_shape",
+        ),
+        ("format = 'swiss'".to_owned(), "tournament_stages_shape"),
+        (format!("{swiss}, rounds = 0"), "tournament_stages_rounds"),
+        (format!("{swiss}, rounds = 128"), "tournament_stages_rounds"),
     ] {
-        let result = sqlx::query("update tournament_stages set config = $1")
-            .bind(&config)
-            .execute(&db)
-            .await;
-        assert_eq!(
-            rejected(result),
-            rule(CHECK, "tournament_stages_config_shape"),
-            "{config}"
-        );
+        let sql = format!("update tournament_stages set {set}");
+        assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{sql}");
     }
-    for config in [
-        json!({ "format": "round_robin", "best_of": 3 }),
-        json!({ "format": "swiss", "best_of": 1, "rounds": null }),
-        json!({ "format": "swiss", "best_of": 5, "rounds": 127 }),
+    for set in [
+        format!("{round_robin}, rounds = null"),
+        format!("{swiss}, rounds = null"),
+        format!("{swiss}, rounds = 127"),
+        single.to_owned(),
     ] {
-        sqlx::query("update tournament_stages set config = $1")
-            .bind(&config)
-            .execute(&db)
-            .await
-            .unwrap();
+        let sql = format!("update tournament_stages set {set}");
+        exec(&db, &sql).await.unwrap();
     }
-    sqlx::query("update tournament_stages set config = $1")
-        .bind(single(json!({ "default": 1, "finals": 3 })))
-        .execute(&db)
-        .await
-        .unwrap();
 
     // O idioma original não muda.
     assert_eq!(
@@ -161,10 +183,9 @@ async fn every_tournament_has_a_stage() {
         .await
         .unwrap();
     sqlx::query(
-        "insert into tournament_stages (tournament_id, position, config)
-         select id, 1, '{\"format\": \"elimination\", \"kind\": {\"kind\": \"single\"},
-                         \"series\": {\"default\": 3, \"finals\": 3}}'
-         from tournaments",
+        "insert into tournament_stages
+             (tournament_id, position, format, best_of, finals_best_of, bracket)
+         select id, 1, 'elimination', 3, 3, 'single' from tournaments",
     )
     .execute(&mut *tx)
     .await
@@ -183,8 +204,8 @@ async fn every_tournament_has_a_stage() {
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     sqlx::query(
-        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, champion_rules, invite_token)
-         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, '{\"bans_per_series\": 1, \"mirror\": true, \"same_team\": false, \"no_repeat\": null}', $2)",
+        "insert into tournaments (tenant_id, slug, locale, name, mode, max_participants, bans_per_series, mirror, same_team, invite_token)
+         values ($1, 'outra', 'pt', 'Outra', 'duel', 8, 1, true, false, $2)",
     )
     .bind(tenant)
     .bind(INVITE_TOKEN)

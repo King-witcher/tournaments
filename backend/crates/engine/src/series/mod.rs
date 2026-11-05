@@ -7,12 +7,12 @@ pub use games::{
     games_left, put, winner_from_frags,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::core::{EngineError, SeriesScore};
 
 /// Quantos mapas vale cada partida.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct SeriesLength {
     /// Melhor de N das partidas comuns.
     pub default: u8,

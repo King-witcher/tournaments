@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select bans_per_series, mirror, same_team, no_repeat_who, no_repeat_scope\n         from tournaments",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bans_per_series",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "bans_per_series"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "mirror",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "mirror"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "same_team",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "same_team"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "no_repeat_who",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "no_repeat_who"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "no_repeat_scope",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "no_repeat_scope"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "019da194ef26814b2ebab38f4f86a5f65bd35618336b1da8e0556336a5967ec3"
+}

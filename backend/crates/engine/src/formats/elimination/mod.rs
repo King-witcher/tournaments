@@ -32,7 +32,7 @@ mod tests;
 
 use std::collections::{HashMap, HashSet};
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::core::{
     BracketSide, EngineError, Match, MatchId, MatchReport, MatchState, Occupant, Outcome,
@@ -43,14 +43,14 @@ use crate::series::{SeriesLength, validate_score};
 use build::{build_matches, mid};
 use resolve::loser_of;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum EliminationKind {
     Single,
     Double { grand_final_reset: bool },
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct EliminationConfig {
     pub kind: EliminationKind,
     pub series: SeriesLength,

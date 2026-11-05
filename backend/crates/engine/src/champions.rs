@@ -12,16 +12,13 @@
 //!   outra partida, e até onde (`scope`). Pick de partida que não chega a
 //!   ser jogada não conta fora da série.
 
-use serde::{Deserialize, Serialize};
-
 use crate::core::EngineError;
 
 /// Bans de campeão de cada lado na série, no máximo.
 pub const MAX_BANS_PER_SERIES: u32 = 3;
 
 /// Quem não pode repetir campeão entre partidas.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoRepeatWho {
     /// Cada jogador não repete os próprios campeões.
     Player,
@@ -31,8 +28,7 @@ pub enum NoRepeatWho {
 }
 
 /// Até onde a regra vale.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoRepeatScope {
     /// Entre as partidas de uma mesma série.
     Series,
@@ -42,14 +38,14 @@ pub enum NoRepeatScope {
     Tournament,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct NoRepeatRule {
     pub who: NoRepeatWho,
     pub scope: NoRepeatScope,
 }
 
-/// Regras de campeões de um torneio (guardadas em JSON no torneio).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// Regras de campeões de um torneio (a API grava em colunas).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ChampionRules {
     /// Bans de cada lado na série. O ban tira o campeão dos dois lados em
     /// todas as partidas dela: a série perde `2 * bans_per_series`.

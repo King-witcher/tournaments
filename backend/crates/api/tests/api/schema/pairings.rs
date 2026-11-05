@@ -112,14 +112,16 @@ async fn pairings_only_in_a_started_swiss() {
         rule(CHECK, "stage_pairings_started")
     );
     // E só na fase do suíço.
-    let elimination = json!({ "format": "elimination", "kind": { "kind": "single" },
-                              "series": { "default": 1, "finals": 1 } });
-    sqlx::query("update tournament_stages set config = $1 where tournament_id = $2")
-        .bind(&elimination)
-        .bind(t)
-        .execute(&db)
-        .await
-        .unwrap();
+    sqlx::query(
+        "update tournament_stages
+         set format = 'elimination', best_of = 1, finals_best_of = 1, bracket = 'single',
+             rounds = null
+         where tournament_id = $1",
+    )
+    .bind(t)
+    .execute(&db)
+    .await
+    .unwrap();
     assert_eq!(
         rejected(exec(&db, &insert(tenant, t, &[(1, 1, teams[0], Some(teams[1]))])).await),
         rule(CHECK, "stage_pairings_swiss")
