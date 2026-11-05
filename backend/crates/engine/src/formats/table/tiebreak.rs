@@ -28,14 +28,15 @@ impl Meeting {
 }
 
 /// Ordena os participantes `0..n` (índices na ordem dos seeds) pelos critérios
-/// de `rules`, nesta ordem; o último precisa separar todos (o seed). `value` dá
-/// o valor de cada critério (maior é melhor), menos o do confronto direto, que
-/// sai de `meetings` dentro de cada grupo e só vale quando todos do grupo já
-/// se enfrentaram. `usable` diz se um critério vale para um grupo (senão, o
+/// de `rules` (`Rules::criteria`: o primeiro, os desempates da fase em
+/// qualquer ordem e o seed, que separa todos). `value` dá o valor de cada
+/// critério (maior é melhor), menos o do confronto direto, que sai de
+/// `meetings` dentro de cada grupo e só vale quando todos do grupo já se
+/// enfrentaram. `usable` diz se um critério vale para um grupo (senão, o
 /// seguinte). Devolve a ordem e, para cada um, o critério que o pôs à frente
 /// do seguinte (`None` no último). Quando um critério depois do confronto
 /// direto separa um grupo, quem segue empatado volta ao confronto direto, só
-/// entre si.
+/// entre si; sem ele entre os desempates, não há volta.
 pub(super) fn order(
     n: usize,
     rules: Rules,
@@ -43,8 +44,11 @@ pub(super) fn order(
     usable: impl Fn(Criterion, &[usize]) -> bool,
     meetings: &[Meeting],
 ) -> Vec<(usize, Option<Criterion>)> {
+    let criteria = rules.criteria();
     let ranker = Ranker {
-        rules,
+        criteria: &criteria,
+        head_to_head: criteria.iter().position(|c| *c == Criterion::HeadToHead),
+        balance: rules.mini_table_balance,
         value: &value,
         usable: &usable,
         meetings,
@@ -54,7 +58,12 @@ pub(super) fn order(
 }
 
 struct Ranker<'a> {
-    rules: Rules,
+    /// Termina sempre no seed.
+    criteria: &'a [Criterion],
+    /// Onde o confronto direto está em `criteria`, se a fase o usa.
+    head_to_head: Option<usize>,
+    /// `Rules::mini_table_balance`.
+    balance: bool,
     value: &'a dyn Fn(Criterion, usize) -> i64,
     usable: &'a dyn Fn(Criterion, &[usize]) -> bool,
     meetings: &'a [Meeting],
@@ -70,7 +79,7 @@ impl Ranker<'_> {
             .filter(|m| m.against(i).is_some_and(|o| group.contains(&o)))
             .map(|m| match m.winner {
                 Some(w) if w == i => 1,
-                Some(_) if self.rules.mini_table_balance => -1,
+                Some(_) if self.balance => -1,
                 _ => 0,
             })
             .sum()
@@ -97,7 +106,7 @@ impl Ranker<'_> {
         if group.len() <= 1 {
             return group.iter().map(|&i| (i, None)).collect();
         }
-        let criterion = self.rules.criteria[from];
+        let criterion = self.criteria[from];
         if criterion != Criterion::Seed && !self.applies(criterion, group) {
             return self.rank(group, from + 1);
         }
@@ -117,15 +126,13 @@ impl Ranker<'_> {
         }
         // Quem continua empatado volta ao confronto direto, agora só entre si,
         // quando ele já passou na ordem (`h2h <= from`): vale para a
-        // mini-tabela refeita e para o grupo que o saldo de mapas ou de frags
-        // separou, antes de seguir. O primeiro critério e o Buchholz, que vêm
-        // antes dele, são globais e já iguais dentro do grupo. Sem confronto
-        // direto atrás de nós, segue o próximo critério.
+        // mini-tabela refeita e para o grupo que um critério depois dele
+        // separou (saldo de mapas, de frags, ou o Buchholz posto depois),
+        // antes de seguir. Os critérios antes dele são globais e já iguais
+        // dentro do grupo, então não precisam voltar. Sem confronto direto
+        // atrás de nós (depois na ordem, ou desligado), segue o próximo.
         let next = self
-            .rules
-            .criteria
-            .iter()
-            .position(|c| *c == Criterion::HeadToHead)
+            .head_to_head
             .filter(|&h2h| h2h <= from)
             .unwrap_or(from + 1);
         let last = runs.len() - 1;

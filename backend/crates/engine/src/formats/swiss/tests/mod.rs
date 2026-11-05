@@ -8,6 +8,7 @@ use std::collections::HashSet;
 
 use super::*;
 use crate::core::{MatchReport, MatchState, Outcome, SeriesFrags, SeriesScore, Slot};
+use crate::formats::table::Tiebreakers;
 use crate::series::wins_needed;
 
 fn p(n: i64) -> ParticipantId {
@@ -27,7 +28,11 @@ fn id(round: u16, index: u16) -> MatchId {
 }
 
 fn config(rounds: Option<u16>) -> SwissConfig {
-    SwissConfig { best_of: 3, rounds }
+    SwissConfig {
+        best_of: 3,
+        rounds,
+        tiebreakers: Tiebreakers::SWISS,
+    }
 }
 
 /// O pareamento em números: os pares e o bye.

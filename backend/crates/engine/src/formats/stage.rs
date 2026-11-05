@@ -196,6 +196,7 @@ mod tests {
     use crate::formats::elimination::{EliminationConfig, EliminationKind};
     use crate::formats::round_robin::RoundRobinConfig;
     use crate::formats::swiss::SwissConfig;
+    use crate::formats::table::Tiebreakers;
     use crate::series::{SeriesLength, wins_needed};
 
     fn seeds(n: i64) -> Vec<ParticipantId> {
@@ -254,10 +255,14 @@ mod tests {
                     finals: 5,
                 },
             }),
-            StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
+            StageFormat::RoundRobin(RoundRobinConfig {
+                best_of: 3,
+                tiebreakers: Tiebreakers::ROUND_ROBIN,
+            }),
             StageFormat::Swiss(SwissConfig {
                 best_of: 1,
                 rounds: None,
+                tiebreakers: Tiebreakers::SWISS,
             }),
         ]
     }

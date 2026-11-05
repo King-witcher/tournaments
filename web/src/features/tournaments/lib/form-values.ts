@@ -1,6 +1,11 @@
 import type { components } from "@/shared/api/schema";
 import { setupEditable } from "./status";
 import { TEAM_PRESETS } from "./team-rules";
+import {
+  DEFAULT_TIEBREAKERS,
+  stageTiebreakers,
+  type Tiebreaker,
+} from "./tiebreakers";
 
 type Schemas = components["schemas"];
 type Locale = Schemas["Locale"];
@@ -37,6 +42,12 @@ export type TournamentValues = {
   finalsBestOf: number;
   /** No suíço: as rodadas; `null` é o automático (⌈log2 N⌉). */
   swissRounds: number | null;
+  /**
+   * Nas fases de tabela: os desempates ligados, na ordem. Na eliminação fica
+   * o padrão do todos contra todos, que não vai no envio; trocar de formato
+   * põe o padrão do novo.
+   */
+  tiebreakers: Tiebreaker[];
   /** Bans de campeão de cada lado na série. */
   bansPerSeries: number;
   /** Adversários podem usar o mesmo campeão na partida. */
@@ -124,6 +135,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     bestOf: 3,
     finalsBestOf: 5,
     swissRounds: null,
+    tiebreakers: DEFAULT_TIEBREAKERS.round_robin,
     bansPerSeries: 1,
     mirror: true,
     noRepeat: "off",
@@ -170,6 +182,7 @@ export function valuesFrom(
     bestOf: stage.best_of,
     finalsBestOf: stage.format === "elimination" ? stage.finals_best_of : 5,
     swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
+    tiebreakers: stageTiebreakers(stage) ?? DEFAULT_TIEBREAKERS.round_robin,
     bansPerSeries: rules.bans_per_series,
     mirror: rules.mirror,
     noRepeat: rules.no_repeat?.scope ?? "off",
@@ -514,12 +527,17 @@ function setupBody(values: TournamentValues) {
 function stageBody(values: TournamentValues): Schemas["StageFormat"] {
   switch (values.stageFormat) {
     case "round_robin":
-      return { format: "round_robin", best_of: values.bestOf };
+      return {
+        format: "round_robin",
+        best_of: values.bestOf,
+        tiebreakers: values.tiebreakers,
+      };
     case "swiss":
       return {
         format: "swiss",
         best_of: values.bestOf,
         rounds: values.swissRounds,
+        tiebreakers: values.tiebreakers,
       };
     case "elimination":
       return {

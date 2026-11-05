@@ -108,7 +108,8 @@
       "languages": "Idiomas",
       "veto": "Mapas",
       "results": "Resultados",
-      "teamRules": "Quién actúa por el equipo"
+      "teamRules": "Quién actúa por el equipo",
+      "tiebreakers": "Desempate"
     },
     "noDate": "Sin fecha"
   },
@@ -267,5 +268,34 @@
       "captain": "Capitán",
       "each_player": "Cada jugador"
     }
+  },
+  "tiebreakers": {
+    "title": "Desempate",
+    "label": "Orden",
+    "position": "{position}.",
+    "seedLast": "Por último, el orden de la llave.",
+    "none": "Solo el orden de la llave",
+    "names": {
+      "head_to_head": "Enfrentamiento directo",
+      "map_diff": "Diferencia de partidas",
+      "frag_diff": "Diferencia de frags",
+      "buchholz": "Buchholz"
+    },
+    "inline": {
+      "head_to_head": "enfrentamiento directo",
+      "map_diff": "diferencia de partidas",
+      "frag_diff": "diferencia de frags",
+      "buchholz": "Buchholz"
+    },
+    "short": {
+      "head_to_head": "enfrentamiento directo",
+      "map_diff": "partidas",
+      "frag_diff": "frags",
+      "buchholz": "Buchholz"
+    },
+    "up": "Subir {name}",
+    "down": "Bajar {name}",
+    "off": "Desactivar {name}",
+    "on": "Activar {name}"
   }
 }

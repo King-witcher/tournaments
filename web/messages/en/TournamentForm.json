@@ -108,7 +108,8 @@
       "languages": "Languages",
       "veto": "Maps",
       "results": "Results",
-      "teamRules": "Who acts for the team"
+      "teamRules": "Who acts for the team",
+      "tiebreakers": "Tiebreakers"
     },
     "noDate": "No date"
   },
@@ -267,5 +268,34 @@
       "captain": "Captain",
       "each_player": "Each player"
     }
+  },
+  "tiebreakers": {
+    "title": "Tiebreakers",
+    "label": "Order",
+    "position": "{position}.",
+    "seedLast": "Seeding comes last.",
+    "none": "Seeding only",
+    "names": {
+      "head_to_head": "Head-to-head",
+      "map_diff": "Game difference",
+      "frag_diff": "Frag difference",
+      "buchholz": "Buchholz"
+    },
+    "inline": {
+      "head_to_head": "head-to-head",
+      "map_diff": "game difference",
+      "frag_diff": "frag difference",
+      "buchholz": "Buchholz"
+    },
+    "short": {
+      "head_to_head": "head-to-head",
+      "map_diff": "games",
+      "frag_diff": "frags",
+      "buchholz": "Buchholz"
+    },
+    "up": "Move {name} up",
+    "down": "Move {name} down",
+    "off": "Turn off {name}",
+    "on": "Turn on {name}"
   }
 }

@@ -198,7 +198,7 @@ async fn a_round_robin_plays_every_pair_and_ends_with_the_table() {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "round_robin", "best_of": 1 })
+        json!({ "format": "round_robin", "best_of": 1, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"] })
     );
     assert_eq!(b["total_rounds"], 3);
     // Seis partidas, todas prontas, rodada 1 com 1 x 4 e 2 x 3.
@@ -380,4 +380,69 @@ async fn a_withdrawal_is_a_walkover_in_everything_left() {
         (&gone["situation"], &gone["placement"]),
         (&json!("withdrawn"), &json!({ "rank": 4, "tied": 1 }))
     );
+}
+
+/// Round robin de 4 em md3: P2 vence P1 por 2 x 1, mas perde para P3; P1 vence
+/// P3 e P4 por 2 x 0. P1 e P2 terminam com saldo +1, P1 com o saldo de mapas
+/// melhor (+3 contra +1). Devolve os jogadores e a chave no fim.
+async fn played_with(
+    app: &Router,
+    db: &sqlx::PgPool,
+    ana: &User,
+    tiebreakers: Value,
+) -> (Vec<User>, Value) {
+    let p = players(app, db, ana, 4).await;
+    let body = copa(table(
+        "round_robin",
+        json!({ "best_of": 3, "tiebreakers": tiebreakers }),
+    ));
+    start(app, ana, body, &[&p[0], &p[1], &p[2], &p[3]]).await;
+    let b = bracket(app, &p[0]).await;
+    // (vencedor, perdedor, mapas do perdedor)
+    for (winner, loser, lost) in [
+        (1, 0, 1),
+        (0, 2, 0),
+        (0, 3, 0),
+        (2, 1, 1),
+        (1, 3, 1),
+        (3, 2, 0),
+    ] {
+        let (w, l) = (json!(p[winner].id), json!(p[loser].id));
+        let m = b["matches"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|m| {
+                let s = sides(&b, m);
+                s == (w.clone(), l.clone()) || s == (l.clone(), w.clone())
+            })
+            .unwrap();
+        let key = m["key"].as_str().unwrap();
+        let (a, other) = sides(&b, m);
+        let user = |id: &Value| p.iter().find(|u| json!(u.id) == *id).unwrap();
+        let (maps_a, maps_b) = if a == w { (2, lost) } else { (lost, 2) };
+        play(app, user(&a), user(&other), key, maps_a, maps_b).await;
+    }
+    let b = bracket(app, &p[0]).await;
+    assert_eq!(b["status"], "finished");
+    (p, b)
+}
+
+#[tokio::test]
+async fn the_table_follows_the_tiebreakers_of_the_stage() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    // Só o saldo de mapas: P1 fica à frente de P2, que venceu o confronto.
+    let (p, b) = played_with(&app, &db, &ana, json!(["map_diff"])).await;
+    assert_eq!(b["format"]["tiebreakers"], json!(["map_diff"]));
+    let order: Vec<Value> = (0..4)
+        .map(|i| player(&b, &b["table"][i]["team_id"]))
+        .collect();
+    let ahead: Vec<&Value> = (0..2).map(|i| &b["table"][i]["ahead_by"]).collect();
+    assert_eq!(b["table"][0]["map_diff"], 3);
+    assert_eq!(b["table"][1]["map_diff"], 1);
+    assert_eq!(ahead, [&json!("map_diff"), &json!("series_diff")]);
+    let ids = |i: [usize; 4]| i.map(|k| json!(p[k].id)).to_vec();
+    assert_eq!(order, ids([0, 1, 3, 2]));
+    assert_eq!(standings(&b)[0]["user_id"], p[0].id);
 }

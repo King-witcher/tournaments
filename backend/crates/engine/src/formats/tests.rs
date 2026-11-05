@@ -1,5 +1,6 @@
 use super::*;
 use crate::formats::elimination::EliminationKind;
+use crate::formats::table::Tiebreakers;
 use crate::series::SeriesLength;
 
 fn stage(kind: EliminationKind) -> StageFormat {
@@ -90,14 +91,19 @@ fn worst_case_games_is_monotonic_in_participants() {
 
 fn table_formats() -> [StageFormat; 3] {
     [
-        StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
+        StageFormat::RoundRobin(RoundRobinConfig {
+            best_of: 3,
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+        }),
         StageFormat::Swiss(SwissConfig {
             best_of: 3,
             rounds: None,
+            tiebreakers: Tiebreakers::SWISS,
         }),
         StageFormat::Swiss(SwissConfig {
             best_of: 1,
             rounds: Some(9),
+            tiebreakers: Tiebreakers::SWISS,
         }),
     ]
 }
@@ -109,11 +115,15 @@ fn table_formats_validate_and_have_one_series_length() {
     }
     assert_eq!(table_formats()[0].longest_series(), 3);
     assert_eq!(table_formats()[2].longest_series(), 1);
-    let even = StageFormat::RoundRobin(RoundRobinConfig { best_of: 8 });
+    let even = StageFormat::RoundRobin(RoundRobinConfig {
+        best_of: 8,
+        tiebreakers: Tiebreakers::ROUND_ROBIN,
+    });
     assert_eq!(even.validate(), Err(EngineError::InvalidBestOf(8)));
     let no_rounds = StageFormat::Swiss(SwissConfig {
         best_of: 3,
         rounds: Some(0),
+        tiebreakers: Tiebreakers::SWISS,
     });
     assert_eq!(
         no_rounds.validate(),
@@ -135,7 +145,10 @@ fn even_series_are_only_for_the_round_robin() {
     };
     // N − 1 séries, com todos os mapas no pior caso.
     for (best_of, worst) in [(2u8, 14), (4, 28), (6, 42)] {
-        let league = StageFormat::RoundRobin(RoundRobinConfig { best_of });
+        let league = StageFormat::RoundRobin(RoundRobinConfig {
+            best_of,
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+        });
         assert_eq!(league.validate(), Ok(()));
         assert_eq!(league.longest_series(), best_of);
         assert_eq!(league.worst_case_games(8), Ok(worst));
@@ -144,13 +157,17 @@ fn even_series_are_only_for_the_round_robin() {
         let swiss = StageFormat::Swiss(SwissConfig {
             best_of,
             rounds: None,
+            tiebreakers: Tiebreakers::SWISS,
         });
         assert_eq!(swiss.validate(), invalid);
         assert_eq!(single(best_of, 3).validate(), invalid);
         assert_eq!(single(3, best_of).validate(), invalid);
     }
     // Nada de md8.
-    let eight = StageFormat::RoundRobin(RoundRobinConfig { best_of: 8 });
+    let eight = StageFormat::RoundRobin(RoundRobinConfig {
+        best_of: 8,
+        tiebreakers: Tiebreakers::ROUND_ROBIN,
+    });
     assert_eq!(eight.validate(), Err(EngineError::InvalidBestOf(8)));
 }
 

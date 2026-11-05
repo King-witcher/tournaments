@@ -206,7 +206,7 @@ pub async fn find(
                            and p.checked_in_at is not null) as "checked_in!",
                   coalesce((select jsonb_agg(s order by s.position)
                             from (select position, format, best_of, finals_best_of, bracket,
-                                         grand_final_reset, rounds
+                                         grand_final_reset, rounds, tiebreakers
                                   from tournament_stages
                                   where tournament_id = t.id) s), '[]')
                       as "stages!: Json<Vec<StageRow>>",

@@ -11,6 +11,7 @@ export type TournamentField = keyof Pick<
   | "teamSize"
   | "bestOf"
   | "swissRounds"
+  | "tiebreakers"
   | "bansPerSeries"
   | "pickOrder"
   | "noRepeat"
@@ -48,6 +49,7 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.team_size_invalid": "teamSize",
   "format.invalid_best_of": "bestOf",
   "format.invalid_rounds": "swissRounds",
+  "format.invalid_tiebreakers": "tiebreakers",
   "format.too_many_participants": "maxParticipants",
   "format.not_enough_players": "maxParticipants",
   "tournament.bans_invalid": "bansPerSeries",
@@ -87,4 +89,13 @@ export function translationFieldOf(
  */
 export function controlName(field: string, locale?: string) {
   return locale ? `translations.${locale}.${field}` : field;
+}
+
+/**
+ * O seletor do controle de um campo: o `name` dele ou, num campo sem controle
+ * nativo (a lista dos desempates), o `data-field` do bloco.
+ */
+export function controlSelector(field: string, locale?: string) {
+  const name = controlName(field, locale);
+  return `[name="${name}"], [data-field="${name}"]`;
 }

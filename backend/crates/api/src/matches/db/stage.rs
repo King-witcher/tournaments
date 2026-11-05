@@ -77,7 +77,8 @@ pub async fn stage_rows(
         r#"select q.id as "id!",
                   case when (select $3::bool) then (
                       select to_json(s) from (
-                          select format, best_of, finals_best_of, bracket, grand_final_reset, rounds
+                          select format, best_of, finals_best_of, bracket, grand_final_reset,
+                                 rounds, tiebreakers
                           from tournament_stages
                           where tournament_id = q.id and position = $2) s)
                   end as "config: Json<StageRow>",

@@ -108,7 +108,8 @@
       "languages": "Idiomas",
       "veto": "Mapas",
       "results": "Resultados",
-      "teamRules": "Quem age pelo time"
+      "teamRules": "Quem age pelo time",
+      "tiebreakers": "Desempate"
     },
     "noDate": "Sem data"
   },
@@ -267,5 +268,34 @@
       "captain": "Capitão",
       "each_player": "Cada jogador"
     }
+  },
+  "tiebreakers": {
+    "title": "Desempate",
+    "label": "Ordem",
+    "position": "{position}.",
+    "seedLast": "Por último, a ordem da chave.",
+    "none": "Só a ordem da chave",
+    "names": {
+      "head_to_head": "Confronto direto",
+      "map_diff": "Saldo de partidas",
+      "frag_diff": "Saldo de frags",
+      "buchholz": "Buchholz"
+    },
+    "inline": {
+      "head_to_head": "confronto direto",
+      "map_diff": "saldo de partidas",
+      "frag_diff": "saldo de frags",
+      "buchholz": "Buchholz"
+    },
+    "short": {
+      "head_to_head": "confronto direto",
+      "map_diff": "partidas",
+      "frag_diff": "frags",
+      "buchholz": "Buchholz"
+    },
+    "up": "Subir {name}",
+    "down": "Descer {name}",
+    "off": "Desligar {name}",
+    "on": "Ligar {name}"
   }
 }

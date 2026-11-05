@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::*;
 use crate::core::{BracketSide, MatchReport, MatchState, Outcome, SeriesFrags, SeriesScore, Slot};
+use crate::formats::table::Tiebreakers;
 use crate::series::wins_needed;
 
 fn p(n: i64) -> ParticipantId {
@@ -26,7 +27,10 @@ fn id(round: u16, index: u16) -> MatchId {
 }
 
 fn config() -> RoundRobinConfig {
-    RoundRobinConfig { best_of: 3 }
+    RoundRobinConfig {
+        best_of: 3,
+        tiebreakers: Tiebreakers::ROUND_ROBIN,
+    }
 }
 
 fn played(m: &Match, winner: ParticipantId, loser_maps: u8) -> StageReport {
@@ -158,10 +162,25 @@ fn limits_and_config() {
         Err(EngineError::DuplicateParticipant(p(1)))
     );
     assert_eq!(
-        RoundRobinBracket::new(RoundRobinConfig { best_of: 8 }, seeds(4)),
+        RoundRobinBracket::new(
+            RoundRobinConfig {
+                best_of: 8,
+                tiebreakers: Tiebreakers::ROUND_ROBIN
+            },
+            seeds(4)
+        ),
         Err(EngineError::InvalidBestOf(8))
     );
-    assert!(RoundRobinBracket::new(RoundRobinConfig { best_of: 2 }, seeds(4)).is_ok());
+    assert!(
+        RoundRobinBracket::new(
+            RoundRobinConfig {
+                best_of: 2,
+                tiebreakers: Tiebreakers::ROUND_ROBIN
+            },
+            seeds(4)
+        )
+        .is_ok()
+    );
     assert!(RoundRobinBracket::new(config(), seeds(32)).is_ok());
 }
 
@@ -169,7 +188,11 @@ fn limits_and_config() {
 fn worst_case_is_one_series_per_opponent() {
     assert_eq!(config().worst_case_games(8), Ok(21));
     assert_eq!(
-        RoundRobinConfig { best_of: 5 }.worst_case_games(32),
+        RoundRobinConfig {
+            best_of: 5,
+            tiebreakers: Tiebreakers::ROUND_ROBIN
+        }
+        .worst_case_games(32),
         Ok(155)
     );
     let b = RoundRobinBracket::new(config(), seeds(8)).unwrap();
@@ -275,7 +298,10 @@ fn report_md2(b: &mut RoundRobinBracket, match_id: MatchId, winner: Option<i64>)
 
 #[test]
 fn best_of_two_plays_to_the_end_with_draws() {
-    let config = RoundRobinConfig { best_of: 2 };
+    let config = RoundRobinConfig {
+        best_of: 2,
+        tiebreakers: Tiebreakers::ROUND_ROBIN,
+    };
     let mut b = RoundRobinBracket::new(config, seeds(3)).unwrap();
     assert_eq!(b.worst_case_games(), 4);
     // Rodadas de 3: 2 x 3, 1 x 3, 1 x 2, cada uma com a folga de um.
@@ -316,7 +342,10 @@ fn best_of_two_plays_to_the_end_with_draws() {
 #[test]
 fn longer_even_series_end_with_a_draw_too() {
     for (best_of, maps) in [(4u8, 2u8), (6, 3)] {
-        let config = RoundRobinConfig { best_of };
+        let config = RoundRobinConfig {
+            best_of,
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+        };
         let mut b = RoundRobinBracket::new(config, seeds(2)).unwrap();
         b.report(StageReport::from(MatchReport {
             match_id: id(1, 1),

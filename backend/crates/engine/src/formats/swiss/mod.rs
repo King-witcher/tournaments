@@ -17,8 +17,10 @@
 //!   termina com as rodadas que teve.
 //! - Em cada partida, o lado `a` é o melhor colocado na tabela do pareamento.
 //! - Uma série (melhor de N, ímpar) para todas as partidas.
-//! - Classificação em `formats::table`: pontos, Buchholz, confronto direto,
-//!   saldo de mapas, saldo de frags, seed. O pareamento segue a mesma ordem.
+//! - Classificação em `formats::table`: pontos, os desempates da fase
+//!   (`config.tiebreakers`; o padrão é Buchholz, confronto direto, saldo de
+//!   mapas, saldo de frags) e o seed. O pareamento segue a mesma ordem, então
+//!   os desempates escolhidos mudam também quem enfrenta quem.
 //! - Termina com as rodadas todas pareadas e decididas; só então há
 //!   colocação (`placements`).
 
@@ -31,7 +33,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use super::table::{self, League, TableRow, pairing as ready, rest};
+use super::table::{League, Rules, TableRow, Tiebreakers, pairing as ready, rest};
 use super::{check_count, check_participants};
 use crate::core::{
     BracketSide, EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport,
@@ -51,6 +53,8 @@ pub struct SwissConfig {
     pub best_of: u8,
     /// Número de rodadas; `None` é ⌈log2 N⌉ com os N do início.
     pub rounds: Option<u16>,
+    /// Os desempates depois dos pontos; o padrão é `Tiebreakers::SWISS`.
+    pub tiebreakers: Tiebreakers,
 }
 
 impl SwissConfig {
@@ -62,7 +66,7 @@ impl SwissConfig {
                 max: MAX_ROUNDS,
                 got,
             }),
-            _ => Ok(()),
+            _ => self.tiebreakers.check(true),
         }
     }
 
@@ -137,7 +141,7 @@ impl SwissBracket {
         let total_rounds = config.total_rounds(seeded.len());
         let matches = build(&seeded, &rounds, total_rounds, config.best_of)?;
         let out = seeded.iter().filter(|p| out.contains(p)).copied().collect();
-        let mut league = League::new(table::SWISS, seeded, matches);
+        let mut league = League::new(Rules::swiss(config.tiebreakers), seeded, matches);
         for report in reports {
             league.apply(report)?;
         }

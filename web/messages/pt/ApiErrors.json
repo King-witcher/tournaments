@@ -141,7 +141,8 @@
     "too_many_participants": "Este formato vai até {max} participantes. Diminua as vagas para {max} ou menos.",
     "duplicate_participant": "Participante repetido.",
     "no_stages": "O torneio precisa de pelo menos uma fase.",
-    "invalid_rounds": "As rodadas vão de 1 a {max}."
+    "invalid_rounds": "As rodadas vão de 1 a {max}.",
+    "invalid_tiebreakers": "Cada desempate entra uma vez, e o Buchholz só no suíço."
   },
   "champions": {
     "pool_exhausted": "No pior caso são necessários {required} campeões, mas o pool tem {available}. Diminua as vagas, as séries ou os bans, ou afrouxe a regra de não repetição."

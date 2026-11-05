@@ -30,7 +30,7 @@ Fase única: o formato é o torneio inteiro e a classificação final sai da tab
 Decidido pelo usuário:
 
 - **Suíço clássico**: número fixo de rodadas (padrão ⌈log2 N⌉, configurável), todos jogam todas; pareamento por pontos sem revanche; o bye vale vitória e vai para o pior colocado ainda sem bye; a rodada seguinte nasce quando a anterior termina.
-- **Desempate**: no round robin, saldo de séries (ver "Séries pares e saldo de séries"); no suíço, pontos (séries vencidas e byes; a série é sempre ímpar e não empata) e **Buchholz** logo depois. Em seguida, nos dois, confronto direto → saldo de mapas → saldo de frags → seed. Quem continua empatado depois do saldo de mapas ou de frags **volta ao confronto direto**, só entre si: quem venceu a série fica à frente, em vez de a posição sair por frags ou seed.
+- **Desempate**: no round robin, saldo de séries (ver "Séries pares e saldo de séries"); no suíço, pontos (séries vencidas e byes; a série é sempre ímpar e não empata) e **Buchholz** logo depois. Em seguida, nos dois, confronto direto → saldo de mapas → saldo de frags → seed. Quem continua empatado depois do saldo de mapas ou de frags **volta ao confronto direto**, só entre si: quem venceu a série fica à frente, em vez de a posição sair por frags ou seed. Desde 05/11 essa é a ordem padrão, escolhida por fase ("Desempate por fase").
 - **Desistência**: no suíço, quem desiste **mantém os pontos** e não é mais pareado; no round robin, vira **W.O. em tudo que faltava**.
 - **W.O. vale vitória sem perder mapa** (2 x 0 na md3, 3 x 0 na md5, no saldo de mapas; sem frags), para o vencedor não ficar atrás de quem jogou o mesmo adversário só pela ordem das partidas.
 - **Ordem das séries no round robin**: a ordem das rodadas continua como padrão; quando o adversário da vez acabou de começar outra série, o site sugere um adversário livre, e a chave marca quem está jogando. Só indica, nunca bloqueia: uma série contestada ou abandonada prenderia o time. Cada time joga N − 1 séries em sequência (8 jogadores em MD3: cerca de 5 h sem nenhuma espera), então, em simulação, sair da ordem não encurta com todos presentes (6 jogadores: de 4,2 h para 4,9 h) e só ajuda em torneio grande quando alguém some (16 jogadores com pausas: de 16,0 h para 14,9 h).
@@ -48,7 +48,7 @@ No `engine` (assumido):
 - **Desistência no suíço**: quem está fora não é pareado nem recebe bye; a série pronta dele vira W.O. pela API. Com menos de 2 ativos, a fase termina.
 - **Confronto direto**: mini-tabela só com as séries decididas entre os empatados, refeita entre os que continuam empatados; **só vale quando todos os empatados já se enfrentaram** (no suíço, quase nunca), senão quem venceu um passaria quem não enfrentou nenhum. No round robin, a mini-tabela é o saldo dentro do grupo; no suíço, as vitórias.
 - **Buchholz**: soma dos pontos atuais dos adversários das séries decididas (inclusive W.O.), contando duas vezes o adversário de revanche.
-- **Saldo de frags**: só desempata empatados que têm frags em todas as séries jogadas (série com mapa sem frags fica sem, em vez de contar 0); senão, seed. Comparar frags de séries diferentes daria vantagem a quem informa.
+- **Saldo de frags**: só desempata empatados que têm frags em todas as séries jogadas (série com mapa sem frags fica sem, em vez de contar 0); senão, vale o critério seguinte (no padrão, o seed). Comparar frags de séries diferentes daria vantagem a quem informa.
 - **Classificação final**: uma posição por participante, sem empate, só quando a fase termina; antes, a tabela mostra a ordem atual e o critério que pôs cada linha à frente da seguinte, para a tela explicar o desempate.
 - Identificador de partida `rr-<rodada>-<n>` e `sw-<rodada>-<n>`; folga e bye são a última da rodada. Orçamento de campeões (`worst_case_games`): round robin (N − 1) × melhor de N; suíço rodadas × melhor de N.
 
@@ -70,6 +70,23 @@ Do usuário (05/11): o round robin aceita melhor de 2, 4 e 6, além dos ímpares
 - **Confronto direto com empate**: a série empatada conta como confronto realizado e vale 0. Quem empatou entre si não se separa por ele e segue para o saldo de mapas.
 - **Saldo de mapas**: a série empatada conta metade para cada lado, e o W.O. vale a maioria sem perder mapa. Na md2 ele é sempre o dobro do saldo de séries, então, na prática, decidem os frags; na md4 e na md6 desempata de verdade (3 x 0 vale +3; 3 x 1, +2). Sem código especial para isso. Os frags da série empatada somam para cada lado (`SeriesFrags` é por lado).
 - **Tela**: coluna "Saldo" com sinal no round robin, "Pontos" no suíço; na série par, o recorde em V–E–D. A explicação dos desempates ignora o primeiro critério.
+
+## Desempate por fase
+
+Do usuário (05/11):
+
+- Nas fases de tabela, o organizador escolhe, para a fase, a **ordem** dos desempates e quais ficam **ligados**. Na eliminação não há desempate.
+- **Fixos, fora da escolha**: o primeiro critério (saldo de séries no todos contra todos, pontos no suíço) e, por último, a ordem da chave (seed), para nunca sobrar empate.
+- **Escolhem-se** confronto direto, saldo de mapas, saldo de frags e, só no suíço, Buchholz. Desligar todos vale: decide a ordem da chave. Sem critério novo.
+- **Padrão = a ordem de antes** (acima), que a migration `20261211020000_stage_tiebreakers` grava nas fases que já existem (testada numa cópia do banco de dev: 41 fases, 28 de torneios começados). Nenhuma tabela muda: o `replay_golden` passa sem mudar o esperado, com dois casos novos de ordem escolhida.
+
+Assumido:
+
+- **Onde fica**: `tournament_stages.tiebreakers text[]`, nula na eliminação e presente nas de tabela (`tournament_stages_shape`), só os quatro valores, cada um uma vez, numa lista simples (`tournament_stages_tiebreakers`), `buchholz` só no suíço (`tournament_stages_buchholz_swiss`). No `engine`, `Tiebreakers` com no máximo 4, de tamanho fixo, para o formato continuar `Copy`. Lista inválida: `format.invalid_tiebreakers`. Sem a lista no corpo, o padrão do formato.
+- **Regras do motor que continuam**: a volta ao confronto direto vale para quem segue empatado depois de qualquer critério posto depois dele (mapas, frags ou o Buchholz), e só com ele ligado; o saldo de frags só vale com os frags completos de todo o grupo, senão vale o critério seguinte.
+- **O pareamento do suíço segue a tabela**: o desempate escolhido muda quem enfrenta quem (com só os frags, a rodada 2 de 6 jogadores sai com outros pares; teste `the_tiebreakers_change_the_pairing`). Rodada já pareada não muda.
+- **Suíço sem Buchholz**: ele não é calculado (`buchholz` nulo na tabela) e a coluna some.
+- **Trava**: depois do início, nada muda; o trigger que já congela a fase inteira (`tournament_stages_frozen_after_start`) cobre a coluna.
 
 ## TDM
 

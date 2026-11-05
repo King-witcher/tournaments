@@ -327,7 +327,7 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
         let stage = format!(
             "update tournament_stages
              set format = '{table}', best_of = 3, finals_best_of = null, bracket = null,
-                 grand_final_reset = null
+                 grand_final_reset = null, tiebreakers = '{{}}'
              where tournament_id = {liga}"
         );
         exec(&db, &stage).await.unwrap();

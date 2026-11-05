@@ -1,6 +1,7 @@
 //! Configuração, rodadas e pareamentos.
 
 use super::*;
+use crate::formats::table::Criterion;
 
 #[test]
 fn rounds_default_to_log2_and_stop_at_n_minus_one() {
@@ -42,6 +43,7 @@ fn config_is_validated() {
     let even = SwissConfig {
         best_of: 4,
         rounds: None,
+        tiebreakers: Tiebreakers::SWISS,
     };
     assert_eq!(even.validate(), Err(EngineError::InvalidBestOf(4)));
     assert_eq!(
@@ -164,4 +166,41 @@ fn players_with_fewer_points_float_down() {
     run.decide(favorite);
     let r = run.pair().unwrap();
     assert_eq!(plain(&r), (vec![[1, 2], [3, 4], [5, 6]], None));
+}
+
+#[test]
+fn the_tiebreakers_change_the_pairing() {
+    // Rodada 1: 1 vence 4 por 2 x 0 (frags +1), 2 vence 5 por 2 x 1 (+40) e 3
+    // vence 6 por 2 x 0 (+5). Entre os vencedores, pontos e Buchholz empatam;
+    // no padrão, o saldo de mapas põe 1 e 3 (+2) à frente de 2 (+1) e os frags
+    // separam 3 de 1; só com os frags, 2 lidera. O melhor enfrenta o segundo,
+    // e o terceiro desce, para o melhor dos perdedores que ele não enfrentou.
+    let reports = |b: &SwissBracket| -> Vec<StageReport> {
+        let score = [(1, 0, (20, 19)), (2, 1, (60, 20)), (3, 0, (30, 25))];
+        b.matches()
+            .iter()
+            .zip(score)
+            .map(|(m, (winner, loser_maps, (a, b)))| StageReport {
+                frags: Some(SeriesFrags { a, b }),
+                ..played(m, p(winner), loser_maps)
+            })
+            .collect()
+    };
+    let second_round = |tiebreakers| {
+        let config = SwissConfig {
+            best_of: 3,
+            rounds: None,
+            tiebreakers,
+        };
+        let rounds = vec![round(&[[1, 4], [2, 5], [3, 6]], None)];
+        let first = SwissBracket::replay(config, seeds(6), rounds.clone(), [], &[]).unwrap();
+        let after = SwissBracket::replay(config, seeds(6), rounds, reports(&first), &[]).unwrap();
+        plain(&after.next_round().unwrap())
+    };
+    assert_eq!(
+        second_round(Tiebreakers::SWISS),
+        (vec![[3, 1], [2, 4], [5, 6]], None)
+    );
+    let frags = Tiebreakers::new(&[Criterion::FragDiff, Criterion::MapDiff]).unwrap();
+    assert_eq!(second_round(frags), (vec![[2, 3], [1, 6], [4, 5]], None));
 }

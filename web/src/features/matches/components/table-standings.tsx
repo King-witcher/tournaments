@@ -4,6 +4,7 @@ import { memberPath } from "@/features/members/lib/paths";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
 import { isEvenSeries } from "@/features/tournaments/lib/format";
+import { stageTiebreakers } from "@/features/tournaments/lib/tiebreakers";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
@@ -29,12 +30,13 @@ type Props = {
  * séries), o saldo de frags (é ele que desempata, não o total; pró e contra
  * vêm ao lado, marcados como incompletos quando alguma série veio sem eles,
  * porque aí não desempatam; "sem frags" quando nenhuma veio), o Buchholz no
- * suíço (explicado no (i) da coluna), e quem venceu, desistiu ou saiu.
- * Embaixo, os desempates que não foram pelo primeiro critério, um por linha ("2º à
- * frente do 3º pelo confronto direto"), visíveis também no celular, onde as
- * colunas de saldo somem (e, com a do Buchholz, o (i): a explicação vem depois
- * dos desempates, se algum foi por ele). Enquanto a fase corre, é a ordem de
- * agora; no fim, a definitiva.
+ * suíço que o usa no desempate (explicado no (i) da coluna), e quem venceu,
+ * desistiu ou saiu. Embaixo, os desempates que não foram pelo primeiro
+ * critério, que seguem a ordem da fase, um por linha ("2º à frente do 3º pelo
+ * confronto direto"), visíveis também no celular, onde as colunas de saldo
+ * somem (e, com a do Buchholz, o (i): a explicação vem depois dos desempates,
+ * se algum foi por ele). Enquanto a fase corre, é a ordem de agora; no fim, a
+ * definitiva.
  */
 export function TableStandings({ tenant, bracket }: Props) {
   const t = useTranslations("Bracket.table");
@@ -42,6 +44,9 @@ export function TableStandings({ tenant, bracket }: Props) {
   const teamName = useTeamName();
   const rows = bracket.table ?? [];
   const swiss = bracket.format.format === "swiss";
+  // O suíço sem o Buchholz entre os desempates não o calcula.
+  const buchholz =
+    stageTiebreakers(bracket.format)?.includes("buchholz") ?? false;
   const finished = bracket.status === "finished";
   const even = isEvenSeries(bracket.format.best_of);
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
@@ -60,7 +65,7 @@ export function TableStandings({ tenant, bracket }: Props) {
       ? []
       : [{ key: "maps", header: t("maps"), secondary: true }]),
     { key: "frags", header: t("frags"), secondary: true },
-    ...(swiss
+    ...(buchholz
       ? [
           {
             key: "buchholz",

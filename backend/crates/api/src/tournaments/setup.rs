@@ -26,6 +26,15 @@ const TDM_TEAM_SIZES: RangeInclusive<i32> = 2..=4;
 /// Times na chave, no mínimo.
 const MIN_SIDES: i32 = 2;
 
+/// As fases do corpo nos tipos do `engine`. Erro: 422
+/// `format.invalid_tiebreakers` com desempate repetido.
+pub fn stages_from_dto(stages: Vec<StageFormat>) -> Result<Vec<ef::StageFormat>, ApiError> {
+    stages
+        .into_iter()
+        .map(|s| ef::StageFormat::try_from(s).map_err(ApiError::from))
+        .collect()
+}
+
 /// A modalidade: duelo (um contra um) ou TDM (times de 2 a 4, `team_size`).
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -89,6 +98,8 @@ pub struct Setup {
 }
 
 impl Setup {
+    /// Erro: 422 `format.invalid_tiebreakers` com desempate repetido; o resto
+    /// fica para `check`.
     pub fn from_dto(
         mode: TournamentMode,
         team_size: Option<i32>,
@@ -97,16 +108,16 @@ impl Setup {
         stages: Vec<StageFormat>,
         veto: VetoSetup,
         team_rules: TeamRules,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, ApiError> {
+        Ok(Self {
             mode,
             team_size: team_size.unwrap_or(mode.default_team_size()),
             max_participants,
             champion_rules: rules.into(),
-            stages: stages.into_iter().map(Into::into).collect(),
+            stages: stages_from_dto(stages)?,
             veto,
             team_rules,
-        }
+        })
     }
 
     /// Jogadores por time, para o `engine` (validado em `check`).
@@ -251,6 +262,7 @@ mod tests {
             VetoSetup::off(),
             TeamRules::default(),
         )
+        .unwrap()
     }
 
     fn tdm(size: i32, slots: i32) -> Setup {
@@ -345,7 +357,11 @@ mod tests {
     #[test]
     fn the_format_cap_counts_players_in_teams() {
         let rr = |slots| Setup {
-            stages: vec![StageFormat::RoundRobin { best_of: 3 }.into()],
+            stages: stages_from_dto(vec![StageFormat::RoundRobin {
+                best_of: 3,
+                tiebreakers: vec![],
+            }])
+            .unwrap(),
             ..tdm(2, slots)
         };
         // 32 times de 2 no round robin.

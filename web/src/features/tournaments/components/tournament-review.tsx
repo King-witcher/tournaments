@@ -7,6 +7,7 @@ import { StructuredList } from "@/shared/ui/structured-list";
 import type { TournamentFormState } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { isTdm } from "../lib/form-values";
+import { isTableFormat } from "../lib/tiebreakers";
 
 type Props = {
   form: TournamentFormState;
@@ -20,6 +21,7 @@ type Row =
   | "name"
   | "startsAt"
   | "format"
+  | "tiebreakers"
   | "teamRules"
   | "registration"
   | "veto"
@@ -29,8 +31,8 @@ type Row =
 
 /**
  * O que vai ser publicado, para conferir antes de "Criar": nome, início,
- * formato, quem age pelo time (só nos times), inscrições, mapas, campeões,
- * resultados e idiomas.
+ * formato, desempate (só nas fases de tabela), quem age pelo time (só nos
+ * times), inscrições, mapas, campeões, resultados e idiomas.
  */
 export function TournamentReview({ form, maps, screenshots }: Props) {
   const t = useTranslations("TournamentForm.review");
@@ -52,6 +54,9 @@ export function TournamentReview({ form, maps, screenshots }: Props) {
       ),
     ],
     ["format", summary.format(values)],
+    ...(isTableFormat(values.stageFormat)
+      ? ([["tiebreakers", summary.tiebreakers(values)]] as [Row, ReactNode][])
+      : []),
     ...(isTdm(values)
       ? ([["teamRules", summary.teamRules(values)]] as [Row, ReactNode][])
       : []),

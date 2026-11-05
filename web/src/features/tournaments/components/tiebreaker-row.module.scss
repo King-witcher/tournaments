@@ -1,0 +1,36 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// O número e o nome numa linha; o desligado guarda o lugar do número, para os
+// nomes ficarem numa coluna só. Lugar e intervalo justos: a 390 px, com as três
+// ações de 48 px, "Enfrentamiento directo" cabe com uns 5 px de folga.
+.content {
+  display: flex;
+  gap: spacing.$spacing-02;
+}
+
+// As ações do item ficam por cima do conteúdo (o `action` do Carbon é
+// absoluto), e o Carbon recua o conteúdo só o bastante para uma
+// (`$spacing-10`). O ligado tem três: o resto do recuo é das outras duas, com
+// a altura do botão `md`, 40px do md para cima e 48px abaixo.
+.three {
+  margin-inline-end: calc(3 * #{spacing.$spacing-08} - #{spacing.$spacing-10});
+
+  @include breakpoint.breakpoint-down(md) {
+    margin-inline-end: calc(
+      3 * #{spacing.$spacing-09} - #{spacing.$spacing-10}
+    );
+  }
+}
+
+.position {
+  flex-shrink: 0;
+  min-inline-size: spacing.$spacing-04;
+  font-variant-numeric: tabular-nums;
+}
+
+// Desligado: o nome em segundo plano, sem número.
+.off {
+  color: theme.$text-secondary;
+}

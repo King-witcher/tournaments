@@ -14,7 +14,7 @@ use super::{
 use crate::shared::{Locale, nullable};
 
 /// Formato de uma fase.
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "format", rename_all = "snake_case")]
 pub enum StageFormat {
     Elimination {
@@ -37,6 +37,13 @@ pub enum StageFormat {
         /// fecha na maioria ou, com todos os mapas e metade para cada lado, empata.
         #[schema(example = 3)]
         best_of: u8,
+        /// Os desempates depois do saldo de séries, na ordem em que valem; por
+        /// último, sempre a ordem da chave. Cada um no máximo uma vez, sem
+        /// `buchholz`; vazio: decide a ordem da chave. Ausente: `head_to_head`,
+        /// `map_diff`, `frag_diff`.
+        #[serde(default = "round_robin_tiebreakers")]
+        #[schema(example = json!(["head_to_head", "map_diff", "frag_diff"]))]
+        tiebreakers: Vec<Tiebreaker>,
     },
     /// Suíço, a fase inteira: rodadas fixas, pareamento por pontos sem
     /// revanche, classificação pela tabela. Até 128 participantes.
@@ -48,7 +55,40 @@ pub enum StageFormat {
         /// máximo N − 1 com os N do início.
         #[serde(default)]
         rounds: Option<u16>,
+        /// Os desempates depois dos pontos, na ordem em que valem; por último,
+        /// sempre a ordem da chave. Cada um no máximo uma vez; vazio: decide a
+        /// ordem da chave. O pareamento segue a tabela, então eles mudam
+        /// também quem enfrenta quem. Ausente: `buchholz`, `head_to_head`,
+        /// `map_diff`, `frag_diff`.
+        #[serde(default = "swiss_tiebreakers")]
+        #[schema(example = json!(["buchholz", "head_to_head", "map_diff", "frag_diff"]))]
+        tiebreakers: Vec<Tiebreaker>,
     },
+}
+
+/// Um desempate das fases de tabela. O primeiro critério (saldo de séries ou
+/// pontos) e a ordem da chave, o último, são fixos e não entram na lista.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Tiebreaker {
+    /// Confronto direto: as séries entre os empatados, quando todos já se
+    /// enfrentaram.
+    HeadToHead,
+    /// Saldo de mapas.
+    MapDiff,
+    /// Saldo de frags, quando todos os empatados têm os frags de todas as
+    /// séries.
+    FragDiff,
+    /// Soma dos pontos dos adversários. Só no suíço.
+    Buchholz,
+}
+
+fn round_robin_tiebreakers() -> Vec<Tiebreaker> {
+    Tiebreaker::list(engine::formats::table::Tiebreakers::ROUND_ROBIN)
+}
+
+fn swiss_tiebreakers() -> Vec<Tiebreaker> {
+    Tiebreaker::list(engine::formats::table::Tiebreakers::SWISS)
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]

@@ -52,7 +52,7 @@ async fn each_round_is_paired_when_the_previous_one_ends() {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "swiss", "best_of": 1, "rounds": null })
+        json!({ "format": "swiss", "best_of": 1, "rounds": null, "tiebreakers": ["buchholz", "head_to_head", "map_diff", "frag_diff"] })
     );
     assert_eq!(b["total_rounds"], 3);
     assert_eq!(keys_in(&b, "ready"), ["sw-1-1", "sw-1-2", "sw-1-3"]);
@@ -237,10 +237,54 @@ async fn table_formats_are_checked_on_create_and_edit() {
         invalid("format.invalid_rounds", json!({ "max": 127, "got": 128 }))
     );
     // Rodadas acima de N − 1 passam: valem N − 1 na fase.
+    // Os desempates: cada um uma vez, o Buchholz só no suíço, e só os que
+    // existem (o seed é fixo, fora da lista).
+    let tiebreakers = |format: &str, list: Value| {
+        with(
+            duel("copa"),
+            table(format, json!({ "best_of": 3, "tiebreakers": list })),
+        )
+    };
+    let refused = (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        err("format.invalid_tiebreakers"),
+    );
+    for (format, list) in [
+        (
+            "round_robin",
+            json!(["map_diff", "head_to_head", "map_diff"]),
+        ),
+        ("swiss", json!(["buchholz", "buchholz"])),
+        ("round_robin", json!(["buchholz"])),
+    ] {
+        assert_eq!(
+            create(tiebreakers(format, list.clone())).await,
+            refused,
+            "{list}"
+        );
+    }
+    assert_eq!(
+        create(tiebreakers("swiss", json!(["seed"]))).await,
+        (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            err("request.invalid_body")
+        )
+    );
     let created = create_tournament(&app, &ana, swiss(json!(20))).await;
     assert_eq!(created["stages"][0]["rounds"], 20);
 
     // A edição troca o formato, com as mesmas regras.
+    let (status, body) = patch(
+        &app,
+        COPA,
+        &ana,
+        table(
+            "round_robin",
+            json!({ "best_of": 3, "tiebreakers": ["buchholz"] }),
+        ),
+    )
+    .await;
+    assert_eq!((status, body), refused);
     let (status, body) = patch(
         &app,
         COPA,
@@ -262,6 +306,30 @@ async fn table_formats_are_checked_on_create_and_edit() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body["stages"][0],
-        json!({ "format": "round_robin", "best_of": 5 })
+        json!({ "format": "round_robin", "best_of": 5, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"] })
     );
+}
+
+#[tokio::test]
+async fn a_swiss_without_buchholz_leaves_it_out_of_the_table() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let all: Vec<&User> = p.iter().collect();
+    let tiebreakers = json!(["head_to_head", "map_diff", "frag_diff"]);
+    let body = copa(table(
+        "swiss",
+        json!({ "best_of": 1, "rounds": 2, "tiebreakers": tiebreakers }),
+    ));
+    start(&app, &ana, body, &all).await;
+    play_round(&app, &p, 1).await;
+
+    // A rodada 2 sai da tabela sem ele: os vencedores se enfrentam.
+    let b = bracket(&app, &p[0]).await;
+    assert_eq!(b["format"]["tiebreakers"], tiebreakers);
+    let id = |i: usize| json!(p[i].id);
+    assert_eq!(round_sides(&b, 2), [(id(0), id(1)), (id(2), id(3))]);
+    let rows = b["table"].as_array().unwrap();
+    assert!(rows.iter().all(|r| r["buchholz"].is_null()), "{rows:?}");
+    assert!(rows.iter().all(|r| r["ahead_by"] != "buchholz"), "{rows:?}");
 }

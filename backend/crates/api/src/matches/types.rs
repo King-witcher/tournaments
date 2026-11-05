@@ -91,15 +91,16 @@ pub struct TableRow {
     pub frag_diff: i64,
     /// Toda série jogada veio com frags: só assim o saldo de frags desempata.
     pub frags_complete: bool,
-    /// Só no suíço: a soma dos pontos dos adversários.
+    /// Só no suíço com o Buchholz entre os desempates: a soma dos pontos dos
+    /// adversários.
     pub buchholz: Option<u32>,
     /// O critério que pôs esta linha à frente da seguinte; `null` na última.
     pub ahead_by: Option<TableCriterion>,
 }
 
-/// Critério de ordem da tabela, na ordem em que valem: o saldo de séries (round
-/// robin) ou os pontos e o Buchholz (suíço), depois confronto direto, saldo de
-/// mapas, saldo de frags e, por último, o seed.
+/// Critério de ordem da tabela: o saldo de séries (round robin) ou os pontos
+/// (suíço), depois os desempates da fase (`StageFormat`, `tiebreakers`), na
+/// ordem dela, e, por último, o seed.
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TableCriterion {

@@ -8,7 +8,7 @@ use super::{
     admission::Admission,
     contest,
     schedule::Schedule,
-    setup::Setup,
+    setup::{Setup, stages_from_dto},
     slug::validate_slug,
     status::TournamentStatus,
     texts::{self, Texts},
@@ -118,7 +118,7 @@ pub fn apply(
             .champion_rules
             .map_or(current_setup.champion_rules, Into::into),
         stages: match patch.stages {
-            Some(stages) => stages.into_iter().map(Into::into).collect(),
+            Some(stages) => stages_from_dto(stages)?,
             None => current_setup.stages.clone(),
         },
         veto: veto.unwrap_or_else(|| current_setup.veto.clone()),
@@ -202,6 +202,7 @@ mod tests {
             VetoSetup::off(),
             Default::default(),
         )
+        .unwrap()
     }
 
     fn schedule() -> Schedule {

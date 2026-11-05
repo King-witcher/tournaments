@@ -115,7 +115,7 @@ async fn pairings_only_in_a_started_swiss() {
     sqlx::query(
         "update tournament_stages
          set format = 'elimination', best_of = 1, finals_best_of = 1, bracket = 'single',
-             rounds = null
+             rounds = null, tiebreakers = null
          where tournament_id = $1",
     )
     .bind(t)

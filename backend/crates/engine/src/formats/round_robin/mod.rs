@@ -13,8 +13,9 @@
 //!   em `replay`, `report` nem na tabela.
 //! - Uma série (melhor de N, ímpar, 2, 4 ou 6) para todas as partidas; não há
 //!   final. A série par pode empatar, sem vencedor (`series`).
-//! - Classificação e desempates em `formats::table`: saldo de séries, confronto
-//!   direto, saldo de mapas, saldo de frags, seed.
+//! - Classificação e desempates em `formats::table`: saldo de séries, os
+//!   desempates da fase (`config.tiebreakers`; o padrão é confronto direto,
+//!   saldo de mapas, saldo de frags; sem Buchholz) e o seed.
 //! - Termina quando todas as séries estão decididas; só então há colocação
 //!   (`placements`), uma posição por participante, sem empate.
 //! - Até `MAX_PARTICIPANTS` (são N(N − 1)/2 partidas).
@@ -27,7 +28,7 @@ mod tests;
 pub use suggest::{SeriesProgress, suggest};
 
 use super::check_count;
-use super::table::{self, League, TableRow};
+use super::table::{League, Rules, TableRow, Tiebreakers};
 use crate::core::{EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport};
 use crate::series::validate_league_best_of;
 
@@ -38,11 +39,17 @@ pub const MAX_PARTICIPANTS: usize = 32;
 pub struct RoundRobinConfig {
     /// Melhor de N de todas as partidas: ímpar, 2, 4 ou 6.
     pub best_of: u8,
+    /// Os desempates depois do saldo de séries, sem Buchholz; o padrão é
+    /// `Tiebreakers::ROUND_ROBIN`.
+    pub tiebreakers: Tiebreakers,
 }
 
 impl RoundRobinConfig {
+    /// Erros: melhor de N inválido; `InvalidTiebreakers` com o Buchholz, que
+    /// é só do suíço.
     pub fn validate(&self) -> Result<(), EngineError> {
-        validate_league_best_of(self.best_of)
+        validate_league_best_of(self.best_of)?;
+        self.tiebreakers.check(false)
     }
 
     /// Máximo de mapas de um participante com `participants`: N − 1 séries.
@@ -67,14 +74,14 @@ impl RoundRobinBracket {
     /// seed 1.
     ///
     /// Erros: menos de 2 ou mais de `MAX_PARTICIPANTS` participantes,
-    /// participante repetido, melhor de N inválido.
+    /// participante repetido, os de `RoundRobinConfig::validate`.
     pub fn new(config: RoundRobinConfig, seeded: Vec<ParticipantId>) -> Result<Self, EngineError> {
         super::check_participants(&seeded, MAX_PARTICIPANTS)?;
         config.validate()?;
         let matches = schedule::build(&seeded, config.best_of);
         Ok(Self {
             config,
-            league: League::new(table::ROUND_ROBIN, seeded, matches),
+            league: League::new(Rules::round_robin(config.tiebreakers), seeded, matches),
         })
     }
 

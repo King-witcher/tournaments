@@ -6,7 +6,12 @@
 
 use engine::{
     champions as ec,
-    formats::{self as ef, elimination as el, round_robin::RoundRobinConfig, swiss::SwissConfig},
+    formats::{
+        self as ef, elimination as el,
+        round_robin::RoundRobinConfig,
+        swiss::SwissConfig,
+        table::{Criterion, Tiebreakers},
+    },
     series::SeriesLength,
 };
 use serde::Deserialize;
@@ -96,6 +101,32 @@ pub struct StageRow {
     pub(super) bracket: Option<String>,
     pub(super) grand_final_reset: Option<bool>,
     pub(super) rounds: Option<i16>,
+    /// Fases de tabela: os desempates, em ordem. Nulo na eliminação.
+    pub(super) tiebreakers: Option<Vec<String>>,
+}
+
+/// Um desempate na coluna `tiebreakers` (check `tournament_stages_tiebreakers`).
+fn tiebreaker_column(criterion: Criterion) -> &'static str {
+    match criterion {
+        Criterion::HeadToHead => "head_to_head",
+        Criterion::MapDiff => "map_diff",
+        Criterion::FragDiff => "frag_diff",
+        Criterion::Buchholz => "buchholz",
+        // `Tiebreakers` só guarda desempates; o check recusaria.
+        Criterion::SeriesDiff => "series_diff",
+        Criterion::Points => "points",
+        Criterion::Seed => "seed",
+    }
+}
+
+fn tiebreaker_columns(tiebreakers: Tiebreakers) -> Option<Vec<String>> {
+    Some(
+        tiebreakers
+            .as_slice()
+            .iter()
+            .map(|&c| tiebreaker_column(c).to_owned())
+            .collect(),
+    )
 }
 
 impl From<ef::StageFormat> for StageRow {
@@ -115,6 +146,7 @@ impl From<ef::StageFormat> for StageRow {
                     bracket: Some(bracket.to_owned()),
                     grand_final_reset,
                     rounds: None,
+                    tiebreakers: None,
                 }
             }
             ef::StageFormat::RoundRobin(config) => Self {
@@ -124,6 +156,7 @@ impl From<ef::StageFormat> for StageRow {
                 bracket: None,
                 grand_final_reset: None,
                 rounds: None,
+                tiebreakers: tiebreaker_columns(config.tiebreakers),
             },
             ef::StageFormat::Swiss(config) => Self {
                 format: "swiss".to_owned(),
@@ -133,12 +166,31 @@ impl From<ef::StageFormat> for StageRow {
                 grand_final_reset: None,
                 // Fora da faixa, o check do banco recusa.
                 rounds: config.rounds.map(|n| i16::try_from(n).unwrap_or(i16::MAX)),
+                tiebreakers: tiebreaker_columns(config.tiebreakers),
             },
         }
     }
 }
 
 impl StageRow {
+    /// Os desempates de uma fase de tabela.
+    fn tiebreakers(&self) -> Result<Tiebreakers, ApiError> {
+        let Some(columns) = &self.tiebreakers else {
+            return Err(invalid("tiebreakers", &self));
+        };
+        let criteria = columns
+            .iter()
+            .map(|c| match c.as_str() {
+                "head_to_head" => Ok(Criterion::HeadToHead),
+                "map_diff" => Ok(Criterion::MapDiff),
+                "frag_diff" => Ok(Criterion::FragDiff),
+                "buchholz" => Ok(Criterion::Buchholz),
+                _ => Err(invalid("tiebreakers", &self)),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Tiebreakers::new(&criteria).map_err(|_| invalid("tiebreakers", &self))
+    }
+
     pub fn read(&self) -> Result<ef::StageFormat, ApiError> {
         let best_of = |n: i16| u8::try_from(n).map_err(|_| invalid("best_of", &self));
         match self.format.as_str() {
@@ -153,6 +205,9 @@ impl StageRow {
                     }
                     _ => return Err(invalid("bracket", &self)),
                 };
+                if self.tiebreakers.is_some() {
+                    return Err(invalid("tiebreakers", &self));
+                }
                 Ok(ef::StageFormat::Elimination(el::EliminationConfig {
                     kind,
                     series: SeriesLength {
@@ -163,6 +218,7 @@ impl StageRow {
             }
             "round_robin" => Ok(ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: best_of(self.best_of)?,
+                tiebreakers: self.tiebreakers()?,
             })),
             "swiss" => Ok(ef::StageFormat::Swiss(SwissConfig {
                 best_of: best_of(self.best_of)?,
@@ -171,6 +227,7 @@ impl StageRow {
                     .map(u16::try_from)
                     .transpose()
                     .map_err(|_| invalid("rounds", &self))?,
+                tiebreakers: self.tiebreakers()?,
             })),
             _ => Err(invalid("format", &self)),
         }
@@ -201,14 +258,23 @@ mod tests {
             elimination(el::EliminationKind::Double {
                 grand_final_reset: false,
             }),
-            ef::StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 }),
+            ef::StageFormat::RoundRobin(RoundRobinConfig {
+                best_of: 3,
+                tiebreakers: Tiebreakers::ROUND_ROBIN,
+            }),
+            ef::StageFormat::RoundRobin(RoundRobinConfig {
+                best_of: 2,
+                tiebreakers: Tiebreakers::NONE,
+            }),
             ef::StageFormat::Swiss(SwissConfig {
                 best_of: 1,
                 rounds: None,
+                tiebreakers: Tiebreakers::SWISS,
             }),
             ef::StageFormat::Swiss(SwissConfig {
                 best_of: 255,
                 rounds: Some(127),
+                tiebreakers: Tiebreakers::new(&[Criterion::FragDiff, Criterion::Buchholz]).unwrap(),
             }),
         ] {
             assert_eq!(StageRow::from(stage).read().unwrap(), stage);
@@ -253,6 +319,7 @@ mod tests {
             bracket: bracket.map(str::to_owned),
             grand_final_reset: reset,
             rounds: None,
+            tiebreakers: None,
         };
         assert!(row("ladder", None, None).read().is_err());
         assert!(row("elimination", None, None).read().is_err());
@@ -262,6 +329,23 @@ mod tests {
                 .read()
                 .is_err()
         );
+        // Os desempates: só nas fases de tabela, e só os que existem.
+        let tiebreakers = |format: &str, list: Option<&[&str]>| StageRow {
+            tiebreakers: list.map(|l| l.iter().map(|s| (*s).to_owned()).collect()),
+            ..row(format, None, None)
+        };
+        assert!(tiebreakers("round_robin", None).read().is_err());
+        assert!(tiebreakers("swiss", Some(&["seed"])).read().is_err());
+        assert!(
+            tiebreakers("swiss", Some(&["map_diff", "map_diff"]))
+                .read()
+                .is_err()
+        );
+        let single = StageRow {
+            tiebreakers: Some(vec![]),
+            ..row("elimination", Some("single"), None)
+        };
+        assert!(single.read().is_err());
         let half_rule = ChampionColumns {
             bans_per_series: 1,
             mirror: true,

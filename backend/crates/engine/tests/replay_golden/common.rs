@@ -4,11 +4,36 @@ use engine::core::{
     BracketSide, MatchId, MatchReport, MatchState, Outcome, ParticipantId, SeriesFrags,
     SeriesScore, StageReport,
 };
-use engine::formats::table::Criterion;
+use engine::formats::table::{Criterion, Tiebreakers};
 use engine::formats::{StageBracket, StageFormat, StageHistory};
 
 pub fn p(n: i64) -> ParticipantId {
     ParticipantId(n)
+}
+
+/// Os desempates de uma fase gravada, como a coluna os guarda.
+pub fn tiebreakers(list: &[Criterion]) -> Tiebreakers {
+    Tiebreakers::new(list).unwrap_or_else(|e| panic!("desempates gravados recusados: {e:?}"))
+}
+
+/// O que a migration `20261211020000_stage_tiebreakers` gravou nas fases de
+/// round robin de antes dela: a ordem que valia até então.
+pub fn round_robin_default() -> Tiebreakers {
+    tiebreakers(&[
+        Criterion::HeadToHead,
+        Criterion::MapDiff,
+        Criterion::FragDiff,
+    ])
+}
+
+/// O mesmo nas fases de suíço.
+pub fn swiss_default() -> Tiebreakers {
+    tiebreakers(&[
+        Criterion::Buchholz,
+        Criterion::HeadToHead,
+        Criterion::MapDiff,
+        Criterion::FragDiff,
+    ])
 }
 
 /// Os participantes de 1 a `n`, na ordem dos seeds (o 1 é o seed 1).

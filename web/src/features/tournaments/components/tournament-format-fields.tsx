@@ -9,6 +9,7 @@ import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
 import { isEvenSeries, mapsToWin, slotLimits, teamsIn } from "../lib/format";
 import { sameValues } from "../lib/same-values";
+import { DEFAULT_TIEBREAKERS } from "../lib/tiebreakers";
 import styles from "./tournament-format-fields.module.scss";
 
 /** A eliminação e o suíço: só ímpares, porque a série não pode empatar. */
@@ -35,17 +36,23 @@ function choiceOf(
 
 /**
  * Trocar de formato. Fora do todos contra todos, a série par vira a ímpar logo
- * acima (md4 vira md5), e o campo mostra o valor novo.
+ * acima (md4 vira md5), e o campo mostra o valor novo. Numa fase de tabela,
+ * os desempates voltam ao padrão dela (o suíço começa pelo Buchholz).
  */
 function patchOf(
   choice: FormatChoice,
   bestOf: number,
 ): Partial<TournamentValues> {
-  if (choice === "round_robin") return { stageFormat: choice };
+  if (choice === "round_robin")
+    return { stageFormat: choice, tiebreakers: DEFAULT_TIEBREAKERS[choice] };
   const series = isEvenSeries(bestOf) ? { bestOf: bestOf + 1 } : {};
   return choice === "double" || choice === "single"
     ? { stageFormat: "elimination", bracket: choice, ...series }
-    : { stageFormat: choice, ...series };
+    : {
+        stageFormat: choice,
+        tiebreakers: DEFAULT_TIEBREAKERS[choice],
+        ...series,
+      };
 }
 
 /** Os campos do formulário que o bloco lê. */

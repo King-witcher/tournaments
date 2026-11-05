@@ -4,6 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import { isEvenSeries } from "../lib/format";
+import { countingTiebreakers, stageTiebreakers } from "../lib/tiebreakers";
 import { AutoRulesAbsence } from "./auto-rules-absence";
 import { AutoRulesEntry } from "./auto-rules-entry";
 import { AutoRulesFormat } from "./auto-rules-format";
@@ -25,9 +26,9 @@ type Props = {
  * As regras que saem da configuração do torneio, para quem joga: o que
  * precisa saber e fazer, na ordem em que acontece, em trechos com título
  * curto. Inscrição e check-in (só antes de começar), os times (TDM), a
- * chave, a classificação (todos contra todos e suíço), cada série, os mapas
- * do pool, o resultado e o W.O. Cada trecho segue a configuração e muda
- * sozinho quando ela muda, porque nada é gravado. O que ela não diz
+ * chave, a classificação (todos contra todos e suíço, com os desempates da
+ * fase), cada série, os mapas do pool, o resultado e o W.O. Cada trecho segue
+ * a configuração e muda sozinho quando ela muda, porque nada é gravado. O que ela não diz
  * (conduta, queda de conexão, quem cria a sala) fica nas regras adicionais.
  */
 export function TournamentAutoRules({ tournament, maps, editable }: Props) {
@@ -51,6 +52,11 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
           <AutoRulesTable
             format={stage.format}
             even={isEvenSeries(stage.best_of)}
+            tiebreakers={countingTiebreakers(
+              stageTiebreakers(stage) ?? [],
+              stage.format,
+              stage.best_of,
+            )}
           />
         )}
         <AutoRulesSeries tournament={tournament} />

@@ -145,7 +145,7 @@
       "head_to_head": "{position}º ({name}) por delante del {next}º ({other}) por el enfrentamiento directo.",
       "map_diff": "{position}º ({name}) por delante del {next}º ({other}) por la diferencia de partidas.",
       "frag_diff": "{position}º ({name}) por delante del {next}º ({other}) por la diferencia de frags.",
-      "seed": "{position}º ({name}) por delante del {next}º ({other}) por el orden de la llave. Empataron en todo lo demás."
+      "seed": "{position}º ({name}) por delante del {next}º ({other}) por el orden de la llave. Empataron en los demás criterios."
     },
     "noFrags": "sin frags",
     "buchholzTip": "¿Qué es el Buchholz?",

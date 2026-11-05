@@ -141,7 +141,8 @@
     "too_many_participants": "This format allows up to {max} participants. Lower the spots to {max} or fewer.",
     "duplicate_participant": "Duplicate participant.",
     "no_stages": "The tournament needs at least one stage.",
-    "invalid_rounds": "Rounds range from 1 to {max}."
+    "invalid_rounds": "Rounds range from 1 to {max}.",
+    "invalid_tiebreakers": "Each tiebreaker can be used once, and Buchholz only in Swiss."
   },
   "champions": {
     "pool_exhausted": "In the worst case, {required} champions are needed, but the pool has {available}. Lower the spots, matches, or bans, or relax the no-repeat rule."

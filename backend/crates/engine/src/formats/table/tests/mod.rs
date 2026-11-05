@@ -1,9 +1,15 @@
 //! Testes da classificação: saldo de séries, pontos, estatísticas, empates e
-//! cada desempate.
+//! cada desempate, na ordem padrão. Outras ordens: `tiebreakers.rs`.
+
+mod tiebreakers;
 
 use super::*;
 use crate::core::{BracketSide, EngineError, MatchId, MatchReport, SeriesScore, Slot, StageReport};
 use Criterion::*;
+
+/// As regras de cada formato com os desempates padrão.
+const ROUND_ROBIN: Rules = Rules::round_robin(Tiebreakers::ROUND_ROBIN);
+const SWISS: Rules = Rules::swiss(Tiebreakers::SWISS);
 
 fn p(n: i64) -> ParticipantId {
     ParticipantId(n)

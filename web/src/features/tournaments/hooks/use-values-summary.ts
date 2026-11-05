@@ -11,6 +11,7 @@ import {
 } from "../lib/form-values";
 import { isEvenSeries, teamsIn } from "../lib/format";
 import { teamPresetOf } from "../lib/team-rules";
+import { countingTiebreakers, isTableFormat } from "../lib/tiebreakers";
 import { useFormatSeconds } from "./use-format-seconds";
 import { useModeLabel } from "./use-mode-label";
 
@@ -28,14 +29,15 @@ export function useValuesSummary() {
   const tForm = useTranslations("TournamentForm");
   const tSetup = useTranslations("Tournament.setup");
   const tTeam = useTranslations("TournamentForm.teamRules");
+  const tTie = useTranslations("TournamentForm.tiebreakers");
   const locale = useLocale();
   const formatMinutes = useFormatMinutes();
   const formatSeconds = useFormatSeconds();
   const modeLabel = useModeLabel();
-  const line = (parts: (string | false | undefined)[]) => {
-    const text = parts.filter(Boolean).join(" · ");
-    return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
-  };
+  const upper = (text: string) =>
+    text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+  const line = (parts: (string | false | undefined)[]) =>
+    upper(parts.filter(Boolean).join(" · "));
 
   return {
     format: (v: TournamentValues) => {
@@ -70,6 +72,19 @@ export function useValuesSummary() {
             : tSetup("rounds.fixed", { count: v.swissRounds })
           : undefined,
       ]);
+    },
+    /**
+     * Os desempates que contam, na ordem ("Confronto direto, partidas, frags"),
+     * ou "Só a ordem da chave"; vazio na eliminação.
+     */
+    tiebreakers: (
+      v: Pick<TournamentValues, "stageFormat" | "bestOf" | "tiebreakers">,
+    ) => {
+      if (!isTableFormat(v.stageFormat)) return "";
+      const list = countingTiebreakers(v.tiebreakers, v.stageFormat, v.bestOf);
+      return list.length === 0
+        ? tTie("none")
+        : upper(list.map((x) => tTie(`short.${x}`)).join(", "));
     },
     /** Quem age pelo time: o preset que as regras formam. */
     teamRules: (v: Pick<TournamentValues, "teamRules">) =>

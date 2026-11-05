@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A lista e, embaixo, o que é fixo, como o texto de ajuda de um campo.
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+}
+
+.hint {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

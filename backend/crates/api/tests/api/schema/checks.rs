@@ -80,11 +80,18 @@ async fn tournaments_keep_state_and_shape() {
 
     // Cada formato com as suas colunas (a fase nasce em eliminação dupla).
     let single = "format = 'elimination', bracket = 'single', grand_final_reset = null, \
-                  best_of = 1, finals_best_of = 3, rounds = null";
+                  best_of = 1, finals_best_of = 3, rounds = null, tiebreakers = null";
     let round_robin = "format = 'round_robin', bracket = null, grand_final_reset = null, \
-                       finals_best_of = null";
+                       finals_best_of = null, tiebreakers = '{}'";
     let swiss = "format = 'swiss', bracket = null, grand_final_reset = null, \
-                 finals_best_of = null";
+                 finals_best_of = null, tiebreakers = '{}'";
+    // Uma fase de tabela com os desempates `list` (o resto válido).
+    let table = |format: &str, list: &str| {
+        format!(
+            "format = '{format}', bracket = null, grand_final_reset = null, \
+             finals_best_of = null, rounds = null, best_of = 3, tiebreakers = {list}"
+        )
+    };
     for (set, name) in [
         ("format = 'ladder'".to_owned(), "tournament_stages_format"),
         ("best_of = 2".to_owned(), "tournament_stages_best_of"),
@@ -142,6 +149,33 @@ async fn tournaments_keep_state_and_shape() {
             format!("{round_robin}, rounds = null, best_of = 8"),
             "tournament_stages_best_of",
         ),
+        // Desempates: só nas fases de tabela, e sempre nelas.
+        ("tiebreakers = '{}'".to_owned(), "tournament_stages_shape"),
+        (table("round_robin", "null"), "tournament_stages_shape"),
+        (table("swiss", "null"), "tournament_stages_shape"),
+        // Os que existem, cada um uma vez, numa lista simples.
+        (table("swiss", "'{seed}'"), "tournament_stages_tiebreakers"),
+        (
+            table("swiss", "'{map_diff,head_to_head,map_diff}'"),
+            "tournament_stages_tiebreakers",
+        ),
+        (
+            table("swiss", "array['map_diff', null]"),
+            "tournament_stages_tiebreakers",
+        ),
+        (
+            table("swiss", "'{{map_diff},{frag_diff}}'"),
+            "tournament_stages_tiebreakers",
+        ),
+        (
+            table("swiss", "'[0:0]={map_diff}'"),
+            "tournament_stages_tiebreakers",
+        ),
+        // O Buchholz só no suíço.
+        (
+            table("round_robin", "'{head_to_head,buchholz}'"),
+            "tournament_stages_buchholz_swiss",
+        ),
     ] {
         let sql = format!("update tournament_stages set {set}");
         assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{sql}");
@@ -153,6 +187,8 @@ async fn tournaments_keep_state_and_shape() {
         format!("{round_robin}, rounds = null, best_of = 6"),
         format!("{swiss}, rounds = null, best_of = 3"),
         format!("{swiss}, rounds = 127"),
+        table("round_robin", "'{frag_diff,map_diff,head_to_head}'"),
+        table("swiss", "'{head_to_head,buchholz,frag_diff,map_diff}'"),
         single.to_owned(),
     ] {
         let sql = format!("update tournament_stages set {set}");

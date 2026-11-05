@@ -19,7 +19,7 @@ import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusWhenShown } from "@/shared/lib/focus";
 import {
-  controlName,
+  controlSelector,
   type FieldErrors,
   type TournamentField,
   tournamentFieldOf,
@@ -219,11 +219,12 @@ export function useTournamentForm(
   const failure = checked ?? sent;
 
   // Erro num campo: mostra o que o esconde e leva o foco até ele (pelo
-  // `name`); o leitor de tela lê o rótulo e o erro.
+  // `name` ou, sem campo nativo, o `data-field`); o leitor de tela lê o
+  // rótulo e o erro.
   const showFailure = useEffectEvent((f: Failure) => {
     if (!f.field) return;
     const control = formRef.current?.querySelector<HTMLElement>(
-      `[name="${controlName(f.field, f.locale)}"]`,
+      controlSelector(f.field, f.locale),
     );
     if (!control) return;
     reveal(control);

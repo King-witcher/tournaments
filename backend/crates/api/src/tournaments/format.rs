@@ -3,15 +3,59 @@
 
 use engine::{
     champions as ec,
-    formats::{self as ef, elimination as el, round_robin::RoundRobinConfig, swiss::SwissConfig},
+    core::EngineError,
+    formats::{
+        self as ef, elimination as el,
+        round_robin::RoundRobinConfig,
+        swiss::SwissConfig,
+        table::{Criterion, Tiebreakers},
+    },
     series::SeriesLength,
 };
 
-use super::types::{Bracket, ChampionRules, NoRepeatRule, NoRepeatScope, NoRepeatWho, StageFormat};
+use super::types::{
+    Bracket, ChampionRules, NoRepeatRule, NoRepeatScope, NoRepeatWho, StageFormat, Tiebreaker,
+};
 
-impl From<StageFormat> for ef::StageFormat {
-    fn from(stage: StageFormat) -> Self {
-        match stage {
+impl Tiebreaker {
+    fn criterion(self) -> Criterion {
+        match self {
+            Self::HeadToHead => Criterion::HeadToHead,
+            Self::MapDiff => Criterion::MapDiff,
+            Self::FragDiff => Criterion::FragDiff,
+            Self::Buchholz => Criterion::Buchholz,
+        }
+    }
+
+    /// Os desempates do `engine` como a API os mostra. A lista só tem
+    /// desempates (`Tiebreakers::new`), então nada fica de fora.
+    pub(super) fn list(tiebreakers: Tiebreakers) -> Vec<Self> {
+        tiebreakers
+            .as_slice()
+            .iter()
+            .filter_map(|c| match c {
+                Criterion::HeadToHead => Some(Self::HeadToHead),
+                Criterion::MapDiff => Some(Self::MapDiff),
+                Criterion::FragDiff => Some(Self::FragDiff),
+                Criterion::Buchholz => Some(Self::Buchholz),
+                Criterion::SeriesDiff | Criterion::Points | Criterion::Seed => None,
+            })
+            .collect()
+    }
+}
+
+/// Erro: `InvalidTiebreakers` com desempate repetido (o Buchholz fora do
+/// suíço é do `validate` do formato, como o resto da configuração).
+fn tiebreakers(list: &[Tiebreaker]) -> Result<Tiebreakers, EngineError> {
+    let criteria: Vec<Criterion> = list.iter().map(|t| t.criterion()).collect();
+    Tiebreakers::new(&criteria)
+}
+
+impl TryFrom<StageFormat> for ef::StageFormat {
+    type Error = EngineError;
+
+    fn try_from(stage: StageFormat) -> Result<Self, EngineError> {
+        Ok(match stage {
             StageFormat::Elimination {
                 bracket,
                 grand_final_reset,
@@ -27,9 +71,23 @@ impl From<StageFormat> for ef::StageFormat {
                     finals: finals_best_of,
                 },
             }),
-            StageFormat::RoundRobin { best_of } => Self::RoundRobin(RoundRobinConfig { best_of }),
-            StageFormat::Swiss { best_of, rounds } => Self::Swiss(SwissConfig { best_of, rounds }),
-        }
+            StageFormat::RoundRobin {
+                best_of,
+                tiebreakers: list,
+            } => Self::RoundRobin(RoundRobinConfig {
+                best_of,
+                tiebreakers: tiebreakers(&list)?,
+            }),
+            StageFormat::Swiss {
+                best_of,
+                rounds,
+                tiebreakers: list,
+            } => Self::Swiss(SwissConfig {
+                best_of,
+                rounds,
+                tiebreakers: tiebreakers(&list)?,
+            }),
+        })
     }
 }
 
@@ -50,10 +108,14 @@ impl From<ef::StageFormat> for StageFormat {
                     finals_best_of: config.series.finals,
                 }
             }
-            ef::StageFormat::RoundRobin(c) => Self::RoundRobin { best_of: c.best_of },
+            ef::StageFormat::RoundRobin(c) => Self::RoundRobin {
+                best_of: c.best_of,
+                tiebreakers: Tiebreaker::list(c.tiebreakers),
+            },
             ef::StageFormat::Swiss(c) => Self::Swiss {
                 best_of: c.best_of,
                 rounds: c.rounds,
+                tiebreakers: Tiebreaker::list(c.tiebreakers),
             },
         }
     }
@@ -106,6 +168,10 @@ impl From<ec::ChampionRules> for ChampionRules {
 mod tests {
     use super::*;
 
+    fn round_trip(dto: StageFormat) -> StageFormat {
+        StageFormat::from(ef::StageFormat::try_from(dto).unwrap())
+    }
+
     #[test]
     fn single_elimination_drops_the_reset() {
         let dto = StageFormat::Elimination {
@@ -114,9 +180,8 @@ mod tests {
             best_of: 3,
             finals_best_of: 5,
         };
-        let back = StageFormat::from(ef::StageFormat::from(dto));
         assert_eq!(
-            back,
+            round_trip(dto),
             StageFormat::Elimination {
                 bracket: Bracket::Single,
                 grand_final_reset: false,
@@ -129,18 +194,44 @@ mod tests {
     #[test]
     fn table_formats_round_trip() {
         for dto in [
-            StageFormat::RoundRobin { best_of: 3 },
+            StageFormat::RoundRobin {
+                best_of: 3,
+                tiebreakers: vec![Tiebreaker::MapDiff, Tiebreaker::HeadToHead],
+            },
+            StageFormat::RoundRobin {
+                best_of: 2,
+                tiebreakers: vec![],
+            },
             StageFormat::Swiss {
                 best_of: 1,
                 rounds: None,
+                tiebreakers: vec![Tiebreaker::FragDiff, Tiebreaker::Buchholz],
             },
             StageFormat::Swiss {
                 best_of: 5,
                 rounds: Some(4),
+                tiebreakers: Tiebreaker::list(Tiebreakers::SWISS),
             },
         ] {
-            assert_eq!(StageFormat::from(ef::StageFormat::from(dto)), dto);
+            assert_eq!(round_trip(dto.clone()), dto);
         }
+    }
+
+    #[test]
+    fn absent_tiebreakers_are_the_format_default() {
+        let read = |json: serde_json::Value| -> ef::StageFormat {
+            serde_json::from_value::<StageFormat>(json)
+                .unwrap()
+                .try_into()
+                .unwrap()
+        };
+        let rr = read(serde_json::json!({ "format": "round_robin", "best_of": 3 }));
+        let swiss = read(serde_json::json!({ "format": "swiss", "best_of": 3 }));
+        let (ef::StageFormat::RoundRobin(rr), ef::StageFormat::Swiss(swiss)) = (rr, swiss) else {
+            panic!("formato trocado");
+        };
+        assert_eq!(rr.tiebreakers, Tiebreakers::ROUND_ROBIN);
+        assert_eq!(swiss.tiebreakers, Tiebreakers::SWISS);
     }
 
     #[test]

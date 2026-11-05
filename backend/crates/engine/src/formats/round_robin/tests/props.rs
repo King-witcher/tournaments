@@ -1,20 +1,15 @@
 //! Propriedades com proptest: qualquer sequência de resultados.
 
 use super::*;
-use crate::formats::table::{Criterion, Rules};
+use crate::formats::table::{Criterion, Rules, Tiebreakers};
 use proptest::prelude::*;
 
 /// A ordem de antes do saldo de séries: vitórias e, no confronto direto, só as
 /// vitórias dentro do grupo.
 const BY_WINS: Rules = Rules {
     bye_points: false,
-    criteria: &[
-        Criterion::Points,
-        Criterion::HeadToHead,
-        Criterion::MapDiff,
-        Criterion::FragDiff,
-        Criterion::Seed,
-    ],
+    first: Criterion::Points,
+    tiebreakers: Tiebreakers::ROUND_ROBIN,
     mini_table_balance: false,
 };
 
@@ -122,9 +117,9 @@ proptest! {
         picks in proptest::collection::vec(
             (any::<bool>(), any::<bool>(), 0u8..4, -50i32..200, -50i32..200), 1..40),
     ) {
-        let config = RoundRobinConfig { best_of };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
-        let mut by_wins = table::League::new(
+        let mut by_wins = League::new(
             BY_WINS,
             seeds(n),
             schedule::build(&seeds(n), best_of),
@@ -150,9 +145,9 @@ proptest! {
         best_of in prop_oneof![Just(2u8), Just(4u8), Just(6u8)],
         firsts in proptest::collection::vec(any::<bool>(), 1..40),
     ) {
-        let config = RoundRobinConfig { best_of };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
-        let mut by_wins = table::League::new(
+        let mut by_wins = League::new(
             BY_WINS,
             seeds(n),
             schedule::build(&seeds(n), best_of),
@@ -188,7 +183,7 @@ proptest! {
         // 0 e 1: venceu um dos lados; 2: empate; 3: W.O.
         kinds in proptest::collection::vec(0u8..4, 1..40),
     ) {
-        let config = RoundRobinConfig { best_of };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
         let ready: Vec<Match> = b.matches().iter()
             .filter(|m| matches!(m.state, MatchState::Ready { .. }))

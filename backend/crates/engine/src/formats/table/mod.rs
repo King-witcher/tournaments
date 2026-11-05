@@ -24,94 +24,48 @@
 //!   frag): o saldo é pró menos contra, com sinal;
 //! - **Buchholz** (só suíço): soma dos pontos atuais dos adversários das
 //!   séries decididas, inclusive por W.O. e repetindo o adversário da
-//!   revanche; o bye não soma nada, porque não há adversário (assumido);
-//! - **ordem**: os critérios do formato, nesta ordem (`ROUND_ROBIN`,
-//!   `SWISS`). O seed é o último e separa todos: a posição nunca empata;
+//!   revanche; o bye não soma nada, porque não há adversário (assumido). Só
+//!   é calculado com ele entre os desempates (`TableRow::buchholz`);
+//! - **ordem** (`criteria.rs`): o primeiro critério do formato (saldo de
+//!   séries ou pontos), os desempates que a fase escolheu (`Tiebreakers`, em
+//!   qualquer ordem, cada um no máximo uma vez, nenhum inclusive; o padrão é
+//!   `Tiebreakers::ROUND_ROBIN` e `SWISS`) e o seed, sempre o último, que
+//!   separa todos: a posição nunca empata;
 //! - **confronto direto**: só quando todos os empatados já se enfrentaram
 //!   (série decidida entre cada par, empatada inclusive; no suíço, é comum não
 //!   terem jogado). É uma mini-tabela com as séries entre eles: no round robin,
 //!   o saldo dentro do grupo (empate 0, então quem empatou entre si não se
 //!   separa por ele); no suíço, as vitórias, porque com revanche o saldo daria
 //!   outra ordem. Se separa o grupo, é refeita só entre os que continuam
-//!   empatados; se não separa, vale o critério seguinte. Quando o saldo de
-//!   mapas ou de frags separa um grupo, quem segue empatado volta ao confronto
-//!   direto, só entre si, antes dos critérios seguintes;
+//!   empatados; se não separa, vale o critério seguinte. Quando um critério
+//!   depois dele (saldo de mapas, de frags, ou o Buchholz posto depois) separa
+//!   um grupo, quem segue empatado volta ao confronto direto, só entre si,
+//!   antes dos critérios seguintes. Desligado, não volta;
 //! - **saldo de frags**: só quando nenhum dos empatados tem série jogada sem
-//!   frags; senão, vale o seed (comparar frags de séries diferentes daria
-//!   vantagem a quem informa).
+//!   frags; senão, vale o critério seguinte (comparar frags de séries
+//!   diferentes daria vantagem a quem informa).
 //!
 //! A tabela em ordem é também a semente de uma fase seguinte (os N
-//! primeiros para os playoffs).
+//! primeiros para os playoffs) e, no suíço, a ordem do pareamento: os
+//! desempates escolhidos mudam quem enfrenta quem.
 
+mod criteria;
 mod league;
 #[cfg(test)]
 mod tests;
 mod tiebreak;
 
+pub(crate) use criteria::Rules;
+pub use criteria::{Criterion, Tiebreakers};
 pub(crate) use league::{League, pairing, rest};
 
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tiebreak::Meeting;
 
 use crate::core::{Match, MatchState, Outcome, ParticipantId, SeriesFrags};
 use crate::series::wins_needed;
-
-/// Critério da ordem da tabela.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Criterion {
-    SeriesDiff,
-    Points,
-    Buchholz,
-    HeadToHead,
-    MapDiff,
-    FragDiff,
-    Seed,
-}
-
-/// Como um formato de tabela pontua e desempata.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct Rules {
-    /// O bye vale vitória (suíço) ou é só folga (round robin).
-    pub bye_points: bool,
-    /// Critérios em ordem; o último é sempre o seed.
-    pub criteria: &'static [Criterion],
-    /// A mini-tabela do confronto direto conta o saldo (round robin) ou só as
-    /// vitórias (suíço). Sem revanche e sem empate, dão a mesma ordem; com
-    /// revanche, não, e o suíço fica como sempre foi.
-    pub mini_table_balance: bool,
-}
-
-/// Round robin: saldo de séries, confronto direto, saldo de mapas, saldo de
-/// frags, seed.
-pub(crate) const ROUND_ROBIN: Rules = Rules {
-    bye_points: false,
-    criteria: &[
-        Criterion::SeriesDiff,
-        Criterion::HeadToHead,
-        Criterion::MapDiff,
-        Criterion::FragDiff,
-        Criterion::Seed,
-    ],
-    mini_table_balance: true,
-};
-
-/// Suíço: pontos, Buchholz, confronto direto, saldo de mapas, saldo de
-/// frags, seed.
-pub(crate) const SWISS: Rules = Rules {
-    bye_points: true,
-    criteria: &[
-        Criterion::Points,
-        Criterion::Buchholz,
-        Criterion::HeadToHead,
-        Criterion::MapDiff,
-        Criterion::FragDiff,
-        Criterion::Seed,
-    ],
-    mini_table_balance: false,
-};
 
 /// Uma linha da tabela.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -141,7 +95,7 @@ pub struct TableRow {
     pub frag_diff: i64,
     /// Toda série jogada veio com frags: só assim o saldo de frags desempata.
     pub frags_complete: bool,
-    /// Só no suíço.
+    /// Só no suíço com o Buchholz entre os desempates.
     pub buchholz: Option<u32>,
     /// O critério que pôs esta linha à frente da seguinte; `None` na última.
     pub ahead_by: Option<Criterion>,
@@ -250,7 +204,7 @@ pub(crate) fn compute(
     }
 
     let points: Vec<u16> = tally.iter().map(|t| t.wins + t.byes).collect();
-    let with_buchholz = rules.criteria.contains(&Criterion::Buchholz);
+    let with_buchholz = rules.tiebreakers.contains(Criterion::Buchholz);
     let buchholz: Vec<u32> = tally
         .iter()
         .map(|t| t.opponents.iter().map(|&o| u32::from(points[o])).sum())

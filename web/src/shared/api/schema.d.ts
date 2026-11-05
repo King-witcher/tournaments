@@ -3604,6 +3604,18 @@ export interface components {
             best_of: number;
             /** @enum {string} */
             format: "round_robin";
+            /**
+             * @description Os desempates depois do saldo de séries, na ordem em que valem; por
+             *     último, sempre a ordem da chave. Cada um no máximo uma vez, sem
+             *     `buchholz`; vazio: decide a ordem da chave. Ausente: `head_to_head`,
+             *     `map_diff`, `frag_diff`.
+             * @example [
+             *       "head_to_head",
+             *       "map_diff",
+             *       "frag_diff"
+             *     ]
+             */
+            tiebreakers?: components["schemas"]["Tiebreaker"][];
         } | {
             /**
              * Format: int32
@@ -3619,6 +3631,20 @@ export interface components {
              *     máximo N − 1 com os N do início.
              */
             rounds?: number | null;
+            /**
+             * @description Os desempates depois dos pontos, na ordem em que valem; por último,
+             *     sempre a ordem da chave. Cada um no máximo uma vez; vazio: decide a
+             *     ordem da chave. O pareamento segue a tabela, então eles mudam
+             *     também quem enfrenta quem. Ausente: `buchholz`, `head_to_head`,
+             *     `map_diff`, `frag_diff`.
+             * @example [
+             *       "buchholz",
+             *       "head_to_head",
+             *       "map_diff",
+             *       "frag_diff"
+             *     ]
+             */
+            tiebreakers?: components["schemas"]["Tiebreaker"][];
         };
         Standing: {
             /** Format: int32 */
@@ -3677,9 +3703,9 @@ export interface components {
             out: number;
         };
         /**
-         * @description Critério de ordem da tabela, na ordem em que valem: o saldo de séries (round
-         *     robin) ou os pontos e o Buchholz (suíço), depois confronto direto, saldo de
-         *     mapas, saldo de frags e, por último, o seed.
+         * @description Critério de ordem da tabela: o saldo de séries (round robin) ou os pontos
+         *     (suíço), depois os desempates da fase (`StageFormat`, `tiebreakers`), na
+         *     ordem dela, e, por último, o seed.
          * @enum {string}
          */
         TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "seed";
@@ -3688,7 +3714,8 @@ export interface components {
             ahead_by?: components["schemas"]["TableCriterion"] | null;
             /**
              * Format: int32
-             * @description Só no suíço: a soma dos pontos dos adversários.
+             * @description Só no suíço com o Buchholz entre os desempates: a soma dos pontos dos
+             *     adversários.
              */
             buchholz?: number | null;
             /**
@@ -3858,6 +3885,12 @@ export interface components {
              */
             url?: string | null;
         };
+        /**
+         * @description Um desempate das fases de tabela. O primeiro critério (saldo de séries ou
+         *     pontos) e a ordem da chave, o último, são fixos e não entram na lista.
+         * @enum {string}
+         */
+        Tiebreaker: "head_to_head" | "map_diff" | "frag_diff" | "buchholz";
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
          *     front escolhe pelo idioma de quem vê.
@@ -8493,7 +8526,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

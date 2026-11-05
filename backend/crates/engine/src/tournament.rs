@@ -288,11 +288,17 @@ mod tests {
 
     #[test]
     fn table_formats_use_their_worst_case_and_limits() {
-        use crate::formats::{round_robin::RoundRobinConfig, swiss::SwissConfig};
-        let rr = [StageFormat::RoundRobin(RoundRobinConfig { best_of: 3 })];
+        use crate::formats::{
+            round_robin::RoundRobinConfig, swiss::SwissConfig, table::Tiebreakers,
+        };
+        let rr = [StageFormat::RoundRobin(RoundRobinConfig {
+            best_of: 3,
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+        })];
         let swiss = [StageFormat::Swiss(SwissConfig {
             best_of: 3,
             rounds: None,
+            tiebreakers: Tiebreakers::SWISS,
         })];
         let r = rules(0, Some(NoRepeatScope::Tournament));
         // Round robin com 8: 7 séries md3; suíço com 16: 4 rodadas md3.

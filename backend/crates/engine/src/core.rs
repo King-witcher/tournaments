@@ -229,6 +229,10 @@ pub enum EngineError {
     NoStages,
     #[error("número de rodadas {got} inválido: de 1 a {max}")]
     InvalidRounds { max: u16, got: u16 },
+    /// Desempate repetido, que não desempata (saldo de séries, pontos e seed
+    /// são fixos) ou Buchholz fora do suíço.
+    #[error("desempates inválidos: cada um no máximo uma vez, e Buchholz só no suíço")]
+    InvalidTiebreakers,
     /// O pareamento gravado não fecha com a fase: participante desconhecido
     /// ou repetido na rodada, rodada sem partida ou além do total, pareamento
     /// num formato que não pareia. Erro de consistência do histórico, não do
