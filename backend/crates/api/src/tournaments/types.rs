@@ -33,7 +33,8 @@ pub enum StageFormat {
     /// Round robin simples, a fase inteira: cada par se enfrenta uma vez e a
     /// classificação sai da tabela. Até 32 participantes.
     RoundRobin {
-        /// Melhor de N de todas as partidas (ímpar).
+        /// Melhor de N de todas as partidas: ímpar, ou 2, 4 ou 6. A série par
+        /// fecha na maioria ou, com todos os mapas e metade para cada lado, empata.
         #[schema(example = 3)]
         best_of: u8,
     },

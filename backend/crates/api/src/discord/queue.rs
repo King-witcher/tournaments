@@ -61,6 +61,7 @@ pub async fn enqueue(conn: &mut PgConnection, event: &Event) -> Result<bool, sql
     let merge_key = spec.merge.then(|| format!("{code}:{path}"));
     let message = Queued {
         code: &code,
+        switch: spec.switch(),
         params: &params,
         path: &path,
     };

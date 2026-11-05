@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{VetoError, VetoOrder, other};
-use crate::series::Side;
+use crate::series::{Side, even_series};
 
 /// O que um passo faz.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -27,19 +27,25 @@ pub enum Action {
 
 /// Os passos do veto de mapas de uma melhor de `best_of` com um pool de
 /// `pool` mapas, sem o decisivo (o mapa que sobra, que é a última partida).
+/// Ímpar:
 ///
 /// Sobram `pool - best_of` bans e `best_of - 1` picks. `BansFirst`: todos os
 /// bans, depois os picks. `Alternating`: dois bans primeiro (se houver),
 /// depois os picks e por fim o resto dos bans. Com 7 mapas: md1, seis bans
 /// nos dois; md3, quatro bans e dois picks (`BansFirst`) ou ban, ban, pick,
 /// pick, ban, ban (`Alternating`); md5, ban, ban e quatro picks nos dois;
-/// md7, seis picks. Erro: `PoolTooSmall` com menos mapas que partidas.
+/// md7, seis picks. Na série par, só bans, até sobrarem N mapas (com 7, cinco na
+/// md2, três na md4 e um na md6), nas duas ordens: não há pick nem decisivo.
+/// Erro: `PoolTooSmall` com menos mapas que partidas.
 pub fn map_sequence(pool: usize, best_of: u8, order: VetoOrder) -> Result<Vec<Action>, VetoError> {
     let games = usize::from(best_of);
     if best_of == 0 || pool < games {
         return Err(VetoError::PoolTooSmall { pool, best_of });
     }
     let bans = pool - games;
+    if even_series(best_of) {
+        return Ok(vec![Action::Ban; bans]);
+    }
     let first = match order {
         VetoOrder::BansFirst => bans,
         VetoOrder::Alternating => bans.min(2),
@@ -195,6 +201,30 @@ mod tests {
         }
     }
 
+    #[test]
+    fn an_even_series_only_bans_until_n_are_left() {
+        assert_eq!(map_sequence(7, 2, BansFirst).unwrap(), [Ban; 5]);
+        assert_eq!(map_sequence(7, 4, BansFirst).unwrap(), [Ban; 3]);
+        assert_eq!(map_sequence(7, 6, BansFirst).unwrap(), [Ban; 1]);
+        for best_of in [2u8, 4, 6] {
+            let games = usize::from(best_of);
+            for pool in games..=16 {
+                let bans = map_sequence(pool, best_of, BansFirst).unwrap();
+                assert_eq!(bans, vec![Ban; pool - games], "md{best_of}, pool {pool}");
+                // A ordem do veto não faz diferença nestas séries.
+                assert_eq!(map_sequence(pool, best_of, Alternating).unwrap(), bans);
+            }
+            assert_eq!(map_sequence(games, best_of, BansFirst).unwrap(), []);
+            assert_eq!(
+                map_sequence(games - 1, best_of, BansFirst),
+                Err(VetoError::PoolTooSmall {
+                    pool: games - 1,
+                    best_of
+                })
+            );
+        }
+    }
+
     /// O draft como (ação, lado, partida), com A no seed melhor.
     fn draft(bans: u8, best_of: u8, teams: bool) -> Vec<(Action, Side, Option<u8>)> {
         draft_sequence(bans, best_of, A, teams)
@@ -222,7 +252,7 @@ mod tests {
 
     #[test]
     fn every_length_gives_each_side_its_bans_and_a_pick_per_game() {
-        for best_of in [1u8, 3, 5, 7] {
+        for best_of in [1u8, 2, 3, 4, 5, 6, 7] {
             for bans in 0..=3u8 {
                 let steps = draft(bans, best_of, false);
                 assert_eq!(

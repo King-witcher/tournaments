@@ -1,6 +1,8 @@
 //! A série mapa a mapa. Cada mapa é enviado e confirmado sozinho; a série
 //! fecha quando os mapas confirmados, em sequência desde o primeiro, dão a
-//! maioria a um lado (2 na md3, 3 na md5).
+//! maioria a um lado (2 na md3, 3 na md5). A série par também (2 na md2, 3 na
+//! md4, 4 na md6) e, sem ninguém na maioria, fecha com os N mapas confirmados,
+//! empatada (`Decision::winner` nulo): 1 x 1, 2 x 2 ou 3 x 3.
 //!
 //! Regras:
 //! - o mapa N+1 só vem depois do N (enviado, não precisa estar confirmado);
@@ -21,7 +23,7 @@ use std::cmp::Ordering;
 
 use serde::{Deserialize, Serialize};
 
-use super::wins_needed;
+use super::{even_series, wins_needed};
 use crate::core::{EngineError, MapId};
 
 /// Um dos dois lados da partida.
@@ -53,10 +55,11 @@ pub struct SeriesGame {
     pub map: Option<MapId>,
 }
 
-/// A série decidida: o vencedor e os mapas de cada lado.
+/// A série decidida: o vencedor e os mapas de cada lado. Sem vencedor, a série
+/// par empatada, com metade dos mapas para cada lado.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Decision {
-    pub winner: Side,
+    pub winner: Option<Side>,
     pub a_wins: u8,
     pub b_wins: u8,
 }
@@ -68,7 +71,7 @@ pub struct SeriesState {
     /// depois da decisão pelos mapas não contestados e saem (anulados).
     pub standing: usize,
     /// Decidida pelos mapas confirmados: todos os mapas até o que deu a
-    /// maioria estão confirmados.
+    /// maioria estão confirmados (sem maioria, na série par, todos os N).
     pub decided: Option<Decision>,
 }
 
@@ -114,12 +117,14 @@ pub fn evaluate(best_of: u8, games: &[SeriesGame]) -> SeriesState {
 
     let mut confirmed = Tally::default();
     let mut decided = None;
-    for g in &games[..standing] {
+    for (i, g) in games[..standing].iter().enumerate() {
         if g.status != GameStatus::Confirmed {
             break;
         }
         confirmed.add(g.winner);
-        if let Some(winner) = confirmed.leader(needed) {
+        let winner = confirmed.leader(needed);
+        // Sem maioria, a série par só fecha com os N mapas: é o empate.
+        if winner.is_some() || (even_series(best_of) && i + 1 == usize::from(best_of)) {
             decided = Some(Decision {
                 winner,
                 a_wins: confirmed.a,
@@ -154,13 +159,19 @@ pub fn check_next(
 
 /// Quantos mapas ainda faltam, no mínimo, para a série acabar, contando o que
 /// está em jogo: as vitórias que faltam a quem está na frente. Mapa
-/// contestado não conta (como em `check_next`).
+/// contestado não conta (como em `check_next`). Na série par, a que pode
+/// acabar sem maioria, nunca mais que os mapas ainda não enviados.
 pub fn games_left(best_of: u8, games: &[SeriesGame]) -> u8 {
     let mut open = Tally::default();
     for g in games.iter().filter(|g| g.status != GameStatus::Contested) {
         open.add(g.winner);
     }
-    wins_needed(best_of).saturating_sub(open.a.max(open.b))
+    let wins = wins_needed(best_of).saturating_sub(open.a.max(open.b));
+    if even_series(best_of) {
+        wins.min(usize::from(best_of).saturating_sub(games.len()) as u8)
+    } else {
+        wins
+    }
 }
 
 /// Grava `game` no índice `index` (a partir de 0) da série: o próximo mapa
@@ -246,11 +257,21 @@ mod tests {
 
     fn decision(winner: Side, a_wins: u8, b_wins: u8) -> Option<Decision> {
         Some(Decision {
-            winner,
+            winner: Some(winner),
             a_wins,
             b_wins,
         })
     }
+
+    const fn drawn(maps: u8) -> Option<Decision> {
+        Some(Decision {
+            winner: None,
+            a_wins: maps,
+            b_wins: maps,
+        })
+    }
+
+    const DRAW: Option<Decision> = drawn(1);
 
     #[test]
     fn the_series_closes_on_the_confirmed_majority() {
@@ -380,6 +401,186 @@ mod tests {
             Err(EngineError::MapRepeated(MapId(2)))
         );
         assert_eq!(put(3, &games, 3, on(4, B)), Err(EngineError::SeriesDecided));
+    }
+
+    #[test]
+    fn best_of_two_closes_only_with_both_maps_confirmed() {
+        let closed = |games: &[SeriesGame]| evaluate(2, games).decided;
+        assert_eq!(
+            closed(&[g(A, Confirmed), g(A, Confirmed)]),
+            decision(A, 2, 0)
+        );
+        assert_eq!(
+            closed(&[g(B, Confirmed), g(B, Confirmed)]),
+            decision(B, 0, 2)
+        );
+        assert_eq!(closed(&[g(A, Confirmed), g(B, Confirmed)]), DRAW);
+        assert_eq!(closed(&[g(B, Confirmed), g(A, Confirmed)]), DRAW);
+        // Um mapa só nunca decide, nem por W.O. de ninguém: falta o outro.
+        assert_eq!(closed(&[]), None);
+        assert_eq!(closed(&[g(A, Confirmed)]), None);
+        // Em sequência: o primeiro sem confirmar segura mesmo com o segundo.
+        assert_eq!(closed(&[g(A, Pending), g(A, Confirmed)]), None);
+        assert_eq!(closed(&[g(A, Confirmed), g(B, Pending)]), None);
+        assert_eq!(closed(&[g(A, Contested), g(B, Confirmed)]), None);
+        assert_eq!(closed(&[g(A, Confirmed), g(B, Contested)]), None);
+    }
+
+    #[test]
+    fn best_of_two_always_plays_both_maps() {
+        // O primeiro mapa não decide, em nenhum estado: o segundo pode vir.
+        for status in [Pending, Contested, Confirmed] {
+            assert_eq!(check_next(2, &[g(A, status)], None), Ok(()));
+        }
+        // Depois dos dois, nada: 2 x 0 está decidido e 1 x 1 esgotou os mapas.
+        assert_eq!(
+            check_next(2, &[g(A, Pending), g(A, Pending)], None),
+            Err(EngineError::SeriesDecided)
+        );
+        let full = Err(EngineError::NoGamesLeft { best_of: 2 });
+        assert_eq!(check_next(2, &[g(A, Confirmed), g(B, Pending)], None), full);
+        assert_eq!(check_next(2, &[g(A, Contested), g(A, Pending)], None), full);
+        // Nada fica fora do que vale.
+        let s = evaluate(2, &[g(A, Confirmed), g(B, Confirmed), g(A, Pending)]);
+        assert_eq!((s.standing, s.decided), (2, DRAW));
+    }
+
+    #[test]
+    fn best_of_two_counts_the_maps_not_yet_sent() {
+        assert_eq!(games_left(2, &[]), 2);
+        assert_eq!(games_left(2, &[g(A, Pending)]), 1);
+        assert_eq!(games_left(2, &[g(A, Contested)]), 1);
+        assert_eq!(games_left(2, &[g(A, Confirmed), g(B, Confirmed)]), 0);
+        assert_eq!(games_left(2, &[g(A, Confirmed), g(A, Confirmed)]), 0);
+    }
+
+    #[test]
+    fn correcting_a_best_of_two_moves_between_win_and_draw() {
+        let won = [on(1, A), on(2, A)];
+        assert_eq!(put(2, &won, 1, on(2, B)).unwrap().decided, DRAW);
+        let drawn = [on(1, A), on(2, B)];
+        let fixed = put(2, &drawn, 1, on(2, A)).unwrap();
+        assert_eq!((fixed.standing, fixed.decided), (2, decision(A, 2, 0)));
+        let flipped = put(2, &drawn, 0, on(1, B)).unwrap();
+        assert_eq!((flipped.standing, flipped.decided), (2, decision(B, 0, 2)));
+        // O mapa do outro índice continua sem repetir.
+        assert_eq!(
+            put(2, &drawn, 0, on(2, A)),
+            Err(EngineError::MapRepeated(MapId(2)))
+        );
+    }
+
+    /// A série com estes vencedores, todos confirmados.
+    fn confirmed(winners: &[Side]) -> Vec<SeriesGame> {
+        winners.iter().map(|w| g(*w, Confirmed)).collect()
+    }
+
+    #[test]
+    fn best_of_four_ends_at_the_majority_or_tied_at_two() {
+        let closed = |w: &[Side]| evaluate(4, &confirmed(w)).decided;
+        assert_eq!(closed(&[A, A, A]), decision(A, 3, 0));
+        assert_eq!(closed(&[B, A, B, B]), decision(B, 1, 3));
+        assert_eq!(closed(&[A, B, A, A]), decision(A, 3, 1));
+        assert_eq!(closed(&[A, B, A, B]), drawn(2));
+        assert_eq!(closed(&[B, B, A, A]), drawn(2));
+        // Sem maioria e sem os 4 mapas, a série continua.
+        assert_eq!(closed(&[A, A]), None);
+        assert_eq!(closed(&[A, B, A]), None);
+        assert_eq!(
+            evaluate(
+                4,
+                &[
+                    g(A, Confirmed),
+                    g(B, Confirmed),
+                    g(A, Confirmed),
+                    g(B, Pending)
+                ]
+            )
+            .decided,
+            None
+        );
+    }
+
+    #[test]
+    fn best_of_six_ends_at_the_majority_or_tied_at_three() {
+        let closed = |w: &[Side]| evaluate(6, &confirmed(w)).decided;
+        assert_eq!(closed(&[A, A, A, A]), decision(A, 4, 0));
+        assert_eq!(closed(&[A, B, A, A, A]), decision(A, 4, 1));
+        assert_eq!(closed(&[B, B, A, B, A, B]), decision(B, 2, 4));
+        assert_eq!(closed(&[A, B, A, B, A, B]), drawn(3));
+        assert_eq!(closed(&[A, A, A, B, B]), None);
+    }
+
+    #[test]
+    fn no_map_after_the_majority_in_an_even_series() {
+        let decided = Err(EngineError::SeriesDecided);
+        assert_eq!(check_next(4, &confirmed(&[A, A, A]), None), decided);
+        assert_eq!(check_next(6, &confirmed(&[B, B, B, B]), None), decided);
+        // Pelos enviados, ainda sem confirmar, e o que vem depois não vale.
+        let pending = [g(A, Pending), g(A, Pending), g(A, Pending)];
+        assert_eq!(check_next(4, &pending, None), decided);
+        let beyond = evaluate(
+            4,
+            &[
+                g(A, Confirmed),
+                g(A, Confirmed),
+                g(A, Confirmed),
+                g(B, Pending),
+            ],
+        );
+        assert_eq!((beyond.standing, beyond.decided), (3, decision(A, 3, 0)));
+        // Sem maioria, com todos os mapas: acabou.
+        for (n, w) in [(4, &[A, B, A, B][..]), (6, &[A, B, A, B, A, B][..])] {
+            assert_eq!(
+                check_next(n, &confirmed(w), None),
+                Err(EngineError::NoGamesLeft { best_of: n })
+            );
+        }
+        // Antes disso, o próximo pode vir.
+        assert_eq!(check_next(4, &confirmed(&[A, A]), None), Ok(()));
+        assert_eq!(check_next(6, &confirmed(&[A, A, A, B, B]), None), Ok(()));
+    }
+
+    #[test]
+    fn games_left_in_an_even_series_stops_at_the_maps_not_sent() {
+        assert_eq!(games_left(4, &[]), 3);
+        assert_eq!(games_left(4, &confirmed(&[A, A])), 1);
+        assert_eq!(games_left(4, &confirmed(&[A, B])), 2);
+        assert_eq!(games_left(4, &confirmed(&[A, B, A])), 1);
+        assert_eq!(games_left(4, &confirmed(&[A, B, A, B])), 0);
+        assert_eq!(games_left(4, &confirmed(&[A, A, A])), 0);
+        assert_eq!(games_left(6, &[]), 4);
+        assert_eq!(games_left(6, &confirmed(&[A, B, A, B])), 2);
+        assert_eq!(games_left(6, &confirmed(&[A, B, A, B, A, B])), 0);
+    }
+
+    #[test]
+    fn correcting_a_best_of_four_moves_between_win_and_draw() {
+        let won = [on(1, A), on(2, B), on(3, A), on(4, A)];
+        let draw = put(4, &won, 3, on(4, B)).unwrap();
+        assert_eq!((draw.standing, draw.decided), (4, drawn(2)));
+        let tied = [on(1, A), on(2, B), on(3, A), on(4, B)];
+        let win = put(4, &tied, 3, on(4, A)).unwrap();
+        assert_eq!((win.standing, win.decided), (4, decision(A, 3, 1)));
+        // Corrigir para 3 x 0 no terceiro mapa deixa o quarto de fora.
+        let swept = put(4, &tied, 1, on(2, A)).unwrap();
+        assert_eq!((swept.standing, swept.decided), (3, decision(A, 3, 0)));
+    }
+
+    #[test]
+    fn odd_series_never_draw() {
+        // Nenhum placar sem maioria fecha a série ímpar.
+        assert_eq!(
+            evaluate(3, &[g(A, Confirmed), g(B, Confirmed)]).decided,
+            None
+        );
+        let four = [
+            g(A, Confirmed),
+            g(B, Confirmed),
+            g(A, Confirmed),
+            g(B, Confirmed),
+        ];
+        assert_eq!(evaluate(5, &four).decided, None);
     }
 
     #[test]

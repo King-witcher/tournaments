@@ -1,4 +1,5 @@
 import type { components } from "@/shared/api/schema";
+import { isEvenSeries } from "./format";
 
 /** Um passo do veto de mapas; o mapa que sobra no fim (o decisivo) não é passo. */
 export type VetoStep = "ban" | "pick";
@@ -13,8 +14,8 @@ export const GROUPED_FROM = 5;
  * Os passos do veto de mapas de uma melhor de `bestOf` com `pool` mapas, sem o
  * decisivo; o mesmo cálculo do `engine` (`map_sequence`). Sobram `pool - bestOf`
  * bans e `bestOf - 1` picks: com `bans_first`, todos os bans e depois os picks;
- * com `alternating`, dois bans, os picks e o resto dos bans. `null` quando o
- * pool tem menos mapas que partidas.
+ * com `alternating`, dois bans, os picks e o resto dos bans. Na série par, só
+ * bans, nas duas ordens. `null` quando o pool tem menos mapas que partidas.
  */
 export function mapSequence(
   pool: number,
@@ -23,6 +24,7 @@ export function mapSequence(
 ): VetoStep[] | null {
   if (bestOf < 1 || pool < bestOf) return null;
   const bans = pool - bestOf;
+  if (isEvenSeries(bestOf)) return Array<VetoStep>(bans).fill("ban");
   const first = order === "bans_first" ? bans : Math.min(bans, 2);
   return [
     ...Array<VetoStep>(first).fill("ban"),

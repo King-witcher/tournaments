@@ -151,6 +151,14 @@ async fn settings_out_of_range_are_refused() {
             with_params("format.invalid_best_of", json!({ "best_of": 2 })),
         ),
         (
+            room(1, 4),
+            with_params("format.invalid_best_of", json!({ "best_of": 4 })),
+        ),
+        (
+            room(1, 6),
+            with_params("format.invalid_best_of", json!({ "best_of": 6 })),
+        ),
+        (
             room(1, 7),
             with_params("format.invalid_best_of", json!({ "best_of": 7 })),
         ),

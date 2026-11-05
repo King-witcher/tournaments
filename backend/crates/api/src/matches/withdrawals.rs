@@ -3,8 +3,8 @@
 //! adversário, decidida e sem autor, com o evento `auto_walkover` no
 //! histórico. Aplicado depois de toda mudança que pode deixar partida pronta
 //! (`settle`), então nenhuma partida pronta fica parada esperando quem saiu.
-//! Os mapas confirmados da série ficam (foram jogados); os pendentes e
-//! contestados são anulados.
+//! Os mapas confirmados da série ficam (foram jogados), até o primeiro sem
+//! confirmar; dele em diante, são anulados (`settle::unsettled`).
 
 use engine::core::{MatchId, MatchState, Outcome, ParticipantId};
 use sqlx::PgConnection;
@@ -12,7 +12,6 @@ use sqlx::PgConnection;
 use super::{
     changes::Snapshot,
     db::{self, MatchRef},
-    games::{GameStatus, StoredGame},
     history::NewEvent,
     key, settle,
     stage::{self, Stage},
@@ -83,11 +82,7 @@ pub async fn give(
             stage: stage.number,
             key: &key,
         };
-        let open: Vec<&StoredGame> = stage
-            .games_of(d.id)
-            .into_iter()
-            .filter(|g| g.status != GameStatus::Confirmed)
-            .collect();
+        let open = settle::unsettled(&stage.games_of(d.id));
         settle::void(conn, &at, &open, None).await?;
         db::put_walkover(conn, &at, d.best_of, d.sides, d.winner).await?;
         let outcome = Outcome::Walkover { winner: d.winner };

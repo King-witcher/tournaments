@@ -10,7 +10,8 @@
 //!   inteira antes da partida 1, com o decisivo: `map_sequence`; os lados
 //!   alternam a cada passo, e `VetoOrder` diz quais são bans e quais são
 //!   picks: todos os bans primeiro, ou dois bans, os picks e o resto dos
-//!   bans),
+//!   bans; na série par, só bans até sobrarem N mapas, jogados na ordem do
+//!   pool, sem pick nem decisivo),
 //!   `Vote` (a cada partida, até 3 mapas sorteados do pool, sem os já
 //!   jogados na série; cada lado vota num; votos iguais, é esse; diferentes,
 //!   sorteio entre os dois), `Random` (o mapa da partida é sorteado quando

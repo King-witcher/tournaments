@@ -51,8 +51,19 @@
 
 // Os fundos são a paleta divergente 2 do Carbon (teal e roxo, para
 // desempenho) e o cinza do andamento: o passo 20 no claro e o 80 no escuro,
-// cada um com o hover que o Carbon define para ele.
-@mixin tones($won, $won-hover, $lost, $lost-hover, $playing, $playing-hover) {
+// cada um com o hover que o Carbon define para ele. O empate é o meio da paleta,
+// um cinza um passo mais forte para não se confundir com o andamento: o 30 no
+// claro e o 70 no escuro, os dois com 4,5:1 com o texto do link.
+@mixin tones(
+  $won,
+  $won-hover,
+  $lost,
+  $lost-hover,
+  $playing,
+  $playing-hover,
+  $drawn,
+  $drawn-hover
+) {
   .won {
     --tone: #{$won};
     --tone-hover: #{$won-hover};
@@ -67,6 +78,11 @@
     --tone: #{$playing};
     --tone-hover: #{$playing-hover};
   }
+
+  .drawn {
+    --tone: #{$drawn};
+    --tone-hover: #{$drawn-hover};
+  }
 }
 
 @include tones(
@@ -75,7 +91,9 @@
   colors.$purple-20,
   colors.$purple-20-hover,
   colors.$gray-20,
-  colors.$gray-20-hover
+  colors.$gray-20-hover,
+  colors.$gray-30,
+  colors.$gray-30-hover
 );
 
 // Os mesmos temas de `globals.scss`: o do sistema, e a escolha da pessoa
@@ -88,7 +106,9 @@
       colors.$purple-80,
       colors.$purple-80-hover,
       colors.$gray-80,
-      colors.$gray-80-hover
+      colors.$gray-80-hover,
+      colors.$gray-70,
+      colors.$gray-70-hover
     );
   }
 }
@@ -100,6 +120,8 @@
     colors.$purple-80,
     colors.$purple-80-hover,
     colors.$gray-80,
-    colors.$gray-80-hover
+    colors.$gray-80-hover,
+    colors.$gray-70,
+    colors.$gray-70-hover
   );
 }

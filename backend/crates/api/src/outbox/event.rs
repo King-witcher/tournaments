@@ -191,7 +191,7 @@ pub enum NoticeKind {
 }
 
 /// Aviso que só vai para o canal do Discord da comunidade: o torneio começou,
-/// terminou ou uma série foi decidida. Mesma forma de `Notice` (código,
+/// terminou ou uma série foi decidida ou empatou. Mesma forma de `Notice` (código,
 /// parâmetros, caminho), mas fora do OpenAPI e do front: nenhuma pessoa o
 /// recebe. O caminho começa pelo slug da comunidade e o do torneio.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -230,6 +230,17 @@ pub enum AnnounceKind {
         match_key: String,
         winner: String,
         loser: String,
+        score: Option<String>,
+    },
+    /// Uma série par empatou: os dois lados e o placar. Sai pelo mesmo interruptor
+    /// de `match.series_decided`.
+    #[serde(rename = "match.series_drawn")]
+    SeriesDrawn {
+        tournament: String,
+        #[serde(rename = "match")]
+        match_key: String,
+        side_a: String,
+        side_b: String,
         score: Option<String>,
     },
 }

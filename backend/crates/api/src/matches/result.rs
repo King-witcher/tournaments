@@ -76,7 +76,8 @@ pub enum Confirmation {
     Organizer,
     /// W.O. automático: o perdedor desistiu ou saiu da comunidade.
     Withdrawal,
-    /// A série: os mapas confirmados deram a maioria a um lado.
+    /// A série: os mapas confirmados deram a maioria a um lado ou empataram a
+    /// série par.
     Maps,
 }
 
@@ -115,7 +116,8 @@ pub struct StoredResult {
     pub match_id: MatchId,
     pub side_a: ParticipantId,
     pub side_b: ParticipantId,
-    pub winner: ParticipantId,
+    /// `None`: a série par empatada, com metade dos mapas para cada lado.
+    pub winner: Option<ParticipantId>,
     /// Mapas vencidos por `a` e por `b`; `None` no W.O.
     pub score: Option<(u8, u8)>,
     pub confirmed_via: Confirmation,
@@ -131,7 +133,7 @@ pub(super) struct ResultRow {
     pub match_key: String,
     pub side_a: i64,
     pub side_b: i64,
-    pub winner: i64,
+    pub winner: Option<i64>,
     pub a_wins: Option<i16>,
     pub b_wins: Option<i16>,
     pub confirmed_via: String,
@@ -154,7 +156,7 @@ impl TryFrom<ResultRow> for StoredResult {
                 .ok_or_else(|| unknown("match_key", &r.match_key))?,
             side_a: ParticipantId(r.side_a),
             side_b: ParticipantId(r.side_b),
-            winner: ParticipantId(r.winner),
+            winner: r.winner.map(ParticipantId),
             score,
             confirmed_via: Confirmation::from_db(&r.confirmed_via)?,
             confirmed_at: r.confirmed_at,
@@ -164,16 +166,14 @@ impl TryFrom<ResultRow> for StoredResult {
 }
 
 impl StoredResult {
-    pub fn winner_side(&self) -> Side {
-        if self.winner == self.side_a {
-            Side::A
-        } else {
-            Side::B
-        }
+    /// O lado que venceu; `None` no empate.
+    pub fn winner_side(&self) -> Option<Side> {
+        self.winner
+            .map(|w| if w == self.side_a { Side::A } else { Side::B })
     }
 
     pub fn outcome(&self) -> Outcome {
-        played_or_walkover(self.winner, self.score)
+        series_outcome(self.winner, self.score)
     }
 
     pub fn report(&self) -> MatchReport {
@@ -184,11 +184,15 @@ impl StoredResult {
     }
 }
 
-/// O resultado com placar `score` (mapas de `a` e de `b`), ou W.O. sem ele.
-pub fn played_or_walkover(winner: ParticipantId, score: Option<(u8, u8)>) -> Outcome {
-    match score {
-        None => Outcome::Walkover { winner },
-        Some((a, b)) => Outcome::Played {
+/// O resultado com `winner` e o placar `score` (mapas de `a` e de `b`): sem
+/// vencedor, o empate; sem placar, W.O.
+pub fn series_outcome(winner: Option<ParticipantId>, score: Option<(u8, u8)>) -> Outcome {
+    match (winner, score) {
+        (None, score) => Outcome::Drawn {
+            maps: score.map_or(0, |(a, _)| a),
+        },
+        (Some(winner), None) => Outcome::Walkover { winner },
+        (Some(winner), Some((a, b))) => Outcome::Played {
             winner,
             score: SeriesScore {
                 winner: a.max(b),

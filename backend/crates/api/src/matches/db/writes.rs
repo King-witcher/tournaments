@@ -8,8 +8,8 @@ use sqlx::PgConnection;
 
 use super::MatchRef;
 
-/// A série que os mapas confirmados decidiram para `winner`, com os mapas de
-/// `a` e de `b`, confirmada em `at_time`. Entra no fim do replay; na correção
+/// A série que os mapas confirmados decidiram para `winner` (`None`: empatada),
+/// com os mapas de `a` e de `b`, confirmada em `at_time`. Entra no fim do replay; na correção
 /// de uma série já decidida (pelos mapas ou por W.O.), fica com a posição
 /// dela.
 pub async fn put_decided(
@@ -17,7 +17,7 @@ pub async fn put_decided(
     at: &MatchRef<'_>,
     best_of: u8,
     (a, b): (ParticipantId, ParticipantId),
-    winner: ParticipantId,
+    winner: Option<ParticipantId>,
     (a_wins, b_wins): (u8, u8),
     at_time: DateTime<Utc>,
 ) -> Result<(), sqlx::Error> {
@@ -42,7 +42,7 @@ pub async fn put_decided(
         i16::from(best_of),
         a.0,
         b.0,
-        winner.0,
+        winner.map(|w| w.0),
         i16::from(a_wins),
         i16::from(b_wins),
         at_time

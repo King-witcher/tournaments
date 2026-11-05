@@ -119,7 +119,7 @@ proptest! {
                     (false, false) => {
                         let winner = if first { a } else { other };
                         let mut r = played(m, winner, loser_maps);
-                        r.frags = (fw % 7 != 0).then_some(SeriesFrags { winner: fw, loser: fl });
+                        r.frags = (fw % 7 != 0).then_some(SeriesFrags { a: fw, b: fl });
                         r
                     }
                 };

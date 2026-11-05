@@ -18,12 +18,13 @@ const TILE: Record<PoolMapState["kind"], TileState> = {
   banned: "banned",
   picked: "picked",
   decider: "picked",
+  kept: "picked",
 };
 
 /**
  * O veto de mapas (modo veto): o pool em cartões com a imagem, o banido e o
- * escolhido marcados (com "Partida N" no escolhido e no decisivo; quem
- * escolheu ou baniu fica para o leitor de tela) e, na vez de quem vê, os que
+ * escolhido marcados (com "Partida N" no escolhido, no decisivo e no que sobrou
+ * na série par; quem escolheu ou baniu fica para o leitor de tela) e, na vez de quem vê, os que
  * sobraram como botões de banir ou escolher.
  */
 export function VetoMapBoard() {
@@ -44,6 +45,8 @@ export function VetoMapBoard() {
         return t("picked", { game: s.game, name: names[s.side] });
       case "decider":
         return t("decider", { game: s.game });
+      case "kept":
+        return t("kept", { game: s.game });
       case "available":
         return undefined;
     }

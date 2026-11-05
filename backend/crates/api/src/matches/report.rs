@@ -7,7 +7,7 @@
 //! partida, contada de quando ela foi liberada (`release`), o que vier por
 //! último. O organizador também confirma, na hora: o pendente, ou o
 //! contestado (resolvendo com o envio). A série fecha sozinha quando as
-//! partidas confirmadas dão a maioria (`settle`).
+//! partidas confirmadas dão a maioria ou empatam a série par (`settle`).
 
 use axum::{Json, extract::State};
 use engine::series;

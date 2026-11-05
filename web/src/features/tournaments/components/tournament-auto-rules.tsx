@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
+import { isEvenSeries } from "../lib/format";
 import { AutoRulesAbsence } from "./auto-rules-absence";
 import { AutoRulesEntry } from "./auto-rules-entry";
 import { AutoRulesFormat } from "./auto-rules-format";
@@ -47,7 +48,10 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
         )}
         <AutoRulesFormat tournament={tournament} />
         {stage.format !== "elimination" && (
-          <AutoRulesTable format={stage.format} />
+          <AutoRulesTable
+            format={stage.format}
+            even={isEvenSeries(stage.best_of)}
+          />
         )}
         <AutoRulesSeries tournament={tournament} />
         <AutoRulesMaps tournament={tournament} maps={maps} />

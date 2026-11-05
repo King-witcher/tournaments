@@ -186,7 +186,10 @@ pub async fn test_discord(
 /// Os avisos pedidos, sem repetir e na ordem do catálogo. Código que não
 /// existe: 422.
 fn known_events(codes: &[String]) -> Result<Vec<String>, ApiError> {
-    if codes.iter().any(|c| find(c).is_none()) {
+    if codes
+        .iter()
+        .any(|c| find(c).is_none_or(|s| s.variant_of.is_some()))
+    {
         return Err(ApiError::invalid("discord.event_unknown"));
     }
     Ok(CATALOG
@@ -200,6 +203,7 @@ fn settings(config: Option<Config>) -> DiscordSettings {
     DiscordSettings {
         available: CATALOG
             .iter()
+            .filter(|s| s.variant_of.is_none())
             .map(|s| AvailableEvent {
                 code: s.code.to_owned(),
                 default_on: s.default_on,

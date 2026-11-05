@@ -3,10 +3,10 @@
 
 use super::{Rules, TableRow, compute};
 use crate::core::{
-    EngineError, Match, MatchId, MatchState, Occupant, Outcome, ParticipantId, Placement,
-    SeriesFrags, Slot, StageReport,
+    EngineError, Match, MatchId, MatchState, Occupant, ParticipantId, Placement, SeriesFrags, Slot,
+    StageReport,
 };
-use crate::series::validate_score;
+use crate::series::validate_outcome;
 
 /// Partida pronta entre `a` e `b`.
 pub(crate) fn pairing(id: MatchId, a: ParticipantId, b: ParticipantId, best_of: u8) -> Match {
@@ -89,7 +89,8 @@ impl League {
     ///
     /// Erros: partida inexistente, sem os dois lados (bye), já com
     /// resultado; vencedor que não joga a partida; placar inválido para o
-    /// melhor de N. W.O. não tem placar e não é validado.
+    /// melhor de N, o empate inclusive (`validate_outcome`). W.O. não tem
+    /// placar e não é validado.
     pub fn apply(&mut self, report: StageReport) -> Result<(), EngineError> {
         let id = report.report.match_id;
         let idx = self.position(id).ok_or(EngineError::UnknownMatch(id))?;
@@ -100,16 +101,16 @@ impl League {
             _ => return Err(EngineError::MatchNotReady(id)),
         };
         let outcome = report.report.outcome;
-        let winner = outcome.winner();
-        if winner != a && winner != b {
+        if let Some(winner) = outcome.winner()
+            && winner != a
+            && winner != b
+        {
             return Err(EngineError::NotInMatch {
                 match_id: id,
                 participant: winner,
             });
         }
-        if let Outcome::Played { score, .. } = outcome {
-            validate_score(m.best_of, score)?;
-        }
+        validate_outcome(m.best_of, outcome)?;
         self.matches[idx].state = MatchState::Completed { a, b, outcome };
         self.frags[idx] = report.frags;
         Ok(())

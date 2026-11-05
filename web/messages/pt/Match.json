@@ -10,7 +10,8 @@
     "ready": "A jogar",
     "bye": "Sem adversário",
     "completed": "Decidida",
-    "not_needed": "Não precisou"
+    "not_needed": "Não precisou",
+    "drawn": "Empate"
   },
   "state": {
     "pending": "Os lados ainda dependem de outras séries.",
@@ -26,6 +27,7 @@
     "withdrawal": "W.O. automático. Quem perdeu desistiu ou saiu da comunidade <time></time>.",
     "maps": "Decidida <time></time>."
   },
+  "drawnAt": "Empate <time></time>.",
   "walkover": {
     "organizer": "{name} venceu por W.O., definido pela organização <time></time>.",
     "withdrawal": "{name} venceu por W.O. O adversário desistiu ou saiu da comunidade <time></time>."
@@ -86,6 +88,7 @@
   "history": {
     "title": "Histórico",
     "empty": "Nada aconteceu nesta série ainda.",
+    "drawn": "Empate em {maps} x {maps}",
     "score": "{winner} venceu {winnerMaps} x {loserMaps}",
     "walkover": "W.O. para {winner}",
     "mapWinner": "{winner} venceu",
@@ -174,6 +177,7 @@
       "banned": "Banido por {name}",
       "picked": "Escolhido por {name} para a partida {game}",
       "decider": "Mapa decisivo, partida {game}",
+      "kept": "Fica para a partida {game}",
       "ban": "Banir",
       "pick": "Escolher",
       "banMap": "Banir {map}",

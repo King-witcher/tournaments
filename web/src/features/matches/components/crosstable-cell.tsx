@@ -28,10 +28,11 @@ function scoreText(own: number, other: number, frags = false) {
 /**
  * Uma célula da tabela cruzada, que inteira é o link da série: o resultado de
  * quem está na linha. A série encerrada é o check e o placar sobre um fundo teal
- * (vitória) ou roxo (derrota), a paleta divergente do Carbon para desempenho;
- * a em andamento, o parcial sobre cinza, com o meio círculo; a pendente, só o
- * ícone de pendente, sem fundo: os três estados têm o símbolo do cartão. A cor
- * não fala sozinha: o nome do link diz o resultado por extenso.
+ * (vitória) ou roxo (derrota), a paleta divergente do Carbon para desempenho, ou
+ * cinza mais escuro no empate, o meio dela; a em andamento, o parcial sobre
+ * cinza, com o meio círculo; a pendente, só o ícone de pendente, sem fundo: os
+ * três estados têm o símbolo do cartão. A cor não fala sozinha: o nome do link
+ * diz o resultado por extenso.
  */
 export function CrosstableCell({ match, team, row, column, href }: Props) {
   const t = useTranslations("Bracket");
@@ -51,28 +52,27 @@ export function CrosstableCell({ match, team, row, column, href }: Props) {
         {score}
       </>
     );
-  } else if (result.kind === "walkover" || result.kind === "score") {
+  } else if (result.kind === "walkover") {
     tone = result.won ? styles.won : styles.lost;
-    if (result.kind === "walkover") {
-      said = tSaid(result.won ? "wonWalkover" : "lostWalkover");
-      content = (
-        <>
-          <CheckmarkOutline />
-          {t("walkover")}
-        </>
-      );
-    } else {
-      const score = scoreText(result.own, result.other, result.frags);
-      said = tSaid(result.won ? "won" : "lost", {
-        score: result.frags ? tSaid("frags", { score }) : score,
-      });
-      content = (
-        <>
-          <CheckmarkOutline />
-          {score}
-        </>
-      );
-    }
+    said = tSaid(result.won ? "wonWalkover" : "lostWalkover");
+    content = (
+      <>
+        <CheckmarkOutline />
+        {t("walkover")}
+      </>
+    );
+  } else if (result.kind === "score") {
+    tone = styles[result.outcome];
+    const score = scoreText(result.own, result.other, result.frags);
+    said = tSaid(result.outcome, {
+      score: result.frags ? tSaid("frags", { score }) : score,
+    });
+    content = (
+      <>
+        <CheckmarkOutline />
+        {score}
+      </>
+    );
   }
   const label = `${t("matchSides", { a: row, b: column })}, ${said}`;
 

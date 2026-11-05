@@ -14,10 +14,10 @@ use sqlx::PgConnection;
 use super::{
     changes::{self, Snapshot},
     db::{self, MatchRef},
-    games::{StoredGame, series_games},
+    games::{GameStatus, StoredGame, series_games},
     history::NewEvent,
     key,
-    result::played_or_walkover,
+    result::{Side, series_outcome},
     rounds,
     stage::{self, Stage},
     types::EventKind,
@@ -102,6 +102,18 @@ pub async fn void(
     Ok(())
 }
 
+/// Os mapas que um W.O. anula: do primeiro sem confirmar em diante, também os
+/// confirmados depois dele. A contestação não trava o envio do mapa seguinte,
+/// então um confirmado pode vir depois de um sem confirmar, e os números vão de
+/// 1 a n sem buraco (`match_games_sequence`).
+pub fn unsettled<'a>(games: &[&'a StoredGame]) -> Vec<&'a StoredGame> {
+    games
+        .iter()
+        .copied()
+        .skip_while(|g| g.status == GameStatus::Confirmed)
+        .collect()
+}
+
 /// Nas partidas prontas sem série decidida: anula os mapas que não valem e
 /// fecha as séries que os mapas confirmados decidiram, na ordem em que
 /// decidiram (é a ordem do replay). Devolve se mudou alguma coisa.
@@ -151,10 +163,10 @@ async fn close_series(
     decided.sort_by(|x, y| (x.0, &x.1).cmp(&(y.0, &y.1)));
     for (at_time, key, best_of, sides, d) in &decided {
         let at = match_ref(tournament, stage, key);
-        let winner = super::result::Side::from(d.winner).of(*sides);
+        let winner = d.winner.map(|w| Side::from(w).of(*sides));
         let score = (d.a_wins, d.b_wins);
         db::put_decided(conn, &at, *best_of, *sides, winner, score, *at_time).await?;
-        let outcome = played_or_walkover(winner, Some(score));
+        let outcome = series_outcome(winner, Some(score));
         let event = NewEvent {
             at: Some(*at_time),
             ..NewEvent::series(EventKind::Decided, None, Some(outcome))

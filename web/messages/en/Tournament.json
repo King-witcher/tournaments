@@ -77,6 +77,7 @@
       "swissTdm": "The format is Swiss. The number of rounds depends on teams: 3 for up to 8, 4 for up to 16, 5 for up to 32.",
       "swissRounds": "The format is Swiss, with {rounds, plural, one {# round} other {# rounds}}.",
       "series": "{bestOf, plural, =1 {Matches are a single game.} other {Matches are best of #.}}",
+      "seriesEven": "If each side wins half the games, the match ends in a tie. The first to win {wins} takes the match, and any games left aren't played.",
       "finals": {
         "single": "{bestOf, plural, =1 {Matches are a single game} other {Matches are best of #}}, and the final is {finals, plural, =1 {a single game} other {best of #}}.",
         "double": "{bestOf, plural, =1 {Matches are a single game} other {Matches are best of #}}, and the grand final is {finals, plural, =1 {a single game} other {best of #}}."
@@ -92,6 +93,9 @@
     "table": {
       "title": "Standings",
       "points": "Each won match is worth 1 point. Ties on points are broken in this order:",
+      "balance": "The order comes from the match difference. A win adds 1 and a loss subtracts 1.",
+      "balanceEven": "The order comes from the match difference. A win adds 1, a tie counts 0 and a loss subtracts 1.",
+      "balanceOrder": "Equal differences are broken in this order:",
       "buchholz": "Buchholz (the sum of your opponents' points)",
       "headToHead": "Head-to-head",
       "games": "Game difference",
@@ -109,6 +113,7 @@
         "veto": "Before the first game, you ban and pick maps, one at a time, until each game's map is set.",
         "vetoBansFirst": "Before the first game, you ban maps, one at a time, until only the match's maps are left. Then you choose the order they're played in.",
         "vetoOne": "Before the game, you ban maps, one at a time, until one is left.",
+        "vetoEven": "Before the first game, you ban maps, one at a time, until only the match's maps are left. Games follow the pool order.",
         "vote": "Before each game, each player votes for one of 3 random maps. If the votes differ, the map is drawn between the two.",
         "random": "Each game's map is drawn when it starts.",
         "off": "You agree on each game's map, without repeating within the match.",
@@ -118,6 +123,7 @@
         "veto": "Before the first game, the teams ban and pick maps, one at a time, until each game's map is set.",
         "vetoBansFirst": "Before the first game, the teams ban maps, one at a time, until only the match's maps are left. Then they choose the order they're played in.",
         "vetoOne": "Before the game, the teams ban maps, one at a time, until one is left.",
+        "vetoEven": "Before the first game, the teams ban maps, one at a time, until only the match's maps are left. Games follow the pool order.",
         "vote": "Before each game, each team votes for one of 3 random maps. If the votes differ, the map is drawn between the two.",
         "random": "Each game's map is drawn when it starts.",
         "off": "The teams agree on each game's map, without repeating within the match.",
@@ -149,7 +155,7 @@
       "walkoverTdm": "If the other team doesn't show up, or if yours needs to leave the tournament, tell the organizers. A team that doesn't play loses by walkover.",
       "score": "A walkover counts as a win by {wins} to 0.",
       "withdrawal": {
-        "round_robin": "A player who leaves the tournament loses by walkover the matches they still had to play, and the points they already earned stay in the standings.",
+        "round_robin": "A player who leaves the tournament loses by walkover the matches they still had to play, and the results they already had stay in the standings.",
         "swiss": "A player who leaves the tournament is no longer paired, and the points they already earned stay in the standings."
       }
     },

@@ -10,7 +10,8 @@
     "ready": "Ready to play",
     "bye": "No opponent",
     "completed": "Decided",
-    "not_needed": "Not needed"
+    "not_needed": "Not needed",
+    "drawn": "Tie"
   },
   "state": {
     "pending": "Sides still depend on other matches.",
@@ -26,6 +27,7 @@
     "withdrawal": "Automatic walkover. The loser withdrew or left the community <time></time>.",
     "maps": "Decided <time></time>."
   },
+  "drawnAt": "Ended in a tie <time></time>.",
   "walkover": {
     "organizer": "{name} won by walkover, set by the organizers <time></time>.",
     "withdrawal": "{name} won by walkover. The opponent withdrew or left the community <time></time>."
@@ -86,6 +88,7 @@
   "history": {
     "title": "History",
     "empty": "Nothing has happened in this match yet.",
+    "drawn": "Tied {maps} to {maps}",
     "score": "{winner} won {winnerMaps} to {loserMaps}",
     "walkover": "Walkover for {winner}",
     "mapWinner": "{winner} won",
@@ -174,6 +177,7 @@
       "banned": "Banned by {name}",
       "picked": "Picked by {name} for game {game}",
       "decider": "Decider map, game {game}",
+      "kept": "Kept for game {game}",
       "ban": "Ban",
       "pick": "Pick",
       "banMap": "Ban {map}",

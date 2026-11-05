@@ -6,7 +6,7 @@ use super::{
     draw::Purpose, index, map_sequence,
 };
 use crate::core::MapId;
-use crate::series::Side;
+use crate::series::{Side, even_series};
 
 impl Veto {
     /// A vez do mapa da partida `game`, com os passos de mapa `maps` dela
@@ -101,9 +101,10 @@ impl Veto {
             .collect()
     }
 
-    /// O decisivo (o mapa que sobrou), com o veto de mapas completo.
+    /// O decisivo (o mapa que sobrou), com o veto de mapas completo. A série
+    /// par não tem: sobram os N mapas que ela joga.
     pub fn decider(&self) -> Option<MapId> {
-        if !self.map_veto_done() {
+        if !self.map_veto_done() || even_series(self.best_of) {
             return None;
         }
         self.remaining_maps().first().copied()
@@ -133,7 +134,9 @@ impl Veto {
 
     /// O mapa da partida `game`, quando já saiu: do veto (o pick aparece
     /// assim que é feito, já que o veto é aberto; o decisivo, com o veto
-    /// completo), da votação ou do sorteio. `None` no modo `Off`.
+    /// completo; na série par, com o veto completo, o k-ésimo que sobrou na
+    /// ordem do pool para a partida k), da votação ou do sorteio. `None` no modo
+    /// `Off`.
     pub fn map_of(&self, game: u8) -> Option<MapId> {
         if game == 0 || game > self.best_of {
             return None;
@@ -156,6 +159,11 @@ impl Veto {
     fn map_with(&self, game: u8, before: &[Option<MapId>]) -> Option<MapId> {
         match self.rules.map_mode {
             MapMode::Off => None,
+            MapMode::Veto if even_series(self.best_of) => self
+                .map_veto_done()
+                .then(|| self.remaining_maps())?
+                .get(usize::from(game).checked_sub(1)?)
+                .copied(),
             MapMode::Veto if game == self.best_of => self.decider(),
             MapMode::Veto => self
                 .veto_picks()

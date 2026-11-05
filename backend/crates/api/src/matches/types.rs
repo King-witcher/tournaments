@@ -63,17 +63,24 @@ pub struct TableRow {
     pub team_id: i64,
     /// De 1 a N, sem empate.
     pub position: u16,
-    /// Séries vencidas (W.O. inclusive) e, no suíço, os byes.
+    /// Séries vencidas (W.O. inclusive) e, no suíço, os byes. É o primeiro
+    /// critério do suíço.
     pub points: u16,
-    /// Séries decididas (W.O. inclusive; bye e folga não).
+    /// Vitórias menos derrotas (W.O. inclusive; empate vale 0). É o primeiro
+    /// critério do round robin.
+    pub series_diff: i32,
+    /// Séries decididas (W.O. e empate inclusive; bye e folga não).
     pub played: u16,
     pub wins: u16,
+    /// Séries empatadas: só nas séries pares.
+    pub draws: u16,
     pub losses: u16,
     /// Byes do suíço (cada um vale um ponto). No round robin, sempre 0: a
     /// folga não vale ponto.
     pub byes: u16,
     /// Mapas das séries; o W.O. conta como vitória sem perder mapa (2 x 0 na
-    /// md3).
+    /// md2 e na md3, 3 x 0 na md4 e na md5), e a série empatada, metade para
+    /// cada lado.
     pub maps_won: u16,
     pub maps_lost: u16,
     pub map_diff: i32,
@@ -90,12 +97,13 @@ pub struct TableRow {
     pub ahead_by: Option<TableCriterion>,
 }
 
-/// Critério de ordem da tabela, na ordem em que valem: pontos, Buchholz (só
-/// suíço), confronto direto, saldo de mapas, saldo de frags e, por último, o
-/// seed.
+/// Critério de ordem da tabela, na ordem em que valem: o saldo de séries (round
+/// robin) ou os pontos e o Buchholz (suíço), depois confronto direto, saldo de
+/// mapas, saldo de frags e, por último, o seed.
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TableCriterion {
+    SeriesDiff,
     Points,
     Buchholz,
     HeadToHead,
@@ -248,11 +256,14 @@ pub enum SourceOutcome {
 #[derive(Serialize, ToSchema)]
 pub struct MatchResult {
     pub walkover: bool,
-    pub winner: Side,
+    /// O lado que venceu; `null` na série par empatada, com metade dos mapas
+    /// para cada lado.
+    pub winner: Option<Side>,
     /// Mapas vencidos por cada lado; `null` no W.O.
     pub a_wins: Option<u8>,
     pub b_wins: Option<u8>,
-    /// `maps` (os mapas confirmados deram a maioria), `organizer` (W.O.),
+    /// `maps` (os mapas confirmados deram a maioria ou empataram a série par),
+    /// `organizer` (W.O.),
     /// `withdrawal` (W.O. automático); `opponent` e `deadline` só em séries
     /// enviadas inteiras, antes do envio mapa a mapa.
     pub confirmed_via: Confirmation,
@@ -373,7 +384,8 @@ pub enum EventKind {
     /// O organizador anulou o mapa (pendente ou contestado) para ser jogado
     /// de novo.
     Replay,
-    /// A série fechou: os mapas confirmados deram a maioria a um lado.
+    /// A série fechou: os mapas confirmados deram a maioria a um lado ou
+    /// empataram a série par.
     Decided,
     /// Uma correção de mapa deixou a série sem decisão.
     Reopened,
@@ -403,11 +415,11 @@ pub struct EventActor {
 #[derive(Serialize, ToSchema)]
 pub struct EventOutcome {
     /// O time vencedor (que pode não ser mais um dos lados, num envio
-    /// anulado).
-    pub winner: Team,
+    /// anulado); `null` na série empatada.
+    pub winner: Option<Team>,
     pub walkover: bool,
-    /// Mapas do vencedor e do perdedor da série; `null` no W.O. e nos
-    /// eventos de um mapa.
+    /// Mapas do vencedor e do perdedor da série (na empatada, os de cada lado);
+    /// `null` no W.O. e nos eventos de um mapa.
     pub winner_maps: Option<u8>,
     pub loser_maps: Option<u8>,
 }

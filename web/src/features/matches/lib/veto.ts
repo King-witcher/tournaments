@@ -1,3 +1,4 @@
+import { isEvenSeries } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 
 type Schemas = components["schemas"];
@@ -7,11 +8,16 @@ type Side = Schemas["Side"];
 /** Estado de um mapa ou campeão no cartão do veto: a cor nunca vem sozinha (ícone e cinza). */
 export type TileState = "available" | "banned" | "picked" | "unavailable";
 
-/** Um mapa do pool no veto de mapas: banido, escolhido para um jogo, o decisivo ou ainda disponível. */
+/**
+ * Um mapa do pool no veto de mapas: banido, escolhido para um jogo, o decisivo,
+ * o que sobrou para um jogo (série par, sem picks nem decisivo) ou ainda
+ * disponível.
+ */
 export type PoolMapState =
   | { kind: "banned"; side: Side }
   | { kind: "picked"; side: Side; game: number }
   | { kind: "decider"; game: number }
+  | { kind: "kept"; game: number }
   | { kind: "available" };
 
 /** O estado de cada mapa do pool (pelo slug) no veto de mapas de uma melhor de `bestOf`. */
@@ -29,13 +35,20 @@ export function poolStates(
       states[step.map.slug] = { kind: "picked", side: step.side, game: picks };
     }
   }
-  const done = veto.map_steps.length === veto.pool.length - 1;
+  const even = isEvenSeries(bestOf);
+  const done = veto.map_steps.length === veto.pool.length - (even ? bestOf : 1);
+  let kept = 0;
   for (const m of veto.pool) {
     if (states[m.slug]) continue;
-    states[m.slug] =
-      done && veto.remaining.some((r) => r.slug === m.slug)
-        ? { kind: "decider", game: bestOf }
-        : { kind: "available" };
+    if (!done || !veto.remaining.some((r) => r.slug === m.slug)) {
+      states[m.slug] = { kind: "available" };
+    } else if (even) {
+      // As partidas seguem a ordem do pool.
+      kept++;
+      states[m.slug] = { kind: "kept", game: kept };
+    } else {
+      states[m.slug] = { kind: "decider", game: bestOf };
+    }
   }
   return states;
 }

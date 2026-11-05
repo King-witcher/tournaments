@@ -45,7 +45,8 @@
   "nextMap": "Next map: {map}",
   "result": {
     "pending": "Game waiting for confirmation",
-    "contested": "Game disputed"
+    "contested": "Game disputed",
+    "drawn": "Tie"
   },
   "task": {
     "report": "Report the next game",
@@ -84,7 +85,8 @@
       "lost": "loss, {score}",
       "frags": "{score} in frags",
       "wonWalkover": "win by walkover",
-      "lostWalkover": "loss by walkover"
+      "lostWalkover": "loss by walkover",
+      "drawn": "tie, {score}"
     }
   },
   "opponentPlaying": "Opponent playing",
@@ -126,6 +128,9 @@
     "record": "Matches",
     "recordValue": "{wins}–{losses}",
     "recordByes": "{wins}–{losses} (+{byes} bye)",
+    "recordDraws": "W–T–L",
+    "recordValueDraws": "{wins}–{draws}–{losses}",
+    "seriesDiff": "Diff.",
     "maps": "Games",
     "frags": "Frag difference",
     "diff": "{won}–{lost} ({diff})",

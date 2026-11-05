@@ -36,6 +36,7 @@
     "double": "Grand final"
   },
   "bestOfOption": "Best of {count}",
+  "bestOfEvenHint": "This match can end in a tie. The first to win {wins} games takes the match.",
   "champions": "Champions",
   "registration": "Registration and deadlines",
   "registrationLocked": "The tournament has started. Start and check-in can't change anymore.",
@@ -134,12 +135,14 @@
     },
     "mapModeHint": {
       "veto": "Before the first game, both sides ban and pick maps.",
+      "vetoEven": "Before the first game, both sides ban maps until {games} are left. Games follow the pool order.",
       "vote": "For each game, each side votes for one of 3 maps drawn from the pool. If the votes differ, a draw picks between the two.",
       "random": "The map is drawn from the pool, without repeating within the match.",
       "off": "No map repeats within the match."
     },
     "mapModeHintTdm": {
       "veto": "Before the first game, teams ban and pick maps.",
+      "vetoEven": "Before the first game, teams ban maps until {games} are left. Games follow the pool order.",
       "vote": "For each game, each team votes for one of 3 maps drawn from the pool. If the votes differ, a draw picks between the two.",
       "random": "The map is drawn from the pool, without repeating within the match.",
       "off": "No map repeats within the match."

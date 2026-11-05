@@ -45,6 +45,14 @@ fn report_errors() {
             score: bad
         })
     );
+    // A eliminação não empata.
+    assert!(matches!(
+        b.report(MatchReport {
+            match_id: m1.id,
+            outcome: Outcome::Drawn { maps: 1 },
+        }),
+        Err(EngineError::InvalidScore { best_of: 3, .. })
+    ));
     // erros não alteram o estado
     assert!(matches!(
         b.get(m1.id).unwrap().state,

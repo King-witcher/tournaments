@@ -11,7 +11,7 @@ use sqlx::PgPool;
 
 use super::*;
 use crate::common::*;
-use crate::matches::{COPA, copa, play, players, single, start};
+use crate::matches::{COPA, confirm, copa, game, play, players, report, single, start, table};
 
 /// O despachante passa o outbox para a fila e a fila sai, em `now`.
 async fn pump(s: &Setup, now: DateTime<Utc>) -> usize {
@@ -158,6 +158,50 @@ async fn the_series_and_the_podium_of_a_finished_tournament() {
             "**Copa de Outubro** terminou. Pódio:\n1. P2\n2. P1\nhttp://localhost:4001/pt/quake-br/copa",
         ]
     );
+}
+
+#[tokio::test]
+async fn a_tied_series_goes_by_the_series_result_switch() {
+    let (db, _lease) = crate::db::test_db().await;
+    let body = || copa(table("round_robin", json!({ "best_of": 2 })));
+    // Com o resultado de cada série ligado, o empate sai, sem dizer quem venceu.
+    let s = configured(&db, &["match.series_decided"]).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    start(&s.app, &s.ana, body(), &[&p[0], &p[1]]).await;
+    for (n, side) in [(1, "a"), (2, "b")] {
+        let map = crate::matches::MAPS[usize::from(n) - 1];
+        let reported = report(&s.app, &p[0], "rr-1-1", n, game(side, map)).await;
+        assert_eq!(reported.0, StatusCode::OK, "{}", reported.1);
+        let confirmed = confirm(&s.app, &p[1], "rr-1-1", n).await;
+        assert_eq!(confirmed.0, StatusCode::OK, "{}", confirmed.1);
+    }
+    pump(&s, Utc::now()).await;
+    assert_eq!(
+        s.fake.texts(),
+        [
+            "**Copa de Outubro**, série 1.1: P1 e P2 empataram (1-1).\nhttp://localhost:4001/pt/quake-br/copa/matches/rr-1-1"
+        ]
+    );
+}
+
+#[tokio::test]
+async fn a_tied_series_says_nothing_with_the_switch_off() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["tournament.started"]).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    let body = copa(table("round_robin", json!({ "best_of": 2 })));
+    start(&s.app, &s.ana, body, &[&p[0], &p[1]]).await;
+    pump(&s, Utc::now()).await;
+    let before = s.fake.texts().len();
+    for (n, side) in [(1, "a"), (2, "b")] {
+        let map = crate::matches::MAPS[usize::from(n) - 1];
+        let reported = report(&s.app, &p[0], "rr-1-1", n, game(side, map)).await;
+        assert_eq!(reported.0, StatusCode::OK, "{}", reported.1);
+        let confirmed = confirm(&s.app, &p[1], "rr-1-1", n).await;
+        assert_eq!(confirmed.0, StatusCode::OK, "{}", confirmed.1);
+    }
+    pump(&s, Utc::now()).await;
+    assert_eq!(s.fake.texts().len(), before);
 }
 
 #[tokio::test]

@@ -8,8 +8,8 @@ import styles from "./match-card-status.module.scss";
 type Props = { match: components["schemas"]["BracketMatch"] };
 
 /**
- * Rodapé do cartão: o adversário ocupado em outra série (round robin), o que a
- * partida espera de quem vê ou, para os outros, o veto em andamento ou se há
+ * Rodapé do cartão: o empate da série decidida, o adversário ocupado em outra
+ * série (round robin), o que a partida espera de quem vê ou, para os outros, o veto em andamento ou se há
  * mapa esperando confirmação ou contestado. A série em andamento sem nada disso
  * não tem etiqueta: o ícone do topo já diz. Sem o que dizer, o espaço fica
  * vazio, para os cartões da rodada terem a mesma altura.
@@ -18,7 +18,13 @@ export function MatchCardStatus({ match: m }: Props) {
   const t = useTranslations("Bracket");
 
   let tag = null;
-  if (m.opponent_playing) {
+  if (m.state === "completed" && m.result && m.result.winner == null) {
+    tag = (
+      <StatusTag status="neutral" size="sm">
+        {t("result.drawn")}
+      </StatusTag>
+    );
+  } else if (m.opponent_playing) {
     tag = (
       <StatusTag status="waiting" size="sm">
         {t("opponentPlaying")}

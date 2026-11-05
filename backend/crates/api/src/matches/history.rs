@@ -1,6 +1,7 @@
 //! Histórico das partidas: o que cada evento grava (`match_events.kind`). O
 //! evento de um mapa (`game`) grava o vencedor do mapa nas ações que o
-//! definem; o da série, o vencedor e o placar (nada no W.O.).
+//! definem; o da série, o vencedor e o placar (sem placar no W.O.; sem vencedor
+//! e com os mapas de cada lado no empate).
 
 use chrono::{DateTime, Utc};
 use engine::core::{Outcome, ParticipantId};
@@ -63,7 +64,7 @@ pub struct NewEvent<'a> {
     /// O mapa; `None`: a série inteira.
     pub game: Option<i16>,
     pub winner: Option<ParticipantId>,
-    /// Mapas do vencedor e do perdedor da série.
+    /// Mapas do vencedor e do perdedor da série; no empate, os de cada lado.
     pub maps: Option<(u8, u8)>,
     pub comment: Option<&'a str>,
     /// Quando; `None`: agora.
@@ -97,6 +98,7 @@ impl<'a> NewEvent<'a> {
             Some(Outcome::Played { winner, score }) => {
                 (Some(winner), Some((score.winner, score.loser)))
             }
+            Some(Outcome::Drawn { maps }) => (None, Some((maps, maps))),
         };
         Self {
             kind,

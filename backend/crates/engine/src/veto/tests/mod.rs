@@ -1,5 +1,6 @@
 mod draft;
 mod draft_props;
+mod even_series;
 mod maps;
 mod pick_alternating;
 mod pick_blind;

@@ -88,7 +88,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
       // "Chave" só na eliminação; round robin e suíço são "Formato".
       label: tip(
         stage.format === "elimination" ? "bracket" : "format",
-        rules.bracketRule(tournament),
+        rules.formatTip(tournament),
       ),
       value: t(`bracket.${kind}`),
     },

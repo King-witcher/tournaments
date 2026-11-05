@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { useFormatSeconds } from "../hooks/use-format-seconds";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
-import { finalsBestOf } from "../lib/format";
+import { finalsBestOf, isEvenSeries } from "../lib/format";
 import { teamPresetOf } from "../lib/team-rules";
 import { AutoRulesBlock } from "./auto-rules-block";
 import { AutoRulesList } from "./auto-rules-list";
@@ -41,9 +41,11 @@ export function AutoRulesSeries({ tournament }: Props) {
       ? "vetoOne"
       : oneGame && mapMode === "off"
         ? "offOne"
-        : mapMode === "veto" && order === "bans_first"
-          ? "vetoBansFirst"
-          : mapMode;
+        : mapMode === "veto" && isEvenSeries(stage.best_of)
+          ? "vetoEven"
+          : mapMode === "veto" && order === "bans_first"
+            ? "vetoBansFirst"
+            : mapMode;
   const maps = t(`${tdm ? "mapsTdm" : "maps"}.${mapKey}`);
   const champions = rules.champions(tournament);
   // Só o preset todo no capitão deixa o "Pronto" com ele.

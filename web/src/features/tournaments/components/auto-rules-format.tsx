@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
-import { finalsBestOf } from "../lib/format";
+import { finalsBestOf, isEvenSeries, mapsToWin } from "../lib/format";
 import { AutoRulesBlock } from "./auto-rules-block";
 import { Sentences } from "./sentences";
 
@@ -10,7 +10,8 @@ type Props = { tournament: components["schemas"]["Tournament"] };
 
 /**
  * A chave (ou o todos contra todos, o suíço): o nome, como se avança ou se
- * cai e o melhor de N das séries e da final.
+ * cai, o melhor de N das séries e da final e, na série par, o empate e o fim
+ * antes de jogar todas.
  */
 export function AutoRulesFormat({ tournament }: Props) {
   const t = useTranslations("Tournament.autoRules.format");
@@ -37,9 +38,15 @@ export function AutoRulesFormat({ tournament }: Props) {
         <Sentences>{[name, rules.bracketRule(tournament)]}</Sentences>
       </p>
       <p>
-        {stage.format === "elimination" && finals !== stage.best_of
-          ? t(`finals.${stage.bracket}`, { bestOf: stage.best_of, finals })
-          : t("series", { bestOf: stage.best_of })}
+        <Sentences>
+          {[
+            stage.format === "elimination" && finals !== stage.best_of
+              ? t(`finals.${stage.bracket}`, { bestOf: stage.best_of, finals })
+              : t("series", { bestOf: stage.best_of }),
+            isEvenSeries(stage.best_of) &&
+              t("seriesEven", { wins: mapsToWin(stage.best_of) }),
+          ]}
+        </Sentences>
       </p>
     </AutoRulesBlock>
   );

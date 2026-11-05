@@ -72,7 +72,18 @@ export function repeatScope(rules: Schemas["ChampionRules"]) {
  */
 export const GAME_MINUTES = 15;
 
-/** Mapas que vencem uma série melhor de N (N ímpar): 2 na md3, 3 na md5. */
+/**
+ * A série par, só do todos contra todos: pode empatar, e o veto de mapas dela
+ * só tem bans (a mesma lista do `engine`, `series::even_series`).
+ */
+export function isEvenSeries(bestOf: number) {
+  return bestOf === 2 || bestOf === 4 || bestOf === 6;
+}
+
+/**
+ * Mapas que vencem uma série melhor de N: 2 na md2 e na md3, 3 na md4 e na md5.
+ * É também o que o W.O. vale.
+ */
 export function mapsToWin(bestOf: number) {
   return Math.floor(bestOf / 2) + 1;
 }

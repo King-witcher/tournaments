@@ -67,15 +67,55 @@ pub fn walkover(match_id: MatchId, winner: i64) -> StageReport {
     })
 }
 
-/// A série com os frags somados dos mapas (do vencedor da série, do perdedor).
+/// Empate na série par: `maps` mapas para cada lado.
+pub fn drawn(match_id: MatchId, maps: u8) -> StageReport {
+    StageReport::from(MatchReport {
+        match_id,
+        outcome: Outcome::Drawn { maps },
+    })
+}
+
+/// A série com os frags somados dos mapas (do vencedor da série, do perdedor;
+/// no empate, dos lados `a` e `b`). Ficam nessa ordem até `replay`, que sabe de
+/// que lado cada um joga.
 pub fn with_frags(mut report: StageReport, winner: i32, loser: i32) -> StageReport {
-    report.frags = Some(SeriesFrags { winner, loser });
+    report.frags = Some(SeriesFrags {
+        a: winner,
+        b: loser,
+    });
     report
 }
 
 /// Refaz a fase como a API: configuração, participantes de 1 a `n` em ordem
 /// de seed e o histórico gravado. Um histórico que não fecha derruba o teste.
-pub fn replay(format: StageFormat, n: i64, history: StageHistory) -> StageBracket {
+/// Os frags de `with_frags` vão para os lados da partida: os lados saem de um
+/// replay sem frags, que não mudam quem joga com quem.
+pub fn replay(format: StageFormat, n: i64, mut history: StageHistory) -> StageBracket {
+    let bare = StageHistory {
+        reports: history
+            .reports
+            .iter()
+            .map(|r| StageReport::from(r.report))
+            .collect(),
+        ..history.clone()
+    };
+    let sides = redo(format, n, bare);
+    for r in &mut history.reports {
+        let id = r.report.match_id;
+        let state = sides.matches().iter().find(|m| m.id == id).map(|m| m.state);
+        if let (Some(MatchState::Completed { b, .. }), Some(frags)) = (state, r.frags.as_mut())
+            && r.report.outcome.winner() == Some(b)
+        {
+            *frags = SeriesFrags {
+                a: frags.b,
+                b: frags.a,
+            };
+        }
+    }
+    redo(format, n, history)
+}
+
+fn redo(format: StageFormat, n: i64, history: StageHistory) -> StageBracket {
     StageBracket::replay(format, seeds(n), history)
         .unwrap_or_else(|e| panic!("o histórico gravado deixou de refazer: {e:?}"))
 }
@@ -106,6 +146,7 @@ fn outcome_text(outcome: Outcome) -> String {
             format!("{} {}-{}", who(winner), score.winner, score.loser)
         }
         Outcome::Walkover { winner } => format!("{} wo", who(winner)),
+        Outcome::Drawn { maps } => format!("draw {maps}-{maps}"),
     }
 }
 
@@ -175,6 +216,7 @@ fn criterion_text(criterion: Option<Criterion>) -> &'static str {
     match criterion {
         None => "-",
         Some(Criterion::Points) => "points",
+        Some(Criterion::SeriesDiff) => "series_diff",
         Some(Criterion::Buchholz) => "buchholz",
         Some(Criterion::HeadToHead) => "head_to_head",
         Some(Criterion::MapDiff) => "map_diff",
@@ -183,20 +225,25 @@ fn criterion_text(criterion: Option<Criterion>) -> &'static str {
     }
 }
 
-/// Uma linha por posição da tabela: pontos, vitórias-derrotas, byes, mapas,
-/// frags, Buchholz e o critério que pôs a linha à frente da seguinte.
+/// Uma linha por posição da tabela: pontos, vitórias-derrotas (com empates,
+/// vitórias-empates-derrotas), byes, mapas, frags, Buchholz e o critério que pôs
+/// a linha à frente da seguinte.
 pub fn table_text(stage: &StageBracket) -> String {
     let rows = stage.table().expect("fase de tabela");
     rows.iter()
         .map(|r| {
             let buchholz = r.buchholz.map_or("-".to_string(), |b| b.to_string());
+            let record = if r.draws > 0 {
+                format!("{}-{}-{}", r.wins, r.draws, r.losses)
+            } else {
+                format!("{}-{}", r.wins, r.losses)
+            };
             format!(
-                "{} {} pts{} {}-{} byes{} maps {}-{} frags {}-{} bh {} ahead {}",
+                "{} {} pts{} {} byes{} maps {}-{} frags {}-{} bh {} ahead {}",
                 r.position,
                 who(r.participant),
                 r.points,
-                r.wins,
-                r.losses,
+                record,
                 r.byes,
                 r.maps_won,
                 r.maps_lost,

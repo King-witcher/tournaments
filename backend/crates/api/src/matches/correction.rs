@@ -15,7 +15,7 @@ use super::{
     actions, db,
     history::NewEvent,
     key,
-    result::{Side, StoredResult, played_or_walkover},
+    result::{Side, StoredResult, series_outcome},
     settle,
     stage::{self, Stage},
     types::EventKind,
@@ -26,9 +26,10 @@ pub const CONFLICTS: ApiError = ApiError::conflict("match.correction_conflicts")
 
 /// O que acontece com a série decidida depois de mudar uma partida.
 pub enum Change {
-    /// Passa a ser esta (`score`: partidas de `a` e de `b`; `None` no W.O.).
+    /// Passa a ser esta (`winner`: `None` no empate; `score`: partidas de `a` e
+    /// de `b`, `None` no W.O.).
     Put {
-        winner: ParticipantId,
+        winner: Option<ParticipantId>,
         score: Option<(u8, u8)>,
     },
     /// Fica sem decisão: a série reabre.
@@ -46,7 +47,7 @@ pub fn series_change(
     let current = current?;
     match decided {
         Some(d) => {
-            let winner = Side::from(d.winner).of(sides);
+            let winner = d.winner.map(|w| Side::from(w).of(sides));
             let score = Some((d.a_wins, d.b_wins));
             (current.winner != winner || current.score != score)
                 .then_some(Change::Put { winner, score })
@@ -131,7 +132,7 @@ pub async fn write<R>(
         Change::Put { winner, score } => {
             let score = score.ok_or_else(ApiError::internal)?;
             db::put_decided(conn, &at, best_of, sides, winner, score, Utc::now()).await?;
-            let outcome = played_or_walkover(winner, Some(score));
+            let outcome = series_outcome(winner, Some(score));
             let event = NewEvent::series(EventKind::Decided, None, Some(outcome));
             db::insert_event(conn, &at, &event).await?;
         }

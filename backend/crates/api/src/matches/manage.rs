@@ -103,7 +103,7 @@ pub async fn put_game(
     ),
     request_body = SetResult,
     responses(
-        (status = OK, body = MatchDetail, description = "W.O. na série inteira, dado pelo organizador: numa partida pronta ou no lugar da série decidida (também com o torneio encerrado). Os mapas confirmados ficam; os pendentes e contestados são anulados. A correção refaz a chave; mapas de partidas cujos lados mudaram são anulados; o torneio encerra ou volta para em andamento conforme a chave"),
+        (status = OK, body = MatchDetail, description = "W.O. na série inteira, dado pelo organizador: numa partida pronta ou no lugar da série decidida (também com o torneio encerrado). Os mapas confirmados ficam até o primeiro sem confirmar; dele em diante, são anulados. A correção refaz a chave; mapas de partidas cujos lados mudaram são anulados; o torneio encerra ou volta para em andamento conforme a chave"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
@@ -124,30 +124,19 @@ pub async fn set_result(
     let sides = playable(m.state)?;
     let ResultInput::Walkover { winner } = body.result;
     let outcome = outcome::walkover(sides, winner);
+    let winner = winner.of(sides);
     if stage.result(m.id).is_some() {
         let change = correction::Change::Put {
-            winner: outcome.winner(),
+            winner: Some(winner),
             score: None,
         };
         correction::void_stale(&mut tx, &member, &tournament, &stage, m.id, &change).await?;
     }
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
-    let open: Vec<&StoredGame> = stage
-        .games_of(m.id)
-        .into_iter()
-        .filter(|g| g.status != GameStatus::Confirmed)
-        .collect();
+    let open = settle::unsettled(&stage.games_of(m.id));
     settle::void(&mut tx, &at, &open, Some(member.user.id)).await?;
-    db::put_by_organizer(
-        &mut tx,
-        &at,
-        m.best_of,
-        sides,
-        outcome.winner(),
-        member.user.id,
-    )
-    .await?;
+    db::put_by_organizer(&mut tx, &at, m.best_of, sides, winner, member.user.id).await?;
     let event = NewEvent::series(EventKind::Walkover, Some(member.user.id), Some(outcome))
         .with_comment(comment.as_deref());
     db::insert_event(&mut tx, &at, &event).await?;

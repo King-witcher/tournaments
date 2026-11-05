@@ -12,6 +12,7 @@ import {
   stepSecondsGroup,
   type TournamentValues,
 } from "../lib/form-values";
+import { isEvenSeries } from "../lib/format";
 import { sameValues } from "../lib/same-values";
 import { MapPoolField } from "./map-pool-field";
 import { SecondsSelect } from "./seconds-select";
@@ -50,7 +51,8 @@ type Props = {
 
 /**
  * O grupo Mapas: como sai o mapa de cada partida, no veto a ordem dos bans e
- * picks, o pool de mapas com a imagem de cada um (fora do modo desligado;
+ * picks (a série par só tem bans, e o campo não aparece: a dica do modo explica),
+ * o pool de mapas com a imagem de cada um (fora do modo desligado;
  * vale para o veto, a votação e o sorteio) e, com veto ou votação, o tempo de
  * cada passo, que vale também para o draft de campeões. Sem passo de mapa,
  * esse tempo fica no grupo Campeões.
@@ -61,16 +63,23 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
   const { tenant, values, onChange, errors, maps, disabled } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
+  const evenVeto = values.mapMode === "veto" && isEvenSeries(values.bestOf);
 
   return (
     <>
       <Select
         labelText={t("mapMode")}
-        helperText={t(
-          tdm
-            ? `mapModeHintTdm.${values.mapMode}`
-            : `mapModeHint.${values.mapMode}`,
-        )}
+        helperText={
+          evenVeto
+            ? t(tdm ? "mapModeHintTdm.vetoEven" : "mapModeHint.vetoEven", {
+                games: values.bestOf,
+              })
+            : t(
+                tdm
+                  ? `mapModeHintTdm.${values.mapMode}`
+                  : `mapModeHint.${values.mapMode}`,
+              )
+        }
         name="mapMode"
         value={values.mapMode}
         disabled={disabled}
@@ -82,7 +91,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           <SelectItem key={m} value={m} text={t(`mapModes.${m}`)} />
         ))}
       </Select>
-      {values.mapMode === "veto" && (
+      {values.mapMode === "veto" && !evenVeto && (
         <TournamentVetoOrderField
           values={values}
           onChange={onChange}

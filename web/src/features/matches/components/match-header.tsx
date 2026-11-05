@@ -22,10 +22,10 @@ type Props = {
 /**
  * O topo da série: a trilha até a chave, o código curto (o mesmo do cartão
  * na chave) com os dois lados e, depois da primeira partida enviada, o
- * placar entre eles (o das confirmadas enquanto corre), o estado e o que ela
- * espera de quem vê, a parte, a rodada e o melhor de N e, embaixo, como ela
- * terminou (ou por que ainda não começou). Com a série em andamento e veto no
- * torneio, o botão que silencia os sons do veto.
+ * placar entre eles (o das confirmadas enquanto corre), o estado (o empate no
+ * lugar de "Decidida") e o que ela espera de quem vê, a parte, a rodada e o
+ * melhor de N e, embaixo, como ela terminou (ou por que ainda não começou). Com
+ * a série em andamento e veto no torneio, o botão que silencia os sons do veto.
  */
 export function MatchHeader({
   tenant,
@@ -74,6 +74,7 @@ export function MatchHeader({
       ? { a: s.a_maps, b: s.b_maps }
       : null;
   const sides = { code: code(s.key), a: side("a"), b: side("b") };
+  const drawn = s.state === "completed" && r != null && r.winner == null;
 
   return (
     <PageHeader
@@ -90,8 +91,8 @@ export function MatchHeader({
       }
       tags={
         <>
-          <StatusTag status={MATCH_STATE_STATUS[s.state]}>
-            {t(`stateTag.${s.state}`)}
+          <StatusTag status={drawn ? "neutral" : MATCH_STATE_STATUS[s.state]}>
+            {t(drawn ? "stateTag.drawn" : `stateTag.${s.state}`)}
           </StatusTag>
           {s.task && (
             <StatusTag status={TASK_STATUS[s.task]}>

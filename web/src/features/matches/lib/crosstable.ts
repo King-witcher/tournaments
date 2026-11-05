@@ -16,7 +16,14 @@ export type CrossResult =
   | { kind: "pending" }
   | { kind: "playing"; own: number; other: number }
   | { kind: "walkover"; won: boolean }
-  | { kind: "score"; won: boolean; own: number; other: number; frags: boolean };
+  | {
+      kind: "score";
+      /** `drawn`: a série par empatada, sem vencedor. */
+      outcome: "won" | "lost" | "drawn";
+      own: number;
+      other: number;
+      frags: boolean;
+    };
 
 function pairKey(x: number, y: number) {
   return x < y ? `${x}-${y}` : `${y}-${x}`;
@@ -45,14 +52,15 @@ export function crossResult(m: Match, team: number): CrossResult {
   const isA = m.a.team_id === team;
   const r = m.result;
   if (r) {
-    const won = (r.winner === "a") === isA;
+    // O lado que venceu é do calendário; sem vencedor, a série empatou.
+    const won = r.winner != null && (r.winner === "a") === isA;
     if (r.walkover) return { kind: "walkover", won };
     const frags = m.best_of === 1 && m.a_frags != null && m.b_frags != null;
     const a = (frags ? m.a_frags : r.a_wins) ?? 0;
     const b = (frags ? m.b_frags : r.b_wins) ?? 0;
     return {
       kind: "score",
-      won,
+      outcome: r.winner == null ? "drawn" : won ? "won" : "lost",
       own: isA ? a : b,
       other: isA ? b : a,
       frags,

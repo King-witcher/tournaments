@@ -11,8 +11,9 @@
 //!   ordem das rodadas, saltando só quando o adversário da vez ainda vai
 //!   demorar), a partir do progresso que a API informa; só indica, nada muda
 //!   em `replay`, `report` nem na tabela.
-//! - Uma série (melhor de N, ímpar) para todas as partidas; não há final.
-//! - Classificação e desempates em `formats::table`: pontos, confronto
+//! - Uma série (melhor de N, ímpar, 2, 4 ou 6) para todas as partidas; não há
+//!   final. A série par pode empatar, sem vencedor (`series`).
+//! - Classificação e desempates em `formats::table`: saldo de séries, confronto
 //!   direto, saldo de mapas, saldo de frags, seed.
 //! - Termina quando todas as séries estão decididas; só então há colocação
 //!   (`placements`), uma posição por participante, sem empate.
@@ -28,20 +29,20 @@ pub use suggest::{SeriesProgress, suggest};
 use super::check_count;
 use super::table::{self, League, TableRow};
 use crate::core::{EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport};
-use crate::series::validate_best_of;
+use crate::series::validate_league_best_of;
 
 /// Teto de participantes: 32 dá 496 partidas e 31 séries por participante.
 pub const MAX_PARTICIPANTS: usize = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RoundRobinConfig {
-    /// Melhor de N de todas as partidas.
+    /// Melhor de N de todas as partidas: ímpar, 2, 4 ou 6.
     pub best_of: u8,
 }
 
 impl RoundRobinConfig {
     pub fn validate(&self) -> Result<(), EngineError> {
-        validate_best_of(self.best_of)
+        validate_league_best_of(self.best_of)
     }
 
     /// Máximo de mapas de um participante com `participants`: N − 1 séries.

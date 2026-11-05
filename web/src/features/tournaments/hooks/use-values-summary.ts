@@ -9,7 +9,7 @@ import {
   type TournamentValues,
   teamSizeOf,
 } from "../lib/form-values";
-import { teamsIn } from "../lib/format";
+import { isEvenSeries, teamsIn } from "../lib/format";
 import { teamPresetOf } from "../lib/team-rules";
 import { useFormatSeconds } from "./use-format-seconds";
 import { useModeLabel } from "./use-mode-label";
@@ -122,7 +122,9 @@ export function useValuesSummary() {
     veto: (v: TournamentValues, maps: components["schemas"]["Map"][]) =>
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
-        v.mapMode === "veto" && t(`vetoOrder.${v.vetoOrder}`),
+        v.mapMode === "veto" &&
+          !isEvenSeries(v.bestOf) &&
+          t(`vetoOrder.${v.vetoOrder}`),
         v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
         stepSecondsGroup(v) === "maps" &&
           t("seconds", { time: formatSeconds(v.vetoSeconds) }),

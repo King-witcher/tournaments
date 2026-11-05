@@ -114,8 +114,10 @@ fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiErro
             .ok_or_else(ApiError::internal)?,
         position: r.position,
         points: r.points,
+        series_diff: r.series_diff,
         played: r.played,
         wins: r.wins,
+        draws: r.draws,
         losses: r.losses,
         byes: r.byes,
         maps_won: r.maps_won,
@@ -127,6 +129,7 @@ fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiErro
         frags_complete: r.frags_complete,
         buchholz: r.buchholz,
         ahead_by: r.ahead_by.map(|c| match c {
+            Criterion::SeriesDiff => TableCriterion::SeriesDiff,
             Criterion::Points => TableCriterion::Points,
             Criterion::Buchholz => TableCriterion::Buchholz,
             Criterion::HeadToHead => TableCriterion::HeadToHead,
@@ -295,20 +298,26 @@ pub fn game(g: &StoredGame, extra: GameExtra, lineup: &[LineupRow]) -> GameDetai
 
 pub fn event(stage: &Stage, e: EventRow) -> Result<MatchEvent, ApiError> {
     let maps = |n: Option<i16>| n.map(u8::try_from).transpose();
-    let outcome = match e.winner {
-        Some(winner) => {
-            let entrant = stage
-                .entrant(ParticipantId(winner))
-                .ok_or_else(ApiError::internal)?;
-            Some(EventOutcome {
-                winner: entrant.view(),
-                walkover: e.game.is_none() && e.winner_maps.is_none(),
+    let winner = e
+        .winner
+        .map(|w| {
+            stage
+                .entrant(ParticipantId(w))
+                .map(StoredTeam::view)
+                .ok_or_else(ApiError::internal)
+        })
+        .transpose()?;
+    // Sem vencedor, só a série empatada tem o que mostrar: o placar.
+    let outcome = (winner.is_some() || e.winner_maps.is_some())
+        .then(|| {
+            Ok::<_, ApiError>(EventOutcome {
+                walkover: winner.is_some() && e.game.is_none() && e.winner_maps.is_none(),
+                winner,
                 winner_maps: maps(e.winner_maps).map_err(|_| ApiError::internal())?,
                 loser_maps: maps(e.loser_maps).map_err(|_| ApiError::internal())?,
             })
-        }
-        None => None,
-    };
+        })
+        .transpose()?;
     Ok(MatchEvent {
         kind: EventKind::from_db(&e.kind)?,
         game: e.game,

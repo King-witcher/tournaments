@@ -158,9 +158,10 @@ fn limits_and_config() {
         Err(EngineError::DuplicateParticipant(p(1)))
     );
     assert_eq!(
-        RoundRobinBracket::new(RoundRobinConfig { best_of: 2 }, seeds(4)),
-        Err(EngineError::InvalidBestOf(2))
+        RoundRobinBracket::new(RoundRobinConfig { best_of: 8 }, seeds(4)),
+        Err(EngineError::InvalidBestOf(8))
     );
+    assert!(RoundRobinBracket::new(RoundRobinConfig { best_of: 2 }, seeds(4)).is_ok());
     assert!(RoundRobinBracket::new(config(), seeds(32)).is_ok());
 }
 
@@ -251,6 +252,85 @@ fn walkover_is_a_clean_win() {
     let top = b.table()[0];
     let maps = (top.maps_won, top.maps_lost);
     assert_eq!((top.participant, top.points, maps), (p(2), 1, (2, 0)));
+}
+
+/// Cada série da md2 de `b`: `Some(ganhador)` (2 x 0) ou empate.
+fn report_md2(b: &mut RoundRobinBracket, match_id: MatchId, winner: Option<i64>) {
+    let outcome = match winner {
+        Some(w) => Outcome::Played {
+            winner: p(w),
+            score: SeriesScore {
+                winner: 2,
+                loser: 0,
+            },
+        },
+        None => Outcome::Drawn { maps: 1 },
+    };
+    b.report(StageReport {
+        report: MatchReport { match_id, outcome },
+        frags: Some(SeriesFrags::default()),
+    })
+    .unwrap();
+}
+
+#[test]
+fn best_of_two_plays_to_the_end_with_draws() {
+    let config = RoundRobinConfig { best_of: 2 };
+    let mut b = RoundRobinBracket::new(config, seeds(3)).unwrap();
+    assert_eq!(b.worst_case_games(), 4);
+    // Rodadas de 3: 2 x 3, 1 x 3, 1 x 2, cada uma com a folga de um.
+    report_md2(&mut b, id(1, 1), None);
+    assert!(!b.is_finished());
+    report_md2(&mut b, id(2, 1), Some(1));
+    // Fecha na última série, empatada: nenhuma fica pronta, e há colocação.
+    assert!(b.placements().is_empty());
+    report_md2(&mut b, id(3, 1), None);
+    assert!(b.is_finished());
+    let t = b.table();
+    let order: Vec<i64> = t.iter().map(|r| r.participant.0).collect();
+    assert_eq!(order, [1, 2, 3]);
+    assert_eq!(
+        (t[0].wins, t[0].draws, t[0].losses, t[0].series_diff),
+        (1, 1, 0, 1)
+    );
+    assert_eq!(
+        (t[1].wins, t[1].draws, t[1].losses, t[1].series_diff),
+        (0, 2, 0, 0)
+    );
+    assert_eq!(
+        (t[2].wins, t[2].draws, t[2].losses, t[2].series_diff),
+        (0, 1, 1, -1)
+    );
+    assert_eq!(b.placements().first().map(|x| x.participant), Some(p(1)));
+    // O empate entra no replay como qualquer resultado.
+    let m = b.get(id(1, 1)).unwrap();
+    assert!(matches!(
+        m.state,
+        MatchState::Completed {
+            outcome: Outcome::Drawn { maps: 1 },
+            ..
+        }
+    ));
+}
+
+#[test]
+fn longer_even_series_end_with_a_draw_too() {
+    for (best_of, maps) in [(4u8, 2u8), (6, 3)] {
+        let config = RoundRobinConfig { best_of };
+        let mut b = RoundRobinBracket::new(config, seeds(2)).unwrap();
+        b.report(StageReport::from(MatchReport {
+            match_id: id(1, 1),
+            outcome: Outcome::Drawn { maps },
+        }))
+        .unwrap();
+        assert!(b.is_finished());
+        let t = b.table();
+        assert_eq!((t[0].participant, t[0].series_diff), (p(1), 0));
+        assert_eq!(
+            (t[0].maps_won, t[1].maps_won),
+            (u16::from(maps), u16::from(maps))
+        );
+    }
 }
 
 #[test]

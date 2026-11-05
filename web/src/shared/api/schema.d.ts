@@ -2261,15 +2261,11 @@ export interface components {
             /** Format: int32 */
             loser_maps?: number | null;
             walkover: boolean;
-            /**
-             * @description O time vencedor (que pode não ser mais um dos lados, num envio
-             *     anulado).
-             */
-            winner: components["schemas"]["Team"];
+            winner?: components["schemas"]["Team"] | null;
             /**
              * Format: int32
-             * @description Mapas do vencedor e do perdedor da série; `null` no W.O. e nos
-             *     eventos de um mapa.
+             * @description Mapas do vencedor e do perdedor da série (na empatada, os de cada lado);
+             *     `null` no W.O. e nos eventos de um mapa.
              */
             winner_maps?: number | null;
         };
@@ -2624,13 +2620,14 @@ export interface components {
             /** Format: date-time */
             confirmed_at: string;
             /**
-             * @description `maps` (os mapas confirmados deram a maioria), `organizer` (W.O.),
+             * @description `maps` (os mapas confirmados deram a maioria ou empataram a série par),
+             *     `organizer` (W.O.),
              *     `withdrawal` (W.O. automático); `opponent` e `deadline` só em séries
              *     enviadas inteiras, antes do envio mapa a mapa.
              */
             confirmed_via: components["schemas"]["Confirmation"];
             walkover: boolean;
-            winner: components["schemas"]["Side"];
+            winner?: components["schemas"]["Side"] | null;
         };
         /** @description Os screenshots de uma partida, mapa a mapa. */
         MatchScreenshots: {
@@ -3600,7 +3597,8 @@ export interface components {
         } | {
             /**
              * Format: int32
-             * @description Melhor de N de todas as partidas (ímpar).
+             * @description Melhor de N de todas as partidas: ímpar, ou 2, 4 ou 6. A série par
+             *     fecha na maioria ou, com todos os mapas e metade para cada lado, empata.
              * @example 3
              */
             best_of: number;
@@ -3679,12 +3677,12 @@ export interface components {
             out: number;
         };
         /**
-         * @description Critério de ordem da tabela, na ordem em que valem: pontos, Buchholz (só
-         *     suíço), confronto direto, saldo de mapas, saldo de frags e, por último, o
-         *     seed.
+         * @description Critério de ordem da tabela, na ordem em que valem: o saldo de séries (round
+         *     robin) ou os pontos e o Buchholz (suíço), depois confronto direto, saldo de
+         *     mapas, saldo de frags e, por último, o seed.
          * @enum {string}
          */
-        TableCriterion: "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "seed";
+        TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "seed";
         /** @description Uma linha da tabela do round robin ou do suíço. */
         TableRow: {
             ahead_by?: components["schemas"]["TableCriterion"] | null;
@@ -3699,6 +3697,11 @@ export interface components {
              *     folga não vale ponto.
              */
             byes: number;
+            /**
+             * Format: int32
+             * @description Séries empatadas: só nas séries pares.
+             */
+            draws: number;
             /** Format: int64 */
             frag_diff: number;
             /** Format: int64 */
@@ -3720,17 +3723,19 @@ export interface components {
             /**
              * Format: int32
              * @description Mapas das séries; o W.O. conta como vitória sem perder mapa (2 x 0 na
-             *     md3).
+             *     md2 e na md3, 3 x 0 na md4 e na md5), e a série empatada, metade para
+             *     cada lado.
              */
             maps_won: number;
             /**
              * Format: int32
-             * @description Séries decididas (W.O. inclusive; bye e folga não).
+             * @description Séries decididas (W.O. e empate inclusive; bye e folga não).
              */
             played: number;
             /**
              * Format: int32
-             * @description Séries vencidas (W.O. inclusive) e, no suíço, os byes.
+             * @description Séries vencidas (W.O. inclusive) e, no suíço, os byes. É o primeiro
+             *     critério do suíço.
              */
             points: number;
             /**
@@ -3738,6 +3743,12 @@ export interface components {
              * @description De 1 a N, sem empate.
              */
             position: number;
+            /**
+             * Format: int32
+             * @description Vitórias menos derrotas (W.O. inclusive; empate vale 0). É o primeiro
+             *     critério do round robin.
+             */
+            series_diff: number;
             /**
              * Format: int64
              * @description O time (um dos `entrants` da chave).
@@ -9997,7 +10008,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description W.O. na série inteira, dado pelo organizador: numa partida pronta ou no lugar da série decidida (também com o torneio encerrado). Os mapas confirmados ficam; os pendentes e contestados são anulados. A correção refaz a chave; mapas de partidas cujos lados mudaram são anulados; o torneio encerra ou volta para em andamento conforme a chave */
+            /** @description W.O. na série inteira, dado pelo organizador: numa partida pronta ou no lugar da série decidida (também com o torneio encerrado). Os mapas confirmados ficam até o primeiro sem confirmar; dele em diante, são anulados. A correção refaz a chave; mapas de partidas cujos lados mudaram são anulados; o torneio encerra ou volta para em andamento conforme a chave */
             200: {
                 headers: {
                     [name: string]: unknown;

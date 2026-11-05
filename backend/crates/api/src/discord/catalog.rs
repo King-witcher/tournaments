@@ -37,12 +37,20 @@ pub struct Spec {
     /// Avisos iguais ainda na fila viram um só, juntando quem se dirige
     /// (a partida pronta chega uma vez por lado).
     pub merge: bool,
+    /// Variante de outro aviso, sem interruptor próprio: sai se aquele está
+    /// ligado, e a tela de configurações não a lista.
+    pub variant_of: Option<&'static str>,
     pt: &'static str,
     es: &'static str,
     en: &'static str,
 }
 
 impl Spec {
+    /// O código do interruptor deste aviso nas configurações da comunidade.
+    pub fn switch(&self) -> &'static str {
+        self.variant_of.unwrap_or(self.code)
+    }
+
     pub const fn text(&self, locale: Locale) -> &'static str {
         match locale {
             Locale::Pt => self.pt,
@@ -65,6 +73,7 @@ const fn spec(
         default_on,
         to,
         merge: false,
+        variant_of: None,
         pt,
         es,
         en,
@@ -160,6 +169,19 @@ pub const CATALOG: &[Spec] = &[
         "**{tournament}**, serie {match}: {winner} venció a {loser}{score_part}.\n{link}",
         "**{tournament}**, match {match}: {winner} beat {loser}{score_part}.\n{link}",
     ),
+    // A série par empatada: quem ligou o resultado de cada série quer saber dela
+    // também.
+    Spec {
+        variant_of: Some("match.series_decided"),
+        ..spec(
+            "match.series_drawn",
+            false,
+            To::Nobody,
+            "**{tournament}**, série {match}: {side_a} e {side_b} empataram{score_part}.\n{link}",
+            "**{tournament}**, serie {match}: {side_a} y {side_b} empataron{score_part}.\n{link}",
+            "**{tournament}**, match {match}: {side_a} and {side_b} tied{score_part}.\n{link}",
+        )
+    },
 ];
 
 pub fn find(code: &str) -> Option<&'static Spec> {
@@ -284,6 +306,32 @@ mod tests {
         assert_eq!(escape("Ana"), "Ana");
         let params = json!({ "player": "@here" });
         assert_eq!(render("{player}", &params, &[]), "\\@here");
+    }
+
+    #[test]
+    fn the_draw_goes_by_the_switch_of_the_series_result() {
+        let drawn = find("match.series_drawn").unwrap();
+        assert_eq!(drawn.switch(), "match.series_decided");
+        assert_eq!(find("match.ready").unwrap().switch(), "match.ready");
+        let params = json!({
+            "tournament": "Copa", "match": "2.1", "side_a": "Ana", "side_b": "Bia",
+        });
+        let extra = [
+            ("score_part", " (1-1)".to_owned()),
+            ("link", "L".to_owned()),
+        ];
+        assert_eq!(
+            render(drawn.text(Locale::Pt), &params, &extra),
+            "**Copa**, série 2.1: Ana e Bia empataram (1-1).\nL"
+        );
+        assert_eq!(
+            render(drawn.text(Locale::Es), &params, &extra),
+            "**Copa**, serie 2.1: Ana y Bia empataron (1-1).\nL"
+        );
+        assert_eq!(
+            render(drawn.text(Locale::En), &params, &extra),
+            "**Copa**, match 2.1: Ana and Bia tied (1-1).\nL"
+        );
     }
 
     #[test]

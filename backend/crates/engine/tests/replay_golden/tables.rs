@@ -5,7 +5,7 @@ use engine::formats::swiss::{SwissConfig, SwissRound};
 use engine::formats::{StageFormat, StageHistory};
 
 use crate::common::{
-    assert_text, matches_text, p, placements_text, played, replay, results, robin, swiss,
+    assert_text, drawn, matches_text, p, placements_text, played, replay, results, robin, swiss,
     table_text, walkover, with_frags,
 };
 
@@ -31,17 +31,19 @@ fn round_robin_with_odd_players_ties_and_walkover() {
         with_frags(played(robin(5, 2), 3, (2, 1)), 102, 80),
     ];
 
-    // Em andamento: a tabela existe, mas ninguém tem colocação ainda.
+    // Em andamento: a tabela existe, mas ninguém tem colocação ainda. A ordem é
+    // pelo saldo de séries: P2, 1-0, empata com P5, 2-1, e venceu o confronto. Até
+    // 05/11 era por vitórias, com P5 em 1º; a ordem final não mudou.
     let midway = replay(format, 5, results(&reports[..5]));
     assert!(!midway.is_finished());
     assert_eq!(placements_text(&midway), "");
     assert_text(
         &table_text(&midway),
         "\
-1 P5 pts2 2-1 byes0 maps 5-3 frags 225-230 bh - ahead points
-2 P1 pts1 1-1 byes0 maps 3-2 frags 145-120 bh - ahead frag_diff
-3 P2 pts1 1-0 byes0 maps 2-1 frags 100-90 bh - ahead map_diff
-4 P4 pts1 1-1 byes0 maps 2-3 frags 140-153 bh - ahead points
+1 P2 pts1 1-0 byes0 maps 2-1 frags 100-90 bh - ahead head_to_head
+2 P5 pts2 2-1 byes0 maps 5-3 frags 225-230 bh - ahead series_diff
+3 P1 pts1 1-1 byes0 maps 3-2 frags 145-120 bh - ahead map_diff
+4 P4 pts1 1-1 byes0 maps 2-3 frags 140-153 bh - ahead series_diff
 5 P3 pts0 0-2 byes0 maps 1-4 frags 138-155 bh - ahead -",
     );
 
@@ -70,10 +72,10 @@ RR5.3 bo3 bye P5",
     assert_text(
         &table_text(&stage),
         "\
-1 P2 pts3 3-1 byes0 maps 7-3 frags 316-266 bh - ahead points
+1 P2 pts3 3-1 byes0 maps 7-3 frags 316-266 bh - ahead series_diff
 2 P1 pts2 2-2 byes0 maps 5-5 frags 279-274 bh - ahead head_to_head
 3 P3 pts2 2-2 byes0 maps 5-5 frags 240-235 bh - ahead frag_diff
-4 P5 pts2 2-2 byes0 maps 5-5 frags 225-230 bh - ahead points
+4 P5 pts2 2-2 byes0 maps 5-5 frags 225-230 bh - ahead series_diff
 5 P4 pts1 1-3 byes0 maps 3-7 frags 258-313 bh - ahead -",
     );
     assert_text(
@@ -101,10 +103,47 @@ fn round_robin_head_to_head_comes_before_the_map_difference() {
         &table_text(&stage),
         "\
 1 P2 pts2 2-1 byes0 maps 5-4 frags 0-0 bh - ahead head_to_head
-2 P1 pts2 2-1 byes0 maps 5-2 frags 0-0 bh - ahead points
+2 P1 pts2 2-1 byes0 maps 5-2 frags 0-0 bh - ahead series_diff
 3 P4 pts1 1-2 byes0 maps 3-5 frags 0-0 bh - ahead head_to_head
 4 P3 pts1 1-2 byes0 maps 3-5 frags 0-0 bh - ahead -",
     );
+}
+
+/// Melhor de 2: 1 x 1 é empate e vale 0 no saldo. P3 e P1 empatam em +1 e entre
+/// si, e o saldo de mapas é o dobro do de séries, então decidem os frags. P4 e P2
+/// empatam em -1, e P4 venceu o confronto.
+#[test]
+fn round_robin_best_of_two_with_draws() {
+    let format = StageFormat::RoundRobin(RoundRobinConfig { best_of: 2 });
+    let reports = [
+        with_frags(played(robin(1, 1), 1, (2, 0)), 40, 20),
+        with_frags(drawn(robin(1, 2), 1), 35, 30),
+        with_frags(drawn(robin(2, 1), 1), 25, 30),
+        with_frags(played(robin(2, 2), 4, (2, 0)), 44, 30),
+        with_frags(drawn(robin(3, 1), 1), 28, 28),
+        with_frags(played(robin(3, 2), 3, (2, 0)), 50, 20),
+    ];
+    let stage = replay(format, 4, results(&reports));
+    assert!(stage.is_finished());
+    assert_text(
+        &matches_text(&stage),
+        "\
+RR1.1 bo2 P1 v P4 -> P1 2-0
+RR1.2 bo2 P2 v P3 -> draw 1-1
+RR2.1 bo2 P1 v P3 -> draw 1-1
+RR2.2 bo2 P2 v P4 -> P4 2-0
+RR3.1 bo2 P1 v P2 -> draw 1-1
+RR3.2 bo2 P3 v P4 -> P3 2-0",
+    );
+    assert_text(
+        &table_text(&stage),
+        "\
+1 P3 pts1 1-2-0 byes0 maps 4-2 frags 110-80 bh - ahead frag_diff
+2 P1 pts1 1-2-0 byes0 maps 4-2 frags 93-78 bh - ahead series_diff
+3 P4 pts1 1-2 byes0 maps 2-4 frags 84-120 bh - ahead head_to_head
+4 P2 pts0 0-2-1 byes0 maps 2-4 frags 93-102 bh - ahead -",
+    );
+    assert_text(&placements_text(&stage), "#1 P3\n#2 P1\n#3 P4\n#4 P2");
 }
 
 /// Suíço: o Buchholz vem antes do confronto direto. P1 e P6 empatam com 2

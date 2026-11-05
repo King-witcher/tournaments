@@ -120,13 +120,38 @@ async fn tournaments_keep_state_and_shape() {
         ("format = 'swiss'".to_owned(), "tournament_stages_shape"),
         (format!("{swiss}, rounds = 0"), "tournament_stages_rounds"),
         (format!("{swiss}, rounds = 128"), "tournament_stages_rounds"),
+        // Série par só no round robin, e só 2, 4 ou 6.
+        ("best_of = 4".to_owned(), "tournament_stages_best_of"),
+        (
+            "finals_best_of = 6".to_owned(),
+            "tournament_stages_finals_best_of",
+        ),
+        (
+            format!("{swiss}, rounds = null, best_of = 2"),
+            "tournament_stages_best_of",
+        ),
+        (
+            format!("{swiss}, rounds = null, best_of = 4"),
+            "tournament_stages_best_of",
+        ),
+        (
+            format!("{swiss}, rounds = null, best_of = 6"),
+            "tournament_stages_best_of",
+        ),
+        (
+            format!("{round_robin}, rounds = null, best_of = 8"),
+            "tournament_stages_best_of",
+        ),
     ] {
         let sql = format!("update tournament_stages set {set}");
         assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{sql}");
     }
     for set in [
         format!("{round_robin}, rounds = null"),
-        format!("{swiss}, rounds = null"),
+        format!("{round_robin}, rounds = null, best_of = 2"),
+        format!("{round_robin}, rounds = null, best_of = 4"),
+        format!("{round_robin}, rounds = null, best_of = 6"),
+        format!("{swiss}, rounds = null, best_of = 3"),
         format!("{swiss}, rounds = 127"),
         single.to_owned(),
     ] {

@@ -28,8 +28,11 @@ export function MatchEventRow({ event }: Props) {
       : t(`kinds.${event.kind}`, { actor: event.actor ? actor : "" });
 
   let outcome: string | null = null;
-  const winner = o ? teamName(o.winner) : "";
-  if (o && event.game != null) {
+  const winner = o?.winner ? teamName(o.winner) : "";
+  if (o && !o.winner) {
+    // Só a série empatada tem resultado sem vencedor.
+    outcome = t("drawn", { maps: o.winner_maps ?? 0 });
+  } else if (o && event.game != null) {
     outcome = t("mapWinner", { winner });
   } else if (o?.walkover) {
     outcome = t("walkover", { winner });

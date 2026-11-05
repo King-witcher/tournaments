@@ -7,7 +7,7 @@ mod single;
 mod validation;
 
 use super::*;
-use crate::core::SeriesScore;
+use crate::core::{Outcome, SeriesScore};
 use crate::series::wins_needed;
 use proptest::prelude::*;
 

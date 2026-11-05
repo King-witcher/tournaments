@@ -106,12 +106,8 @@ impl Stage {
     /// Os frags da série decidida `id` por lado (`a`, `b`), os mesmos que
     /// entram na tabela. `None` antes da decisão e nos casos de `frags`.
     pub fn series_frags(&self, id: MatchId) -> Option<(i32, i32)> {
-        let r = self.result(id)?;
-        let sum = frags(r, &self.games)?;
-        Some(match r.winner_side() {
-            Side::A => (sum.winner, sum.loser),
-            Side::B => (sum.loser, sum.winner),
-        })
+        let sum = frags(self.result(id)?, &self.games)?;
+        Some((sum.a, sum.b))
     }
 
     /// O que entra no replay, com outros resultados (a correção confere a
@@ -223,18 +219,18 @@ pub fn replay(
     Ok(bracket)
 }
 
-/// Os frags da série decidida `r`, somados dos mapas dela (do vencedor e do
-/// perdedor da série). `None` no W.O. (sem mapas que valham) e quando algum
-/// mapa veio sem frags: a série fica sem frags, em vez de contar 0.
+/// Os frags da série decidida `r`, somados dos mapas dela, por lado: os mapas
+/// têm os mesmos lados da série (`check_match_series`). `None` no W.O. (sem
+/// mapas que valham) e quando algum mapa veio sem frags: a série fica sem
+/// frags, em vez de contar 0.
 fn frags(r: &StoredResult, games: &[StoredGame]) -> Option<SeriesFrags> {
     r.score?;
     let mut sum: Option<SeriesFrags> = None;
     for g in games.iter().filter(|g| g.match_id == r.match_id) {
         let (a, b) = g.frags?;
-        let (won, lost) = if r.winner == g.side_a { (a, b) } else { (b, a) };
         let total = sum.get_or_insert_default();
-        total.winner += i32::from(won);
-        total.loser += i32::from(lost);
+        total.a += i32::from(a);
+        total.b += i32::from(b);
     }
     sum
 }

@@ -41,7 +41,7 @@ fn check_invariants(b: &EliminationBracket) {
     for m in b.matches() {
         let (x, y, played_it) = match m.state {
             MatchState::Completed { a, b, outcome } => {
-                let loser = loser_of(a, b, outcome);
+                let loser = loser_of(a, b, outcome).expect("a eliminação não empata");
                 let t = tally.entry(loser).or_default();
                 t.losses += 1;
                 for q in [a, b] {

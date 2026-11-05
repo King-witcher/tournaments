@@ -7,11 +7,15 @@ import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
-import { slotLimits, teamsIn } from "../lib/format";
+import { isEvenSeries, mapsToWin, slotLimits, teamsIn } from "../lib/format";
 import { sameValues } from "../lib/same-values";
 import styles from "./tournament-format-fields.module.scss";
 
+/** A eliminação e o suíço: só ímpares, porque a série não pode empatar. */
 const BEST_OF = [1, 3, 5, 7, 9];
+
+/** O todos contra todos também aceita as séries pares. */
+const BEST_OF_ROUND_ROBIN = [1, 2, 3, 4, 5, 6, 7, 9];
 
 /** O teto de rodadas do suíço na API. */
 const MAX_SWISS_ROUNDS = 127;
@@ -29,10 +33,19 @@ function choiceOf(
     : values.stageFormat;
 }
 
-function patchOf(choice: FormatChoice): Partial<TournamentValues> {
+/**
+ * Trocar de formato. Fora do todos contra todos, a série par vira a ímpar logo
+ * acima (md4 vira md5), e o campo mostra o valor novo.
+ */
+function patchOf(
+  choice: FormatChoice,
+  bestOf: number,
+): Partial<TournamentValues> {
+  if (choice === "round_robin") return { stageFormat: choice };
+  const series = isEvenSeries(bestOf) ? { bestOf: bestOf + 1 } : {};
   return choice === "double" || choice === "single"
-    ? { stageFormat: "elimination", bracket: choice }
-    : { stageFormat: choice };
+    ? { stageFormat: "elimination", bracket: choice, ...series }
+    : { stageFormat: choice, ...series };
 }
 
 /** Os campos do formulário que o bloco lê. */
@@ -59,9 +72,9 @@ type Props = {
 
 /**
  * O formato (as quatro opções à vista, com a dica do escolhido), o reset da
- * grande final na dupla, as séries (e a final, na eliminação) e as rodadas
- * do suíço. No TDM, o teto do formato aparece em jogadores (como as vagas) e
- * as rodadas contam times.
+ * grande final na dupla, as séries (e a final, na eliminação; as pares só no
+ * todos contra todos, com a dica) e as rodadas do suíço. No TDM, o teto do
+ * formato aparece em jogadores (como as vagas) e as rodadas contam times.
  */
 export const TournamentFormatFields = memo(function TournamentFormatFields({
   values,
@@ -72,9 +85,11 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
   const t = useTranslations("TournamentForm");
   const choice = choiceOf(values);
   const elimination = values.stageFormat === "elimination";
-  const bestOfItems = BEST_OF.map((n) => (
-    <SelectItem key={n} value={n} text={t("bestOfOption", { count: n })} />
-  ));
+  const items = (options: number[]) =>
+    options.map((n) => (
+      <SelectItem key={n} value={n} text={t("bestOfOption", { count: n })} />
+    ));
+  const roundRobin = values.stageFormat === "round_robin";
   const tdm = isTdm(values);
   const size = teamSizeOf(values);
   // Rodadas que fazem sentido com as vagas: no máximo N − 1, com N os lados
@@ -101,7 +116,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           value,
           label: t(`stageFormats.${value}`),
         }))}
-        onChange={(next) => onChange(patchOf(next))}
+        onChange={(next) => onChange(patchOf(next, values.bestOf))}
       />
       {elimination && values.bracket === "double" && (
         <Checkbox
@@ -116,6 +131,11 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
       <div className={styles.pair}>
         <Select
           labelText={t("bestOf")}
+          helperText={
+            isEvenSeries(values.bestOf)
+              ? t("bestOfEvenHint", { wins: mapsToWin(values.bestOf) })
+              : undefined
+          }
           name="bestOf"
           value={values.bestOf}
           disabled={disabled}
@@ -123,7 +143,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           invalidText={errors.bestOf}
           onChange={(e) => onChange({ bestOf: Number(e.target.value) })}
         >
-          {bestOfItems}
+          {items(roundRobin ? BEST_OF_ROUND_ROBIN : BEST_OF)}
         </Select>
         {elimination && (
           <Select
@@ -133,7 +153,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             disabled={disabled}
             onChange={(e) => onChange({ finalsBestOf: Number(e.target.value) })}
           >
-            {bestOfItems}
+            {items(BEST_OF)}
           </Select>
         )}
         {values.stageFormat === "swiss" && (

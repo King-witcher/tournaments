@@ -36,6 +36,7 @@
     "double": "Gran final"
   },
   "bestOfOption": "Al mejor de {count}",
+  "bestOfEvenHint": "Esta serie puede empatar. Quien gana {wins} partidas se lleva la serie.",
   "champions": "Campeones",
   "registration": "Inscripciones y plazos",
   "registrationLocked": "El torneo ya empezó. El inicio y el check-in ya no cambian.",
@@ -134,12 +135,14 @@
     },
     "mapModeHint": {
       "veto": "Antes de la primera partida, los dos lados banean y eligen mapas.",
+      "vetoEven": "Antes de la primera partida, los dos lados banean mapas hasta que queden {games}. Las partidas siguen el orden del pool.",
       "vote": "En cada partida, cada lado vota uno de 3 mapas sorteados del pool. Votos distintos, sorteo entre los dos.",
       "random": "El mapa sale del pool, sin repetir en la serie.",
       "off": "Sin repetir mapa en la serie."
     },
     "mapModeHintTdm": {
       "veto": "Antes de la primera partida, los equipos banean y eligen mapas.",
+      "vetoEven": "Antes de la primera partida, los equipos banean mapas hasta que queden {games}. Las partidas siguen el orden del pool.",
       "vote": "En cada partida, cada equipo vota uno de 3 mapas sorteados del pool. Votos distintos, sorteo entre los dos.",
       "random": "El mapa sale del pool, sin repetir en la serie.",
       "off": "Sin repetir mapa en la serie."

@@ -31,7 +31,7 @@ pub enum StageFormat {
 
 impl StageFormat {
     /// Confere a configuração sem depender de participantes (ex.: melhor de N
-    /// ímpar, rodadas do suíço na faixa).
+    /// que o formato aceita, rodadas do suíço na faixa).
     pub fn validate(&self) -> Result<(), EngineError> {
         match self {
             Self::Elimination(c) => c.series.validate(),

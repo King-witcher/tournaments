@@ -110,7 +110,7 @@ type GameMark = (
     Option<MapId>,
     Option<(i16, i16)>,
 );
-type ResultMark = (i64, ParticipantId, Option<(u8, u8)>, Confirmation);
+type ResultMark = (i64, Option<ParticipantId>, Option<(u8, u8)>, Confirmation);
 
 impl Mark {
     fn of(stage: &Stage, m: &Match) -> Self {

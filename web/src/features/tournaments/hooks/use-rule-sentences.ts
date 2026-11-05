@@ -1,7 +1,12 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { formatKind, repeatScope } from "../lib/format";
+import {
+  formatKind,
+  isEvenSeries,
+  mapsToWin,
+  repeatScope,
+} from "../lib/format";
 import { teamPresetOf } from "../lib/team-rules";
 import { useFormatSeconds } from "./use-format-seconds";
 
@@ -24,6 +29,22 @@ export function useRuleSentences() {
       return tournament.mode === "tdm" && kind === "round_robin"
         ? t("tdm.roundRobinRule")
         : t(`bracketRule.${kind}`);
+    },
+
+    /** O (i) do formato no resumo: a regra da chave e, no todos contra todos, o saldo e a série par. */
+    formatTip: (tournament: Tournament) => {
+      const [stage] = tournament.stages;
+      const even = isEvenSeries(stage.best_of);
+      const roundRobin = stage.format === "round_robin";
+      return [
+        tournament.mode === "tdm" && roundRobin
+          ? t("tdm.roundRobinRule")
+          : t(`bracketRule.${formatKind(stage)}`),
+        roundRobin && t(even ? "table.balanceEven" : "table.balance"),
+        even && t("format.seriesEven", { wins: mapsToWin(stage.best_of) }),
+      ]
+        .filter((s): s is string => typeof s === "string")
+        .join(" ");
     },
 
     /**

@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { memberPath } from "@/features/members/lib/paths";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
+import { isEvenSeries } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
@@ -22,13 +23,14 @@ type Props = {
 
 /**
  * A tabela do round robin e do suíço: posição, o time (no duelo, o jogador,
- * com link para a pessoa), pontos, séries vencidas e perdidas (com os byes do
- * suíço), partidas com o saldo (na md1 não: seriam as mesmas contas das
+ * com link para a pessoa), o saldo de séries com sinal no round robin ou os
+ * pontos no suíço, séries vencidas e perdidas (com os empates da série par e os
+ * byes do suíço), partidas com o saldo (na md1 não: seriam as mesmas contas das
  * séries), o saldo de frags (é ele que desempata, não o total; pró e contra
  * vêm ao lado, marcados como incompletos quando alguma série veio sem eles,
  * porque aí não desempatam; "sem frags" quando nenhuma veio), o Buchholz no
  * suíço (explicado no (i) da coluna), e quem venceu, desistiu ou saiu.
- * Embaixo, os desempates que não foram pelos pontos, um por linha ("2º à
+ * Embaixo, os desempates que não foram pelo primeiro critério, um por linha ("2º à
  * frente do 3º pelo confronto direto"), visíveis também no celular, onde as
  * colunas de saldo somem (e, com a do Buchholz, o (i): a explicação vem depois
  * dos desempates, se algum foi por ele). Enquanto a fase corre, é a ordem de
@@ -41,6 +43,7 @@ export function TableStandings({ tenant, bracket }: Props) {
   const rows = bracket.table ?? [];
   const swiss = bracket.format.format === "swiss";
   const finished = bracket.status === "finished";
+  const even = isEvenSeries(bracket.format.best_of);
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
   const signed = (n: number) => (n > 0 ? `+${n}` : fragsText(n));
   const nameOf = (teamId: number) => {
@@ -51,8 +54,8 @@ export function TableStandings({ tenant, bracket }: Props) {
   const columns: DataTableColumn[] = [
     { key: "position", header: t("position") },
     { key: "team", header: t("team") },
-    { key: "points", header: t("points") },
-    { key: "record", header: t("record") },
+    { key: "score", header: swiss ? t("points") : t("seriesDiff") },
+    { key: "record", header: even ? t("recordDraws") : t("record") },
     ...(bracket.format.best_of === 1
       ? []
       : [{ key: "maps", header: t("maps"), secondary: true }]),
@@ -94,9 +97,14 @@ export function TableStandings({ tenant, bracket }: Props) {
             <span className={styles.name}>{name}</span>
           </span>
         ),
-        points: String(r.points),
-        record:
-          r.byes > 0
+        score: swiss ? String(r.points) : signed(r.series_diff),
+        record: even
+          ? t("recordValueDraws", {
+              wins: r.wins,
+              draws: r.draws,
+              losses: r.losses,
+            })
+          : r.byes > 0
             ? t("recordByes", { wins: r.wins, losses: r.losses, byes: r.byes })
             : t("recordValue", { wins: r.wins, losses: r.losses }),
         maps: t("diff", {
@@ -135,12 +143,14 @@ export function TableStandings({ tenant, bracket }: Props) {
   });
 
   // Os desempates que a tela explica: o critério que pôs cada linha à frente
-  // da seguinte, quando não foram os pontos. Entre dois que ainda não
-  // jogaram, é sempre a ordem da chave: não há o que explicar.
+  // da seguinte, quando não foi o primeiro critério, que a coluna já mostra.
+  // Entre dois que ainda não jogaram, é sempre a ordem da chave: não há o que
+  // explicar.
   const started = (r: Schemas["TableRow"]) => r.played + r.byes > 0;
   const tiebreaks = rows.flatMap((r, i) => {
     const next = rows[i + 1];
-    if (!next || !r.ahead_by || r.ahead_by === "points") return [];
+    if (!next || !r.ahead_by) return [];
+    if (r.ahead_by === "points" || r.ahead_by === "series_diff") return [];
     if (!started(r) && !started(next)) return [];
     return [
       t(`aheadBy.${r.ahead_by}`, {

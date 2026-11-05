@@ -47,7 +47,7 @@ pub const MAX_ROUNDS: u16 = MAX_PARTICIPANTS as u16 - 1;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SwissConfig {
-    /// Melhor de N de todas as partidas.
+    /// Melhor de N de todas as partidas: sempre ímpar, sem empate.
     pub best_of: u8,
     /// Número de rodadas; `None` é ⌈log2 N⌉ com os N do início.
     pub rounds: Option<u16>,

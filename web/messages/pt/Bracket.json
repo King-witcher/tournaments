@@ -45,7 +45,8 @@
   "nextMap": "Próximo mapa: {map}",
   "result": {
     "pending": "Partida esperando confirmação",
-    "contested": "Partida contestada"
+    "contested": "Partida contestada",
+    "drawn": "Empate"
   },
   "task": {
     "report": "Envie a próxima partida",
@@ -84,7 +85,8 @@
       "lost": "derrota, {score}",
       "frags": "{score} em frags",
       "wonWalkover": "vitória por W.O.",
-      "lostWalkover": "derrota por W.O."
+      "lostWalkover": "derrota por W.O.",
+      "drawn": "empate, {score}"
     }
   },
   "opponentPlaying": "Adversário jogando",
@@ -126,6 +128,9 @@
     "record": "Séries",
     "recordValue": "{wins}–{losses}",
     "recordByes": "{wins}–{losses} (+{byes} bye)",
+    "recordDraws": "V–E–D",
+    "recordValueDraws": "{wins}–{draws}–{losses}",
+    "seriesDiff": "Saldo",
     "maps": "Partidas",
     "frags": "Saldo de frags",
     "diff": "{won}–{lost} ({diff})",

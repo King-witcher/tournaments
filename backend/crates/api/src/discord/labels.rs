@@ -7,7 +7,7 @@ use serde_json::Value;
 use crate::shared::Locale;
 
 /// Os parâmetros que trazem o nome de alguém (apelido ou nome do time).
-const NAMES: [&str; 4] = ["opponent", "player", "winner", "loser"];
+const NAMES: [&str; 6] = ["opponent", "player", "winner", "loser", "side_a", "side_b"];
 
 /// "Conta excluída" no idioma da configuração.
 pub const fn deleted_account(locale: Locale) -> &'static str {
@@ -124,5 +124,8 @@ mod tests {
         assert_eq!(es["loser"], "Cuenta eliminada");
         let en = with_names(&json!({ "loser": "" }), Locale::En);
         assert_eq!(en["loser"], "Deleted account");
+        let drawn = with_names(&json!({ "side_a": "", "side_b": "Ana" }), Locale::Pt);
+        assert_eq!(drawn["side_a"], "Conta excluída");
+        assert_eq!(drawn["side_b"], "Ana");
     }
 }

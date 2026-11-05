@@ -11,7 +11,8 @@ type Props = { detail: components["schemas"]["MatchDetail"] };
 
 /**
  * A linha embaixo do cabeçalho da série, quando ele não basta: decidida,
- * como e quando (no W.O., quem venceu, que o título não mostra); sem lados
+ * como e quando (no W.O., quem venceu, que o título não mostra; no empate, sem
+ * ninguém); sem lados
  * ainda, sem adversário ou sem precisar, o porquê. Enquanto a série corre,
  * nada: o título e as etiquetas dizem.
  */
@@ -23,14 +24,18 @@ export function MatchStatusLine({ detail }: Props) {
   let line: ReactNode = null;
   if (s.state === "completed" && r) {
     const time = () => <LocalDateTime value={r.confirmed_at} />;
-    line = r.walkover
-      ? t.rich(
-          r.confirmed_via === "withdrawal"
-            ? "walkover.withdrawal"
-            : "walkover.organizer",
-          { name: names[r.winner], time },
-        )
-      : t.rich(`confirmedVia.${r.confirmed_via}`, { time });
+    if (r.winner == null) {
+      line = t.rich("drawnAt", { time });
+    } else if (r.walkover) {
+      line = t.rich(
+        r.confirmed_via === "withdrawal"
+          ? "walkover.withdrawal"
+          : "walkover.organizer",
+        { name: names[r.winner], time },
+      );
+    } else {
+      line = t.rich(`confirmedVia.${r.confirmed_via}`, { time });
+    }
   } else if (s.state !== "ready") {
     line = t(`state.${s.state}`);
   }

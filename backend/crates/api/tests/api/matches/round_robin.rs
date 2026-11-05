@@ -261,9 +261,9 @@ async fn a_round_robin_plays_every_pair_and_ends_with_the_table() {
     assert_eq!(
         ahead,
         [
-            &json!("points"),
-            &json!("points"),
-            &json!("points"),
+            &json!("series_diff"),
+            &json!("series_diff"),
+            &json!("series_diff"),
             &Value::Null
         ]
     );

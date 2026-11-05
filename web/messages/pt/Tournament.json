@@ -77,6 +77,7 @@
       "swissTdm": "O formato é suíço. O número de rodadas depende dos times: 3 com até 8, 4 com até 16, 5 com até 32.",
       "swissRounds": "O formato é suíço, em {rounds, plural, one {# rodada} other {# rodadas}}.",
       "series": "{bestOf, plural, =1 {As séries têm uma partida só.} other {As séries são melhor de #.}}",
+      "seriesEven": "Se cada lado vencer metade das partidas, a série termina empatada. Quem vencer {wins} leva a série, e as que faltam não são jogadas.",
       "finals": {
         "single": "{bestOf, plural, =1 {As séries têm uma partida só} other {As séries são melhor de #}}, e a final, {finals, plural, =1 {uma partida só} other {melhor de #}}.",
         "double": "{bestOf, plural, =1 {As séries têm uma partida só} other {As séries são melhor de #}}, e a grande final, {finals, plural, =1 {uma partida só} other {melhor de #}}."
@@ -92,6 +93,9 @@
     "table": {
       "title": "Classificação",
       "points": "Cada série vencida vale 1 ponto. Os empates em pontos se desfazem nesta ordem:",
+      "balance": "A ordem sai do saldo de séries. Vitória soma 1 e derrota tira 1.",
+      "balanceEven": "A ordem sai do saldo de séries. Vitória soma 1, empate vale 0 e derrota tira 1.",
+      "balanceOrder": "Quem tem o mesmo saldo se separa nesta ordem:",
       "buchholz": "Buchholz (a soma dos pontos dos seus adversários)",
       "headToHead": "Confronto direto",
       "games": "Saldo de partidas",
@@ -109,6 +113,7 @@
         "veto": "Antes da primeira partida, vocês banem e escolhem mapas, um de cada vez, até definir o mapa de cada partida.",
         "vetoBansFirst": "Antes da primeira partida, vocês banem mapas, um de cada vez, até sobrarem só os da série. Depois escolhem a ordem em que eles são jogados.",
         "vetoOne": "Antes da partida, vocês banem mapas, um de cada vez, até sobrar um.",
+        "vetoEven": "Antes da primeira partida, vocês banem mapas, um de cada vez, até sobrarem só os da série. As partidas seguem a ordem do pool.",
         "vote": "Antes de cada partida, cada um vota num de 3 mapas sorteados. Se os votos forem diferentes, o mapa é sorteado entre os dois.",
         "random": "O mapa de cada partida é sorteado quando ela começa.",
         "off": "Vocês combinam o mapa de cada partida, sem repetir na série.",
@@ -118,6 +123,7 @@
         "veto": "Antes da primeira partida, os times banem e escolhem mapas, um de cada vez, até definir o mapa de cada partida.",
         "vetoBansFirst": "Antes da primeira partida, os times banem mapas, um de cada vez, até sobrarem só os da série. Depois escolhem a ordem em que eles são jogados.",
         "vetoOne": "Antes da partida, os times banem mapas, um de cada vez, até sobrar um.",
+        "vetoEven": "Antes da primeira partida, os times banem mapas, um de cada vez, até sobrarem só os da série. As partidas seguem a ordem do pool.",
         "vote": "Antes de cada partida, cada time vota num de 3 mapas sorteados. Se os votos forem diferentes, o mapa é sorteado entre os dois.",
         "random": "O mapa de cada partida é sorteado quando ela começa.",
         "off": "Os times combinam o mapa de cada partida, sem repetir na série.",
@@ -149,7 +155,7 @@
       "walkoverTdm": "Se o outro time não aparecer, ou se o seu precisar sair do torneio, avise a organização. O time que não joga perde por W.O.",
       "score": "O W.O. vale vitória por {wins} a 0.",
       "withdrawal": {
-        "round_robin": "Quem sai do torneio perde por W.O. as séries que faltavam, e os pontos que já fez continuam na tabela.",
+        "round_robin": "Quem sai do torneio perde por W.O. as séries que faltavam, e os resultados que já teve continuam na tabela.",
         "swiss": "Quem sai do torneio não é mais pareado, e os pontos que já fez continuam na tabela."
       }
     },

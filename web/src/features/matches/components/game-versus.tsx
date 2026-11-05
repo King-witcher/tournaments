@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
+import { isEvenSeries } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { useLiveMatch } from "../hooks/use-live-match";
 import { useSideNames } from "../hooks/use-side-names";
@@ -19,8 +20,8 @@ type Props = {
 /**
  * O alto do cartão da partida, como os dois lados de frente: o lado A, no
  * meio a imagem do mapa, o nome e de onde ele veio (quem escolheu, o
- * decisivo, a votação, o sorteio), e o lado B, cada um com o campeão. Some
- * enquanto a partida não tem mapa (votação, mapa combinado fora do site).
+ * decisivo, a votação, o sorteio; na série par, o veto só tem bans e não há o
+ * que dizer), e o lado B, cada um com o campeão. Some enquanto a partida não tem mapa (votação, mapa combinado fora do site).
  */
 export function GameVersus({ number, map: sent }: Props) {
   const t = useTranslations("Match.card");
@@ -35,7 +36,9 @@ export function GameVersus({ number, map: sent }: Props) {
     : !game?.map
       ? null
       : veto?.map_mode === "veto"
-        ? t("decider")
+        ? isEvenSeries(detail.summary.best_of)
+          ? null
+          : t("decider")
         : veto?.map_mode === "vote"
           ? t("voted")
           : veto?.map_mode === "random"

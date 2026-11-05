@@ -457,6 +457,207 @@ async fn events_reject_invalid_rows() {
     );
 }
 
+/// A série `key` em md`best_of`, sem autor, com o vencedor e o placar dados e
+/// `confirmed_via` conforme o placar (os mapas ou o organizador).
+async fn insert_decided(
+    db: &PgPool,
+    (tenant, tournament): (i64, i64),
+    (a, b): (i64, i64),
+    (key, best_of): (&str, i16),
+    winner: Option<i64>,
+    wins: Option<(i16, i16)>,
+) -> Result<sqlx::postgres::PgQueryResult, sqlx::Error> {
+    sqlx::query(
+        r#"insert into match_results
+               (tenant_id, tournament_id, stage, match_key, best_of, side_a, side_b, status,
+                winner, a_wins, b_wins, confirmed_via, confirmed_at, position)
+           values ($1, $2, 1, $3, $4, $5, $6, 'confirmed', $7, $8, $9,
+                   case when $8::smallint is null then 'organizer' else 'maps' end, now(), 1)"#,
+    )
+    .bind(tenant)
+    .bind(tournament)
+    .bind(key)
+    .bind(best_of)
+    .bind(a)
+    .bind(b)
+    .bind(winner)
+    .bind(wins.map(|w| w.0))
+    .bind(wins.map(|w| w.1))
+    .execute(db)
+    .await
+}
+
+#[tokio::test]
+async fn only_an_even_series_in_the_round_robin_draws() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    let body = copa(table("round_robin", json!({ "best_of": 2 })));
+    start(&app, &ana, body, &[&p[0], &p[1]]).await;
+    let (tenant, tournament, seeded) = ids(&db, "copa").await;
+    let t = (tenant, tournament);
+    let sides = (seeded[0], seeded[1]);
+    let a = seeded[0];
+    let cases = [
+        // Sem vencedor, só metade para cada lado numa série par: nem na md3, nem
+        // outro placar, nem o W.O.
+        (("rr-1-1", 3), None, Some((1, 1)), "match_results_draw"),
+        (("rr-1-1", 2), None, Some((2, 0)), "match_results_draw"),
+        (("rr-1-1", 2), None, None, "match_results_draw"),
+        (("rr-1-1", 4), None, Some((1, 1)), "match_results_draw"),
+        (("rr-1-1", 4), None, Some((3, 1)), "match_results_draw"),
+        (("rr-1-1", 6), None, Some((2, 2)), "match_results_draw"),
+        // Com vencedor, a md2 é 2 x 0: 1 x 1 não tem vencedor, e 2 x 1 são 3 mapas.
+        (
+            ("rr-1-1", 2),
+            Some(a),
+            Some((1, 1)),
+            "match_results_score_check",
+        ),
+        (
+            ("rr-1-1", 2),
+            Some(a),
+            Some((2, 1)),
+            "match_results_score_check",
+        ),
+        (
+            ("rr-1-1", 2),
+            Some(a),
+            Some((0, 2)),
+            "match_results_score_check",
+        ),
+        // Na md4 não há 3 x 2 nem vencedor em 2 x 2; na md6, nem 4 x 3 nem 3 x 3.
+        (
+            ("rr-1-1", 4),
+            Some(a),
+            Some((3, 2)),
+            "match_results_score_check",
+        ),
+        (
+            ("rr-1-1", 4),
+            Some(a),
+            Some((2, 2)),
+            "match_results_score_check",
+        ),
+        (
+            ("rr-1-1", 6),
+            Some(a),
+            Some((4, 3)),
+            "match_results_score_check",
+        ),
+        (
+            ("rr-1-1", 6),
+            Some(a),
+            Some((3, 3)),
+            "match_results_score_check",
+        ),
+        // A série par é só do round robin, e só 2, 4 e 6.
+        (
+            ("wb-1-1", 2),
+            Some(a),
+            Some((2, 0)),
+            "match_results_best_of_check",
+        ),
+        (
+            ("sw-1-1", 2),
+            Some(a),
+            Some((2, 0)),
+            "match_results_best_of_check",
+        ),
+        (
+            ("wb-1-1", 4),
+            Some(a),
+            Some((3, 0)),
+            "match_results_best_of_check",
+        ),
+        (
+            ("sw-1-1", 6),
+            Some(a),
+            Some((4, 0)),
+            "match_results_best_of_check",
+        ),
+        (
+            ("rr-1-1", 8),
+            Some(a),
+            Some((5, 0)),
+            "match_results_best_of_check",
+        ),
+    ];
+    for (series, winner, wins, name) in cases {
+        assert_eq!(
+            rejected(insert_decided(&db, t, sides, series, winner, wins).await),
+            rule(CHECK, name),
+            "{series:?} {winner:?} {wins:?}"
+        );
+    }
+
+    // O W.O. da md2 tem vencedor e não tem placar.
+    insert_decided(&db, t, sides, ("rr-1-1", 2), Some(a), None)
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn a_draw_in_the_history_has_the_same_maps_each_and_no_winner() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    let body = copa(table("round_robin", json!({ "best_of": 2 })));
+    start(&app, &ana, body, &[&p[0], &p[1]]).await;
+    let (tenant, tournament, seeded) = ids(&db, "copa").await;
+    let a = seeded[0];
+    let event =
+        |kind: &'static str, key: &'static str, winner: Option<i64>, maps: Option<(i16, i16)>| {
+            sqlx::query(
+                "insert into match_events
+                 (tenant_id, tournament_id, stage, match_key, kind, winner, winner_maps, loser_maps)
+             values ($1, $2, 1, $3, $4, $5, $6, $7)",
+            )
+            .bind(tenant)
+            .bind(tournament)
+            .bind(key)
+            .bind(kind)
+            .bind(winner)
+            .bind(maps.map(|m| m.0))
+            .bind(maps.map(|m| m.1))
+            .execute(&db)
+        };
+    for tie in [(1, 1), (2, 2), (3, 3)] {
+        event("decided", "rr-1-1", None, Some(tie)).await.unwrap();
+    }
+    event("decided", "rr-1-1", Some(a), Some((2, 0)))
+        .await
+        .unwrap();
+    let maps = rule(CHECK, "match_events_maps_check");
+    for (kind, key, winner, score) in [
+        // Sem vencedor, só o mesmo número para cada lado, de 1 a 3, só ao decidir,
+        // só no round robin.
+        ("decided", "rr-1-1", None, Some((2, 0))),
+        ("decided", "rr-1-1", None, Some((2, 1))),
+        ("decided", "rr-1-1", None, Some((4, 4))),
+        ("decided", "wb-1-1", None, Some((1, 1))),
+        ("corrected", "rr-1-1", None, Some((1, 1))),
+        // Com vencedor, 1 x 1 não existe.
+        ("decided", "rr-1-1", Some(a), Some((1, 1))),
+    ] {
+        assert_eq!(
+            rejected(event(kind, key, winner, score).await),
+            maps,
+            "{kind} {key} {winner:?} {score:?}"
+        );
+    }
+    // Decidida sem placar, e não há W.O. empatado.
+    let outcome = rule(CHECK, "match_events_outcome_check");
+    assert_eq!(
+        rejected(event("decided", "rr-1-1", None, None).await),
+        outcome
+    );
+    assert_eq!(
+        rejected(event("walkover", "rr-1-1", None, None).await),
+        outcome
+    );
+}
+
 async fn exec_sql(db: &PgPool, sql: &'static str) -> Result<u64, sqlx::Error> {
     Ok(sqlx::query(sql).execute(db).await?.rows_affected())
 }

@@ -87,12 +87,17 @@ pub enum Outcome {
     },
     /// W.O.: o adversário não compareceu ou desistiu.
     Walkover { winner: ParticipantId },
+    /// Empate: a série par que terminou com `maps` mapas para cada lado, sem
+    /// vencedor. Só o round robin aceita (`series::validate_outcome`).
+    Drawn { maps: u8 },
 }
 
 impl Outcome {
-    pub fn winner(&self) -> ParticipantId {
+    /// Quem venceu; `None` no empate.
+    pub const fn winner(&self) -> Option<ParticipantId> {
         match *self {
-            Outcome::Played { winner, .. } | Outcome::Walkover { winner } => winner,
+            Outcome::Played { winner, .. } | Outcome::Walkover { winner } => Some(winner),
+            Outcome::Drawn { .. } => None,
         }
     }
 }
@@ -104,14 +109,14 @@ pub struct MatchReport {
     pub outcome: Outcome,
 }
 
-/// Frags somados de uma série jogada (os mapas que valem), do vencedor e do
-/// perdedor da série. Quem venceu a série pode ter feito menos frags, e os
-/// frags podem ser negativos (no Quake Champions, suicídio e queda tiram
-/// frag; cada mapa vai de -999 a 999, faixa do site).
+/// Frags somados de uma série jogada (os mapas que valem), de cada lado da
+/// partida. Quem venceu a série pode ter feito menos frags, e os frags podem
+/// ser negativos (no Quake Champions, suicídio e queda tiram frag; cada mapa
+/// vai de -999 a 999, faixa do site).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SeriesFrags {
-    pub winner: i32,
-    pub loser: i32,
+    pub a: i32,
+    pub b: i32,
 }
 
 /// Resultado de uma série com os frags dela, como entra no histórico de uma
@@ -162,7 +167,7 @@ pub struct Match {
     pub id: MatchId,
     pub a: Slot,
     pub b: Slot,
-    /// Série melhor de N mapas (sempre ímpar).
+    /// Série melhor de N mapas: ímpar ou, só no round robin, 2, 4 ou 6.
     pub best_of: u8,
     pub state: MatchState,
 }
@@ -189,7 +194,7 @@ pub enum EngineError {
     TooManyParticipants { max: usize, got: usize },
     #[error("participante repetido: {0:?}")]
     DuplicateParticipant(ParticipantId),
-    #[error("melhor de {0} inválido: precisa ser ímpar e maior que zero")]
+    #[error("melhor de {0} inválido: precisa ser ímpar (o round robin aceita também 2, 4 e 6)")]
     InvalidBestOf(u8),
     #[error("partida inexistente: {0:?}")]
     UnknownMatch(MatchId),

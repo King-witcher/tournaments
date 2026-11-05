@@ -6,7 +6,7 @@
 //! custa cada clique (`cost`), o veto de mapas e
 //! campeões (`veto`), a ordem das escolhas de campeão e o que fica escondido às
 //! cegas (`pick_order`), quem age pelo time (`acting`) e os formatos de tabela
-//! (`round_robin`, `swiss`).
+//! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod acting;
@@ -15,6 +15,7 @@ mod contest;
 mod corrections;
 pub mod cost;
 mod deadline;
+mod even_series;
 mod organizer;
 mod pick_order;
 mod replay;

@@ -163,6 +163,8 @@ pub async fn hold(db: &PgPool, tenant: TenantId, until: DateTime<Utc>) -> Result
 /// `Announce` do outbox.
 pub struct Queued<'a> {
     pub code: &'a str,
+    /// O código do interruptor que libera este aviso (`Spec::switch`).
+    pub switch: &'a str,
     pub params: &'a Value,
     pub path: &'a str,
 }
@@ -181,7 +183,7 @@ pub async fn enqueue(
         r#"insert into discord_messages (tenant_id, code, params, path, users, merge_key)
            select w.tenant_id, $2, $3, $4, $5, $6
            from discord_webhooks w join tenants t on t.id = w.tenant_id
-           where t.slug = $1 and w.broken_at is null and $2 = any(w.events)
+           where t.slug = $1 and w.broken_at is null and $7 = any(w.events)
            on conflict (tenant_id, merge_key) where merge_key is not null do update
            set users = (select coalesce(array_agg(distinct u order by u), '{}')
                         from unnest(discord_messages.users || excluded.users) as u)"#,
@@ -190,7 +192,8 @@ pub async fn enqueue(
         message.params,
         message.path,
         users,
-        merge_key
+        merge_key,
+        message.switch
     )
     .execute(conn)
     .await?;

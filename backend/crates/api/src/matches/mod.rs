@@ -9,8 +9,9 @@
 //! conferida e gravada em `correction`.
 //!
 //! Cada mapa da série é enviado e confirmado sozinho (`games`); a série
-//! fecha quando os mapas confirmados dão a maioria (regra do `engine`,
-//! `series::games`), e só a série decidida entra na chave (`result`). A chave
+//! fecha quando os mapas confirmados dão a maioria ou empatam a série par (regra
+//! do `engine`, `series::games`), e só a série decidida entra na chave
+//! (`result`). A chave
 //! (a fase de qualquer formato: eliminação, round robin ou suíço) nunca é
 //! gravada: sai do `replay` do `engine` com a configuração da fase, os times
 //! pelo seed, as séries decididas, na ordem em que passaram a valer, e, no

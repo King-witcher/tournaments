@@ -5,8 +5,13 @@ use crate::core::{
     BracketSide, Match, MatchId, MatchState, Occupant, Outcome, ParticipantId, Slot,
 };
 
-pub(super) fn loser_of(a: ParticipantId, b: ParticipantId, outcome: Outcome) -> ParticipantId {
-    if outcome.winner() == a { b } else { a }
+/// Quem perdeu. Na eliminação há sempre um: `report` recusa o empate.
+pub(super) fn loser_of(
+    a: ParticipantId,
+    b: ParticipantId,
+    outcome: Outcome,
+) -> Option<ParticipantId> {
+    outcome.winner().map(|w| if w == a { b } else { a })
 }
 
 fn lookup(matches: &[Match], id: MatchId) -> Option<&Match> {
@@ -22,7 +27,9 @@ pub(super) fn occupant(matches: &[Match], slot: Slot) -> Occupant {
         Slot::Participant(p) => Occupant::Participant(p),
         Slot::Bye => Occupant::Bye,
         Slot::WinnerOf(id) => match lookup(matches, id).map(|m| m.state) {
-            Some(MatchState::Completed { outcome, .. }) => Occupant::Participant(outcome.winner()),
+            Some(MatchState::Completed { outcome, .. }) => outcome
+                .winner()
+                .map_or(Occupant::Unknown, Occupant::Participant),
             Some(MatchState::Bye {
                 advanced: Some(p), ..
             }) => Occupant::Participant(p),
@@ -31,7 +38,7 @@ pub(super) fn occupant(matches: &[Match], slot: Slot) -> Occupant {
         },
         Slot::LoserOf(id) => match lookup(matches, id).map(|m| m.state) {
             Some(MatchState::Completed { a, b, outcome }) => {
-                Occupant::Participant(loser_of(a, b, outcome))
+                loser_of(a, b, outcome).map_or(Occupant::Unknown, Occupant::Participant)
             }
             Some(MatchState::Bye { .. }) => Occupant::Bye,
             _ => Occupant::Unknown,
@@ -54,7 +61,7 @@ pub(super) fn resolve(matches: &mut [Match]) {
                 state: MatchState::Completed { a, outcome, .. },
                 ..
             }) = lookup(matches, mid(BracketSide::GrandFinal, 1, 1))
-            && outcome.winner() == *a
+            && outcome.winner() == Some(*a)
         {
             matches[i].state = MatchState::NotNeeded;
             continue;

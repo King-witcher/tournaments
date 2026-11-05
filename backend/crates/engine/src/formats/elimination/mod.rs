@@ -35,11 +35,11 @@ use std::collections::{HashMap, HashSet};
 use serde::Serialize;
 
 use crate::core::{
-    BracketSide, EngineError, Match, MatchId, MatchReport, MatchState, Occupant, Outcome,
-    ParticipantId, Placement, Slot,
+    BracketSide, EngineError, Match, MatchId, MatchReport, MatchState, Occupant, ParticipantId,
+    Placement, Slot,
 };
 use crate::seeding::bracket_size;
-use crate::series::{SeriesLength, validate_score};
+use crate::series::{SeriesLength, validate_outcome};
 use build::{build_matches, mid};
 use resolve::loser_of;
 
@@ -155,8 +155,9 @@ impl EliminationBracket {
     /// Registra um resultado e resolve as partidas que dependem dele.
     ///
     /// Erros: partida inexistente, ainda não pronta, já com resultado;
-    /// vencedor que não joga a partida; placar inválido para o melhor de N.
-    /// W.O. não tem placar e não é validado contra o melhor de N.
+    /// vencedor que não joga a partida; placar inválido para o melhor de N, o
+    /// empate inclusive. W.O. não tem placar e não é validado contra o melhor
+    /// de N.
     pub fn report(&mut self, report: MatchReport) -> Result<(), EngineError> {
         let id = report.match_id;
         let idx = self
@@ -169,16 +170,16 @@ impl EliminationBracket {
             MatchState::Completed { .. } => return Err(EngineError::MatchAlreadyReported(id)),
             _ => return Err(EngineError::MatchNotReady(id)),
         };
-        let winner = report.outcome.winner();
-        if winner != a && winner != b {
+        if let Some(winner) = report.outcome.winner()
+            && winner != a
+            && winner != b
+        {
             return Err(EngineError::NotInMatch {
                 match_id: id,
                 participant: winner,
             });
         }
-        if let Outcome::Played { score, .. } = report.outcome {
-            validate_score(m.best_of, score)?;
-        }
+        validate_outcome(m.best_of, report.outcome)?;
         self.matches[idx].state = MatchState::Completed {
             a,
             b,
@@ -266,7 +267,7 @@ impl EliminationBracket {
         }
 
         let loser = |id: MatchId| match self.get(id).map(|m| m.state) {
-            Some(MatchState::Completed { a, b, outcome }) => Some(loser_of(a, b, outcome)),
+            Some(MatchState::Completed { a, b, outcome }) => loser_of(a, b, outcome),
             _ => None,
         };
 
@@ -276,9 +277,10 @@ impl EliminationBracket {
             state: MatchState::Completed { outcome, .. },
             ..
         }) = decided
+            && let Some(participant) = outcome.winner()
         {
             out.push(Placement {
-                participant: outcome.winner(),
+                participant,
                 rank: 1,
                 tied: 1,
             });
