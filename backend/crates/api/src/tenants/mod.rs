@@ -7,7 +7,8 @@
 //! agendador avisa o owner na véspera e apaga na data). Também é a base de
 //! todo dado de tenant:
 //! `TenantId`, `Role`, o extractor `TenantMember` (que recusa escrita na
-//! comunidade com a exclusão agendada; `DuringDeletion` passa) e as regras de
+//! comunidade com a exclusão agendada; `DuringDeletion` passa; `Memberships`
+//! traz todas as participações de quem vê) e as regras de
 //! apelido, que os outros domínios usam nas rotas `/tenants/{slug}/...`, e o
 //! que a comunidade emite no outbox (`changed`, `access_lost`,
 //! `organizing_changed`; `staff` são os destinatários dos avisos da
@@ -26,7 +27,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
-pub use access::{DuringDeletion, Organizer, Owner, Role, TenantId, TenantMember};
+pub use access::{DuringDeletion, Memberships, Organizer, Owner, Role, TenantId, TenantMember};
 pub use changes::{access_lost, changed, organizing_changed};
 pub use db::{my_tenant, staff, standing};
 pub use deletion::{delete_due, remind_due as remind_due_deletions};

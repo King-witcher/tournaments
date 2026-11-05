@@ -1,27 +1,25 @@
-//! Pareamentos gravados do suíço (`stage_pairings`): ler os da fase e gravar
-//! o de uma rodada nova. Apagar fica no `discard`.
+//! Pareamentos gravados do suíço (`stage_pairings`): montar as rodadas das
+//! linhas que `stage_rows` lê e gravar o pareamento de uma rodada nova.
+//! Apagar fica no `discard`.
 
 use engine::{core::ParticipantId, formats::swiss::SwissRound};
+use serde::Deserialize;
 use sqlx::PgConnection;
 
 use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
 
-/// Os pareamentos da fase `stage`, da rodada 1 em diante. 500 se as rodadas
-/// gravadas não forem 1..n (o banco garante; só um erro nosso chega aqui).
-pub async fn pairings(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-) -> Result<Vec<SwissRound>, ApiError> {
-    let rows = sqlx::query!(
-        r#"select round, side_a, side_b from stage_pairings
-           where tournament_id = $1 and stage = $2
-           order by round, number"#,
-        tournament.get(),
-        stage
-    )
-    .fetch_all(conn)
-    .await?;
+/// Uma linha de `stage_pairings`, como vem do JSON de `stage_rows`.
+#[derive(Deserialize, Debug)]
+pub struct PairingRow {
+    round: i16,
+    side_a: i64,
+    side_b: Option<i64>,
+}
+
+/// As rodadas, da 1 em diante, das linhas na ordem (rodada e número). 500 se
+/// as rodadas gravadas não forem 1..n (o banco garante; só um erro nosso
+/// chega aqui).
+pub fn rounds(rows: Vec<PairingRow>) -> Result<Vec<SwissRound>, ApiError> {
     let mut rounds: Vec<SwissRound> = Vec::new();
     for row in rows {
         if usize::try_from(row.round).ok() != Some(rounds.len()) {

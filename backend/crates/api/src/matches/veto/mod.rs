@@ -24,9 +24,11 @@
 //!   organizador deixou pela metade. A série que passa a ter outros lados
 //!   perde o veto.
 //! - O tempo de cada passo vence ao ler e antes de cada ação (`due`), e um
-//!   relógio no `realtime` dorme até o próximo prazo (`clock`): a ação vale
-//!   até 2 s depois do prazo que a série mostra (`due::GRACE`); então a
-//!   escolha é sorteada pelo `engine`, gravada com essa hora.
+//!   relógio aplica nos torneios que ninguém leu (`clock`, chamado pelo
+//!   `realtime`, que dorme até o próximo prazo; relê só os torneios que podem ter
+//!   mudado): a ação vale até 2 s depois do prazo que a série mostra
+//!   (`due::GRACE`); então a escolha é sorteada pelo `engine`, gravada com essa
+//!   hora.
 //! - A série diz qual vez mostra (`VetoView::step`, o evento que a abriu);
 //!   a ação que manda esse número é recusada se a vez mudou antes de ela
 //!   chegar (`veto.step_changed`), em vez de cair no passo seguinte.
@@ -40,6 +42,7 @@
 //! (`due_draws`) e a montagem da visão (`view::build`), e grava na tabela dela.
 
 mod advance;
+mod clock;
 mod db;
 mod due;
 pub(super) mod handlers;
@@ -56,8 +59,9 @@ use engine::{
 };
 
 pub use advance::advance;
-pub use db::{Champion, NewVetoEvent, champions, events, lineups};
-pub use due::{GRACE, any_due, apply_due, clock, due_draws};
+pub use clock::{VetoClock, VetoPass};
+pub use db::{Champion, NewVetoEvent};
+pub use due::{GRACE, any_due, apply_due, due_draws};
 pub use state::{Kind, MatchVeto, MatchVetoRow, Readiness, VetoLog, VetoRow, ev_side, turn_action};
 pub use types::{VetoChoice, VetoReadyBy, VetoStatus, VetoView};
 pub use view::{Board, Permissions, Shown, build, next_map, status, view};

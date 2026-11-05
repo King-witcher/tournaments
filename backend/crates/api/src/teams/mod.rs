@@ -2,7 +2,9 @@
 //! duelo, cada inscrito é um time de um jogador, que o banco cria junto com a
 //! inscrição e apaga com ela (`participants` não sabe de time). Aqui ficam o
 //! time com os jogadores (`StoredTeam`, que a chave em `matches` carrega por
-//! `seeded` e a página da pessoa em `ratings` por `by_ids`) e como a API o
+//! `seeded`, ou `seeded_in` para vários torneios, a página da pessoa em
+//! `ratings` por `by_ids`, e o time de alguém em vários torneios de uma vez,
+//! `of_user_in`, para `/me/tournaments` e o perfil do membro) e como a API o
 //! mostra (`Team`), o seeding antes de iniciar (`seeding`; `lifecycle` fecha a
 //! ordem por `finalize_seeding` ao iniciar) e a desistência, que é do time
 //! (`withdraw`, marcada pelo organizador; `withdraw_departing`, quando o
@@ -28,8 +30,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use db::{
-    any_formed, by_ids, clear as clear_teams, create as create_team, of_user, players,
-    save_teams_seed, seeded, withdraw, withdraw_departing,
+    UserTeam, by_ids, clear as clear_teams, create as create_team, of_user_in, players,
+    save_teams_seed, seeded, seeded_in, withdraw, withdraw_departing,
 };
 pub use formation::{editable as formation_editable, formation};
 pub use seeding::finalize as finalize_seeding;

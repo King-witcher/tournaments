@@ -236,6 +236,9 @@ async fn a_started_duel_goes_with_everything() {
     let (status, body) = post_empty(&c.app, &format!("{result}/confirm"), &c.p1).await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
+    // O relógio do veto já viu o torneio (e guarda o que viu).
+    realtime::veto_clock(&c.state, Utc::now()).await.unwrap();
+
     let id = tournament_id(&db).await;
     let before = rows_of(&db, id).await;
     for table in [
@@ -270,12 +273,12 @@ async fn a_started_duel_goes_with_everything() {
     );
     assert_eq!(queued(&db).await, [key]);
 
-    // O agendador (com o relógio do veto) e o despachante passam sem tropeçar.
-    let tick = realtime::tick(&c.state, Utc::now())
+    // O agendador, o relógio do veto e o despachante passam sem tropeçar.
+    realtime::tick(&c.state, Utc::now())
         .await
         .unwrap()
         .expect("nenhuma outra passada");
-    assert_eq!(tick.vetoed, 0);
+    assert_eq!(realtime::veto_clock(&c.state, Utc::now()).await.unwrap(), 0);
     realtime::dispatch_once(&c.state).await.unwrap();
     // O ranking fica só com o outro torneio.
     let rated = ranking(&c.app, &c.ana).await;

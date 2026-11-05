@@ -1,20 +1,18 @@
-//! Mapas da série (`match_games`): ler, enviar, confirmar, contestar, aceitar a
-//! contestação, o organizador lançar e anular, e o aviso atrasado à organização.
+//! Mapas da série (`match_games`): enviar, confirmar, contestar, aceitar a
+//! contestação, o organizador lançar e anular, e o aviso atrasado à
+//! organização. A leitura dos mapas da fase fica em `stage_rows`.
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::{MapId, ParticipantId},
     series,
 };
+use serde::Deserialize;
 use sqlx::{PgConnection, PgPool};
 
 use super::MatchRef;
 use crate::{
-    matches::{
-        games::{GameRow, StoredGame},
-        result::{Confirmation, Side},
-    },
-    shared::ApiError,
+    matches::result::{Confirmation, Side},
     tenants::TenantId,
     tournaments::TournamentId,
 };
@@ -44,32 +42,6 @@ impl NewGame {
             map: Some(self.map),
         }
     }
-}
-
-/// Os mapas da fase `stage`, por partida e na ordem.
-pub async fn games(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-) -> Result<Vec<StoredGame>, ApiError> {
-    sqlx::query_as!(
-        GameRow,
-        r#"select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner, g.map_id,
-                  m.slug as "map_slug?", m.name as "map_name?", g.a_frags, g.b_frags, g.status,
-                  g.reported_side, g.reported_by, g.reported_at, g.confirm_by, g.contested_by,
-                  g.contested_at, g.contest_comment, g.confirmed_via, g.confirmed_at
-           from match_games g
-           left join maps m on m.id = g.map_id
-           where g.tournament_id = $1 and g.stage = $2
-           order by g.match_key, g.number"#,
-        tournament.get(),
-        stage
-    )
-    .fetch_all(conn)
-    .await?
-    .into_iter()
-    .map(StoredGame::try_from)
-    .collect()
 }
 
 /// Quanto dura o prazo de um envio: a partida liberada em `released` (ver
@@ -316,7 +288,8 @@ pub async fn void_games(conn: &mut PgConnection, ids: &[i64]) -> Result<(), sqlx
     Ok(())
 }
 
-/// Um jogador da escalação de um mapa.
+/// Um jogador da escalação de um mapa (`match_history`).
+#[derive(Deserialize, Debug)]
 pub struct LineupRow {
     pub game_id: i64,
     pub side: String,
@@ -324,30 +297,4 @@ pub struct LineupRow {
     pub nickname: String,
     pub avatar_url: Option<String>,
     pub left: bool,
-}
-
-/// A escalação de cada mapa da partida `key` da fase `stage` (quem jogou por
-/// lado), por mapa e lado.
-pub async fn lineups(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-    key: &str,
-) -> Result<Vec<LineupRow>, sqlx::Error> {
-    sqlx::query_as!(
-        LineupRow,
-        r#"select gp.game_id, gp.side, gp.user_id, m.nickname, u.avatar_url,
-                  m.left_at is not null as "left!"
-           from match_game_players gp
-           join match_games g on g.id = gp.game_id
-           join tenant_members m on m.tenant_id = gp.tenant_id and m.user_id = gp.user_id
-           join users u on u.id = gp.user_id
-           where g.tournament_id = $1 and g.stage = $2 and g.match_key = $3
-           order by gp.game_id, gp.side, m.nickname, gp.user_id"#,
-        tournament.get(),
-        stage,
-        key
-    )
-    .fetch_all(conn)
-    .await
 }

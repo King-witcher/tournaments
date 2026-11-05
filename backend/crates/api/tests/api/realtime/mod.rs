@@ -2,7 +2,8 @@
 //! (`events`), os avisos e seus destinatários (`notices`), o despachante
 //! (`dispatcher`), o agendador (`scheduler`), o WebSocket (`socket`) e o Web
 //! Push (`push`). As tarefas em segundo plano não sobem nos testes: eles
-//! chamam `dispatch_once` e `tick` direto.
+//! chamam `dispatch_once`, `tick` e `veto_clock` direto (o relógio do veto é
+//! testado com o veto, em `matches`).
 
 mod dispatcher;
 mod events;

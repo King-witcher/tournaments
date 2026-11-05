@@ -1,5 +1,6 @@
 //! `GET /me/tournaments`: os torneios de quem vê em todas as comunidades, com
-//! a situação dele e a próxima partida.
+//! a situação dele e a próxima partida; e `.../mine`, a mesma entrada de um
+//! torneio só.
 
 use axum::{
     Router,
@@ -16,6 +17,23 @@ async fn mine(app: &Router, who: &User) -> Value {
     let (status, body) = get(app, "/me/tournaments", who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     body["registered"].clone()
+}
+
+/// A entrada de `who` no torneio `slug` de `quake-br` (`.../mine`), conferida
+/// com a da lista: a rota de um torneio só traz o mesmo item.
+async fn entry(app: &Router, who: &User, slug: &str) -> Value {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}/mine");
+    let (status, one) = get(app, &uri, who).await;
+    assert_eq!(status, StatusCode::OK, "{one}");
+    let list = mine(app, who).await;
+    let listed = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["tenant_slug"] == "quake-br" && t["tournament"]["slug"] == slug)
+        .unwrap_or_else(|| panic!("{slug} fora da lista: {list}"));
+    assert_eq!(&one, listed);
+    one
 }
 
 /// `comunidade/torneio` dos abertos à inscrição de `who`, na ordem.
@@ -151,6 +169,13 @@ async fn situation_before_the_bracket() {
     );
     assert_eq!(list[0]["tenant_name"], "Tenant quake-br");
     assert_eq!(list[0]["next_match"], Value::Null);
+    assert_eq!(entry(&app, &bia, "copa").await["situation"], "registered");
+    // Num torneio em que não está inscrita, a entrada não existe.
+    let (status, body) = get(&app, "/tenants/quake-br/tournaments/outro/mine", &bia).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::NOT_FOUND, err("participant.not_found"))
+    );
 
     // O check-in abre: pendente até fazer.
     starts_in(&db, "copa", 10).await;
@@ -165,9 +190,9 @@ async fn situation_before_the_bracket() {
     // Começou: Caio, sem check-in, ficou fora da chave.
     let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    let caio_list = mine(&app, &caio).await;
-    assert_eq!(caio_list[0]["situation"], "missed_check_in");
-    assert_eq!(caio_list[0]["tournament"]["status"], "in_progress");
+    let caio_entry = entry(&app, &caio, "copa").await;
+    assert_eq!(caio_entry["situation"], "missed_check_in");
+    assert_eq!(caio_entry["tournament"]["status"], "in_progress");
     assert_eq!(mine(&app, &bia).await[0]["situation"], "playing");
 }
 
@@ -186,7 +211,7 @@ async fn a_tdm_reserve_before_the_bracket() {
     let (status, body) = crate::teams::draw(&app, &ana, "random").await;
     assert_eq!(status, StatusCode::OK, "{body}");
     register(&app, "copa", &[&caio]).await;
-    assert_eq!(mine(&app, &caio).await[0]["situation"], "reserve");
+    assert_eq!(entry(&app, &caio, "copa").await["situation"], "reserve");
     assert_eq!(mine(&app, &bia).await[0]["situation"], "registered");
     let uri = format!("/tenants/quake-br/members/{}", caio.id);
     let (status, body) = get(&app, &uri, &ana).await;
@@ -218,7 +243,7 @@ async fn next_match_and_placement() {
     .await;
 
     // P1 (seed 1) contra P4 na primeira rodada: enviar o mapa.
-    let first = &mine(&app, &p[0]).await[0];
+    let first = &entry(&app, &p[0], "copa").await;
     assert_eq!(first["situation"], "playing");
     let next = &first["next_match"];
     assert_eq!(next["key"], "wb-1-1");
@@ -256,12 +281,14 @@ async fn next_match_and_placement() {
         json!({ "outcome": "winner", "match_key": "wb-1-2" })
     );
     assert_eq!(next["task"], Value::Null);
-    let out = &mine(&app, &p[3]).await[0];
+    let out = &entry(&app, &p[3], "copa").await;
     assert_eq!(out["situation"], "eliminated");
     assert_eq!(out["placement"], json!({ "rank": 3, "tied": 2 }));
     assert_eq!(out["next_match"], Value::Null);
 
-    // Final: P1 campeão, o torneio encerrado continua na lista.
+    // Final: P1 campeão, o torneio encerrado continua na lista. A lista lê a
+    // colocação de todos os encerrados de uma vez, sem o veto; a rota de um
+    // torneio só, da fase inteira: as duas dizem o mesmo (`entry`).
     let (a, b) = if side_of(&app, &p[1], "wb-1-2").await == "a" {
         (1, 0)
     } else {
@@ -274,11 +301,11 @@ async fn next_match_and_placement() {
         (0, 1)
     };
     play(&app, &p[0], &p[1], "wb-2-1", a, b).await;
-    let won = &mine(&app, &p[0]).await[0];
+    let won = &entry(&app, &p[0], "copa").await;
     assert_eq!(won["tournament"]["status"], "finished");
     assert_eq!(won["situation"], "champion");
     assert_eq!(won["placement"], json!({ "rank": 1, "tied": 1 }));
-    let second = &mine(&app, &p[1]).await[0];
+    let second = &entry(&app, &p[1], "copa").await;
     assert_eq!(second["situation"], "eliminated");
     assert_eq!(second["placement"], json!({ "rank": 2, "tied": 1 }));
 }

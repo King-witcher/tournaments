@@ -108,7 +108,7 @@ pub(super) fn unknown(column: &'static str, value: &str) -> ApiError {
     ApiError::internal()
 }
 
-/// Uma linha de `match_results` (`db::results`), com os enums já lidos.
+/// Uma linha de `match_results` (`db::stage_rows`), com os enums já lidos.
 #[derive(Clone)]
 pub struct StoredResult {
     pub id: i64,
@@ -124,7 +124,8 @@ pub struct StoredResult {
     pub position: i32,
 }
 
-/// O que `db::results` lê, antes de converter.
+/// O que `db::stage_rows` lê de cada série decidida, antes de converter.
+#[derive(Deserialize, Debug)]
 pub(super) struct ResultRow {
     pub id: i64,
     pub match_key: String,

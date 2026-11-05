@@ -4,7 +4,8 @@
 mod deletion;
 
 use chrono::{DateTime, Utc};
-use sqlx::{PgConnection, PgPool};
+use serde::Deserialize;
+use sqlx::{PgConnection, PgPool, types::Json};
 
 use super::{MyTenant, Role, TenantId};
 use crate::{
@@ -130,33 +131,69 @@ pub async fn standing(
     .await
 }
 
-/// As participações ativas de um usuário, na ordem em que entrou.
-pub async fn memberships(db: &PgPool, user_id: i64) -> Result<Vec<Membership>, ApiError> {
-    let rows = sqlx::query!(
-        r#"select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
-           from tenant_members m
-           join tenants t on t.id = m.tenant_id
-           where m.user_id = $1 and m.left_at is null
-           order by m.joined_at, t.id"#,
+/// Uma participação, como vem do JSON de `user_and_memberships`.
+#[derive(Deserialize, Debug)]
+struct MembershipRow {
+    id: i64,
+    slug: String,
+    name: String,
+    description: Option<String>,
+    role: String,
+    nickname: String,
+    deletion_due_at: Option<DateTime<Utc>>,
+    logo_key: Option<String>,
+}
+
+/// O usuário `user_id` (conta não excluída) e as participações ativas dele,
+/// na ordem em que entrou, numa query só (as participações agregadas em
+/// JSON): o extractor `Memberships`. `None` sem a conta.
+pub async fn user_and_memberships(
+    db: &PgPool,
+    user_id: i64,
+) -> Result<Option<(CurrentUser, Vec<Membership>)>, ApiError> {
+    let Some(r) = sqlx::query!(
+        r#"select u.id, u.display_name, u.avatar_url, u.locale,
+                  (select json_agg(x order by x.joined_at, x.id) from (
+                       select t.id, t.slug, t.name, t.description, m.role, m.nickname,
+                              t.deletion_due_at, t.logo_key, m.joined_at
+                       from tenant_members m
+                       join tenants t on t.id = m.tenant_id
+                       where m.user_id = u.id and m.left_at is null) x)
+                      as "memberships: Json<Vec<MembershipRow>>"
+           from users u
+           where u.id = $1 and u.deleted_at is null"#,
         user_id
     )
-    .fetch_all(db)
-    .await?;
-
-    rows.into_iter()
-        .map(|r| {
+    .fetch_optional(db)
+    .await?
+    else {
+        return Ok(None);
+    };
+    let user = CurrentUser {
+        id: r.id,
+        display_name: r.display_name,
+        avatar_url: r.avatar_url,
+        locale: r.locale,
+    };
+    let memberships = r
+        .memberships
+        .map(|j| j.0)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|m| {
             Ok(Membership {
-                tenant: TenantId::new(r.id),
-                slug: r.slug,
-                name: r.name,
-                description: r.description,
-                role: Role::from_db(&r.role)?,
-                nickname: r.nickname,
-                deletion_scheduled_for: r.deletion_due_at,
-                logo_key: r.logo_key,
+                tenant: TenantId::new(m.id),
+                slug: m.slug,
+                name: m.name,
+                description: m.description,
+                role: Role::from_db(&m.role)?,
+                nickname: m.nickname,
+                deletion_scheduled_for: m.deletion_due_at,
+                logo_key: m.logo_key,
             })
         })
-        .collect()
+        .collect::<Result<_, ApiError>>()?;
+    Ok(Some((user, memberships)))
 }
 
 /// Cria o tenant com `owner_id` como owner, desde que ele ainda não seja

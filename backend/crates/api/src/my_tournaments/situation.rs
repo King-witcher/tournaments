@@ -17,6 +17,12 @@ impl Situation {
         }
     }
 
+    /// Antes da chave, no TDM: reserva quando já há time formado e quem se
+    /// inscreveu está fora de todos (`reserve`); senão, a mesma.
+    pub const fn or_reserve(self, reserve: bool) -> Self {
+        if reserve { Self::Reserve } else { self }
+    }
+
     /// A situação pelo lugar na chave, com a colocação quando já se definiu.
     /// No TDM (`teams`), fora da chave é estar sem time (reserva ou
     /// substituído): iniciar exige todo time completo e com check-in.

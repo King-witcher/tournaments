@@ -503,7 +503,7 @@ async fn both_votes_answer_the_same_turn() {
 }
 
 #[tokio::test]
-async fn the_scheduler_also_applies_timeouts() {
+async fn the_clock_applies_timeouts_nobody_read() {
     let (db, _lease) = crate::db::test_db().await;
     let state = state(db.clone());
     let app = app_from(state.clone());
@@ -514,13 +514,12 @@ async fn the_scheduler_also_applies_timeouts() {
     start(&app, &ana, body, &[&p[0], &p[1]]).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[1]).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.vetoed, 0);
-    // Dois prazos vencidos em sequência: dois passos sorteados.
+    assert_eq!(realtime::veto_clock(&state, Utc::now()).await.unwrap(), 0);
+    // Dois prazos vencidos em sequência: dois passos sorteados (o histórico
+    // mudou desde a passada anterior, que guardou o prazo de antes).
     age_veto(&db, 65).await;
     clear(&db).await;
-    let tick = realtime::tick(&state, Utc::now()).await.unwrap().unwrap();
-    assert_eq!(tick.vetoed, 2);
+    assert_eq!(realtime::veto_clock(&state, Utc::now()).await.unwrap(), 2);
     assert!(
         outbox(&db)
             .await

@@ -1,0 +1,129 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select q.id as \"tournament_id!\",\n                  exists(select 1 from teams x where x.tournament_id = q.id) as \"formed!\",\n                  t.id as \"id?\", t.name as \"name?\", t.seed as \"seed?\", t.captain as \"captain?\",\n                  t.withdrawn_at is not null as \"withdrawn?\",\n                  p.user_id as \"user_id?\", m.nickname as \"nickname?\", u.avatar_url as \"avatar_url?\",\n                  m.left_at is not null as \"left?\"\n           from unnest((select $1::bigint[])) as q(id)\n           left join participants me on me.tournament_id = q.id and me.user_id = $2\n           left join teams t on t.tournament_id = q.id and t.id = me.team_id\n           left join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           left join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           left join users u on u.id = p.user_id\n           order by q.id, p.user_id <> t.captain, p.registered_at, p.user_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tournament_id!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "formed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "id?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "seed?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "seed"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "captain?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "captain"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "withdrawn?",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "user_id?",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "participants",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "nickname?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenant_members",
+            "name": "nickname"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "avatar_url?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_url"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "left?",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      false,
+      true,
+      true,
+      false,
+      null,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "ec5b9a757f5143c985c67a0661172e3ab2054e40b6717b40f3ebda283ee49698"
+}

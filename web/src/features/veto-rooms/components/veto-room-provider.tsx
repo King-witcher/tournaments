@@ -1,6 +1,12 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import {
+  type ReactNode,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useMineMark } from "@/features/matches/hooks/use-mine-mark";
 import {
@@ -75,50 +81,62 @@ export function VetoRoomProvider({ token, initial, children }: Props) {
       if (!ok) refresh();
     },
   });
-  const go: typeof run = (...args) => {
-    mineMark.markMine();
-    return run(...args);
-  };
-
   const seat = room.seat?.name ? room.seat : null;
   const names = sideNames(room, labels);
   const veto = withSeatNames(optimistic ?? room.veto, room.seats, labels);
-  const actions: VetoActions = {
-    step: (choice) => {
-      const preview = seat
-        ? afterStep(veto, choice, {
-            mine: seat.side,
-            bestOf: room.best_of,
-            bansPerSeries: room.bans_per_series,
-            order: room.order,
-            viewer: { id: seat.id, nickname: seat.name ?? "" },
-            now: serverTime(),
-          })
-        : undefined;
-      go(
-        "step",
-        ({ headers, step }) =>
-          api.POST("/veto-rooms/{token}/steps", {
-            params,
-            headers,
-            body: { ...choice, step },
-          }),
-        preview,
-      );
-    },
-    ready: () =>
-      go("ready", ({ headers }) =>
-        api.POST("/veto-rooms/{token}/ready", { params, headers }),
-      ),
-    start: () =>
-      go("start", ({ headers }) =>
-        api.POST("/veto-rooms/{token}/begin", { params, headers }),
-      ),
-    // A sala não tem desfazer.
-    undo: () => {},
-    request: () => {},
-    answer: () => {},
-  };
+
+  // As ações leem a sala da última renderização na hora do clique: são as
+  // mesmas entre renderizações, e os tiles do tabuleiro (`memo`) não
+  // renderizam de novo por elas.
+  const latest = useRef({ room, seat, veto, run });
+  useLayoutEffect(() => {
+    latest.current = { room, seat, veto, run };
+  });
+  const { markMine } = mineMark;
+  const actions = useMemo<VetoActions>(() => {
+    const params = { path: { token } };
+    const go: typeof run = (...args) => {
+      markMine();
+      return latest.current.run(...args);
+    };
+    return {
+      step: (choice) => {
+        const { room, seat, veto } = latest.current;
+        const preview = seat
+          ? afterStep(veto, choice, {
+              mine: seat.side,
+              bestOf: room.best_of,
+              bansPerSeries: room.bans_per_series,
+              order: room.order,
+              viewer: { id: seat.id, nickname: seat.name ?? "" },
+              now: serverTime(),
+            })
+          : undefined;
+        go(
+          "step",
+          ({ headers, step }) =>
+            api.POST("/veto-rooms/{token}/steps", {
+              params,
+              headers,
+              body: { ...choice, step },
+            }),
+          preview,
+        );
+      },
+      ready: () =>
+        go("ready", ({ headers }) =>
+          api.POST("/veto-rooms/{token}/ready", { params, headers }),
+        ),
+      start: () =>
+        go("start", ({ headers }) =>
+          api.POST("/veto-rooms/{token}/begin", { params, headers }),
+        ),
+      // A sala não tem desfazer.
+      undo: () => {},
+      request: () => {},
+      answer: () => {},
+    };
+  }, [token, markMine]);
 
   return (
     <VetoRoomContext

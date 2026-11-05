@@ -2,7 +2,10 @@
 //! séries decididas e, no suíço, os pareamentos gravados (`rounds`) → fase de
 //! qualquer formato (`StageBracket`), sempre por `replay`. Nada do estado do
 //! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
-//! refeito por replay) vêm junto.
+//! refeito por replay) vêm junto. Duas idas ao banco: os times (`teams`) e o
+//! resto (`db::stage_rows`, com os campeões quando há draft). Para a colocação
+//! nos torneios encerrados, `brackets` refaz só a chave de vários torneios,
+//! com as mesmas duas idas.
 //!
 //! Só existe a primeira fase. Outras fases entrariam aqui: cada uma com a
 //! classificação da anterior como participantes, montada quando a anterior
@@ -16,16 +19,17 @@ use engine::{
 use sqlx::PgConnection;
 
 use super::{
-    changes, db,
+    changes,
+    db::{self, Parts},
     games::StoredGame,
     result::{Side, StoredResult},
     rounds,
-    veto::{self, Champion, MatchVeto, MatchVetoRow, VetoLog},
+    veto::{Champion, MatchVeto, MatchVetoRow, VetoLog},
 };
 use crate::{
     shared::ApiError,
     teams::{self, StoredTeam},
-    tournaments::{self, PoolMap, StoredTournament, TeamRules, TournamentStatus},
+    tournaments::{self, PoolMap, StoredTournament, TeamRules, TournamentId, TournamentStatus},
 };
 
 /// A primeira (e por enquanto única) fase.
@@ -82,10 +86,7 @@ impl Stage {
     /// resposta, veto, screenshot) acham o lado de quem age; quem do time pode
     /// agir é a regra do torneio (`acting`).
     pub fn participant_of(&self, user_id: i64) -> Option<ParticipantId> {
-        self.entrants
-            .iter()
-            .find(|e| e.has(user_id))
-            .map(StoredTeam::participant)
+        participant_of(&self.entrants, user_id)
     }
 
     pub fn result(&self, id: MatchId) -> Option<&StoredResult> {
@@ -123,6 +124,14 @@ impl Stage {
             rounds: &self.rounds,
         }
     }
+}
+
+/// O time de `entrants` em que `user_id` joga (`Stage::participant_of`).
+pub fn participant_of(entrants: &[StoredTeam], user_id: i64) -> Option<ParticipantId> {
+    entrants
+        .iter()
+        .find(|e| e.has(user_id))
+        .map(StoredTeam::participant)
 }
 
 /// Quem escolhe campeão pelo time `id` no TDM: os jogadores dele que estão
@@ -240,6 +249,31 @@ fn config(tournament: &StoredTournament, number: i16) -> Result<&ef::StageFormat
         .ok_or_else(ApiError::internal)
 }
 
+/// `replay`, com o erro no log: o histórico gravado do torneio `id` que não
+/// fecha é um erro nosso (500).
+fn replayed(
+    id: TournamentId,
+    format: ef::StageFormat,
+    history: &History<'_>,
+) -> Result<StageBracket, ApiError> {
+    replay(format, history).map_err(|err| {
+        let id = id.get();
+        match err {
+            Contradiction::Engine(e) => tracing::error!(%e, id, "histórico gravado não fecha"),
+            Contradiction::SidesChanged(m) => {
+                tracing::error!(?m, id, "resultado gravado com outros lados");
+            }
+        }
+        ApiError::internal()
+    })
+}
+
+/// TDM com o draft: só nele a fase lê quem jogou cada partida enviada (no
+/// resto, o pick é do lado).
+fn needs_lineups(rules: &VetoRules) -> bool {
+    rules.champion_phase && rules.teams()
+}
+
 /// A fase em jogo, refeita. 404 `bracket.not_found` antes de o torneio
 /// começar.
 pub async fn load(
@@ -253,38 +287,37 @@ pub async fn load(
         return Err(ApiError::not_found("bracket.not_found"));
     }
     let number = FIRST_STAGE;
-    let entrants = teams::seeded(conn, tournament.id).await?;
-    let results = db::results(conn, tournament.id, number).await?;
-    let games = db::games(conn, tournament.id, number).await?;
     let format = *config(tournament, number)?;
-    let rounds = match format {
-        ef::StageFormat::Swiss(_) => db::pairings(conn, tournament.id, number).await?,
-        _ => Vec::new(),
-    };
-    let veto_rows = veto::events(conn, tournament.id, number).await?;
     let veto_rules = tournament.setup.veto_rules();
-    let champions = if veto_rules.champion_phase {
-        veto::champions(conn).await?
-    } else {
-        Vec::new()
+    let entrants = teams::seeded(conn, tournament.id).await?;
+    let parts = Parts {
+        results: true,
+        games: true,
+        pairings: matches!(format, ef::StageFormat::Swiss(_)),
+        veto: true,
+        lineups: needs_lineups(&veto_rules),
+        champions: veto_rules.champion_phase,
+        ..Parts::default()
     };
+    let db::StageRows {
+        results,
+        games,
+        rounds,
+        veto: veto_rows,
+        lineups,
+        champions,
+        ..
+    } = db::stage_rows(conn, &[tournament.id], number, parts)
+        .await?
+        .pop()
+        .unwrap_or_default();
     let history = History {
         entrants: &entrants,
         results: &results,
         games: &games,
         rounds: &rounds,
     };
-    let bracket = replay(format, &history).map_err(|err| {
-        let id = tournament.id.get();
-        match err {
-            Contradiction::Engine(e) => tracing::error!(%e, id, "histórico gravado não fecha"),
-            Contradiction::SidesChanged(m) => {
-                tracing::error!(?m, id, "resultado gravado com outros lados");
-            }
-        }
-        ApiError::internal()
-    })?;
-    let lineups = lineups_of(conn, tournament, &veto_rules).await?;
+    let bracket = replayed(tournament.id, format, &history)?;
     let vetoes = vetoes(
         &bracket,
         &veto_rules,
@@ -312,50 +345,95 @@ pub async fn load(
     })
 }
 
-/// TDM com o draft: quem jogou cada partida enviada da fase; vazio nos
-/// outros casos (o pick é do lado).
-async fn lineups_of(
+/// A chave de um torneio iniciado sem o veto (`brackets`).
+pub struct Settled {
+    /// Os times da chave, na ordem dos seeds.
+    pub entrants: Vec<StoredTeam>,
+    pub bracket: StageBracket,
+    /// Os mapas enviados (para quem confere as confirmações por tempo).
+    pub games: Vec<StoredGame>,
+}
+
+/// A chave de cada torneio iniciado de `tournaments`, na ordem, sem o veto,
+/// as escalações e os campeões: para dizer onde cada um terminou (a lista dos
+/// torneios de quem vê). Duas idas ao banco para todos.
+pub async fn brackets(
     conn: &mut PgConnection,
-    tournament: &StoredTournament,
-    rules: &VetoRules,
-) -> Result<Vec<(MatchId, i16, Side, i64)>, ApiError> {
-    if rules.champion_phase && rules.teams() {
-        veto::lineups(conn, tournament.id, FIRST_STAGE).await
-    } else {
-        Ok(Vec::new())
+    tournaments: &[TournamentId],
+) -> Result<Vec<Settled>, ApiError> {
+    if tournaments.is_empty() {
+        return Ok(Vec::new());
     }
+    let teams = teams::seeded_in(conn, tournaments).await?;
+    let parts = Parts {
+        config: true,
+        results: true,
+        games: true,
+        pairings: true,
+        ..Parts::default()
+    };
+    let rows = db::stage_rows(conn, tournaments, FIRST_STAGE, parts).await?;
+    tournaments
+        .iter()
+        .zip(teams)
+        .zip(rows)
+        .map(|((&id, entrants), rows)| {
+            let format = rows.config.ok_or_else(ApiError::internal)?;
+            let history = History {
+                entrants: &entrants,
+                results: &rows.results,
+                games: &rows.games,
+                rounds: &rows.rounds,
+            };
+            let bracket = replayed(id, format, &history)?;
+            Ok(Settled {
+                entrants,
+                bracket,
+                games: rows.games,
+            })
+        })
+        .collect()
 }
 
 impl Stage {
     /// A fase depois de uma ação que, na transação, só gravou `wrote`,
-    /// relendo só isso (o mesmo que `load`, com menos idas ao banco): os
-    /// times, as séries decididas, os pareamentos e os campeões não mudaram.
-    /// A chave e o veto saem do replay de novo. Quem grava outra coisa usa
-    /// `load`.
+    /// relendo só isso numa ida (o mesmo que `load`, com menos idas ao
+    /// banco): os times, as séries decididas, os pareamentos e os campeões
+    /// não mudaram. A chave e o veto saem do replay de novo. Quem grava outra
+    /// coisa usa `load`.
     pub async fn refresh(
         self,
         conn: &mut PgConnection,
         tournament: &StoredTournament,
         wrote: Wrote,
     ) -> Result<Self, ApiError> {
+        let parts = match wrote {
+            Wrote::Veto => Parts {
+                veto: true,
+                ..Parts::default()
+            },
+            Wrote::Games => Parts {
+                games: true,
+                lineups: needs_lineups(&self.veto_rules),
+                ..Parts::default()
+            },
+        };
+        let fresh = db::stage_rows(conn, &[tournament.id], self.number, parts)
+            .await?
+            .pop()
+            .unwrap_or_default();
         let (games, bracket, lineups, rows) = match wrote {
-            Wrote::Veto => {
-                let rows = veto::events(conn, tournament.id, self.number).await?;
-                (self.games, self.bracket, self.lineups, rows)
-            }
+            Wrote::Veto => (self.games, self.bracket, self.lineups, fresh.veto),
             Wrote::Games => {
-                let games = db::games(conn, tournament.id, self.number).await?;
-                let lineups = lineups_of(conn, tournament, &self.veto_rules).await?;
+                let games = fresh.games;
+                let lineups = fresh.lineups;
                 let history = History {
                     entrants: &self.entrants,
                     results: &self.results,
                     games: &games,
                     rounds: &self.rounds,
                 };
-                let bracket = replay(self.format, &history).map_err(|_| {
-                    tracing::error!(id = tournament.id.get(), "histórico gravado não fecha");
-                    ApiError::internal()
-                })?;
+                let bracket = replayed(tournament.id, self.format, &history)?;
                 let rows = self
                     .vetoes
                     .into_iter()

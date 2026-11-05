@@ -55,9 +55,10 @@ export const getMyTournaments = cache(async () => {
 });
 
 /**
- * A entrada de quem vê em "Seus torneios" para este torneio: a situação (na
- * chave, eliminado, campeão…), a colocação e a próxima partida. `undefined`
- * se ele não está inscrito, se o torneio não aparece ali (rascunho) ou se a
+ * A entrada de quem vê neste torneio, a mesma de "Seus torneios": a situação
+ * (na chave, eliminado, campeão…), a colocação e a próxima partida. Busca só
+ * este torneio (`.../mine`), não a lista de todas as comunidades. `undefined`
+ * sem login, se ele não está inscrito, se não vê o torneio (rascunho) ou se a
  * API falhar. Lê a sessão: quem usa fica em `<Suspense>`.
  */
 export const getMyTournamentEntry = cache(
@@ -65,9 +66,13 @@ export const getMyTournamentEntry = cache(
     tenant: string,
     slug: string,
   ): Promise<Schemas["MyTournament"] | undefined> => {
-    const mine = await getMyTournaments();
-    return mine?.registered.find(
-      (e) => e.tenant_slug === tenant && e.tournament.slug === slug,
-    );
+    if (!(await hasSessionCookie())) return undefined;
+    const api = await serverApi();
+    return api
+      .GET("/tenants/{slug}/tournaments/{tournament}/mine", {
+        params: { path: { slug: tenant, tournament: slug } },
+      })
+      .then(({ data }) => data)
+      .catch(() => undefined);
   },
 );

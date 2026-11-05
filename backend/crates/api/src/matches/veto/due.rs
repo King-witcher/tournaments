@@ -10,9 +10,9 @@
 //! do elenco; nos picks alternados por jogador, cada pick é um passo, e o
 //! sorteio é do primeiro do lado da vez sem escolha. A API aplica ao ler a série
 //! ou a chave
-//! e antes de cada ação (`any_due`, `apply_due`), e o relógio do `realtime`
-//! aplica nos torneios que ninguém leu (`clock`), dormindo até o próximo
-//! prazo. O mesmo sorteio completa o draft quando o organizador lança a
+//! e antes de cada ação (`any_due`, `apply_due`), e o relógio (`clock`, que o
+//! `realtime` chama) aplica nos torneios que ninguém leu, dormindo até o
+//! próximo prazo. O mesmo sorteio completa o draft quando o organizador lança a
 //! partida 1 antes do fim dele (`draw_turn`, pelo `advance`). `draw_turn` e
 //! `due_draws` só dizem o que gravar: a sala de veto (`veto_rooms`) usa os mesmos.
 //! A série cujo elenco mudou e deixou os dois lados prontos também conta como
@@ -23,7 +23,7 @@ use engine::{
     core::MatchState,
     veto::{Action, Choice, Event, Turn, Veto},
 };
-use sqlx::{PgConnection, PgPool};
+use sqlx::PgConnection;
 
 use super::{
     Ctx,
@@ -31,9 +31,9 @@ use super::{
     state::{Kind, MatchVeto, api_side},
 };
 use crate::{
-    matches::{changes::Snapshot, db::MatchRef, key, settle, stage},
+    matches::{db::MatchRef, key, stage},
     shared::ApiError,
-    tournaments::{self, StoredTournament, TournamentStatus},
+    tournaments::{StoredTournament, TournamentStatus},
 };
 
 /// Quanto a ação ainda vale depois do prazo de cada passo (e da janela
@@ -247,50 +247,4 @@ pub(super) fn draw_turn(
         });
     }
     Ok(rows)
-}
-
-/// O relógio: aplica os passos vencidos em `now` em todos os torneios com
-/// veto aberto, cada um na própria transação e com o torneio travado (só
-/// quando há algum vencido: ler não trava), e devolve o próximo prazo. O
-/// erro de um torneio fica no log e não para os outros.
-pub async fn clock(
-    db: &PgPool,
-    now: DateTime<Utc>,
-) -> Result<(u64, Option<DateTime<Utc>>), ApiError> {
-    let mut next: Option<DateTime<Utc>> = None;
-    let mut written = 0;
-    for (tenant, slug) in db::open_tournaments(db).await? {
-        let pass = async {
-            let mut conn = db.acquire().await?;
-            let Some(t) = tournaments::find(&mut conn, tenant, &slug, None).await? else {
-                return Ok((0, None));
-            };
-            let current = stage::load(&mut conn, &t).await?;
-            if !any_due(t.status, &current, now) {
-                return Ok((0, next_deadline(t.status, &current)));
-            }
-            drop(conn);
-            let mut tx = db.begin().await?;
-            let Some(t) = tournaments::find_for_update(&mut tx, tenant, &slug, None).await? else {
-                return Ok((0, None));
-            };
-            let current = stage::load(&mut tx, &t).await?;
-            let before = Snapshot::of(&current);
-            let n = apply_due(&mut tx, &t, &current, now).await?;
-            let (after, _) = settle::settle(&mut tx, &t, None, &before).await?;
-            tx.commit().await?;
-            Ok::<_, ApiError>((n, next_deadline(t.status, &after)))
-        };
-        match pass.await {
-            Ok((n, deadline)) => {
-                written += n;
-                next = match (next, deadline) {
-                    (Some(a), Some(b)) => Some(a.min(b)),
-                    (a, b) => a.or(b),
-                };
-            }
-            Err(e) => tracing::error!(slug, code = e.code, "tempo do veto falhou"),
-        }
-    }
-    Ok((written, next))
 }

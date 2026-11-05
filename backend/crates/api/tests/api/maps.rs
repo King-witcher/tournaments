@@ -1,6 +1,20 @@
-use axum::http::{Method, StatusCode};
+use axum::{
+    body::Body,
+    http::{Method, Request, StatusCode, header},
+};
+use tower::ServiceExt;
 
 use crate::common::{app, call};
+
+/// A lista é a mesma para todos e só muda num deploy: o navegador a guarda.
+#[tokio::test]
+async fn the_list_is_cached_by_the_browser() {
+    let (db, _lease) = crate::db::test_db().await;
+    let req = Request::get("/maps").body(Body::empty()).unwrap();
+    let res = app(db).oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(res.headers()[header::CACHE_CONTROL], "public, max-age=300");
+}
 
 #[tokio::test]
 async fn maps_list_the_duel_pool_first() {

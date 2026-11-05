@@ -1,5 +1,5 @@
 use anyhow::Context;
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use api::{
     AppState, MIGRATOR,
@@ -39,8 +39,15 @@ async fn main() -> anyhow::Result<()> {
     let storage = storage(&config)?;
     let public_storage = public_storage(&config)?;
 
+    // Sem conexões mínimas (não ocupar o pooler do Supabase sem uso) e com o
+    // ping antes de cada uso (`stack.md`, "Idas ao banco"). Conexão nova é TLS +
+    // SCRAM pelo Supavisor, paga por quem a abre: com 2 h de vida (o padrão é
+    // 30 min), as 5 se renovam uma a cada ~24 min, não a cada 6.
     let db = PgPoolOptions::new()
         .max_connections(5)
+        .min_connections(0)
+        .max_lifetime(Duration::from_secs(2 * 60 * 60))
+        .idle_timeout(Duration::from_secs(10 * 60))
         .connect(&config.database_url)
         .await
         .context("falha ao conectar no Postgres (confira DATABASE_URL)")?;

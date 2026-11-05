@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status, t.admission,\n                  t.max_participants, t.starts_at, t.check_in_minutes, t.created_at, t.cover_key,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = $1\n             and ($3 or t.status <> 'draft')\n           group by t.id\n           order by t.created_at desc, t.id desc",
+  "query": "select t.id, t.tenant_id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status,\n                  t.admission, t.max_participants, t.starts_at, t.check_in_minutes, t.created_at,\n                  t.cover_key,\n                  (select count(*) from participants p where p.tournament_id = t.id) as \"participants!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2) as \"registered!\",\n                  exists(select 1 from participants p\n                         where p.tournament_id = t.id and p.user_id = $2\n                           and p.checked_in_at is not null) as \"checked_in!\",\n                  coalesce(array_agg(tr.locale order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_locales!\",\n                  coalesce(array_agg(tr.name order by tr.locale) filter (where tr.locale is not null),\n                           '{}') as \"translation_names!\"\n           from tournaments t\n           left join tournament_translations tr on tr.tournament_id = t.id\n           where t.tenant_id = any($1)\n             and (t.status <> 'draft' or t.tenant_id = any($3))\n           group by t.id\n           order by t.created_at desc, t.id desc",
   "describe": {
     "columns": [
       {
@@ -16,6 +16,17 @@
       },
       {
         "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "tenant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
         "name": "slug",
         "type_info": "Text",
         "origin": {
@@ -26,7 +37,7 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "locale",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "name",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "mode",
         "type_info": "Text",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "team_size",
         "type_info": "Int2",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "status",
         "type_info": "Text",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "admission",
         "type_info": "Text",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "max_participants",
         "type_info": "Int4",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "starts_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "check_in_minutes",
         "type_info": "Int4",
         "origin": {
@@ -125,7 +136,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -136,7 +147,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "cover_key",
         "type_info": "Text",
         "origin": {
@@ -147,31 +158,31 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "participants!",
         "type_info": "Int8",
         "origin": "Expression"
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "registered!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "checked_in!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "translation_locales!",
         "type_info": "TextArray",
         "origin": "Expression"
       },
       {
-        "ordinal": 17,
+        "ordinal": 18,
         "name": "translation_names!",
         "type_info": "TextArray",
         "origin": "Expression"
@@ -179,12 +190,13 @@
     ],
     "parameters": {
       "Left": [
+        "Int8Array",
         "Int8",
-        "Int8",
-        "Bool"
+        "Int8Array"
       ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -205,5 +217,5 @@
       null
     ]
   },
-  "hash": "b1b0f0259a7ec415089a6767650df0a7654cf4f05e698209008c28159c5fd11b"
+  "hash": "4a7cb47e3e4c347cf66b691dda511d22058177e49958203d9d3e48c2c213407c"
 }

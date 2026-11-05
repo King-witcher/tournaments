@@ -7,8 +7,11 @@
  * cada lista abaixo, em ordem alfabética. Os tipos do next-intl saem de `pt`;
  * `es` e `en` precisam ter as mesmas chaves (falta de chave é erro de
  * compilação). Os imports são estáticos (nada de fs em runtime) e cada
- * arquivo vira um módulo à parte, carregado só no servidor.
+ * arquivo vira um módulo à parte, carregado só no servidor. O que vai ao
+ * navegador: `clientMessages`, no fim.
  */
+
+import type { IntlConfig, NamespaceKeys, NestedKeyOf } from "next-intl";
 
 const pt = {
   Account: () => import("../../messages/pt/Account.json"),
@@ -154,4 +157,53 @@ export async function loadMessages(
     ),
   );
   return Object.fromEntries(entries) as Messages;
+}
+
+/**
+ * O que só Server Components leem (`getTranslations`, ou `useTranslations` num
+ * componente sem "use client" que nenhum de cliente importa): um namespace ou
+ * uma parte dele. Fica fora do que o layout manda ao navegador, de novo a cada
+ * `router.refresh()`. Namespace novo vai ao cliente sem precisar de nada aqui.
+ *
+ * Componente de cliente que use algo desta lista mostra a chave no lugar do
+ * texto (em dev, com o aviso no console): tire a linha daqui.
+ */
+export const SERVER_ONLY_MESSAGES = [
+  "Admission",
+  "Home",
+  "Landing",
+  "Metadata",
+  "NewTournament",
+  "NotFound",
+  "Organizing",
+  "Roles",
+  // As regras por extenso (Regras e Visão geral): o maior bloco que o
+  // cliente não lê.
+  "Tournament.autoRules",
+  "TournamentStatus",
+] as const satisfies readonly NamespaceKeys<Messages, NestedKeyOf<Messages>>[];
+
+type MessageTree = { [key: string]: MessageTree | string };
+
+/** `tree` sem o caminho `[key, ...rest]`, sem mexer no original. */
+function without(tree: MessageTree, [key, ...rest]: string[]): MessageTree {
+  const { [key]: child, ...others } = tree;
+  if (rest.length === 0) return others;
+  return typeof child === "object"
+    ? { ...others, [key]: without(child, rest) }
+    : tree;
+}
+
+/**
+ * As mensagens para o `IntlClientProvider` do layout: todas, menos
+ * `SERVER_ONLY_MESSAGES`. Copia só o caminho de cada corte: os objetos de
+ * `messages` são os dos módulos JSON, os mesmos em toda requisição.
+ */
+export function clientMessages(
+  messages: Messages,
+): NonNullable<IntlConfig["messages"]> {
+  return SERVER_ONLY_MESSAGES.reduce<MessageTree>(
+    (tree, path) => without(tree, path.split(".")),
+    messages,
+  ) as NonNullable<IntlConfig["messages"]>;
 }

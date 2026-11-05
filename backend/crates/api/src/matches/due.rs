@@ -12,7 +12,7 @@ use sqlx::{Acquire, PgConnection, PgPool};
 use super::{
     changes::Snapshot,
     db,
-    games::GameStatus,
+    games::{GameStatus, StoredGame},
     settle,
     stage::{self, Stage},
     veto,
@@ -104,9 +104,8 @@ pub async fn lock_current<R>(
 /// Há mapa pendente com a janela de contestação vencida em `now`, pelos
 /// mapas da fase já carregados (o mesmo que `db::has_due`, sem a query: só
 /// há uma fase).
-fn confirmations_due(stage: &Stage, now: DateTime<Utc>) -> bool {
-    stage
-        .games
+pub fn confirmations_due(games: &[StoredGame], now: DateTime<Utc>) -> bool {
+    games
         .iter()
         .any(|g| g.status == GameStatus::Pending && g.confirm_by.is_some_and(|by| by <= now))
 }
@@ -120,13 +119,23 @@ pub async fn current<R>(
     slug: &str,
 ) -> Result<(StoredTournament, Stage), ApiError> {
     let tournament = find_visible(conn, member, slug).await?;
+    current_from(conn, member, tournament).await
+}
+
+/// Como `current`, com o torneio já lido por `find_visible` (sem lê-lo de
+/// novo quando nada venceu).
+pub async fn current_from<R>(
+    conn: &mut PgConnection,
+    member: &TenantMember<R>,
+    tournament: StoredTournament,
+) -> Result<(StoredTournament, Stage), ApiError> {
     let stage = stage::load(conn, &tournament).await?;
     let now = Utc::now();
-    if !confirmations_due(&stage, now) && !veto::any_due(tournament.status, &stage, now) {
+    if !confirmations_due(&stage.games, now) && !veto::any_due(tournament.status, &stage, now) {
         return Ok((tournament, stage));
     }
     let mut tx = conn.begin().await?;
-    let (tournament, stage) = lock_stage(&mut tx, member, slug).await?;
+    let (tournament, stage) = lock_stage(&mut tx, member, &tournament.slug).await?;
     tx.commit().await?;
     Ok((tournament, stage))
 }
@@ -144,7 +153,7 @@ pub async fn lock_stage<R>(
     let now = Utc::now();
     // As confirmações primeiro: podem fechar a série ou começar o jogo
     // seguinte do veto, e o prazo do veto vale na fase que fica.
-    let (tournament, stage) = if confirmations_due(&stage, now) {
+    let (tournament, stage) = if confirmations_due(&stage.games, now) {
         let before = Snapshot::of(&stage);
         db::confirm_due(conn, tournament.id, now).await?;
         let (stage, status) = settle::settle(conn, &tournament, None, &before).await?;

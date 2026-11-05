@@ -207,10 +207,8 @@ async fn handle(
             let topic = Topic { tenant, tournament };
             // Ler o torneio pode abrir o check-in (e emitir): acorda o
             // despachante, como a camada das rotas.
-            let (allowed, emitted) = outbox::track(None, check(state, user, &topic)).await;
-            if emitted {
-                state.realtime.wake();
-            }
+            let (allowed, touched) = outbox::track(None, check(state, user, &topic)).await;
+            state.realtime.emitted(touched);
             let result = allowed.and_then(|()| {
                 connection
                     .subscribe(topic.clone())

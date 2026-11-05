@@ -12,19 +12,21 @@ const VETO = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto";
  * pedir e responder o pedido de desfazer): o `LiveMatchProvider` as põe no
  * `VetoBoard`. O passo aparece marcado na hora. Cada ação diz a vez que a tela
  * mostrava: se ela mudou antes do clique chegar, a API recusa em vez de cair
- * na vez seguinte.
+ * na vez seguinte. `live` dá a série como a tela a mostra na hora do clique,
+ * para as ações serem as mesmas entre renderizações.
  */
 export function matchVetoActions(
   target: MatchTarget,
-  live: Pick<
+  live: () => Pick<
     LiveMatch,
-    "detail" | "viewerId" | "bansPerSeries" | "vetoOrder" | "run"
+    "detail" | "viewerId" | "bansPerSeries" | "vetoOrder"
   >,
+  run: LiveMatch["run"],
 ): VetoActions {
   const params = matchParams(target);
 
   function step(choice: VetoChoice) {
-    const { detail, viewerId, bansPerSeries, vetoOrder } = live;
+    const { detail, viewerId, bansPerSeries, vetoOrder } = live();
     const mine = detail.viewer_side;
     const member = [
       ...(detail.a?.members ?? []),
@@ -43,7 +45,7 @@ export function matchVetoActions(
             now: serverTime(),
           })
         : undefined;
-    live.run(
+    run(
       "step",
       ({ headers, step }) =>
         api.POST(`${VETO}/steps`, {
@@ -58,23 +60,23 @@ export function matchVetoActions(
   return {
     step,
     ready: () =>
-      live.run("ready", ({ headers }) =>
+      run("ready", ({ headers }) =>
         api.POST(`${VETO}/ready`, { params, headers }),
       ),
     start: () =>
-      live.run("start", ({ headers }) =>
+      run("start", ({ headers }) =>
         api.POST(`${VETO}/begin`, { params, headers }),
       ),
     undo: () =>
-      live.run("undo", ({ headers, step }) =>
+      run("undo", ({ headers, step }) =>
         api.POST(`${VETO}/undo`, { params, headers, body: { step } }),
       ),
     request: () =>
-      live.run("request", ({ headers, step }) =>
+      run("request", ({ headers, step }) =>
         api.POST(`${VETO}/undo-request`, { params, headers, body: { step } }),
       ),
     answer: (accept: boolean) =>
-      live.run(accept ? "accept" : "decline", ({ headers, step }) =>
+      run(accept ? "accept" : "decline", ({ headers, step }) =>
         api.POST(`${VETO}/undo-request/answer`, {
           params,
           headers,

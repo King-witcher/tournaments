@@ -1,4 +1,5 @@
-//! Leitura de torneios: a lista do tenant e um torneio pelo slug. As duas
+//! Leitura de torneios: a lista do tenant (ou de vários, `list_in`) e um
+//! torneio pelo slug. As duas
 //! aplicam a abertura automática do check-in (`Schedule::check_in_due`) antes
 //! de devolver, então o status lido já é o que vale agora. O agendador do
 //! tempo real abre pelo mesmo caminho (`current_status`) os que ninguém leu.
@@ -54,10 +55,34 @@ pub async fn list(
     viewer: i64,
     see_all: bool,
 ) -> Result<Vec<TournamentSummary>, ApiError> {
+    let drafts: &[TenantId] = if see_all { &[tenant] } else { &[] };
     let mut conn = db.acquire().await?;
+    let listed = list_in(&mut conn, &[tenant], drafts, viewer).await?;
+    Ok(listed.into_iter().map(|l| l.summary).collect())
+}
+
+/// Um torneio da lista, com o id interno e o tenant: para quem junta as
+/// comunidades (`/me/tournaments`) e depois lê mais de alguns deles.
+pub struct Listed {
+    pub id: TournamentId,
+    pub tenant: TenantId,
+    pub summary: TournamentSummary,
+}
+
+/// Como `list`, dos tenants `tenants` de uma vez (uma query para todas as
+/// comunidades de quem vê): os rascunhos só dos de `drafts` (onde `viewer` é
+/// organizer ou owner). Do mais novo ao mais antigo, misturando os tenants.
+pub async fn list_in(
+    conn: &mut PgConnection,
+    tenants: &[TenantId],
+    drafts: &[TenantId],
+    viewer: i64,
+) -> Result<Vec<Listed>, ApiError> {
+    let ids = |ts: &[TenantId]| ts.iter().map(|t| t.get()).collect::<Vec<_>>();
     let rows = sqlx::query!(
-        r#"select t.id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status, t.admission,
-                  t.max_participants, t.starts_at, t.check_in_minutes, t.created_at, t.cover_key,
+        r#"select t.id, t.tenant_id, t.slug, t.locale, t.name, t.mode, t.team_size, t.status,
+                  t.admission, t.max_participants, t.starts_at, t.check_in_minutes, t.created_at,
+                  t.cover_key,
                   (select count(*) from participants p where p.tournament_id = t.id) as "participants!",
                   exists(select 1 from participants p
                          where p.tournament_id = t.id and p.user_id = $2) as "registered!",
@@ -70,13 +95,13 @@ pub async fn list(
                            '{}') as "translation_names!"
            from tournaments t
            left join tournament_translations tr on tr.tournament_id = t.id
-           where t.tenant_id = $1
-             and ($3 or t.status <> 'draft')
+           where t.tenant_id = any($1)
+             and (t.status <> 'draft' or t.tenant_id = any($3))
            group by t.id
            order by t.created_at desc, t.id desc"#,
-        tenant.get(),
+        &ids(tenants),
         viewer,
-        see_all
+        &ids(drafts)
     )
     .fetch_all(&mut *conn)
     .await?;
@@ -88,8 +113,8 @@ pub async fn list(
             check_in_minutes: r.check_in_minutes,
         };
         let stored = TournamentStatus::from_db(&r.status)?;
-        let status =
-            current_status(&mut conn, TournamentId(r.id), stored, &schedule, Utc::now()).await?;
+        let id = TournamentId(r.id);
+        let status = current_status(&mut *conn, id, stored, &schedule, Utc::now()).await?;
         let translations = r
             .translation_locales
             .iter()
@@ -101,22 +126,31 @@ pub async fn list(
                 })
             })
             .collect::<Result<_, ApiError>>()?;
-        list.push(TournamentSummary {
-            slug: r.slug,
-            locale: Locale::from_db(&r.locale)?,
-            name: r.name,
-            mode: TournamentMode::from_db(&r.mode)?,
-            team_size: i32::from(r.team_size),
-            status,
-            admission: Admission::from_db(&r.admission)?,
-            max_participants: r.max_participants,
-            participants: r.participants,
-            registered: r.registered,
-            checked_in: r.checked_in,
-            starts_at: r.starts_at,
-            translations,
-            created_at: r.created_at,
-            cover_url: r.cover_key.as_deref().and_then(public_url),
+        // O `TenantId` é o de quem chamou (conferido), não um lido do banco.
+        let tenant = *tenants
+            .iter()
+            .find(|t| t.get() == r.tenant_id)
+            .ok_or_else(ApiError::internal)?;
+        list.push(Listed {
+            id,
+            tenant,
+            summary: TournamentSummary {
+                slug: r.slug,
+                locale: Locale::from_db(&r.locale)?,
+                name: r.name,
+                mode: TournamentMode::from_db(&r.mode)?,
+                team_size: i32::from(r.team_size),
+                status,
+                admission: Admission::from_db(&r.admission)?,
+                max_participants: r.max_participants,
+                participants: r.participants,
+                registered: r.registered,
+                checked_in: r.checked_in,
+                starts_at: r.starts_at,
+                translations,
+                created_at: r.created_at,
+                cover_url: r.cover_key.as_deref().and_then(public_url),
+            },
         });
     }
     Ok(list)

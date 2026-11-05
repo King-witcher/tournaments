@@ -1,7 +1,6 @@
 //! O agendador: a cada 10 s, numa instância só (advisory lock do Postgres),
 //! abre o check-in que chegou na hora, avisa a hora de iniciar, confirma os
-//! mapas com a janela vencida, sorteia os passos de veto vencidos (rede de
-//! segurança do relógio preciso, `clock`), avisa a organização das contestações
+//! mapas com a janela vencida, avisa a organização das contestações
 //! que ninguém resolveu a tempo, avisa na véspera as exclusões de
 //! comunidade (ao owner) e de conta (por email) e executa as que venceram,
 //! cada torneio, comunidade ou conta na própria
@@ -9,7 +8,9 @@
 //! screenshots e das imagens públicas (depois das exclusões, para já levar dos
 //! buckets os arquivos das comunidades excluídas), recalcula o rating das comunidades marcadas
 //! (depois das confirmações e das desistências desta passada) e apaga as
-//! notificações com mais de 30 dias; depois acorda o despachante. Aplicar ao ler e agir continua, para quem chega
+//! notificações com mais de 30 dias. Se a passada emitiu, acorda o despachante
+//! e, para os torneios alcançados, o relógio do veto (`clock`, que sorteia os
+//! passos vencidos e tem a própria rede de segurança). Aplicar ao ler e agir continua, para quem chega
 //! antes do agendador ver o estado certo. Também sorteia os passos vencidos das
 //! salas de veto e apaga as vencidas.
 
@@ -19,7 +20,7 @@ use chrono::{DateTime, Utc};
 
 use super::db;
 use crate::{
-    AppState, auth, images, matches, members, notifications, ratings, screenshots,
+    AppState, auth, images, matches, members, notifications, outbox, ratings, screenshots,
     shared::ApiError, tenants, tournaments, veto_rooms,
 };
 
@@ -34,8 +35,6 @@ pub struct Tick {
     pub reminded: usize,
     /// Mapas confirmados por tempo.
     pub confirmed: u64,
-    /// Passos de veto sorteados pelo fim do tempo.
-    pub vetoed: u64,
     /// Contestações que a organização foi avisada de resolver.
     pub contest_notices: u64,
     /// Owners avisados da exclusão da comunidade na véspera.
@@ -62,6 +61,8 @@ pub struct Tick {
 
 /// Uma passada em `now`. `None` se outra instância está numa passada.
 pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, ApiError> {
+    // O lock é de transação, para soltar sozinho até se a tarefa morrer; por
+    // isso esta conexão fica presa à passada, e as etapas usam outras do pool.
     let mut lock = state.db.begin().await?;
     if !db::try_lock_scheduler(&mut lock).await? {
         return Ok(None);
@@ -71,7 +72,6 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             opened: tournaments::open_due_check_ins(&state.db, now).await?,
             reminded: tournaments::remind_due_starts(&state.db, now).await?,
             confirmed: matches::confirm_all_due(&state.db, now).await?,
-            vetoed: matches::veto_clock(&state.db, now).await?.0,
             contest_notices: matches::notify_contested(&state.db, now).await?,
             tenant_reminders: tenants::remind_due_deletions(&state.db, now).await?,
             account_reminders: auth::remind_due_account_deletions(state, now).await?,
@@ -84,10 +84,10 @@ pub async fn tick(state: &AppState, now: DateTime<Utc>) -> Result<Option<Tick>, 
             veto_room_steps: veto_rooms::clock(state, now).await?.0,
             expired_veto_rooms: veto_rooms::delete_expired(state, now).await?,
         })
-    }
-    .await;
+    };
+    let (pass, touched) = outbox::track(None, pass).await;
+    state.realtime.emitted(touched);
     lock.rollback().await?;
-    state.realtime.wake();
     pass.map(Some)
 }
 

@@ -4,10 +4,11 @@
 //! outbox, publica, guarda os avisos no sininho e manda os Web Push
 //! (`dispatcher`) e o agendador que faz o que vence com o tempo
 //! (`scheduler`: check-in na hora, hora de iniciar, confirmação por tempo,
-//! sorteio dos passos de veto vencidos, exclusões de comunidade e de conta,
-//! a rotina diária dos screenshots, rating das comunidades marcadas,
-//! notificações vencidas) e o relógio dos passos do veto (`clock`), que dorme
-//! até o próximo prazo. Fica acima de todos os domínios: confere o acesso
+//! exclusões de comunidade e de conta, a rotina diária dos screenshots,
+//! rating das comunidades marcadas, notificações vencidas) e o relógio dos
+//! passos do veto (`clock`), que dorme até o próximo prazo e, ao acordar, relê
+//! só os torneios que os eventos alcançaram ou cujo prazo venceu. Fica acima
+//! de todos os domínios: confere o acesso
 //! como na leitura (`tenants`, `tournaments`), o socket e o despachante
 //! chamam `notifications`, e o agendador chama `tournaments`, `matches`,
 //! `tenants`, `members`, `screenshots`, `ratings` e `notifications`.
@@ -25,9 +26,10 @@ mod scheduler;
 mod socket;
 mod types;
 
+use chrono::{DateTime, Utc};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::AppState;
+use crate::{AppState, shared::ApiError};
 
 pub use connection::MAX_TOPICS;
 pub use dispatcher::dispatch_once;
@@ -41,17 +43,38 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(room_socket::veto_room_socket))
 }
 
+/// Uma passada do relógio do veto em `now` (os testes; em produção, a tarefa
+/// de `spawn`). Devolve quantos passos sorteou.
+pub async fn veto_clock(state: &AppState, now: DateTime<Utc>) -> Result<u64, ApiError> {
+    Ok(clock::pass(state, now).await?.written)
+}
+
 /// Sobe o despachante, o agendador e os relógios do veto (o `main`; os testes
-/// chamam `dispatch_once` e `tick` direto).
+/// chamam `dispatch_once`, `tick` e `veto_clock` direto).
 pub fn spawn(state: AppState) {
     let dispatcher = state.clone();
     tokio::spawn(async move {
         loop {
-            dispatcher::drain(&dispatcher).await;
-            dispatcher.realtime.woken().await;
+            let wait = if dispatcher::drain(&dispatcher).await {
+                dispatcher::IDLE
+            } else {
+                dispatcher::RETRY
+            };
+            let _ = tokio::time::timeout(wait, dispatcher.realtime.woken()).await;
         }
     });
-    tokio::spawn(clock::run(state.clone()));
+    // O relógio é o único que sorteia os passos de quem ninguém lê: se a tarefa
+    // cair (pânico), recomeça, relendo todos os torneios.
+    let ticking = state.clone();
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = tokio::spawn(clock::run(ticking.clone())).await {
+                tracing::error!(error = %e, "relógio do veto caiu; recomeça");
+            }
+            ticking.realtime.wake();
+            tokio::time::sleep(clock::PAUSE).await;
+        }
+    });
     tokio::spawn(clock::run_rooms(state.clone()));
     tokio::spawn(async move {
         let mut every = tokio::time::interval(scheduler::EVERY);

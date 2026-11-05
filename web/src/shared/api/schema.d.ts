@@ -1380,6 +1380,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["my_tournament"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/participants": {
         parameters: {
             query?: never;
@@ -10521,6 +10537,49 @@ export interface operations {
             };
             /** @description request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    my_tournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A entrada de quem vê neste torneio, a mesma que `/me/tournaments` traria em `registered` (também nos encerrados que a lista já não traz): a situação, a colocação, a próxima partida e o time. As confirmações por tempo vencidas são aplicadas antes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTournament"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, participant.not_found (quem vê não está inscrito) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

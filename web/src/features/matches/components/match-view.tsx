@@ -8,6 +8,7 @@ import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedTexts } from "@/features/tournaments/lib/localize";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
+import { preload } from "@/shared/lib/preload";
 import { PageError } from "@/shared/ui/page-error";
 import { loadBracket, loadMaps, loadMatch } from "../server";
 import { MatchAfter } from "./match-after";
@@ -29,7 +30,7 @@ type Props = { tenant: string; slug: string; matchKey: string };
 export async function MatchView({ tenant, slug, matchKey }: Props) {
   // Os screenshots de cada partida (GameScreenshots) saem deste pedido:
   // junto dos outros.
-  void loadMatchScreenshots(tenant, slug, matchKey);
+  preload(loadMatchScreenshots(tenant, slug, matchKey));
   const [t, tNav, locale, loaded, found, bracket, maps, user, teamName] =
     await Promise.all([
       getTranslations("Match"),

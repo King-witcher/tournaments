@@ -1,6 +1,9 @@
 //! O "Pronto": só o capitão, ou todos do elenco de agora, com o elenco mudando no meio.
 
+use api::realtime::veto_clock;
+
 use super::*;
+use crate::schema::count;
 
 // Pronto.
 
@@ -132,6 +135,27 @@ async fn whoever_leaves_the_community_does_not_hold_the_series_forever() {
     let seen = detail(&c.app, cap, KEY).await;
     assert_eq!(seen["veto"]["status"], "in_progress", "{seen}");
     assert_eq!(seen["veto"]["turn"]["action"], "ban");
+}
+
+/// Sem ninguém ler, quem começa é o relógio: a saída não grava evento de veto,
+/// mas a mudança da comunidade o faz reler os torneios dela, em vez de confiar
+/// no que viu antes (a série esperando quem saiu).
+#[tokio::test]
+async fn the_clock_begins_the_series_that_a_departure_left_ready() {
+    let (db, _lease) = crate::db::test_db().await;
+    let c = cast(&db, all_players(), draft("alternating", 1, 1)).await;
+    let [cap, mate, other_cap, other_mate] = [&c.p[0], &c.p[1], &c.p[2], &c.p[3]];
+    ok_ready(&c, cap).await;
+    ok_ready(&c, other_cap).await;
+    ok_ready(&c, other_mate).await;
+    const BEGUN: &str = "select count(*) from match_veto_events where kind = 'begin'";
+    let now = chrono::Utc::now;
+    assert_eq!(veto_clock(&c.state, now()).await.unwrap(), 0);
+    let (status, body) = delete(&c.app, "/tenants/quake-br/me", mate).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    assert_eq!(count(&db, BEGUN).await, 0);
+    assert_eq!(veto_clock(&c.state, now()).await.unwrap(), 0);
+    assert_eq!(count(&db, BEGUN).await, 1);
 }
 
 #[tokio::test]

@@ -1,27 +1,30 @@
-//! SQL da chave: leitura das séries decididas, confirmação por tempo dos
-//! mapas e descarte aqui; escritas da série em `writes`, mapas em `games`,
-//! histórico em `events`, o que a chave lê dos screenshots em `screenshots`,
-//! os pareamentos gravados do suíço em `pairings`.
+//! SQL da chave: confirmação por tempo dos mapas e descarte aqui; a leitura
+//! da fase inteira numa query (séries decididas, mapas, pareamentos, veto) em
+//! `stage`; escritas da série em `writes`, mapas em `games`, histórico da
+//! partida em `events` (com as escalações dela, `match_history`), o que a
+//! chave lê dos screenshots em `screenshots`, os pareamentos gravados do
+//! suíço em `pairings`.
 
 mod events;
 mod games;
 mod pairings;
 mod screenshots;
+mod stage;
 mod writes;
 
 use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
-use super::result::{ResultRow, StoredResult};
-use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
+use crate::{tenants::TenantId, tournaments::TournamentId};
 
-pub use events::{EventRow, events, insert_event};
+pub use events::{EventRow, insert_event, match_history};
 pub use games::{
     Deadline, LineupRow, NewGame, accept_contest, confirm_game, contest_game, contest_notices_due,
-    games, insert_report, lineups, put_game, take_contest_notices, void_games,
+    insert_report, put_game, take_contest_notices, void_games,
 };
-pub use pairings::{insert_round, pairings};
+pub use pairings::insert_round;
 pub use screenshots::has_screenshot;
+pub use stage::{Parts, StageRows, stage_rows};
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
 /// Uma partida no banco: tenant, torneio, fase e identificador.
@@ -30,30 +33,6 @@ pub struct MatchRef<'a> {
     pub tournament: TournamentId,
     pub stage: i16,
     pub key: &'a str,
-}
-
-/// Séries decididas da fase `stage`, na ordem do replay.
-pub async fn results(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-) -> Result<Vec<StoredResult>, ApiError> {
-    sqlx::query_as!(
-        ResultRow,
-        r#"select id, match_key, side_a, side_b, winner, a_wins, b_wins,
-                  confirmed_via as "confirmed_via!", confirmed_at as "confirmed_at!",
-                  position as "position!"
-           from match_results
-           where tournament_id = $1 and stage = $2
-           order by position"#,
-        tournament.get(),
-        stage
-    )
-    .fetch_all(conn)
-    .await?
-    .into_iter()
-    .map(StoredResult::try_from)
-    .collect()
 }
 
 /// Há mapa pendente com a janela de contestação vencida em `now`.

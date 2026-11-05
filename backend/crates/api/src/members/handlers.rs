@@ -148,6 +148,8 @@ pub async fn get_member(
     member: TenantMember,
     PathParams(path): PathParams<MemberPath>,
 ) -> Result<Json<MemberProfile>, ApiError> {
+    // Uma conexão para o membro e os torneios dele.
+    let mut conn = state.db.acquire().await?;
     let Member {
         user_id,
         nickname,
@@ -155,11 +157,11 @@ pub async fn get_member(
         avatar_url,
         role,
         joined_at,
-    } = db::list(&state.db, member.tenant, Some(path.user_id))
+    } = db::list(&mut *conn, member.tenant, Some(path.user_id))
         .await?
         .pop()
         .ok_or(ApiError::not_found("member.not_found"))?;
-    let tournaments = history::of(&state.db, &member, user_id).await?;
+    let tournaments = history::of(&mut conn, &member, user_id).await?;
     Ok(Json(MemberProfile {
         user_id,
         nickname,

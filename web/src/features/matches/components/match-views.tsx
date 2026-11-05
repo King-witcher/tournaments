@@ -2,7 +2,7 @@
 
 import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useDeferredValue, useId, useState } from "react";
 
 import { ContentSwitcher } from "@/shared/ui/content-switcher";
 import styles from "./match-views.module.scss";
@@ -18,11 +18,14 @@ type Props = {
 
 /**
  * As duas vistas das séries do round robin, no `ContentSwitcher`: por rodada
- * ou quem enfrentou quem. As duas chegam prontas do servidor.
+ * ou quem enfrentou quem. As duas chegam prontas do servidor. A vista nova
+ * entra depois do clique (`useDeferredValue`): com muitos inscritos, montar
+ * a tabela cruzada ou todas as rodadas segurava o switcher.
  */
 export function MatchViews({ rounds, crosstable }: Props) {
   const t = useTranslations("Bracket.views");
   const [view, setView] = useState<View>("rounds");
+  const shown = useDeferredValue(view);
   const id = useId();
   const tabId = (name: View) => `${id}-${name}`;
 
@@ -45,10 +48,10 @@ export function MatchViews({ rounds, crosstable }: Props) {
       </div>
       <div
         role="tabpanel"
-        aria-labelledby={tabId(view)}
+        aria-labelledby={tabId(shown)}
         className={styles.panel}
       >
-        {view === "rounds" ? rounds : crosstable}
+        {shown === "rounds" ? rounds : crosstable}
       </div>
     </Stack>
   );

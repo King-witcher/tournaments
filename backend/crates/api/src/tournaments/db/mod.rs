@@ -23,13 +23,14 @@ use crate::{
 };
 
 pub use audience::{Address, Audience, audience};
-pub use read::{current_status, find, find_for_update, list, slugs_for_member};
+pub use read::{Listed, current_status, find, find_for_update, list, list_in, slugs_for_member};
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use status::{publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 
-/// Id interno de um torneio. Só sai do banco por `find`/`find_for_update`,
-/// que filtram pelo tenant; quem recebe um `TournamentId` já passou por lá.
+/// Id interno de um torneio. Só sai do banco por `find`/`find_for_update` e
+/// `list_in`, que filtram pelo tenant; quem recebe um `TournamentId` já passou
+/// por lá.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TournamentId(i64);
 

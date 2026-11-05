@@ -3,7 +3,9 @@ import { Suspense } from "react";
 
 import { TeamsSection } from "@/features/teams/components/teams-section";
 import { loadTournament } from "@/features/tournaments/server";
+import { preload } from "@/shared/lib/preload";
 import { SectionSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
+import { getParticipants } from "../server";
 import { ParticipantTable } from "./participant-table";
 
 type Props = { tenant: string; slug: string };
@@ -12,8 +14,12 @@ type Props = { tenant: string; slug: string };
  * A aba Inscritos. No TDM, primeiro os times e os reservas (para todos),
  * depois a tabela das inscrições individuais (check-in, tirar alguém); no
  * duelo, a tabela. Fica em `<Suspense>`.
+ *
+ * A tabela sai em todo modo: os inscritos começam junto com o torneio, não
+ * depois dele.
  */
 export async function ParticipantsView({ tenant, slug }: Props) {
+  preload(getParticipants(tenant, slug));
   const loaded = await loadTournament(tenant, slug);
   if (loaded.kind !== "ok") return null;
 

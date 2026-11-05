@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 
-import { ChampionPortrait } from "@/features/champions/components/champion-portrait";
 import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
 import { Notice } from "@/shared/ui/notice";
@@ -34,13 +34,21 @@ export function VetoChampionBoard({ rule, slot }: Props) {
   const tMaps = useTranslations("Match.veto.maps");
   const { veto, names, pending, actions } = useVetoBoard();
   const text = useChampionTileText(names, rule);
-  if (!veto) return null;
-  const turn = veto.turn?.target === "champion" ? veto.turn : null;
+  const turn = veto?.turn?.target === "champion" ? veto.turn : null;
   const banning = turn?.action === "ban";
   const pickSlot = banning ? undefined : slot;
+  const game = pickSlot?.game ?? turn?.pick_for ?? 1;
+  const teamPick = turn?.action === "team_pick";
+  const player = pickSlot?.player ?? undefined;
+  const { step } = actions;
+  const choose = useCallback(
+    (champion: string) =>
+      step(teamPick ? { champion, game, player } : { champion }),
+    [step, teamPick, game, player],
+  );
+  if (!veto) return null;
   const options = banning ? veto.options : (pickSlot?.options ?? []);
   const tiles = championTiles(veto, pickSlot);
-  const game = pickSlot?.game ?? turn?.pick_for ?? 1;
   const { hint, described } = text;
   // O capitão escolhendo por um colega: é o que diz para quem é o campeão.
   const forTeam = veto.can_act.pick_for_team && pickSlot?.player != null;
@@ -67,36 +75,21 @@ export function VetoChampionBoard({ rule, slot }: Props) {
           return (
             <VetoTile
               key={c.slug}
-              image={
-                <ChampionPortrait slug={c.slug} out={tile.state === "banned"} />
-              }
+              slug={c.slug}
               name={c.name}
               state={tile.state}
               portrait
               hint={hint(tile)}
               described={described(tile)}
-              action={
-                options.includes(c.slug)
-                  ? {
-                      kind: banning ? "ban" : "pick",
-                      text: banning ? tMaps("ban") : tMaps("pick"),
-                      label: banning
-                        ? t("banChampion", { champion: c.name })
-                        : pickLabel(c.name),
-                      disabled: pending != null,
-                      onClick: () =>
-                        actions.step(
-                          turn?.action === "team_pick"
-                            ? {
-                                champion: c.slug,
-                                game,
-                                player: pickSlot?.player ?? undefined,
-                              }
-                            : { champion: c.slug },
-                        ),
-                    }
-                  : undefined
-              }
+              {...(options.includes(c.slug) && {
+                action: banning ? ("ban" as const) : ("pick" as const),
+                actionText: banning ? tMaps("ban") : tMaps("pick"),
+                actionLabel: banning
+                  ? t("banChampion", { champion: c.name })
+                  : pickLabel(c.name),
+                disabled: pending != null,
+                onAction: choose,
+              })}
             />
           );
         })}

@@ -4,7 +4,11 @@
 //! evento no canal dos sockets (o `notify` leva o id de uma notificação que
 //! já existe). Os avisos que a comunidade quer no Discord entram na fila dele
 //! nessa transação (o envio é da tarefa do `discord`). Roda quando acordado:
-//! depois de cada requisição que emitiu e a cada passada do agendador.
+//! depois de cada requisição, passada do agendador ou do relógio que emitiu;
+//! sem despertar, a cada `IDLE` (rede de segurança de quem emitiu sem acordar),
+//! e `RETRY` depois de uma falha.
+
+use std::time::Duration;
 
 use super::hub::Published;
 use crate::{
@@ -16,6 +20,10 @@ use crate::{
 
 /// Eventos por passada; com mais, o despachante passa de novo.
 const BATCH: i64 = 200;
+/// Sem despertar, quanto o despachante espera para olhar o outbox de novo.
+pub(super) const IDLE: Duration = Duration::from_secs(60);
+/// Depois de uma passada que falhou, quando tentar de novo.
+pub(super) const RETRY: Duration = Duration::from_secs(10);
 
 /// Uma passada: publica e apaga até `BATCH` eventos. Devolve quantos saíram
 /// (os ilegíveis também saem, com log).
@@ -41,6 +49,11 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
         }
         published.push(out);
     }
+    if batch.is_empty() {
+        // Nada a apagar: a transação só travaria o que não existe.
+        tx.rollback().await?;
+        return Ok(0);
+    }
     let ids: Vec<i64> = batch.iter().map(|s| s.id).collect();
     outbox::remove(&mut tx, &ids).await?;
     tx.commit().await?;
@@ -53,15 +66,16 @@ pub async fn dispatch_once(state: &AppState) -> Result<usize, ApiError> {
     Ok(batch.len())
 }
 
-/// Até esvaziar o outbox. Um erro fica no log e espera o próximo despertar.
-pub(super) async fn drain(state: &AppState) {
+/// Até esvaziar o outbox. Um erro fica no log e devolve `false` (tenta de
+/// novo em `RETRY`).
+pub(super) async fn drain(state: &AppState) -> bool {
     loop {
         match dispatch_once(state).await {
             Ok(n) if n as i64 == BATCH => {}
-            Ok(_) => return,
+            Ok(_) => return true,
             Err(e) => {
                 tracing::error!(code = e.code, "despachante do outbox falhou");
-                return;
+                return false;
             }
         }
     }

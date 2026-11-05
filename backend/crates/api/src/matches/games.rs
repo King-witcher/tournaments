@@ -79,7 +79,8 @@ pub struct GameMap {
     pub name: String,
 }
 
-/// O que `db::games` lê, antes de converter.
+/// O que `db::stage_rows` lê de cada mapa, antes de converter.
+#[derive(Deserialize, Debug)]
 pub(super) struct GameRow {
     pub id: i64,
     pub match_key: String,

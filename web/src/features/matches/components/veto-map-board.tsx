@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 
-import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { useVetoBoard } from "../hooks/use-veto-board";
 import {
   nextMapPickGame,
@@ -30,9 +30,11 @@ export function VetoMapBoard() {
   const t = useTranslations("Match.veto.maps");
   const tGame = useTranslations("Match.games");
   const { veto, bestOf, names, pending, actions } = useVetoBoard();
+  const { step } = actions;
+  const choose = useCallback((map: string) => step({ map }), [step]);
   if (!veto) return null;
   const states = poolStates(veto, bestOf);
-  const kind = veto.turn?.action === "pick" ? "pick" : "ban";
+  const kind: "pick" | "ban" = veto.turn?.action === "pick" ? "pick" : "ban";
 
   const describe = (s: PoolMapState) => {
     switch (s.kind) {
@@ -52,12 +54,11 @@ export function VetoMapBoard() {
       <ul className={styles.maps}>
         {veto.pool.map((m) => {
           const state = states[m.slug];
+          const option = veto.options.includes(m.slug);
           return (
             <VetoTile
               key={m.slug}
-              image={
-                <MapThumbnail slug={m.slug} out={state.kind === "banned"} />
-              }
+              slug={m.slug}
               name={m.name}
               state={TILE[state.kind]}
               note={
@@ -66,23 +67,19 @@ export function VetoMapBoard() {
                   : undefined
               }
               described={describe(state)}
-              action={
-                veto.options.includes(m.slug)
-                  ? {
-                      kind,
-                      text: t(kind),
-                      label:
-                        kind === "pick"
-                          ? t("pickMap", {
-                              map: m.name,
-                              game: nextMapPickGame(veto),
-                            })
-                          : t("banMap", { map: m.name }),
-                      disabled: pending != null,
-                      onClick: () => actions.step({ map: m.slug }),
-                    }
-                  : undefined
-              }
+              {...(option && {
+                action: kind,
+                actionText: t(kind),
+                actionLabel:
+                  kind === "pick"
+                    ? t("pickMap", {
+                        map: m.name,
+                        game: nextMapPickGame(veto),
+                      })
+                    : t("banMap", { map: m.name }),
+                disabled: pending != null,
+                onAction: choose,
+              })}
             />
           );
         })}

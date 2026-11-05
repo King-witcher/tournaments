@@ -1,5 +1,7 @@
 mod formation;
 
+use std::collections::HashMap;
+
 use sqlx::PgConnection;
 
 pub use formation::*;
@@ -24,7 +26,7 @@ struct Row {
 }
 
 /// Junta as linhas consecutivas de cada time, na ordem em que vieram.
-fn group(rows: Vec<Row>) -> Vec<StoredTeam> {
+fn group(rows: impl IntoIterator<Item = Row>) -> Vec<StoredTeam> {
     let mut teams: Vec<StoredTeam> = Vec::new();
     for r in rows {
         let member = StoredMember {
@@ -57,23 +59,52 @@ pub async fn list(
     tournament: TournamentId,
     seeded_only: bool,
 ) -> Result<Vec<StoredTeam>, sqlx::Error> {
-    let rows = sqlx::query_as!(
-        Row,
-        r#"select t.id, t.name, t.seed, t.captain, t.withdrawn_at is not null as "withdrawn!",
+    let mut all = list_in(conn, &[tournament], seeded_only).await?;
+    Ok(all.pop().unwrap_or_default())
+}
+
+/// Como `list`, de vários torneios numa query só: os times de cada um, na
+/// ordem de `tournaments`.
+async fn list_in(
+    conn: &mut PgConnection,
+    tournaments: &[TournamentId],
+    seeded_only: bool,
+) -> Result<Vec<Vec<StoredTeam>>, sqlx::Error> {
+    let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
+    let rows = sqlx::query!(
+        r#"select t.tournament_id, t.id, t.name, t.seed, t.captain,
+                  t.withdrawn_at is not null as "withdrawn!",
                   p.user_id, m.nickname, u.avatar_url, m.left_at is not null as "left!"
            from teams t
            join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
            join users u on u.id = p.user_id
-           where t.tournament_id = $1 and (not $2 or t.seed is not null)
-           order by t.seed nulls last, t.created_at, t.id,
+           where t.tournament_id = any($1) and (not $2 or t.seed is not null)
+           order by t.tournament_id, t.seed nulls last, t.created_at, t.id,
                     p.user_id <> t.captain, p.registered_at, p.user_id"#,
-        tournament.get(),
+        &ids,
         seeded_only
     )
     .fetch_all(conn)
     .await?;
-    Ok(group(rows))
+    let mut by_tournament: HashMap<i64, Vec<Row>> = HashMap::new();
+    for r in rows {
+        by_tournament.entry(r.tournament_id).or_default().push(Row {
+            id: r.id,
+            name: r.name,
+            seed: r.seed,
+            captain: r.captain,
+            withdrawn: r.withdrawn,
+            user_id: r.user_id,
+            nickname: r.nickname,
+            avatar_url: r.avatar_url,
+            left: r.left,
+        });
+    }
+    Ok(ids
+        .iter()
+        .map(|id| group(by_tournament.remove(id).unwrap_or_default()))
+        .collect())
 }
 
 /// Os times da chave: os que têm seed, pelo seed, com os jogadores. Depois
@@ -83,6 +114,15 @@ pub async fn seeded(
     tournament: TournamentId,
 ) -> Result<Vec<StoredTeam>, sqlx::Error> {
     list(conn, tournament, true).await
+}
+
+/// Como `seeded`, de vários torneios numa query só, na ordem de
+/// `tournaments`.
+pub async fn seeded_in(
+    conn: &mut PgConnection,
+    tournaments: &[TournamentId],
+) -> Result<Vec<Vec<StoredTeam>>, sqlx::Error> {
+    list_in(conn, tournaments, true).await
 }
 
 /// Os times `ids` de qualquer torneio do tenant, com os jogadores, pelo id.
@@ -244,44 +284,71 @@ pub async fn withdraw_departing(
     Ok(true)
 }
 
-/// O time de `user_id` no torneio `slug` do tenant, com os jogadores; `None`
-/// sem inscrição ou sem time.
-pub async fn of_user(
-    conn: &mut PgConnection,
-    tenant: TenantId,
-    slug: &str,
-    user_id: i64,
-) -> Result<Option<StoredTeam>, sqlx::Error> {
-    let team = sqlx::query_scalar!(
-        r#"select p.team_id as "team_id!" from participants p
-           join tournaments t on t.id = p.tournament_id
-           where t.tenant_id = $1 and t.slug = $2 and p.user_id = $3 and p.team_id is not null"#,
-        tenant.get(),
-        slug,
-        user_id
-    )
-    .fetch_optional(&mut *conn)
-    .await?;
-    let Some(team) = team else {
-        return Ok(None);
-    };
-    Ok(by_ids(conn, tenant, &[team]).await?.into_iter().next())
+/// O time de um usuário num torneio (`of_user_in`).
+pub struct UserTeam {
+    /// O time dele, com os jogadores; `None` sem inscrição ou sem time.
+    pub team: Option<StoredTeam>,
+    /// O torneio já tem algum time (no TDM antes do início: quem está fora
+    /// de todos fica de reserva).
+    pub any_formed: bool,
 }
 
-/// O torneio `slug` do tenant já tem algum time (no TDM antes do início:
-/// quem está fora de todos fica de reserva).
-pub async fn any_formed(
+/// O time de `user_id` em cada torneio de `tournaments` e se o torneio já
+/// tem algum time, numa query só (a lista dos torneios de quem vê e o perfil
+/// do membro), na ordem de `tournaments`. Os ids entram por `(select $1)`
+/// para o Postgres reusar o plano genérico (`stage_rows` em `matches` diz
+/// por quê).
+pub async fn of_user_in(
     conn: &mut PgConnection,
-    tenant: TenantId,
-    slug: &str,
-) -> Result<bool, sqlx::Error> {
-    sqlx::query_scalar!(
-        r#"select exists (select 1 from teams t
-                          join tournaments tr on tr.id = t.tournament_id
-                          where tr.tenant_id = $1 and tr.slug = $2) as "formed!""#,
-        tenant.get(),
-        slug
+    tournaments: &[TournamentId],
+    user_id: i64,
+) -> Result<Vec<UserTeam>, sqlx::Error> {
+    let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
+    let rows = sqlx::query!(
+        r#"select q.id as "tournament_id!",
+                  exists(select 1 from teams x where x.tournament_id = q.id) as "formed!",
+                  t.id as "id?", t.name as "name?", t.seed as "seed?", t.captain as "captain?",
+                  t.withdrawn_at is not null as "withdrawn?",
+                  p.user_id as "user_id?", m.nickname as "nickname?", u.avatar_url as "avatar_url?",
+                  m.left_at is not null as "left?"
+           from unnest((select $1::bigint[])) as q(id)
+           left join participants me on me.tournament_id = q.id and me.user_id = $2
+           left join teams t on t.tournament_id = q.id and t.id = me.team_id
+           left join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id
+           left join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
+           left join users u on u.id = p.user_id
+           order by q.id, p.user_id <> t.captain, p.registered_at, p.user_id"#,
+        &ids,
+        user_id
     )
-    .fetch_one(conn)
-    .await
+    .fetch_all(conn)
+    .await?;
+    let mut formed: HashMap<i64, bool> = HashMap::new();
+    let mut members: HashMap<i64, Vec<Row>> = HashMap::new();
+    for r in rows {
+        formed.insert(r.tournament_id, r.formed);
+        let (Some(id), Some(captain), Some(user_id), Some(nickname)) =
+            (r.id, r.captain, r.user_id, r.nickname)
+        else {
+            continue;
+        };
+        members.entry(r.tournament_id).or_default().push(Row {
+            id,
+            name: r.name,
+            seed: r.seed,
+            captain,
+            withdrawn: r.withdrawn.unwrap_or_default(),
+            user_id,
+            nickname,
+            avatar_url: r.avatar_url,
+            left: r.left.unwrap_or_default(),
+        });
+    }
+    Ok(ids
+        .iter()
+        .map(|id| UserTeam {
+            team: group(members.remove(id).unwrap_or_default()).pop(),
+            any_formed: formed.get(id).copied().unwrap_or_default(),
+        })
+        .collect())
 }

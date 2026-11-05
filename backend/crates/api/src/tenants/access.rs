@@ -112,15 +112,31 @@ pub struct TenantMember<R = Player> {
 /// qualquer método: só para o que a exclusão não impede (cancelá-la, sair).
 pub struct DuringDeletion<R = Player>(pub TenantMember<R>);
 
-impl TenantMember {
-    /// Todas as participações ativas de `user`, na ordem em que entrou, para
-    /// as rotas de quem vê que juntam as comunidades (`/me/tournaments`): o
-    /// `TenantId` continua saindo só de uma participação conferida no banco.
-    pub async fn all_of(db: &PgPool, user: &CurrentUser) -> Result<Vec<Self>, ApiError> {
-        Ok(db::memberships(db, user.id)
+/// O usuário logado e todas as participações ativas dele, na ordem em que
+/// entrou, para as rotas de quem vê que juntam as comunidades
+/// (`/me/tournaments`): o `TenantId` continua saindo só de uma participação
+/// conferida no banco. A conta e as participações saem de uma query só (a
+/// sessão, do Redis, como em `CurrentUser`); sem sessão válida ou sem a
+/// conta, 401 `auth.unauthenticated`.
+pub struct Memberships {
+    pub user: CurrentUser,
+    pub members: Vec<TenantMember>,
+}
+
+impl FromRequestParts<AppState> for Memberships {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let user_id = CurrentUser::session_owner(parts, state).await?;
+        let (user, memberships) = db::user_and_memberships(&state.db, user_id)
             .await?
+            .ok_or(ApiError::unauthenticated())?;
+        let members = memberships
             .into_iter()
-            .map(|m| Self {
+            .map(|m| TenantMember {
                 tenant: m.tenant,
                 slug: m.slug,
                 name: m.name,
@@ -132,7 +148,8 @@ impl TenantMember {
                 logo_key: m.logo_key,
                 min_role: PhantomData,
             })
-            .collect())
+            .collect();
+        Ok(Self { user, members })
     }
 }
 

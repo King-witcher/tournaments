@@ -1,18 +1,20 @@
 //! Onde quem vê está na chave de um torneio e qual é a próxima partida dele,
-//! para a lista dos torneios dele em todas as comunidades (`/me/tournaments`),
-//! e onde outro inscrito está, sem a próxima partida, para o perfil do membro
-//! na comunidade (`place_of`).
+//! para a lista dos torneios dele em todas as comunidades (`/me/tournaments`)
+//! e para a entrada de um torneio só; onde ele terminou nos encerrados, de
+//! vários de uma vez (`final_places`); e onde outro inscrito está, sem a
+//! próxima partida, para o perfil do membro na comunidade (`place_of`).
 
+use chrono::Utc;
 use engine::{
     core::{self as ec, Occupant, ParticipantId, Slot},
-    formats::{self as ef, elimination::EliminationKind},
+    formats::{self as ef, StageBracket, elimination::EliminationKind},
 };
 use sqlx::PgConnection;
 
 use super::{
     due, key, progress,
     result::Side,
-    stage::Stage,
+    stage::{self, Stage},
     tasks,
     types::{MatchState, NextMatch, SideSource, SourceOutcome, ViewerTask},
     veto,
@@ -22,7 +24,7 @@ use crate::{
     shared::ApiError,
     teams::StoredTeam,
     tenants::TenantMember,
-    tournaments::{StoredTournament, TournamentStatus},
+    tournaments::{StoredTournament, TournamentId, TournamentStatus, find_visible},
 };
 
 /// Onde o inscrito está na chave. A colocação é a faixa (`rank` 5 com
@@ -56,9 +58,19 @@ pub async fn place<R>(
     member: &TenantMember<R>,
     slug: &str,
 ) -> Result<BracketPlace, ApiError> {
-    let (tournament, stage) = due::current(conn, member, slug).await?;
+    let tournament = find_visible(conn, member, slug).await?;
+    place_from(conn, member, tournament).await
+}
+
+/// Como `place`, com o torneio já lido por `find_visible`.
+pub async fn place_from<R>(
+    conn: &mut PgConnection,
+    member: &TenantMember<R>,
+    tournament: StoredTournament,
+) -> Result<BracketPlace, ApiError> {
+    let (tournament, stage) = due::current_from(conn, member, tournament).await?;
     let viewer = Viewer::new(member, &stage);
-    let place = locate(&stage, viewer.participant);
+    let place = locate(&stage.bracket, &stage.entrants, viewer.participant);
     let next = match place {
         Place::Playing => next_match(tournament.status, &stage, &viewer),
         _ => None,
@@ -70,6 +82,27 @@ pub async fn place<R>(
     })
 }
 
+/// Onde `user_id` (inscrito) terminou em cada torneio encerrado de
+/// `finished`, na ordem: só a chave, sem o veto, e duas idas ao banco para
+/// todos (`stage::brackets`). `None` no torneio com confirmação por tempo
+/// vencida: a chave ainda pode mudar, e ele vai por `place` (que aplica e
+/// trava).
+pub async fn final_places(
+    conn: &mut PgConnection,
+    finished: &[TournamentId],
+    user_id: i64,
+) -> Result<Vec<Option<Place>>, ApiError> {
+    let now = Utc::now();
+    Ok(stage::brackets(conn, finished)
+        .await?
+        .iter()
+        .map(|s| {
+            let me = stage::participant_of(&s.entrants, user_id);
+            (!due::confirmations_due(&s.games, now)).then(|| locate(&s.bracket, &s.entrants, me))
+        })
+        .collect())
+}
+
 /// Como `place`, para outro inscrito, `user_id`, no torneio `slug` como
 /// `member` o vê: sem a próxima partida, que é só de quem joga.
 pub async fn place_of<R>(
@@ -79,7 +112,11 @@ pub async fn place_of<R>(
     user_id: i64,
 ) -> Result<BracketPlace, ApiError> {
     let (tournament, stage) = due::current(conn, member, slug).await?;
-    let place = locate(&stage, stage.participant_of(user_id));
+    let place = locate(
+        &stage.bracket,
+        &stage.entrants,
+        stage.participant_of(user_id),
+    );
     Ok(BracketPlace {
         tournament,
         place,
@@ -87,18 +124,22 @@ pub async fn place_of<R>(
     })
 }
 
-/// O lugar de `participant` na chave; `None` é o inscrito sem seed.
-fn locate(stage: &Stage, participant: Option<ParticipantId>) -> Place {
+/// O lugar de `participant` na chave `bracket` dos times `entrants`; `None`
+/// é o inscrito sem seed.
+fn locate(
+    bracket: &StageBracket,
+    entrants: &[StoredTeam],
+    participant: Option<ParticipantId>,
+) -> Place {
     let Some(me) = participant else {
         return Place::Missed;
     };
-    let standing = stage
-        .bracket
+    let standing = bracket
         .placements()
         .into_iter()
         .find(|p| p.participant == me)
         .map(|p| (p.rank, p.tied));
-    let withdrawn = stage.entrant(me).is_some_and(|e| e.withdrawn);
+    let withdrawn = entrants.iter().any(|e| e.id == me.0 && e.withdrawn);
     match standing {
         Some((1, _)) => Place::Champion,
         _ if withdrawn => Place::Withdrawn(standing),

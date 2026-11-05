@@ -1,5 +1,6 @@
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 
+import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
@@ -24,7 +25,10 @@ type Sent = {
  * organização (lança, resolve ou corrige, já confirmado, com a nota), `accept`
  * o capitão que aceita a contestação (já confirmado). Depois
  * de gravar, chama `onSent`, marca a mudança como de quem vê e recarrega a
- * página, com o foco no passo da partida; o erro volta traduzido.
+ * página, com o foco no passo da partida; o erro volta traduzido. `pending`
+ * dura até a página nova: `onSent` (que limpa e fecha o formulário) aparece
+ * junto com ela. A aba recarrega sozinha, então o aviso da própria mudança não
+ * volta pelo socket (`originHeaders`), e são uma recarga por envio, não duas.
  * `send` entra num `submitAction`.
  */
 export function useSendGame(
@@ -35,24 +39,26 @@ export function useSendGame(
 ) {
   const errorMessage = useApiErrorMessage();
   const router = useRouter();
+  const hub = useRealtimeHub();
   const markMine = useMarkMine();
   const [error, dispatch, pending] = useActionState<string | undefined, Sent>(
     async (_previous, { game, comment }) => {
       const params = gameParams(target, number);
       const body = gameInput(game);
+      const headers = hub?.originHeaders();
       const result =
         mode === "report"
           ? await callApi(
               api.POST(
                 "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/report",
-                { params, body },
+                { params, body, headers },
               ),
             )
           : mode === "accept"
             ? await callApi(
                 api.POST(
                   "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/contest/accept",
-                  { params, body },
+                  { params, body, headers },
                 ),
               )
             : await callApi(
@@ -61,13 +67,18 @@ export function useSendGame(
                   {
                     params,
                     body: { game: body, comment: comment.trim() || null },
+                    headers,
                   },
                 ),
               );
       if (!result.ok) return errorMessage(result.code, result.params);
-      onSent?.();
       markMine();
-      router.refresh();
+      // Depois do `await`, só entra na transition (e no `pending`) o que roda
+      // dentro de outra: o formulário some com a página nova, não antes.
+      startTransition(() => {
+        onSent?.();
+        router.refresh();
+      });
       // O formulário some: o foco vai para o passo da partida enviada (ou,
       // se os passos seguirem para outro, para ele: `MatchSteps`).
       focusIfLost(gameRowId(number));

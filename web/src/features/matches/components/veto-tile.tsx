@@ -1,14 +1,20 @@
 import { CheckmarkFilled, ErrorFilled } from "@carbon/icons-react";
-import { type ReactNode, useId } from "react";
+import { memo, useId } from "react";
 
+import { ChampionPortrait } from "@/features/champions/components/champion-portrait";
+import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { cn } from "@/shared/lib/cn";
 import { Tooltip } from "@/shared/ui/tooltip";
 import type { TileState } from "../lib/veto";
 import styles from "./veto-tile.module.scss";
 
 type Props = {
-  /** `MapThumbnail` (16:9) ou `ChampionPortrait` (3:4), já com `out` no banido. */
-  image: ReactNode;
+  /**
+   * O mapa ou o campeão: dá a imagem (`MapThumbnail` 16:9 ou, com
+   * `portrait`, `ChampionPortrait` 3:4; em cinza no banido) e vai no
+   * `onAction`.
+   */
+  slug: string;
   name: string;
   state: TileState;
   /**
@@ -27,16 +33,19 @@ type Props = {
   /** O estado por extenso para o leitor de tela ("Banido por Ana"), quando não é botão. */
   described?: string;
   /** Na vez de quem vê: o cartão inteiro vira o botão, com a ação escrita nele. */
-  action?: {
-    kind: "ban" | "pick";
-    /** "Banir", "Escolher", "Votar". */
-    text: string;
-    /** Rótulo acessível com o nome ("Banir Awoken"). */
-    label: string;
-    /** Outra ação do veto está no ar: o botão fica, sem responder. */
-    disabled?: boolean;
-    onClick: () => void;
-  };
+  action?: "ban" | "pick";
+  /** "Banir", "Escolher", "Votar". */
+  actionText?: string;
+  /** Rótulo acessível com o nome ("Banir Awoken"). */
+  actionLabel?: string;
+  /** Outra ação do veto está no ar: o botão fica, sem responder. */
+  disabled?: boolean;
+  /**
+   * O clique na ação, com o `slug`: a mesma função para todos os tiles do
+   * tabuleiro, que entre renderizações não muda (os tiles só renderizam de
+   * novo quando o que mostram muda).
+   */
+  onAction?: (slug: string) => void;
 };
 
 /**
@@ -56,9 +65,13 @@ type Props = {
  * nem check de escolhido (quem escolheu o quê está no resumo do draft), o
  * banido com a marca e o que quem vê não pode escolher apagado, com o motivo
  * numa dica (`hint`). O pé tem sempre a altura da ação, com ela ou sem.
+ *
+ * Só com props simples (`memo`): o clique no mapa renderiza o tabuleiro duas
+ * ou três vezes (o passo marcado, a resposta, a recarga), e os tiles que não
+ * mudaram ficam como estão, com as dicas e as imagens.
  */
-export function VetoTile({
-  image,
+export const VetoTile = memo(function VetoTile({
+  slug,
   name,
   state,
   portrait = false,
@@ -66,8 +79,18 @@ export function VetoTile({
   hint,
   described,
   action,
+  actionText,
+  actionLabel,
+  disabled: busy,
+  onAction,
 }: Props) {
   const noteId = useId();
+  const out = state === "banned";
+  const image = portrait ? (
+    <ChampionPortrait slug={slug} out={out} />
+  ) : (
+    <MapThumbnail slug={slug} out={out} />
+  );
   const Icon =
     state === "banned"
       ? ErrorFilled
@@ -81,7 +104,7 @@ export function VetoTile({
   );
   const foot = action ? (
     <span aria-hidden className={styles.action}>
-      {action.text}
+      {actionText}
     </span>
   ) : portrait ? (
     <span className={styles.slot}>
@@ -112,11 +135,11 @@ export function VetoTile({
   const surface = action ? (
     <button
       type="button"
-      className={cn(styles.surface, styles.button, styles[action.kind])}
-      aria-label={action.label}
+      className={cn(styles.surface, styles.button, styles[action])}
+      aria-label={actionLabel}
       aria-describedby={note ? noteId : undefined}
-      disabled={action.disabled}
-      onClick={action.onClick}
+      disabled={busy}
+      onClick={() => onAction?.(slug)}
     >
       {body}
     </button>
@@ -153,4 +176,4 @@ export function VetoTile({
       )}
     </li>
   );
-}
+});

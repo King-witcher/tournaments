@@ -27,9 +27,11 @@
 //! com os avisos de partida pronta, mapa enviado e contestado. A desistência,
 //! que fica no `lifecycle`, chama `settle_withdrawals`. O lugar de quem vê na
 //! chave e a próxima partida dele, para `/me/tournaments`, saem de `place`
-//! (`mine`); o de outro inscrito, para o perfil do membro, de `place_of`. O
+//! (`mine`), e onde terminou nos encerrados, de vários torneios numa leitura
+//! só, de `final_places`; o de outro inscrito, para o perfil do membro, de
+//! `place_of`. O
 //! veto de mapas e campeões de cada partida, entre ela ficar pronta e o envio
-//! de cada mapa, fica em `veto` (o relógio dos passos, `veto_clock`, é do
+//! de cada mapa, fica em `veto` (o relógio dos passos, `VetoClock`, roda no
 //! `realtime`). O domínio `screenshots` lê a partida por `slots`; com
 //! screenshot obrigatório, o envio do jogador exige um screenshot anexado
 //! (`evidence`). No round robin, `progress` diz quem está jogando e qual série
@@ -76,12 +78,12 @@ use crate::AppState;
 
 pub use contest_notice::notify_contested;
 pub use due::{apply_due_confirmations, confirm_all_due};
-pub use mine::{Place, place, place_of};
+pub use mine::{Place, final_places, place, place_from, place_of};
 pub use result::Side;
 pub use slots::{MatchGames, games as match_games, lock_games as lock_match_games};
 pub use stage::{discard, start};
 pub use types::NextMatch;
-pub use veto::clock as veto_clock;
+pub use veto::{VetoClock, VetoPass};
 pub use withdrawals::settle as settle_withdrawals;
 
 pub fn router() -> OpenApiRouter<AppState> {

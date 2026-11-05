@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use axum::{Json, extract::State};
+use axum::{Json, extract::State, http::header, response::IntoResponse};
 use engine::core::MapId;
 use serde::Serialize;
 use sqlx::PgConnection;
@@ -39,7 +39,7 @@ pub struct Map {
         (status = OK, body = Vec<Map>, description = "Mapas ativos: os do pool de duelo primeiro (o pool padrão de um torneio novo, `default_pool`, na ordem dele, e depois os outros por nome), depois os demais por nome"),
     )
 )]
-pub async fn list_maps(State(state): State<AppState>) -> Result<Json<Vec<Map>>, ApiError> {
+pub async fn list_maps(State(state): State<AppState>) -> Result<impl IntoResponse, ApiError> {
     let maps = sqlx::query_as!(
         Map,
         r#"select slug, name, duel_pool,
@@ -49,8 +49,13 @@ pub async fn list_maps(State(state): State<AppState>) -> Result<Json<Vec<Map>>, 
     )
     .fetch_all(&state.db)
     .await?;
-    Ok(Json(maps))
+    Ok(([(header::CACHE_CONTROL, CACHE)], Json(maps)))
 }
+
+/// A lista é a mesma para todos (sem sessão nem idioma: o nome do mapa é igual
+/// em todos) e só muda por migration, num deploy: o navegador (e o que houver
+/// no caminho) a guarda por 5 minutos.
+const CACHE: &str = "public, max-age=300";
 
 /// Ids dos mapas ativos entre `slugs`; o que não existe (ou saiu do jogo)
 /// fica de fora.

@@ -1,5 +1,6 @@
 //! Quantas idas ao banco custa cada ação do caminho do clique (passo do veto,
-//! envio e confirmação de partida) e a leitura da série: as queries (eventos
+//! envio e confirmação de partida), a leitura da série e os torneios de quem
+//! vê (`/me/tournaments` e a entrada de um torneio só): as queries (eventos
 //! `sqlx::query`) e os pings das conexões reaproveitadas
 //! (`test_before_acquire`), num torneio de 8 com duas séries no veto.
 
@@ -197,7 +198,7 @@ async fn what_a_veto_step_costs() {
         micros.push(cost.micros);
         last = Some(cost);
     }
-    check("GET série", &last.unwrap(), micros, 9);
+    check("GET série", &last.unwrap(), micros, 5);
 
     // Os seis passos do veto de mapas (md3, 7 mapas), alternando os lados.
     let steps = format!("{uri}/veto/steps");
@@ -216,7 +217,7 @@ async fn what_a_veto_step_costs() {
         micros.push(cost.micros);
         last = Some(cost);
     }
-    check("POST passo do veto", &last.unwrap(), micros, 14);
+    check("POST passo do veto", &last.unwrap(), micros, 10);
 }
 
 #[tokio::test]
@@ -252,8 +253,120 @@ async fn what_reporting_and_confirming_cost() {
         confirmed.0.push(cost.micros);
         confirmed.1 = Some(cost);
     }
-    check("POST envio", &sent.1.unwrap(), sent.0, 16);
-    check("POST confirmação", &confirmed.1.unwrap(), confirmed.0, 14);
+    check("POST envio", &sent.1.unwrap(), sent.0, 13);
+    check("POST confirmação", &confirmed.1.unwrap(), confirmed.0, 11);
+}
+
+/// Um torneio `slug` de dois (md1) jogado até o fim: `winner` vence `loser`.
+async fn finished(app: &Router, ana: &User, slug: &str, winner: &User, loser: &User) {
+    let uri = format!("/tenants/quake-br/tournaments/{slug}");
+    create_tournament(app, ana, with(copa(single(1, 1)), json!({ "slug": slug }))).await;
+    publish(app, ana, slug).await;
+    register(app, slug, &[winner, loser]).await;
+    let (status, body) = seed(app, ana, slug, &[winner, loser]).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = post_empty(app, &format!("{uri}/start"), ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (_, b) = get(app, &format!("{uri}/bracket"), ana).await;
+    let side = if sides(&b, find(&b, "wb-1-1")).0 == json!(winner.id) {
+        "a"
+    } else {
+        "b"
+    };
+    let game_uri = format!("{uri}/matches/wb-1-1/games/1");
+    let (status, body) = post(
+        app,
+        &format!("{game_uri}/report"),
+        winner,
+        game(side, "awoken"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let (status, body) = post_empty(app, &format!("{game_uri}/confirm"), loser).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+}
+
+/// Os torneios de P1 em todas as comunidades: um em andamento com o veto e o
+/// draft, três encerrados, dois na inscrição (um TDM) e um de outra
+/// comunidade. A home e a página de cada torneio pedem isso.
+#[tokio::test]
+async fn what_my_tournaments_cost() {
+    let (db, _lease) = crate::db::test_db().await;
+    let veto = json!({ "veto": { "map_mode": "veto", "champion_phase": true } });
+    let (app, meter, ana, p) = eight(&db, veto).await;
+    let b = bracket(&app, &ana).await;
+    let key = &keys_in(&b, "ready")[0];
+    let (a, b2) = pair(&p, &b, key);
+    for u in [a, b2] {
+        let uri = format!("{COPA}/matches/{key}/veto/ready");
+        assert_eq!(post_empty(&app, &uri, u).await.0, StatusCode::OK);
+    }
+    for slug in ["liga-1", "liga-2", "liga-3"] {
+        finished(&app, &ana, slug, a, b2).await;
+    }
+    create_tournament(
+        &app,
+        &ana,
+        with(copa(json!({})), json!({ "slug": "aberto" })),
+    )
+    .await;
+    publish(&app, &ana, "aberto").await;
+    let times = with(crate::teams::tdm(2, json!({})), json!({ "slug": "times" }));
+    create_tournament(&app, &ana, times).await;
+    publish(&app, &ana, "times").await;
+    register(&app, "aberto", &[a]).await;
+    register(&app, "times", &[a, b2]).await;
+    create(&app, a, "argentina").await;
+    let liga = "/tenants/argentina/tournaments/liga";
+    let body = with(duel("liga"), json!({ "check_in_minutes": null }));
+    let (status, body) = post(&app, "/tenants/argentina/tournaments", a, body).await;
+    assert_eq!(status, StatusCode::CREATED, "{body}");
+    assert_eq!(
+        post_empty(&app, &format!("{liga}/publish"), a).await.0,
+        StatusCode::OK
+    );
+    let (status, _) = post_empty(&app, &format!("{liga}/registration"), a).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    let mut micros = Vec::new();
+    let mut last = None;
+    for _ in 0..11 {
+        let (body, cost) = request(&meter, &app, Method::GET, "/me/tournaments", a, None).await;
+        assert_eq!(body["registered"].as_array().unwrap().len(), 7, "{body}");
+        micros.push(cost.micros);
+        last = Some(cost);
+    }
+    check("GET /me/tournaments", &last.unwrap(), micros, 8);
+
+    // O perfil de P1 na comunidade, visto pela organização: a mesma entrada.
+    let profile = format!("/tenants/quake-br/members/{}", a.id);
+    let mut micros = Vec::new();
+    let mut last = None;
+    for _ in 0..11 {
+        let (body, cost) = request(&meter, &app, Method::GET, &profile, &ana, None).await;
+        assert_eq!(body["tournaments"].as_array().unwrap().len(), 6, "{body}");
+        micros.push(cost.micros);
+        last = Some(cost);
+    }
+    check("GET perfil do membro", &last.unwrap(), micros, 10);
+
+    // A entrada de um torneio só, na página dele: em andamento e encerrado.
+    for (label, uri) in [
+        ("GET .../mine (em andamento)", format!("{COPA}/mine")),
+        (
+            "GET .../mine (encerrado)",
+            "/tenants/quake-br/tournaments/liga-1/mine".to_owned(),
+        ),
+    ] {
+        let mut micros = Vec::new();
+        let mut last = None;
+        for _ in 0..11 {
+            let (_, cost) = request(&meter, &app, Method::GET, &uri, a, None).await;
+            micros.push(cost.micros);
+            last = Some(cost);
+        }
+        check(label, &last.unwrap(), micros, 4);
+    }
 }
 
 /// O que o Next pede à API para montar a página da série (`MatchView` e o
@@ -309,5 +422,5 @@ async fn what_the_series_page_costs() {
         total.pings,
         median(micros)
     );
-    assert!(total.queries.len() <= 30, "{} queries", total.queries.len());
+    assert!(total.queries.len() <= 20, "{} queries", total.queries.len());
 }

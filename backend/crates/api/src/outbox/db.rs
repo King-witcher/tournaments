@@ -21,7 +21,7 @@ pub async fn emit(conn: &mut PgConnection, event: Event) -> Result<(), sqlx::Err
     )
     .execute(conn)
     .await?;
-    tracking::mark();
+    tracking::mark(&event);
     Ok(())
 }
 
@@ -30,25 +30,27 @@ pub async fn emit_all(
     conn: &mut PgConnection,
     events: impl IntoIterator<Item = Event>,
 ) -> Result<(), sqlx::Error> {
-    let events: Vec<Value> = events
-        .into_iter()
-        .filter(|e| !e.is_empty())
-        .map(|e| serde_json::to_value(e).expect("o evento vira JSON"))
-        .collect();
+    let events: Vec<Event> = events.into_iter().filter(|e| !e.is_empty()).collect();
     if events.is_empty() {
         return Ok(());
     }
+    let values: Vec<Value> = events
+        .iter()
+        .map(|e| serde_json::to_value(e).expect("o evento vira JSON"))
+        .collect();
     sqlx::query!(
         r#"insert into outbox (event, origin)
            select e.event, $2 from unnest($1::jsonb[]) with ordinality as e(event, n)
            order by e.n
            on conflict (xact, (md5(event::text))) do nothing"#,
-        &events,
+        &values,
         tracking::origin()
     )
     .execute(conn)
     .await?;
-    tracking::mark();
+    for event in &events {
+        tracking::mark(event);
+    }
     Ok(())
 }
 

@@ -4,6 +4,7 @@ import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
 
+import { useRealtimeHub } from "@/features/realtime/hooks/use-realtime-hub";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
@@ -34,6 +35,7 @@ const MAX_COMMENT = 280;
 export function GameRespond({ target, number, canConfirm }: Props) {
   const t = useTranslations("Match.respond");
   const router = useRouter();
+  const hub = useRealtimeHub();
   const markMine = useMarkMine();
   const { run, pending, error } = useApiAction();
   const [contesting, setContesting] = useState(false);
@@ -41,6 +43,9 @@ export function GameRespond({ target, number, canConfirm }: Props) {
   const fieldId = useId();
   const contestButton = useRef<HTMLButtonElement>(null);
   const params = gameParams(target, number);
+  // A aba recarrega sozinha (`done`): o aviso da própria mudança não volta
+  // pelo socket, que pediria uma segunda recarga.
+  const headers = () => hub?.originHeaders();
   const done = () => {
     markMine();
     router.refresh();
@@ -55,7 +60,7 @@ export function GameRespond({ target, number, canConfirm }: Props) {
       () =>
         api.POST(
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/confirm",
-          { params },
+          { params, headers: headers() },
         ),
       done,
       stale,
@@ -65,7 +70,7 @@ export function GameRespond({ target, number, canConfirm }: Props) {
       () =>
         api.POST(
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/contest",
-          { params, body: { comment } },
+          { params, body: { comment }, headers: headers() },
         ),
       done,
       stale,

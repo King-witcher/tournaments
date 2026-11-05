@@ -1,7 +1,42 @@
-//! Torneio gravado → resposta da API, que `lifecycle` também devolve.
+//! Torneio gravado → resposta da API, que `lifecycle` também devolve, e o
+//! item de lista dele (`/tenants/{slug}/tournaments/{tournament}/mine`).
 
-use super::{db::StoredTournament, types::Tournament, veto::VetoSettings};
+use super::{
+    db::StoredTournament,
+    types::{NameTranslation, Tournament, TournamentSummary},
+    veto::VetoSettings,
+};
 use crate::shared::public_url;
+
+/// O mesmo item que `list` traria para este torneio.
+impl From<&StoredTournament> for TournamentSummary {
+    fn from(t: &StoredTournament) -> Self {
+        Self {
+            slug: t.slug.clone(),
+            locale: t.locale,
+            name: t.texts.name.clone(),
+            mode: t.setup.mode,
+            team_size: t.setup.team_size,
+            status: t.status,
+            admission: t.admission,
+            max_participants: t.setup.max_participants,
+            participants: t.participants,
+            registered: t.registered,
+            checked_in: t.checked_in,
+            starts_at: t.schedule.starts_at,
+            translations: t
+                .translations
+                .iter()
+                .map(|tr| NameTranslation {
+                    locale: tr.locale,
+                    name: tr.name.clone(),
+                })
+                .collect(),
+            created_at: t.created_at,
+            cover_url: t.cover_key.as_deref().and_then(public_url),
+        }
+    }
+}
 
 impl From<StoredTournament> for Tournament {
     fn from(t: StoredTournament) -> Self {

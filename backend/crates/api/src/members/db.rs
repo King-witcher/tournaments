@@ -1,4 +1,4 @@
-use sqlx::{PgConnection, PgPool};
+use sqlx::{PgConnection, PgExecutor, PgPool};
 
 use super::types::Member;
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
 /// Membros ativos do tenant (ou só `only_user`), owner primeiro, depois
 /// organizers e players, cada grupo por apelido.
 pub async fn list(
-    db: &PgPool,
+    db: impl PgExecutor<'_>,
     tenant: TenantId,
     only_user: Option<i64>,
 ) -> Result<Vec<Member>, ApiError> {

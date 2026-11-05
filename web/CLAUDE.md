@@ -24,7 +24,7 @@ src/
     hooks/  lib/        hooks e funções puras do domínio
   shared/               serve a qualquer domínio; nunca importa de features/
     ui/  hooks/  api/  lib/
-  i18n/                 next-intl: routing, navigation, request, namespaces
+  i18n/                 next-intl: routing, navigation, request, namespaces, provider do cliente
 messages/<pt|es|en>/    um JSON por namespace
 ```
 
@@ -36,6 +36,7 @@ messages/<pt|es|en>/    um JSON por namespace
 
 - Server Component por padrão; `"use client"` só na folha que precisa de estado ou evento (o botão, não a seção).
 - Busca: componente async que busca o próprio dado, dentro de `<Suspense>`; busca usada em mais de um lugar vai para `features/<domínio>/server.ts`, com `cache()` do React.
+- Busca em série: o `layout.tsx` e a `page.tsx` rodam juntos no servidor (o `children` do layout é outra parte da resposta), mas os filhos que um componente devolve só começam depois do `await` dele. Componente que espera uma busca antes de devolver os filhos começa antes a deles: `preload(getX(...))` (`shared/lib/preload.ts`), com os mesmos argumentos do uso e só para o que o filho buscaria de qualquer jeito (modelo: `HomeSessionGate`).
 - Mutação de botão: `useApiAction` (`run(chamada, aoDarCerto)` com `pending` e `error` já traduzido). Formulário: `useActionState` + `callApi`. Nunca mostre o código cru da API.
 - Server Component não passa função para Client Component (`onClick`, `onSelect`, `renderIcon`, `as`). Lista do servidor com ação por linha: o servidor monta as linhas e põe em cada uma um componente de cliente da feature (`<MemberActions member={m} />`).
 
@@ -94,6 +95,7 @@ Formulário grande com um estado só (o de torneio): cada bloco é `memo(Compone
 
 - Um arquivo por namespace de primeiro nível (`messages/pt/Tenant.json`, `messages/es/Tenant.json` e `messages/en/Tenant.json`); chave nova vai no namespace do seu fluxo, nos três idiomas. `es` e `en` precisam ter as mesmas chaves de `pt` (o `tsc` e o `build` acusam).
 - Namespace novo: crie os três arquivos e acrescente uma linha em cada lista (`pt`, `es` e `en`) de `src/i18n/namespaces.ts`, em ordem alfabética.
+- O navegador recebe todos os namespaces menos os de `SERVER_ONLY_MESSAGES` (`namespaces.ts`), que só Server Components leem, e de novo a cada `router.refresh()`. Namespace novo vai sozinho. Componente de cliente que passe a usar algo da lista: tire a linha de lá (senão aparece a chave no lugar do texto). Bloco grande que só o servidor lê: acrescente.
 - `Common` (textos da biblioteca) e `Nav` são da base. Num namespace que outro fluxo também usa, só acrescente chaves: não reordene nem reformate o arquivo.
 - Código novo de aviso da API: `Notifications.notices.<código>` (`title` e `body`) nos três idiomas, os mesmos na página e no service worker. Só `{param}` simples (o service worker não entende plural do ICU); o prazo `confirm_by` entra como `{deadline}`.
 - O espanhol é em "tú". O inglês é americano (en-US), em "you", com as mesmas regras de "Como escrever". Plural do ICU em inglês só tem `one` e `other`; ordinal (`selectordinal`) tem `one`/`two`/`few`/`other`. Data digitada `mm/dd/yyyy` (`dateText` em `shared/lib/plain-date.ts`).

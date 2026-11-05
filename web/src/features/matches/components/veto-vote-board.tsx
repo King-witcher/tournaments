@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useCallback } from "react";
 
-import { MapThumbnail } from "@/features/maps/components/map-thumbnail";
 import { useVetoBoard } from "../hooks/use-veto-board";
 import { VetoTile } from "./veto-tile";
 import styles from "./veto-vote-board.module.scss";
@@ -21,6 +21,8 @@ type Props = {
 export function VetoVoteBoard({ game }: Props) {
   const t = useTranslations("Match.veto.vote");
   const { veto, names, pending, actions } = useVetoBoard();
+  const { step } = actions;
+  const vote = useCallback((map: string) => step({ map }), [step]);
   const g = veto?.games.find((x) => x.game === game);
   if (!veto || !g || g.map || g.offered.length < 2) return null;
 
@@ -39,21 +41,17 @@ export function VetoVoteBoard({ game }: Props) {
           return (
             <VetoTile
               key={m.slug}
-              image={<MapThumbnail slug={m.slug} />}
+              slug={m.slug}
               name={m.name}
               state="available"
               note={note}
-              action={
-                veto.options.includes(m.slug)
-                  ? {
-                      kind: "pick",
-                      text: t("vote"),
-                      label: t("voteFor", { map: m.name }),
-                      disabled: pending != null,
-                      onClick: () => actions.step({ map: m.slug }),
-                    }
-                  : undefined
-              }
+              {...(veto.options.includes(m.slug) && {
+                action: "pick" as const,
+                actionText: t("vote"),
+                actionLabel: t("voteFor", { map: m.name }),
+                disabled: pending != null,
+                onAction: vote,
+              })}
             />
           );
         })}

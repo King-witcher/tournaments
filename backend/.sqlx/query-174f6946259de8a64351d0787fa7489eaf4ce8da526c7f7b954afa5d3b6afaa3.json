@@ -1,10 +1,21 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.name, t.seed, t.captain, t.withdrawn_at is not null as \"withdrawn!\",\n                  p.user_id, m.nickname, u.avatar_url, m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tournament_id = $1 and (not $2 or t.seed is not null)\n           order by t.seed nulls last, t.created_at, t.id,\n                    p.user_id <> t.captain, p.registered_at, p.user_id",
+  "query": "select t.tournament_id, t.id, t.name, t.seed, t.captain,\n                  t.withdrawn_at is not null as \"withdrawn!\",\n                  p.user_id, m.nickname, u.avatar_url, m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tournament_id = any($1) and (not $2 or t.seed is not null)\n           order by t.tournament_id, t.seed nulls last, t.created_at, t.id,\n                    p.user_id <> t.captain, p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
+        "name": "tournament_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "tournament_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
         "name": "id",
         "type_info": "Int8",
         "origin": {
@@ -15,7 +26,7 @@
         }
       },
       {
-        "ordinal": 1,
+        "ordinal": 2,
         "name": "name",
         "type_info": "Text",
         "origin": {
@@ -26,7 +37,7 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "seed",
         "type_info": "Int4",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "captain",
         "type_info": "Int8",
         "origin": {
@@ -48,13 +59,13 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "withdrawn!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "user_id",
         "type_info": "Int8",
         "origin": {
@@ -65,7 +76,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -76,7 +87,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": {
@@ -87,7 +98,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "left!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -95,11 +106,12 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
+        "Int8Array",
         "Bool"
       ]
     },
     "nullable": [
+      false,
       false,
       true,
       true,
@@ -111,5 +123,5 @@
       null
     ]
   },
-  "hash": "5c6880a123c60b21c9226f601dd4b63c37617dbdc246a0e56d597e6e8e256a89"
+  "hash": "174f6946259de8a64351d0787fa7489eaf4ce8da526c7f7b954afa5d3b6afaa3"
 }

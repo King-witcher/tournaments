@@ -40,8 +40,8 @@ pub async fn load(
     let summary = view::summary(tournament.status, stage, m, viewer, &playing);
     let games = stage.games_of(m.id);
     let mine = view::viewer_side(stage, m, viewer);
-    let events = db::events(conn, tournament.id, stage.number, &summary.key).await?;
-    let lineups = db::lineups(conn, tournament.id, stage.number, &summary.key).await?;
+    let (events, lineups) =
+        db::match_history(conn, tournament.id, stage.number, &summary.key).await?;
     let team = |id: Option<i64>| {
         id.and_then(|id| stage.entrant(ParticipantId(id)))
             .map(StoredTeam::view)

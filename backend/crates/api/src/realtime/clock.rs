@@ -1,16 +1,17 @@
 //! O relógio do veto: o passo tem 30 s (por torneio), e o agendador de 10 s
 //! seria grosso demais para o prazo. A tarefa dorme até o próximo prazo de
-//! veto de todos os torneios e é acordada quando algo muda (toda requisição
-//! que emite acorda também o despachante, e um passo, um "pronto" ou um jogo
-//! novo sempre emitem): então recalcula o próximo prazo, sorteando antes os
-//! passos que já venceram (`matches::veto_clock`). Sem veto aberto, ela só
-//! dorme. O sorteio também acontece ao ler e antes de cada ação, e o agendador
-//! passa a cada 10 s como rede de segurança. As salas de veto têm o relógio
-//! delas (`run_rooms`): o clique numa sala não relê os torneios abertos.
+//! veto de todos os torneios e é acordada quando um evento alcança um torneio
+//! (toda requisição que emite passa por `Realtime::emitted`, e um passo, um
+//! "pronto", um jogo novo ou um elenco novo sempre emitem): então passa de novo
+//! (`matches::VetoClock`), relendo só os torneios que mudaram ou cujo prazo
+//! venceu, e todos a cada minuto. A passada que falha tenta de novo em 10 s, e
+//! a tarefa que cai recomeça (`spawn`), relendo tudo. O sorteio também acontece
+//! ao ler e antes de cada ação. As salas de veto têm o relógio delas
+//! (`run_rooms`): o clique numa sala não relê os torneios abertos.
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 
-use crate::{AppState, matches, veto_rooms};
+use crate::{AppState, matches::VetoPass, outbox, shared::ApiError, veto_rooms};
 
 /// Folga depois do prazo, para a passada cair depois dele.
 const SLACK: std::time::Duration = std::time::Duration::from_millis(50);
@@ -18,6 +19,9 @@ const SLACK: std::time::Duration = std::time::Duration::from_millis(50);
 /// a sala que falhou continuaria vencida (o erro dela fica no log). Quem grava
 /// acorda o relógio na hora, então uma fila grande não espera por isto.
 const ROOMS_PAUSE: std::time::Duration = std::time::Duration::from_secs(10);
+/// A pausa depois de uma passada dos torneios que falhou, ou cujo prazo
+/// continua vencido depois de aplicado (não havia o que sortear).
+pub(super) const PAUSE: std::time::Duration = std::time::Duration::from_secs(10);
 
 pub(super) async fn run_rooms(state: AppState) {
     loop {
@@ -48,30 +52,35 @@ pub(super) async fn run_rooms(state: AppState) {
 
 pub(super) async fn run(state: AppState) {
     loop {
-        let next = match matches::veto_clock(&state.db, Utc::now()).await {
-            Ok((written, next)) => {
-                if written > 0 {
-                    state.realtime.wake_dispatcher();
-                }
-                next
+        let now = Utc::now();
+        let wait = match pass(&state, now).await {
+            Ok(VetoPass { wake_at, .. }) if wake_at > now => {
+                (wake_at - Utc::now()).to_std().unwrap_or_default() + SLACK
             }
+            Ok(_) => PAUSE,
             Err(e) => {
                 tracing::error!(code = e.code, "relógio do veto falhou");
-                None
+                PAUSE
             }
         };
-        let sleep = next.map(|at| {
-            let wait = (at - Utc::now()).to_std().unwrap_or_default();
-            tokio::time::sleep(wait + SLACK)
-        });
-        match sleep {
-            Some(sleep) => {
-                tokio::select! {
-                    () = sleep => {}
-                    () = state.realtime.clock_woken() => {}
-                }
-            }
-            None => state.realtime.clock_woken().await,
+        tokio::select! {
+            () = tokio::time::sleep(wait) => {}
+            () = state.realtime.clock_woken() => {}
         }
     }
+}
+
+/// Uma passada em `now`, com os torneios que os eventos alcançaram desde a
+/// anterior. O que ela emite (passos sorteados, a série que começa sozinha)
+/// acorda o despachante, não o relógio: a passada já sabe o que gravou.
+pub(super) async fn pass(state: &AppState, now: DateTime<Utc>) -> Result<VetoPass, ApiError> {
+    let (mut clock, changed) = state.realtime.veto_clock().await;
+    let (pass, touched) = outbox::track(None, clock.pass(&state.db, now, &changed)).await;
+    if pass.is_err() {
+        state.realtime.missed();
+    }
+    if touched.any() {
+        state.realtime.wake_dispatcher();
+    }
+    pass
 }

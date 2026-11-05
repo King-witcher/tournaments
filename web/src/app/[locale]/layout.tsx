@@ -5,8 +5,8 @@ import "../globals.scss";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
-import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { hasLocale } from "next-intl";
+import { getMessages, getTimeZone, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/features/auth/components/user-menu";
@@ -15,6 +15,8 @@ import { PushSession } from "@/features/push/components/push-session";
 import { RealtimeProvider } from "@/features/realtime/components/realtime-provider";
 import { RealtimeSession } from "@/features/realtime/components/realtime-session";
 import { TenantSwitcher } from "@/features/tenants/components/tenant-switcher";
+import { IntlClientProvider } from "@/i18n/intl-client-provider";
+import { clientMessages } from "@/i18n/namespaces";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 import { plexMono, plexSans } from "@/shared/lib/fonts";
@@ -68,7 +70,11 @@ export default async function LocaleLayout({
 }: LayoutProps<"/[locale]">) {
   const locale = await rootLocale();
   if (!hasLocale(routing.locales, locale)) notFound();
-  const t = await getTranslations("Nav");
+  const [t, messages, timeZone] = await Promise.all([
+    getTranslations("Nav"),
+    getMessages(),
+    getTimeZone(),
+  ]);
 
   return (
     <html
@@ -84,7 +90,11 @@ export default async function LocaleLayout({
         />
       </head>
       <body>
-        <NextIntlClientProvider>
+        <IntlClientProvider
+          locale={locale}
+          timeZone={timeZone}
+          messages={clientMessages(messages)}
+        >
           {/* As páginas dizem o que mostram (LiveUpdates); a conexão abre
               só para quem está logado (RealtimeSession), e a inscrição de
               Web Push acompanha o idioma e a conta (PushSession). */}
@@ -111,7 +121,7 @@ export default async function LocaleLayout({
               <PushSession />
             </Suspense>
           </RealtimeProvider>
-        </NextIntlClientProvider>
+        </IntlClientProvider>
       </body>
     </html>
   );

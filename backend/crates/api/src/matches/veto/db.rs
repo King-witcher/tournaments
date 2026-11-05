@@ -1,16 +1,16 @@
-//! SQL do veto: o histórico de eventos (`match_veto_events`), os campeões do
-//! torneio e os torneios com veto aberto, para o relógio.
+//! SQL do veto: gravar e apagar o histórico de eventos (`match_veto_events`)
+//! e os torneios com veto aberto, com o carimbo do histórico, para o relógio.
+//! Os eventos, as escalações e os campeões são lidos com a fase
+//! (`db::stage_rows`).
 
 use chrono::{DateTime, Utc};
 use engine::core::{ChampionId, MapId, ParticipantId};
 use sqlx::{PgConnection, PgPool};
 
-use super::state::{Kind, MatchVetoRow, VetoRow};
+use super::state::Kind;
 use crate::{
     matches::{db::MatchRef, result::Side},
-    shared::ApiError,
     tenants::TenantId,
-    tournaments::TournamentId,
 };
 
 /// Um campeão do jogo; os ativos são o pool de todo torneio.
@@ -20,77 +20,6 @@ pub struct Champion {
     pub slug: String,
     pub name: String,
     pub active: bool,
-}
-
-/// Todos os campeões (os inativos aparecem em vetos antigos), na ordem dos
-/// ids: a ordem das opções e do sorteio do tempo esgotado, que não muda.
-pub async fn champions(conn: &mut PgConnection) -> Result<Vec<Champion>, sqlx::Error> {
-    Ok(
-        sqlx::query!("select id, slug, name, active from champions order by id")
-            .fetch_all(conn)
-            .await?
-            .into_iter()
-            .map(|r| Champion {
-                id: ChampionId(r.id),
-                slug: r.slug,
-                name: r.name,
-                active: r.active,
-            })
-            .collect(),
-    )
-}
-
-/// Os eventos de veto da fase `stage`, por partida e na ordem, com o apelido
-/// de quem agiu.
-pub async fn events(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-) -> Result<Vec<MatchVetoRow>, ApiError> {
-    let rows = sqlx::query!(
-        r#"select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side, e.map_id,
-                  e.played_map_id, e.champion_id, e.player_id, e.pick_game, e.gave_way, e.seed,
-                  e.timeout, e.actor,
-                  coalesce(m.nickname, u.display_name) as actor_name,
-                  pm.nickname as "player_name?", e.created_at
-           from match_veto_events e
-           left join users u on u.id = e.actor
-           left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor
-           left join tenant_members pm on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id
-           where e.tournament_id = $1 and e.stage = $2
-           order by e.match_key, e.id"#,
-        tournament.get(),
-        stage
-    )
-    .fetch_all(conn)
-    .await?;
-    rows.into_iter()
-        .map(|r| {
-            Ok(MatchVetoRow {
-                match_id: crate::matches::key::parse(&r.match_key)
-                    .ok_or_else(|| crate::matches::result::unknown("match_key", &r.match_key))?,
-                sides: (ParticipantId(r.side_a), ParticipantId(r.side_b)),
-                row: VetoRow {
-                    id: r.id,
-                    game: r.game,
-                    kind: Kind::from_db(&r.kind)?,
-                    side: r.side.as_deref().map(Side::from_db).transpose()?,
-                    map: r.map_id.map(MapId),
-                    played_map: r.played_map_id.map(MapId),
-                    champion: r.champion_id.map(ChampionId),
-                    player: r.player_id,
-                    player_name: r.player_name,
-                    pick_game: r.pick_game,
-                    gave_way: r.gave_way,
-                    seed: r.seed,
-                    timeout: r.timeout,
-                    actor: r.actor,
-                    actor_name: r.actor_name,
-                    created_at: r.created_at,
-                },
-            })
-        })
-        .collect()
 }
 
 /// Um evento a gravar.
@@ -193,11 +122,39 @@ pub async fn remove(conn: &mut PgConnection, at: &MatchRef<'_>) -> Result<(), sq
     Ok(())
 }
 
+/// Um torneio que o relógio olha.
+pub struct OpenTournament {
+    /// O id interno, só para o relógio reconhecer o torneio entre as passadas.
+    pub id: i64,
+    pub tenant: TenantId,
+    pub tenant_slug: String,
+    pub slug: String,
+    pub stamp: Stamp,
+}
+
+/// O carimbo do histórico do veto de um torneio (todas as fases): muda a cada
+/// evento gravado ou apagado (o histórico só cresce, e apagar o veto de uma
+/// série tira linhas) e com a hora de um evento mexida à mão (os testes
+/// envelhecem o veto assim).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Stamp {
+    pub events: i64,
+    pub last_id: i64,
+    pub last_at: DateTime<Utc>,
+}
+
 /// Torneios em andamento com veto começado numa partida ainda sem série
-/// decidida: os que o relógio olha.
-pub async fn open_tournaments(db: &PgPool) -> Result<Vec<(TenantId, String)>, sqlx::Error> {
+/// decidida: os que o relógio olha, com o carimbo do histórico de cada um.
+pub async fn open_tournaments(db: &PgPool) -> Result<Vec<OpenTournament>, sqlx::Error> {
     Ok(sqlx::query!(
-        r#"select t.tenant_id, t.slug from tournaments t
+        r#"select t.id, t.tenant_id, n.slug as tenant_slug, t.slug,
+                  s.events as "events!", s.last_id as "last_id!", s.last_at as "last_at!"
+           from tournaments t
+           join tenants n on n.id = t.tenant_id
+           cross join lateral (select count(*) as events, max(e.id) as last_id,
+                                      max(e.created_at) as last_at
+                               from match_veto_events e
+                               where e.tournament_id = t.id) s
            where t.status = 'in_progress'
              and exists(select 1 from match_veto_events e
                         where e.tournament_id = t.id and e.kind in ('begin', 'ready')
@@ -210,34 +167,16 @@ pub async fn open_tournaments(db: &PgPool) -> Result<Vec<(TenantId, String)>, sq
     .fetch_all(db)
     .await?
     .into_iter()
-    .map(|r| (TenantId::new(r.tenant_id), r.slug))
+    .map(|r| OpenTournament {
+        id: r.id,
+        tenant: TenantId::new(r.tenant_id),
+        tenant_slug: r.tenant_slug,
+        slug: r.slug,
+        stamp: Stamp {
+            events: r.events,
+            last_id: r.last_id,
+            last_at: r.last_at,
+        },
+    })
     .collect())
-}
-
-/// TDM: quem jogou cada partida enviada da fase `stage` (a escalação gravada
-/// no envio, `match_game_players`), por partida e lado: `(série, partida,
-/// lado, jogador)`, na ordem.
-pub async fn lineups(
-    conn: &mut PgConnection,
-    tournament: TournamentId,
-    stage: i16,
-) -> Result<Vec<(engine::core::MatchId, i16, Side, i64)>, ApiError> {
-    let rows = sqlx::query!(
-        r#"select g.match_key, g.number, gp.side, gp.user_id
-           from match_game_players gp
-           join match_games g on g.id = gp.game_id
-           where g.tournament_id = $1 and g.stage = $2
-           order by g.match_key, g.number, gp.side, gp.user_id"#,
-        tournament.get(),
-        stage
-    )
-    .fetch_all(conn)
-    .await?;
-    rows.into_iter()
-        .map(|r| {
-            let id = crate::matches::key::parse(&r.match_key)
-                .ok_or_else(|| crate::matches::result::unknown("match_key", &r.match_key))?;
-            Ok((id, r.number, Side::from_db(&r.side)?, r.user_id))
-        })
-        .collect()
 }

@@ -63,6 +63,8 @@ fn map_veto() -> Value {
 }
 
 struct Cast {
+    /// O estado do app, para os testes do relógio do veto.
+    state: api::AppState,
     app: Router,
     ana: User,
     bia: User,
@@ -71,11 +73,18 @@ struct Cast {
 }
 
 async fn cast(db: &PgPool, team_rules: Value, changes: Value) -> Cast {
-    let (app, ana, bia) = quake_br(db).await;
+    // Como `quake_br`, com o estado à mão.
+    let state = state(db.clone());
+    let app = app_from(state.clone());
+    let ana = user(db, "Ana").await;
+    let bia = user(db, "Bia").await;
+    create(&app, &ana, "quake-br").await;
+    join(&app, &bia, &invite(&app, &ana, "quake-br").await).await;
     let p = players(&app, db, &ana, 4).await;
     let body = tdm(2, with(team_rules, changes));
     let teams = started(&app, &ana, body, 2, &[&p[0], &p[1], &p[2], &p[3]]).await;
     Cast {
+        state,
         app,
         ana,
         bia,
