@@ -1,6 +1,7 @@
-import { Loading as CarbonLoading } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
+
+import { Loading as CarbonLoading } from "./carbon/loading";
 
 // `id` está obsoleto no Carbon.
 type Props = Omit<ComponentProps<typeof CarbonLoading>, "id">;

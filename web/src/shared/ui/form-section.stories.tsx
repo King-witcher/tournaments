@@ -1,5 +1,6 @@
-import { Form, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { Form } from "./carbon/form";
+import { Stack } from "./carbon/stack";
 import { FormSection } from "./form-section";
 import { NumberInput } from "./number-input";
 import { TextInput } from "./text-input";

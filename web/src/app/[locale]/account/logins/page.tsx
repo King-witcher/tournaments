@@ -1,4 +1,3 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
@@ -6,6 +5,7 @@ import { AccountLogins } from "@/features/auth/components/account-logins";
 import { AuthError } from "@/features/auth/components/auth-error";
 import { LoginsSkeleton } from "@/features/auth/components/logins-skeleton";
 import { PasswordResetDone } from "@/features/auth/components/password-reset-done";
+import { Stack } from "@/shared/ui/carbon/stack";
 
 /**
  * Aba Logins da conta: email, Discord, Google e senha.

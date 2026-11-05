@@ -1,8 +1,9 @@
 "use client";
 
-import { RadioTile, TileGroup, type TileGroupProps } from "@carbon/react";
+import type { TileGroupProps } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
+import { RadioTile, TileGroup } from "./carbon/tile";
 import styles from "./radio-tile-group.module.scss";
 import { RequiredLabel } from "./required-label";
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { submitAction } from "@/shared/lib/submit-action";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { TextInput } from "@/shared/ui/text-input";

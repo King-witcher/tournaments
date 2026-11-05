@@ -1,5 +1,9 @@
-import { AccordionItem, Accordion as CarbonAccordion } from "@carbon/react";
 import type { ReactNode } from "react";
+
+import {
+  AccordionItem,
+  Accordion as CarbonAccordion,
+} from "./carbon/accordion";
 
 type Props = {
   /** O que abre (o nome do bloco). */

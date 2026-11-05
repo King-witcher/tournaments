@@ -1,12 +1,12 @@
 "use client";
 
-import { InlineLoading } from "@carbon/react";
 import { type Locale, useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
 import { getPathname } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
 import { DELETION_CANCELLED } from "../lib/deletion-cancelled";
 import { takeOAuthFlow } from "../lib/oauth-flow";
 import type { Provider } from "../lib/providers";

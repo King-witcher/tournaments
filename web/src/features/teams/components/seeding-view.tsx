@@ -1,4 +1,3 @@
-import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
@@ -10,6 +9,7 @@ import { seedingOpen } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";

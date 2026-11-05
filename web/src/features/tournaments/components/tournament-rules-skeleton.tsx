@@ -1,6 +1,6 @@
-import { SkeletonText, Stack } from "@carbon/react";
-
 import { MapGridSkeleton } from "@/features/maps/components/map-grid-skeleton";
+import { SkeletonText } from "@/shared/ui/carbon/skeleton-text";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**

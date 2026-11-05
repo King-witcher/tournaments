@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
@@ -17,6 +16,8 @@ import {
   invalidProps,
 } from "@/shared/lib/form-result";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormError } from "@/shared/ui/form-error";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { TextInput } from "@/shared/ui/text-input";

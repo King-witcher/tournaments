@@ -1,12 +1,14 @@
 "use client";
 
-import { Layer, Stack, Tile } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { Button } from "@/shared/ui/button";
+import { Layer } from "@/shared/ui/carbon/layer";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
 import { useEnterAccount } from "../hooks/use-enter-account";

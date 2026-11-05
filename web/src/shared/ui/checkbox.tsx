@@ -1,7 +1,8 @@
 "use client";
 
-import { Checkbox as CarbonCheckbox } from "@carbon/react";
 import { type ComponentProps, type ReactNode, useId } from "react";
+
+import { Checkbox as CarbonCheckbox } from "./carbon/checkbox";
 
 type Props = Omit<
   ComponentProps<typeof CarbonCheckbox>,

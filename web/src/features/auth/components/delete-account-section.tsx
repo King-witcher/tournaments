@@ -1,7 +1,8 @@
-import { ListItem, Stack, UnorderedList } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { getMyTenants } from "@/features/tenants/server";
+import { ListItem, UnorderedList } from "@/shared/ui/carbon/list";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { DangerZone } from "@/shared/ui/danger-zone";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";

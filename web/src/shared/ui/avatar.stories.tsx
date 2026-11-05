@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Avatar } from "./avatar";
+import { Stack } from "./carbon/stack";
 
 // Sem fotos de jogador no projeto, a imagem de um mapa serve de amostra.
 const image = "/maps/crucible.webp";

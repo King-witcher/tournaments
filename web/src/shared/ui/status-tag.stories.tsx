@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Stack } from "./carbon/stack";
 import { type Status, StatusTag } from "./status-tag";
 
 const labels: Record<Status, string> = {

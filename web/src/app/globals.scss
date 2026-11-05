@@ -32,21 +32,22 @@
 @use "@carbon/react/scss/themes";
 @use "@carbon/react/scss/theme";
 
-// Todos os componentes do @carbon/react, também os que o site ainda não usa,
-// para qualquer um já sair com estilo quando entrar. Ficam de fora só as
-// pastas do @carbon/styles que são do @carbon/ibm-products (side-panel,
-// tearsheet, coachmark...), que o @carbon/react não exporta, e o slug, que o
-// ai-label substituiu. Card, combo-button, menu-button e shape-indicator não
-// têm o atalho em @carbon/react/scss e vêm do @carbon/styles. Versão nova do
-// Carbon com pasta nova: acrescente aqui, em ordem alfabética.
+// Os componentes que a shared/ui usa (src/shared/ui/carbon/), cada um com as
+// pastas de que ele depende (o próprio Sass do Carbon puxa: o combo-box traz o
+// list-box). Componente novo do Carbon: acrescente a pasta dele aqui, em ordem
+// alfabética (os nomes estão em node_modules/@carbon/styles/scss/components;
+// combo-button, menu-button e shape-indicator não têm o atalho em
+// @carbon/react/scss e vêm do @carbon/styles). Faltou uma pasta, o componente
+// aparece sem estilo (sem borda, cor nem espaçamento) na tela e no Storybook.
+// Fora do site: as versões Fluid dos campos (sem FluidForm não há classe
+// --fluid), card, chat-button, page-header e data-table/expandable (nenhum em
+// uso) e dialog (só com a flag enable-dialog-element).
 @use "@carbon/react/scss/components/accordion";
 @use "@carbon/react/scss/components/ai-label";
 @use "@carbon/react/scss/components/aspect-ratio";
 @use "@carbon/react/scss/components/badge-indicator";
 @use "@carbon/react/scss/components/breadcrumb";
 @use "@carbon/react/scss/components/button";
-@use "@carbon/styles/scss/components/card";
-@use "@carbon/react/scss/components/chat-button";
 @use "@carbon/react/scss/components/checkbox";
 @use "@carbon/react/scss/components/code-snippet";
 @use "@carbon/react/scss/components/combo-box";
@@ -56,24 +57,17 @@
 @use "@carbon/react/scss/components/copy-button";
 @use "@carbon/react/scss/components/data-table";
 @use "@carbon/react/scss/components/data-table/action";
-@use "@carbon/react/scss/components/data-table/expandable";
 @use "@carbon/react/scss/components/data-table/skeleton";
 @use "@carbon/react/scss/components/data-table/sort";
 @use "@carbon/react/scss/components/date-picker";
-@use "@carbon/react/scss/components/dialog";
 @use "@carbon/react/scss/components/dropdown";
 @use "@carbon/react/scss/components/file-uploader";
-@use "@carbon/react/scss/components/fluid-combo-box";
-@use "@carbon/react/scss/components/fluid-date-picker";
-@use "@carbon/react/scss/components/fluid-dropdown";
-@use "@carbon/react/scss/components/fluid-list-box";
-@use "@carbon/react/scss/components/fluid-multiselect";
-@use "@carbon/react/scss/components/fluid-number-input";
-@use "@carbon/react/scss/components/fluid-search";
-@use "@carbon/react/scss/components/fluid-select";
-@use "@carbon/react/scss/components/fluid-text-area";
-@use "@carbon/react/scss/components/fluid-text-input";
-@use "@carbon/react/scss/components/fluid-time-picker";
+// Fora da ordem alfabética: é a posição em que o CSS destes quatro sempre
+// saiu, e mudar a ordem muda quem vence quando dois seletores empatam.
+@use "@carbon/react/scss/components/multiselect";
+@use "@carbon/react/scss/components/number-input";
+@use "@carbon/react/scss/components/select";
+@use "@carbon/react/scss/components/text-area";
 @use "@carbon/react/scss/components/form";
 @use "@carbon/react/scss/components/icon-indicator";
 @use "@carbon/react/scss/components/inline-loading";
@@ -84,11 +78,8 @@
 @use "@carbon/react/scss/components/menu";
 @use "@carbon/styles/scss/components/menu-button";
 @use "@carbon/react/scss/components/modal";
-@use "@carbon/react/scss/components/multiselect";
 @use "@carbon/react/scss/components/notification";
-@use "@carbon/react/scss/components/number-input";
 @use "@carbon/react/scss/components/overflow-menu";
-@use "@carbon/react/scss/components/page-header";
 @use "@carbon/react/scss/components/pagination";
 @use "@carbon/react/scss/components/pagination-nav";
 @use "@carbon/react/scss/components/popover";
@@ -96,7 +87,6 @@
 @use "@carbon/react/scss/components/progress-indicator";
 @use "@carbon/react/scss/components/radio-button";
 @use "@carbon/react/scss/components/search";
-@use "@carbon/react/scss/components/select";
 @use "@carbon/styles/scss/components/shape-indicator";
 @use "@carbon/react/scss/components/skeleton-styles";
 @use "@carbon/react/scss/components/slider";
@@ -104,7 +94,6 @@
 @use "@carbon/react/scss/components/structured-list";
 @use "@carbon/react/scss/components/tabs";
 @use "@carbon/react/scss/components/tag";
-@use "@carbon/react/scss/components/text-area";
 @use "@carbon/react/scss/components/text-input";
 @use "@carbon/react/scss/components/tile";
 @use "@carbon/react/scss/components/time-picker";

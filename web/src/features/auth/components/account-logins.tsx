@@ -1,6 +1,5 @@
-import { Stack } from "@carbon/react";
-
 import { apiErrorMessage } from "@/shared/api/errors";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { soleProviderWithoutEmail } from "../lib/backup-login";
 import { PROVIDERS } from "../lib/providers";

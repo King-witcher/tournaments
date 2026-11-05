@@ -1,8 +1,9 @@
-import { FormGroup, SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { FormGroup } from "@/shared/ui/carbon/form";
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";

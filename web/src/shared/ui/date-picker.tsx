@@ -1,6 +1,5 @@
 "use client";
 
-import { DatePicker as CarbonDatePicker, DatePickerInput } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   type ChangeEvent,
@@ -14,6 +13,10 @@ import {
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
 import { dateText, plainDateOf } from "@/shared/lib/plain-date";
+import {
+  DatePicker as CarbonDatePicker,
+  DatePickerInput,
+} from "./carbon/date-picker";
 import { RequiredLabel } from "./required-label";
 
 type Props = Pick<

@@ -1,12 +1,12 @@
 "use client";
 
 import { BrightnessContrast, Moon, Sun } from "@carbon/icons-react";
-import { ContentSwitcher, IconSwitch } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 
 import { useTheme } from "@/shared/hooks/use-theme";
 import { THEME_CHOICES } from "@/shared/lib/theme";
+import { ContentSwitcher, IconSwitch } from "./carbon/content-switcher";
 import styles from "./theme-switcher.module.scss";
 
 // Os ícones do seletor de tema do tutorial do Carbon.

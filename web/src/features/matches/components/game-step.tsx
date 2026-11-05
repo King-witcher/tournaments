@@ -1,7 +1,7 @@
-import { Column, Grid } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Section } from "@/shared/ui/section";
 import { gameRowId } from "../lib/match-target";
 import styles from "./game-step.module.scss";

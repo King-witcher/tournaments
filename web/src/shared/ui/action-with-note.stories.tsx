@@ -1,9 +1,9 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
 import { ActionWithNote } from "./action-with-note";
 import { Button } from "./button";
+import { Stack } from "./carbon/stack";
 
 const meta = {
   title: "Ação/ActionWithNote",

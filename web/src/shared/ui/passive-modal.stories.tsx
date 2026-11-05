@@ -1,7 +1,7 @@
-import { CodeSnippet } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { CodeSnippet } from "./carbon/code-snippet";
 import { PassiveModal } from "./passive-modal";
 
 const meta = {

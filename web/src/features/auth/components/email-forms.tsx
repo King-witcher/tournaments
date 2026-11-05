@@ -1,9 +1,9 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { ChangeEmailForm } from "./change-email-form";
 

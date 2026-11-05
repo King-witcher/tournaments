@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Button } from "./button";
+import { Stack } from "./carbon/stack";
 import { ErrorText } from "./error-text";
 
 const meta = {

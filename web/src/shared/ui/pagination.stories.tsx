@@ -1,7 +1,8 @@
-import { PaginationSkeleton, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { PaginationSkeleton } from "./carbon/pagination";
+import { Stack } from "./carbon/stack";
 import { Pagination } from "./pagination";
 
 const meta = {

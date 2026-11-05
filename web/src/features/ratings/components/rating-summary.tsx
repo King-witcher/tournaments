@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StructuredList } from "@/shared/ui/structured-list";
 import { formatPoints } from "../lib/format-points";

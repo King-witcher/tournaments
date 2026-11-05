@@ -1,6 +1,5 @@
 "use client";
 
-import { Accordion, Form, SelectItem, Stack } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState, useEffect, useState } from "react";
 
@@ -28,6 +27,10 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Accordion } from "@/shared/ui/carbon/accordion";
+import { Form } from "@/shared/ui/carbon/form";
+import { SelectItem } from "@/shared/ui/carbon/select";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";

@@ -1,11 +1,11 @@
 "use client";
 
-import { Modal } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode, RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { useReturnFocus } from "@/shared/hooks/use-return-focus";
+import { Modal } from "./carbon/modal";
 
 type Props = {
   title: ReactNode;

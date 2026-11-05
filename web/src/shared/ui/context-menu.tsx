@@ -1,8 +1,8 @@
 "use client";
 
-import { Menu, useContextMenu } from "@carbon/react";
 import type { ComponentProps, RefObject } from "react";
 
+import { Menu, useContextMenu } from "./carbon/menu";
 import { type MenuEntry, useMenuActions } from "./use-menu-actions";
 
 type Props = Omit<

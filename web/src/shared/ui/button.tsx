@@ -1,12 +1,12 @@
 "use client";
 
 import type { CarbonIconType } from "@carbon/icons-react";
-import { Button as CarbonButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps, MouseEvent, ReactNode, Ref } from "react";
 
 import { cn } from "@/shared/lib/cn";
 import styles from "./button.module.scss";
+import { Button as CarbonButton } from "./carbon/button";
 import { Spinner } from "./spinner";
 
 export type ButtonKind =

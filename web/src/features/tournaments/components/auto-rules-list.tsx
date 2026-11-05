@@ -1,6 +1,6 @@
-import { ListItem, OrderedList, UnorderedList } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { ListItem, OrderedList, UnorderedList } from "@/shared/ui/carbon/list";
 import styles from "./auto-rules-list.module.scss";
 import { Sentences } from "./sentences";
 

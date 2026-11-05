@@ -1,8 +1,9 @@
 import { Map as MapIcon } from "@carbon/icons-react";
-import { ListItem, Stack, UnorderedList } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { ListItem, UnorderedList } from "./carbon/list";
+import { Stack } from "./carbon/stack";
 import { OperationalTag } from "./operational-tag";
 import { Popover, PopoverContent } from "./popover";
 

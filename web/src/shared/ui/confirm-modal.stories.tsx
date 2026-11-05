@@ -1,7 +1,7 @@
-import { ListItem, UnorderedList } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { ListItem, UnorderedList } from "./carbon/list";
 import { ConfirmModal } from "./confirm-modal";
 import { TextInput } from "./text-input";
 

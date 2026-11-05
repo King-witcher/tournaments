@@ -1,9 +1,9 @@
 "use client";
 
-import { FormGroup } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/shared/lib/cn";
+import { FormGroup } from "@/shared/ui/carbon/form";
 import { NumberInput } from "@/shared/ui/number-input";
 import { isTied, MAX_FRAGS, MIN_FRAGS } from "../lib/score";
 import styles from "./score-fields.module.scss";

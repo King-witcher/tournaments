@@ -1,9 +1,9 @@
 import { Add, ArrowRight } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import type { ButtonKind } from "./button";
 import { ButtonLink } from "./button-link";
+import { Stack } from "./carbon/stack";
 
 const kinds: ButtonKind[] = [
   "primary",

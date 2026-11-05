@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Stack } from "./carbon/stack";
 import { LocalDate } from "./local-date";
 
 /** O instante, em ISO, `days` dias a partir de hoje, ao meio-dia local. */

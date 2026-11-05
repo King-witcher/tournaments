@@ -1,9 +1,9 @@
 import { Map as MapIcon } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { DismissibleTag } from "./dismissible-tag";
 
 const types = [

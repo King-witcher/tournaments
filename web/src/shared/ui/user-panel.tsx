@@ -1,11 +1,12 @@
 "use client";
 
 import { UserAvatar } from "@carbon/icons-react";
-import { InlineLoading, SwitcherDivider, SwitcherItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { Avatar } from "./avatar";
+import { InlineLoading } from "./carbon/inline-loading";
+import { SwitcherDivider, SwitcherItem } from "./carbon/ui-shell";
 import { HeaderPanelAction } from "./header-panel-action";
 import { HeaderSwitcher } from "./header-switcher";
 import { LocaleSwitcher } from "./locale-switcher";

@@ -1,8 +1,9 @@
 "use client";
 
-import { DismissibleTag as CarbonDismissibleTag } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
+
+import { DismissibleTag as CarbonDismissibleTag } from "./carbon/tag";
 
 type Props = ComponentProps<typeof CarbonDismissibleTag>;
 

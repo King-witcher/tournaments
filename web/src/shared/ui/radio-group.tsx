@@ -1,8 +1,8 @@
 "use client";
 
-import { RadioButton, RadioButtonGroup } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
+import { RadioButton, RadioButtonGroup } from "./carbon/radio-button";
 import styles from "./radio-group.module.scss";
 
 type Option<V extends string> = {

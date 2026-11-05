@@ -1,5 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { type MouseEvent, type ReactNode, useState } from "react";
+
+import { type Href, useRouter } from "@/i18n/navigation";
+import { cn } from "@/shared/lib/cn";
 import {
   Table,
   TableBody,
@@ -11,12 +16,7 @@ import {
   TableToolbar,
   TableToolbarContent,
   TableToolbarSearch,
-} from "@carbon/react";
-import { useTranslations } from "next-intl";
-import { type MouseEvent, type ReactNode, useState } from "react";
-
-import { type Href, useRouter } from "@/i18n/navigation";
-import { cn } from "@/shared/lib/cn";
+} from "./carbon/data-table";
 import styles from "./data-table.module.scss";
 import { EmptyState } from "./empty-state";
 import { Link } from "./link";

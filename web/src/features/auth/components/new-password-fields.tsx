@@ -1,6 +1,5 @@
 "use client";
 
-import { Accordion, AccordionItem, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -8,6 +7,8 @@ import {
   fieldId,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { Accordion, AccordionItem } from "@/shared/ui/carbon/accordion";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { PasswordInput } from "@/shared/ui/password-input";
 import type { useNewPassword } from "../hooks/use-new-password";
 import type { AuthField } from "../lib/auth-field";

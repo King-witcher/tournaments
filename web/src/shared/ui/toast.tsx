@@ -1,8 +1,8 @@
 "use client";
 
-import { ToastNotification } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
+import { ToastNotification } from "./carbon/notification";
 import styles from "./toast.module.scss";
 
 type Props = {

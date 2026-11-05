@@ -1,6 +1,8 @@
-import { Stack, TextAreaSkeleton, TextInputSkeleton } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Stack } from "./carbon/stack";
+import { TextAreaSkeleton } from "./carbon/text-area";
+import { TextInputSkeleton } from "./carbon/text-input";
 import {
   FormSectionSkeleton,
   FormSkeleton,

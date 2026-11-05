@@ -1,7 +1,8 @@
-import { ButtonSet, Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { ButtonLink } from "@/shared/ui/button-link";
+import { ButtonSet } from "@/shared/ui/carbon/button";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Link } from "@/shared/ui/link";
 import { SIGNUP_HREF } from "../lib/signup-href";
 import styles from "./landing-hero.module.scss";

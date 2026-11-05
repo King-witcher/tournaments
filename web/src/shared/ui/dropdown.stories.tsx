@@ -1,7 +1,9 @@
-import { DropdownSkeleton, Layer, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { DropdownSkeleton } from "./carbon/dropdown";
+import { Layer } from "./carbon/layer";
+import { Stack } from "./carbon/stack";
 import { Dropdown } from "./dropdown";
 
 const items = [

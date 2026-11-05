@@ -1,6 +1,6 @@
-import { TextInput } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { TextInput } from "./carbon/text-input";
 import { RequiredLabel } from "./required-label";
 
 const meta = {

@@ -1,7 +1,8 @@
 "use client";
 
-import { SelectableTag as CarbonSelectableTag } from "@carbon/react";
 import type { ComponentProps } from "react";
+
+import { SelectableTag as CarbonSelectableTag } from "./carbon/tag";
 
 type Props = ComponentProps<typeof CarbonSelectableTag>;
 

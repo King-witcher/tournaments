@@ -1,7 +1,7 @@
 import { ArrowRight } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Stack } from "./carbon/stack";
 import { Link } from "./link";
 
 const meta = {

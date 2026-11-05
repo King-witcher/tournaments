@@ -1,6 +1,5 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -8,6 +7,7 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { TextInput } from "@/shared/ui/text-input";
 import { EmailProofSent } from "./email-proof-sent";

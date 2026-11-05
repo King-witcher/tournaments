@@ -1,9 +1,10 @@
-import { AILabelActions, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AILabel, AILabelContent } from "./ai-label";
 import { Button } from "./button";
+import { AILabelActions } from "./carbon/ai-label";
+import { Stack } from "./carbon/stack";
 
 const sizes = ["mini", "2xs", "xs", "sm", "md", "lg", "xl"] as const;
 

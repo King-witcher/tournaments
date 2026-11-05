@@ -1,6 +1,5 @@
 "use client";
 
-import { Accordion, Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import {
   useCallback,
@@ -16,6 +15,9 @@ import { useImageSettings } from "@/features/images/hooks/use-image-settings";
 import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
+import { Accordion } from "@/shared/ui/carbon/accordion";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";

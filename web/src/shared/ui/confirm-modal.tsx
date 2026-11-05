@@ -1,10 +1,13 @@
 "use client";
 
-import { Modal, Stack, TextInput, usePrefix } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useId, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { Modal } from "./carbon/modal";
+import { usePrefix } from "./carbon/prefix";
+import { Stack } from "./carbon/stack";
+import { TextInput } from "./carbon/text-input";
 import styles from "./confirm-modal.module.scss";
 
 export type ConfirmModalProps = {

@@ -1,11 +1,12 @@
 "use client";
 
+import type { CheckboxGroupProps } from "@carbon/react";
+import { type ReactNode, useId } from "react";
+
 import {
   CheckboxGroup as CarbonCheckboxGroup,
   Checkbox,
-  type CheckboxGroupProps,
-} from "@carbon/react";
-import { type ReactNode, useId } from "react";
+} from "./carbon/checkbox";
 
 type Option<V extends string> = {
   value: V;

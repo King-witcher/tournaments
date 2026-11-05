@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
@@ -8,6 +7,8 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { ErrorText } from "@/shared/ui/error-text";
 import { PasswordInput } from "@/shared/ui/password-input";

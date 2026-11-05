@@ -1,9 +1,9 @@
-import { Tile } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AppContent } from "./app-content";
 import { Button } from "./button";
+import { Tile } from "./carbon/tile";
 import { Page } from "./page";
 import { Section } from "./section";
 

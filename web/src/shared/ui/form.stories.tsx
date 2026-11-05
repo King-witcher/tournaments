@@ -1,4 +1,3 @@
-import { Form, SelectItem, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useActionState, useId, useState } from "react";
 import { fn } from "storybook/test";
@@ -12,6 +11,9 @@ import {
   invalidProps,
 } from "@/shared/lib/form-result";
 import { slugChars } from "@/shared/lib/input-filters";
+import { Form } from "./carbon/form";
+import { SelectItem } from "./carbon/select";
+import { Stack } from "./carbon/stack";
 import { Checkbox } from "./checkbox";
 import { DateTimeInput } from "./date-time-input";
 import { FormActions } from "./form-actions";

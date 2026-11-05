@@ -1,6 +1,5 @@
 "use client";
 
-import { HeaderGlobalAction, HeaderPanel } from "@carbon/react";
 import {
   type FocusEvent,
   type KeyboardEvent,
@@ -14,6 +13,7 @@ import {
 
 import { usePathname } from "@/i18n/navigation";
 import { focusSibling } from "@/shared/lib/focus";
+import { HeaderGlobalAction, HeaderPanel } from "./carbon/ui-shell";
 import styles from "./header-panel-action.module.scss";
 
 type Props = {

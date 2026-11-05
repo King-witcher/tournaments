@@ -1,9 +1,9 @@
 "use client";
 
-import { ProgressIndicator, ProgressStep } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/shared/lib/cn";
+import { ProgressIndicator, ProgressStep } from "./carbon/progress-indicator";
 import type { ProgressStepItem } from "./progress-steps";
 import styles from "./progress-steps-list.module.scss";
 

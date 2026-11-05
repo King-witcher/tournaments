@@ -1,11 +1,10 @@
 "use client";
 
-import {
-  ActionableNotification as CarbonActionableNotification,
-  FeatureFlags,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
+
+import { FeatureFlags } from "./carbon/feature-flags";
+import { ActionableNotification as CarbonActionableNotification } from "./carbon/notification";
 
 type Props = ComponentProps<typeof CarbonActionableNotification>;
 

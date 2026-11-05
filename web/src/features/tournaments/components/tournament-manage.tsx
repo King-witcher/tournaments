@@ -1,10 +1,10 @@
-import { Stack } from "@carbon/react";
 import { Suspense } from "react";
 
 import { LifecycleSection } from "@/features/lifecycle/components/lifecycle-section";
 import { SeedingSummary } from "@/features/teams/components/seeding-summary";
 import { TeamsSummary } from "@/features/teams/components/teams-summary";
 import { apiErrorMessage } from "@/shared/api/errors";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { loadTournament } from "../server";

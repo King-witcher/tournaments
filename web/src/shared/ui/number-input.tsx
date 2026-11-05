@@ -1,6 +1,5 @@
 "use client";
 
-import { NumberInput as CarbonNumberInput } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import {
   type ComponentProps,
@@ -9,6 +8,7 @@ import {
   useId,
 } from "react";
 
+import { NumberInput as CarbonNumberInput } from "./carbon/number-input";
 import { RequiredLabel } from "./required-label";
 
 type CarbonProps = ComponentProps<typeof CarbonNumberInput>;

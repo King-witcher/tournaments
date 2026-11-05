@@ -1,8 +1,8 @@
 "use client";
 
-import { TabList as CarbonTabList } from "@carbon/react";
 import type { ComponentProps } from "react";
 
+import { TabList as CarbonTabList } from "./carbon/tabs";
 import styles from "./tab-list.module.scss";
 
 type Props = ComponentProps<typeof CarbonTabList>;

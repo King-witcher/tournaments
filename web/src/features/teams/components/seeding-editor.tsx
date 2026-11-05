@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -11,6 +10,8 @@ import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";

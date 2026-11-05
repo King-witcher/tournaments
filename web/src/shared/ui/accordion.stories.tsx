@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Accordion } from "./accordion";
+import { Stack } from "./carbon/stack";
 import { StructuredList } from "./structured-list";
 
 const meta = {

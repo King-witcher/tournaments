@@ -1,8 +1,9 @@
 "use client";
 
-import { Toggle as CarbonToggle } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
+
+import { Toggle as CarbonToggle } from "./carbon/toggle";
 
 type Props = {
   labelText: string;

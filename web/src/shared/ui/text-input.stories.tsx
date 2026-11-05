@@ -1,8 +1,9 @@
-import { Layer, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
 
 import { slugChars } from "@/shared/lib/input-filters";
+import { Layer } from "./carbon/layer";
+import { Stack } from "./carbon/stack";
 import { TextInput } from "./text-input";
 
 const meta = {

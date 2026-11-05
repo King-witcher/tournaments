@@ -1,8 +1,8 @@
 "use client";
 
-import { Select as CarbonSelect } from "@carbon/react";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
+import { Select as CarbonSelect } from "./carbon/select";
 import { RequiredLabel } from "./required-label";
 
 type Props = Omit<ComponentProps<typeof CarbonSelect>, "id" | "labelText"> & {

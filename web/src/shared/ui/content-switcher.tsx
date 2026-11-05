@@ -1,12 +1,13 @@
 "use client";
 
 import type { CarbonIconType } from "@carbon/icons-react";
+import type { ComponentProps } from "react";
+
 import {
   ContentSwitcher as CarbonContentSwitcher,
   IconSwitch,
   Switch,
-} from "@carbon/react";
-import type { ComponentProps } from "react";
+} from "./carbon/content-switcher";
 
 type Option<V extends string> = {
   value: V;

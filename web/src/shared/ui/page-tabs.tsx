@@ -1,9 +1,9 @@
 "use client";
 
-import { Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import type { ComponentType, ReactNode } from "react";
 
 import { Link as IntlLink, usePathname } from "@/i18n/navigation";
+import { Tab, TabPanel, TabPanels, Tabs } from "./carbon/tabs";
 import styles from "./page-tabs.module.scss";
 import { TabList } from "./tab-list";
 

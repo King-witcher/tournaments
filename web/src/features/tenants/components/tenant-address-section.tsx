@@ -1,6 +1,6 @@
-import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Section } from "@/shared/ui/section";
 import { getTenant } from "../server";
 import { TenantAddressForm } from "./tenant-address-form";

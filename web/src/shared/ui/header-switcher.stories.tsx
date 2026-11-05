@@ -1,9 +1,9 @@
 import { UserMultiple } from "@carbon/icons-react";
-import { SwitcherDivider, SwitcherItem } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 
 import { AppHeader } from "./app-header";
+import { SwitcherDivider, SwitcherItem } from "./carbon/ui-shell";
 import { HeaderPanelAction } from "./header-panel-action";
 import { HeaderSwitcher } from "./header-switcher";
 

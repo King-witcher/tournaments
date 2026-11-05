@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
@@ -16,6 +15,8 @@ import {
   formError,
   invalidProps,
 } from "@/shared/lib/form-result";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";

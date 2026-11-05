@@ -1,9 +1,9 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useDeferredValue, useId, useState } from "react";
 
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ContentSwitcher } from "@/shared/ui/content-switcher";
 import styles from "./match-views.module.scss";
 

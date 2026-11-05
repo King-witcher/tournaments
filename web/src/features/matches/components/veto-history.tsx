@@ -1,8 +1,8 @@
-import { AccordionItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
+import { AccordionItem } from "@/shared/ui/carbon/accordion";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import rowStyles from "./match-event-row.module.scss";
 import styles from "./match-history.module.scss";

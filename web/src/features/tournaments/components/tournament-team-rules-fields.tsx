@@ -1,8 +1,8 @@
-import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { Select } from "@/shared/ui/select";
 import type { TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";

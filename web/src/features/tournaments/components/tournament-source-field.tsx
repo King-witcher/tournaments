@@ -1,10 +1,10 @@
-import { InlineLoading } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useRef, useState } from "react";
 
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
 import { ComboBox } from "@/shared/ui/combo-box";
 import { localizedName } from "../lib/localize";
 

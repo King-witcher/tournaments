@@ -1,4 +1,3 @@
-import { InlineLoading } from "@carbon/react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -6,6 +5,7 @@ import { Suspense } from "react";
 
 import { OAuthCallback } from "@/features/auth/components/oauth-callback";
 import { isProvider } from "@/features/auth/lib/providers";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
 import { Page } from "@/shared/ui/page";
 
 /** O code está na URL: nada que a página carregar o recebe no Referer. */

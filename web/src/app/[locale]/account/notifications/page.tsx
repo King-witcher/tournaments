@@ -1,8 +1,8 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { PushSettings } from "@/features/push/components/push-settings";
 import { SoundSettings } from "@/features/realtime/components/sound-settings";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 
 /**

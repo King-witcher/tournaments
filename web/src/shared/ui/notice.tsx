@@ -1,7 +1,8 @@
-import { Callout, InlineNotification, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { Callout, InlineNotification } from "./carbon/notification";
+import { Stack } from "./carbon/stack";
 import styles from "./notice.module.scss";
 
 type Props = {

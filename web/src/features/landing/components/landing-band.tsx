@@ -1,7 +1,7 @@
-import { Grid } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/cn";
+import { Grid } from "@/shared/ui/carbon/grid";
 import styles from "./landing-band.module.scss";
 
 type Props = {

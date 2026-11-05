@@ -1,4 +1,3 @@
-import { AspectRatio, Breadcrumb, BreadcrumbItem } from "@carbon/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -6,6 +5,8 @@ import type { ReactNode } from "react";
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { BreadcrumbOverflow } from "./breadcrumb-overflow";
+import { AspectRatio } from "./carbon/aspect-ratio";
+import { Breadcrumb, BreadcrumbItem } from "./carbon/breadcrumb";
 import styles from "./page-header.module.scss";
 
 type Crumb = {

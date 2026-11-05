@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn, userEvent } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { TextArea } from "./text-area";
 
 const meta = {

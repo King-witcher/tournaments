@@ -1,10 +1,10 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/shared/ui/button";
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { Page } from "@/shared/ui/page";
 import { PageHeader } from "@/shared/ui/page-header";

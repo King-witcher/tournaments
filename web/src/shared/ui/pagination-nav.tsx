@@ -1,6 +1,5 @@
 "use client";
 
-import { PaginationNav as CarbonPaginationNav, usePrefix } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import {
   type ComponentProps,
@@ -8,6 +7,9 @@ import {
   useRef,
   useSyncExternalStore,
 } from "react";
+
+import { PaginationNav as CarbonPaginationNav } from "./carbon/pagination-nav";
+import { usePrefix } from "./carbon/prefix";
 
 type Props = Omit<
   ComponentProps<typeof CarbonPaginationNav>,

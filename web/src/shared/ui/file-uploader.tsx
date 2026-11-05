@@ -1,10 +1,9 @@
 "use client";
 
-import {
-  FileUploader as CarbonFileUploader,
-  type FileUploaderProps,
-} from "@carbon/react";
+import type { FileUploaderProps } from "@carbon/react";
 import { useTranslations } from "next-intl";
+
+import { FileUploader as CarbonFileUploader } from "./carbon/file-uploader";
 
 // O rótulo do ícone de cada arquivo, que muda com o estado.
 const STATUS = {

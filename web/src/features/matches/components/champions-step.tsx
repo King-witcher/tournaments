@@ -1,11 +1,11 @@
 "use client";
 
-import { Column, Grid } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { shownNickname } from "@/features/members/lib/nickname";
 import type { components } from "@/shared/api/schema";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Section } from "@/shared/ui/section";
 import { useVetoBoard } from "../hooks/use-veto-board";

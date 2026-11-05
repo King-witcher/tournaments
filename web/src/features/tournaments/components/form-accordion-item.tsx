@@ -1,6 +1,7 @@
-import { AccordionItem, Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { AccordionItem } from "@/shared/ui/carbon/accordion";
+import { Stack } from "@/shared/ui/carbon/stack";
 import styles from "./form-accordion-item.module.scss";
 
 type Props = {

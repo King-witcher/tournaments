@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 
+import { Stack } from "./carbon/stack";
 import { ProgressSteps } from "./progress-steps";
 
 const steps = [

@@ -1,6 +1,5 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
@@ -9,6 +8,7 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button, type ButtonKind, type ButtonSize } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { Notice } from "@/shared/ui/notice";
 import { PassiveModal } from "@/shared/ui/passive-modal";

@@ -1,9 +1,10 @@
 import { Trophy } from "@carbon/icons-react";
-import { FormGroup, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
+import { FormGroup } from "./carbon/form";
+import { Stack } from "./carbon/stack";
 import { SelectableTag } from "./selectable-tag";
 
 const meta = {

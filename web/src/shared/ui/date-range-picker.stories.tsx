@@ -1,8 +1,9 @@
-import { DatePickerSkeleton, Layer } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useArgs } from "storybook/preview-api";
 import { fn } from "storybook/test";
 
+import { DatePickerSkeleton } from "./carbon/date-picker";
+import { Layer } from "./carbon/layer";
 import { DateRangePicker } from "./date-range-picker";
 
 const meta = {

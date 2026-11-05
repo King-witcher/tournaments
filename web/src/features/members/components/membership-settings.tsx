@@ -1,9 +1,10 @@
-import { Column, Grid, Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { RatingSettingsSection } from "@/features/ratings/components/rating-settings-section";
 import { getTenant } from "@/features/tenants/server";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { NicknameForm } from "./nickname-form";

@@ -1,9 +1,9 @@
 import { Notification } from "@carbon/icons-react";
-import { SwitcherItem } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AppHeader } from "./app-header";
+import { SwitcherItem } from "./carbon/ui-shell";
 import { HeaderPanelAction } from "./header-panel-action";
 import { HeaderPlaceholder } from "./header-placeholder";
 import { HeaderSwitcher } from "./header-switcher";

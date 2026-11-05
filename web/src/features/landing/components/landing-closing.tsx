@@ -1,7 +1,7 @@
-import { Column } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Column } from "@/shared/ui/carbon/grid";
 import { SIGNUP_HREF } from "../lib/signup-href";
 import { LandingBand } from "./landing-band";
 import styles from "./landing-closing.module.scss";

@@ -1,5 +1,4 @@
-import { SkeletonText } from "@carbon/react";
-
+import { SkeletonText } from "@/shared/ui/carbon/skeleton-text";
 import { MapGrid } from "./map-grid";
 import styles from "./map-grid-skeleton.module.scss";
 

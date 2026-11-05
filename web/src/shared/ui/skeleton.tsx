@@ -1,17 +1,15 @@
-import {
-  BreadcrumbSkeleton,
-  ButtonSkeleton,
-  TabsSkeleton as CarbonTabsSkeleton,
-  DataTableSkeleton,
-  SkeletonText,
-  Stack,
-  TextAreaSkeleton,
-  TextInputSkeleton,
-  Tile,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { BreadcrumbSkeleton } from "./carbon/breadcrumb";
+import { ButtonSkeleton } from "./carbon/button";
+import { DataTableSkeleton } from "./carbon/data-table";
+import { SkeletonText } from "./carbon/skeleton-text";
+import { Stack } from "./carbon/stack";
+import { TabsSkeleton as CarbonTabsSkeleton } from "./carbon/tabs";
+import { TextAreaSkeleton } from "./carbon/text-area";
+import { TextInputSkeleton } from "./carbon/text-input";
+import { Tile } from "./carbon/tile";
 import styles from "./skeleton.module.scss";
 
 // Peças de esqueleto com a forma do que vai chegar: monte o `loading.tsx` de

@@ -1,10 +1,11 @@
-import { Stack, Tile } from "@carbon/react";
 import type { Decorator, Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { AppContent } from "./app-content";
 import { AppHeader } from "./app-header";
 import { Button } from "./button";
+import { Stack } from "./carbon/stack";
+import { Tile } from "./carbon/tile";
 import { OverflowActions } from "./overflow-actions";
 import { Page } from "./page";
 import { PageHeader } from "./page-header";

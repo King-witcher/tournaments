@@ -1,5 +1,6 @@
-import { preview__IconIndicator as CarbonIconIndicator } from "@carbon/react";
 import type { ComponentProps } from "react";
+
+import { preview__IconIndicator as CarbonIconIndicator } from "./carbon/icon-indicator";
 
 type Props = ComponentProps<typeof CarbonIconIndicator>;
 

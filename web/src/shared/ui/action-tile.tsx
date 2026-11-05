@@ -1,7 +1,7 @@
-import { Tile } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import styles from "./action-tile.module.scss";
+import { Tile } from "./carbon/tile";
 
 type Props = {
   /** Antes do nome, o logo (`Avatar` `square`); decorativo. */

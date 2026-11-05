@@ -1,9 +1,13 @@
 "use client";
 
 import { Information } from "@carbon/icons-react";
-import { Toggletip, ToggletipButton, ToggletipContent } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import {
+  Toggletip,
+  ToggletipButton,
+  ToggletipContent,
+} from "./carbon/toggletip";
 import styles from "./info-tip.module.scss";
 
 type Props = {

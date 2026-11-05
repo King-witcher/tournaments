@@ -1,9 +1,11 @@
 import { Add, Close, Events, Trophy } from "@carbon/icons-react";
-import { Layer, Stack, Tag } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { type ComponentProps, useState } from "react";
 import { fn } from "storybook/test";
 
+import { Layer } from "./carbon/layer";
+import { Stack } from "./carbon/stack";
+import { Tag } from "./carbon/tag";
 import { ContainedList, ContainedListItem } from "./contained-list";
 import { IconButton } from "./icon-button";
 

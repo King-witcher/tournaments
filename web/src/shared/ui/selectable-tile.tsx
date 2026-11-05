@@ -1,7 +1,8 @@
 "use client";
 
-import { SelectableTile as CarbonSelectableTile } from "@carbon/react";
 import { type ComponentProps, type ReactNode, useId } from "react";
+
+import { SelectableTile as CarbonSelectableTile } from "./carbon/tile";
 
 type Props = Omit<
   ComponentProps<typeof CarbonSelectableTile>,

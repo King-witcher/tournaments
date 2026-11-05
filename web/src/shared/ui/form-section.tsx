@@ -1,6 +1,7 @@
-import { FormGroup, Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { FormGroup } from "./carbon/form";
+import { Stack } from "./carbon/stack";
 import styles from "./form-section.module.scss";
 
 type Props = {

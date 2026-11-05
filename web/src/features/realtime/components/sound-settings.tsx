@@ -1,10 +1,10 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { playChime } from "@/shared/lib/chime";
 import { Button } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Toggle } from "@/shared/ui/toggle";
 import { useSoundEnabled } from "../hooks/use-sound-enabled";
 

@@ -1,4 +1,3 @@
-import { Stack } from "@carbon/react";
 import { NextIntlClientProvider } from "next-intl";
 
 import { cn } from "@/shared/lib/cn";
@@ -6,6 +5,7 @@ import { plexMono, plexSans } from "@/shared/lib/fonts";
 import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppHeader } from "@/shared/ui/app-header";
+import { Stack } from "@/shared/ui/carbon/stack";
 import commonEn from "../../../../messages/en/Common.json";
 import errorsEn from "../../../../messages/en/Errors.json";
 import navEn from "../../../../messages/en/Nav.json";

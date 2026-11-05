@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
+import { Stack } from "./carbon/stack";
 import styles from "./section.module.scss";
 
 type Props = {

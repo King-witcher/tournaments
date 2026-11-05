@@ -1,6 +1,6 @@
-import { SelectItem } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { Select } from "@/shared/ui/select";
 import { useFormatSeconds } from "../hooks/use-format-seconds";
 

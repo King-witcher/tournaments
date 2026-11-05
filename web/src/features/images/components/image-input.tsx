@@ -1,12 +1,12 @@
 "use client";
 
-import { AspectRatio } from "@carbon/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef } from "react";
 
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
+import { AspectRatio } from "@/shared/ui/carbon/aspect-ratio";
 import { FileDropZone } from "@/shared/ui/file-drop-zone";
 import type { ImageKind } from "../lib/encode-image";
 import styles from "./image-input.module.scss";

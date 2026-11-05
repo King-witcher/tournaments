@@ -1,7 +1,7 @@
-import { Content } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import styles from "./app-content.module.scss";
+import { Content } from "./carbon/ui-shell";
 
 /**
  * A área de conteúdo abaixo do `AppHeader` (`Content` do Carbon, o `<main>`

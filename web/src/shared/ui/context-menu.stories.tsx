@@ -1,9 +1,9 @@
 import { Copy, Edit } from "@carbon/icons-react";
-import { Tile } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { type ComponentProps, useRef, useState } from "react";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
+import { Tile } from "./carbon/tile";
 import { ContextMenu } from "./context-menu";
 import type { MenuEntry } from "./use-menu-actions";
 

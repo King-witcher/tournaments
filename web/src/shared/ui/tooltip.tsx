@@ -1,5 +1,6 @@
-import { Tooltip as CarbonTooltip } from "@carbon/react";
 import type { ComponentProps } from "react";
+
+import { Tooltip as CarbonTooltip } from "./carbon/tooltip";
 
 type Props = ComponentProps<typeof CarbonTooltip>;
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
 import styles from "./game-accept-contest.module.scss";

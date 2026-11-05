@@ -1,8 +1,8 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { type DropZoneFile, FileDropZone } from "./file-drop-zone";
 
 const MAX_SIZE = 2 * 1024 * 1024;

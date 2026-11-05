@@ -1,8 +1,9 @@
-import { Stack, Tile } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { Children, type ReactNode } from "react";
 
 import { PushSuggestion } from "@/features/push/components/push-suggestion";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { MY_PARTICIPATION_ID } from "../lib/focus";
 import styles from "./participation-tile.module.scss";
 

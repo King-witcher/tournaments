@@ -1,8 +1,8 @@
 import { Play, TrashCan } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { ConfirmButton } from "./confirm-button";
 
 const meta = {

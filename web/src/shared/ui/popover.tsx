@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Popover as CarbonPopover,
-  PopoverContent as CarbonPopoverContent,
-  type PopoverProps,
-} from "@carbon/react";
+import type { PopoverProps } from "@carbon/react";
 import {
   type ComponentProps,
   cloneElement,
@@ -15,6 +11,10 @@ import {
   useState,
 } from "react";
 
+import {
+  Popover as CarbonPopover,
+  PopoverContent as CarbonPopoverContent,
+} from "./carbon/popover";
 import styles from "./popover.module.scss";
 
 type TriggerProps = {

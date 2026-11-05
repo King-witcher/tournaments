@@ -1,5 +1,5 @@
-import { ButtonSet, Stack } from "@carbon/react";
-
+import { ButtonSet } from "@/shared/ui/carbon/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { LoginButton } from "./login-button";
 import styles from "./login-prompt.module.scss";
 import { SignupButton } from "./signup-button";

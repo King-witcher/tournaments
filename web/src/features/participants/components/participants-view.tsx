@@ -1,9 +1,9 @@
-import { Stack } from "@carbon/react";
 import { Suspense } from "react";
 
 import { TeamsSection } from "@/features/teams/components/teams-section";
 import { loadTournament } from "@/features/tournaments/server";
 import { preload } from "@/shared/lib/preload";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton, TableSkeleton } from "@/shared/ui/skeleton";
 import { getParticipants } from "../server";
 import { ParticipantTable } from "./participant-table";

@@ -1,19 +1,19 @@
 "use client";
 
-import {
-  ComposedModal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  Stack,
-  usePrefix,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ReactNode, RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { useReturnFocus } from "@/shared/hooks/use-return-focus";
 import { Button } from "./button";
+import {
+  ComposedModal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+} from "./carbon/modal";
+import { usePrefix } from "./carbon/prefix";
+import { Stack } from "./carbon/stack";
 import { FormError } from "./form-error";
 
 type Props = {

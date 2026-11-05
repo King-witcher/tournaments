@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
+
 import {
   StructuredListBody,
   StructuredListCell,
   StructuredListHead,
   StructuredListRow,
   StructuredListWrapper,
-} from "@carbon/react";
-import type { ReactNode } from "react";
+} from "./carbon/structured-list";
 
 type Row = {
   key: string;

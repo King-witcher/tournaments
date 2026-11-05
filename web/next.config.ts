@@ -86,8 +86,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Os ícones do Carbon vêm de um índice com milhares de módulos: importa
-    // só os usados. (@carbon/react não entra: o índice dele é que traz o
-    // "use client" que deixa os componentes rodarem em Server Components.)
+    // só os usados. O @carbon/react aqui não muda nada no Turbopack (o
+    // índice dele tem "use client" e efeito colateral declarado, e sai
+    // inteiro, 0,8 MB, em toda página que o importa): os componentes vêm de
+    // src/shared/ui/carbon/, um módulo "use client" pequeno por pasta.
     optimizePackageImports: ["@carbon/icons-react"],
     // O .scss passa pelo sass-loader configurado abaixo, não pelo embutido.
     turbopackUseBuiltinSass: false,

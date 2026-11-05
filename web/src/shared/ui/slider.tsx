@@ -1,9 +1,10 @@
 "use client";
 
-import { Slider as CarbonSlider, type SliderProps } from "@carbon/react";
+import type { SliderProps } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useId } from "react";
 
+import { Slider as CarbonSlider } from "./carbon/slider";
 import { RequiredLabel } from "./required-label";
 
 type Props = Omit<SliderProps, "id" | "labelText" | "translateWithId"> & {

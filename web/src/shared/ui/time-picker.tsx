@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  TimePicker as CarbonTimePicker,
-  SelectItem,
-  TimePickerSelect,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
 import {
   type ChangeEvent,
@@ -19,6 +14,11 @@ import { useIsClient } from "@/shared/hooks/use-is-client";
 import { cn } from "@/shared/lib/cn";
 import { timeDigits } from "@/shared/lib/input-filters";
 import { timeZoneOptions } from "@/shared/lib/zoned-time";
+import { SelectItem } from "./carbon/select";
+import {
+  TimePicker as CarbonTimePicker,
+  TimePickerSelect,
+} from "./carbon/time-picker";
 import { RequiredLabel } from "./required-label";
 import styles from "./time-picker.module.scss";
 

@@ -1,16 +1,16 @@
 "use client";
 
 import type { CarbonIconType } from "@carbon/icons-react";
+import { type ReactNode, useRef, useState } from "react";
+
+import { useRouter } from "@/i18n/navigation";
 import {
   MenuItem,
   MenuItemDivider,
   MenuItemGroup,
   MenuItemRadioGroup,
   MenuItemSelectable,
-} from "@carbon/react";
-import { type ReactNode, useRef, useState } from "react";
-
-import { useRouter } from "@/i18n/navigation";
+} from "./carbon/menu";
 import { ConfirmModal } from "./confirm-modal";
 import type { OverflowAction } from "./overflow-actions";
 

@@ -1,7 +1,8 @@
-import { SelectItem, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { SelectItem } from "./carbon/select";
+import { Stack } from "./carbon/stack";
 import { Select } from "./select";
 
 const options = (

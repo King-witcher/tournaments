@@ -1,11 +1,11 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { ErrorText } from "@/shared/ui/error-text";
 

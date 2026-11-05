@@ -1,9 +1,9 @@
 "use client";
 
-import { MenuButton as CarbonMenuButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
 
+import { MenuButton as CarbonMenuButton } from "./carbon/menu-button";
 import styles from "./overflow-actions.module.scss";
 import { Spinner } from "./spinner";
 import { type MenuEntry, useMenuActions } from "./use-menu-actions";

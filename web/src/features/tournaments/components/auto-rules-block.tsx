@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import styles from "./auto-rules-block.module.scss";
 

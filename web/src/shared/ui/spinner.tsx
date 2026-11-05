@@ -1,6 +1,6 @@
 "use client";
 
-import { InlineLoading } from "@carbon/react";
+import { InlineLoading } from "./carbon/inline-loading";
 
 /**
  * O indicador girando do `InlineLoading`, sem texto, para ir dentro de outro

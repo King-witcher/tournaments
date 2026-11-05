@@ -1,10 +1,10 @@
-import { Stack } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import type { Href } from "@/i18n/navigation";
 import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { InfoTip } from "@/shared/ui/info-tip";
 import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";

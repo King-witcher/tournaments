@@ -1,6 +1,6 @@
-import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Link } from "@/shared/ui/link";
 import { ProductShot } from "./product-shot";
 import styles from "./tour-panel.module.scss";

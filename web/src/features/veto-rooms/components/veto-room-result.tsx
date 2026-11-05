@@ -1,6 +1,5 @@
 "use client";
 
-import { Column, Grid } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { CopyVetoResult } from "@/features/matches/components/copy-veto-result";
@@ -8,6 +7,7 @@ import { DraftSummary } from "@/features/matches/components/draft-summary";
 import { VetoMapBoard } from "@/features/matches/components/veto-map-board";
 import { useVetoBoard } from "@/features/matches/hooks/use-veto-board";
 import { useVetoResult } from "@/features/matches/hooks/use-veto-result";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { CodeSnippet } from "@/shared/ui/code-snippet";
 import { Section } from "@/shared/ui/section";
 

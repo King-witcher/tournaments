@@ -1,7 +1,8 @@
-import { Layer, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { Layer } from "./carbon/layer";
+import { Stack } from "./carbon/stack";
 import { ComboBox } from "./combo-box";
 
 const champions = [

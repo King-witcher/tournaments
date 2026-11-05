@@ -1,10 +1,10 @@
 import { Folder, Trophy } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { type ComponentProps, useState } from "react";
 import { fn } from "storybook/test";
 
 import { Button } from "./button";
+import { Stack } from "./carbon/stack";
 import { TreeNode, TreeView } from "./tree-view";
 
 type Node = {

@@ -1,15 +1,15 @@
+import { useTranslations } from "next-intl";
+
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
+import { soloMember } from "@/features/teams/lib/team-name";
+import type { components } from "@/shared/api/schema";
 import {
   Table,
   TableBody,
   TableHead,
   TableHeader,
   TableRow,
-} from "@carbon/react";
-import { useTranslations } from "next-intl";
-
-import { useTeamName } from "@/features/teams/hooks/use-team-name";
-import { soloMember } from "@/features/teams/lib/team-name";
-import type { components } from "@/shared/api/schema";
+} from "@/shared/ui/carbon/data-table";
 import { seriesByPair } from "../lib/crosstable";
 import styles from "./crosstable.module.scss";
 import { CrosstableRow } from "./crosstable-row";

@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { MatchCard } from "./match-card";
 import styles from "./rounds-list.module.scss";
 

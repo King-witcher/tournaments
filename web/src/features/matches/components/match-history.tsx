@@ -1,7 +1,7 @@
-import { AccordionItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { AccordionItem } from "@/shared/ui/carbon/accordion";
 import { MatchEventRow } from "./match-event-row";
 import styles from "./match-history.module.scss";
 

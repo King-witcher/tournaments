@@ -1,7 +1,8 @@
 "use client";
 
-import { OperationalTag as CarbonOperationalTag } from "@carbon/react";
 import type { ComponentProps } from "react";
+
+import { OperationalTag as CarbonOperationalTag } from "./carbon/tag";
 
 type Props = ComponentProps<typeof CarbonOperationalTag>;
 

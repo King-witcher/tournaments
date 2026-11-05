@@ -1,6 +1,5 @@
 "use client";
 
-import { DatePicker as CarbonDatePicker, DatePickerInput } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   type ChangeEvent,
@@ -11,6 +10,10 @@ import {
 } from "react";
 
 import { dateOfPlain, dateText, plainDateOf } from "@/shared/lib/plain-date";
+import {
+  DatePicker as CarbonDatePicker,
+  DatePickerInput,
+} from "./carbon/date-picker";
 import { RequiredLabel } from "./required-label";
 
 type Range = [start: string | null, end: string | null];

@@ -1,8 +1,8 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { Button } from "./button";
+import { Stack } from "./carbon/stack";
 import { Link } from "./link";
 import { Notice } from "./notice";
 

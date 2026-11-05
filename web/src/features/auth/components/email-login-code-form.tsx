@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
@@ -11,6 +10,8 @@ import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import type { FormResult } from "@/shared/lib/form-result";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { useCodeAutoSubmit } from "../hooks/use-code-auto-submit";
 import { useEnterAccount } from "../hooks/use-enter-account";
 import { useNewPassword } from "../hooks/use-new-password";

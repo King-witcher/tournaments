@@ -1,8 +1,10 @@
-import { Layer, SliderSkeleton, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useArgs } from "storybook/preview-api";
 import { fn } from "storybook/test";
 
+import { Layer } from "./carbon/layer";
+import { SliderSkeleton } from "./carbon/slider";
+import { Stack } from "./carbon/stack";
 import { Slider } from "./slider";
 
 const range = {

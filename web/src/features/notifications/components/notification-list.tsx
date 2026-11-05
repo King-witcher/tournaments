@@ -1,10 +1,10 @@
 "use client";
 
-import { InlineLoading } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type RefObject, useId, useState } from "react";
 
 import { focusIfLost } from "@/shared/lib/focus";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
 import { ContentSwitcher } from "@/shared/ui/content-switcher";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ErrorText } from "@/shared/ui/error-text";

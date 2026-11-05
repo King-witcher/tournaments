@@ -1,9 +1,9 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { CodeSnippet } from "@/shared/ui/code-snippet";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Section } from "@/shared/ui/section";

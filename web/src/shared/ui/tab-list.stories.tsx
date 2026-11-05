@@ -1,6 +1,6 @@
-import { Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Tab, TabPanel, TabPanels, Tabs } from "./carbon/tabs";
 import { TabList } from "./tab-list";
 
 const labels = ["Visão geral", "Inscritos", "Chave", "Regras"];

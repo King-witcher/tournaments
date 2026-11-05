@@ -1,8 +1,8 @@
 "use client";
 
-import { Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { Tab, TabPanel, TabPanels, Tabs } from "@/shared/ui/carbon/tabs";
 import { TabList } from "@/shared/ui/tab-list";
 import styles from "./bracket-tabs.module.scss";
 

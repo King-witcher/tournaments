@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import { AutoRulesAbsence } from "./auto-rules-absence";
 import { AutoRulesEntry } from "./auto-rules-entry";

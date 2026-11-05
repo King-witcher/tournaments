@@ -1,10 +1,10 @@
 "use client";
 
-import { ToastNotification } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type FocusEvent, useEffect, useState } from "react";
 
 import type { Href } from "@/i18n/navigation";
+import { ToastNotification } from "./carbon/notification";
 import { Link } from "./link";
 import styles from "./toast-stack.module.scss";
 

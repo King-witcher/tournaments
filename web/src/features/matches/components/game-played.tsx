@@ -1,8 +1,9 @@
-import { Layer, Tile } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { GameScreenshots } from "@/features/screenshots/components/game-screenshots";
 import type { components } from "@/shared/api/schema";
+import { Layer } from "@/shared/ui/carbon/layer";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { gameRowId, type MatchTarget } from "../lib/match-target";
 import { GameAcceptContest } from "./game-accept-contest";
 import styles from "./game-card.module.scss";

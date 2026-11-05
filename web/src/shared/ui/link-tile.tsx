@@ -1,10 +1,11 @@
 "use client";
 
 import { ArrowRight } from "@carbon/icons-react";
-import { AspectRatio, ClickableTile } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
+import { AspectRatio } from "./carbon/aspect-ratio";
+import { ClickableTile } from "./carbon/tile";
 import styles from "./link-tile.module.scss";
 
 type Props = {

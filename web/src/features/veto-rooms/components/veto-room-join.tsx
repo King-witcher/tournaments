@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, InlineLoading, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect, useRef, useState } from "react";
 
@@ -10,6 +9,9 @@ import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusIfLost } from "@/shared/lib/focus";
+import { Form } from "@/shared/ui/carbon/form";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Section } from "@/shared/ui/section";

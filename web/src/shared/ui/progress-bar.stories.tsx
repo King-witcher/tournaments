@@ -1,7 +1,8 @@
-import { Stack, Tile } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useEffect, useState } from "react";
 
+import { Stack } from "./carbon/stack";
+import { Tile } from "./carbon/tile";
 import { ProgressBar } from "./progress-bar";
 
 const meta = {

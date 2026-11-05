@@ -1,10 +1,10 @@
-import { FormGroup } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
+import { FormGroup } from "@/shared/ui/carbon/form";
 import { ErrorText } from "@/shared/ui/error-text";
 import {
   longestSeries,

@@ -1,12 +1,13 @@
 "use client";
 
-import { InlineLoading, SwitcherDivider, SwitcherItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { type Href, Link as IntlLink, usePathname } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
+import { SwitcherDivider, SwitcherItem } from "@/shared/ui/carbon/ui-shell";
 import { ErrorText } from "@/shared/ui/error-text";
 import { HeaderSwitcher } from "@/shared/ui/header-switcher";
 import styles from "./tenant-switcher-list.module.scss";

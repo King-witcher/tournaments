@@ -1,9 +1,10 @@
 "use client";
 
-import { BreadcrumbItem, OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { getPathname, type Href } from "@/i18n/navigation";
+import { BreadcrumbItem } from "./carbon/breadcrumb";
+import { OverflowMenu, OverflowMenuItem } from "./carbon/overflow-menu";
 
 type Props = {
   /** As páginas de cima que não cabem, da raiz para baixo. */

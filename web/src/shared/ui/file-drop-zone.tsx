@@ -1,14 +1,14 @@
 "use client";
 
-import {
-  FileUploaderDropContainer,
-  FileUploaderItem,
-  FormItem,
-} from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { cn } from "@/shared/lib/cn";
+import {
+  FileUploaderDropContainer,
+  FileUploaderItem,
+} from "./carbon/file-uploader";
+import { FormItem } from "./carbon/form";
 import styles from "./file-drop-zone.module.scss";
 import { RequiredLabel } from "./required-label";
 

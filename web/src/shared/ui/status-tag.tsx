@@ -1,5 +1,6 @@
-import { Tag } from "@carbon/react";
 import type { ReactNode } from "react";
+
+import { Tag } from "./carbon/tag";
 
 /**
  * Cor fixa por significado (docs/design.md, "Estado"). Os códigos do torneio

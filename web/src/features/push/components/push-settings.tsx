@@ -1,10 +1,11 @@
 "use client";
 
-import { InlineLoading, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
+import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { usePush } from "../hooks/use-push";
 

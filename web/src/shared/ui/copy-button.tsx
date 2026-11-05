@@ -1,10 +1,10 @@
 "use client";
 
-import { CopyButton as CarbonCopyButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps, MouseEvent } from "react";
 
 import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard";
+import { CopyButton as CarbonCopyButton } from "./carbon/copy-button";
 
 type Props = ComponentProps<typeof CarbonCopyButton> & {
   /** O que vai para a área de transferência ao clicar. */

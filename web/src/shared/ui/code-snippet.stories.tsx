@@ -1,6 +1,7 @@
-import { CodeSnippetSkeleton, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { CodeSnippetSkeleton } from "./carbon/code-snippet";
+import { Stack } from "./carbon/stack";
 import { CodeSnippet } from "./code-snippet";
 
 const link = "https://telefrag.gg/pt/invite/7Hq2xKp9Lm4vRt8sWz3nYb6cDf1gJe5a";

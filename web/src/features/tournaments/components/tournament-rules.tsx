@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { loadMaps } from "@/features/matches/server";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import { UserText } from "@/shared/ui/user-text";
 import { rulesSource } from "../lib/localize";

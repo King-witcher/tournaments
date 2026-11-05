@@ -1,6 +1,7 @@
-import { AccordionItem, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
+import { AccordionItem } from "@/shared/ui/carbon/accordion";
+import { Stack } from "@/shared/ui/carbon/stack";
 import type { MatchTarget } from "../lib/match-target";
 import styles from "./organizer-panel.module.scss";
 import { WalkoverForm } from "./walkover-form";

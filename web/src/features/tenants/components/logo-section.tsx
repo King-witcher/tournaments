@@ -1,7 +1,7 @@
-import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 import { ImageField } from "@/features/images/components/image-field";
 import { getImageSettings } from "@/features/images/server";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Section } from "@/shared/ui/section";
 import { getTenant } from "../server";
 

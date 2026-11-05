@@ -1,5 +1,6 @@
-import { preview__ShapeIndicator as CarbonShapeIndicator } from "@carbon/react";
 import type { ComponentProps } from "react";
+
+import { preview__ShapeIndicator as CarbonShapeIndicator } from "./carbon/shape-indicator";
 
 type Props = ComponentProps<typeof CarbonShapeIndicator>;
 

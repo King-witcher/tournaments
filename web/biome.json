@@ -17,13 +17,40 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["@carbon/react"],
+                "importNamePattern": ".*(Props|TranslationKey)",
+                "invertImportNamePattern": true,
+                "message": "O índice do @carbon/react leva o Carbon inteiro a toda página. Importe o componente de @/shared/ui/carbon/<pasta> (acrescente lá o que faltar); daqui, só tipos."
+              },
+              {
+                "group": ["@carbon/react/es/**", "@carbon/react/lib/**"],
+                "message": "Arquivo interno do Carbon: só os módulos de src/shared/ui/carbon/ apontam para ele."
+              }
+            ]
+          }
+        }
+      }
     },
     "domains": {
       "next": "recommended",
       "react": "recommended"
     }
   },
+  "overrides": [
+    {
+      "includes": ["src/shared/ui/carbon/**"],
+      "linter": {
+        "rules": { "style": { "noRestrictedImports": "off" } }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double"

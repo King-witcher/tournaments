@@ -1,10 +1,10 @@
 "use client";
 
-import { TextInput as CarbonTextInput } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
+import { TextInput as CarbonTextInput } from "./carbon/text-input";
 import { RequiredLabel } from "./required-label";
 
 type Props = Omit<

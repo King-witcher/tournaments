@@ -1,12 +1,12 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { Button } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ErrorText } from "@/shared/ui/error-text";
 
 type Props = {

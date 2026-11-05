@@ -1,10 +1,12 @@
 "use client";
 
-import { Form, Stack, Tab, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tab, TabPanel, TabPanels, Tabs } from "@/shared/ui/carbon/tabs";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";

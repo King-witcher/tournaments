@@ -1,10 +1,11 @@
 import { Filter, Settings } from "@carbon/icons-react";
-import { ListItem, Stack, UnorderedList } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { fn, userEvent, within } from "storybook/test";
 
 import { Button } from "./button";
+import { ListItem, UnorderedList } from "./carbon/list";
+import { Stack } from "./carbon/stack";
 import { Checkbox } from "./checkbox";
 import { IconButton } from "./icon-button";
 import { OperationalTag } from "./operational-tag";

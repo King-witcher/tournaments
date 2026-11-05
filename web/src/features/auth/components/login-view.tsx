@@ -1,6 +1,8 @@
-import { Layer, Stack, Tile } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
+import { Layer } from "@/shared/ui/carbon/layer";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { safeReturnTo } from "../lib/return-to";
 import { AccountDeletionScheduled } from "./account-deletion-scheduled";
 import { AlreadySignedIn } from "./already-signed-in";

@@ -1,8 +1,8 @@
 import { Add, Copy, Edit, TrashCan } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { IconButton } from "./icon-button";
 
 const kinds = ["primary", "secondary", "tertiary", "ghost"] as const;

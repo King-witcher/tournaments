@@ -1,15 +1,17 @@
 "use client";
 
-import {
-  MultiSelect as CarbonMultiSelect,
-  FilterableMultiSelect,
-  type FilterableMultiSelectProps,
-  type MultiSelectProps,
+import type {
+  FilterableMultiSelectProps,
+  MultiSelectProps,
 } from "@carbon/react";
 import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useId } from "react";
 
 import { useListBoxTranslation } from "@/shared/hooks/use-list-box-translation";
+import {
+  MultiSelect as CarbonMultiSelect,
+  FilterableMultiSelect,
+} from "./carbon/multi-select";
 
 type Props<Item> = Omit<
   MultiSelectProps<Item>,

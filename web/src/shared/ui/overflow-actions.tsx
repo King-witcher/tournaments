@@ -1,10 +1,10 @@
 "use client";
 
-import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef, useState } from "react";
 
 import { type Href, useRouter } from "@/i18n/navigation";
+import { OverflowMenu, OverflowMenuItem } from "./carbon/overflow-menu";
 import { ConfirmModal } from "./confirm-modal";
 import styles from "./overflow-actions.module.scss";
 import { Spinner } from "./spinner";

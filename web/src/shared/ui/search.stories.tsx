@@ -1,7 +1,9 @@
-import { Layer, SearchSkeleton, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { Layer } from "./carbon/layer";
+import { SearchSkeleton } from "./carbon/search";
+import { Stack } from "./carbon/stack";
 import { Search } from "./search";
 
 const meta = {

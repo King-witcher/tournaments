@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useActionState, useId, useState } from "react";
 
@@ -10,6 +9,8 @@ import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormError } from "@/shared/ui/form-error";
 import { TextInput } from "@/shared/ui/text-input";
 import { EmailLoginSent } from "./email-login-sent";

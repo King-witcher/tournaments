@@ -1,7 +1,6 @@
-import { Column, Grid } from "@carbon/react";
-
 import { DeleteTenantSection } from "@/features/tenants/components/delete-tenant-section";
 import { getTenant } from "@/features/tenants/server";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { DangerZone } from "@/shared/ui/danger-zone";
 import { LeaveTenantSection } from "./leave-tenant-section";
 import { TransferOwnershipSection } from "./transfer-ownership-section";

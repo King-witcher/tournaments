@@ -1,9 +1,9 @@
 import { Document, DocumentPdf, Image, TableSplit } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { MenuButton } from "./menu-button";
 import type { MenuEntry } from "./use-menu-actions";
 

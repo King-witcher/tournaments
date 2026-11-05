@@ -1,12 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import type { ComponentProps, ReactNode } from "react";
+
 import {
   ExpandableTile as CarbonExpandableTile,
   TileAboveTheFoldContent,
   TileBelowTheFoldContent,
-} from "@carbon/react";
-import { useTranslations } from "next-intl";
-import type { ComponentProps, ReactNode } from "react";
+} from "./carbon/tile";
 
 type Props = Omit<
   ComponentProps<typeof CarbonExpandableTile>,

@@ -1,8 +1,9 @@
 "use client";
 
-import { Pagination as CarbonPagination } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
+
+import { Pagination as CarbonPagination } from "./carbon/pagination";
 
 type Props = ComponentProps<typeof CarbonPagination>;
 

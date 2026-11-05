@@ -1,12 +1,12 @@
 "use client";
 
-import { IconButton as CarbonIconButton } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps, MouseEvent, ReactNode, Ref } from "react";
 
 import { cn } from "@/shared/lib/cn";
 import type { ButtonSize } from "./button";
 import styles from "./button.module.scss";
+import { IconButton as CarbonIconButton } from "./carbon/button";
 import { Spinner } from "./spinner";
 
 type Props = Omit<ComponentProps<"button">, "children" | "ref" | "title"> & {

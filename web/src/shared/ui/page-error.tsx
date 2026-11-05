@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { Stack } from "./carbon/stack";
 import { Link } from "./link";
 import { Notice } from "./notice";
 

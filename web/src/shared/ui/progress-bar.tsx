@@ -1,9 +1,9 @@
 "use client";
 
-import { ProgressBar as CarbonProgressBar } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, useLayoutEffect, useRef } from "react";
 
+import { ProgressBar as CarbonProgressBar } from "./carbon/progress-bar";
 import styles from "./progress-bar.module.scss";
 
 type Props = ComponentProps<typeof CarbonProgressBar>;

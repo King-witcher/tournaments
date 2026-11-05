@@ -1,9 +1,10 @@
+import { useTranslations } from "next-intl";
+import type { ComponentProps } from "react";
+
 import {
   AILabel as CarbonAILabel,
   AILabelContent as CarbonAILabelContent,
-} from "@carbon/react";
-import { useTranslations } from "next-intl";
-import type { ComponentProps } from "react";
+} from "./carbon/ai-label";
 
 type Props = ComponentProps<typeof CarbonAILabel>;
 

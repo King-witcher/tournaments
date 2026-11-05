@@ -1,9 +1,9 @@
-import { Stack } from "@carbon/react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { PendingMatches } from "@/features/matches/components/pending-matches";
 import { actionableMatches } from "@/features/matches/lib/status";
 import { loadBracket } from "@/features/matches/server";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
 import { UserText } from "@/shared/ui/user-text";
 import { localizedTexts } from "../lib/localize";

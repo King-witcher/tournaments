@@ -1,8 +1,8 @@
-import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import { getTenant } from "@/features/tenants/server";
 import { serverApi } from "@/shared/api/server";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Section } from "@/shared/ui/section";
 import { DiscordForm } from "./discord-form";
 

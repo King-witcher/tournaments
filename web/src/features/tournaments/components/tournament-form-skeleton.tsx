@@ -1,13 +1,10 @@
-import {
-  AccordionSkeleton,
-  ButtonSkeleton,
-  RadioButtonSkeleton,
-  SelectSkeleton,
-  Stack,
-  TextAreaSkeleton,
-  TextInputSkeleton,
-} from "@carbon/react";
-
+import { AccordionSkeleton } from "@/shared/ui/carbon/accordion";
+import { ButtonSkeleton } from "@/shared/ui/carbon/button";
+import { RadioButtonSkeleton } from "@/shared/ui/carbon/radio-button";
+import { SelectSkeleton } from "@/shared/ui/carbon/select";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { TextAreaSkeleton } from "@/shared/ui/carbon/text-area";
+import { TextInputSkeleton } from "@/shared/ui/carbon/text-input";
 import {
   FormSectionSkeleton,
   PageHeaderSkeleton,

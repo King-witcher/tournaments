@@ -1,5 +1,7 @@
-import { Column, Grid, Stack } from "@carbon/react";
 import type { ReactNode } from "react";
+
+import { Column, Grid } from "./carbon/grid";
+import { Stack } from "./carbon/stack";
 
 /**
  * O conteúdo de uma página `wide` em duas colunas do `Grid` do Carbon: a

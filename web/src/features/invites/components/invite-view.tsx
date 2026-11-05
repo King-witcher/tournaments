@@ -1,4 +1,3 @@
-import { AspectRatio, Layer, Stack, Tile } from "@carbon/react";
 import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -6,6 +5,10 @@ import { RequireLogin } from "@/features/auth/components/require-login";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
+import { AspectRatio } from "@/shared/ui/carbon/aspect-ratio";
+import { Layer } from "@/shared/ui/carbon/layer";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { Section } from "@/shared/ui/section";

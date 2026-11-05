@@ -1,13 +1,13 @@
 "use client";
 
-import {
-  TreeNode as CarbonTreeNode,
-  TreeView as CarbonTreeView,
-} from "@carbon/react";
 import { useLocale } from "next-intl";
 import type { ComponentProps } from "react";
 
 import { getPathname, type Href, useRouter } from "@/i18n/navigation";
+import {
+  TreeNode as CarbonTreeNode,
+  TreeView as CarbonTreeView,
+} from "./carbon/tree-view";
 
 /**
  * Lista em árvore (`TreeView` do Carbon): itens aninhados que se abrem e

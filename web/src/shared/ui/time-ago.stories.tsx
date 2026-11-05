@@ -1,6 +1,6 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { Stack } from "./carbon/stack";
 import { TimeAgo } from "./time-ago";
 
 /** O instante, em ISO, `seconds` segundos antes de agora. */

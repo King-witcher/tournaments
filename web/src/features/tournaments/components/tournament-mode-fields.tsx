@@ -1,8 +1,8 @@
-import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { Notice } from "@/shared/ui/notice";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";

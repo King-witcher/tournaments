@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
@@ -23,6 +22,8 @@ import {
 } from "@/shared/lib/form-result";
 import { slugChars } from "@/shared/lib/input-filters";
 import { slugify } from "@/shared/lib/slugify";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { TextInput } from "@/shared/ui/text-input";

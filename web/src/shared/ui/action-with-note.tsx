@@ -1,10 +1,10 @@
 "use client";
 
-import { Tooltip } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/cn";
 import styles from "./action-with-note.module.scss";
+import { Tooltip } from "./carbon/tooltip";
 import { ErrorText } from "./error-text";
 
 type Props = {

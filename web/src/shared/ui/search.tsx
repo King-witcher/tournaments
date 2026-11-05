@@ -1,8 +1,9 @@
 "use client";
 
-import { Search as CarbonSearch, ExpandableSearch } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, useId } from "react";
+
+import { Search as CarbonSearch, ExpandableSearch } from "./carbon/search";
 
 type Props = Omit<
   ComponentProps<typeof CarbonSearch>,

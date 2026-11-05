@@ -1,8 +1,8 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
+import { Stack } from "@/shared/ui/carbon/stack";
 import styles from "./invite-membership.module.scss";
 
 type Props = {

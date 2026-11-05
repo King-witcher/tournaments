@@ -1,6 +1,7 @@
-import { CodeSnippet as CarbonCodeSnippet } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
+
+import { CodeSnippet as CarbonCodeSnippet } from "./carbon/code-snippet";
 
 type Props = ComponentProps<typeof CarbonCodeSnippet>;
 

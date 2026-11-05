@@ -1,11 +1,11 @@
 "use client";
 
-import { Accordion } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
 import { VetoHistory } from "@/features/matches/components/veto-history";
 import { VetoReady } from "@/features/matches/components/veto-ready";
 import { useVetoBoard } from "@/features/matches/hooks/use-veto-board";
+import { Accordion } from "@/shared/ui/carbon/accordion";
 import { PageColumns } from "@/shared/ui/page-columns";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusTag } from "@/shared/ui/status-tag";

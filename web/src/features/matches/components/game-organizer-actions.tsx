@@ -1,6 +1,5 @@
 "use client";
 
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -10,6 +9,7 @@ import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { Button } from "@/shared/ui/button";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ErrorText } from "@/shared/ui/error-text";
 import { Notice } from "@/shared/ui/notice";
 import { useMarkMine } from "../hooks/use-live-match";

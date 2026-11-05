@@ -1,7 +1,6 @@
-import { TableCell, TableRow } from "@carbon/react";
-
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
+import { TableCell, TableRow } from "@/shared/ui/carbon/data-table";
 import type { CrossTeam } from "../lib/crosstable";
 import { CrosstableCell } from "./crosstable-cell";
 import styles from "./crosstable-row.module.scss";

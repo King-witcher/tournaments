@@ -1,11 +1,11 @@
 "use client";
 
 import type { CarbonIconType } from "@carbon/icons-react";
-import { Button as CarbonButton } from "@carbon/react";
 import type { ReactNode } from "react";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import type { ButtonKind, ButtonSize } from "./button";
+import { Button as CarbonButton } from "./carbon/button";
 
 type Props = {
   /** Destino, com o prefixo de idioma posto pelo `Link` do i18n. */

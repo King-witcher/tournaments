@@ -1,6 +1,6 @@
-import { Switcher } from "@carbon/react";
 import type { ReactNode } from "react";
 
+import { Switcher } from "./carbon/ui-shell";
 import styles from "./header-switcher.module.scss";
 
 type Props = {

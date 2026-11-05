@@ -1,9 +1,10 @@
 "use client";
 
-import { ComboBox as CarbonComboBox, type ComboBoxProps } from "@carbon/react";
+import type { ComboBoxProps } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
 import { useListBoxTranslation } from "@/shared/hooks/use-list-box-translation";
+import { ComboBox as CarbonComboBox } from "./carbon/combo-box";
 import { RequiredLabel } from "./required-label";
 
 type Props<Item> = Omit<

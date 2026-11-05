@@ -1,6 +1,7 @@
-import { Callout as CarbonCallout } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, useId } from "react";
+
+import { Callout as CarbonCallout } from "./carbon/notification";
 
 type Props = ComponentProps<typeof CarbonCallout>;
 

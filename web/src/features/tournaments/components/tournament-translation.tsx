@@ -1,9 +1,10 @@
-import { FormGroup, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { memo, useId } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
+import { FormGroup } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
 import { TextArea } from "@/shared/ui/text-area";
 import { TextInput } from "@/shared/ui/text-input";

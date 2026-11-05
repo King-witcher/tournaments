@@ -1,6 +1,6 @@
-import { Column, Grid } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { LandingBand } from "./landing-band";
 import styles from "./landing-features.module.scss";
 

@@ -1,6 +1,5 @@
-import { Accordion } from "@carbon/react";
-
 import type { components } from "@/shared/api/schema";
+import { Accordion } from "@/shared/ui/carbon/accordion";
 import type { MatchTarget } from "../lib/match-target";
 import { CorrectionNote } from "./correction-note";
 import { MatchHistory } from "./match-history";

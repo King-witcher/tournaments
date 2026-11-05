@@ -1,10 +1,10 @@
 "use client";
 
-import { TextArea as CarbonTextArea } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { type ComponentProps, type ReactNode, useId } from "react";
 
 import { useFieldCheck } from "@/shared/hooks/use-field-check";
+import { TextArea as CarbonTextArea } from "./carbon/text-area";
 import { RequiredLabel } from "./required-label";
 
 type Props = Omit<ComponentProps<typeof CarbonTextArea>, "id" | "labelText"> & {

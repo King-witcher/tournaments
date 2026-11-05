@@ -1,8 +1,8 @@
-import { Layer } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { Button } from "./button";
+import { Layer } from "./carbon/layer";
 import { ExpandableTile } from "./expandable-tile";
 
 const meta = {

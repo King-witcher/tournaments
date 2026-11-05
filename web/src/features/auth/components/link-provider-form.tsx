@@ -1,9 +1,10 @@
 "use client";
 
-import { Form, Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
+import { Form } from "@/shared/ui/carbon/form";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { ErrorText } from "@/shared/ui/error-text";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { useOAuthStart } from "../hooks/use-oauth-start";

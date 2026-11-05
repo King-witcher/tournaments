@@ -1,7 +1,8 @@
-import { FileUploaderSkeleton, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
+import { FileUploaderSkeleton } from "./carbon/file-uploader";
+import { Stack } from "./carbon/stack";
 import { FileUploader } from "./file-uploader";
 
 const meta = {

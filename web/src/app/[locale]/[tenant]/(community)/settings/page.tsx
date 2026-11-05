@@ -1,4 +1,3 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
@@ -8,6 +7,7 @@ import { MembershipSettings } from "@/features/members/components/membership-set
 import { LogoSection } from "@/features/tenants/components/logo-section";
 import { TenantAddressSection } from "@/features/tenants/components/tenant-address-section";
 import { TenantDetailsSection } from "@/features/tenants/components/tenant-details-section";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**

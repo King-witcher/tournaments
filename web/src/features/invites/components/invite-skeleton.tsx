@@ -1,5 +1,7 @@
-import { ButtonSkeleton, SkeletonText, Stack, Tile } from "@carbon/react";
-
+import { ButtonSkeleton } from "@/shared/ui/carbon/button";
+import { SkeletonText } from "@/shared/ui/carbon/skeleton-text";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { PageHeaderSkeleton } from "@/shared/ui/skeleton";
 
 /**

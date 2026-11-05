@@ -1,11 +1,11 @@
 "use client";
 
 import type { CarbonIconType } from "@carbon/icons-react";
-import { Link as CarbonLink } from "@carbon/react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { type Href, Link as IntlLink } from "@/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
+import { Link as CarbonLink } from "./carbon/link";
 import styles from "./link.module.scss";
 
 type Own = {

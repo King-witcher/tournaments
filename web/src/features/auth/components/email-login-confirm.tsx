@@ -1,6 +1,5 @@
 "use client";
 
-import { Form, Layer, Stack, Tile } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 
@@ -11,6 +10,10 @@ import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
 import { type FormResult, formError } from "@/shared/lib/form-result";
 import { Button } from "@/shared/ui/button";
+import { Form } from "@/shared/ui/carbon/form";
+import { Layer } from "@/shared/ui/carbon/layer";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Tile } from "@/shared/ui/carbon/tile";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
 import { useEnterAccount } from "../hooks/use-enter-account";

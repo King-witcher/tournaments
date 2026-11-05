@@ -1,9 +1,9 @@
-import { Stack } from "@carbon/react";
 import { useTranslations } from "next-intl";
 import { Fragment } from "react";
 
 import { isSingle } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
 import { useMatchLabels } from "../hooks/use-match-labels";

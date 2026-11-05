@@ -1,7 +1,7 @@
-import { Stack } from "@carbon/react";
 import { getTranslations } from "next-intl/server";
 
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";

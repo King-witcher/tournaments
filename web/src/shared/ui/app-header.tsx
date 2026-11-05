@@ -1,15 +1,15 @@
 "use client";
 
+import type { ReactNode } from "react";
+
+import { Link as IntlLink } from "@/i18n/navigation";
+import styles from "./app-header.module.scss";
 import {
   Header,
   HeaderGlobalBar,
   HeaderName,
   SkipToContent,
-} from "@carbon/react";
-import type { ReactNode } from "react";
-
-import { Link as IntlLink } from "@/i18n/navigation";
-import styles from "./app-header.module.scss";
+} from "./carbon/ui-shell";
 import { Logo } from "./logo";
 
 type Props = {

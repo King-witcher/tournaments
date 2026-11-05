@@ -1,9 +1,9 @@
 import { Add, TrashCan } from "@carbon/icons-react";
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 import { Button, type ButtonKind } from "./button";
+import { Stack } from "./carbon/stack";
 
 const kinds: ButtonKind[] = [
   "primary",

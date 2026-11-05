@@ -1,9 +1,9 @@
-import { Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { useArgs } from "storybook/preview-api";
 import { fn } from "storybook/test";
 
+import { Stack } from "./carbon/stack";
 import { NumberInput } from "./number-input";
 
 const meta = {

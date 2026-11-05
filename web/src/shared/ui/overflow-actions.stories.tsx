@@ -1,8 +1,9 @@
-import { Column, Grid, Stack } from "@carbon/react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { expect, fn, screen, userEvent, within } from "storybook/test";
 
+import { Column, Grid } from "./carbon/grid";
+import { Stack } from "./carbon/stack";
 import { OverflowActions } from "./overflow-actions";
 import { TextInput } from "./text-input";
 

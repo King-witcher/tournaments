@@ -1,9 +1,10 @@
 "use client";
 
-import { Dropdown as CarbonDropdown, type DropdownProps } from "@carbon/react";
+import type { DropdownProps } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
 import { useListBoxTranslation } from "@/shared/hooks/use-list-box-translation";
+import { Dropdown as CarbonDropdown } from "./carbon/dropdown";
 
 type Props<Item> = Omit<
   DropdownProps<Item>,

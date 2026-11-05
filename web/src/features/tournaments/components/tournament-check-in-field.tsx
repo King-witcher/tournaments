@@ -1,6 +1,6 @@
-import { SelectItem } from "@carbon/react";
 import { useTranslations } from "next-intl";
 
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { Select } from "@/shared/ui/select";
 
 const WINDOWS = [15, 30, 45, 60];

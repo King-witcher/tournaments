@@ -1,13 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { type ComponentProps, useId } from "react";
+
 import {
   ContainedList as CarbonContainedList,
   ContainedListItem as CarbonContainedListItem,
-  ExpandableSearch,
-  Search,
-} from "@carbon/react";
-import { useTranslations } from "next-intl";
-import { type ComponentProps, useId } from "react";
+} from "./carbon/contained-list";
+import { ExpandableSearch, Search } from "./carbon/search";
 
 type Props = ComponentProps<typeof CarbonContainedList> & {
   /**
