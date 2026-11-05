@@ -19,7 +19,7 @@ export function SoundSettings() {
     <Stack gap={5}>
       <Toggle labelText={t("label")} toggled={enabled} onToggle={setEnabled} />
       <div>
-        {/* O clique já prepara o áudio (shared/lib/chime). */}
+        {/* O clique já prepara o áudio (shared/lib/audio). */}
         <Button kind="tertiary" size="sm" onClick={playChime}>
           {t("test")}
         </Button>

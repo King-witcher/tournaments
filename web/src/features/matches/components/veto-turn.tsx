@@ -6,6 +6,7 @@ import { shownNickname } from "@/features/members/lib/nickname";
 import { useVetoBoard } from "../hooks/use-veto-board";
 import {
   currentGame,
+  isActing,
   isWindow,
   nextMapPickGame,
   turnKey,
@@ -33,7 +34,7 @@ export function VetoTurn() {
   const window = isWindow(turn);
   const allowed = veto.can_act[turnRule(turn)];
   const sideTurn = mine != null && turn.sides.includes(mine);
-  const ours = teamPick ? veto.picks.length > 0 : sideTurn && allowed;
+  const ours = isActing(veto, mine);
   const forTeam = veto.can_act.pick_for_team;
   const blind = veto.pick_order === "blind";
   // O verbo em negrito: é ele que muda de "banir" para "escolher".

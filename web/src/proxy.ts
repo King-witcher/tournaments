@@ -67,7 +67,8 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
 
 export const config = {
   // Tudo, exceto o que é pedido às dezenas por página e só um endereço exato
-  // alcança: os arquivos do build, as imagens otimizadas e as de `public/`.
+  // alcança: os arquivos do build, as imagens otimizadas e as imagens e os
+  // sons de `public/`.
   matcher:
-    "/((?!_next/static|_next/image|_vercel|icon$|apple-icon$|.*\\.webp$).*)",
+    "/((?!_next/static|_next/image|_vercel|icon$|apple-icon$|.*\\.webp$|.*\\.mp3$).*)",
 };

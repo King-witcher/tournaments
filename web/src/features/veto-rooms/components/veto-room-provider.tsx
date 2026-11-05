@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { VetoSounds } from "@/features/matches/components/veto-sounds";
 import { useMineMark } from "@/features/matches/hooks/use-mine-mark";
 import {
   type VetoActions,
@@ -167,6 +168,7 @@ export function VetoRoomProvider({ token, initial, children }: Props) {
           refresh,
         }}
       >
+        <VetoSounds />
         {children}
       </VetoBoardContext>
     </VetoRoomContext>

@@ -27,7 +27,9 @@ type Props = Omit<ComponentProps<"button">, "children" | "ref" | "title"> & {
  * Botão só com ícone (`IconButton` do Carbon): o `label` é o tooltip e o nome
  * acessível. `pending` age como o do `Button`: sem `disabled` (o foco fica),
  * com `aria-disabled`/`aria-busy`, ignora o clique e mostra o indicador no
- * lugar do ícone. Ação com texto é o `Button`.
+ * lugar do ícone. Ação com texto é o `Button`. O tooltip muda de lado quando
+ * sairia da tela (`autoAlign`: no celular, as ações do `PageHeader` ficam
+ * encostadas na margem).
  */
 export function IconButton({
   children,
@@ -54,6 +56,7 @@ export function IconButton({
     <CarbonIconButton
       ref={ref}
       label={label}
+      autoAlign
       kind={kind}
       size={size}
       type={type}

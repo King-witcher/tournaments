@@ -166,6 +166,10 @@
     "drawing": "Time is up. Drawing.",
     "sending": "Sending.",
     "timeLeft": "Time left",
+    "sound": {
+      "mute": "Mute veto sounds",
+      "unmute": "Unmute veto sounds"
+    },
     "maps": {
       "banned": "Banned by {name}",
       "picked": "Picked by {name} for game {game}",

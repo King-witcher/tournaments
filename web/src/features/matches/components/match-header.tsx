@@ -8,6 +8,7 @@ import { useMatchLabels } from "../hooks/use-match-labels";
 import { useSideNames } from "../hooks/use-side-names";
 import { MATCH_STATE_STATUS, TASK_STATUS, taskKey } from "../lib/status";
 import { MatchStatusLine } from "./match-status-line";
+import { VetoSoundToggle } from "./veto-sound-toggle";
 
 type Props = {
   tenant: string;
@@ -23,7 +24,8 @@ type Props = {
  * na chave) com os dois lados e, depois da primeira partida enviada, o
  * placar entre eles (o das confirmadas enquanto corre), o estado e o que ela
  * espera de quem vê, a parte, a rodada e o melhor de N e, embaixo, como ela
- * terminou (ou por que ainda não começou).
+ * terminou (ou por que ainda não começou). Com a série em andamento e veto no
+ * torneio, o botão que silencia os sons do veto.
  */
 export function MatchHeader({
   tenant,
@@ -104,6 +106,7 @@ export function MatchHeader({
         </>
       }
       meta={`${label} · ${t("bestOf", { count: s.best_of })}`}
+      actions={s.state === "ready" && detail.veto && <VetoSoundToggle />}
     >
       <MatchStatusLine detail={detail} />
     </PageHeader>

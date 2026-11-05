@@ -74,6 +74,17 @@ const nextConfig: NextConfig = {
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       })),
+      // Os sons do veto levam o hash do conteúdo no nome: outro conteúdo é
+      // outro endereço, e o navegador guarda o arquivo para sempre.
+      {
+        source: "/sounds/:file",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ];
   },
   images: {

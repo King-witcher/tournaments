@@ -166,6 +166,10 @@
     "drawing": "Tempo esgotado. Sorteando.",
     "sending": "Enviando.",
     "timeLeft": "Tempo restante",
+    "sound": {
+      "mute": "Silenciar os sons do veto",
+      "unmute": "Ativar os sons do veto"
+    },
     "maps": {
       "banned": "Banido por {name}",
       "picked": "Escolhido por {name} para a partida {game}",

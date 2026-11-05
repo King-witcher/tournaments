@@ -54,6 +54,19 @@ export function turnRule(turn: Schemas["VetoTurn"]): "map" | "ban" | "pick" {
   return turn.action === "ban" ? "ban" : "pick";
 }
 
+/**
+ * A vez é de quem vê agir: o lado dele e a regra deixa (o voto que falta
+ * inclusive) ou, no pick por jogador, há pick que ele pode fazer agora.
+ */
+export function isActing(veto: Veto, mine: Side | null): boolean {
+  const turn = veto.turn;
+  if (!turn || veto.status !== "in_progress") return false;
+  if (turn.action === "team_pick") return veto.picks.length > 0;
+  return (
+    mine != null && turn.sides.includes(mine) && veto.can_act[turnRule(turn)]
+  );
+}
+
 /** A chave de texto do passo esperado (`ban_map`, `pick_champion`, `vote_map`...). */
 export function turnKey(turn: Schemas["VetoTurn"]) {
   return `${turn.action}_${turn.target}` as const;

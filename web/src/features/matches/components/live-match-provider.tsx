@@ -21,6 +21,7 @@ import { useVetoRunner } from "../hooks/use-veto-runner";
 import type { MatchTarget } from "../lib/match-target";
 import { matchVetoActions } from "../lib/match-veto-actions";
 import { isNewer } from "../lib/veto";
+import { VetoSounds } from "./veto-sounds";
 
 type Schemas = components["schemas"];
 
@@ -135,7 +136,10 @@ export function LiveMatchProvider({
   );
   return (
     <LiveMatchContext value={value}>
-      <VetoBoardContext value={board}>{children}</VetoBoardContext>
+      <VetoBoardContext value={board}>
+        <VetoSounds />
+        {children}
+      </VetoBoardContext>
     </LiveMatchContext>
   );
 }

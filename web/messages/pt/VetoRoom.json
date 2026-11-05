@@ -53,7 +53,7 @@
     "title": "Links",
     "notJoined": "ainda não entrou",
     "spectator": "Espectador",
-    "manage": "Gestão (esta página)",
+    "open": "Abrir em nova guia",
     "expires": "A sala vale até <date></date>.",
     "captain": "Capitão: {side}"
   },

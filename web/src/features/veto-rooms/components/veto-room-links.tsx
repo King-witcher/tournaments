@@ -1,10 +1,12 @@
 "use client";
 
+import { Launch } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { CodeSnippet } from "@/shared/ui/code-snippet";
+import { IconButtonLink } from "@/shared/ui/icon-button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Section } from "@/shared/ui/section";
 import { useSeatLabels } from "../hooks/use-seat-labels";
@@ -13,9 +15,10 @@ import styles from "./veto-room-links.module.scss";
 
 /**
  * Os links da sala, para a gestão: um por lugar (centrada no capitão, um por
- * time), com o nome de quem entrou, o de espectador e o desta página, cada um com
- * o botão de copiar do Carbon. Vão sem idioma: o proxy do next-intl manda cada
- * pessoa para o seu.
+ * time), com o nome de quem entrou, e o de espectador, cada um com o botão de
+ * copiar do Carbon e o de abrir numa guia nova. O da gestão fica de fora: é o
+ * endereço desta página. Os copiados vão sem idioma: o proxy do next-intl manda
+ * cada pessoa para o seu.
  */
 export function VetoRoomLinks() {
   const t = useTranslations("VetoRoom.links");
@@ -31,9 +34,14 @@ export function VetoRoomLinks() {
         {label}
         {note && <span className={styles.note}> · {note}</span>}
       </p>
-      <CodeSnippet type="single" aria-label={label}>
-        {`${origin}/veto/${token}`}
-      </CodeSnippet>
+      <div className={styles.field}>
+        <CodeSnippet type="single" aria-label={label}>
+          {`${origin}/veto/${token}`}
+        </CodeSnippet>
+        <IconButtonLink href={`/veto/${token}`} label={t("open")} newTab>
+          <Launch />
+        </IconButtonLink>
+      </div>
     </div>
   );
 
@@ -56,7 +64,6 @@ export function VetoRoomLinks() {
           );
         })}
         {row(t("spectator"), links.spectator)}
-        {row(t("manage"), links.manage)}
       </Stack>
       <p className={styles.expires}>
         {t.rich("expires", {

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useEffectEvent, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { playChime, unlockAudioOnGesture } from "@/shared/lib/chime";
+import { unlockAudioOnGesture } from "@/shared/lib/audio";
+import { playChime } from "@/shared/lib/chime";
 import { useBellOpen } from "../hooks/use-bell-open";
 import { useMarkPageRead } from "../hooks/use-mark-page-read";
 import { useMarkVisitedPageRead } from "../hooks/use-mark-visited-page-read";

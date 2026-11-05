@@ -11,6 +11,13 @@
   min-inline-size: 0;
 }
 
+// Abrir numa guia nova encostado no snippet, ao lado do copiar: as duas ações
+// do mesmo link.
+.field {
+  display: flex;
+  align-items: center;
+}
+
 .label {
   @include type.type-style("label-01");
 

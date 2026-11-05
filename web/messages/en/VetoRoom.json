@@ -53,7 +53,7 @@
     "title": "Links",
     "notJoined": "hasn't joined yet",
     "spectator": "Spectator",
-    "manage": "Manager (this page)",
+    "open": "Open in new tab",
     "expires": "The room is valid until <date></date>.",
     "captain": "Captain: {side}"
   },

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { VetoHistory } from "@/features/matches/components/veto-history";
 import { VetoReady } from "@/features/matches/components/veto-ready";
+import { VetoSoundToggle } from "@/features/matches/components/veto-sound-toggle";
 import { useVetoBoard } from "@/features/matches/hooks/use-veto-board";
 import { Accordion } from "@/shared/ui/carbon/accordion";
 import { PageColumns } from "@/shared/ui/page-columns";
@@ -49,6 +50,7 @@ export function VetoRoomLive({ signedIn }: { signedIn: boolean }) {
         title={t("title")}
         tags={who && <StatusTag status="neutral">{who}</StatusTag>}
         meta={`${mode} · ${t("bestOf", { count: room.best_of })}`}
+        actions={<VetoSoundToggle />}
       />
       {needsName ? (
         <VetoRoomJoin signedIn={signedIn} />
