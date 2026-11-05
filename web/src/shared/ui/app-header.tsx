@@ -17,7 +17,7 @@ type Props = {
   name: string;
   /** Texto do "pular para o conteúdo" (aparece no primeiro Tab). */
   skipLabel: string;
-  /** As ações da barra, da esquerda para a direita (idioma, a pessoa). */
+  /** As ações da barra, da esquerda para a direita (comunidades, a pessoa). */
   children: ReactNode;
 };
 

@@ -9,7 +9,6 @@ import { InlineLoading } from "./carbon/inline-loading";
 import { SwitcherDivider, SwitcherItem } from "./carbon/ui-shell";
 import { HeaderPanelAction } from "./header-panel-action";
 import { HeaderSwitcher } from "./header-switcher";
-import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import styles from "./user-panel.module.scss";
 
@@ -40,10 +39,9 @@ function asIntlLink(href: Href) {
 /**
  * O lugar da pessoa no cabeçalho: avatar (ou o ícone de usuário) e, com
  * sessão, o nome, que abrem um painel com os itens (Conta e Sair; sem
- * sessão, Entrar e Criar conta) e, no fim, o tema de cor e o idioma, que
- * valem com ou sem sessão. Na barra o nome longo termina em reticências (no
- * celular, mais cedo); no painel ele aparece inteiro. Os itens vêm de
- * `features/auth`.
+ * sessão, Entrar e Criar conta) e, no fim, o tema de cor, que vale com ou sem
+ * sessão. Na barra o nome longo termina em reticências (no celular, mais
+ * cedo); no painel ele aparece inteiro. Os itens vêm de `features/auth`.
  */
 export function UserPanel({ label, name, avatarSrc, items }: Props) {
   const t = useTranslations("Common");
@@ -98,7 +96,6 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
         <SwitcherDivider />
       </HeaderSwitcher>
       <ThemeSwitcher />
-      <LocaleSwitcher />
     </HeaderPanelAction>
   );
 }

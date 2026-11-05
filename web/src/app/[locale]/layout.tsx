@@ -23,6 +23,7 @@ import { plexMono, plexSans } from "@/shared/lib/fonts";
 import { SITE_ORIGIN, siteOpenGraph } from "@/shared/lib/link-preview";
 import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
+import { AppFooter } from "@/shared/ui/app-footer";
 import { AppHeader } from "@/shared/ui/app-header";
 import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
 
@@ -114,6 +115,7 @@ export default async function LocaleLayout({
               </Suspense>
             </AppHeader>
             <AppContent>{children}</AppContent>
+            <AppFooter />
             <Suspense fallback={null}>
               <RealtimeSession />
             </Suspense>

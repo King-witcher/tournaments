@@ -10,6 +10,9 @@ const intl = createMiddleware(routing);
 /** A rota do início de quem entrou (`app/[locale]/me`), servida em `/`. */
 const SIGNED_IN_HOME = "me";
 
+/** O nome padrão do next-intl. */
+const LOCALE_COOKIE = "NEXT_LOCALE";
+
 /**
  * O idioma (next-intl) e, no início, quem vê o quê. Sem o cookie de sessão,
  * a apresentação do site, estática (`app/[locale]/(home)`), sai pronta sem
@@ -27,9 +30,14 @@ export default function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(`/${locale}${search}`, request.url));
     }
     if (!segment && request.cookies.has(SESSION_COOKIE)) {
-      return NextResponse.rewrite(
+      const response = NextResponse.rewrite(
         new URL(`/${locale}/${SIGNED_IN_HOME}${search}`, request.url),
       );
+      // Esta resposta não passa pelo next-intl, que guarda o idioma aberto.
+      if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+        response.cookies.set(LOCALE_COOKIE, locale, { sameSite: "lax" });
+      }
+      return response;
     }
   }
   return intl(request);

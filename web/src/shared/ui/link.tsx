@@ -3,7 +3,7 @@
 import type { CarbonIconType } from "@carbon/icons-react";
 import type { ComponentProps, ReactNode } from "react";
 
-import { type Href, Link as IntlLink } from "@/i18n/navigation";
+import { getPathname, type Href, Link as IntlLink } from "@/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { Link as CarbonLink } from "./carbon/link";
 import styles from "./link.module.scss";
@@ -16,7 +16,11 @@ type Own = {
   size?: "sm" | "md" | "lg";
   /** Ícone à direita (ex.: `ArrowRight` para "ir para"). */
   renderIcon?: CarbonIconType;
-  /** Troca de idioma mantendo a página (só o seletor de idioma usa). */
+  /**
+   * A mesma página em outro idioma (só o `LocaleSwitcher` usa): `<a>` comum,
+   * que carrega tudo de novo. A navegação do Next troca o `<html>` sem rodar
+   * o script do tema, e o tema escolhido se perde.
+   */
   locale?: ComponentProps<typeof IntlLink>["locale"];
   className?: string;
 };
@@ -46,10 +50,10 @@ export function Link({
 }: Props) {
   return (
     <CarbonLink
-      as={IntlLink}
-      // O Carbon tipa href como string; quem o recebe é o Link do i18n.
-      href={href as string}
-      locale={locale}
+      {...(locale
+        ? { href: getPathname({ href, locale }), hrefLang: locale }
+        : // O Carbon tipa href como string; quem o recebe é o Link do i18n.
+          { as: IntlLink, href: href as string })}
       inline={inline}
       size={size}
       renderIcon={renderIcon}

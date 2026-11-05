@@ -124,6 +124,14 @@
   @include theme.theme(themes.$g100);
 }
 
+// A casca em coluna, para o rodapé (AppFooter) ficar no fim da tela em página
+// curta; o AppContent ocupa a sobra.
+body {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
 // Toque: abaixo de md (celular), os tamanhos sm e md dos controles do Carbon
 // (botão, campo, select, menu ⋯, abas, acordeão, paginação, busca) valem lg,
 // 48px, o alvo de dedo; do md para cima, a altura compacta. Os componentes

@@ -16,8 +16,6 @@ type Option<V extends string> = {
   /** Só o ícone, com `text` na dica: todas as opções com ícone ou nenhuma. */
   icon?: CarbonIconType;
   disabled?: boolean;
-  /** Idioma do texto, quando não é o da página (o nome de um idioma). */
-  lang?: string;
   /** `id` do botão: o alvo do foco ou o nome do conteúdo (`aria-labelledby`). */
   id?: string;
 };
@@ -61,14 +59,13 @@ export function ContentSwitcher<V extends string>({
         if (index !== undefined) onChange(options[index].value);
       }}
     >
-      {options.map(({ value: name, text, icon: Icon, disabled, lang, id }) =>
+      {options.map(({ value: name, text, icon: Icon, disabled, id }) =>
         Icon ? (
           <IconSwitch
             key={name}
             name={name}
             text={text}
             disabled={disabled}
-            lang={lang}
             id={id}
           >
             <Icon />
@@ -79,7 +76,6 @@ export function ContentSwitcher<V extends string>({
             name={name}
             text={text}
             disabled={disabled}
-            lang={lang}
             id={id}
           />
         ),
