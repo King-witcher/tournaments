@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 
 import { Checkbox } from "@/shared/ui/checkbox";
-import { useScreenshotSettings } from "../hooks/use-screenshot-settings";
 
 type Props = {
   checked: boolean;
@@ -13,8 +12,9 @@ type Props = {
 };
 
 /**
- * "Exigir screenshot do placar", no formulário do torneio. Só aparece quando
- * esta API tem screenshots; sem eles, o valor gravado fica como está.
+ * "Exigir screenshot do placar", no formulário do torneio. Quem o usa só o
+ * mostra quando esta API tem screenshots (`getScreenshotSettings`); sem eles, o
+ * valor gravado fica como está.
  */
 export function ScreenshotsRequiredField({
   checked,
@@ -22,8 +22,6 @@ export function ScreenshotsRequiredField({
   disabled,
 }: Props) {
   const t = useTranslations("Screenshots.field");
-  const settings = useScreenshotSettings();
-  if (!settings?.enabled) return null;
   return (
     <Checkbox
       labelText={t("label")}

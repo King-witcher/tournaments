@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { CoverSection } from "@/features/images/components/cover-section";
 import { loadMaps } from "@/features/matches/server";
+import { getScreenshotSettings } from "@/features/screenshots/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
@@ -18,11 +19,12 @@ type Props = { tenant: string; slug: string };
  * torneio. Fica em `<Suspense>`.
  */
 export async function EditTournamentView({ tenant, slug }: Props) {
-  const [t, tNav, locale, loaded] = await Promise.all([
+  const [t, tNav, locale, loaded, screenshots] = await Promise.all([
     getTranslations("TournamentForm.edit"),
     getTranslations("Nav"),
     getLocale(),
     loadTournament(tenant, slug),
+    getScreenshotSettings(),
   ]);
   if (loaded.kind === "login") {
     return (
@@ -72,6 +74,7 @@ export async function EditTournamentView({ tenant, slug }: Props) {
           tenant={tenant}
           tournament={tournament}
           maps={await loadMaps()}
+          screenshots={screenshots?.enabled ?? false}
           cover={
             <CoverSection
               tenant={tenant}

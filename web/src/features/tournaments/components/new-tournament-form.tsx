@@ -11,8 +11,6 @@ import {
 import { ImageNotSent } from "@/features/images/components/image-not-sent";
 import { ImagePicker } from "@/features/images/components/image-picker";
 import { useImageOnCreate } from "@/features/images/hooks/use-image-on-create";
-import { useImageSettings } from "@/features/images/hooks/use-image-settings";
-import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { Accordion } from "@/shared/ui/carbon/accordion";
@@ -83,6 +81,8 @@ export function NewTournamentForm({
   maps,
   tournaments,
   source,
+  images,
+  screenshots,
 }: {
   tenant: string;
   /** Os mapas ativos, para o pool do veto. */
@@ -91,13 +91,15 @@ export function NewTournamentForm({
   tournaments: Schemas["TournamentSummary"][];
   /** O torneio copiado ao abrir (`?from=`). */
   source: Schemas["Tournament"] | undefined;
+  /** O que esta API aceita de capa; nulo se a API falhou. */
+  images: Schemas["ImageSettings"] | null;
+  /** Se esta API tem capturas de tela. */
+  screenshots: boolean;
 }) {
   const t = useTranslations("TournamentForm");
   const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
-  const screenshots = useScreenshotSettings()?.enabled ?? false;
   const tCover = useTranslations("Images.cover");
-  const images = useImageSettings();
   const cover = useImageOnCreate();
   // A tradução copiada vem sem o nome, que é obrigatório: o grupo abre para
   // ele ficar à vista.
@@ -300,6 +302,7 @@ export function NewTournamentForm({
               onChange={onChange}
               errors={errors}
               finished={false}
+              screenshots={screenshots}
             />
           </FormAccordionItem>
           <FormAccordionItem
@@ -361,7 +364,9 @@ export function NewTournamentForm({
         title={t("review.title")}
         confirmLabel={t("review.confirm")}
         destructive={false}
-        details={<TournamentReview form={form} maps={maps} />}
+        details={
+          <TournamentReview form={form} maps={maps} screenshots={screenshots} />
+        }
       >
         {t("review.question")}
       </ConfirmModal>

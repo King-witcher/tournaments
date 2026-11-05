@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { useScreenshotSettings } from "@/features/screenshots/hooks/use-screenshot-settings";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StructuredList } from "@/shared/ui/structured-list";
@@ -13,6 +12,8 @@ type Props = {
   form: TournamentFormState;
   /** Os mapas ativos, para contar o pool padrão. */
   maps: components["schemas"]["Map"][];
+  /** Se esta API tem capturas de tela. */
+  screenshots: boolean;
 };
 
 type Row =
@@ -31,11 +32,10 @@ type Row =
  * formato, quem age pelo time (só nos times), inscrições, mapas, campeões,
  * resultados e idiomas.
  */
-export function TournamentReview({ form, maps }: Props) {
+export function TournamentReview({ form, maps, screenshots }: Props) {
   const t = useTranslations("TournamentForm.review");
   const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
-  const screenshots = useScreenshotSettings()?.enabled ?? false;
   const { values } = form;
   const languages = [
     form.original,

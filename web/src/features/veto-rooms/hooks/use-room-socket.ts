@@ -36,7 +36,8 @@ type Options = {
  * O socket de uma sala (`GET /veto-rooms/{token}/ws`), sem login. Só avisa: a
  * sala vem da API. Reconecta com espera crescente e, a cada vez que abre, busca
  * o que mudou no meio; enquanto está fora, busca de tempos em tempos (o navegador não
- * distingue a queda do teto de conexões). `headers()`: os cabeçalhos da ação
+ * distingue a queda do teto de conexões). Com a aba oculta, não busca: marca que
+ * ficou para trás e busca uma vez ao voltar. `headers()`: os cabeçalhos da ação
  * cuja resposta a aba aplica sozinha, que então não volta por aqui.
  */
 export function useRoomSocket({ token, spectator, onChange, onGone }: Options) {
@@ -52,11 +53,24 @@ export function useRoomSocket({ token, spectator, onChange, onGone }: Options) {
     let attempt = 0;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let poll: ReturnType<typeof setInterval> | undefined;
+    let stale = false;
     const url = `${API_URL.replace(/^http/, "ws")}/veto-rooms/${token}/ws?connection=${id}`;
 
+    const fetchRoom = () => {
+      if (document.visibilityState === "hidden") {
+        stale = true;
+        return;
+      }
+      latest.current.onChange();
+    };
     const notify = () => {
       const delay = spectator ? Math.random() * SPECTATOR_SPREAD_MS : 0;
-      setTimeout(() => latest.current.onChange(), delay);
+      setTimeout(fetchRoom, delay);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible" || !stale) return;
+      stale = false;
+      notify();
     };
     const open = () => {
       if (closed) return;
@@ -76,15 +90,17 @@ export function useRoomSocket({ token, spectator, onChange, onGone }: Options) {
           latest.current.onGone();
           return;
         }
-        poll ??= setInterval(() => latest.current.onChange(), POLL_MS);
+        poll ??= setInterval(fetchRoom, POLL_MS);
         const wait = BACKOFF_MS[Math.min(attempt, BACKOFF_MS.length - 1)];
         attempt++;
         retry = setTimeout(open, wait);
       };
     };
+    document.addEventListener("visibilitychange", onVisibility);
     open();
     return () => {
       closed = true;
+      document.removeEventListener("visibilitychange", onVisibility);
       clearTimeout(retry);
       clearInterval(poll);
       socket?.close(1000);

@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
+import { getScreenshotSettings } from "@/features/screenshots/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { PageError } from "@/shared/ui/page-error";
@@ -21,27 +23,30 @@ type Props = {
  */
 export async function NewTournamentView({ tenant, from }: Props) {
   const api = await serverApi();
-  const [t, tNav, result, tournaments, source] = await Promise.all([
-    getTranslations("NewTournament"),
-    getTranslations("Nav"),
-    api
-      .GET("/tenants/{slug}", { params: { path: { slug: tenant } } })
-      .catch(() => undefined),
-    api
-      .GET("/tenants/{slug}/tournaments", {
-        params: { path: { slug: tenant } },
-      })
-      .then(({ data }) => data ?? [])
-      .catch(() => []),
-    from
-      ? api
-          .GET("/tenants/{slug}/tournaments/{tournament}", {
-            params: { path: { slug: tenant, tournament: from } },
-          })
-          .then(({ data }) => data)
-          .catch(() => undefined)
-      : undefined,
-  ]);
+  const [t, tNav, images, screenshots, result, tournaments, source] =
+    await Promise.all([
+      getTranslations("NewTournament"),
+      getTranslations("Nav"),
+      getImageSettings(),
+      getScreenshotSettings(),
+      api
+        .GET("/tenants/{slug}", { params: { path: { slug: tenant } } })
+        .catch(() => undefined),
+      api
+        .GET("/tenants/{slug}/tournaments", {
+          params: { path: { slug: tenant } },
+        })
+        .then(({ data }) => data ?? [])
+        .catch(() => []),
+      from
+        ? api
+            .GET("/tenants/{slug}/tournaments/{tournament}", {
+              params: { path: { slug: tenant, tournament: from } },
+            })
+            .then(({ data }) => data)
+            .catch(() => undefined)
+        : undefined,
+    ]);
 
   if (result?.response.status === 401) {
     return (
@@ -82,6 +87,8 @@ export async function NewTournamentView({ tenant, from }: Props) {
           maps={await loadMaps()}
           tournaments={tournaments}
           source={source}
+          images={images}
+          screenshots={screenshots?.enabled ?? false}
         />
       )}
     </>

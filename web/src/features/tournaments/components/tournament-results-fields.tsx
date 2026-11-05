@@ -14,6 +14,8 @@ type Props = {
   errors: FieldErrors;
   /** Encerrado: nem a janela de contestação nem a captura de tela obrigatória mudam. */
   finished: boolean;
+  /** Se esta API tem capturas de tela. */
+  screenshots: boolean;
 };
 
 /**
@@ -26,6 +28,7 @@ export const TournamentResultsFields = memo(function TournamentResultsFields({
   onChange,
   errors,
   finished,
+  screenshots,
 }: Props) {
   return (
     <>
@@ -35,11 +38,13 @@ export const TournamentResultsFields = memo(function TournamentResultsFields({
         error={errors.contestMinutes}
         disabled={finished}
       />
-      <ScreenshotsRequiredField
-        checked={values.screenshotsRequired}
-        onChange={(screenshotsRequired) => onChange({ screenshotsRequired })}
-        disabled={finished}
-      />
+      {screenshots && (
+        <ScreenshotsRequiredField
+          checked={values.screenshotsRequired}
+          onChange={(screenshotsRequired) => onChange({ screenshotsRequired })}
+          disabled={finished}
+        />
+      )}
     </>
   );
 }, sameValues(KEYS));

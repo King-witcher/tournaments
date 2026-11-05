@@ -6,10 +6,10 @@ import { useActionState, useId, useState } from "react";
 import { ImageNotSent } from "@/features/images/components/image-not-sent";
 import { ImagePicker } from "@/features/images/components/image-picker";
 import { useImageOnCreate } from "@/features/images/hooks/use-image-on-create";
-import { useImageSettings } from "@/features/images/hooks/use-image-settings";
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
+import type { components } from "@/shared/api/schema";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFocusInvalid } from "@/shared/hooks/use-focus-invalid";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
@@ -43,10 +43,14 @@ const FIELD_OF_ERROR: Partial<Record<string, Field>> = {
  * endereço acompanha o nome até a pessoa editá-lo. O logo só vai ao bucket
  * depois de a comunidade ser criada (`useImageOnCreate`).
  */
-export function CreateTenantForm() {
+export function CreateTenantForm({
+  images,
+}: {
+  /** O que esta API aceita de logo; nulo se a API falhou. */
+  images: components["schemas"]["ImageSettings"] | null;
+}) {
   const t = useTranslations("NewTenant");
   const tLogo = useTranslations("Images.logo");
-  const images = useImageSettings();
   const logo = useImageOnCreate();
   const errorMessage = useApiErrorMessage();
   const router = useRouter();

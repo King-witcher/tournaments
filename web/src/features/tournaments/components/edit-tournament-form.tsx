@@ -43,6 +43,8 @@ type Props = {
   maps: Schemas["Map"][];
   /** A capa (`CoverSection`), que se salva sozinha, na aba Geral. */
   cover?: ReactNode;
+  /** Se esta API tem capturas de tela. */
+  screenshots: boolean;
 };
 
 /**
@@ -56,7 +58,13 @@ type Props = {
  * livres. O endereço só muda no rascunho, e salvar com ele trocado pede a
  * confirmação do que isso quebra.
  */
-export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
+export function EditTournamentForm({
+  tenant,
+  tournament,
+  maps,
+  cover,
+  screenshots,
+}: Props) {
   const t = useTranslations("TournamentForm");
   const [tab, setTab] = useState<EditTab>("general");
   const [asking, setAsking] = useState(false);
@@ -213,6 +221,7 @@ export function EditTournamentForm({ tenant, tournament, maps, cover }: Props) {
                   onChange={onChange}
                   errors={errors}
                   finished={finished}
+                  screenshots={screenshots}
                 />
               </Stack>
             </TabPanel>
