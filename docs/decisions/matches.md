@@ -1,6 +1,6 @@
 # Resultados e chave
 
-Vocabulário destes arquivos: **partida** = `match` (a série md1/md3/md5; na interface, "série") e **mapa** = `game` (um jogo; na interface, "partida"). Ver "Termos da interface" em `web/CLAUDE.md`. Veto e campeões: `veto.md`. Screenshots do placar: `screenshots.md`.
+Vocabulário destes arquivos: **partida** = `match` (a série md1/md3/md5; na interface, "série") e **mapa** = `game` (um jogo; na interface, "partida"). Ver "Termos da interface" em `web/messages/CLAUDE.md`. Veto e campeões: `veto.md`. Screenshots do placar: `screenshots.md`.
 
 ## Envio e confirmação
 

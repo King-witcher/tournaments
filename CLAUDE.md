@@ -6,9 +6,9 @@ Site multi-tenant para organizar torneios de Quake Champions (duelo, FFA, FFA po
 
 - `backend/`: cargo workspace (`engine` puro, `api` Axum com um módulo por domínio, `migrate`, `migrations/`). Organização em `backend/CLAUDE.md`.
 - `web/`: Next.js, só apresentação, uma pasta por domínio em `src/features/`, os mesmos da API. Organização em `web/CLAUDE.md`.
-- `docs/`: `decisions.md` e `decisions/` (o que foi decidido e por quê), `roadmap.md` (feito e pendências), `design.md` (alvo das páginas).
+- `docs/`: `decisions.md` e `decisions/` (o que foi decidido e por quê), `roadmap.md` (próximo e pendências), `design.md` (alvo das páginas).
 
-O código é organizado por domínio dos dois lados, com `shared/` para o genérico. Antes de criar arquivo, módulo ou componente, siga `backend/CLAUDE.md` ou `web/CLAUDE.md` (o Claude Code carrega cada um ao abrir arquivos da pasta).
+O código é organizado por domínio dos dois lados, com `shared/` para o genérico. Antes de criar arquivo, módulo ou componente, siga `backend/CLAUDE.md` ou `web/CLAUDE.md` (o Claude Code carrega cada um ao abrir arquivos da pasta; `web/messages/` e `web/src/shared/ui/` têm o seu).
 
 ## Comandos
 
@@ -31,7 +31,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 - Todo acesso a dados de tenant recebe um `TenantId` tipado; nunca filtre tenant com string solta.
 - Rota que exige login recebe `CurrentUser` (`auth/current_user.rs`); rota pública que muda para quem está logado, `Option<CurrentUser>`. Rota `/tenants/{slug}/...` recebe `TenantMember<Player | Organizer | Owner>` (`tenants/access.rs`), que confere participação e papel mínimo e entrega o `TenantId`.
 - Erros saem por `ApiError` (`shared/error.rs`) como `{"error": "<código>"}`. Corpo e caminho entram por `JsonBody`/`PathParams` (`shared/extract.rs`), não por `Json`/`Path` do axum, para a rejeição também sair como código.
-- A API devolve códigos (`match.already_reported`), nunca texto para o usuário; as traduções ficam em `web/`. Exceções: emails (`auth/emails/`, layout em `mail/layout.rs`) e avisos do Discord (`discord/catalog.rs`), em pt, es e en.
+- A API devolve códigos (`match.already_reported`), nunca texto para o usuário; as traduções ficam em `web/`. Exceções: emails (`auth/emails/`, layout em `mail/layout.rs`) e avisos do Discord (`discord/catalog.rs`), em pt, es e en, com as regras de texto de `web/messages/CLAUDE.md`.
 - Ids: chave interna `bigint` identity; identificador público é slug; segredo é token aleatório com só o hash guardado, no banco ou no Redis; exceção: o token dos links de convite (`invite_token`), em claro porque não é credencial (`docs/decisions/stack.md`, "Ids"). Datas em UTC no banco.
 - O Next nunca acessa o banco. Supabase é só host de Postgres: nada de Supabase Auth, Realtime, Storage nem supabase-js.
 - Redis (Upstash grátis: 256 MB e 500 mil comandos por mês) só para dado efêmero com TTL (`auth/kv/`, `mail/kv.rs`). Cada comando conta na cota: nada de Redis no caminho de toda requisição, nem cache ou lock sem medir antes (`docs/decisions/stack.md`, "Redis"). A sessão é lida da memória (`auth/session_store.rs`), e o Redis só a guarda entre os boots; limite que um abuso chamaria sem parar fica em memória (`shared/window_limit.rs`). Localmente, sempre no database 1 (os outros são de outros projetos do usuário; no Upstash, o 0), e chave sempre por `Redis::key` (`shared/redis.rs`), que põe o prefixo do ambiente.
@@ -41,7 +41,7 @@ Variáveis de ambiente: `backend/.env` e `web/.env.local`, a partir dos `.env.ex
 
 ## Como trabalhar aqui
 
-- Próximo passo e pendências: `docs/roadmap.md`. Ao terminar um incremento, ajuste a linha da área em "Feito" (uma linha por área; o detalhe vai no commit) e tire de "Pendências" o que resolveu; cada pendência é curta: o que falta e onde.
+- Próximo passo e pendências: `docs/roadmap.md`. Ao terminar um incremento, tire de "Pendências" o que resolveu e ponha o que ficou por conferir; cada pendência é curta: o que falta e onde. O que existe fica em `docs/decisions/`, e o detalhe, no commit.
 - Decisão de produto em aberto: pergunte ao usuário (ele prefere rodadas de perguntas com opções) em vez de decidir sozinho, e registre a resposta no arquivo da área em `docs/decisions/` (poucas linhas: decisão, motivo, número que importa).
 - Subagentes (`.claude/agents/`): `format-engine` (trabalho no `engine`), `rules-reviewer` (revisar um formato), `test-runner` (rodar testes), `investigator` (como algo funciona ou por que falha, só leitura; use sempre que a resposta pedir código de mais de uma camada ou além de `docs/decisions/`). Passe a especificação completa no prompt: eles não veem esta conversa.
 

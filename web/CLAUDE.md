@@ -10,6 +10,11 @@
 - Cache Components está ligado: dado buscado a cada requisição fica dentro de `<Suspense>`.
 - Interface: Carbon Design System v11 (`@carbon/react`, `@carbon/icons-react`). O que cada página é está em `docs/design.md`; aqui fica o como.
 
+Duas pastas têm guia próprio, que o Claude Code carrega ao abrir um arquivo delas (leia direto se for criar arquivo lá sem abrir outro antes):
+
+- `messages/CLAUDE.md`: textos (namespaces, termos da interface, "Como escrever"). Vale para todo texto novo ou mudado.
+- `src/shared/ui/CLAUDE.md`: a biblioteca por dentro (módulos do Carbon, Sass, componente novo, Storybook). Para só usar a biblioteca, basta este arquivo.
+
 ## Organização
 
 ```
@@ -48,11 +53,9 @@ messages/<pt|es|en>/    um JSON por namespace
 
 ## Estilo (Carbon)
 
-- O JS do Carbon vem de `src/shared/ui/carbon/<pasta>.ts`: um módulo `"use client"` por pasta do Carbon (`grid`, `stack`, `ui-shell`...), que reexporta os componentes de `@carbon/react/es/...` e liga as feature flags do v11 (`@carbon/react/es/feature-flags.js`; sem elas o `Grid` volta à grade flex). Nunca do índice `@carbon/react`: ele é `"use client"` com efeito colateral declarado, e o Turbopack o põe inteiro (0,8 MB, flatpickr e downshift incluídos) em toda página que o importa; o Biome recusa (`noRestrictedImports`), menos tipos (`import type { ComboBoxProps } from "@carbon/react"`). Componente que ainda não está lá: acrescente o `export` no módulo da pasta (o caminho de cada nome está em `node_modules/@carbon/react/es/index.js`) ou crie o módulo copiando um vizinho. Um módulo por pasta, não um índice só: o Server Component que importa de um módulo `"use client"` leva para o navegador tudo o que os Server Components usam dele.
-- `globals.scss` importa o Sass só das pastas do Carbon que a `shared/ui` usa (as dependências entre elas o próprio Sass do Carbon traz). Componente novo do Carbon: acrescente a pasta dele (`node_modules/@carbon/styles/scss/components`), em ordem alfabética; faltando, ele aparece sem estilo na tela e no Storybook. O `@use "@carbon/react"` inteiro não serve: traz as pastas sem uso e as do `@carbon/ibm-products` (side-panel, tearsheet...).
+- Componente do Carbon vem de `@/shared/ui/carbon/<pasta>` (`import { Stack } from "@/shared/ui/carbon/stack"`), nunca do índice `@carbon/react`, que põe o Carbon inteiro em toda página (o Biome recusa; `import type` pode). Faltando o componente lá, ou o estilo dele: `src/shared/ui/CLAUDE.md`.
 - Tema `white` em `:root` e `g100` no escuro (do sistema ou `data-theme="dark"`).
 - Toque: abaixo de `md` (672px), os controles `sm` e `md` valem 48px por token em `globals.scss`. Passe o tamanho de desktop (`md`, o padrão; `sm` em linha de tabela); nenhum componente trata.
-- O `.scss` passa por um `sass-loader` próprio (`turbopack.rules` em `next.config.ts`): o embutido do Turbopack não acha os `@use` relativos do Carbon. Não volte para o embutido.
 - O pouco de CSS próprio (grade, alinhamento, avatar, placar, chave) vai num `.module.scss` ao lado do componente, só com tokens: `@use "@carbon/react/scss/spacing"` (`spacing.$spacing-05`), `theme` (`theme.$text-secondary`), `type` (`@include type.type-style("heading-03")`), `breakpoint` (`breakpoint(md)` é "do md para cima"; `breakpoint-down(md)` é o celular). Utilitários em `@carbon/react/scss/utilities/` (`visually-hidden`, `skeleton`, `z-index.z("modal")`).
 - Para mudar uma propriedade que o próprio Carbon põe no elemento (o padding do `Content`), ponha um elemento seu em volta ou dobre a classe (`.panel.panel { padding: 0; }`), que tem o mesmo peso.
 
@@ -67,7 +70,7 @@ messages/<pt|es|en>/    um JSON por namespace
 
 ## Biblioteca `shared/ui`
 
-Cada componente já cumpre os princípios abaixo (foco, `pending`, toque, celular, confirmação): use-o em vez do Carbon cru. Props, exemplos e regras estão no JSDoc de `src/shared/ui/<nome>.tsx`; leia antes de usar. Layout sem regra própria (`Grid`, `Column`, `Stack`, `Layer`, `Tile`, `Form`, `FormGroup`, `SkeletonText`, `InlineLoading`, `AccordionItem`, `SelectItem`, `UnorderedList`/`ListItem`) vem direto do Carbon, de `@/shared/ui/carbon/<pasta>` (`import { Stack } from "@/shared/ui/carbon/stack"`), também em Server Component, enquanto as props forem serializáveis. Todo componente do Carbon tem o seu aqui, mesmo os que o site ainda não usa (história no Storybook); ficam de fora só os `preview__`/`unstable__` e as versões Fluid dos campos (o invólucro e a pasta do Sass dela entram quando um formulário pedir).
+Cada componente já cumpre os princípios abaixo (foco, `pending`, toque, celular, confirmação): use-o em vez do Carbon cru. Props, exemplos e regras estão no JSDoc de `src/shared/ui/<nome>.tsx`; leia antes de usar. Todo componente do Carbon tem o seu aqui (menos os `preview__`/`unstable__` e as versões Fluid dos campos). Layout sem regra própria (`Grid`, `Column`, `Stack`, `Layer`, `Tile`, `Form`, `FormGroup`, `SkeletonText`, `InlineLoading`, `AccordionItem`, `SelectItem`, `UnorderedList`/`ListItem`) vem direto do Carbon, de `@/shared/ui/carbon/<pasta>`, também em Server Component, enquanto as props forem serializáveis.
 
 Os que não se deduzem do nome:
 
@@ -80,49 +83,6 @@ Os que não se deduzem do nome:
 Formulário: `Form` com `action` do `useActionState`, um `FormSection` por grupo (com um grupo só, os campos direto num `Stack gap={6}`), erro de campo no `invalidText` (`invalidProps`), `FormError` acima dos botões, `FormActions` no fim. Campo travado: `Notice kind="info"` com o motivo **antes** dos campos. Modelo: `features/tenants/components/create-tenant-form.tsx`. Validação: "Formulários: validação" em Princípios de interface; `useFormValidity` (`shared/hooks/`) e os filtros de `shared/lib/input-filters.ts`.
 
 Campos de torneio (as seções da aba Configurações, a criação curta e a sala de veto): cada bloco é `memo(Componente, sameValues(KEYS))` (`features/tournaments/lib/same-values.ts`) e tipa `values` como o `Pick` dos campos que lê; o `onChange` e os `errors` de `useSettingsSection` e `useNewTournament` não mudam de objeto à toa, e função passada a um bloco também não pode mudar (nada de `onChange={(x) => ...}` inline nele). Sem isso, cada tecla renderiza a seção inteira. Só leitura (o torneio já começou): `readOnly` nos blocos, não `disabled`.
-
-### Storybook
-
-`bun run storybook` (http://localhost:6006) mostra cada componente da `shared/ui` nas variações que ele expõe, com tema (`white`/`g100`), idioma e largura (`Celular (390px)`, `md`) na barra de ferramentas e a aba Accessibility (axe) para contraste. `bun run build-storybook` gera o site estático em `storybook-static/` (ignorado).
-
-- A história fica ao lado do componente: `button.tsx` → `button.stories.tsx`, CSF3 como em `button.stories.tsx`. Título `"<Grupo>/<Componente>"`, com os grupos de "Biblioteca `shared/ui`" acima (Página, Ação, Formulário, Listas, Estado e conteúdo; mais Cabeçalho e Data e hora).
-- Uma história por variação do Carbon que o componente expõe (consulte `code_search` no MCP) e por estado próprio (`pending`, inválido, travado), mais uma que põe as variações lado a lado quando comparar ajuda. Componente que muda no celular ganha uma com `globals: { viewport: { value: "phone" } }`.
-- O conteúdo de exemplo pode ser texto em português direto na história (não passa pelo messages); o idioma da barra troca só os textos dos componentes.
-- Modal, toast e outro elemento fixo: `parameters: { docs: { story: { inline: false, height: "500px" } } }`, senão cobre a página de documentação.
-- Componente novo ou com variação nova na `shared/ui` ganha a história no mesmo commit. Componente de feature fica de fora: depende de dado da API.
-- O Storybook usa o Vite, não o Next: `next/navigation`, `next/link`, `next/image` e `next/font` são simulados pelo `@storybook/nextjs-vite`, e o Sass do Carbon lê o `loadPaths` de `.storybook/main.ts`. Componente async (Server Component que busca dado) não roda lá.
-
-## Textos (messages)
-
-- Um arquivo por namespace de primeiro nível (`messages/pt/Tenant.json`, `messages/es/Tenant.json` e `messages/en/Tenant.json`); chave nova vai no namespace do seu fluxo, nos três idiomas. `es` e `en` precisam ter as mesmas chaves de `pt` (o `tsc` e o `build` acusam).
-- Namespace novo: crie os três arquivos e acrescente uma linha em cada lista (`pt`, `es` e `en`) de `src/i18n/namespaces.ts`, em ordem alfabética.
-- O navegador recebe todos os namespaces menos os de `SERVER_ONLY_MESSAGES` (`namespaces.ts`), que só Server Components leem, e de novo a cada `router.refresh()`. Namespace novo vai sozinho. Componente de cliente que passe a usar algo da lista: tire a linha de lá (senão aparece a chave no lugar do texto). Bloco grande que só o servidor lê: acrescente.
-- `Common` (textos da biblioteca) e `Nav` são da base. Num namespace que outro fluxo também usa, só acrescente chaves: não reordene nem reformate o arquivo.
-- Código novo de aviso da API: `Notifications.notices.<código>` (`title` e `body`) nos três idiomas, os mesmos na página e no service worker. Só `{param}` simples (o service worker não entende plural do ICU); o prazo `confirm_by` entra como `{deadline}`.
-- O espanhol é em "tú". O inglês é americano (en-US), em "you", com as mesmas regras de "Como escrever". Plural do ICU em inglês só tem `one` e `other`; ordinal (`selectordinal`) tem `one`/`two`/`few`/`other`. Data digitada `mm/dd/yyyy` (`dateText` em `shared/lib/plain-date.ts`).
-
-### Termos da interface
-
-| Conceito                                                              | pt      | es      | en         | No código    |
-| --------------------------------------------------------------------- | ------- | ------- | ---------- | ------------ |
-| Um jogo só, num mapa                                                  | partida | partida | game       | `game`       |
-| Md3, md5 (o confronto entre dois lados)                               | série   | serie   | match      | `match`      |
-| O todo                                                                | torneio | torneo  | tournament | `tournament` |
-| A arena (pool, veto, ban e pick de mapa, mapa decisivo, nome do mapa) | mapa    | mapa    | map        | `map`        |
-- "Mapa" só quando é a arena. "Mapa enviado", "rating por mapa", "mapas jogados" e "placar mapa a mapa" são partidas. "Partida pronta", "Partidas que esperam você" e "C1 · partida 3" são séries.
-- Concordância: a partida foi enviada, a série foi decidida.
-- Outros termos já decididos: "ordem da chave" (seeding, nunca "seed"), "captura de tela", "W.O.", "check-in", "chave", "rating", "todos contra todos" (nunca "round robin"), "queda do K".
-- Dois-pontos só em aposto, lista ou rótulo ("Rating: 1500"). Para explicar, ponha ponto e comece outro período: "Faça o check-in na página do torneio. Quem não fizer, não entra em nenhum time." A API também segue isto nos emails e nas mensagens do Discord.
-
-### Como escrever
-
-O texto diz só o que a pessoa não sabe e não vai descobrir logo em seguida. Para cada frase, pergunte o que ela faria diferente sem a frase; se nada, corte. Cortar não é ficar vago: nomeie a coisa ("a série pronta", "o fator K"), dê a data ou o número quando importam e não tire o que a pessoa precisa para decidir (o que se perde, o que não volta, o que falta fazer).
-
-- **Não repita a tela.** Título, etiqueta, botão e coluna já falam: a etiqueta "Inscrição feita" dispensa "Você está inscrito."; o botão "Ver os inscritos" dispensa "Até lá, confira quem está inscrito."; o título "Nova senha" dispensa "Escolha a senha nova."
-- **Estado vazio é o estado e a ação**: "Sem descrição." e o botão, não "Escreva uma para os membros saberem do que se trata…".
-- **Fica de fora**: regra interna ("vale para os próximos envios"), mecânica que se percebe ao usar (o pedido de refazer no veto), definição do óbvio ("Completo é o time com 2 jogadores"), o porquê de uma exigência evidente ("A conta precisa de pelo menos um jeito de entrar.") e a exceção de cada caso entre parênteses quando a regra geral basta ("quando abrir vaga", não "(alguém sair ou as vagas aumentarem)").
-- **Cada coisa na hora e para quem age**: a consequência de uma ação no modal de confirmação, não acima do botão; o limite no campo e no erro, não na descrição; a explicação longa na página que a usa, não no resumo que leva a ela.
-- **Um fato por frase, curta, com ponto no fim.** Sem jargão de sistema ("API", "banco") e sem nada com cara de texto gerado (dois-pontos encadeando explicação, "ou seja", listas de todos os casos).
 
 ## Quando quebrar um componente
 
@@ -153,9 +113,10 @@ Utilidade antes de enfeite: cada estilo precisa de um motivo de uso (hierarquia,
   - Valor fora do limite fica inválido com a mensagem curta no `invalidText`: número, na hora (`min`/`max`, "Use de 1 a 10."); texto (`minLength`, `pattern` com `patternMessage`, `type="email"`, `required`, `sameAs` da senha repetida), depois da primeira saída do campo e dali a cada tecla ("mínimo de 3" não fica vermelho na primeira letra).
   - Regra que só o chamador sabe (data à frente de agora): `problem` do `TextInput`/`DateTimeInput`, com a mensagem traduzida; aparece na hora e bloqueia o envio.
   - `helperText` só existe quando o rótulo não basta: diz o que o campo é ou um efeito que não se vê, nunca a faixa nem o tamanho. O erro da API continua no `invalid`/`invalidText` (`invalidProps`) e vale mais que o do campo.
-- **Estado vazio e erro**: o `EmptyState` diz o estado e põe a ação, sem ensinar o uso (ver "Como escrever"); erro sempre traduzido, junto do controle que falhou (`invalidText`, `ErrorText`) ou acima dos botões (`FormError`).
+- **Estado vazio e erro**: o `EmptyState` diz o estado e põe a ação, sem ensinar o uso ("Como escrever", em `messages/CLAUDE.md`); erro sempre traduzido, junto do controle que falhou (`invalidText`, `ErrorText`) ou acima dos botões (`FormError`).
 
 ## MCP do Carbon
 
+- Antes do MCP, o que o projeto já tem: o componente da `shared/ui` (o catálogo acima e o JSDoc dele), um uso dele em `features/` e o `.d.ts` instalado. Cada `docs_search` traz uns 10 mil caracteres: use-o para o padrão que o projeto ainda não usa e, decidido o padrão, registre-o no JSDoc do componente (ou em `docs/design.md`, se for de página), para a próxima tela não buscar de novo.
 - `code_audit` nos arquivos que você criou ou mudou, em lote. Ignore quando ele sugerir `<Theme>` em volta da página ou classes `cds--type-*`: o tema vem do `globals.scss`, o tipo do mixin `type-style`.
 - A versão instalada manda: na dúvida sobre uma prop, confira o `.d.ts` em `node_modules/@carbon/react/lib/components/<Componente>/`.

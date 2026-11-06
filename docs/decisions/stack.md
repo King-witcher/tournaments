@@ -94,7 +94,7 @@ Quem pede `/.env`, `/wp-login.php` e afins tem o IP banido por 7 dias, e dali em
 
 ## Organização do código
 
-Regras em `backend/CLAUDE.md` e `web/CLAUDE.md` (o Claude Code os carrega ao abrir arquivos da pasta; uma skill dependeria de ser acionada e um doc importado na raiz custaria contexto em toda sessão).
+Regras em `backend/CLAUDE.md` e `web/CLAUDE.md` (o Claude Code os carrega ao abrir arquivos da pasta; uma skill dependeria de ser acionada e um doc importado na raiz custaria contexto em toda sessão). O que só uma parte do trabalho usa fica no `CLAUDE.md` da pasta dela (`web/messages/` para os textos, `web/src/shared/ui/` para a biblioteca por dentro e o Storybook), para não entrar em toda tarefa do `web/`: em 06/11 o `web/CLAUDE.md` tinha 24 mil caracteres (uns 7 mil tokens), lido em toda sessão que abria o front.
 
 - **Por domínio dos dois lados**, com os mesmos nomes, e `shared/` para o genérico.
 - **API: SQL só em `<domínio>/db.rs`**: achar uma query é abrir um arquivo, e handler com transação não fica longo.

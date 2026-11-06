@@ -2,7 +2,7 @@
 
 Cada decisão com o motivo; o que o código mostra por si só fica de fora. Está dividido por área em `docs/decisions/`. Atualize o arquivo da área quando algo mudar, em poucas linhas: decisão, motivo e o número ou limite que importa. "Do usuário" é decisão dele; "assumido" é minha, fácil de mudar.
 
-Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "série") e **mapa** = `game` (um jogo; na interface, "partida"). Glossário da interface em `web/CLAUDE.md`.
+Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "série") e **mapa** = `game` (um jogo; na interface, "partida"). Glossário da interface em `web/messages/CLAUDE.md`.
 
 | Arquivo | O que tem |
 |---|---|

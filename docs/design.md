@@ -1,6 +1,6 @@
 # Interface: o que cada página é
 
-Alvo da experiência de uso, no Carbon Design System. Este arquivo diz **o que** cada página é e **quais padrões** valem em todas; o **como** (biblioteca `shared/ui`, regras de código, textos) fica em `web/CLAUDE.md`, e os motivos em `decisions/interface.md` e `decisions/tournaments-ui.md`.
+Alvo da experiência de uso, no Carbon Design System. Este arquivo diz **o que** cada página é e **quais padrões** valem em todas; o **como** (biblioteca `shared/ui`, regras de código) fica em `web/CLAUDE.md`, os textos em `web/messages/CLAUDE.md`, e os motivos em `decisions/interface.md` e `decisions/tournaments-ui.md`.
 
 ## Base
 
