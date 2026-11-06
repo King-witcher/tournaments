@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select\n               (select json_agg(e order by e.created_at, e.id) from (\n                    select e.id, e.kind, e.actor, coalesce(m.nickname, u.display_name) as actor_name,\n                           coalesce(u.avatar_key, u.avatar_url) as actor_avatar, e.game, e.winner, e.winner_maps,\n                           e.loser_maps, e.comment, e.created_at\n                    from match_events e\n                    left join users u on u.id = e.actor\n                    left join tenant_members m on m.tenant_id = e.tenant_id and m.user_id = e.actor\n                    where e.tournament_id = $1 and e.stage = $2 and e.match_key = $3) e)\n                   as \"events: Json<Vec<EventRow>>\",\n               (select json_agg(l order by l.game_id, l.side, l.nickname, l.user_id) from (\n                    select gp.game_id, gp.side, gp.user_id, m.nickname,\n                           coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                           m.left_at is not null as \"left\"\n                    from match_game_players gp\n                    join match_games g on g.id = gp.game_id\n                    join tenant_members m on m.tenant_id = gp.tenant_id and m.user_id = gp.user_id\n                    join users u on u.id = gp.user_id\n                    where g.tournament_id = $1 and g.stage = $2 and g.match_key = $3) l)\n                   as \"lineups: Json<Vec<LineupRow>>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "events: Json<Vec<EventRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "lineups: Json<Vec<LineupRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "089e3cd93a709af99176a3df0f0d064ed419f84a56365e1228efdfdce83cd28e"
+}

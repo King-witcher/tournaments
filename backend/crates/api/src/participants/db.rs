@@ -1,7 +1,7 @@
 use sqlx::PgConnection;
 
 use super::types::Participant;
-use crate::{tenants::TenantId, tournaments::TournamentId};
+use crate::{auth::resolve_avatars, tenants::TenantId, tournaments::TournamentId};
 
 /// Inscritos do torneio (ou só `only_user`), na ordem de inscrição, com o
 /// seed e a desistência do time de cada um.
@@ -10,9 +10,10 @@ pub async fn list(
     tournament: TournamentId,
     only_user: Option<i64>,
 ) -> Result<Vec<Participant>, sqlx::Error> {
-    sqlx::query_as!(
+    let mut rows = sqlx::query_as!(
         Participant,
-        r#"select p.user_id, m.nickname, u.avatar_url, p.registered_at,
+        r#"select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
+                  p.registered_at,
                   p.checked_in_at is not null as "checked_in!", p.team_id,
                   t.seed as "seed?",
                   t.withdrawn_at is not null as "withdrawn!",
@@ -27,7 +28,9 @@ pub async fn list(
         only_user
     )
     .fetch_all(conn)
-    .await
+    .await?;
+    resolve_avatars(&mut rows, |p| &mut p.avatar_url);
+    Ok(rows)
 }
 
 pub async fn is_registered(

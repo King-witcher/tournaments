@@ -19,7 +19,11 @@ import { FormError } from "./form-error";
 type Props = {
   /** Título curto (o nome da ação). */
   title: ReactNode;
-  /** Os campos (`TextInput`, `Select`…); o primeiro recebe o foco ao abrir. */
+  /**
+   * Os campos (`TextInput`, `Select`…); o primeiro recebe o foco ao abrir,
+   * ou o primeiro elemento com `data-modal-primary-focus` que vier antes
+   * dele (um controle que não é campo, como a área do editor de foto).
+   */
   children: ReactNode;
   /** Texto do primário, com o nome da ação ("Inscrever"). */
   submitLabel: ReactNode;
@@ -87,7 +91,7 @@ function OpenFormModal({
       open
       size="sm"
       onClose={close}
-      selectorPrimaryFocus={`${content} input, ${content} select, ${content} textarea`}
+      selectorPrimaryFocus={`${content} [data-modal-primary-focus], ${content} input:not([type="hidden"]), ${content} select, ${content} textarea`}
     >
       <ModalHeader title={title} iconDescription={t("close")} />
       <ModalBody>

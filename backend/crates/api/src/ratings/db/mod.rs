@@ -11,6 +11,7 @@ use super::types::{
     AdjustmentAuthor, MapRecord, RankingEntry, RatedGame, RatedTournament, RatingAdjustment,
 };
 use crate::{
+    auth::resolve_avatar,
     shared::{ApiError, Locale},
     teams,
     tenants::TenantId,
@@ -62,7 +63,7 @@ pub async fn put_settings(
 pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>, sqlx::Error> {
     let rows = sqlx::query!(
         r#"select rank() over (order by r.rating desc) as "position!", r.user_id, m.nickname,
-                  u.display_name, u.avatar_url, r.rating, r.games, r.wins, r.losses,
+                  u.display_name, coalesce(u.avatar_key, u.avatar_url) as avatar_url, r.rating, r.games, r.wins, r.losses,
                   r.last_game_at
            from ratings r
            join tenant_members m on m.tenant_id = r.tenant_id and m.user_id = r.user_id
@@ -80,7 +81,7 @@ pub async fn ranking(db: &PgPool, tenant: TenantId) -> Result<Vec<RankingEntry>,
             user_id: r.user_id,
             nickname: r.nickname,
             display_name: r.display_name,
-            avatar_url: r.avatar_url,
+            avatar_url: resolve_avatar(r.avatar_url),
             rating: r.rating,
             provisional: r.games < PROVISIONAL_GAMES as i32,
             games: r.games,

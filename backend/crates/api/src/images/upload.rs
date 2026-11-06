@@ -1,6 +1,7 @@
-//! Os passos comuns ao logo e à capa: pedir a URL de upload (com o limite por
-//! pessoa) e conferir no bucket o upload que se quer registrar, antes da
-//! transação que o grava (o HEAD é uma ida à rede).
+//! Os passos comuns ao logo, à capa e à foto de perfil: pedir a URL de upload
+//! (com o limite por pessoa, que vale para os três juntos) e conferir no
+//! bucket o upload que se quer registrar, antes da transação que o grava (o
+//! HEAD é uma ida à rede).
 
 use std::time::Duration;
 
@@ -9,17 +10,14 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
 use super::{
-    db::{self, NewUpload, PendingUpload},
+    db::{self, NewUpload, PendingUpload, Scope},
     object::{self, Place},
     types::{ImageUpload, NewImageUpload},
 };
-use crate::{
-    shared::{ApiError, ImageType, Storage, storage::PUBLIC_CACHE},
-    tenants::TenantId,
-    tournaments::TournamentId,
-};
+use crate::shared::{ApiError, ImageType, Storage, storage::PUBLIC_CACHE};
 
-/// Tamanho máximo de um logo ou de uma capa (o mesmo check está na tabela).
+/// Tamanho máximo de um logo, de uma capa ou de uma foto (o mesmo check está
+/// na tabela).
 pub const MAX_BYTES: u32 = 1024 * 1024;
 /// Só JPEG: a prévia dos links do front (o `ImageResponse` do Next), que
 /// desenha o logo e a capa, não lê WebP.
@@ -34,11 +32,9 @@ pub const NOT_FOUND: ApiError = ApiError::not_found("images.not_found");
 
 /// De quem é a imagem e quem age.
 pub struct Target<'a> {
-    pub tenant: TenantId,
+    pub scope: Scope,
     pub user: i64,
     pub place: Place<'a>,
-    /// A capa deste torneio; `None`: o logo.
-    pub tournament: Option<TournamentId>,
 }
 
 /// Grava o upload pendente e devolve a URL do PUT. Erros: 422
@@ -72,8 +68,7 @@ pub async fn request(
     let key = object::new_key(target.place, kind);
     let expires_at = now + UPLOAD_EXPIRES;
     let upload = NewUpload {
-        tenant: target.tenant,
-        tournament: target.tournament,
+        scope: target.scope,
         object_key: &key,
         content_type: kind,
         size: body.size,
@@ -111,8 +106,8 @@ pub async fn verify(
     id: i64,
 ) -> Result<PendingUpload, ApiError> {
     let mut conn = db.acquire().await?;
-    let tournament = target.tournament.map(TournamentId::get);
-    let pending = db::find_upload(&mut conn, target.tenant, id)
+    let tournament = target.scope.tournament();
+    let pending = db::find_upload(&mut conn, target.scope, target.user, id)
         .await?
         .filter(|p| p.uploaded_by == Some(target.user) && p.tournament == tournament)
         .ok_or(NOT_FOUND)?;

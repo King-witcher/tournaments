@@ -32,6 +32,14 @@
   background-color: theme.$layer-01;
 }
 
+// A foto como o `Avatar` a mostra: redonda.
+.avatar {
+  overflow: hidden;
+  inline-size: spacing.$spacing-13;
+  border-radius: 50%;
+  background-color: theme.$layer-01;
+}
+
 .cover {
   inline-size: 100%;
   background-color: theme.$layer-01;

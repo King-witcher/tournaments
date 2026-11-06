@@ -2,16 +2,17 @@ use axum::{Json, extract::State, http::StatusCode};
 use chrono::Utc;
 
 use super::{
-    db::{self, PendingUpload},
+    db::{self, PendingUpload, Scope},
     object::Place,
     types::{
-        CoverPath, CoverUploadPath, ImageSettings, ImageUpload, LogoUploadPath, NewImageUpload,
-        PublicImage,
+        AvatarUploadPath, CoverPath, CoverUploadPath, ImageSettings, ImageUpload, LogoUploadPath,
+        NewImageUpload, PublicImage,
     },
     upload::{self, CONTENT_TYPES, MAX_BYTES, NOT_FOUND, Target},
 };
 use crate::{
     AppState,
+    auth::CurrentUser,
     shared::{ApiError, ErrorBody, JsonBody, PathParams, Storage, public_url},
     tenants::{self, Organizer, Owner, TenantMember},
     tournaments::{self, StoredTournament, find_visible},
@@ -26,24 +27,36 @@ fn storage(state: &AppState) -> Result<&Storage, ApiError> {
 
 fn logo(owner: &TenantMember<Owner>) -> Target<'_> {
     Target {
-        tenant: owner.tenant,
+        scope: Scope::Tenant {
+            tenant: owner.tenant,
+            tournament: None,
+        },
         user: owner.user.id,
         place: Place::Logo {
             tenant: &owner.slug,
         },
-        tournament: None,
     }
 }
 
 fn cover<'a>(member: &'a TenantMember<Organizer>, t: &'a StoredTournament) -> Target<'a> {
     Target {
-        tenant: member.tenant,
+        scope: Scope::Tenant {
+            tenant: member.tenant,
+            tournament: Some(t.id),
+        },
         user: member.user.id,
         place: Place::Cover {
             tenant: &member.slug,
             tournament: &t.slug,
         },
-        tournament: Some(t.id),
+    }
+}
+
+fn avatar(user: &CurrentUser) -> Target<'static> {
+    Target {
+        scope: Scope::Avatar,
+        user: user.id,
+        place: Place::Avatar,
     }
 }
 
@@ -264,5 +277,77 @@ pub async fn remove_cover(
         tournaments::changed(&mut tx, t.id).await?;
     }
     tx.commit().await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/me/avatar/uploads",
+    tag = "images",
+    request_body = NewImageUpload,
+    responses(
+        (status = CREATED, body = ImageUpload, description = "URL para o navegador mandar a foto de perfil direto ao bucket (como a do logo); depois, registrar com `/me/avatar/uploads/{upload}/attach`. Até lá, a foto de antes continua"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "images.too_many_uploads {max} (contando logos e capas)"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured"),
+    )
+)]
+pub async fn create_avatar_upload(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    JsonBody(body): JsonBody<NewImageUpload>,
+) -> Result<(StatusCode, Json<ImageUpload>), ApiError> {
+    let storage = storage(&state)?;
+    let upload = upload::request(&state.db, storage, &avatar(&user), body, Utc::now()).await?;
+    Ok((StatusCode::CREATED, Json(upload)))
+}
+
+#[utoipa::path(
+    post,
+    path = "/me/avatar/uploads/{upload}/attach",
+    tag = "images",
+    params(("upload" = i64, Path, description = "O `id` do upload")),
+    responses(
+        (status = OK, body = PublicImage, description = "Upload conferido no bucket e gravado como a foto de perfil, que passa a valer no lugar do avatar do Discord; a de antes sai do bucket na rotina diária"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = NOT_FOUND, body = ErrorBody, description = "images.not_found (upload de outra pessoa ou de um logo ou capa, já registrado ou vencido)"),
+        (status = CONFLICT, body = ErrorBody, description = "images.upload_missing (o arquivo não chegou ao bucket)"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "images.upload_invalid (o upload é descartado)"),
+        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured"),
+    )
+)]
+pub async fn attach_avatar(
+    State(state): State<AppState>,
+    user: CurrentUser,
+    PathParams(path): PathParams<AvatarUploadPath>,
+) -> Result<Json<PublicImage>, ApiError> {
+    let storage = storage(&state)?;
+    let pending = upload::verify(&state.db, storage, &avatar(&user), path.upload).await?;
+    let mut tx = state.db.begin().await?;
+    // A foto primeiro: o upload que sai já é dela e não vai para a fila.
+    db::set_avatar(&mut tx, user.id, Some(&pending.object_key)).await?;
+    if !db::delete_upload(&mut tx, pending.id).await? {
+        return Err(NOT_FOUND);
+    }
+    tx.commit().await?;
+    image(&pending)
+}
+
+#[utoipa::path(
+    delete,
+    path = "/me/avatar",
+    tag = "images",
+    responses(
+        (status = NO_CONTENT, description = "A conta fica sem foto (o arquivo sai do bucket na rotina diária) e volta a mostrar o avatar do Discord, se houver; sem foto, nada muda"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+    )
+)]
+pub async fn remove_avatar(
+    State(state): State<AppState>,
+    user: CurrentUser,
+) -> Result<StatusCode, ApiError> {
+    let mut conn = state.db.acquire().await?;
+    db::set_avatar(&mut conn, user.id, None).await?;
     Ok(StatusCode::NO_CONTENT)
 }

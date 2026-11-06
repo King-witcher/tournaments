@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update users set avatar_key = $2\n           where id = $1 and deleted_at is null and avatar_key is distinct from $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "59995b3d0d4bc642ca5880b1a3dc0161111dcc245e88ff1ac45ad03f00494dd0"
+}

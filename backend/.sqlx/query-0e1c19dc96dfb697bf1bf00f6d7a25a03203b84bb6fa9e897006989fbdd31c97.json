@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  (select json_agg(x order by x.joined_at, x.id) from (\n                       select t.id, t.slug, t.name, t.description, m.role, m.nickname,\n                              t.deletion_due_at, t.logo_key, m.joined_at\n                       from tenant_members m\n                       join tenants t on t.id = m.tenant_id\n                       where m.user_id = u.id and m.left_at is null) x)\n                      as \"memberships: Json<Vec<MembershipRow>>\"\n           from users u\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  (select json_agg(x order by x.joined_at, x.id) from (\n                       select t.id, t.slug, t.name, t.description, m.role, m.nickname,\n                              t.deletion_due_at, t.logo_key, m.joined_at\n                       from tenant_members m\n                       join tenants t on t.id = m.tenant_id\n                       where m.user_id = u.id and m.left_at is null) x)\n                      as \"memberships: Json<Vec<MembershipRow>>\"\n           from users u\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "avatar_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "locale",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "memberships: Json<Vec<MembershipRow>>",
         "type_info": "Json",
         "origin": "Expression"
@@ -63,9 +74,10 @@
       false,
       false,
       true,
+      true,
       false,
       null
     ]
   },
-  "hash": "78cdd90eb79cb5a1eceb5a772d69b8c47a0165c55588580785cd4b380be1c405"
+  "hash": "0e1c19dc96dfb697bf1bf00f6d7a25a03203b84bb6fa9e897006989fbdd31c97"
 }

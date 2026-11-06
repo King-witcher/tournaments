@@ -6,7 +6,7 @@ use axum_extra::extract::CookieJar;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::db;
+use super::{avatar::resolve_avatar, db};
 use crate::{
     AppState,
     shared::{ApiError, token::hash_token},
@@ -18,11 +18,35 @@ use crate::{
 pub struct CurrentUser {
     pub id: i64,
     pub display_name: String,
+    /// O avatar que as telas mostram: a foto enviada ou, sem ela, o do
+    /// Discord.
     pub avatar_url: Option<String>,
+    /// Só a foto enviada (`/me/avatar`); nula sem ela, mesmo com o avatar do
+    /// Discord.
+    pub photo_url: Option<String>,
     pub locale: String,
 }
 
 impl CurrentUser {
+    /// A conta como o banco a guarda: a foto (`avatar_key`) e o avatar do
+    /// Discord (`discord_avatar`) viram as duas URLs.
+    pub fn from_row(
+        id: i64,
+        display_name: String,
+        avatar_key: Option<String>,
+        discord_avatar: Option<String>,
+        locale: String,
+    ) -> Self {
+        let photo_url = resolve_avatar(avatar_key);
+        Self {
+            id,
+            display_name,
+            avatar_url: photo_url.clone().or(discord_avatar),
+            photo_url,
+            locale,
+        }
+    }
+
     /// Dono da sessão com este hash: o dono vem da memória e o usuário, do
     /// banco. Sessão vencida ou conta que não existe mais → `None`.
     pub(super) async fn of_session(

@@ -2,6 +2,7 @@ use sqlx::{PgConnection, PgExecutor, PgPool};
 
 use super::types::Member;
 use crate::{
+    auth::resolve_avatar,
     shared::ApiError,
     tenants::{Role, TenantId},
 };
@@ -14,7 +15,8 @@ pub async fn list(
     only_user: Option<i64>,
 ) -> Result<Vec<Member>, ApiError> {
     let rows = sqlx::query!(
-        r#"select u.id as user_id, m.nickname, u.display_name, u.avatar_url, m.role, m.joined_at
+        r#"select u.id as user_id, m.nickname, u.display_name,
+                  coalesce(u.avatar_key, u.avatar_url) as avatar_url, m.role, m.joined_at
            from tenant_members m
            join users u on u.id = m.user_id
            where m.tenant_id = $1 and m.left_at is null
@@ -33,7 +35,7 @@ pub async fn list(
                 user_id: r.user_id,
                 nickname: r.nickname,
                 display_name: r.display_name,
-                avatar_url: r.avatar_url,
+                avatar_url: resolve_avatar(r.avatar_url),
                 role: Role::from_db(&r.role)?,
                 joined_at: r.joined_at,
             })

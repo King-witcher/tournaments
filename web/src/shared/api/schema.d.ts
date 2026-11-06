@@ -516,6 +516,54 @@ export interface paths {
         patch: operations["update_me"];
         trace?: never;
     };
+    "/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_avatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/avatar/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_avatar_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/avatar/uploads/{upload}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach_avatar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/deletion": {
         parameters: {
             query?: never;
@@ -2164,11 +2212,20 @@ export interface components {
          *     sem sessão válida a rota responde 401 `auth.unauthenticated`.
          */
         CurrentUser: {
+            /**
+             * @description O avatar que as telas mostram: a foto enviada ou, sem ela, o do
+             *     Discord.
+             */
             avatar_url?: string | null;
             display_name: string;
             /** Format: int64 */
             id: number;
             locale: string;
+            /**
+             * @description Só a foto enviada (`/me/avatar`); nula sem ela, mesmo com o avatar do
+             *     Discord.
+             */
+            photo_url?: string | null;
         };
         DeleteSubscription: {
             endpoint: string;
@@ -6588,6 +6645,161 @@ export interface operations {
             };
             /** @description auth.display_name_invalid, request.invalid_body */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    remove_avatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A conta fica sem foto (o arquivo sai do bucket na rotina diária) e volta a mostrar o avatar do Discord, se houver; sem foto, nada muda */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_avatar_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewImageUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar a foto de perfil direto ao bucket (como a do logo); depois, registrar com `/me/avatar/uploads/{upload}/attach`. Até lá, a foto de antes continua */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.too_many_uploads {max} (contando logos e capas) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach_avatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description O `id` do upload */
+                upload: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket e gravado como a foto de perfil, que passa a valer no lugar do avatar do Discord; a de antes sai do bucket na rotina diária */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicImage"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_found (upload de outra pessoa ou de um logo ou capa, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_missing (o arquivo não chegou ao bucket) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_invalid (o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

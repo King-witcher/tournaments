@@ -17,6 +17,16 @@ O logo da comunidade e a capa do torneio (01/11). Decidido pelo usuário, salvo 
 - **Só depois de criar** (06/11, do usuário; de 01/11 até aqui, a criação também tinha a imagem, guardada no navegador até o dono existir): o Novo torneio perdeu a capa ao virar o Modal curto, e o Criar comunidade, o logo ao virar Modal também. Os dois ficam nas Configurações, que salvam sozinhas. Saiu com isso o caso "criado, mas a imagem não chegou", que o Modal teria de mostrar no lugar do formulário.
 - **Sem recorte manual** (o Carbon não tem cropper): o navegador corta pelo centro e reduz para **256×256** (logo) e **1200×600** (capa), em **JPEG**, até **1 MB**. Só JPEG (a API recusa WebP): o `ImageResponse` da prévia dos links não desenha WebP. Sem transparência, o logo sai sobre branco, o que também evita um logo escuro transparente sumir no tema g100.
 
+## Foto de perfil
+
+A foto da conta (06/11), na aba Perfil. Assumido, salvo o que o usuário pediu (recorte, zoom e giro antes do envio; nada no bucket sem dono; a foto só troca se o envio deu certo).
+
+- **Vale mais que o avatar do Discord**, que continua gravado (`users.avatar_url`, atualizado a cada login) e volta quando a foto sai. A API devolve um `avatar_url` só (a foto ou o do Discord) em toda resposta que mostra pessoas, e `/me` também o `photo_url` (só a foto). Cada query lê `coalesce(u.avatar_key, u.avatar_url)` e passa por `auth::resolve_avatar`: o banco garante `avatars/...` num e `https://...` no outro.
+- **Editor no navegador, num Modal** (o Carbon não tem cropper): a área quadrada com o círculo que o site mostra, arrastar, pinçar, roda do mouse ou setas para mover, o `Slider` de zoom (100% a 400%) e dois `IconButton` de girar em quartos de volta; a foto lida com a orientação do EXIF. O recorte sempre cobre o quadrado. Sai **256×256, JPEG**, sobre branco, como o logo.
+- **Nada sai antes de "Salvar foto"**: cancelar não chama a API. Salvar segue o caminho do logo (URL assinada, PUT com `If-None-Match: *`, registro conferido por HEAD): a foto de antes só é trocada no registro, e o erro fica no Modal com o recorte. O upload pedido e não registrado (PUT que falhou, aba fechada) sai na rotina diária, como os outros. **O limite de 10 uploads por hora é um só** para logo, capa e foto.
+- **Objeto `avatars/<aleatório>.jpg`, sem pasta**: a pessoa não tem slug, e o id interno não vai para a URL. O upload pendente da foto fica em `image_uploads` sem comunidade, com `user_id`. A conta excluída perde a foto e os uploads pendentes (para a fila do bucket).
+- **Remover sem confirmação**, como o logo: enviar de novo desfaz.
+
 ## Bucket e URL
 
 - **Bucket público à parte, com o Block Public Access ligado**, lido só pelo CloudFront (OAC). Um bucket só, com o CloudFront liberado por prefixo, deixaria os screenshots separados do mundo por uma linha da política; à parte, o privado nem tem o CloudFront na política. Domínio próprio no CDN (`img.telefrag.com.br`; o de staging fica em `img-staging.telefrag.com.br`, porque `staging.` é CNAME da Vercel, cujo CAA não libera a Amazon), para as prévias já postadas sobreviverem a uma troca de provedor.

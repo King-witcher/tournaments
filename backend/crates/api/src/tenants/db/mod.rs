@@ -68,7 +68,7 @@ pub async fn user_and_membership(
     user_id: i64,
 ) -> Result<Option<(CurrentUser, Option<Membership>)>, ApiError> {
     let Some(r) = sqlx::query!(
-        r#"select u.id, u.display_name, u.avatar_url, u.locale,
+        r#"select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,
                   t.id as "tenant_id?", t.slug as "slug?", t.name as "name?", t.description,
                   m.role as "role?", m.nickname as "nickname?", t.deletion_due_at, t.logo_key
            from users u
@@ -85,12 +85,7 @@ pub async fn user_and_membership(
     else {
         return Ok(None);
     };
-    let user = CurrentUser {
-        id: r.id,
-        display_name: r.display_name,
-        avatar_url: r.avatar_url,
-        locale: r.locale,
-    };
+    let user = CurrentUser::from_row(r.id, r.display_name, r.avatar_key, r.avatar_url, r.locale);
     let membership = match (r.tenant_id, r.slug, r.name, r.role, r.nickname) {
         (Some(id), Some(slug), Some(name), Some(role), Some(nickname)) => Some(Membership {
             tenant: TenantId::new(id),
@@ -152,7 +147,7 @@ pub async fn user_and_memberships(
     user_id: i64,
 ) -> Result<Option<(CurrentUser, Vec<Membership>)>, ApiError> {
     let Some(r) = sqlx::query!(
-        r#"select u.id, u.display_name, u.avatar_url, u.locale,
+        r#"select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,
                   (select json_agg(x order by x.joined_at, x.id) from (
                        select t.id, t.slug, t.name, t.description, m.role, m.nickname,
                               t.deletion_due_at, t.logo_key, m.joined_at
@@ -169,12 +164,7 @@ pub async fn user_and_memberships(
     else {
         return Ok(None);
     };
-    let user = CurrentUser {
-        id: r.id,
-        display_name: r.display_name,
-        avatar_url: r.avatar_url,
-        locale: r.locale,
-    };
+    let user = CurrentUser::from_row(r.id, r.display_name, r.avatar_key, r.avatar_url, r.locale);
     let memberships = r
         .memberships
         .map(|j| j.0)

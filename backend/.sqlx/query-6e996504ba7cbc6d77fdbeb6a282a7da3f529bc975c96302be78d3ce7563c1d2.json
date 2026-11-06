@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into image_uploads\n               (tenant_id, tournament_id, object_key, content_type, size, uploaded_by,\n                upload_expires_at)\n           values ($1, $2, $3, $4, $5, $6, $7)\n           returning id",
+  "query": "insert into image_uploads\n               (tenant_id, tournament_id, user_id, object_key, content_type, size, uploaded_by,\n                upload_expires_at)\n           values ($1, $2, $3, $4, $5, $6, $7, $8)\n           returning id",
   "describe": {
     "columns": [
       {
@@ -19,6 +19,7 @@
       "Left": [
         "Int8",
         "Int8",
+        "Int8",
         "Text",
         "Text",
         "Int4",
@@ -30,5 +31,5 @@
       false
     ]
   },
-  "hash": "41201d429af7ac700539750f28914196f45b95916591e541ea4ce16f4380c263"
+  "hash": "6e996504ba7cbc6d77fdbeb6a282a7da3f529bc975c96302be78d3ce7563c1d2"
 }

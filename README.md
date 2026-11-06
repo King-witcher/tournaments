@@ -123,9 +123,9 @@ No console, cada screenshot fica em `screenshots/<comunidade>/<torneio>/<partida
 4. **Variáveis** que a API lê (no Render, e no `backend/.env` só se quiser um bucket de dev à parte): `S3_PRIVATE_BUCKET` (o nome do bucket privado), `S3_ACCESS_KEY_ID` e `S3_SECRET_ACCESS_KEY` (a access key do usuário IAM) e `S3_REGION` (a região do bucket; sem ela, `us-east-1`). Com só parte das três primeiras, a API não sobe (é engano de configuração); com nenhuma, sobe sem screenshots. `S3_ENDPOINT` só para outro provedor compatível (Cloudflare R2, MinIO), com o bucket no caminho da URL.
 5. **Conferir**: com as variáveis no Render, o log da API não mostra o aviso "screenshots desligados" e `GET /screenshots/settings` responde `"enabled": true`. Sem o CORS do passo 2, o PUT do navegador falha e a tela mostra "O envio da imagem falhou".
 
-## Bucket público (logos e capas)
+## Bucket público (logos, capas e fotos de perfil)
 
-O logo da comunidade e a capa do torneio vão para outro bucket, que o CloudFront serve num domínio próprio; o bucket continua fechado (motivos em `docs/decisions/images.md`). O envio é como o dos screenshots (URL assinada, conferência por HEAD, rotina diária de exclusão), com as mesmas chaves. No console, `logos/<comunidade>/<aleatório>.jpg` e `covers/<comunidade>/<torneio>/<aleatório>.jpg` (só JPEG: a prévia dos links não desenha WebP).
+O logo da comunidade, a capa do torneio e a foto de perfil vão para outro bucket, que o CloudFront serve num domínio próprio; o bucket continua fechado (motivos em `docs/decisions/images.md`). O envio é como o dos screenshots (URL assinada, conferência por HEAD, rotina diária de exclusão), com as mesmas chaves. No console, `logos/<comunidade>/<aleatório>.jpg`, `covers/<comunidade>/<torneio>/<aleatório>.jpg` e `avatars/<aleatório>.jpg` (só JPEG: a prévia dos links não desenha WebP).
 
 1. **Bucket**: como o privado, com **Block all public access ligado**, Object Ownership "Bucket owner enforced", versionamento e "Static website hosting" desligados.
 2. **CORS**: o do bucket privado com `cache-control` a mais nos `AllowedHeaders` (o envio grava o `Cache-Control` de um ano no objeto, assinado na URL).
@@ -139,7 +139,8 @@ O logo da comunidade e a capa do torneio vão para outro bucket, que o CloudFron
      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
      "Resource": [
        "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/logos/*",
-       "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/covers/*"
+       "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/covers/*",
+       "arn:aws:s3:::NOME-DO-BUCKET-PUBLICO/avatars/*"
      ]
    }
    ```

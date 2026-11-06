@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select p.user_id, m.nickname, u.avatar_url, p.registered_at,\n                  p.checked_in_at is not null as \"checked_in!\",\n                  m.left_at is not null as \"left!\", p.team_id\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1\n           order by p.registered_at, p.user_id",
+  "query": "select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  p.registered_at,\n                  p.checked_in_at is not null as \"checked_in!\",\n                  m.left_at is not null as \"left!\", p.team_id\n           from participants p\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where p.tournament_id = $1\n           order by p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
@@ -29,12 +29,7 @@
         "ordinal": 2,
         "name": "avatar_url",
         "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "users",
-            "name": "avatar_url"
-          }
-        }
+        "origin": "Expression"
       },
       {
         "ordinal": 3,
@@ -79,12 +74,12 @@
     "nullable": [
       false,
       false,
-      true,
+      null,
       false,
       null,
       null,
       true
     ]
   },
-  "hash": "1944ad7106530fcc03b76ba2c2de8999e46e58e0e59793fc8f6ed3688ce0e6a8"
+  "hash": "bed8b8bfd8f593e98c58656294d6b05dfcfd31b8af433a599593b74a76096e2c"
 }

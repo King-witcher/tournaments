@@ -22,6 +22,7 @@
 //! das comunidades e daqui sai a anonimização.
 
 mod attempts;
+mod avatar;
 mod credentials;
 mod current_user;
 mod db;
@@ -48,6 +49,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use avatar::{resolve_avatar, resolve_avatars};
 pub use current_user::CurrentUser;
 pub use db::{
     anonymize as anonymize_account, due_deletions as due_account_deletions,

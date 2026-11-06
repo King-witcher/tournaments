@@ -10,7 +10,7 @@ use super::{
     seed_order::Entrant,
     team::{StoredMember, StoredTeam},
 };
-use crate::{tenants::TenantId, tournaments::TournamentId};
+use crate::{auth::resolve_avatar, tenants::TenantId, tournaments::TournamentId};
 
 /// Uma linha de time com um jogador; `group` junta as do mesmo time.
 struct Row {
@@ -32,7 +32,7 @@ fn group(rows: impl IntoIterator<Item = Row>) -> Vec<StoredTeam> {
         let member = StoredMember {
             user_id: r.user_id,
             nickname: r.nickname,
-            avatar_url: r.avatar_url,
+            avatar_url: resolve_avatar(r.avatar_url),
             left: r.left,
         };
         match teams.last_mut() {
@@ -74,7 +74,8 @@ async fn list_in(
     let rows = sqlx::query!(
         r#"select t.tournament_id, t.id, t.name, t.seed, t.captain,
                   t.withdrawn_at is not null as "withdrawn!",
-                  p.user_id, m.nickname, u.avatar_url, m.left_at is not null as "left!"
+                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
+                  m.left_at is not null as "left!"
            from teams t
            join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
@@ -134,7 +135,8 @@ pub async fn by_ids(
     let rows = sqlx::query_as!(
         Row,
         r#"select t.id, t.name, t.seed, t.captain, t.withdrawn_at is not null as "withdrawn!",
-                  p.user_id, m.nickname, u.avatar_url, m.left_at is not null as "left!"
+                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
+                  m.left_at is not null as "left!"
            from teams t
            join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id
            join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id
@@ -309,7 +311,7 @@ pub async fn of_user_in(
                   exists(select 1 from teams x where x.tournament_id = q.id) as "formed!",
                   t.id as "id?", t.name as "name?", t.seed as "seed?", t.captain as "captain?",
                   t.withdrawn_at is not null as "withdrawn?",
-                  p.user_id as "user_id?", m.nickname as "nickname?", u.avatar_url as "avatar_url?",
+                  p.user_id as "user_id?", m.nickname as "nickname?", coalesce(u.avatar_key, u.avatar_url) as "avatar_url?",
                   m.left_at is not null as "left?"
            from unnest((select $1::bigint[])) as q(id)
            left join participants me on me.tournament_id = q.id and me.user_id = $2

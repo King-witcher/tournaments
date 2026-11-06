@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\", t.description,\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\", t.description,\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "avatar_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "locale",
         "type_info": "Text",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "tenant_id?",
         "type_info": "Int8",
         "origin": {
@@ -59,7 +70,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "slug?",
         "type_info": "Text",
         "origin": {
@@ -70,7 +81,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "name?",
         "type_info": "Text",
         "origin": {
@@ -81,7 +92,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "description",
         "type_info": "Text",
         "origin": {
@@ -92,7 +103,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "role?",
         "type_info": "Text",
         "origin": {
@@ -103,7 +114,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "nickname?",
         "type_info": "Text",
         "origin": {
@@ -114,7 +125,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "deletion_due_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +136,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "logo_key",
         "type_info": "Text",
         "origin": {
@@ -146,6 +157,7 @@
       false,
       false,
       true,
+      true,
       false,
       true,
       true,
@@ -157,5 +169,5 @@
       true
     ]
   },
-  "hash": "82e0a2ac61287013ae8e20b9d36295ab169b6f8c57f194207964dc2756bd6e82"
+  "hash": "543175466410b120f951463f286eec2e503b19680791ade84be1fccadcd1b281"
 }

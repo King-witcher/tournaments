@@ -238,6 +238,25 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
     create_tournament(&app, &ana, duel("aberta")).await;
     publish(&app, &ana, "aberta").await;
     register(&app, "aberta", &[&rapha]).await;
+    // Uma foto e outra enviada e ainda não registrada.
+    let photo = "avatars/abcdefghijkmnopqrstuvw.jpg";
+    let pending = "avatars/zyxwvutsrqpnmkjihgfedc.jpg";
+    sqlx::query("update users set avatar_key = $2 where id = $1")
+        .bind(rapha.id)
+        .bind(photo)
+        .execute(&db)
+        .await
+        .unwrap();
+    sqlx::query(
+        r#"insert into image_uploads
+               (user_id, uploaded_by, object_key, content_type, size, upload_expires_at)
+           values ($1, $1, $2, 'image/jpeg', 1000, now() + interval '10 minutes')"#,
+    )
+    .bind(rapha.id)
+    .bind(pending)
+    .execute(&db)
+    .await
+    .unwrap();
 
     skip_cooldown(&db, &email_of("Rapha")).await;
     let (status, body, _) = schedule(&app, &rapha, json!({ "current_password": PASSWORD })).await;
@@ -281,6 +300,14 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
         (row.identities, row.passwords, row.push, row.notifications),
         (0, 0, 0, 0)
     );
+    // A foto e o upload pendente saem do bucket na rotina das imagens.
+    let queued: Vec<String> = sqlx::query_scalar(
+        r#"select object_key from image_deletions order by object_key collate "C""#,
+    )
+    .fetch_all(&db)
+    .await
+    .unwrap();
+    assert_eq!(queued, vec![photo.to_owned(), pending.to_owned()]);
     // Inativa nas duas comunidades, com o apelido vazio.
     let members = sqlx::query!(
         r#"select nickname, left_at is not null as "left!" from tenant_members where user_id = $1"#,

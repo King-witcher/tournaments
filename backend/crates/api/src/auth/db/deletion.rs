@@ -136,9 +136,14 @@ pub async fn anonymize(conn: &mut PgConnection, user_id: i64) -> Result<(), sqlx
     )
     .execute(&mut *conn)
     .await?;
+    // Os uploads de foto pendentes saem (os objetos vão para a fila de
+    // exclusão do bucket, como a foto, pelos triggers).
+    sqlx::query!("delete from image_uploads where user_id = $1", user_id)
+        .execute(&mut *conn)
+        .await?;
     sqlx::query!(
         r#"update users
-           set display_name = '', avatar_url = null, email = null,
+           set display_name = '', avatar_url = null, avatar_key = null, email = null,
                deletion_due_at = null, deletion_reminded_at = null, deleted_at = now()
            where id = $1"#,
         user_id

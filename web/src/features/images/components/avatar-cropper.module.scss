@@ -1,0 +1,47 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/focus-outline" as *;
+
+// A área de recorte: um quadrado na largura do Modal, com a imagem inteira
+// por baixo e o que fica fora da foto escurecido. No máximo 30% da altura
+// da tela, para o zoom, os botões e o erro caberem no Modal sem rolar.
+.frame {
+  position: relative;
+  overflow: hidden;
+  inline-size: min(100%, 30dvh);
+  margin-inline: auto;
+  aspect-ratio: 1;
+  background-color: theme.$layer-accent-01;
+
+  // O contorno no quadrado, por cima da máscara (no canvas ela o cobriria).
+  &:has(.canvas:focus-visible) {
+    @include focus-outline("outline");
+  }
+}
+
+// `touch-action: none`: no celular, arrastar e pinçar mexem na foto, não na
+// página.
+.canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// O círculo é o que o site mostra (o `Avatar` é redondo); a sombra de
+// espalhamento grande é a máscara em volta dele, não enfeite.
+.mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 100vmax theme.$overlay;
+  pointer-events: none;
+}

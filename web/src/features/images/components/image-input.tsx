@@ -34,10 +34,11 @@ type Props = {
 };
 
 /**
- * A parte visível do logo ou da capa: sem imagem, a área de soltar do Carbon
- * com um arquivo só; com ela, a prévia já cortada como aparece no site,
- * "Trocar" e "Remover", com o erro embaixo. Quem usa decide o que escolher e
- * tirar fazem (`ImageField` salva na hora).
+ * A parte visível do logo, da capa ou da foto de perfil: sem imagem, a área
+ * de soltar do Carbon com um arquivo só; com ela, a prévia já cortada como
+ * aparece no site (a foto redonda), "Trocar" e "Remover", com o erro
+ * embaixo. Quem usa decide o que escolher e tirar fazem (`ImageField` salva
+ * na hora; `AvatarField` abre o editor).
  */
 export function ImageInput({
   kind,
@@ -95,8 +96,8 @@ export function ImageInput({
         </div>
       )}
       <AspectRatio
-        ratio={kind === "logo" ? "1x1" : "2x1"}
-        className={kind === "logo" ? styles.logo : styles.cover}
+        ratio={kind === "cover" ? "2x1" : "1x1"}
+        className={styles[kind]}
       >
         <Image src={url} alt="" fill unoptimized className={styles.image} />
       </AspectRatio>

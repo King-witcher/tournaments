@@ -1,7 +1,11 @@
-/** O logo é quadrado e a capa, 2:1, nestes tamanhos no máximo. */
+/**
+ * O logo e a foto de perfil são quadrados e a capa, 2:1, nestes tamanhos no
+ * máximo (a foto sai sempre neste, do editor: `crop-image.ts`).
+ */
 export const SHAPES = {
   logo: { width: 256, height: 256 },
   cover: { width: 1200, height: 600 },
+  avatar: { width: 256, height: 256 },
 } as const;
 
 export type ImageKind = keyof typeof SHAPES;
@@ -68,7 +72,17 @@ export async function encodeImage(
     canvas.height,
   );
   bitmap.close();
+  return encodeCanvas(canvas, maxBytes);
+}
 
+/**
+ * O canvas já desenhado em JPEG, baixando a qualidade até caber em
+ * `maxBytes`.
+ */
+export async function encodeCanvas(
+  canvas: HTMLCanvasElement,
+  maxBytes: number,
+): Promise<EncodedImage | EncodeError> {
   for (const quality of QUALITIES) {
     const blob = await toBlob(canvas, "image/jpeg", quality);
     if (!blob) return "unreadable";

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, display_name, avatar_url, locale from users where id = $1 and deleted_at is null",
+  "query": "select id, display_name, avatar_key, avatar_url, locale\n           from users where id = $1 and deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,17 @@
       },
       {
         "ordinal": 2,
+        "name": "avatar_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "avatar_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": {
@@ -37,7 +48,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "locale",
         "type_info": "Text",
         "origin": {
@@ -57,8 +68,9 @@
       false,
       false,
       true,
+      true,
       false
     ]
   },
-  "hash": "facc82d3a0a5e980a9472af543e3f9a3cde8a012f2c56f2ae1951372574c6d06"
+  "hash": "a253cf1cab3eea734647ace0aef56cdce7e78d22ad642156edfa0557c1d849bd"
 }

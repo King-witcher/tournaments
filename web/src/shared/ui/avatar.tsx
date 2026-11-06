@@ -14,11 +14,17 @@ type Props = {
   size?: keyof typeof PIXELS;
   /**
    * `circle` (o padrão) para gente; `square` para uma coisa, como o logo de
-   * uma comunidade. O quadrado vem do CDN do site já no tamanho e não passa
-   * pela otimização de imagens da Vercel (que tem cota).
+   * uma comunidade.
    */
   shape?: "circle" | "square";
 };
+
+/**
+ * Só o avatar do Discord passa pela otimização de imagens da Vercel (que tem
+ * cota, e está liberada só para ele no `next.config.ts`): o logo e a foto
+ * enviada vêm do CDN do site já no tamanho.
+ */
+const OPTIMIZED = "https://cdn.discordapp.com/";
 
 /**
  * A inicial: a primeira letra ou número ("[AR] Lobo" dá "A"), senão o
@@ -46,7 +52,7 @@ export function Avatar({ src, name, size = "sm", shape = "circle" }: Props) {
       alt=""
       width={PIXELS[size]}
       height={PIXELS[size]}
-      unoptimized={shape === "square"}
+      unoptimized={!src.startsWith(OPTIMIZED)}
       className={className}
     />
   );

@@ -7,6 +7,16 @@
     "title": "Capa",
     "hint": "A imagem é cortada em 2:1, pelo centro."
   },
+  "avatar": {
+    "title": "Foto",
+    "discord": "Sem foto, aparece o avatar do Discord.",
+    "editTitle": "Ajustar foto",
+    "save": "Salvar foto",
+    "zoom": "Zoom",
+    "rotateLeft": "Girar para a esquerda",
+    "rotateRight": "Girar para a direita",
+    "area": "Recorte da foto. Arraste ou use as setas para mover."
+  },
   "drop": "Arraste uma imagem para cá ou clique para escolher",
   "change": "Trocar",
   "remove": "Remover",

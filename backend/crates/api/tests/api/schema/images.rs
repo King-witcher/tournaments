@@ -37,6 +37,65 @@ async fn the_object_has_the_form_but_the_folder_may_be_an_old_address() {
         .unwrap();
 }
 
+/// A foto: sem pasta, só da conta não excluída; o upload dela não tem
+/// comunidade e é de quem pediu.
+#[tokio::test]
+async fn the_photo_belongs_to_one_account() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (_, ana, _) = quake_br(&db).await;
+    let id = ana.id;
+    let bad =
+        format!("update users set avatar_key = 'avatars/quake-br/{TOKEN}.jpg' where id = {id}");
+    assert_eq!(
+        rejected(exec(&db, &bad).await),
+        rule(CHECK, "users_avatar_key")
+    );
+    let photo = format!("avatars/{TOKEN}.jpg");
+    let set = format!("update users set avatar_key = '{photo}' where id = {id}");
+    exec(&db, &set).await.unwrap();
+    let deleted = format!("update users set deleted_at = now(), display_name = '' where id = {id}");
+    assert_eq!(
+        rejected(exec(&db, &deleted).await),
+        rule(CHECK, "users_deleted_avatar")
+    );
+
+    let upload = |user: &str, tenant: &str, by: &str, key: &str| {
+        format!(
+            "insert into image_uploads
+                 (user_id, tenant_id, uploaded_by, object_key, content_type, size, upload_expires_at)
+             select {user}, {tenant}, {by}, '{key}', 'image/jpeg', 1000, now() + interval '10 minutes'
+             from users u, tenants t where u.id = {id}"
+        )
+    };
+    let pending = "avatars/zyxwvutsrqpnmkjihgfedc.jpg";
+    let logo = format!("logos/quake-br/{TOKEN}.jpg");
+    for (user, tenant, by, key) in [
+        ("u.id", "t.id", "u.id", pending),
+        ("u.id", "null", "null", pending),
+        ("null", "null", "u.id", logo.as_str()),
+    ] {
+        assert_eq!(
+            rejected(exec(&db, &upload(user, tenant, by, key)).await),
+            rule(CHECK, "image_uploads_scope"),
+            "{user} {tenant} {by}"
+        );
+    }
+    let in_folder = format!("avatars/quake-br/{TOKEN}.jpg");
+    assert_eq!(
+        rejected(exec(&db, &upload("u.id", "null", "u.id", &in_folder)).await),
+        rule(CHECK, "image_uploads_object_key")
+    );
+    exec(&db, &upload("u.id", "null", "u.id", pending))
+        .await
+        .unwrap();
+
+    // Trocada, a de antes vai para a fila; o upload abandonado também.
+    let unset = format!("update users set avatar_key = null where id = {id}");
+    exec(&db, &unset).await.unwrap();
+    exec(&db, "delete from image_uploads").await.unwrap();
+    assert_eq!(queued(&db).await, vec![photo, pending.to_owned()]);
+}
+
 #[tokio::test]
 async fn deleting_the_tenant_queues_every_image() {
     let (db, _lease) = crate::db::test_db().await;

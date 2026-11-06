@@ -9,7 +9,6 @@ Nada na fila: os itens de "Depois" ainda não foram escolhidos. Um incremento po
 ## Depois
 
 - Outros formatos: FFA por pontos/frags, playoffs (os N melhores da tabela do round robin ou do suíço numa eliminação) e grupos.
-- Avatar enviado (para quem não entra pelo Discord), no bucket público como o logo (`images.md`; a política do IAM já pode ganhar o prefixo `avatars/`).
 - A capa do torneio nos avisos do Discord (embed com `image`; hoje a mensagem é só texto, `discord/render.rs`), sem precisar de página pública.
 
 ## Pendências
@@ -25,6 +24,7 @@ Cada uma diz o que falta e onde. "Conferir" é verificação no navegador ou em 
 - **`shared/ui`**: conferir no navegador `FormModal` de "inscrever alguém" (foco, Enter), anular mapa com nota, `FormActions`, listas vazias com a ação na barra, foco no campo recusado e o painel de comunidades no cabeçalho.
 - **Placar da partida (01/11)**: visto no Chromium (tema claro, 390 e 1280 px, com a API local): campos lado a lado, empate, botão, `Dropdown` e abas. Falta o tema escuro, o `Dropdown` dentro do acordeão "Lançar partida N" a 390 px, a captura de tela no fim do formulário (pede bucket) e o espanhol. `useFormValidity` não serve ao formulário: o `NumberInput` controlado atualiza o campo num commit depois do render e o botão ficava um passo atrás; o mesmo pode valer em `rating-settings-form` e onde houver `NumberInput` com `canSubmit`.
 - **Foco nas setas da ordem da chave** (`seeding-row.tsx`): mover uma linha devolve o foco à seta usada (ou à outra, na ponta); só foi lido no código, falta conferir no navegador.
+- **Foto de perfil (06/11)**: falta o prefixo `avatars/*` na política do IAM do bucket público (staging e produção). Visto no Chromium com um S3 falso (1280 e 390 px, claro e escuro): escolher, mover pelo teclado, girar, salvar, cancelar sem envio e PUT recusado (a foto fica). Falta conferir o pinçar e o arrastar num celular de verdade, uma foto do celular com EXIF girado, o espanhol e o inglês, e "Remover" com o avatar do Discord voltando.
 - **Exclusão de conta e comunidade**: conferir conta só com Discord (sem campo de senha), espanhol, cancelar entrando por email, o lembrete da véspera num envio real e o aviso da véspera ao owner (sininho e push).
 - **Avisos no celular**: o `Callout` e o `ActionableNotification` da `shared/ui` usados direto ainda param em 288 px abaixo do `md` (o `Notice` e os toasts já ocupam a largura).
 - **Componentes do Carbon (31/10)**: conferir no app, com a API, o início do torneio (calendário, hora, fuso, só a data preenchida, edição com início que já passou), os `Callout` dos campos travados e a ordem nova dos botões dos formulários. O toast ainda cobre o topo dos outros painéis do cabeçalho (comunidades, pessoa). O ícone de busca recolhida do `ExpandableSearch` diz "Search" (o Carbon 1.119 não tem prop para isso).

@@ -1,8 +1,11 @@
-//! Imagens públicas: o logo da comunidade (quadrado, do owner) e a capa do
-//! torneio (2:1, da organização), no bucket público que o CDN serve. O banco
-//! guarda só o nome do objeto (`tenants.logo_key`, `tournaments.cover_key`);
-//! as respostas de `tenants`, `tournaments`, `my_tournaments` e `invites`
-//! montam a URL com `shared::public_url`. Como nos screenshots, o navegador
+//! Imagens públicas: o logo da comunidade (quadrado, do owner), a capa do
+//! torneio (2:1, da organização) e a foto de perfil (quadrada, da própria
+//! pessoa, em `/me/avatar`), no bucket público que o CDN serve. O banco
+//! guarda só o nome do objeto (`tenants.logo_key`, `tournaments.cover_key`,
+//! `users.avatar_key`); as respostas de `tenants`, `tournaments`,
+//! `my_tournaments` e `invites` montam a URL com `shared::public_url`, e as
+//! que mostram pessoas, com `auth::avatar_url` (a foto vale mais que o avatar
+//! do Discord). Como nos screenshots, o navegador
 //! manda o arquivo direto ao bucket: pede a URL assinada (`.../uploads`, que
 //! grava o upload pendente e conta os pedidos da pessoa, em `upload`), faz o
 //! PUT (uma vez só por URL, com o `Cache-Control` de um ano) e registra
@@ -36,4 +39,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::create_cover_upload))
         .routes(routes!(handlers::attach_cover))
         .routes(routes!(handlers::remove_cover))
+        .routes(routes!(handlers::create_avatar_upload))
+        .routes(routes!(handlers::attach_avatar))
+        .routes(routes!(handlers::remove_avatar))
 }

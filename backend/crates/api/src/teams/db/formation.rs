@@ -4,7 +4,9 @@
 use chrono::{DateTime, Utc};
 use sqlx::PgConnection;
 
-use crate::{shared::ApiError, tenants::TenantId, tournaments::TournamentId};
+use crate::{
+    auth::resolve_avatars, shared::ApiError, tenants::TenantId, tournaments::TournamentId,
+};
 
 /// Um inscrito, como a formação o vê.
 #[derive(Debug, Clone)]
@@ -23,9 +25,10 @@ pub async fn players(
     conn: &mut PgConnection,
     tournament: TournamentId,
 ) -> Result<Vec<Player>, sqlx::Error> {
-    sqlx::query_as!(
+    let mut rows = sqlx::query_as!(
         Player,
-        r#"select p.user_id, m.nickname, u.avatar_url, p.registered_at,
+        r#"select p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
+                  p.registered_at,
                   p.checked_in_at is not null as "checked_in!",
                   m.left_at is not null as "left!", p.team_id
            from participants p
@@ -36,7 +39,9 @@ pub async fn players(
         tournament.get()
     )
     .fetch_all(conn)
-    .await
+    .await?;
+    resolve_avatars(&mut rows, |p| &mut p.avatar_url);
+    Ok(rows)
 }
 
 /// Um time, travado para mudar.

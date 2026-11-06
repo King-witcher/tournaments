@@ -5,10 +5,11 @@ import { AccountDeletionCancelled } from "@/features/auth/components/account-del
 import { AuthError } from "@/features/auth/components/auth-error";
 import { DeleteAccountSection } from "@/features/auth/components/delete-account-section";
 import { DisplayNameSection } from "@/features/auth/components/display-name-section";
+import { AvatarSection } from "@/features/images/components/avatar-section";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { FormSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
-/** Aba Perfil da conta: o nome exibido e, no fim, excluir a conta. */
+/** Aba Perfil da conta: o nome exibido, a foto e, no fim, excluir a conta. */
 export default async function AccountProfilePage({
   searchParams,
 }: PageProps<"/[locale]/account">) {
@@ -26,6 +27,9 @@ export default async function AccountProfilePage({
         fallback={<FormSkeleton heading fields={1} label={t("loading")} />}
       >
         <DisplayNameSection />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton rows={2} />}>
+        <AvatarSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton rows={2} />}>
         <DeleteAccountSection />

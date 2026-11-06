@@ -8,10 +8,14 @@ import {
   type ImageKind,
 } from "./encode-image";
 
-/** De quem é a imagem: o logo da comunidade ou a capa de um torneio dela. */
+/**
+ * De quem é a imagem: o logo da comunidade, a capa de um torneio dela ou a
+ * foto de perfil de quem está logado.
+ */
 export type ImageTarget =
   | { kind: "logo"; tenant: string }
-  | { kind: "cover"; tenant: string; tournament: string };
+  | { kind: "cover"; tenant: string; tournament: string }
+  | { kind: "avatar" };
 
 /** Erro do navegador, fora da API (o texto fica em `Images.errors`). */
 export type LocalError = EncodeError | "notImage" | "uploadFailed";
@@ -24,25 +28,35 @@ export type ImageOutcome =
 type NewUpload = components["schemas"]["NewImageUpload"];
 
 function requestUpload(target: ImageTarget, body: NewUpload) {
-  return target.kind === "logo"
-    ? api.POST("/tenants/{slug}/logo/uploads", {
+  switch (target.kind) {
+    case "logo":
+      return api.POST("/tenants/{slug}/logo/uploads", {
         params: { path: { slug: target.tenant } },
         body,
-      })
-    : api.POST("/tenants/{slug}/tournaments/{tournament}/cover/uploads", {
-        params: {
-          path: { slug: target.tenant, tournament: target.tournament },
-        },
-        body,
       });
+    case "cover":
+      return api.POST(
+        "/tenants/{slug}/tournaments/{tournament}/cover/uploads",
+        {
+          params: {
+            path: { slug: target.tenant, tournament: target.tournament },
+          },
+          body,
+        },
+      );
+    case "avatar":
+      return api.POST("/me/avatar/uploads", { body });
+  }
 }
 
 function attach(target: ImageTarget, upload: number) {
-  return target.kind === "logo"
-    ? api.POST("/tenants/{slug}/logo/uploads/{upload}/attach", {
+  switch (target.kind) {
+    case "logo":
+      return api.POST("/tenants/{slug}/logo/uploads/{upload}/attach", {
         params: { path: { slug: target.tenant, upload } },
-      })
-    : api.POST(
+      });
+    case "cover":
+      return api.POST(
         "/tenants/{slug}/tournaments/{tournament}/cover/uploads/{upload}/attach",
         {
           params: {
@@ -54,24 +68,34 @@ function attach(target: ImageTarget, upload: number) {
           },
         },
       );
+    case "avatar":
+      return api.POST("/me/avatar/uploads/{upload}/attach", {
+        params: { path: { upload } },
+      });
+  }
 }
 
-/** Tira o logo ou a capa. */
+/** Tira o logo, a capa ou a foto. */
 export function removeImage(target: ImageTarget) {
-  return target.kind === "logo"
-    ? api.DELETE("/tenants/{slug}/logo", {
+  switch (target.kind) {
+    case "logo":
+      return api.DELETE("/tenants/{slug}/logo", {
         params: { path: { slug: target.tenant } },
-      })
-    : api.DELETE("/tenants/{slug}/tournaments/{tournament}/cover", {
+      });
+    case "cover":
+      return api.DELETE("/tenants/{slug}/tournaments/{tournament}/cover", {
         params: {
           path: { slug: target.tenant, tournament: target.tournament },
         },
       });
+    case "avatar":
+      return api.DELETE("/me/avatar");
+  }
 }
 
 /**
- * O caminho inteiro de um logo ou de uma capa: corta e converte no
- * navegador (`prepareImage`) e manda (`sendImage`).
+ * O caminho inteiro de um logo ou de uma capa: corta pelo centro e converte
+ * no navegador (`prepareImage`) e manda (`sendImage`).
  */
 export async function uploadImage(
   target: ImageTarget,
@@ -97,11 +121,11 @@ async function prepareImage(
  * Manda uma imagem já convertida: pede a URL de upload à API, manda o
  * arquivo direto ao bucket (PUT, com o tipo, o `Cache-Control` e o
  * `If-None-Match: *` que a URL assinou: o bucket grava uma vez só) e
- * registra na API, que confere o que chegou e troca a imagem. Parado no
- * meio (erro, aba fechada), o upload fica pendente e a rotina diária da API
- * apaga o objeto.
+ * registra na API, que confere o que chegou e só então troca a imagem.
+ * Parado no meio (erro, aba fechada), a imagem de antes continua, o upload
+ * fica pendente e a rotina diária da API apaga o objeto.
  */
-async function sendImage(
+export async function sendImage(
   target: ImageTarget,
   encoded: EncodedImage,
 ): Promise<ImageOutcome> {

@@ -61,3 +61,9 @@ pub struct CoverUploadPath {
     pub tournament: String,
     pub upload: i64,
 }
+
+/// `{upload}` de `/me/avatar/uploads/{upload}/attach`.
+#[derive(Deserialize)]
+pub struct AvatarUploadPath {
+    pub upload: i64,
+}

@@ -7,6 +7,16 @@
     "title": "Portada",
     "hint": "La imagen se recorta en 2:1, por el centro."
   },
+  "avatar": {
+    "title": "Foto",
+    "discord": "Sin foto, se muestra el avatar de Discord.",
+    "editTitle": "Ajustar foto",
+    "save": "Guardar foto",
+    "zoom": "Zoom",
+    "rotateLeft": "Girar a la izquierda",
+    "rotateRight": "Girar a la derecha",
+    "area": "Recorte de la foto. Arrastra o usa las flechas para moverla."
+  },
   "drop": "Arrastra una imagen aquí o haz clic para elegir",
   "change": "Cambiar",
   "remove": "Quitar",

@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/spacing";
+
+// Os botões de girar lado a lado, na largura deles (o `Stack` horizontal do
+// Carbon divide a linha em colunas iguais).
+.turns {
+  display: flex;
+  gap: spacing.$spacing-02;
+}

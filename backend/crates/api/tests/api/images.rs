@@ -1,7 +1,7 @@
-//! Testes de `images`: o logo da comunidade e a capa do torneio (pedir a URL,
-//! mandar ao bucket, registrar, trocar e remover), quem pode, os limites e a
-//! rotina diária. O bucket é o S3 falso dos screenshots, com o HTTP de
-//! verdade. As regras do banco ficam em `schema::images`.
+//! Testes de `images`: o logo da comunidade, a capa do torneio e a foto de
+//! perfil (pedir a URL, mandar ao bucket, registrar, trocar e remover), quem
+//! pode, os limites e a rotina diária. O bucket é o S3 falso dos screenshots,
+//! com o HTTP de verdade. As regras do banco ficam em `schema::images`.
 
 use api::{
     AppState, images,
@@ -351,4 +351,108 @@ async fn logo_and_cover_outlive_a_new_address() {
     let done = images::sweep(&db, storage, later).await.unwrap();
     assert_eq!((done.deleted, done.drained), (6, true));
     assert_eq!(s3.keys().into_iter().collect::<Vec<_>>(), [key(&hers)]);
+}
+
+const AVATAR: &str = "/me/avatar";
+const DISCORD: &str = "https://cdn.discordapp.com/avatars/1/a.png";
+
+/// O avatar e a foto de quem vê (`/me`) e o avatar dele na lista de membros.
+async fn avatars(app: &Router, who: &User) -> (Value, Value, Value) {
+    let (status, me) = get(app, "/me", who).await;
+    assert_eq!(status, StatusCode::OK, "{me}");
+    let (status, list) = get(app, "/tenants/quake-br/members", who).await;
+    assert_eq!(status, StatusCode::OK, "{list}");
+    let row = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["user_id"] == me["id"])
+        .unwrap()
+        .clone();
+    (
+        me["avatar_url"].clone(),
+        me["photo_url"].clone(),
+        row["avatar_url"].clone(),
+    )
+}
+
+#[tokio::test]
+async fn the_photo_replaces_the_discord_avatar_until_removed() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, state, s3, ana) = app_with_bucket(&db).await;
+    sqlx::query("update users set avatar_url = $2 where id = $1")
+        .bind(ana.id)
+        .bind(DISCORD)
+        .execute(&db)
+        .await
+        .unwrap();
+    assert_eq!(
+        avatars(&app, &ana).await,
+        (json!(DISCORD), Value::Null, json!(DISCORD))
+    );
+
+    let first = send(&app, &ana, AVATAR).await;
+    assert!(first.starts_with(&format!("{CDN}/avatars/")), "{first}");
+    assert_eq!(
+        avatars(&app, &ana).await,
+        (json!(first), json!(first), json!(first))
+    );
+    let second = send(&app, &ana, AVATAR).await;
+    assert_eq!(queued(&db).await, vec![key(&first)]);
+
+    // Sem a foto, volta o do Discord.
+    let (status, body) = delete(&app, AVATAR, &ana).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    assert_eq!(
+        avatars(&app, &ana).await,
+        (json!(DISCORD), Value::Null, json!(DISCORD))
+    );
+    let mut both = vec![key(&first), key(&second)];
+    both.sort();
+    assert_eq!(queued(&db).await, both);
+    let storage = state.public_storage.as_ref().unwrap();
+    let done = images::sweep(&db, storage, Utc::now() + Duration::hours(1))
+        .await
+        .unwrap();
+    assert_eq!(done.deleted, 2);
+    assert!(s3.keys().is_empty());
+}
+
+/// A foto só muda quando o arquivo chegou ao bucket, e só a própria pessoa
+/// registra o upload dela; o que não chegou sai na rotina.
+#[tokio::test]
+async fn the_photo_changes_only_with_the_file_in_the_bucket() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, state, s3, ana) = app_with_bucket(&db).await;
+    let bia = member(&app, &db, &ana, "Bia").await;
+    let kept = send(&app, &ana, AVATAR).await;
+
+    let (status, upload) = request(&app, &ana, AVATAR, 1000).await;
+    assert_eq!(status, StatusCode::CREATED, "{upload}");
+    let (status, body) = attach(&app, &ana, AVATAR, &upload["id"]).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::CONFLICT, err("images.upload_missing"))
+    );
+    assert_eq!(avatars(&app, &ana).await.1, json!(kept));
+
+    // O upload de outra pessoa, e o de um logo pela rota da foto (e o
+    // contrário), não existem.
+    assert_eq!(put_to_bucket(&upload, vec![7; 1000]).await, StatusCode::OK);
+    let not_found = (StatusCode::NOT_FOUND, err("images.not_found"));
+    assert_eq!(attach(&app, &bia, AVATAR, &upload["id"]).await, not_found);
+    assert_eq!(attach(&app, &ana, LOGO, &upload["id"]).await, not_found);
+    let (_, logo) = request(&app, &ana, LOGO, 1000).await;
+    assert_eq!(put_to_bucket(&logo, vec![7; 1000]).await, StatusCode::OK);
+    assert_eq!(attach(&app, &ana, AVATAR, &logo["id"]).await, not_found);
+    assert_eq!(avatars(&app, &bia).await.1, Value::Null);
+
+    // Nunca registrados, a foto e o logo saem do bucket; a foto de agora fica.
+    let storage = state.public_storage.as_ref().unwrap();
+    let done = images::sweep(&db, storage, Utc::now() + Duration::days(2))
+        .await
+        .unwrap();
+    assert_eq!((done.abandoned, done.deleted), (2, 2));
+    assert_eq!(s3.keys().into_iter().collect::<Vec<_>>(), vec![key(&kept)]);
+    assert_eq!(avatars(&app, &ana).await.1, json!(kept));
 }

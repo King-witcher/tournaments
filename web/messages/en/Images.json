@@ -7,6 +7,16 @@
     "title": "Cover",
     "hint": "The image is cropped to 2:1, from the center."
   },
+  "avatar": {
+    "title": "Photo",
+    "discord": "Without a photo, your Discord avatar is shown.",
+    "editTitle": "Adjust photo",
+    "save": "Save photo",
+    "zoom": "Zoom",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "area": "Photo crop. Drag or use the arrow keys to move it."
+  },
   "drop": "Drag an image here or click to choose one",
   "change": "Change",
   "remove": "Remove",

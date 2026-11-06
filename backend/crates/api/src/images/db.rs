@@ -1,5 +1,6 @@
-//! SQL do logo (`tenants.logo_key`), da capa (`tournaments.cover_key`), dos
-//! uploads pedidos (`image_uploads`) e da fila do que sai do bucket público
+//! SQL do logo (`tenants.logo_key`), da capa (`tournaments.cover_key`), da
+//! foto de perfil (`users.avatar_key`), dos uploads pedidos
+//! (`image_uploads`) e da fila do que sai do bucket público
 //! (`image_deletions`, preenchida pelo banco a cada objeto que deixa de ser
 //! usado).
 
@@ -16,10 +17,43 @@ use crate::{
 /// longe das outras chaves do projeto.
 const LOCK_BASE: i64 = 0x696d_6167_0000_0000;
 
+/// De onde é um upload: da comunidade (o logo; com torneio, a capa) ou a
+/// foto de perfil de quem pediu.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scope {
+    Tenant {
+        tenant: TenantId,
+        tournament: Option<TournamentId>,
+    },
+    Avatar,
+}
+
+impl Scope {
+    fn tenant(self) -> Option<i64> {
+        match self {
+            Self::Tenant { tenant, .. } => Some(tenant.get()),
+            Self::Avatar => None,
+        }
+    }
+
+    /// A capa deste torneio; `None`: o logo ou a foto.
+    pub fn tournament(self) -> Option<i64> {
+        match self {
+            Self::Tenant { tournament, .. } => tournament.map(TournamentId::get),
+            Self::Avatar => None,
+        }
+    }
+
+    /// A conta dona da foto (`image_uploads.user_id`).
+    fn avatar_of(self, user: i64) -> Option<i64> {
+        matches!(self, Self::Avatar).then_some(user)
+    }
+}
+
 /// Um upload pedido e ainda não registrado.
 pub struct PendingUpload {
     pub id: i64,
-    /// A capa deste torneio; `None`: o logo.
+    /// A capa deste torneio; `None`: o logo ou a foto.
     pub tournament: Option<i64>,
     pub object_key: String,
     pub content_type: ImageType,
@@ -29,8 +63,7 @@ pub struct PendingUpload {
 
 /// O que um upload novo grava.
 pub struct NewUpload<'a> {
-    pub tenant: TenantId,
-    pub tournament: Option<TournamentId>,
+    pub scope: Scope,
     pub object_key: &'a str,
     pub content_type: ImageType,
     pub size: u32,
@@ -71,12 +104,13 @@ pub async fn insert_upload(
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"insert into image_uploads
-               (tenant_id, tournament_id, object_key, content_type, size, uploaded_by,
+               (tenant_id, tournament_id, user_id, object_key, content_type, size, uploaded_by,
                 upload_expires_at)
-           values ($1, $2, $3, $4, $5, $6, $7)
+           values ($1, $2, $3, $4, $5, $6, $7, $8)
            returning id"#,
-        upload.tenant.get(),
-        upload.tournament.map(TournamentId::get),
+        upload.scope.tenant(),
+        upload.scope.tournament(),
+        upload.scope.avatar_of(upload.user),
         upload.object_key,
         upload.content_type.mime(),
         i32::try_from(upload.size).unwrap_or(i32::MAX),
@@ -87,16 +121,21 @@ pub async fn insert_upload(
     .await
 }
 
-/// O upload `id` pendente na comunidade.
+/// O upload `id` pendente na comunidade (o logo ou uma capa) ou, com
+/// `Scope::Avatar`, a foto de `user`.
 pub async fn find_upload(
     conn: &mut PgConnection,
-    tenant: TenantId,
+    scope: Scope,
+    user: i64,
     id: i64,
 ) -> Result<Option<PendingUpload>, ApiError> {
     let Some(r) = sqlx::query!(
         r#"select id, tournament_id, object_key, content_type, size, uploaded_by
-           from image_uploads where tenant_id = $1 and id = $2"#,
-        tenant.get(),
+           from image_uploads
+           where id = $3 and tenant_id is not distinct from $1
+             and user_id is not distinct from $2"#,
+        scope.tenant(),
+        scope.avatar_of(user),
         id
     )
     .fetch_optional(conn)
@@ -122,7 +161,7 @@ pub async fn find_upload(
 }
 
 /// Tira o upload `id` dos pendentes; falso se ele já não estava lá. O objeto
-/// vai para a fila de exclusão se não for o logo nem a capa de ninguém.
+/// vai para a fila de exclusão se não for o logo, a capa nem a foto de ninguém.
 pub async fn delete_upload(conn: &mut PgConnection, id: i64) -> Result<bool, sqlx::Error> {
     let done = sqlx::query!("delete from image_uploads where id = $1", id)
         .execute(conn)
@@ -160,6 +199,24 @@ pub async fn set_cover(
            where tenant_id = $1 and id = $2 and cover_key is distinct from $3"#,
         tenant.get(),
         tournament.get(),
+        key
+    )
+    .execute(conn)
+    .await?;
+    Ok(done.rows_affected() > 0)
+}
+
+/// Troca a foto de perfil por `key` (`None` tira); falso se nada mudou. A de
+/// antes vai para a fila de exclusão.
+pub async fn set_avatar(
+    conn: &mut PgConnection,
+    user: i64,
+    key: Option<&str>,
+) -> Result<bool, sqlx::Error> {
+    let done = sqlx::query!(
+        r#"update users set avatar_key = $2
+           where id = $1 and deleted_at is null and avatar_key is distinct from $2"#,
+        user,
         key
     )
     .execute(conn)
