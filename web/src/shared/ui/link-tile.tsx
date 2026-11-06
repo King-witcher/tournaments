@@ -10,8 +10,6 @@ import styles from "./link-tile.module.scss";
 
 type Props = {
   href: Href;
-  /** O id do link, para levar o foco a ele (o primeiro de uma página que chegou). */
-  id?: string;
   /** O nome do item. */
   title: ReactNode;
   /** Antes do nome, o logo (`Avatar` `square`); decorativo. */
@@ -38,7 +36,6 @@ type Props = {
  */
 export function LinkTile({
   href,
-  id,
   title,
   avatar,
   media,
@@ -52,7 +49,6 @@ export function LinkTile({
   return (
     <ClickableTile
       {...link}
-      id={id}
       className={styles.tile}
       renderIcon={ArrowRight}
       onClick={onClick}

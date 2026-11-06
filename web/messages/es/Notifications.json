@@ -102,6 +102,7 @@
     "countUnread": "{count, plural, one {# notificación sin leer.} other {# notificaciones sin leer.}}",
     "countRead": "{count, plural, one {# notificación leída.} other {# notificaciones leídas.}}",
     "markAll": "Marcar todas como leídas",
-    "more": "Cargar más"
+    "failedMore": "No se pudieron cargar más notificaciones.",
+    "retry": "Intentar de nuevo"
   }
 }

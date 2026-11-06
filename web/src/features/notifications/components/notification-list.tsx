@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type RefObject, useEffect, useId, useRef } from "react";
+import { type RefObject, useId } from "react";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
@@ -20,12 +21,10 @@ import { NotificationTile } from "./notification-tile";
 
 /**
  * O conteúdo do sininho, montado a cada abertura: as não lidas e, um nível
- * abaixo, as lidas, em páginas, com "Carregar mais" no fim (o "Load more" do
- * Carbon: o painel não tem largura para a paginação). O título e a troca de
- * vista não esperam a busca, então as lidas estão ao alcance também sem nada
- * não lido. O leitor de tela ouve quantas há a cada troca de vista e página;
- * depois de "Marcar todas", que some, o foco vai para o título, e depois de
- * "Carregar mais", para a primeira que chegou.
+ * abaixo, as lidas, em páginas que chegam ao rolar perto do fim. O título e
+ * a troca de vista não esperam a busca, então as lidas estão ao alcance também
+ * sem nada não lido. O leitor de tela ouve quantas há a cada troca de vista e
+ * página; depois de "Marcar todas", que some, o foco vai para o título.
  */
 export function NotificationList({
   saved,
@@ -37,17 +36,12 @@ export function NotificationList({
     useNotificationLists(saved);
   const id = useId();
   const titleId = `${id}-title`;
-  const tileId = (notification: number) => `${id}-${notification}`;
   const list = lists[view];
   const empty = t(view === "read" ? "emptyRead" : "emptyUnread");
-
-  // A primeira da página que chegou, para receber o foco quando aparecer.
-  const focusOn = useRef<number>(undefined);
-  useEffect(() => {
-    if (focusOn.current === undefined || !list) return;
-    document.getElementById(`${id}-${focusOn.current}`)?.focus();
-    focusOn.current = undefined;
-  }, [id, list]);
+  const marker = useInfiniteScroll(
+    more.loadMore,
+    list?.next != null && !more.loadingMore && !more.moreFailed,
+  );
 
   return (
     <>
@@ -87,28 +81,32 @@ export function NotificationList({
           <ul className={styles.list}>
             {list.items.map((notification) => (
               <li key={notification.id}>
-                <NotificationTile
-                  id={tileId(notification.id)}
-                  notification={notification}
-                />
+                <NotificationTile notification={notification} />
               </li>
             ))}
           </ul>
           {list.next !== null && (
-            <ActionWithNote error={more.moreError}>
-              <Button
-                kind="ghost"
-                size="sm"
-                pending={more.loadingMore}
-                onClick={() =>
-                  more.loadMore((first) => {
-                    focusOn.current = first.id;
-                  })
-                }
-              >
-                {t("more")}
-              </Button>
-            </ActionWithNote>
+            <div ref={marker}>
+              {more.moreFailed ? (
+                // Com erro, o marcador não chama de novo: quem tenta é a pessoa.
+                <ActionWithNote error={t("failedMore")}>
+                  <Button
+                    kind="ghost"
+                    size="sm"
+                    pending={more.loadingMore}
+                    onClick={more.loadMore}
+                  >
+                    {t("retry")}
+                  </Button>
+                </ActionWithNote>
+              ) : (
+                more.loadingMore && (
+                  <div className={styles.status}>
+                    <InlineLoading description={t("loading")} />
+                  </div>
+                )
+              )}
+            </div>
           )}
         </>
       )}

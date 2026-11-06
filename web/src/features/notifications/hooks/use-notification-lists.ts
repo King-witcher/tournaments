@@ -44,7 +44,7 @@ function fromPage(page: NotificationPage): NotificationList {
 /**
  * As listas do sininho, enquanto ele está aberto, em páginas de 20: as não
  * lidas, à mostra ao abrir, e as lidas. Busca a primeira página ao abrir e ao
- * trocar de vista, e "Carregar mais" (`loadMore`) junta a seguinte. Quando
+ * trocar de vista, e `loadMore` (ao rolar até o fim) junta a seguinte. Quando
  * chega aviso ou a contagem muda noutra aba, busca de novo de uma vez tudo o
  * que a vista mostra. Deixa em `saved` o que chegou, para a abertura seguinte
  * não começar vazia. As não lidas guardadas só valem inteiras e se batem com
@@ -67,6 +67,8 @@ export function useNotificationLists(saved: RefObject<NotificationLists>) {
   });
   const [failed, setFailed] = useState(false);
   const more = useApiAction();
+  // A vista em que a página seguinte falhou: o erro não passa para a outra.
+  const [moreFailedIn, setMoreFailedIn] = useState<NotificationView>();
   // A última busca do começo da lista que vale: a resposta de uma anterior é
   // descartada.
   const latest = useRef(0);
@@ -126,11 +128,8 @@ export function useNotificationLists(saved: RefObject<NotificationLists>) {
     setView(next);
   }, []);
 
-  /**
-   * A página seguinte da vista à mostra, no fim da lista; `onLoaded` recebe a
-   * primeira que chegou, para o foco ir até ela.
-   */
-  const loadMore = (onLoaded: (first: NotificationEntry) => void) => {
+  /** A página seguinte da vista à mostra, no fim da lista. */
+  const loadMore = () => {
     const shown = view;
     const before = lists[shown]?.next;
     if (before == null) return;
@@ -143,21 +142,22 @@ export function useNotificationLists(saved: RefObject<NotificationLists>) {
           },
         }),
       (page) => {
+        setMoreFailedIn(undefined);
         if (at !== restarted.current) return;
         depth.current = Math.min(depth.current + PAGE_SIZE, MAX_LIMIT);
-        // Uma busca de novo pode ter chegado antes: só as que vêm depois da
-        // última à mostra.
-        const last = lists[shown]?.items.at(-1)?.id ?? before;
-        const fresh = page.notifications.filter((n) => n.id < last);
-        setLists((all) => ({
-          ...all,
-          [shown]: {
-            items: [...(all[shown]?.items ?? []), ...fresh],
-            next: page.next ?? null,
-          },
-        }));
-        if (fresh.length > 0) onLoaded(fresh[0]);
+        setLists((all) => {
+          // Uma busca de novo pode ter chegado antes: só as que vêm depois
+          // da última à mostra.
+          const items = all[shown]?.items ?? [];
+          const last = items.at(-1)?.id ?? before;
+          const fresh = page.notifications.filter((n) => n.id < last);
+          return {
+            ...all,
+            [shown]: { items: [...items, ...fresh], next: page.next ?? null },
+          };
+        });
       },
+      () => setMoreFailedIn(shown),
     );
   };
 
@@ -178,6 +178,6 @@ export function useNotificationLists(saved: RefObject<NotificationLists>) {
     clearUnread,
     loadMore,
     loadingMore: more.pending,
-    moreError: more.error,
+    moreFailed: moreFailedIn === view,
   };
 }
