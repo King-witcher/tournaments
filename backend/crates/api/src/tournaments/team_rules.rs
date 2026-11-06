@@ -122,14 +122,6 @@ impl TeamRules {
         report: TeamActor::Anyone,
     };
 
-    /// Tudo no capitão: só ele marca "Pronto", e um Pronto basta por lado.
-    pub const fn captain_only(self) -> bool {
-        matches!(self.veto, TeamActor::Captain)
-            && matches!(self.ban, TeamActor::Captain)
-            && matches!(self.pick, TeamPicker::Captain)
-            && matches!(self.report, TeamActor::Captain)
-    }
-
     /// `action` é de qualquer um do time, não só do capitão.
     pub const fn open_to_all(self, action: TeamAction) -> bool {
         match action {
@@ -155,18 +147,6 @@ impl Default for TeamRules {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn only_all_four_on_the_captain_is_captain_only() {
-        assert!(TeamRules::CAPTAIN.captain_only());
-        assert!(!TeamRules::EVERYONE.captain_only());
-        assert!(!TeamRules::BALANCED.captain_only());
-        let one_off = TeamRules {
-            report: TeamActor::Anyone,
-            ..TeamRules::CAPTAIN
-        };
-        assert!(!one_off.captain_only());
-    }
 
     #[test]
     fn the_captain_can_do_everything_and_the_others_what_is_open() {

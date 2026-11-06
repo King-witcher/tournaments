@@ -49,9 +49,9 @@ async fn with_everything_on_the_captain_only_the_captain_marks_ready() {
 }
 
 #[tokio::test]
-async fn anything_else_needs_everyone_including_a_custom_mix() {
+async fn a_step_open_to_the_team_needs_everyone_including_a_custom_mix() {
     let (db, _lease) = crate::db::test_db().await;
-    let mix = rules("captain", "captain", "captain", "anyone");
+    let mix = rules("captain", "captain", "each_player", "captain");
     let c = cast(&db, mix, draft("alternating", 1, 1)).await;
     let [cap, mate, other_cap, other_mate] = [&c.p[0], &c.p[1], &c.p[2], &c.p[3]];
     let seen = detail(&c.app, cap, KEY).await;
@@ -85,6 +85,28 @@ async fn anything_else_needs_everyone_including_a_custom_mix() {
     let body = ok_ready(&c, other_mate).await;
     assert_eq!(body["veto"]["status"], "in_progress");
     assert_eq!(body["veto"]["ready_waiting"], json!([]));
+}
+
+/// Marca quem tem o que fazer antes das partidas: enviar o resultado vem
+/// depois, e a escolha de campeões sem campeões no site não existe. No
+/// Balanceado só com o veto de mapas, só o capitão veta, e só ele marca.
+#[tokio::test]
+async fn the_result_and_steps_the_tournament_lacks_leave_ready_with_the_captain() {
+    let (db, _lease) = crate::db::test_db().await;
+    let balanced = rules("captain", "captain", "each_player", "anyone");
+    let c = cast(&db, balanced, map_veto()).await;
+    let [cap, mate, other_cap] = [&c.p[0], &c.p[1], &c.p[2]];
+    let seen = detail(&c.app, mate, KEY).await;
+    assert_eq!(seen["veto"]["ready_by"], "captain");
+    assert_eq!(seen["summary"]["task"], "await_captain");
+    assert_eq!(
+        users(&seen["veto"]["ready_waiting"]),
+        [cap.id, other_cap.id]
+    );
+    assert_eq!(
+        ready(&c, mate).await,
+        (StatusCode::FORBIDDEN, err(NOT_CAPTAIN))
+    );
 }
 
 /// Quem cansou de esperar desfaz o "Pronto": o lado deixa de estar pronto, e

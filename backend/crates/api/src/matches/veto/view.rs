@@ -289,7 +289,7 @@ pub fn view(stage: &Stage, m: &Match, mine: Option<Side>, me: Option<i64>) -> Op
             can,
             me: plays,
             readiness,
-            ready_by: if stage.team_rules.captain_only() {
+            ready_by: if stage.captain_acts_alone() {
                 VetoReadyBy::Captain
             } else {
                 VetoReadyBy::Everyone

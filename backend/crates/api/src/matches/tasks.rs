@@ -89,7 +89,7 @@ fn veto_task(
             ViewerTask::Ready
         } else if readiness.side(mine) {
             ViewerTask::AwaitOpponent
-        } else if viewer.rules.captain_only() {
+        } else if stage.captain_acts_alone() {
             ViewerTask::AwaitCaptain
         } else {
             ViewerTask::AwaitTeam

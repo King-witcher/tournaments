@@ -14,7 +14,12 @@ async fn map_veto_by(team_rule: &str, colleague_acts: bool) {
         map_veto(),
     )
     .await;
-    all_ready(&c).await;
+    // Sem campeões, só quem veta tem o que fazer antes das partidas.
+    if colleague_acts {
+        all_ready(&c).await;
+    } else {
+        captains_ready(&c).await;
+    }
     let ban = json!({ "map": "awoken" });
     let [cap, mate, other_cap, other_mate] = [&c.p[0], &c.p[1], &c.p[2], &c.p[3]];
     let forbidden = StatusCode::FORBIDDEN;
@@ -77,7 +82,11 @@ async fn vote_by(team_rule: &str, colleague_acts: bool) {
         json!({ "veto": { "map_mode": "vote", "champion_phase": false } }),
     )
     .await;
-    all_ready(&c).await;
+    if colleague_acts {
+        all_ready(&c).await;
+    } else {
+        captains_ready(&c).await;
+    }
     let seen = detail(&c.app, &c.p[0], KEY).await;
     let offered = seen["veto"]["games"][0]["offered"].clone();
     let vote = json!({ "map": offered[0]["slug"] });

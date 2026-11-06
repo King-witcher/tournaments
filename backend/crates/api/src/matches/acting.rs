@@ -38,6 +38,31 @@ impl Stage {
         self.team_rules.allows(action, self.is_captain(user_id))
     }
 
+    /// Os passos antes das partidas que o torneio tem (veto ou votação de mapa,
+    /// bans, escolha de campeões), cada um com a regra dele aberta ao time ou
+    /// não. Enviar o resultado vem depois das partidas e não entra.
+    fn pre_game_steps(&self) -> [(bool, bool); 3] {
+        let rules = self.team_rules;
+        let veto = &self.veto_rules;
+        [
+            (
+                matches!(veto.map_mode, MapMode::Veto | MapMode::Vote),
+                rules.open_to_all(TeamAction::Veto),
+            ),
+            (
+                veto.champion_phase && veto.bans() > 0,
+                rules.open_to_all(TeamAction::Ban),
+            ),
+            (veto.champion_phase, rules.pick == TeamPicker::EachPlayer),
+        ]
+    }
+
+    /// Só o capitão tem o que fazer antes das partidas: nenhum passo que o
+    /// torneio tem é aberto ao time. É ele, então, quem marca "Pronto".
+    pub fn captain_acts_alone(&self) -> bool {
+        !self.pre_game_steps().iter().any(|(on, open)| *on && *open)
+    }
+
     /// Quem marca "Pronto" pelo time `id` (ver `required`) e quem do lado já
     /// marcou, na série `match_id` entre `sides`. Conta sobre o elenco de agora:
     /// quem saiu do time ou da comunidade não trava o lado.
@@ -48,13 +73,14 @@ impl Stage {
         )
     }
 
-    /// Com tudo no capitão, ele; senão, todos os jogadores que estão no time e
-    /// na comunidade.
+    /// Marca "Pronto" quem tem o que fazer antes das partidas: só o capitão
+    /// quando ele age sozinho (`captain_acts_alone`); senão, todos os
+    /// jogadores que estão no time e na comunidade.
     fn required(&self, id: ParticipantId) -> Vec<i64> {
         let Some(team) = self.entrant(id) else {
             return Vec::new();
         };
-        if self.team_rules.captain_only() {
+        if self.captain_acts_alone() {
             vec![team.captain]
         } else {
             team.members
@@ -75,9 +101,10 @@ pub fn require(stage: &Stage, user_id: i64, action: TeamAction) -> Result<(), Ap
     }
 }
 
-/// 403 `match.not_captain`: com tudo no capitão, só ele marca "Pronto".
+/// 403 `match.not_captain`: quando só o capitão age antes das partidas, só ele
+/// marca "Pronto".
 pub fn require_ready(stage: &Stage, user_id: i64) -> Result<(), ApiError> {
-    if !stage.team_rules.captain_only() || stage.is_captain(user_id) {
+    if !stage.captain_acts_alone() || stage.is_captain(user_id) {
         Ok(())
     } else {
         Err(NOT_CAPTAIN)
@@ -108,20 +135,8 @@ pub fn audience(team: &StoredTeam, rules: TeamRules, action: TeamAction) -> Vec<
 /// Quem do time recebe o aviso de que o veto começou: só o capitão quando ele é o
 /// único com algo a fazer em todo passo que o torneio tem; senão, todos.
 pub fn veto_audience(stage: &Stage, team: &StoredTeam) -> Vec<i64> {
-    let rules = stage.team_rules;
-    let veto = &stage.veto_rules;
-    let map_steps = matches!(veto.map_mode, MapMode::Veto | MapMode::Vote);
-    let phases = [
-        (map_steps, rules.open_to_all(TeamAction::Veto)),
-        (
-            veto.champion_phase && veto.bans() > 0,
-            rules.open_to_all(TeamAction::Ban),
-        ),
-        (veto.champion_phase, rules.pick == TeamPicker::EachPlayer),
-    ];
-    let has_steps = phases.iter().any(|(on, _)| *on);
-    let only_captain = has_steps && !phases.iter().any(|(on, open)| *on && *open);
-    if only_captain {
+    let has_steps = stage.pre_game_steps().iter().any(|(on, _)| *on);
+    if has_steps && stage.captain_acts_alone() {
         vec![team.captain]
     } else {
         team.user_ids()

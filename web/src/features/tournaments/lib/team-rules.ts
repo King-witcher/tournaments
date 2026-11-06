@@ -33,6 +33,25 @@ const same = (a: TeamRules, b: TeamRules) =>
   a.pick === b.pick &&
   a.report === b.report;
 
+/**
+ * Só o capitão tem o que fazer antes das partidas: nenhum passo que o torneio
+ * tem (veto ou votação de mapa, bans, escolha de campeões) é aberto ao time.
+ * É ele, então, quem marca "Pronto". Enviar o resultado vem depois e não
+ * entra. A mesma regra de `Stage::captain_acts_alone` na API.
+ */
+export function captainActsAlone(
+  rules: TeamRules,
+  setup: { mapMode: string; championPhase: boolean; bansPerSeries: number },
+): boolean {
+  const maps = setup.mapMode === "veto" || setup.mapMode === "vote";
+  const bans = setup.championPhase && setup.bansPerSeries > 0;
+  return !(
+    (maps && rules.veto === "anyone") ||
+    (bans && rules.ban === "anyone") ||
+    (setup.championPhase && rules.pick === "each_player")
+  );
+}
+
 /** O preset que as regras formam; nenhum, Personalizado. */
 export function teamPresetOf(rules: TeamRules): TeamPreset {
   if (same(rules, TEAM_PRESETS.captain)) return "captain";
