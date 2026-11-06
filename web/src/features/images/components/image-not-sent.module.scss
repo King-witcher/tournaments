@@ -1,8 +1,0 @@
-@use "@carbon/react/scss/spacing";
-
-// Lado a lado, na largura do texto, e um embaixo do outro no celular estreito.
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-03;
-}

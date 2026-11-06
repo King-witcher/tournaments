@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
   useEffect,
   useId,
   useRef,
@@ -36,6 +37,11 @@ type Props = {
    * outros ficam num `<section>`, os dois com o `label` como nome.
    */
   navigation?: boolean;
+  /**
+   * O botão da barra, para o que um item do painel abre (um Modal, que fica
+   * fora do painel) devolver o foco a ele: o item some quando o painel fecha.
+   */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
   /** O conteúdo do painel; só existe enquanto ele está aberto. */
   children: ReactNode;
 };
@@ -56,10 +62,12 @@ export function HeaderPanelAction({
   text,
   badgeCount,
   navigation,
+  triggerRef,
   children,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
+  const ownTrigger = useRef<HTMLButtonElement>(null);
+  const trigger = triggerRef ?? ownTrigger;
   const panel = useRef<HTMLDivElement>(null);
   // O clique do Enter e do Espaço tem `detail` 0.
   const byKeyboard = useRef(false);
@@ -103,7 +111,8 @@ export function HeaderPanelAction({
       waiting.disconnect();
       document.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [open]);
+    // `trigger` é uma ref (a recebida ou a própria): não muda entre renders.
+  }, [open, trigger]);
 
   // Sem destino (a janela perdeu o foco), fica aberto.
   const closeIfFocusLeaves = (event: FocusEvent) => {

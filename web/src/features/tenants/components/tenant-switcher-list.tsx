@@ -19,6 +19,8 @@ type Props = {
   tenants?: MyTenant[];
   /** Estável (o `setState` do painel): a busca sai uma vez por abertura. */
   onLoad: (tenants: MyTenant[]) => void;
+  /** "Criar comunidade": abre o Modal. */
+  onCreate: () => void;
 };
 
 /**
@@ -35,7 +37,7 @@ function asIntlLink(href: Href) {
  * o carregando, na primeira). A comunidade da página atual leva
  * `aria-current`, sem marca visível (o Carbon não marca item do painel).
  */
-export function TenantSwitcherList({ tenants, onLoad }: Props) {
+export function TenantSwitcherList({ tenants, onLoad, onCreate }: Props) {
   const t = useTranslations("Nav.tenants");
   const current = usePathname().split("/")[1];
   const [failed, setFailed] = useState(false);
@@ -83,7 +85,11 @@ export function TenantSwitcherList({ tenants, onLoad }: Props) {
           </SwitcherItem>
         ))}
         {tenants.length > 0 && <SwitcherDivider />}
-        <SwitcherItem {...asIntlLink("/new")} aria-label={t("create")}>
+        <SwitcherItem
+          {...({ as: "button", type: "button" } as object)}
+          aria-label={t("create")}
+          onClick={onCreate}
+        >
           {t("create")}
         </SwitcherItem>
       </HeaderSwitcher>

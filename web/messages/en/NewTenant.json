@@ -7,5 +7,5 @@
   "slugHint": "The community link will be {address}.",
   "slugInvalid": "Can't end with a hyphen.",
   "slugPlaceholder": "your-address",
-  "submit": "Create community"
+  "submit": "Create"
 }

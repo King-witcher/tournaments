@@ -37,7 +37,7 @@ type Props = {
  * A parte visível do logo ou da capa: sem imagem, a área de soltar do Carbon
  * com um arquivo só; com ela, a prévia já cortada como aparece no site,
  * "Trocar" e "Remover", com o erro embaixo. Quem usa decide o que escolher e
- * tirar fazem (`ImageField` salva na hora, `ImagePicker` guarda para depois).
+ * tirar fazem (`ImageField` salva na hora).
  */
 export function ImageInput({
   kind,

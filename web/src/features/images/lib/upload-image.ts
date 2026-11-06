@@ -83,7 +83,7 @@ export async function uploadImage(
 }
 
 /** Corta e converte no navegador, sem mandar nada. */
-export async function prepareImage(
+async function prepareImage(
   file: Blob,
   kind: ImageKind,
   maxBytes: number,
@@ -101,7 +101,7 @@ export async function prepareImage(
  * meio (erro, aba fechada), o upload fica pendente e a rotina diária da API
  * apaga o objeto.
  */
-export async function sendImage(
+async function sendImage(
   target: ImageTarget,
   encoded: EncodedImage,
 ): Promise<ImageOutcome> {

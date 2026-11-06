@@ -20,3 +20,13 @@
     min-block-size: var(--cds-layout-size-height-lg);
   }
 }
+
+// Item que é botão ("Sair", "Criar comunidade") com a mesma cara dos itens
+// que são link.
+.list > li > button {
+  inline-size: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: start;
+}

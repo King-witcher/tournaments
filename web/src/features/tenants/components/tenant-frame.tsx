@@ -11,6 +11,7 @@ import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
 import { PageTabs } from "@/shared/ui/page-tabs";
 import { StatusTag } from "@/shared/ui/status-tag";
+import { TENANT_TITLE_ID } from "../lib/focus";
 import { getTenant } from "../server";
 import { TenantDescription } from "./tenant-description";
 
@@ -61,7 +62,12 @@ export async function TenantFrame({ slug, children }: Props) {
     <>
       <PageHeader
         breadcrumbs={[{ href: "/", label: tNav("home") }]}
-        title={tenant.name}
+        // tabIndex -1: recebe o foco depois de criar a comunidade.
+        title={
+          <span id={TENANT_TITLE_ID} tabIndex={-1}>
+            {tenant.name}
+          </span>
+        }
         logo={
           tenant.logo_url && (
             <Avatar shape="square" size="lg" src={tenant.logo_url} />

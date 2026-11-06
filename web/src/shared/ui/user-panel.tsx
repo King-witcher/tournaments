@@ -72,7 +72,6 @@ export function UserPanel({ label, name, avatarSrc, items }: Props) {
             <SwitcherItem
               key={item.label}
               {...({ as: "button", type: "button" } as object)}
-              className={styles.action}
               aria-label={item.label}
               aria-disabled={item.pending || undefined}
               aria-busy={item.pending || undefined}

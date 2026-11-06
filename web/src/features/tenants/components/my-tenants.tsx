@@ -1,17 +1,17 @@
 import { getTranslations } from "next-intl/server";
 
 import { Avatar } from "@/shared/ui/avatar";
-import { ButtonLink } from "@/shared/ui/button-link";
 import { LinkTile } from "@/shared/ui/link-tile";
 import { Section } from "@/shared/ui/section";
 import { TileGrid } from "@/shared/ui/tile-grid";
 import { getMyTenants } from "../server";
+import { CreateTenantButton } from "./create-tenant-button";
 
 /**
  * Comunidades do usuário logado, em tiles com o logo e o papel dele, e, depois
- * da lista, o "Criar comunidade" (poucos usam, e o painel do cabeçalho também
- * o tem). Sem login ou sem nenhuma, não mostra nada: quem não tem comunidade
- * vê o `NoTenants`. Fica em `<Suspense>`.
+ * da lista, o "Criar comunidade", que abre o Modal (poucos usam, e o painel
+ * do cabeçalho também o tem). Sem login ou sem nenhuma, não mostra nada: quem
+ * não tem comunidade vê o `NoTenants`. Fica em `<Suspense>`.
  */
 export async function MyTenants() {
   const tenants = await getMyTenants();
@@ -46,9 +46,9 @@ export async function MyTenants() {
           />
         ))}
       </TileGrid>
-      <ButtonLink href="/new" kind="ghost" size="sm">
+      <CreateTenantButton kind="ghost" size="sm">
         {t("create")}
-      </ButtonLink>
+      </CreateTenantButton>
     </Section>
   );
 }

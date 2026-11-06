@@ -15,16 +15,5 @@
     "unreadable": "No se pudo leer esa imagen. Prueba con otro archivo.",
     "tooLarge": "Incluso convertida, la imagen supera el tamaño máximo. Prueba con otra.",
     "uploadFailed": "El envío de la imagen falló. Revisa la conexión e inténtalo de nuevo."
-  },
-  "notSent": {
-    "logo": {
-      "title": "La comunidad fue creada, pero el logo no se envió.",
-      "skip": "Seguir sin el logo"
-    },
-    "cover": {
-      "title": "El torneo fue creado, pero la portada no se envió.",
-      "skip": "Seguir sin la portada"
-    },
-    "retry": "Intentar de nuevo"
   }
 }
