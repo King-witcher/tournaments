@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { memberPath } from "@/features/members/lib/paths";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
@@ -33,9 +33,10 @@ type Props = {
  * suíço que o usa no desempate (explicado no (i) da coluna), e quem venceu,
  * desistiu ou saiu. Embaixo, os desempates que não foram pelo primeiro
  * critério, que seguem a ordem da fase, um por linha ("2º à frente do 3º pelo
- * confronto direto"), visíveis também no celular, onde as colunas de saldo
- * somem (e, com a do Buchholz, o (i): a explicação vem depois dos desempates,
- * se algum foi por ele). Enquanto a fase corre, é a ordem de agora; no fim, a
+ * confronto direto"; no menor rating, com o rating do início de cada um),
+ * visíveis também no celular, onde as colunas de saldo somem (e, com a do
+ * Buchholz, o (i): a explicação vem depois dos desempates, se algum foi por
+ * ele). Enquanto a fase corre, é a ordem de agora; no fim, a
  * definitiva.
  */
 export function TableStandings({ tenant, bracket }: Props) {
@@ -51,6 +52,15 @@ export function TableStandings({ tenant, bracket }: Props) {
   const even = isEvenSeries(bracket.format.best_of);
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
   const signed = (n: number) => (n > 0 ? `+${n}` : fragsText(n));
+  // O rating do início é a média do time: até 2 casas, sem separador de
+  // milhar, como o rating no resto do site.
+  const locale = useLocale();
+  const ratingFormat = new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 2,
+    useGrouping: false,
+  });
+  const ratingOf = (r: Schemas["TableRow"]) =>
+    r.rating == null ? "" : ratingFormat.format(r.rating);
   const nameOf = (teamId: number) => {
     const team = byId.get(teamId);
     return team ? teamName(team) : "";
@@ -163,6 +173,8 @@ export function TableStandings({ tenant, bracket }: Props) {
         name: nameOf(r.team_id),
         next: next.position,
         other: nameOf(next.team_id),
+        rating: ratingOf(r),
+        otherRating: ratingOf(next),
       }),
     ];
   });

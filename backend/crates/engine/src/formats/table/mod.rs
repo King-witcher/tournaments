@@ -38,12 +38,18 @@
 //!   separa por ele); no suíço, as vitórias, porque com revanche o saldo daria
 //!   outra ordem. Se separa o grupo, é refeita só entre os que continuam
 //!   empatados; se não separa, vale o critério seguinte. Quando um critério
-//!   depois dele (saldo de mapas, de frags, ou o Buchholz posto depois) separa
-//!   um grupo, quem segue empatado volta ao confronto direto, só entre si,
-//!   antes dos critérios seguintes. Desligado, não volta;
+//!   depois dele (saldo de mapas, de frags, o menor rating ou o Buchholz posto
+//!   depois) separa um grupo, quem segue empatado volta ao confronto direto,
+//!   só entre si, antes dos critérios seguintes. Desligado, não volta;
 //! - **saldo de frags**: só quando nenhum dos empatados tem série jogada sem
 //!   frags; senão, vale o critério seguinte (comparar frags de séries
-//!   diferentes daria vantagem a quem informa).
+//!   diferentes daria vantagem a quem informa);
+//! - **menor rating**: o rating de cada participante congelado no início da
+//!   fase (a API o calcula e passa no replay, `StageHistory::ratings`); o
+//!   menor fica à frente, porque quem tem o maior tinha a obrigação de vencer
+//!   (do usuário). Só vale depois da primeira série decidida da fase, para a
+//!   tabela do início e a rodada 1 do suíço seguirem o seed, e só com o
+//!   rating de todos os empatados; senão, vale o critério seguinte.
 //!
 //! A tabela em ordem é também a semente de uma fase seguinte (os N
 //! primeiros para os playoffs) e, no suíço, a ordem do pareamento: os
@@ -97,6 +103,9 @@ pub struct TableRow {
     pub frags_complete: bool,
     /// Só no suíço com o Buchholz entre os desempates.
     pub buchholz: Option<u32>,
+    /// O rating congelado no início (`StageHistory::ratings`), só com o menor
+    /// rating entre os desempates.
+    pub rating: Option<i32>,
     /// O critério que pôs esta linha à frente da seguinte; `None` na última.
     pub ahead_by: Option<Criterion>,
 }
@@ -129,11 +138,13 @@ fn maps_of(a: ParticipantId, outcome: Outcome, best_of: u8) -> (u16, u16) {
     if a_won { (won, lost) } else { (lost, won) }
 }
 
-/// A tabela de `participants` (na ordem dos seeds) com as partidas e os
-/// frags de cada uma (`frags[i]` é da partida `matches[i]`), já na ordem.
+/// A tabela de `participants` (na ordem dos seeds, com o rating congelado de
+/// cada um em `ratings[i]`) com as partidas e os frags de cada uma
+/// (`frags[i]` é da partida `matches[i]`), já na ordem.
 pub(crate) fn compute(
     rules: Rules,
     participants: &[ParticipantId],
+    ratings: &[Option<i32>],
     matches: &[Match],
     frags: &[Option<SeriesFrags>],
 ) -> Vec<TableRow> {
@@ -205,6 +216,7 @@ pub(crate) fn compute(
 
     let points: Vec<u16> = tally.iter().map(|t| t.wins + t.byes).collect();
     let with_buchholz = rules.tiebreakers.contains(Criterion::Buchholz);
+    let with_rating = rules.tiebreakers.contains(Criterion::LowerRating);
     let buchholz: Vec<u32> = tally
         .iter()
         .map(|t| t.opponents.iter().map(|&o| u32::from(points[o])).sum())
@@ -217,6 +229,8 @@ pub(crate) fn compute(
             Criterion::Buchholz => i64::from(buchholz[i]),
             Criterion::MapDiff => i64::from(t.maps_won) - i64::from(t.maps_lost),
             Criterion::FragDiff => t.frags_for - t.frags_against,
+            // O menor fica à frente; sem rating não chega aqui (`usable`).
+            Criterion::LowerRating => -i64::from(ratings[i].unwrap_or_default()),
             // O seed melhor (menor índice) fica à frente.
             Criterion::Seed => -(i as i64),
             // Calculado dentro de cada grupo de empatados (`tiebreak`).
@@ -225,9 +239,12 @@ pub(crate) fn compute(
     };
 
     let complete = |i: usize| tally[i].frags_missing == 0;
-    // O saldo de frags só compara empatados que têm frags de todas as séries.
+    // O saldo de frags só compara empatados que têm frags de todas as séries;
+    // o menor rating, só com alguma série decidida e o rating de todos.
+    let decided = !meetings.is_empty();
     let usable = |c: Criterion, group: &[usize]| match c {
         Criterion::FragDiff => group.iter().all(|&i| complete(i)),
+        Criterion::LowerRating => decided && group.iter().all(|&i| ratings[i].is_some()),
         _ => true,
     };
 
@@ -254,6 +271,7 @@ pub(crate) fn compute(
                 frag_diff: t.frags_for - t.frags_against,
                 frags_complete: complete(i),
                 buchholz: with_buchholz.then_some(buchholz[i]),
+                rating: ratings[i].filter(|_| with_rating),
                 ahead_by,
             }
         })

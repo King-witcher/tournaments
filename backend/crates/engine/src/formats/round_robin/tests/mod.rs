@@ -370,7 +370,7 @@ fn correction_changes_the_table_only() {
     let mut fixed = reports.clone();
     let first = b.get(id(1, 1)).unwrap();
     fixed[0] = played(first, p(4), 1);
-    let corrected = RoundRobinBracket::replay(config(), seeds(4), fixed).unwrap();
+    let corrected = RoundRobinBracket::replay(config(), seeds(4), fixed, &[]).unwrap();
     let ids = |x: &RoundRobinBracket| x.matches().iter().map(|m| m.id).collect::<Vec<_>>();
     assert_eq!(ids(&corrected), ids(&b));
     let points: HashMap<i64, u16> = corrected
@@ -388,7 +388,7 @@ fn replay_matches_incremental_state() {
         let mut b = RoundRobinBracket::new(config(), seeds(n)).unwrap();
         let reports = play_favorites(&mut b);
         assert_eq!(
-            RoundRobinBracket::replay(config(), seeds(n), reports),
+            RoundRobinBracket::replay(config(), seeds(n), reports, &[]),
             Ok(b)
         );
     }

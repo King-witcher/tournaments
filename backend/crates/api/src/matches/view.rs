@@ -128,6 +128,7 @@ fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiErro
         frag_diff: r.frag_diff,
         frags_complete: r.frags_complete,
         buchholz: r.buchholz,
+        rating: r.rating.map(|c| f64::from(c) / 100.0),
         ahead_by: r.ahead_by.map(|c| match c {
             Criterion::SeriesDiff => TableCriterion::SeriesDiff,
             Criterion::Points => TableCriterion::Points,
@@ -135,6 +136,7 @@ fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiErro
             Criterion::HeadToHead => TableCriterion::HeadToHead,
             Criterion::MapDiff => TableCriterion::MapDiff,
             Criterion::FragDiff => TableCriterion::FragDiff,
+            Criterion::LowerRating => TableCriterion::LowerRating,
             Criterion::Seed => TableCriterion::Seed,
         }),
     })

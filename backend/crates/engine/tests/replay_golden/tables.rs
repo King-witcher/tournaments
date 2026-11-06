@@ -247,6 +247,7 @@ fn swiss_with_recorded_pairings_a_withdrawal_and_a_bye() {
         reports: reports[..reports_done].to_vec(),
         rounds: rounds[..rounds_done].to_vec(),
         out: out.iter().map(|n| p(*n)).collect(),
+        ..StageHistory::default()
     };
 
     // Rodada 1 decidida: a hora de parear a 2 (o pareamento é o gravado).
@@ -376,6 +377,7 @@ fn swiss_with_chosen_tiebreakers_and_no_buchholz() {
         reports: reports.to_vec(),
         rounds: rounds.to_vec(),
         out: vec![p(4)],
+        ..StageHistory::default()
     };
     let stage = replay(format, 6, history);
     assert!(stage.is_finished());

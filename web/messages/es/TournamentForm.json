@@ -254,19 +254,22 @@
       "head_to_head": "Enfrentamiento directo",
       "map_diff": "Diferencia de partidas",
       "frag_diff": "Diferencia de frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "Menor rating"
     },
     "inline": {
       "head_to_head": "enfrentamiento directo",
       "map_diff": "diferencia de partidas",
       "frag_diff": "diferencia de frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "menor rating"
     },
     "short": {
       "head_to_head": "enfrentamiento directo",
       "map_diff": "partidas",
       "frag_diff": "frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "menor rating"
     },
     "up": "Subir {name}",
     "down": "Bajar {name}",

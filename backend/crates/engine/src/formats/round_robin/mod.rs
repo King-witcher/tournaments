@@ -85,15 +85,19 @@ impl RoundRobinBracket {
         })
     }
 
-    /// Reconstrói o estado aplicando os resultados em ordem. Corrigir um
-    /// resultado é chamar `replay` com o histórico corrigido: muda a tabela,
-    /// e nada mais depende dele.
+    /// Reconstrói o estado aplicando os resultados em ordem, com o rating
+    /// congelado de cada participante (`ratings`, para o menor rating; ids que
+    /// não são participantes são ignorados). Corrigir um resultado é chamar
+    /// `replay` com o histórico corrigido: muda a tabela, e nada mais depende
+    /// dele.
     pub fn replay(
         config: RoundRobinConfig,
         seeded: Vec<ParticipantId>,
         reports: impl IntoIterator<Item = StageReport>,
+        ratings: &[(ParticipantId, i32)],
     ) -> Result<Self, EngineError> {
         let mut bracket = Self::new(config, seeded)?;
+        bracket.league.set_ratings(ratings);
         for report in reports {
             bracket.league.apply(report)?;
         }

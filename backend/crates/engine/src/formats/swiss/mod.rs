@@ -118,13 +118,15 @@ impl SwissBracket {
     /// Erros: menos de 2 ou mais de `MAX_PARTICIPANTS` participantes,
     /// participante repetido, os de `SwissConfig::validate`.
     pub fn new(config: SwissConfig, seeded: Vec<ParticipantId>) -> Result<Self, EngineError> {
-        Self::replay(config, seeded, Vec::new(), [], &[])
+        Self::replay(config, seeded, Vec::new(), [], &[], &[])
     }
 
     /// Reconstrói o estado com os pareamentos gravados (`rounds`, da rodada
-    /// 1 em diante), os resultados em ordem e quem está fora (ids que não
-    /// são participantes são ignorados). Corrigir um resultado é chamar
-    /// `replay` com o histórico corrigido: a tabela muda, os pareamentos não.
+    /// 1 em diante), os resultados em ordem, quem está fora e o rating
+    /// congelado de cada participante (`ratings`, para o menor rating; nos
+    /// dois, ids que não são participantes são ignorados). Corrigir um
+    /// resultado é chamar `replay` com o histórico corrigido: a tabela muda,
+    /// os pareamentos não.
     ///
     /// Erros: os de `new`; `InvalidPairing` para rodada além do total, sem
     /// par, ou com participante desconhecido ou repetido; os de cada
@@ -135,6 +137,7 @@ impl SwissBracket {
         rounds: Vec<SwissRound>,
         reports: impl IntoIterator<Item = StageReport>,
         out: &[ParticipantId],
+        ratings: &[(ParticipantId, i32)],
     ) -> Result<Self, EngineError> {
         check_participants(&seeded, MAX_PARTICIPANTS)?;
         config.validate()?;
@@ -142,6 +145,7 @@ impl SwissBracket {
         let matches = build(&seeded, &rounds, total_rounds, config.best_of)?;
         let out = seeded.iter().filter(|p| out.contains(p)).copied().collect();
         let mut league = League::new(Rules::swiss(config.tiebreakers), seeded, matches);
+        league.set_ratings(ratings);
         for report in reports {
             league.apply(report)?;
         }

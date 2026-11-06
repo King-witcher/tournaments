@@ -16,17 +16,20 @@ pub enum Criterion {
     HeadToHead,
     MapDiff,
     FragDiff,
+    /// O rating menor fica à frente: o do início da fase, que a API congela
+    /// por participante e passa no replay.
+    LowerRating,
     Seed,
 }
 
 impl Criterion {
     /// Pode ser escolhido como desempate: o confronto direto, os saldos de
-    /// mapas e de frags e o Buchholz (só no suíço). O primeiro critério de
-    /// cada formato e o seed são fixos.
+    /// mapas e de frags, o menor rating e o Buchholz (só no suíço). O
+    /// primeiro critério de cada formato e o seed são fixos.
     pub const fn is_tiebreaker(self) -> bool {
         matches!(
             self,
-            Self::Buchholz | Self::HeadToHead | Self::MapDiff | Self::FragDiff
+            Self::Buchholz | Self::HeadToHead | Self::MapDiff | Self::FragDiff | Self::LowerRating
         )
     }
 }
@@ -44,8 +47,8 @@ pub struct Tiebreakers {
 }
 
 impl Tiebreakers {
-    /// Os quatro desempates que existem, cada um uma vez.
-    pub const MAX: usize = 4;
+    /// Os cinco desempates que existem, cada um uma vez.
+    pub const MAX: usize = 5;
 
     /// Nenhum desempate: depois do primeiro critério, o seed.
     pub const NONE: Self = Self {
@@ -62,6 +65,7 @@ impl Tiebreakers {
             Criterion::MapDiff,
             Criterion::FragDiff,
             Criterion::Seed,
+            Criterion::Seed,
         ],
     };
 
@@ -74,6 +78,7 @@ impl Tiebreakers {
             Criterion::HeadToHead,
             Criterion::MapDiff,
             Criterion::FragDiff,
+            Criterion::Seed,
         ],
     };
 
@@ -84,7 +89,7 @@ impl Tiebreakers {
     pub fn new(list: &[Criterion]) -> Result<Self, EngineError> {
         let mut out = Self::NONE;
         for &c in list {
-            // São quatro desempates, então o quinto sempre cai aqui: o índice
+            // São cinco desempates, então o sexto sempre cai aqui: o índice
             // abaixo nunca passa de `MAX`.
             if !c.is_tiebreaker() || out.contains(c) {
                 return Err(EngineError::InvalidTiebreakers);

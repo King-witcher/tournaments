@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams t set rating_at_start = r.rating\n           from unnest($2::bigint[], $3::integer[]) as r(id, rating)\n           where t.tournament_id = $1 and t.id = r.id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8Array",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9903c6b004935cad32f108eab7e90f3625ff99405076e40192fef48618162fb2"
+}

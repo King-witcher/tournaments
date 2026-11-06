@@ -25,6 +25,10 @@ pub struct StageHistory {
     /// menos de 2 ativos, termina. Nos outros, a API resolve as partidas de
     /// quem saiu por W.O.
     pub out: Vec<ParticipantId>,
+    /// O rating de cada participante congelado no início, para o menor rating
+    /// nos formatos de tabela (menor fica à frente; quem não aparece não é
+    /// desempatado por ele). Nos outros formatos, ignorado.
+    pub ratings: Vec<(ParticipantId, i32)>,
 }
 
 /// O estado de uma fase, de qualquer formato.
@@ -59,15 +63,19 @@ impl StageBracket {
                 seeded,
                 history.reports.into_iter().map(|r| r.report),
             )?),
-            StageFormat::RoundRobin(c) => {
-                Self::RoundRobin(RoundRobinBracket::replay(c, seeded, history.reports)?)
-            }
+            StageFormat::RoundRobin(c) => Self::RoundRobin(RoundRobinBracket::replay(
+                c,
+                seeded,
+                history.reports,
+                &history.ratings,
+            )?),
             StageFormat::Swiss(c) => Self::Swiss(SwissBracket::replay(
                 c,
                 seeded,
                 history.rounds,
                 history.reports,
                 &history.out,
+                &history.ratings,
             )?),
             StageFormat::Placement(c) => Self::Placement(PlacementBracket::replay(
                 c,

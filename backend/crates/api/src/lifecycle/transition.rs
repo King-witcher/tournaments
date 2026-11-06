@@ -1,9 +1,10 @@
 //! As transições manuais de status depois de publicar, num lugar só: de onde
 //! cada uma sai, para onde vai e o que faz junto. Publicar fica em
 //! `tournaments` (só mexe no torneio) e a abertura automática do check-in em
-//! `tournaments::schedule`, aplicada ao ler. Iniciar gera a chave e desfazer
-//! a descarta, com os resultados (`matches::start`, `matches::discard`), e
-//! tira as inscrições de quem desistiu ou saiu da comunidade; em andamento ↔
+//! `tournaments::schedule`, aplicada ao ler. Iniciar congela o rating dos
+//! times (`start_rating`) e gera a chave, e desfazer a descarta, com os
+//! resultados (`matches::start`, `matches::discard`), apaga o rating congelado
+//! e tira as inscrições de quem desistiu ou saiu da comunidade; em andamento ↔
 //! encerrado anda sozinho conforme a chave, em `matches`.
 //!
 //! ```text
@@ -21,6 +22,7 @@ use chrono::Utc;
 use engine::core::ParticipantId;
 use sqlx::PgConnection;
 
+use super::start_rating;
 use crate::{
     matches, participants,
     shared::ApiError,
@@ -86,6 +88,7 @@ pub async fn apply(
         Transition::Start => {
             let seeded: Vec<ParticipantId> =
                 teams::finalize_seeding(conn, tournament, MIN_TO_START).await?;
+            start_rating::freeze(conn, tournament).await?;
             matches::start(conn, tournament, &seeded).await?;
         }
         Transition::UndoStart => {
@@ -100,9 +103,11 @@ pub async fn apply(
             // A mudança sai antes, com os inscritos de agora: "Seus torneios"
             // de quem sai a seguir também muda.
             tournaments::changed(conn, tournament.id).await?;
-            // Fora de andamento, quem desistiu ou saiu da comunidade sai da
+            // Fora de andamento, o rating do início sai (iniciar de novo grava
+            // o de então), e quem desistiu ou saiu da comunidade sai da
             // inscrição (antes, o banco não deixa: inscrito de torneio
             // iniciado não sai).
+            teams::clear_start_ratings(conn, tournament.id).await?;
             participants::delete_departed(conn, tournament.id).await?;
         }
         Transition::Start => {

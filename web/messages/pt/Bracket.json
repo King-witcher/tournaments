@@ -151,6 +151,7 @@
       "head_to_head": "{position}º ({name}) à frente do {next}º ({other}) pelo confronto direto.",
       "map_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de partidas.",
       "frag_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de frags.",
+      "lower_rating": "{position}º ({name}) à frente do {next}º ({other}) pelo menor rating ({rating} contra {otherRating}).",
       "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave. Empataram nos outros critérios."
     },
     "noFrags": "sem frags",

@@ -1,6 +1,7 @@
 //! Transições depois de publicar: abrir o check-in, iniciar e desfazer o início; a desistência e o W.O. automático em
-//! `withdrawal`.
+//! `withdrawal`; o rating congelado no início, em `start_rating`.
 
+mod start_rating;
 mod withdrawal;
 
 use axum::{Router, http::StatusCode};

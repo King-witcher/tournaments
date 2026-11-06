@@ -151,6 +151,7 @@
       "head_to_head": "#{position} ({name}) ahead of #{next} ({other}) on head-to-head.",
       "map_diff": "#{position} ({name}) ahead of #{next} ({other}) on game difference.",
       "frag_diff": "#{position} ({name}) ahead of #{next} ({other}) on frag difference.",
+      "lower_rating": "#{position} ({name}) ahead of #{next} ({other}) on lower rating ({rating} vs. {otherRating}).",
       "seed": "#{position} ({name}) ahead of #{next} ({other}) on seeding. They tied on the other criteria."
     },
     "noFrags": "no frags",

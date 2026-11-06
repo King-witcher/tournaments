@@ -102,6 +102,7 @@
       "headToHead": "Head-to-head",
       "games": "Game difference",
       "frags": "Frag difference",
+      "lowerRating": "Lower rating (the one at the start of the tournament)",
       "seed": "Seeding"
     },
     "series": {

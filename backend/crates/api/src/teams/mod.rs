@@ -30,8 +30,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use db::{
-    UserTeam, by_ids, clear as clear_teams, create as create_team, of_user_in, players,
-    save_teams_seed, seeded, seeded_in, withdraw, withdraw_departing,
+    UserTeam, by_ids, clear as clear_teams, clear_start_ratings, create as create_team, of_user_in,
+    players, save_start_ratings, save_teams_seed, seeded, seeded_in, withdraw, withdraw_departing,
 };
 pub use formation::{editable as formation_editable, formation};
 pub use seeding::finalize as finalize_seeding;

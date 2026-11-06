@@ -97,13 +97,13 @@ proptest! {
         prop_assert_eq!(b.placements().len(), n as usize);
 
         // Replay determinístico, e a ordem dos resultados não importa.
-        let again = RoundRobinBracket::replay(config(), seeds(n), reports.clone()).unwrap();
+        let again = RoundRobinBracket::replay(config(), seeds(n), reports.clone(), &[]).unwrap();
         prop_assert_eq!(&again, &b);
         let k = reports.len();
         let shift = (order_seed as usize) % k;
         reports.rotate_left(shift);
         reports.reverse();
-        let shuffled = RoundRobinBracket::replay(config(), seeds(n), reports).unwrap();
+        let shuffled = RoundRobinBracket::replay(config(), seeds(n), reports, &[]).unwrap();
         prop_assert_eq!(shuffled.table(), b.table());
     }
 

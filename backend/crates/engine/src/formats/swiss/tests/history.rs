@@ -140,7 +140,8 @@ fn ends_early_without_two_players_left() {
 
 #[test]
 fn unknown_out_ids_are_ignored() {
-    let b = SwissBracket::replay(config(None), seeds(4), Vec::new(), [], &[p(9), p(2)]).unwrap();
+    let b =
+        SwissBracket::replay(config(None), seeds(4), Vec::new(), [], &[p(9), p(2)], &[]).unwrap();
     assert_eq!(b.out(), [p(2)]);
 }
 
@@ -148,7 +149,7 @@ fn unknown_out_ids_are_ignored() {
 fn bad_pairings_are_rejected() {
     let bad = |rounds: Vec<SwissRound>, round: u16| {
         assert_eq!(
-            SwissBracket::replay(config(None), seeds(4), rounds, [], &[]),
+            SwissBracket::replay(config(None), seeds(4), rounds, [], &[], &[]),
             Err(EngineError::InvalidPairing { round })
         );
     };

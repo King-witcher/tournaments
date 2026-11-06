@@ -252,6 +252,7 @@ fn criterion_text(criterion: Option<Criterion>) -> &'static str {
         Some(Criterion::HeadToHead) => "head_to_head",
         Some(Criterion::MapDiff) => "map_diff",
         Some(Criterion::FragDiff) => "frag_diff",
+        Some(Criterion::LowerRating) => "lower_rating",
         Some(Criterion::Seed) => "seed",
     }
 }

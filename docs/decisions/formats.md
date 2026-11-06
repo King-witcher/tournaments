@@ -77,16 +77,19 @@ Do usuário (05/11):
 
 - Nas fases de tabela, o organizador escolhe, para a fase, a **ordem** dos desempates e quais ficam **ligados**. Na eliminação não há desempate.
 - **Fixos, fora da escolha**: o primeiro critério (saldo de séries no todos contra todos, pontos no suíço) e, por último, a ordem da chave (seed), para nunca sobrar empate.
-- **Escolhem-se** confronto direto, saldo de mapas, saldo de frags e, só no suíço, Buchholz. Desligar todos vale: decide a ordem da chave. Sem critério novo.
+- **Escolhem-se** confronto direto, saldo de mapas, saldo de frags, menor rating e, só no suíço, Buchholz. Desligar todos vale: decide a ordem da chave.
 - **Padrão = a ordem de antes** (acima), que a migration `20261211020000_stage_tiebreakers` grava nas fases que já existem (testada numa cópia do banco de dev: 41 fases, 28 de torneios começados). Nenhuma tabela muda: o `replay_golden` passa sem mudar o esperado, com dois casos novos de ordem escolhida.
+- **Menor rating** (06/11, revoga o "sem critério novo" de 05/11): entre empatados, fica à frente quem tem o rating menor. Quem tem o maior tinha a obrigação de vencer; empatar com alguém pior é mais derrota que vitória. Desligado por padrão: nenhuma tabela existente muda (o `replay_golden` passa sem mudar o esperado).
 
 Assumido:
 
-- **Onde fica**: `tournament_stages.tiebreakers text[]`, nula na eliminação e presente nas de tabela (`tournament_stages_shape`), só os quatro valores, cada um uma vez, numa lista simples (`tournament_stages_tiebreakers`), `buchholz` só no suíço (`tournament_stages_buchholz_swiss`). No `engine`, `Tiebreakers` com no máximo 4, de tamanho fixo, para o formato continuar `Copy`. Lista inválida: `format.invalid_tiebreakers`. Sem a lista no corpo, o padrão do formato.
-- **Regras do motor que continuam**: a volta ao confronto direto vale para quem segue empatado depois de qualquer critério posto depois dele (mapas, frags ou o Buchholz), e só com ele ligado; o saldo de frags só vale com os frags completos de todo o grupo, senão vale o critério seguinte.
+- **Onde fica**: `tournament_stages.tiebreakers text[]`, nula na eliminação e presente nas de tabela (`tournament_stages_shape`), só os valores que existem (cinco desde `20261215000000_lower_rating_tiebreaker`), cada um uma vez, numa lista simples (`tournament_stages_tiebreakers`), `buchholz` só no suíço (`tournament_stages_buchholz_swiss`). No `engine`, `Tiebreakers` com no máximo 5, de tamanho fixo, para o formato continuar `Copy`. Lista inválida: `format.invalid_tiebreakers`. Sem a lista no corpo, o padrão do formato.
+- **Regras do motor que continuam**: a volta ao confronto direto vale para quem segue empatado depois de qualquer critério posto depois dele (mapas, frags, menor rating ou o Buchholz), e só com ele ligado; o saldo de frags só vale com os frags completos de todo o grupo, senão vale o critério seguinte.
 - **O pareamento do suíço segue a tabela**: o desempate escolhido muda quem enfrenta quem (com só os frags, a rodada 2 de 6 jogadores sai com outros pares; teste `the_tiebreakers_change_the_pairing`). Rodada já pareada não muda.
 - **Suíço sem Buchholz**: ele não é calculado (`buchholz` nulo na tabela) e a coluna some.
 - **Trava**: depois do início, nada muda; o trigger que já congela a fase inteira (`tournament_stages_frozen_after_start`) cobre a coluna.
+- **Menor rating, o do início**: ao iniciar um torneio com ele, cada time da chave grava `teams.rating_at_start`, a média dos jogadores em centésimos (inteiro, para comparar sem `f64`; com até 4 por time, médias diferentes nunca empatam), com o rating da comunidade de então (recalculado antes se há marca em `rating_dirty`) e o inicial para quem não tem, também em torneio que não conta para o rating. O rating muda a cada mapa e correção, e a tabela precisa sair igual no replay. Desfazer o início apaga; reiniciar grava de novo; a substituição não muda. O banco congela a coluna depois do início (`teams_started_frozen`) e só a aceita em time com seed. O `engine` recebe os ratings no replay (`StageHistory::ratings`).
+- **Menor rating só depois da primeira série decidida da fase**: sem isso, a tabela do início e a rodada 1 do suíço sairiam pelo rating ao contrário, e não pela ordem da chave. Com algum empatado sem rating, vale o critério seguinte. Rating igual também passa adiante. Vale na tabela ao vivo e no pareamento do suíço, e a volta ao confronto direto vale depois dele como depois dos outros. A Classificação explica com os ratings ("pelo menor rating (1450 contra 1500)").
 
 ## Disputa de posições
 

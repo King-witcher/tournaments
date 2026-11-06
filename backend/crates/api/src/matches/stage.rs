@@ -180,10 +180,10 @@ pub struct History<'a> {
 }
 
 /// Refaz a fase com os resultados confirmados de `history`, na ordem (com os
-/// frags somados dos mapas de cada série), os pareamentos gravados e quem
-/// está fora (desistiu ou saiu da comunidade: o suíço não o pareia mais), e
-/// confere que cada resultado caiu na partida com os lados com que foi
-/// gravado.
+/// frags somados dos mapas de cada série), os pareamentos gravados, o rating
+/// de cada time no início (para o menor rating) e quem está fora (desistiu ou
+/// saiu da comunidade: o suíço não o pareia mais), e confere que cada
+/// resultado caiu na partida com os lados com que foi gravado.
 pub fn replay(
     format: ef::StageFormat,
     history: &History<'_>,
@@ -207,6 +207,11 @@ pub fn replay(
         reports,
         rounds: history.rounds.to_vec(),
         out: out.map(StoredTeam::participant).collect(),
+        ratings: history
+            .entrants
+            .iter()
+            .filter_map(|e| e.rating_at_start.map(|r| (e.participant(), r)))
+            .collect(),
     };
     let bracket =
         StageBracket::replay(format, seeded, stage_history).map_err(Contradiction::Engine)?;

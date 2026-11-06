@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.name, t.seed, t.captain, t.withdrawn_at is not null as \"withdrawn!\",\n                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tenant_id = $1 and t.id = any($2)\n           order by t.id, p.user_id <> t.captain, p.registered_at, p.user_id",
+  "query": "select t.id, t.name, t.seed, t.rating_at_start, t.captain, t.withdrawn_at is not null as \"withdrawn!\",\n                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tenant_id = $1 and t.id = any($2)\n           order by t.id, p.user_id <> t.captain, p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "rating_at_start",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "rating_at_start"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "captain",
         "type_info": "Int8",
         "origin": {
@@ -48,13 +59,13 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "withdrawn!",
         "type_info": "Bool",
         "origin": "Expression"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "user_id",
         "type_info": "Int8",
         "origin": {
@@ -65,7 +76,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -76,13 +87,13 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "left!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -98,6 +109,7 @@
       false,
       true,
       true,
+      true,
       false,
       null,
       false,
@@ -106,5 +118,5 @@
       null
     ]
   },
-  "hash": "4c593dd18bd8c3ce842b8f4da2f7d5b9da473b3150cc227e3c4de4e47d78ba46"
+  "hash": "385d4d50d381fa332719f41d035f8165ebdc9ebb5c766043a9084441ec3483ae"
 }

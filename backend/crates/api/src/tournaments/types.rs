@@ -90,6 +90,10 @@ pub enum Tiebreaker {
     FragDiff,
     /// Soma dos pontos dos adversários. Só no suíço.
     Buchholz,
+    /// Menor rating: o do time no início do torneio (média dos jogadores, o
+    /// inicial da comunidade para quem não tem); o menor fica à frente. Só
+    /// depois da primeira série decidida da fase.
+    LowerRating,
 }
 
 fn round_robin_tiebreakers() -> Vec<Tiebreaker> {

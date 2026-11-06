@@ -4,11 +4,13 @@
 //! (`withdrawal`: a desistência do time marcada pelo organizador e o membro
 //! que sai da comunidade). Fica acima de `tournaments`, `participants`,
 //! `teams` e `matches` porque iniciar fecha o seeding e gera a chave, e a
-//! desistência dá W.O. Também o sorteio dos times do TDM (`draw`), que lê o
-//! rating da comunidade.
+//! desistência dá W.O. Também o sorteio dos times do TDM (`draw`) e o rating
+//! de cada time congelado no início para o desempate pelo menor rating
+//! (`start_rating`), que leem o rating da comunidade.
 
 mod draw;
 mod handlers;
+mod start_rating;
 mod transition;
 mod withdrawal;
 

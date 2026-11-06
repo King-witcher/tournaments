@@ -102,6 +102,7 @@
       "headToHead": "Confronto direto",
       "games": "Saldo de partidas",
       "frags": "Saldo de frags",
+      "lowerRating": "Menor rating (o do início do torneio)",
       "seed": "Ordem da chave"
     },
     "series": {

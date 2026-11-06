@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select t.rating_at_start from teams t\n               join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n               where p.user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rating_at_start",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "rating_at_start"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "d8ceb009a378e3f37f855137c262d190b0ac14308446cfe8c9b29d0f1320c938"
+}

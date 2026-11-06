@@ -25,6 +25,7 @@ impl Tiebreaker {
             Self::MapDiff => Criterion::MapDiff,
             Self::FragDiff => Criterion::FragDiff,
             Self::Buchholz => Criterion::Buchholz,
+            Self::LowerRating => Criterion::LowerRating,
         }
     }
 
@@ -39,6 +40,7 @@ impl Tiebreaker {
                 Criterion::MapDiff => Some(Self::MapDiff),
                 Criterion::FragDiff => Some(Self::FragDiff),
                 Criterion::Buchholz => Some(Self::Buchholz),
+                Criterion::LowerRating => Some(Self::LowerRating),
                 Criterion::SeriesDiff | Criterion::Points | Criterion::Seed => None,
             })
             .collect()
@@ -209,6 +211,17 @@ mod tests {
                 best_of: 1,
                 rounds: None,
                 tiebreakers: vec![Tiebreaker::FragDiff, Tiebreaker::Buchholz],
+            },
+            StageFormat::Swiss {
+                best_of: 3,
+                rounds: None,
+                tiebreakers: vec![
+                    Tiebreaker::LowerRating,
+                    Tiebreaker::Buchholz,
+                    Tiebreaker::HeadToHead,
+                    Tiebreaker::MapDiff,
+                    Tiebreaker::FragDiff,
+                ],
             },
             StageFormat::Swiss {
                 best_of: 5,

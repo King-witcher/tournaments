@@ -193,8 +193,9 @@ fn the_tiebreakers_change_the_pairing() {
             tiebreakers,
         };
         let rounds = vec![round(&[[1, 4], [2, 5], [3, 6]], None)];
-        let first = SwissBracket::replay(config, seeds(6), rounds.clone(), [], &[]).unwrap();
-        let after = SwissBracket::replay(config, seeds(6), rounds, reports(&first), &[]).unwrap();
+        let first = SwissBracket::replay(config, seeds(6), rounds.clone(), [], &[], &[]).unwrap();
+        let after =
+            SwissBracket::replay(config, seeds(6), rounds, reports(&first), &[], &[]).unwrap();
         plain(&after.next_round().unwrap())
     };
     assert_eq!(
@@ -203,4 +204,36 @@ fn the_tiebreakers_change_the_pairing() {
     );
     let frags = Tiebreakers::new(&[Criterion::FragDiff, Criterion::MapDiff]).unwrap();
     assert_eq!(second_round(frags), (vec![[2, 3], [1, 6], [4, 5]], None));
+}
+
+#[test]
+fn the_lower_rating_pairs_from_round_two_on() {
+    // Ratings ao contrário dos seeds. A rodada 1 segue o seed (o rating só vale
+    // depois da primeira série decidida); na 2, entre os vencedores (1, 2 e 3,
+    // todos 2 x 0), o menor rating vem antes: 3 e 2 se enfrentam, e 1 desce
+    // para o primeiro dos perdedores, que pelo rating é o 6.
+    let config = SwissConfig {
+        best_of: 3,
+        rounds: None,
+        tiebreakers: Tiebreakers::new(&[Criterion::LowerRating]).unwrap(),
+    };
+    let ratings: Vec<(ParticipantId, i32)> =
+        (1..=6).map(|n| (p(n), 1900 - 100 * n as i32)).collect();
+    let first = SwissBracket::replay(config, seeds(6), Vec::new(), [], &[], &ratings).unwrap();
+    let round_one = first.next_round().unwrap();
+    assert_eq!(plain(&round_one), (vec![[1, 4], [2, 5], [3, 6]], None));
+    let rounds = vec![round_one];
+    let paired = SwissBracket::replay(config, seeds(6), rounds.clone(), [], &[], &ratings).unwrap();
+    let reports: Vec<StageReport> = paired
+        .matches()
+        .iter()
+        .map(|m| match m.state {
+            MatchState::Ready { a, .. } => played(m, a, 0),
+            _ => unreachable!("sem bye com 6"),
+        })
+        .collect();
+    let after = SwissBracket::replay(config, seeds(6), rounds, reports, &[], &ratings).unwrap();
+    let (pairs, bye) = plain(&after.next_round().unwrap());
+    assert_eq!(bye, None);
+    assert_eq!(pairs, vec![[3, 2], [1, 6], [5, 4]]);
 }

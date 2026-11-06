@@ -254,19 +254,22 @@
       "head_to_head": "Confronto direto",
       "map_diff": "Saldo de partidas",
       "frag_diff": "Saldo de frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "Menor rating"
     },
     "inline": {
       "head_to_head": "confronto direto",
       "map_diff": "saldo de partidas",
       "frag_diff": "saldo de frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "menor rating"
     },
     "short": {
       "head_to_head": "confronto direto",
       "map_diff": "partidas",
       "frag_diff": "frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "menor rating"
     },
     "up": "Subir {name}",
     "down": "Descer {name}",

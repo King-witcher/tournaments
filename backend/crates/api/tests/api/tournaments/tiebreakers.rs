@@ -100,3 +100,36 @@ async fn the_order_is_saved_on_create_and_edit_and_frozen_after_the_start() {
     );
     assert_eq!(stored(&db).await, Some(vec!["map_diff".to_owned()]));
 }
+
+#[tokio::test]
+async fn the_lower_rating_is_accepted_anywhere_in_the_list() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let body = copa(stage(
+        "round_robin",
+        json!({ "best_of": 3, "tiebreakers": ["lower_rating", "head_to_head"] }),
+    ));
+    let created = create_tournament(&app, &ana, body).await;
+    assert_eq!(
+        created["stages"][0]["tiebreakers"],
+        json!(["lower_rating", "head_to_head"])
+    );
+    // Os cinco no suíço, ele por último.
+    let all = json!([
+        "buchholz",
+        "head_to_head",
+        "map_diff",
+        "frag_diff",
+        "lower_rating"
+    ]);
+    let (status, body) = patch(
+        &app,
+        COPA,
+        &ana,
+        stage("swiss", json!({ "best_of": 3, "tiebreakers": all })),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["stages"][0]["tiebreakers"], all);
+    assert_eq!(stored(&db).await.unwrap().last().unwrap(), "lower_rating");
+}

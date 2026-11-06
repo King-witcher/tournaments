@@ -114,6 +114,7 @@ fn tiebreaker_column(criterion: Criterion) -> &'static str {
         Criterion::MapDiff => "map_diff",
         Criterion::FragDiff => "frag_diff",
         Criterion::Buchholz => "buchholz",
+        Criterion::LowerRating => "lower_rating",
         // `Tiebreakers` só guarda desempates; o check recusaria.
         Criterion::SeriesDiff => "series_diff",
         Criterion::Points => "points",
@@ -196,6 +197,7 @@ impl StageRow {
                 "map_diff" => Ok(Criterion::MapDiff),
                 "frag_diff" => Ok(Criterion::FragDiff),
                 "buchholz" => Ok(Criterion::Buchholz),
+                "lower_rating" => Ok(Criterion::LowerRating),
                 _ => Err(invalid("tiebreakers", &self)),
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -282,6 +284,11 @@ mod tests {
             ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: 2,
                 tiebreakers: Tiebreakers::NONE,
+            }),
+            ef::StageFormat::RoundRobin(RoundRobinConfig {
+                best_of: 4,
+                tiebreakers: Tiebreakers::new(&[Criterion::LowerRating, Criterion::HeadToHead])
+                    .unwrap(),
             }),
             ef::StageFormat::Swiss(SwissConfig {
                 best_of: 1,

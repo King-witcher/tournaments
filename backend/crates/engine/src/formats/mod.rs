@@ -46,6 +46,16 @@ impl StageFormat {
         }
     }
 
+    /// Os desempates da fase de tabela; `None` na eliminação e na disputa de
+    /// posições.
+    pub fn tiebreakers(&self) -> Option<table::Tiebreakers> {
+        match self {
+            Self::RoundRobin(c) => Some(c.tiebreakers),
+            Self::Swiss(c) => Some(c.tiebreakers),
+            Self::Elimination(_) | Self::Placement(_) => None,
+        }
+    }
+
     /// Maior melhor de N de uma partida da fase.
     pub fn longest_series(&self) -> u8 {
         match self {

@@ -3807,7 +3807,7 @@ export interface components {
          *     ordem dela, e, por último, o seed.
          * @enum {string}
          */
-        TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "seed";
+        TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "lower_rating" | "seed";
         /** @description Uma linha da tabela do round robin ou do suíço. */
         TableRow: {
             ahead_by?: components["schemas"]["TableCriterion"] | null;
@@ -3869,6 +3869,12 @@ export interface components {
              * @description De 1 a N, sem empate.
              */
             position: number;
+            /**
+             * Format: double
+             * @description Só com o menor rating entre os desempates: o rating do time congelado
+             *     no início (média dos jogadores, com até 2 casas).
+             */
+            rating?: number | null;
             /**
              * Format: int32
              * @description Vitórias menos derrotas (W.O. inclusive; empate vale 0). É o primeiro
@@ -3989,7 +3995,7 @@ export interface components {
          *     pontos) e a ordem da chave, o último, são fixos e não entram na lista.
          * @enum {string}
          */
-        Tiebreaker: "head_to_head" | "map_diff" | "frag_diff" | "buchholz";
+        Tiebreaker: "head_to_head" | "map_diff" | "frag_diff" | "buchholz" | "lower_rating";
         /**
          * @description Torneio completo, com os textos no idioma original e as traduções; o
          *     front escolhe pelo idioma de quem vê.

@@ -101,6 +101,7 @@ impl Run {
             self.rounds.clone(),
             self.reports.clone(),
             &self.out,
+            &[],
         )
         .unwrap()
     }

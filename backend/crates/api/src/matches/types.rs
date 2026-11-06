@@ -99,6 +99,9 @@ pub struct TableRow {
     /// Só no suíço com o Buchholz entre os desempates: a soma dos pontos dos
     /// adversários.
     pub buchholz: Option<u32>,
+    /// Só com o menor rating entre os desempates: o rating do time congelado
+    /// no início (média dos jogadores, com até 2 casas).
+    pub rating: Option<f64>,
     /// O critério que pôs esta linha à frente da seguinte; `null` na última.
     pub ahead_by: Option<TableCriterion>,
 }
@@ -115,6 +118,7 @@ pub enum TableCriterion {
     HeadToHead,
     MapDiff,
     FragDiff,
+    LowerRating,
     Seed,
 }
 

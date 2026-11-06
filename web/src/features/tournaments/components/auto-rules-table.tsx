@@ -17,6 +17,7 @@ const KEY = {
   map_diff: "games",
   frag_diff: "frags",
   buchholz: "buchholz",
+  lower_rating: "lowerRating",
 } as const;
 
 /**

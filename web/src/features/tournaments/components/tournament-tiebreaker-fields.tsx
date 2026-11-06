@@ -32,7 +32,7 @@ type Props = {
  * Os desempates da fase de tabela, na ordem: os ligados numerados, com subir,
  * descer e desligar; embaixo, os desligados, com ligar (vai para o fim).
  * Setas em vez de arrastar, porque funcionam igual no teclado e no toque e a
- * lista tem no máximo quatro. O primeiro critério (saldo de séries ou pontos)
+ * lista tem no máximo cinco. O primeiro critério (saldo de séries ou pontos)
  * não aparece, e a ordem da chave, sempre a última, vem no texto embaixo. No
  * todos contra todos em md1 e md2, o saldo de partidas some, porque só
  * repetiria o saldo de séries, mas fica gravado se estava. Depois de cada

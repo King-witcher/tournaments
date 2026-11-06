@@ -254,19 +254,22 @@
       "head_to_head": "Head-to-head",
       "map_diff": "Game difference",
       "frag_diff": "Frag difference",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "Lower rating"
     },
     "inline": {
       "head_to_head": "head-to-head",
       "map_diff": "game difference",
       "frag_diff": "frag difference",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "lower rating"
     },
     "short": {
       "head_to_head": "head-to-head",
       "map_diff": "games",
       "frag_diff": "frags",
-      "buchholz": "Buchholz"
+      "buchholz": "Buchholz",
+      "lower_rating": "lower rating"
     },
     "up": "Move {name} up",
     "down": "Move {name} down",

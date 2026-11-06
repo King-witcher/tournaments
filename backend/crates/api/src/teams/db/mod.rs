@@ -17,6 +17,7 @@ struct Row {
     id: i64,
     name: Option<String>,
     seed: Option<i32>,
+    rating_at_start: Option<i32>,
     captain: i64,
     withdrawn: bool,
     user_id: i64,
@@ -41,6 +42,7 @@ fn group(rows: impl IntoIterator<Item = Row>) -> Vec<StoredTeam> {
                 id: r.id,
                 name: r.name,
                 seed: r.seed,
+                rating_at_start: r.rating_at_start,
                 captain: r.captain,
                 withdrawn: r.withdrawn,
                 members: vec![member],
@@ -72,7 +74,7 @@ async fn list_in(
 ) -> Result<Vec<Vec<StoredTeam>>, sqlx::Error> {
     let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
     let rows = sqlx::query!(
-        r#"select t.tournament_id, t.id, t.name, t.seed, t.captain,
+        r#"select t.tournament_id, t.id, t.name, t.seed, t.rating_at_start, t.captain,
                   t.withdrawn_at is not null as "withdrawn!",
                   p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
                   m.left_at is not null as "left!"
@@ -94,6 +96,7 @@ async fn list_in(
             id: r.id,
             name: r.name,
             seed: r.seed,
+            rating_at_start: r.rating_at_start,
             captain: r.captain,
             withdrawn: r.withdrawn,
             user_id: r.user_id,
@@ -134,7 +137,7 @@ pub async fn by_ids(
 ) -> Result<Vec<StoredTeam>, sqlx::Error> {
     let rows = sqlx::query_as!(
         Row,
-        r#"select t.id, t.name, t.seed, t.captain, t.withdrawn_at is not null as "withdrawn!",
+        r#"select t.id, t.name, t.seed, t.rating_at_start, t.captain, t.withdrawn_at is not null as "withdrawn!",
                   p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
                   m.left_at is not null as "left!"
            from teams t
@@ -192,6 +195,44 @@ pub async fn save_seeds(
            where t.tournament_id = $1 and t.id = o.id"#,
         tournament.get(),
         order
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
+/// Grava o rating do início de cada time de `ratings` (id do time e rating em
+/// centésimos), para o menor rating. Só antes de o torneio entrar em
+/// andamento: o banco congela a coluna depois.
+pub async fn save_start_ratings(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    ratings: &[(i64, i32)],
+) -> Result<(), sqlx::Error> {
+    let (ids, values): (Vec<i64>, Vec<i32>) = ratings.iter().copied().unzip();
+    sqlx::query!(
+        r#"update teams t set rating_at_start = r.rating
+           from unnest($2::bigint[], $3::integer[]) as r(id, rating)
+           where t.tournament_id = $1 and t.id = r.id"#,
+        tournament.get(),
+        &ids,
+        &values
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
+/// Apaga o rating do início (desfazer o início), depois de o torneio sair de
+/// andamento.
+pub async fn clear_start_ratings(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "update teams set rating_at_start = null
+         where tournament_id = $1 and rating_at_start is not null",
+        tournament.get()
     )
     .execute(conn)
     .await?;
@@ -309,7 +350,7 @@ pub async fn of_user_in(
     let rows = sqlx::query!(
         r#"select q.id as "tournament_id!",
                   exists(select 1 from teams x where x.tournament_id = q.id) as "formed!",
-                  t.id as "id?", t.name as "name?", t.seed as "seed?", t.captain as "captain?",
+                  t.id as "id?", t.name as "name?", t.seed as "seed?", t.rating_at_start, t.captain as "captain?",
                   t.withdrawn_at is not null as "withdrawn?",
                   p.user_id as "user_id?", m.nickname as "nickname?", coalesce(u.avatar_key, u.avatar_url) as "avatar_url?",
                   m.left_at is not null as "left?"
@@ -338,6 +379,7 @@ pub async fn of_user_in(
             id,
             name: r.name,
             seed: r.seed,
+            rating_at_start: r.rating_at_start,
             captain,
             withdrawn: r.withdrawn.unwrap_or_default(),
             user_id,

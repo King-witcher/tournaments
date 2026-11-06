@@ -1,6 +1,8 @@
 //! Testes da classificação: saldo de séries, pontos, estatísticas, empates e
-//! cada desempate, na ordem padrão. Outras ordens: `tiebreakers.rs`.
+//! cada desempate, na ordem padrão. Outras ordens: `tiebreakers.rs`; o menor
+//! rating: `lower_rating.rs`.
 
+mod lower_rating;
 mod tiebreakers;
 
 use super::*;

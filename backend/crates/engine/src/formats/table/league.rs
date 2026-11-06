@@ -38,23 +38,39 @@ pub(crate) struct League {
     matches: Vec<Match>,
     /// `frags[i]` é da partida `matches[i]`.
     frags: Vec<Option<SeriesFrags>>,
+    /// `ratings[i]` é o rating congelado de `participants[i]`, para o menor
+    /// rating; `None` sem rating.
+    ratings: Vec<Option<i32>>,
     table: Vec<TableRow>,
 }
 
 impl League {
     /// `participants` na ordem dos seeds; `matches` em ordem de id, feitas
-    /// por `pairing` e `rest`.
+    /// por `pairing` e `rest`. Sem ratings (`set_ratings`).
     pub fn new(rules: Rules, participants: Vec<ParticipantId>, matches: Vec<Match>) -> Self {
         debug_assert!(matches.is_sorted_by_key(|m| m.id));
         let frags = vec![None; matches.len()];
-        let table = compute(rules, &participants, &matches, &frags);
+        let ratings = vec![None; participants.len()];
+        let table = compute(rules, &participants, &ratings, &matches, &frags);
         Self {
             rules,
             participants,
             matches,
             frags,
+            ratings,
             table,
         }
+    }
+
+    /// Os ratings congelados, por participante (os de quem não participa
+    /// ficam de fora; quem não aparece fica sem), sem refazer a tabela (o
+    /// `replay` refaz uma vez, no fim, por `refresh`).
+    pub fn set_ratings(&mut self, ratings: &[(ParticipantId, i32)]) {
+        self.ratings = self
+            .participants
+            .iter()
+            .map(|p| ratings.iter().find(|(q, _)| q == p).map(|&(_, r)| r))
+            .collect();
     }
 
     pub fn participants(&self) -> &[ParticipantId] {
@@ -118,7 +134,13 @@ impl League {
 
     /// Refaz a tabela.
     pub fn refresh(&mut self) {
-        self.table = compute(self.rules, &self.participants, &self.matches, &self.frags);
+        self.table = compute(
+            self.rules,
+            &self.participants,
+            &self.ratings,
+            &self.matches,
+            &self.frags,
+        );
     }
 
     pub fn report(&mut self, report: StageReport) -> Result<(), EngineError> {

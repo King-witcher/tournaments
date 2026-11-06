@@ -14,6 +14,9 @@ pub struct StoredTeam {
     /// `None` no duelo e nos times sem nome.
     pub name: Option<String>,
     pub seed: Option<i32>,
+    /// O rating do time congelado no início, em centésimos, para o menor
+    /// rating (`lifecycle`); `None` antes do início e sem esse desempate.
+    pub rating_at_start: Option<i32>,
     /// `user_id` do capitão (um dos `members`).
     pub captain: i64,
     /// Desistiu do torneio em andamento.
@@ -108,6 +111,7 @@ mod tests {
             id: 1,
             name: name.map(Into::into),
             seed: Some(1),
+            rating_at_start: None,
             captain: members[0].user_id,
             withdrawn: false,
             members,

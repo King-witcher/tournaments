@@ -11,11 +11,20 @@ export type TableFormat = Extract<Stage["format"], "round_robin" | "swiss">;
 
 /**
  * O padrão de cada formato, o mesmo do `engine` (`Tiebreakers::ROUND_ROBIN` e
- * `SWISS`). É também a ordem em que os desligados aparecem.
+ * `SWISS`).
  */
 export const DEFAULT_TIEBREAKERS: Record<TableFormat, Tiebreaker[]> = {
   round_robin: ["head_to_head", "map_diff", "frag_diff"],
   swiss: ["buchholz", "head_to_head", "map_diff", "frag_diff"],
+};
+
+/**
+ * Os que cada formato oferece: o padrão e, desligado por padrão, o menor
+ * rating. É a ordem em que os desligados aparecem.
+ */
+const OFFERED_TIEBREAKERS: Record<TableFormat, Tiebreaker[]> = {
+  round_robin: [...DEFAULT_TIEBREAKERS.round_robin, "lower_rating"],
+  swiss: [...DEFAULT_TIEBREAKERS.swiss, "lower_rating"],
 };
 
 export const isTableFormat = (format: Stage["format"]): format is TableFormat =>
@@ -58,13 +67,13 @@ export function countingTiebreakers(
   return list.filter((t) => counts(t, format, bestOf));
 }
 
-/** Os que o formato oferece, que contam e estão desligados, na ordem padrão. */
+/** Os que o formato oferece, que contam e estão desligados, nessa ordem. */
 export function offTiebreakers(
   list: Tiebreaker[],
   format: TableFormat,
   bestOf: number,
 ) {
-  return DEFAULT_TIEBREAKERS[format].filter(
+  return OFFERED_TIEBREAKERS[format].filter(
     (t) => !list.includes(t) && counts(t, format, bestOf),
   );
 }

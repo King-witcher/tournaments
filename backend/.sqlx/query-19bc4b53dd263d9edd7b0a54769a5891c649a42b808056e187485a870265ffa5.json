@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update teams set rating_at_start = null\n         where tournament_id = $1 and rating_at_start is not null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "19bc4b53dd263d9edd7b0a54769a5891c649a42b808056e187485a870265ffa5"
+}

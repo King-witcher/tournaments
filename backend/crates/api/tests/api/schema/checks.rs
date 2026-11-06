@@ -162,6 +162,10 @@ async fn tournaments_keep_state_and_shape() {
             "tournament_stages_tiebreakers",
         ),
         (
+            table("swiss", "'{lower_rating,lower_rating}'"),
+            "tournament_stages_tiebreakers",
+        ),
+        (
             table("swiss", "array['map_diff', null]"),
             "tournament_stages_tiebreakers",
         ),

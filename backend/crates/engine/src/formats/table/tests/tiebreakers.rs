@@ -28,10 +28,13 @@ fn each_tiebreaker_at_most_once_and_only_tiebreakers() {
 
     let invalid = Err(EngineError::InvalidTiebreakers);
     assert_eq!(Tiebreakers::new(&[MapDiff, MapDiff]), invalid);
+    let all = [Buchholz, HeadToHead, MapDiff, FragDiff, LowerRating];
+    assert_eq!(Tiebreakers::new(&all).unwrap().as_slice(), all);
     assert_eq!(
-        Tiebreakers::new(&[Buchholz, HeadToHead, MapDiff, FragDiff, HeadToHead]),
+        Tiebreakers::new(&[all.as_slice(), &[HeadToHead]].concat()),
         invalid
     );
+    assert_eq!(Tiebreakers::new(&[LowerRating, LowerRating]), invalid);
     // O primeiro critério e o seed são fixos.
     for fixed in [Points, SeriesDiff, Seed] {
         assert_eq!(Tiebreakers::new(&[HeadToHead, fixed]), invalid, "{fixed:?}");
