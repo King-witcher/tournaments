@@ -11,7 +11,8 @@ type Props = {
   maps: components["schemas"]["Map"][];
   /** Os slugs escolhidos. */
   pool: string[];
-  disabled: boolean;
+  /** Só os do pool, sem mudar. */
+  readOnly: boolean;
   onToggle: (slug: string, on: boolean) => void;
   /** O `id` do subtítulo dos escolhidos, alvo do foco quando o controle que a pessoa usou some. */
   headingId: string;
@@ -32,7 +33,7 @@ type Props = {
 export function MapPoolGrid({
   maps,
   pool,
-  disabled,
+  readOnly,
   onToggle,
   headingId,
   outHeadingId,
@@ -60,7 +61,7 @@ export function MapPoolGrid({
   return (
     <MapGrid>
       {parts.flatMap((p) => {
-        if (p.maps.length === 0) return [];
+        if (p.maps.length === 0 || (p.key === "out" && readOnly)) return [];
         if (p.key === "out" && !outShown) {
           return [
             <div key={p.key} className={styles.part}>
@@ -80,7 +81,7 @@ export function MapPoolGrid({
               map={m}
               name={m.slug === first ? "mapPool" : undefined}
               checked={p.key === "in"}
-              disabled={disabled}
+              readOnly={readOnly}
               onChange={(on) => onToggle(m.slug, on)}
             />
           )),

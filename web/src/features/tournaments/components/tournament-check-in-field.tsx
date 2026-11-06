@@ -11,8 +11,8 @@ type Props = {
   onChange: (minutes: number | null) => void;
   /** O que a API disse deste campo, já traduzido. */
   error?: string;
-  /** O torneio já começou: não muda mais. */
-  disabled: boolean;
+  /** O torneio já começou: só para leitura. */
+  readOnly: boolean;
   /** TDM: o check-in decide quem entra num time, não na chave. */
   teams?: boolean;
 };
@@ -22,7 +22,7 @@ export function TournamentCheckInField({
   value,
   onChange,
   error,
-  disabled,
+  readOnly,
   teams = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
@@ -42,7 +42,7 @@ export function TournamentCheckInField({
       }
       name="checkInMinutes"
       value={value ?? "off"}
-      disabled={disabled}
+      readOnly={readOnly}
       invalid={error !== undefined}
       invalidText={error}
       onChange={(e) =>

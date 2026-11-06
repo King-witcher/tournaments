@@ -9,7 +9,7 @@ import { hasStarted, isFinished } from "../lib/status";
 type Props = {
   tenant: string;
   tournament: components["schemas"]["Tournament"];
-  /** Organizer ou owner: vê a aba Organização. */
+  /** Organizer ou owner: vê as abas Organização e Configurações. */
   organizer: boolean;
   /** A aba atual. */
   children: ReactNode;
@@ -19,8 +19,8 @@ type Props = {
  * As abas do torneio, uma coisa por aba: Visão geral, Chave (a partir do
  * início), Classificação (no round robin e no suíço, a partir do início; na
  * eliminação, só no fim, quando há colocações), Inscritos, Regras (sempre: o
- * texto que sai do formato vem antes das regras adicionais) e Organização (só
- * para ela). O que não se aplica não entra na lista.
+ * texto que sai do formato vem antes das regras adicionais), Organização e
+ * Configurações (só para ela). O que não se aplica não entra na lista.
  */
 export function TournamentTabs({
   tenant,
@@ -43,7 +43,12 @@ export function TournamentTabs({
       : []),
     { href: `${base}/participants`, label: t("tabs.participants") },
     { href: `${base}/rules`, label: t("tabs.rules") },
-    ...(organizer ? [{ href: `${base}/manage`, label: t("tabs.manage") }] : []),
+    ...(organizer
+      ? [
+          { href: `${base}/manage`, label: t("tabs.manage") },
+          { href: `${base}/settings`, label: t("tabs.settings") },
+        ]
+      : []),
   ];
 
   return (

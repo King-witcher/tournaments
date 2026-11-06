@@ -2,7 +2,6 @@
   "loading": "Cargando el torneo…",
   "loginRequired": "Inicia sesión para ver este torneo.",
   "draftHint": "Solo la organización ve el borrador.",
-  "edit": "Editar",
   "sections": "Secciones del torneo",
   "tabs": {
     "overview": "Resumen",
@@ -10,7 +9,8 @@
     "standings": "Clasificación",
     "participants": "Inscritos",
     "rules": "Reglas",
-    "manage": "Organización"
+    "manage": "Organización",
+    "settings": "Configuración"
   },
   "meta": {
     "bestOf": "Al mejor de {bestOf}",
@@ -224,7 +224,7 @@
     "labelTranslation": "Reglas adicionales ({language}, traducción)"
   },
   "publish": "Publicar y abrir inscripciones",
-  "publishConfirm": "¿Publicar el torneo? Las inscripciones se abren y la comunidad pasa a verlo. Publicado, no vuelve a borrador ni se puede eliminar.",
+  "publishConfirm": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar.",
   "publishBlocked": {
     "past": "La fecha de inicio ya pasó. Cámbiala en Editar para publicar.",
     "window": "El inicio está más cerca que la ventana de check-in. Cambia la fecha en Editar para publicar."

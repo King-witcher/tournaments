@@ -29,8 +29,8 @@ type Props = {
   onChange: (patch: Partial<TournamentValues>) => void;
   /** Os mapas ativos (`GET /maps`), para contar o pool. */
   maps: Schemas["Map"][];
-  /** O torneio já começou: a ordem fica travada. */
-  disabled: boolean;
+  /** O torneio já começou: só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -43,7 +43,7 @@ export const TournamentVetoOrderField = memo(function TournamentVetoOrderField({
   values,
   onChange,
   maps,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm.veto");
   const pool = poolOf(values, maps).length;
@@ -74,7 +74,7 @@ export const TournamentVetoOrderField = memo(function TournamentVetoOrderField({
       options={ORDERS.map((value) => ({ value, label: t(`orders.${value}`) }))}
       onChange={(vetoOrder) => onChange({ vetoOrder })}
       helperText={lines.length > 0 ? lines : undefined}
-      disabled={disabled}
+      readOnly={readOnly}
     />
   );
 }, sameValues(KEYS));

@@ -1,5 +1,6 @@
 {
   "title": "Create tournament",
   "loading": "Loading the form…",
-  "loginRequired": "Log in to create a tournament."
+  "loginRequired": "Log in to create a tournament.",
+  "submit": "Create"
 }

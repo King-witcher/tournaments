@@ -25,7 +25,8 @@ type Props = {
   error: string | undefined;
   /** Os mapas ativos (`GET /maps`). */
   maps: components["schemas"]["Map"][];
-  disabled: boolean;
+  /** O torneio já começou: só os mapas do pool, sem mudar. */
+  readOnly: boolean;
 };
 
 /**
@@ -34,7 +35,8 @@ type Props = {
  * "Usar o pool padrão" aparece quando o pool é outro e volta ao padrão,
  * esquecendo o lembrado. Os mapas de fora começam atrás de um botão (eram
  * dois terços do grupo aberto) e aparecem sozinhos quando o pool não basta
- * ou quando um mapa sai dele, para a caixa usada continuar à vista.
+ * ou quando um mapa sai dele, para a caixa usada continuar à vista. Só para
+ * leitura, só os do pool.
  */
 export function MapPoolField({
   tenant,
@@ -42,7 +44,7 @@ export function MapPoolField({
   onChange,
   error,
   maps,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm.veto");
   const headingId = useId();
@@ -81,7 +83,7 @@ export function MapPoolField({
     <FormGroup legendText={t("mapPool")} invalid={error !== undefined}>
       <div className={styles.hint}>
         <p className={styles.text}>{t("mapPoolHint", { min })}</p>
-        {!isStandard && !disabled && (
+        {!isStandard && !readOnly && (
           <Button kind="ghost" size="sm" onClick={resetToStandard}>
             {t("useDefaultPool")}
           </Button>
@@ -90,7 +92,7 @@ export function MapPoolField({
       <MapPoolGrid
         maps={maps}
         pool={pool}
-        disabled={disabled}
+        readOnly={readOnly}
         onToggle={toggle}
         headingId={headingId}
         outHeadingId={outHeadingId}

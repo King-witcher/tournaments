@@ -29,15 +29,12 @@
   border-color: theme.$layer-selected-inverse;
 }
 
-.disabled {
-  cursor: not-allowed;
+// Só leitura: sem a mão e sem o fundo de hover, que dizem que dá para clicar.
+.readOnly {
+  cursor: default;
 
   &:hover {
     background: theme.$layer;
-  }
-
-  &.selected {
-    border-color: theme.$border-disabled;
   }
 }
 

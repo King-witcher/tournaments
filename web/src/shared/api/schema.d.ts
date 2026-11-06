@@ -1932,16 +1932,12 @@ export interface components {
         ChampionRulesInput: {
             /**
              * Format: int32
-             * @description Padrão 1.
-             * @default 1
+             * @description Ausente: 1.
              * @example 1
              */
-            bans_per_series: number;
-            /**
-             * @description Padrão verdadeiro.
-             * @default true
-             */
-            mirror: boolean;
+            bans_per_series?: number;
+            /** @description Ausente: verdadeiro. */
+            mirror?: boolean;
             no_repeat?: components["schemas"]["NoRepeatRule"] | null;
             /** @description Padrão falso. */
             same_team?: boolean;
@@ -2047,24 +2043,21 @@ export interface components {
              * @description Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
              *     Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
              *     andamento).
-             * @default 30
              * @example 30
              */
-            check_in_minutes: number | null;
+            check_in_minutes?: number | null;
             /**
              * Format: int32
              * @description Minutos que o adversário tem para confirmar ou contestar um resultado
              *     enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 10.
-             * @default 10
              * @example 10
              */
-            contest_minutes: number;
+            contest_minutes?: number;
             /**
              * @description Se os mapas do torneio contam para o rating da comunidade. Ausente:
              *     sim. Muda até o torneio começar.
-             * @default true
              */
-            counts_for_rating: boolean;
+            counts_for_rating?: boolean;
             /** @description Texto simples; as quebras de linha são preservadas. Até 2000 caracteres. */
             description?: string;
             /** @description Idioma original dos textos. Não muda depois. */
@@ -2074,10 +2067,9 @@ export interface components {
              * @description Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
              *     checagem de campeões usa o pior caso com esse número (no TDM, com os
              *     times que ele comporta). Ausente: 16.
-             * @default 16
              * @example 16
              */
-            max_participants: number;
+            max_participants?: number;
             /**
              * @description Duelo ou TDM. Muda até o torneio começar; com inscritos, refaz os
              *     times (no duelo, cada um num time de um; no TDM, todos sem time).

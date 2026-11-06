@@ -1,9 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
-import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
-import { getScreenshotSettings } from "@/features/screenshots/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { PageError } from "@/shared/ui/page-error";
@@ -17,36 +15,36 @@ type Props = {
 };
 
 /**
- * Criar torneio na comunidade, para organizer e owner: o cabeçalho com a
- * trilha e o formulário, que começa da cópia de `from` quando ele existe na
- * comunidade (senão, do padrão). Lê a sessão, então fica em `<Suspense>`.
+ * Criar torneio na comunidade numa página, para organizer e owner (o link
+ * direto; na comunidade, a criação é o Modal do "Novo torneio"): o cabeçalho
+ * com a trilha e o formulário curto, que começa da cópia de `from` quando ele
+ * existe na comunidade (senão, do padrão). Lê a sessão, então fica em
+ * `<Suspense>`.
  */
 export async function NewTournamentView({ tenant, from }: Props) {
   const api = await serverApi();
-  const [t, tNav, images, screenshots, result, tournaments, source] =
-    await Promise.all([
-      getTranslations("NewTournament"),
-      getTranslations("Nav"),
-      getImageSettings(),
-      getScreenshotSettings(),
-      api
-        .GET("/tenants/{slug}", { params: { path: { slug: tenant } } })
-        .catch(() => undefined),
-      api
-        .GET("/tenants/{slug}/tournaments", {
-          params: { path: { slug: tenant } },
-        })
-        .then(({ data }) => data ?? [])
-        .catch(() => []),
-      from
-        ? api
-            .GET("/tenants/{slug}/tournaments/{tournament}", {
-              params: { path: { slug: tenant, tournament: from } },
-            })
-            .then(({ data }) => data)
-            .catch(() => undefined)
-        : undefined,
-    ]);
+  const [t, tNav, maps, result, tournaments, source] = await Promise.all([
+    getTranslations("NewTournament"),
+    getTranslations("Nav"),
+    loadMaps(),
+    api
+      .GET("/tenants/{slug}", { params: { path: { slug: tenant } } })
+      .catch(() => undefined),
+    api
+      .GET("/tenants/{slug}/tournaments", {
+        params: { path: { slug: tenant } },
+      })
+      .then(({ data }) => data ?? [])
+      .catch(() => []),
+    from
+      ? api
+          .GET("/tenants/{slug}/tournaments/{tournament}", {
+            params: { path: { slug: tenant, tournament: from } },
+          })
+          .then(({ data }) => data)
+          .catch(() => undefined)
+      : undefined,
+  ]);
 
   if (result?.response.status === 401) {
     return (
@@ -84,11 +82,9 @@ export async function NewTournamentView({ tenant, from }: Props) {
       ) : (
         <NewTournamentForm
           tenant={tenant}
-          maps={await loadMaps()}
+          maps={maps}
           tournaments={tournaments}
           source={source}
-          images={images}
-          screenshots={screenshots?.enabled ?? false}
         />
       )}
     </>

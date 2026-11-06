@@ -1,5 +1,5 @@
 import { useLocale, useTranslations } from "next-intl";
-import { memo, useId, useState } from "react";
+import { memo, useState } from "react";
 
 import { useIsClient } from "@/shared/hooks/use-is-client";
 import { slugChars } from "@/shared/lib/input-filters";
@@ -8,7 +8,6 @@ import { TextInput } from "@/shared/ui/text-input";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
-import styles from "./tournament-identity-fields.module.scss";
 
 /** Os campos do formulário que o bloco lê. */
 const KEYS = ["name", "slug", "locale"] as const;
@@ -20,17 +19,15 @@ type Props = {
   errors: FieldErrors;
   /** Na criação, o endereço acompanha o nome até a pessoa editá-lo. */
   isNew: boolean;
-  /** Já publicado: o endereço aparece travado, com o motivo embaixo. */
-  slugLocked?: boolean;
+  /** Já publicado: o endereço só para leitura (o motivo vem antes, no `Callout` da seção). */
+  slugReadOnly?: boolean;
 };
 
 /**
  * O nome no idioma original e o endereço com a prévia do link. Na criação, o
  * erro do endereço aparece quando a pessoa sai do nome: um nome curto ("Q")
  * deixava os botões desabilitados sem o motivo à vista. Depois de publicar, o
- * campo fica desabilitado, para quem procura como mudar ver que não muda; o
- * motivo fica numa linha à parte, porque a dica de um campo desabilitado sai no
- * cinza do Carbon, sem o contraste de um texto para ler.
+ * endereço fica só para leitura, para quem procura como mudar ver que não muda.
  */
 export const TournamentIdentityFields = memo(function TournamentIdentityFields({
   tenant,
@@ -38,12 +35,11 @@ export const TournamentIdentityFields = memo(function TournamentIdentityFields({
   onChange,
   errors,
   isNew,
-  slugLocked = false,
+  slugReadOnly = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const locale = useLocale();
   const isClient = useIsClient();
-  const noteId = useId();
   const [slugEdited, setSlugEdited] = useState(false);
   const [nameLeft, setNameLeft] = useState(false);
   // O domínio só no navegador: o servidor não sabe por qual endereço entraram.
@@ -69,19 +65,13 @@ export const TournamentIdentityFields = memo(function TournamentIdentityFields({
           })
         }
       />
-      {slugLocked ? (
-        <div>
-          <TextInput
-            labelText={t("slug")}
-            name="slug"
-            disabled
-            value={values.slug}
-            aria-describedby={noteId}
-          />
-          <p id={noteId} className={styles.note}>
-            {t("slugLocked")}
-          </p>
-        </div>
+      {slugReadOnly ? (
+        <TextInput
+          labelText={t("slug")}
+          name="slug"
+          readOnly
+          value={values.slug}
+        />
       ) : (
         <TextInput
           labelText={t("slug")}

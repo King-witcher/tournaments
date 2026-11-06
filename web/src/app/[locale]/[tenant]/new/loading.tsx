@@ -1,14 +1,15 @@
 import { getTranslations } from "next-intl/server";
 
-import { TournamentFormSkeleton } from "@/features/tournaments/components/tournament-form-skeleton";
 import { Page } from "@/shared/ui/page";
+import { FormSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
 
-/** Criar torneio carregando, na forma da página: a trilha, o título e o formulário. */
+/** Criar torneio carregando: a trilha, o título e os quatro campos. */
 export default async function Loading() {
   const t = await getTranslations("NewTournament");
   return (
     <Page>
-      <TournamentFormSkeleton label={t("loading")} />
+      <PageHeaderSkeleton label={t("loading")} />
+      <FormSkeleton fields={4} label={false} />
     </Page>
   );
 }

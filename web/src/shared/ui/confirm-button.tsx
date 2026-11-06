@@ -25,6 +25,8 @@ type Props = {
   size?: ButtonSize;
   renderIcon?: CarbonIconType;
   className?: string;
+  /** O que vai valer, para conferir antes de confirmar (`ConfirmModal`, mais largo). */
+  details?: ReactNode;
 };
 
 /**
@@ -46,6 +48,7 @@ export function ConfirmButton({
   size = "sm",
   renderIcon,
   className,
+  details,
 }: Props) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -81,6 +84,7 @@ export function ConfirmButton({
         confirmLabel={children}
         destructive={destructive}
         slug={confirmSlug}
+        details={details}
       >
         {question}
       </ConfirmModal>

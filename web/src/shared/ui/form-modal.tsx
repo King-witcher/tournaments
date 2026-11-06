@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { ReactNode, RefObject } from "react";
+import type { ReactNode, Ref, RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { useReturnFocus } from "@/shared/hooks/use-return-focus";
@@ -37,6 +37,8 @@ type Props = {
   error?: ReactNode;
   /** O botão que abriu, se o navegador não der foco a ele no clique; sem isso, quem tinha o foco. */
   returnFocusTo?: RefObject<HTMLElement | null>;
+  /** O `<form>` de dentro, para o `useFormValidity` de quem abre. */
+  formRef?: Ref<HTMLFormElement>;
 };
 
 /**
@@ -64,6 +66,7 @@ function OpenFormModal({
   destructive,
   error,
   returnFocusTo,
+  formRef,
 }: Props) {
   const t = useTranslations("Common");
   const prefix = usePrefix();
@@ -89,6 +92,7 @@ function OpenFormModal({
       <ModalHeader title={title} iconDescription={t("close")} />
       <ModalBody>
         <form
+          ref={formRef}
           onSubmit={(event) => {
             event.preventDefault();
             submit();

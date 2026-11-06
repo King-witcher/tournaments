@@ -15,8 +15,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: não muda mais. */
-  disabled: boolean;
+  /** O torneio já começou: só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -29,7 +29,7 @@ export const TournamentSlotsField = memo(function TournamentSlotsField({
   values,
   onChange,
   errors,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const errorMessage = useApiErrorMessage();
@@ -49,13 +49,13 @@ export const TournamentSlotsField = memo(function TournamentSlotsField({
       labelText={t(tdm ? "maxParticipantsTdm" : "maxParticipants")}
       helperText={hint}
       name="maxParticipants"
-      required
+      required={!readOnly}
       allowEmpty
       disableWheel
       min={limits.min}
       max={limits.max}
       value={slots}
-      disabled={disabled}
+      readOnly={readOnly}
       invalid={error !== undefined}
       // Fora dos limites o próprio campo fica inválido, com o texto da API.
       invalidText={

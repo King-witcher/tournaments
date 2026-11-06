@@ -30,7 +30,8 @@ const nextConfig: NextConfig = {
   // continuam levando a algum lugar: o link de antes vale menos que o pedido
   // novo, e a página diz que ele expirou (a query e o `#token` vão junto, sem uso).
   // A aba Sobre da comunidade saiu (a descrição ficou no cabeçalho): o endereço
-  // antigo leva à página dela. Sem idioma, o proxy acrescenta o prefixo e cai aqui.
+  // antigo leva à página dela. Editar torneio virou a aba Configurações. Sem
+  // idioma, o proxy acrescenta o prefixo e cai aqui.
   async redirects() {
     return [
       {
@@ -46,6 +47,11 @@ const nextConfig: NextConfig = {
       {
         source: "/:locale(pt|es|en)/:tenant/about",
         destination: "/:locale/:tenant",
+        permanent: false,
+      },
+      {
+        source: "/:locale(pt|es|en)/:tenant/:tournament/edit",
+        destination: "/:locale/:tenant/:tournament/settings",
         permanent: false,
       },
     ];

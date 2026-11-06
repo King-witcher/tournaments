@@ -9,13 +9,16 @@ import { Notice } from "./notice";
 export function FormError({
   children,
   title,
+  action,
 }: {
   children: ReactNode;
   /** Resumo curto em negrito antes do texto. */
   title?: string;
+  /** O que a pessoa pode fazer a respeito, embaixo do aviso (um `Button kind="ghost"`). */
+  action?: ReactNode;
 }) {
   return (
-    <Notice kind="error" title={title}>
+    <Notice kind="error" title={title} action={action}>
       {children}
     </Notice>
   );

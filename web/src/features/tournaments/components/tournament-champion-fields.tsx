@@ -45,8 +45,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: tudo aqui fica travado. */
-  disabled: boolean;
+  /** O torneio já começou: tudo aqui só para leitura. */
+  readOnly: boolean;
   /** As escolhas de não repetição, fora do torneio (a sala de veto só tem a da série). */
   repeatChoices?: NoRepeatChoice[];
 };
@@ -64,7 +64,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
   values,
   onChange,
   errors,
-  disabled,
+  readOnly,
   repeatChoices,
 }: Props) {
   const t = useTranslations("TournamentForm.championRules");
@@ -78,7 +78,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
         name="championPhase"
         orientation="horizontal"
         value={values.championPhase ? "site" : "off"}
-        disabled={disabled}
+        readOnly={readOnly}
         options={(["site", "off"] as const).map((value) => ({
           value,
           label: t(`phaseOptions.${value}`),
@@ -90,7 +90,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
         helperText={t("bansHint")}
         name="bansPerSeries"
         value={values.bansPerSeries}
-        disabled={disabled}
+        readOnly={readOnly}
         invalid={errors.bansPerSeries !== undefined}
         invalidText={errors.bansPerSeries}
         onChange={(e) => onChange({ bansPerSeries: Number(e.target.value) })}
@@ -110,7 +110,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
             .join(" ")}
           name="pickOrder"
           value={values.pickOrder}
-          disabled={disabled}
+          readOnly={readOnly}
           invalid={errors.pickOrder !== undefined}
           invalidText={errors.pickOrder}
           onChange={(e) =>
@@ -135,7 +135,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           helperText={values.mirror ? undefined : t("mirrorOff")}
           name="mirror"
           checked={values.mirror}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(mirror) =>
             onChange(
               !mirror && values.pickOrder === "blind"
@@ -149,7 +149,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
             labelText={t("sameTeam")}
             name="sameTeam"
             checked={values.sameTeam}
-            disabled={disabled}
+            readOnly={readOnly}
             onChange={(sameTeam) => onChange({ sameTeam })}
           />
         )}
@@ -165,7 +165,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
         }
         name="noRepeat"
         value={values.noRepeat}
-        disabled={disabled}
+        readOnly={readOnly}
         invalid={errors.noRepeat !== undefined}
         invalidText={errors.noRepeat}
         onChange={(e) =>
@@ -187,7 +187,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           name="noRepeatWho"
           orientation="horizontal"
           value={values.noRepeatWho}
-          disabled={disabled}
+          readOnly={readOnly}
           options={WHO.map((value) => ({
             value,
             label: t(`whoOptions.${value}`),
@@ -203,7 +203,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           options={STEP_SECONDS}
           value={values.vetoSeconds}
           error={errors.vetoSeconds}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(vetoSeconds) => onChange({ vetoSeconds })}
         />
       )}
@@ -215,7 +215,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           options={TEAM_PICK_SECONDS}
           value={values.teamPickSeconds}
           error={errors.teamPickSeconds}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(teamPickSeconds) => onChange({ teamPickSeconds })}
         />
       )}

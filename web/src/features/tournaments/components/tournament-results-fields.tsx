@@ -12,8 +12,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** Encerrado: nem a janela de contestação nem a captura de tela obrigatória mudam. */
-  finished: boolean;
+  /** Encerrado: a janela de contestação e a captura de tela só para leitura. */
+  readOnly: boolean;
   /** Se esta API tem capturas de tela. */
   screenshots: boolean;
 };
@@ -27,7 +27,7 @@ export const TournamentResultsFields = memo(function TournamentResultsFields({
   values,
   onChange,
   errors,
-  finished,
+  readOnly,
   screenshots,
 }: Props) {
   return (
@@ -36,13 +36,13 @@ export const TournamentResultsFields = memo(function TournamentResultsFields({
         value={values.contestMinutes}
         onChange={(contestMinutes) => onChange({ contestMinutes })}
         error={errors.contestMinutes}
-        disabled={finished}
+        readOnly={readOnly}
       />
       {screenshots && (
         <ScreenshotsRequiredField
           checked={values.screenshotsRequired}
           onChange={(screenshotsRequired) => onChange({ screenshotsRequired })}
-          disabled={finished}
+          readOnly={readOnly}
         />
       )}
     </>

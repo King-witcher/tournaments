@@ -89,6 +89,18 @@ export const ModalOpenSlug: Story = {
   play: ModalOpen.play,
 };
 
+/** Com `details`, o Modal mais largo mostra o que vai valer (a revisão antes de publicar). */
+export const ModalOpenDetails: Story = {
+  args: {
+    destructive: false,
+    children: "Publicar e abrir inscrições",
+    question: "As inscrições abrem e a comunidade passa a ver o torneio.",
+    details: <p>Duelo · 16 vagas · Eliminação dupla · Veto de mapas</p>,
+  },
+  parameters: ModalOpen.parameters,
+  play: ModalOpen.play,
+};
+
 /** Os gatilhos de cada tipo e estado, para comparar. */
 export const Triggers: Story = {
   render: (args) => (

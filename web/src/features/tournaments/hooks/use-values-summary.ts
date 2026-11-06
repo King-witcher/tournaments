@@ -15,14 +15,11 @@ import { countingTiebreakers, isTableFormat } from "../lib/tiebreakers";
 import { useFormatSeconds } from "./use-format-seconds";
 import { useModeLabel } from "./use-mode-label";
 
-/** Caracteres das regras adicionais no título do grupo fechado: uma linha no celular. */
-const RULES_PREVIEW = 40;
-
 /**
- * O resumo dos valores do formulário, uma linha por grupo: o que aparece no
- * título dos grupos fechados e na revisão antes de publicar (e, a partir de
- * um torneio salvo, no resumo do formato da página dele). Usa os mesmos
- * textos do resumo do formato na página do torneio.
+ * O resumo dos valores de um torneio, uma linha por grupo: na revisão antes
+ * de publicar, no resumo do formato da página dele e no título dos grupos
+ * fechados da sala de veto. Usa os mesmos textos do resumo do formato na
+ * página do torneio.
  */
 export function useValuesSummary() {
   const t = useTranslations("TournamentForm.summary");
@@ -96,20 +93,6 @@ export function useValuesSummary() {
           ? t("noCheckIn")
           : t("checkIn", { window: formatMinutes(v.checkInMinutes) }),
       ]),
-    /** A primeira linha das regras adicionais, cortada, ou "Nenhuma". */
-    rules: (v: TournamentValues) => {
-      const first = v.rules
-        .split("\n")
-        .map((l) => l.trim())
-        .find(Boolean);
-      if (!first) return t("noRules");
-      return first.length > RULES_PREVIEW
-        ? `${first.slice(0, RULES_PREVIEW).trimEnd()}…`
-        : first;
-    },
-    /** Os idiomas com tradução, ou "Nenhum". */
-    languages: (enabled: string[]) =>
-      enabled.length === 0 ? t("noLanguages") : line(enabled),
     /** `screenshots`: a API tem capturas de tela; sem elas, o campo não aparece e o valor não conta. */
     results: (v: TournamentValues, screenshots: boolean) =>
       line([

@@ -86,8 +86,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: tudo aqui fica travado. */
-  disabled: boolean;
+  /** O torneio já começou: tudo aqui só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -100,7 +100,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
   values,
   onChange,
   errors,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const choice = choiceOf(values);
@@ -131,7 +131,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
         name="stageFormat"
         orientation="horizontal"
         value={choice}
-        disabled={disabled}
+        readOnly={readOnly}
         options={CHOICES.map((value) => ({
           value,
           label: t(`stageFormats.${value}`),
@@ -144,7 +144,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           helperText={t("grandFinalResetHint")}
           name="grandFinalReset"
           checked={values.grandFinalReset}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(grandFinalReset) => onChange({ grandFinalReset })}
         />
       )}
@@ -158,7 +158,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           }
           name="bestOf"
           value={values.bestOf}
-          disabled={disabled}
+          readOnly={readOnly}
           invalid={errors.bestOf !== undefined}
           invalidText={errors.bestOf}
           onChange={(e) => onChange({ bestOf: Number(e.target.value) })}
@@ -170,7 +170,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             labelText={t(`finalsBestOf.${values.bracket}`)}
             name="finalsBestOf"
             value={values.finalsBestOf}
-            disabled={disabled}
+            readOnly={readOnly}
             onChange={(e) => onChange({ finalsBestOf: Number(e.target.value) })}
           >
             {items(BEST_OF)}
@@ -182,7 +182,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             helperText={t(tdm ? "swissRoundsHintTdm" : "swissRoundsHint")}
             name="swissRounds"
             value={values.swissRounds ?? "auto"}
-            disabled={disabled}
+            readOnly={readOnly}
             invalid={errors.swissRounds !== undefined}
             invalidText={errors.swissRounds}
             onChange={(e) =>
@@ -211,7 +211,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
         helperText={t("countsForRatingHint")}
         name="countsForRating"
         checked={values.countsForRating}
-        disabled={disabled}
+        readOnly={readOnly}
         onChange={(countsForRating) => onChange({ countsForRating })}
       />
     </>

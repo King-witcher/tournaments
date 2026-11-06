@@ -15,6 +15,8 @@ type Props = {
   id?: string;
   /** Nível do título: 2 (padrão) ou 3, para a seção dentro de outra (`DangerZone`). */
   level?: 2 | 3;
+  /** O título recebe o foco por script (`tabIndex={-1}`): o alvo de um "Ir para". */
+  focusable?: boolean;
 };
 
 /**
@@ -28,6 +30,7 @@ export function Section({
   children,
   id,
   level = 2,
+  focusable = false,
 }: Props) {
   const Heading = level === 3 ? "h3" : "h2";
   const generated = useId();
@@ -38,6 +41,7 @@ export function Section({
         <div className={styles.header}>
           <Heading
             id={headingId}
+            tabIndex={focusable ? -1 : undefined}
             className={level === 3 ? styles.subtitle : styles.title}
           >
             {title}

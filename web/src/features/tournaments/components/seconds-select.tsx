@@ -11,7 +11,8 @@ type Props = {
   options: number[];
   value: number;
   error?: string;
-  disabled: boolean;
+  /** O torneio já começou: só para leitura. */
+  readOnly: boolean;
   onChange: (seconds: number) => void;
 };
 

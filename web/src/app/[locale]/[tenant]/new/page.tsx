@@ -2,8 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { NewTournamentView } from "@/features/tournaments/components/new-tournament-view";
-import { TournamentFormSkeleton } from "@/features/tournaments/components/tournament-form-skeleton";
 import { Page } from "@/shared/ui/page";
+import { FormSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
 
 export default async function NewTournamentPage({
   params,
@@ -12,7 +12,14 @@ export default async function NewTournamentPage({
   const t = await getTranslations("NewTournament");
   return (
     <Page>
-      <Suspense fallback={<TournamentFormSkeleton label={t("loading")} />}>
+      <Suspense
+        fallback={
+          <>
+            <PageHeaderSkeleton label={t("loading")} />
+            <FormSkeleton fields={4} label={false} />
+          </>
+        }
+      >
         {Promise.all([params, searchParams]).then(([{ tenant }, { from }]) => (
           <NewTournamentView
             tenant={tenant}

@@ -4,17 +4,13 @@ import type { ReactNode } from "react";
 import type { components } from "@/shared/api/schema";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StructuredList } from "@/shared/ui/structured-list";
-import type { TournamentFormState } from "../hooks/use-tournament-form";
 import { useValuesSummary } from "../hooks/use-values-summary";
-import { isTdm } from "../lib/form-values";
+import { isTdm, valuesFrom } from "../lib/form-values";
 import { isTableFormat } from "../lib/tiebreakers";
 
 type Props = {
-  form: TournamentFormState;
-  /** Os mapas ativos, para contar o pool padrão. */
-  maps: components["schemas"]["Map"][];
-  /** Se esta API tem capturas de tela. */
-  screenshots: boolean;
+  /** O rascunho como está salvo. */
+  tournament: components["schemas"]["Tournament"];
 };
 
 type Row =
@@ -30,18 +26,19 @@ type Row =
   | "languages";
 
 /**
- * O que vai ser publicado, para conferir antes de "Criar": nome, início,
+ * O que vai ser publicado, para conferir antes de "Publicar": nome, início,
  * formato, desempate (só nas fases de tabela), quem age pelo time (só nos
- * times), inscrições, mapas, campeões, resultados e idiomas.
+ * times), inscrições, mapas, campeões, resultados e idiomas, da configuração
+ * salva do rascunho.
  */
-export function TournamentReview({ form, maps, screenshots }: Props) {
+export function TournamentReview({ tournament }: Props) {
   const t = useTranslations("TournamentForm.review");
   const tLocales = useTranslations("Locales");
   const summary = useValuesSummary();
-  const { values } = form;
+  const values = valuesFrom(tournament);
   const languages = [
-    form.original,
-    ...form.others.filter((l) => form.translationOf(l).enabled),
+    tournament.locale,
+    ...tournament.translations.map((x) => x.locale),
   ];
   const rows: [Row, ReactNode][] = [
     ["name", values.name],
@@ -61,9 +58,11 @@ export function TournamentReview({ form, maps, screenshots }: Props) {
       ? ([["teamRules", summary.teamRules(values)]] as [Row, ReactNode][])
       : []),
     ["registration", summary.registration(values)],
-    ["veto", summary.veto(values, maps)],
+    // O pool salvo é sempre uma lista: os mapas ativos não fazem falta.
+    ["veto", summary.veto(values, [])],
     ["champions", summary.champions(values)],
-    ["results", summary.results(values, screenshots)],
+    // A captura obrigatória só liga com capturas na API.
+    ["results", summary.results(values, true)],
     ["languages", languages.map((l) => tLocales(l)).join(", ")],
   ];
 

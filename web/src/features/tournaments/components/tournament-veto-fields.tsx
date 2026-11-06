@@ -45,8 +45,8 @@ type Props = {
   errors: FieldErrors;
   /** Os mapas ativos (`GET /maps`), para escolher o pool. */
   maps: Schemas["Map"][];
-  /** O torneio já começou: tudo aqui fica travado. */
-  disabled: boolean;
+  /** O torneio já começou: tudo aqui só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -60,7 +60,7 @@ type Props = {
 export const TournamentVetoFields = memo(function TournamentVetoFields(
   props: Props,
 ) {
-  const { tenant, values, onChange, errors, maps, disabled } = props;
+  const { tenant, values, onChange, errors, maps, readOnly } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
   const evenVeto = values.mapMode === "veto" && isEvenSeries(values.bestOf);
@@ -82,7 +82,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
         }
         name="mapMode"
         value={values.mapMode}
-        disabled={disabled}
+        readOnly={readOnly}
         onChange={(e) =>
           onChange({ mapMode: e.target.value as Schemas["MapMode"] })
         }
@@ -96,7 +96,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           values={values}
           onChange={onChange}
           maps={maps}
-          disabled={disabled}
+          readOnly={readOnly}
         />
       )}
       {values.mapMode !== "off" && (
@@ -106,7 +106,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           onChange={onChange}
           error={errors.mapPool}
           maps={maps}
-          disabled={disabled}
+          readOnly={readOnly}
         />
       )}
       {stepSecondsGroup(values) === "maps" && (
@@ -119,7 +119,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           options={STEP_SECONDS}
           value={values.vetoSeconds}
           error={errors.vetoSeconds}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(vetoSeconds) => onChange({ vetoSeconds })}
         />
       )}

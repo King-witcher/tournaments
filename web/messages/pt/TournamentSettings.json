@@ -1,0 +1,22 @@
+{
+  "loading": "Carregando as configurações…",
+  "sections": {
+    "general": "Geral",
+    "format": "Formato",
+    "teams": "Times",
+    "maps": "Mapas",
+    "champions": "Campeões",
+    "registration": "Inscrições e prazos",
+    "results": "Resultados",
+    "languages": "Outros idiomas"
+  },
+  "locks": {
+    "slug": "O endereço não muda depois de publicar.",
+    "started": "O torneio já começou.",
+    "finished": "O torneio encerrou.",
+    "schedule": "O torneio já começou. Início e check-in não mudam mais.",
+    "rules": "O torneio encerrou. As regras não mudam mais."
+  },
+  "goTo": "Ir para {section}",
+  "saved": "Salvo."
+}

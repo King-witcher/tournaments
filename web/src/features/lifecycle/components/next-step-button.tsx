@@ -32,7 +32,7 @@ export function NextStepButton({ tenant, tournament, now, kind }: Props) {
     return (
       <PublishTournamentButton
         tenant={tenant}
-        slug={slug}
+        tournament={tournament}
         kind={kind}
         startBehind={
           startTiming(

@@ -1,9 +1,6 @@
-import { useTranslations } from "next-intl";
-
 import { NextStepButton } from "@/features/lifecycle/components/next-step-button";
 import { ParticipationAction } from "@/features/participants/components/participation-action";
 import type { components } from "@/shared/api/schema";
-import { ButtonLink } from "@/shared/ui/button-link";
 
 type Props = {
   tenant: string;
@@ -16,9 +13,9 @@ type Props = {
 
 /**
  * As ações do cabeçalho, com o primário à direita: para quem joga,
- * inscrever-se ou fazer o check-in; para a organização, "Editar" (encerrado o
- * torneio, ainda para corrigir o nome e a descrição) e o próximo passo do
- * ciclo, com a inscrição e o check-in dela mesma como terciários.
+ * inscrever-se ou fazer o check-in; para a organização, o próximo passo do
+ * ciclo, com a inscrição e o check-in dela mesma como terciários. Editar é a
+ * aba Configurações.
  */
 export function TournamentActions({
   tenant,
@@ -26,17 +23,8 @@ export function TournamentActions({
   organizer,
   now,
 }: Props) {
-  const t = useTranslations("Tournament");
   return (
     <>
-      {organizer && (
-        <ButtonLink
-          href={`/${tenant}/${tournament.slug}/edit`}
-          kind="secondary"
-        >
-          {t("edit")}
-        </ButtonLink>
-      )}
       <ParticipationAction
         tenant={tenant}
         tournament={tournament}

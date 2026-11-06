@@ -4,16 +4,19 @@ import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
+import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
 import type { ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
+import { TournamentReview } from "./tournament-review";
 
 type Props = {
   tenant: string;
-  slug: string;
+  /** O rascunho, como está salvo: a revisão sai dele. */
+  tournament: components["schemas"]["Tournament"];
   /**
    * `primary` no cabeçalho, onde o motivo vira a dica do botão; `secondary`
    * na aba Organização, onde ele fica escrito embaixo.
@@ -27,12 +30,13 @@ type Props = {
 };
 
 /**
- * Rascunho → inscrição, com confirmação: publicado, o torneio não volta a
- * rascunho nem pode ser excluído. A API confere os campeões e a data de novo.
+ * Rascunho → inscrição. A confirmação mostra a revisão do que vai valer (a
+ * configuração salva) e diz que publicado o torneio não volta a rascunho nem
+ * pode ser excluído. A API confere os campeões e a data de novo.
  */
 export function PublishTournamentButton({
   tenant,
-  slug,
+  tournament,
   kind = "primary",
   startBehind,
 }: Props) {
@@ -54,11 +58,14 @@ export function PublishTournamentButton({
         pending={pending}
         disabled={startBehind !== undefined}
         question={t("publishConfirm")}
+        details={<TournamentReview tournament={tournament} />}
         onConfirm={() => {
           run(
             () =>
               api.POST("/tenants/{slug}/tournaments/{tournament}/publish", {
-                params: { path: { slug: tenant, tournament: slug } },
+                params: {
+                  path: { slug: tenant, tournament: tournament.slug },
+                },
               }),
             () => {
               router.refresh();

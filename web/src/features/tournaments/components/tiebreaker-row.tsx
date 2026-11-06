@@ -26,8 +26,8 @@ type Props = {
   tiebreaker: Tiebreaker;
   /** A posição entre os ligados (1 é o primeiro); ausente no desligado. */
   position?: number;
-  /** O torneio já começou: nada muda. */
-  disabled: boolean;
+  /** O torneio já começou: a linha sem as ações. */
+  readOnly: boolean;
   /** Ausente no primeiro ligado e nos desligados. */
   onUp?: () => void;
   /** Ausente no último ligado e nos desligados. */
@@ -52,7 +52,7 @@ type Props = {
 export function TiebreakerRow({
   tiebreaker,
   position,
-  disabled,
+  readOnly,
   onUp,
   onDown,
   onOff,
@@ -80,12 +80,12 @@ export function TiebreakerRow({
   return (
     <ContainedListItem
       action={
-        on ? (
+        readOnly ? undefined : on ? (
           <>
             <IconButton
               ref={up}
               label={t("up", { name })}
-              disabled={disabled || !onUp}
+              disabled={!onUp}
               onClick={onUp}
             >
               <ArrowUp />
@@ -93,27 +93,17 @@ export function TiebreakerRow({
             <IconButton
               ref={down}
               label={t("down", { name })}
-              disabled={disabled || !onDown}
+              disabled={!onDown}
               onClick={onDown}
             >
               <ArrowDown />
             </IconButton>
-            <IconButton
-              ref={off}
-              label={t("off", { name })}
-              disabled={disabled}
-              onClick={onOff}
-            >
+            <IconButton ref={off} label={t("off", { name })} onClick={onOff}>
               <Close />
             </IconButton>
           </>
         ) : (
-          <IconButton
-            ref={add}
-            label={t("on", { name })}
-            disabled={disabled}
-            onClick={onOn}
-          >
+          <IconButton ref={add} label={t("on", { name })} onClick={onOn}>
             <Add />
           </IconButton>
         )

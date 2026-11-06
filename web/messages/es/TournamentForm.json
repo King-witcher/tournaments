@@ -1,15 +1,12 @@
 {
-  "tournament": "Torneo",
   "name": "Nombre",
   "slug": "Dirección",
   "slugHint": "El enlace del torneo será {address}. No cambia después de publicar.",
-  "slugLocked": "La dirección no cambia después de publicar. Solo cambia el nombre.",
   "slugConfirm": {
     "title": "Cambiar dirección",
     "submit": "Guardar y cambiar dirección",
     "text": "El borrador pasa a {address}. Los enlaces guardados con {old} dejan de funcionar. Otro torneo puede tomar esa dirección. Los enlaces de inscripción siguen valiendo."
   },
-  "finishedLocked": "El torneo terminó. Solo el nombre, la descripción y la portada todavía cambian.",
   "slugInvalid": "No puede terminar con guion.",
   "slugPlaceholder": "tu-torneo",
   "startsAt": "Inicio",
@@ -18,8 +15,6 @@
     "past": "La fecha de inicio ya pasó.",
     "soon": "Usa un inicio a partir de {from}, para que el check-in abra antes."
   },
-  "format": "Formato",
-  "formatLocked": "El torneo ya empezó. El formato, los cupos, los mapas y los campeones ya no cambian.",
   "mode": "Modalidad",
   "teamSize": "Tamaño del equipo",
   "teamSizeOption": "{size}v{size}",
@@ -38,9 +33,6 @@
   "bestOfOption": "Al mejor de {count}",
   "bestOfEvenHint": "Esta serie puede empatar. Quien gana {wins} partidas se lleva la serie.",
   "champions": "Campeones",
-  "registration": "Inscripciones y plazos",
-  "registrationLocked": "El torneo ya empezó. El inicio y el check-in ya no cambian.",
-  "results": "Resultados",
   "countsForRating": "Modifica el rating",
   "countsForRatingHint": "Cada partida actualiza el rating de los jugadores.",
   "maxParticipants": "Cupos",
@@ -74,9 +66,7 @@
     },
     "seconds": "{time} por paso",
     "teamPick": "{time} para elegir los campeones",
-    "screenshotsRequired": "captura de pantalla obligatoria",
-    "noRules": "Ninguna",
-    "noLanguages": "Ninguno"
+    "screenshotsRequired": "captura de pantalla obligatoria"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -85,19 +75,12 @@
   },
   "description": "Descripción",
   "rules": "Reglas adicionales",
-  "rulesHint": "La pestaña Reglas ya explica el formato, el check-in y los resultados. Escribe aquí el resto, como conducta y caída de conexión.",
-  "otherLanguages": "Otros idiomas",
-  "translationOff": "El nombre, la descripción y las reglas de arriba están en {original}. Quien usa el sitio en {language} los ve así.",
+  "translationOff": "El nombre, la descripción y las reglas están en {original}. Quien usa el sitio en {language} los ve así.",
   "translationHint": "Si la descripción o las reglas quedan vacías, se muestran las del original.",
   "addLanguage": "Agregar {language}",
   "removeLanguage": "Quitar {language}",
   "willDelete": "La traducción guardada se va a borrar cuando guardes. Para conservarla, agrega el idioma de nuevo antes de guardar.",
-  "create": "Crear y publicar",
-  "createDraft": "Crear como borrador",
   "review": {
-    "title": "Crear y publicar",
-    "question": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar.",
-    "confirm": "Crear y publicar",
     "label": "Resumen del torneo",
     "labels": {
       "name": "Nombre",
@@ -112,18 +95,6 @@
       "tiebreakers": "Desempate"
     },
     "noDate": "Sin fecha"
-  },
-  "tabs": {
-    "label": "Partes del torneo",
-    "general": "General",
-    "format": "Formato",
-    "registration": "Inscripciones y plazos",
-    "results": "Resultados"
-  },
-  "edit": {
-    "title": "Editar torneo",
-    "loading": "Cargando el torneo…",
-    "loginRequired": "Inicia sesión para editar este torneo."
   },
   "veto": {
     "title": "Mapas",
@@ -238,8 +209,8 @@
   },
   "admissionOpenHint": "Cualquier miembro se inscribe, hasta el inicio.",
   "source": {
-    "label": "Copiar de",
-    "none": "Ningún torneo"
+    "label": "Empezar desde",
+    "none": "Configuración predeterminada"
   },
   "teamRules": {
     "title": "Equipos",

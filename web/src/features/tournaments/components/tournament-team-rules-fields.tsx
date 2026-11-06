@@ -26,8 +26,8 @@ const KEYS = [
 type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
-  /** O torneio já começou: tudo aqui fica travado. */
-  disabled: boolean;
+  /** O torneio já começou: tudo aqui só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -38,7 +38,7 @@ type Props = {
  * site, sem bans) não aparece, mas continua guardado.
  */
 export const TournamentTeamRulesFields = memo(
-  function TournamentTeamRulesFields({ values, onChange, disabled }: Props) {
+  function TournamentTeamRulesFields({ values, onChange, readOnly }: Props) {
     const t = useTranslations("TournamentForm.teamRules");
     const rules = values.teamRules;
     const [custom, setCustom] = useState(false);
@@ -50,7 +50,7 @@ export const TournamentTeamRulesFields = memo(
         labelText={t(`fields.${field}`)}
         name={`teamRules.${field}`}
         value={rules[field]}
-        disabled={disabled}
+        readOnly={readOnly}
         onChange={(e) =>
           update({ [field]: e.target.value as Schemas["TeamActor"] })
         }
@@ -68,7 +68,7 @@ export const TournamentTeamRulesFields = memo(
           helperText={t(`hints.${teamPresetOf(rules)}`)}
           name="teamPreset"
           value={preset}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={(e) => {
             const next = e.target.value as TeamPreset;
             setCustom(next === "custom");
@@ -89,7 +89,7 @@ export const TournamentTeamRulesFields = memo(
                 labelText={t("fields.pick")}
                 name="teamRules.pick"
                 value={rules.pick}
-                disabled={disabled}
+                readOnly={readOnly}
                 onChange={(e) =>
                   update({ pick: e.target.value as Schemas["TeamPicker"] })
                 }

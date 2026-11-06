@@ -15,7 +15,7 @@ export type NoRepeatChoice = "off" | Schemas["NoRepeatScope"];
 /** Tamanhos de time do TDM (2v2, 3v3, 4v4). */
 export const TEAM_SIZES = [2, 3, 4];
 
-/** Campos do formulário de torneio (criação e edição), no idioma original. */
+/** Os campos de um torneio na interface (configurações e cópia), no idioma original. */
 export type TournamentValues = {
   name: string;
   slug: string;
@@ -71,7 +71,10 @@ export type TournamentValues = {
   mapMode: Schemas["MapMode"];
   /** Ordem do veto de mapas (só vale no modo veto): todos os bans primeiro, ou alternando. */
   vetoOrder: Schemas["VetoOrder"];
-  /** Slugs do pool de mapas; `null` na criação: o padrão da API. */
+  /**
+   * Slugs do pool de mapas; `null`: o padrão da API (a sala de veto sem mexer,
+   * a cópia de um torneio sem nenhum mapa que ainda exista).
+   */
   mapPool: string[] | null;
   /** Draft de campeões da série no site (`false`: fora do site). */
   championPhase: boolean;
@@ -111,12 +114,11 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
 };
 
 /**
- * Padrão do duelo: público, dupla sem reset, md3 e md5 na grande final, 16
- * vagas, 1 ban por série, espelho permitido, check-in de 30 min, 10 min para
- * contestar, veto de mapas no pool padrão, draft de campeões no site e 30 s
- * por passo, com as escolhas alternadas. Trocado para o TDM: times de 2, a regra
- * de não repetição por jogador, sem campeão igual no time e o capitão agindo pelo
- * time. Às cegas, 60 s para a janela simultânea.
+ * O começo da sala de veto, que usa os campos de mapas e campeões do torneio:
+ * veto de mapas no pool padrão, 1 ban por série, espelho permitido, draft de
+ * campeões no site e 30 s por passo, com as escolhas alternadas (às cegas,
+ * 60 s para a janela simultânea). O torneio novo não parte daqui: sem origem,
+ * a criação manda só nome, endereço e modalidade, e o resto é o padrão da API.
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -412,11 +414,32 @@ export function earliestStart(checkInMinutes: number, now: Date) {
   return new Date(Math.floor(edge / minute) * minute + minute);
 }
 
-/** Corpo da criação: rascunho, ou já publicado com `publish`. */
+/**
+ * Corpo da criação sem origem: o mínimo (nome, endereço, idioma e
+ * modalidade), com os padrões da API, e o pool lembrado da comunidade, se
+ * houver. Sempre rascunho.
+ */
+export function minimalCreateBody(
+  values: Pick<
+    TournamentValues,
+    "name" | "slug" | "locale" | "mode" | "teamSize"
+  >,
+  pool: string[] | null,
+) {
+  return {
+    slug: values.slug,
+    locale: values.locale,
+    name: values.name,
+    mode: values.mode,
+    team_size: teamSizeOf(values),
+    ...(pool && { veto: { map_pool: pool } }),
+  };
+}
+
+/** Corpo da criação a partir de um torneio copiado: a configuração inteira. Sempre rascunho. */
 export function createBody(
   values: TournamentValues,
   translations: Translations,
-  publish: boolean,
 ) {
   return {
     ...textsBody(values),
@@ -436,7 +459,6 @@ export function createBody(
           ]
         : [],
     ),
-    publish,
   };
 }
 
@@ -497,7 +519,7 @@ function setupBody(values: TournamentValues) {
     veto: {
       map_mode: values.mapMode,
       order: values.vetoOrder,
-      // Sem mexer, na criação, vale o pool padrão da API.
+      // Nulo, vale o pool padrão da API.
       map_pool: values.mapPool ?? undefined,
       champion_phase: values.championPhase,
       pick_order: values.pickOrder,

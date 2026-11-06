@@ -156,13 +156,13 @@ pub enum NoRepeatScope {
 /// inteira.
 #[derive(Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChampionRulesInput {
-    /// Padrão 1.
+    /// Ausente: 1.
     #[serde(default = "default_bans_per_series")]
-    #[schema(required = false, default = 1, example = 1)]
+    #[schema(required = false, example = 1)]
     pub bans_per_series: u8,
-    /// Padrão verdadeiro.
+    /// Ausente: verdadeiro.
     #[serde(default = "default_mirror")]
-    #[schema(required = false, default = true)]
+    #[schema(required = false)]
     pub mirror: bool,
     /// Padrão falso.
     #[serde(default)]
@@ -257,7 +257,7 @@ pub struct CreateTournament {
     /// checagem de campeões usa o pior caso com esse número (no TDM, com os
     /// times que ele comporta). Ausente: 16.
     #[serde(default = "default_max_participants")]
-    #[schema(required = false, default = 16, example = 16)]
+    #[schema(required = false, example = 16)]
     pub max_participants: i32,
     /// Ausente, ou campo ausente: 1 ban por série, espelho permitido, sem
     /// campeão igual no time e sem regra de não repetição.
@@ -277,12 +277,12 @@ pub struct CreateTournament {
     /// Ausente: 30. `null`: sem check-in (a inscrição vai direto para em
     /// andamento).
     #[serde(default = "default_check_in_minutes")]
-    #[schema(required = false, default = 30, example = 30)]
+    #[schema(required = false, example = 30)]
     pub check_in_minutes: Option<i32>,
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
     /// enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 10.
     #[serde(default = "default_contest_minutes")]
-    #[schema(required = false, default = 10, example = 10)]
+    #[schema(required = false, example = 10)]
     pub contest_minutes: i32,
     /// Veto das partidas: modo do mapa, pool, campeões e tempo por passo.
     /// Ausente (ou campo ausente): o padrão (veto, os 7 primeiros mapas do
@@ -310,7 +310,7 @@ pub struct CreateTournament {
     /// Se os mapas do torneio contam para o rating da comunidade. Ausente:
     /// sim. Muda até o torneio começar.
     #[serde(default = "default_counts_for_rating")]
-    #[schema(required = false, default = true)]
+    #[schema(required = false)]
     pub counts_for_rating: bool,
     /// O envio do jogador exige screenshot do placar (`screenshots`). Só liga
     /// com o bucket configurado (`GET /screenshots/settings`). Ausente:

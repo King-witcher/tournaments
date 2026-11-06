@@ -9,7 +9,8 @@ import styles from "./map-pool-option.module.scss";
 type Props = {
   map: components["schemas"]["Map"];
   checked: boolean;
-  disabled: boolean;
+  /** O torneio já começou: a caixa mostra a escolha sem mudar. */
+  readOnly: boolean;
   /** O nome do campo, só na primeira caixa: o foco do erro vai para ela. */
   name?: string;
   onChange: (checked: boolean) => void;
@@ -26,7 +27,7 @@ type Props = {
 export function MapPoolOption({
   map,
   checked,
-  disabled,
+  readOnly,
   name,
   onChange,
 }: Props) {
@@ -36,7 +37,7 @@ export function MapPoolOption({
       className={cn(
         styles.option,
         checked && styles.selected,
-        disabled && styles.disabled,
+        readOnly && styles.readOnly,
       )}
     >
       <label htmlFor={id} className={styles.image}>
@@ -48,7 +49,7 @@ export function MapPoolOption({
           name={name}
           labelText={map.name}
           checked={checked}
-          disabled={disabled}
+          readOnly={readOnly}
           onChange={onChange}
         />
       </div>

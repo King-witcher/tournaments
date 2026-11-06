@@ -23,8 +23,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: não muda mais. */
-  disabled: boolean;
+  /** O torneio já começou: só para leitura. */
+  readOnly: boolean;
   /**
    * Na edição, o início gravado (`null` sem data): só uma data diferente dele
    * é conferida, como na API. Na criação, não vem e toda data é conferida.
@@ -42,7 +42,7 @@ export const TournamentStartField = memo(function TournamentStartField({
   values,
   onChange,
   errors,
-  disabled,
+  readOnly,
   saved,
 }: Props) {
   const { startsAt: value, checkInMinutes } = values;
@@ -54,7 +54,7 @@ export const TournamentStartField = memo(function TournamentStartField({
   const timeZone = chosenZone ?? (isClient ? browserTimeZone() : "UTC");
   const now = new Date();
   const checked =
-    isClient && !disabled && (saved === undefined || value !== saved);
+    isClient && !readOnly && (saved === undefined || value !== saved);
   const timing = checked ? startTiming(value, checkInMinutes, now) : null;
   const when = (date: Date) =>
     format.dateTime(date, {
@@ -72,7 +72,7 @@ export const TournamentStartField = memo(function TournamentStartField({
   // O calendário começa hoje; um início gravado que já passou continua à
   // vista (o flatpickr apagaria uma data antes do mínimo).
   const min =
-    isClient && !disabled && (saved == null || new Date(saved) > now)
+    isClient && !readOnly && (saved == null || new Date(saved) > now)
       ? now.toISOString()
       : undefined;
 
@@ -84,7 +84,7 @@ export const TournamentStartField = memo(function TournamentStartField({
       }
       name="startsAt"
       value={value}
-      disabled={disabled}
+      readOnly={readOnly}
       min={min}
       timeZone={timeZone}
       onTimeZoneChange={setChosenZone}

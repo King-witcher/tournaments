@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useCallback, useRef, useState } from "react";
 
 import { MY_PARTICIPATION_ID } from "@/features/participants/lib/focus";
 import { useRouter } from "@/i18n/navigation";
@@ -15,12 +16,14 @@ import {
 } from "@/shared/ui/overflow-actions";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 import { hasStarted } from "../lib/status";
+import { NewTournamentModal } from "./new-tournament-modal";
+import styles from "./tournament-overflow-menu.module.scss";
 
 type Props = {
   tenant: string;
   slug: string;
-  /** Organização: "Copiar torneio", que abre a criação com `?from=`. */
-  copy: boolean;
+  /** Organização: "Copiar torneio" abre a criação com este torneio em "Começar de". */
+  copySource?: components["schemas"]["Tournament"];
   /** Quem vê fez o check-in, que ainda está aberto: pode desfazer. */
   undoCheckIn: boolean;
   /** Quem vê está inscrito, com a inscrição aberta: pode cancelar. */
@@ -45,7 +48,7 @@ type Props = {
 export function TournamentOverflowMenu({
   tenant,
   slug,
-  copy,
+  copySource,
   undoCheckIn,
   withdrawRegistration,
   inviteOnly,
@@ -59,6 +62,11 @@ export function TournamentOverflowMenu({
   const tLifecycle = useTranslations("Lifecycle");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
+  const [copying, setCopying] = useState(false);
+  const stopCopying = useCallback(() => setCopying(false), []);
+  // O ⋯, para o foco voltar a ele quando o Modal fecha sem criar.
+  const wrapper = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLElement | null>(null);
   const params = { path: { slug: tenant, tournament: slug } };
   const viewerDone = () => {
     router.refresh();
@@ -71,10 +79,13 @@ export function TournamentOverflowMenu({
   };
 
   const items: OverflowAction[] = [];
-  if (copy) {
+  if (copySource) {
     items.push({
       label: t("copy"),
-      href: { pathname: `/${tenant}/new`, query: { from: slug } },
+      onSelect: () => {
+        trigger.current = wrapper.current?.querySelector("button") ?? null;
+        setCopying(true);
+      },
     });
   }
   if (undoCheckIn) {
@@ -172,8 +183,19 @@ export function TournamentOverflowMenu({
   }
 
   return (
-    <ActionWithNote error={error}>
-      <OverflowActions items={items} pending={pending} />
-    </ActionWithNote>
+    <div ref={wrapper} className={styles.contents}>
+      <ActionWithNote error={error}>
+        <OverflowActions items={items} pending={pending} />
+      </ActionWithNote>
+      {copying && copySource && (
+        <NewTournamentModal
+          tenant={tenant}
+          title={t("copy")}
+          source={copySource}
+          trigger={trigger}
+          onClose={stopCopying}
+        />
+      )}
+    </div>
   );
 }

@@ -23,6 +23,8 @@ type Props<V extends string> = {
   invalid?: boolean;
   invalidText?: ReactNode;
   disabled?: boolean;
+  /** Só leitura (o padrão "Read-only states" do Carbon): mostra a escolha sem deixar mudar. */
+  readOnly?: boolean;
   name?: string;
 };
 

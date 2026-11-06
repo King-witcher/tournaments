@@ -2,9 +2,9 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
+import { NewTournamentButton } from "@/features/tournaments/components/new-tournament-button";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Avatar } from "@/shared/ui/avatar";
-import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Notice } from "@/shared/ui/notice";
 import { PageError } from "@/shared/ui/page-error";
@@ -22,7 +22,8 @@ type Props = {
 
 /**
  * O topo da comunidade e as abas, com a aba aberta dentro: o logo (quando
- * há), nome, o papel de quem vê, para a organização, "Novo torneio" e, quando
+ * há), nome, o papel de quem vê, para a organização, "Novo torneio" (a
+ * criação num Modal) e, quando
  * há, a descrição (`TenantDescription`, em todas as abas). Com a exclusão
  * agendada, o aviso com a data (e,
  * para o dono, onde cancelar) entre o topo e as abas. Sem sessão, o convite a
@@ -69,7 +70,9 @@ export async function TenantFrame({ slug, children }: Props) {
         tags={<StatusTag status="neutral">{tRoles(tenant.role)}</StatusTag>}
         actions={
           organizer && (
-            <ButtonLink href={`/${slug}/new`}>{t("newTournament")}</ButtonLink>
+            <NewTournamentButton tenant={slug}>
+              {t("newTournament")}
+            </NewTournamentButton>
           )
         }
       >

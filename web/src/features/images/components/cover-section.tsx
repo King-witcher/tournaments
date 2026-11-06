@@ -12,9 +12,9 @@ type Props = {
 };
 
 /**
- * A capa do torneio, na aba Geral de Editar: uma seção que se salva sozinha,
- * fora do "Salvar" do formulário. Sem o bucket público na API, nada. Fica em
- * `<Suspense>`.
+ * A capa do torneio, na seção Geral das Configurações: um bloco que se salva
+ * sozinho, depois do "Salvar" do nome e da descrição. Sem o bucket público na
+ * API, nada. Fica em `<Suspense>`.
  */
 export async function CoverSection({ tenant, tournament, url }: Props) {
   const [settings, t] = await Promise.all([

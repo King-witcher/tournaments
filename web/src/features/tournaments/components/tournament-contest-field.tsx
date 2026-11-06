@@ -10,8 +10,8 @@ type Props = {
   onChange: (minutes: number) => void;
   /** O que a API disse deste campo, já traduzido. */
   error?: string;
-  /** Torneio encerrado: não muda mais. */
-  disabled: boolean;
+  /** Torneio encerrado: só para leitura. */
+  readOnly: boolean;
 };
 
 /** Janela de contestação: quanto tempo o adversário tem para responder. */
@@ -19,7 +19,7 @@ export function TournamentContestField({
   value,
   onChange,
   error,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm");
   // Uma janela que veio da API fora das opções continua aparecendo.
@@ -33,7 +33,7 @@ export function TournamentContestField({
       helperText={t("contestHint")}
       name="contestMinutes"
       value={value}
-      disabled={disabled}
+      readOnly={readOnly}
       invalid={error !== undefined}
       invalidText={error}
       onChange={(e) => onChange(Number(e.target.value))}

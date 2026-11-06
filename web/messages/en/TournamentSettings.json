@@ -1,0 +1,22 @@
+{
+  "loading": "Loading the settings…",
+  "sections": {
+    "general": "General",
+    "format": "Format",
+    "teams": "Teams",
+    "maps": "Maps",
+    "champions": "Champions",
+    "registration": "Registration and deadlines",
+    "results": "Results",
+    "languages": "Other languages"
+  },
+  "locks": {
+    "slug": "The address can't change after publishing.",
+    "started": "The tournament has started.",
+    "finished": "The tournament has ended.",
+    "schedule": "The tournament has started. The start and check-in can't change anymore.",
+    "rules": "The tournament has ended. The rules can't change anymore."
+  },
+  "goTo": "Go to {section}",
+  "saved": "Saved."
+}

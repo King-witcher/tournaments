@@ -25,8 +25,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: tudo aqui fica travado. */
-  disabled: boolean;
+  /** O torneio já começou: tudo aqui só para leitura. */
+  readOnly: boolean;
   /**
    * Na edição, o torneio salvo: com inscritos, trocar a modalidade ou o
    * tamanho avisa que os times serão refeitos ao salvar.
@@ -43,7 +43,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
   values,
   onChange,
   errors,
-  disabled,
+  readOnly,
   saved,
 }: Props) {
   const t = useTranslations("TournamentForm");
@@ -61,7 +61,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
         name="mode"
         orientation="horizontal"
         value={values.mode}
-        disabled={disabled}
+        readOnly={readOnly}
         options={MODES.map((value) => ({ value, label: tMode(value) }))}
         // Do duelo (time de 1) para o TDM, o tamanho começa em 2; voltando
         // ao TDM antes de salvar, fica o que estava.
@@ -78,7 +78,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
           labelText={t("teamSize")}
           name="teamSize"
           value={values.teamSize}
-          disabled={disabled}
+          readOnly={readOnly}
           invalid={errors.teamSize !== undefined}
           invalidText={errors.teamSize}
           onChange={(e) => onChange({ teamSize: Number(e.target.value) })}

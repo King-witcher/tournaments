@@ -84,6 +84,11 @@ export const Disabled: Story = {
   args: { name: "radio-group-disabled", disabled: true },
 };
 
+/** Só leitura: a escolha à vista, sem mudar (o torneio que já começou). */
+export const ReadOnly: Story = {
+  args: { name: "radio-group-readonly", readOnly: true },
+};
+
 export const OptionDisabled: Story = {
   args: {
     name: "radio-group-option-disabled",
@@ -99,6 +104,7 @@ function Stateful(props: {
   name: string;
   orientation?: "horizontal" | "vertical";
   disabled?: boolean;
+  readOnly?: boolean;
   invalid?: boolean;
   invalidText?: string;
 }) {
@@ -126,6 +132,7 @@ export const States: Story = {
         invalidText="A md5 precisa de pelo menos 4 mapas."
       />
       <Stateful name="radio-group-states-disabled" disabled />
+      <Stateful name="radio-group-states-readonly" readOnly />
     </Stack>
   ),
 };

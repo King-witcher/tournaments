@@ -14,24 +14,24 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: o check-in fica travado. */
-  setupLocked: boolean;
-  /** Encerrado: o tipo de inscrição não muda mais. */
-  finished: boolean;
+  /** O torneio já começou: o check-in só para leitura. */
+  checkInReadOnly: boolean;
+  /** Encerrado: o tipo de inscrição só para leitura. */
+  admissionReadOnly: boolean;
 };
 
 /**
  * Inscrições e prazos: tipo de inscrição e janela de check-in, os dois com
- * padrão. A data de início fica fora, junto do nome; as vagas, no Formato; a
- * contestação e a captura de tela, em Resultados.
+ * padrão. A data de início vem antes, no `TournamentStartField`; as vagas, no
+ * Formato; a contestação e a captura de tela, em Resultados.
  */
 export const TournamentRegistrationFields = memo(
   function TournamentRegistrationFields({
     values,
     onChange,
     errors,
-    setupLocked,
-    finished,
+    checkInReadOnly,
+    admissionReadOnly,
   }: Props) {
     const t = useTranslations("TournamentForm");
 
@@ -47,7 +47,7 @@ export const TournamentRegistrationFields = memo(
           name="admission"
           orientation="horizontal"
           value={values.admission}
-          disabled={finished}
+          readOnly={admissionReadOnly}
           options={[
             { value: "open", label: t("admissionOptions.open") },
             { value: "invite_only", label: t("admissionOptions.invite_only") },
@@ -58,7 +58,7 @@ export const TournamentRegistrationFields = memo(
           value={values.checkInMinutes}
           onChange={(checkInMinutes) => onChange({ checkInMinutes })}
           error={errors.checkInMinutes}
-          disabled={setupLocked}
+          readOnly={checkInReadOnly}
           teams={isTdm(values)}
         />
       </>

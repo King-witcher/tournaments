@@ -1,15 +1,12 @@
 {
-  "tournament": "Tournament",
   "name": "Name",
   "slug": "Address",
   "slugHint": "The tournament link will be {address}. It doesn't change after you publish.",
-  "slugLocked": "The address doesn't change after publishing. Only the name can change.",
   "slugConfirm": {
     "title": "Change address",
     "submit": "Save and change address",
     "text": "The draft moves to {address}. Links saved with {old} stop working. Another tournament can take this address. Registration links still work."
   },
-  "finishedLocked": "The tournament has ended. Only the name, description and cover image can still change.",
   "slugInvalid": "Can't end with a hyphen.",
   "slugPlaceholder": "your-tournament",
   "startsAt": "Start",
@@ -18,8 +15,6 @@
     "past": "The start date has already passed.",
     "soon": "Pick a start from {from} on, so check-in can open first."
   },
-  "format": "Format",
-  "formatLocked": "The tournament has started. Format, slots, maps and champions can't change anymore.",
   "mode": "Mode",
   "teamSize": "Team size",
   "teamSizeOption": "{size}v{size}",
@@ -38,9 +33,6 @@
   "bestOfOption": "Best of {count}",
   "bestOfEvenHint": "This match can end in a tie. The first to win {wins} games takes the match.",
   "champions": "Champions",
-  "registration": "Registration and deadlines",
-  "registrationLocked": "The tournament has started. Start and check-in can't change anymore.",
-  "results": "Results",
   "countsForRating": "Affects rating",
   "countsForRatingHint": "Each game updates players' rating.",
   "maxParticipants": "Slots",
@@ -74,9 +66,7 @@
     },
     "seconds": "{time} per step",
     "teamPick": "{time} to pick champions",
-    "screenshotsRequired": "screenshot required",
-    "noRules": "None",
-    "noLanguages": "None"
+    "screenshotsRequired": "screenshot required"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -85,19 +75,12 @@
   },
   "description": "Description",
   "rules": "Additional rules",
-  "rulesHint": "The Rules tab already covers format, check-in and results. Write the rest here, such as conduct and disconnections.",
-  "otherLanguages": "Other languages",
-  "translationOff": "The name, description and rules above are in {original}. Users of the site in {language} see them as they are.",
+  "translationOff": "The name, description and rules are in {original}. Users of the site in {language} see them as they are.",
   "translationHint": "A blank description or rules show the original.",
   "addLanguage": "Add {language}",
   "removeLanguage": "Remove {language}",
   "willDelete": "The saved translation will be deleted when you save. To keep it, add the language again before saving.",
-  "create": "Create and publish",
-  "createDraft": "Create as draft",
   "review": {
-    "title": "Create and publish",
-    "question": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",
-    "confirm": "Create and publish",
     "label": "Tournament summary",
     "labels": {
       "name": "Name",
@@ -112,18 +95,6 @@
       "tiebreakers": "Tiebreakers"
     },
     "noDate": "No date"
-  },
-  "tabs": {
-    "label": "Tournament sections",
-    "general": "General",
-    "format": "Format",
-    "registration": "Registration and deadlines",
-    "results": "Results"
-  },
-  "edit": {
-    "title": "Edit tournament",
-    "loading": "Loading tournament…",
-    "loginRequired": "Log in to edit this tournament."
   },
   "veto": {
     "title": "Maps",
@@ -238,8 +209,8 @@
   },
   "admissionOpenHint": "Any member can register until the start.",
   "source": {
-    "label": "Copy from",
-    "none": "No tournament"
+    "label": "Start from",
+    "none": "Default settings"
   },
   "teamRules": {
     "title": "Teams",

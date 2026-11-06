@@ -9,20 +9,28 @@ import { ComboBox } from "@/shared/ui/combo-box";
 import { localizedName } from "../lib/localize";
 
 type Schemas = components["schemas"];
-type Summary = Schemas["TournamentSummary"];
+
+/** Um torneio da lista: o que o campo mostra dele. */
+export type SourceItem = Pick<
+  Schemas["TournamentSummary"],
+  "slug" | "name" | "translations"
+>;
 
 type Props = {
   tenant: string;
   /** Os torneios da comunidade, do mais novo ao mais antigo. */
-  tournaments: Summary[];
-  /** O torneio com que o formulário abriu (`?from=`). */
+  tournaments: SourceItem[];
+  /** A lista ainda está chegando: o campo espera, só para leitura. */
+  loading?: boolean;
+  /** O torneio de onde começa ao abrir ("Copiar torneio", `?from=`). */
   initial: string | undefined;
-  /** Aplica a origem escolhida (`undefined`: nenhuma); a mesma função em todo render. */
+  /** Aplica a origem escolhida (`undefined`: o padrão); a mesma função em todo render. */
   onCopy: (source: Schemas["Tournament"] | undefined) => void;
+  /** Na página: o `?from=` acompanha a escolha, para recarregar voltar a ela. */
+  syncUrl?: boolean;
 };
 
-/** O `?from=` acompanha a escolha, para recarregar a página voltar a ela. */
-function syncUrl(slug: string | undefined) {
+function replaceFrom(slug: string | undefined) {
   const url = new URL(window.location.href);
   if (slug) url.searchParams.set("from", slug);
   else url.searchParams.delete("from");
@@ -30,15 +38,18 @@ function syncUrl(slug: string | undefined) {
 }
 
 /**
- * "Copiar de", no topo da criação: escolhe o torneio da comunidade de onde
- * vem a configuração. Busca o torneio escolhido e só então o aplica; se a
- * busca falha, a escolha volta à anterior, que é a que está no formulário.
+ * "Começar de", na criação: vazio, a configuração padrão; ou um torneio da
+ * comunidade, de onde vem a configuração. Busca o torneio escolhido e só
+ * então o aplica; se a busca falha, a escolha volta à anterior, que é a que
+ * vale.
  */
 export const TournamentSourceField = memo(function TournamentSourceField({
   tenant,
   tournaments,
+  loading = false,
   initial,
   onCopy,
+  syncUrl = false,
 }: Props) {
   const t = useTranslations("TournamentForm.source");
   const tCommon = useTranslations("Common");
@@ -47,19 +58,19 @@ export const TournamentSourceField = memo(function TournamentSourceField({
   const [picked, setPicked] = useState(
     () => tournaments.find((x) => x.slug === initial) ?? null,
   );
-  // O que está aplicado no formulário: o Carbon chama `onChange` também
-  // quando a escolha volta à anterior, e aí não há o que buscar.
+  // O que está aplicado: o Carbon chama `onChange` também quando a escolha
+  // volta à anterior, e aí não há o que buscar.
   const applied = useRef(picked);
-  const label = (item: Summary | null) =>
+  const label = (item: SourceItem | null) =>
     item ? localizedName(item, locale) : "";
 
-  const select = (item: Summary | null) => {
+  const select = (item: SourceItem | null) => {
     setPicked(item);
     if (item?.slug === applied.current?.slug) return;
     if (!item) {
       applied.current = null;
       onCopy(undefined);
-      syncUrl(undefined);
+      if (syncUrl) replaceFrom(undefined);
       return;
     }
     run(
@@ -70,11 +81,12 @@ export const TournamentSourceField = memo(function TournamentSourceField({
       (source) => {
         applied.current = item;
         onCopy(source);
-        syncUrl(item.slug);
+        if (syncUrl) replaceFrom(item.slug);
       },
       () => setPicked(applied.current),
     );
   };
+  const busy = pending || loading;
 
   return (
     <ComboBox
@@ -83,6 +95,8 @@ export const TournamentSourceField = memo(function TournamentSourceField({
       items={tournaments}
       itemToString={label}
       selectedItem={picked}
+      // A lista flutua por cima: no Modal, o corpo dele a cortaria.
+      autoAlign
       onChange={({ selectedItem }) => select(selectedItem ?? null)}
       // Filtra pelo que foi digitado; com o nome escolhido no campo, mostra todos.
       shouldFilterItem={({ item, inputValue }) =>
@@ -90,9 +104,9 @@ export const TournamentSourceField = memo(function TournamentSourceField({
         inputValue === label(picked) ||
         label(item).toLowerCase().includes(inputValue.toLowerCase())
       }
-      readOnly={pending}
+      readOnly={busy}
       helperText={
-        pending ? <InlineLoading description={tCommon("loading")} /> : undefined
+        busy ? <InlineLoading description={tCommon("loading")} /> : undefined
       }
       invalid={error !== undefined}
       invalidText={error}

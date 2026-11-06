@@ -7,8 +7,8 @@ import { Checkbox } from "@/shared/ui/checkbox";
 type Props = {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  /** Torneio encerrado: não muda mais. */
-  disabled: boolean;
+  /** Torneio encerrado: só para leitura. */
+  readOnly: boolean;
 };
 
 /**
@@ -19,7 +19,7 @@ type Props = {
 export function ScreenshotsRequiredField({
   checked,
   onChange,
-  disabled,
+  readOnly,
 }: Props) {
   const t = useTranslations("Screenshots.field");
   return (
@@ -28,7 +28,7 @@ export function ScreenshotsRequiredField({
       helperText={t("hint")}
       name="screenshotsRequired"
       checked={checked}
-      disabled={disabled}
+      readOnly={readOnly}
       onChange={onChange}
     />
   );

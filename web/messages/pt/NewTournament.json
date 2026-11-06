@@ -1,5 +1,6 @@
 {
   "title": "Criar torneio",
   "loading": "Carregando o formulário…",
-  "loginRequired": "Entre para criar um torneio."
+  "loginRequired": "Entre para criar um torneio.",
+  "submit": "Criar"
 }

@@ -1,0 +1,22 @@
+{
+  "loading": "Cargando la configuración…",
+  "sections": {
+    "general": "General",
+    "format": "Formato",
+    "teams": "Equipos",
+    "maps": "Mapas",
+    "champions": "Campeones",
+    "registration": "Inscripciones y plazos",
+    "results": "Resultados",
+    "languages": "Otros idiomas"
+  },
+  "locks": {
+    "slug": "La dirección no cambia después de publicar.",
+    "started": "El torneo ya empezó.",
+    "finished": "El torneo terminó.",
+    "schedule": "El torneo ya empezó. El inicio y el check-in ya no cambian.",
+    "rules": "El torneo terminó. Las reglas ya no cambian."
+  },
+  "goTo": "Ir a {section}",
+  "saved": "Guardado."
+}

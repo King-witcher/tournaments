@@ -2,7 +2,6 @@
   "loading": "Loading the tournament…",
   "loginRequired": "Log in to view this tournament.",
   "draftHint": "Only the organizers can see the draft.",
-  "edit": "Edit",
   "sections": "Tournament sections",
   "tabs": {
     "overview": "Overview",
@@ -10,7 +9,8 @@
     "standings": "Standings",
     "participants": "Registered",
     "rules": "Rules",
-    "manage": "Organizers"
+    "manage": "Organizers",
+    "settings": "Settings"
   },
   "meta": {
     "bestOf": "Best of {bestOf}",
@@ -224,7 +224,7 @@
     "labelTranslation": "Additional rules ({language}, translation)"
   },
   "publish": "Publish and open registration",
-  "publishConfirm": "Publish the tournament? Registration opens and the community can see it. Once published, it can't go back to draft or be deleted.",
+  "publishConfirm": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",
   "publishBlocked": {
     "past": "The start date has already passed. Change it under Edit to publish.",
     "window": "The start is closer than the check-in window. Change the date under Edit to publish."

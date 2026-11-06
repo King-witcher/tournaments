@@ -15,7 +15,7 @@ type Props = {
 /**
  * O ⋯ do cabeçalho, com o que é raro ou destrutivo e vale agora: desfazer o
  * próprio check-in, cancelar a própria inscrição e, para a organização, criar
- * outro torneio a partir deste, desfazer o início (com a conta dos resultados
+ * outro torneio a partir deste (o Modal da criação, com ele em "Começar de"), desfazer o início (com a conta dos resultados
  * que ele apaga, lida da chave) e excluir (antes de começar, a organização;
  * depois, só o owner). Sem nada, não aparece.
  */
@@ -28,7 +28,6 @@ export async function TournamentOverflow({
   const { status, registered, checked_in: checkedIn } = tournament;
   const started = hasStarted(status);
   const flags = {
-    copy: organizer,
     undoCheckIn: status === "check_in" && registered && checkedIn,
     withdrawRegistration: registrationOpen(status) && registered,
     canDelete: started ? owner : organizer,
@@ -42,12 +41,15 @@ export async function TournamentOverflow({
       hasCheckIn: tournament.check_in_minutes != null,
     };
   }
-  if (!undoStart && !Object.values(flags).some(Boolean)) return null;
+  if (!organizer && !undoStart && !Object.values(flags).some(Boolean)) {
+    return null;
+  }
 
   return (
     <TournamentOverflowMenu
       tenant={tenant}
       slug={tournament.slug}
+      copySource={organizer ? tournament : undefined}
       undoStart={undoStart}
       inviteOnly={tournament.admission === "invite_only"}
       status={status}

@@ -232,7 +232,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
                   values={values}
                   onChange={onChange}
                   maps={maps}
-                  disabled={false}
+                  readOnly={false}
                 />
                 <MapPoolField
                   tenant={POOL_KEY}
@@ -240,7 +240,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
                   onChange={onChange}
                   error={undefined}
                   maps={maps}
-                  disabled={false}
+                  readOnly={false}
                 />
               </>
             )}
@@ -255,7 +255,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
                 name="vetoSeconds"
                 options={STEP_SECONDS}
                 value={values.vetoSeconds}
-                disabled={false}
+                readOnly={false}
                 onChange={(vetoSeconds) => onChange({ vetoSeconds })}
               />
             )}
@@ -271,7 +271,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
               values={values}
               onChange={onChange}
               errors={NO_ERRORS}
-              disabled={false}
+              readOnly={false}
               repeatChoices={REPEAT_CHOICES}
             />
           </FormAccordionItem>

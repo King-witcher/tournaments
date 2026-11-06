@@ -24,8 +24,8 @@ type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
   onChange: (patch: Partial<TournamentValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: a ordem fica travada. */
-  disabled: boolean;
+  /** O torneio já começou: só os ligados, na ordem, sem as ações. */
+  readOnly: boolean;
 };
 
 /**
@@ -36,14 +36,15 @@ type Props = {
  * não aparece, e a ordem da chave, sempre a última, vem no texto embaixo. No
  * todos contra todos em md1 e md2, o saldo de partidas some, porque só
  * repetiria o saldo de séries, mas fica gravado se estava. Depois de cada
- * ação, o foco vai para o controle certo da linha, no lugar novo dela.
+ * ação, o foco vai para o controle certo da linha, no lugar novo dela. Só
+ * para leitura, os ligados, sem as ações; nenhum, "Só a ordem da chave".
  */
 export const TournamentTiebreakerFields = memo(
   function TournamentTiebreakerFields({
     values,
     onChange,
     errors,
-    disabled,
+    readOnly,
   }: Props) {
     const t = useTranslations("TournamentForm.tiebreakers");
     const errorId = useId();
@@ -72,6 +73,9 @@ export const TournamentTiebreakerFields = memo(
         ? { focusToken: focus.token, focusOn: focus.on }
         : {};
     const error = errors.tiebreakers;
+    if (readOnly && ons.length === 0) {
+      return <p className={styles.hint}>{t("none")}</p>;
+    }
 
     return (
       // O alvo do erro da API (`data-field`): a lista não tem campo nativo.
@@ -87,7 +91,7 @@ export const TournamentTiebreakerFields = memo(
               key={x}
               tiebreaker={x}
               position={i + 1}
-              disabled={disabled}
+              readOnly={readOnly}
               onUp={
                 i > 0
                   ? () => change(moveTiebreaker(list, x, -1, shown), x, "up")
@@ -108,11 +112,11 @@ export const TournamentTiebreakerFields = memo(
               {...focusOf(x)}
             />
           ))}
-          {offs.map((x) => (
+          {(readOnly ? [] : offs).map((x) => (
             <TiebreakerRow
               key={x}
               tiebreaker={x}
-              disabled={disabled}
+              readOnly={false}
               onOn={() => change([...list, x], x, "up")}
               {...focusOf(x)}
             />

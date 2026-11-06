@@ -3,13 +3,13 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
-import { ButtonLink } from "@/shared/ui/button-link";
 import { DataTable } from "@/shared/ui/data-table";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { checkInPending } from "../lib/check-in";
 import { localizedName } from "../lib/localize";
 import { participantsEditable } from "../lib/status";
+import { NewTournamentButton } from "./new-tournament-button";
 import styles from "./tournament-list.module.scss";
 
 type Schemas = components["schemas"];
@@ -118,9 +118,9 @@ export async function TournamentList({ slug }: { slug: string }) {
               text: t("empty"),
               // O "Novo torneio" primário já está no cabeçalho.
               action: (
-                <ButtonLink href={`/${slug}/new`} kind="tertiary">
+                <NewTournamentButton tenant={slug} kind="tertiary">
                   {t("create")}
-                </ButtonLink>
+                </NewTournamentButton>
               ),
             }
           : { text: t("emptyPlayer") }
