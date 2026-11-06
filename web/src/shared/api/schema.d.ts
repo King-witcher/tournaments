@@ -1865,7 +1865,7 @@ export interface components {
             /** Format: int32 */
             index: number;
             /**
-             * @description Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`.
+             * @description Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
              * @example wb-1-3
              */
             key: string;
@@ -1894,7 +1894,7 @@ export interface components {
          * @description Parte da chave.
          * @enum {string}
          */
-        BracketPart: "winners" | "losers" | "grand_final" | "round_robin" | "swiss";
+        BracketPart: "winners" | "losers" | "grand_final" | "round_robin" | "swiss" | "placement";
         ChampionRef: {
             name: string;
             slug: string;
@@ -1991,7 +1991,7 @@ export interface components {
              * @description Número do mapa na série.
              */
             game: number;
-            /** @description A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`. */
+            /** @description A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`. */
             key: string;
             /** @description Nome do mapa jogado; `null` em série antiga, sem detalhe por mapa. */
             map?: string | null;
@@ -3645,6 +3645,15 @@ export interface components {
              *     ]
              */
             tiebreakers?: components["schemas"]["Tiebreaker"][];
+        } | {
+            /**
+             * Format: int32
+             * @description Melhor de N de todas as partidas (ímpar).
+             * @example 3
+             */
+            best_of: number;
+            /** @enum {string} */
+            format: "placement";
         };
         Standing: {
             /** Format: int32 */
@@ -3986,20 +3995,22 @@ export interface components {
             /**
              * @description Colocações já definidas. Na eliminação, os eliminados e, no fim,
              *     campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
-             *     5º–8º). No round robin e no suíço, todos, só no fim, sem empate.
+             *     5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
+             *     disputa de posições, as dos pares decididos e a do sem par, sem empate.
              */
             standings: components["schemas"]["Standing"][];
             /** @description Status do torneio depois das confirmações por tempo. */
             status: components["schemas"]["TournamentStatus"];
             /**
              * @description Round robin e suíço: a tabela de agora, em ordem de posição (a final
-             *     quando a fase termina); `null` na eliminação.
+             *     quando a fase termina); `null` na eliminação e na disputa de posições.
              */
             table?: components["schemas"]["TableRow"][] | null;
             /**
              * Format: int32
              * @description Round robin e suíço: o número de rodadas da fase (no suíço, as que vão
-             *     ser jogadas, não só as já pareadas); `null` na eliminação.
+             *     ser jogadas, não só as já pareadas); `null` na eliminação e na disputa
+             *     de posições.
              */
             total_rounds?: number | null;
         };
@@ -9286,7 +9297,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -9331,7 +9342,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -9409,7 +9420,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -9474,7 +9485,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número da partida na série, a partir de 1 */
                 game: number;
@@ -9552,7 +9563,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número da partida na série, a partir de 1 */
                 game: number;
@@ -9630,7 +9641,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -9708,7 +9719,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -9786,7 +9797,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série: um enviado ou o próximo */
                 game: number;
@@ -9882,7 +9893,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série */
                 game: number;
@@ -9947,7 +9958,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
                 /** @description Número do mapa na série */
                 game: number;
@@ -10032,7 +10043,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10108,7 +10119,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10153,7 +10164,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10225,7 +10236,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10360,7 +10371,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10436,7 +10447,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10512,7 +10523,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;
@@ -10588,7 +10599,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
                 match: string;
             };
             cookie?: never;

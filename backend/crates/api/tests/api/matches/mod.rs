@@ -6,7 +6,8 @@
 //! custa cada clique (`cost`), o veto de mapas e
 //! campeões (`veto`), a ordem das escolhas de campeão e o que fica escondido às
 //! cegas (`pick_order`), quem age pelo time (`acting`) e os formatos de tabela
-//! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`).
+//! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`), e a
+//! disputa de posições (`placement`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod acting;
@@ -18,6 +19,7 @@ mod deadline;
 mod even_series;
 mod organizer;
 mod pick_order;
+mod placement;
 mod replay;
 mod results;
 mod round_robin;
@@ -61,7 +63,7 @@ pub fn single(best_of: u8, finals: u8) -> Value {
     }] })
 }
 
-/// Uma fase de `format` (`round_robin` ou `swiss`) com `fields`.
+/// Uma fase de `format` (`round_robin`, `swiss` ou `placement`) com `fields`.
 pub fn table(format: &str, fields: Value) -> Value {
     json!({ "stages": [with(json!({ "format": format }), fields)] })
 }

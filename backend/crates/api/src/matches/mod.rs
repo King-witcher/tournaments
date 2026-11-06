@@ -12,7 +12,8 @@
 //! fecha quando os mapas confirmados dão a maioria ou empatam a série par (regra
 //! do `engine`, `series::games`), e só a série decidida entra na chave
 //! (`result`). A chave
-//! (a fase de qualquer formato: eliminação, round robin ou suíço) nunca é
+//! (a fase de qualquer formato: eliminação, round robin, suíço ou disputa de
+//! posições) nunca é
 //! gravada: sai do `replay` do `engine` com a configuração da fase, os times
 //! pelo seed, as séries decididas, na ordem em que passaram a valer, e, no
 //! suíço, os pareamentos de cada rodada, que ficam gravados (`stage`,

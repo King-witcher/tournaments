@@ -76,6 +76,7 @@
       "swiss": "El formato es suizo. El número de rondas depende de los inscritos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
       "swissTdm": "El formato es suizo. El número de rondas depende de los equipos: 3 con hasta 8, 4 con hasta 16, 5 con hasta 32.",
       "swissRounds": "El formato es suizo, en {rounds, plural, one {# ronda} other {# rondas}}.",
+      "placement": "El formato es disputa de posiciones.",
       "series": "{bestOf, plural, =1 {Las series son a una sola partida.} other {Las series son al mejor de #.}}",
       "seriesEven": "Si cada lado gana la mitad de las partidas, la serie termina empatada. Quien gane {wins} se lleva la serie, y las que faltan no se juegan.",
       "finals": {
@@ -88,7 +89,8 @@
       "double": "Quien pierde una serie pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final, y quien gane es el campeón, aunque venga del repechaje.",
       "doubleReset": "Quien pierde una serie pasa al repechaje, y quien pierde de nuevo queda fuera. Los ganadores de la llave principal y del repechaje juegan la gran final. Si gana quien viene del repechaje, la gran final se juega otra vez.",
       "round_robin": "Las series quedan abiertas desde el inicio, y juegas cada una cuando lo acuerdes con tu rival. Las rondas solo ordenan. Con un número impar de inscritos, cada uno descansa una ronda.",
-      "swiss": "En la primera ronda, los pares salen del orden de la llave. En las siguientes, se enfrentan quienes tienen la misma puntuación, sin repetir rival. Cada ronda empieza cuando terminan todas las series de la anterior. Con un número impar, descansa el peor ubicado que todavía no descansó, y el descanso vale victoria."
+      "swiss": "En la primera ronda, los pares salen del orden de la llave. En las siguientes, se enfrentan quienes tienen la misma puntuación, sin repetir rival. Cada ronda empieza cuando terminan todas las series de la anterior. Con un número impar, descansa el peor ubicado que todavía no descansó, y el descanso vale victoria.",
+      "placement": "Los pares salen del orden de la llave (1º contra 2º, 3º contra 4º...), y quien gana se queda con la mejor de las dos posiciones. Con número impar, el último se queda en su posición sin jugar."
     },
     "table": {
       "title": "Clasificación",
@@ -254,7 +256,8 @@
       "double": "Eliminación doble",
       "doubleReset": "Eliminación doble, con reset en la gran final",
       "round_robin": "Todos contra todos",
-      "swiss": "Suizo"
+      "swiss": "Suizo",
+      "placement": "Disputa de posiciones"
     },
     "series": {
       "single": "Al mejor de {bestOf}; final al mejor de {finals}",

@@ -38,6 +38,8 @@ pub enum BracketSide {
     RoundRobin,
     /// Rodada do suíço.
     Swiss,
+    /// Os pares da disputa de posições (rodada 1).
+    Placement,
 }
 
 /// Identificador estável e legível de uma partida ("chave de cima, rodada 2,

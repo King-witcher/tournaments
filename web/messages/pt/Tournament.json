@@ -76,6 +76,7 @@
       "swiss": "O formato é suíço. O número de rodadas depende dos inscritos: 3 com até 8, 4 com até 16, 5 com até 32.",
       "swissTdm": "O formato é suíço. O número de rodadas depende dos times: 3 com até 8, 4 com até 16, 5 com até 32.",
       "swissRounds": "O formato é suíço, em {rounds, plural, one {# rodada} other {# rodadas}}.",
+      "placement": "O formato é disputa de posições.",
       "series": "{bestOf, plural, =1 {As séries têm uma partida só.} other {As séries são melhor de #.}}",
       "seriesEven": "Se cada lado vencer metade das partidas, a série termina empatada. Quem vencer {wins} leva a série, e as que faltam não são jogadas.",
       "finals": {
@@ -88,7 +89,8 @@
       "double": "Quem perde uma série cai para a repescagem, e quem perde de novo está fora. Os vencedores da chave principal e da repescagem fazem a grande final, e quem vencer é o campeão, mesmo vindo da repescagem.",
       "doubleReset": "Quem perde uma série cai para a repescagem, e quem perde de novo está fora. Os vencedores da chave principal e da repescagem fazem a grande final. Se quem vem da repescagem vencer, a grande final é jogada de novo.",
       "round_robin": "As séries ficam abertas desde o início, e você joga cada uma quando combinar com o adversário. As rodadas só organizam a ordem. Com número ímpar de inscritos, cada um folga uma rodada.",
-      "swiss": "Na primeira rodada, os pares saem da ordem da chave. Nas seguintes, quem tem a mesma pontuação se enfrenta, sem repetir adversário. Cada rodada começa quando todas as séries da anterior terminam. Com número ímpar, folga o pior colocado que ainda não folgou, e a folga vale vitória."
+      "swiss": "Na primeira rodada, os pares saem da ordem da chave. Nas seguintes, quem tem a mesma pontuação se enfrenta, sem repetir adversário. Cada rodada começa quando todas as séries da anterior terminam. Com número ímpar, folga o pior colocado que ainda não folgou, e a folga vale vitória.",
+      "placement": "Os pares saem da ordem da chave (1º contra 2º, 3º contra 4º...), e quem vence fica com a melhor das duas posições. Com número ímpar, o último fica na posição dele sem jogar."
     },
     "table": {
       "title": "Classificação",
@@ -254,7 +256,8 @@
       "double": "Eliminação dupla",
       "doubleReset": "Eliminação dupla, com reset na grande final",
       "round_robin": "Todos contra todos",
-      "swiss": "Suíço"
+      "swiss": "Suíço",
+      "placement": "Disputa de posições"
     },
     "series": {
       "single": "Melhor de {bestOf}; final melhor de {finals}",

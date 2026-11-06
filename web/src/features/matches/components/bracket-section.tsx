@@ -8,6 +8,7 @@ import { Section } from "@/shared/ui/section";
 import { loadBracket } from "../server";
 import styles from "./bracket-section.module.scss";
 import { BracketView } from "./bracket-view";
+import { PlacementMatches } from "./placement-matches";
 import { TableMatches } from "./table-matches";
 
 type Props = {
@@ -17,8 +18,8 @@ type Props = {
 
 /**
  * A chave do torneio em andamento ou encerrado, em largura cheia (no round
- * robin e no suíço, as séries). A classificação tem a aba dela. Antes do
- * início não mostra nada (a aba mostra o aviso).
+ * robin, no suíço e na disputa de posições, as séries). A classificação tem
+ * a aba dela. Antes do início não mostra nada (a aba mostra o aviso).
  * Busca a chave, então fica em `<Suspense>`.
  */
 export async function BracketSection({ tenant, tournament }: Props) {
@@ -37,6 +38,16 @@ export async function BracketSection({ tenant, tournament }: Props) {
   if (isTable(bracket.format)) {
     return (
       <TableMatches
+        tenant={tenant}
+        tournament={tournament.slug}
+        bracket={bracket}
+      />
+    );
+  }
+  // Disputa de posições: os pares, sem linhas entre eles.
+  if (bracket.format.format === "placement") {
+    return (
+      <PlacementMatches
         tenant={tenant}
         tournament={tournament.slug}
         bracket={bracket}

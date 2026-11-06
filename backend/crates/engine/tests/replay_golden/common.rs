@@ -65,6 +65,11 @@ pub fn robin(round: u16, index: u16) -> MatchId {
     id(BracketSide::RoundRobin, round, index)
 }
 
+/// Disputa de posições (`PL1.2`): a rodada é sempre 1.
+pub fn placement(index: u16) -> MatchId {
+    id(BracketSide::Placement, 1, index)
+}
+
 /// Suíço (`SW3.2`).
 pub fn swiss(round: u16, index: u16) -> MatchId {
     id(BracketSide::Swiss, round, index)
@@ -188,7 +193,7 @@ fn state_text(state: MatchState) -> String {
     }
 }
 
-/// `W1.2`, `L3.1`, `G2.1`, `RR1.1`, `SW2.3`.
+/// `W1.2`, `L3.1`, `G2.1`, `RR1.1`, `SW2.3`, `PL1.2`.
 pub fn label(id: MatchId) -> String {
     let side = match id.side {
         BracketSide::Winners => "W",
@@ -196,6 +201,7 @@ pub fn label(id: MatchId) -> String {
         BracketSide::GrandFinal => "G",
         BracketSide::RoundRobin => "RR",
         BracketSide::Swiss => "SW",
+        BracketSide::Placement => "PL",
     };
     format!("{side}{}.{}", id.round, id.index)
 }

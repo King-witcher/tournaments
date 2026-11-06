@@ -6,6 +6,7 @@ use engine::{
     core::EngineError,
     formats::{
         self as ef, elimination as el,
+        placement::PlacementConfig,
         round_robin::RoundRobinConfig,
         swiss::SwissConfig,
         table::{Criterion, Tiebreakers},
@@ -87,6 +88,7 @@ impl TryFrom<StageFormat> for ef::StageFormat {
                 rounds,
                 tiebreakers: tiebreakers(&list)?,
             }),
+            StageFormat::Placement { best_of } => Self::Placement(PlacementConfig { best_of }),
         })
     }
 }
@@ -117,6 +119,7 @@ impl From<ef::StageFormat> for StageFormat {
                 rounds: c.rounds,
                 tiebreakers: Tiebreaker::list(c.tiebreakers),
             },
+            ef::StageFormat::Placement(c) => Self::Placement { best_of: c.best_of },
         }
     }
 }
@@ -212,6 +215,7 @@ mod tests {
                 rounds: Some(4),
                 tiebreakers: Tiebreaker::list(Tiebreakers::SWISS),
             },
+            StageFormat::Placement { best_of: 3 },
         ] {
             assert_eq!(round_trip(dto.clone()), dto);
         }

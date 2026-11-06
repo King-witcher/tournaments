@@ -19,12 +19,15 @@ type Props = {
  * os mesmos cartões da chave (código, lados, placar e o que a partida espera
  * de quem vê) e quem folga (round robin) ou recebe o bye (suíço). No round
  * robin, todas ficam abertas desde o início; no suíço, a rodada seguinte
- * aparece quando é pareada, e até lá uma linha diz quando isso acontece.
+ * aparece quando é pareada, e até lá uma linha diz quando isso acontece. Na
+ * disputa de posições, a rodada única sem título: os pares, cada um com o
+ * que está em jogo no lugar do código, e o sem par por último.
  */
 export function RoundsList({ tenant, tournament, bracket }: Props) {
   const t = useTranslations("Bracket");
   const total = bracket.total_rounds ?? 0;
   const swiss = bracket.format.format === "swiss";
+  const placement = bracket.format.format === "placement";
   const entrants = new Map(bracket.entrants.map((e) => [e.id, e]));
   const rounds = new Map<number, Schemas["BracketMatch"][]>();
   for (const m of bracket.matches) {
@@ -39,7 +42,9 @@ export function RoundsList({ tenant, tournament, bracket }: Props) {
         .sort(([a], [b]) => a - b)
         .map(([round, matches]) => (
           <section key={round} className={styles.round}>
-            <h3 className={styles.title}>{t("roundOf", { round, total })}</h3>
+            {!placement && (
+              <h3 className={styles.title}>{t("roundOf", { round, total })}</h3>
+            )}
             <ol className={styles.matches}>
               {matches
                 .sort((a, b) => a.index - b.index)

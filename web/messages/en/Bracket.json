@@ -13,7 +13,8 @@
     "losers": "Losers bracket",
     "grand_final": "Grand final",
     "round_robin": "Round robin",
-    "swiss": "Swiss"
+    "swiss": "Swiss",
+    "placement": "Placement matches"
   },
   "rounds": {
     "final": "Final",
@@ -29,7 +30,8 @@
     "losers": "L{round}.{index}",
     "grand_final": "GF{round}",
     "round_robin": "{round}.{index}",
-    "swiss": "{round}.{index}"
+    "swiss": "{round}.{index}",
+    "placement": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}-place match"
   },
   "from": {
     "winner": "Winner of {match}",
@@ -109,10 +111,14 @@
     "result": "Result",
     "champion": "Won the tournament",
     "eliminated": "Eliminated: <match></match> ({score})",
+    "won": "Won: <match></match> ({score})",
+    "lost": "Lost: <match></match> ({score})",
+    "alone": "No opponent",
     "empty": "Standings appear here when the last match in the bracket is decided."
   },
   "rest": "<name></name> sits out this round",
   "swissBye": "<name></name> gets the bye (counts as a win)",
+  "placementAlone": "<name></name> takes {place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} place, with no opponent",
   "matchesTitle": "Matches",
   "roundOf": "Round {round} of {total}",
   "roundRobinHint": "All matches are open, and each is played when both sides agree. Open a match to report or view the result.",

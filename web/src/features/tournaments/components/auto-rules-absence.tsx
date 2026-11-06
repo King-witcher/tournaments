@@ -14,7 +14,10 @@ type Props = { tournament: components["schemas"]["Tournament"] };
 export function AutoRulesAbsence({ tournament }: Props) {
   const t = useTranslations("Tournament.autoRules.absence");
   const [stage] = tournament.stages;
-  const table = stage.format === "elimination" ? null : stage.format;
+  const table =
+    stage.format === "round_robin" || stage.format === "swiss"
+      ? stage.format
+      : null;
   return (
     <AutoRulesBlock title={t("title")}>
       <p>

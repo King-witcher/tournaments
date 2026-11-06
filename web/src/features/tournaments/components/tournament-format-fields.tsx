@@ -12,7 +12,10 @@ import { sameValues } from "../lib/same-values";
 import { DEFAULT_TIEBREAKERS } from "../lib/tiebreakers";
 import styles from "./tournament-format-fields.module.scss";
 
-/** A eliminação e o suíço: só ímpares, porque a série não pode empatar. */
+/**
+ * A eliminação, o suíço e a disputa de posições: só ímpares, porque a série não
+ * pode empatar.
+ */
 const BEST_OF = [1, 3, 5, 7, 9];
 
 /** O todos contra todos também aceita as séries pares. */
@@ -21,10 +24,19 @@ const BEST_OF_ROUND_ROBIN = [1, 2, 3, 4, 5, 6, 7, 9];
 /** O teto de rodadas do suíço na API. */
 const MAX_SWISS_ROUNDS = 127;
 
-/** A escolha do formato numa opção só: as duas eliminações, round robin, suíço. */
-type FormatChoice = "double" | "single" | "round_robin" | "swiss";
+/**
+ * A escolha do formato numa opção só: as duas eliminações, round robin, suíço
+ * e disputa de posições.
+ */
+type FormatChoice = "double" | "single" | "round_robin" | "swiss" | "placement";
 
-const CHOICES: FormatChoice[] = ["double", "single", "round_robin", "swiss"];
+const CHOICES: FormatChoice[] = [
+  "double",
+  "single",
+  "round_robin",
+  "swiss",
+  "placement",
+];
 
 function choiceOf(
   values: Pick<TournamentValues, "stageFormat" | "bracket">,
@@ -46,6 +58,7 @@ function patchOf(
   if (choice === "round_robin")
     return { stageFormat: choice, tiebreakers: DEFAULT_TIEBREAKERS[choice] };
   const series = isEvenSeries(bestOf) ? { bestOf: bestOf + 1 } : {};
+  if (choice === "placement") return { stageFormat: choice, ...series };
   return choice === "double" || choice === "single"
     ? { stageFormat: "elimination", bracket: choice, ...series }
     : {
@@ -78,7 +91,7 @@ type Props = {
 };
 
 /**
- * O formato (as quatro opções à vista, com a dica do escolhido), o reset da
+ * O formato (as cinco opções à vista, com a dica do escolhido), o reset da
  * grande final na dupla, as séries (e a final, na eliminação; as pares só no
  * todos contra todos, com a dica) e as rodadas do suíço. No TDM, o teto do
  * formato aparece em jogadores (como as vagas) e as rodadas contam times.

@@ -12,7 +12,7 @@ Vocabulário dos arquivos: **partida** = `match` (a série; na interface, "séri
 | `decisions/tenants.md` | Comunidades, papéis, convites, membros inativos, posse |
 | `decisions/deletion.md` | Excluir conta (anonimiza) e excluir comunidade, ambas agendadas para 7 dias; excluir torneio, na hora |
 | `decisions/tournaments.md` | Criação e edição, inscrição aberta/só por link, data de início, ciclo e check-in, inscrição, seeding, i18n do conteúdo |
-| `decisions/formats.md` | Eixos de formato, times em todos os modos, round robin e suíço, TDM (formação, janela de campeões, substituição) |
+| `decisions/formats.md` | Eixos de formato, times em todos os modos, round robin e suíço, disputa de posições, TDM (formação, janela de campeões, substituição) |
 | `decisions/matches.md` | Envio mapa a mapa, regras da série, contestação e prazos, ações do organizador, desistência e W.O., mapas |
 | `decisions/veto.md` | Modo do mapa, pool, cronômetro, desfazer, draft de campeões da série, não repetição, orçamento de campeões, replay |
 | `decisions/ratings.md` | Elo por mapa, K que decai, times, recálculo derivado, ajustes, ranking |

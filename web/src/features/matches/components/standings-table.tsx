@@ -10,7 +10,7 @@ import { Link } from "@/shared/ui/link";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { eliminationOf } from "../lib/standings";
+import { eliminationOf, placementSeriesOf } from "../lib/standings";
 import { DepartureTag } from "./departure-tag";
 import styles from "./standings-table.module.scss";
 
@@ -24,10 +24,12 @@ type Props = {
 };
 
 /**
- * A classificação da eliminação, quando o torneio encerra: posição (empatados
- * dividem a faixa, 5º–8º), o time (no duelo, o jogador, com link para a
- * pessoa) e o resultado (quem venceu o torneio, quem desistiu ou saiu, e a
- * série que eliminou cada um, com link). Antes disso, diz quando ela aparece.
+ * A classificação da eliminação e da disputa de posições, quando o torneio
+ * encerra: posição (empatados dividem a faixa, 5º–8º), o time (no duelo, o
+ * jogador, com link para a pessoa) e o resultado (quem venceu o torneio, quem
+ * desistiu ou saiu, e a série que eliminou cada um, com link; na disputa de
+ * posições, a série de cada um, vencida ou perdida, ou "Sem adversário").
+ * Antes disso, diz quando ela aparece.
  */
 export function StandingsTable({ tenant, bracket, basePath }: Props) {
   const t = useTranslations("Bracket.standings");
@@ -36,17 +38,27 @@ export function StandingsTable({ tenant, bracket, basePath }: Props) {
   const teamName = useTeamName();
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
   const standings = bracket.status === "finished" ? bracket.standings : [];
+  const placement = bracket.format.format === "placement";
 
   const rows = standings.map((s) => {
     const team = byId.get(s.team_id);
     const name = team ? teamName(team) : "";
     const solo = team ? soloMember(team) : null;
     // O campeão pode ter perdido uma série (a grande final, vindo de baixo):
-    // não foi eliminado.
-    const champion = s.rank === 1 && s.tied === 1;
-    const out = champion
-      ? undefined
-      : eliminationOf(bracket.matches, s.team_id);
+    // não foi eliminado. Na disputa de posições, cada um tem a série dele.
+    const champion = !placement && s.rank === 1 && s.tied === 1;
+    const own = placement
+      ? placementSeriesOf(bracket.matches, s.team_id)
+      : undefined;
+    const out = placement
+      ? own === "alone"
+        ? undefined
+        : own
+      : champion
+        ? undefined
+        : eliminationOf(bracket.matches, s.team_id);
+    const outcome =
+      own && own !== "alone" ? (own.won ? "won" : "lost") : "eliminated";
     const r = out?.match.result;
     const score =
       r && out
@@ -82,9 +94,10 @@ export function StandingsTable({ tenant, bracket, basePath }: Props) {
             {team && (
               <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />
             )}
+            {own === "alone" && <span>{t("alone")}</span>}
             {out && (
               <span>
-                {t.rich("eliminated", {
+                {t.rich(outcome, {
                   score,
                   match: () => (
                     <Link inline href={`${basePath}/${out.match.key}`}>

@@ -4,7 +4,7 @@ Regras no `engine` (`formats/`, `teams.rs`); a API grava e sabe a hora. "Assumid
 
 ## Formatos
 
-- Dois eixos independentes: **chaveamento** (eliminação simples, dupla, round robin, suíço, lobbies FFA, série de pontos) e **partida** (melhor de N; no FFA, pontos por colocação ou soma de frags).
+- Dois eixos independentes: **chaveamento** (eliminação simples, dupla, round robin, suíço, disputa de posições, lobbies FFA, série de pontos) e **partida** (melhor de N; no FFA, pontos por colocação ou soma de frags).
 - Duelo e TDM (2v2, 3v3, 4v4) são o mesmo motor com `team_size` diferente.
 - O torneio tem **fases** (`stages`) no modelo desde o início; hoje, uma só (resultados já têm `stage`; uma fase seguinte teria como participantes a classificação da anterior).
 - Fluxo: inscrição individual → check-in → formação de times → seeding → chave.
@@ -87,6 +87,26 @@ Assumido:
 - **O pareamento do suíço segue a tabela**: o desempate escolhido muda quem enfrenta quem (com só os frags, a rodada 2 de 6 jogadores sai com outros pares; teste `the_tiebreakers_change_the_pairing`). Rodada já pareada não muda.
 - **Suíço sem Buchholz**: ele não é calculado (`buchholz` nulo na tabela) e a coluna some.
 - **Trava**: depois do início, nada muda; o trigger que já congela a fase inteira (`tournament_stages_frozen_after_start`) cobre a coluna.
+
+## Disputa de posições
+
+Para a segunda etapa de um torneio em duas: depois de um todos contra todos (em md2, por exemplo), o 1º enfrenta o 2º, o 3º enfrenta o 4º, e assim por diante. Sem fases ligadas, a segunda etapa é outro torneio: a organização inscreve os jogadores e põe a ordem da chave na ordem da classificação da primeira.
+
+Do usuário (06/11):
+
+- **Formato de uma fase** (`placement`), ao lado das eliminações, do todos contra todos e do suíço: "Disputa de posições", "Disputa de posiciones", "Placement matches". Partida `pl-1-<par>`.
+- **Pares pela ordem da chave**: seed 1 x 2, 3 x 4..., todas as séries prontas no início, numa rodada só; o lado `a` é o seed melhor.
+- **Colocação**: no par k, quem vence fica em 2k − 1 e quem perde em 2k, sem empate.
+- **Série**: melhor de N ímpar, uma só para todas (precisa de vencedor); sem série par, sem desempate e sem final separada.
+
+Assumido:
+
+- **N ímpar**: o último seed não tem par e fica na posição dele, sem jogar (partida `Bye`, a última, como a folga do round robin; na chave, "P5 fica em 5º, sem adversário").
+- **Limites**: de 2 a 128 participantes, como o suíço; orçamento de campeões (`worst_case_games`) = o melhor de N, porque cada um joga no máximo uma série.
+- **O resto como nos outros formatos**: W.O. e desistência (o time que desiste perde por W.O. a série dele, pelo W.O. automático da API), veto e draft, contestação, rating por mapa. Todos os pares recebem `match.ready` no início, como uma rodada do suíço.
+- **Colocação a cada par decidido**, como os eliminados da eliminação: "Seus torneios" já mostra "Terminou em 3º" para quem decidiu o par enquanto os outros jogam, e o sem par tem a posição desde o início. A aba Classificação, como na eliminação, só aparece no fim, com a série de cada um (vitória ou derrota, com o placar) ou "Sem adversário".
+- **Tela**: a lista dos pares com os cartões da chave, e o código do cartão é o que está em jogo ("Disputa do 3º lugar"), também no título da série e nas listas que citam a série. No Discord fica `1.2`, como no round robin: "o veto da série Disputa do 3º lugar" não cabe nas frases de lá.
+- **Banco**: só `best_of` (os outros campos da fase nulos, `tournament_stages_shape`), na migration `20261212000000_placement`.
 
 ## TDM
 

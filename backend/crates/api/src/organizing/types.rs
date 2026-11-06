@@ -33,7 +33,7 @@ pub struct PendingTournament {
 #[derive(Serialize, ToSchema)]
 pub struct ContestedGame {
     pub tournament: PendingTournament,
-    /// A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`.
+    /// A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
     pub key: String,
     /// Eliminação simples (o código curto da partida não diz a chave).
     pub single: bool,

@@ -66,7 +66,7 @@ fn seen(mv: &MatchVeto, step: Option<i64>) -> Result<(), ApiError> {
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     responses(
         (status = OK, body = MatchDetail, description = "Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto pela primeira vez, quem falta do adversário recebe `match.opponent_ready` (depois de alguém desfazer, marcar de novo não avisa outra vez). Repetir não muda nada"),
@@ -179,7 +179,7 @@ pub async fn veto_unready(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     responses(
         (status = OK, body = MatchDetail, description = "O organizador começa o veto sem esperar os dois prontos (aviso `match.veto_started` para os dois)"),
@@ -216,7 +216,7 @@ pub async fn veto_begin(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     request_body = VetoChoice,
     responses(
@@ -274,7 +274,7 @@ pub async fn veto_step(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     request_body = Option<VetoSeen>,
     responses(
@@ -332,7 +332,7 @@ fn undoable(mv: &MatchVeto) -> Result<i16, ApiError> {
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     request_body = Option<VetoSeen>,
     responses(
@@ -382,7 +382,7 @@ pub async fn veto_undo_request(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     request_body = UndoAnswer,
     responses(

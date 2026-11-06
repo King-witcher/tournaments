@@ -50,7 +50,10 @@ fn fill(name: &mut String, locale: Locale) {
 /// O código curto da série `key`, como a chave do site mostra: `C1.2` na
 /// chave de cima (`L` em espanhol, `W` em inglês), `R2.1` na repescagem
 /// (`L2.1` em inglês), `GF1` e `GF2` na grande final, `3.2` no round robin,
-/// no suíço e na eliminação simples (`single`). Fora da forma `{lado}-{rodada}-{partida}`, como veio.
+/// no suíço e na eliminação simples (`single`). Na disputa de posições, `1.2`:
+/// o site mostra o que está em jogo ("Disputa do 3º lugar"), que não cabe
+/// numa frase como "o veto da série {match}". Fora da forma
+/// `{lado}-{rodada}-{partida}`, como veio.
 pub fn match_code(key: &str, single: bool, locale: Locale) -> String {
     let mut parts = key.split('-');
     let (Some(side), Some(round), Some(index), None) =
@@ -76,7 +79,7 @@ pub fn match_code(key: &str, single: bool, locale: Locale) -> String {
             format!("{letter}{round}.{index}")
         }
         "gf" => format!("GF{round}"),
-        "rr" | "sw" => format!("{round}.{index}"),
+        "rr" | "sw" | "pl" => format!("{round}.{index}"),
         _ => key.to_owned(),
     }
 }
@@ -96,6 +99,7 @@ mod tests {
         assert_eq!(pt("gf-2-1", false), "GF2");
         assert_eq!(pt("rr-2-1", false), "2.1");
         assert_eq!(pt("sw-4-3", false), "4.3");
+        assert_eq!(pt("pl-1-2", false), "1.2");
         assert_eq!(match_code("wb-1-2", false, Locale::Es), "L1.2");
         assert_eq!(match_code("lb-3-1", false, Locale::Es), "R3.1");
         let en = |key, single| match_code(key, single, Locale::En);

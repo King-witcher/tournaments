@@ -127,7 +127,7 @@ pub async fn get_screenshot_settings(State(state): State<AppState>) -> Json<Scre
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
     ),
     responses(
         (status = OK, body = MatchScreenshots, description = "Os screenshots de cada mapa enviado e do próximo, com o que quem vê pode fazer. Sem o bucket configurado, `enabled` falso e nenhum mapa"),
@@ -159,7 +159,7 @@ pub async fn list(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número do mapa na série: um enviado ou o próximo"),
     ),
     request_body = NewUpload,
@@ -222,7 +222,7 @@ pub async fn create_upload(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número do mapa na série"),
         ("screenshot" = i64, Path, description = "O `id` do upload"),
     ),
@@ -281,7 +281,7 @@ pub async fn attach(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número do mapa na série"),
         ("screenshot" = i64, Path, description = "O `id` do screenshot"),
     ),

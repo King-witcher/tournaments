@@ -185,6 +185,7 @@ pub fn summary(
             ec::BracketSide::GrandFinal => BracketPart::GrandFinal,
             ec::BracketSide::RoundRobin => BracketPart::RoundRobin,
             ec::BracketSide::Swiss => BracketPart::Swiss,
+            ec::BracketSide::Placement => BracketPart::Placement,
         },
         round: m.id.round,
         index: m.id.index,

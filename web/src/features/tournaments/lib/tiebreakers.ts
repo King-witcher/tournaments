@@ -19,17 +19,17 @@ export const DEFAULT_TIEBREAKERS: Record<TableFormat, Tiebreaker[]> = {
 };
 
 export const isTableFormat = (format: Stage["format"]): format is TableFormat =>
-  format !== "elimination";
+  format === "round_robin" || format === "swiss";
 
 /**
- * Os desempates de uma fase, na ordem; `null` na eliminação. A API sempre os
- * manda, mas o tipo os deixa opcionais porque a criação aceita sem eles (e
- * então vale o padrão).
+ * Os desempates de uma fase, na ordem; `null` na eliminação e na disputa de
+ * posições. A API sempre os manda, mas o tipo os deixa opcionais porque a
+ * criação aceita sem eles (e então vale o padrão).
  */
 export function stageTiebreakers(stage: Stage): Tiebreaker[] | null {
-  return stage.format === "elimination"
-    ? null
-    : (stage.tiebreakers ?? DEFAULT_TIEBREAKERS[stage.format]);
+  return stage.format === "round_robin" || stage.format === "swiss"
+    ? (stage.tiebreakers ?? DEFAULT_TIEBREAKERS[stage.format])
+    : null;
 }
 
 /**

@@ -11,6 +11,8 @@ const PART_ORDER: Record<Schemas["BracketPart"], number> = {
   // Sem eliminação: a tabela classifica.
   round_robin: 0,
   swiss: 0,
+  // Uma rodada só: cada par tem a sua série.
+  placement: 0,
 };
 
 const later = (a: Match, b: Match) =>
@@ -32,4 +34,24 @@ export function eliminationOf(matches: Match[], teamId: number) {
     if (!found || later(m, found.match) > 0) found = { match: m, side };
   }
   return found;
+}
+
+/**
+ * Disputa de posições: a série do time `teamId` (cada um joga no máximo uma),
+ * com o lado dele e se venceu; `alone` é o sem par, que fica na posição dele
+ * sem jogar. Sem série decidida, nada.
+ */
+export function placementSeriesOf(
+  matches: Match[],
+  teamId: number,
+): { match: Match; side: Schemas["Side"]; won: boolean } | "alone" | undefined {
+  for (const m of matches) {
+    const side =
+      m.a.team_id === teamId ? "a" : m.b.team_id === teamId ? "b" : null;
+    if (side === null) continue;
+    if (m.state === "bye") return "alone";
+    if (m.state !== "completed" || !m.result) return undefined;
+    return { match: m, side, won: m.result.winner === side };
+  }
+  return undefined;
 }

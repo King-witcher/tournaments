@@ -34,7 +34,7 @@ const UNCHANGED: ApiError = ApiError::invalid("match.contest_unchanged");
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número da partida na série, a partir de 1"),
     ),
     request_body = GameInput,

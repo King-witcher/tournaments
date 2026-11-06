@@ -76,6 +76,7 @@
       "swiss": "The format is Swiss. The number of rounds depends on registrations: 3 for up to 8, 4 for up to 16, 5 for up to 32.",
       "swissTdm": "The format is Swiss. The number of rounds depends on teams: 3 for up to 8, 4 for up to 16, 5 for up to 32.",
       "swissRounds": "The format is Swiss, with {rounds, plural, one {# round} other {# rounds}}.",
+      "placement": "The format is placement matches.",
       "series": "{bestOf, plural, =1 {Matches are a single game.} other {Matches are best of #.}}",
       "seriesEven": "If each side wins half the games, the match ends in a tie. The first to win {wins} takes the match, and any games left aren't played.",
       "finals": {
@@ -88,7 +89,8 @@
       "double": "Losing a match drops you to the losers' bracket, and losing again eliminates you. The winners of the upper bracket and the losers' bracket play the grand final, and the winner is the champion, even if they came through the losers' bracket.",
       "doubleReset": "Losing a match drops you to the losers' bracket, and losing again eliminates you. The winners of the upper bracket and the losers' bracket play the grand final. If the player from the losers' bracket wins, the grand final is played again.",
       "round_robin": "Matches stay open from the start, and you play each one when you agree on a time with your opponent. Rounds only set the order. With an odd number of registered players, each player gets one round off.",
-      "swiss": "In the first round, pairings come from the seeding. After that, players with the same score face each other, without repeating an opponent. Each round starts when all matches in the previous one finish. With an odd number of players, the lowest-ranked player who hasn't had a bye yet gets one, and a bye counts as a win."
+      "swiss": "In the first round, pairings come from the seeding. After that, players with the same score face each other, without repeating an opponent. Each round starts when all matches in the previous one finish. With an odd number of players, the lowest-ranked player who hasn't had a bye yet gets one, and a bye counts as a win.",
+      "placement": "Pairs come from the seeding (1st vs. 2nd, 3rd vs. 4th...), and the winner takes the higher of the two places. With an odd number, the last one keeps its place without playing."
     },
     "table": {
       "title": "Standings",
@@ -254,7 +256,8 @@
       "double": "Double elimination",
       "doubleReset": "Double elimination, with a reset in the grand final",
       "round_robin": "Round robin",
-      "swiss": "Swiss"
+      "swiss": "Swiss",
+      "placement": "Placement matches"
     },
     "series": {
       "single": "Best of {bestOf}; final best of {finals}",

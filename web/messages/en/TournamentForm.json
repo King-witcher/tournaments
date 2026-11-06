@@ -177,13 +177,15 @@
     "double": "Double elimination",
     "single": "Single elimination",
     "round_robin": "Round robin",
-    "swiss": "Swiss"
+    "swiss": "Swiss",
+    "placement": "Placement matches"
   },
   "stageFormatHints": {
     "double": "Whoever loses drops to the losers' bracket. Losing again eliminates them.",
     "single": "Whoever loses a match is out.",
     "round_robin": "Everyone plays every other participant once. Up to {max} participants.",
-    "swiss": "Each round, players with the same score face each other, without repeating opponents. Up to {max} participants."
+    "swiss": "Each round, players with the same score face each other, without repeating opponents. Up to {max} participants.",
+    "placement": "Seeding sets the pairs (1st vs. 2nd, 3rd vs. 4th...). The winner takes the higher place. Up to {max} participants."
   },
   "swissRounds": "Rounds",
   "swissRoundsHint": "Automatic: 3 rounds for up to 8 registered, 4 for up to 16, and 5 for up to 32. With few registered, at most one less than their number.",

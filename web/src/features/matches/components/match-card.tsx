@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { TeamName } from "@/features/teams/components/team-name";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
+import { placementPlace } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Link } from "@/shared/ui/link";
@@ -55,19 +56,23 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   if (m.state === "bye" || m.state === "not_needed") {
     const who = entrants.get(m.a.team_id ?? m.b.team_id ?? -1);
     // Na chave, quem não tem adversário avança; no round robin, folga na
-    // rodada (sem ponto); no suíço, recebe o bye (vale vitória).
+    // rodada (sem ponto); no suíço, recebe o bye (vale vitória); na disputa
+    // de posições, fica na posição dele.
     const rest =
       m.part === "round_robin"
         ? "rest"
         : m.part === "swiss"
           ? "swissBye"
-          : "advances";
+          : m.part === "placement"
+            ? "placementAlone"
+            : "advances";
     return (
       <p className={styles.ghost}>
         {m.state === "not_needed"
           ? `${code(m.key)} · ${t("notNeeded")}`
           : who
             ? t.rich(rest, {
+                place: placementPlace(m.index),
                 name: () => <TeamName tenant={tenant} team={who} inline />,
               })
             : t("bye")}

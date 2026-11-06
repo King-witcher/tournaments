@@ -9,14 +9,15 @@ export type EliminationStage = Extract<Stage, { format: "elimination" }>;
 /**
  * O formato como os textos o nomeiam e explicam: as duas eliminações (a
  * dupla com reset na grande final tem nome e explicação próprios), o round
- * robin e o suíço.
+ * robin, o suíço e a disputa de posições.
  */
 export type FormatKind =
   | "single"
   | "double"
   | "doubleReset"
   | "round_robin"
-  | "swiss";
+  | "swiss"
+  | "placement";
 
 /** A chave de eliminação como os textos a nomeiam e explicam. */
 export function bracketKind(
@@ -39,7 +40,15 @@ export function isSingle(stage: Stage) {
 
 /** Round robin ou suíço: a classificação sai de uma tabela de pontos. */
 export function isTable(stage: Stage) {
-  return stage.format !== "elimination";
+  return stage.format === "round_robin" || stage.format === "swiss";
+}
+
+/**
+ * A posição que o par `index` da disputa de posições vale para quem vence (o
+ * par 2 vale o 3º lugar); quem perde fica com a seguinte.
+ */
+export function placementPlace(index: number) {
+  return 2 * index - 1;
 }
 
 /** O melhor de N da final, só na eliminação. */
@@ -89,15 +98,16 @@ export function mapsToWin(bestOf: number) {
 }
 
 /**
- * O teto de participantes de cada formato no `engine` (round robin 32, suíço
- * 128), em lados da chave (no TDM, times); a eliminação vai até as vagas do
- * site.
+ * O teto de participantes de cada formato no `engine` (round robin 32, suíço e
+ * disputa de posições 128), em lados da chave (no TDM, times); a eliminação vai
+ * até as vagas do site.
  */
 export const FORMAT_MAX_ENTRANTS: Partial<
   Record<Schemas["StageFormat"]["format"], number>
 > = {
   round_robin: 32,
   swiss: 128,
+  placement: 128,
 };
 
 /** Os limites de vagas da API, em jogadores (no TDM, o mínimo é de dois times). */

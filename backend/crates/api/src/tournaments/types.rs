@@ -64,6 +64,15 @@ pub enum StageFormat {
         #[schema(example = json!(["buchholz", "head_to_head", "map_diff", "frag_diff"]))]
         tiebreakers: Vec<Tiebreaker>,
     },
+    /// Disputa de posições, a fase inteira: a ordem da chave forma os pares
+    /// (1 x 2, 3 x 4...), todos prontos no início, e quem vence cada série
+    /// fica com a melhor das duas posições. Com N ímpar, o último fica na
+    /// posição dele sem jogar. De 2 a 128 participantes.
+    Placement {
+        /// Melhor de N de todas as partidas (ímpar).
+        #[schema(example = 3)]
+        best_of: u8,
+    },
 }
 
 /// Um desempate das fases de tabela. O primeiro critério (saldo de séries ou

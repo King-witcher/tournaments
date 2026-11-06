@@ -85,6 +85,8 @@ async fn tournaments_keep_state_and_shape() {
                        finals_best_of = null, tiebreakers = '{}'";
     let swiss = "format = 'swiss', bracket = null, grand_final_reset = null, \
                  finals_best_of = null, tiebreakers = '{}'";
+    let placement = "format = 'placement', bracket = null, grand_final_reset = null, \
+                     finals_best_of = null";
     // Uma fase de tabela com os desempates `list` (o resto válido).
     let table = |format: &str, list: &str| {
         format!(
@@ -176,6 +178,24 @@ async fn tournaments_keep_state_and_shape() {
             table("round_robin", "'{head_to_head,buchholz}'"),
             "tournament_stages_buchholz_swiss",
         ),
+        // A disputa de posições só tem o melhor de N, sempre ímpar.
+        ("format = 'placement'".to_owned(), "tournament_stages_shape"),
+        (
+            format!("{placement}, tiebreakers = '{{}}'"),
+            "tournament_stages_shape",
+        ),
+        (
+            format!("{placement}, rounds = 3"),
+            "tournament_stages_shape",
+        ),
+        (
+            "format = 'placement', bracket = null, grand_final_reset = null".to_owned(),
+            "tournament_stages_shape",
+        ),
+        (
+            format!("{placement}, best_of = 2"),
+            "tournament_stages_best_of",
+        ),
     ] {
         let sql = format!("update tournament_stages set {set}");
         assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{sql}");
@@ -189,6 +209,7 @@ async fn tournaments_keep_state_and_shape() {
         format!("{swiss}, rounds = 127"),
         table("round_robin", "'{frag_diff,map_diff,head_to_head}'"),
         table("swiss", "'{head_to_head,buchholz,frag_diff,map_diff}'"),
+        format!("{placement}, rounds = null, tiebreakers = null, best_of = 5"),
         single.to_owned(),
     ] {
         let sql = format!("update tournament_stages set {set}");

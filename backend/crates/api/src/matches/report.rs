@@ -45,7 +45,7 @@ const GAME_MINUTES: i32 = 15;
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     request_body = GameInput,
@@ -134,7 +134,7 @@ pub async fn report(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     responses(
@@ -193,7 +193,7 @@ pub async fn confirm(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+        ("match" = String, Path, description = "Série: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
         ("game" = i16, Path, description = "Número da partida na série, a partir de 1"),
     ),
     request_body = ContestReport,

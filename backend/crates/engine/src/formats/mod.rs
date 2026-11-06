@@ -1,11 +1,13 @@
 //! Formatos de chaveamento.
 //!
-//! Cada formato é uma pasta (`elimination/`, `round_robin/`, `swiss/`);
-//! `table/` é o que os formatos de tabela (round robin e suíço) dividem:
-//! partidas de lados fixos e a classificação com os desempates. `stage.rs` é
-//! a fase de qualquer formato (`StageBracket`), o que a API usa.
+//! Cada formato é uma pasta (`elimination/`, `round_robin/`, `swiss/`,
+//! `placement/`); `table/` é o que os formatos de tabela (round robin e
+//! suíço) dividem: partidas de lados fixos e a classificação com os
+//! desempates (a disputa de posições usa só as partidas). `stage.rs` é a fase
+//! de qualquer formato (`StageBracket`), o que a API usa.
 
 pub mod elimination;
+pub mod placement;
 pub mod round_robin;
 mod stage;
 pub mod swiss;
@@ -17,6 +19,7 @@ use std::collections::HashSet;
 
 use crate::core::{EngineError, ParticipantId};
 use elimination::{EliminationBracket, EliminationConfig};
+use placement::PlacementConfig;
 use round_robin::RoundRobinConfig;
 use swiss::SwissConfig;
 
@@ -27,6 +30,8 @@ pub enum StageFormat {
     Elimination(EliminationConfig),
     RoundRobin(RoundRobinConfig),
     Swiss(SwissConfig),
+    /// Disputa de posições.
+    Placement(PlacementConfig),
 }
 
 impl StageFormat {
@@ -37,6 +42,7 @@ impl StageFormat {
             Self::Elimination(c) => c.series.validate(),
             Self::RoundRobin(c) => c.validate(),
             Self::Swiss(c) => c.validate(),
+            Self::Placement(c) => c.validate(),
         }
     }
 
@@ -46,6 +52,7 @@ impl StageFormat {
             Self::Elimination(c) => c.series.default.max(c.series.finals),
             Self::RoundRobin(c) => c.best_of,
             Self::Swiss(c) => c.best_of,
+            Self::Placement(c) => c.best_of,
         }
     }
 
@@ -63,6 +70,7 @@ impl StageFormat {
             }
             Self::RoundRobin(c) => c.worst_case_games(participants),
             Self::Swiss(c) => c.worst_case_games(participants),
+            Self::Placement(c) => c.worst_case_games(participants),
         }
     }
 }

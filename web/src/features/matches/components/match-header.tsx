@@ -45,23 +45,28 @@ export function MatchHeader({
   // A final, a grande final e o reset têm uma partida só: basta o nome.
   const alone = s.part === "grand_final" || s.round === detail.part_rounds;
   const table = s.part === "round_robin" || s.part === "swiss";
-  const label = table
-    ? t("labelTable", {
-        round: s.round,
-        total: detail.part_rounds,
-        index: s.index,
-      })
-    : alone
-      ? single || s.part === "grand_final"
-        ? round
-        : t("labelPart", { part: tBracket(`parts.${s.part}`), round })
-      : single
-        ? t("labelSingle", { round, index: s.index })
-        : t("label", {
-            part: tBracket(`parts.${s.part}`),
-            round,
+  // Na disputa de posições, o título já diz o que está em jogo; a linha diz o
+  // formato.
+  const label =
+    s.part === "placement"
+      ? tBracket("parts.placement")
+      : table
+        ? t("labelTable", {
+            round: s.round,
+            total: detail.part_rounds,
             index: s.index,
-          });
+          })
+        : alone
+          ? single || s.part === "grand_final"
+            ? round
+            : t("labelPart", { part: tBracket(`parts.${s.part}`), round })
+          : single
+            ? t("labelSingle", { round, index: s.index })
+            : t("label", {
+                part: tBracket(`parts.${s.part}`),
+                round,
+                index: s.index,
+              });
   const side = (who: "a" | "b") =>
     detail[who] ? names[who] : placeholder(s[who]);
   // O W.O. não tem placar: a linha embaixo diz quem venceu.

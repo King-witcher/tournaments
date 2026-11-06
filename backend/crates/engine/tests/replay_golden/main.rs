@@ -12,5 +12,6 @@
 
 mod common;
 mod elimination;
+mod placement;
 mod tables;
 mod veto;

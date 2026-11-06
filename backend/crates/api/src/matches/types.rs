@@ -25,13 +25,15 @@ pub struct TournamentBracket {
     pub matches: Vec<BracketMatch>,
     /// Colocações já definidas. Na eliminação, os eliminados e, no fim,
     /// campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
-    /// 5º–8º). No round robin e no suíço, todos, só no fim, sem empate.
+    /// 5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
+    /// disputa de posições, as dos pares decididos e a do sem par, sem empate.
     pub standings: Vec<Standing>,
     /// Round robin e suíço: a tabela de agora, em ordem de posição (a final
-    /// quando a fase termina); `null` na eliminação.
+    /// quando a fase termina); `null` na eliminação e na disputa de posições.
     pub table: Option<Vec<TableRow>>,
     /// Round robin e suíço: o número de rodadas da fase (no suíço, as que vão
-    /// ser jogadas, não só as já pareadas); `null` na eliminação.
+    /// ser jogadas, não só as já pareadas); `null` na eliminação e na disputa
+    /// de posições.
     pub total_rounds: Option<u16>,
     /// Janela de contestação de cada mapa, em minutos.
     pub contest_minutes: i32,
@@ -54,6 +56,9 @@ pub enum BracketPart {
     RoundRobin,
     /// Rodada do suíço.
     Swiss,
+    /// Os pares da disputa de posições (rodada 1; o par k vale as posições
+    /// 2k − 1 e 2k).
+    Placement,
 }
 
 /// Uma linha da tabela do round robin ou do suíço.
@@ -187,7 +192,7 @@ pub struct NextMatch {
 
 #[derive(Serialize, ToSchema)]
 pub struct BracketMatch {
-    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`.
+    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
     #[schema(example = "wb-1-3")]
     pub key: String,
     pub part: BracketPart,

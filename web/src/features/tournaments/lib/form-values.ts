@@ -539,6 +539,8 @@ function stageBody(values: TournamentValues): Schemas["StageFormat"] {
         rounds: values.swissRounds,
         tiebreakers: values.tiebreakers,
       };
+    case "placement":
+      return { format: "placement", best_of: values.bestOf };
     case "elimination":
       return {
         format: "elimination",

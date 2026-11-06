@@ -13,7 +13,8 @@
     "losers": "Repescagem",
     "grand_final": "Grande final",
     "round_robin": "Todos contra todos",
-    "swiss": "Suíço"
+    "swiss": "Suíço",
+    "placement": "Disputa de posições"
   },
   "rounds": {
     "final": "Final",
@@ -29,7 +30,8 @@
     "losers": "R{round}.{index}",
     "grand_final": "GF{round}",
     "round_robin": "{round}.{index}",
-    "swiss": "{round}.{index}"
+    "swiss": "{round}.{index}",
+    "placement": "Disputa do {place}º lugar"
   },
   "from": {
     "winner": "Vencedor de {match}",
@@ -109,10 +111,14 @@
     "result": "Resultado",
     "champion": "Venceu o torneio",
     "eliminated": "Eliminação: <match></match> ({score})",
+    "won": "Vitória: <match></match> ({score})",
+    "lost": "Derrota: <match></match> ({score})",
+    "alone": "Sem adversário",
     "empty": "A classificação aparece aqui quando a última série da chave for decidida."
   },
   "rest": "<name></name> folga nesta rodada",
   "swissBye": "<name></name> recebe o bye (vale vitória)",
+  "placementAlone": "<name></name> fica em {place}º, sem adversário",
   "matchesTitle": "Séries",
   "roundOf": "Rodada {round} de {total}",
   "roundRobinHint": "Todas as séries estão abertas, e cada uma é jogada quando os dois lados combinarem. Abra uma série para enviar ou ver o resultado.",

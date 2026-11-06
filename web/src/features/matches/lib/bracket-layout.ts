@@ -59,8 +59,8 @@ export function bracketEdges(columns: Column[]): Edge[] {
 
 /**
  * Nome da rodada: na simples e no fim de cada chave, final, semifinal e
- * quartas; na grande final, a série e o reset; nas outras (e no round robin
- * e no suíço, que não têm final), o número.
+ * quartas; na grande final, a série e o reset; nas outras (e no round robin,
+ * no suíço e na disputa de posições, que não têm final), o número.
  */
 export type RoundName =
   | { kind: "final" | "semifinal" | "quarterfinal" | "grandFinal" | "reset" }
@@ -75,7 +75,7 @@ export function roundName(
   if (part === "grand_final") {
     return { kind: round === 1 ? "grandFinal" : "reset" };
   }
-  if (part === "round_robin" || part === "swiss")
+  if (part === "round_robin" || part === "swiss" || part === "placement")
     return { kind: "round", round };
   const fromEnd = lastRound - round;
   if (fromEnd === 0) return { kind: "final" };
@@ -91,6 +91,7 @@ const PARTS: Record<string, Part> = {
   gf: "grand_final",
   rr: "round_robin",
   sw: "swiss",
+  pl: "placement",
 };
 
 /** `wb-1-3`, `rr-2-1` → parte, rodada e índice (o formato que a API gera). */

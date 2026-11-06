@@ -177,13 +177,15 @@
     "double": "Eliminación doble",
     "single": "Eliminación simple",
     "round_robin": "Todos contra todos",
-    "swiss": "Suizo"
+    "swiss": "Suizo",
+    "placement": "Disputa de posiciones"
   },
   "stageFormatHints": {
     "double": "Quien pierde pasa al repechaje y, si pierde de nuevo, queda fuera.",
     "single": "Quien pierde una serie queda fuera.",
     "round_robin": "Cada uno enfrenta a todos los demás una vez. Hasta {max} participantes.",
-    "swiss": "En cada ronda se enfrentan quienes tienen la misma puntuación, sin repetir rival. Hasta {max} participantes."
+    "swiss": "En cada ronda se enfrentan quienes tienen la misma puntuación, sin repetir rival. Hasta {max} participantes.",
+    "placement": "El orden de la llave forma los pares (1º contra 2º, 3º contra 4º...). Quien gana se queda con la mejor posición. Hasta {max} participantes."
   },
   "swissRounds": "Rondas",
   "swissRoundsHint": "Automático: 3 rondas con hasta 8 inscritos, 4 con hasta 16 y 5 con hasta 32. Con pocos inscritos, como máximo una menos que ellos.",

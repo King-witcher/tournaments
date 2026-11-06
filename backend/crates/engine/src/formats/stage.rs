@@ -4,6 +4,7 @@
 
 use super::StageFormat;
 use super::elimination::EliminationBracket;
+use super::placement::PlacementBracket;
 use super::round_robin::RoundRobinBracket;
 use super::swiss::{SwissBracket, SwissRound};
 use super::table::TableRow;
@@ -32,6 +33,7 @@ pub enum StageBracket {
     Elimination(EliminationBracket),
     RoundRobin(RoundRobinBracket),
     Swiss(SwissBracket),
+    Placement(PlacementBracket),
 }
 
 impl StageBracket {
@@ -67,6 +69,11 @@ impl StageBracket {
                 history.reports,
                 &history.out,
             )?),
+            StageFormat::Placement(c) => Self::Placement(PlacementBracket::replay(
+                c,
+                seeded,
+                history.reports.into_iter().map(|r| r.report),
+            )?),
         })
     }
 
@@ -75,6 +82,7 @@ impl StageBracket {
             Self::Elimination(b) => StageFormat::Elimination(b.config()),
             Self::RoundRobin(b) => StageFormat::RoundRobin(b.config()),
             Self::Swiss(b) => StageFormat::Swiss(b.config()),
+            Self::Placement(b) => StageFormat::Placement(b.config()),
         }
     }
 
@@ -84,6 +92,7 @@ impl StageBracket {
             Self::Elimination(b) => b.participants(),
             Self::RoundRobin(b) => b.participants(),
             Self::Swiss(b) => b.participants(),
+            Self::Placement(b) => b.participants(),
         }
     }
 
@@ -94,6 +103,7 @@ impl StageBracket {
             Self::Elimination(b) => b.matches(),
             Self::RoundRobin(b) => b.matches(),
             Self::Swiss(b) => b.matches(),
+            Self::Placement(b) => b.matches(),
         }
     }
 
@@ -102,6 +112,7 @@ impl StageBracket {
             Self::Elimination(b) => b.get(id),
             Self::RoundRobin(b) => b.get(id),
             Self::Swiss(b) => b.get(id),
+            Self::Placement(b) => b.get(id),
         }
     }
 
@@ -112,6 +123,7 @@ impl StageBracket {
             Self::Elimination(b) => b.occupants(id),
             Self::RoundRobin(b) => b.occupants(id),
             Self::Swiss(b) => b.occupants(id),
+            Self::Placement(b) => b.occupants(id),
         }
     }
 
@@ -128,6 +140,7 @@ impl StageBracket {
             Self::Elimination(b) => b.report(report.report),
             Self::RoundRobin(b) => b.report(report),
             Self::Swiss(b) => b.report(report),
+            Self::Placement(b) => b.report(report.report),
         }
     }
 
@@ -136,35 +149,38 @@ impl StageBracket {
             Self::Elimination(b) => b.is_finished(),
             Self::RoundRobin(b) => b.is_finished(),
             Self::Swiss(b) => b.is_finished(),
+            Self::Placement(b) => b.is_finished(),
         }
     }
 
     /// Colocações já definidas. Na eliminação, os eliminados (faixas com
     /// empate) e, no fim, campeão e vice; nos formatos de tabela, todos, só
-    /// no fim, uma posição cada.
+    /// no fim, uma posição cada; na disputa de posições, as dos pares
+    /// decididos e a do sem par, uma posição cada.
     pub fn placements(&self) -> Vec<Placement> {
         match self {
             Self::Elimination(b) => b.standings(),
             Self::RoundRobin(b) => b.placements(),
             Self::Swiss(b) => b.placements(),
+            Self::Placement(b) => b.placements(),
         }
     }
 
-    /// A tabela atual, em ordem de posição; `None` na eliminação. Em ordem, é
-    /// a semente de uma fase seguinte.
+    /// A tabela atual, em ordem de posição; `None` na eliminação e na
+    /// disputa de posições. Em ordem, é a semente de uma fase seguinte.
     pub fn table(&self) -> Option<&[TableRow]> {
         match self {
-            Self::Elimination(_) => None,
+            Self::Elimination(_) | Self::Placement(_) => None,
             Self::RoundRobin(b) => Some(b.table()),
             Self::Swiss(b) => Some(b.table()),
         }
     }
 
     /// Número de rodadas dos formatos de tabela (no suíço, as da fase, não só
-    /// as pareadas); `None` na eliminação.
+    /// as pareadas); `None` na eliminação e na disputa de posições.
     pub fn total_rounds(&self) -> Option<u16> {
         match self {
-            Self::Elimination(_) => None,
+            Self::Elimination(_) | Self::Placement(_) => None,
             Self::RoundRobin(b) => Some(b.rounds()),
             Self::Swiss(b) => Some(b.total_rounds()),
         }
@@ -185,6 +201,7 @@ impl StageBracket {
             Self::Elimination(b) => b.worst_case_games(),
             Self::RoundRobin(b) => b.worst_case_games(),
             Self::Swiss(b) => b.worst_case_games(),
+            Self::Placement(b) => b.worst_case_games(),
         }
     }
 }
@@ -194,6 +211,7 @@ mod tests {
     use super::*;
     use crate::core::{MatchReport, Outcome, SeriesScore};
     use crate::formats::elimination::{EliminationConfig, EliminationKind};
+    use crate::formats::placement::PlacementConfig;
     use crate::formats::round_robin::RoundRobinConfig;
     use crate::formats::swiss::SwissConfig;
     use crate::formats::table::Tiebreakers;
@@ -244,7 +262,7 @@ mod tests {
         (stage, history)
     }
 
-    fn formats() -> [StageFormat; 3] {
+    fn formats() -> [StageFormat; 4] {
         [
             StageFormat::Elimination(EliminationConfig {
                 kind: EliminationKind::Double {
@@ -264,6 +282,7 @@ mod tests {
                 rounds: None,
                 tiebreakers: Tiebreakers::SWISS,
             }),
+            StageFormat::Placement(PlacementConfig { best_of: 3 }),
         ]
     }
 
@@ -279,7 +298,7 @@ mod tests {
                 assert_eq!(first.participant, ParticipantId(1), "{format:?} {n}");
                 assert_eq!(
                     stage.table().is_some(),
-                    !matches!(format, StageFormat::Elimination(_))
+                    matches!(format, StageFormat::RoundRobin(_) | StageFormat::Swiss(_))
                 );
             }
         }
@@ -309,7 +328,10 @@ mod tests {
             }],
             ..StageHistory::default()
         };
-        for format in &formats()[..2] {
+        for format in formats()
+            .iter()
+            .filter(|f| !matches!(f, StageFormat::Swiss(_)))
+        {
             assert_eq!(
                 StageBracket::replay(*format, seeds(2), history.clone()),
                 Err(EngineError::InvalidPairing { round: 1 })

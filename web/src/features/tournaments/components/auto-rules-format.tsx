@@ -9,9 +9,9 @@ import { Sentences } from "./sentences";
 type Props = { tournament: components["schemas"]["Tournament"] };
 
 /**
- * A chave (ou o todos contra todos, o suíço): o nome, como se avança ou se
- * cai, o melhor de N das séries e da final e, na série par, o empate e o fim
- * antes de jogar todas.
+ * A chave (ou o todos contra todos, o suíço, a disputa de posições): o nome,
+ * como se avança ou se cai, o melhor de N das séries e da final e, na série
+ * par, o empate e o fim antes de jogar todas.
  */
 export function AutoRulesFormat({ tournament }: Props) {
   const t = useTranslations("Tournament.autoRules.format");
@@ -26,7 +26,9 @@ export function AutoRulesFormat({ tournament }: Props) {
         ? stage.rounds != null
           ? t("swissRounds", { rounds: stage.rounds })
           : t(tdm ? "swissTdm" : "swiss")
-        : t(tdm ? "round_robinTdm" : "round_robin");
+        : stage.format === "placement"
+          ? t("placement")
+          : t(tdm ? "round_robinTdm" : "round_robin");
 
   return (
     <AutoRulesBlock

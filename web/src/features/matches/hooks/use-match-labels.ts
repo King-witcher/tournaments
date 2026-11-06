@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { placementPlace } from "@/features/tournaments/lib/format";
 import type { components } from "@/shared/api/schema";
 import { parseMatchKey, roundName } from "../lib/bracket-layout";
 
@@ -7,7 +8,8 @@ type Schemas = components["schemas"];
 
 /**
  * Nomes das partidas e rodadas no idioma de quem vê: código curto
- * (`C1.2`), título da rodada, de onde vem um lado ("Vencedor de C1.2") e o
+ * (`C1.2`; na disputa de posições, o que está em jogo, "Disputa do 3º
+ * lugar"), título da rodada, de onde vem um lado ("Vencedor de C1.2") e o
  * que fica no lugar de quem ainda não se sabe. `single`: eliminação simples
  * (uma chave só).
  */
@@ -16,7 +18,11 @@ export function useMatchLabels(single: boolean) {
 
   function code(key: string) {
     const { part, round, index } = parseMatchKey(key);
-    return t(`short.${single ? "single" : part}`, { round, index });
+    return t(`short.${single ? "single" : part}`, {
+      round,
+      index,
+      place: placementPlace(index),
+    });
   }
 
   function roundTitle(

@@ -48,7 +48,7 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
           <AutoRulesTeams tournament={tournament} />
         )}
         <AutoRulesFormat tournament={tournament} />
-        {stage.format !== "elimination" && (
+        {(stage.format === "round_robin" || stage.format === "swiss") && (
           <AutoRulesTable
             format={stage.format}
             even={isEvenSeries(stage.best_of)}

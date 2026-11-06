@@ -3,8 +3,9 @@
 //! avisa a página da partida e a chave, "Seus torneios" de quem joga nelas e,
 //! na que passou a ter os dois lados sem estar decidida, os dois (`match.ready`;
 //! a que vira W.O. na hora já chega decidida; no suíço, as partidas de cada
-//! rodada nova). No round robin, em que todas as partidas ficam prontas no
-//! início, `match.ready` vai para cada time só com a série sugerida a ele: a
+//! rodada nova; na disputa de posições, todos os pares no início). No round
+//! robin, em que todas as partidas ficam prontas no início, `match.ready` vai
+//! para cada time só com a série sugerida a ele: a
 //! primeira no início e a seguinte quando ele termina uma série, junto com o
 //! adversário livre que a esperava (`progress::notices`); como a sugestão e
 //! quem está jogando dependem das séries dos outros, quando mudam avisa "Seus
@@ -288,10 +289,11 @@ fn is_league(bracket: &StageBracket) -> bool {
     matches!(bracket.format(), ef::StageFormat::RoundRobin(_))
 }
 
-/// Na eliminação e no suíço, quem recebe `match.ready` de qual partida (com os
-/// lados dela) depois de uma mudança de `before` (`None`: o início) para
-/// `after`: os dois lados da partida que passou a estar pronta com eles. O
-/// round robin, com todas prontas desde o início, é `progress::notices`.
+/// Na eliminação, no suíço e na disputa de posições, quem recebe `match.ready`
+/// de qual partida (com os lados dela) depois de uma mudança de `before`
+/// (`None`: o início) para `after`: os dois lados da partida que passou a estar
+/// pronta com eles. O round robin, com todas prontas desde o início, é
+/// `progress::notices`.
 fn ready_notices(before: Option<&Snapshot>, after: &StageBracket) -> Notices {
     let was = |id: MatchId| before.and_then(|b| b.marks.get(&id)).map(|m| m.state);
     after

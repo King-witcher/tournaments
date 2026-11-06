@@ -8,6 +8,7 @@ use engine::{
     champions as ec,
     formats::{
         self as ef, elimination as el,
+        placement::PlacementConfig,
         round_robin::RoundRobinConfig,
         swiss::SwissConfig,
         table::{Criterion, Tiebreakers},
@@ -101,7 +102,8 @@ pub struct StageRow {
     pub(super) bracket: Option<String>,
     pub(super) grand_final_reset: Option<bool>,
     pub(super) rounds: Option<i16>,
-    /// Fases de tabela: os desempates, em ordem. Nulo na eliminação.
+    /// Fases de tabela: os desempates, em ordem. Nulo na eliminação e na
+    /// disputa de posições.
     pub(super) tiebreakers: Option<Vec<String>>,
 }
 
@@ -168,6 +170,15 @@ impl From<ef::StageFormat> for StageRow {
                 rounds: config.rounds.map(|n| i16::try_from(n).unwrap_or(i16::MAX)),
                 tiebreakers: tiebreaker_columns(config.tiebreakers),
             },
+            ef::StageFormat::Placement(config) => Self {
+                format: "placement".to_owned(),
+                best_of: config.best_of.into(),
+                finals_best_of: None,
+                bracket: None,
+                grand_final_reset: None,
+                rounds: None,
+                tiebreakers: None,
+            },
         }
     }
 }
@@ -229,6 +240,12 @@ impl StageRow {
                     .map_err(|_| invalid("rounds", &self))?,
                 tiebreakers: self.tiebreakers()?,
             })),
+            "placement" if self.tiebreakers.is_none() => {
+                Ok(ef::StageFormat::Placement(PlacementConfig {
+                    best_of: best_of(self.best_of)?,
+                }))
+            }
+            "placement" => Err(invalid("tiebreakers", &self)),
             _ => Err(invalid("format", &self)),
         }
     }
@@ -276,6 +293,7 @@ mod tests {
                 rounds: Some(127),
                 tiebreakers: Tiebreakers::new(&[Criterion::FragDiff, Criterion::Buchholz]).unwrap(),
             }),
+            ef::StageFormat::Placement(PlacementConfig { best_of: 5 }),
         ] {
             assert_eq!(StageRow::from(stage).read().unwrap(), stage);
         }
@@ -346,6 +364,7 @@ mod tests {
             ..row("elimination", Some("single"), None)
         };
         assert!(single.read().is_err());
+        assert!(tiebreakers("placement", Some(&[])).read().is_err());
         let half_rule = ChampionColumns {
             bans_per_series: 1,
             mirror: true,
