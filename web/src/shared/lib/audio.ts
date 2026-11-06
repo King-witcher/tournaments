@@ -24,11 +24,15 @@ function create() {
 /**
  * Chama `ready` quando o som puder tocar: na hora, se um gesto já criou o
  * contexto; senão, no primeiro gesto. Antes disso, nada a fazer (baixar um
- * arquivo que talvez nunca toque, por exemplo).
+ * arquivo que talvez nunca toque, por exemplo). Devolve a função que desiste
+ * de esperar.
  */
 export function whenAudioReady(ready: () => void) {
   if (context) ready();
   else waiting.add(ready);
+  return () => {
+    waiting.delete(ready);
+  };
 }
 
 /** Prepara o som no próximo clique ou tecla; devolve a função que desfaz. */

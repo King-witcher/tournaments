@@ -14,9 +14,12 @@ export type VetoSoundEvent =
   | { kind: "votePassed"; map: string }
   | { kind: "championBan"; champion: string }
   | { kind: "championPick"; champion: string }
-  | { kind: "yourPick" }
+  | { kind: "yourTurn"; action: TurnAction }
   | { kind: "enemyPick" }
   | { kind: "done" };
+
+/** O que quem vê tem de fazer na vez dele (a janela às cegas é um pick). */
+export type TurnAction = "ban" | "pick" | "vote";
 
 /**
  * O que a comparação guarda de um veto, só em valores simples (a sala de veto
@@ -30,8 +33,11 @@ export type VetoSoundState = {
   status: Veto["status"];
   /** A votação aberta (a partida), ou `null`. */
   vote: string | null;
-  /** A vez de pick (o `step` e de quem é, pelo lado de quem vê), ou `null`. */
-  pick: string | null;
+  /**
+   * A vez de quem joga (`passo:mine:ação`, ou `passo:theirs:pick` na vez de
+   * pick do adversário), ou `null`.
+   */
+  turn: string | null;
   /** As votações já decididas (`partida:mapa`). */
   decided: string[];
 };
@@ -52,7 +58,7 @@ export function soundState(
       turn?.action === "vote" && turn.sides.length > 0
         ? String(veto.game ?? 1)
         : null,
-    pick: pickTurn(veto, mine),
+    turn: turnOf(veto, mine),
     decided: veto.games
       .filter((g) => g.offered.length > 1 && g.map)
       .map((g) => `${g.game}:${g.map?.slug}`),
@@ -60,25 +66,37 @@ export function soundState(
 }
 
 /**
- * A vez de pick (de mapa ou de campeão) de quem joga: a dele, se pode agir
- * agora, ou a do adversário. Na janela às cegas, os dois escolhem juntos: só a
- * dele conta.
+ * A vez de quem joga: a dele (ban, pick ou voto), se pode agir agora, ou a de
+ * pick do adversário (a de ban não tem som). Na janela às cegas, os dois
+ * escolhem juntos: só a dele conta.
  */
-function pickTurn(veto: Veto, mine: Schemas["Side"] | null): string | null {
+function turnOf(veto: Veto, mine: Schemas["Side"] | null): string | null {
   const turn = veto.turn;
   if (veto.status !== "in_progress" || !turn || mine == null) return null;
+  if (isActing(veto, mine)) {
+    const action = turn.action === "team_pick" ? "pick" : turn.action;
+    return `${veto.step}:mine:${action}`;
+  }
   if (turn.action !== "pick" && turn.action !== "team_pick") return null;
-  if (isActing(veto, mine)) return `${veto.step}:mine`;
   if (isWindow(turn) || turn.sides.length === 0 || turn.sides.includes(mine))
     return null;
-  return `${veto.step}:theirs`;
+  return `${veto.step}:theirs:pick`;
+}
+
+/** O som da vez guardada em `VetoSoundState.turn`. */
+function turnEvent(turn: string): VetoSoundEvent {
+  const [, who, action] = turn.split(":");
+  return who === "mine"
+    ? { kind: "yourTurn", action: action as TurnAction }
+    : { kind: "enemyPick" };
 }
 
 /**
  * Os sons entre dois estados do mesmo veto, na ordem em que tocam: os eventos
  * novos do histórico (o passo de cada um, já confirmado pela API), o
- * resultado da votação, o fim do veto e, por último, a vez que abriu. `now` é
- * a hora da API na resposta mais nova.
+ * resultado da votação, o fim do veto e, por último, a votação e a vez que
+ * abriram (a de quem vota antes do "vote now", para o efeito da vez tocar
+ * junto dele). `now` é a hora da API na resposta mais nova.
  */
 export function soundEvents(
   before: VetoSoundState,
@@ -102,13 +120,13 @@ export function soundEvents(
   if (before.status === "in_progress" && after.status === "done") {
     events.push({ kind: "done" });
   }
+  const turn =
+    after.turn && after.turn !== before.turn ? turnEvent(after.turn) : null;
+  const voting = turn?.kind === "yourTurn" && turn.action === "vote";
+  if (turn && voting) events.push(turn);
   if (after.vote && after.vote !== before.vote)
     events.push({ kind: "voteNow" });
-  if (after.pick && after.pick !== before.pick) {
-    events.push({
-      kind: after.pick.endsWith(":mine") ? "yourPick" : "enemyPick",
-    });
-  }
+  if (turn && !voting) events.push(turn);
   return events;
 }
 

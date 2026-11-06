@@ -1,5 +1,9 @@
 import { pickWeighted, type Weighted } from "@/shared/lib/pick-weighted";
-import type { AnnouncementLine, SoundBatch } from "@/shared/lib/sound-player";
+import type {
+  AnnouncementLine,
+  LoopSound,
+  SoundBatch,
+} from "@/shared/lib/sound-player";
 import type { VetoSoundEvent } from "./veto-sound-events";
 import { VETO_SOUND_FILES as FILES } from "./veto-sound-files";
 
@@ -17,12 +21,16 @@ import { VETO_SOUND_FILES as FILES } from "./veto-sound-files";
  *   de um efeito sem fala (a porta que tranca cobriria "your pick"). Os de
  *   um mesmo passo saem em sequência ("vote passed", o mapa, "prepare to
  *   fight").
- * - O que pede uma ação (`your_pick`, `enemys_pick`, `vote_now`) fica velho
- *   no próximo passo: é cortado no meio por ele, e o que ainda não começou
- *   não toca. O que conta algo (`prepare_draft`, `vote_passed` e o mapa,
- *   `prepare_to_fight`) termina, e o anúncio seguinte vem depois.
+ * - A vez de quem vê (ban, pick, voto) toca o efeito da vez junto da fala
+ *   dela ("your pick", "vote now"; no ban, que não tem fala, só o efeito).
+ * - O que pede uma ação (a vez e o efeito dela, `enemys_pick`, `vote_now`)
+ *   fica velho no próximo passo: é cortado no meio por ele, e o que ainda não
+ *   começou não toca. O que conta algo (`prepare_draft`, `vote_passed` e o
+ *   mapa, `prepare_to_fight`) termina, e o anúncio seguinte vem depois.
  * - A contagem é só de quem age e para assim que ele age ou a vez muda
  *   (`COUNTDOWN`), mesmo no meio do som.
+ * - A música (`VETO_MUSIC`) repete enquanto o veto está em andamento, por
+ *   baixo de tudo; no começo, entra depois da parte forte do "match found".
  */
 
 /** O idioma do locutor: o do site (o inglês é o original do jogo). */
@@ -41,12 +49,14 @@ export type VetoCue = {
 /**
  * Quanto o anúncio do mesmo lote espera um efeito sem fala, pela parte forte
  * dele (o envelope medido): a porta que tranca, quase 0,8 s de ruído largo; o
- * voto, 0,5 s; o clique do ban de campeão, 0,3 s.
+ * voto, 0,5 s; o clique do ban de campeão, 0,3 s; o "match found", o golpe do
+ * começo (o resto, mais baixo, fica embaixo do "prepare draft").
  */
 const HOLD_S: Record<string, number> = {
   [FILES.effects.mapBan]: 0.7,
   [FILES.effects.vote]: 0.5,
   [FILES.effects.championBan]: 0.3,
+  [FILES.effects.matchFound]: 0.6,
 };
 
 const lookup = (table: Record<string, string>, key: string) =>
@@ -77,7 +87,10 @@ function variants(
     one({ announce: [{ url, interruptible: true }] });
   switch (event.kind) {
     case "begin":
-      return tell(lines.prepareDraft);
+      return one({
+        effect: FILES.effects.matchFound,
+        announce: [{ url: lines.prepareDraft }],
+      });
     case "mapBan":
       return one({ effect: FILES.effects.mapBan });
     case "mapPick":
@@ -104,8 +117,22 @@ function variants(
         voice: name ? [name] : [],
       });
     }
-    case "yourPick":
-      return ask(lines.yourPick);
+    case "yourTurn": {
+      // O efeito começa junto da fala seguinte: "your pick" ou, no voto, o
+      // "vote now" que vem logo depois no lote. O ban não tem fala.
+      const effect = {
+        url: FILES.effects.yourTurn,
+        interruptible: true,
+        overlap: true,
+      };
+      const spoken = event.action === "pick" ? [lines.yourPick] : [];
+      return one({
+        announce: [
+          effect,
+          ...spoken.map((url) => ({ url, interruptible: true })),
+        ],
+      });
+    }
     case "enemyPick":
       return ask(lines.enemyPick);
     case "done":
@@ -177,3 +204,6 @@ export function vetoSoundsToPreload(
 /** A contagem dos últimos segundos da vez, e o grupo dela no `sound-player`. */
 export const TICK_SOUND = FILES.effects.tick;
 export const COUNTDOWN = "veto-countdown";
+
+/** A música do veto em andamento (`playLoop`). */
+export const VETO_MUSIC: LoopSound = FILES.music;

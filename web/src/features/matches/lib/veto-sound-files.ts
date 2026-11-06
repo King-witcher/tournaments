@@ -37,6 +37,8 @@ export const VETO_SOUND_FILES = {
           "/sounds/5b615ab9a8cb-qk_vo_announcer_map_mountngranek-en.mp3",
         "vale-of-pnath":
           "/sounds/9f75ca2e30b3-qk_vo_announcer_map_valeofpnath-en.mp3",
+        "cursed-soul":
+          "/sounds/30ba533ac6a8-qk_vo_announcer_medal_cursed-en.mp3",
       },
       champions: {
         anarki:
@@ -103,6 +105,8 @@ export const VETO_SOUND_FILES = {
           "/sounds/9d79d22695b3-qk_vo_announcer_map_mountngranek-pt.mp3",
         "vale-of-pnath":
           "/sounds/5d130cc03950-qk_vo_announcer_map_valeofpnath-pt.mp3",
+        "cursed-soul":
+          "/sounds/1bff877b77f3-qk_vo_announcer_medal_cursed-pt.mp3",
       },
       champions: {
         anarki:
@@ -169,6 +173,8 @@ export const VETO_SOUND_FILES = {
           "/sounds/b4c5d99a881b-qk_vo_announcer_map_mountngranek-es.mp3",
         "vale-of-pnath":
           "/sounds/50a1da55223b-qk_vo_announcer_map_valeofpnath-es.mp3",
+        "cursed-soul":
+          "/sounds/79ec50483b42-qk_vo_announcer_medal_cursed-es.mp3",
       },
       champions: {
         anarki:
@@ -282,5 +288,11 @@ export const VETO_SOUND_FILES = {
     championPick:
       "/sounds/c803de5d906f-qk_sfx_ui_draft_select_champ_confirm.mp3",
     vote: "/sounds/3bf25a751c76-qk_sfx_ui_matchmaking_map_voting_confirmed.mp3",
+    matchFound: "/sounds/ed0777d9adc5-qk_sfx_ui_matchmaking_match_found.mp3",
+    yourTurn: "/sounds/ba6634b9a95e-qk_sfx_ui_matchmaking_map_voting.mp3",
+  },
+  music: {
+    url: "/sounds/eb2e99edf03f-qk_sfx_ui_draft_start_loop.mp3",
+    seconds: 117.47553287981859,
   },
 } as const;

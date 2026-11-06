@@ -172,7 +172,9 @@
     "timeLeft": "Time left",
     "sound": {
       "mute": "Mute veto sounds",
-      "unmute": "Unmute veto sounds"
+      "unmute": "Unmute veto sounds",
+      "muteMusic": "Mute veto music",
+      "unmuteMusic": "Unmute veto music"
     },
     "maps": {
       "banned": "Banned by {name}",

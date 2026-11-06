@@ -15,7 +15,8 @@ import { currentAudio, whenAudioReady, withRunningAudio } from "./audio";
  * página (`audio.ts`).
  *
  * Som cujo arquivo demora mais de `LATE_MS` para chegar não toca, porque já
- * não diz respeito ao que está na tela. Cada arquivo é baixado uma vez
+ * não diz respeito ao que está na tela. A música de fundo é à parte
+ * (`playLoop`): repete até ser parada. Cada arquivo é baixado uma vez
  * (`preloadSounds` adianta, depois do primeiro gesto: antes, nada tocaria) e
  * decodificado no primeiro uso.
  */
@@ -88,19 +89,25 @@ function stop(sources: Iterable<AudioBufferSourceNode>) {
 }
 
 /**
- * Toca `loaded` em sequência a partir de `at`; devolve quando termina. Com
- * `announced`, cada parte entra no anúncio, com o `interruptible` dela.
+ * Toca `loaded` em sequência a partir de `at`; devolve quando termina tudo.
+ * Com `announced`, cada parte entra no anúncio, com o `interruptible` dela, e
+ * a parte `overlap` não segura a seguinte, que começa junto.
  */
 function sequence(
   audio: AudioContext,
   loaded: (AudioBuffer | null)[],
   at: number,
   group: string | undefined,
-  announced?: { into: Map<AudioBufferSourceNode, Announced>; cut: boolean[] },
+  announced?: {
+    into: Map<AudioBufferSourceNode, Announced>;
+    lines: readonly AnnouncementLine[];
+  },
 ) {
+  let start = at;
   let end = at;
   loaded.forEach((buffer, i) => {
     if (!buffer) return;
+    const line = announced?.lines[i];
     const source = audio.createBufferSource();
     source.buffer = buffer;
     source.connect(audio.destination);
@@ -109,14 +116,15 @@ function sequence(
       announced?.into.delete(source);
     };
     playing.set(source, group);
-    const next = end + buffer.duration + GAP_S;
+    const finish = start + buffer.duration + GAP_S;
     announced?.into.set(source, {
-      at: end,
-      end: next,
-      interruptible: announced.cut[i] ?? false,
+      at: start,
+      end: finish,
+      interruptible: line?.interruptible ?? false,
     });
-    source.start(end);
-    end = next;
+    source.start(start);
+    end = Math.max(end, finish);
+    if (!line?.overlap) start = finish;
   });
   return end;
 }
@@ -136,8 +144,16 @@ function replaceAnnouncement(audio: AudioContext) {
   return hold;
 }
 
-/** Uma fala do anúncio; `interruptible`: o anúncio seguinte a corta no meio. */
-export type AnnouncementLine = { url: string; interruptible?: boolean };
+/**
+ * Uma parte do anúncio; `interruptible`: o anúncio seguinte a corta no meio;
+ * `overlap`: a parte seguinte começa junto com ela, não depois (o efeito da
+ * vez com a fala dela).
+ */
+export type AnnouncementLine = {
+  url: string;
+  interruptible?: boolean;
+  overlap?: boolean;
+};
 
 /** O que tocar de uma vez. */
 export type SoundBatch = {
@@ -219,11 +235,87 @@ export function playBatch({
       if (id !== 0 && id === announcementId) {
         sequence(running, announced, end, group, {
           into: announcing,
-          cut: announcement.map((line) => line.interruptible ?? false),
+          lines: announcement,
         });
       }
     });
   });
+}
+
+/** Uma música em repetição: o arquivo e a duração do original, em segundos. */
+export type LoopSound = { url: string; seconds: number };
+
+/**
+ * O atraso do codificador no MP3 (LAME: 576 amostras, mais as 529 do
+ * decodificador, a 44,1 kHz).
+ */
+const ENCODER_DELAY_S = 1105 / 44100;
+
+/**
+ * Onde a volta começa e termina no buffer. O MP3 decodificado traz o atraso
+ * do codificador no começo e o enchimento no fim (os do site saem sem o
+ * cabeçalho LAME completo, que deixaria o navegador cortá-los), e a música
+ * vai do fim do atraso até a duração do original (conferido no Chromium
+ * contra o original). O buffer com a duração do original já veio cortado.
+ * Sem isso, cada volta teria um buraco.
+ */
+function loopBounds(buffer: AudioBuffer, seconds: number): [number, number] {
+  const start = buffer.duration - seconds < 0.005 ? 0 : ENCODER_DELAY_S;
+  return [start, Math.min(buffer.duration, start + seconds)];
+}
+
+/**
+ * Toca `sound` em repetição, entrando aos poucos (`fadeIn` segundos) depois
+ * de `delay` segundos; devolve a função que para, saindo aos poucos em
+ * `fadeOut` segundos. Antes do primeiro gesto na página, espera por ele, e
+ * parar antes disso desiste. Ao contrário dos lotes, não tem `LATE_MS`: ela
+ * acompanha um estado (o veto em andamento), não um evento. `stopSounds`
+ * também a para.
+ */
+export function playLoop(
+  sound: LoopSound,
+  { delay = 0, fadeIn = 0 }: { delay?: number; fadeIn?: number } = {},
+) {
+  let stopped = false;
+  let started: { source: AudioBufferSourceNode; gain: GainNode } | undefined;
+  const current = generation;
+  const cancel = whenAudioReady(() => {
+    const audio = currentAudio();
+    if (!audio) return;
+    const from = audio.currentTime;
+    decode(audio, sound.url).then((buffer) => {
+      if (!buffer || stopped || current !== generation) return;
+      const source = audio.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      [source.loopStart, source.loopEnd] = loopBounds(buffer, sound.seconds);
+      const gain = audio.createGain();
+      const at = Math.max(audio.currentTime, from + delay);
+      gain.gain.setValueAtTime(0, at);
+      gain.gain.linearRampToValueAtTime(1, at + fadeIn);
+      source.connect(gain).connect(audio.destination);
+      source.onended = () => playing.delete(source);
+      playing.set(source, undefined);
+      source.start(at, source.loopStart);
+      started = { source, gain };
+    });
+  });
+  return (fadeOut = 0) => {
+    if (stopped) return;
+    stopped = true;
+    cancel();
+    if (!started) return;
+    const { source, gain } = started;
+    const now = source.context.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(0, now + fadeOut);
+    try {
+      source.stop(now + fadeOut);
+    } catch {
+      // Já tinha parado.
+    }
+  };
 }
 
 /** Para o que os lotes de `group` tocam ou ainda vão tocar. */

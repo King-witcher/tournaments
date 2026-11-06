@@ -172,7 +172,9 @@
     "timeLeft": "Tiempo restante",
     "sound": {
       "mute": "Silenciar los sonidos del veto",
-      "unmute": "Activar los sonidos del veto"
+      "unmute": "Activar los sonidos del veto",
+      "muteMusic": "Silenciar la música del veto",
+      "unmuteMusic": "Activar la música del veto"
     },
     "maps": {
       "banned": "Baneado por {name}",
