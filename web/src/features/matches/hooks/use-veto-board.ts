@@ -7,10 +7,14 @@ import type { VetoChoice } from "../lib/veto-optimistic";
 
 type Schemas = components["schemas"];
 
-/** O que quem vê pode mandar: um passo, "Pronto" e, na série, o desfazer. */
+/**
+ * O que quem vê pode mandar: um passo, "Pronto" (e desfazê-lo) e, na série, o
+ * desfazer do último passo.
+ */
 export type VetoActions = {
   step: (choice: VetoChoice) => void;
   ready: () => void;
+  unready: () => void;
   start: () => void;
   undo: () => void;
   request: () => void;

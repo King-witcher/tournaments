@@ -103,6 +103,17 @@ async fn ok_ready(c: &Cast, who: &User) -> Value {
     body
 }
 
+/// Desfaz o "Pronto".
+async fn unready(c: &Cast, who: &User) -> (StatusCode, Value) {
+    delete(&c.app, &uri("ready"), who).await
+}
+
+async fn ok_unready(c: &Cast, who: &User) -> Value {
+    let (status, body) = unready(c, who).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}
+
 async fn all_ready(c: &Cast) {
     for who in &c.p {
         ok_ready(c, who).await;

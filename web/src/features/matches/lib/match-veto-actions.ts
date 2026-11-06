@@ -8,8 +8,8 @@ import { afterStep, type VetoChoice } from "./veto-optimistic";
 const VETO = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto";
 
 /**
- * As ações do veto de uma série (pronto, forçar o começo, um passo, desfazer,
- * pedir e responder o pedido de desfazer): o `LiveMatchProvider` as põe no
+ * As ações do veto de uma série (pronto e desfazê-lo, forçar o começo, um passo,
+ * desfazer, pedir e responder o pedido de desfazer): o `LiveMatchProvider` as põe no
  * `VetoBoard`. O passo aparece marcado na hora. Cada ação diz a vez que a tela
  * mostrava: se ela mudou antes do clique chegar, a API recusa em vez de cair
  * na vez seguinte. `live` dá a série como a tela a mostra na hora do clique,
@@ -62,6 +62,10 @@ export function matchVetoActions(
     ready: () =>
       run("ready", ({ headers }) =>
         api.POST(`${VETO}/ready`, { params, headers }),
+      ),
+    unready: () =>
+      run("unready", ({ headers }) =>
+        api.DELETE(`${VETO}/ready`, { params, headers }),
       ),
     start: () =>
       run("start", ({ headers }) =>

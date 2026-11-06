@@ -101,6 +101,12 @@ pub async fn ready(app: &Router, token: &str) -> (StatusCode, Value) {
     act(app, token, "ready", None).await
 }
 
+/// Desfaz o "Pronto".
+pub async fn unready(app: &Router, token: &str) -> (StatusCode, Value) {
+    let uri = format!("/veto-rooms/{token}/ready");
+    call(app, Method::DELETE, &uri, None, None).await
+}
+
 /// A gestão começa sem esperar os prontos.
 pub async fn begin(app: &Router, manage: &str) -> Value {
     let (status, body) = act(app, manage, "begin", None).await;

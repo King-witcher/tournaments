@@ -1310,7 +1310,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["veto_ready"];
-        delete?: never;
+        delete: operations["veto_unready"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1726,7 +1726,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["veto_room_ready"];
-        delete?: never;
+        delete: operations["veto_room_unready"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4226,6 +4226,8 @@ export interface components {
              *     e o tipo dele é um que ele pode fazer.
              */
             undo: boolean;
+            /** @description Desfazer o "Pronto" agora: ele marcou, a marca conta, e o veto não começou. */
+            unready: boolean;
         };
         /** @description Um campeão ativo do torneio, com o ban da série. */
         VetoChampion: {
@@ -4284,7 +4286,7 @@ export interface components {
             timeout: boolean;
         };
         /** @enum {string} */
-        VetoEventKind: "ready" | "begin" | "game" | "ban" | "pick" | "vote" | "undo" | "undo_request" | "undo_declined";
+        VetoEventKind: "ready" | "unready" | "begin" | "game" | "ban" | "pick" | "vote" | "undo" | "undo_request" | "undo_declined";
         /** @description Uma partida da série: o mapa e os campeões escolhidos para ela. */
         VetoGame: {
             /** Format: int32 */
@@ -10230,7 +10232,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto, quem falta do adversário recebe `match.opponent_ready`. Repetir não muda nada */
+            /** @description Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto pela primeira vez, quem falta do adversário recebe `match.opponent_ready` (depois de alguém desfazer, marcar de novo não avisa outra vez). Repetir não muda nada */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10277,6 +10279,69 @@ export interface operations {
             };
             /** @description champions.pool_exhausted `{required, available}` (com os dois prontos: campeões ativos de menos para os bans da série) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_unready: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2 */
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quem tinha marcado "Pronto" desfaz, enquanto o veto não começou: o lado dele deixa de estar pronto. Ninguém é avisado, e marcar de novo não avisa o adversário outra vez. Sem marca, não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchDetail"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description match.not_player, match.not_captain (tudo no capitão, e ele não é) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tournament.not_in_progress, match.not_ready, match.series_decided, veto.off (torneio sem veto), veto.already_begun */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12445,6 +12510,56 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description O lugar de quem clica está pronto. O lado fica pronto quando todo lugar com link marcou (centrada no capitão, ele). Com os dois prontos, o veto começa: quem começa é o lado A ou, por padrão, sorteado, e a sala passa a valer 24 h. Repetir não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VetoRoomDetail"];
+                };
+            };
+            /** @description veto_room.not_player (link de gestão ou de espectador) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_found (não existe ou venceu) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description veto_room.not_joined (falta entrar no lugar), veto.already_begun */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    veto_room_unready: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description O link de um lugar */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O lugar de quem clica desfaz o "Pronto", enquanto o veto não começou: o lado dele deixa de estar pronto. Sem marca, não muda nada */
             200: {
                 headers: {
                     [name: string]: unknown;

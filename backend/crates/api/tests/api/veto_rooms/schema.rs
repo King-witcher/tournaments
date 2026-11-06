@@ -322,8 +322,12 @@ async fn the_history_keeps_its_shape_and_only_grows() {
             "veto_room_events_timeout",
         ),
         (
-            // Pronto depois do começo.
+            // Pronto depois do começo, e o desfazer dele.
             insert("side, actor", &format!("'ready', 'a', {seat}")),
+            "veto_room_events_order",
+        ),
+        (
+            insert("side, actor", &format!("'unready', 'a', {seat}")),
             "veto_room_events_order",
         ),
     ];
@@ -372,28 +376,32 @@ async fn the_history_keeps_its_shape_and_only_grows() {
         ),
         rule(CHECK, "veto_room_events_order")
     );
-    // Um pronto por lado.
-    exec(
-        &db,
-        &format!(
+    // Pronto e desfazer alternam, a começar pelo pronto; o desfazer não tem partida.
+    let mark = |kind: &str| {
+        format!(
             "insert into veto_room_events (room_id, kind, side, actor)
-             values ({other_room}, 'ready', 'a', {other_seat})"
-        ),
-    )
-    .await
-    .unwrap();
+             values ({other_room}, '{kind}', 'a', {other_seat})"
+        )
+    };
+    let toggle = rule(CHECK, "veto_room_events_ready_toggle");
+    assert_eq!(rejected(exec(&db, &mark("unready")).await), toggle);
+    exec(&db, &mark("ready")).await.unwrap();
+    assert_eq!(rejected(exec(&db, &mark("ready")).await), toggle);
+    exec(&db, &mark("unready")).await.unwrap();
+    assert_eq!(rejected(exec(&db, &mark("unready")).await), toggle);
+    exec(&db, &mark("ready")).await.unwrap();
     assert_eq!(
         rejected(
             exec(
                 &db,
                 &format!(
-                    "insert into veto_room_events (room_id, kind, side, actor)
-                     values ({other_room}, 'ready', 'a', {other_seat})"
+                    "insert into veto_room_events (room_id, kind, game, side, actor)
+                     values ({other_room}, 'unready', 1, 'a', {other_seat})"
                 )
             )
             .await
         ),
-        rule(UNIQUE, "veto_room_events_ready_once")
+        rule(CHECK, "veto_room_events_shape")
     );
     // O lugar de outra sala não vale.
     assert_eq!(

@@ -68,6 +68,8 @@ pub struct VetoReadyPlayer {
 pub struct VetoCanAct {
     /// Marcar "Pronto" agora: ainda falta ele, e a regra deixa.
     pub ready: bool,
+    /// Desfazer o "Pronto" agora: ele marcou, a marca conta, e o veto não começou.
+    pub unready: bool,
     /// Vetar mapas e votar, na vez do lado.
     pub map: bool,
     /// Banir campeões, na vez do lado.
@@ -239,6 +241,8 @@ pub struct VetoPickSlot {
 pub enum VetoEventKind {
     /// Um lado está pronto (`actor`: o jogador que clicou).
     Ready,
+    /// Quem tinha marcado "Pronto" desfez (`actor`).
+    Unready,
     /// O veto começou (`actor`: o organizador que forçou).
     Begin,
     /// A partida seguinte começou (a anterior foi enviada).

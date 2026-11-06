@@ -360,6 +360,7 @@ pub fn build(board: &Board<'_>, shown: &Shown<'_>) -> VetoView {
         picks_by_captain: shown.picks_by_captain,
         can_act: VetoCanAct {
             ready: shown.open && !begun && shown.me.is_some_and(|me| readiness.awaits(me)),
+            unready: shown.open && !begun && shown.me.is_some_and(|me| readiness.has_marked(me)),
             map: shown.can.map,
             ban: shown.can.ban,
             pick: shown.can.pick,
@@ -681,6 +682,7 @@ fn event(board: &Board<'_>, r: &VetoRow) -> VetoEvent {
     VetoEvent {
         kind: match r.kind {
             Kind::Ready => VetoEventKind::Ready,
+            Kind::Unready => VetoEventKind::Unready,
             Kind::Begin => VetoEventKind::Begin,
             Kind::Game => VetoEventKind::Game,
             Kind::Ban => VetoEventKind::Ban,

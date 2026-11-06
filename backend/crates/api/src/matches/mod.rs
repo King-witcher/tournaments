@@ -98,7 +98,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
         .routes(routes!(replay::replay))
-        .routes(routes!(veto::handlers::veto_ready))
+        .routes(routes!(
+            veto::handlers::veto_ready,
+            veto::handlers::veto_unready
+        ))
         .routes(routes!(veto::handlers::veto_begin))
         .routes(routes!(veto::handlers::veto_step))
         .routes(routes!(veto::handlers::veto_undo))

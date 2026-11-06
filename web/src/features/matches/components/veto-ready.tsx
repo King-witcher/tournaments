@@ -20,7 +20,8 @@ type Props = {
 
 /**
  * O passo "Pronto", com o título: cada lado, com quem falta por nome, "Pronto"
- * para quem ainda precisa marcar, o aviso de que é o capitão quem marca para o
+ * para quem ainda precisa marcar, "Não estou mais pronto" para quem marcou e
+ * cansou de esperar, o aviso de que é o capitão quem marca para o
  * colega e "Começar o veto agora" para a organização (na sala, para a gestão).
  * Feito, a lista e quem começou sem esperar, se foi a organização.
  */
@@ -32,6 +33,7 @@ export function VetoReady({ done = false, room = false }: Props) {
   if (!veto) return null;
   const ready = { a: veto.ready_a, b: veto.ready_b };
   const canReady = !done && veto.can_act.ready;
+  const canUnready = !done && veto.can_act.unready;
   const canStart = !done && canManage;
   const forcedBy = veto.history.find((e) => e.kind === "begin")?.actor;
   const teams = veto.team_size > 1;
@@ -88,11 +90,20 @@ export function VetoReady({ done = false, room = false }: Props) {
         </p>
       )}
       {waitsCaptain && <p>{t("captainActs.ready")}</p>}
-      {(canReady || canStart) && (
+      {(canReady || canUnready || canStart) && (
         <div className={styles.buttons}>
           {canReady && (
             <Button pending={pending === "ready"} onClick={actions.ready}>
               {t("readyButton")}
+            </Button>
+          )}
+          {canUnready && (
+            <Button
+              kind="secondary"
+              pending={pending === "unready"}
+              onClick={actions.unready}
+            >
+              {t("unreadyButton")}
             </Button>
           )}
           {canStart && (

@@ -148,6 +148,7 @@
     "isReady": "{name} is ready.",
     "notReady": "{name} is not ready yet.",
     "readyButton": "Ready",
+    "unreadyButton": "I'm no longer ready",
     "forceStart": "Start the veto now",
     "forceStartQuestion": "Start the veto without waiting for both players to click “Ready”? Anyone who doesn't choose in time gets a random choice.",
     "yourTurn": "Your turn: <action></action>.",
@@ -227,6 +228,7 @@
       "timeout": "drawn when time ran out",
       "kinds": {
         "ready": "{name} marked ready.",
+        "unready": "{name} is no longer ready",
         "begin": "{forced, select, yes {{actor} started the veto} other {The veto started}}",
         "game": "Game {game} started",
         "ban": "{name} banned {map}{champion}",

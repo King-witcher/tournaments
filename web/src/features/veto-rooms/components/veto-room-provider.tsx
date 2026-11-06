@@ -128,6 +128,10 @@ export function VetoRoomProvider({ token, initial, children }: Props) {
         go("ready", ({ headers }) =>
           api.POST("/veto-rooms/{token}/ready", { params, headers }),
         ),
+      unready: () =>
+        go("unready", ({ headers }) =>
+          api.DELETE("/veto-rooms/{token}/ready", { params, headers }),
+        ),
       start: () =>
         go("start", ({ headers }) =>
           api.POST("/veto-rooms/{token}/begin", { params, headers }),

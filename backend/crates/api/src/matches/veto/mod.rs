@@ -6,7 +6,8 @@
 //!
 //! - A série pronta, num torneio com alguma fase de veto, pede "Pronto"
 //!   (`handlers::ready`): com tudo no capitão, dele; senão, de todos do elenco de
-//!   agora (`Readiness`). O veto começa com os dois lados prontos, ou quando o
+//!   agora (`Readiness`). Quem marcou desfaz enquanto o veto não começou
+//!   (`handlers::unready`). O veto começa com os dois lados prontos, ou quando o
 //!   organizador força (`handlers::start`).
 //! - O que é do lado (veto de mapas, bans, voto, pick do duelo, pedir e responder
 //!   o desfazer) é de quem a regra do torneio deixa (`acting`): vale o primeiro
@@ -165,7 +166,7 @@ pub fn released_at(stage: &Stage, id: engine::core::MatchId) -> Option<DateTime<
         .rows
         .iter()
         .rev()
-        .find(|r| !matches!(r.kind, Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined))
+        .find(|r| !r.kind.api_only())
         .map(|r| r.created_at)
 }
 

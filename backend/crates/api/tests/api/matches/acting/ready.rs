@@ -23,6 +23,7 @@ async fn with_everything_on_the_captain_only_the_captain_marks_ready() {
     let not_captain = (StatusCode::FORBIDDEN, err(NOT_CAPTAIN));
     assert_eq!(ready(&c, mate).await, not_captain);
     assert_eq!(ready(&c, other_mate).await, not_captain);
+    assert_eq!(unready(&c, mate).await, not_captain);
     let not_player = (StatusCode::FORBIDDEN, err(NOT_PLAYER));
     assert_eq!(ready(&c, &c.ana).await, not_player);
     assert_eq!(ready(&c, &c.bia).await, not_player);
@@ -84,6 +85,61 @@ async fn anything_else_needs_everyone_including_a_custom_mix() {
     let body = ok_ready(&c, other_mate).await;
     assert_eq!(body["veto"]["status"], "in_progress");
     assert_eq!(body["veto"]["ready_waiting"], json!([]));
+}
+
+/// Quem cansou de esperar desfaz o "Pronto": o lado deixa de estar pronto, e
+/// marcar de novo não avisa o adversário outra vez.
+#[tokio::test]
+async fn whoever_marked_unmarks_until_the_veto_begins() {
+    let (db, _lease) = crate::db::test_db().await;
+    let c = cast(&db, all_players(), draft("alternating", 1, 1)).await;
+    let [cap, mate, other_cap, other_mate] = [&c.p[0], &c.p[1], &c.p[2], &c.p[3]];
+    let warned = |sent: Vec<(String, Vec<i64>, Value)>| {
+        sent.iter()
+            .filter(|(code, _, _)| code == "match.opponent_ready")
+            .count()
+    };
+    ok_ready(&c, cap).await;
+    // Sem marca, desfazer não muda nada, nem para quem não joga a série.
+    let body = ok_unready(&c, mate).await;
+    assert_eq!(body["veto"]["can_act"]["unready"], false);
+    assert_eq!(body["veto"]["history"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        unready(&c, &c.ana).await,
+        (StatusCode::FORBIDDEN, err(NOT_PLAYER))
+    );
+    clear(&db).await;
+    let body = ok_ready(&c, mate).await;
+    assert_eq!(body["veto"]["ready_a"], true);
+    assert_eq!(body["veto"]["can_act"]["unready"], true);
+    assert_eq!(warned(notices(&outbox(&db).await)), 1);
+
+    clear(&db).await;
+    let body = ok_unready(&c, mate).await;
+    assert_eq!(body["veto"]["ready_a"], false);
+    assert_eq!(body["veto"]["can_act"]["ready"], true);
+    assert_eq!(body["veto"]["can_act"]["unready"], false);
+    assert_eq!(users(&body["veto"]["ready_waiting"])[0], mate.id);
+    assert_eq!(body["summary"]["task"], "ready");
+    assert_eq!(last_event(&body)["kind"], "unready");
+    assert_eq!(last_event(&body)["actor"], "P2");
+    assert_eq!(warned(notices(&outbox(&db).await)), 0);
+    // O colega continua marcado; o lado volta a ficar pronto sem novo aviso.
+    let seen = detail(&c.app, cap, KEY).await;
+    assert_eq!(seen["veto"]["can_act"]["unready"], true);
+    assert_eq!(seen["summary"]["task"], "await_team");
+    let body = ok_ready(&c, mate).await;
+    assert_eq!(body["veto"]["ready_a"], true);
+    assert_eq!(warned(notices(&outbox(&db).await)), 0);
+
+    ok_ready(&c, other_cap).await;
+    let body = ok_ready(&c, other_mate).await;
+    assert_eq!(body["veto"]["status"], "in_progress");
+    assert_eq!(body["veto"]["can_act"]["unready"], false);
+    assert_eq!(
+        unready(&c, mate).await,
+        (StatusCode::CONFLICT, err("veto.already_begun"))
+    );
 }
 
 #[tokio::test]

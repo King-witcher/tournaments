@@ -195,6 +195,35 @@ pub async fn veto_room_ready(
 }
 
 #[utoipa::path(
+    delete,
+    path = "/veto-rooms/{token}/ready",
+    tag = "veto_rooms",
+    params(("token" = String, Path, description = "O link de um lugar")),
+    responses(
+        (status = OK, body = VetoRoomDetail, description = "O lugar de quem clica desfaz o \"Pronto\", enquanto o veto não começou: o lado dele deixa de estar pronto. Sem marca, não muda nada"),
+        (status = FORBIDDEN, body = ErrorBody, description = "veto_room.not_player (link de gestão ou de espectador)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "veto_room.not_found (não existe ou venceu)"),
+        (status = CONFLICT, body = ErrorBody, description = "veto_room.not_joined (falta entrar no lugar), veto.already_begun"),
+    )
+)]
+pub async fn veto_room_unready(
+    State(state): State<AppState>,
+    PathParams(path): PathParams<VetoRoomPath>,
+) -> Result<Json<VetoRoomDetail>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let mut room = opened(&mut tx, &path.token).await?;
+    let (seat, side) = room.acting_seat()?;
+    if room.log.state.begun() {
+        return Err(ApiError::conflict("veto.already_begun"));
+    }
+    if room.readiness().has_marked(seat) {
+        let event = NewVetoEvent::new(Kind::Unready, None, Some(side), Some(seat));
+        room.record(&mut tx, vec![event]).await?;
+    }
+    finish(&state, tx, &room).await
+}
+
+#[utoipa::path(
     post,
     path = "/veto-rooms/{token}/begin",
     tag = "veto_rooms",

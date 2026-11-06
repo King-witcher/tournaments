@@ -1,6 +1,6 @@
-//! O veto até o fim: "Pronto", o duelo md3 com draft, o 2v2 com a janela de
-//! campeões (às cegas, a que se escolhe hoje) e as escolhas recusadas. O
-//! `engine` já cobre as regras; aqui é o caminho pela sala.
+//! O veto até o fim: "Pronto" (e desfazê-lo), o duelo md3 com draft, o 2v2 com
+//! a janela de campeões (às cegas, a que se escolhe hoje) e as escolhas
+//! recusadas. O `engine` já cobre as regras; aqui é o caminho pela sala.
 
 use axum::http::StatusCode;
 use chrono::{DateTime, Duration, Utc};
@@ -62,6 +62,50 @@ async fn ready_of_each_side_starts_and_the_room_is_valid_for_a_day() {
     let history = detail(&app, &links.manage).await["veto"]["history"].clone();
     assert_eq!(history[4]["kind"], "begin");
     assert!(history[4]["side"].is_string());
+}
+
+#[tokio::test]
+async fn a_seat_unmarks_ready_until_the_start() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db);
+    let links = links_of(&app, room(1, 1)).await;
+    let [a, b] = [&links.seats[0], &links.seats[1]];
+    enter(&app, a, "king").await;
+    enter(&app, b, "thallis").await;
+    let (status, body) = ready(&app, a).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["can_act"]["unready"], true);
+    let (status, body) = unready(&app, a).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["ready_a"], false);
+    assert_eq!(body["veto"]["can_act"]["ready"], true);
+    assert_eq!(body["veto"]["can_act"]["unready"], false);
+    let kinds: Vec<&Value> = body["veto"]["history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| &e["kind"])
+        .collect();
+    assert_eq!(kinds, ["ready", "unready"]);
+    // Repetir não muda nada; gestão e espectador não marcam.
+    let (status, body) = unready(&app, a).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["veto"]["history"].as_array().unwrap().len(), 2);
+    for token in [&links.manage, &links.spectator] {
+        assert_eq!(
+            unready(&app, token).await,
+            (StatusCode::FORBIDDEN, err("veto_room.not_player"))
+        );
+    }
+    // O outro lado marca, e quem desfez marca de novo: começa.
+    ready(&app, b).await;
+    let (status, body) = ready(&app, a).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["veto"]["status"], "in_progress");
+    assert_eq!(
+        unready(&app, a).await,
+        (StatusCode::CONFLICT, err("veto.already_begun"))
+    );
 }
 
 #[tokio::test]

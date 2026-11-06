@@ -1,9 +1,9 @@
-//! As rotas do veto: "Pronto", o organizador forçar o começo, cada passo,
-//! desfazer (o organizador, ou o jogador com o aceite do adversário). Todas
-//! devolvem a série como ficou. Quem do time faz o que é do lado é a regra do
-//! torneio (`acting`), e vale o primeiro clique. No pick por jogador, cada um
-//! escolhe os seus, ou o capitão, os de todos. Pedir e responder o desfazer é de
-//! quem pode fazer aquele tipo de passo.
+//! As rotas do veto: "Pronto" e desfazê-lo, o organizador forçar o começo,
+//! cada passo, desfazer (o organizador, ou o jogador com o aceite do
+//! adversário). Todas devolvem a série como ficou. Quem do time faz o que é do
+//! lado é a regra do torneio (`acting`), e vale o primeiro clique. No pick por
+//! jogador, cada um escolhe os seus, ou o capitão, os de todos. Pedir e responder
+//! o desfazer é de quem pode fazer aquele tipo de passo.
 
 use axum::{Json, extract::State};
 use engine::core::ParticipantId;
@@ -18,7 +18,7 @@ use super::{
 use crate::{
     AppState,
     matches::{
-        acting, actions, changes, detail, due,
+        Side, acting, actions, changes, detail, due,
         stage::{Stage, Wrote},
         types::{MatchDetail, MatchPath},
     },
@@ -69,7 +69,7 @@ fn seen(mv: &MatchVeto, step: Option<i64>) -> Result<(), ApiError> {
         ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
     ),
     responses(
-        (status = OK, body = MatchDetail, description = "Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto, quem falta do adversário recebe `match.opponent_ready`. Repetir não muda nada"),
+        (status = OK, body = MatchDetail, description = "Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto pela primeira vez, quem falta do adversário recebe `match.opponent_ready` (depois de alguém desfazer, marcar de novo não avisa outra vez). Repetir não muda nada"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (tudo no capitão, e ele não é)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
@@ -84,23 +84,18 @@ pub async fn veto_ready(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
     let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
-    let (m, sides) = open(&tournament, &stage, &path.key)?;
-    let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
-    if stage.veto_of(m.id).is_some_and(|v| v.state.begun()) {
-        return Err(ApiError::conflict("veto.already_begun"));
-    }
+    let (m, sides, side) = may_mark(&tournament, &stage, &member, &path.key)?;
     let who = member.user.id;
-    acting::require_ready(&stage, who)?;
     let before = stage.readiness(m.id, sides);
     if before.awaits(who) {
         let at = actions::at(&member, &tournament, &stage, &path.key);
         let event = NewVetoEvent::new(Kind::Ready, None, Some(side), Some(who));
         db::insert(&mut tx, &at, sides, &event).await?;
-        let side_was_ready = before.side(side);
+        let been_ready = before.been_ready[slot(side)];
         let after = before.without(who);
         if after.both() {
             advance::begin(&mut tx, &tournament, &stage, m, sides, None).await?;
-        } else if after.side(side) && !side_was_ready {
+        } else if after.side(side) && !been_ready {
             let (mine, _) = acting::of_side(side, sides);
             let name = stage
                 .entrant(mine)
@@ -108,6 +103,68 @@ pub async fn veto_ready(
             let to = &after.waiting[slot(other(side))];
             changes::opponent_ready(&mut tx, &tournament, &path.key, to, &name).await?;
         }
+    }
+    let detail =
+        actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;
+    tx.commit().await?;
+    Ok(Json(detail))
+}
+
+/// O que marcar e desfazer o "Pronto" conferem: a série aberta ao veto, quem
+/// clica joga nela, o veto não começou e, com tudo no capitão, é ele. Devolve a
+/// partida, os lados e o lado de quem clica.
+fn may_mark<'a>(
+    tournament: &StoredTournament,
+    stage: &'a Stage,
+    member: &TenantMember,
+    key: &str,
+) -> Result<
+    (
+        &'a engine::core::Match,
+        (ParticipantId, ParticipantId),
+        Side,
+    ),
+    ApiError,
+> {
+    let (m, sides) = open(tournament, stage, key)?;
+    let side = actions::side_of(stage, member, sides).ok_or(NOT_PLAYER)?;
+    if stage.veto_of(m.id).is_some_and(|v| v.state.begun()) {
+        return Err(ApiError::conflict("veto.already_begun"));
+    }
+    acting::require_ready(stage, member.user.id)?;
+    Ok((m, sides, side))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/tenants/{slug}/tournaments/{tournament}/matches/{match}/veto/ready",
+    tag = "matches",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2"),
+    ),
+    responses(
+        (status = OK, body = MatchDetail, description = "Quem tinha marcado \"Pronto\" desfaz, enquanto o veto não começou: o lado dele deixa de estar pronto. Ninguém é avisado, e marcar de novo não avisa o adversário outra vez. Sem marca, não muda nada"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (tudo no capitão, e ele não é)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.not_ready, match.series_decided, veto.off (torneio sem veto), veto.already_begun"),
+    )
+)]
+pub async fn veto_unready(
+    State(state): State<AppState>,
+    member: TenantMember,
+    PathParams(path): PathParams<MatchPath>,
+) -> Result<Json<MatchDetail>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (m, sides, side) = may_mark(&tournament, &stage, &member, &path.key)?;
+    let who = member.user.id;
+    if stage.readiness(m.id, sides).has_marked(who) {
+        let at = actions::at(&member, &tournament, &stage, &path.key);
+        let event = NewVetoEvent::new(Kind::Unready, None, Some(side), Some(who));
+        db::insert(&mut tx, &at, sides, &event).await?;
     }
     let detail =
         actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Veto, &path.key).await?;

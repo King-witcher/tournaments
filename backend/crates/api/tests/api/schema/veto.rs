@@ -1,5 +1,6 @@
 //! Veto: o histórico só cresce, com a forma de cada tipo e os mesmos lados;
-//! pronto antes do começo e o resto depois dele, um começo por partida; o
+//! pronto (e o desfazer dele, alternando) antes do começo e o resto depois dele,
+//! um começo por partida; o
 //! pool de mapas com mapas para a série mais longa e, como a configuração do
 //! veto (inclusive a ordem dele, `veto_order`: as duas ordens e o padrão, e a
 //! das escolhas, `pick_order`, que às cegas exige espelho), congelado depois do
@@ -65,23 +66,52 @@ async fn veto_events_keep_their_shape_and_order() {
         rejected(exec(&db, &ban).await),
         rule(CHECK, "match_veto_events_order")
     );
-    // Um pronto por jogador em cada lado (sem autor, conta excluída, não conta).
+    // Pronto e desfazer alternam por jogador em cada lado, a começar pelo pronto
+    // (sem autor, conta excluída, o pronto não conta nem se desfaz).
     let actor: i64 = sqlx::query_scalar("select id from users order by id limit 1")
         .fetch_one(&db)
         .await
         .unwrap();
     let ready = event(t, "ready", ", side, actor", &format!(", 'a', {actor}"));
+    let unready = event(t, "unready", ", side, actor", &format!(", 'a', {actor}"));
+    let toggle = rule(CHECK, "match_veto_events_ready_toggle");
+    assert_eq!(rejected(exec(&db, &unready).await), toggle);
     exec(&db, &ready).await.unwrap();
+    assert_eq!(rejected(exec(&db, &ready).await), toggle);
+    exec(&db, &unready).await.unwrap();
+    assert_eq!(rejected(exec(&db, &unready).await), toggle);
+    exec(&db, &ready).await.unwrap();
+    exec(
+        &db,
+        &event(t, "ready", ", side, actor", &format!(", 'b', {actor}")),
+    )
+    .await
+    .unwrap();
+    exec(&db, &event(t, "ready", ", side", ", 'a'"))
+        .await
+        .unwrap();
+    exec(&db, &event(t, "ready", ", side", ", 'a'"))
+        .await
+        .unwrap();
     assert_eq!(
-        rejected(exec(&db, &ready).await),
-        rule(UNIQUE, "match_veto_events_ready_once")
+        rejected(exec(&db, &event(t, "unready", ", side", ", 'a'")).await),
+        toggle
     );
-    exec(&db, &event(t, "ready", ", side", ", 'a'"))
-        .await
-        .unwrap();
-    exec(&db, &event(t, "ready", ", side", ", 'a'"))
-        .await
-        .unwrap();
+    assert_eq!(
+        rejected(
+            exec(
+                &db,
+                &event(
+                    t,
+                    "unready",
+                    ", game, side, actor",
+                    &format!(", 1, 'a', {actor}")
+                )
+            )
+            .await
+        ),
+        rule(CHECK, "match_veto_events_shape")
+    );
     // O começo tem a seed e é o jogo 1.
     assert_eq!(
         rejected(exec(&db, &event(t, "begin", ", game, side", ", 1, 'a'")).await),
@@ -103,6 +133,10 @@ async fn veto_events_keep_their_shape_and_order() {
     );
     assert_eq!(
         rejected(exec(&db, &event(t, "ready", ", side", ", 'b'")).await),
+        rule(CHECK, "match_veto_events_order")
+    );
+    assert_eq!(
+        rejected(exec(&db, &unready).await),
         rule(CHECK, "match_veto_events_order")
     );
     exec(&db, &ban).await.unwrap();

@@ -1,8 +1,8 @@
 //! O veto como fica gravado e o estado que o `engine` refaz dele
 //! (`veto::Veto::replay`): `VetoLog` serve à série de um torneio
 //! (`match_veto_events`, `MatchVeto`) e à sala de veto (`veto_rooms`). O
-//! "pronto" de cada jogador, o pedido de desfazer e o relógio do passo são da API:
-//! saem das linhas.
+//! "pronto" de cada jogador (e o desfazer dele), o pedido de desfazer e o relógio
+//! do passo são da API: saem das linhas.
 
 use chrono::{DateTime, Utc};
 use engine::{
@@ -45,6 +45,8 @@ pub struct VetoRow {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Ready,
+    /// Desfaz o "Pronto" de quem o marcou, antes do começo.
+    Unready,
     Begin,
     Game,
     Ban,
@@ -59,6 +61,7 @@ impl Kind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Ready => "ready",
+            Self::Unready => "unready",
             Self::Begin => "begin",
             Self::Game => "game",
             Self::Ban => "ban",
@@ -74,6 +77,7 @@ impl Kind {
         use Kind::*;
         [
             Ready,
+            Unready,
             Begin,
             Game,
             Ban,
@@ -96,6 +100,15 @@ impl Kind {
         }
     }
 
+    /// Só a API usa (não vai ao `engine` nem muda o veto): o pronto e o desfazer
+    /// dele, o pedido de desfazer e a recusa.
+    pub const fn api_only(self) -> bool {
+        matches!(
+            self,
+            Self::Ready | Self::Unready | Self::UndoRequest | Self::UndoDeclined
+        )
+    }
+
     /// Reinicia o relógio do passo.
     const fn clock(self) -> bool {
         matches!(
@@ -113,13 +126,9 @@ impl VetoRow {
         self.kind.clock() && !(window && self.player.is_some())
     }
 
-    /// É evento do `engine` (os que só a API usa: pronto, pedido e recusa de
-    /// desfazer).
+    /// É evento do `engine` (não é dos que só a API usa, `Kind::api_only`).
     const fn is_event(&self) -> bool {
-        !matches!(
-            self.kind,
-            Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined
-        )
+        !self.kind.api_only()
     }
 
     /// O evento do `engine`; `None` nos que só a API usa (`is_event`).
@@ -135,7 +144,9 @@ impl VetoRow {
                 .ok_or_else(|| unknown("game", "null"))
         };
         let action = match self.kind {
-            Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined => return Ok(None),
+            Kind::Ready | Kind::Unready | Kind::UndoRequest | Kind::UndoDeclined => {
+                return Ok(None);
+            }
             Kind::Undo => return Ok(Some(Event::Undo)),
             Kind::Begin => {
                 return Ok(Some(Event::Begin {
@@ -223,30 +234,56 @@ pub const fn turn_action(turn: &Turn) -> Option<TeamAction> {
     }
 }
 
-/// Quem ainda falta marcar "Pronto", por lado (`[a, b]`).
+/// Quem marcou "Pronto" (`(lado, autor)`), com `r`, se é um pronto ou o
+/// desfazer dele: o último dos dois de cada um no lado diz se está marcado. O
+/// pronto sem autor (conta excluída) fica.
+fn mark(marks: &mut Vec<(Side, Option<i64>)>, r: &VetoRow) {
+    let Some(side) = r.side else { return };
+    match r.kind {
+        Kind::Ready => marks.push((side, r.actor)),
+        Kind::Unready => marks.retain(|m| *m != (side, r.actor)),
+        _ => {}
+    }
+}
+
+/// Quem ainda falta marcar "Pronto" e quem está marcado, por lado (`[a, b]`).
 #[derive(Clone, Debug, Default)]
 pub struct Readiness {
     pub waiting: [Vec<i64>; 2],
+    /// De quem precisa marcar, quem está marcado (e pode desfazer).
+    pub marked: [Vec<i64>; 2],
+    /// O lado já esteve pronto em algum ponto do histórico, contado sobre quem
+    /// precisa marcar agora: o aviso ao adversário sai só na primeira vez.
+    pub been_ready: [bool; 2],
 }
 
 impl Readiness {
     /// De `required`, quem precisa marcar por lado (o elenco de agora, ou o
-    /// capitão), sai quem já marcou no histórico `log`. Marcou e saiu do elenco:
-    /// não conta. Saiu e voltou: continua marcado.
+    /// capitão), sai quem está marcado no histórico `log`. Marcou e saiu do
+    /// elenco: não conta. Saiu e voltou: continua marcado.
     pub fn of(log: Option<&VetoLog>, required: [Vec<i64>; 2]) -> Self {
-        let marked = |side: Side, who: i64| {
-            log.is_some_and(|l| {
-                l.rows
+        let mut marks = Vec::new();
+        let mut been_ready = [false, false];
+        for r in log.iter().flat_map(|l| &l.rows) {
+            mark(&mut marks, r);
+            if let (Kind::Ready, Some(side)) = (r.kind, r.side) {
+                let all = required[slot(side)]
                     .iter()
-                    .any(|r| r.kind == Kind::Ready && r.side == Some(side) && r.actor == Some(who))
-            })
+                    .all(|w| marks.contains(&(side, Some(*w))));
+                been_ready[slot(side)] |= all;
+            }
+        }
+        let split = |side: Side, who: Vec<i64>| -> (Vec<i64>, Vec<i64>) {
+            who.into_iter()
+                .partition(|w| !marks.contains(&(side, Some(*w))))
         };
         let [a, b] = required;
+        let (waiting_a, marked_a) = split(Side::A, a);
+        let (waiting_b, marked_b) = split(Side::B, b);
         Self {
-            waiting: [
-                a.into_iter().filter(|w| !marked(Side::A, *w)).collect(),
-                b.into_iter().filter(|w| !marked(Side::B, *w)).collect(),
-            ],
+            waiting: [waiting_a, waiting_b],
+            marked: [marked_a, marked_b],
+            been_ready,
         }
     }
 
@@ -264,10 +301,18 @@ impl Readiness {
         self.waiting.iter().flatten().any(|w| *w == who)
     }
 
+    /// `who` está marcado e conta: pode desfazer.
+    pub fn has_marked(&self, who: i64) -> bool {
+        self.marked.iter().flatten().any(|w| *w == who)
+    }
+
     /// Como fica depois de `who` marcar.
     pub fn without(mut self, who: i64) -> Self {
-        for side in &mut self.waiting {
-            side.retain(|w| *w != who);
+        for (waiting, marked) in self.waiting.iter_mut().zip(&mut self.marked) {
+            if waiting.contains(&who) {
+                waiting.retain(|w| *w != who);
+                marked.push(who);
+            }
         }
         self
     }
@@ -332,16 +377,14 @@ impl VetoLog {
         Ok(Self { rows, state })
     }
 
-    /// Os lados em que alguém marcou "Pronto" (`[a, b]`): o que a tela mostra do
-    /// veto já começado, que não pede mais nada.
+    /// Os lados em que alguém está com "Pronto" marcado (`[a, b]`): o que a tela
+    /// mostra do veto já começado, que não pede mais nada.
     pub fn clicked(&self) -> [bool; 2] {
-        let mut ready = [false, false];
-        for r in self.rows.iter().filter(|r| r.kind == Kind::Ready) {
-            if let Some(side) = r.side {
-                ready[slot(side)] = true;
-            }
+        let mut marks = Vec::new();
+        for r in &self.rows {
+            mark(&mut marks, r);
         }
-        ready
+        [Side::A, Side::B].map(|side| marks.iter().any(|(s, _)| *s == side))
     }
 
     /// A regra que cobre o último passo da partida em andamento, o que o desfazer
@@ -355,7 +398,7 @@ impl VetoLog {
                     steps.pop();
                 }
                 Kind::Begin | Kind::Game => steps.clear(),
-                Kind::Ready | Kind::UndoRequest | Kind::UndoDeclined => {}
+                Kind::Ready | Kind::Unready | Kind::UndoRequest | Kind::UndoDeclined => {}
             }
         }
         let last = steps.last()?;
@@ -373,7 +416,7 @@ impl VetoLog {
         for r in &self.rows {
             match r.kind {
                 Kind::UndoRequest => pending = r.side,
-                Kind::Ready => {}
+                Kind::Ready | Kind::Unready => {}
                 _ => pending = None,
             }
         }

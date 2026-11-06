@@ -148,6 +148,7 @@
     "isReady": "{name} está pronto.",
     "notReady": "{name} ainda não está pronto.",
     "readyButton": "Pronto",
+    "unreadyButton": "Não estou mais pronto",
     "forceStart": "Começar o veto agora",
     "forceStartQuestion": "Começar o veto sem esperar os dois clicarem em “Pronto”? Quem não escolher a tempo leva uma escolha sorteada.",
     "yourTurn": "Sua vez: <action></action>.",
@@ -227,6 +228,7 @@
       "timeout": "sorteado pelo fim do tempo",
       "kinds": {
         "ready": "{name} ficou pronto",
+        "unready": "{name} deixou de estar pronto",
         "begin": "{forced, select, yes {{actor} começou o veto} other {O veto começou}}",
         "game": "A partida {game} começou",
         "ban": "{name} baniu {map}{champion}",
