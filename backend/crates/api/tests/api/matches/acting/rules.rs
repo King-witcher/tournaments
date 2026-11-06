@@ -105,7 +105,7 @@ async fn the_rules_are_saved_and_lock_when_the_tournament_starts() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
-    // Sem dizer nada, todos os jogadores: o comportamento de quem já existia.
+    // Dita na criação, vale a dita.
     let created = create_tournament(&app, &ana, tdm(2, json!({}))).await;
     assert_eq!(
         created["team_rules"],

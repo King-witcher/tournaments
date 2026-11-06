@@ -10,6 +10,7 @@ use super::{
     setup::Setup,
     slug::validate_slug,
     status::TournamentStatus,
+    team_rules::TeamRules,
     texts::Texts,
     types::{
         CreateTournament, CreateTranslation, DeleteTournament, Tournament, TournamentPath,
@@ -54,10 +55,10 @@ pub async fn create_tournament(
         body.mode,
         body.team_size,
         body.max_participants,
-        body.champion_rules,
+        body.champion_rules.into(),
         body.stages,
         veto,
-        body.team_rules.unwrap_or_default(),
+        body.team_rules.unwrap_or(TeamRules::CAPTAIN),
     )?;
     setup.check(db::champion_pool(&mut *conn).await?, 0)?;
     drop(conn);

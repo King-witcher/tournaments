@@ -151,6 +151,81 @@ pub enum NoRepeatScope {
     Tournament,
 }
 
+/// As regras de campeões da criação: o que faltar cai no padrão
+/// (`ChampionRulesInput::default`). O PATCH segue com `ChampionRules`
+/// inteira.
+#[derive(Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ChampionRulesInput {
+    /// Padrão 1.
+    #[serde(default = "default_bans_per_series")]
+    #[schema(required = false, default = 1, example = 1)]
+    pub bans_per_series: u8,
+    /// Padrão verdadeiro.
+    #[serde(default = "default_mirror")]
+    #[schema(required = false, default = true)]
+    pub mirror: bool,
+    /// Padrão falso.
+    #[serde(default)]
+    pub same_team: bool,
+    /// Padrão `null`: pode repetir.
+    #[serde(default)]
+    pub no_repeat: Option<NoRepeatRule>,
+}
+
+impl Default for ChampionRulesInput {
+    /// As regras de um torneio novo.
+    fn default() -> Self {
+        Self {
+            bans_per_series: default_bans_per_series(),
+            mirror: default_mirror(),
+            same_team: false,
+            no_repeat: None,
+        }
+    }
+}
+
+impl From<ChampionRulesInput> for ChampionRules {
+    fn from(input: ChampionRulesInput) -> Self {
+        Self {
+            bans_per_series: input.bans_per_series,
+            mirror: input.mirror,
+            same_team: input.same_team,
+            no_repeat: input.no_repeat,
+        }
+    }
+}
+
+/// Vagas de um torneio novo.
+const DEFAULT_MAX_PARTICIPANTS: i32 = 16;
+/// Bans por série de um torneio novo.
+const DEFAULT_BANS_PER_SERIES: u8 = 1;
+/// Melhor de N das séries comuns de um torneio novo.
+const DEFAULT_BEST_OF: u8 = 3;
+/// Melhor de N da final (e da grande final) de um torneio novo.
+const DEFAULT_FINALS_BEST_OF: u8 = 5;
+
+fn default_max_participants() -> i32 {
+    DEFAULT_MAX_PARTICIPANTS
+}
+
+fn default_bans_per_series() -> u8 {
+    DEFAULT_BANS_PER_SERIES
+}
+
+fn default_mirror() -> bool {
+    true
+}
+
+/// A fase de um torneio novo: eliminação dupla, md3, final md5, sem reset.
+fn default_stages() -> Vec<StageFormat> {
+    vec![StageFormat::Elimination {
+        bracket: Bracket::Double,
+        grand_final_reset: false,
+        best_of: DEFAULT_BEST_OF,
+        finals_best_of: DEFAULT_FINALS_BEST_OF,
+    }]
+}
+
 #[derive(Deserialize, ToSchema)]
 pub struct CreateTournament {
     /// a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Muda enquanto for
@@ -180,11 +255,20 @@ pub struct CreateTournament {
     pub admission: Admission,
     /// Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
     /// checagem de campeões usa o pior caso com esse número (no TDM, com os
-    /// times que ele comporta).
-    #[schema(example = 16)]
+    /// times que ele comporta). Ausente: 16.
+    #[serde(default = "default_max_participants")]
+    #[schema(required = false, default = 16, example = 16)]
     pub max_participants: i32,
-    pub champion_rules: ChampionRules,
-    /// Fases, na ordem. Por enquanto, exatamente uma.
+    /// Ausente, ou campo ausente: 1 ban por série, espelho permitido, sem
+    /// campeão igual no time e sem regra de não repetição.
+    #[serde(default)]
+    #[schema(required = false)]
+    pub champion_rules: ChampionRulesInput,
+    /// Fases, na ordem. Por enquanto, exatamente uma. Ausente: uma fase de
+    /// eliminação dupla, melhor de 3, final melhor de 5, sem reset da grande
+    /// final.
+    #[serde(default = "default_stages")]
+    #[schema(required = false)]
     pub stages: Vec<StageFormat>,
     /// Início previsto. Opcional: sem data o check-in não abre sozinho.
     #[serde(default)]
@@ -196,17 +280,17 @@ pub struct CreateTournament {
     #[schema(required = false, default = 30, example = 30)]
     pub check_in_minutes: Option<i32>,
     /// Minutos que o adversário tem para confirmar ou contestar um resultado
-    /// enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 5.
+    /// enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 10.
     #[serde(default = "default_contest_minutes")]
-    #[schema(required = false, default = 5, example = 5)]
+    #[schema(required = false, default = 10, example = 10)]
     pub contest_minutes: i32,
     /// Veto das partidas: modo do mapa, pool, campeões e tempo por passo.
     /// Ausente (ou campo ausente): o padrão (veto, os 7 primeiros mapas do
     /// pool de duelo, campeões ligados, 30 s).
     #[serde(default)]
     pub veto: Option<VetoInput>,
-    /// Quem age pelo time. Ausente: todos os jogadores. O formulário de um
-    /// torneio novo manda o capitão. No duelo, não muda nada.
+    /// Quem age pelo time. Ausente: o capitão em tudo (`TeamRules::CAPTAIN`).
+    /// No duelo, não muda nada.
     #[serde(default)]
     pub team_rules: Option<TeamRules>,
     /// Traduções dos textos, no máximo uma por idioma e nenhuma no idioma
@@ -217,9 +301,10 @@ pub struct CreateTournament {
     #[serde(default)]
     pub translations: Vec<CreateTranslation>,
     /// Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-    /// transação: e, se há `starts_at` e a
-    /// janela de check-in já abriu, o torneio vem em `check_in`; senão, em
-    /// `registration`. Qualquer erro e nada é gravado.
+    /// transação: o torneio vem sempre em `registration` (inscrição aberta);
+    /// o check-in abre depois, na hora (um `starts_at` dentro da janela já
+    /// aberta é recusado com `tournament.starts_at_too_soon`). Qualquer erro e
+    /// nada é gravado.
     #[serde(default)]
     pub publish: bool,
     /// Se os mapas do torneio contam para o rating da comunidade. Ausente:

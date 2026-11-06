@@ -135,3 +135,67 @@ async fn the_same_translation_locale_twice_is_refused() {
     );
     assert_nothing_created(&app, &ana, "copa").await;
 }
+
+fn minimal(slug: &str, mode: &str) -> Value {
+    json!({ "slug": slug, "locale": "pt", "name": "Copa", "mode": mode })
+}
+
+#[tokio::test]
+async fn create_with_only_the_name_address_and_mode_uses_the_defaults() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let created = create_tournament(&app, &ana, minimal("copa", "duel")).await;
+    let (_, seen) = get(&app, &format!("{URI}/copa"), &ana).await;
+    assert_eq!(seen, created);
+    assert_eq!(created["status"], "draft");
+    assert_eq!(created["admission"], "open");
+    assert_eq!(created["max_participants"], 16);
+    assert_eq!(created["team_size"], 1);
+    assert_eq!(
+        created["champion_rules"],
+        json!({ "bans_per_series": 1, "mirror": true, "same_team": false, "no_repeat": null })
+    );
+    assert_eq!(
+        created["stages"],
+        json!([{
+            "format": "elimination",
+            "bracket": "double",
+            "grand_final_reset": false,
+            "best_of": 3,
+            "finals_best_of": 5
+        }])
+    );
+    assert_eq!(created["check_in_minutes"], 30);
+    assert_eq!(created["contest_minutes"], 10);
+    assert_eq!(created["counts_for_rating"], true);
+    assert_eq!(created["veto"]["map_mode"], "veto");
+    assert_eq!(created["veto"]["champion_phase"], true);
+    assert_eq!(created["veto"]["step_seconds"], 30);
+}
+
+#[tokio::test]
+async fn a_new_team_tournament_defaults_to_the_captain() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let created = create_tournament(&app, &ana, minimal("copa", "tdm")).await;
+    assert_eq!(created["team_size"], 2);
+    assert_eq!(
+        created["team_rules"],
+        json!({ "veto": "captain", "ban": "captain", "pick": "captain", "report": "captain" })
+    );
+}
+
+#[tokio::test]
+async fn missing_champion_rules_fields_fall_back_to_the_defaults() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let body = with(
+        minimal("copa", "duel"),
+        json!({ "champion_rules": { "bans_per_series": 2 } }),
+    );
+    let created = create_tournament(&app, &ana, body).await;
+    assert_eq!(
+        created["champion_rules"],
+        json!({ "bans_per_series": 2, "mirror": true, "same_team": false, "no_repeat": null })
+    );
+}

@@ -1924,6 +1924,28 @@ export interface components {
              */
             same_team: boolean;
         };
+        /**
+         * @description As regras de campeões da criação: o que faltar cai no padrão
+         *     (`ChampionRulesInput::default`). O PATCH segue com `ChampionRules`
+         *     inteira.
+         */
+        ChampionRulesInput: {
+            /**
+             * Format: int32
+             * @description Padrão 1.
+             * @default 1
+             * @example 1
+             */
+            bans_per_series: number;
+            /**
+             * @description Padrão verdadeiro.
+             * @default true
+             */
+            mirror: boolean;
+            no_repeat?: components["schemas"]["NoRepeatRule"] | null;
+            /** @description Padrão falso. */
+            same_team?: boolean;
+        };
         ChangeEmail: {
             /** @description Senha atual: obrigatória se a conta tem senha. */
             current_password?: string | null;
@@ -2015,7 +2037,11 @@ export interface components {
         CreateTournament: {
             /** @description Padrão `open`. Muda depois, até o torneio encerrar. */
             admission?: components["schemas"]["Admission"];
-            champion_rules: components["schemas"]["ChampionRules"];
+            /**
+             * @description Ausente, ou campo ausente: 1 ban por série, espelho permitido, sem
+             *     campeão igual no time e sem regra de não repetição.
+             */
+            champion_rules?: components["schemas"]["ChampionRulesInput"];
             /**
              * Format: int32
              * @description Minutos antes do início em que o check-in abre sozinho, de 5 a 1440.
@@ -2028,9 +2054,9 @@ export interface components {
             /**
              * Format: int32
              * @description Minutos que o adversário tem para confirmar ou contestar um resultado
-             *     enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 5.
-             * @default 5
-             * @example 5
+             *     enviado, de 1 a 1440; depois disso, confirma sozinho. Ausente: 10.
+             * @default 10
+             * @example 10
              */
             contest_minutes: number;
             /**
@@ -2047,7 +2073,8 @@ export interface components {
              * Format: int32
              * @description Vagas, em jogadores, de 2 a 1024 (no TDM, no mínimo dois times). A
              *     checagem de campeões usa o pior caso com esse número (no TDM, com os
-             *     times que ele comporta).
+             *     times que ele comporta). Ausente: 16.
+             * @default 16
              * @example 16
              */
             max_participants: number;
@@ -2063,9 +2090,10 @@ export interface components {
             name: string;
             /**
              * @description Padrão falso (rascunho). Verdadeiro cria e já publica, na mesma
-             *     transação: e, se há `starts_at` e a
-             *     janela de check-in já abriu, o torneio vem em `check_in`; senão, em
-             *     `registration`. Qualquer erro e nada é gravado.
+             *     transação: o torneio vem sempre em `registration` (inscrição aberta);
+             *     o check-in abre depois, na hora (um `starts_at` dentro da janela já
+             *     aberta é recusado com `tournament.starts_at_too_soon`). Qualquer erro e
+             *     nada é gravado.
              */
             publish?: boolean;
             /** @description Texto simples; as quebras de linha são preservadas. Até 20000 caracteres. */
@@ -2082,8 +2110,12 @@ export interface components {
              * @example copa-de-outubro
              */
             slug: string;
-            /** @description Fases, na ordem. Por enquanto, exatamente uma. */
-            stages: components["schemas"]["StageFormat"][];
+            /**
+             * @description Fases, na ordem. Por enquanto, exatamente uma. Ausente: uma fase de
+             *     eliminação dupla, melhor de 3, final melhor de 5, sem reset da grande
+             *     final.
+             */
+            stages?: components["schemas"]["StageFormat"][];
             /**
              * Format: date-time
              * @description Início previsto. Opcional: sem data o check-in não abre sozinho.
@@ -3597,7 +3629,7 @@ export interface components {
         } | {
             /**
              * Format: int32
-             * @description Melhor de N de todas as partidas: ímpar, ou 2, 4 ou 6. A série par
+             * @description Melhor de N de todas as partidas, ímpar ou par. A série par
              *     fecha na maioria ou, com todos os mapas e metade para cada lado, empata.
              * @example 3
              */

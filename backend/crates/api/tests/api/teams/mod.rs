@@ -13,14 +13,22 @@ use serde_json::{Value, json};
 use crate::common::*;
 use crate::matches::{COPA, single};
 
-/// TDM `copa` com times de `size`, sem check-in, eliminação simples md1 e
-/// sem veto, com `changes`.
+/// TDM `copa` com times de `size`, sem check-in, eliminação simples md1, sem
+/// veto e com todos os jogadores agindo pelo time (sem dizer, a API põe o
+/// capitão), com `changes`.
 pub fn tdm(size: u8, changes: Value) -> Value {
     with(
         duel("copa"),
         with(
             with(
-                json!({ "mode": "tdm", "team_size": size, "check_in_minutes": null }),
+                json!({
+                    "mode": "tdm",
+                    "team_size": size,
+                    "check_in_minutes": null,
+                    "team_rules": {
+                        "veto": "anyone", "ban": "anyone", "pick": "each_player", "report": "anyone"
+                    }
+                }),
                 single(1, 1),
             ),
             changes,
