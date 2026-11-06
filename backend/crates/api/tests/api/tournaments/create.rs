@@ -174,14 +174,14 @@ async fn create_with_only_the_name_address_and_mode_uses_the_defaults() {
 }
 
 #[tokio::test]
-async fn a_new_team_tournament_defaults_to_the_captain() {
+async fn a_new_team_tournament_defaults_to_balanced() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let created = create_tournament(&app, &ana, minimal("copa", "tdm")).await;
     assert_eq!(created["team_size"], 2);
     assert_eq!(
         created["team_rules"],
-        json!({ "veto": "captain", "ban": "captain", "pick": "captain", "report": "captain" })
+        json!({ "veto": "captain", "ban": "captain", "pick": "each_player", "report": "anyone" })
     );
 }
 

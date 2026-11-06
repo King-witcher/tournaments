@@ -113,6 +113,15 @@ impl TeamRules {
         report: TeamActor::Captain,
     };
 
+    /// O capitão veta e bane, cada jogador escolhe o próprio campeão e
+    /// qualquer um envia: o preset Balanceado e o padrão de um torneio novo.
+    pub const BALANCED: Self = Self {
+        veto: TeamActor::Captain,
+        ban: TeamActor::Captain,
+        pick: TeamPicker::EachPlayer,
+        report: TeamActor::Anyone,
+    };
+
     /// Tudo no capitão: só ele marca "Pronto", e um Pronto basta por lado.
     pub const fn captain_only(self) -> bool {
         matches!(self.veto, TeamActor::Captain)
@@ -151,6 +160,7 @@ mod tests {
     fn only_all_four_on_the_captain_is_captain_only() {
         assert!(TeamRules::CAPTAIN.captain_only());
         assert!(!TeamRules::EVERYONE.captain_only());
+        assert!(!TeamRules::BALANCED.captain_only());
         let one_off = TeamRules {
             report: TeamActor::Anyone,
             ..TeamRules::CAPTAIN

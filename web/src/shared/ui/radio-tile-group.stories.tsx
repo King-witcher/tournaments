@@ -14,6 +14,26 @@ const formats = [
   { value: "swiss", content: "Suíço" },
 ];
 
+/** Com o que cada opção faz, para comparar antes de escolher. */
+const described = [
+  {
+    value: "single",
+    content: "Eliminação simples",
+    description: "Quem perde uma série está fora.",
+  },
+  {
+    value: "double",
+    content: "Eliminação dupla",
+    description:
+      "Quem perde cai para a repescagem e, se perder de novo, está fora.",
+  },
+  {
+    value: "round-robin",
+    content: "Todos contra todos",
+    description: "Cada um enfrenta todos os outros uma vez.",
+  },
+];
+
 const meta = {
   title: "Formulário/RadioTileGroup",
   component: RadioTileGroup,
@@ -71,6 +91,26 @@ export const OptionDisabled: Story = {
     name: "radio-tile-group-option-disabled",
     options: [...formats.slice(0, 3), { ...formats[3], disabled: true }],
   },
+};
+
+export const WithDescription: Story = {
+  args: { name: "radio-tile-group-described", options: described },
+};
+
+/** Só leitura: só a escolhida, num tile sem interação. */
+export const ReadOnly: Story = {
+  args: {
+    name: "radio-tile-group-read-only",
+    options: described,
+    value: "double",
+    readOnly: true,
+  },
+};
+
+/** No celular, uma coluna, com o texto quebrando dentro do tile. */
+export const Phone: Story = {
+  args: { name: "radio-tile-group-phone", options: described },
+  globals: { viewport: { value: "phone" } },
 };
 
 function Stateful({ name }: { name: string }) {

@@ -32,6 +32,7 @@
   },
   "bestOfOption": "Best of {count}",
   "bestOfEvenHint": "This match can end in a tie. The first to win {wins} games takes the match.",
+  "seriesPool": "Needs {games} maps, and the pool has {pool}.",
   "champions": "Champions",
   "countsForRating": "Affects rating",
   "countsForRatingHint": "Each game updates players' rating.",
@@ -46,6 +47,7 @@
   "checkIn": "Check-in",
   "checkInOff": "No check-in",
   "checkInOption": "Opens {minutes} min before start",
+  "checkInOptionHours": "Opens {window} before start",
   "checkInOffHint": "All registered players enter the bracket.",
   "checkInHint": "Only players who confirm attendance on the site enter the bracket.",
   "checkInOffHintTdm": "All registered players can join a team.",
@@ -225,7 +227,8 @@
       "captain": "The captain marks “Ready”, vetoes, bans, picks champions for everyone and submits the result.",
       "balanced": "The captain vetoes and bans. Each player picks their own champion. Anyone can submit the result. Everyone marks “Ready”.",
       "everyone": "Any player can veto, ban and submit the result, and each picks their own champion. Everyone marks “Ready”.",
-      "custom": "All players mark “Ready”."
+      "custom": "Choose who does what. Everyone marks “Ready”.",
+      "customCaptain": "Choose who does what. Only the captain marks “Ready”."
     },
     "fields": {
       "veto": "Veto maps",

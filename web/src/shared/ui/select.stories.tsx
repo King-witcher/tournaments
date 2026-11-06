@@ -57,6 +57,15 @@ export const Invalid: Story = {
   },
 };
 
+/** Erro que só o chamador sabe: aparece na hora e bloqueia o envio. */
+export const Problem: Story = {
+  args: {
+    id: "select-problem",
+    defaultValue: "3v3",
+    problem: "Pede 6 jogadores, e há 4 inscritos.",
+  },
+};
+
 export const Warn: Story = {
   args: {
     id: "select-warn",

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import type { NewTournamentState } from "../hooks/use-new-tournament";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 import { TournamentModeFields } from "./tournament-mode-fields";
@@ -18,9 +20,11 @@ type Props = {
 };
 
 /**
- * Os campos da criação curta, no Modal e na página: nome, endereço (gerado do
- * nome, com a prévia), "Começar de" (sem torneio na comunidade, não aparece)
- * e modalidade, que vem da origem escolhida e muda depois.
+ * Os campos da criação curta, no Modal e na página: "Começar de" primeiro
+ * (sem torneio na comunidade, não aparece), porque é por onde se decide e,
+ * depois do nome vazio, o obrigatório já ficaria vermelho; nome, endereço
+ * (gerado do nome, com a prévia) e modalidade, que vem da origem escolhida e
+ * muda depois.
  */
 export function NewTournamentFields({
   tenant,
@@ -28,24 +32,27 @@ export function NewTournamentFields({
   tournaments,
   syncUrl = false,
 }: Props) {
-  const { values, onChange, errors } = form;
+  const { values, onChange, errors, formRef } = form;
   const loading = tournaments === undefined;
   // Enquanto a lista chega, a origem que abriu o formulário já aparece.
   const items = tournaments ?? (form.origin ? [form.origin] : []);
+  const withSource = loading || items.length > 0;
+  // A lista chegou vazia: o campo, que o Modal abriu com o foco, sai, e o
+  // foco perdido vai para o nome.
+  const hadSource = useRef(withSource);
+  useEffect(() => {
+    const removed = hadSource.current && !withSource;
+    hadSource.current = withSource;
+    const active = document.activeElement;
+    if (removed && (active === null || active === document.body)) {
+      formRef.current?.querySelector<HTMLElement>('[name="name"]')?.focus();
+    }
+  }, [withSource, formRef]);
 
   return (
     <>
-      <TournamentIdentityFields
-        tenant={tenant}
-        values={values}
-        onChange={onChange}
-        errors={errors}
-        isNew
-      />
-      {(loading || items.length > 0) && (
+      {withSource && (
         <TournamentSourceField
-          // A lista chegou: o campo começa de novo, com a escolha nela.
-          key={loading ? "loading" : "ready"}
           tenant={tenant}
           tournaments={items}
           loading={loading}
@@ -54,6 +61,13 @@ export function NewTournamentFields({
           syncUrl={syncUrl}
         />
       )}
+      <TournamentIdentityFields
+        tenant={tenant}
+        values={values}
+        onChange={onChange}
+        errors={errors}
+        isNew
+      />
       <TournamentModeFields
         values={values}
         onChange={onChange}

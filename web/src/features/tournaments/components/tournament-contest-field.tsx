@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import { SelectItem } from "@/shared/ui/carbon/select";
 import { Select } from "@/shared/ui/select";
 
@@ -22,10 +23,14 @@ export function TournamentContestField({
   readOnly,
 }: Props) {
   const t = useTranslations("TournamentForm");
+  const formatMinutes = useFormatMinutes();
   // Uma janela que veio da API fora das opções continua aparecendo.
   const windows = WINDOWS.includes(value)
     ? WINDOWS
     : [...WINDOWS, value].sort((a, b) => a - b);
+  // Acima de uma hora, em horas, como no resto do site ("24 h").
+  const label = (minutes: number) =>
+    minutes > 60 ? formatMinutes(minutes) : t("contestOption", { minutes });
 
   return (
     <Select
@@ -39,11 +44,7 @@ export function TournamentContestField({
       onChange={(e) => onChange(Number(e.target.value))}
     >
       {windows.map((minutes) => (
-        <SelectItem
-          key={minutes}
-          value={minutes}
-          text={t("contestOption", { minutes })}
-        />
+        <SelectItem key={minutes} value={minutes} text={label(minutes)} />
       ))}
     </Select>
   );

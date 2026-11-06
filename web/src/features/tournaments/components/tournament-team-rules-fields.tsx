@@ -3,6 +3,7 @@ import { memo, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { SelectItem } from "@/shared/ui/carbon/select";
+import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import { Select } from "@/shared/ui/select";
 import type { TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
@@ -31,11 +32,13 @@ type Props = {
 };
 
 /**
- * Quem age pelo time: o preset, com o que ele faz, e, em Personalizado, as
- * quatro regras. Só as regras vão para a API: o preset sai delas, e escolher
- * Personalizado continua nele até recarregar, mesmo com valores iguais aos de
- * um preset. O que não tem efeito (mapa desligado ou sorteado, campeões fora do
- * site, sem bans) não aparece, mas continua guardado.
+ * Quem age pelo time: os presets em tiles, cada um com o que faz (inclusive
+ * quem marca "Pronto"), e, em Personalizado, as quatro regras. Só as regras
+ * vão para a API: o preset sai delas, e escolher Personalizado continua nele
+ * até recarregar, mesmo com valores iguais aos de um preset (o tile dele diz
+ * quem marca "Pronto" pelas regras). O que não tem efeito (mapa desligado ou
+ * sorteado, campeões fora do site, sem bans) não aparece, mas continua
+ * guardado.
  */
 export const TournamentTeamRulesFields = memo(
   function TournamentTeamRulesFields({ values, onChange, readOnly }: Props) {
@@ -60,25 +63,27 @@ export const TournamentTeamRulesFields = memo(
         ))}
       </Select>
     );
+    // Personalizado com as quatro no capitão: só ele marca "Pronto".
+    const customHint =
+      teamPresetOf(rules) === "captain" ? "customCaptain" : "custom";
 
     return (
       <>
-        <Select
-          labelText={t("label")}
-          helperText={t(`hints.${teamPresetOf(rules)}`)}
+        <RadioTileGroup
+          legend={t("label")}
           name="teamPreset"
           value={preset}
           readOnly={readOnly}
-          onChange={(e) => {
-            const next = e.target.value as TeamPreset;
+          options={PRESETS.map((p) => ({
+            value: p,
+            content: t(`presets.${p}`),
+            description: t(`hints.${p === "custom" ? customHint : p}`),
+          }))}
+          onChange={(next) => {
             setCustom(next === "custom");
             if (next !== "custom") onChange({ teamRules: TEAM_PRESETS[next] });
           }}
-        >
-          {PRESETS.map((p) => (
-            <SelectItem key={p} value={p} text={t(`presets.${p}`)} />
-          ))}
-        </Select>
+        />
         {preset === "custom" && (
           <>
             {(values.mapMode === "veto" || values.mapMode === "vote") &&

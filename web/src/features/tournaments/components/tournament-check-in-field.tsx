@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import { SelectItem } from "@/shared/ui/carbon/select";
 import { Select } from "@/shared/ui/select";
 
@@ -26,6 +27,7 @@ export function TournamentCheckInField({
   teams = false,
 }: Props) {
   const t = useTranslations("TournamentForm");
+  const formatMinutes = useFormatMinutes();
   // Uma janela que veio da API fora das opções continua aparecendo.
   const windows =
     value === null || WINDOWS.includes(value)
@@ -54,7 +56,12 @@ export function TournamentCheckInField({
         <SelectItem
           key={minutes}
           value={minutes}
-          text={t("checkInOption", { minutes })}
+          // Acima de uma hora, em horas, como no resto do site ("24 h").
+          text={
+            minutes > 60
+              ? t("checkInOptionHours", { window: formatMinutes(minutes) })
+              : t("checkInOption", { minutes })
+          }
         />
       ))}
     </Select>

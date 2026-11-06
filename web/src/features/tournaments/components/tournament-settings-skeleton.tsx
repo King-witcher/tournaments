@@ -1,11 +1,7 @@
-import { ButtonSkeleton } from "@/shared/ui/carbon/button";
+import { AccordionSkeleton } from "@/shared/ui/carbon/accordion";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
-import { RadioButtonSkeleton } from "@/shared/ui/carbon/radio-button";
-import { SelectSkeleton } from "@/shared/ui/carbon/select";
-import { Stack } from "@/shared/ui/carbon/stack";
-import { TextAreaSkeleton } from "@/shared/ui/carbon/text-area";
-import { TextInputSkeleton } from "@/shared/ui/carbon/text-input";
-import { FormSectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TabLoading } from "@/shared/ui/skeleton";
+import { SETTINGS_SECTIONS } from "../lib/settings-sections";
 
 type Props = {
   /** O que está carregando, lido pelo leitor de tela. */
@@ -13,8 +9,8 @@ type Props = {
 };
 
 /**
- * A aba Configurações carregando, na forma dela: na coluna estreita, Geral
- * (nome, endereço, descrição e o Salvar) e o começo de Formato.
+ * A aba Configurações carregando, na forma dela: o acordeão fechado, um item
+ * por seção, na coluna estreita.
  */
 export function TournamentSettingsSkeleton({ label }: Props) {
   return (
@@ -22,20 +18,7 @@ export function TournamentSettingsSkeleton({ label }: Props) {
       <Grid>
         <Column sm={4} md={8} lg={8}>
           <div aria-hidden>
-            <Stack gap={9}>
-              <FormSectionSkeleton>
-                <TextInputSkeleton />
-                <TextInputSkeleton />
-                <TextAreaSkeleton />
-                <ButtonSkeleton />
-              </FormSectionSkeleton>
-              <FormSectionSkeleton>
-                <RadioButtonSkeleton />
-                <TextInputSkeleton />
-                <RadioButtonSkeleton />
-                <SelectSkeleton />
-              </FormSectionSkeleton>
-            </Stack>
+            <AccordionSkeleton count={SETTINGS_SECTIONS.length} open={false} />
           </div>
         </Column>
       </Grid>

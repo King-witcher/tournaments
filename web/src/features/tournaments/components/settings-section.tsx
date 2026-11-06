@@ -8,12 +8,15 @@ import { Form } from "@/shared/ui/carbon/form";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
+import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { Notice } from "@/shared/ui/notice";
-import { Section } from "@/shared/ui/section";
+import { StatusTag } from "@/shared/ui/status-tag";
+import { useSettingsItems } from "../hooks/use-settings-items";
 import {
   type SettingsSection as SectionKey,
-  sectionHeadingId,
+  sectionItemId,
 } from "../lib/settings-sections";
+import { FormAccordionItem } from "./form-accordion-item";
 
 /** O que o formulário da seção precisa do hook dela. */
 export type SectionFormState = {
@@ -24,11 +27,15 @@ export type SectionFormState = {
   formError?: { message: string; fixIn?: SectionKey };
   /** Acabou de salvar e nada mudou desde então. */
   done: boolean;
+  /** Algum campo está diferente do salvo. */
+  dirty: boolean;
 };
 
 type Props = {
   section: SectionKey;
   form: SectionFormState;
+  /** O que está salvo, numa linha, no título do item. */
+  summary: ReactNode;
   /** Por que a seção (ou parte dela) não muda agora: o `Callout` antes dos campos. */
   lock?: ReactNode;
   /** Nada aqui muda no estado de agora: os campos só leitura e sem o Salvar. */
@@ -43,16 +50,20 @@ type Props = {
 };
 
 /**
- * Uma seção da aba Configurações do torneio, como as da comunidade: o título,
- * o motivo do que não muda num `Callout` antes dos campos, os campos e o
- * Salvar dela, desabilitado enquanto um campo recusa o que tem. Erro de outra
- * seção (as séries daqui pedem mais mapas que o pool salvo) aparece acima do
- * botão, com "Ir para" a seção onde corrigir; salvo, "Salvo." até a próxima
- * mudança.
+ * Uma seção da aba Configurações do torneio, num item de acordeão: no título,
+ * o nome, o resumo do que está salvo e o estado ("Mudanças não salvas" com o
+ * aviso do Carbon, ou "Só leitura"); dentro, o motivo do que não muda num
+ * `Callout` antes dos campos, os campos e o Salvar dela, desabilitado
+ * enquanto um campo recusa o que tem. Fechar não perde o que foi mexido. Erro
+ * de outra seção (as séries daqui pedem mais mapas que o pool salvo) aparece
+ * acima do botão, com "Ir para" a seção onde corrigir, que abre o item dela
+ * com o foco no título; salvo, o item continua aberto, o foco fica no Salvar
+ * e "Salvo." aparece até a próxima mudança.
  */
 export function SettingsSection({
   section,
   form,
+  summary,
   lock,
   readOnly = false,
   onSave,
@@ -61,17 +72,28 @@ export function SettingsSection({
   after,
 }: Props) {
   const t = useTranslations("TournamentSettings");
+  const { isOpen, setOpen, reveal } = useSettingsItems();
   const fixIn = form.formError?.fixIn;
-  // O foco rola até o título, no meio da tela (no topo, ficaria embaixo do
-  // cabeçalho fixo).
-  const goTo = (target: SectionKey) =>
-    document.getElementById(sectionHeadingId(target))?.focus();
 
   return (
-    <Section
+    <FormAccordionItem
+      id={sectionItemId(section)}
+      group={section}
       title={t(`sections.${section}`)}
-      id={sectionHeadingId(section)}
-      focusable
+      summary={summary}
+      status={
+        form.dirty ? (
+          <IconIndicator kind="caution-minor" label={t("unsaved")} />
+        ) : (
+          readOnly && (
+            <StatusTag status="neutral" size="sm">
+              {t("readOnly")}
+            </StatusTag>
+          )
+        )
+      }
+      open={isOpen(section)}
+      onToggle={(open) => setOpen(section, open)}
     >
       <Form
         ref={form.formRef}
@@ -88,7 +110,7 @@ export function SettingsSection({
               action={
                 fixIn &&
                 fixIn !== section && (
-                  <Button kind="ghost" size="sm" onClick={() => goTo(fixIn)}>
+                  <Button kind="ghost" size="sm" onClick={() => reveal(fixIn)}>
                     {t("goTo", { section: t(`sections.${fixIn}`) })}
                   </Button>
                 )
@@ -108,6 +130,6 @@ export function SettingsSection({
         </Stack>
       </Form>
       {after}
-    </Section>
+    </FormAccordionItem>
   );
 }

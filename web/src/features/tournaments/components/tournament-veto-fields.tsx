@@ -2,8 +2,7 @@ import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
-import { SelectItem } from "@/shared/ui/carbon/select";
-import { Select } from "@/shared/ui/select";
+import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import type { FieldErrors } from "../lib/form-errors";
 import {
   draftHasSteps,
@@ -50,8 +49,9 @@ type Props = {
 };
 
 /**
- * O grupo Mapas: como sai o mapa de cada partida, no veto a ordem dos bans e
- * picks (a série par só tem bans, e o campo não aparece: a dica do modo explica),
+ * O grupo Mapas: como sai o mapa de cada partida (em tiles, cada modo com o
+ * que faz), no veto a ordem dos bans e picks (a série par só tem bans, e o
+ * campo não aparece: o tile do veto explica),
  * o pool de mapas com a imagem de cada um (fora do modo desligado;
  * vale para o veto, a votação e o sorteio) e, com veto ou votação, o tempo de
  * cada passo, que vale também para o draft de campeões. Sem passo de mapa,
@@ -67,30 +67,24 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
 
   return (
     <>
-      <Select
-        labelText={t("mapMode")}
-        helperText={
-          evenVeto
-            ? t(tdm ? "mapModeHintTdm.vetoEven" : "mapModeHint.vetoEven", {
-                games: values.bestOf,
-              })
-            : t(
-                tdm
-                  ? `mapModeHintTdm.${values.mapMode}`
-                  : `mapModeHint.${values.mapMode}`,
-              )
-        }
+      <RadioTileGroup
+        legend={t("mapMode")}
         name="mapMode"
         value={values.mapMode}
         readOnly={readOnly}
-        onChange={(e) =>
-          onChange({ mapMode: e.target.value as Schemas["MapMode"] })
-        }
-      >
-        {MODES.map((m) => (
-          <SelectItem key={m} value={m} text={t(`mapModes.${m}`)} />
-        ))}
-      </Select>
+        options={MODES.map((m) => ({
+          value: m,
+          content: t(`mapModes.${m}`),
+          // A série par só tem bans: o veto dela se explica diferente.
+          description:
+            m === "veto" && isEvenSeries(values.bestOf)
+              ? t(tdm ? "mapModeHintTdm.vetoEven" : "mapModeHint.vetoEven", {
+                  games: values.bestOf,
+                })
+              : t(tdm ? `mapModeHintTdm.${m}` : `mapModeHint.${m}`),
+        }))}
+        onChange={(mapMode) => onChange({ mapMode })}
+      />
       {values.mapMode === "veto" && !evenVeto && (
         <TournamentVetoOrderField
           values={values}

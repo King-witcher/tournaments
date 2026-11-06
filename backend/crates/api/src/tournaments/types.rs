@@ -289,7 +289,9 @@ pub struct CreateTournament {
     /// pool de duelo, campeões ligados, 30 s).
     #[serde(default)]
     pub veto: Option<VetoInput>,
-    /// Quem age pelo time. Ausente: o capitão em tudo (`TeamRules::CAPTAIN`).
+    /// Quem age pelo time. Ausente: Balanceado (`TeamRules::BALANCED`: o
+    /// capitão veta e bane, cada jogador escolhe o próprio campeão, qualquer
+    /// um envia).
     /// No duelo, não muda nada.
     #[serde(default)]
     pub team_rules: Option<TeamRules>,

@@ -2,11 +2,10 @@
   "loading": "Carregando as configurações…",
   "sections": {
     "general": "Geral",
+    "registration": "Início e inscrições",
     "format": "Formato",
-    "teams": "Times",
     "maps": "Mapas",
     "champions": "Campeões",
-    "registration": "Inscrições e prazos",
     "results": "Resultados",
     "languages": "Outros idiomas"
   },
@@ -18,5 +17,8 @@
     "rules": "O torneio encerrou. As regras não mudam mais."
   },
   "goTo": "Ir para {section}",
-  "saved": "Salvo."
+  "saved": "Salvo.",
+  "unsaved": "Mudanças não salvas",
+  "readOnly": "Só leitura",
+  "noTranslations": "Sem tradução"
 }

@@ -32,6 +32,7 @@
   },
   "bestOfOption": "Melhor de {count}",
   "bestOfEvenHint": "Esta série pode empatar. Quem vence {wins} partidas leva a série.",
+  "seriesPool": "Pede {games} mapas, e o pool tem {pool}.",
   "champions": "Campeões",
   "countsForRating": "Modifica rating",
   "countsForRatingHint": "Cada partida atualiza o rating dos jogadores.",
@@ -46,6 +47,7 @@
   "checkIn": "Check-in",
   "checkInOff": "Sem check-in",
   "checkInOption": "Abre {minutes} min antes do início",
+  "checkInOptionHours": "Abre {window} antes do início",
   "checkInOffHint": "Todos os inscritos entram na chave.",
   "checkInHint": "Só quem confirmar presença no site entra na chave.",
   "checkInOffHintTdm": "Todos os inscritos podem entrar num time.",
@@ -225,7 +227,8 @@
       "captain": "O capitão marca “Pronto”, veta, bane, escolhe os campeões de todos e envia o resultado.",
       "balanced": "O capitão veta e bane. Cada jogador escolhe o próprio campeão. Qualquer um envia o resultado. Todos marcam “Pronto”.",
       "everyone": "Qualquer jogador veta, bane e envia o resultado, e cada um escolhe o próprio campeão. Todos marcam “Pronto”.",
-      "custom": "Todos os jogadores marcam “Pronto”."
+      "custom": "Escolha quem faz cada coisa. Todos marcam “Pronto”.",
+      "customCaptain": "Escolha quem faz cada coisa. Só o capitão marca “Pronto”."
     },
     "fields": {
       "veto": "Vetar mapas",

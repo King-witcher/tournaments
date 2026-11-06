@@ -143,7 +143,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     noRepeat: "off",
     noRepeatWho: "player",
     sameTeam: false,
-    teamRules: TEAM_PRESETS.captain,
+    teamRules: TEAM_PRESETS.balanced,
     startsAt: null,
     checkInMinutes: 30,
     contestMinutes: 10,
@@ -225,8 +225,10 @@ export function valuesFromSource(
     slug: "",
     startsAt: null,
     mapPool: pool.length > 0 ? pool : null,
-    // No duelo as regras não valem: virando TDM aqui, começa como todo time novo.
-    teamRules: source.mode === "tdm" ? source.team_rules : TEAM_PRESETS.captain,
+    // No duelo as regras não valem: virando TDM aqui, começa como todo time
+    // novo (Balanceado, o padrão da API).
+    teamRules:
+      source.mode === "tdm" ? source.team_rules : TEAM_PRESETS.balanced,
     // A janela aberta só fica em quem já a tinha: não se escolhe mais.
     pickOrder:
       source.veto.pick_order === "open"

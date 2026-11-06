@@ -58,6 +58,15 @@ export const TournamentSourceField = memo(function TournamentSourceField({
   const [picked, setPicked] = useState(
     () => tournaments.find((x) => x.slug === initial) ?? null,
   );
+  // A lista chegou: a escolha passa a ser o item dela. Sem remontar o campo,
+  // que é o primeiro do Modal e pode estar com o foco.
+  const [waiting, setWaiting] = useState(loading);
+  if (waiting && !loading) {
+    setWaiting(false);
+    setPicked(
+      tournaments.find((x) => x.slug === (picked?.slug ?? initial)) ?? null,
+    );
+  }
   // O que está aplicado: o Carbon chama `onChange` também quando a escolha
   // volta à anterior, e aí não há o que buscar.
   const applied = useRef(picked);

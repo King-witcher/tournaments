@@ -1,9 +1,10 @@
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 
+import { Button } from "@/shared/ui/button";
 import { SelectItem } from "@/shared/ui/carbon/select";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { RadioGroup } from "@/shared/ui/radio-group";
+import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
@@ -45,6 +46,10 @@ function choiceOf(
     ? values.bracket
     : values.stageFormat;
 }
+
+/** O formato da fase de uma escolha (as duas eliminações são uma só). */
+const stageOf = (choice: FormatChoice): TournamentValues["stageFormat"] =>
+  choice === "double" || choice === "single" ? "elimination" : choice;
 
 /**
  * Trocar de formato. Fora do todos contra todos, a série par vira a ímpar logo
@@ -88,22 +93,44 @@ type Props = {
   errors: FieldErrors;
   /** O torneio já começou: tudo aqui só para leitura. */
   readOnly: boolean;
+  /**
+   * Os mapas do pool salvo, quando o mapa sai dele: a série que pede mais
+   * partidas que isso fica inválida na hora, sem esperar o erro da API.
+   */
+  pool?: number;
+  /** Leva a Mapas, onde o pool cresce (com `pool`; a mesma função em todo render). */
+  onGoToPool?: () => void;
 };
 
 /**
- * O formato (as cinco opções à vista, com a dica do escolhido), o reset da
+ * O formato (as cinco opções em tiles, cada uma com o que faz), o reset da
  * grande final na dupla, as séries (e a final, na eliminação; as pares só no
  * todos contra todos, com a dica) e as rodadas do suíço. No TDM, o teto do
- * formato aparece em jogadores (como as vagas) e as rodadas contam times.
+ * formato aparece em jogadores (como as vagas) e as rodadas contam times. A
+ * série que pede mais mapas que o pool salvo fica inválida, com o caminho
+ * para Mapas embaixo.
  */
 export const TournamentFormatFields = memo(function TournamentFormatFields({
   values,
   onChange,
   errors,
   readOnly,
+  pool,
+  onGoToPool,
 }: Props) {
   const t = useTranslations("TournamentForm");
+  const tSettings = useTranslations("TournamentSettings");
   const choice = choiceOf(values);
+  // Cada partida da série precisa de um mapa do pool.
+  const poolProblem = (games: number) =>
+    pool !== undefined && games > pool
+      ? t("seriesPool", { games, pool })
+      : undefined;
+  const bestOfProblem = poolProblem(values.bestOf);
+  const finalsProblem =
+    values.stageFormat === "elimination"
+      ? poolProblem(values.finalsBestOf)
+      : undefined;
   const elimination = values.stageFormat === "elimination";
   const items = (options: number[]) =>
     options.map((n) => (
@@ -123,18 +150,17 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
 
   return (
     <>
-      <RadioGroup
-        legendText={t("stageFormat")}
-        helperText={t(`stageFormatHints.${choice}`, {
-          max: slotLimits(values.stageFormat, size).max,
-        })}
+      <RadioTileGroup
+        legend={t("stageFormat")}
         name="stageFormat"
-        orientation="horizontal"
         value={choice}
         readOnly={readOnly}
         options={CHOICES.map((value) => ({
           value,
-          label: t(`stageFormats.${value}`),
+          content: t(`stageFormats.${value}`),
+          description: t(`stageFormatHints.${value}`, {
+            max: slotLimits(stageOf(value), size).max,
+          }),
         }))}
         onChange={(next) => onChange(patchOf(next, values.bestOf))}
       />
@@ -159,6 +185,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           name="bestOf"
           value={values.bestOf}
           readOnly={readOnly}
+          problem={bestOfProblem}
           invalid={errors.bestOf !== undefined}
           invalidText={errors.bestOf}
           onChange={(e) => onChange({ bestOf: Number(e.target.value) })}
@@ -171,6 +198,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             name="finalsBestOf"
             value={values.finalsBestOf}
             readOnly={readOnly}
+            problem={finalsProblem}
             onChange={(e) => onChange({ finalsBestOf: Number(e.target.value) })}
           >
             {items(BEST_OF)}
@@ -204,6 +232,13 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
               />
             ))}
           </Select>
+        )}
+        {(bestOfProblem || finalsProblem) && onGoToPool && (
+          <div className={styles.goTo}>
+            <Button kind="ghost" size="sm" onClick={onGoToPool}>
+              {tSettings("goTo", { section: tSettings("sections.maps") })}
+            </Button>
+          </div>
         )}
       </div>
       <Checkbox

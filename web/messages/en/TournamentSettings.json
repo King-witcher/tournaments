@@ -2,11 +2,10 @@
   "loading": "Loading the settings…",
   "sections": {
     "general": "General",
+    "registration": "Start and registration",
     "format": "Format",
-    "teams": "Teams",
     "maps": "Maps",
     "champions": "Champions",
-    "registration": "Registration and deadlines",
     "results": "Results",
     "languages": "Other languages"
   },
@@ -18,5 +17,8 @@
     "rules": "The tournament has ended. The rules can't change anymore."
   },
   "goTo": "Go to {section}",
-  "saved": "Saved."
+  "saved": "Saved.",
+  "unsaved": "Unsaved changes",
+  "readOnly": "Read-only",
+  "noTranslations": "No translations"
 }

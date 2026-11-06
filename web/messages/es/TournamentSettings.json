@@ -2,11 +2,10 @@
   "loading": "Cargando la configuración…",
   "sections": {
     "general": "General",
+    "registration": "Inicio e inscripciones",
     "format": "Formato",
-    "teams": "Equipos",
     "maps": "Mapas",
     "champions": "Campeones",
-    "registration": "Inscripciones y plazos",
     "results": "Resultados",
     "languages": "Otros idiomas"
   },
@@ -18,5 +17,8 @@
     "rules": "El torneo terminó. Las reglas ya no cambian."
   },
   "goTo": "Ir a {section}",
-  "saved": "Guardado."
+  "saved": "Guardado.",
+  "unsaved": "Cambios sin guardar",
+  "readOnly": "Solo lectura",
+  "noTranslations": "Sin traducción"
 }

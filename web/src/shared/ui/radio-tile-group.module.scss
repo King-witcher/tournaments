@@ -1,4 +1,6 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
 
 // Os tiles empilhados com o respiro dos exemplos do Carbon. O `TileGroup` os
 // põe colados, num `div` sem classe, e a classe passada a ele substitui a
@@ -7,4 +9,22 @@
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-03;
+}
+
+// O nome no peso de título de bloco compacto e, embaixo, o que a opção faz,
+// como texto de apoio: é o que se compara entre os tiles.
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+}
+
+.title {
+  @include type.type-style("heading-compact-01");
+}
+
+.description {
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
 }

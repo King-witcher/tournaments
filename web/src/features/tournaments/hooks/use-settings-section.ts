@@ -13,7 +13,6 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
-import { focusIfLost } from "@/shared/lib/focus";
 import {
   controlSelector,
   type FieldErrors,
@@ -26,9 +25,9 @@ import {
   valuesFrom,
 } from "../lib/form-values";
 import {
+  changed,
   SECTION_KEYS,
   type SettingsSection,
-  sectionHeadingId,
   sectionOf,
   type ValuesSection,
 } from "../lib/settings-sections";
@@ -121,9 +120,9 @@ export function useSettingsSection(section: ValuesSection) {
       );
       setDone(true);
       if (outcome.data.slug !== tournament.slug) {
-        router.replace(`/${tenant}/${outcome.data.slug}/settings`);
-        // A página do endereço novo troca a árvore: o foco volta à seção.
-        focusIfLost(sectionHeadingId(section));
+        // A página do endereço novo troca a árvore: o `#` abre de novo o
+        // item, com o foco no título dele.
+        router.replace(`/${tenant}/${outcome.data.slug}/settings#${section}`);
       }
       router.refresh();
     });
@@ -146,6 +145,7 @@ export function useSettingsSection(section: ValuesSection) {
     () => (live?.field ? { [live.field]: live.message } : NO_ERRORS),
     [live],
   );
+  const dirty = keys.some((k) => changed(saved, values, k));
 
   return {
     formRef,
@@ -163,6 +163,8 @@ export function useSettingsSection(section: ValuesSection) {
     formError: failure && failure.field === undefined ? failure : undefined,
     /** Acabou de salvar e nada mudou desde então. */
     done,
+    /** Algum campo desta seção está diferente do salvo. */
+    dirty,
     pending,
     submit,
   };

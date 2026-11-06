@@ -179,6 +179,10 @@ export function useLanguagesSection() {
         ? { message: failure.message }
         : undefined,
     done,
+    /** Alguma tradução está diferente da salva (ou foi tirada). */
+    dirty: others.some(
+      (l) => translationChange(tournament, l, draftOf(l)) !== undefined,
+    ),
     pending,
     submit,
   };

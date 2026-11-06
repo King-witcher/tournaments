@@ -12,3 +12,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+// "Ir para Mapas", embaixo do erro das séries, na largura das duas: é o
+// caminho para corrigir, junto da causa. O respiro da grade já separa.
+.goTo {
+  grid-column: 1 / -1;
+  margin-block-start: calc(-1 * spacing.$spacing-03);
+}

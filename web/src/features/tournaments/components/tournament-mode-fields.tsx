@@ -13,6 +13,7 @@ import {
   teamSizeOf,
 } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
+import { TEAM_PRESETS } from "../lib/team-rules";
 
 type Schemas = components["schemas"];
 
@@ -63,12 +64,13 @@ export const TournamentModeFields = memo(function TournamentModeFields({
         value={values.mode}
         readOnly={readOnly}
         options={MODES.map((value) => ({ value, label: tMode(value) }))}
-        // Do duelo (time de 1) para o TDM, o tamanho começa em 2; voltando
-        // ao TDM antes de salvar, fica o que estava.
+        // Do duelo (time de 1) para o TDM, o tamanho começa em 2 e quem age
+        // pelo time em Balanceado, como todo time novo; voltando ao TDM antes
+        // de salvar, fica o que estava.
         onChange={(mode) =>
           onChange(
             mode === "tdm" && values.teamSize < 2
-              ? { mode, teamSize: 2 }
+              ? { mode, teamSize: 2, teamRules: TEAM_PRESETS.balanced }
               : { mode },
           )
         }

@@ -17,9 +17,9 @@ type Props = {
 
 /**
  * Geral: nome, endereço e descrição, com um Salvar, e a capa embaixo, que se
- * salva sozinha. O endereço só muda no rascunho, e salvar com ele trocado
- * pede a confirmação do que isso quebra; depois de publicar, ele fica só para
- * leitura, com o motivo antes dos campos.
+ * salva sozinha; no título, o nome e o endereço salvos. O endereço só muda no
+ * rascunho, e salvar com ele trocado pede a confirmação do que isso quebra;
+ * depois de publicar, ele fica só para leitura, com o motivo antes dos campos.
  */
 export function SettingsGeneralSection({ cover }: Props) {
   const t = useTranslations("TournamentForm");
@@ -37,6 +37,7 @@ export function SettingsGeneralSection({ cover }: Props) {
       <SettingsSection
         section="general"
         form={form}
+        summary={`${form.saved.name} · ${form.saved.slug}`}
         lock={draft ? undefined : tSettings("locks.slug")}
         onSave={() => (moves ? setAsking(true) : form.submit())}
         submitRef={submitRef}

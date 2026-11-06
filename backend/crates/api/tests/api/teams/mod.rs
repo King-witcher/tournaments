@@ -15,7 +15,7 @@ use crate::matches::{COPA, single};
 
 /// TDM `copa` com times de `size`, sem check-in, eliminação simples md1, sem
 /// veto e com todos os jogadores agindo pelo time (sem dizer, a API põe o
-/// capitão), com `changes`.
+/// Balanceado), com `changes`.
 pub fn tdm(size: u8, changes: Value) -> Value {
     with(
         duel("copa"),
