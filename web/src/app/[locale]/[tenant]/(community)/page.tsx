@@ -1,22 +1,14 @@
-import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { TournamentList } from "@/features/tournaments/components/tournament-list";
-import { TabLoading, TableSkeleton } from "@/shared/ui/skeleton";
+import { TournamentListSkeleton } from "@/features/tournaments/components/tournament-list-skeleton";
 
 /** Aba Torneios da comunidade. */
-export default async function TenantTournamentsPage({
+export default function TenantTournamentsPage({
   params,
 }: PageProps<"/[locale]/[tenant]">) {
-  const t = await getTranslations("Tournaments");
   return (
-    <Suspense
-      fallback={
-        <TabLoading label={t("loading")}>
-          <TableSkeleton columns={5} />
-        </TabLoading>
-      }
-    >
+    <Suspense fallback={<TournamentListSkeleton />}>
       {params.then(({ tenant }) => (
         <TournamentList slug={tenant} />
       ))}

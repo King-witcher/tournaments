@@ -11,6 +11,12 @@
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-03;
+
+  // A seta do Carbon fica no canto de baixo, sobre o respiro do tile: a
+  // última linha (em geral, as tags) para antes dela em vez de passar por baixo.
+  > :last-child {
+    padding-inline-end: spacing.$spacing-06;
+  }
 }
 
 // A capa fica dentro do respiro do tile, acima do nome. Sem fundo próprio:

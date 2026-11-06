@@ -1,130 +1,91 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 
 import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
-import { DataTable } from "@/shared/ui/data-table";
-import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { StatusTag } from "@/shared/ui/status-tag";
-import { checkInPending } from "../lib/check-in";
-import { localizedName } from "../lib/localize";
-import { participantsEditable } from "../lib/status";
+import { Stack } from "@/shared/ui/carbon/stack";
+import { EmptyState } from "@/shared/ui/empty-state";
+import { Section } from "@/shared/ui/section";
+import { TileGrid } from "@/shared/ui/tile-grid";
+import { CommunityTournamentTile } from "./community-tournament-tile";
+import { FinishedTournaments } from "./finished-tournaments";
 import { NewTournamentButton } from "./new-tournament-button";
-import styles from "./tournament-list.module.scss";
 
 type Schemas = components["schemas"];
 
 /**
- * Do que está acontecendo para o que já acabou; dentro de cada status, a
- * ordem da API (mais novo primeiro).
+ * Do que está acontecendo para o que ainda vai começar; dentro de cada
+ * status, a ordem da API (mais novo primeiro).
  */
 const ORDER: Schemas["TournamentStatus"][] = [
   "in_progress",
   "check_in",
   "registration",
   "draft",
-  "finished",
 ];
 
 /**
- * A aba Torneios da comunidade: a tabela (nome, formato, estado, início,
- * inscritos), do que está acontecendo para o que acabou. O jogador só recebe
- * os publicados (a API filtra); a organização vê os rascunhos e, sem
- * nenhum, o "Criar torneio". Fica em `<Suspense>`.
+ * A aba Torneios da comunidade: os ativos em tiles, do que está acontecendo
+ * para o que vai começar, e embaixo os encerrados, em tabela (`FinishedTournaments`).
+ * O jogador só recebe os publicados (a API filtra); a organização vê os
+ * rascunhos e, sem nenhum torneio, o "Criar torneio". Fica em `<Suspense>`.
  */
 export async function TournamentList({ slug }: { slug: string }) {
   const api = await serverApi();
-  const [loaded, t, tStatus, tAdmission, locale, tournaments] =
-    await Promise.all([
-      getTenant(slug),
-      getTranslations("Tournaments"),
-      getTranslations("TournamentStatus"),
-      getTranslations("Admission"),
-      getLocale(),
-      api
-        .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
-        .then(({ data }) =>
-          (data ?? []).toSorted(
-            (a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status),
-          ),
-        ),
-    ]);
-  const organizer = loaded.kind === "ok" && loaded.tenant.role !== "player";
+  const [loaded, t, tournaments] = await Promise.all([
+    getTenant(slug),
+    getTranslations("Tournaments"),
+    api
+      .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
+      .then(({ data }) => data ?? []),
+  ]);
+  const tenant = loaded.kind === "ok" ? loaded.tenant : undefined;
+  const organizer = tenant !== undefined && tenant.role !== "player";
+  const active = tournaments
+    .filter((x) => x.status !== "finished")
+    .toSorted((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status));
+  const finished = tournaments.filter((x) => x.status === "finished");
+  // Numa grade com alguma capa, todo tile leva o espaço dela (com o logo ou a
+  // inicial da comunidade no lugar da que falta); sem nenhuma, nenhum leva.
+  const media = active.some((x) => x.cover_url);
+  const create = organizer && (
+    // O "Novo torneio" primário já está no cabeçalho.
+    <NewTournamentButton tenant={slug} kind="tertiary">
+      {t("create")}
+    </NewTournamentButton>
+  );
+
+  if (tournaments.length === 0) {
+    return (
+      <EmptyState action={create}>
+        {organizer ? t("empty") : t("emptyPlayer")}
+      </EmptyState>
+    );
+  }
 
   return (
-    <DataTable
-      label={t("label")}
-      columns={[
-        { key: "name", header: t("columns.name") },
-        { key: "format", header: t("columns.format"), secondary: true },
-        { key: "status", header: t("columns.status") },
-        { key: "starts", header: t("columns.starts"), secondary: true },
-        {
-          key: "participants",
-          header: t("columns.participants"),
-          secondary: true,
-        },
-      ]}
-      rows={tournaments.map((tournament) => {
-        const name = localizedName(tournament, locale);
-        return {
-          id: tournament.slug,
-          href: `/${slug}/${tournament.slug}`,
-          search: `${name} ${tournament.name}`,
-          cells: {
-            name,
-            // O mesmo texto do `useModeLabel` ("Duelo", "TDM 2v2").
-            format:
-              tournament.mode === "tdm"
-                ? t("modeTeams", { size: tournament.team_size })
-                : t(`mode.${tournament.mode}`),
-            status: (
-              <span className={styles.tags}>
-                <StatusTag status={tournament.status}>
-                  {tStatus(tournament.status)}
-                </StatusTag>
-                {checkInPending(tournament) ? (
-                  <StatusTag status="check_in">{t("checkInPending")}</StatusTag>
-                ) : (
-                  tournament.registered && (
-                    <StatusTag status="registration">
-                      {t("registered")}
-                    </StatusTag>
-                  )
-                )}
-                {tournament.admission === "invite_only" &&
-                  participantsEditable(tournament.status) && (
-                    <StatusTag status="neutral">
-                      {tAdmission("inviteOnly")}
-                    </StatusTag>
-                  )}
-              </span>
-            ),
-            starts: tournament.starts_at ? (
-              <LocalDateTime value={tournament.starts_at} />
-            ) : (
-              t("noDate")
-            ),
-            participants: t("participants", {
-              count: tournament.participants,
-              max: tournament.max_participants,
-            }),
-          },
-        };
-      })}
-      empty={
-        organizer
-          ? {
-              text: t("empty"),
-              // O "Novo torneio" primário já está no cabeçalho.
-              action: (
-                <NewTournamentButton tenant={slug} kind="tertiary">
-                  {t("create")}
-                </NewTournamentButton>
-              ),
-            }
-          : { text: t("emptyPlayer") }
-      }
-    />
+    <Stack gap={7}>
+      <Section title={t("active")}>
+        {active.length === 0 ? (
+          <EmptyState action={create}>{t("noneActive")}</EmptyState>
+        ) : (
+          <TileGrid>
+            {active.map((tournament) => (
+              <CommunityTournamentTile
+                key={tournament.slug}
+                tenant={{
+                  slug,
+                  name: tenant?.name ?? slug,
+                  logo_url: tenant?.logo_url,
+                }}
+                tournament={tournament}
+                media={media}
+              />
+            ))}
+          </TileGrid>
+        )}
+      </Section>
+      <FinishedTournaments slug={slug} tournaments={finished} />
+    </Stack>
   );
 }

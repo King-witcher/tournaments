@@ -59,7 +59,7 @@ Convite: coluna estreita, o logo da comunidade no título, `Tile` (com a capa do
 
 `PageHeader`: logo (quando há), nome, `Tag` do papel, "Novo torneio" (organização; abre a criação num Modal) e, quando há, a descrição em até 2 linhas, em todas as abas, com "Ver mais"/"Ver menos" (só aparece se o texto passa de 2 linhas, medido, também ao redimensionar). Abas por sub-rota:
 
-- **Torneios**: `DataTable` (nome, formato, estado, início, inscritos); jogador vê só os publicados.
+- **Torneios**: "Ativos" em tiles (a capa no topo quando a grade tem alguma, nome, início, modalidade e vagas, a `Tag` do estado e as de quem vê), do em andamento ao rascunho; embaixo, "Encerrados" num `DataTable` (nome, formato, data, inscritos), que some sem nenhum. Jogador vê só os publicados.
 - **Ranking** (todos): posição, membro, rating com `Tag` "provisório", mapas, V–D, último mapa; a linha abre a página da pessoa.
 - **Membros**: membro com avatar, papel e desde; a linha abre a página da pessoa; o owner troca papel e remove no ⋯. Para a organização, "Convidar" na barra da tabela: o link único, para copiar, e "Gerar novo link".
 - **Configurações**: owner: nome e descrição, endereço (com a confirmação do que ele quebra), logo (salva sozinho); apelido; owner: rating da comunidade (salvar recalcula todos), Discord; no fim a **zona de perigo** (`DangerZone`, uma seção por ação): sair da comunidade; owner: transferir a posse e excluir a comunidade (Modal com slug; agendada, mostra a data e "Cancelar exclusão"). Com a exclusão agendada, todas as abas têm o aviso com a data (só leitura).

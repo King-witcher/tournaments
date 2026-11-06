@@ -1,10 +1,8 @@
 {
-  "label": "Torneios da comunidade",
   "loading": "Carregando os torneios…",
   "columns": {
     "name": "Torneio",
     "format": "Formato",
-    "status": "Estado",
     "starts": "Início",
     "participants": "Inscritos"
   },
@@ -19,5 +17,9 @@
   "checkInPending": "Falta seu check-in",
   "create": "Criar torneio",
   "empty": "Nenhum torneio ainda.",
-  "emptyPlayer": "Nenhum torneio publicado."
+  "emptyPlayer": "Nenhum torneio publicado.",
+  "active": "Ativos",
+  "noneActive": "Nenhum torneio ativo.",
+  "finished": "Encerrados",
+  "spots": "{count} de {max} inscritos"
 }
