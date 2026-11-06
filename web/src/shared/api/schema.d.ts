@@ -3086,6 +3086,15 @@ export interface components {
              */
             read: boolean;
         };
+        /** @description Uma página de notificações, da mais nova. */
+        NotificationPage: {
+            /**
+             * Format: int64
+             * @description O `before` da página seguinte; `null` quando não há mais.
+             */
+            next?: number | null;
+            notifications: components["schemas"]["Notification"][];
+        };
         /** @description O code que o provedor mandou ao callback do front, com o verifier da aba. */
         OAuthCode: {
             code: string;
@@ -6662,6 +6671,10 @@ export interface operations {
             query?: {
                 /** @description `false`: só as não lidas. `true`: só as lidas. Sem ele, todas. */
                 read?: boolean;
+                /** @description Só as de id menor: o `next` da página anterior. */
+                before?: number;
+                /** @description Quantas, de 1 a 100. Sem ele, 20. */
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -6669,13 +6682,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description As 50 notificações mais recentes de quem vê, da mais nova, cada uma dizendo se já foi lida. O filtro vale antes do limite: uma não lida antiga não fica atrás das recentes. Quantas faltam ler chega pelo WebSocket (`unread` ao conectar e ao ler noutra aba; cada `notify` soma uma) */
+            /** @description Uma página das notificações de quem vê, da mais nova, cada uma dizendo se já foi lida, e o `before` da seguinte. O filtro vale antes do limite: uma não lida antiga não fica atrás das recentes. Quantas faltam ler chega pelo WebSocket (`unread` ao conectar e ao ler noutra aba; cada `notify` soma uma) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Notification"][];
+                    "application/json": components["schemas"]["NotificationPage"];
                 };
             };
             /** @description request.invalid_query */

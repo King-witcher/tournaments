@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{PgConnection, PgExecutor, PgPool, types::Json};
 
-use super::types::Notification;
+use super::types::{Notification, NotificationPage};
 use crate::{
     outbox::{self, Event, Notice},
     tenants::TenantId,
@@ -44,31 +44,42 @@ pub async fn unread_count(db: impl PgExecutor<'_>, user_id: i64) -> Result<i64, 
     .await
 }
 
-/// As `limit` notificações mais recentes de `user_id`; com `read`, só as lidas
-/// ou só as não lidas. A que a API não entende mais fica de fora, com log, mas
-/// continua na contagem das não lidas: quem tira um código do `NoticeKind`
-/// apaga as linhas dele na migration.
-pub async fn recent(
+/// As `limit` notificações mais recentes de `user_id` com id menor que
+/// `before`; com `read`, só as lidas ou só as não lidas. A que a API não
+/// entende mais fica de fora, com log, mas continua na contagem das não lidas
+/// (quem tira um código do `NoticeKind` apaga as linhas dele na migration) e
+/// no `next`, para a página seguinte não a buscar de novo.
+pub async fn page(
     db: &PgPool,
     user_id: i64,
     read: Option<bool>,
+    before: Option<i64>,
     limit: i64,
-) -> Result<Vec<Notification>, sqlx::Error> {
-    let rows = sqlx::query!(
+) -> Result<NotificationPage, sqlx::Error> {
+    // Uma a mais diz se há outra página.
+    let mut rows = sqlx::query!(
         r#"select id, notice as "notice: Json<Value>", created_at,
                   read_at is not null as "read!"
            from notifications
            where user_id = $1
              and ($2::bool is null or (read_at is not null) = $2)
+             and ($3::bigint is null or id < $3)
            order by id desc
-           limit $3"#,
+           limit $4"#,
         user_id,
         read,
-        limit
+        before,
+        limit + 1
     )
     .fetch_all(db)
     .await?;
-    Ok(rows
+    let next = if rows.len() as i64 > limit {
+        rows.truncate(limit as usize);
+        rows.last().map(|r| r.id)
+    } else {
+        None
+    };
+    let notifications = rows
         .into_iter()
         .filter_map(|r| {
             let notice = serde_json::from_value(r.notice.0)
@@ -81,7 +92,11 @@ pub async fn recent(
                 read: r.read,
             })
         })
-        .collect())
+        .collect();
+    Ok(NotificationPage {
+        notifications,
+        next,
+    })
 }
 
 /// Marca como lidas as notificações de `user_id` até `up_to` e devolve quantas

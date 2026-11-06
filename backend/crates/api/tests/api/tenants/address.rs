@@ -193,17 +193,20 @@ async fn the_bell_keeps_leading_to_the_community() {
     assert_eq!(notice_path(&db, lookalike).await, "/quake-br-2/copa");
     // O que a pessoa vê, com o que ela já viu como estava.
     let (_, list) = get(&app, "/me/notifications", &ana).await;
-    assert_eq!(list[0]["notice"]["path"], "/quake-brasil/settings");
-    assert_eq!(list[0]["read"], true);
+    assert_eq!(
+        list["notifications"][0]["notice"]["path"],
+        "/quake-brasil/settings"
+    );
+    assert_eq!(list["notifications"][0]["read"], true);
     let (_, list) = get(&app, "/me/notifications", &bia).await;
-    assert_eq!(list[1]["notice"]["path"], "/quake-brasil");
-    assert_eq!(list[1]["read"], false);
+    assert_eq!(list["notifications"][1]["notice"]["path"], "/quake-brasil");
+    assert_eq!(list["notifications"][1]["read"], false);
 
     // A comunidade que pega o endereço antigo não recebe nenhum deles.
     let eva = user(&db, "Eva").await;
     create(&app, &eva, "quake-br").await;
     let (_, list) = get(&app, "/me/notifications", &eva).await;
-    assert_eq!(list, json!([]));
+    assert_eq!(list["notifications"], json!([]));
 }
 
 #[tokio::test]

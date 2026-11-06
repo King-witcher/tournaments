@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, notice as \"notice: Json<Value>\", created_at,\n                  read_at is not null as \"read!\"\n           from notifications\n           where user_id = $1\n             and ($2::bool is null or (read_at is not null) = $2)\n           order by id desc\n           limit $3",
+  "query": "select id, notice as \"notice: Json<Value>\", created_at,\n                  read_at is not null as \"read!\"\n           from notifications\n           where user_id = $1\n             and ($2::bool is null or (read_at is not null) = $2)\n             and ($3::bigint is null or id < $3)\n           order by id desc\n           limit $4",
   "describe": {
     "columns": [
       {
@@ -47,6 +47,7 @@
       "Left": [
         "Int8",
         "Bool",
+        "Int8",
         "Int8"
       ]
     },
@@ -57,5 +58,5 @@
       null
     ]
   },
-  "hash": "9e635f5e64a343621fb3bac88bec5966d69c07bf3cc1935bae6356ea71cc0c9f"
+  "hash": "96585c147c487a6b187b9efe01681ef72d093cc8fa149b4d7abea67a1b39a7b3"
 }

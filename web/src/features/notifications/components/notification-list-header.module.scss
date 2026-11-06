@@ -1,0 +1,28 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O título com a troca de vista na mesma linha. Os botões sem contorno
+// encostam na borda do painel por dentro do respiro dele (o texto de "Ver
+// lidas" e a seta ficam alinhados com o texto dos tiles); o título, sozinho
+// na ponta, ganha a margem dos tiles.
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: spacing.$spacing-03;
+  padding: spacing.$spacing-03 0 spacing.$spacing-03 spacing.$spacing-03;
+}
+
+// O nome do painel, como o nome da pessoa no painel dela.
+.title {
+  @include type.type-style("heading-compact-02");
+
+  flex: 1;
+  color: theme.$text-primary;
+
+  &:first-child {
+    padding-inline-start: spacing.$spacing-03;
+  }
+}

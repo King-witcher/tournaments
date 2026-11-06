@@ -46,7 +46,7 @@ async fn publishes_in_order_and_deletes() {
     assert_eq!(users, &[bia.id]);
     // Com o id da notificação que ficou no sininho da Bia, para o toast.
     let (_, list) = get(&app, "/me/notifications", &bia).await;
-    let id = list[0]["id"].as_i64().unwrap();
+    let id = list["notifications"][0]["id"].as_i64().unwrap();
     assert_eq!(last.notifications, HashMap::from([(bia.id, id)]));
 
     // Nada mais a sair.

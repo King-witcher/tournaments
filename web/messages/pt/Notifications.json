@@ -92,14 +92,16 @@
   "bell": {
     "label": "Notificações",
     "title": "Notificações",
+    "titleRead": "Notificações lidas",
+    "showRead": "Ver lidas",
+    "back": "Voltar",
     "loading": "Carregando as notificações…",
     "failed": "Não deu para carregar as notificações. Feche e abra de novo.",
-    "unread": "Não lidas",
-    "read": "Lidas",
     "emptyUnread": "Nenhuma notificação nova.",
     "emptyRead": "Nenhuma notificação lida.",
     "countUnread": "{count, plural, one {# notificação não lida.} other {# notificações não lidas.}}",
     "countRead": "{count, plural, one {# notificação lida.} other {# notificações lidas.}}",
-    "markAll": "Marcar todas como lidas"
+    "markAll": "Marcar todas como lidas",
+    "more": "Carregar mais"
   }
 }

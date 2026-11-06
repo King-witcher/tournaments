@@ -1,8 +1,8 @@
-use axum::{Json, extract::State};
+use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
     db,
-    types::{ListQuery, MarkRead, Notification, Unread},
+    types::{ListQuery, MarkRead, NotificationPage, Unread},
 };
 use crate::{
     AppState,
@@ -11,8 +11,11 @@ use crate::{
     shared::{ApiError, ErrorBody, JsonBody, QueryParams},
 };
 
-/// Notificações em cada lista do sininho.
-const LIST_LIMIT: i64 = 50;
+/// Notificações numa página do sininho, sem `limit`.
+const PAGE_SIZE: i64 = 20;
+/// O maior `limit`: o sininho, ao recarregar a lista aberta, pede de uma vez
+/// as páginas que já mostrava.
+const MAX_PAGE_SIZE: i64 = 100;
 
 #[utoipa::path(
     get,
@@ -20,7 +23,7 @@ const LIST_LIMIT: i64 = 50;
     tag = "notifications",
     params(ListQuery),
     responses(
-        (status = OK, body = Vec<Notification>, description = "As 50 notificações mais recentes de quem vê, da mais nova, cada uma dizendo se já foi lida. O filtro vale antes do limite: uma não lida antiga não fica atrás das recentes. Quantas faltam ler chega pelo WebSocket (`unread` ao conectar e ao ler noutra aba; cada `notify` soma uma)"),
+        (status = OK, body = NotificationPage, description = "Uma página das notificações de quem vê, da mais nova, cada uma dizendo se já foi lida, e o `before` da seguinte. O filtro vale antes do limite: uma não lida antiga não fica atrás das recentes. Quantas faltam ler chega pelo WebSocket (`unread` ao conectar e ao ler noutra aba; cada `notify` soma uma)"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_query"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
     )
@@ -29,9 +32,16 @@ pub async fn notifications(
     State(state): State<AppState>,
     user: CurrentUser,
     QueryParams(query): QueryParams<ListQuery>,
-) -> Result<Json<Vec<Notification>>, ApiError> {
+) -> Result<Json<NotificationPage>, ApiError> {
+    let limit = query.limit.unwrap_or(PAGE_SIZE);
+    if !(1..=MAX_PAGE_SIZE).contains(&limit) {
+        return Err(ApiError::new(
+            StatusCode::BAD_REQUEST,
+            "request.invalid_query",
+        ));
+    }
     Ok(Json(
-        db::recent(&state.db, user.id, query.read, LIST_LIMIT).await?,
+        db::page(&state.db, user.id, query.read, query.before, limit).await?,
     ))
 }
 

@@ -92,14 +92,16 @@
   "bell": {
     "label": "Notifications",
     "title": "Notifications",
+    "titleRead": "Read notifications",
+    "showRead": "View read",
+    "back": "Back",
     "loading": "Loading notifications…",
     "failed": "Couldn't load notifications. Close and reopen.",
-    "unread": "Unread",
-    "read": "Read",
     "emptyUnread": "No new notifications.",
     "emptyRead": "No read notifications.",
     "countUnread": "{count, plural, one {# unread notification.} other {# unread notifications.}}",
     "countRead": "{count, plural, one {# read notification.} other {# read notifications.}}",
-    "markAll": "Mark all as read"
+    "markAll": "Mark all as read",
+    "more": "Load more"
   }
 }

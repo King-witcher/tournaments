@@ -260,7 +260,7 @@ async fn notices_and_ended_sessions() {
     );
     // Com o id do que ficou no sininho.
     let (_, list) = get(&app, "/me/notifications", &bia).await;
-    let up_to = list[0]["id"].clone();
+    let up_to = list["notifications"][0]["id"].clone();
     assert_eq!(
         next(&mut socket).await,
         json!({

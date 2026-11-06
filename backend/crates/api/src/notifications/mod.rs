@@ -6,8 +6,10 @@
 //! - O despachante do `realtime` grava cada aviso que publica (`store`, na
 //!   transação dele), e o WebSocket manda as não lidas ao abrir
 //!   (`unread_count`); cada aviso que chega depois soma uma no front.
-//! - `GET /me/notifications`: as mais recentes, todas, só as lidas ou só as não
-//!   lidas. `POST /me/notifications/read`: abrir a página de um aviso marca os
+//! - `GET /me/notifications`: uma página das mais recentes (20, ou `limit`),
+//!   todas, só as lidas ou só as não lidas, com o `next` que vira o `before`
+//!   da seguinte (pelo id, que só cresce: a que chega no meio não desloca as
+//!   páginas). `POST /me/notifications/read`: abrir a página de um aviso marca os
 //!   dela (pelo `path` exato) e "Marcar todas como lidas" marca até um id (a
 //!   que chegou depois continua não lida); se alguma mudou, emite
 //!   `Event::Unread`, que leva a contagem às outras abas e aparelhos.

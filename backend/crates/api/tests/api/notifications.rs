@@ -1,5 +1,5 @@
 //! `/me/notifications`: os avisos que o despachante guardou para cada pessoa,
-//! o filtro entre lidas e não lidas, o que abrir a página de um aviso (pelo
+//! o filtro entre lidas e não lidas, as páginas, o que abrir a página de um aviso (pelo
 //! caminho) ou "Marcar todas como lidas" (até a mais recente da lista) marca e
 //! o prazo de 30 dias. A contagem pelo WebSocket fica em `realtime::socket`.
 
@@ -22,9 +22,15 @@ async fn notifications(app: &Router, who: &User) -> Vec<Value> {
 }
 
 async fn listed(app: &Router, who: &User, query: &str) -> Vec<Value> {
+    page(app, who, query).await.0
+}
+
+/// Uma página e o `next` dela.
+async fn page(app: &Router, who: &User, query: &str) -> (Vec<Value>, Value) {
     let (status, body) = get(app, &format!("/me/notifications{query}"), who).await;
     assert_eq!(status, StatusCode::OK, "{body}");
-    body.as_array().unwrap().clone()
+    let list = body["notifications"].as_array().unwrap().clone();
+    (list, body["next"].clone())
 }
 
 /// Um aviso direto no banco que leva a `path`.
@@ -178,7 +184,7 @@ async fn the_filter_comes_before_the_limit() {
     let ana = user(&db, "Ana").await;
     stored(&db, &ana, 2).await;
     let old = notifications(&app, &ana).await[0]["id"].as_i64().unwrap();
-    for _ in 0..50 {
+    for _ in 0..20 {
         stored(&db, &ana, 1).await;
     }
     sqlx::query("update notifications set read_at = now() where id > $1")
@@ -187,13 +193,13 @@ async fn the_filter_comes_before_the_limit() {
         .await
         .unwrap();
 
-    // A não lida antiga não fica atrás das 50 recentes.
+    // A não lida antiga não fica atrás das 20 recentes.
     let unread = listed(&app, &ana, "?read=false").await;
     assert_eq!(unread.len(), 1);
     assert_eq!(unread[0]["id"], old);
     assert_eq!(unread[0]["read"], false);
-    let read = listed(&app, &ana, "?read=true").await;
-    assert_eq!(read.len(), 50);
+    let (read, next) = page(&app, &ana, "?read=true").await;
+    assert_eq!((read.len(), next), (20, Value::Null));
     assert!(read.iter().all(|n| n["read"] == true));
     assert!(
         notifications(&app, &ana)
@@ -207,6 +213,45 @@ async fn the_filter_comes_before_the_limit() {
         (status, body),
         (StatusCode::BAD_REQUEST, err("request.invalid_query"))
     );
+}
+
+#[tokio::test]
+async fn pages_go_by_id() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let ana = user(&db, "Ana").await;
+    for _ in 0..25 {
+        stored(&db, &ana, 0).await;
+    }
+    let (first, next) = page(&app, &ana, "").await;
+    assert_eq!(first.len(), 20);
+    assert_eq!(next, first[19]["id"]);
+
+    // A que chega no meio fica na primeira página: a seguinte continua de onde
+    // a anterior parou.
+    stored(&db, &ana, 0).await;
+    let (rest, end) = page(&app, &ana, &format!("?before={next}")).await;
+    assert_eq!((rest.len(), end), (5, Value::Null));
+    let ids: Vec<i64> = first
+        .iter()
+        .chain(&rest)
+        .map(|n| n["id"].as_i64().unwrap())
+        .collect();
+    assert!(ids.is_sorted_by(|a, b| a > b), "{ids:?}");
+
+    // `limit` muda o tamanho; exatamente o que há não deixa `next`.
+    let (some, next) = page(&app, &ana, "?limit=3").await;
+    assert_eq!((some.len(), next), (3, some[2]["id"].clone()));
+    let (all, end) = page(&app, &ana, "?limit=26").await;
+    assert_eq!((all.len(), end), (26, Value::Null));
+    for bad in ["?limit=0", "?limit=101", "?before=x"] {
+        let (status, body) = get(&app, &format!("/me/notifications{bad}"), &ana).await;
+        assert_eq!(
+            (status, body),
+            (StatusCode::BAD_REQUEST, err("request.invalid_query")),
+            "{bad}"
+        );
+    }
 }
 
 #[tokio::test]

@@ -3,19 +3,6 @@
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/utilities/visually-hidden" as *;
 
-// O nome do painel, como o nome da pessoa no painel dela.
-.title {
-  @include type.type-style("heading-compact-02");
-
-  padding: spacing.$spacing-05 spacing.$spacing-05 spacing.$spacing-03;
-  color: theme.$text-primary;
-}
-
-// O filtro, com a margem dos tiles, para não colar na borda do painel.
-.views {
-  padding: 0 spacing.$spacing-05 spacing.$spacing-03;
-}
-
 // Quantas há, para o leitor de tela: quem vê tem a lista.
 .announce {
   @include visually-hidden;

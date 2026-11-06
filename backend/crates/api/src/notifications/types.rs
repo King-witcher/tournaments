@@ -4,12 +4,25 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::outbox::Notice;
 
-/// Quais notificações listar.
+/// Quais notificações listar e a partir de onde.
 #[derive(Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct ListQuery {
     /// `false`: só as não lidas. `true`: só as lidas. Sem ele, todas.
     pub read: Option<bool>,
+    /// Só as de id menor: o `next` da página anterior.
+    pub before: Option<i64>,
+    /// Quantas, de 1 a 100. Sem ele, 20.
+    #[param(minimum = 1, maximum = 100)]
+    pub limit: Option<i64>,
+}
+
+/// Uma página de notificações, da mais nova.
+#[derive(Serialize, ToSchema, Debug)]
+pub struct NotificationPage {
+    pub notifications: Vec<Notification>,
+    /// O `before` da página seguinte; `null` quando não há mais.
+    pub next: Option<i64>,
 }
 
 /// Um aviso que chegou para quem vê.

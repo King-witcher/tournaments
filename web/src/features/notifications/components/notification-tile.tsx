@@ -15,8 +15,11 @@ import styles from "./notification-tile.module.scss";
  * está não abre de novo, então marca aqui.
  */
 export function NotificationTile({
+  id,
   notification: { notice, read, created_at },
 }: {
+  /** O id do link, para o foco chegar a ele. */
+  id: string;
   notification: NotificationEntry;
 }) {
   const text = useNoticeText();
@@ -25,6 +28,7 @@ export function NotificationTile({
   const { title, body } = text(notice);
   return (
     <LinkTile
+      id={id}
       href={notice.path}
       title={title}
       onClick={() => {

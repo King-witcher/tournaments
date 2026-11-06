@@ -34,7 +34,7 @@ Têm página própria: **pessoa na comunidade**, **ordem da chave**, **chave** e
 
 ### Casca (todas)
 
-`Header` do UI Shell: `SkipToContent`; `HeaderName` com o logo do Telefrag (só o ícone abaixo do `md`); na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista e "Criar comunidade"; a atual sem marca visível, só para o leitor de tela), o sininho (o número das que faltam ler no `BadgeIndicator` do Carbon; painel com as não lidas e, num `ContentSwitcher`, as lidas) e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema, num `ContentSwitcher`); sem sessão, o mesmo painel com "Entrar" e "Criar conta". Um painel aberto por vez. Sem `SideNav`: cada nível tem no máximo seis seções, que cabem nas abas, e a chave precisa da largura toda. No rodapé, no fim da tela mesmo em página curta, os idiomas: um link para cada um e o atual como texto.
+`Header` do UI Shell: `SkipToContent`; `HeaderName` com o logo do Telefrag (só o ícone abaixo do `md`); na `HeaderGlobalBar`, com sessão, suas comunidades (painel com a lista e "Criar comunidade"; a atual sem marca visível, só para o leitor de tela), o sininho (o número das que faltam ler no `BadgeIndicator` do Carbon; painel com as não lidas e, atrás de "Ver lidas", as lidas, em páginas de 20 com "Carregar mais") e a pessoa (avatar e nome abrindo `HeaderPanel` com "Conta", "Sair" e, no fim, o tema, num `ContentSwitcher`); sem sessão, o mesmo painel com "Entrar" e "Criar conta". Um painel aberto por vez. Sem `SideNav`: cada nível tem no máximo seis seções, que cabem nas abas, e a chave precisa da largura toda. No rodapé, no fim da tela mesmo em página curta, os idiomas: um link para cada um e o atual como texto.
 
 ### Início `/`
 
