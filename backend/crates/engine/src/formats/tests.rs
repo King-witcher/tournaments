@@ -115,11 +115,11 @@ fn table_formats_validate_and_have_one_series_length() {
     }
     assert_eq!(table_formats()[0].longest_series(), 3);
     assert_eq!(table_formats()[2].longest_series(), 1);
-    let even = StageFormat::RoundRobin(RoundRobinConfig {
-        best_of: 8,
+    let none = StageFormat::RoundRobin(RoundRobinConfig {
+        best_of: 0,
         tiebreakers: Tiebreakers::ROUND_ROBIN,
     });
-    assert_eq!(even.validate(), Err(EngineError::InvalidBestOf(8)));
+    assert_eq!(none.validate(), Err(EngineError::InvalidBestOf(0)));
     let no_rounds = StageFormat::Swiss(SwissConfig {
         best_of: 3,
         rounds: Some(0),
@@ -163,12 +163,14 @@ fn even_series_are_only_for_the_round_robin() {
         assert_eq!(single(best_of, 3).validate(), invalid);
         assert_eq!(single(3, best_of).validate(), invalid);
     }
-    // Nada de md8.
-    let eight = StageFormat::RoundRobin(RoundRobinConfig {
-        best_of: 8,
-        tiebreakers: Tiebreakers::ROUND_ROBIN,
-    });
-    assert_eq!(eight.validate(), Err(EngineError::InvalidBestOf(8)));
+    // Qualquer N par no round robin, como no ímpar; md0 não existe.
+    for (best_of, result) in [(8u8, Ok(())), (0, Err(EngineError::InvalidBestOf(0)))] {
+        let league = StageFormat::RoundRobin(RoundRobinConfig {
+            best_of,
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+        });
+        assert_eq!(league.validate(), result, "md{best_of}");
+    }
 }
 
 #[test]

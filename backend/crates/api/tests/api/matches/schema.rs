@@ -551,7 +551,7 @@ async fn only_an_even_series_in_the_round_robin_draws() {
             Some((3, 3)),
             "match_results_score_check",
         ),
-        // A série par é só do round robin, e só 2, 4 e 6.
+        // A série par é só do round robin; a md8 também tem maioria (5).
         (
             ("wb-1-1", 2),
             Some(a),
@@ -579,8 +579,8 @@ async fn only_an_even_series_in_the_round_robin_draws() {
         (
             ("rr-1-1", 8),
             Some(a),
-            Some((5, 0)),
-            "match_results_best_of_check",
+            Some((4, 4)),
+            "match_results_score_check",
         ),
     ];
     for (series, winner, wins, name) in cases {
@@ -622,7 +622,7 @@ async fn a_draw_in_the_history_has_the_same_maps_each_and_no_winner() {
             .bind(maps.map(|m| m.1))
             .execute(&db)
         };
-    for tie in [(1, 1), (2, 2), (3, 3)] {
+    for tie in [(1, 1), (2, 2), (3, 3), (4, 4)] {
         event("decided", "rr-1-1", None, Some(tie)).await.unwrap();
     }
     event("decided", "rr-1-1", Some(a), Some((2, 0)))
@@ -630,11 +630,11 @@ async fn a_draw_in_the_history_has_the_same_maps_each_and_no_winner() {
         .unwrap();
     let maps = rule(CHECK, "match_events_maps_check");
     for (kind, key, winner, score) in [
-        // Sem vencedor, só o mesmo número para cada lado, de 1 a 3, só ao decidir,
+        // Sem vencedor, só o mesmo número para cada lado, pelo menos 1, só ao decidir,
         // só no round robin.
         ("decided", "rr-1-1", None, Some((2, 0))),
         ("decided", "rr-1-1", None, Some((2, 1))),
-        ("decided", "rr-1-1", None, Some((4, 4))),
+        ("decided", "rr-1-1", None, Some((0, 0))),
         ("decided", "wb-1-1", None, Some((1, 1))),
         ("corrected", "rr-1-1", None, Some((1, 1))),
         // Com vencedor, 1 x 1 não existe.

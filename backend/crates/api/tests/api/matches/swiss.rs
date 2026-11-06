@@ -289,12 +289,12 @@ async fn table_formats_are_checked_on_create_and_edit() {
         &app,
         COPA,
         &ana,
-        json!({ "stages": [{ "format": "round_robin", "best_of": 8 }] }),
+        json!({ "stages": [{ "format": "round_robin", "best_of": 0 }] }),
     )
     .await;
     assert_eq!(
         (status, body),
-        invalid("format.invalid_best_of", json!({ "best_of": 8 }))
+        invalid("format.invalid_best_of", json!({ "best_of": 0 }))
     );
     let (status, body) = patch(
         &app,

@@ -129,7 +129,7 @@ async fn tournaments_keep_state_and_shape() {
         ("format = 'swiss'".to_owned(), "tournament_stages_shape"),
         (format!("{swiss}, rounds = 0"), "tournament_stages_rounds"),
         (format!("{swiss}, rounds = 128"), "tournament_stages_rounds"),
-        // Série par só no round robin, e só 2, 4 ou 6.
+        // Série par só no round robin.
         ("best_of = 4".to_owned(), "tournament_stages_best_of"),
         (
             "finals_best_of = 6".to_owned(),
@@ -148,7 +148,7 @@ async fn tournaments_keep_state_and_shape() {
             "tournament_stages_best_of",
         ),
         (
-            format!("{round_robin}, rounds = null, best_of = 8"),
+            format!("{round_robin}, rounds = null, best_of = 0"),
             "tournament_stages_best_of",
         ),
         // Desempates: só nas fases de tabela, e sempre nelas.
@@ -205,6 +205,7 @@ async fn tournaments_keep_state_and_shape() {
         format!("{round_robin}, rounds = null, best_of = 2"),
         format!("{round_robin}, rounds = null, best_of = 4"),
         format!("{round_robin}, rounds = null, best_of = 6"),
+        format!("{round_robin}, rounds = null, best_of = 8"),
         format!("{swiss}, rounds = null, best_of = 3"),
         format!("{swiss}, rounds = 127"),
         table("round_robin", "'{frag_diff,map_diff,head_to_head}'"),

@@ -39,7 +39,7 @@ Decidido pelo usuário:
 No `engine` (assumido):
 
 - **Round robin**: cada par uma vez, método do círculo (Berger). N ímpar: cada um folga uma vez, e a folga **não vale ponto** (partida `bye`, a última da rodada, só para a tela). **Todas as partidas ficam prontas desde o início** (a interface agrupa por rodada). Até **32 participantes** (496 partidas; `format.too_many_participants {max}`).
-- **Uma série** (melhor de N: ímpar; no round robin, também 2, 4 ou 6) para todas as partidas da fase; não há final. Rodadas do suíço nulas = automático.
+- **Uma série** (melhor de N: ímpar; no round robin, também par) para todas as partidas da fase; não há final. Rodadas do suíço nulas = automático.
 - **Suíço**: rodadas de 1 a 127 (`format.invalid_rounds {max, got}`), no máximo N − 1 com os N do início (com menos inscritos, valem N − 1, sem erro). Até **128 participantes** (pareamento medido em 4 ms na pior rodada).
 - **Pareamentos gravados**: o `engine` gera o pareamento de cada rodada (`next_round`) quando todas as séries das rodadas pareadas estão decididas, e a API grava; o replay usa os gravados. Corrigir um resultado antigo muda a tabela, **nunca refaz rodadas pareadas**; uma correção que reabre série segura a rodada seguinte. Pareamento determinístico (sem sorteio; o seed desempata).
 - **Como pareia**: na ordem da tabela, com todos os desempates. Dentro do grupo de mesma pontuação, metades do sistema holandês (seed 1 contra N/2 + 1...); o que sobra de grupo ímpar desce e enfrenta o melhor do grupo de baixo (simplificação do holandês). O lado `a` é o melhor colocado.
@@ -62,13 +62,13 @@ Na API e na tela (assumido):
 
 ## Séries pares e saldo de séries
 
-Do usuário (05/11): o round robin aceita melhor de 2, 4 e 6, além dos ímpares, e a tabela dele ordena pelo **saldo de séries** em qualquer melhor de N: vitória +1, empate 0, derrota −1, no lugar dos pontos como primeiro critério. Assumido: as séries pares são só do round robin (eliminação e suíço recusam, `format.invalid_best_of`; a eliminação precisa de quem avança). Como a série par fecha: `matches.md`; o veto dela: `veto.md`.
+Do usuário (05/11): o round robin aceita séries pares além das ímpares (de início 2, 4 e 6; desde 06/11 qualquer N par, com o mesmo teto do ímpar, e o formulário oferece de 1 a 9), e a tabela dele ordena pelo **saldo de séries** em qualquer melhor de N: vitória +1, empate 0, derrota −1, no lugar dos pontos como primeiro critério. Assumido: as séries pares são só do round robin (eliminação e suíço recusam, `format.invalid_best_of`; a eliminação precisa de quem avança). Como a série par fecha: `matches.md`; o veto dela: `veto.md`.
 
 - **A ordem final em md ímpar não muda.** Sem empate, todos jogam N − 1 séries (W.O. inclusive), então o saldo é `2 × vitórias − (N − 1)`: os mesmos grupos que as vitórias dão. Teste de propriedade em `round_robin/tests/props.rs`, com md1, md3, md5 e md7, de 2 a 16 jogadores. Só muda a ordem durante o torneio: quem jogou mais não fica à frente só por isso.
 - **Sem configuração.** 2/1/0 dá a mesma ordem que o saldo: saldo = pontos − séries jogadas, e todos jogam o mesmo número. Só 3/1/0 mudaria a classificação; entraria com uma coluna nova na fase, sem converter resultados, porque a tabela é derivada.
 - **O suíço fica como está**: pontos = vitórias + byes, Buchholz e o pareamento (`pair()` usa os pontos). Pelo saldo, quem desiste com 2-0 passaria quem foi até o fim com 3-2 (+2 contra +1). A mini-tabela do confronto direto dele também continua nas vitórias: com revanche (A vence B duas vezes, B vence C, C vence A), as duas contas dão ordens diferentes.
 - **Confronto direto com empate**: a série empatada conta como confronto realizado e vale 0. Quem empatou entre si não se separa por ele e segue para o saldo de mapas.
-- **Saldo de mapas**: a série empatada conta metade para cada lado, e o W.O. vale a maioria sem perder mapa. Na md2 ele é sempre o dobro do saldo de séries, então, na prática, decidem os frags; na md4 e na md6 desempata de verdade (3 x 0 vale +3; 3 x 1, +2). Sem código especial para isso. Os frags da série empatada somam para cada lado (`SeriesFrags` é por lado).
+- **Saldo de mapas**: a série empatada conta metade para cada lado, e o W.O. vale a maioria sem perder mapa. Na md2 ele é sempre o dobro do saldo de séries, então, na prática, decidem os frags; da md4 em diante desempata de verdade (na md4, 3 x 0 vale +3; 3 x 1, +2). Sem código especial para isso. Os frags da série empatada somam para cada lado (`SeriesFrags` é por lado).
 - **Tela**: coluna "Saldo" com sinal no round robin, "Pontos" no suíço; na série par, o recorde em V–E–D. A explicação dos desempates ignora o primeiro critério.
 
 ## Desempate por fase

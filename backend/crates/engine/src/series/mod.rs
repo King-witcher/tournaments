@@ -1,6 +1,6 @@
 //! Séries melhor de N mapas: tamanho e placar aqui; mapa a mapa em `games`.
 //!
-//! N é ímpar ou, só no round robin, par (2, 4 ou 6, `even_series`): a série par
+//! N é ímpar ou, só no round robin, par (qualquer N par, `even_series`): a série par
 //! pode empatar (`Outcome::Drawn`), com todos os N mapas confirmados e metade
 //! para cada lado. Se alguém chega à maioria antes, ela fecha como as outras: a
 //! md2 termina em 2 x 0 ou 1 x 1, a md4 em 3 x 0, 3 x 1 ou 2 x 2, a md6 em 4 x 0,
@@ -34,9 +34,10 @@ impl SeriesLength {
     }
 }
 
-/// É uma das séries pares: pode empatar e o veto de mapas dela só tem bans.
+/// Série par (qualquer N par, só no round robin): pode empatar, e o veto de
+/// mapas dela só tem bans.
 pub const fn even_series(best_of: u8) -> bool {
-    matches!(best_of, 2 | 4 | 6)
+    best_of >= 2 && best_of.is_multiple_of(2)
 }
 
 /// Melhor de N ímpar: a da eliminação e a do suíço.
@@ -118,16 +119,14 @@ mod tests {
     }
 
     #[test]
-    fn the_league_also_takes_two_four_and_six() {
-        for n in [1, 2, 3, 4, 5, 6, 7, 9] {
+    fn the_league_also_takes_any_even_series() {
+        for n in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 254, 255] {
             assert!(validate_league_best_of(n).is_ok(), "{n}");
         }
-        for n in [0, 8, 10] {
-            assert_eq!(
-                validate_league_best_of(n),
-                Err(EngineError::InvalidBestOf(n))
-            );
-        }
+        assert_eq!(
+            validate_league_best_of(0),
+            Err(EngineError::InvalidBestOf(0))
+        );
     }
 
     #[test]
@@ -177,7 +176,7 @@ mod tests {
 
     #[test]
     fn only_an_even_series_draws_with_half_the_maps_each() {
-        for (best_of, maps) in [(2, 1), (4, 2), (6, 3)] {
+        for (best_of, maps) in [(2, 1), (4, 2), (6, 3), (8, 4)] {
             assert_eq!(validate_outcome(best_of, Outcome::Drawn { maps }), Ok(()));
             let wrong = maps - 1;
             assert_eq!(
@@ -188,7 +187,7 @@ mod tests {
                 })
             );
         }
-        for best_of in [1, 3, 5, 8] {
+        for best_of in [1, 3, 5, 9] {
             let maps = best_of / 2;
             assert_eq!(
                 validate_outcome(best_of, Outcome::Drawn { maps }),

@@ -755,7 +755,7 @@ async fn only_the_round_robin_takes_an_even_series() {
         )
     };
     let uri = "/tenants/quake-br/tournaments";
-    for best_of in [2, 4, 6] {
+    for best_of in [2, 4, 6, 8] {
         for stages in [
             table("swiss", json!({ "best_of": best_of, "rounds": null })),
             single(best_of, 3),
@@ -766,8 +766,9 @@ async fn only_the_round_robin_takes_an_even_series() {
             assert_eq!(got, invalid(best_of), "{body}");
         }
     }
-    // Nada de md8, nem no round robin.
-    assert_eq!(post(&app, uri, &ana, even(8, json!({}))).await, invalid(8));
+    // No round robin, qualquer N par: a md8 entra, a md0 não.
+    create_tournament(&app, &ana, even(8, json!({ "slug": "liga-md8" }))).await;
+    assert_eq!(post(&app, uri, &ana, even(0, json!({}))).await, invalid(0));
     // Trocar para o suíço com série par também é recusado.
     create_tournament(&app, &ana, even(4, json!({}))).await;
     assert_eq!(

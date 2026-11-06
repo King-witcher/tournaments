@@ -19,7 +19,7 @@ import styles from "./tournament-format-fields.module.scss";
 const BEST_OF = [1, 3, 5, 7, 9];
 
 /** O todos contra todos também aceita as séries pares. */
-const BEST_OF_ROUND_ROBIN = [1, 2, 3, 4, 5, 6, 7, 9];
+const BEST_OF_ROUND_ROBIN = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /** O teto de rodadas do suíço na API. */
 const MAX_SWISS_ROUNDS = 127;

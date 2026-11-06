@@ -83,10 +83,10 @@ export const GAME_MINUTES = 15;
 
 /**
  * A série par, só do todos contra todos: pode empatar, e o veto de mapas dela
- * só tem bans (a mesma lista do `engine`, `series::even_series`).
+ * só tem bans (a mesma regra do `engine`, `series::even_series`).
  */
 export function isEvenSeries(bestOf: number) {
-  return bestOf === 2 || bestOf === 4 || bestOf === 6;
+  return bestOf >= 2 && bestOf % 2 === 0;
 }
 
 /**

@@ -164,12 +164,12 @@ fn limits_and_config() {
     assert_eq!(
         RoundRobinBracket::new(
             RoundRobinConfig {
-                best_of: 8,
+                best_of: 0,
                 tiebreakers: Tiebreakers::ROUND_ROBIN
             },
             seeds(4)
         ),
-        Err(EngineError::InvalidBestOf(8))
+        Err(EngineError::InvalidBestOf(0))
     );
     assert!(
         RoundRobinBracket::new(
