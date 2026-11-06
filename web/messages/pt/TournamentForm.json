@@ -224,11 +224,10 @@
       "custom": "Personalizado"
     },
     "hints": {
-      "captain": "O capitão marca “Pronto”, veta, bane, escolhe os campeões de todos e envia o resultado.",
-      "balanced": "O capitão veta e bane. Cada jogador escolhe o próprio campeão. Qualquer um envia o resultado. Todos marcam “Pronto”.",
-      "everyone": "Qualquer jogador veta, bane e envia o resultado, e cada um escolhe o próprio campeão. Todos marcam “Pronto”.",
-      "custom": "Escolha quem faz cada coisa. Todos marcam “Pronto”.",
-      "customCaptain": "Escolha quem faz cada coisa. Só o capitão marca “Pronto”."
+      "captain": "O capitão veta, bane, escolhe os campeões de todos e envia o resultado.",
+      "balanced": "O capitão veta e bane. Cada jogador escolhe o próprio campeão. Qualquer um envia o resultado.",
+      "everyone": "Qualquer jogador veta, bane e envia o resultado. Cada um escolhe o próprio campeão.",
+      "custom": "Escolha quem faz cada coisa."
     },
     "fields": {
       "veto": "Vetar mapas",

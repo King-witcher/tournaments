@@ -224,11 +224,10 @@
       "custom": "Personalizado"
     },
     "hints": {
-      "captain": "El capitán marca “Listo”, veta, banea, elige los campeones de todos y envía el resultado.",
-      "balanced": "El capitán veta y banea. Cada jugador elige su propio campeón. Cualquiera envía el resultado. Todos marcan “Listo”.",
-      "everyone": "Cualquier jugador veta, banea y envía el resultado, y cada uno elige su propio campeón. Todos marcan “Listo”.",
-      "custom": "Elige quién hace cada cosa. Todos marcan “Listo”.",
-      "customCaptain": "Elige quién hace cada cosa. Solo el capitán marca “Listo”."
+      "captain": "El capitán veta, banea, elige los campeones de todos y envía el resultado.",
+      "balanced": "El capitán veta y banea. Cada jugador elige su propio campeón. Cualquiera envía el resultado.",
+      "everyone": "Cualquier jugador veta, banea y envía el resultado. Cada uno elige su propio campeón.",
+      "custom": "Elige quién hace cada cosa."
     },
     "fields": {
       "veto": "Vetar mapas",

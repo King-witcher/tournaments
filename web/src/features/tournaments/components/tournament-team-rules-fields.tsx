@@ -32,11 +32,11 @@ type Props = {
 };
 
 /**
- * Quem age pelo time: os presets em tiles, cada um com o que faz (inclusive
- * quem marca "Pronto"), e, em Personalizado, as quatro regras. Só as regras
- * vão para a API: o preset sai delas, e escolher Personalizado continua nele
- * até recarregar, mesmo com valores iguais aos de um preset (o tile dele diz
- * quem marca "Pronto" pelas regras). O que não tem efeito (mapa desligado ou
+ * Quem age pelo time: os presets em tiles, cada um com o que faz (quem marca
+ * "Pronto" fica de fora: quem joga vê na série), e, em Personalizado, as
+ * quatro regras. Só as regras vão para a API: o preset sai delas, e escolher
+ * Personalizado continua nele até recarregar, mesmo com valores iguais aos de
+ * um preset. O que não tem efeito (mapa desligado ou
  * sorteado, campeões fora do site, sem bans) não aparece, mas continua
  * guardado.
  */
@@ -63,9 +63,6 @@ export const TournamentTeamRulesFields = memo(
         ))}
       </Select>
     );
-    // Personalizado com as quatro no capitão: só ele marca "Pronto".
-    const customHint =
-      teamPresetOf(rules) === "captain" ? "customCaptain" : "custom";
 
     return (
       <>
@@ -77,7 +74,7 @@ export const TournamentTeamRulesFields = memo(
           options={PRESETS.map((p) => ({
             value: p,
             content: t(`presets.${p}`),
-            description: t(`hints.${p === "custom" ? customHint : p}`),
+            description: t(`hints.${p}`),
           }))}
           onChange={(next) => {
             setCustom(next === "custom");

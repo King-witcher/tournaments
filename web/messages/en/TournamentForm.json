@@ -224,11 +224,10 @@
       "custom": "Custom"
     },
     "hints": {
-      "captain": "The captain marks “Ready”, vetoes, bans, picks champions for everyone and submits the result.",
-      "balanced": "The captain vetoes and bans. Each player picks their own champion. Anyone can submit the result. Everyone marks “Ready”.",
-      "everyone": "Any player can veto, ban and submit the result, and each picks their own champion. Everyone marks “Ready”.",
-      "custom": "Choose who does what. Everyone marks “Ready”.",
-      "customCaptain": "Choose who does what. Only the captain marks “Ready”."
+      "captain": "The captain vetoes, bans, picks champions for everyone and submits the result.",
+      "balanced": "The captain vetoes and bans. Each player picks their own champion. Anyone can submit the result.",
+      "everyone": "Any player can veto, ban and submit the result. Each picks their own champion.",
+      "custom": "Choose who does what."
     },
     "fields": {
       "veto": "Veto maps",
