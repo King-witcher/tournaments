@@ -4,6 +4,7 @@
 
 mod lower_rating;
 mod tiebreakers;
+mod ties;
 
 use super::*;
 use crate::core::{BracketSide, EngineError, MatchId, MatchReport, SeriesScore, Slot, StageReport};

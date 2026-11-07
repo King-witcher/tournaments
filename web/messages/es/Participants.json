@@ -52,7 +52,8 @@
     "champion": "1.er puesto, ganaste",
     "rank": "{rank}.º",
     "range": "{from}.º–{to}.º",
-    "reserve": "Suplente, sin equipo"
+    "reserve": "Suplente, sin equipo",
+    "tie_pending": "Empate en el {place}, la organización va a decidir"
   },
   "checkIn": {
     "opensAt": "El check-in abre <date></date>. Quien no lo haga queda fuera de la llave.",

@@ -32,6 +32,7 @@ fn config(rounds: Option<u16>) -> SwissConfig {
         best_of: 3,
         rounds,
         tiebreakers: Tiebreakers::SWISS,
+        final_tie: FinalTie::Seed,
     }
 }
 

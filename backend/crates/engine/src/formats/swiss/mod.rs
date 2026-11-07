@@ -21,7 +21,8 @@
 //!   (`config.tiebreakers`; o padrão é Buchholz, confronto direto, saldo de
 //!   mapas, saldo de frags) e o seed. O pareamento segue a mesma ordem, então
 //!   os desempates escolhidos mudam também quem enfrenta quem.
-//! - Termina com as rodadas todas pareadas e decididas; só então há
+//! - Termina com as rodadas todas pareadas e decididas e nenhum empate
+//!   esperando a organização (`config.final_tie`, `table::ties`); só então há
 //!   colocação (`placements`).
 
 mod matching;
@@ -33,7 +34,9 @@ use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
-use super::table::{League, Rules, TableRow, Tiebreakers, pairing as ready, rest};
+use super::table::{
+    FinalTie, League, PendingTie, Rules, TableRow, TieOrder, Tiebreakers, pairing as ready, rest,
+};
 use super::{check_count, check_participants};
 use crate::core::{
     BracketSide, EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport,
@@ -55,6 +58,8 @@ pub struct SwissConfig {
     pub rounds: Option<u16>,
     /// Os desempates depois dos pontos; o padrão é `Tiebreakers::SWISS`.
     pub tiebreakers: Tiebreakers,
+    /// Quem decide o empate que sobra depois de todos os critérios, no fim.
+    pub final_tie: FinalTie,
 }
 
 impl SwissConfig {
@@ -139,24 +144,49 @@ impl SwissBracket {
         out: &[ParticipantId],
         ratings: &[(ParticipantId, i32)],
     ) -> Result<Self, EngineError> {
+        Self::replay_with_ties(config, seeded, rounds, reports, out, ratings, Vec::new())
+    }
+
+    /// `replay` com as decisões da organização para os empates do fim
+    /// (`formats::table::ties`); só valem com `FinalTie::Organizer`.
+    pub fn replay_with_ties(
+        config: SwissConfig,
+        seeded: Vec<ParticipantId>,
+        rounds: Vec<SwissRound>,
+        reports: impl IntoIterator<Item = StageReport>,
+        out: &[ParticipantId],
+        ratings: &[(ParticipantId, i32)],
+        orders: Vec<TieOrder>,
+    ) -> Result<Self, EngineError> {
         check_participants(&seeded, MAX_PARTICIPANTS)?;
         config.validate()?;
         let total_rounds = config.total_rounds(seeded.len());
         let matches = build(&seeded, &rounds, total_rounds, config.best_of)?;
         let out = seeded.iter().filter(|p| out.contains(p)).copied().collect();
-        let mut league = League::new(Rules::swiss(config.tiebreakers), seeded, matches);
+        let mut league = League::new(Rules::swiss(config.tiebreakers), seeded, matches)
+            .with_ties(config.final_tie, orders);
         league.set_ratings(ratings);
         for report in reports {
             league.apply(report)?;
         }
-        league.refresh();
-        Ok(Self {
+        let mut bracket = Self {
             config,
             total_rounds,
             rounds,
             out,
             league,
-        })
+        };
+        bracket.refresh();
+        Ok(bracket)
+    }
+
+    /// Refaz a tabela e, no fim das rodadas, fecha os empates. Antes, o seed
+    /// desempata, e o pareamento segue essa tabela.
+    fn refresh(&mut self) {
+        self.league.refresh();
+        if self.matches_done() {
+            self.league.close();
+        }
     }
 
     pub fn config(&self) -> SwissConfig {
@@ -197,7 +227,9 @@ impl SwissBracket {
 
     /// Registra um resultado (ver `RoundRobinBracket::report`).
     pub fn report(&mut self, report: StageReport) -> Result<(), EngineError> {
-        self.league.report(report)
+        self.league.apply(report)?;
+        self.refresh();
+        Ok(())
     }
 
     fn active_count(&self) -> usize {
@@ -246,9 +278,21 @@ impl SwissBracket {
         })
     }
 
-    pub fn is_finished(&self) -> bool {
+    /// As rodadas todas pareadas (ou menos de 2 ativos) e decididas.
+    fn matches_done(&self) -> bool {
         self.league.all_decided()
             && (self.rounds.len() >= usize::from(self.total_rounds) || self.active_count() < 2)
+    }
+
+    /// `matches_done` e nenhum empate esperando a organização.
+    pub fn is_finished(&self) -> bool {
+        self.matches_done() && self.league.pending().is_empty()
+    }
+
+    /// Os empates do fim que esperam a organização (só com
+    /// `FinalTie::Organizer` e as rodadas todas decididas).
+    pub fn pending_ties(&self) -> &[PendingTie] {
+        self.league.pending()
     }
 
     /// A tabela atual, em ordem de posição (é a ordem do pareamento).
@@ -256,9 +300,10 @@ impl SwissBracket {
         self.league.table()
     }
 
-    /// A colocação final, quando termina; antes, vazia.
+    /// A colocação final, com as rodadas todas decididas, menos os de um
+    /// empate que espera a organização; antes, vazia.
     pub fn placements(&self) -> Vec<Placement> {
-        if self.is_finished() {
+        if self.matches_done() {
             self.league.placements()
         } else {
             Vec::new()

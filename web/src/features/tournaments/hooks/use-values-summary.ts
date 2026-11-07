@@ -72,16 +72,24 @@ export function useValuesSummary() {
     },
     /**
      * Os desempates que contam, na ordem ("Confronto direto, partidas, frags"),
-     * ou "Só a ordem da chave"; vazio na eliminação.
+     * ou "Só a ordem da chave"; com a organização decidindo o empate do fim, ela
+     * por último. Vazio na eliminação.
      */
     tiebreakers: (
-      v: Pick<TournamentValues, "stageFormat" | "bestOf" | "tiebreakers">,
+      v: Pick<
+        TournamentValues,
+        "stageFormat" | "bestOf" | "tiebreakers" | "finalTie"
+      >,
     ) => {
       if (!isTableFormat(v.stageFormat)) return "";
       const list = countingTiebreakers(v.tiebreakers, v.stageFormat, v.bestOf);
-      return list.length === 0
-        ? tTie("none")
-        : upper(list.map((x) => tTie(`short.${x}`)).join(", "));
+      const organizer = v.finalTie === "organizer";
+      if (list.length === 0) {
+        return organizer ? tTie("organizerOnly") : tTie("none");
+      }
+      const names = list.map((x) => tTie(`short.${x}`));
+      if (organizer) names.push(tTie("short.organizer"));
+      return upper(names.join(", "));
     },
     /** Quem age pelo time: o preset que as regras formam. */
     teamRules: (v: Pick<TournamentValues, "teamRules">) =>

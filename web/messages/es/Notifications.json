@@ -44,6 +44,10 @@
       "start_due": {
         "title": "Hora de iniciar",
         "body": "{tournament} llegó a la hora marcada y todavía no se inició."
+      },
+      "tie_pending": {
+        "title": "Empate por decidir",
+        "body": "{tournament}: las series terminaron con empate en la clasificación. Decide el orden."
       }
     },
     "tenant": {

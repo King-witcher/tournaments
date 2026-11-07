@@ -1,6 +1,7 @@
 //! As partidas de uma fase de tabela, com os frags de cada uma e a
 //! classificação que sai delas.
 
+use super::ties::{self, FinalTie, PendingTie, TieOrder};
 use super::{Rules, TableRow, compute};
 use crate::core::{
     EngineError, Match, MatchId, MatchState, Occupant, ParticipantId, Placement, SeriesFrags, Slot,
@@ -42,6 +43,12 @@ pub(crate) struct League {
     /// rating; `None` sem rating.
     ratings: Vec<Option<i32>>,
     table: Vec<TableRow>,
+    /// Quem decide o empate que sobra no fim (`ties`).
+    final_tie: FinalTie,
+    /// As decisões da organização gravadas para a fase.
+    orders: Vec<TieOrder>,
+    /// Os grupos que esperam decisão; só depois de `close`.
+    pending: Vec<PendingTie>,
 }
 
 impl League {
@@ -59,6 +66,9 @@ impl League {
             frags,
             ratings,
             table,
+            final_tie: FinalTie::Seed,
+            orders: Vec::new(),
+            pending: Vec::new(),
         }
     }
 
@@ -71,6 +81,14 @@ impl League {
             .iter()
             .map(|p| ratings.iter().find(|(q, _)| q == p).map(|&(_, r)| r))
             .collect();
+    }
+
+    /// Quem decide o empate que sobra no fim e as decisões gravadas. Vale a
+    /// partir do próximo `close`.
+    pub fn with_ties(mut self, final_tie: FinalTie, orders: Vec<TieOrder>) -> Self {
+        self.final_tie = final_tie;
+        self.orders = orders;
+        self
     }
 
     pub fn participants(&self) -> &[ParticipantId] {
@@ -132,7 +150,7 @@ impl League {
         Ok(())
     }
 
-    /// Refaz a tabela.
+    /// Refaz a tabela, como durante a fase (o seed desempata, nada pendente).
     pub fn refresh(&mut self) {
         self.table = compute(
             self.rules,
@@ -141,8 +159,24 @@ impl League {
             &self.matches,
             &self.frags,
         );
+        self.pending.clear();
     }
 
+    /// No fim da fase (o formato sabe quando): aplica as decisões da
+    /// organização à tabela e acha os empates que ainda esperam uma
+    /// (`ties::settle`). Chamado depois de `refresh`.
+    pub fn close(&mut self) {
+        self.pending = ties::settle(&mut self.table, self.final_tie, &self.orders);
+    }
+
+    /// Os empates que esperam a organização; vazio antes de `close`.
+    pub fn pending(&self) -> &[PendingTie] {
+        &self.pending
+    }
+
+    /// `apply` e `refresh`, sem fechar os empates (os formatos sabem quando
+    /// a fase acaba e fecham sozinhos).
+    #[cfg(test)]
     pub fn report(&mut self, report: StageReport) -> Result<(), EngineError> {
         self.apply(report)?;
         self.refresh();
@@ -162,10 +196,13 @@ impl League {
         &self.table
     }
 
-    /// A tabela como colocação: uma posição por participante, sem empate.
+    /// A tabela como colocação: uma posição por participante, sem empate,
+    /// menos os de um empate que espera a organização.
     pub fn placements(&self) -> Vec<Placement> {
+        let waiting = |p: ParticipantId| self.pending.iter().any(|t| t.participants.contains(&p));
         self.table
             .iter()
+            .filter(|r| !waiting(r.participant))
             .map(|r| Placement {
                 participant: r.participant,
                 rank: r.position,

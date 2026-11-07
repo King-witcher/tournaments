@@ -9,14 +9,33 @@ use engine::{
         placement::PlacementConfig,
         round_robin::RoundRobinConfig,
         swiss::SwissConfig,
-        table::{Criterion, Tiebreakers},
+        table::{self as et, Criterion, Tiebreakers},
     },
     series::SeriesLength,
 };
 
 use super::types::{
-    Bracket, ChampionRules, NoRepeatRule, NoRepeatScope, NoRepeatWho, StageFormat, Tiebreaker,
+    Bracket, ChampionRules, FinalTie, NoRepeatRule, NoRepeatScope, NoRepeatWho, StageFormat,
+    Tiebreaker,
 };
+
+impl From<FinalTie> for et::FinalTie {
+    fn from(f: FinalTie) -> Self {
+        match f {
+            FinalTie::Seed => Self::Seed,
+            FinalTie::Organizer => Self::Organizer,
+        }
+    }
+}
+
+impl From<et::FinalTie> for FinalTie {
+    fn from(f: et::FinalTie) -> Self {
+        match f {
+            et::FinalTie::Seed => Self::Seed,
+            et::FinalTie::Organizer => Self::Organizer,
+        }
+    }
+}
 
 impl Tiebreaker {
     fn criterion(self) -> Criterion {
@@ -41,7 +60,10 @@ impl Tiebreaker {
                 Criterion::FragDiff => Some(Self::FragDiff),
                 Criterion::Buchholz => Some(Self::Buchholz),
                 Criterion::LowerRating => Some(Self::LowerRating),
-                Criterion::SeriesDiff | Criterion::Points | Criterion::Seed => None,
+                Criterion::SeriesDiff
+                | Criterion::Points
+                | Criterion::Seed
+                | Criterion::Organizer => None,
             })
             .collect()
     }
@@ -77,18 +99,22 @@ impl TryFrom<StageFormat> for ef::StageFormat {
             StageFormat::RoundRobin {
                 best_of,
                 tiebreakers: list,
+                final_tie,
             } => Self::RoundRobin(RoundRobinConfig {
                 best_of,
                 tiebreakers: tiebreakers(&list)?,
+                final_tie: final_tie.into(),
             }),
             StageFormat::Swiss {
                 best_of,
                 rounds,
                 tiebreakers: list,
+                final_tie,
             } => Self::Swiss(SwissConfig {
                 best_of,
                 rounds,
                 tiebreakers: tiebreakers(&list)?,
+                final_tie: final_tie.into(),
             }),
             StageFormat::Placement { best_of } => Self::Placement(PlacementConfig { best_of }),
         })
@@ -115,11 +141,13 @@ impl From<ef::StageFormat> for StageFormat {
             ef::StageFormat::RoundRobin(c) => Self::RoundRobin {
                 best_of: c.best_of,
                 tiebreakers: Tiebreaker::list(c.tiebreakers),
+                final_tie: c.final_tie.into(),
             },
             ef::StageFormat::Swiss(c) => Self::Swiss {
                 best_of: c.best_of,
                 rounds: c.rounds,
                 tiebreakers: Tiebreaker::list(c.tiebreakers),
+                final_tie: c.final_tie.into(),
             },
             ef::StageFormat::Placement(c) => Self::Placement { best_of: c.best_of },
         }
@@ -202,15 +230,18 @@ mod tests {
             StageFormat::RoundRobin {
                 best_of: 3,
                 tiebreakers: vec![Tiebreaker::MapDiff, Tiebreaker::HeadToHead],
+                final_tie: FinalTie::Organizer,
             },
             StageFormat::RoundRobin {
                 best_of: 2,
                 tiebreakers: vec![],
+                final_tie: FinalTie::Seed,
             },
             StageFormat::Swiss {
                 best_of: 1,
                 rounds: None,
                 tiebreakers: vec![Tiebreaker::FragDiff, Tiebreaker::Buchholz],
+                final_tie: FinalTie::Organizer,
             },
             StageFormat::Swiss {
                 best_of: 3,
@@ -222,11 +253,13 @@ mod tests {
                     Tiebreaker::MapDiff,
                     Tiebreaker::FragDiff,
                 ],
+                final_tie: FinalTie::Organizer,
             },
             StageFormat::Swiss {
                 best_of: 5,
                 rounds: Some(4),
                 tiebreakers: Tiebreaker::list(Tiebreakers::SWISS),
+                final_tie: FinalTie::Seed,
             },
             StageFormat::Placement { best_of: 3 },
         ] {
@@ -249,6 +282,8 @@ mod tests {
         };
         assert_eq!(rr.tiebreakers, Tiebreakers::ROUND_ROBIN);
         assert_eq!(swiss.tiebreakers, Tiebreakers::SWISS);
+        assert_eq!(rr.final_tie, et::FinalTie::Seed);
+        assert_eq!(swiss.final_tie, et::FinalTie::Seed);
     }
 
     #[test]

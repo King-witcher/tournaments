@@ -14,11 +14,11 @@ use super::{
     key, progress,
     result::{Side, StoredResult},
     stage::Stage,
-    tasks,
+    tasks, ties,
     types::{
         BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail, MapRef,
-        MatchEvent, MatchResult, MatchSide, MatchState, SideSource, SourceOutcome, Standing,
-        TableCriterion, TableRow, TournamentBracket, ViewerTask,
+        MatchEvent, MatchResult, MatchSide, MatchState, PendingTieGroup, SideSource, SourceOutcome,
+        Standing, TableCriterion, TableRow, TournamentBracket, ViewerTask,
     },
     veto,
 };
@@ -91,8 +91,23 @@ pub fn bracket(
     let table = stage
         .bracket
         .table()
-        .map(|rows| rows.iter().map(|r| table_row(stage, r)).collect())
+        .map(|rows| table_rows(stage, rows))
         .transpose()?;
+    let pending_ties = stage
+        .bracket
+        .pending_ties()
+        .iter()
+        .map(|t| {
+            Ok(PendingTieGroup {
+                position: t.position,
+                team_ids: t
+                    .participants
+                    .iter()
+                    .map(|p| team(*p).ok_or_else(ApiError::internal))
+                    .collect::<Result<_, ApiError>>()?,
+            })
+        })
+        .collect::<Result<_, ApiError>>()?;
     Ok(TournamentBracket {
         format: stage.format.into(),
         status: tournament.status,
@@ -100,19 +115,59 @@ pub fn bracket(
         matches,
         standings,
         table,
+        pending_ties,
         total_rounds: stage.bracket.total_rounds(),
         contest_minutes: tournament.contest_minutes,
         results: touched as i64,
     })
 }
 
-fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiError> {
+/// A tabela, com os empates do fim: quem espera a organização divide a melhor
+/// posição do grupo, e o grupo que ela ordenou leva o motivo.
+fn table_rows(stage: &Stage, rows: &[ef::table::TableRow]) -> Result<Vec<TableRow>, ApiError> {
+    let pending = stage.bracket.pending_ties();
+    let mut out = Vec::with_capacity(rows.len());
+    for (i, r) in rows.iter().enumerate() {
+        let tie = pending
+            .iter()
+            .find(|t| t.participants.contains(&r.participant));
+        let reason = decided_group(rows, i)
+            .and_then(|group| ties::decision_for(stage, &group))
+            .and_then(|d| d.reason.clone());
+        out.push(table_row(stage, r, tie.map(|t| t.position), reason)?);
+    }
+    Ok(out)
+}
+
+/// O grupo que a organização ordenou em que está a linha `i`: as linhas
+/// ligadas por `ahead_by` `organizer`.
+fn decided_group(rows: &[ef::table::TableRow], i: usize) -> Option<Vec<ParticipantId>> {
+    let linked = |k: usize| rows[k].ahead_by == Some(Criterion::Organizer);
+    let mut start = i;
+    while start > 0 && linked(start - 1) {
+        start -= 1;
+    }
+    let mut end = i;
+    while end < rows.len() && linked(end) {
+        end += 1;
+    }
+    (end > start).then(|| rows[start..=end].iter().map(|r| r.participant).collect())
+}
+
+fn table_row(
+    stage: &Stage,
+    r: &ef::table::TableRow,
+    pending_at: Option<u16>,
+    tie_reason: Option<String>,
+) -> Result<TableRow, ApiError> {
     Ok(TableRow {
         team_id: stage
             .entrant(r.participant)
             .map(|e| e.id)
             .ok_or_else(ApiError::internal)?,
-        position: r.position,
+        position: pending_at.unwrap_or(r.position),
+        tie_pending: pending_at.is_some(),
+        tie_reason,
         points: r.points,
         series_diff: r.series_diff,
         played: r.played,
@@ -138,6 +193,7 @@ fn table_row(stage: &Stage, r: &ef::table::TableRow) -> Result<TableRow, ApiErro
             Criterion::FragDiff => TableCriterion::FragDiff,
             Criterion::LowerRating => TableCriterion::LowerRating,
             Criterion::Seed => TableCriterion::Seed,
+            Criterion::Organizer => TableCriterion::Organizer,
         }),
     })
 }

@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with d as (\n               insert into stage_tie_decisions (tenant_id, tournament_id, stage, decided_by, reason)\n               values ($1, $2, $3, $4, $5)\n               returning id, tenant_id, tournament_id\n           )\n           insert into stage_tie_decision_teams\n               (tenant_id, tournament_id, decision_id, position, team_id)\n           select d.tenant_id, d.tournament_id, d.id, t.n::smallint, t.team\n           from d, unnest($6::bigint[]) with ordinality as t(team, n)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int8",
+        "Text",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "acbac1fd89ea6b98cc7d2cb60ed12044bc1b09de0496ebd11507faa119223194"
+}

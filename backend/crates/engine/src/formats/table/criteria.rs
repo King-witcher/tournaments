@@ -20,6 +20,9 @@ pub enum Criterion {
     /// por participante e passa no replay.
     LowerRating,
     Seed,
+    /// A decisão da organização, no empate que sobra depois de todos os
+    /// critérios (`ties`). Não entra na ordem: só aparece na explicação.
+    Organizer,
 }
 
 impl Criterion {

@@ -181,6 +181,11 @@ pub enum NoticeKind {
     /// owner, uma vez).
     #[serde(rename = "tournament.start_due")]
     StartDue { tournament: String },
+    /// As séries da fase acabaram com um empate na classificação que espera a
+    /// decisão da organização (para organizers e owner, uma vez, quando a fase
+    /// passa a esperar).
+    #[serde(rename = "tournament.tie_pending")]
+    TiePending { tournament: String },
     /// A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
     /// o owner, uma vez, na véspera).
     #[serde(rename = "tenant.deletion_due")]

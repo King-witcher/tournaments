@@ -268,5 +268,9 @@
     "member_invalid": "The player leaving must be on the team, and the one joining must be someone else.",
     "player_in_team": "This person already plays on a team in this tournament.",
     "withdrawn": "This team withdrew from the tournament."
+  },
+  "tie": {
+    "not_pending": "This tie is no longer waiting for a decision. Reload the page.",
+    "reason_invalid": "Write a reason of up to {max} characters, on one line."
   }
 }

@@ -254,6 +254,7 @@ fn criterion_text(criterion: Option<Criterion>) -> &'static str {
         Some(Criterion::FragDiff) => "frag_diff",
         Some(Criterion::LowerRating) => "lower_rating",
         Some(Criterion::Seed) => "seed",
+        Some(Criterion::Organizer) => "organizer",
     }
 }
 

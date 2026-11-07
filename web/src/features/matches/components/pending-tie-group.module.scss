@@ -1,0 +1,34 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// O número e o nome numa linha. As duas setas ficam por cima do conteúdo (o
+// `action` do Carbon é absoluto, e o recuo dele é para uma): o resto do recuo é
+// da outra, com a altura do botão `md`, 40px do md para cima e 48px abaixo.
+.row {
+  display: flex;
+  gap: spacing.$spacing-03;
+  margin-inline-end: calc(2 * #{spacing.$spacing-08} - #{spacing.$spacing-10});
+
+  @include breakpoint.breakpoint-down(md) {
+    margin-inline-end: calc(
+      2 * #{spacing.$spacing-09} - #{spacing.$spacing-10}
+    );
+  }
+}
+
+.position {
+  flex-shrink: 0;
+  min-inline-size: spacing.$spacing-05;
+  font-variant-numeric: tabular-nums;
+}
+
+// Apelido longo quebra em vez de passar por baixo das setas.
+.name {
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}

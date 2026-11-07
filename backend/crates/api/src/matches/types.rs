@@ -27,10 +27,16 @@ pub struct TournamentBracket {
     /// campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
     /// 5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
     /// disputa de posições, as dos pares decididos e a do sem par, sem empate.
+    /// Com um empate do fim esperando a organização, os do grupo ficam de fora
+    /// (`pending_ties`).
     pub standings: Vec<Standing>,
     /// Round robin e suíço: a tabela de agora, em ordem de posição (a final
     /// quando a fase termina); `null` na eliminação e na disputa de posições.
     pub table: Option<Vec<TableRow>>,
+    /// Round robin e suíço com a organização decidindo o empate do fim: os
+    /// grupos que, com todas as séries decididas, esperam a decisão dela. A
+    /// fase (e o torneio) só termina sem nenhum. Vazio nos outros casos.
+    pub pending_ties: Vec<PendingTieGroup>,
     /// Round robin e suíço: o número de rodadas da fase (no suíço, as que vão
     /// ser jogadas, não só as já pareadas); `null` na eliminação e na disputa
     /// de posições.
@@ -66,8 +72,15 @@ pub enum BracketPart {
 pub struct TableRow {
     /// O time (um dos `entrants` da chave).
     pub team_id: i64,
-    /// De 1 a N, sem empate.
+    /// De 1 a N, sem empate, menos num empate que espera a organização
+    /// (`tie_pending`): os do grupo dividem a melhor posição dele.
     pub position: u16,
+    /// Está num empate do fim que espera a decisão da organização; a ordem
+    /// dentro do grupo é a provisória (a da chave).
+    pub tie_pending: bool,
+    /// Num grupo que a organização ordenou (`ahead_by` `organizer`): o motivo
+    /// dela, se deu.
+    pub tie_reason: Option<String>,
     /// Séries vencidas (W.O. inclusive) e, no suíço, os byes. É o primeiro
     /// critério do suíço.
     pub points: u16,
@@ -108,7 +121,8 @@ pub struct TableRow {
 
 /// Critério de ordem da tabela: o saldo de séries (round robin) ou os pontos
 /// (suíço), depois os desempates da fase (`StageFormat`, `tiebreakers`), na
-/// ordem dela, e, por último, o seed.
+/// ordem dela, e, por último, o seed ou, no fim da fase, a decisão da
+/// organização (`final_tie`).
 #[derive(Serialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TableCriterion {
@@ -120,6 +134,29 @@ pub enum TableCriterion {
     FragDiff,
     LowerRating,
     Seed,
+    /// A decisão da organização, no empate que sobrou depois de todos os
+    /// critérios.
+    Organizer,
+}
+
+/// Um empate do fim da fase que espera a organização.
+#[derive(Serialize, ToSchema)]
+pub struct PendingTieGroup {
+    /// A melhor posição do grupo, que os empatados dividem.
+    pub position: u16,
+    /// Os times empatados, na ordem da chave.
+    pub team_ids: Vec<i64>,
+}
+
+/// A ordem que a organização decide para um empate do fim da fase.
+#[derive(Deserialize, ToSchema)]
+pub struct TieDecision {
+    /// Os times de um empate pendente (`pending_ties`), do melhor ao pior,
+    /// todos e cada um uma vez. A ordem da chave também vale.
+    pub teams: Vec<i64>,
+    /// Motivo opcional, até 280 caracteres, que a classificação mostra.
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 /// Estado da partida na chave (só séries decididas contam).

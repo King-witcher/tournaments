@@ -44,6 +44,10 @@
       "start_due": {
         "title": "Time to start",
         "body": "{tournament} has reached its scheduled time and hasn't started yet."
+      },
+      "tie_pending": {
+        "title": "Tie to decide",
+        "body": "{tournament}: the matches ended with a tie in the standings. Decide the order."
       }
     },
     "tenant": {

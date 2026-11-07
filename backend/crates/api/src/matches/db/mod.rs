@@ -3,13 +3,14 @@
 //! `stage`; escritas da série em `writes`, mapas em `games`, histórico da
 //! partida em `events` (com as escalações dela, `match_history`), o que a
 //! chave lê dos screenshots em `screenshots`, os pareamentos gravados do
-//! suíço em `pairings`.
+//! suíço em `pairings`, as decisões dos empates do fim em `ties`.
 
 mod events;
 mod games;
 mod pairings;
 mod screenshots;
 mod stage;
+mod ties;
 mod writes;
 
 use chrono::{DateTime, Utc};
@@ -25,6 +26,7 @@ pub use games::{
 pub use pairings::insert_round;
 pub use screenshots::has_screenshot;
 pub use stage::{Parts, StageRows, stage_rows};
+pub use ties::{TieRow, clear_pending, insert_decision, mark_pending};
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
 /// Uma partida no banco: tenant, torneio, fase e identificador.
@@ -79,8 +81,8 @@ pub async fn confirm_due(
     Ok(done.rows_affected())
 }
 
-/// Apaga séries, mapas, histórico, vetos e pareamentos do torneio (desfazer o
-/// início). Devolve quantas partidas tinham resultado ou mapa.
+/// Apaga séries, mapas, histórico, vetos, pareamentos e os empates do fim do
+/// torneio (desfazer o início). Devolve quantas partidas tinham resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: TournamentId,
@@ -111,6 +113,13 @@ pub async fn discard(
     sqlx::query!("delete from stage_pairings where tournament_id = $1", id)
         .execute(&mut *conn)
         .await?;
+    sqlx::query!(
+        "with p as (delete from stage_pending_ties where tournament_id = $1)
+         delete from stage_tie_decisions where tournament_id = $1",
+        id
+    )
+    .execute(&mut *conn)
+    .await?;
     Ok(touched as u64)
 }
 

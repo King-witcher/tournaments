@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with p as (delete from stage_pending_ties where tournament_id = $1)\n         delete from stage_tie_decisions where tournament_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "28773d609ce1d16bd192dd377322b22f15013fc15a8c5c169888616a7e88f39b"
+}

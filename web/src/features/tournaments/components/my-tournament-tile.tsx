@@ -33,8 +33,9 @@ export function MyTournamentTile({
   const locale = useLocale();
   const teamName = useTeamName();
   const { tournament, placement } = entry;
+  // No empate a decidir, a melhor posição do grupo ("Empate no 3º").
   const place = placement
-    ? placement.tied > 1
+    ? placement.tied > 1 && entry.situation !== "tie_pending"
       ? t("range", {
           from: placement.rank,
           to: placement.rank + placement.tied - 1,

@@ -165,7 +165,7 @@ async fn a_round_robin_plays_to_the_end_and_a_draw_closes_it() {
     let b = bracket(&app, p1).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "round_robin", "best_of": 2, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"] })
+        json!({ "format": "round_robin", "best_of": 2, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"], "final_tie": "seed" })
     );
     assert_eq!(find(&b, "rr-1-1")["best_of"], 2);
 

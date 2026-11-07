@@ -1,8 +1,11 @@
 import { useTranslations } from "next-intl";
 import { memo, useId, useState } from "react";
 
+import type { components } from "@/shared/api/schema";
+import { SelectItem } from "@/shared/ui/carbon/select";
 import { ContainedList } from "@/shared/ui/contained-list";
 import { ErrorText } from "@/shared/ui/error-text";
+import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
@@ -17,8 +20,11 @@ import {
 import { type FocusOn, TiebreakerRow } from "./tiebreaker-row";
 import styles from "./tournament-tiebreaker-fields.module.scss";
 
+/** As opções do empate do fim, o padrão primeiro. */
+const FINAL_TIES: components["schemas"]["FinalTie"][] = ["seed", "organizer"];
+
 /** Os campos do formulário que o bloco lê. */
-const KEYS = ["stageFormat", "bestOf", "tiebreakers"] as const;
+const KEYS = ["stageFormat", "bestOf", "tiebreakers", "finalTie"] as const;
 
 type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
@@ -33,7 +39,8 @@ type Props = {
  * descer e desligar; embaixo, os desligados, com ligar (vai para o fim).
  * Setas em vez de arrastar, porque funcionam igual no teclado e no toque e a
  * lista tem no máximo cinco. O primeiro critério (saldo de séries ou pontos)
- * não aparece, e a ordem da chave, sempre a última, vem no texto embaixo. No
+ * não aparece. Embaixo, quem decide o empate que sobra no fim: a ordem da
+ * chave (o padrão) ou a organização, com a dica do que a escolhida faz. No
  * todos contra todos em md1 e md2, o saldo de partidas some, porque só
  * repetiria o saldo de séries, mas fica gravado se estava. Depois de cada
  * ação, o foco vai para o controle certo da linha, no lugar novo dela. Só
@@ -73,8 +80,31 @@ export const TournamentTiebreakerFields = memo(
         ? { focusToken: focus.token, focusOn: focus.on }
         : {};
     const error = errors.tiebreakers;
+    const finalTie = (
+      <Select
+        labelText={t("finalTie")}
+        helperText={t(`finalTieHints.${values.finalTie}`)}
+        name="finalTie"
+        value={values.finalTie}
+        readOnly={readOnly}
+        onChange={(e) =>
+          onChange({
+            finalTie: e.target.value as components["schemas"]["FinalTie"],
+          })
+        }
+      >
+        {FINAL_TIES.map((x) => (
+          <SelectItem key={x} value={x} text={t(`finalTieOptions.${x}`)} />
+        ))}
+      </Select>
+    );
     if (readOnly && ons.length === 0) {
-      return <p className={styles.hint}>{t("none")}</p>;
+      return (
+        <div className={styles.block}>
+          <p className={styles.hint}>{t("none")}</p>
+          {finalTie}
+        </div>
+      );
     }
 
     return (
@@ -122,12 +152,12 @@ export const TournamentTiebreakerFields = memo(
             />
           ))}
         </ContainedList>
-        <p className={styles.hint}>{t("seedLast")}</p>
         {error && (
           <div id={errorId}>
             <ErrorText>{error}</ErrorText>
           </div>
         )}
+        {finalTie}
       </div>
     );
   },

@@ -227,7 +227,7 @@ impl Setup {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tournaments::types::{Bracket, NoRepeatRule, NoRepeatScope, NoRepeatWho};
+    use crate::tournaments::types::{Bracket, FinalTie, NoRepeatRule, NoRepeatScope, NoRepeatWho};
 
     fn double(best_of: u8) -> StageFormat {
         StageFormat::Elimination {
@@ -360,6 +360,7 @@ mod tests {
             stages: stages_from_dto(vec![StageFormat::RoundRobin {
                 best_of: 3,
                 tiebreakers: vec![],
+                final_tie: FinalTie::Seed,
             }])
             .unwrap(),
             ..tdm(2, slots)

@@ -103,7 +103,8 @@
       "games": "Game difference",
       "frags": "Frag difference",
       "lowerRating": "Lower rating (the one at the start of the tournament)",
-      "seed": "Seeding"
+      "seed": "Seeding",
+      "organizer": "Organizers' decision, at the end of the stage"
     },
     "series": {
       "title": "Each match",

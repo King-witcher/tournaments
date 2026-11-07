@@ -16,7 +16,8 @@
 //! - Classificação e desempates em `formats::table`: saldo de séries, os
 //!   desempates da fase (`config.tiebreakers`; o padrão é confronto direto,
 //!   saldo de mapas, saldo de frags; sem Buchholz) e o seed.
-//! - Termina quando todas as séries estão decididas; só então há colocação
+//! - Termina quando todas as séries estão decididas e nenhum empate espera a
+//!   organização (`config.final_tie`, `table::ties`); só então há colocação
 //!   (`placements`), uma posição por participante, sem empate.
 //! - Até `MAX_PARTICIPANTS` (são N(N − 1)/2 partidas).
 
@@ -28,7 +29,7 @@ mod tests;
 pub use suggest::{SeriesProgress, suggest};
 
 use super::check_count;
-use super::table::{League, Rules, TableRow, Tiebreakers};
+use super::table::{FinalTie, League, PendingTie, Rules, TableRow, TieOrder, Tiebreakers};
 use crate::core::{EngineError, Match, MatchId, Occupant, ParticipantId, Placement, StageReport};
 use crate::series::validate_league_best_of;
 
@@ -42,6 +43,8 @@ pub struct RoundRobinConfig {
     /// Os desempates depois do saldo de séries, sem Buchholz; o padrão é
     /// `Tiebreakers::ROUND_ROBIN`.
     pub tiebreakers: Tiebreakers,
+    /// Quem decide o empate que sobra depois de todos os critérios, no fim.
+    pub final_tie: FinalTie,
 }
 
 impl RoundRobinConfig {
@@ -81,7 +84,8 @@ impl RoundRobinBracket {
         let matches = schedule::build(&seeded, config.best_of);
         Ok(Self {
             config,
-            league: League::new(Rules::round_robin(config.tiebreakers), seeded, matches),
+            league: League::new(Rules::round_robin(config.tiebreakers), seeded, matches)
+                .with_ties(config.final_tie, Vec::new()),
         })
     }
 
@@ -96,13 +100,34 @@ impl RoundRobinBracket {
         reports: impl IntoIterator<Item = StageReport>,
         ratings: &[(ParticipantId, i32)],
     ) -> Result<Self, EngineError> {
+        Self::replay_with_ties(config, seeded, reports, ratings, Vec::new())
+    }
+
+    /// `replay` com as decisões da organização para os empates do fim
+    /// (`formats::table::ties`); só valem com `FinalTie::Organizer`.
+    pub fn replay_with_ties(
+        config: RoundRobinConfig,
+        seeded: Vec<ParticipantId>,
+        reports: impl IntoIterator<Item = StageReport>,
+        ratings: &[(ParticipantId, i32)],
+        orders: Vec<TieOrder>,
+    ) -> Result<Self, EngineError> {
         let mut bracket = Self::new(config, seeded)?;
         bracket.league.set_ratings(ratings);
+        bracket.league = bracket.league.with_ties(config.final_tie, orders);
         for report in reports {
             bracket.league.apply(report)?;
         }
-        bracket.league.refresh();
+        bracket.refresh();
         Ok(bracket)
+    }
+
+    /// Refaz a tabela e, com todas as séries decididas, fecha os empates.
+    fn refresh(&mut self) {
+        self.league.refresh();
+        if self.league.all_decided() {
+            self.league.close();
+        }
     }
 
     pub fn config(&self) -> RoundRobinConfig {
@@ -135,11 +160,20 @@ impl RoundRobinBracket {
     /// Registra um resultado. Erros: os de `MatchReport` numa partida (ver
     /// `EliminationBracket::report`); a folga não recebe resultado.
     pub fn report(&mut self, report: StageReport) -> Result<(), EngineError> {
-        self.league.report(report)
+        self.league.apply(report)?;
+        self.refresh();
+        Ok(())
     }
 
+    /// Todas as séries decididas e nenhum empate esperando a organização.
     pub fn is_finished(&self) -> bool {
-        self.league.all_decided()
+        self.league.all_decided() && self.league.pending().is_empty()
+    }
+
+    /// Os empates do fim que esperam a organização (só com
+    /// `FinalTie::Organizer` e todas as séries decididas).
+    pub fn pending_ties(&self) -> &[PendingTie] {
+        self.league.pending()
     }
 
     /// A tabela atual, em ordem de posição.
@@ -147,10 +181,11 @@ impl RoundRobinBracket {
         self.league.table()
     }
 
-    /// A colocação final, quando termina; antes, vazia (ninguém sai antes do
+    /// A colocação final, com todas as séries decididas, menos os de um
+    /// empate que espera a organização; antes, vazia (ninguém sai antes do
     /// fim).
     pub fn placements(&self) -> Vec<Placement> {
-        if self.is_finished() {
+        if self.league.all_decided() {
             self.league.placements()
         } else {
             Vec::new()

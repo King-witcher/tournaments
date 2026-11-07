@@ -57,6 +57,7 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
               stage.format,
               stage.best_of,
             )}
+            finalTie={stage.final_tie ?? "seed"}
           />
         )}
         <AutoRulesSeries tournament={tournament} />

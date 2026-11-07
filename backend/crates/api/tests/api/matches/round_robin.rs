@@ -198,7 +198,7 @@ async fn a_round_robin_plays_every_pair_and_ends_with_the_table() {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "round_robin", "best_of": 1, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"] })
+        json!({ "format": "round_robin", "best_of": 1, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"], "final_tie": "seed" })
     );
     assert_eq!(b["total_rounds"], 3);
     // Seis partidas, todas prontas, rodada 1 com 1 x 4 e 2 x 3.

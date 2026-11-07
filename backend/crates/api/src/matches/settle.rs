@@ -4,8 +4,9 @@
 //! nada (fechar uma série pode deixar pronta uma partida de quem desistiu),
 //! grava o pareamento da rodada seguinte do suíço quando a anterior termina
 //! (`rounds`) e começa o jogo seguinte do veto de cada partida
-//! (`veto::advance`); depois encerra ou reabre o torneio conforme a chave e
-//! emite o que mudou (`changes`). Quem chama trava o torneio.
+//! (`veto::advance`); depois encerra ou reabre o torneio conforme a chave
+//! (que espera a organização decidir os empates do fim, `ties`), acerta a
+//! marca dessa espera e emite o que mudou (`changes`). Quem chama trava o torneio.
 
 use chrono::Utc;
 use engine::{core::MatchState, series};
@@ -20,6 +21,7 @@ use super::{
     result::{Side, series_outcome},
     rounds,
     stage::{self, Stage},
+    ties,
     types::EventKind,
     veto, withdrawals,
 };
@@ -82,6 +84,7 @@ pub async fn settle_from(
 ) -> Result<(Stage, TournamentStatus), ApiError> {
     let stage = apply_from(conn, tournament, actor, first).await?;
     let status = stage::sync_status(conn, tournament, &stage).await?;
+    ties::sync(conn, tournament, &stage).await?;
     changes::settled(conn, tournament, before, &stage, status).await?;
     Ok((stage, status))
 }

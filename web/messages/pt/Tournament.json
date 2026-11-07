@@ -103,7 +103,8 @@
       "games": "Saldo de partidas",
       "frags": "Saldo de frags",
       "lowerRating": "Menor rating (o do início do torneio)",
-      "seed": "Ordem da chave"
+      "seed": "Ordem da chave",
+      "organizer": "Decisão da organização, no fim da fase"
     },
     "series": {
       "title": "Cada série",

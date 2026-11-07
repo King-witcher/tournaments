@@ -5,7 +5,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use super::types::{ContestedGame, PendingTournament, StartDue};
+use super::types::{ContestedGame, PendingTies, PendingTournament, StartDue};
 use crate::{
     shared::{ApiError, Locale},
     tournaments::{NameTranslation, TournamentStatus},
@@ -109,6 +109,46 @@ pub async fn start_due(
             has_check_in: r.check_in_minutes.is_some(),
             registered: r.registered,
             checked_in: r.checked_in,
+        })
+    })
+    .collect()
+}
+
+/// Os torneios das comunidades que `user` organiza com um empate do fim da fase
+/// esperando a decisão da organização (`stage_pending_ties`, só em torneio em
+/// andamento), do que espera há mais tempo.
+pub async fn pending_ties(db: &PgPool, user: i64) -> Result<Vec<PendingTies>, ApiError> {
+    sqlx::query!(
+        r#"select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,
+                  coalesce((select array_agg(tr.locale order by tr.locale)
+                            from tournament_translations tr where tr.tournament_id = t.id),
+                           '{}') as "translation_locales!",
+                  coalesce((select array_agg(tr.name order by tr.locale)
+                            from tournament_translations tr where tr.tournament_id = t.id),
+                           '{}') as "translation_names!",
+                  min(pt.since) as "since!"
+           from tenant_members m
+           join tenants te on te.id = m.tenant_id
+           join tournaments t on t.tenant_id = m.tenant_id
+           join stage_pending_ties pt on pt.tournament_id = t.id
+           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')
+           group by te.slug, te.name, t.id, t.slug, t.name
+           order by min(pt.since), t.id"#,
+        user
+    )
+    .fetch_all(db)
+    .await?
+    .into_iter()
+    .map(|r| {
+        Ok(PendingTies {
+            tournament: PendingTournament {
+                tenant_slug: r.tenant_slug,
+                tenant_name: r.tenant_name,
+                slug: r.slug,
+                name: r.name,
+                translations: translations(r.translation_locales, r.translation_names)?,
+            },
+            since: r.since,
         })
     })
     .collect()

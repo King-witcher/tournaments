@@ -38,7 +38,9 @@
 //! screenshot obrigatório, o envio do jogador exige um screenshot anexado
 //! (`evidence`). No round robin, `progress` diz quem está jogando e qual série
 //! sugerir a cada time, sem travar nada. Quem do time pode agir, pela regra do
-//! torneio, e quem marca "Pronto" ficam em `acting`, num lugar só.
+//! torneio, e quem marca "Pronto" ficam em `acting`, num lugar só. Nas fases
+//! de tabela com a organização decidindo o empate do fim, a decisão dela, a
+//! marca de espera e o aviso ficam em `ties`.
 
 mod accept;
 mod acting;
@@ -69,6 +71,7 @@ mod settle;
 mod slots;
 mod stage;
 mod tasks;
+mod ties;
 mod types;
 pub mod veto;
 mod view;
@@ -98,6 +101,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(accept::accept_contest))
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
+        .routes(routes!(ties::decide_tie))
+        .routes(routes!(ties::decide_ties_by_seed))
         .routes(routes!(replay::replay))
         .routes(routes!(
             veto::handlers::veto_ready,

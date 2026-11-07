@@ -24,7 +24,8 @@
       "eliminated": "Terminou em {place}",
       "withdrawn": "Desistiu",
       "champion": "1º lugar",
-      "reserve": "Reserva, sem time"
+      "reserve": "Reserva, sem time",
+      "tie_pending": "Empate no {place}, a decidir"
     },
     "empty": "{name} ainda não jogou aqui.",
     "emptyYou": "Você ainda não jogou aqui.",

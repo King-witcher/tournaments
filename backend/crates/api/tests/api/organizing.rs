@@ -23,7 +23,7 @@ async fn organizing(app: &Router, who: &User) -> Value {
 }
 
 fn empty() -> Value {
-    json!({ "contested": [], "start_due": [] })
+    json!({ "contested": [], "start_due": [], "pending_ties": [] })
 }
 
 /// Se o outbox tem a mudança de "Seus torneios" exatamente para `users`.

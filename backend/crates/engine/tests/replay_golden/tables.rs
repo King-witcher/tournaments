@@ -3,7 +3,7 @@
 use engine::core::StageReport;
 use engine::formats::round_robin::RoundRobinConfig;
 use engine::formats::swiss::{SwissConfig, SwissRound};
-use engine::formats::table::Criterion;
+use engine::formats::table::{Criterion, FinalTie};
 use engine::formats::{StageFormat, StageHistory};
 
 use crate::common::{
@@ -39,6 +39,7 @@ fn round_robin_with_odd_players_ties_and_walkover() {
     let format = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 3,
         tiebreakers: round_robin_default(),
+        final_tie: FinalTie::Seed,
     });
     let reports = five_players_and_a_walkover();
 
@@ -102,6 +103,7 @@ fn round_robin_head_to_head_comes_before_the_map_difference() {
     let format = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 3,
         tiebreakers: round_robin_default(),
+        final_tie: FinalTie::Seed,
     });
     let reports = [
         played(robin(1, 1), 1, (2, 0)),
@@ -131,6 +133,7 @@ fn round_robin_best_of_two_with_draws() {
     let format = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 2,
         tiebreakers: round_robin_default(),
+        final_tie: FinalTie::Seed,
     });
     let reports = [
         with_frags(played(robin(1, 1), 1, (2, 0)), 40, 20),
@@ -171,6 +174,7 @@ fn swiss_buchholz_comes_before_head_to_head() {
         best_of: 3,
         rounds: Some(4),
         tiebreakers: swiss_default(),
+        final_tie: FinalTie::Seed,
     });
     let rounds = [
         round(&[[1, 4], [2, 5], [3, 6]], None),
@@ -227,6 +231,7 @@ fn swiss_with_recorded_pairings_a_withdrawal_and_a_bye() {
         best_of: 3,
         rounds: Some(3),
         tiebreakers: swiss_default(),
+        final_tie: FinalTie::Seed,
     });
     let rounds = [
         round(&[[1, 4], [2, 5], [3, 6]], None),
@@ -313,6 +318,7 @@ fn round_robin_with_chosen_tiebreakers_and_no_head_to_head() {
     let format = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 3,
         tiebreakers: tiebreakers(&[Criterion::MapDiff, Criterion::FragDiff]),
+        final_tie: FinalTie::Seed,
     });
     let reports = five_players_and_a_walkover();
 
@@ -357,6 +363,7 @@ fn swiss_with_chosen_tiebreakers_and_no_buchholz() {
             Criterion::MapDiff,
             Criterion::FragDiff,
         ]),
+        final_tie: FinalTie::Seed,
     });
     let rounds = [
         round(&[[1, 4], [2, 5], [3, 6]], None),

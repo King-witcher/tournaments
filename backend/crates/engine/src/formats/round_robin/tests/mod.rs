@@ -30,6 +30,7 @@ fn config() -> RoundRobinConfig {
     RoundRobinConfig {
         best_of: 3,
         tiebreakers: Tiebreakers::ROUND_ROBIN,
+        final_tie: FinalTie::Seed,
     }
 }
 
@@ -165,7 +166,8 @@ fn limits_and_config() {
         RoundRobinBracket::new(
             RoundRobinConfig {
                 best_of: 0,
-                tiebreakers: Tiebreakers::ROUND_ROBIN
+                tiebreakers: Tiebreakers::ROUND_ROBIN,
+                final_tie: FinalTie::Seed,
             },
             seeds(4)
         ),
@@ -175,7 +177,8 @@ fn limits_and_config() {
         RoundRobinBracket::new(
             RoundRobinConfig {
                 best_of: 2,
-                tiebreakers: Tiebreakers::ROUND_ROBIN
+                tiebreakers: Tiebreakers::ROUND_ROBIN,
+                final_tie: FinalTie::Seed,
             },
             seeds(4)
         )
@@ -190,7 +193,8 @@ fn worst_case_is_one_series_per_opponent() {
     assert_eq!(
         RoundRobinConfig {
             best_of: 5,
-            tiebreakers: Tiebreakers::ROUND_ROBIN
+            tiebreakers: Tiebreakers::ROUND_ROBIN,
+            final_tie: FinalTie::Seed,
         }
         .worst_case_games(32),
         Ok(155)
@@ -301,6 +305,7 @@ fn best_of_two_plays_to_the_end_with_draws() {
     let config = RoundRobinConfig {
         best_of: 2,
         tiebreakers: Tiebreakers::ROUND_ROBIN,
+        final_tie: FinalTie::Seed,
     };
     let mut b = RoundRobinBracket::new(config, seeds(3)).unwrap();
     assert_eq!(b.worst_case_games(), 4);
@@ -345,6 +350,7 @@ fn longer_even_series_end_with_a_draw_too() {
         let config = RoundRobinConfig {
             best_of,
             tiebreakers: Tiebreakers::ROUND_ROBIN,
+            final_tie: FinalTie::Seed,
         };
         let mut b = RoundRobinBracket::new(config, seeds(2)).unwrap();
         b.report(StageReport::from(MatchReport {

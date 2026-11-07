@@ -51,6 +51,10 @@
 //!   tabela do início e a rodada 1 do suíço seguirem o seed, e só com o
 //!   rating de todos os empatados; senão, vale o critério seguinte.
 //!
+//! - **empate no fim** (`ties`): o grupo que só o seed separa, no fim da
+//!   fase, fica na ordem do seed ou espera a decisão da organização
+//!   (`FinalTie`).
+//!
 //! A tabela em ordem é também a semente de uma fase seguinte (os N
 //! primeiros para os playoffs) e, no suíço, a ordem do pareamento: os
 //! desempates escolhidos mudam quem enfrenta quem.
@@ -60,10 +64,12 @@ mod league;
 #[cfg(test)]
 mod tests;
 mod tiebreak;
+mod ties;
 
 pub(crate) use criteria::Rules;
 pub use criteria::{Criterion, Tiebreakers};
 pub(crate) use league::{League, pairing, rest};
+pub use ties::{FinalTie, PendingTie, TieOrder};
 
 use std::collections::HashMap;
 
@@ -235,6 +241,8 @@ pub(crate) fn compute(
             Criterion::Seed => -(i as i64),
             // Calculado dentro de cada grupo de empatados (`tiebreak`).
             Criterion::HeadToHead => 0,
+            // Fora da ordem: aplicada no fim da fase (`ties`).
+            Criterion::Organizer => 0,
         }
     };
 

@@ -152,10 +152,32 @@
       "map_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de partidas.",
       "frag_diff": "{position}º ({name}) à frente do {next}º ({other}) pelo saldo de frags.",
       "lower_rating": "{position}º ({name}) à frente do {next}º ({other}) pelo menor rating ({rating} contra {otherRating}).",
-      "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave. Empataram nos outros critérios."
+      "seed": "{position}º ({name}) à frente do {next}º ({other}) pela ordem da chave. Empataram nos outros critérios.",
+      "organizer": "{position}º ({name}) à frente do {next}º ({other}) por decisão da organização.",
+      "organizerReason": "{position}º ({name}) à frente do {next}º ({other}) por decisão da organização. Motivo: {reason}"
     },
     "noFrags": "sem frags",
     "buchholzTip": "O que é o Buchholz?",
-    "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um. Entre quem tem os mesmos pontos, fica à frente quem enfrentou adversários mais fortes."
+    "buchholzMeaning": "Buchholz é a soma dos pontos dos adversários de cada um. Entre quem tem os mesmos pontos, fica à frente quem enfrentou adversários mais fortes.",
+    "tiePending": "Empate a decidir",
+    "pendingGroup": "{names} empataram no {position}º. A organização vai decidir a ordem."
+  },
+  "ties": {
+    "title": "Empates a decidir",
+    "description": "O torneio termina quando todos forem decididos.",
+    "group": "Empate no {position}º",
+    "order": "Ordem",
+    "position": "{position}.",
+    "up": "Subir {name}",
+    "down": "Descer {name}",
+    "reason": "Motivo",
+    "reasonHint": "Aparece na classificação.",
+    "save": "Salvar ordem",
+    "saveQuestion": "Essa ordem fica na classificação.",
+    "seed": "Usar a ordem da chave",
+    "seedQuestion": "Os empatados ficam na ordem da chave.",
+    "seedAll": "Usar a ordem da chave em todos",
+    "seedAllQuestion": "Todos os empatados ficam na ordem da chave.",
+    "ends": "O torneio termina."
   }
 }

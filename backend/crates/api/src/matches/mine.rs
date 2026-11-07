@@ -38,6 +38,9 @@ pub enum Place {
     Playing,
     /// Desistiu; com a colocação quando ela já se definiu.
     Withdrawn(Option<(u16, u16)>),
+    /// Num empate do fim da fase que espera a organização: a melhor posição
+    /// do grupo e quantos estão nele.
+    TiePending(u16, u16),
     /// Eliminado, ou fora do 1º lugar na tabela final, com a colocação.
     Eliminated(u16, u16),
     Champion,
@@ -140,6 +143,13 @@ fn locate(
         .find(|p| p.participant == me)
         .map(|p| (p.rank, p.tied));
     let withdrawn = entrants.iter().any(|e| e.id == me.0 && e.withdrawn);
+    let tie = bracket
+        .pending_ties()
+        .iter()
+        .find(|t| t.participants.contains(&me));
+    if let Some(t) = tie.filter(|_| !withdrawn) {
+        return Place::TiePending(t.position, t.participants.len() as u16);
+    }
     match standing {
         Some((1, _)) => Place::Champion,
         _ if withdrawn => Place::Withdrawn(standing),

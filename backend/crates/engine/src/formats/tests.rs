@@ -1,6 +1,6 @@
 use super::*;
 use crate::formats::elimination::EliminationKind;
-use crate::formats::table::Tiebreakers;
+use crate::formats::table::{FinalTie, Tiebreakers};
 use crate::series::SeriesLength;
 
 fn stage(kind: EliminationKind) -> StageFormat {
@@ -94,16 +94,19 @@ fn table_formats() -> [StageFormat; 3] {
         StageFormat::RoundRobin(RoundRobinConfig {
             best_of: 3,
             tiebreakers: Tiebreakers::ROUND_ROBIN,
+            final_tie: FinalTie::Seed,
         }),
         StageFormat::Swiss(SwissConfig {
             best_of: 3,
             rounds: None,
             tiebreakers: Tiebreakers::SWISS,
+            final_tie: FinalTie::Seed,
         }),
         StageFormat::Swiss(SwissConfig {
             best_of: 1,
             rounds: Some(9),
             tiebreakers: Tiebreakers::SWISS,
+            final_tie: FinalTie::Seed,
         }),
     ]
 }
@@ -118,12 +121,14 @@ fn table_formats_validate_and_have_one_series_length() {
     let none = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 0,
         tiebreakers: Tiebreakers::ROUND_ROBIN,
+        final_tie: FinalTie::Seed,
     });
     assert_eq!(none.validate(), Err(EngineError::InvalidBestOf(0)));
     let no_rounds = StageFormat::Swiss(SwissConfig {
         best_of: 3,
         rounds: Some(0),
         tiebreakers: Tiebreakers::SWISS,
+        final_tie: FinalTie::Seed,
     });
     assert_eq!(
         no_rounds.validate(),
@@ -148,6 +153,7 @@ fn even_series_are_only_for_the_round_robin() {
         let league = StageFormat::RoundRobin(RoundRobinConfig {
             best_of,
             tiebreakers: Tiebreakers::ROUND_ROBIN,
+            final_tie: FinalTie::Seed,
         });
         assert_eq!(league.validate(), Ok(()));
         assert_eq!(league.longest_series(), best_of);
@@ -158,6 +164,7 @@ fn even_series_are_only_for_the_round_robin() {
             best_of,
             rounds: None,
             tiebreakers: Tiebreakers::SWISS,
+            final_tie: FinalTie::Seed,
         });
         assert_eq!(swiss.validate(), invalid);
         assert_eq!(single(best_of, 3).validate(), invalid);
@@ -168,6 +175,7 @@ fn even_series_are_only_for_the_round_robin() {
         let league = StageFormat::RoundRobin(RoundRobinConfig {
             best_of,
             tiebreakers: Tiebreakers::ROUND_ROBIN,
+            final_tie: FinalTie::Seed,
         });
         assert_eq!(league.validate(), result, "md{best_of}");
     }

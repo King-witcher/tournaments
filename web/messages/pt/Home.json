@@ -32,7 +32,8 @@
       "eliminated": "Terminou em {place}",
       "withdrawn": "Desistiu",
       "champion": "1º lugar, você venceu",
-      "reserve": "Reserva, sem time"
+      "reserve": "Reserva, sem time",
+      "tie_pending": "Empate no {place}, a organização vai decidir"
     },
     "next": {
       "against": "Próxima série: {match} contra {opponent}",

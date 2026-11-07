@@ -11,5 +11,10 @@
     "startedAt": "Início marcado para <date></date>",
     "checkedIn": "{checkedIn} de {registered} fizeram check-in",
     "registered": "{registered, plural, =0 {Nenhum inscrito} one {# inscrito} other {# inscritos}}, sem check-in"
+  },
+  "pendingTies": {
+    "title": "Empate a decidir",
+    "since": "Desde <date></date>",
+    "action": "Decidir"
   }
 }

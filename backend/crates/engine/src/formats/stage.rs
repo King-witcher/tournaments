@@ -7,7 +7,7 @@ use super::elimination::EliminationBracket;
 use super::placement::PlacementBracket;
 use super::round_robin::RoundRobinBracket;
 use super::swiss::{SwissBracket, SwissRound};
-use super::table::TableRow;
+use super::table::{PendingTie, TableRow, TieOrder};
 use crate::core::{
     EngineError, Match, MatchId, MatchState, Occupant, ParticipantId, Placement, StageReport,
 };
@@ -29,6 +29,10 @@ pub struct StageHistory {
     /// nos formatos de tabela (menor fica à frente; quem não aparece não é
     /// desempatado por ele). Nos outros formatos, ignorado.
     pub ratings: Vec<(ParticipantId, i32)>,
+    /// Fases de tabela com `FinalTie::Organizer`: as decisões da organização
+    /// para os empates do fim, na ordem em que foram gravadas. Nos outros
+    /// casos, ignoradas.
+    pub tie_orders: Vec<TieOrder>,
 }
 
 /// O estado de uma fase, de qualquer formato.
@@ -63,19 +67,21 @@ impl StageBracket {
                 seeded,
                 history.reports.into_iter().map(|r| r.report),
             )?),
-            StageFormat::RoundRobin(c) => Self::RoundRobin(RoundRobinBracket::replay(
+            StageFormat::RoundRobin(c) => Self::RoundRobin(RoundRobinBracket::replay_with_ties(
                 c,
                 seeded,
                 history.reports,
                 &history.ratings,
+                history.tie_orders,
             )?),
-            StageFormat::Swiss(c) => Self::Swiss(SwissBracket::replay(
+            StageFormat::Swiss(c) => Self::Swiss(SwissBracket::replay_with_ties(
                 c,
                 seeded,
                 history.rounds,
                 history.reports,
                 &history.out,
                 &history.ratings,
+                history.tie_orders,
             )?),
             StageFormat::Placement(c) => Self::Placement(PlacementBracket::replay(
                 c,
@@ -163,8 +169,9 @@ impl StageBracket {
 
     /// Colocações já definidas. Na eliminação, os eliminados (faixas com
     /// empate) e, no fim, campeão e vice; nos formatos de tabela, todos, só
-    /// no fim, uma posição cada; na disputa de posições, as dos pares
-    /// decididos e a do sem par, uma posição cada.
+    /// com todas as séries decididas, uma posição cada, menos os de um empate
+    /// que espera a organização (`pending_ties`); na disputa de posições, as
+    /// dos pares decididos e a do sem par, uma posição cada.
     pub fn placements(&self) -> Vec<Placement> {
         match self {
             Self::Elimination(b) => b.standings(),
@@ -181,6 +188,17 @@ impl StageBracket {
             Self::Elimination(_) | Self::Placement(_) => None,
             Self::RoundRobin(b) => Some(b.table()),
             Self::Swiss(b) => Some(b.table()),
+        }
+    }
+
+    /// Os empates do fim que esperam a organização: só nas fases de tabela
+    /// com `FinalTie::Organizer`, com todas as séries decididas. Enquanto há
+    /// algum, a fase não termina.
+    pub fn pending_ties(&self) -> &[PendingTie] {
+        match self {
+            Self::Elimination(_) | Self::Placement(_) => &[],
+            Self::RoundRobin(b) => b.pending_ties(),
+            Self::Swiss(b) => b.pending_ties(),
         }
     }
 
@@ -222,7 +240,7 @@ mod tests {
     use crate::formats::placement::PlacementConfig;
     use crate::formats::round_robin::RoundRobinConfig;
     use crate::formats::swiss::SwissConfig;
-    use crate::formats::table::Tiebreakers;
+    use crate::formats::table::{FinalTie, Tiebreakers};
     use crate::series::{SeriesLength, wins_needed};
 
     fn seeds(n: i64) -> Vec<ParticipantId> {
@@ -284,11 +302,13 @@ mod tests {
             StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: 3,
                 tiebreakers: Tiebreakers::ROUND_ROBIN,
+                final_tie: FinalTie::Seed,
             }),
             StageFormat::Swiss(SwissConfig {
                 best_of: 1,
                 rounds: None,
                 tiebreakers: Tiebreakers::SWISS,
+                final_tie: FinalTie::Seed,
             }),
             StageFormat::Placement(PlacementConfig { best_of: 3 }),
         ]

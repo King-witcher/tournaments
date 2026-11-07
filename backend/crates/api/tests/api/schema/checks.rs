@@ -80,18 +80,20 @@ async fn tournaments_keep_state_and_shape() {
 
     // Cada formato com as suas colunas (a fase nasce em eliminação dupla).
     let single = "format = 'elimination', bracket = 'single', grand_final_reset = null, \
-                  best_of = 1, finals_best_of = 3, rounds = null, tiebreakers = null";
+                  best_of = 1, finals_best_of = 3, rounds = null, tiebreakers = null, \
+                  final_tie = null";
     let round_robin = "format = 'round_robin', bracket = null, grand_final_reset = null, \
-                       finals_best_of = null, tiebreakers = '{}'";
+                       finals_best_of = null, tiebreakers = '{}', final_tie = 'seed'";
     let swiss = "format = 'swiss', bracket = null, grand_final_reset = null, \
-                 finals_best_of = null, tiebreakers = '{}'";
+                 finals_best_of = null, tiebreakers = '{}', final_tie = 'seed'";
     let placement = "format = 'placement', bracket = null, grand_final_reset = null, \
-                     finals_best_of = null";
+                     finals_best_of = null, final_tie = null";
     // Uma fase de tabela com os desempates `list` (o resto válido).
     let table = |format: &str, list: &str| {
         format!(
             "format = '{format}', bracket = null, grand_final_reset = null, \
-             finals_best_of = null, rounds = null, best_of = 3, tiebreakers = {list}"
+             finals_best_of = null, rounds = null, best_of = 3, tiebreakers = {list}, \
+             final_tie = 'seed'"
         )
     };
     for (set, name) in [
@@ -155,6 +157,16 @@ async fn tournaments_keep_state_and_shape() {
         ("tiebreakers = '{}'".to_owned(), "tournament_stages_shape"),
         (table("round_robin", "null"), "tournament_stages_shape"),
         (table("swiss", "null"), "tournament_stages_shape"),
+        // Quem decide o empate do fim: só nas fases de tabela, e sempre nelas.
+        (
+            swiss.replace("final_tie = 'seed'", "final_tie = null"),
+            "tournament_stages_shape",
+        ),
+        (
+            swiss.replace("final_tie = 'seed'", "final_tie = 'coin'"),
+            "tournament_stages_final_tie",
+        ),
+        ("final_tie = 'seed'".to_owned(), "tournament_stages_shape"),
         // Os que existem, cada um uma vez, numa lista simples.
         (table("swiss", "'{seed}'"), "tournament_stages_tiebreakers"),
         (
@@ -212,6 +224,7 @@ async fn tournaments_keep_state_and_shape() {
         format!("{round_robin}, rounds = null, best_of = 8"),
         format!("{swiss}, rounds = null, best_of = 3"),
         format!("{swiss}, rounds = 127"),
+        swiss.replace("final_tie = 'seed'", "final_tie = 'organizer'"),
         table("round_robin", "'{frag_diff,map_diff,head_to_head}'"),
         table("swiss", "'{head_to_head,buchholz,frag_diff,map_diff}'"),
         format!("{placement}, rounds = null, tiebreakers = null, best_of = 5"),

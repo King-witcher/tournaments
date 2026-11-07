@@ -248,7 +248,6 @@
     "title": "Desempate",
     "label": "Ordem",
     "position": "{position}.",
-    "seedLast": "Por último, a ordem da chave.",
     "none": "Só a ordem da chave",
     "names": {
       "head_to_head": "Confronto direto",
@@ -269,11 +268,22 @@
       "map_diff": "partidas",
       "frag_diff": "frags",
       "buchholz": "Buchholz",
-      "lower_rating": "menor rating"
+      "lower_rating": "menor rating",
+      "organizer": "decisão da organização"
     },
     "up": "Subir {name}",
     "down": "Descer {name}",
     "off": "Desligar {name}",
-    "on": "Ligar {name}"
+    "on": "Ligar {name}",
+    "finalTie": "Quando todos os critérios empatarem",
+    "finalTieOptions": {
+      "seed": "Usar a ordem da chave",
+      "organizer": "A organização decide"
+    },
+    "finalTieHints": {
+      "seed": "Quem continuar empatado fica na ordem da chave.",
+      "organizer": "No fim da fase, a organização ordena quem continuar empatado. O torneio só termina depois disso."
+    },
+    "organizerOnly": "Decisão da organização"
   }
 }

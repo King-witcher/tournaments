@@ -117,7 +117,7 @@ proptest! {
         picks in proptest::collection::vec(
             (any::<bool>(), any::<bool>(), 0u8..4, -50i32..200, -50i32..200), 1..40),
     ) {
-        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN, final_tie: FinalTie::Seed };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
         let mut by_wins = League::new(
             BY_WINS,
@@ -145,7 +145,7 @@ proptest! {
         best_of in prop_oneof![Just(2u8), Just(4u8), Just(6u8)],
         firsts in proptest::collection::vec(any::<bool>(), 1..40),
     ) {
-        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN, final_tie: FinalTie::Seed };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
         let mut by_wins = League::new(
             BY_WINS,
@@ -183,7 +183,7 @@ proptest! {
         // 0 e 1: venceu um dos lados; 2: empate; 3: W.O.
         kinds in proptest::collection::vec(0u8..4, 1..40),
     ) {
-        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN };
+        let config = RoundRobinConfig { best_of, tiebreakers: Tiebreakers::ROUND_ROBIN, final_tie: FinalTie::Seed };
         let mut b = RoundRobinBracket::new(config, seeds(n)).unwrap();
         let ready: Vec<Match> = b.matches().iter()
             .filter(|m| matches!(m.state, MatchState::Ready { .. }))

@@ -152,10 +152,32 @@
       "map_diff": "#{position} ({name}) ahead of #{next} ({other}) on game difference.",
       "frag_diff": "#{position} ({name}) ahead of #{next} ({other}) on frag difference.",
       "lower_rating": "#{position} ({name}) ahead of #{next} ({other}) on lower rating ({rating} vs. {otherRating}).",
-      "seed": "#{position} ({name}) ahead of #{next} ({other}) on seeding. They tied on the other criteria."
+      "seed": "#{position} ({name}) ahead of #{next} ({other}) on seeding. They tied on the other criteria.",
+      "organizer": "#{position} ({name}) ahead of #{next} ({other}) by the organizers' decision.",
+      "organizerReason": "#{position} ({name}) ahead of #{next} ({other}) by the organizers' decision. Reason: {reason}"
     },
     "noFrags": "no frags",
     "buchholzTip": "What is Buchholz?",
-    "buchholzMeaning": "Buchholz is the sum of each player's opponents' points. Among players with the same points, the one who faced stronger opponents ranks higher."
+    "buchholzMeaning": "Buchholz is the sum of each player's opponents' points. Among players with the same points, the one who faced stronger opponents ranks higher.",
+    "tiePending": "Tie to decide",
+    "pendingGroup": "{names} tied for #{position}. The organizers will decide the order."
+  },
+  "ties": {
+    "title": "Ties to decide",
+    "description": "The tournament ends once all of them are decided.",
+    "group": "Tie for #{position}",
+    "order": "Order",
+    "position": "{position}.",
+    "up": "Move {name} up",
+    "down": "Move {name} down",
+    "reason": "Reason",
+    "reasonHint": "Shown in the standings.",
+    "save": "Save order",
+    "saveQuestion": "This order goes into the standings.",
+    "seed": "Use the seeding",
+    "seedQuestion": "Everyone tied stays in seeding order.",
+    "seedAll": "Use the seeding for all",
+    "seedAllQuestion": "Everyone tied stays in seeding order, in every tie.",
+    "ends": "The tournament ends."
   }
 }

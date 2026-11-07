@@ -24,7 +24,8 @@
       "eliminated": "Finished in {place}",
       "withdrawn": "Withdrew",
       "champion": "1st place",
-      "reserve": "Reserve, no team"
+      "reserve": "Reserve, no team",
+      "tie_pending": "Tied for {place}, to be decided"
     },
     "empty": "{name} hasn't played here yet.",
     "emptyYou": "You haven't played here yet.",

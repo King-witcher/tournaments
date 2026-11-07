@@ -52,7 +52,8 @@
     "champion": "1st place, you won",
     "rank": "{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
     "range": "{from, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}–{to, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
-    "reserve": "Reserve, no team"
+    "reserve": "Reserve, no team",
+    "tie_pending": "Tied for {place}, the organizers will decide"
   },
   "checkIn": {
     "opensAt": "Check-in opens <date></date>. Anyone who doesn't check in is left out of the bracket.",

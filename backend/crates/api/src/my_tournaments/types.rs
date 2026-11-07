@@ -62,6 +62,10 @@ pub enum Situation {
     Reserve,
     /// Na chave e ainda vivo (no round robin e no suíço, até a fase terminar).
     Playing,
+    /// As séries da fase acabaram e ele está num empate que espera a decisão
+    /// da organização: a colocação é a melhor posição do grupo, e `tied`,
+    /// quantos estão nele.
+    TiePending,
     /// Terminou, com a colocação: eliminado, ou na tabela final do round robin
     /// e do suíço.
     Eliminated,

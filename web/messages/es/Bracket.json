@@ -152,10 +152,32 @@
       "map_diff": "{position}º ({name}) por delante del {next}º ({other}) por la diferencia de partidas.",
       "frag_diff": "{position}º ({name}) por delante del {next}º ({other}) por la diferencia de frags.",
       "lower_rating": "{position}º ({name}) por delante del {next}º ({other}) por el menor rating ({rating} contra {otherRating}).",
-      "seed": "{position}º ({name}) por delante del {next}º ({other}) por el orden de la llave. Empataron en los demás criterios."
+      "seed": "{position}º ({name}) por delante del {next}º ({other}) por el orden de la llave. Empataron en los demás criterios.",
+      "organizer": "{position}º ({name}) por delante del {next}º ({other}) por decisión de la organización.",
+      "organizerReason": "{position}º ({name}) por delante del {next}º ({other}) por decisión de la organización. Motivo: {reason}"
     },
     "noFrags": "sin frags",
     "buchholzTip": "¿Qué es el Buchholz?",
-    "buchholzMeaning": "El Buchholz es la suma de los puntos de los rivales de cada uno. Entre quienes tienen los mismos puntos, queda por delante quien enfrentó a rivales más fuertes."
+    "buchholzMeaning": "El Buchholz es la suma de los puntos de los rivales de cada uno. Entre quienes tienen los mismos puntos, queda por delante quien enfrentó a rivales más fuertes.",
+    "tiePending": "Empate por decidir",
+    "pendingGroup": "{names} empataron en el {position}º. La organización va a decidir el orden."
+  },
+  "ties": {
+    "title": "Empates por decidir",
+    "description": "El torneo termina cuando todos estén decididos.",
+    "group": "Empate en el {position}º",
+    "order": "Orden",
+    "position": "{position}.",
+    "up": "Subir {name}",
+    "down": "Bajar {name}",
+    "reason": "Motivo",
+    "reasonHint": "Aparece en la clasificación.",
+    "save": "Guardar orden",
+    "saveQuestion": "Ese orden queda en la clasificación.",
+    "seed": "Usar el orden de la llave",
+    "seedQuestion": "Los empatados quedan en el orden de la llave.",
+    "seedAll": "Usar el orden de la llave en todos",
+    "seedAllQuestion": "Todos los empatados quedan en el orden de la llave.",
+    "ends": "El torneo termina."
   }
 }

@@ -91,6 +91,23 @@ Assumido:
 - **Menor rating, o do início**: ao iniciar um torneio com ele, cada time da chave grava `teams.rating_at_start`, a média dos jogadores em centésimos (inteiro, para comparar sem `f64`; com até 4 por time, médias diferentes nunca empatam), com o rating da comunidade de então (recalculado antes se há marca em `rating_dirty`) e o inicial para quem não tem, também em torneio que não conta para o rating. O rating muda a cada mapa e correção, e a tabela precisa sair igual no replay. Desfazer o início apaga; reiniciar grava de novo; a substituição não muda. O banco congela a coluna depois do início (`teams_started_frozen`) e só a aceita em time com seed. O `engine` recebe os ratings no replay (`StageHistory::ratings`).
 - **Menor rating só depois da primeira série decidida da fase**: sem isso, a tabela do início e a rodada 1 do suíço sairiam pelo rating ao contrário, e não pela ordem da chave. Com algum empatado sem rating, vale o critério seguinte. Rating igual também passa adiante. Vale na tabela ao vivo e no pareamento do suíço, e a volta ao confronto direto vale depois dele como depois dos outros. A Classificação explica com os ratings ("pelo menor rating (1450 contra 1500)").
 
+## Empate no fim da fase
+
+Do usuário (06/11). Motivo: uma fase seguinte (fases ligadas, ou a Disputa de posições, que usa a classificação como ordem da chave) não pode começar com empate decidido pela sorte do seeding aleatório; e o padrão não pode surpreender quem não sabe que a opção existe.
+
+- **Escolha por fase de tabela**, logo depois da lista de desempates: "Quando todos os critérios empatarem", com "Usar a ordem da chave" (**padrão**) ou "A organização decide".
+- **Todos os empates que sobram** viram pendência; cada grupo também pode ser resolvido com "Usar a ordem da chave".
+- **A fase espera**: com empate pendente, a fase e o torneio não terminam, mesmo com todas as séries decididas.
+
+Assumido:
+
+- **Só no fim**: durante a fase nada muda (tabela ao vivo e pareamento do suíço desempatam pelo seed). Com todas as séries decididas, o grupo que só o seed separaria é pendente, a não ser que haja decisão para exatamente esse conjunto de times.
+- **No `engine`** (`formats/table/ties.rs`): `FinalTie` na configuração e as decisões (`TieOrder`) no `StageHistory`; a decisão vale pelo conjunto (a correção que muda quem empatou a deixa sem efeito; com o mesmo conjunto, continua; havendo duas, a última); a tabela mostra `organizer` como critério; os do grupo pendente ficam fora das colocações. O `replay_golden` não mudou.
+- **Banco** (`20261215010000_stage_final_tie`): `tournament_stages.final_tie` (`seed` nas fases que já existiam), as decisões em `stage_tie_decisions` (quem, quando, motivo de até 280) com a ordem em `stage_tie_decision_teams`, só inseridas; `stage_pending_ties` marca a fase que espera, só com o torneio em andamento, e é o que a home da organização lê. "Usar a ordem da chave" também grava decisão. Desfazer o início apaga tudo.
+- **API**: `POST .../ties` (ordem completa de um grupo pendente e motivo opcional; `tie.not_pending` se não bate) e `POST .../ties/seed` (todos pela ordem da chave), só organizer e owner. A fase termina pelo `settle`, como no fim normal, com o mesmo aviso de encerramento. A correção que cria pendência num torneio encerrado o reabre, como a que reabre série.
+- **Aviso** `tournament.tie_pending` para organizers e owner (toast, Web Push e Discord, como a partida contestada), uma vez, quando a fase passa a esperar; de novo só se ela deixar de esperar e voltar.
+- **Tela**: os empatados dividem a melhor posição, com "Empate a decidir"; a organização ordena cada grupo com setas (como os desempates do formulário), com motivo opcional e confirmação, porque a ordem gravada não muda. Quem está no grupo vê "Empate no 3º, a organização vai decidir"; os outros já veem a posição. O rating não muda (é por mapa).
+
 ## Disputa de posições
 
 Para a segunda etapa de um torneio em duas: depois de um todos contra todos (em md2, por exemplo), o 1º enfrenta o 2º, o 3º enfrenta o 4º, e assim por diante. Sem fases ligadas, a segunda etapa é outro torneio: a organização inscreve os jogadores e põe a ordem da chave na ordem da classificação da primeira.

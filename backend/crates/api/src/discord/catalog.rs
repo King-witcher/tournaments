@@ -138,6 +138,14 @@ pub const CATALOG: &[Spec] = &[
         "{to} **{tournament}** has reached its scheduled time and hasn't started yet.\n{link}",
     ),
     spec(
+        "tournament.tie_pending",
+        true,
+        To::Staff,
+        "{to} **{tournament}** terminou as séries com empate na classificação. A organização precisa decidir a ordem.\n{link}",
+        "{to} **{tournament}** terminó las series con empate en la clasificación. La organización debe decidir el orden.\n{link}",
+        "{to} **{tournament}** finished its matches with a tie in the standings. The organizers need to decide the order.\n{link}",
+    ),
+    spec(
         "match.game_contested",
         true,
         To::Staff,

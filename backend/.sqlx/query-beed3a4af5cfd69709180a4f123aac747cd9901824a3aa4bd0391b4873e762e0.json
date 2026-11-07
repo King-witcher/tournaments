@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from stage_pending_ties where tournament_id = $1 and stage = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "beed3a4af5cfd69709180a4f123aac747cd9901824a3aa4bd0391b4873e762e0"
+}

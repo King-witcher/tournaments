@@ -199,8 +199,8 @@ async fn insert_stages(
         sqlx::query!(
             "insert into tournament_stages
                  (tournament_id, position, format, best_of, finals_best_of, bracket,
-                  grand_final_reset, rounds, tiebreakers)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+                  grand_final_reset, rounds, tiebreakers, final_tie)
+             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
             id.0,
             position as i16,
             row.format,
@@ -209,7 +209,8 @@ async fn insert_stages(
             row.bracket,
             row.grand_final_reset,
             row.rounds,
-            row.tiebreakers.as_deref()
+            row.tiebreakers.as_deref(),
+            row.final_tie
         )
         .execute(&mut *conn)
         .await?;

@@ -31,8 +31,9 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
       ? "missed_check_in"
       : "playing");
   const placement = entry?.placement;
+  // No empate a decidir, a melhor posição do grupo ("Empate no 3º").
   const place = placement
-    ? placement.tied > 1
+    ? placement.tied > 1 && situation !== "tie_pending"
       ? t("situation.range", {
           from: placement.rank,
           to: placement.rank + placement.tied - 1,

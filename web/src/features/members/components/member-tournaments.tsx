@@ -53,7 +53,12 @@ export function MemberTournaments({ tenant, profile, isYou }: Props) {
             const label = team
               ? t("withTeam", { tournament: name, team: teamName(team) })
               : name;
-            const placed = placement ? place(placement) : undefined;
+            // No empate a decidir, a melhor posição do grupo ("Empate no 3º").
+            const placed = placement
+              ? situation === "tie_pending"
+                ? t("rank", { rank: placement.rank })
+                : place(placement)
+              : undefined;
             return {
               id: tournament.slug,
               href: `/${tenant}/${tournament.slug}`,

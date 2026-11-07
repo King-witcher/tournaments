@@ -32,7 +32,8 @@
       "eliminated": "Finished in {place}",
       "withdrawn": "Withdrew",
       "champion": "1st place, you won",
-      "reserve": "Reserve, no team"
+      "reserve": "Reserve, no team",
+      "tie_pending": "Tied for {place}, the organizers will decide"
     },
     "next": {
       "against": "Next match: {match} against {opponent}",

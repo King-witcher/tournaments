@@ -44,6 +44,10 @@ pub enum StageFormat {
         #[serde(default = "round_robin_tiebreakers")]
         #[schema(example = json!(["head_to_head", "map_diff", "frag_diff"]))]
         tiebreakers: Vec<Tiebreaker>,
+        /// Quem decide o empate que sobra depois de todos os critérios, no fim
+        /// da fase. Ausente: `seed`.
+        #[serde(default)]
+        final_tie: FinalTie,
     },
     /// Suíço, a fase inteira: rodadas fixas, pareamento por pontos sem
     /// revanche, classificação pela tabela. Até 128 participantes.
@@ -63,6 +67,10 @@ pub enum StageFormat {
         #[serde(default = "swiss_tiebreakers")]
         #[schema(example = json!(["buchholz", "head_to_head", "map_diff", "frag_diff"]))]
         tiebreakers: Vec<Tiebreaker>,
+        /// Quem decide o empate que sobra depois de todos os critérios, no fim
+        /// da fase. Ausente: `seed`.
+        #[serde(default)]
+        final_tie: FinalTie,
     },
     /// Disputa de posições, a fase inteira: a ordem da chave forma os pares
     /// (1 x 2, 3 x 4...), todos prontos no início, e quem vence cada série
@@ -94,6 +102,19 @@ pub enum Tiebreaker {
     /// inicial da comunidade para quem não tem); o menor fica à frente. Só
     /// depois da primeira série decidida da fase.
     LowerRating,
+}
+
+/// Quem decide, nas fases de tabela, o empate que sobra depois de todos os
+/// critérios.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum FinalTie {
+    /// A ordem da chave, como nos critérios.
+    #[default]
+    Seed,
+    /// A organização, no fim da fase: a fase espera a decisão de cada grupo
+    /// empatado e só então termina.
+    Organizer,
 }
 
 fn round_robin_tiebreakers() -> Vec<Tiebreaker> {

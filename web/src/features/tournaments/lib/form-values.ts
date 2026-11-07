@@ -48,6 +48,11 @@ export type TournamentValues = {
    * põe o padrão do novo.
    */
   tiebreakers: Tiebreaker[];
+  /**
+   * Nas fases de tabela: quem decide o empate que sobra depois de todos os
+   * critérios, no fim da fase.
+   */
+  finalTie: Schemas["FinalTie"];
   /** Bans de campeão de cada lado na série. */
   bansPerSeries: number;
   /** Adversários podem usar o mesmo campeão na partida. */
@@ -138,6 +143,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     finalsBestOf: 5,
     swissRounds: null,
     tiebreakers: DEFAULT_TIEBREAKERS.round_robin,
+    finalTie: "seed",
     bansPerSeries: 1,
     mirror: true,
     noRepeat: "off",
@@ -185,6 +191,10 @@ export function valuesFrom(
     finalsBestOf: stage.format === "elimination" ? stage.finals_best_of : 5,
     swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
     tiebreakers: stageTiebreakers(stage) ?? DEFAULT_TIEBREAKERS.round_robin,
+    finalTie:
+      stage.format === "round_robin" || stage.format === "swiss"
+        ? (stage.final_tie ?? "seed")
+        : "seed",
     bansPerSeries: rules.bans_per_series,
     mirror: rules.mirror,
     noRepeat: rules.no_repeat?.scope ?? "off",
@@ -555,6 +565,7 @@ function stageBody(values: TournamentValues): Schemas["StageFormat"] {
         format: "round_robin",
         best_of: values.bestOf,
         tiebreakers: values.tiebreakers,
+        final_tie: values.finalTie,
       };
     case "swiss":
       return {
@@ -562,6 +573,7 @@ function stageBody(values: TournamentValues): Schemas["StageFormat"] {
         best_of: values.bestOf,
         rounds: values.swissRounds,
         tiebreakers: values.tiebreakers,
+        final_tie: values.finalTie,
       };
     case "placement":
       return { format: "placement", best_of: values.bestOf };

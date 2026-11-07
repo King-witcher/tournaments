@@ -3,7 +3,8 @@
 //! qualquer formato (`StageBracket`), sempre por `replay`. Nada do estado do
 //! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
 //! refeito por replay) vêm junto. Duas idas ao banco: os times (`teams`) e o
-//! resto (`db::stage_rows`, com os campeões quando há draft). Para a colocação
+//! resto (`db::stage_rows`, com os campeões quando há draft e, com a
+//! organização decidindo o empate do fim, as decisões dela, `ties`). Para a colocação
 //! nos torneios encerrados, `brackets` refaz só a chave de vários torneios,
 //! com as mesmas duas idas.
 //!
@@ -11,6 +12,7 @@
 //! classificação da anterior como participantes, montada quando a anterior
 //! termina, e os resultados já separados por `stage`.
 
+use chrono::{DateTime, Utc};
 use engine::{
     core::{EngineError, MatchId, MatchState, ParticipantId, PlayerId, SeriesFrags, StageReport},
     formats::{self as ef, StageBracket, StageHistory, swiss::SwissRound},
@@ -24,6 +26,7 @@ use super::{
     games::StoredGame,
     result::{Side, StoredResult},
     rounds,
+    ties::{self, StoredTie},
     veto::{Champion, MatchVeto, MatchVetoRow, VetoLog},
 };
 use crate::{
@@ -60,6 +63,12 @@ pub struct Stage {
     pub vetoes: Vec<MatchVeto>,
     /// Quem age pelo time.
     pub team_rules: TeamRules,
+    /// Fases de tabela com a organização decidindo o empate do fim: as
+    /// decisões gravadas, na ordem; vazio nos outros casos.
+    pub ties: Vec<StoredTie>,
+    /// Desde quando a fase espera a organização decidir um empate (o que está
+    /// gravado: `ties::sync` acerta depois de cada mudança).
+    pub ties_pending_since: Option<DateTime<Utc>>,
     /// TDM com o draft: quem jogou cada partida enviada (o elenco do veto);
     /// vazio nos outros casos.
     lineups: Vec<(MatchId, i16, Side, i64)>,
@@ -118,6 +127,7 @@ impl Stage {
             results,
             games: &self.games,
             rounds: &self.rounds,
+            ties: &self.ties,
         }
     }
 }
@@ -177,6 +187,8 @@ pub struct History<'a> {
     pub games: &'a [StoredGame],
     /// Suíço: os pareamentos gravados.
     pub rounds: &'a [SwissRound],
+    /// As decisões dos empates do fim.
+    pub ties: &'a [StoredTie],
 }
 
 /// Refaz a fase com os resultados confirmados de `history`, na ordem (com os
@@ -212,6 +224,7 @@ pub fn replay(
             .iter()
             .filter_map(|e| e.rating_at_start.map(|r| (e.participant(), r)))
             .collect(),
+        tie_orders: history.ties.iter().map(StoredTie::order).collect(),
     };
     let bracket =
         StageBracket::replay(format, seeded, stage_history).map_err(Contradiction::Engine)?;
@@ -269,6 +282,17 @@ fn replayed(
     })
 }
 
+/// Fase de tabela com a organização decidindo o empate do fim: só nela a fase
+/// lê as decisões e a marca de espera.
+fn organizer_ties(format: &ef::StageFormat) -> bool {
+    let final_tie = match format {
+        ef::StageFormat::RoundRobin(c) => c.final_tie,
+        ef::StageFormat::Swiss(c) => c.final_tie,
+        _ => return false,
+    };
+    final_tie == ef::table::FinalTie::Organizer
+}
+
 /// TDM com o draft: só nele a fase lê quem jogou cada partida enviada (no
 /// resto, o pick é do lado).
 fn needs_lineups(rules: &VetoRules) -> bool {
@@ -298,6 +322,7 @@ pub async fn load(
         veto: true,
         lineups: needs_lineups(&veto_rules),
         champions: veto_rules.champion_phase,
+        ties: organizer_ties(&format),
         ..Parts::default()
     };
     let db::StageRows {
@@ -307,16 +332,20 @@ pub async fn load(
         veto: veto_rows,
         lineups,
         champions,
+        ties,
+        ties_pending_since,
         ..
     } = db::stage_rows(conn, &[tournament.id], number, parts)
         .await?
         .pop()
         .unwrap_or_default();
+    let ties = ties::stored(ties);
     let history = History {
         entrants: &entrants,
         results: &results,
         games: &games,
         rounds: &rounds,
+        ties: &ties,
     };
     let bracket = replayed(tournament.id, format, &history)?;
     let vetoes = vetoes(
@@ -342,6 +371,8 @@ pub async fn load(
         map_pool: tournament.map_pool.clone(),
         vetoes,
         team_rules: tournament.setup.team_rules,
+        ties,
+        ties_pending_since,
         lineups,
     })
 }
@@ -371,6 +402,7 @@ pub async fn brackets(
         results: true,
         games: true,
         pairings: true,
+        ties: true,
         ..Parts::default()
     };
     let rows = db::stage_rows(conn, tournaments, FIRST_STAGE, parts).await?;
@@ -380,11 +412,13 @@ pub async fn brackets(
         .zip(rows)
         .map(|((&id, entrants), rows)| {
             let format = rows.config.ok_or_else(ApiError::internal)?;
+            let ties = ties::stored(rows.ties);
             let history = History {
                 entrants: &entrants,
                 results: &rows.results,
                 games: &rows.games,
                 rounds: &rows.rounds,
+                ties: &ties,
             };
             let bracket = replayed(id, format, &history)?;
             Ok(Settled {
@@ -433,6 +467,7 @@ impl Stage {
                     results: &self.results,
                     games: &games,
                     rounds: &self.rounds,
+                    ties: &self.ties,
                 };
                 let bracket = replayed(tournament.id, self.format, &history)?;
                 let rows = self

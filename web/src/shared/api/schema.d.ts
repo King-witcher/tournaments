@@ -1668,6 +1668,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/ties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decide_tie"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/ties/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decide_ties_by_seed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/translations/{locale}": {
         parameters: {
             query?: never;
@@ -2350,6 +2382,12 @@ export interface components {
              */
             winner_maps?: number | null;
         };
+        /**
+         * @description Quem decide, nas fases de tabela, o empate que sobra depois de todos os
+         *     critérios.
+         * @enum {string}
+         */
+        FinalTie: "seed" | "organizer";
         /** @description Um inscrito sem time. */
         FormationPlayer: {
             avatar_url?: string | null;
@@ -3118,6 +3156,17 @@ export interface components {
             };
         } | {
             /** @enum {string} */
+            code: "tournament.tie_pending";
+            /**
+             * @description As séries da fase acabaram com um empate na classificação que espera a
+             *     decisão da organização (para organizers e owner, uma vez, quando a fase
+             *     passa a esperar).
+             */
+            params: {
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
             code: "tenant.deletion_due";
             /**
              * @description A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
@@ -3206,6 +3255,11 @@ export interface components {
              */
             contested: components["schemas"]["ContestedGame"][];
             /**
+             * @description Torneios com um empate do fim da fase esperando a decisão da
+             *     organização, do que espera há mais tempo ao mais recente.
+             */
+            pending_ties: components["schemas"]["PendingTies"][];
+            /**
              * @description Torneios na inscrição ou no check-in com o início marcado já passado,
              *     do início mais antigo ao mais recente.
              */
@@ -3250,6 +3304,29 @@ export interface components {
              *     W.O.
              */
             withdrawn: boolean;
+        };
+        /** @description Um empate do fim da fase que espera a organização. */
+        PendingTieGroup: {
+            /**
+             * Format: int32
+             * @description A melhor posição do grupo, que os empatados dividem.
+             */
+            position: number;
+            /** @description Os times empatados, na ordem da chave. */
+            team_ids: number[];
+        };
+        /**
+         * @description Um torneio cujas séries acabaram com empate na classificação esperando a
+         *     organização: resolve-se na aba Classificação
+         *     (`/{tenant}/{torneio}/standings`).
+         */
+        PendingTies: {
+            /**
+             * Format: date-time
+             * @description Desde quando espera.
+             */
+            since: string;
+            tournament: components["schemas"]["PendingTournament"];
         };
         /** @description O torneio de um item: a comunidade, o endereço e o nome. */
         PendingTournament: {
@@ -3659,7 +3736,7 @@ export interface components {
          *     membro, no perfil dele na comunidade.
          * @enum {string}
          */
-        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "reserve" | "playing" | "eliminated" | "withdrawn" | "champion";
+        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "reserve" | "playing" | "tie_pending" | "eliminated" | "withdrawn" | "champion";
         /** @enum {string} */
         SourceOutcome: "winner" | "loser";
         /** @description Formato de uma fase. */
@@ -3692,6 +3769,11 @@ export interface components {
              * @example 3
              */
             best_of: number;
+            /**
+             * @description Quem decide o empate que sobra depois de todos os critérios, no fim
+             *     da fase. Ausente: `seed`.
+             */
+            final_tie?: components["schemas"]["FinalTie"];
             /** @enum {string} */
             format: "round_robin";
             /**
@@ -3713,6 +3795,11 @@ export interface components {
              * @example 3
              */
             best_of: number;
+            /**
+             * @description Quem decide o empate que sobra depois de todos os critérios, no fim
+             *     da fase. Ausente: `seed`.
+             */
+            final_tie?: components["schemas"]["FinalTie"];
             /** @enum {string} */
             format: "swiss";
             /**
@@ -3804,10 +3891,11 @@ export interface components {
         /**
          * @description Critério de ordem da tabela: o saldo de séries (round robin) ou os pontos
          *     (suíço), depois os desempates da fase (`StageFormat`, `tiebreakers`), na
-         *     ordem dela, e, por último, o seed.
+         *     ordem dela, e, por último, o seed ou, no fim da fase, a decisão da
+         *     organização (`final_tie`).
          * @enum {string}
          */
-        TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "lower_rating" | "seed";
+        TableCriterion: "series_diff" | "points" | "buchholz" | "head_to_head" | "map_diff" | "frag_diff" | "lower_rating" | "seed" | "organizer";
         /** @description Uma linha da tabela do round robin ou do suíço. */
         TableRow: {
             ahead_by?: components["schemas"]["TableCriterion"] | null;
@@ -3866,7 +3954,8 @@ export interface components {
             points: number;
             /**
              * Format: int32
-             * @description De 1 a N, sem empate.
+             * @description De 1 a N, sem empate, menos num empate que espera a organização
+             *     (`tie_pending`): os do grupo dividem a melhor posição dele.
              */
             position: number;
             /**
@@ -3886,6 +3975,16 @@ export interface components {
              * @description O time (um dos `entrants` da chave).
              */
             team_id: number;
+            /**
+             * @description Está num empate do fim que espera a decisão da organização; a ordem
+             *     dentro do grupo é a provisória (a da chave).
+             */
+            tie_pending: boolean;
+            /**
+             * @description Num grupo que a organização ordenou (`ahead_by` `organizer`): o motivo
+             *     dela, se deu.
+             */
+            tie_reason?: string | null;
             /** Format: int32 */
             wins: number;
         };
@@ -3990,6 +4089,16 @@ export interface components {
              */
             url?: string | null;
         };
+        /** @description A ordem que a organização decide para um empate do fim da fase. */
+        TieDecision: {
+            /** @description Motivo opcional, até 280 caracteres, que a classificação mostra. */
+            reason?: string | null;
+            /**
+             * @description Os times de um empate pendente (`pending_ties`), do melhor ao pior,
+             *     todos e cada um uma vez. A ordem da chave também vale.
+             */
+            teams: number[];
+        };
         /**
          * @description Um desempate das fases de tabela. O primeiro critério (saldo de séries ou
          *     pontos) e a ordem da chave, o último, são fixos e não entram na lista.
@@ -4083,6 +4192,12 @@ export interface components {
              */
             matches: components["schemas"]["BracketMatch"][];
             /**
+             * @description Round robin e suíço com a organização decidindo o empate do fim: os
+             *     grupos que, com todas as séries decididas, esperam a decisão dela. A
+             *     fase (e o torneio) só termina sem nenhum. Vazio nos outros casos.
+             */
+            pending_ties: components["schemas"]["PendingTieGroup"][];
+            /**
              * Format: int64
              * @description Partidas com algum mapa enviado ou resultado, que desfazer o início
              *     apaga.
@@ -4093,6 +4208,8 @@ export interface components {
              *     campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
              *     5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
              *     disputa de posições, as dos pares decididos e a do sem par, sem empate.
+             *     Com um empate do fim esperando a organização, os do grupo ficam de fora
+             *     (`pending_ties`).
              */
             standings: components["schemas"]["Standing"][];
             /** @description Status do torneio depois das confirmações por tempo. */
@@ -6980,7 +7097,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in. Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
+            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in, e torneios com empate do fim da fase esperando a decisão da organização (do mais antigo). Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12339,6 +12456,141 @@ export interface operations {
                 };
             };
             /** @description tournament.not_in_progress, team.not_in_bracket (time que ficou fora da chave) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    decide_tie: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TieDecision"];
+            };
+        };
+        responses: {
+            /** @description A ordem de um empate pendente do fim da fase (`pending_ties` da chave), decidida pela organização, com o motivo opcional; usar a ordem da chave também é mandar a ordem dela. Sem outro pendente, o torneio encerra */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentBracket"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tie.not_pending (os times não são exatamente os de um empate pendente agora) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tie.reason_invalid {max}, request.invalid_body */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    decide_ties_by_seed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Todos os empates pendentes do fim da fase decididos pela ordem da chave, sem motivo; o torneio encerra */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TournamentBracket"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tie.not_pending (nenhum empate pendente) */
             409: {
                 headers: {
                     [name: string]: unknown;

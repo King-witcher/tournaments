@@ -47,6 +47,7 @@ fn buchholz_only_in_the_swiss() {
     let rr = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 3,
         tiebreakers: buchholz,
+        final_tie: FinalTie::Seed,
     });
     assert_eq!(rr.validate(), Err(EngineError::InvalidTiebreakers));
     assert_eq!(rr.worst_case_games(8), Err(EngineError::InvalidTiebreakers));
@@ -55,12 +56,14 @@ fn buchholz_only_in_the_swiss() {
             best_of: 3,
             rounds: None,
             tiebreakers,
+            final_tie: FinalTie::Seed,
         });
         assert_eq!(swiss.validate(), Ok(()));
     }
     let none = StageFormat::RoundRobin(RoundRobinConfig {
         best_of: 3,
         tiebreakers: Tiebreakers::NONE,
+        final_tie: FinalTie::Seed,
     });
     assert_eq!(none.validate(), Ok(()));
 }

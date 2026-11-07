@@ -14,6 +14,9 @@ pub struct Organizing {
     /// Torneios na inscrição ou no check-in com o início marcado já passado,
     /// do início mais antigo ao mais recente.
     pub start_due: Vec<StartDue>,
+    /// Torneios com um empate do fim da fase esperando a decisão da
+    /// organização, do que espera há mais tempo ao mais recente.
+    pub pending_ties: Vec<PendingTies>,
 }
 
 /// O torneio de um item: a comunidade, o endereço e o nome.
@@ -44,6 +47,16 @@ pub struct ContestedGame {
     /// Apelido de quem contestou; `null` se a conta não existe mais.
     pub contested_by: Option<String>,
     pub contested_at: DateTime<Utc>,
+}
+
+/// Um torneio cujas séries acabaram com empate na classificação esperando a
+/// organização: resolve-se na aba Classificação
+/// (`/{tenant}/{torneio}/standings`).
+#[derive(Serialize, ToSchema)]
+pub struct PendingTies {
+    pub tournament: PendingTournament,
+    /// Desde quando espera.
+    pub since: DateTime<Utc>,
 }
 
 /// Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se na

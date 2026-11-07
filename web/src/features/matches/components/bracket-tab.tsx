@@ -46,7 +46,11 @@ export async function BracketTab({ tenant, slug, view }: Props) {
     );
   }
   return view === "standings" ? (
-    <StandingsSection tenant={tenant} tournament={tournament} />
+    <StandingsSection
+      tenant={tenant}
+      tournament={tournament}
+      organizer={loaded.me.role !== "player"}
+    />
   ) : (
     <BracketSection tenant={tenant} tournament={tournament} />
   );

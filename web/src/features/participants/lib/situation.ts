@@ -16,6 +16,7 @@ export const SITUATION_STATUS: Record<
   missed_check_in: "cancelled",
   reserve: "neutral",
   playing: "in_progress",
+  tie_pending: "in_progress",
   eliminated: "finished",
   withdrawn: "cancelled",
   champion: "confirmed",

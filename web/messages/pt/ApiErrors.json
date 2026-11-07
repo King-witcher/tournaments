@@ -268,5 +268,9 @@
     "member_invalid": "Quem sai precisa ser do time, e quem entra, outra pessoa.",
     "player_in_team": "Essa pessoa já joga num time deste torneio.",
     "withdrawn": "Esse time desistiu do torneio."
+  },
+  "tie": {
+    "not_pending": "Esse empate não está mais esperando decisão. Recarregue a página.",
+    "reason_invalid": "Escreva um motivo de até {max} caracteres, numa linha."
   }
 }

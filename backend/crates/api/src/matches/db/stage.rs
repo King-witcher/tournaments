@@ -1,5 +1,6 @@
 //! O que a fase grava, numa ida só ao banco: as séries decididas, os mapas,
-//! os pareamentos do suíço, os eventos de veto, as escalações e os campeões,
+//! os pareamentos do suíço, os eventos de veto, as escalações, os campeões
+//! e as decisões dos empates do fim,
 //! cada parte agregada em JSON e lida só quando pedida (`Parts`). Serve a
 //! `stage::load`, a `Stage::refresh` e às colocações dos torneios encerrados
 //! (`mine::final_places`, vários torneios de uma vez). Os times da chave ficam
@@ -14,6 +15,7 @@ use serde::Deserialize;
 use sqlx::{PgConnection, types::Json};
 
 use super::pairings::{PairingRow, rounds};
+use super::ties::TieRow;
 use crate::{
     matches::{
         games::{GameRow, StoredGame},
@@ -38,6 +40,9 @@ pub struct Parts {
     /// TDM com o draft: quem jogou cada partida enviada.
     pub lineups: bool,
     pub champions: bool,
+    /// Fases de tabela com a organização decidindo o empate do fim: as
+    /// decisões e se a fase espera por ela.
+    pub ties: bool,
 }
 
 /// A fase de um torneio como está gravada.
@@ -57,6 +62,10 @@ pub struct StageRows {
     /// Todos os campeões (os inativos aparecem em vetos antigos), na ordem
     /// dos ids: a ordem das opções e do sorteio do tempo esgotado.
     pub champions: Vec<Champion>,
+    /// As decisões dos empates do fim, na ordem em que foram gravadas.
+    pub ties: Vec<TieRow>,
+    /// Desde quando a fase espera a organização decidir um empate.
+    pub ties_pending_since: Option<DateTime<Utc>>,
 }
 
 /// A fase `stage` de cada torneio de `tournaments`, na mesma ordem, com as
@@ -78,7 +87,7 @@ pub async fn stage_rows(
                   case when (select $3::bool) then (
                       select to_json(s) from (
                           select format, best_of, finals_best_of, bracket, grand_final_reset,
-                                 rounds, tiebreakers
+                                 rounds, tiebreakers, final_tie
                           from tournament_stages
                           where tournament_id = q.id and position = $2) s)
                   end as "config: Json<StageRow>",
@@ -129,7 +138,20 @@ pub async fn stage_rows(
                   case when (select $9::bool) then (
                       select json_agg(c order by c.id) from (
                           select id, slug, name, active from champions) c)
-                  end as "champions: Json<Vec<ChampionRow>>"
+                  end as "champions: Json<Vec<ChampionRow>>",
+                  case when (select $10::bool) then (
+                      select json_agg(d order by d.id) from (
+                          select d.id, d.reason,
+                                 (select array_agg(x.team_id order by x.position)
+                                  from stage_tie_decision_teams x
+                                  where x.decision_id = d.id) as teams
+                          from stage_tie_decisions d
+                          where d.tournament_id = q.id and d.stage = $2) d)
+                  end as "ties: Json<Vec<TieRow>>",
+                  case when (select $10::bool) then (
+                      select since from stage_pending_ties
+                      where tournament_id = q.id and stage = $2)
+                  end as ties_pending_since
            from unnest((select $1::bigint[])) with ordinality as q(id, n)
            order by q.n"#,
         &ids,
@@ -140,7 +162,8 @@ pub async fn stage_rows(
         parts.pairings,
         parts.veto,
         parts.lineups,
-        parts.champions
+        parts.champions,
+        parts.ties
     )
     .fetch_all(conn)
     .await?;
@@ -169,6 +192,8 @@ pub async fn stage_rows(
                     .into_iter()
                     .map(ChampionRow::read)
                     .collect(),
+                ties: list(r.ties),
+                ties_pending_since: r.ties_pending_since,
             })
         })
         .collect()

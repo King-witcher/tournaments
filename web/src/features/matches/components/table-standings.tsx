@@ -36,13 +36,17 @@ type Props = {
  * confronto direto"; no menor rating, com o rating do início de cada um),
  * visíveis também no celular, onde as colunas de saldo somem (e, com a do
  * Buchholz, o (i): a explicação vem depois dos desempates, se algum foi por
- * ele). Enquanto a fase corre, é a ordem de agora; no fim, a
- * definitiva.
+ * ele). Enquanto a fase corre, é a ordem de agora; no fim, a definitiva. No
+ * empate do fim que espera a organização, os empatados dividem a melhor
+ * posição do grupo, com a etiqueta "Empate a decidir" e uma linha nos
+ * desempates; no grupo que ela ordenou, o desempate diz "por decisão da
+ * organização", com o motivo.
  */
 export function TableStandings({ tenant, bracket }: Props) {
   const t = useTranslations("Bracket.table");
   const tStandings = useTranslations("Bracket.standings");
   const teamName = useTeamName();
+  const locale = useLocale();
   const rows = bracket.table ?? [];
   const swiss = bracket.format.format === "swiss";
   // O suíço sem o Buchholz entre os desempates não o calcula.
@@ -54,7 +58,6 @@ export function TableStandings({ tenant, bracket }: Props) {
   const signed = (n: number) => (n > 0 ? `+${n}` : fragsText(n));
   // O rating do início é a média do time: até 2 casas, sem separador de
   // milhar, como o rating no resto do site.
-  const locale = useLocale();
   const ratingFormat = new Intl.NumberFormat(locale, {
     maximumFractionDigits: 2,
     useGrouping: false,
@@ -148,6 +151,11 @@ export function TableStandings({ tenant, bracket }: Props) {
                 {tStandings("champion")}
               </StatusTag>
             )}
+            {r.tie_pending && (
+              <StatusTag status="in_progress" size="sm">
+                {t("tiePending")}
+              </StatusTag>
+            )}
             {team && (
               <DepartureTag withdrawn={team.withdrawn} left={teamLeft(team)} />
             )}
@@ -167,17 +175,31 @@ export function TableStandings({ tenant, bracket }: Props) {
     if (!next || !r.ahead_by) return [];
     if (r.ahead_by === "points" || r.ahead_by === "series_diff") return [];
     if (!started(r) && !started(next)) return [];
-    return [
-      t(`aheadBy.${r.ahead_by}`, {
-        position: r.position,
-        name: nameOf(r.team_id),
-        next: next.position,
-        other: nameOf(next.team_id),
-        rating: ratingOf(r),
-        otherRating: ratingOf(next),
-      }),
-    ];
+    // No empate a decidir, a ordem é provisória: a linha do grupo vem abaixo.
+    if (r.ahead_by === "seed" && r.tie_pending && next.tie_pending) return [];
+    const values = {
+      position: r.position,
+      name: nameOf(r.team_id),
+      next: next.position,
+      other: nameOf(next.team_id),
+      rating: ratingOf(r),
+      otherRating: ratingOf(next),
+    };
+    if (r.ahead_by === "organizer" && r.tie_reason) {
+      return [
+        t("aheadBy.organizerReason", { ...values, reason: r.tie_reason }),
+      ];
+    }
+    return [t(`aheadBy.${r.ahead_by}`, values)];
   });
+  const names = new Intl.ListFormat(locale, { type: "conjunction" });
+  const pending = (bracket.pending_ties ?? []).map((tie) =>
+    t("pendingGroup", {
+      position: tie.position,
+      names: names.format(tie.team_ids.map(nameOf)),
+    }),
+  );
+  const explained = [...pending, ...tiebreaks];
 
   return (
     <Section
@@ -191,11 +213,11 @@ export function TableStandings({ tenant, bracket }: Props) {
         rows={tableRows}
         empty={{ text: t("empty") }}
       />
-      {tiebreaks.length > 0 && (
+      {explained.length > 0 && (
         <div className={styles.tiebreaks}>
           <h3 className={styles.tiebreaksTitle}>{t("tiebreaks")}</h3>
           <ul className={styles.tiebreakList}>
-            {tiebreaks.map((text) => (
+            {explained.map((text) => (
               <li key={text}>{text}</li>
             ))}
           </ul>

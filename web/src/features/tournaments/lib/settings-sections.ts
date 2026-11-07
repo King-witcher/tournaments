@@ -50,6 +50,7 @@ export const SECTION_KEYS = {
     "finalsBestOf",
     "swissRounds",
     "tiebreakers",
+    "finalTie",
     "countsForRating",
   ],
   maps: ["mapMode", "vetoOrder", "mapPool", "vetoSeconds"],

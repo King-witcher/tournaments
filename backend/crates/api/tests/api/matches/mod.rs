@@ -6,8 +6,9 @@
 //! custa cada clique (`cost`), o veto de mapas e
 //! campeões (`veto`), a ordem das escolhas de campeão e o que fica escondido às
 //! cegas (`pick_order`), quem age pelo time (`acting`) e os formatos de tabela
-//! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`), e a
-//! disputa de posições (`placement`).
+//! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`) e o
+//! empate do fim decidido pela organização (`ties`), e a disputa de posições
+//! (`placement`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod acting;
@@ -26,6 +27,7 @@ mod round_robin;
 mod schema;
 mod swiss;
 mod tdm;
+mod ties;
 mod veto;
 
 use axum::{Router, http::StatusCode};

@@ -11,7 +11,7 @@ use engine::{
         placement::PlacementConfig,
         round_robin::RoundRobinConfig,
         swiss::SwissConfig,
-        table::{Criterion, Tiebreakers},
+        table::{Criterion, FinalTie, Tiebreakers},
     },
     series::SeriesLength,
 };
@@ -105,6 +105,9 @@ pub struct StageRow {
     /// Fases de tabela: os desempates, em ordem. Nulo na eliminação e na
     /// disputa de posições.
     pub(super) tiebreakers: Option<Vec<String>>,
+    /// Fases de tabela: `seed` ou `organizer` (check `tournament_stages_final_tie`).
+    /// Nulo na eliminação e na disputa de posições.
+    pub(super) final_tie: Option<String>,
 }
 
 /// Um desempate na coluna `tiebreakers` (check `tournament_stages_tiebreakers`).
@@ -119,7 +122,18 @@ fn tiebreaker_column(criterion: Criterion) -> &'static str {
         Criterion::SeriesDiff => "series_diff",
         Criterion::Points => "points",
         Criterion::Seed => "seed",
+        Criterion::Organizer => "organizer",
     }
+}
+
+fn final_tie_column(final_tie: FinalTie) -> Option<String> {
+    Some(
+        match final_tie {
+            FinalTie::Seed => "seed",
+            FinalTie::Organizer => "organizer",
+        }
+        .to_owned(),
+    )
 }
 
 fn tiebreaker_columns(tiebreakers: Tiebreakers) -> Option<Vec<String>> {
@@ -150,6 +164,7 @@ impl From<ef::StageFormat> for StageRow {
                     grand_final_reset,
                     rounds: None,
                     tiebreakers: None,
+                    final_tie: None,
                 }
             }
             ef::StageFormat::RoundRobin(config) => Self {
@@ -160,6 +175,7 @@ impl From<ef::StageFormat> for StageRow {
                 grand_final_reset: None,
                 rounds: None,
                 tiebreakers: tiebreaker_columns(config.tiebreakers),
+                final_tie: final_tie_column(config.final_tie),
             },
             ef::StageFormat::Swiss(config) => Self {
                 format: "swiss".to_owned(),
@@ -170,6 +186,7 @@ impl From<ef::StageFormat> for StageRow {
                 // Fora da faixa, o check do banco recusa.
                 rounds: config.rounds.map(|n| i16::try_from(n).unwrap_or(i16::MAX)),
                 tiebreakers: tiebreaker_columns(config.tiebreakers),
+                final_tie: final_tie_column(config.final_tie),
             },
             ef::StageFormat::Placement(config) => Self {
                 format: "placement".to_owned(),
@@ -179,6 +196,7 @@ impl From<ef::StageFormat> for StageRow {
                 grand_final_reset: None,
                 rounds: None,
                 tiebreakers: None,
+                final_tie: None,
             },
         }
     }
@@ -204,6 +222,15 @@ impl StageRow {
         Tiebreakers::new(&criteria).map_err(|_| invalid("tiebreakers", &self))
     }
 
+    /// Quem decide o empate do fim numa fase de tabela.
+    fn final_tie(&self) -> Result<FinalTie, ApiError> {
+        match self.final_tie.as_deref() {
+            Some("seed") => Ok(FinalTie::Seed),
+            Some("organizer") => Ok(FinalTie::Organizer),
+            _ => Err(invalid("final_tie", &self)),
+        }
+    }
+
     pub fn read(&self) -> Result<ef::StageFormat, ApiError> {
         let best_of = |n: i16| u8::try_from(n).map_err(|_| invalid("best_of", &self));
         match self.format.as_str() {
@@ -221,6 +248,9 @@ impl StageRow {
                 if self.tiebreakers.is_some() {
                     return Err(invalid("tiebreakers", &self));
                 }
+                if self.final_tie.is_some() {
+                    return Err(invalid("final_tie", &self));
+                }
                 Ok(ef::StageFormat::Elimination(el::EliminationConfig {
                     kind,
                     series: SeriesLength {
@@ -232,6 +262,7 @@ impl StageRow {
             "round_robin" => Ok(ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: best_of(self.best_of)?,
                 tiebreakers: self.tiebreakers()?,
+                final_tie: self.final_tie()?,
             })),
             "swiss" => Ok(ef::StageFormat::Swiss(SwissConfig {
                 best_of: best_of(self.best_of)?,
@@ -241,8 +272,9 @@ impl StageRow {
                     .transpose()
                     .map_err(|_| invalid("rounds", &self))?,
                 tiebreakers: self.tiebreakers()?,
+                final_tie: self.final_tie()?,
             })),
-            "placement" if self.tiebreakers.is_none() => {
+            "placement" if self.tiebreakers.is_none() && self.final_tie.is_none() => {
                 Ok(ef::StageFormat::Placement(PlacementConfig {
                     best_of: best_of(self.best_of)?,
                 }))
@@ -280,25 +312,30 @@ mod tests {
             ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: 3,
                 tiebreakers: Tiebreakers::ROUND_ROBIN,
+                final_tie: FinalTie::Organizer,
             }),
             ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: 2,
                 tiebreakers: Tiebreakers::NONE,
+                final_tie: FinalTie::Seed,
             }),
             ef::StageFormat::RoundRobin(RoundRobinConfig {
                 best_of: 4,
                 tiebreakers: Tiebreakers::new(&[Criterion::LowerRating, Criterion::HeadToHead])
                     .unwrap(),
+                final_tie: FinalTie::Organizer,
             }),
             ef::StageFormat::Swiss(SwissConfig {
                 best_of: 1,
                 rounds: None,
                 tiebreakers: Tiebreakers::SWISS,
+                final_tie: FinalTie::Seed,
             }),
             ef::StageFormat::Swiss(SwissConfig {
                 best_of: 255,
                 rounds: Some(127),
                 tiebreakers: Tiebreakers::new(&[Criterion::FragDiff, Criterion::Buchholz]).unwrap(),
+                final_tie: FinalTie::Organizer,
             }),
             ef::StageFormat::Placement(PlacementConfig { best_of: 5 }),
         ] {
@@ -345,6 +382,7 @@ mod tests {
             grand_final_reset: reset,
             rounds: None,
             tiebreakers: None,
+            final_tie: None,
         };
         assert!(row("ladder", None, None).read().is_err());
         assert!(row("elimination", None, None).read().is_err());
@@ -372,6 +410,19 @@ mod tests {
         };
         assert!(single.read().is_err());
         assert!(tiebreakers("placement", Some(&[])).read().is_err());
+        // Quem decide o empate do fim: só nas fases de tabela, e só os dois.
+        let final_tie = |format: &str, value: Option<&str>| StageRow {
+            final_tie: value.map(str::to_owned),
+            ..tiebreakers(format, Some(&[]))
+        };
+        assert!(final_tie("round_robin", Some("seed")).read().is_ok());
+        assert!(final_tie("round_robin", None).read().is_err());
+        assert!(final_tie("swiss", Some("coin")).read().is_err());
+        let single_with_tie = StageRow {
+            final_tie: Some("seed".to_owned()),
+            ..row("elimination", Some("single"), None)
+        };
+        assert!(single_with_tie.read().is_err());
         let half_rule = ChampionColumns {
             bans_per_series: 1,
             mirror: true,

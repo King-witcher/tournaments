@@ -1,12 +1,14 @@
 //! `GET /me/organizing`: o que espera a organização em todas as comunidades
 //! em que quem vê é organizer ou owner ativo, com o caminho de cada item:
-//! mapas contestados a resolver e torneios cujo início marcado chegou sem
-//! terem sido iniciados (o critério do aviso `tournament.start_due`). É o
+//! mapas contestados a resolver, torneios cujo início marcado chegou sem
+//! terem sido iniciados (o critério do aviso `tournament.start_due`) e
+//! torneios com empate do fim da fase esperando a decisão dela
+//! (`stage_pending_ties`, o critério do aviso `tournament.tie_pending`). É o
 //! par de `/me/tournaments` para quem organiza, numa rota própria: só a home
 //! de quem organiza pede (o front sabe pelos papéis de "Suas comunidades"),
 //! e a resposta não depende de refazer chave nenhuma.
 //!
-//! Só leitura, em duas queries (`db`) que leem direto as tabelas de
+//! Só leitura, em três queries (`db`) que leem direto as tabelas de
 //! `tournaments`, `participants` e `matches`: passar pelo domínio de cada um
 //! seria uma busca por torneio. Organizer e owner veem todos os torneios da
 //! comunidade (`visibility`: só o rascunho some para os outros), então o papel basta como filtro.

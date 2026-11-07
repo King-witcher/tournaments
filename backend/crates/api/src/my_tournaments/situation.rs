@@ -35,6 +35,7 @@ impl Situation {
             Place::Withdrawn(Some((rank, tied))) => {
                 (Self::Withdrawn, Some(MyPlacement { rank, tied }))
             }
+            Place::TiePending(rank, tied) => (Self::TiePending, Some(MyPlacement { rank, tied })),
             Place::Eliminated(rank, tied) => (Self::Eliminated, Some(MyPlacement { rank, tied })),
             Place::Champion => (Self::Champion, Some(MyPlacement { rank: 1, tied: 1 })),
         }

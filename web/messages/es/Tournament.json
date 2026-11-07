@@ -103,7 +103,8 @@
       "games": "Diferencia de partidas",
       "frags": "Diferencia de frags",
       "lowerRating": "Menor rating (el del inicio del torneo)",
-      "seed": "Orden de la llave"
+      "seed": "Orden de la llave",
+      "organizer": "Decisión de la organización, al final de la fase"
     },
     "series": {
       "title": "Cada serie",

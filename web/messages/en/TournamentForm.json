@@ -248,7 +248,6 @@
     "title": "Tiebreakers",
     "label": "Order",
     "position": "{position}.",
-    "seedLast": "Seeding comes last.",
     "none": "Seeding only",
     "names": {
       "head_to_head": "Head-to-head",
@@ -269,11 +268,22 @@
       "map_diff": "games",
       "frag_diff": "frags",
       "buchholz": "Buchholz",
-      "lower_rating": "lower rating"
+      "lower_rating": "lower rating",
+      "organizer": "organizers' decision"
     },
     "up": "Move {name} up",
     "down": "Move {name} down",
     "off": "Turn off {name}",
-    "on": "Turn on {name}"
+    "on": "Turn on {name}",
+    "finalTie": "When every criterion is tied",
+    "finalTieOptions": {
+      "seed": "Use the seeding",
+      "organizer": "The organizers decide"
+    },
+    "finalTieHints": {
+      "seed": "Anyone still tied stays in seeding order.",
+      "organizer": "At the end of the stage, the organizers order anyone still tied. The tournament only ends after that."
+    },
+    "organizerOnly": "Organizers' decision"
   }
 }

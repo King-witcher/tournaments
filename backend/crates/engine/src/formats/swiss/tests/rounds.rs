@@ -44,6 +44,7 @@ fn config_is_validated() {
         best_of: 4,
         rounds: None,
         tiebreakers: Tiebreakers::SWISS,
+        final_tie: FinalTie::Seed,
     };
     assert_eq!(even.validate(), Err(EngineError::InvalidBestOf(4)));
     assert_eq!(
@@ -191,6 +192,7 @@ fn the_tiebreakers_change_the_pairing() {
             best_of: 3,
             rounds: None,
             tiebreakers,
+            final_tie: FinalTie::Seed,
         };
         let rounds = vec![round(&[[1, 4], [2, 5], [3, 6]], None)];
         let first = SwissBracket::replay(config, seeds(6), rounds.clone(), [], &[], &[]).unwrap();
@@ -216,6 +218,7 @@ fn the_lower_rating_pairs_from_round_two_on() {
         best_of: 3,
         rounds: None,
         tiebreakers: Tiebreakers::new(&[Criterion::LowerRating]).unwrap(),
+        final_tie: FinalTie::Seed,
     };
     let ratings: Vec<(ParticipantId, i32)> =
         (1..=6).map(|n| (p(n), 1900 - 100 * n as i32)).collect();
