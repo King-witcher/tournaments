@@ -44,6 +44,8 @@ type Props = {
  * repetiria o saldo de séries, mas fica gravado se estava. Depois de cada
  * ação, o foco vai para o controle certo da linha, no lugar novo dela. Só
  * para leitura, os ligados, sem as ações; nenhum, "Só a ordem da chave".
+ * Devolve dois blocos (a lista e o empate do fim), para quem chama pô-los
+ * lado a lado.
  */
 export const TournamentTiebreakerFields = memo(
   function TournamentTiebreakerFields({
@@ -100,65 +102,67 @@ export const TournamentTiebreakerFields = memo(
     );
     if (readOnly && ons.length === 0) {
       return (
-        <div className={styles.block}>
+        <>
           <p className={styles.hint}>{t("none")}</p>
           {finalTie}
-        </div>
+        </>
       );
     }
 
     return (
-      // O alvo do erro da API (`data-field`): a lista não tem campo nativo.
-      <div
-        className={styles.block}
-        data-field={stageField(index, "tiebreakers")}
-        tabIndex={-1}
-        aria-describedby={error ? errorId : undefined}
-      >
-        <ContainedList label={t("label")} size="md">
-          {ons.map((x, i) => (
-            <TiebreakerRow
-              key={x}
-              tiebreaker={x}
-              position={i + 1}
-              readOnly={readOnly}
-              onUp={
-                i > 0
-                  ? () => change(moveTiebreaker(list, x, -1, shown), x, "up")
-                  : undefined
-              }
-              onDown={
-                i < ons.length - 1
-                  ? () => change(moveTiebreaker(list, x, 1, shown), x, "down")
-                  : undefined
-              }
-              onOff={() =>
-                change(
-                  list.filter((y) => y !== x),
-                  x,
-                  "on",
-                )
-              }
-              {...focusOf(x)}
-            />
-          ))}
-          {(readOnly ? [] : offs).map((x) => (
-            <TiebreakerRow
-              key={x}
-              tiebreaker={x}
-              readOnly={false}
-              onOn={() => change([...list, x], x, "up")}
-              {...focusOf(x)}
-            />
-          ))}
-        </ContainedList>
-        {error && (
-          <div id={errorId}>
-            <ErrorText>{error}</ErrorText>
-          </div>
-        )}
+      <>
+        {/* O alvo do erro da API (`data-field`): a lista não tem campo nativo. */}
+        <div
+          className={styles.block}
+          data-field={stageField(index, "tiebreakers")}
+          tabIndex={-1}
+          aria-describedby={error ? errorId : undefined}
+        >
+          <ContainedList label={t("label")} size="md">
+            {ons.map((x, i) => (
+              <TiebreakerRow
+                key={x}
+                tiebreaker={x}
+                position={i + 1}
+                readOnly={readOnly}
+                onUp={
+                  i > 0
+                    ? () => change(moveTiebreaker(list, x, -1, shown), x, "up")
+                    : undefined
+                }
+                onDown={
+                  i < ons.length - 1
+                    ? () => change(moveTiebreaker(list, x, 1, shown), x, "down")
+                    : undefined
+                }
+                onOff={() =>
+                  change(
+                    list.filter((y) => y !== x),
+                    x,
+                    "on",
+                  )
+                }
+                {...focusOf(x)}
+              />
+            ))}
+            {(readOnly ? [] : offs).map((x) => (
+              <TiebreakerRow
+                key={x}
+                tiebreaker={x}
+                readOnly={false}
+                onOn={() => change([...list, x], x, "up")}
+                {...focusOf(x)}
+              />
+            ))}
+          </ContainedList>
+          {error && (
+            <div id={errorId}>
+              <ErrorText>{error}</ErrorText>
+            </div>
+          )}
+        </div>
         {finalTie}
-      </div>
+      </>
     );
   },
 );

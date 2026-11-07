@@ -3,6 +3,7 @@
 import type { TileGroupProps } from "@carbon/react";
 import { type ReactNode, useId } from "react";
 
+import { cn } from "@/shared/lib/cn";
 import { FormGroup } from "./carbon/form";
 import { RadioTile, Tile, TileGroup } from "./carbon/tile";
 import styles from "./radio-tile-group.module.scss";
@@ -39,6 +40,12 @@ type Props<V extends string> = Omit<
    * tile sem interação, como o pool de mapas mostra só os mapas dele.
    */
   readOnly?: boolean;
+  /**
+   * Quantos tiles lado a lado, no máximo (uma coluna sem isso). As colunas
+   * seguem a largura do grupo: `5` dá cinco na aba larga, três numa coluna
+   * de 8 e uma no celular, nunca um tile sozinho na última linha.
+   */
+  columns?: 2 | 3 | 4 | 5;
 };
 
 /** O nome e, embaixo, o que a opção faz. */
@@ -60,8 +67,9 @@ function TileText({
  * uma faz (`description`), para comparar antes de escolher, como os formatos
  * de torneio; opções de uma linha vão no `RadioGroup`. Por baixo são rádios
  * nativos: com `name`, a escolha entra no `FormData`, e `required` põe a
- * estrela na `legend`. Monta os tiles a partir de `options`, empilhados com o
- * respiro dos exemplos do Carbon (uma coluna também no celular).
+ * estrela na `legend`. Monta os tiles a partir de `options`, com o respiro dos
+ * exemplos do Carbon: empilhados, ou em fileiras com `columns` (os tiles da
+ * mesma fileira ficam da mesma altura, como o Carbon põe tiles na grade).
  */
 export function RadioTileGroup<V extends string>({
   legend,
@@ -71,6 +79,7 @@ export function RadioTileGroup<V extends string>({
   name,
   required,
   readOnly = false,
+  columns,
   ...props
 }: Props<V>) {
   const generated = useId();
@@ -94,7 +103,7 @@ export function RadioTileGroup<V extends string>({
   }
 
   return (
-    <div className={styles.group}>
+    <div className={cn(styles.group, columns && styles[`columns${columns}`])}>
       <TileGroup<V>
         {...props}
         name={groupName}

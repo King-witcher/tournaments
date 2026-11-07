@@ -23,10 +23,12 @@ type Props = { tenant: string; slug: string };
  * A aba Configurações do torneio, para organizer e owner: um acordeão com uma
  * seção por item (Geral, Início e inscrições, Formato, Mapas, Campeões,
  * Resultados, Outros idiomas), cada uma com o resumo do que está salvo no
- * título e o próprio Salvar dentro, na coluna estreita das configurações da
- * comunidade. Fechada, a aba é o resumo da configuração inteira; vários itens
- * podem ficar abertos. As regras da organização ficam na aba Regras. Para quem
- * joga, o aviso de que a aba não é dele. Fica em `<Suspense>`.
+ * título e o próprio Salvar dentro, na largura toda da página (como a chave e
+ * as tabelas): cada seção põe lado a lado o que se decide junto (`FormRow`) e
+ * os tiles em fileiras. Fechada, a aba é o resumo da configuração inteira;
+ * vários itens podem ficar abertos. As regras da organização ficam na aba
+ * Regras. Para quem joga, o aviso de que a aba não é dele. Fica em
+ * `<Suspense>`.
  */
 export async function TournamentSettings({ tenant, slug }: Props) {
   const [loaded, maps, screenshots, imageSettings] = await Promise.all([
@@ -46,7 +48,7 @@ export async function TournamentSettings({ tenant, slug }: Props) {
   const { tournament } = loaded;
   return (
     <Grid>
-      <Column sm={4} md={8} lg={8}>
+      <Column sm={4} md={8} lg={16}>
         <TournamentSettingsProvider tenant={tenant} tournament={tournament}>
           <Accordion>
             <SettingsGeneralSection

@@ -7,14 +7,14 @@ import createNextIntlPlugin from "next-intl/plugin";
 // sass-loader embutido no Turbopack não acha. Aqui o Sass resolve tudo
 // sozinho, como na linha de comando: sem o importador do webpack, com
 // node_modules como load path (é assim que `@use "@carbon/react/..."` acha
-// o pacote).
+// o pacote) e src (`@use "shared/ui/columns"` acha as nossas parciais).
 const sassLoader = {
   loader: "sass-loader",
   options: {
     api: "modern",
     webpackImporter: false,
     sassOptions: {
-      loadPaths: [path.resolve("node_modules")],
+      loadPaths: [path.resolve("node_modules"), path.resolve("src")],
       // Os avisos de depreciação do Sass dentro do Carbon não são nossos.
       quietDeps: true,
     },

@@ -3,6 +3,7 @@ import { memo, useState } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { SelectItem } from "@/shared/ui/carbon/select";
+import { FormRow } from "@/shared/ui/form-row";
 import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import { Select } from "@/shared/ui/select";
 import type { TournamentValues } from "../lib/form-values";
@@ -32,9 +33,10 @@ type Props = {
 };
 
 /**
- * Quem age pelo time: os presets em tiles, cada um com o que faz (quem marca
- * "Pronto" fica de fora: quem joga vê na série), e, em Personalizado, as
- * quatro regras. Só as regras vão para a API: o preset sai delas, e escolher
+ * Quem age pelo time: os presets em tiles, numa fileira, cada um com o que
+ * faz (quem marca "Pronto" fica de fora: quem joga vê na série), e, em
+ * Personalizado, as quatro regras lado a lado, uma coluna por regra. Só as
+ * regras vão para a API: o preset sai delas, e escolher
  * Personalizado continua nele até recarregar, mesmo com valores iguais aos de
  * um preset. O que não tem efeito (mapa desligado ou
  * sorteado, campeões fora do site, sem bans) não aparece, mas continua
@@ -71,6 +73,7 @@ export const TournamentTeamRulesFields = memo(
           name="teamPreset"
           value={preset}
           readOnly={readOnly}
+          columns={4}
           options={PRESETS.map((p) => ({
             value: p,
             content: t(`presets.${p}`),
@@ -82,7 +85,7 @@ export const TournamentTeamRulesFields = memo(
           }}
         />
         {preset === "custom" && (
-          <>
+          <FormRow columns={4}>
             {(values.mapMode === "veto" || values.mapMode === "vote") &&
               actor("veto")}
             {values.championPhase && values.bansPerSeries > 0 && actor("ban")}
@@ -102,7 +105,7 @@ export const TournamentTeamRulesFields = memo(
               </Select>
             )}
             {actor("report")}
-          </>
+          </FormRow>
         )}
       </>
     );

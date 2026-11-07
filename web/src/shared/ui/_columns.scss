@@ -1,0 +1,32 @@
+@use "sass:map";
+@use "@carbon/react/scss/spacing";
+
+// Colunas iguais que seguem a largura do bloco, não a da tela: o mesmo
+// formulário fica em quatro colunas na aba larga, em duas num Modal e numa
+// só no celular ou numa coluna estreita. Quem usa o mixin põe
+// `container-type: inline-size` num elemento em volta da grade.
+
+/// A largura mínima de uma coluna com um campo ou um tile com texto: 16rem,
+/// a mesma do `TileGrid` (um nome e uma frase sem apertar).
+$column-min: spacing.$spacing-13 + spacing.$spacing-12;
+
+/// Os degraus de cada número de colunas, sem deixar um item sozinho na última
+/// linha: 4 cai para 2 (2 + 2) e 5 para 3 (3 + 2); 3 e 2 caem direto para 1.
+$-steps: (
+  2: 2,
+  3: 3,
+  4: 2 4,
+  5: 3 5,
+);
+
+/// Até `$max` colunas iguais, quantas o bloco em volta comporta com
+/// `$column-min` cada; abaixo de duas, uma só. Vai dentro do seletor da grade.
+@mixin columns($max) {
+  grid-template-columns: minmax(0, 1fr);
+
+  @each $count in map.get($-steps, $max) {
+    @container (width >= #{$count * $column-min}) {
+      grid-template-columns: repeat($count, minmax(0, 1fr));
+    }
+  }
+}

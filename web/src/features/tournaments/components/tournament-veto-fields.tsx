@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
+import { FormRow } from "@/shared/ui/form-row";
 import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import type { FieldErrors } from "../lib/form-errors";
 import {
@@ -49,13 +50,13 @@ type Props = {
 };
 
 /**
- * O grupo Mapas: como sai o mapa de cada partida (em tiles, cada modo com o
- * que faz), no veto a ordem dos bans e picks (a série par só tem bans, e o
- * campo não aparece: o tile do veto explica),
- * o pool de mapas com a imagem de cada um (fora do modo desligado;
- * vale para o veto, a votação e o sorteio) e, com veto ou votação, o tempo de
- * cada passo, que vale também para o draft de campeões. Sem passo de mapa,
- * esse tempo fica no grupo Campeões.
+ * O grupo Mapas: como sai o mapa de cada partida (em tiles, numa fileira,
+ * cada modo com o que faz), no veto a ordem dos bans e picks (a série par só
+ * tem bans, e o campo não aparece: o tile do veto explica), o pool de mapas
+ * com a imagem de cada um (fora do modo desligado; vale para o veto, a
+ * votação e o sorteio) e, com veto ou votação, o tempo de cada passo (um
+ * campo curto, na primeira coluna), que vale também para o draft de campeões.
+ * Sem passo de mapa, esse tempo fica no grupo Campeões.
  */
 export const TournamentVetoFields = memo(function TournamentVetoFields(
   props: Props,
@@ -74,6 +75,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
         name="mapMode"
         value={values.mapMode}
         readOnly={readOnly}
+        columns={4}
         options={MODES.map((m) => ({
           value: m,
           content: t(`mapModes.${m}`),
@@ -106,18 +108,20 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
         />
       )}
       {stepSecondsGroup(values) === "maps" && (
-        <SecondsSelect
-          labelText={t("seconds")}
-          helperText={t(
-            draftHasSteps(values) ? "secondsHintDraft" : "secondsHint",
-          )}
-          name="vetoSeconds"
-          options={STEP_SECONDS}
-          value={values.vetoSeconds}
-          error={errors.vetoSeconds}
-          readOnly={readOnly}
-          onChange={(vetoSeconds) => onChange({ vetoSeconds })}
-        />
+        <FormRow columns={4}>
+          <SecondsSelect
+            labelText={t("seconds")}
+            helperText={t(
+              draftHasSteps(values) ? "secondsHintDraft" : "secondsHint",
+            )}
+            name="vetoSeconds"
+            options={STEP_SECONDS}
+            value={values.vetoSeconds}
+            error={errors.vetoSeconds}
+            readOnly={readOnly}
+            onChange={(vetoSeconds) => onChange({ vetoSeconds })}
+          />
+        </FormRow>
       )}
     </>
   );

@@ -6,6 +6,7 @@ import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Tab, TabPanel, TabPanels, Tabs } from "@/shared/ui/carbon/tabs";
+import { FormRow } from "@/shared/ui/form-row";
 import { FormSection } from "@/shared/ui/form-section";
 import { TabList } from "@/shared/ui/tab-list";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
@@ -44,7 +45,8 @@ type Props = {
 /**
  * As fases do torneio. Com uma, os campos dela direto, e "Adicionar fase"
  * embaixo; com duas a quatro, uma aba por fase, cada uma com os campos, o
- * Desempate, a entrada (da segunda em diante) e "Remover fase". Antes do
+ * Desempate (a ordem e, ao lado, quem decide o empate que sobra), a entrada
+ * (da segunda em diante) e "Remover fase". Antes do
  * início tudo muda; depois, só as fases que não começaram (as que começaram
  * ficam só para leitura), e não se acrescenta fase. A eliminação só cabe na
  * última fase, então não se acrescenta fase depois dela. Um erro da API numa
@@ -115,13 +117,15 @@ export function TournamentStages({
       />
       {isTableFormat(stage.format) && (
         <FormSection legend={t("tiebreakers.title")}>
-          <TournamentTiebreakerFields
-            stage={stage}
-            index={index}
-            onStageChange={onStageChange}
-            errors={errors}
-            readOnly={locked(index)}
-          />
+          <FormRow columns={2}>
+            <TournamentTiebreakerFields
+              stage={stage}
+              index={index}
+              onStageChange={onStageChange}
+              errors={errors}
+              readOnly={locked(index)}
+            />
+          </FormRow>
         </FormSection>
       )}
       {index > 0 && (

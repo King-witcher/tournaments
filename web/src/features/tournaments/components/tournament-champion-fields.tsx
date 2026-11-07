@@ -5,6 +5,7 @@ import type { components } from "@/shared/api/schema";
 import { FormGroup } from "@/shared/ui/carbon/form";
 import { SelectItem } from "@/shared/ui/carbon/select";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FormRow } from "@/shared/ui/form-row";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
 import type { FieldErrors } from "../lib/form-errors";
@@ -60,7 +61,9 @@ type Props = {
  * não repete). Com o draft no site: o tempo de cada passo, quando o mapa não
  * tem passo (com veto ou votação, ele fica no grupo Mapas), e, às cegas, o da
  * janela. Às cegas exige espelho: sem ele, a opção fica desabilitada, e desligar
- * o espelho com ela escolhida volta ao alternado.
+ * o espelho com ela escolhida volta ao alternado. Onde cabe (a aba larga),
+ * cada grupo fica numa linha: o draft (se é no site, bans, ordem), o que
+ * repete, a regra de outras partidas (e quem não repete) e os tempos.
  */
 export const TournamentChampionFields = memo(function TournamentChampionFields({
   values,
@@ -74,64 +77,73 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
   const tdm = isTdm(values);
   const noRepeat = noRepeatFor(values.noRepeat, values.stages.length);
 
+  const stepSeconds = stepSecondsGroup(values) === "champions";
+  const pickWindow = hasPickWindow(values);
+
   return (
     <>
-      <RadioGroup
-        legendText={t("phase")}
-        name="championPhase"
-        orientation="horizontal"
-        value={values.championPhase ? "site" : "off"}
-        readOnly={readOnly}
-        options={(["site", "off"] as const).map((value) => ({
-          value,
-          label: t(`phaseOptions.${value}`),
-        }))}
-        onChange={(v) => onChange({ championPhase: v === "site" })}
-      />
-      <Select
-        labelText={t("bans")}
-        helperText={t("bansHint")}
-        name="bansPerSeries"
-        value={values.bansPerSeries}
-        readOnly={readOnly}
-        invalid={errors.bansPerSeries !== undefined}
-        invalidText={errors.bansPerSeries}
-        onChange={(e) => onChange({ bansPerSeries: Number(e.target.value) })}
-      >
-        {BANS.map((n) => (
-          <SelectItem key={n} value={n} text={t("bansOption", { count: n })} />
-        ))}
-      </Select>
-      {values.championPhase && (
-        <Select
-          labelText={t("pickOrder")}
-          helperText={[
-            t(`pickOrderHints.${values.pickOrder}`),
-            !values.mirror && t("pickOrderBlindNeedsMirror"),
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          name="pickOrder"
-          value={values.pickOrder}
+      <FormRow columns={3}>
+        <RadioGroup
+          legendText={t("phase")}
+          name="championPhase"
+          orientation="horizontal"
+          value={values.championPhase ? "site" : "off"}
           readOnly={readOnly}
-          invalid={errors.pickOrder !== undefined}
-          invalidText={errors.pickOrder}
-          onChange={(e) =>
-            onChange({
-              pickOrder: e.target.value as components["schemas"]["PickOrder"],
-            })
-          }
+          options={(["site", "off"] as const).map((value) => ({
+            value,
+            label: t(`phaseOptions.${value}`),
+          }))}
+          onChange={(v) => onChange({ championPhase: v === "site" })}
+        />
+        <Select
+          labelText={t("bans")}
+          helperText={t("bansHint")}
+          name="bansPerSeries"
+          value={values.bansPerSeries}
+          readOnly={readOnly}
+          invalid={errors.bansPerSeries !== undefined}
+          invalidText={errors.bansPerSeries}
+          onChange={(e) => onChange({ bansPerSeries: Number(e.target.value) })}
         >
-          {pickOrderChoices(values.pickOrder).map((order) => (
+          {BANS.map((n) => (
             <SelectItem
-              key={order}
-              value={order}
-              text={t(`pickOrderOptions.${order}`)}
-              disabled={order === "blind" && !values.mirror}
+              key={n}
+              value={n}
+              text={t("bansOption", { count: n })}
             />
           ))}
         </Select>
-      )}
+        {values.championPhase && (
+          <Select
+            labelText={t("pickOrder")}
+            helperText={[
+              t(`pickOrderHints.${values.pickOrder}`),
+              !values.mirror && t("pickOrderBlindNeedsMirror"),
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            name="pickOrder"
+            value={values.pickOrder}
+            readOnly={readOnly}
+            invalid={errors.pickOrder !== undefined}
+            invalidText={errors.pickOrder}
+            onChange={(e) =>
+              onChange({
+                pickOrder: e.target.value as components["schemas"]["PickOrder"],
+              })
+            }
+          >
+            {pickOrderChoices(values.pickOrder).map((order) => (
+              <SelectItem
+                key={order}
+                value={order}
+                text={t(`pickOrderOptions.${order}`)}
+                disabled={order === "blind" && !values.mirror}
+              />
+            ))}
+          </Select>
+        )}
+      </FormRow>
       <FormGroup legendText={t("repeat")}>
         <Checkbox
           labelText={t("mirror")}
@@ -157,72 +169,80 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           />
         )}
       </FormGroup>
-      <Select
-        labelText={t("otherGames")}
-        // Na série, a opção se explica; fora dela, conta só o que foi jogado
-        // e o pool pode não bastar.
-        helperText={
-          noRepeat === "stage" || noRepeat === "tournament"
-            ? t(`otherGamesHints.${noRepeat}`)
-            : undefined
-        }
-        name="noRepeat"
-        value={noRepeat}
-        readOnly={readOnly}
-        invalid={errors.noRepeat !== undefined}
-        invalidText={errors.noRepeat}
-        onChange={(e) =>
-          onChange({ noRepeat: e.target.value as NoRepeatChoice })
-        }
-      >
-        {(repeatChoices ?? noRepeatChoices(values.stages.length)).map(
-          (choice) => (
-            <SelectItem
-              key={choice}
-              value={choice}
-              text={t(`otherGamesOptions.${choice}`)}
-            />
-          ),
+      <FormRow columns={3}>
+        <Select
+          labelText={t("otherGames")}
+          // Na série, a opção se explica; fora dela, conta só o que foi jogado
+          // e o pool pode não bastar.
+          helperText={
+            noRepeat === "stage" || noRepeat === "tournament"
+              ? t(`otherGamesHints.${noRepeat}`)
+              : undefined
+          }
+          name="noRepeat"
+          value={noRepeat}
+          readOnly={readOnly}
+          invalid={errors.noRepeat !== undefined}
+          invalidText={errors.noRepeat}
+          onChange={(e) =>
+            onChange({ noRepeat: e.target.value as NoRepeatChoice })
+          }
+        >
+          {(repeatChoices ?? noRepeatChoices(values.stages.length)).map(
+            (choice) => (
+              <SelectItem
+                key={choice}
+                value={choice}
+                text={t(`otherGamesOptions.${choice}`)}
+              />
+            ),
+          )}
+        </Select>
+        {tdm && values.noRepeat !== "off" && (
+          <RadioGroup
+            legendText={t("who")}
+            helperText={
+              values.noRepeatWho === "team" ? t("whoTeam") : undefined
+            }
+            name="noRepeatWho"
+            orientation="horizontal"
+            value={values.noRepeatWho}
+            readOnly={readOnly}
+            options={WHO.map((value) => ({
+              value,
+              label: t(`whoOptions.${value}`),
+            }))}
+            onChange={(noRepeatWho) => onChange({ noRepeatWho })}
+          />
         )}
-      </Select>
-      {tdm && values.noRepeat !== "off" && (
-        <RadioGroup
-          legendText={t("who")}
-          helperText={values.noRepeatWho === "team" ? t("whoTeam") : undefined}
-          name="noRepeatWho"
-          orientation="horizontal"
-          value={values.noRepeatWho}
-          readOnly={readOnly}
-          options={WHO.map((value) => ({
-            value,
-            label: t(`whoOptions.${value}`),
-          }))}
-          onChange={(noRepeatWho) => onChange({ noRepeatWho })}
-        />
-      )}
-      {stepSecondsGroup(values) === "champions" && (
-        <SecondsSelect
-          labelText={tVeto("seconds")}
-          helperText={tVeto("secondsHint")}
-          name="vetoSeconds"
-          options={STEP_SECONDS}
-          value={values.vetoSeconds}
-          error={errors.vetoSeconds}
-          readOnly={readOnly}
-          onChange={(vetoSeconds) => onChange({ vetoSeconds })}
-        />
-      )}
-      {hasPickWindow(values) && (
-        <SecondsSelect
-          labelText={tVeto("teamPickSeconds")}
-          helperText={tVeto("teamPickSecondsHint")}
-          name="teamPickSeconds"
-          options={TEAM_PICK_SECONDS}
-          value={values.teamPickSeconds}
-          error={errors.teamPickSeconds}
-          readOnly={readOnly}
-          onChange={(teamPickSeconds) => onChange({ teamPickSeconds })}
-        />
+      </FormRow>
+      {(stepSeconds || pickWindow) && (
+        <FormRow columns={3}>
+          {stepSeconds && (
+            <SecondsSelect
+              labelText={tVeto("seconds")}
+              helperText={tVeto("secondsHint")}
+              name="vetoSeconds"
+              options={STEP_SECONDS}
+              value={values.vetoSeconds}
+              error={errors.vetoSeconds}
+              readOnly={readOnly}
+              onChange={(vetoSeconds) => onChange({ vetoSeconds })}
+            />
+          )}
+          {pickWindow && (
+            <SecondsSelect
+              labelText={tVeto("teamPickSeconds")}
+              helperText={tVeto("teamPickSecondsHint")}
+              name="teamPickSeconds"
+              options={TEAM_PICK_SECONDS}
+              value={values.teamPickSeconds}
+              error={errors.teamPickSeconds}
+              readOnly={readOnly}
+              onChange={(teamPickSeconds) => onChange({ teamPickSeconds })}
+            />
+          )}
+        </FormRow>
       )}
     </>
   );

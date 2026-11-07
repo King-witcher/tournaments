@@ -1,14 +1,33 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "./columns";
 
-// Os tiles empilhados com o respiro dos exemplos do Carbon. O `TileGroup` os
-// põe colados, num `div` sem classe, e a classe passada a ele substitui a
-// que zera o `fieldset`: por isso o módulo fica num elemento em volta.
+// A largura que decide as colunas é a do grupo, não a da tela.
+.group {
+  container-type: inline-size;
+}
+
+// Os tiles em grade, com o respiro dos exemplos do Carbon; uma coluna por
+// padrão. O `TileGroup` os põe colados, num `div` sem classe, e a classe
+// passada a ele substitui a que zera o `fieldset`: por isso o módulo fica num
+// elemento em volta.
 .group fieldset > div {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: spacing.$spacing-03;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+// Lado a lado, os tiles da mesma linha ficam da mesma altura: o invólucro de
+// cada um vira grade para o tile (o `label`) esticar até ela.
+.group fieldset > div > div {
+  display: grid;
+}
+
+@each $count in (2, 3, 4, 5) {
+  .columns#{$count} fieldset > div {
+    @include columns.columns($count);
+  }
 }
 
 // O nome no peso de título de bloco compacto e, embaixo, o que a opção faz,

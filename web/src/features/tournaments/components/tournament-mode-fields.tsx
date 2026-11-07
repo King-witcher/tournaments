@@ -3,6 +3,7 @@ import { memo } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { SelectItem } from "@/shared/ui/carbon/select";
+import { FormRow } from "@/shared/ui/form-row";
 import { Notice } from "@/shared/ui/notice";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select";
@@ -36,9 +37,9 @@ type Props = {
 };
 
 /**
- * A modalidade (duelo ou TDM, à vista) e, no TDM, o tamanho dos times. As
- * vagas não mudam sozinhas ao trocar: abaixo de dois times, a conferência
- * mostra o erro no campo delas.
+ * A modalidade (duelo ou TDM, à vista) e, no TDM, o tamanho dos times ao lado
+ * dela (onde cabe; embaixo, no celular). As vagas não mudam sozinhas ao
+ * trocar: abaixo de dois times, a conferência mostra o erro no campo delas.
  */
 export const TournamentModeFields = memo(function TournamentModeFields({
   values,
@@ -57,43 +58,45 @@ export const TournamentModeFields = memo(function TournamentModeFields({
 
   return (
     <>
-      <RadioGroup
-        legendText={t("mode")}
-        name="mode"
-        orientation="horizontal"
-        value={values.mode}
-        readOnly={readOnly}
-        options={MODES.map((value) => ({ value, label: tMode(value) }))}
-        // Do duelo (time de 1) para o TDM, o tamanho começa em 2 e quem age
-        // pelo time em Balanceado, como todo time novo; voltando ao TDM antes
-        // de salvar, fica o que estava.
-        onChange={(mode) =>
-          onChange(
-            mode === "tdm" && values.teamSize < 2
-              ? { mode, teamSize: 2, teamRules: TEAM_PRESETS.balanced }
-              : { mode },
-          )
-        }
-      />
-      {values.mode === "tdm" && (
-        <Select
-          labelText={t("teamSize")}
-          name="teamSize"
-          value={values.teamSize}
+      <FormRow columns={2}>
+        <RadioGroup
+          legendText={t("mode")}
+          name="mode"
+          orientation="horizontal"
+          value={values.mode}
           readOnly={readOnly}
-          invalid={errors.teamSize !== undefined}
-          invalidText={errors.teamSize}
-          onChange={(e) => onChange({ teamSize: Number(e.target.value) })}
-        >
-          {TEAM_SIZES.map((n) => (
-            <SelectItem
-              key={n}
-              value={n}
-              text={t("teamSizeOption", { size: n })}
-            />
-          ))}
-        </Select>
-      )}
+          options={MODES.map((value) => ({ value, label: tMode(value) }))}
+          // Do duelo (time de 1) para o TDM, o tamanho começa em 2 e quem age
+          // pelo time em Balanceado, como todo time novo; voltando ao TDM antes
+          // de salvar, fica o que estava.
+          onChange={(mode) =>
+            onChange(
+              mode === "tdm" && values.teamSize < 2
+                ? { mode, teamSize: 2, teamRules: TEAM_PRESETS.balanced }
+                : { mode },
+            )
+          }
+        />
+        {values.mode === "tdm" && (
+          <Select
+            labelText={t("teamSize")}
+            name="teamSize"
+            value={values.teamSize}
+            readOnly={readOnly}
+            invalid={errors.teamSize !== undefined}
+            invalidText={errors.teamSize}
+            onChange={(e) => onChange({ teamSize: Number(e.target.value) })}
+          >
+            {TEAM_SIZES.map((n) => (
+              <SelectItem
+                key={n}
+                value={n}
+                text={t("teamSizeOption", { size: n })}
+              />
+            ))}
+          </Select>
+        )}
+      </FormRow>
       {reset && saved && (
         <Notice kind="warning">
           {t(`teamsReset.${reset}`, { count: saved.participants, size })}

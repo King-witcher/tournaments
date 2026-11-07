@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/spacing";
+@use "shared/ui/columns";
+
+// O formulário e, ao lado, o que se salva sozinho (a capa), nas duas metades
+// da seção larga, com a calha da grade entre elas; numa seção estreita ou no
+// celular, um embaixo do outro. A largura que decide é a da seção.
+.halves {
+  container-type: inline-size;
+}
+
+.columns {
+  display: grid;
+  gap: spacing.$spacing-07;
+  align-items: start;
+
+  @include columns.columns(2);
+}

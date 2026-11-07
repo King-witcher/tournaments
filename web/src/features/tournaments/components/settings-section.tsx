@@ -17,6 +17,7 @@ import {
   sectionItemId,
 } from "../lib/settings-sections";
 import { FormAccordionItem } from "./form-accordion-item";
+import styles from "./settings-section.module.scss";
 
 /** O que o formulário da seção precisa do hook dela. */
 export type SectionFormState = {
@@ -45,8 +46,11 @@ type Props = {
   /** O primário, para devolver o foco a ele (depois de um Modal que ele abriu). */
   submitRef?: Ref<HTMLButtonElement>;
   children: ReactNode;
-  /** Depois do formulário, fora dele (a capa, que se salva sozinha). */
-  after?: ReactNode;
+  /**
+   * Ao lado do formulário, fora dele (a capa, que se salva sozinha): na
+   * metade da direita quando a seção é larga, embaixo quando não é.
+   */
+  aside?: ReactNode;
 };
 
 /**
@@ -58,7 +62,8 @@ type Props = {
  * de outra seção (as séries daqui pedem mais mapas que o pool salvo) aparece
  * acima do botão, com "Ir para" a seção onde corrigir, que abre o item dela
  * com o foco no título; salvo, o item continua aberto, o foco fica no Salvar
- * e "Salvo." aparece até a próxima mudança.
+ * e "Salvo." aparece até a próxima mudança. Com `aside`, o formulário fica na
+ * metade da esquerda e ele na da direita, como as duas colunas da página.
  */
 export function SettingsSection({
   section,
@@ -69,11 +74,47 @@ export function SettingsSection({
   onSave,
   submitRef,
   children,
-  after,
+  aside,
 }: Props) {
   const t = useTranslations("TournamentSettings");
   const { isOpen, setOpen, reveal } = useSettingsItems();
   const fixIn = form.formError?.fixIn;
+  const body = (
+    <Form
+      ref={form.formRef}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!readOnly && !form.pending && form.canSubmit) onSave();
+      }}
+    >
+      <Stack gap={6}>
+        {lock && <Notice kind="info">{lock}</Notice>}
+        {children}
+        {form.formError && (
+          <FormError
+            action={
+              fixIn &&
+              fixIn !== section && (
+                <Button kind="ghost" size="sm" onClick={() => reveal(fixIn)}>
+                  {t("goTo", { section: t(`sections.${fixIn}`) })}
+                </Button>
+              )
+            }
+          >
+            {form.formError.message}
+          </FormError>
+        )}
+        {form.done && <Notice kind="success">{t("saved")}</Notice>}
+        {!readOnly && (
+          <FormActions
+            submitRef={submitRef}
+            pending={form.pending}
+            disabled={!form.canSubmit}
+          />
+        )}
+      </Stack>
+    </Form>
+  );
 
   return (
     <FormAccordionItem
@@ -95,41 +136,16 @@ export function SettingsSection({
       open={isOpen(section)}
       onToggle={(open) => setOpen(section, open)}
     >
-      <Form
-        ref={form.formRef}
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!readOnly && !form.pending && form.canSubmit) onSave();
-        }}
-      >
-        <Stack gap={6}>
-          {lock && <Notice kind="info">{lock}</Notice>}
-          {children}
-          {form.formError && (
-            <FormError
-              action={
-                fixIn &&
-                fixIn !== section && (
-                  <Button kind="ghost" size="sm" onClick={() => reveal(fixIn)}>
-                    {t("goTo", { section: t(`sections.${fixIn}`) })}
-                  </Button>
-                )
-              }
-            >
-              {form.formError.message}
-            </FormError>
-          )}
-          {form.done && <Notice kind="success">{t("saved")}</Notice>}
-          {!readOnly && (
-            <FormActions
-              submitRef={submitRef}
-              pending={form.pending}
-              disabled={!form.canSubmit}
-            />
-          )}
-        </Stack>
-      </Form>
-      {after}
+      {aside ? (
+        <div className={styles.halves}>
+          <div className={styles.columns}>
+            {body}
+            {aside}
+          </div>
+        </div>
+      ) : (
+        body
+      )}
     </FormAccordionItem>
   );
 }

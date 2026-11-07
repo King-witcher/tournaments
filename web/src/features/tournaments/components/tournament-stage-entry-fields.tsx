@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FormRow } from "@/shared/ui/form-row";
 import { NumberInput } from "@/shared/ui/number-input";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { type FieldErrors, stageField } from "../lib/form-errors";
@@ -23,8 +24,8 @@ type Props = {
 
 /**
  * Como a fase recebe a anterior, da segunda em diante: todos ou os N melhores
- * da classificação dela (de 2 ao teto do formato desta fase) e o check-in
- * antes da fase, que vale ao salvar.
+ * da classificação dela (de 2 ao teto do formato desta fase), com o número ao
+ * lado da escolha, e o check-in antes da fase, que vale ao salvar.
  */
 export const TournamentStageEntryFields = memo(
   function TournamentStageEntryFields({
@@ -44,38 +45,41 @@ export const TournamentStageEntryFields = memo(
 
     return (
       <>
-        <RadioGroup
-          legendText={t("entry", { previous: index })}
-          name={`stages.${index}.entry`}
-          orientation="horizontal"
-          value={limited ? "top" : "all"}
-          readOnly={readOnly}
-          options={(["all", "top"] as const).map((value) => ({
-            value,
-            label: t(`entryOptions.${value}`),
-          }))}
-          onChange={(entry) => {
-            setTop(entry === "top");
-            onStageChange(index, {
-              advance: entry === "all" ? null : Math.min(DEFAULT_ADVANCE, max),
-            });
-          }}
-        />
-        {limited && (
-          <NumberInput
-            labelText={t("entryCount")}
-            name={advanceName}
-            required={!readOnly}
-            disableWheel
-            min={2}
-            max={max}
-            value={stage.advance}
+        <FormRow columns={2}>
+          <RadioGroup
+            legendText={t("entry", { previous: index })}
+            name={`stages.${index}.entry`}
+            orientation="horizontal"
+            value={limited ? "top" : "all"}
             readOnly={readOnly}
-            invalid={error !== undefined}
-            invalidText={error}
-            onChange={(advance) => onStageChange(index, { advance })}
+            options={(["all", "top"] as const).map((value) => ({
+              value,
+              label: t(`entryOptions.${value}`),
+            }))}
+            onChange={(entry) => {
+              setTop(entry === "top");
+              onStageChange(index, {
+                advance:
+                  entry === "all" ? null : Math.min(DEFAULT_ADVANCE, max),
+              });
+            }}
           />
-        )}
+          {limited && (
+            <NumberInput
+              labelText={t("entryCount")}
+              name={advanceName}
+              required={!readOnly}
+              disableWheel
+              min={2}
+              max={max}
+              value={stage.advance}
+              readOnly={readOnly}
+              invalid={error !== undefined}
+              invalidText={error}
+              onChange={(advance) => onStageChange(index, { advance })}
+            />
+          )}
+        </FormRow>
         <Checkbox
           labelText={t("checkIn")}
           helperText={t("checkInHint")}

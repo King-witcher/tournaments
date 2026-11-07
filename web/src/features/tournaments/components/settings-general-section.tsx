@@ -11,15 +11,16 @@ import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 
 type Props = {
-  /** A capa (`CoverSection`), que se salva sozinha, depois do Salvar. */
+  /** A capa (`CoverSection`), que se salva sozinha, ao lado do formulário. */
   cover: ReactNode;
 };
 
 /**
- * Geral: nome, endereço e descrição, com um Salvar, e a capa embaixo, que se
- * salva sozinha; no título, o nome e o endereço salvos. O endereço só muda no
- * rascunho, e salvar com ele trocado pede a confirmação do que isso quebra;
- * depois de publicar, ele fica só para leitura, com o motivo antes dos campos.
+ * Geral: nome, endereço e descrição, com um Salvar, na metade da esquerda, e
+ * a capa na da direita (como no cabeçalho do torneio), que se salva sozinha;
+ * no título, o nome e o endereço salvos. O endereço só muda no rascunho, e
+ * salvar com ele trocado pede a confirmação do que isso quebra; depois de
+ * publicar, ele fica só para leitura, com o motivo antes dos campos.
  */
 export function SettingsGeneralSection({ cover }: Props) {
   const t = useTranslations("TournamentForm");
@@ -41,7 +42,7 @@ export function SettingsGeneralSection({ cover }: Props) {
         lock={draft ? undefined : tSettings("locks.slug")}
         onSave={() => (moves ? setAsking(true) : form.submit())}
         submitRef={submitRef}
-        after={cover}
+        aside={cover}
       >
         <TournamentIdentityFields
           tenant={tenant}

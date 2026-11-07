@@ -1,0 +1,21 @@
+@use "@carbon/react/scss/spacing";
+@use "./columns";
+
+// A largura que decide as colunas é a da linha, não a da tela.
+.row {
+  container-type: inline-size;
+}
+
+// Entre as colunas, a calha da grade do Carbon (32px, a dos formulários de
+// duas colunas); entre as linhas, o mesmo respiro dos campos empilhados.
+.grid {
+  display: grid;
+  gap: spacing.$spacing-06 spacing.$spacing-07;
+  align-items: start;
+}
+
+@each $count in (2, 3, 4) {
+  .columns#{$count} {
+    @include columns.columns($count);
+  }
+}

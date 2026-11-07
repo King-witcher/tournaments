@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
+import { FormRow } from "@/shared/ui/form-row";
 import { useSettingsItems } from "../hooks/use-settings-items";
 import { useSettingsSection } from "../hooks/use-settings-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
@@ -77,12 +78,14 @@ export function SettingsFormatSection() {
           readOnly={fixed}
         />
       )}
-      <TournamentSlotsField
-        values={values}
-        onChange={onChange}
-        errors={errors}
-        readOnly={fixed}
-      />
+      <FormRow columns={4}>
+        <TournamentSlotsField
+          values={values}
+          onChange={onChange}
+          errors={errors}
+          readOnly={fixed}
+        />
+      </FormRow>
       <TournamentStages
         values={values}
         onChange={onChange}

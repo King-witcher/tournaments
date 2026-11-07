@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { ScreenshotsRequiredField } from "@/features/screenshots/components/screenshots-required-field";
+import { FormRow } from "@/shared/ui/form-row";
 import type { FieldErrors } from "../lib/form-errors";
 import type { TournamentValues } from "../lib/form-values";
 import { sameValues } from "../lib/same-values";
@@ -19,9 +20,9 @@ type Props = {
 };
 
 /**
- * Resultados: a janela de contestação e a captura de tela obrigatória (só
- * com capturas de tela na API). Ambas valem para os próximos envios e têm
- * padrão.
+ * Resultados: a janela de contestação (um campo curto, na primeira coluna) e
+ * a captura de tela obrigatória (só com capturas de tela na API). Ambas valem
+ * para os próximos envios e têm padrão.
  */
 export const TournamentResultsFields = memo(function TournamentResultsFields({
   values,
@@ -32,12 +33,14 @@ export const TournamentResultsFields = memo(function TournamentResultsFields({
 }: Props) {
   return (
     <>
-      <TournamentContestField
-        value={values.contestMinutes}
-        onChange={(contestMinutes) => onChange({ contestMinutes })}
-        error={errors.contestMinutes}
-        readOnly={readOnly}
-      />
+      <FormRow columns={4}>
+        <TournamentContestField
+          value={values.contestMinutes}
+          onChange={(contestMinutes) => onChange({ contestMinutes })}
+          error={errors.contestMinutes}
+          readOnly={readOnly}
+        />
+      </FormRow>
       {screenshots && (
         <ScreenshotsRequiredField
           checked={values.screenshotsRequired}

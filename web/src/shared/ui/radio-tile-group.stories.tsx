@@ -97,6 +97,26 @@ export const WithDescription: Story = {
   args: { name: "radio-tile-group-described", options: described },
 };
 
+/**
+ * Em fileiras: até quatro lado a lado, da mesma altura, quantas a largura do
+ * grupo comporta (duas numa coluna de 8, uma no celular).
+ */
+export const Columns: Story = {
+  args: {
+    name: "radio-tile-group-columns",
+    options: [
+      ...described,
+      {
+        value: "swiss",
+        content: "Suíço",
+        description:
+          "Em cada rodada, se enfrenta quem tem a mesma pontuação, sem repetir adversário.",
+      },
+    ],
+    columns: 4,
+  },
+};
+
 /** Só leitura: só a escolhida, num tile sem interação. */
 export const ReadOnly: Story = {
   args: {

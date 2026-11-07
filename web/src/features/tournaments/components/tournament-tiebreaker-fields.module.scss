@@ -2,7 +2,7 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-// A lista e, embaixo, o que é fixo, como o texto de ajuda de um campo.
+// A lista e, embaixo, o erro dela, como o texto de ajuda de um campo.
 .block {
   display: flex;
   flex-direction: column;

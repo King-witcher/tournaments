@@ -4,6 +4,7 @@ import { memo } from "react";
 import { Button } from "@/shared/ui/button";
 import { SelectItem } from "@/shared/ui/carbon/select";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { FormRow } from "@/shared/ui/form-row";
 import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import { Select } from "@/shared/ui/select";
 import { type FieldErrors, stageField } from "../lib/form-errors";
@@ -97,11 +98,12 @@ type Props = {
 };
 
 /**
- * O formato da fase (as cinco opções em tiles, cada uma com o que faz; a
- * eliminação só na última fase), o reset da grande final na dupla, as séries
- * (e a final, na eliminação; as pares só no todos contra todos, com a dica) e
- * as rodadas do suíço. No TDM, o teto do formato aparece em jogadores (como as
- * vagas) e as rodadas contam times. A série que pede mais mapas que o pool
+ * O formato da fase (as cinco opções em tiles, numa fileira, cada uma com o
+ * que faz; a eliminação só na última fase), o reset da grande final na dupla
+ * e, lado a lado, as séries (e a final, na eliminação; as pares só no todos
+ * contra todos, com a dica) e as rodadas do suíço. No TDM, o teto do formato
+ * aparece em jogadores (como as vagas) e as rodadas contam times. A série que
+ * pede mais mapas que o pool
  * salvo fica inválida, com o caminho para Mapas embaixo.
  */
 export const TournamentFormatFields = memo(function TournamentFormatFields({
@@ -155,6 +157,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
         name={stageField(index, "format")}
         value={choice}
         readOnly={readOnly}
+        columns={5}
         options={CHOICES.map((value) => {
           const blocked = isElimination(value) && !last;
           return {
@@ -180,7 +183,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           onChange={(grandFinalReset) => change({ grandFinalReset })}
         />
       )}
-      <div className={styles.pair}>
+      <FormRow columns={4}>
         <Select
           labelText={t("bestOf")}
           helperText={
@@ -246,7 +249,7 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             </Button>
           </div>
         )}
-      </div>
+      </FormRow>
     </>
   );
 }, sameValues(KEYS));

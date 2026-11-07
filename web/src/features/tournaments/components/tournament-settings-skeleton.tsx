@@ -10,13 +10,13 @@ type Props = {
 
 /**
  * A aba Configurações carregando, na forma dela: o acordeão fechado, um item
- * por seção, na coluna estreita.
+ * por seção, na largura toda.
  */
 export function TournamentSettingsSkeleton({ label }: Props) {
   return (
     <TabLoading label={label}>
       <Grid>
-        <Column sm={4} md={8} lg={8}>
+        <Column sm={4} md={8} lg={16}>
           <div aria-hidden>
             <AccordionSkeleton count={SETTINGS_SECTIONS.length} open={false} />
           </div>
