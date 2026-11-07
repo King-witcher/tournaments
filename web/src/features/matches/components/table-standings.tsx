@@ -20,6 +20,8 @@ type Schemas = components["schemas"];
 type Props = {
   tenant: string;
   bracket: Schemas["TournamentBracket"];
+  /** É a última fase: o 1º, com ela encerrada, venceu o torneio. */
+  lastStage: boolean;
 };
 
 /**
@@ -42,7 +44,7 @@ type Props = {
  * desempates; no grupo que ela ordenou, o desempate diz "por decisão da
  * organização", com o motivo.
  */
-export function TableStandings({ tenant, bracket }: Props) {
+export function TableStandings({ tenant, bracket, lastStage }: Props) {
   const t = useTranslations("Bracket.table");
   const tStandings = useTranslations("Bracket.standings");
   const teamName = useTeamName();
@@ -146,7 +148,7 @@ export function TableStandings({ tenant, bracket }: Props) {
         buchholz: String(r.buchholz ?? 0),
         notes: (
           <span className={styles.notes}>
-            {finished && r.position === 1 && (
+            {finished && lastStage && r.position === 1 && (
               <StatusTag status="confirmed" size="sm">
                 {tStandings("champion")}
               </StatusTag>

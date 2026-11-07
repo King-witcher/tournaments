@@ -4,7 +4,7 @@ use chrono::Utc;
 use super::{
     changes, contest,
     db::{self, NewTournament},
-    edit, rules_images,
+    rules_images,
     schedule::Schedule,
     screenshots,
     setup::Setup,
@@ -14,7 +14,7 @@ use super::{
     texts::Texts,
     types::{
         CreateTournament, CreateTranslation, DeleteTournament, Tournament, TournamentPath,
-        TournamentSummary, UpdateTournament,
+        TournamentSummary,
     },
     veto,
     visibility::find_visible,
@@ -39,7 +39,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of, stage}, format.invalid_rounds {max, got, stage}, format.invalid_tiebreakers {stage} (desempate repetido, ou buchholz fora do suíço), format.too_many_participants {max, got, stage}, stage.elimination_not_last {stage} (eliminação só na última fase), stage.invalid_advance {stage, min, max} (corte de 2 ao teto do formato da fase), stage.entry_rules_first {stage} (corte ou check-in na fase 1), champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -172,89 +172,6 @@ pub async fn get_tournament(
 ) -> Result<Json<Tournament>, ApiError> {
     let found = find_visible(&mut *state.db.acquire().await?, &member, &path.tournament).await?;
     Ok(Json(found.into()))
-}
-
-#[utoipa::path(
-    patch,
-    path = "/tenants/{slug}/tournaments/{tournament}",
-    tag = "tournaments",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("tournament" = String, Path, description = "Slug do torneio"),
-    ),
-    request_body = UpdateTournament,
-    responses(
-        (status = OK, body = Tournament, description = "Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação"),
-    )
-)]
-pub async fn update_tournament(
-    State(state): State<AppState>,
-    member: TenantMember<Organizer>,
-    PathParams(path): PathParams<TournamentPath>,
-    JsonBody(mut body): JsonBody<UpdateTournament>,
-) -> Result<Json<Tournament>, ApiError> {
-    let viewer = Some(member.user.id);
-    let mut tx = state.db.begin().await?;
-    let current = db::find_for_update(&mut tx, member.tenant, &path.tournament, viewer)
-        .await?
-        .ok_or(NOT_FOUND)?;
-    let veto = match body.veto.take() {
-        Some(input) => Some(veto::resolve(&mut tx, input, Some(&current.setup.veto)).await?),
-        None => None,
-    };
-    let screenshots_required = screenshots::edit(
-        current.status,
-        current.screenshots_required,
-        body.screenshots_required,
-        state.storage.is_some(),
-    )?;
-    let stored = edit::Current {
-        status: current.status,
-        slug: &current.slug,
-        texts: &current.texts,
-        admission: current.admission,
-        setup: &current.setup,
-        schedule: current.schedule,
-        contest_minutes: current.contest_minutes,
-        counts_for_rating: current.counts_for_rating,
-        now: Utc::now(),
-    };
-    let edit = edit::apply(stored, veto, body)?;
-    let rules_changed = edit.texts.rules != current.texts.rules;
-    if let Some(setup) = &edit.setup {
-        let pool = db::champion_pool(&mut *tx).await?;
-        setup.check(pool, current.participants)?;
-    }
-    db::update(&mut tx, current.id, &edit).await?;
-    if rules_changed {
-        let cdn = rules_images::cdn(&state);
-        let rules = &edit.texts.rules;
-        rules_images::save(&mut tx, member.tenant, current.id, None, rules, cdn).await?;
-    }
-    if let Some(required) = screenshots_required {
-        db::set_screenshots_required(&mut tx, current.id, required).await?;
-    }
-    if let Some(slug) = &edit.slug {
-        db::rename(&mut tx, current.id, slug).await?;
-        changes::moved(&mut tx, &member.slug, &current.slug, slug).await?;
-    }
-    changes::changed(&mut tx, current.id).await?;
-    if current.schedule.start_due(current.status, Utc::now()) {
-        // Adiado, sai do que espera a organização (se continua, o evento é o
-        // mesmo de `changed` e entra uma vez).
-        tenants::organizing_changed(&mut tx, member.tenant).await?;
-    }
-    let slug = edit.slug.as_deref().unwrap_or(&current.slug);
-    let updated = db::find(&mut tx, member.tenant, slug, viewer)
-        .await?
-        .ok_or_else(ApiError::internal)?;
-    tx.commit().await?;
-    Ok(Json(updated.into()))
 }
 
 #[utoipa::path(

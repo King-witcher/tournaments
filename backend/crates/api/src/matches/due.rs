@@ -36,7 +36,9 @@ pub async fn apply_due_confirmations(
     if !db::has_due(conn, tournament.id, now).await? {
         return Ok(0);
     }
-    let before = Snapshot::of(&stage::load(conn, tournament).await?);
+    // Mapa pendente só há em série aberta, e só a fase atual tem (as
+    // anteriores terminaram).
+    let before = Snapshot::of(&stage::load_current(conn, tournament).await?);
     let confirmed = db::confirm_due(conn, tournament.id, now).await?;
     if confirmed > 0 {
         settle::settle(conn, tournament, None, &before).await?;
@@ -102,24 +104,30 @@ pub async fn lock_current<R>(
 }
 
 /// Há mapa pendente com a janela de contestação vencida em `now`, pelos
-/// mapas da fase já carregados (o mesmo que `db::has_due`, sem a query: só
-/// há uma fase).
+/// mapas da fase já carregados (o mesmo que `db::has_due`, sem a query, na
+/// fase atual: só ela tem mapa pendente).
 pub fn confirmations_due(games: &[StoredGame], now: DateTime<Utc>) -> bool {
     games
         .iter()
         .any(|g| g.status == GameStatus::Pending && g.confirm_by.is_some_and(|by| by <= now))
 }
 
-/// O torneio `slug` e a fase em jogo como `member` os vê, depois das
-/// confirmações e dos passos de veto vencidos (só abre transação, e trava o
-/// torneio, quando há algum).
+/// A fase `stage` de `tournament`; `None`: a atual.
+fn number(tournament: &StoredTournament, stage: Option<i16>) -> i16 {
+    stage.unwrap_or_else(|| tournament.current_stage())
+}
+
+/// O torneio `slug` e a fase `stage` (`None`: a atual) como `member` os vê,
+/// depois das confirmações e dos passos de veto vencidos (só abre transação,
+/// e trava o torneio, quando há algum).
 pub async fn current<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     slug: &str,
+    stage: Option<i16>,
 ) -> Result<(StoredTournament, Stage), ApiError> {
     let tournament = find_visible(conn, member, slug).await?;
-    current_from(conn, member, tournament).await
+    current_from(conn, member, tournament, stage).await
 }
 
 /// Como `current`, com o torneio já lido por `find_visible` (sem lê-lo de
@@ -128,28 +136,31 @@ pub async fn current_from<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     tournament: StoredTournament,
+    stage: Option<i16>,
 ) -> Result<(StoredTournament, Stage), ApiError> {
-    let stage = stage::load(conn, &tournament).await?;
+    let loaded = stage::load(conn, &tournament, number(&tournament, stage)).await?;
     let now = Utc::now();
-    if !confirmations_due(&stage.games, now) && !veto::any_due(tournament.status, &stage, now) {
-        return Ok((tournament, stage));
+    if !confirmations_due(&loaded.games, now) && !veto::any_due(tournament.status, &loaded, now) {
+        return Ok((tournament, loaded));
     }
     let mut tx = conn.begin().await?;
-    let (tournament, stage) = lock_stage(&mut tx, member, &tournament.slug).await?;
+    let (tournament, loaded) = lock_stage(&mut tx, member, &tournament.slug, stage).await?;
     tx.commit().await?;
-    Ok((tournament, stage))
+    Ok((tournament, loaded))
 }
 
 /// Para as ações: trava o torneio `slug` (como `member` o vê), aplica as
 /// confirmações e os passos de veto vencidos e devolve o torneio e a fase
-/// como ficaram. Sem nada vencido (o normal), a fase é lida uma vez só.
+/// `stage` (`None`: a atual; nas ações sobre uma partida, a dela) como
+/// ficaram. Sem nada vencido (o normal), a fase é lida uma vez só.
 pub async fn lock_stage<R>(
     conn: &mut PgConnection,
     member: &TenantMember<R>,
     slug: &str,
+    stage: Option<i16>,
 ) -> Result<(StoredTournament, Stage), ApiError> {
     let tournament = find_visible_for_update(conn, member, slug).await?;
-    let stage = stage::load(conn, &tournament).await?;
+    let stage = stage::load(conn, &tournament, number(&tournament, stage)).await?;
     let now = Utc::now();
     // As confirmações primeiro: podem fechar a série ou começar o jogo
     // seguinte do veto, e o prazo do veto vale na fase que fica.

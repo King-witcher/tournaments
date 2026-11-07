@@ -1,27 +1,51 @@
 import type { TournamentValues, TranslationValues } from "./form-values";
 
-/** Campo do formulário de torneio que um erro da API pode apontar. */
-export type TournamentField = keyof Pick<
-  TournamentValues,
-  | "name"
-  | "slug"
-  | "description"
-  | "rules"
-  | "maxParticipants"
-  | "teamSize"
+/** Os campos de uma fase que um erro da API pode apontar. */
+export type StageFieldName =
+  | "format"
   | "bestOf"
   | "swissRounds"
   | "tiebreakers"
-  | "bansPerSeries"
-  | "pickOrder"
-  | "noRepeat"
-  | "startsAt"
-  | "checkInMinutes"
-  | "contestMinutes"
-  | "mapPool"
-  | "vetoSeconds"
-  | "teamPickSeconds"
->;
+  | "advance";
+
+/**
+ * Um campo de uma fase: `stages.1.bestOf` é o melhor de N da segunda fase. É
+ * também o `name` do controle dele.
+ */
+export type StageField = `stages.${number}.${StageFieldName}`;
+
+/** O campo `name` da fase `index` (a partir de 0). */
+export const stageField = (index: number, name: StageFieldName): StageField =>
+  `stages.${index}.${name}`;
+
+/** O campo é de uma fase. */
+export const isStageField = (field: string): field is StageField =>
+  field.startsWith("stages.");
+
+/** A fase (a partir de 0) de um campo de fase. */
+export const stageIndexOf = (field: StageField) => Number(field.split(".")[1]);
+
+/** Campo do formulário de torneio que um erro da API pode apontar. */
+export type TournamentField =
+  | StageField
+  | keyof Pick<
+      TournamentValues,
+      | "name"
+      | "slug"
+      | "description"
+      | "rules"
+      | "maxParticipants"
+      | "teamSize"
+      | "bansPerSeries"
+      | "pickOrder"
+      | "noRepeat"
+      | "startsAt"
+      | "checkInMinutes"
+      | "contestMinutes"
+      | "mapPool"
+      | "vetoSeconds"
+      | "teamPickSeconds"
+    >;
 
 /** Os erros de cada campo, já traduzidos. */
 export type FieldErrors<F extends string = TournamentField> = Partial<
@@ -49,9 +73,6 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.max_participants_invalid": "maxParticipants",
   "tournament.max_participants_below_registered": "maxParticipants",
   "tournament.team_size_invalid": "teamSize",
-  "format.invalid_best_of": "bestOf",
-  "format.invalid_rounds": "swissRounds",
-  "format.invalid_tiebreakers": "tiebreakers",
   "format.too_many_participants": "maxParticipants",
   "format.not_enough_players": "maxParticipants",
   "tournament.bans_invalid": "bansPerSeries",
@@ -70,8 +91,35 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.pick_order_invalid": "pickOrder",
 };
 
-/** O campo do torneio que o erro aponta, ou `undefined` se é do formulário. */
-export function tournamentFieldOf(code: string): TournamentField | undefined {
+/**
+ * Os erros que apontam um campo da fase `params.stage` (a partir de 1; sem
+ * ele, a primeira).
+ */
+const STAGE_FIELD_OF_CODE: Record<string, StageFieldName> = {
+  "format.invalid_best_of": "bestOf",
+  "format.invalid_rounds": "swissRounds",
+  "format.invalid_tiebreakers": "tiebreakers",
+  "stage.elimination_not_last": "format",
+  "stage.invalid_advance": "advance",
+  "stage.entry_rules_first": "advance",
+};
+
+/**
+ * O campo do torneio que o erro aponta, ou `undefined` se é do formulário. Os
+ * erros de formato levam a fase em `params.stage`.
+ */
+export function tournamentFieldOf(
+  code: string,
+  params?: Record<string, number | string>,
+): TournamentField | undefined {
+  const stageName = STAGE_FIELD_OF_CODE[code];
+  if (stageName) {
+    const stage = Number(params?.stage ?? 1);
+    return stageField(
+      Number.isInteger(stage) && stage > 0 ? stage - 1 : 0,
+      stageName,
+    );
+  }
   return FIELD_OF_CODE[code];
 }
 

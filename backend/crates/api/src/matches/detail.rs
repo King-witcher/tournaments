@@ -7,7 +7,8 @@ use sqlx::PgConnection;
 use super::{
     contest, db,
     games::GameStatus,
-    key, progress,
+    key::{self, MatchKey},
+    progress,
     stage::Stage,
     tasks,
     types::MatchDetail,
@@ -23,9 +24,12 @@ use crate::{
 const NOT_FOUND: ApiError = ApiError::not_found("match.not_found");
 
 /// A partida `key` da fase. 404 `match.not_found` se o identificador não
-/// existe na chave.
-pub fn find<'a>(stage: &'a Stage, key: &str) -> Result<&'a Match, ApiError> {
-    let id = key::parse(key).ok_or(NOT_FOUND)?;
+/// existe na chave (ou é de outra fase).
+pub fn find<'a>(stage: &'a Stage, key: &MatchKey) -> Result<&'a Match, ApiError> {
+    if key.stage != stage.number {
+        return Err(NOT_FOUND);
+    }
+    let id = key::parse(&key.local).ok_or(NOT_FOUND)?;
     stage.bracket.get(id).ok_or(NOT_FOUND)
 }
 
@@ -40,8 +44,8 @@ pub async fn load(
     let summary = view::summary(tournament.status, stage, m, viewer, &playing);
     let games = stage.games_of(m.id);
     let mine = view::viewer_side(stage, m, viewer);
-    let (events, lineups) =
-        db::match_history(conn, tournament.id, stage.number, &summary.key).await?;
+    let local = key::format(m.id);
+    let (events, lineups) = db::match_history(conn, tournament.id, stage.number, &local).await?;
     let team = |id: Option<i64>| {
         id.and_then(|id| stage.entrant(ParticipantId(id)))
             .map(StoredTeam::view)
@@ -49,6 +53,7 @@ pub async fn load(
     Ok(MatchDetail {
         a: team(summary.a.team_id),
         b: team(summary.b.team_id),
+        stage: u16::try_from(stage.number).unwrap_or(1),
         format: stage.format.into(),
         part_rounds: stage.bracket.total_rounds().unwrap_or_else(|| {
             stage

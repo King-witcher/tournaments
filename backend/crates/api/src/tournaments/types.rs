@@ -29,6 +29,13 @@ pub enum StageFormat {
         /// Melhor de N da final (simples) ou da grande final e do reset (dupla).
         #[schema(example = 5)]
         finals_best_of: u8,
+        /// Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+        /// `null` ou ausente: todos.
+        #[serde(default)]
+        advance: Option<u16>,
+        /// Fases 2 em diante: check-in antes da fase. Ausente: `false`.
+        #[serde(default)]
+        check_in: bool,
     },
     /// Round robin simples, a fase inteira: cada par se enfrenta uma vez e a
     /// classificação sai da tabela. Até 32 participantes.
@@ -48,6 +55,13 @@ pub enum StageFormat {
         /// da fase. Ausente: `seed`.
         #[serde(default)]
         final_tie: FinalTie,
+        /// Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+        /// `null` ou ausente: todos.
+        #[serde(default)]
+        advance: Option<u16>,
+        /// Fases 2 em diante: check-in antes da fase. Ausente: `false`.
+        #[serde(default)]
+        check_in: bool,
     },
     /// Suíço, a fase inteira: rodadas fixas, pareamento por pontos sem
     /// revanche, classificação pela tabela. Até 128 participantes.
@@ -71,6 +85,13 @@ pub enum StageFormat {
         /// da fase. Ausente: `seed`.
         #[serde(default)]
         final_tie: FinalTie,
+        /// Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+        /// `null` ou ausente: todos.
+        #[serde(default)]
+        advance: Option<u16>,
+        /// Fases 2 em diante: check-in antes da fase. Ausente: `false`.
+        #[serde(default)]
+        check_in: bool,
     },
     /// Disputa de posições, a fase inteira: a ordem da chave forma os pares
     /// (1 x 2, 3 x 4...), todos prontos no início, e quem vence cada série
@@ -80,7 +101,43 @@ pub enum StageFormat {
         /// Melhor de N de todas as partidas (ímpar).
         #[schema(example = 3)]
         best_of: u8,
+        /// Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+        /// `null` ou ausente: todos.
+        #[serde(default)]
+        advance: Option<u16>,
+        /// Fases 2 em diante: check-in antes da fase. Ausente: `false`.
+        #[serde(default)]
+        check_in: bool,
     },
+}
+
+/// Uma fase como o torneio a lê: o formato e a situação dela.
+#[derive(Serialize, ToSchema)]
+pub struct TournamentStage {
+    #[serde(flatten)]
+    pub format: StageFormat,
+    /// A posição da fase, de 1 em diante ("Fase N").
+    pub number: u16,
+    pub status: StageStatus,
+    /// Quando a fase começou (a 1, com o torneio); `null` antes.
+    pub started_at: Option<DateTime<Utc>>,
+    /// Quando a organização abriu o check-in da fase (fases 2 em diante);
+    /// `null` se não abriu.
+    pub check_in_opened_at: Option<DateTime<Utc>>,
+}
+
+/// Onde a fase está.
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum StageStatus {
+    /// Não começou e o check-in dela não está aberto (a fase 1 de um torneio
+    /// que não começou também).
+    Pending,
+    /// Fases 2 em diante: o check-in está aberto, e a fase não começou.
+    CheckIn,
+    InProgress,
+    /// Todas as séries decididas e nenhum empate esperando a organização.
+    Finished,
 }
 
 /// Um desempate das fases de tabela. O primeiro critério (saldo de séries ou
@@ -248,6 +305,8 @@ fn default_stages() -> Vec<StageFormat> {
         grand_final_reset: false,
         best_of: DEFAULT_BEST_OF,
         finals_best_of: DEFAULT_FINALS_BEST_OF,
+        advance: None,
+        check_in: false,
     }]
 }
 
@@ -289,9 +348,10 @@ pub struct CreateTournament {
     #[serde(default)]
     #[schema(required = false)]
     pub champion_rules: ChampionRulesInput,
-    /// Fases, na ordem. Por enquanto, exatamente uma. Ausente: uma fase de
-    /// eliminação dupla, melhor de 3, final melhor de 5, sem reset da grande
-    /// final.
+    /// Fases, na ordem, de 1 a 4: cada uma recebe quem jogou a anterior, pela
+    /// classificação final dela (`advance`, `check_in`); eliminação só na
+    /// última. Ausente: uma fase de eliminação dupla, melhor de 3, final
+    /// melhor de 5, sem reset da grande final.
     #[serde(default = "default_stages")]
     #[schema(required = false)]
     pub stages: Vec<StageFormat>,
@@ -398,6 +458,11 @@ pub struct UpdateTournament {
     pub admission: Option<Admission>,
     pub max_participants: Option<i32>,
     pub champion_rules: Option<ChampionRules>,
+    /// Todas as fases, na ordem. Depois do início do torneio: as começadas
+    /// vêm iguais (senão, `tournament.stages_locked`), as que não começaram
+    /// mudam ou saem (tirá-las do fim da lista), e fase nova não entra
+    /// (`tournament.stages_locked`). Sem fase depois da atual, já terminada, o
+    /// torneio encerra.
     pub stages: Option<Vec<StageFormat>>,
     /// `null` tira a data, o que só vale no rascunho.
     #[serde(default, deserialize_with = "nullable")]
@@ -456,7 +521,7 @@ pub struct Tournament {
     /// Se quem vê fez check-in.
     pub checked_in: bool,
     pub champion_rules: ChampionRules,
-    pub stages: Vec<StageFormat>,
+    pub stages: Vec<TournamentStage>,
     /// Início previsto; `null`: sem data.
     pub starts_at: Option<DateTime<Utc>>,
     /// Janela de check-in em minutos; `null`: sem check-in.

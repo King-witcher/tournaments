@@ -1,8 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { MyParticipation } from "@/features/participants/components/my-participation";
+import { NextStage } from "@/features/stages/components/next-stage";
+import { pendingStage } from "@/features/stages/lib/stages";
+import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { loadTournament } from "../server";
 import { ErrorBack } from "./error-back";
 import { TournamentHeader } from "./tournament-header";
@@ -50,6 +53,15 @@ export async function TournamentView({ tenant, slug, children }: Props) {
         organizer={organizer}
         now={now}
       />
+      {pendingStage(tournament) && (
+        <Suspense fallback={<SectionSkeleton rows={2} />}>
+          <NextStage
+            tenant={tenant}
+            tournament={tournament}
+            organizer={organizer}
+          />
+        </Suspense>
+      )}
       <TournamentTabs
         tenant={tenant}
         tournament={tournament}

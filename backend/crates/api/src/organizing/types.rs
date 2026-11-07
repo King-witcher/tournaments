@@ -17,6 +17,9 @@ pub struct Organizing {
     /// Torneios com um empate do fim da fase esperando a decisão da
     /// organização, do que espera há mais tempo ao mais recente.
     pub pending_ties: Vec<PendingTies>,
+    /// Torneios com uma fase pronta para iniciar (a anterior terminou), do
+    /// que espera há mais tempo ao mais recente.
+    pub stage_due: Vec<StageDue>,
 }
 
 /// O torneio de um item: a comunidade, o endereço e o nome.
@@ -36,7 +39,8 @@ pub struct PendingTournament {
 #[derive(Serialize, ToSchema)]
 pub struct ContestedGame {
     pub tournament: PendingTournament,
-    /// A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
+    /// A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`; da fase 2
+    /// em diante, com o prefixo da fase (`s2-pl-1-1`).
     pub key: String,
     /// Eliminação simples (o código curto da partida não diz a chave).
     pub single: bool,
@@ -56,6 +60,18 @@ pub struct ContestedGame {
 pub struct PendingTies {
     pub tournament: PendingTournament,
     /// Desde quando espera.
+    pub since: DateTime<Utc>,
+}
+
+/// Um torneio com uma fase pronta para iniciar: a anterior terminou e ela não
+/// começou. Resolve-se na aba Organização, iniciando a fase (ou abrindo o
+/// check-in dela).
+#[derive(Serialize, ToSchema)]
+pub struct StageDue {
+    pub tournament: PendingTournament,
+    /// A fase pronta para iniciar, de 2 em diante.
+    pub stage: u16,
+    /// Desde quando: o fim da fase anterior.
     pub since: DateTime<Utc>,
 }
 

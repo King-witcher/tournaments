@@ -246,6 +246,7 @@ pub async fn contest_notices_due(
 /// Uma partida contestada cujo aviso à organização venceu.
 pub struct ContestNotice {
     pub game: i64,
+    pub stage: i16,
     pub match_key: String,
     pub number: i16,
     /// Quem contestou; `None` se a conta foi excluída.
@@ -266,13 +267,13 @@ pub async fn take_contest_notices(
         r#"with due as (
                update match_games set contest_notify_at = null
                where tournament_id = $1 and contest_notify_at <= $2
-               returning id, tenant_id, match_key, number, contested_by
+               returning id, tenant_id, stage, match_key, number, contested_by
            )
-           select d.id as game, d.match_key, d.number, d.contested_by as "contested_by?",
-                  m.nickname as "player?"
+           select d.id as game, d.stage, d.match_key, d.number,
+                  d.contested_by as "contested_by?", m.nickname as "player?"
            from due d
            left join tenant_members m on m.tenant_id = d.tenant_id and m.user_id = d.contested_by
-           order by d.match_key, d.number"#,
+           order by d.stage, d.match_key, d.number"#,
         tournament.get(),
         now
     )

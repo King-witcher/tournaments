@@ -13,14 +13,15 @@ import { Section } from "@/shared/ui/section";
 import { TileGrid } from "@/shared/ui/tile-grid";
 import { ContestedGameTile } from "./contested-game-tile";
 import { PendingTiesTile } from "./pending-ties-tile";
+import { StageDueTile } from "./stage-due-tile";
 import { StartDueTile } from "./start-due-tile";
 
 /**
  * O topo da home: o que só anda se quem vê agir, em todas as comunidades.
  * Primeiro o que ele tem de fazer como jogador, que corre contra o relógio, e
  * depois o que espera a organização (os mapas contestados, em que há uma
- * partida parada, os torneios na hora de iniciar e os que esperam a decisão
- * de um empate na classificação). Nada esperando, nada
+ * partida parada, os torneios na hora de iniciar, os com uma fase pronta para
+ * iniciar e os que esperam a decisão de um empate na classificação). Nada esperando, nada
  * aparece: o aviso com som e o push já chamam quando chega algo, e a home
  * recarrega sozinha pelo canal da pessoa. Fica em `<Suspense>`.
  *
@@ -48,8 +49,13 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
   const contested = organizing?.contested ?? [];
   const startDue = organizing?.start_due ?? [];
   const pendingTies = organizing?.pending_ties ?? [];
+  const stageDue = organizing?.stage_due ?? [];
   const total =
-    tasks.length + contested.length + startDue.length + pendingTies.length;
+    tasks.length +
+    contested.length +
+    startDue.length +
+    pendingTies.length +
+    stageDue.length;
   if (total === 0) return null;
   const t = await getTranslations("Home.waiting");
 
@@ -61,6 +67,7 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
     ...contested.map((item) => item.tournament.tenant_slug),
     ...startDue.map((item) => item.tournament.tenant_slug),
     ...pendingTies.map((item) => item.tournament.tenant_slug),
+    ...stageDue.map((item) => item.tournament.tenant_slug),
   ]);
   const logos = new Map(
     tenants.map((tenant) => [tenant.slug, tenant.logo_url]),
@@ -95,6 +102,16 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
         {startDue.map((item) => (
           <StartDueTile
             key={`${item.tournament.tenant_slug}/${item.tournament.slug}`}
+            item={item}
+            avatar={avatar(
+              item.tournament.tenant_slug,
+              item.tournament.tenant_name,
+            )}
+          />
+        ))}
+        {stageDue.map((item) => (
+          <StageDueTile
+            key={`${item.tournament.tenant_slug}/${item.tournament.slug}/${item.stage}`}
             item={item}
             avatar={avatar(
               item.tournament.tenant_slug,

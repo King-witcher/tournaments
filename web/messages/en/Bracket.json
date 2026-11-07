@@ -31,7 +31,8 @@
     "grand_final": "GF{round}",
     "round_robin": "{round}.{index}",
     "swiss": "{round}.{index}",
-    "placement": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}-place match"
+    "placement": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}-place match",
+    "stage": "Stage {stage} · {code}"
   },
   "from": {
     "winner": "Winner of {match}",
@@ -114,7 +115,8 @@
     "won": "Won: <match></match> ({score})",
     "lost": "Lost: <match></match> ({score})",
     "alone": "No opponent",
-    "empty": "Standings appear here when the last match in the bracket is decided."
+    "empty": "Standings appear here when the last match in the bracket is decided.",
+    "final": "Final standings"
   },
   "rest": "<name></name> sits out this round",
   "swissBye": "<name></name> gets the bye (counts as a win)",

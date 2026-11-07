@@ -9,11 +9,12 @@ use engine::{
 };
 
 use super::{
+    chain,
     db::{EventRow, LineupRow},
     games::{GameStatus, StoredGame, confirmed_wins},
     key, progress,
     result::{Side, StoredResult},
-    stage::Stage,
+    stage::{Chain, Stage},
     tasks, ties,
     types::{
         BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail, MapRef,
@@ -57,24 +58,43 @@ impl Viewer {
     }
 }
 
-pub fn bracket(
-    tournament: &StoredTournament,
-    stage: &Stage,
-    viewer: &Viewer,
-) -> Result<TournamentBracket, ApiError> {
-    let team = |p: ParticipantId| stage.entrant(p).map(|e| e.id);
-    let standings = stage
-        .bracket
-        .placements()
-        .into_iter()
+/// As colocações `placements` como a API mostra, com os times de `teams`.
+fn standings_of(
+    placements: &[ec::Placement],
+    teams: &[StoredTeam],
+) -> Result<Vec<Standing>, ApiError> {
+    placements
+        .iter()
         .map(|p| {
+            let team = teams.iter().find(|t| t.id == p.participant.0);
             Ok(Standing {
-                team_id: team(p.participant).ok_or_else(ApiError::internal)?,
+                team_id: team.map(|t| t.id).ok_or_else(ApiError::internal)?,
                 rank: p.rank,
                 tied: p.tied,
             })
         })
-        .collect::<Result<_, ApiError>>()?;
+        .collect()
+}
+
+/// A chave da fase `stage`, com a classificação final do torneio
+/// (`chain::standings` das fases começadas, `chain`).
+pub fn bracket(
+    tournament: &StoredTournament,
+    stage: &Stage,
+    viewer: &Viewer,
+    chain: &Chain,
+) -> Result<TournamentBracket, ApiError> {
+    let team = |p: ParticipantId| stage.entrant(p).map(|e| e.id);
+    let standings = standings_of(&stage.bracket.placements(), &stage.entrants)?;
+    let composite = chain::standings(chain);
+    let standings_final = standings_of(&composite, &chain.teams)?;
+    let other_teams = chain
+        .teams
+        .iter()
+        .filter(|t| stage.entrant(t.participant()).is_none())
+        .filter(|t| composite.iter().any(|p| p.participant.0 == t.id))
+        .map(StoredTeam::view)
+        .collect();
     let playing = progress::playing(stage);
     let matches: Vec<BracketMatch> = stage
         .bracket
@@ -108,12 +128,19 @@ pub fn bracket(
             })
         })
         .collect::<Result<_, ApiError>>()?;
+    let format = match tournament.stage(stage.number) {
+        Some((setup, _)) => (*setup).into(),
+        None => stage.format.into(),
+    };
     Ok(TournamentBracket {
-        format: stage.format.into(),
+        stage: u16::try_from(stage.number).unwrap_or(1),
+        format,
         status: tournament.status,
         entrants: stage.entrants.iter().map(StoredTeam::view).collect(),
         matches,
         standings,
+        standings_final,
+        other_teams,
         table,
         pending_ties,
         total_rounds: stage.bracket.total_rounds(),
@@ -236,7 +263,7 @@ pub fn summary(
     let count = |s: GameStatus| games.iter().filter(|g| g.status == s).count() as u8;
     let (a_frags, b_frags) = stage.series_frags(m.id).unzip();
     BracketMatch {
-        key: key::format(m.id),
+        key: key::public(stage.number, m.id),
         part: match m.id.side {
             ec::BracketSide::Winners => BracketPart::Winners,
             ec::BracketSide::Losers => BracketPart::Losers,
@@ -277,7 +304,7 @@ fn side(stage: &Stage, slot: Slot, occupant: Occupant) -> MatchSide {
     let from = |outcome, id| {
         Some(SideSource {
             outcome,
-            match_key: key::format(id),
+            match_key: key::public(stage.number, id),
         })
     };
     MatchSide {

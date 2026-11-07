@@ -38,6 +38,9 @@ impl Situation {
             Place::TiePending(rank, tied) => (Self::TiePending, Some(MyPlacement { rank, tied })),
             Place::Eliminated(rank, tied) => (Self::Eliminated, Some(MyPlacement { rank, tied })),
             Place::Champion => (Self::Champion, Some(MyPlacement { rank: 1, tied: 1 })),
+            Place::AwaitingStage => (Self::AwaitingStage, None),
+            Place::StageCheckIn => (Self::StageCheckInPending, None),
+            Place::Substitute => (Self::Substitute, None),
         }
     }
 }
@@ -93,5 +96,11 @@ mod tests {
             (Situation::Eliminated, Some((3, 2)))
         );
         assert_eq!(of(Place::Champion), (Situation::Champion, Some((1, 1))));
+        assert_eq!(of(Place::AwaitingStage), (Situation::AwaitingStage, None));
+        assert_eq!(
+            of(Place::StageCheckIn),
+            (Situation::StageCheckInPending, None)
+        );
+        assert_eq!(of(Place::Substitute), (Situation::Substitute, None));
     }
 }

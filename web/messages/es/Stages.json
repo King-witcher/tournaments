@@ -1,0 +1,52 @@
+{
+  "title": "Fase {number}",
+  "state": {
+    "pending": "Esperando el inicio",
+    "check_in": "Check-in abierto"
+  },
+  "enters": "{count, plural, one {Entra # {tdm, select, yes {equipo} other {jugador}}} other {Entran # {tdm, select, yes {equipos} other {jugadores}}}}",
+  "substitutes": "{count, plural, one {# suplente} other {# suplentes}}",
+  "confirmed": "{count} de {total} hicieron check-in",
+  "list": {
+    "title": "Quién entra en la fase {number}",
+    "seed": "Orden",
+    "team": "Equipo",
+    "player": "Jugador",
+    "previous": "Posición en la fase {previous}",
+    "presence": "Situación",
+    "empty": "Ningún candidato.",
+    "rank": "{rank}º",
+    "state": {
+      "enters": "Entra",
+      "substitute": "Suplente",
+      "absent": "Sin check-in",
+      "withdrawn": "Desistió"
+    }
+  },
+  "yourTeam": {
+    "substitute": "{tdm, select, yes {Tu equipo entra} other {Entras}} si alguien de arriba {checkIn, select, yes {no hace el check-in} other {desiste}}."
+  },
+  "checkIn": {
+    "do": "Hacer check-in",
+    "undo": "Deshacer check-in",
+    "mark": "Marcar check-in",
+    "unmark": "Desmarcar check-in",
+    "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera de la fase {number} si empieza así.",
+    "actionsFor": "Acciones de {name}"
+  },
+  "openCheckIn": "Abrir check-in de la fase {number}",
+  "start": "Iniciar fase {number}",
+  "startQuestion": "¿Iniciar la fase {number}? El orden y quién entra quedan definidos.",
+  "startEntering": "Entran, en este orden:",
+  "startPlacement": "Pares de la primera ronda:",
+  "startSubstitutes": "Suplentes, fuera de la fase: {names}.",
+  "startAbsent": "Sin check-in, fuera de la fase: {names}.",
+  "versus": "{a} × {b}",
+  "alone": "{name} sin rival",
+  "undoStart": "Deshacer fase {number}",
+  "undoStartConfirm": "¿Deshacer el inicio de la fase {number}? La fase vuelve a esperar el inicio, con los check-ins conservados.",
+  "undoStartTournamentConfirm": "¿Deshacer el inicio del torneo? Todas las fases vuelven al comienzo y se borran sus partidas y resultados, con el historial de las series.",
+  "switcher": "Fase",
+  "stageOption": "Fase {number}",
+  "finalOption": "Final"
+}

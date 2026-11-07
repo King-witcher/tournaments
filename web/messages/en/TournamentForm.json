@@ -68,7 +68,9 @@
     },
     "seconds": "{time} per step",
     "teamPick": "{time} to pick champions",
-    "screenshotsRequired": "screenshot required"
+    "screenshotsRequired": "screenshot required",
+    "series": "best of {bestOf}",
+    "seriesFinals": "best of {bestOf}, final best of {finals}"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -94,7 +96,9 @@
       "veto": "Maps",
       "results": "Results",
       "teamRules": "Who acts for the team",
-      "tiebreakers": "Tiebreakers"
+      "tiebreakers": "Tiebreakers",
+      "stage": "Stage {number}",
+      "entry": "Entry"
     },
     "noDate": "No date"
   },
@@ -165,6 +169,23 @@
   "swissRoundsHintTdm": "Automatic: 3 rounds for up to 8 teams, 4 for up to 16, and 5 for up to 32. With few teams, at most one less than their number.",
   "swissRoundsAuto": "Automatic (based on registered)",
   "swissRoundsAutoTdm": "Automatic (based on teams)",
+  "stages": {
+    "label": "Stages",
+    "tab": "Stage {number}",
+    "add": "Add stage",
+    "remove": "Remove stage",
+    "addBlocked": "Elimination can only be the last stage.",
+    "eliminationLast": "Last stage only.",
+    "entryTitle": "Entry",
+    "entry": "Who enters from stage {previous}",
+    "entryOptions": {
+      "all": "Everyone",
+      "top": "The top"
+    },
+    "entryCount": "How many enter",
+    "checkIn": "Check-in before the stage",
+    "checkInHint": "The organizers open check-in when the previous stage ends. Only those who confirm enter."
+  },
   "swissRoundsOption": "{count, plural, one {# round} other {# rounds}}",
   "championRules": {
     "phase": "Champion picks",

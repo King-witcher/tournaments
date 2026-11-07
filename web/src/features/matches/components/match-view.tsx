@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { getCurrentUser } from "@/features/auth/server";
 import { loadMatchScreenshots } from "@/features/screenshots/server";
+import { hasSeveralStages } from "@/features/stages/lib/stages";
 import { getTeamName } from "@/features/teams/server";
 import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { localizedTexts } from "@/features/tournaments/lib/localize";
@@ -10,6 +11,7 @@ import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { preload } from "@/shared/lib/preload";
 import { PageError } from "@/shared/ui/page-error";
+import { parseMatchKey } from "../lib/bracket-layout";
 import { loadBracket, loadMaps, loadMatch } from "../server";
 import { MatchAfter } from "./match-after";
 import { MatchHeader } from "./match-header";
@@ -38,7 +40,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
       getLocale(),
       loadTournament(tenant, slug),
       loadMatch(tenant, slug, matchKey),
-      loadBracket(tenant, slug),
+      loadBracket(tenant, slug, parseMatchKey(matchKey).stage),
       loadMaps(),
       getCurrentUser(),
       getTeamName(),
@@ -73,6 +75,7 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
         tenantName={loaded.me.name}
         tournamentName={localizedTexts(tournament, locale).name}
         detail={detail}
+        severalStages={hasSeveralStages(tournament)}
       />
       <MatchLive
         target={target}

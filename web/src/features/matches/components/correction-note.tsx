@@ -27,7 +27,7 @@ type Props = {
  */
 export function CorrectionNote({ bracket, matchKey, basePath }: Props) {
   const t = useTranslations("Match.correction");
-  const { code } = useMatchLabels(isSingle(bracket.format));
+  const { shortCode: code } = useMatchLabels(isSingle(bracket.format));
   const later = bracket.matches.filter(
     (m) =>
       m.state === "completed" &&

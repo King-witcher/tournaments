@@ -1588,6 +1588,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/stages/{stage}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_stage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/stages/{stage}/check-in/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["open_stage_check_in"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/stages/{stage}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start_stage"];
+        delete: operations["undo_stage_start"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/stages/{stage}/teams/{team}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["check_in_team"];
+        delete: operations["undo_team_check_in"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/start": {
         parameters: {
             query?: never;
@@ -1977,7 +2041,8 @@ export interface components {
             /** Format: int32 */
             index: number;
             /**
-             * @description Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
+             * @description Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`; da
+             *     fase 2 em diante, com o prefixo da fase (`s2-pl-1-1`).
              * @example wb-1-3
              */
             key: string;
@@ -2121,7 +2186,10 @@ export interface components {
              * @description Número do mapa na série.
              */
             game: number;
-            /** @description A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`. */
+            /**
+             * @description A partida: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`; da fase 2
+             *     em diante, com o prefixo da fase (`s2-pl-1-1`).
+             */
             key: string;
             /** @description Nome do mapa jogado; `null` em série antiga, sem detalhe por mapa. */
             map?: string | null;
@@ -2215,9 +2283,10 @@ export interface components {
              */
             slug: string;
             /**
-             * @description Fases, na ordem. Por enquanto, exatamente uma. Ausente: uma fase de
-             *     eliminação dupla, melhor de 3, final melhor de 5, sem reset da grande
-             *     final.
+             * @description Fases, na ordem, de 1 a 4: cada uma recebe quem jogou a anterior, pela
+             *     classificação final dela (`advance`, `check_in`); eliminação só na
+             *     última. Ausente: uma fase de eliminação dupla, melhor de 3, final
+             *     melhor de 5, sem reset da grande final.
              */
             stages?: components["schemas"]["StageFormat"][];
             /**
@@ -2748,6 +2817,11 @@ export interface components {
              *     suíço, também as que ainda não foram pareadas).
              */
             part_rounds: number;
+            /**
+             * Format: int32
+             * @description A fase da partida, de 1 em diante.
+             */
+            stage: number;
             status: components["schemas"]["TournamentStatus"];
             summary: components["schemas"]["BracketMatch"];
             veto?: components["schemas"]["VetoView"] | null;
@@ -2927,6 +3001,13 @@ export interface components {
             next_match?: components["schemas"]["NextMatch"] | null;
             placement?: components["schemas"]["MyPlacement"] | null;
             situation: components["schemas"]["Situation"];
+            /**
+             * Format: int32
+             * @description A fase de que a situação fala: a que ele joga ou em que terminou, ou a
+             *     seguinte, que ele espera (`awaiting_stage`, `stage_check_in_pending`,
+             *     `substitute`). `null` antes da chave.
+             */
+            stage?: number | null;
             team?: components["schemas"]["Team"] | null;
             /** @description O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela). */
             tenant_logo_url?: string | null;
@@ -3083,6 +3164,18 @@ export interface components {
             code: "check_in.opened";
             /** @description O check-in abriu (para os inscritos). */
             params: {
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "stage.check_in_opened";
+            /**
+             * @description O check-in da fase `stage` (2 em diante) abriu: quem joga por um time
+             *     candidato confirma a presença dele (para os jogadores dos candidatos).
+             */
+            params: {
+                /** Format: int32 */
+                stage: number;
                 tournament: string;
             };
         } | {
@@ -3301,6 +3394,11 @@ export interface components {
              *     organização, do que espera há mais tempo ao mais recente.
              */
             pending_ties: components["schemas"]["PendingTies"][];
+            /**
+             * @description Torneios com uma fase pronta para iniciar (a anterior terminou), do
+             *     que espera há mais tempo ao mais recente.
+             */
+            stage_due: components["schemas"]["StageDue"][];
             /**
              * @description Torneios na inscrição ou no check-in com o início marcado já passado,
              *     do início mais antigo ao mais recente.
@@ -3778,11 +3876,102 @@ export interface components {
          *     membro, no perfil dele na comunidade.
          * @enum {string}
          */
-        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "reserve" | "playing" | "tie_pending" | "eliminated" | "withdrawn" | "champion";
+        Situation: "registered" | "check_in_pending" | "checked_in" | "missed_check_in" | "reserve" | "playing" | "tie_pending" | "eliminated" | "withdrawn" | "champion" | "awaiting_stage" | "stage_check_in_pending" | "substitute";
         /** @enum {string} */
         SourceOutcome: "winner" | "loser";
+        /** @description Um candidato à fase: um time que jogou a anterior. */
+        StageCandidate: {
+            /** @description Confirmou presença no check-in da fase. */
+            checked_in: boolean;
+            /** Format: date-time */
+            checked_in_at?: string | null;
+            /**
+             * Format: int32
+             * @description A posição na classificação da fase anterior (a de agora, antes de ela
+             *     terminar).
+             */
+            previous_rank: number;
+            /**
+             * Format: int32
+             * @description Antes do início, o seed com que entraria agora (com o check-in aberto,
+             *     só quem confirmou; antes de abrir, todos que não desistiram); depois,
+             *     o gravado. `null`: suplente (abaixo do corte) ou fora.
+             */
+            projected_seed?: number | null;
+            /**
+             * Format: int32
+             * @description O seed gravado no início: entrou na fase. `null` antes do início e para
+             *     quem ficou de fora.
+             */
+            seed?: number | null;
+            team: components["schemas"]["Team"];
+            /** @description Desistiu: fica fora. */
+            withdrawn: boolean;
+        };
+        /**
+         * @description Um torneio com uma fase pronta para iniciar: a anterior terminou e ela não
+         *     começou. Resolve-se na aba Organização, iniciando a fase (ou abrindo o
+         *     check-in dela).
+         */
+        StageDue: {
+            /**
+             * Format: date-time
+             * @description Desde quando: o fim da fase anterior.
+             */
+            since: string;
+            /**
+             * Format: int32
+             * @description A fase pronta para iniciar, de 2 em diante.
+             */
+            stage: number;
+            tournament: components["schemas"]["PendingTournament"];
+        };
+        /**
+         * @description Uma fase da 2 em diante: a configuração da entrada nela, onde ela está e
+         *     os candidatos (quem jogou a anterior).
+         */
+        StageEntry: {
+            /**
+             * Format: int32
+             * @description Quantos da fase anterior entram; `null`: todos.
+             */
+            advance?: number | null;
+            /** @description A organização pode iniciar a fase agora (`start_blocker` nulo). */
+            can_start: boolean;
+            /**
+             * @description Quem jogou a fase anterior, na ordem da classificação dela (a de
+             *     agora, antes de ela terminar); vazio antes de ela começar.
+             */
+            candidates: components["schemas"]["StageCandidate"][];
+            /** @description Só entra quem confirmar presença no check-in da fase. */
+            check_in: boolean;
+            /** Format: date-time */
+            check_in_opened_at?: string | null;
+            /**
+             * Format: int32
+             * @description A posição da fase ("Fase N"), de 2 em diante.
+             */
+            number: number;
+            /**
+             * @description Por que a fase não pode começar agora: `stage.already_started`,
+             *     `tournament.not_in_progress`, `stage.previous_not_finished` (séries por
+             *     decidir ou empate do fim esperando a organização),
+             *     `stage.check_in_not_open` (a fase pede check-in e ele não abriu),
+             *     `stage.not_enough_entrants` (menos de 2 entrariam). `null`: pode.
+             */
+            start_blocker?: string | null;
+            /** Format: date-time */
+            started_at?: string | null;
+            status: components["schemas"]["StageStatus"];
+        };
         /** @description Formato de uma fase. */
         StageFormat: {
+            /**
+             * Format: int32
+             * @description Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+             *     `null` ou ausente: todos.
+             */
+            advance?: number | null;
             /**
              * Format: int32
              * @description Melhor de N das partidas comuns (ímpar).
@@ -3790,6 +3979,8 @@ export interface components {
              */
             best_of: number;
             bracket: components["schemas"]["Bracket"];
+            /** @description Fases 2 em diante: check-in antes da fase. Ausente: `false`. */
+            check_in?: boolean;
             /**
              * Format: int32
              * @description Melhor de N da final (simples) ou da grande final e do reset (dupla).
@@ -3806,11 +3997,19 @@ export interface components {
         } | {
             /**
              * Format: int32
+             * @description Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+             *     `null` ou ausente: todos.
+             */
+            advance?: number | null;
+            /**
+             * Format: int32
              * @description Melhor de N de todas as partidas, ímpar ou par. A série par
              *     fecha na maioria ou, com todos os mapas e metade para cada lado, empata.
              * @example 3
              */
             best_of: number;
+            /** @description Fases 2 em diante: check-in antes da fase. Ausente: `false`. */
+            check_in?: boolean;
             /**
              * @description Quem decide o empate que sobra depois de todos os critérios, no fim
              *     da fase. Ausente: `seed`.
@@ -3833,10 +4032,18 @@ export interface components {
         } | {
             /**
              * Format: int32
+             * @description Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+             *     `null` ou ausente: todos.
+             */
+            advance?: number | null;
+            /**
+             * Format: int32
              * @description Melhor de N de todas as partidas (ímpar).
              * @example 3
              */
             best_of: number;
+            /** @description Fases 2 em diante: check-in antes da fase. Ausente: `false`. */
+            check_in?: boolean;
             /**
              * @description Quem decide o empate que sobra depois de todos os critérios, no fim
              *     da fase. Ausente: `seed`.
@@ -3867,13 +4074,26 @@ export interface components {
         } | {
             /**
              * Format: int32
+             * @description Fases 2 em diante: quantos da fase anterior entram (mínimo 2);
+             *     `null` ou ausente: todos.
+             */
+            advance?: number | null;
+            /**
+             * Format: int32
              * @description Melhor de N de todas as partidas (ímpar).
              * @example 3
              */
             best_of: number;
+            /** @description Fases 2 em diante: check-in antes da fase. Ausente: `false`. */
+            check_in?: boolean;
             /** @enum {string} */
             format: "placement";
         };
+        /**
+         * @description Onde a fase está.
+         * @enum {string}
+         */
+        StageStatus: "pending" | "check_in" | "in_progress" | "finished";
         Standing: {
             /** Format: int32 */
             rank: number;
@@ -4201,7 +4421,7 @@ export interface components {
              */
             screenshots_required: boolean;
             slug: string;
-            stages: components["schemas"]["StageFormat"][];
+            stages: components["schemas"]["TournamentStage"][];
             /**
              * Format: date-time
              * @description Início previsto; `null`: sem data.
@@ -4218,7 +4438,7 @@ export interface components {
             translations: components["schemas"]["TournamentTranslation"][];
             veto: components["schemas"]["VetoSettings"];
         };
-        /** @description A chave da fase em jogo, refeita dos resultados confirmados. */
+        /** @description A chave de uma fase, refeita dos resultados confirmados. */
         TournamentBracket: {
             /**
              * Format: int32
@@ -4234,6 +4454,11 @@ export interface components {
              */
             matches: components["schemas"]["BracketMatch"][];
             /**
+             * @description Os times de `standings_final` que não estão em `entrants` (os que
+             *     ficaram em fases anteriores).
+             */
+            other_teams: components["schemas"]["Team"][];
+            /**
              * @description Round robin e suíço com a organização decidindo o empate do fim: os
              *     grupos que, com todas as séries decididas, esperam a decisão dela. A
              *     fase (e o torneio) só termina sem nenhum. Vazio nos outros casos.
@@ -4246,14 +4471,27 @@ export interface components {
              */
             results: number;
             /**
+             * Format: int32
+             * @description A fase desta chave, de 1 em diante.
+             */
+            stage: number;
+            /**
              * @description Colocações já definidas. Na eliminação, os eliminados e, no fim,
              *     campeão e vice; empatados dividem a faixa (`rank` 5 com `tied` 4 é
              *     5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
              *     disputa de posições, as dos pares decididos e a do sem par, sem empate.
              *     Com um empate do fim esperando a organização, os do grupo ficam de fora
-             *     (`pending_ties`).
+             *     (`pending_ties`). São as colocações desta fase.
              */
             standings: components["schemas"]["Standing"][];
+            /**
+             * @description A classificação final do torneio, com as posições já conhecidas: os da
+             *     última fase pela colocação dela (só quando a fase atual é a última);
+             *     depois, de trás para a frente, os cortados de cada fase e, por último
+             *     dela, os que não confirmaram presença ou desistiram. Com uma fase só, é
+             *     `standings`.
+             */
+            standings_final: components["schemas"]["Standing"][];
             /** @description Status do torneio depois das confirmações por tempo. */
             status: components["schemas"]["TournamentStatus"];
             /**
@@ -4274,6 +4512,26 @@ export interface components {
          * @enum {string}
          */
         TournamentMode: "duel" | "tdm";
+        /** @description Uma fase como o torneio a lê: o formato e a situação dela. */
+        TournamentStage: components["schemas"]["StageFormat"] & {
+            /**
+             * Format: date-time
+             * @description Quando a organização abriu o check-in da fase (fases 2 em diante);
+             *     `null` se não abriu.
+             */
+            check_in_opened_at?: string | null;
+            /**
+             * Format: int32
+             * @description A posição da fase, de 1 em diante ("Fase N").
+             */
+            number: number;
+            /**
+             * Format: date-time
+             * @description Quando a fase começou (a 1, com o torneio); `null` antes.
+             */
+            started_at?: string | null;
+            status: components["schemas"]["StageStatus"];
+        };
         /**
          * @description rascunho → inscrição → check-in → em andamento → encerrado.
          * @enum {string}
@@ -4444,6 +4702,13 @@ export interface components {
              * @example copa-de-novembro
              */
             slug?: string | null;
+            /**
+             * @description Todas as fases, na ordem. Depois do início do torneio: as começadas
+             *     vêm iguais (senão, `tournament.stages_locked`), as que não começaram
+             *     mudam ou saem (tirá-las do fim da lista), e fase nova não entra
+             *     (`tournament.stages_locked`). Sem fase depois da atual, já terminada, o
+             *     torneio encerra.
+             */
             stages?: components["schemas"]["StageFormat"][] | null;
             /**
              * Format: date-time
@@ -7139,7 +7404,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in, e torneios com empate do fim da fase esperando a decisão da organização (do mais antigo). Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
+            /** @description O que espera a organização em todas as comunidades em que quem vê é organizer ou owner ativo: mapas contestados a resolver (do mais antigo) e torneios na inscrição ou no check-in com o início marcado já passado (o critério do aviso `tournament.start_due`), com quantos fizeram check-in, e torneios com empate do fim da fase esperando a decisão da organização e com uma fase pronta para iniciar (a anterior terminou; do mais antigo). Sem comunidade que organize, as listas vêm vazias. Muda pelo canal da pessoa (`me`) */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -8953,7 +9218,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of, stage}, format.invalid_rounds {max, got, stage}, format.invalid_tiebreakers {stage} (desempate repetido, ou buchholz fora do suíço), format.too_many_participants {max, got, stage}, stage.elimination_not_last {stage} (eliminação só na última fase), stage.invalid_advance {stage, min, max} (corte de 2 ao teto do formato da fase), stage.entry_rules_first {stage} (corte ou check-in na fase 1), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -9097,7 +9362,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento */
+            /** @description Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9133,7 +9398,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, fases, veto ou conta para o rating depois de começar), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
+            /** @description tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered} */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -9155,7 +9420,10 @@ export interface operations {
     };
     get_bracket: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A fase, de 1 em diante; ausente: a atual (a última que começou). A fase que não começou é 404 `stage.not_started` (o que se sabe dela antes, em `GET .../stages/{stage}`) */
+                stage?: number;
+            };
             header?: never;
             path: {
                 /** @description Slug do tenant */
@@ -9167,7 +9435,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A chave, refeita dos resultados confirmados (as confirmações por tempo vencidas são aplicadas antes), com as partidas de quem vê e o que esperam dele */
+            /** @description A chave da fase, refeita dos resultados confirmados (as confirmações por tempo vencidas são aplicadas antes), com as partidas de quem vê e o que esperam dele, e a classificação final do torneio até aqui */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9185,7 +9453,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, tournament.not_found, bracket.not_found (ainda não começou) */
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found (ainda não começou), stage.not_started (a fase pedida não começou ou não existe) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9711,7 +9979,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -9736,7 +10004,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, tournament.not_found, bracket.not_found, match.not_found */
+            /** @description tenant.not_found, tournament.not_found, bracket.not_found, stage.not_started, match.not_found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9756,7 +10024,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -9834,7 +10102,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -10055,7 +10323,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -10133,7 +10401,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série, a partir de 1 */
                 game: number;
@@ -10211,7 +10479,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série: um enviado ou o próximo */
                 game: number;
@@ -10307,7 +10575,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série */
                 game: number;
@@ -10372,7 +10640,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
                 /** @description Número do mapa na série */
                 game: number;
@@ -10457,7 +10725,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10533,7 +10801,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10578,7 +10846,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10650,7 +10918,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10785,7 +11053,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10861,7 +11129,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -10937,7 +11205,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -11013,7 +11281,7 @@ export interface operations {
                 slug: string;
                 /** @description Slug do torneio */
                 tournament: string;
-                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2 */
+                /** @description Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1) */
                 match: string;
             };
             cookie?: never;
@@ -11970,6 +12238,379 @@ export interface operations {
                 };
             };
             /** @description tournament.participants_locked (já começou) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_stage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A fase: a entrada nela (corte e check-in), onde ela está, os candidatos (quem jogou a anterior, na ordem da classificação dela, com a presença e o seed com que entrariam) e se ela pode começar agora */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found (a fase 1, que nasce com o torneio, ou uma que não existe) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    open_stage_check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check-in da fase aberto: os jogadores dos candidatos que não desistiram são avisados (`stage.check_in_opened`, também no Discord). Fecha quando a fase começa */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.check_in_disabled (a fase não pede check-in), stage.already_started, tournament.not_in_progress, stage.previous_not_finished, stage.check_in_already_open */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    start_stage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fase iniciada: entram os que jogaram a anterior, sem os desistentes e, com check-in, só os que confirmaram, na ordem da classificação final dela, até o corte; os seeds 1..K ficam gravados, o check-in fecha e a primeira rodada nasce. Avisa os lados das séries prontas (`match.ready`) e o Discord (`stage.started`) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.already_started, tournament.not_in_progress, stage.previous_not_finished, stage.check_in_not_open, stage.not_enough_entrants {min, got} */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Os da configuração da fase com os times de verdade (com `params.stage`), champions.pool_exhausted {required, available} (o pool mudou), tournament.blind_needs_mirror */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    undo_stage_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Início da fase desfeito, só sem nada jogado nela: os seeds e os pareamentos dela saem; os check-ins ficam (e o check-in, se tinha aberto, volta a valer) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só organizer ou owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.not_started, stage.next_started {stage} (a seguinte começou: desfaça antes o início dela), tournament.not_in_progress, stage.has_activity (algum evento de veto ou de partida, mapa enviado, resultado ou screenshot na fase, mesmo de mapa já anulado) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    check_in_team: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+                /** @description Id do time */
+                team: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presença do time confirmada na fase (por qualquer jogador dele, ou pela organização). Confirmar de novo não muda nada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.not_your_team (nem jogador do time nem da organização) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.check_in_not_open (fechado: não abriu ou a fase começou), stage.not_candidate (não jogou a fase anterior, ou desistiu) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    undo_team_check_in: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description A fase, de 2 em diante */
+                stage: number;
+                /** @description Id do time */
+                team: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presença do time desfeita (pelo próprio time ou pela organização), até a fase começar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageEntry"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.not_your_team */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, stage.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description stage.check_in_not_open, stage.not_candidate */
             409: {
                 headers: {
                     [name: string]: unknown;

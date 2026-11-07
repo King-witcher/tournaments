@@ -49,6 +49,11 @@ async fn openapi_json_is_served() {
     let spec: Value = serde_json::from_slice(&body).unwrap();
     assert!(spec["openapi"].is_string());
     assert!(spec["paths"]["/health"].is_object());
+    // O PATCH do torneio vem de outro domínio (`lifecycle`), no mesmo caminho.
+    let tournament = &spec["paths"]["/tenants/{slug}/tournaments/{tournament}"];
+    for method in ["get", "patch", "delete"] {
+        assert!(tournament[method].is_object(), "{method}");
+    }
 }
 
 #[tokio::test]

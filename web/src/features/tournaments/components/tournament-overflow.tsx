@@ -1,4 +1,5 @@
 import { loadBracket } from "@/features/matches/server";
+import { currentStage, startedStages } from "@/features/stages/lib/stages";
 import type { components } from "@/shared/api/schema";
 import { hasStarted, registrationOpen } from "../lib/status";
 import { TournamentOverflowMenu } from "./tournament-overflow-menu";
@@ -16,7 +17,8 @@ type Props = {
  * O ⋯ do cabeçalho, com o que é raro ou destrutivo e vale agora: desfazer o
  * próprio check-in, cancelar a própria inscrição e, para a organização, criar
  * outro torneio a partir deste (o Modal da criação, com ele em "Começar de"), desfazer o início (com a conta dos resultados
- * que ele apaga, lida da chave) e excluir (antes de começar, a organização;
+ * que ele apaga, lida da chave; com várias fases, apaga todas) e, na fase 2 em
+ * diante sem nada jogado, só o início dela e excluir (antes de começar, a organização;
  * depois, só o owner). Sem nada, não aparece.
  */
 export async function TournamentOverflow({
@@ -32,14 +34,28 @@ export async function TournamentOverflow({
     withdrawRegistration: registrationOpen(status) && registered,
     canDelete: started ? owner : organizer,
   };
-  let undoStart: { results: number; hasCheckIn: boolean } | undefined;
+  let undoStart:
+    | { results: number; hasCheckIn: boolean; several: boolean }
+    | undefined;
+  let undoStage: number | undefined;
   if (organizer && status === "in_progress") {
-    // A mesma busca da aba da chave (cache por requisição).
+    // A mesma busca da aba da chave (cache por requisição): a fase atual.
     const loaded = await loadBracket(tenant, tournament.slug);
+    const results = loaded.kind === "ok" ? loaded.data.results : 0;
     undoStart = {
-      results: loaded.kind === "ok" ? loaded.data.results : 0,
+      results,
       hasCheckIn: tournament.check_in_minutes != null,
+      several: startedStages(tournament).length > 1,
     };
+    // Desfazer só o início da fase 2 em diante, e só sem nada jogado nela.
+    const current = currentStage(tournament);
+    if (
+      current.number > 1 &&
+      current.status === "in_progress" &&
+      results === 0
+    ) {
+      undoStage = current.number;
+    }
   }
   if (!organizer && !undoStart && !Object.values(flags).some(Boolean)) {
     return null;
@@ -51,6 +67,7 @@ export async function TournamentOverflow({
       slug={tournament.slug}
       copySource={organizer ? tournament : undefined}
       undoStart={undoStart}
+      undoStage={undoStage}
       inviteOnly={tournament.admission === "invite_only"}
       status={status}
       countsForRating={tournament.counts_for_rating}

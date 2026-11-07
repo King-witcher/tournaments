@@ -13,13 +13,16 @@ import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
 import { useApiErrorMessage } from "@/shared/api/use-api-error-message";
 import { useFormValidity } from "@/shared/hooks/use-form-validity";
+import { focusWhenShown } from "@/shared/lib/focus";
 import {
   controlSelector,
   type FieldErrors,
+  isStageField,
   type TournamentField,
   tournamentFieldOf,
 } from "../lib/form-errors";
 import {
+  fieldValue,
   type TournamentValues,
   updateBody,
   valuesFrom,
@@ -92,15 +95,15 @@ export function useSettingsSection(section: ValuesSection) {
         }),
       );
       if (!outcome.ok) {
-        const field = tournamentFieldOf(outcome.code);
+        const field = tournamentFieldOf(outcome.code, outcome.params);
         const message = errorMessage(outcome.code, outcome.params);
         const here =
           field !== undefined &&
-          keys.includes(field) &&
+          (isStageField(field) ? section === "format" : keys.includes(field)) &&
           formRef.current?.querySelector(controlSelector(field)) != null;
         setFailure(
           here
-            ? { message, field, value: values[field] }
+            ? { message, field, value: fieldValue(values, field) }
             : {
                 message,
                 fixIn:
@@ -132,13 +135,16 @@ export function useSettingsSection(section: ValuesSection) {
   useEffect(() => {
     if (!failure?.field || focused.current === failure) return;
     focused.current = failure;
-    formRef.current
-      ?.querySelector<HTMLElement>(controlSelector(failure.field))
-      ?.focus();
+    // A fase de outra aba só aparece depois: espera ficar à vista.
+    const control = formRef.current?.querySelector<HTMLElement>(
+      controlSelector(failure.field),
+    );
+    if (control) focusWhenShown(control);
   }, [failure, formRef]);
 
   const live =
-    failure?.field !== undefined && values[failure.field] === failure.value
+    failure?.field !== undefined &&
+    Object.is(fieldValue(values, failure.field), failure.value)
       ? failure
       : undefined;
   const errors = useMemo<FieldErrors>(

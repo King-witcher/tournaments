@@ -25,7 +25,10 @@
       "withdrawn": "Desistiu",
       "champion": "1º lugar",
       "reserve": "Reserva, sem time",
-      "tie_pending": "Empate no {place}, a decidir"
+      "tie_pending": "Empate no {place}, a decidir",
+      "substitute": "Suplente da próxima fase",
+      "awaiting_stage": "Esperando a próxima fase",
+      "stage_check_in_pending": "Falta o check-in da próxima fase"
     },
     "empty": "{name} ainda não jogou aqui.",
     "emptyYou": "Você ainda não jogou aqui.",

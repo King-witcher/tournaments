@@ -53,7 +53,10 @@
     "rank": "{rank}º",
     "range": "{from}º–{to}º",
     "reserve": "Reserva, sem time",
-    "tie_pending": "Empate no {place}, a organização vai decidir"
+    "tie_pending": "Empate no {place}, a organização vai decidir",
+    "substitute": "Suplente na fase {stage}",
+    "awaiting_stage": "Esperando a fase {stage}",
+    "stage_check_in_pending": "Falta o seu check-in na fase {stage}"
   },
   "checkIn": {
     "opensAt": "O check-in abre <date></date>. Quem não fizer fica fora da chave.",

@@ -12,6 +12,7 @@
   "locks": {
     "slug": "La dirección no cambia después de publicar.",
     "started": "El torneo ya empezó.",
+    "startedStages": "El torneo ya empezó. Solo cambian las fases que no empezaron.",
     "finished": "El torneo terminó.",
     "schedule": "El torneo ya empezó. El inicio y el check-in ya no cambian.",
     "rules": "El torneo terminó. Las reglas ya no cambian."

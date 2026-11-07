@@ -17,13 +17,7 @@ type Schemas = components["schemas"];
 const ORDERS: Schemas["VetoOrder"][] = ["alternating", "bans_first"];
 
 /** Os campos do formulário que o bloco lê. */
-const KEYS = [
-  "vetoOrder",
-  "mapPool",
-  "stageFormat",
-  "bestOf",
-  "finalsBestOf",
-] as const;
+const KEYS = ["vetoOrder", "mapPool", "stages"] as const;
 
 type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;

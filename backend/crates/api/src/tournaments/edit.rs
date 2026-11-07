@@ -3,6 +3,7 @@
 //! chama, com o pool lido na mesma transação.
 
 use chrono::{DateTime, Utc};
+use engine::stages::StageSetup;
 
 use super::{
     admission::Admission,
@@ -24,8 +25,16 @@ pub struct Edit {
     pub texts: Texts,
     /// `Some` só quando o tipo de inscrição muda.
     pub admission: Option<Admission>,
-    /// `Some` só quando vagas, regra de campeões ou fases mudam de fato.
+    /// `Some` só quando vagas, regra de campeões, fases ou veto mudam de fato:
+    /// a configuração inteira, como fica.
     pub setup: Option<Setup>,
+    /// Em `setup`, mudou o que não é fase (o torneio, o pool, o veto).
+    pub rest_changed: bool,
+    /// Em `setup`, mudaram as fases.
+    pub stages_changed: bool,
+    /// Com as fases mudadas depois do início: a fase atual, já terminada,
+    /// ficou sendo a última, e o torneio encerra.
+    pub finishes: bool,
     /// `Some` só quando a data de início ou a janela de check-in mudam.
     pub schedule: Option<Schedule>,
     /// `Some` só quando a janela de contestação muda.
@@ -47,6 +56,10 @@ pub struct Current<'a> {
     pub schedule: Schedule,
     pub contest_minutes: i32,
     pub counts_for_rating: bool,
+    /// Fases já começadas, da 1 em diante (0 antes do início do torneio).
+    pub started_stages: usize,
+    /// A última fase começada já terminou.
+    pub current_finished: bool,
     /// O relógio da requisição, para conferir a data de início nova.
     pub now: DateTime<Utc>,
 }
@@ -55,7 +68,9 @@ pub struct Current<'a> {
 /// `tournament.finished` (regras, inscrição ou janela de contestação depois de
 /// encerrar; nome e descrição continuam), 409 `tournament.setup_locked`
 /// (configuração, inclusive o veto (`veto`, já resolvido), ou "conta para o
-/// rating" depois de começar), os de `validate_slug`, os de `Schedule::edit`, o
+/// rating" depois de começar; as fases têm regra própria), 409
+/// `tournament.stages_locked` (depois do início: fase nova, ou fase começada
+/// diferente), os de `validate_slug`, os de `Schedule::edit`, o
 /// de `contest::check` e os de validação dos textos. Mandar um campo igual ao
 /// atual não conta como mudança, então o front pode reenviar o formulário
 /// inteiro.
@@ -73,6 +88,8 @@ pub fn apply(
         schedule: current_schedule,
         contest_minutes: current_contest_minutes,
         counts_for_rating: current_counts_for_rating,
+        started_stages,
+        current_finished,
         now,
     } = current;
     let slug = patch.slug.filter(|slug| slug != current_slug);
@@ -124,10 +141,24 @@ pub fn apply(
         veto: veto.unwrap_or_else(|| current_setup.veto.clone()),
         team_rules: patch.team_rules.unwrap_or(current_setup.team_rules),
     };
-    let setup = (setup != *current_setup).then_some(setup);
-    if setup.is_some() && !status.setup_editable() {
+    let stages_changed = setup.stages != current_setup.stages;
+    let rest_changed = Setup {
+        stages: current_setup.stages.clone(),
+        ..setup.clone()
+    } != *current_setup;
+    if rest_changed && !status.setup_editable() {
         return Err(ApiError::conflict("tournament.setup_locked"));
     }
+    let mut finishes = false;
+    if stages_changed && !status.setup_editable() {
+        finishes = stages_after_start(
+            &current_setup.stages,
+            &setup.stages,
+            started_stages,
+            current_finished,
+        )?;
+    }
+    let setup = (rest_changed || stages_changed).then_some(setup);
     let schedule = current_schedule.edit(status, patch.starts_at, patch.check_in_minutes, now)?;
     let check_in_off = schedule.is_some_and(|s| !s.has_check_in());
     let contest_minutes = patch
@@ -150,12 +181,32 @@ pub fn apply(
         texts,
         admission,
         setup,
+        rest_changed,
+        stages_changed,
+        finishes,
         schedule,
         contest_minutes,
         counts_for_rating,
         status: (check_in_off && status == TournamentStatus::CheckIn)
             .then_some(TournamentStatus::Registration),
     })
+}
+
+/// As fases depois do início do torneio: as `started` primeiras (as
+/// começadas) iguais e nenhuma a mais; as outras mudam ou saem. Devolve se o
+/// torneio encerra: a fase atual, já terminada (`current_finished`), ficou
+/// sendo a última. 409 `tournament.stages_locked`.
+fn stages_after_start(
+    current: &[StageSetup],
+    new: &[StageSetup],
+    started: usize,
+    current_finished: bool,
+) -> Result<bool, ApiError> {
+    const LOCKED: ApiError = ApiError::conflict("tournament.stages_locked");
+    if new.len() > current.len() || new.len() < started || new[..started] != current[..started] {
+        return Err(LOCKED);
+    }
+    Ok(new.len() == started && current.len() > started && current_finished)
 }
 
 #[cfg(test)]
@@ -180,6 +231,16 @@ mod tests {
             grand_final_reset: reset,
             best_of: 3,
             finals_best_of: 5,
+            advance: None,
+            check_in: false,
+        }
+    }
+
+    fn placement(best_of: u8) -> StageFormat {
+        StageFormat::Placement {
+            best_of,
+            advance: None,
+            check_in: false,
         }
     }
 
@@ -235,15 +296,28 @@ mod tests {
     }
 
     fn run(status: TournamentStatus, patch: UpdateTournament) -> Result<Edit, ApiError> {
+        let started = usize::from(status.has_started());
+        run_with(status, &setup(), (started, false), patch)
+    }
+
+    /// Com `setup` gravado e `(fases começadas, a atual terminou)`.
+    fn run_with(
+        status: TournamentStatus,
+        setup: &Setup,
+        (started_stages, current_finished): (usize, bool),
+        patch: UpdateTournament,
+    ) -> Result<Edit, ApiError> {
         let current = Current {
             status,
             slug: "copa",
             texts: &texts(),
             admission: Admission::Open,
-            setup: &setup(),
+            setup,
             schedule: schedule(),
             contest_minutes: 5,
             counts_for_rating: true,
+            started_stages,
+            current_finished,
             now: DateTime::from_timestamp(1_700_000_000, 0).unwrap(),
         };
         apply(current, None, patch)
@@ -424,7 +498,58 @@ mod tests {
         };
         let edit = run(TournamentStatus::CheckIn, p()).unwrap();
         assert_eq!(edit.setup.unwrap().max_participants, 16);
+        // A fase 1, começada com o torneio, não muda.
         let err = run(TournamentStatus::InProgress, p()).unwrap_err();
+        assert_eq!(err.code, "tournament.stages_locked");
+        let p = UpdateTournament {
+            max_participants: Some(8),
+            ..patch()
+        };
+        let err = run(TournamentStatus::InProgress, p).unwrap_err();
         assert_eq!(err.code, "tournament.setup_locked");
+    }
+
+    #[test]
+    fn stages_that_did_not_start_change_until_they_start() {
+        let three = Setup {
+            stages: crate::tournaments::setup::stages_from_dto(vec![
+                placement(1),
+                placement(3),
+                placement(5),
+            ])
+            .unwrap(),
+            ..setup()
+        };
+        let stages = |list: Vec<StageFormat>| UpdateTournament {
+            stages: Some(list),
+            ..patch()
+        };
+        let in_progress = |started, finished, list| {
+            run_with(
+                TournamentStatus::InProgress,
+                &three,
+                (started, finished),
+                stages(list),
+            )
+        };
+        // Durante a fase 1: a 2 muda, a 3 sai.
+        let edit = in_progress(1, false, vec![placement(1), placement(5)]).unwrap();
+        assert!(edit.stages_changed && !edit.rest_changed && !edit.finishes);
+        // Nada entra, e a começada não muda.
+        let err = in_progress(
+            1,
+            false,
+            vec![placement(1), placement(3), placement(5), placement(7)],
+        );
+        assert_eq!(err.unwrap_err().code, "tournament.stages_locked");
+        let err = in_progress(2, false, vec![placement(1), placement(5), placement(5)]);
+        assert_eq!(err.unwrap_err().code, "tournament.stages_locked");
+        // Tirar as que faltam com a atual terminada encerra.
+        let edit = in_progress(2, true, vec![placement(1), placement(3)]).unwrap();
+        assert!(edit.finishes);
+        let edit = in_progress(2, false, vec![placement(1), placement(3)]).unwrap();
+        assert!(!edit.finishes);
+        let err = in_progress(2, true, vec![placement(1)]);
+        assert_eq!(err.unwrap_err().code, "tournament.stages_locked");
     }
 }

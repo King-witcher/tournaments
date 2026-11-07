@@ -4,11 +4,13 @@ O que fazer, em que ordem, e o que falta conferir. O que já existe, com as regr
 
 ## Próximo
 
-Os itens de "Depois" ainda não foram escolhidos. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
+- **Mapas e campeões por fase**: decidido com o usuário em 07/11, depois do ensaio das fases ligadas. Mapas e Campeões ganham "Mesmas regras em todas as fases" (marcado; só com 2+ fases) e, desmarcado, uma aba por fase com os mesmos campos, começando da cópia; Resultados fica do torneio. Cada fase congela as suas ao começar; a API já busca as regras da série por um lugar só. Detalhe em `docs/decisions/formats.md` ("Fases ligadas").
+
+Demais itens de "Depois" ainda não foram escolhidos. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
 
 ## Depois
 
-- Outros formatos: FFA por pontos/frags, playoffs (os N melhores da tabela do round robin ou do suíço numa eliminação) e grupos.
+- Outros formatos: FFA por pontos/frags e grupos (fases em paralelo; os playoffs já são uma fase seguinte com corte). Corte numa eliminação que não é a última fase (só na borda de faixa).
 - A capa do torneio nos avisos do Discord (embed com `image`; hoje a mensagem é só texto, `discord/render.rs`), sem precisar de página pública.
 
 ## Pendências
@@ -27,6 +29,7 @@ Cada uma diz o que falta e onde. As conferências no navegador e nos ambientes a
 - **Veto**: o mapa que o organizador lança fora do veto não muda os mapas dos jogos seguintes (o veto de mapas é da série inteira).
 - **Disputa de posições**: não há teste de rota da disputa com veto (o veto é o mesmo dos outros formatos).
 - **Imagens nas regras** (API em 07/11, `images.md`): conferir se a política de cache do CloudFront respeita o `max-age=3600` do objeto (TTL mínimo acima disso mantém a imagem apagada no CDN) e o envio no staging, também pelo "Inserir imagem" do front (sem bucket local, só testado com rotas simuladas). A imagem tirada do texto ainda fica no bucket até a rotina diária (até um dia mais a hora do cache).
+- **Fases ligadas** (07/11): ensaio completo no staging antes do torneio de novembro (RR md2 → disputa com check-in, corte, um ausente, uma correção e uma desistência), e nenhum deploy que mexa em partidas ou fases entre a fase 1 e a 2 do torneio real. Sem teste de rota: check-in no TDM por qualquer jogador, não repetição isolada no veto ao vivo, desfazer o início do torneio com a fase 2 começada, suíço como fase 1, eliminação como última fase jogada até o fim, screenshot e aviso de contestação numa fase 2, a corrida desistência × início (`matches/chain.rs`, `check_next`). No perfil do membro, a situação entre fases sai sem o número da fase (`MemberTournament` não traz `stage`). No duelo, `MyTournament.team` vem nulo, então o check-in da fase na home leva à página do torneio em vez de fazer no tile (no TDM, faz). `TournamentBracket.status` é o do torneio, não o da fase pedida (o front deduz com `withStageStatus`; um `stage_status` resolveria na origem). O `stage_due` diz "pronta para iniciar" também quando falta abrir o check-in.
 - **Menor rating**: a tela de configuração e a Classificação com o critério não foram vistas no navegador (só lint e build). O rating congelado não aparece em coluna, só na explicação dos desempates; e o critério só vale depois da primeira série decidida (`formats.md`, "Desempate por fase"): confirmar com o usuário.
 - **Round robin e suíço**: um round robin de 32 mostra 496 cartões numa página: recolher as rodadas encerradas se pesar. "Seus torneios" entre duas rodadas talvez deva dizer "esperando a rodada seguinte".
 - **Empate no fim da fase** (`formats.md`): limitar a pendência às N primeiras posições (hoje, todo grupo empatado); série de desempate dentro do site, quando houver fases ligadas (um empate entre dois viraria Disputa de posições em md1); lembrete à organização se a pendência ficar parada (hoje, um aviso só). Por conferir no navegador: o select nas Configurações, o bloco "Empates a decidir" no celular e no teclado, e os textos em es e en.

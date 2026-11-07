@@ -39,7 +39,7 @@ export function MyParticipation({ tenant, tournament, organizer, now }: Props) {
   const { status } = tournament;
   const tag = (situation: keyof typeof SITUATION_STATUS) => (
     <StatusTag status={SITUATION_STATUS[situation]}>
-      {t(`situation.${situation}`, { place: "" })}
+      {t(`situation.${situation}`, { place: "", stage: "" })}
     </StatusTag>
   );
   // No TDM, inscrito ou com o check-in feito pode já estar de reserva (os

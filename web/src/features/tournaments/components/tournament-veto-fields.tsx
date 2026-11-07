@@ -7,7 +7,9 @@ import type { FieldErrors } from "../lib/form-errors";
 import {
   draftHasSteps,
   isTdm,
+  onlyEvenSeries,
   STEP_SECONDS,
+  singleLength,
   stepSecondsGroup,
   type TournamentValues,
 } from "../lib/form-values";
@@ -31,9 +33,7 @@ const KEYS = [
   "pickOrder",
   "bansPerSeries",
   "vetoSeconds",
-  "stageFormat",
-  "bestOf",
-  "finalsBestOf",
+  "stages",
 ] as const;
 
 type Props = {
@@ -63,7 +63,9 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
   const { tenant, values, onChange, errors, maps, readOnly } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
-  const evenVeto = values.mapMode === "veto" && isEvenSeries(values.bestOf);
+  const evenVeto = values.mapMode === "veto" && onlyEvenSeries(values);
+  // A dica da série par conta as partidas de uma só duração; com várias, a geral.
+  const evenGames = singleLength(values);
 
   return (
     <>
@@ -77,9 +79,9 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           content: t(`mapModes.${m}`),
           // A série par só tem bans: o veto dela se explica diferente.
           description:
-            m === "veto" && isEvenSeries(values.bestOf)
+            m === "veto" && evenGames !== undefined && isEvenSeries(evenGames)
               ? t(tdm ? "mapModeHintTdm.vetoEven" : "mapModeHint.vetoEven", {
-                  games: values.bestOf,
+                  games: evenGames,
                 })
               : t(tdm ? `mapModeHintTdm.${m}` : `mapModeHint.${m}`),
         }))}

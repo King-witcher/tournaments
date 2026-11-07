@@ -33,7 +33,18 @@ async fn draft_is_only_for_organizers_until_published() {
     assert_eq!(created["status"], "draft");
     assert_eq!(created["name"], "Copa de Outubro");
     assert_eq!(created["rules"], "- md3\n- md5 na grande final");
-    assert_eq!(created["stages"], duel("copa")["stages"]);
+    // A fase como foi enviada, com o corte, o check-in e onde ela está.
+    let mut stages = duel("copa")["stages"].clone();
+    stages[0].as_object_mut().unwrap().extend(
+        json!({
+            "advance": null, "check_in": false, "number": 1, "status": "pending",
+            "started_at": null, "check_in_opened_at": null
+        })
+        .as_object()
+        .unwrap()
+        .clone(),
+    );
+    assert_eq!(created["stages"], stages);
     assert_eq!(created["translations"], json!([]));
 
     let (_, list) = get(&app, "/tenants/quake-br/tournaments", &ana).await;
@@ -123,7 +134,13 @@ async fn stage_and_champion_rules_are_stored_in_columns_and_read_back() {
             "bracket": "double",
             "grand_final_reset": true,
             "best_of": 3,
-            "finals_best_of": 5
+            "finals_best_of": 5,
+            "advance": null,
+            "check_in": false,
+            "number": 1,
+            "status": "pending",
+            "started_at": null,
+            "check_in_opened_at": null
         }])
     );
 }
@@ -236,12 +253,15 @@ async fn create_validates_the_input() {
     );
     assert_eq!(
         try_create(with(duel("copa"), json!({ "stages": [] }))).await,
-        with_params("tournament.stage_count_invalid", json!({ "max": 1 }))
+        with_params("tournament.stage_count_invalid", json!({ "max": 4 }))
     );
     let even = json!({ "stages": [{ "format": "elimination", "bracket": "single", "best_of": 2, "finals_best_of": 5 }] });
     assert_eq!(
         try_create(with(duel("copa"), even)).await,
-        with_params("format.invalid_best_of", json!({ "best_of": 2 }))
+        with_params(
+            "format.invalid_best_of",
+            json!({ "best_of": 2, "stage": 1 })
+        )
     );
     assert_eq!(
         try_create(with(duel("copa"), json!({ "mode": "ffa" })))

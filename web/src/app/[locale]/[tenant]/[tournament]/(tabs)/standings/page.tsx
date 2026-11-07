@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { BracketTab } from "@/features/matches/components/bracket-tab";
+import { parseStageParam } from "@/features/stages/lib/stages";
 import {
   SectionSkeleton,
   TabLoading,
@@ -14,6 +15,7 @@ import {
  */
 export default async function StandingsPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/[tenant]/[tournament]/standings">) {
   const t = await getTranslations("Bracket.standings");
   return (
@@ -25,9 +27,16 @@ export default async function StandingsPage({
         </TabLoading>
       }
     >
-      {params.then(({ tenant, tournament }) => (
-        <BracketTab tenant={tenant} slug={tournament} view="standings" />
-      ))}
+      {Promise.all([params, searchParams]).then(
+        ([{ tenant, tournament }, { stage }]) => (
+          <BracketTab
+            tenant={tenant}
+            slug={tournament}
+            view="standings"
+            stage={parseStageParam(stage)}
+          />
+        ),
+      )}
     </Suspense>
   );
 }

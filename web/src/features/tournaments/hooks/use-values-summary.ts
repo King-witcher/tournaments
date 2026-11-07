@@ -4,12 +4,14 @@ import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
 import {
   hasPickWindow,
   isTdm,
+  onlyEvenSeries,
   poolOf,
   stepSecondsGroup,
   type TournamentValues,
   teamSizeOf,
 } from "../lib/form-values";
-import { isEvenSeries, teamsIn } from "../lib/format";
+import { teamsIn } from "../lib/format";
+import type { StageValues } from "../lib/stage-values";
 import { teamPresetOf } from "../lib/team-rules";
 import { countingTiebreakers, isTableFormat } from "../lib/tiebreakers";
 import { useFormatSeconds } from "./use-format-seconds";
@@ -36,53 +38,82 @@ export function useValuesSummary() {
   const line = (parts: (string | false | undefined)[]) =>
     upper(parts.filter(Boolean).join(" · "));
 
-  return {
-    format: (v: TournamentValues) => {
-      const kind =
-        v.stageFormat !== "elimination"
-          ? v.stageFormat
-          : v.bracket === "double" && v.grandFinalReset
-            ? "doubleReset"
-            : v.bracket;
-      const slots = v.maxParticipants;
-      const size = teamSizeOf(v);
-      return line([
-        modeLabel(v.mode, size),
-        slots !== null &&
-          (isTdm(v)
-            ? t("slotsTeams", {
-                count: slots,
-                size,
-                teams: teamsIn(slots, size).teams,
-              })
-            : t("slots", { count: slots })),
-        tSetup(`bracket.${kind}`),
-        v.stageFormat === "elimination"
-          ? tSetup(`series.${v.bracket}`, {
-              bestOf: v.bestOf,
-              finals: v.finalsBestOf,
+  /** O formato de uma fase, com o reset da grande final no nome. */
+  const stageLine = (s: StageValues, tdm: boolean) => {
+    const kind =
+      s.format !== "elimination"
+        ? s.format
+        : s.bracket === "double" && s.grandFinalReset
+          ? "doubleReset"
+          : s.bracket;
+    return line([
+      tSetup(`bracket.${kind}`),
+      s.format === "elimination"
+        ? tSetup(`series.${s.bracket}`, {
+            bestOf: s.bestOf,
+            finals: s.finalsBestOf,
+          })
+        : tSetup("series.table", { bestOf: s.bestOf }),
+      s.format === "swiss"
+        ? s.swissRounds === null
+          ? tSetup(tdm ? "rounds.autoTeams" : "rounds.auto")
+          : tSetup("rounds.fixed", { count: s.swissRounds })
+        : undefined,
+    ]);
+  };
+
+  /** Uma fase em poucas palavras, para o título com várias: "Todos contra todos, md2". */
+  const stagePhrase = (s: StageValues) =>
+    `${tSetup(`bracket.${s.format === "elimination" ? s.bracket : s.format}`)}, ${
+      s.format === "elimination"
+        ? t("seriesFinals", { bestOf: s.bestOf, finals: s.finalsBestOf })
+        : t("series", { bestOf: s.bestOf })
+    }`;
+
+  /** Modalidade e vagas. */
+  const base = (v: TournamentValues) => {
+    const slots = v.maxParticipants;
+    const size = teamSizeOf(v);
+    return [
+      modeLabel(v.mode, size),
+      slots !== null &&
+        (isTdm(v)
+          ? t("slotsTeams", {
+              count: slots,
+              size,
+              teams: teamsIn(slots, size).teams,
             })
-          : tSetup("series.table", { bestOf: v.bestOf }),
-        v.stageFormat === "swiss"
-          ? v.swissRounds === null
-            ? tSetup(isTdm(v) ? "rounds.autoTeams" : "rounds.auto")
-            : tSetup("rounds.fixed", { count: v.swissRounds })
-          : undefined,
-      ]);
-    },
+          : t("slots", { count: slots })),
+    ];
+  };
+
+  return {
+    /**
+     * Modalidade, vagas e as fases: com uma, o formato dela por inteiro; com
+     * várias, uma frase curta por fase, ligadas por setas.
+     */
+    format: (v: TournamentValues) =>
+      line([
+        ...base(v),
+        v.stages.length === 1
+          ? stageLine(v.stages[0], isTdm(v))
+          : v.stages.map(stagePhrase).join(" → "),
+      ]),
+    /** Só modalidade e vagas: as fases vêm à parte (a revisão com várias). */
+    mode: (v: TournamentValues) => line(base(v)),
+    /** O formato de uma fase por inteiro (bracket, séries e rodadas). */
+    stage: (s: StageValues, v: Pick<TournamentValues, "mode">) =>
+      stageLine(s, isTdm(v)),
     /**
      * Os desempates que contam, na ordem ("Confronto direto, partidas, frags"),
      * ou "Só a ordem da chave"; com a organização decidindo o empate do fim, ela
      * por último. Vazio na eliminação.
      */
     tiebreakers: (
-      v: Pick<
-        TournamentValues,
-        "stageFormat" | "bestOf" | "tiebreakers" | "finalTie"
-      >,
+      v: Pick<StageValues, "format" | "bestOf" | "tiebreakers" | "finalTie">,
     ) => {
-      if (!isTableFormat(v.stageFormat)) return "";
-      const list = countingTiebreakers(v.tiebreakers, v.stageFormat, v.bestOf);
+      if (!isTableFormat(v.format)) return "";
+      const list = countingTiebreakers(v.tiebreakers, v.format, v.bestOf);
       const organizer = v.finalTie === "organizer";
       if (list.length === 0) {
         return organizer ? tTie("organizerOnly") : tTie("none");
@@ -129,7 +160,7 @@ export function useValuesSummary() {
       line([
         tForm(`veto.mapModes.${v.mapMode}`),
         v.mapMode === "veto" &&
-          !isEvenSeries(v.bestOf) &&
+          !onlyEvenSeries(v) &&
           t(`vetoOrder.${v.vetoOrder}`),
         v.mapMode !== "off" && t("maps", { count: poolOf(v, maps).length }),
         stepSecondsGroup(v) === "maps" &&

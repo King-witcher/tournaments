@@ -19,16 +19,20 @@ async function load<T>(
 /**
  * A chave do torneio (com as confirmações por tempo já aplicadas), para a
  * seção da chave e para o desfazer início, que mostra quantos resultados
- * seriam apagados. Lê a sessão: quem usa fica em `<Suspense>`.
+ * seriam apagados. `stage`: a fase (de 1 em diante); sem ela, a atual. Fase
+ * que não começou é erro (`stage.not_started`). Lê a sessão: quem usa fica
+ * em `<Suspense>`.
  */
-export const loadBracket = cache(async (tenant: string, slug: string) => {
-  const api = await serverApi();
-  return load<Schemas["TournamentBracket"]>(
-    api.GET("/tenants/{slug}/tournaments/{tournament}/bracket", {
-      params: { path: { slug: tenant, tournament: slug } },
-    }),
-  );
-});
+export const loadBracket = cache(
+  async (tenant: string, slug: string, stage?: number) => {
+    const api = await serverApi();
+    return load<Schemas["TournamentBracket"]>(
+      api.GET("/tenants/{slug}/tournaments/{tournament}/bracket", {
+        params: { path: { slug: tenant, tournament: slug }, query: { stage } },
+      }),
+    );
+  },
+);
 
 /** Uma partida, com detalhe por mapa e histórico. */
 export const loadMatch = cache(

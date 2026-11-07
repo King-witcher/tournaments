@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { withStageStatus } from "@/features/stages/lib/stages";
 import { isTable } from "@/features/tournaments/lib/format";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
@@ -14,6 +15,8 @@ import { TableMatches } from "./table-matches";
 type Props = {
   tenant: string;
   tournament: components["schemas"]["Tournament"];
+  /** A fase pedida; sem ela, a atual. */
+  stage?: number;
 };
 
 /**
@@ -22,18 +25,19 @@ type Props = {
  * a aba dela. Antes do início não mostra nada (a aba mostra o aviso).
  * Busca a chave, então fica em `<Suspense>`.
  */
-export async function BracketSection({ tenant, tournament }: Props) {
+export async function BracketSection({ tenant, tournament, stage }: Props) {
   if (tournament.status !== "in_progress" && tournament.status !== "finished") {
     return null;
   }
   const [t, loaded] = await Promise.all([
     getTranslations("Bracket"),
-    loadBracket(tenant, tournament.slug),
+    loadBracket(tenant, tournament.slug, stage),
   ]);
   if (loaded.kind === "error") {
     return <Notice kind="error">{await apiErrorMessage(loaded.code)}</Notice>;
   }
-  const bracket = loaded.data;
+  // A fase que já terminou sai encerrada, sem as dicas de quem ainda joga.
+  const bracket = withStageStatus(tournament, loaded.data);
   // Round robin e suíço: as partidas por rodada, sem a grade da chave.
   if (isTable(bracket.format)) {
     return (

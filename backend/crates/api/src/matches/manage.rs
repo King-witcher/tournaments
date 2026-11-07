@@ -31,7 +31,7 @@ use crate::{
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     request_body = SetGame,
@@ -52,7 +52,8 @@ pub async fn put_game(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let m = detail::find(&stage, &path.key)?;
     let sides = playable(m.state)?;
     let games = stage.games_of(m.id);
@@ -84,7 +85,7 @@ pub async fn put_game(
         .collect();
     settle::void(&mut tx, &at, &beyond, Some(member.user.id)).await?;
     if let Some(change) = change {
-        let series = (path.key.as_str(), m.best_of);
+        let series = (&path.key, m.best_of);
         correction::write(&mut tx, &member, &tournament, &stage, series, sides, change).await?;
     }
     let detail = actions::respond(&mut tx, &member, tournament, &stage, &path.key).await?;
@@ -99,7 +100,7 @@ pub async fn put_game(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     request_body = SetResult,
     responses(
@@ -119,7 +120,8 @@ pub async fn set_result(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let m = detail::find(&stage, &path.key)?;
     let sides = playable(m.state)?;
     let ResultInput::Walkover { winner } = body.result;

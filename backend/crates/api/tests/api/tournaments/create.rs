@@ -162,7 +162,13 @@ async fn create_with_only_the_name_address_and_mode_uses_the_defaults() {
             "bracket": "double",
             "grand_final_reset": false,
             "best_of": 3,
-            "finals_best_of": 5
+            "finals_best_of": 5,
+            "advance": null,
+            "check_in": false,
+            "number": 1,
+            "status": "pending",
+            "started_at": null,
+            "check_in_opened_at": null
         }])
     );
     assert_eq!(created["check_in_minutes"], 30);

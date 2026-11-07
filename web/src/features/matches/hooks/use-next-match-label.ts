@@ -10,7 +10,7 @@ import { useMatchLabels } from "./use-match-labels";
  */
 export function useNextMatchLabel(next: components["schemas"]["NextMatch"]) {
   const t = useTranslations("Home.tournaments.next");
-  const { code } = useMatchLabels(next.single);
+  const { code, shortCode } = useMatchLabels(next.single);
   const teamName = useTeamName();
   const match = code(next.key);
   const from = next.opponent_from;
@@ -18,6 +18,6 @@ export function useNextMatchLabel(next: components["schemas"]["NextMatch"]) {
     return t("against", { match, opponent: teamName(next.opponent) });
   }
   return from
-    ? t(from.outcome, { match, source: code(from.match_key) })
+    ? t(from.outcome, { match, source: shortCode(from.match_key) })
     : t("unknown", { match });
 }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournament_stages\n         set started_at = null, check_in_opened_at = null, finished_at = null\n         where tournament_id = $1\n           and (started_at, check_in_opened_at, finished_at) is distinct from (null, null, null)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7fc67debb5daa104cc9db9f2e3b07a22efacb647524fb91d0f1a5359ca7e83c6"
+}

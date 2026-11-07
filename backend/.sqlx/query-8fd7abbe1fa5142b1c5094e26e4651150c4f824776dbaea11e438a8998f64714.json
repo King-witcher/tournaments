@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,\n                  coalesce((select array_agg(tr.locale order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_locales!\",\n                  coalesce((select array_agg(tr.name order by tr.locale)\n                            from tournament_translations tr where tr.tournament_id = t.id),\n                           '{}') as \"translation_names!\",\n                  w.stage as \"stage?\", w.since as \"since!\"\n           from tenant_members m\n           join tenants te on te.id = m.tenant_id\n           join tournaments t on t.tenant_id = m.tenant_id\n           join lateral (\n               select null::smallint as stage, min(pt.since) as since\n               from stage_pending_ties pt where pt.tournament_id = t.id\n               having count(*) > 0\n               union all\n               select s.position, p.finished_at\n               from tournament_stages s\n               join tournament_stages p\n                 on p.tournament_id = s.tournament_id and p.position = s.position - 1\n               where s.tournament_id = t.id and s.started_at is null\n                 and p.finished_at is not null\n           ) w on true\n           where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')\n             -- Empate pendente e fase por iniciar só há em andamento.\n             and t.status = 'in_progress'\n           order by w.since, t.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tenant_slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "slug",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "slug"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tournaments",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "translation_locales!",
+        "type_info": "TextArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "translation_names!",
+        "type_info": "TextArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "stage?",
+        "type_info": "Int2",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "since!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "8fd7abbe1fa5142b1c5094e26e4651150c4f824776dbaea11e438a8998f64714"
+}

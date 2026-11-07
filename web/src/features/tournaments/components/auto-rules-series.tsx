@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { useFormatSeconds } from "../hooks/use-format-seconds";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
-import { finalsBestOf, isEvenSeries } from "../lib/format";
+import { allEvenSeries, longestBestOf } from "../lib/format";
 import { captainActsAlone } from "../lib/team-rules";
 import { AutoRulesBlock } from "./auto-rules-block";
 import { AutoRulesList } from "./auto-rules-list";
@@ -28,9 +28,9 @@ export function AutoRulesSeries({ tournament }: Props) {
     order,
     champion_phase: championPhase,
   } = tournament.veto;
-  const [stage] = tournament.stages;
-  // Tudo numa partida só: o veto não tem pick, e não há o que repetir.
-  const oneGame = Math.max(stage.best_of, finalsBestOf(stage) ?? 0) === 1;
+  // Tudo numa partida só (em todas as fases): o veto não tem pick, e não há o
+  // que repetir.
+  const oneGame = longestBestOf(tournament.stages) === 1;
   // Sem fase nenhuma, a série não pede "Pronto" e não há veto no site.
   const phases = mapMode !== "off" || championPhase;
   // O sorteio do mapa não tem escolha; o resto tem, com tempo.
@@ -41,7 +41,7 @@ export function AutoRulesSeries({ tournament }: Props) {
       ? "vetoOne"
       : oneGame && mapMode === "off"
         ? "offOne"
-        : mapMode === "veto" && isEvenSeries(stage.best_of)
+        : mapMode === "veto" && allEvenSeries(tournament.stages)
           ? "vetoEven"
           : mapMode === "veto" && order === "bans_first"
             ? "vetoBansFirst"

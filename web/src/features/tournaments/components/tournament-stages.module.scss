@@ -1,0 +1,11 @@
+@use "@carbon/react/scss/spacing";
+
+// Sem o padding que o Carbon põe no painel das abas: os campos alinham com os
+// de cima da seção. Só o respiro entre as abas e o primeiro campo, o mesmo
+// entre os campos. Classe dobrada para vencer a do Carbon, que tem o mesmo
+// peso.
+.panel.panel {
+  min-inline-size: 0;
+  padding: 0;
+  padding-block-start: spacing.$spacing-06;
+}

@@ -23,6 +23,7 @@ pub mod realtime;
 pub mod scanners;
 pub mod screenshots;
 pub mod shared;
+mod stages;
 mod teams;
 mod tenants;
 mod tournaments;
@@ -110,6 +111,7 @@ pub fn app(state: AppState, web_origin: HeaderValue) -> Router {
         .merge(participants::router())
         .merge(teams::router())
         .merge(lifecycle::router())
+        .merge(stages::router())
         .merge(maps::router())
         .merge(matches::router())
         .merge(my_tournaments::router())

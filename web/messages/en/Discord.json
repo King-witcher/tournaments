@@ -36,6 +36,10 @@
       "game_contested": "Game disputed, for the organizers",
       "contest_received": "Game disputed, for the opposing captain",
       "series_decided": "Result of each match (many messages)"
+    },
+    "stage": {
+      "check_in_opened": "Stage check-in open",
+      "started": "Stage started, with the bracket link"
     }
   },
   "mention": {

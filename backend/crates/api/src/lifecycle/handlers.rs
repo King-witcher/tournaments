@@ -2,10 +2,10 @@ use axum::{Json, extract::State};
 
 use super::transition::{self, Transition};
 use crate::{
-    AppState,
-    shared::{ApiError, ErrorBody, PathParams},
+    AppState, matches,
+    shared::{ApiError, ErrorBody, JsonBody, PathParams},
     tenants::{Organizer, TenantMember},
-    tournaments::{self, Tournament, TournamentPath},
+    tournaments::{self, Tournament, TournamentPath, UpdateTournament},
 };
 
 #[utoipa::path(
@@ -78,6 +78,42 @@ pub async fn undo_start(
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<Tournament>, ApiError> {
     run(&state, &member, &path.tournament, Transition::UndoStart).await
+}
+
+#[utoipa::path(
+    patch,
+    path = "/tenants/{slug}/tournaments/{tournament}",
+    tag = "tournaments",
+    params(
+        ("slug" = String, Path, description = "Slug do tenant"),
+        ("tournament" = String, Path, description = "Slug do torneio"),
+    ),
+    request_body = UpdateTournament,
+    responses(
+        (status = OK, body = Tournament, description = "Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord"),
+        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
+        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
+        (status = CONFLICT, body = ErrorBody, description = "tournament.slug_locked (endereço depois de publicar), tournament.slug_taken, tournament.finished (regras, inscrição, janela de contestação ou screenshot obrigatório), tournament.setup_locked (modo, tamanho do time, vagas, campeões, veto ou conta para o rating depois de começar), tournament.stages_locked (depois do início: fase nova, ou fase já começada diferente; as que não começaram mudam e saem), tournament.schedule_locked (data de início ou janela de check-in depois de começar), tournament.max_participants_below_registered {registered}"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "Os mesmos da criação"),
+    )
+)]
+pub async fn update_tournament(
+    State(state): State<AppState>,
+    member: TenantMember<Organizer>,
+    PathParams(path): PathParams<TournamentPath>,
+    JsonBody(body): JsonBody<UpdateTournament>,
+) -> Result<Json<Tournament>, ApiError> {
+    let mut tx = state.db.begin().await?;
+    let storage = state.storage.is_some();
+    let cdn = tournaments::rules_images_cdn(&state);
+    let updated =
+        tournaments::update(&mut tx, &member, &path.tournament, body, storage, cdn).await?;
+    if updated.finished {
+        matches::announce_finished(&mut tx, &updated.tournament).await?;
+    }
+    tx.commit().await?;
+    Ok(Json(updated.tournament.into()))
 }
 
 /// Trava o torneio, aplica a transição e devolve o torneio como ficou.

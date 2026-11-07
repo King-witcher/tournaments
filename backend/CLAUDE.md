@@ -18,7 +18,7 @@ crates/api/src/
   mail/           email sem domínio: endereço canônico, layout, envio (Mailer), limites
   auth/           login, sessão, CurrentUser, cadastro, entrar por email, troca de email, avisos de segurança
   tenants/        comunidades e a base de todo dado de tenant: TenantId, Role, TenantMember
-  members/  invites/  tournaments/  participants/  teams/  lifecycle/
+  members/  invites/  tournaments/  participants/  teams/  lifecycle/  stages/
   matches/        chave, resultados mapa a mapa e o veto (veto/)
   veto_rooms/     sala de veto: o veto de matches/veto sem torneio nem login, por token
   my_tournaments/ organizing/ notifications/ ratings/ screenshots/ images/ push/ discord/
@@ -27,7 +27,7 @@ crates/api/src/
   health.rs  maps.rs   domínios pequenos, um arquivo cada
 ```
 
-O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//!` do `mod.rs` dele: leia antes de mexer e atualize ao acrescentar arquivo ou responsabilidade. Fora do óbvio: `ratings` lê mapas e torneios direto no banco, sem chamar `matches`; `screenshots` fica acima de `matches`; `lifecycle` tem o sorteio dos times (lê o rating).
+O que cada domínio faz, de quem depende e o papel de cada arquivo estão no `//!` do `mod.rs` dele: leia antes de mexer e atualize ao acrescentar arquivo ou responsabilidade. Fora do óbvio: `ratings` lê mapas e torneios direto no banco, sem chamar `matches`; `screenshots` fica acima de `matches`; `lifecycle` tem o sorteio dos times (lê o rating); `stages` (as fases ligadas da 2 em diante: check-in, início e desfazer de cada fase) fica acima de `matches`, como o `lifecycle`.
 
 ### Tempo real: mudou estado visível, `emit` na mesma transação
 

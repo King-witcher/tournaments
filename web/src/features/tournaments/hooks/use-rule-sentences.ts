@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { noRepeatFor } from "../lib/form-values";
 import {
   formatKind,
   isEvenSeries,
@@ -24,16 +25,15 @@ export function useRuleSentences() {
 
   return {
     /** Como a chave (ou o round robin, o suíço) leva ao campeão. */
-    bracketRule: (tournament: Tournament) => {
-      const kind = formatKind(tournament.stages[0]);
+    bracketRule: (tournament: Tournament, stage = tournament.stages[0]) => {
+      const kind = formatKind(stage);
       return tournament.mode === "tdm" && kind === "round_robin"
         ? t("tdm.roundRobinRule")
         : t(`bracketRule.${kind}`);
     },
 
     /** O (i) do formato no resumo: a regra da chave e, no todos contra todos, o saldo e a série par. */
-    formatTip: (tournament: Tournament) => {
-      const [stage] = tournament.stages;
+    formatTip: (tournament: Tournament, stage = tournament.stages[0]) => {
       const even = isEvenSeries(stage.best_of);
       const roundRobin = stage.format === "round_robin";
       return [
@@ -55,7 +55,7 @@ export function useRuleSentences() {
     champions: (tournament: Tournament): string[] => {
       const rules = tournament.champion_rules;
       const bans = rules.bans_per_series;
-      const scope = repeatScope(rules);
+      const scope = noRepeatFor(repeatScope(rules), tournament.stages.length);
       const site = tournament.veto.champion_phase;
       const tdm = tournament.mode === "tdm";
       const who = rules.no_repeat?.who ?? "player";

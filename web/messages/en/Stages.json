@@ -1,0 +1,52 @@
+{
+  "title": "Stage {number}",
+  "state": {
+    "pending": "Waiting to start",
+    "check_in": "Check-in open"
+  },
+  "enters": "{count, plural, one {# {tdm, select, yes {team} other {player}} enters} other {# {tdm, select, yes {teams} other {players}} enter}}",
+  "substitutes": "{count, plural, one {# substitute} other {# substitutes}}",
+  "confirmed": "{count} of {total} checked in",
+  "list": {
+    "title": "Who enters stage {number}",
+    "seed": "Order",
+    "team": "Team",
+    "player": "Player",
+    "previous": "Place in stage {previous}",
+    "presence": "Status",
+    "empty": "No candidates.",
+    "rank": "{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "state": {
+      "enters": "Enters",
+      "substitute": "Substitute",
+      "absent": "Not checked in",
+      "withdrawn": "Withdrew"
+    }
+  },
+  "yourTeam": {
+    "substitute": "{tdm, select, yes {Your team enters} other {You enter}} if someone above {checkIn, select, yes {doesn't check in} other {withdraws}}."
+  },
+  "checkIn": {
+    "do": "Check in",
+    "undo": "Undo check-in",
+    "mark": "Mark as checked in",
+    "unmark": "Unmark check-in",
+    "unmarkConfirm": "Unmark check-in for {name}? Without check-in, {name} is left out of stage {number} if it starts this way.",
+    "actionsFor": "Actions for {name}"
+  },
+  "openCheckIn": "Open stage {number} check-in",
+  "start": "Start stage {number}",
+  "startQuestion": "Start stage {number}? The order and who enters will be set.",
+  "startEntering": "Entering, in order:",
+  "startPlacement": "First-round pairs:",
+  "startSubstitutes": "Substitutes, out of the stage: {names}.",
+  "startAbsent": "Not checked in, out of the stage: {names}.",
+  "versus": "{a} × {b}",
+  "alone": "{name} with no opponent",
+  "undoStart": "Undo stage {number}",
+  "undoStartConfirm": "Undo the start of stage {number}? The stage goes back to waiting to start, with check-ins kept.",
+  "undoStartTournamentConfirm": "Undo the tournament start? All stages go back to the beginning, and their games and results will be deleted, along with the match history.",
+  "switcher": "Stage",
+  "stageOption": "Stage {number}",
+  "finalOption": "Final"
+}

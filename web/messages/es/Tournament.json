@@ -252,7 +252,8 @@
       "format": "Formato",
       "rounds": "Rondas",
       "mode": "Modalidad",
-      "teamRules": "Quién actúa por el equipo"
+      "teamRules": "Quién actúa por el equipo",
+      "entry": "Entrada"
     },
     "bracket": {
       "single": "Eliminación simple",
@@ -261,6 +262,12 @@
       "round_robin": "Todos contra todos",
       "swiss": "Suizo",
       "placement": "Disputa de posiciones"
+    },
+    "stage": "Fase {number}",
+    "entry": {
+      "all": "Entran todos de la fase {previous}.",
+      "top": "Entran los {count} mejores de la fase {previous}.",
+      "checkIn": "Con check-in antes de la fase."
     },
     "series": {
       "single": "Al mejor de {bestOf}; final al mejor de {finals}",

@@ -6,7 +6,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{PgConnection, PgPool};
 
-use super::{changes, contest, db, stage};
+use super::{changes, contest, db, key, stage};
 use crate::{
     shared::ApiError,
     tournaments::{self, StoredTournament},
@@ -42,20 +42,26 @@ async fn notify_tournament(
     tournament: &StoredTournament,
     now: DateTime<Utc>,
 ) -> Result<u64, ApiError> {
-    let stage = stage::load(conn, tournament).await?;
     let due = db::take_contest_notices(conn, tournament.id, now).await?;
+    // A partida pode ser de uma fase anterior (contestada antes de a seguinte
+    // começar): cada fase dos avisos é lida uma vez.
+    let mut loaded: Option<stage::Stage> = None;
     for notice in &due {
+        if loaded.as_ref().is_none_or(|s| s.number != notice.stage) {
+            loaded = Some(stage::load(conn, tournament, notice.stage).await?);
+        }
+        let stage = loaded.as_ref().ok_or_else(ApiError::internal)?;
         let captain = stage
             .games
             .iter()
             .find(|g| g.id == notice.game)
-            .and_then(|g| contest::accepter(&stage, g));
+            .and_then(|g| contest::accepter(stage, g));
         let except = [notice.contested_by, captain];
         let player = notice.player.as_deref().unwrap_or_default();
         changes::game_contested(
             conn,
             tournament,
-            &notice.match_key,
+            &key::prefixed(notice.stage, &notice.match_key),
             notice.number,
             player,
             except,

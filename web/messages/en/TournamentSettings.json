@@ -12,6 +12,7 @@
   "locks": {
     "slug": "The address can't change after publishing.",
     "started": "The tournament has started.",
+    "startedStages": "The tournament has started. Only stages that haven't started can change.",
     "finished": "The tournament has ended.",
     "schedule": "The tournament has started. The start and check-in can't change anymore.",
     "rules": "The tournament has ended. The rules can't change anymore."

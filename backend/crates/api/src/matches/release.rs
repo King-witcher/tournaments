@@ -4,7 +4,8 @@
 //! adversário que ainda está jogando não perder o prazo.
 //!
 //! Liberada é o mais tarde destes momentos:
-//! - a série pronta para os dois lados: o início do torneio, a série
+//! - a série pronta para os dois lados: o início da fase (a 1, o do
+//!   torneio), a série
 //!   anterior de cada lado decidida e, no suíço, a rodada anterior inteira
 //!   (o pareamento espera por ela);
 //! - a partida anterior da série enviada;
@@ -16,8 +17,9 @@ use engine::core::{BracketSide, Match, ParticipantId};
 
 use super::{stage::Stage, veto};
 
-/// A partida `game` da série `m`, entre `sides`, no torneio que começou em
-/// `started_at`. `None` só sem nada disso (torneio antigo, sem o início).
+/// A partida `game` da série `m`, entre `sides`, na fase que começou em
+/// `started_at` (`Stage::started_at`). `None` só sem nada disso (torneio
+/// antigo, sem o início).
 pub fn released_at(
     stage: &Stage,
     m: &Match,

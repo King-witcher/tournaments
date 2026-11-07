@@ -52,7 +52,7 @@ async fn each_round_is_paired_when_the_previous_one_ends() {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "swiss", "best_of": 1, "rounds": null, "tiebreakers": ["buchholz", "head_to_head", "map_diff", "frag_diff"], "final_tie": "seed" })
+        json!({ "format": "swiss", "best_of": 1, "rounds": null, "tiebreakers": ["buchholz", "head_to_head", "map_diff", "frag_diff"], "final_tie": "seed", "advance": null, "check_in": false })
     );
     assert_eq!(b["total_rounds"], 3);
     assert_eq!(keys_in(&b, "ready"), ["sw-1-1", "sw-1-2", "sw-1-3"]);
@@ -219,7 +219,7 @@ async fn table_formats_are_checked_on_create_and_edit() {
         create(rr).await,
         invalid(
             "format.too_many_participants",
-            json!({ "max": 32, "got": 33 })
+            json!({ "max": 32, "got": 33, "stage": 1 })
         )
     );
     let swiss = |rounds: Value| {
@@ -230,11 +230,17 @@ async fn table_formats_are_checked_on_create_and_edit() {
     };
     assert_eq!(
         create(swiss(json!(0))).await,
-        invalid("format.invalid_rounds", json!({ "max": 127, "got": 0 }))
+        invalid(
+            "format.invalid_rounds",
+            json!({ "max": 127, "got": 0, "stage": 1 })
+        )
     );
     assert_eq!(
         create(swiss(json!(128))).await,
-        invalid("format.invalid_rounds", json!({ "max": 127, "got": 128 }))
+        invalid(
+            "format.invalid_rounds",
+            json!({ "max": 127, "got": 128, "stage": 1 })
+        )
     );
     // Rodadas acima de N − 1 passam: valem N − 1 na fase.
     // Os desempates: cada um uma vez, o Buchholz só no suíço, e só os que
@@ -247,7 +253,7 @@ async fn table_formats_are_checked_on_create_and_edit() {
     };
     let refused = (
         StatusCode::UNPROCESSABLE_ENTITY,
-        err("format.invalid_tiebreakers"),
+        json!({ "error": "format.invalid_tiebreakers", "params": { "stage": 1 } }),
     );
     for (format, list) in [
         (
@@ -294,7 +300,10 @@ async fn table_formats_are_checked_on_create_and_edit() {
     .await;
     assert_eq!(
         (status, body),
-        invalid("format.invalid_best_of", json!({ "best_of": 0 }))
+        invalid(
+            "format.invalid_best_of",
+            json!({ "best_of": 0, "stage": 1 })
+        )
     );
     let (status, body) = patch(
         &app,
@@ -306,7 +315,11 @@ async fn table_formats_are_checked_on_create_and_edit() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body["stages"][0],
-        json!({ "format": "round_robin", "best_of": 5, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"], "final_tie": "seed" })
+        json!({
+            "format": "round_robin", "best_of": 5, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"],
+            "final_tie": "seed", "advance": null, "check_in": false, "number": 1, "status": "pending",
+            "started_at": null, "check_in_opened_at": null
+        })
     );
 }
 

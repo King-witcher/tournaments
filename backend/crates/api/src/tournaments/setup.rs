@@ -3,7 +3,7 @@
 
 use std::ops::RangeInclusive;
 
-use engine::{champions as ec, formats as ef, tournament::TournamentSetup};
+use engine::{champions as ec, stages::StageSetup, tournament::TournamentSetup};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -18,20 +18,19 @@ use crate::shared::ApiError;
 const PARTICIPANTS: RangeInclusive<i32> = 2..=1024;
 /// Bans de campeão de cada lado na série.
 const MAX_BANS_PER_SERIES: u32 = engine::champions::MAX_BANS_PER_SERIES;
-/// Fases por torneio. Ainda não há regra de classificação entre fases nem
-/// interface para mais de uma.
-const MAX_STAGES: usize = 1;
+/// Fases por torneio (o check `tournament_stages_position_max` do banco).
+pub const MAX_STAGES: usize = 4;
 /// Jogadores por time no TDM.
 const TDM_TEAM_SIZES: RangeInclusive<i32> = 2..=4;
 /// Times na chave, no mínimo.
 const MIN_SIDES: i32 = 2;
 
 /// As fases do corpo nos tipos do `engine`. Erro: 422
-/// `format.invalid_tiebreakers` com desempate repetido.
-pub fn stages_from_dto(stages: Vec<StageFormat>) -> Result<Vec<ef::StageFormat>, ApiError> {
-    stages
-        .into_iter()
-        .map(|s| ef::StageFormat::try_from(s).map_err(ApiError::from))
+/// `format.invalid_tiebreakers` `{stage}` com desempate repetido.
+pub fn stages_from_dto(stages: Vec<StageFormat>) -> Result<Vec<StageSetup>, ApiError> {
+    (1..)
+        .zip(stages)
+        .map(|(number, s)| StageSetup::try_from(s).map_err(|e| e.in_stage(number).into()))
         .collect()
 }
 
@@ -91,7 +90,8 @@ pub struct Setup {
     /// Vagas, em jogadores (a inscrição é individual).
     pub max_participants: i32,
     pub champion_rules: ec::ChampionRules,
-    pub stages: Vec<ef::StageFormat>,
+    /// As fases, na ordem: o formato, o corte e o check-in de cada uma.
+    pub stages: Vec<StageSetup>,
     pub veto: VetoSetup,
     /// Quem age pelo time.
     pub team_rules: TeamRules,
@@ -134,9 +134,16 @@ impl Setup {
     pub fn longest_series(&self) -> u8 {
         self.stages
             .iter()
-            .map(ef::StageFormat::longest_series)
+            .map(|s| s.format.longest_series())
             .max()
             .unwrap_or(1)
+    }
+
+    /// As regras do veto das séries da fase `number`: um lugar só, para as
+    /// regras de mapas e campeões por fase entrarem aqui. Hoje, as do torneio
+    /// em todas as fases.
+    pub fn stage_veto_rules(&self, _number: i16) -> engine::veto::VetoRules {
+        self.veto_rules()
     }
 
     /// As regras do veto das séries do torneio.
@@ -212,6 +219,29 @@ impl Setup {
     /// Às cegas exige espelho: 422 `tournament.blind_needs_mirror`.
     pub fn check_entrants(&self, champion_pool: u32, players: usize) -> Result<(), ApiError> {
         engine::veto::PickOrder::from(self.veto.pick_order).check(self.champion_rules.mirror)?;
+        self.engine(champion_pool, players).validate()?;
+        Ok(())
+    }
+
+    /// Ao iniciar a fase `number` (2 em diante) com `sides` times de verdade:
+    /// o formato com esse número e o pool de campeões de agora, só dessa fase
+    /// (as fases são isoladas na regra de não repetição). Erros: os de
+    /// `check_entrants` para a fase (com `params.stage`).
+    pub fn check_stage(
+        &self,
+        champion_pool: u32,
+        number: i16,
+        sides: usize,
+    ) -> Result<(), ApiError> {
+        engine::veto::PickOrder::from(self.veto.pick_order).check(self.champion_rules.mirror)?;
+        let index = usize::try_from(number - 1).map_err(|_| ApiError::internal())?;
+        let players = sides * self.team_size() as usize;
+        Ok(self
+            .engine(champion_pool, players)
+            .validate_stage(index, sides)?)
+    }
+
+    fn engine(&self, champion_pool: u32, players: usize) -> TournamentSetup<'_> {
         TournamentSetup {
             team_size: self.team_size(),
             slots: players,
@@ -219,8 +249,6 @@ impl Setup {
             champion_pool,
             stages: &self.stages,
         }
-        .validate()?;
-        Ok(())
     }
 }
 
@@ -235,6 +263,16 @@ mod tests {
             grand_final_reset: true,
             best_of,
             finals_best_of: 5,
+            advance: None,
+            check_in: false,
+        }
+    }
+
+    fn placement(best_of: u8) -> StageFormat {
+        StageFormat::Placement {
+            best_of,
+            advance: None,
+            check_in: false,
         }
     }
 
@@ -316,11 +354,43 @@ mod tests {
         );
         assert_eq!(
             check(setup(8, 1, None, vec![])),
-            err("tournament.stage_count_invalid", &[("max", 1)])
+            err("tournament.stage_count_invalid", &[("max", 4)])
+        );
+        // Até 4 fases (a eliminação só na última).
+        let placements = |n| (0..n).map(|_| placement(3)).collect::<Vec<_>>();
+        assert_eq!(check(setup(8, 1, None, placements(4))), Ok(()));
+        assert_eq!(
+            check(setup(8, 1, None, placements(5))),
+            err("tournament.stage_count_invalid", &[("max", 4)])
+        );
+    }
+
+    #[test]
+    fn stage_rules_carry_the_stage() {
+        let err = |code, params: &[(&'static str, i64)]| Err((code, params.to_vec()));
+        assert_eq!(
+            check(setup(8, 1, None, vec![double(3), placement(3)])),
+            err("stage.elimination_not_last", &[("stage", 1)])
         );
         assert_eq!(
-            check(setup(8, 1, None, vec![double(3), double(3)])),
-            err("tournament.stage_count_invalid", &[("max", 1)])
+            check(setup(8, 1, None, vec![placement(3), double(4)])),
+            err("format.invalid_best_of", &[("best_of", 4), ("stage", 2)])
+        );
+        let cut = |advance| StageFormat::Placement {
+            best_of: 3,
+            advance,
+            check_in: false,
+        };
+        assert_eq!(
+            check(setup(8, 1, None, vec![placement(3), cut(Some(1))])),
+            err(
+                "stage.invalid_advance",
+                &[("stage", 2), ("min", 2), ("max", 128)]
+            )
+        );
+        assert_eq!(
+            check(setup(8, 1, None, vec![cut(Some(4)), placement(3)])),
+            err("stage.entry_rules_first", &[("stage", 1)])
         );
     }
 
@@ -361,6 +431,8 @@ mod tests {
                 best_of: 3,
                 tiebreakers: vec![],
                 final_tie: FinalTie::Seed,
+                advance: None,
+                check_in: false,
             }])
             .unwrap(),
             ..tdm(2, slots)
@@ -371,7 +443,7 @@ mod tests {
             check(rr(66)),
             Err((
                 "format.too_many_participants",
-                vec![("max", 64), ("got", 66)]
+                vec![("max", 64), ("got", 66), ("stage", 1)]
             ))
         );
     }
@@ -420,7 +492,7 @@ mod tests {
     fn engine_errors_keep_their_numbers() {
         assert_eq!(
             check(setup(8, 1, None, vec![double(4)])),
-            Err(("format.invalid_best_of", vec![("best_of", 4)]))
+            Err(("format.invalid_best_of", vec![("best_of", 4), ("stage", 1)]))
         );
         assert_eq!(
             check(setup(

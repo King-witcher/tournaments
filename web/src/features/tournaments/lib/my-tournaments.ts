@@ -40,10 +40,15 @@ export function playerTask(entry: Entry) {
   return task && isPlayerTask(task) ? task : undefined;
 }
 
-/** Só anda se quem vê agir: o check-in que falta ou a vez dele na série. */
+/**
+ * Só anda se quem vê agir: o check-in que falta (do torneio ou de uma fase)
+ * ou a vez dele na série.
+ */
 export function waitsForViewer(entry: Entry) {
   return (
-    entry.situation === "check_in_pending" || playerTask(entry) !== undefined
+    entry.situation === "check_in_pending" ||
+    entry.situation === "stage_check_in_pending" ||
+    playerTask(entry) !== undefined
   );
 }
 

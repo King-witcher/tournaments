@@ -9,7 +9,7 @@ import { SLOTS, slotLimits, teamsIn } from "../lib/format";
 import { sameValues } from "../lib/same-values";
 
 /** Os campos do formulário que o bloco lê. */
-const KEYS = ["mode", "teamSize", "stageFormat", "maxParticipants"] as const;
+const KEYS = ["mode", "teamSize", "stages", "maxParticipants"] as const;
 
 type Props = {
   values: Pick<TournamentValues, (typeof KEYS)[number]>;
@@ -21,7 +21,7 @@ type Props = {
 
 /**
  * As vagas, em jogadores (a inscrição é individual), na seção Formato: os
- * limites seguem o formato e o time, de dois times até o teto do formato
+ * limites seguem o formato da primeira fase e o time, de dois times até o teto do formato
  * vezes o tamanho, e as rodadas do suíço seguem as vagas. No TDM, a dica diz
  * quantos times cabem e quantos sobram de reserva.
  */
@@ -35,7 +35,7 @@ export const TournamentSlotsField = memo(function TournamentSlotsField({
   const errorMessage = useApiErrorMessage();
   const tdm = isTdm(values);
   const size = teamSizeOf(values);
-  const limits = slotLimits(values.stageFormat, size);
+  const limits = slotLimits(values.stages[0].format, size);
   const slots = values.maxParticipants;
   const error = errors.maxParticipants;
   // No duelo, "Vagas" se explica sozinho.

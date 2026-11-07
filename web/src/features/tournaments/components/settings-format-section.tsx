@@ -3,32 +3,31 @@
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
-import { FormSection } from "@/shared/ui/form-section";
 import { useSettingsItems } from "../hooks/use-settings-items";
 import { useSettingsSection } from "../hooks/use-settings-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { isTdm } from "../lib/form-values";
 import { sectionLock } from "../lib/settings-sections";
-import { isTableFormat } from "../lib/tiebreakers";
+import { stageStarted } from "../lib/stage-values";
 import { SettingsSection } from "./settings-section";
-import { TournamentFormatFields } from "./tournament-format-fields";
 import { TournamentModeFields } from "./tournament-mode-fields";
+import { TournamentRatingField } from "./tournament-rating-field";
 import { TournamentSlotsField } from "./tournament-slots-field";
+import { TournamentStages } from "./tournament-stages";
 import { TournamentTeamRulesFields } from "./tournament-team-rules-fields";
-import { TournamentTiebreakerFields } from "./tournament-tiebreaker-fields";
 
 /**
  * Formato: modalidade e tamanho do time (com o aviso do que salvar faz com os
  * times dos inscritos) e, no TDM, quem age pelo time logo embaixo, assim que
- * a modalidade muda na tela; vagas, chaveamento, séries, final, reset,
- * rodadas, rating e, nas fases de tabela, o Desempate, que completa o
- * formato. As séries que pedem mais mapas que o pool salvo em Mapas ficam
- * inválidas na hora, com o caminho para lá. Só para leitura depois de
- * começar.
+ * a modalidade muda na tela; vagas, as fases (cada uma com chaveamento,
+ * séries, final, reset, rodadas e, nas de tabela, o Desempate; da segunda em
+ * diante, quem entra e o check-in) e o rating. As séries que pedem mais mapas
+ * que o pool salvo em Mapas ficam inválidas na hora, com o caminho para lá.
+ * Depois de começar, os campos do torneio e as fases que começaram ficam só
+ * para leitura; as que não começaram ainda mudam.
  */
 export function SettingsFormatSection() {
-  const t = useTranslations("TournamentForm");
   const tSettings = useTranslations("TournamentSettings");
   const summary = useValuesSummary();
   const { tournament } = useTournamentSettings();
@@ -36,10 +35,14 @@ export function SettingsFormatSection() {
   const form = useSettingsSection("format");
   const { values, onChange, errors, saved } = form;
   const lock = sectionLock("format", tournament.status);
-  const readOnly = lock !== undefined;
+  // Os campos do torneio param no início; as fases, uma a uma.
+  const fixed = lock !== undefined;
+  const stagesOpen =
+    lock !== "finished" && !tournament.stages.every(stageStarted);
+  const readOnly = fixed && !stagesOpen;
   // O pool e o modo do mapa vêm do salvo em Mapas.
   const pool =
-    !readOnly && values.mapMode !== "off" ? values.mapPool?.length : undefined;
+    !fixed && values.mapMode !== "off" ? values.mapPool?.length : undefined;
   const goToMaps = useCallback(() => reveal("maps"), [reveal]);
 
   return (
@@ -49,7 +52,14 @@ export function SettingsFormatSection() {
       summary={[summary.format(saved), isTdm(saved) && summary.teamRules(saved)]
         .filter(Boolean)
         .join(" · ")}
-      lock={lock && tSettings(`locks.${lock}`)}
+      lock={
+        lock &&
+        tSettings(
+          lock === "started" && stagesOpen
+            ? "locks.startedStages"
+            : `locks.${lock}`,
+        )
+      }
       readOnly={readOnly}
       onSave={form.submit}
     >
@@ -57,40 +67,34 @@ export function SettingsFormatSection() {
         values={values}
         onChange={onChange}
         errors={errors}
-        readOnly={readOnly}
+        readOnly={fixed}
         saved={tournament}
       />
       {isTdm(values) && (
         <TournamentTeamRulesFields
           values={values}
           onChange={onChange}
-          readOnly={readOnly}
+          readOnly={fixed}
         />
       )}
       <TournamentSlotsField
         values={values}
         onChange={onChange}
         errors={errors}
-        readOnly={readOnly}
+        readOnly={fixed}
       />
-      <TournamentFormatFields
+      <TournamentStages
         values={values}
         onChange={onChange}
         errors={errors}
-        readOnly={readOnly}
         pool={pool}
         onGoToPool={goToMaps}
       />
-      {isTableFormat(values.stageFormat) && (
-        <FormSection legend={t("tiebreakers.title")}>
-          <TournamentTiebreakerFields
-            values={values}
-            onChange={onChange}
-            errors={errors}
-            readOnly={readOnly}
-          />
-        </FormSection>
-      )}
+      <TournamentRatingField
+        values={values}
+        onChange={onChange}
+        readOnly={fixed}
+      />
     </SettingsSection>
   );
 }

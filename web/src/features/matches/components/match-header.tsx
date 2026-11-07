@@ -17,6 +17,8 @@ type Props = {
   /** Nome já no idioma de quem vê. */
   tournamentName: string;
   detail: components["schemas"]["MatchDetail"];
+  /** O torneio tem mais de uma fase: a trilha leva à chave da fase da série. */
+  severalStages: boolean;
 };
 
 /**
@@ -33,6 +35,7 @@ export function MatchHeader({
   tenantName,
   tournamentName,
   detail,
+  severalStages,
 }: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
@@ -87,7 +90,15 @@ export function MatchHeader({
         { href: "/", label: tNav("home") },
         { href: `/${tenant}`, label: tenantName },
         { href: `/${tenant}/${slug}`, label: tournamentName },
-        { href: `/${tenant}/${slug}/bracket`, label: tBracket("title") },
+        {
+          href: severalStages
+            ? {
+                pathname: `/${tenant}/${slug}/bracket`,
+                query: { stage: detail.stage },
+              }
+            : `/${tenant}/${slug}/bracket`,
+          label: tBracket("title"),
+        },
       ]}
       title={
         score

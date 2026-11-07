@@ -1,0 +1,52 @@
+{
+  "title": "Fase {number}",
+  "state": {
+    "pending": "Esperando o início",
+    "check_in": "Check-in aberto"
+  },
+  "enters": "{count, plural, one {Entra # {tdm, select, yes {time} other {jogador}}} other {Entram # {tdm, select, yes {times} other {jogadores}}}}",
+  "substitutes": "{count, plural, one {# suplente} other {# suplentes}}",
+  "confirmed": "{count} de {total} fizeram check-in",
+  "list": {
+    "title": "Quem entra na fase {number}",
+    "seed": "Ordem",
+    "team": "Time",
+    "player": "Jogador",
+    "previous": "Posição na fase {previous}",
+    "presence": "Situação",
+    "empty": "Nenhum candidato.",
+    "rank": "{rank}º",
+    "state": {
+      "enters": "Entra",
+      "substitute": "Suplente",
+      "absent": "Sem check-in",
+      "withdrawn": "Desistiu"
+    }
+  },
+  "yourTeam": {
+    "substitute": "{tdm, select, yes {Seu time entra} other {Você entra}} se alguém acima {checkIn, select, yes {não fizer o check-in} other {desistir}}."
+  },
+  "checkIn": {
+    "do": "Fazer check-in",
+    "undo": "Desfazer check-in",
+    "mark": "Marcar check-in",
+    "unmark": "Desmarcar check-in",
+    "unmarkConfirm": "Desmarcar o check-in de {name}? Sem check-in, {name} fica fora da fase {number} se ela começar assim.",
+    "actionsFor": "Ações de {name}"
+  },
+  "openCheckIn": "Abrir check-in da fase {number}",
+  "start": "Iniciar fase {number}",
+  "startQuestion": "Iniciar a fase {number}? A ordem e quem entra ficam definidos.",
+  "startEntering": "Entram, na ordem:",
+  "startPlacement": "Pares da primeira rodada:",
+  "startSubstitutes": "Suplentes, fora da fase: {names}.",
+  "startAbsent": "Sem check-in, fora da fase: {names}.",
+  "versus": "{a} × {b}",
+  "alone": "{name} sem adversário",
+  "undoStart": "Desfazer fase {number}",
+  "undoStartConfirm": "Desfazer o início da fase {number}? A fase volta a esperar o início, com os check-ins mantidos.",
+  "undoStartTournamentConfirm": "Desfazer o início do torneio? Todas as fases voltam ao começo e as partidas e os resultados delas serão apagados, com o histórico das séries.",
+  "switcher": "Fase",
+  "stageOption": "Fase {number}",
+  "finalOption": "Final"
+}

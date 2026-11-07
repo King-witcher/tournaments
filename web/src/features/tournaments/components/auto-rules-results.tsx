@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { useFormatMinutes } from "@/shared/hooks/use-format-minutes";
-import { finalsBestOf, GAME_MINUTES } from "../lib/format";
+import { GAME_MINUTES, longestBestOf } from "../lib/format";
 import { AutoRulesBlock } from "./auto-rules-block";
 import { AutoRulesList } from "./auto-rules-list";
 
@@ -17,8 +17,7 @@ export function AutoRulesResults({ tournament }: Props) {
   const t = useTranslations("Tournament.autoRules.results");
   const formatMinutes = useFormatMinutes();
   const tdm = tournament.mode === "tdm";
-  const [stage] = tournament.stages;
-  const severalGames = Math.max(stage.best_of, finalsBestOf(stage) ?? 0) > 1;
+  const severalGames = longestBestOf(tournament.stages) > 1;
   const byCaptain = tdm && tournament.team_rules.report === "captain";
 
   return (

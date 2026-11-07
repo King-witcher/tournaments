@@ -6,7 +6,10 @@
 //! `teams` e `matches` porque iniciar fecha o seeding e gera a chave, e a
 //! desistência dá W.O. Também o sorteio dos times do TDM (`draw`) e o rating
 //! de cada time congelado no início para o desempate pelo menor rating
-//! (`start_rating`), que leem o rating da comunidade.
+//! (`start_rating`), que leem o rating da comunidade. E a rota do PATCH do
+//! torneio (o resto em `tournaments::update`): tirar as fases que faltam com
+//! a atual terminada encerra o torneio, e o pódio sai pela chave
+//! (`matches::announce_finished`).
 
 mod draw;
 mod handlers;
@@ -26,4 +29,5 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::start, handlers::undo_start))
         .routes(routes!(withdrawal::withdraw_team))
         .routes(routes!(draw::draw_teams))
+        .routes(routes!(handlers::update_tournament))
 }

@@ -3,7 +3,7 @@
 
 use super::{
     db::StoredTournament,
-    types::{NameTranslation, Tournament, TournamentSummary},
+    types::{NameTranslation, Tournament, TournamentStage, TournamentSummary},
     veto::VetoSettings,
 };
 use crate::shared::public_url;
@@ -40,6 +40,19 @@ impl From<&StoredTournament> for TournamentSummary {
 
 impl From<StoredTournament> for Tournament {
     fn from(t: StoredTournament) -> Self {
+        let stages = (1..)
+            .zip(&t.setup.stages)
+            .map(|(number, setup)| {
+                let progress = t.stage(number).map(|(_, p)| p).unwrap_or_default();
+                TournamentStage {
+                    format: (*setup).into(),
+                    number: u16::try_from(number).unwrap_or(1),
+                    status: t.stage_status(number),
+                    started_at: progress.started_at,
+                    check_in_opened_at: progress.check_in_opened_at,
+                }
+            })
+            .collect();
         Self {
             slug: t.slug,
             locale: t.locale,
@@ -55,7 +68,7 @@ impl From<StoredTournament> for Tournament {
             registered: t.registered,
             checked_in: t.checked_in,
             champion_rules: t.setup.champion_rules.into(),
-            stages: t.setup.stages.into_iter().map(Into::into).collect(),
+            stages,
             starts_at: t.schedule.starts_at,
             check_in_minutes: t.schedule.check_in_minutes,
             check_in_opens_at: t.schedule.check_in_opens_at(),

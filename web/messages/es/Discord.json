@@ -36,6 +36,10 @@
       "game_contested": "Partida impugnada, para la organización",
       "contest_received": "Partida impugnada, para el capitán rival",
       "series_decided": "Resultado de cada serie (muchos mensajes)"
+    },
+    "stage": {
+      "check_in_opened": "Check-in de una fase abierto",
+      "started": "Fase iniciada, con el enlace de la llave"
     }
   },
   "mention": {

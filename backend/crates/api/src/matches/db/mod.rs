@@ -25,7 +25,7 @@ pub use games::{
 };
 pub use pairings::insert_round;
 pub use screenshots::has_screenshot;
-pub use stage::{Parts, StageRows, stage_rows};
+pub use stage::{Parts, StageRows, Which, stage_rows};
 pub use ties::{TieRow, clear_pending, insert_decision, mark_pending};
 pub use writes::{put_by_organizer, put_decided, put_walkover, remove_result};
 
@@ -121,6 +121,48 @@ pub async fn discard(
     .execute(&mut *conn)
     .await?;
     Ok(touched as u64)
+}
+
+/// Algo foi feito na fase `stage`: um evento de veto, um mapa enviado, uma
+/// série decidida (W.O. inclusive), um evento no histórico de uma partida
+/// (também de mapa já anulado) ou um screenshot (também o que ainda não foi
+/// anexado). Tudo isso fica preso à fase, e desfazer o início o deixaria
+/// numa série nova com o mesmo código.
+pub async fn stage_activity(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    stage: i16,
+) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"select (exists(select 1 from match_veto_events where tournament_id = $1 and stage = $2)
+                   or exists(select 1 from match_games where tournament_id = $1 and stage = $2)
+                   or exists(select 1 from match_results where tournament_id = $1 and stage = $2)
+                   or exists(select 1 from match_events where tournament_id = $1 and stage = $2)
+                   or exists(select 1 from match_screenshots
+                             where tournament_id = $1 and stage = $2))
+           as "active!""#,
+        tournament.get(),
+        stage
+    )
+    .fetch_one(conn)
+    .await
+}
+
+/// Apaga os pareamentos da fase `stage` (desfazer o início dela, sem nada
+/// jogado).
+pub async fn discard_pairings(
+    conn: &mut PgConnection,
+    tournament: TournamentId,
+    stage: i16,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "delete from stage_pairings where tournament_id = $1 and stage = $2",
+        tournament.get(),
+        stage
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
 }
 
 /// Torneios em andamento com mapa pendente de janela vencida em `now`, para

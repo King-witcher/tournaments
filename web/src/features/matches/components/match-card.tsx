@@ -50,7 +50,7 @@ function scores(
  */
 export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const t = useTranslations("Bracket");
-  const { code, placeholder } = useMatchLabels(single);
+  const { shortCode: code, placeholder } = useMatchLabels(single);
   const teamName = useTeamName();
 
   if (m.state === "bye" || m.state === "not_needed") {

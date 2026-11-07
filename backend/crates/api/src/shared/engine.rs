@@ -57,6 +57,21 @@ impl From<EngineError> for ApiError {
             E::InvalidRounds { max, got } => Self::invalid("format.invalid_rounds")
                 .with_params([("max", i64::from(max)), ("got", i64::from(got))]),
             E::InvalidTiebreakers => Self::invalid("format.invalid_tiebreakers"),
+            // O erro de uma fase, com o número dela.
+            E::InStage { stage, error } => {
+                Self::from(*error).with_params([("stage", i64::from(stage))])
+            }
+            E::EliminationNotLast { stage } => Self::invalid("stage.elimination_not_last")
+                .with_params([("stage", i64::from(stage))]),
+            E::InvalidAdvance { stage, min, max } => Self::invalid("stage.invalid_advance")
+                .with_params([
+                    ("stage", i64::from(stage)),
+                    ("min", i64::from(min)),
+                    ("max", i64::from(max)),
+                ]),
+            E::EntryRulesFirst { stage } => {
+                Self::invalid("stage.entry_rules_first").with_params([("stage", i64::from(stage))])
+            }
             // Histórico gravado que não fecha: erro nosso, não do usuário.
             E::InvalidPairing { .. } => Self::internal(),
         }

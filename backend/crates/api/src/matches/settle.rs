@@ -4,15 +4,19 @@
 //! nada (fechar uma série pode deixar pronta uma partida de quem desistiu),
 //! grava o pareamento da rodada seguinte do suíço quando a anterior termina
 //! (`rounds`) e começa o jogo seguinte do veto de cada partida
-//! (`veto::advance`); depois encerra ou reabre o torneio conforme a chave
-//! (que espera a organização decidir os empates do fim, `ties`), acerta a
-//! marca dessa espera e emite o que mudou (`changes`). Quem chama trava o torneio.
+//! (`veto::advance`); depois, se a fase seguinte já começou, confere que
+//! quem entrou nela e a ordem continuam os mesmos (`chain::check_next`; senão,
+//! 409 e nada fica gravado), marca o fim da fase e encerra ou reabre o
+//! torneio conforme a chave da última (que espera a organização decidir os
+//! empates do fim, `ties`), acerta a marca dessa espera e emite o que mudou
+//! (`changes`). Quem chama trava o torneio. Tudo na fase da mudança.
 
 use chrono::Utc;
 use engine::{core::MatchState, series};
 use sqlx::PgConnection;
 
 use super::{
+    chain,
     changes::{self, Snapshot},
     db::{self, MatchRef},
     games::{GameStatus, StoredGame, series_games},
@@ -37,13 +41,14 @@ use crate::{
 async fn apply_from(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
+    number: i16,
     actor: Option<i64>,
     mut first: Option<Stage>,
 ) -> Result<Stage, ApiError> {
     loop {
         let stage = match first.take() {
             Some(stage) => stage,
-            None => stage::load(conn, tournament).await?,
+            None => stage::load(conn, tournament, number).await?,
         };
         if close_series(conn, tournament, &stage, actor).await? {
             continue;
@@ -82,8 +87,9 @@ pub async fn settle_from(
     before: &Snapshot,
     first: Option<Stage>,
 ) -> Result<(Stage, TournamentStatus), ApiError> {
-    let stage = apply_from(conn, tournament, actor, first).await?;
-    let status = stage::sync_status(conn, tournament, &stage).await?;
+    let mut stage = apply_from(conn, tournament, before.stage(), actor, first).await?;
+    chain::check_next(tournament, &stage)?;
+    let status = stage::sync_status(conn, tournament, &mut stage).await?;
     ties::sync(conn, tournament, &stage).await?;
     changes::settled(conn, tournament, before, &stage, status).await?;
     Ok((stage, status))

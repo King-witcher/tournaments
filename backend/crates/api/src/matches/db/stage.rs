@@ -9,7 +9,8 @@
 use chrono::{DateTime, Utc};
 use engine::{
     core::{ChampionId, MapId, MatchId, ParticipantId},
-    formats::{self as ef, swiss::SwissRound},
+    formats::swiss::SwissRound,
+    stages::StageSetup,
 };
 use serde::Deserialize;
 use sqlx::{PgConnection, types::Json};
@@ -24,7 +25,7 @@ use crate::{
         veto::{Champion, Kind, MatchVetoRow, VetoRow},
     },
     shared::ApiError,
-    tournaments::{StageRow, TournamentId},
+    tournaments::{StageProgress, StageRow, TournamentId},
 };
 
 /// O que ler da fase. O que fica de fora vem vazio.
@@ -48,7 +49,14 @@ pub struct Parts {
 /// A fase de um torneio como está gravada.
 #[derive(Default)]
 pub struct StageRows {
-    pub config: Option<ef::StageFormat>,
+    /// O id do torneio e a posição da fase.
+    pub tournament: i64,
+    pub stage: i16,
+    /// Quando a fase terminou, como está gravado agora (o torneio lido antes
+    /// pode estar atrás, se a fase terminou ou reabriu na mesma transação).
+    pub finished_at: Option<DateTime<Utc>>,
+    /// A configuração e o andamento da fase.
+    pub config: Option<(StageSetup, StageProgress)>,
     /// Na ordem do replay.
     pub results: Vec<StoredResult>,
     /// Por partida e na ordem.
@@ -68,7 +76,26 @@ pub struct StageRows {
     pub ties_pending_since: Option<DateTime<Utc>>,
 }
 
-/// A fase `stage` de cada torneio de `tournaments`, na mesma ordem, com as
+/// Que fase ler de um torneio em `stage_rows`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Which {
+    /// A fase de número dado.
+    Stage(i16),
+    /// Todas as que começaram (a 1 sempre), na ordem.
+    Started,
+}
+
+impl Which {
+    const fn number(self) -> i16 {
+        match self {
+            Self::Stage(n) => n,
+            Self::Started => 0,
+        }
+    }
+}
+
+/// As fases `which` de cada torneio de `at`, na mesma ordem (com
+/// `Which::Started`, as do torneio em sequência, da 1 em diante), com as
 /// partes de `parts`. Uma query, qualquer que seja o número de torneios.
 ///
 /// Os ids e as partes entram por `(select $n)`: assim o plano genérico do
@@ -77,25 +104,26 @@ pub struct StageRows {
 /// 0,48 ms contra 0,01 ms, medido no PG 18 local).
 pub async fn stage_rows(
     conn: &mut PgConnection,
-    tournaments: &[TournamentId],
-    stage: i16,
+    at: &[(TournamentId, Which)],
     parts: Parts,
 ) -> Result<Vec<StageRows>, ApiError> {
-    let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
+    let ids: Vec<i64> = at.iter().map(|(t, _)| t.get()).collect();
+    let stages: Vec<i16> = at.iter().map(|(_, w)| w.number()).collect();
     let rows = sqlx::query!(
-        r#"select q.id as "id!",
+        r#"select q.id as "id!", st.position as "stage!", st.finished_at,
                   case when (select $3::bool) then (
                       select to_json(s) from (
                           select format, best_of, finals_best_of, bracket, grand_final_reset,
-                                 rounds, tiebreakers, final_tie
+                                 rounds, tiebreakers, final_tie, advance, check_in, started_at,
+                                 check_in_opened_at, finished_at
                           from tournament_stages
-                          where tournament_id = q.id and position = $2) s)
+                          where tournament_id = q.id and position = st.position) s)
                   end as "config: Json<StageRow>",
                   case when (select $4::bool) then (
                       select json_agg(r order by r.position) from (
                           select id, match_key, side_a, side_b, winner, a_wins, b_wins,
                                  confirmed_via, confirmed_at, position
-                          from match_results where tournament_id = q.id and stage = $2) r)
+                          from match_results where tournament_id = q.id and stage = st.position) r)
                   end as "results: Json<Vec<ResultRow>>",
                   case when (select $5::bool) then (
                       select json_agg(g order by g.match_key, g.number) from (
@@ -106,12 +134,12 @@ pub async fn stage_rows(
                                  g.contest_comment, g.confirmed_via, g.confirmed_at
                           from match_games g
                           left join maps m on m.id = g.map_id
-                          where g.tournament_id = q.id and g.stage = $2) g)
+                          where g.tournament_id = q.id and g.stage = st.position) g)
                   end as "games: Json<Vec<GameRow>>",
                   case when (select $6::bool) then (
                       select json_agg(p order by p.round, p.number) from (
                           select round, number, side_a, side_b from stage_pairings
-                          where tournament_id = q.id and stage = $2) p)
+                          where tournament_id = q.id and stage = st.position) p)
                   end as "pairings: Json<Vec<PairingRow>>",
                   case when (select $7::bool) then (
                       select json_agg(e order by e.match_key, e.id) from (
@@ -126,14 +154,14 @@ pub async fn stage_rows(
                                  on m.tenant_id = e.tenant_id and m.user_id = e.actor
                           left join tenant_members pm
                                  on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id
-                          where e.tournament_id = q.id and e.stage = $2) e)
+                          where e.tournament_id = q.id and e.stage = st.position) e)
                   end as "veto: Json<Vec<VetoEventRow>>",
                   case when (select $8::bool) then (
                       select json_agg(l order by l.match_key, l.number, l.side, l.user_id) from (
                           select g.match_key, g.number, gp.side, gp.user_id
                           from match_game_players gp
                           join match_games g on g.id = gp.game_id
-                          where g.tournament_id = q.id and g.stage = $2) l)
+                          where g.tournament_id = q.id and g.stage = st.position) l)
                   end as "lineups: Json<Vec<PlayedRow>>",
                   case when (select $9::bool) then (
                       select json_agg(c order by c.id) from (
@@ -146,16 +174,21 @@ pub async fn stage_rows(
                                   from stage_tie_decision_teams x
                                   where x.decision_id = d.id) as teams
                           from stage_tie_decisions d
-                          where d.tournament_id = q.id and d.stage = $2) d)
+                          where d.tournament_id = q.id and d.stage = st.position) d)
                   end as "ties: Json<Vec<TieRow>>",
                   case when (select $10::bool) then (
                       select since from stage_pending_ties
-                      where tournament_id = q.id and stage = $2)
+                      where tournament_id = q.id and stage = st.position)
                   end as ties_pending_since
-           from unnest((select $1::bigint[])) with ordinality as q(id, n)
-           order by q.n"#,
+           from unnest((select $1::bigint[]), (select $2::smallint[]))
+                    with ordinality as q(id, stage, n)
+           join tournament_stages st
+             on st.tournament_id = q.id
+            and (st.position = q.stage
+                 or (q.stage = 0 and (st.started_at is not null or st.position = 1)))
+           order by q.n, st.position"#,
         &ids,
-        stage,
+        &stages,
         parts.config,
         parts.results,
         parts.games,
@@ -170,7 +203,13 @@ pub async fn stage_rows(
     rows.into_iter()
         .map(|r| {
             Ok(StageRows {
-                config: r.config.map(|c| c.0.read()).transpose()?,
+                tournament: r.id,
+                stage: r.stage,
+                finished_at: r.finished_at,
+                config: r
+                    .config
+                    .map(|c| Ok::<_, ApiError>((c.0.read_setup()?, c.0.progress())))
+                    .transpose()?,
                 results: list(r.results)
                     .into_iter()
                     .map(StoredResult::try_from)

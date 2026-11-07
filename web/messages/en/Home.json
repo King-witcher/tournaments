@@ -10,7 +10,8 @@
       "respond": "Confirm or dispute",
       "accept_contest": "View dispute",
       "report": "Submit game"
-    }
+    },
+    "stageCheckIn": "Stage {stage} check-in is open"
   },
   "open": {
     "title": "Registration open",
@@ -33,7 +34,10 @@
       "withdrawn": "Withdrew",
       "champion": "1st place, you won",
       "reserve": "Reserve, no team",
-      "tie_pending": "Tied for {place}, the organizers will decide"
+      "tie_pending": "Tied for {place}, the organizers will decide",
+      "substitute": "Substitute in stage {stage}",
+      "awaiting_stage": "Waiting for stage {stage}",
+      "stage_check_in_pending": "Stage {stage} check-in pending"
     },
     "next": {
       "against": "Next match: {match} against {opponent}",

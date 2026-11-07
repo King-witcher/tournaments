@@ -19,6 +19,7 @@ use crate::{
     AppState,
     matches::{
         Side, acting, actions, changes, detail, due,
+        key::MatchKey,
         stage::{Stage, Wrote},
         types::{MatchDetail, MatchPath},
     },
@@ -35,7 +36,7 @@ const NOT_BEGUN: ApiError = ApiError::conflict("veto.not_begun");
 fn open<'a>(
     tournament: &StoredTournament,
     stage: &'a Stage,
-    key: &str,
+    key: &MatchKey,
 ) -> Result<(&'a engine::core::Match, (ParticipantId, ParticipantId)), ApiError> {
     actions::in_progress(tournament)?;
     let m = detail::find(stage, key)?;
@@ -66,7 +67,7 @@ fn seen(mv: &MatchVeto, step: Option<i64>) -> Result<(), ApiError> {
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     responses(
         (status = OK, body = MatchDetail, description = "Quem clica está pronto. Com tudo no capitão, só ele marca, e um basta por lado; senão, o lado fica pronto quando todos do elenco de agora marcaram. Com os dois lados prontos, o veto começa (aviso `match.veto_started`, para quem age nele); com o lado dele pronto pela primeira vez, quem falta do adversário recebe `match.opponent_ready` (depois de alguém desfazer, marcar de novo não avisa outra vez). Repetir não muda nada"),
@@ -83,7 +84,8 @@ pub async fn veto_ready(
     PathParams(path): PathParams<MatchPath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides, side) = may_mark(&tournament, &stage, &member, &path.key)?;
     let who = member.user.id;
     let before = stage.readiness(m.id, sides);
@@ -101,7 +103,7 @@ pub async fn veto_ready(
                 .entrant(mine)
                 .map_or_else(|| member.nickname.clone(), |t| t.display_name());
             let to = &after.waiting[slot(other(side))];
-            changes::opponent_ready(&mut tx, &tournament, &path.key, to, &name).await?;
+            changes::opponent_ready(&mut tx, &tournament, &path.key.public(), to, &name).await?;
         }
     }
     let detail =
@@ -117,7 +119,7 @@ fn may_mark<'a>(
     tournament: &StoredTournament,
     stage: &'a Stage,
     member: &TenantMember,
-    key: &str,
+    key: &MatchKey,
 ) -> Result<
     (
         &'a engine::core::Match,
@@ -158,7 +160,8 @@ pub async fn veto_unready(
     PathParams(path): PathParams<MatchPath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides, side) = may_mark(&tournament, &stage, &member, &path.key)?;
     let who = member.user.id;
     if stage.readiness(m.id, sides).has_marked(who) {
@@ -179,7 +182,7 @@ pub async fn veto_unready(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     responses(
         (status = OK, body = MatchDetail, description = "O organizador começa o veto sem esperar os dois prontos (aviso `match.veto_started` para os dois)"),
@@ -196,7 +199,8 @@ pub async fn veto_begin(
     PathParams(path): PathParams<MatchPath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     if stage.veto_of(m.id).is_some_and(|v| v.state.begun()) {
         return Err(ApiError::conflict("veto.already_begun"));
@@ -216,7 +220,7 @@ pub async fn veto_begin(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     request_body = VetoChoice,
     responses(
@@ -235,7 +239,8 @@ pub async fn veto_step(
     JsonBody(body): JsonBody<VetoChoice>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let mv = begun(&stage, m)?;
     seen(mv, body.step)?;
@@ -274,7 +279,7 @@ pub async fn veto_step(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     request_body = Option<VetoSeen>,
     responses(
@@ -293,7 +298,8 @@ pub async fn veto_undo(
     body: Option<JsonBody<VetoSeen>>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let mv = begun(&stage, m)?;
     seen(mv, body.and_then(|JsonBody(b)| b.step))?;
@@ -332,7 +338,7 @@ fn undoable(mv: &MatchVeto) -> Result<i16, ApiError> {
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     request_body = Option<VetoSeen>,
     responses(
@@ -351,7 +357,8 @@ pub async fn veto_undo_request(
     body: Option<JsonBody<VetoSeen>>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
     let mv = begun(&stage, m)?;
@@ -382,7 +389,7 @@ pub async fn veto_undo_request(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
     ),
     request_body = UndoAnswer,
     responses(
@@ -401,7 +408,8 @@ pub async fn veto_undo_answer(
     JsonBody(body): JsonBody<UndoAnswer>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let (m, sides) = open(&tournament, &stage, &path.key)?;
     let side = actions::side_of(&stage, &member, sides).ok_or(NOT_PLAYER)?;
     let mv = begun(&stage, m)?;

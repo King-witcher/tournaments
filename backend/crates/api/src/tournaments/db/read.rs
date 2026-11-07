@@ -206,7 +206,9 @@ pub async fn find(
                            and p.checked_in_at is not null) as "checked_in!",
                   coalesce((select jsonb_agg(s order by s.position)
                             from (select position, format, best_of, finals_best_of, bracket,
-                                         grand_final_reset, rounds, tiebreakers, final_tie
+                                         grand_final_reset, rounds, tiebreakers, final_tie,
+                                         advance, check_in, started_at, check_in_opened_at,
+                                         finished_at
                                   from tournament_stages
                                   where tournament_id = t.id) s), '[]')
                       as "stages!: Json<Vec<StageRow>>",
@@ -271,8 +273,9 @@ pub async fn find(
         .stages
         .0
         .iter()
-        .map(StageRow::read)
+        .map(StageRow::read_setup)
         .collect::<Result<_, _>>()?;
+    let stage_progress = row.stages.0.iter().map(StageRow::progress).collect();
     let champion_rules = ChampionColumns {
         bans_per_series: row.bans_per_series,
         mirror: row.mirror,
@@ -329,6 +332,7 @@ pub async fn find(
         created_at: row.created_at,
         started_at: row.started_at,
         cover_key: row.cover_key,
+        stage_progress,
     }))
 }
 

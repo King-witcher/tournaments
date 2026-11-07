@@ -31,7 +31,8 @@
     "grand_final": "GF{round}",
     "round_robin": "{round}.{index}",
     "swiss": "{round}.{index}",
-    "placement": "Disputa do {place}º lugar"
+    "placement": "Disputa do {place}º lugar",
+    "stage": "Fase {stage} · {code}"
   },
   "from": {
     "winner": "Vencedor de {match}",
@@ -114,7 +115,8 @@
     "won": "Vitória: <match></match> ({score})",
     "lost": "Derrota: <match></match> ({score})",
     "alone": "Sem adversário",
-    "empty": "A classificação aparece aqui quando a última série da chave for decidida."
+    "empty": "A classificação aparece aqui quando a última série da chave for decidida.",
+    "final": "Classificação final"
   },
   "rest": "<name></name> folga nesta rodada",
   "swissBye": "<name></name> recebe o bye (vale vitória)",

@@ -18,7 +18,7 @@ pub async fn changed<R>(
     let event = Event::Tournament {
         tenant: member.slug.clone(),
         tournament: m.tournament.slug.clone(),
-        match_key: Some(m.key.clone()),
+        match_key: Some(m.public_key()),
     };
     outbox::emit(conn, event).await
 }

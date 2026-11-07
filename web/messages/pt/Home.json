@@ -10,7 +10,8 @@
       "respond": "Confirmar ou contestar",
       "accept_contest": "Ver contestação",
       "report": "Enviar partida"
-    }
+    },
+    "stageCheckIn": "Check-in da fase {stage} aberto"
   },
   "open": {
     "title": "Inscrições abertas",
@@ -33,7 +34,10 @@
       "withdrawn": "Desistiu",
       "champion": "1º lugar, você venceu",
       "reserve": "Reserva, sem time",
-      "tie_pending": "Empate no {place}, a organização vai decidir"
+      "tie_pending": "Empate no {place}, a organização vai decidir",
+      "substitute": "Suplente na fase {stage}",
+      "awaiting_stage": "Esperando a fase {stage}",
+      "stage_check_in_pending": "Falta o seu check-in na fase {stage}"
     },
     "next": {
       "against": "Próxima série: {match} contra {opponent}",

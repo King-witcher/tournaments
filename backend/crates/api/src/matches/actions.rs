@@ -11,6 +11,7 @@ use super::{
     db::MatchRef,
     detail,
     games::StoredGame,
+    key::MatchKey,
     result::Side,
     settle,
     stage::{Stage, Wrote},
@@ -96,17 +97,18 @@ pub fn game_index(number: i16, len: usize) -> Result<usize, ApiError> {
         .ok_or_else(|| EngineError::GameOutOfOrder { next: len + 1 }.into())
 }
 
+/// A partida `key` da fase `stage` no banco (o identificador sem a fase).
 pub fn at<'a, R>(
     member: &TenantMember<R>,
     tournament: &StoredTournament,
     stage: &Stage,
-    key: &'a str,
+    key: &'a MatchKey,
 ) -> MatchRef<'a> {
     MatchRef {
         tenant: member.tenant,
         tournament: tournament.id,
         stage: stage.number,
-        key,
+        key: &key.local,
     }
 }
 
@@ -119,7 +121,7 @@ pub async fn respond<R>(
     member: &TenantMember<R>,
     mut tournament: StoredTournament,
     before: &Stage,
-    key: &str,
+    key: &MatchKey,
 ) -> Result<MatchDetail, ApiError> {
     let before = Snapshot::of(before);
     let actor = Some(member.user.id);
@@ -138,7 +140,7 @@ pub async fn respond_to<R>(
     mut tournament: StoredTournament,
     before: Stage,
     wrote: Wrote,
-    key: &str,
+    key: &MatchKey,
 ) -> Result<MatchDetail, ApiError> {
     let snapshot = Snapshot::of(&before);
     let first = before.refresh(conn, &tournament, wrote).await?;

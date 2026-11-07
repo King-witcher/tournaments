@@ -54,7 +54,8 @@ pub async fn accept_contest(
     JsonBody(body): JsonBody<GameInput>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);
@@ -90,7 +91,15 @@ pub async fn accept_contest(
     db::insert_event(&mut tx, &at, &event).await?;
     if let Some(contester) = g.contested_by {
         let by = member.nickname.as_str();
-        changes::contest_accepted(&mut tx, &tournament, &path.key, g.number, contester, by).await?;
+        changes::contest_accepted(
+            &mut tx,
+            &tournament,
+            &path.key.public(),
+            g.number,
+            contester,
+            by,
+        )
+        .await?;
     }
     let detail =
         actions::respond_to(&mut tx, &member, tournament, stage, Wrote::Games, &path.key).await?;

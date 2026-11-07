@@ -130,7 +130,7 @@ export function useNewTournament({ tenant, source, maps, onCreated }: Options) {
         }),
       );
       if (!created.ok) {
-        const field = tournamentFieldOf(created.code);
+        const field = tournamentFieldOf(created.code, created.params);
         const shown = SHOWN.find((f) => f === field);
         // Erro de texto numa tradução copiada vem com o idioma: não é o campo daqui.
         const translation = created.params?.locale !== undefined;

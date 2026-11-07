@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into tournament_stages\n             (tournament_id, position, format, best_of, finals_best_of, bracket,\n              grand_final_reset, rounds, tiebreakers, final_tie, advance, check_in)\n         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Text",
+        "Int2",
+        "Int2",
+        "Text",
+        "Bool",
+        "Int2",
+        "TextArray",
+        "Text",
+        "Int2",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6d5b2d74952b1872be6a25a6eb01ae5f8fd062478109befefe7d46c2f21b759c"
+}

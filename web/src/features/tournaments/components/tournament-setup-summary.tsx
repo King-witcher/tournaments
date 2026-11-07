@@ -11,6 +11,7 @@ import { Section } from "@/shared/ui/section";
 import { StructuredList } from "@/shared/ui/structured-list";
 import { useModeLabel } from "../hooks/use-mode-label";
 import { useRuleSentences } from "../hooks/use-rule-sentences";
+import { useStageEntry } from "../hooks/use-stage-entry";
 import { useValuesSummary } from "../hooks/use-values-summary";
 import { valuesFrom } from "../lib/form-values";
 import { formatKind, GAME_MINUTES, repeatScope, teamsIn } from "../lib/format";
@@ -40,6 +41,7 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
   const modeLabel = useModeLabel();
   const rules = useRuleSentences();
   const summary = useValuesSummary();
+  const entry = useStageEntry();
   // Campeões e veto com o mesmo texto do resumo do formulário.
   const values = valuesFrom(tournament);
   const tdm = tournament.mode === "tdm";
@@ -83,41 +85,71 @@ export function TournamentSetupSummary({ tournament, rulesHref }: Props) {
           },
         ]
       : []),
-    {
-      key: "bracket",
-      // "Chave" só na eliminação; round robin e suíço são "Formato".
-      label: tip(
-        stage.format === "elimination" ? "bracket" : "format",
-        rules.formatTip(tournament),
-      ),
-      value: t(`bracket.${kind}`),
-    },
-    {
-      key: "series",
-      label: t("labels.series"),
-      value:
-        stage.format === "elimination"
-          ? t(`series.${stage.bracket}`, {
-              bestOf: stage.best_of,
-              finals: stage.finals_best_of,
-            })
-          : t("series.table", { bestOf: stage.best_of }),
-    },
-    ...(stage.format === "swiss"
+    ...(tournament.stages.length === 1
       ? [
           {
-            key: "rounds",
-            label: t("labels.rounds"),
-            // No TDM, as rodadas contam times, não inscritos.
-            value:
-              stage.rounds == null
-                ? t(tdm ? "roundsValue.autoTeams" : "roundsValue.auto")
-                : t(tdm ? "roundsValue.fixedTeams" : "roundsValue.fixed", {
-                    count: stage.rounds,
-                  }),
+            key: "bracket",
+            // "Chave" só na eliminação; round robin e suíço são "Formato".
+            label: tip(
+              stage.format === "elimination" ? "bracket" : "format",
+              rules.formatTip(tournament),
+            ),
+            value: t(`bracket.${kind}`),
           },
+          {
+            key: "series",
+            label: t("labels.series"),
+            value:
+              stage.format === "elimination"
+                ? t(`series.${stage.bracket}`, {
+                    bestOf: stage.best_of,
+                    finals: stage.finals_best_of,
+                  })
+                : t("series.table", { bestOf: stage.best_of }),
+          },
+          ...(stage.format === "swiss"
+            ? [
+                {
+                  key: "rounds",
+                  label: t("labels.rounds"),
+                  // No TDM, as rodadas contam times, não inscritos.
+                  value:
+                    stage.rounds == null
+                      ? t(tdm ? "roundsValue.autoTeams" : "roundsValue.auto")
+                      : t(
+                          tdm ? "roundsValue.fixedTeams" : "roundsValue.fixed",
+                          {
+                            count: stage.rounds,
+                          },
+                        ),
+                },
+              ]
+            : []),
         ]
-      : []),
+      : // Com várias fases, uma linha por fase e, da segunda em diante, a entrada.
+        tournament.stages.flatMap((s, i) => [
+          {
+            key: `stage-${s.number}`,
+            label: (
+              <InfoTip
+                term={t("stage", { number: s.number })}
+                label={t("tips.format")}
+              >
+                {rules.formatTip(tournament, s)}
+              </InfoTip>
+            ),
+            value: summary.stage(values.stages[i], values),
+          },
+          ...(s.number > 1
+            ? [
+                {
+                  key: `entry-${s.number}`,
+                  label: t("labels.entry"),
+                  value: entry(s.advance, s.check_in, s.number).join(" "),
+                },
+              ]
+            : []),
+        ])),
     {
       key: "slots",
       label: t("labels.slots"),

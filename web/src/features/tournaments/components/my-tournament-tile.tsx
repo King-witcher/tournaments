@@ -83,7 +83,10 @@ export function MyTournamentTile({
           <TaskTag next={entry.next_match} task={entry.next_match.task} />
         ) : (
           <StatusTag status={SITUATION_STATUS[entry.situation]}>
-            {t(`situation.${entry.situation}`, { place: place ?? "" })}
+            {t(`situation.${entry.situation}`, {
+              place: place ?? "",
+              stage: entry.stage ?? "",
+            })}
           </StatusTag>
         )
       }

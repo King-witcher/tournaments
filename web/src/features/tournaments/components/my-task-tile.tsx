@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { useNextMatchLabel } from "@/features/matches/hooks/use-next-match-label";
 import { CheckInButton } from "@/features/participants/components/check-in-button";
+import { StageCheckInButton } from "@/features/stages/components/stage-check-in-button";
+import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import type { components } from "@/shared/api/schema";
 import { ActionTile } from "@/shared/ui/action-tile";
 import { ButtonLink } from "@/shared/ui/button-link";
@@ -23,15 +25,18 @@ type Props = {
 
 /**
  * O que um torneio de quem vê espera dele: a série em que é a vez dele, com o
- * botão que leva a ela, ou o check-in que falta, feito aqui mesmo (uma tarefa
- * que se desfaz e não pede nada além do clique).
+ * botão que leva a ela, ou o check-in que falta (do torneio ou de uma fase),
+ * feito aqui mesmo (uma tarefa que se desfaz e não pede nada além do clique);
+ * o da fase no duelo, sem o time na resposta, leva à página do torneio.
  */
 export function MyTaskTile({ entry, avatar, focusAfter }: Props) {
   const t = useTranslations("Home.waiting");
+  const tStages = useTranslations("Stages.checkIn");
   const locale = useLocale();
   const { tournament } = entry;
   const startsAt = tournament.starts_at;
   const task = playerTask(entry);
+  const teamName = useTeamName();
 
   if (task && entry.next_match) {
     return (
@@ -40,6 +45,39 @@ export function MyTaskTile({ entry, avatar, focusAfter }: Props) {
         next={entry.next_match}
         label={t(`action.${task}`)}
         avatar={avatar}
+      />
+    );
+  }
+  if (entry.situation === "stage_check_in_pending" && entry.stage) {
+    // No duelo a API não manda o time (só no TDM): o botão leva à página do
+    // torneio, onde o check-in da fase está à mão.
+    return (
+      <ActionTile
+        avatar={avatar}
+        title={localizedName(tournament, locale)}
+        meta={`${entry.tenant_name} · ${t("stageCheckIn", { stage: entry.stage })}`}
+        action={
+          entry.team ? (
+            <StageCheckInButton
+              tenant={entry.tenant_slug}
+              slug={tournament.slug}
+              stage={entry.stage}
+              team={entry.team.id}
+              name={teamName(entry.team)}
+              checkedIn={false}
+              variant="tile"
+              focusAfter={focusAfter}
+            />
+          ) : (
+            <ButtonLink
+              href={`/${entry.tenant_slug}/${tournament.slug}`}
+              kind="tertiary"
+              size="sm"
+            >
+              {tStages("do")}
+            </ButtonLink>
+          )
+        }
       />
     );
   }

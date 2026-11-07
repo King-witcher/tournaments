@@ -241,4 +241,28 @@ pub enum EngineError {
     /// usuário.
     #[error("pareamento gravado inválido na rodada {round}")]
     InvalidPairing { round: u16 },
+    /// Um erro da configuração da fase `stage` (a partir de 1): o do
+    /// formato, o do teto de participantes ou o do pior caso.
+    #[error("fase {stage}: {error}")]
+    InStage { stage: u16, error: Box<EngineError> },
+    /// Eliminação (simples ou dupla) antes da última fase: os eliminados
+    /// saem em faixas empatadas e não há onde cortar.
+    #[error("a fase {stage} é eliminação e não é a última")]
+    EliminationNotLast { stage: u16 },
+    /// O corte da fase `stage` fora de `min` a `max` (o teto do formato).
+    #[error("corte da fase {stage} inválido: de {min} a {max}")]
+    InvalidAdvance { stage: u16, min: u16, max: u16 },
+    /// Corte ou check-in na fase 1, que recebe os inscritos do torneio.
+    #[error("a fase {stage} não tem corte nem check-in")]
+    EntryRulesFirst { stage: u16 },
+}
+
+impl EngineError {
+    /// O erro `self` na fase `stage` (a partir de 1).
+    pub fn in_stage(self, stage: usize) -> Self {
+        Self::InStage {
+            stage: u16::try_from(stage).unwrap_or(u16::MAX),
+            error: Box::new(self),
+        }
+    }
 }

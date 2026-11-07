@@ -9,7 +9,10 @@
 //! ordem por `finalize_seeding` ao iniciar) e a desistência, que é do time
 //! (`withdraw`, marcada pelo organizador; `withdraw_departing`, quando o
 //! último jogador do time sai da comunidade). A rota da desistência fica em
-//! `lifecycle`, que dá os W.O. pela chave.
+//! `lifecycle`, que dá os W.O. pela chave. Nas fases da 2 em diante, a
+//! presença confirmada e o seed de cada time (`stage_teams`, gravados pelo
+//! domínio `stages`) vêm com o time (`StoredTeam::stages`), e
+//! `stage_entrants` dá os times de uma fase com o seed dela.
 //!
 //! No TDM (times de 2 a 4): a formação antes do início (`formation`: ver os
 //! times e os reservas, criar time, pôr e tirar jogadores; o sorteio, que lê
@@ -30,12 +33,14 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::AppState;
 
 pub use db::{
-    UserTeam, by_ids, clear as clear_teams, clear_start_ratings, create as create_team, of_user_in,
-    players, save_start_ratings, save_teams_seed, seeded, seeded_in, withdraw, withdraw_departing,
+    UserTeam, by_ids, check_in_stage, clear as clear_teams, clear_stage_seeds, clear_stages,
+    clear_start_ratings, create as create_team, of_user_in, players, save_stage_seeds,
+    save_start_ratings, save_teams_seed, seeded, seeded_in, undo_stage_check_in, withdraw,
+    withdraw_departing,
 };
 pub use formation::{editable as formation_editable, formation};
 pub use seeding::finalize as finalize_seeding;
-pub use team::StoredTeam;
+pub use team::{StoredTeam, stage_entrants};
 pub use types::{DrawMethod, DrawTeams, Team, TeamFormation, TeamMember, TeamPath};
 
 pub fn router() -> OpenApiRouter<AppState> {

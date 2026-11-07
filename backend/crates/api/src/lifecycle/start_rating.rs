@@ -2,8 +2,10 @@
 //! rating (`docs/decisions/formats.md`, "Desempate por fase"). O rating da
 //! comunidade muda a cada mapa e correção; a tabela precisa sair igual em todo
 //! replay, então vale o do início, gravado em `teams.rating_at_start`. Só nos
-//! torneios com o menor rating entre os desempates; desfazer o início o apaga,
-//! e iniciar de novo grava outra vez. A substituição não muda.
+//! torneios com o menor rating entre os desempates ou com mais de uma fase (as
+//! que não começaram podem passar a usá-lo); desfazer o início o apaga, e
+//! iniciar de novo grava outra vez. A substituição não muda. Todas as fases
+//! usam o do início do torneio.
 
 use engine::formats::table::Criterion;
 use sqlx::PgConnection;
@@ -18,10 +20,15 @@ pub async fn freeze(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
 ) -> Result<(), ApiError> {
-    let uses = tournament.setup.stages.iter().any(|s| {
-        s.tiebreakers()
-            .is_some_and(|t| t.contains(Criterion::LowerRating))
-    });
+    // Com mais de uma fase, sempre: as que não começaram ainda podem passar a
+    // usá-lo (a configuração delas muda até começarem), e o de então é o do
+    // início do torneio.
+    let uses = tournament.setup.stages.len() > 1
+        || tournament.setup.stages.iter().any(|s| {
+            s.format
+                .tiebreakers()
+                .is_some_and(|t| t.contains(Criterion::LowerRating))
+        });
     if !uses {
         return Ok(());
     }

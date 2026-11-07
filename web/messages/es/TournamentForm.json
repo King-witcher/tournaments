@@ -68,7 +68,9 @@
     },
     "seconds": "{time} por paso",
     "teamPick": "{time} para elegir los campeones",
-    "screenshotsRequired": "captura de pantalla obligatoria"
+    "screenshotsRequired": "captura de pantalla obligatoria",
+    "series": "al mejor de {bestOf}",
+    "seriesFinals": "al mejor de {bestOf}, final al mejor de {finals}"
   },
   "duration": {
     "seconds": "{seconds} s",
@@ -94,7 +96,9 @@
       "veto": "Mapas",
       "results": "Resultados",
       "teamRules": "Quién actúa por el equipo",
-      "tiebreakers": "Desempate"
+      "tiebreakers": "Desempate",
+      "stage": "Fase {number}",
+      "entry": "Entrada"
     },
     "noDate": "Sin fecha"
   },
@@ -165,6 +169,23 @@
   "swissRoundsHintTdm": "Automático: 3 rondas con hasta 8 equipos, 4 con hasta 16 y 5 con hasta 32. Con pocos equipos, como máximo una menos que ellos.",
   "swissRoundsAuto": "Automático (según los inscritos)",
   "swissRoundsAutoTdm": "Automático (según los equipos)",
+  "stages": {
+    "label": "Fases",
+    "tab": "Fase {number}",
+    "add": "Añadir fase",
+    "remove": "Quitar fase",
+    "addBlocked": "La eliminación solo cabe en la última fase.",
+    "eliminationLast": "Solo en la última fase.",
+    "entryTitle": "Entrada",
+    "entry": "Quién entra de la fase {previous}",
+    "entryOptions": {
+      "all": "Todos",
+      "top": "Los mejores"
+    },
+    "entryCount": "Cuántos entran",
+    "checkIn": "Check-in antes de la fase",
+    "checkInHint": "La organización abre el check-in cuando termina la fase anterior. Solo entra quien confirme."
+  },
   "swissRoundsOption": "{count, plural, one {# ronda} other {# rondas}}",
   "championRules": {
     "phase": "Elección de campeones",

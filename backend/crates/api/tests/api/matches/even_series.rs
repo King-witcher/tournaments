@@ -165,7 +165,7 @@ async fn a_round_robin_plays_to_the_end_and_a_draw_closes_it() {
     let b = bracket(&app, p1).await;
     assert_eq!(
         b["format"],
-        json!({ "format": "round_robin", "best_of": 2, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"], "final_tie": "seed" })
+        json!({ "format": "round_robin", "best_of": 2, "tiebreakers": ["head_to_head", "map_diff", "frag_diff"], "final_tie": "seed", "advance": null, "check_in": false })
     );
     assert_eq!(find(&b, "rr-1-1")["best_of"], 2);
 
@@ -751,7 +751,7 @@ async fn only_the_round_robin_takes_an_even_series() {
     let invalid = |best_of: u8| {
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "format.invalid_best_of", "params": { "best_of": best_of } }),
+            json!({ "error": "format.invalid_best_of", "params": { "best_of": best_of, "stage": 1 } }),
         )
     };
     let uri = "/tenants/quake-br/tournaments";

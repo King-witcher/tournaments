@@ -1,5 +1,5 @@
 import type { components } from "@/shared/api/schema";
-import type { TournamentField } from "./form-errors";
+import { isStageField, type TournamentField } from "./form-errors";
 import {
   isTdm,
   stepSecondsGroup,
@@ -43,14 +43,7 @@ export const SECTION_KEYS = {
     "teamSize",
     "teamRules",
     "maxParticipants",
-    "stageFormat",
-    "bracket",
-    "grandFinalReset",
-    "bestOf",
-    "finalsBestOf",
-    "swissRounds",
-    "tiebreakers",
-    "finalTie",
+    "stages",
     "countsForRating",
   ],
   maps: ["mapMode", "vetoOrder", "mapPool", "vetoSeconds"],
@@ -91,6 +84,7 @@ export function sectionOf(
   translation = false,
 ): SettingsSection {
   if (translation) return "languages";
+  if (isStageField(field)) return "format";
   if (field === "vetoSeconds") {
     return stepSecondsGroup(saved) === "champions" ? "champions" : "maps";
   }

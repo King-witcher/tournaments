@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select q.id as \"tournament_id!\",\n                  exists(select 1 from teams x where x.tournament_id = q.id) as \"formed!\",\n                  t.id as \"id?\", t.name as \"name?\", t.seed as \"seed?\", t.rating_at_start, t.captain as \"captain?\",\n                  t.withdrawn_at is not null as \"withdrawn?\",\n                  p.user_id as \"user_id?\", m.nickname as \"nickname?\", coalesce(u.avatar_key, u.avatar_url) as \"avatar_url?\",\n                  m.left_at is not null as \"left?\"\n           from unnest((select $1::bigint[])) as q(id)\n           left join participants me on me.tournament_id = q.id and me.user_id = $2\n           left join teams t on t.tournament_id = q.id and t.id = me.team_id\n           left join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           left join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           left join users u on u.id = p.user_id\n           order by q.id, p.user_id <> t.captain, p.registered_at, p.user_id",
+  "query": "select q.id as \"tournament_id!\",\n                  exists(select 1 from teams x where x.tournament_id = q.id) as \"formed!\",\n                  t.id as \"id?\", t.name as \"name?\", t.seed as \"seed?\", t.rating_at_start, t.captain as \"captain?\",\n                  t.withdrawn_at as \"withdrawn_at?\",\n                  p.user_id as \"user_id?\", m.nickname as \"nickname?\", coalesce(u.avatar_key, u.avatar_url) as \"avatar_url?\",\n                  m.left_at is not null as \"left?\"\n           from unnest((select $1::bigint[])) as q(id)\n           left join participants me on me.tournament_id = q.id and me.user_id = $2\n           left join teams t on t.tournament_id = q.id and t.id = me.team_id\n           left join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           left join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           left join users u on u.id = p.user_id\n           order by q.id, p.user_id <> t.captain, p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
@@ -72,9 +72,14 @@
       },
       {
         "ordinal": 7,
-        "name": "withdrawn?",
-        "type_info": "Bool",
-        "origin": "Expression"
+        "name": "withdrawn_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "withdrawn_at"
+          }
+        }
       },
       {
         "ordinal": 8,
@@ -125,12 +130,12 @@
       true,
       true,
       false,
-      null,
+      true,
       false,
       false,
       null,
       null
     ]
   },
-  "hash": "886c5a074b706d94345687457b5b1c23c79ac51bf6685ed29b92282e36f1f908"
+  "hash": "260af852b1ce0830a37f3303ea8c37639c38204b5b0dc1b9e44abf1f63f39eb6"
 }

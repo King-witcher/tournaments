@@ -100,6 +100,10 @@ pub enum NoticeKind {
     /// O check-in abriu (para os inscritos).
     #[serde(rename = "check_in.opened")]
     CheckInOpened { tournament: String },
+    /// O check-in da fase `stage` (2 em diante) abriu: quem joga por um time
+    /// candidato confirma a presença dele (para os jogadores dos candidatos).
+    #[serde(rename = "stage.check_in_opened")]
+    StageCheckInOpened { tournament: String, stage: i16 },
     /// A partida tem os dois lados e pode ser jogada (para os dois).
     #[serde(rename = "match.ready")]
     MatchReady {
@@ -220,6 +224,9 @@ pub enum AnnounceKind {
     /// A chave foi gerada.
     #[serde(rename = "tournament.started")]
     TournamentStarted { tournament: String },
+    /// A fase `stage` (2 em diante) começou: a chave dela foi gerada.
+    #[serde(rename = "stage.started")]
+    StageStarted { tournament: String, stage: i16 },
     /// A última partida acabou; `podium` na ordem da classificação.
     #[serde(rename = "tournament.finished")]
     TournamentFinished {

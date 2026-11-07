@@ -3,7 +3,8 @@
 //! mapas contestados a resolver, torneios cujo início marcado chegou sem
 //! terem sido iniciados (o critério do aviso `tournament.start_due`) e
 //! torneios com empate do fim da fase esperando a decisão dela
-//! (`stage_pending_ties`, o critério do aviso `tournament.tie_pending`). É o
+//! (`stage_pending_ties`, o critério do aviso `tournament.tie_pending`) ou
+//! com uma fase pronta para iniciar (a anterior terminou). É o
 //! par de `/me/tournaments` para quem organiza, numa rota própria: só a home
 //! de quem organiza pede (o front sabe pelos papéis de "Suas comunidades"),
 //! e a resposta não depende de refazer chave nenhuma.

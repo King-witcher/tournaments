@@ -12,6 +12,7 @@ use engine::{
         table::{self as et, Criterion, Tiebreakers},
     },
     series::SeriesLength,
+    stages::StageSetup,
 };
 
 use super::types::{
@@ -76,9 +77,79 @@ fn tiebreakers(list: &[Tiebreaker]) -> Result<Tiebreakers, EngineError> {
     Tiebreakers::new(&criteria)
 }
 
+impl StageFormat {
+    /// O corte e o check-in da fase.
+    const fn entry(&self) -> (Option<u16>, bool) {
+        match *self {
+            Self::Elimination {
+                advance, check_in, ..
+            }
+            | Self::RoundRobin {
+                advance, check_in, ..
+            }
+            | Self::Swiss {
+                advance, check_in, ..
+            }
+            | Self::Placement {
+                advance, check_in, ..
+            } => (advance, check_in),
+        }
+    }
+
+    /// A mesma fase com o corte e o check-in `entry`.
+    fn with_entry(mut self, (advance, check_in): (Option<u16>, bool)) -> Self {
+        match &mut self {
+            Self::Elimination {
+                advance: a,
+                check_in: c,
+                ..
+            }
+            | Self::RoundRobin {
+                advance: a,
+                check_in: c,
+                ..
+            }
+            | Self::Swiss {
+                advance: a,
+                check_in: c,
+                ..
+            }
+            | Self::Placement {
+                advance: a,
+                check_in: c,
+                ..
+            } => {
+                *a = advance;
+                *c = check_in;
+            }
+        }
+        self
+    }
+}
+
+impl TryFrom<StageFormat> for StageSetup {
+    type Error = EngineError;
+
+    fn try_from(stage: StageFormat) -> Result<Self, EngineError> {
+        let (advance, check_in) = stage.entry();
+        Ok(Self {
+            format: stage.try_into()?,
+            advance,
+            check_in,
+        })
+    }
+}
+
+impl From<StageSetup> for StageFormat {
+    fn from(stage: StageSetup) -> Self {
+        Self::from(stage.format).with_entry((stage.advance, stage.check_in))
+    }
+}
+
 impl TryFrom<StageFormat> for ef::StageFormat {
     type Error = EngineError;
 
+    /// Só o formato (o corte e o check-in ficam de fora).
     fn try_from(stage: StageFormat) -> Result<Self, EngineError> {
         Ok(match stage {
             StageFormat::Elimination {
@@ -86,6 +157,7 @@ impl TryFrom<StageFormat> for ef::StageFormat {
                 grand_final_reset,
                 best_of,
                 finals_best_of,
+                ..
             } => Self::Elimination(el::EliminationConfig {
                 kind: match bracket {
                     Bracket::Single => el::EliminationKind::Single,
@@ -100,6 +172,7 @@ impl TryFrom<StageFormat> for ef::StageFormat {
                 best_of,
                 tiebreakers: list,
                 final_tie,
+                ..
             } => Self::RoundRobin(RoundRobinConfig {
                 best_of,
                 tiebreakers: tiebreakers(&list)?,
@@ -110,18 +183,20 @@ impl TryFrom<StageFormat> for ef::StageFormat {
                 rounds,
                 tiebreakers: list,
                 final_tie,
+                ..
             } => Self::Swiss(SwissConfig {
                 best_of,
                 rounds,
                 tiebreakers: tiebreakers(&list)?,
                 final_tie: final_tie.into(),
             }),
-            StageFormat::Placement { best_of } => Self::Placement(PlacementConfig { best_of }),
+            StageFormat::Placement { best_of, .. } => Self::Placement(PlacementConfig { best_of }),
         })
     }
 }
 
 impl From<ef::StageFormat> for StageFormat {
+    /// O formato sem corte nem check-in.
     fn from(stage: ef::StageFormat) -> Self {
         match stage {
             ef::StageFormat::Elimination(config) => {
@@ -136,20 +211,30 @@ impl From<ef::StageFormat> for StageFormat {
                     grand_final_reset,
                     best_of: config.series.default,
                     finals_best_of: config.series.finals,
+                    advance: None,
+                    check_in: false,
                 }
             }
             ef::StageFormat::RoundRobin(c) => Self::RoundRobin {
                 best_of: c.best_of,
                 tiebreakers: Tiebreaker::list(c.tiebreakers),
                 final_tie: c.final_tie.into(),
+                advance: None,
+                check_in: false,
             },
             ef::StageFormat::Swiss(c) => Self::Swiss {
                 best_of: c.best_of,
                 rounds: c.rounds,
                 tiebreakers: Tiebreaker::list(c.tiebreakers),
                 final_tie: c.final_tie.into(),
+                advance: None,
+                check_in: false,
             },
-            ef::StageFormat::Placement(c) => Self::Placement { best_of: c.best_of },
+            ef::StageFormat::Placement(c) => Self::Placement {
+                best_of: c.best_of,
+                advance: None,
+                check_in: false,
+            },
         }
     }
 }
@@ -202,7 +287,7 @@ mod tests {
     use super::*;
 
     fn round_trip(dto: StageFormat) -> StageFormat {
-        StageFormat::from(ef::StageFormat::try_from(dto).unwrap())
+        StageFormat::from(StageSetup::try_from(dto).unwrap())
     }
 
     #[test]
@@ -212,6 +297,8 @@ mod tests {
             grand_final_reset: true,
             best_of: 3,
             finals_best_of: 5,
+            advance: None,
+            check_in: false,
         };
         assert_eq!(
             round_trip(dto),
@@ -220,6 +307,8 @@ mod tests {
                 grand_final_reset: false,
                 best_of: 3,
                 finals_best_of: 5,
+                advance: None,
+                check_in: false,
             }
         );
     }
@@ -231,17 +320,23 @@ mod tests {
                 best_of: 3,
                 tiebreakers: vec![Tiebreaker::MapDiff, Tiebreaker::HeadToHead],
                 final_tie: FinalTie::Organizer,
+                advance: None,
+                check_in: false,
             },
             StageFormat::RoundRobin {
                 best_of: 2,
                 tiebreakers: vec![],
                 final_tie: FinalTie::Seed,
+                advance: Some(4),
+                check_in: true,
             },
             StageFormat::Swiss {
                 best_of: 1,
                 rounds: None,
                 tiebreakers: vec![Tiebreaker::FragDiff, Tiebreaker::Buchholz],
                 final_tie: FinalTie::Organizer,
+                advance: None,
+                check_in: true,
             },
             StageFormat::Swiss {
                 best_of: 3,
@@ -254,17 +349,40 @@ mod tests {
                     Tiebreaker::FragDiff,
                 ],
                 final_tie: FinalTie::Organizer,
+                advance: Some(16),
+                check_in: false,
             },
             StageFormat::Swiss {
                 best_of: 5,
                 rounds: Some(4),
                 tiebreakers: Tiebreaker::list(Tiebreakers::SWISS),
                 final_tie: FinalTie::Seed,
+                advance: None,
+                check_in: false,
             },
-            StageFormat::Placement { best_of: 3 },
+            StageFormat::Placement {
+                best_of: 3,
+                advance: Some(8),
+                check_in: true,
+            },
         ] {
             assert_eq!(round_trip(dto.clone()), dto);
         }
+    }
+
+    #[test]
+    fn the_cut_and_check_in_are_optional_in_the_body() {
+        let dto: StageFormat =
+            serde_json::from_value(serde_json::json!({ "format": "placement", "best_of": 3 }))
+                .unwrap();
+        let stage = StageSetup::try_from(dto).unwrap();
+        assert_eq!((stage.advance, stage.check_in), (None, false));
+        let dto: StageFormat = serde_json::from_value(serde_json::json!({
+            "format": "placement", "best_of": 3, "advance": 8, "check_in": true
+        }))
+        .unwrap();
+        let stage = StageSetup::try_from(dto).unwrap();
+        assert_eq!((stage.advance, stage.check_in), (Some(8), true));
     }
 
     #[test]

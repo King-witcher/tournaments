@@ -6,7 +6,8 @@
 //!   time enviou. Confirmar é só do outro time.
 //! - Confirmada pelo adversário ou pelo fim do prazo (a contestação tardia):
 //!   as mesmas pessoas, até a próxima série de um dos dois lados começar
-//!   (veto começado ou partida enviada depois do envio desta), com o torneio
+//!   (veto começado ou partida enviada depois do envio desta; a fase seguinte
+//!   começada também), com o torneio
 //!   em andamento. A partida volta a contestada e, se a série estava decidida
 //!   por ela, a série reabre e a chave é refeita (`correction`). Fica fechada
 //!   quando reabrir contradiz uma série decidida depois (um W.O. na seguinte,
@@ -108,7 +109,13 @@ pub fn late(stage: &Stage, m: &Match, g: &StoredGame) -> Result<Option<Change>, 
     let walkover = stage
         .result(m.id)
         .is_some_and(|r| r.confirmed_via != Confirmation::Maps);
-    if g.status != GameStatus::Confirmed || !by_player || walkover || moved_on(stage, g) {
+    // A fase seguinte começada é a próxima série de todos os lados.
+    if g.status != GameStatus::Confirmed
+        || !by_player
+        || walkover
+        || stage.next_started
+        || moved_on(stage, g)
+    {
         return Err(CLOSED);
     }
     let games = stage.games_of(m.id);

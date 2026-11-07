@@ -14,6 +14,7 @@ pub mod formats;
 pub mod rating;
 pub mod seeding;
 pub mod series;
+pub mod stages;
 pub mod teams;
 pub mod tournament;
 pub mod veto;

@@ -34,7 +34,7 @@ type Props = {
 export function StandingsTable({ tenant, bracket, basePath }: Props) {
   const t = useTranslations("Bracket.standings");
   const tBracket = useTranslations("Bracket");
-  const { code } = useMatchLabels(isSingle(bracket.format));
+  const { shortCode: code } = useMatchLabels(isSingle(bracket.format));
   const teamName = useTeamName();
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
   const standings = bracket.status === "finished" ? bracket.standings : [];

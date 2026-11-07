@@ -41,11 +41,20 @@
 //! torneio, e quem marca "Pronto" ficam em `acting`, num lugar só. Nas fases
 //! de tabela com a organização decidindo o empate do fim, a decisão dela, a
 //! marca de espera e o aviso ficam em `ties`.
+//!
+//! Fases ligadas: cada partida é da fase dela (o código público ganha `s<N>-`
+//! da fase 2 em diante, `key`), e as ações carregam a fase da partida; a
+//! chave e "Seus torneios", a fase atual (a última que começou). A fase 2 em
+//! diante nasce com os seeds que o domínio `stages` grava (`start_stage`) e
+//! se desfaz sem nada jogado (`discard_stage`); quem é candidato e quem entra
+//! (`next_stage`), a classificação final do torneio e a correção recusada na
+//! fase anterior depois do início da seguinte ficam em `chain`.
 
 mod accept;
 mod acting;
 mod actions;
 mod announce;
+mod chain;
 mod changes;
 mod contest;
 mod contest_notice;
@@ -81,12 +90,14 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::AppState;
 
+pub use chain::{NextStage, next_stage};
 pub use contest_notice::notify_contested;
 pub use due::{apply_due_confirmations, confirm_all_due};
+pub use key::MatchKey;
 pub use mine::{Place, final_places, place, place_from, place_of};
 pub use result::Side;
 pub use slots::{MatchGames, games as match_games, lock_games as lock_match_games};
-pub use stage::{discard, start};
+pub use stage::{announce_finished, discard, discard_stage, start, start_stage};
 pub use types::NextMatch;
 pub use veto::{VetoClock, VetoPass};
 pub use withdrawals::settle as settle_withdrawals;

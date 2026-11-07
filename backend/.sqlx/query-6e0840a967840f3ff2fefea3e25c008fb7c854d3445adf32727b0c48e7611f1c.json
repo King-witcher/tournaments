@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from stage_teams\n         where tournament_id = $1 and stage = $2 and team_id = $3 and seed is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6e0840a967840f3ff2fefea3e25c008fb7c854d3445adf32727b0c48e7611f1c"
+}

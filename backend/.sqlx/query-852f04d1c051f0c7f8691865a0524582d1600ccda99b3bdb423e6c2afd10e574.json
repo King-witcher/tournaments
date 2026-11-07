@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.tournament_id, t.id, t.name, t.seed, t.rating_at_start, t.captain,\n                  t.withdrawn_at is not null as \"withdrawn!\",\n                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tournament_id = any($1) and (not $2 or t.seed is not null)\n           order by t.tournament_id, t.seed nulls last, t.created_at, t.id,\n                    p.user_id <> t.captain, p.registered_at, p.user_id",
+  "query": "select t.tournament_id, t.id, t.name, t.seed, t.rating_at_start, t.captain,\n                  t.withdrawn_at,\n                  (select json_agg(json_build_object('stage', s.stage,\n                                                     'checked_in_at', s.checked_in_at,\n                                                     'seed', s.seed) order by s.stage)\n                   from stage_teams s\n                   where s.tournament_id = t.tournament_id and s.team_id = t.id)\n                      as \"stages: Json<Vec<StageTeam>>\",\n                  p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,\n                  m.left_at is not null as \"left!\"\n           from teams t\n           join participants p on p.tournament_id = t.tournament_id and p.team_id = t.id\n           join tenant_members m on m.tenant_id = p.tenant_id and m.user_id = p.user_id\n           join users u on u.id = p.user_id\n           where t.tournament_id = any($1) and (not $2 or t.seed is not null)\n           order by t.tournament_id, t.seed nulls last, t.created_at, t.id,\n                    p.user_id <> t.captain, p.registered_at, p.user_id",
   "describe": {
     "columns": [
       {
@@ -71,12 +71,23 @@
       },
       {
         "ordinal": 6,
-        "name": "withdrawn!",
-        "type_info": "Bool",
-        "origin": "Expression"
+        "name": "withdrawn_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "teams",
+            "name": "withdrawn_at"
+          }
+        }
       },
       {
         "ordinal": 7,
+        "name": "stages: Json<Vec<StageTeam>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
         "name": "user_id",
         "type_info": "Int8",
         "origin": {
@@ -87,7 +98,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -98,13 +109,13 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": "Expression"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "left!",
         "type_info": "Bool",
         "origin": "Expression"
@@ -123,6 +134,7 @@
       true,
       true,
       false,
+      true,
       null,
       false,
       false,
@@ -130,5 +142,5 @@
       null
     ]
   },
-  "hash": "e768e4bfec0d3fe791a3a6829c81dc3fc4c8972f91d91f8469fe277461e8901d"
+  "hash": "852f04d1c051f0c7f8691865a0524582d1600ccda99b3bdb423e6c2afd10e574"
 }

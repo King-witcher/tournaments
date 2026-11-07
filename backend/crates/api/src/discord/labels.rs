@@ -52,9 +52,23 @@ fn fill(name: &mut String, locale: Locale) {
 /// (`L2.1` em inglês), `GF1` e `GF2` na grande final, `3.2` no round robin,
 /// no suíço e na eliminação simples (`single`). Na disputa de posições, `1.2`:
 /// o site mostra o que está em jogo ("Disputa do 3º lugar"), que não cabe
-/// numa frase como "o veto da série {match}". Fora da forma
-/// `{lado}-{rodada}-{partida}`, como veio.
+/// numa frase como "o veto da série {match}". Da fase 2 em diante (`s2-...`),
+/// com a fase depois: `1.2 (fase 2)`. Fora da forma `{lado}-{rodada}-{partida}`,
+/// como veio.
 pub fn match_code(key: &str, single: bool, locale: Locale) -> String {
+    let parsed = crate::matches::MatchKey::from(key.to_owned());
+    if parsed.stage > 1 {
+        let code = local_code(&parsed.local, single, locale);
+        let word = match locale {
+            Locale::Pt | Locale::Es => "fase",
+            Locale::En => "stage",
+        };
+        return format!("{code} ({word} {})", parsed.stage);
+    }
+    local_code(key, single, locale)
+}
+
+fn local_code(key: &str, single: bool, locale: Locale) -> String {
     let mut parts = key.split('-');
     let (Some(side), Some(round), Some(index), None) =
         (parts.next(), parts.next(), parts.next(), parts.next())
@@ -110,6 +124,10 @@ mod tests {
         assert_eq!(en("rr-2-1", false), "2.1");
         assert_eq!(pt("xx-1-1", false), "xx-1-1");
         assert_eq!(pt("wb-1", false), "wb-1");
+        // Da fase 2 em diante, com a fase.
+        assert_eq!(pt("s2-pl-1-2", false), "1.2 (fase 2)");
+        assert_eq!(en("s3-wb-1-2", true), "1.2 (stage 3)");
+        assert_eq!(pt("s2-wb-1-2", false), "C1.2 (fase 2)");
     }
 
     #[test]

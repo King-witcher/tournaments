@@ -35,8 +35,12 @@ pub struct MyTournament {
     pub tenant_logo_url: Option<String>,
     pub tournament: TournamentSummary,
     pub situation: Situation,
+    /// A fase de que a situação fala: a que ele joga ou em que terminou, ou a
+    /// seguinte, que ele espera (`awaiting_stage`, `stage_check_in_pending`,
+    /// `substitute`). `null` antes da chave.
+    pub stage: Option<u16>,
     /// Colocação de quem foi eliminado, desistiu ou venceu, quando já se
-    /// definiu.
+    /// definiu (na classificação final do torneio).
     pub placement: Option<MyPlacement>,
     /// Só de quem ainda joga, com o torneio em andamento.
     pub next_match: Option<NextMatch>,
@@ -72,6 +76,16 @@ pub enum Situation {
     /// Desistiu (marcado pela organização).
     Withdrawn,
     Champion,
+    /// Entre as fases (a anterior terminou, a seguinte, `stage`, não começou):
+    /// está entre os que entram nela.
+    AwaitingStage,
+    /// Entre as fases, com o check-in da seguinte (`stage`) aberto: falta
+    /// confirmar a presença do time; sem ela, fica fora.
+    StageCheckInPending,
+    /// Entre as fases: abaixo do corte da seguinte (`stage`); entra se alguém
+    /// de cima não confirmar presença ou desistir. Quem fica de fora ganha a
+    /// colocação quando ela começa.
+    Substitute,
 }
 
 /// Faixa de colocação: `rank` 5 com `tied` 4 é 5º–8º.

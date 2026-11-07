@@ -56,6 +56,16 @@ impl StageFormat {
         }
     }
 
+    /// Teto de participantes do formato.
+    pub const fn max_participants(&self) -> usize {
+        match self {
+            Self::Elimination(_) => elimination::MAX_PARTICIPANTS,
+            Self::RoundRobin(_) => round_robin::MAX_PARTICIPANTS,
+            Self::Swiss(_) => swiss::MAX_PARTICIPANTS,
+            Self::Placement(_) => placement::MAX_PARTICIPANTS,
+        }
+    }
+
     /// Maior melhor de N de uma partida da fase.
     pub fn longest_series(&self) -> u8 {
         match self {

@@ -83,7 +83,8 @@ async fn write_begin(
         key,
     };
     db::insert(conn, &at, sides, event).await?;
-    changes::veto_started(conn, tournament, stage, key, sides).await
+    let public = key::public(stage.number, m.id);
+    changes::veto_started(conn, tournament, stage, &public, sides).await
 }
 
 /// Começa o veto da série `m`. Erros: os de `begin_event`.

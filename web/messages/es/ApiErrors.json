@@ -89,11 +89,12 @@
     "rules_invalid": "Las reglas pueden tener hasta {max} caracteres.",
     "max_participants_invalid": "Los cupos deben estar entre {min} y {max}.",
     "bans_invalid": "Son como máximo {max} bans por lado en cada serie.",
-    "stage_count_invalid": "Por ahora un torneo tiene una sola fase.",
+    "stage_count_invalid": "Un torneo tiene de 1 a {max} fases.",
     "not_draft": "Esto solo vale para borradores.",
     "slug_locked": "La dirección del torneo no cambia después de publicar.",
     "confirmation_mismatch": "La dirección escrita no coincide con la del torneo.",
     "setup_locked": "El torneo ya empezó. Formato, cupos y campeones ya no cambian.",
+    "stages_locked": "El torneo ya empezó. Solo cambian las fases que no empezaron, y no se pueden añadir fases.",
     "finished": "El torneo ya terminó. Solo el nombre, la descripción y la portada todavía cambian.",
     "translation_same_locale": "Ese ya es el idioma original del torneo.",
     "translation_not_found": "No hay traducción en ese idioma.",
@@ -145,6 +146,23 @@
     "no_stages": "El torneo necesita al menos una fase.",
     "invalid_rounds": "Las rondas van de 1 a {max}.",
     "invalid_tiebreakers": "Cada desempate va una sola vez, y el Buchholz solo en el suizo."
+  },
+  "stage": {
+    "elimination_not_last": "Fase {stage}: la eliminación solo cabe en la última fase.",
+    "invalid_advance": "Fase {stage}: entran de {min} a {max}.",
+    "entry_rules_first": "Fase {stage}: la primera fase no tiene corte ni check-in.",
+    "not_found": "Esta fase no existe.",
+    "not_started": "Esta fase aún no empezó.",
+    "already_started": "Esta fase ya empezó.",
+    "previous_not_finished": "La fase anterior aún no terminó. Faltan series o empates por decidir.",
+    "check_in_not_open": "El check-in de la fase no está abierto.",
+    "check_in_disabled": "Esta fase no tiene check-in.",
+    "check_in_already_open": "El check-in de la fase ya está abierto.",
+    "not_candidate": "Este equipo no jugó la fase anterior o desistió.",
+    "not_your_team": "Solo los jugadores del equipo o la organización confirman la presencia.",
+    "not_enough_entrants": "La fase necesita al menos {min} equipos, y solo entrarían {got}.",
+    "next_started": "La fase {stage} ya empezó y este cambio alteraría quién entra en ella o el orden. Deshaz antes el inicio de la fase {stage}.",
+    "has_activity": "Ya hubo juego en esta fase. El inicio no se deshace."
   },
   "champions": {
     "pool_exhausted": "En el peor caso se necesitan {required} campeones, pero el pool tiene {available}. Reduce los cupos, las series o los bans, o afloja la regla de no repetición."

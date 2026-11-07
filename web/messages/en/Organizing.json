@@ -16,5 +16,10 @@
     "title": "Tie to decide",
     "since": "Since <date></date>",
     "action": "Decide"
+  },
+  "stageDue": {
+    "title": "Stage {number} ready to start",
+    "since": "Since <date></date>",
+    "action": "Start"
   }
 }

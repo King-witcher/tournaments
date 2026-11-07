@@ -55,6 +55,12 @@
         "title": "{tenant} vai ser excluída",
         "body": "Para manter a comunidade, cancele a exclusão nas configurações até {deadline}."
       }
+    },
+    "stage": {
+      "check_in_opened": {
+        "title": "Check-in da fase {stage} aberto",
+        "body": "{tournament}: confirme sua presença para jogar."
+      }
     }
   },
   "open": {

@@ -1,6 +1,7 @@
 //! O que a chave anuncia só ao canal do Discord da comunidade
-//! (`Event::Announce`): o torneio começou, terminou (com o pódio) ou uma série
-//! foi decidida ou empatou. Quem recebe e em que texto é do domínio `discord`.
+//! (`Event::Announce`): o torneio ou uma fase dele começou, o torneio
+//! terminou (com o pódio da classificação final) ou uma série foi decidida
+//! ou empatou. Quem recebe e em que texto é do domínio `discord`.
 
 use engine::core::{Match, MatchState};
 use sqlx::PgConnection;
@@ -14,29 +15,37 @@ use crate::{
 /// O pódio de quem fica até o 3º lugar.
 const PODIUM: u16 = 3;
 
-/// A chave foi gerada.
-pub async fn started(conn: &mut PgConnection, audience: &Address) -> Result<(), sqlx::Error> {
-    let kind = AnnounceKind::TournamentStarted {
-        tournament: audience.name.clone(),
+/// A chave da fase `stage` foi gerada: a 1 é o torneio que começou.
+pub async fn started(
+    conn: &mut PgConnection,
+    audience: &Address,
+    stage: i16,
+) -> Result<(), sqlx::Error> {
+    let tournament = audience.name.clone();
+    let kind = if stage > 1 {
+        AnnounceKind::StageStarted { tournament, stage }
+    } else {
+        AnnounceKind::TournamentStarted { tournament }
     };
     emit(conn, kind, audience.path()).await
 }
 
-/// A chave terminou: o pódio na ordem da classificação.
+/// A última fase terminou: o pódio na ordem da classificação final do
+/// torneio (`standings`, com os das fases anteriores).
 pub async fn finished(
     conn: &mut PgConnection,
     audience: &Address,
     stage: &Stage,
+    standings: &[engine::core::Placement],
 ) -> Result<(), sqlx::Error> {
-    let podium = stage
-        .bracket
-        .placements()
-        .into_iter()
+    let team = |p: engine::core::ParticipantId| stage.teams.iter().find(|t| t.id == p.0);
+    let podium = standings
+        .iter()
         .filter(|p| p.rank <= PODIUM)
         .filter_map(|p| {
             Some(Placement {
                 rank: u32::from(p.rank),
-                player: stage.entrant(p.participant)?.display_name(),
+                player: team(p.participant)?.display_name(),
             })
         })
         .collect();
@@ -59,7 +68,7 @@ pub async fn series_decided(
     let (Some(result), MatchState::Completed { a, b, .. }) = (stage.result(m.id), m.state) else {
         return Ok(());
     };
-    let key = key::format(m.id);
+    let key = key::public(stage.number, m.id);
     let path = format!("{}/matches/{key}", audience.path());
     let Some(won) = result.winner else {
         let (Some(a), Some(b)) = (stage.entrant(a), stage.entrant(b)) else {

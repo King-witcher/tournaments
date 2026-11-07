@@ -1,28 +1,33 @@
-//! A fase em jogo: configuração (`tournament_stages`), times (pelo seed),
-//! séries decididas e, no suíço, os pareamentos gravados (`rounds`) → fase de
+//! Uma fase começada: configuração (`tournament_stages`), times (pelo seed
+//! da fase: o de `teams` na 1, o de `stage_teams` nas outras), séries
+//! decididas e, no suíço, os pareamentos gravados (`rounds`) → fase de
 //! qualquer formato (`StageBracket`), sempre por `replay`. Nada do estado do
 //! `engine` é gravado. Os mapas das séries e o veto de cada partida (também
 //! refeito por replay) vêm junto. Duas idas ao banco: os times (`teams`) e o
 //! resto (`db::stage_rows`, com os campeões quando há draft e, com a
-//! organização decidindo o empate do fim, as decisões dela, `ties`). Para a colocação
-//! nos torneios encerrados, `brackets` refaz só a chave de vários torneios,
-//! com as mesmas duas idas.
+//! organização decidindo o empate do fim, as decisões dela, `ties`). As
+//! partidas de uma fase carregam a fase delas (`load` com o número); o
+//! resto, a fase atual (a última que começou, `load_current`). Para a
+//! colocação nos torneios encerrados, `brackets` refaz só a chave de todas as
+//! fases de vários torneios, com as mesmas duas idas.
 //!
-//! Só existe a primeira fase. Outras fases entrariam aqui: cada uma com a
-//! classificação da anterior como participantes, montada quando a anterior
-//! termina, e os resultados já separados por `stage`.
+//! A fase 1 nasce no início do torneio (`start`); as outras, pelo botão da
+//! organização (`start_stage`, com os seeds já gravados), e desfazer o início
+//! de uma delas a descarta (`discard_stage`). O fim da última encerra o
+//! torneio; o das outras só fica marcado (`sync_status`).
 
 use chrono::{DateTime, Utc};
 use engine::{
     core::{EngineError, MatchId, MatchState, ParticipantId, PlayerId, SeriesFrags, StageReport},
     formats::{self as ef, StageBracket, StageHistory, swiss::SwissRound},
+    stages::StageSetup,
     veto::{Rosters, VetoRules},
 };
 use sqlx::PgConnection;
 
 use super::{
     changes,
-    db::{self, Parts},
+    db::{self, Parts, Which},
     games::StoredGame,
     result::{Side, StoredResult},
     rounds,
@@ -32,17 +37,33 @@ use super::{
 use crate::{
     shared::ApiError,
     teams::{self, StoredTeam},
-    tournaments::{self, PoolMap, StoredTournament, TeamRules, TournamentId, TournamentStatus},
+    tenants,
+    tournaments::{
+        self, PoolMap, StageProgress, StoredTournament, TeamRules, TournamentId, TournamentStatus,
+    },
 };
 
-/// A primeira (e por enquanto única) fase.
+/// A fase que nasce com o torneio.
 pub const FIRST_STAGE: i16 = 1;
 
 pub struct Stage {
     pub number: i16,
     pub format: ef::StageFormat,
-    /// Os times da chave, na ordem dos seeds.
+    /// A última fase do torneio: o fim dela encerra o torneio.
+    pub last: bool,
+    /// Quando a fase começou: a 1, o início do torneio (`None` em torneio
+    /// antigo, sem ele); as outras, o botão da organização.
+    pub started_at: Option<DateTime<Utc>>,
+    /// Quando terminou, como está gravado (`sync_status` acerta).
+    pub finished_at: Option<DateTime<Utc>>,
+    /// A fase seguinte já começou: quem entrou nela e a ordem não podem mais
+    /// mudar (`settle` confere), e a contestação tardia desta fecha.
+    pub next_started: bool,
+    /// Os times da chave, na ordem dos seeds da fase (com o seed dela).
     pub entrants: Vec<StoredTeam>,
+    /// Os times que jogaram o torneio (os da fase 1, pelo seed do torneio),
+    /// com as linhas de cada fase: para quem entra nas fases seguintes.
+    pub teams: Vec<StoredTeam>,
     /// As séries decididas da fase, na ordem do replay.
     pub results: Vec<StoredResult>,
     /// Os mapas enviados da fase, por partida e na ordem.
@@ -254,12 +275,10 @@ fn frags(r: &StoredResult, games: &[StoredGame]) -> Option<SeriesFrags> {
 }
 
 /// A configuração da fase `number`.
-fn config(tournament: &StoredTournament, number: i16) -> Result<&ef::StageFormat, ApiError> {
-    let index = usize::try_from(number - 1).map_err(|_| ApiError::internal())?;
+fn config(tournament: &StoredTournament, number: i16) -> Result<ef::StageFormat, ApiError> {
     tournament
-        .setup
-        .stages
-        .get(index)
+        .stage(number)
+        .map(|(s, _)| s.format)
         .ok_or_else(ApiError::internal)
 }
 
@@ -299,11 +318,21 @@ fn needs_lineups(rules: &VetoRules) -> bool {
     rules.champion_phase && rules.teams()
 }
 
-/// A fase em jogo, refeita. 404 `bracket.not_found` antes de o torneio
-/// começar.
+/// A fase atual (a última que começou), refeita. 404 `bracket.not_found`
+/// antes de o torneio começar.
+pub async fn load_current(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+) -> Result<Stage, ApiError> {
+    load(conn, tournament, tournament.current_stage()).await
+}
+
+/// A fase `number`, refeita. 404 `bracket.not_found` antes de o torneio
+/// começar e `stage.not_started` com a fase por começar (ou que não existe).
 pub async fn load(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
+    number: i16,
 ) -> Result<Stage, ApiError> {
     if !matches!(
         tournament.status,
@@ -311,10 +340,13 @@ pub async fn load(
     ) {
         return Err(ApiError::not_found("bracket.not_found"));
     }
-    let number = FIRST_STAGE;
-    let format = *config(tournament, number)?;
-    let veto_rules = tournament.setup.veto_rules();
-    let entrants = teams::seeded(conn, tournament.id).await?;
+    if !tournament.stage_started(number) {
+        return Err(ApiError::not_found("stage.not_started"));
+    }
+    let format = config(tournament, number)?;
+    let veto_rules = tournament.setup.stage_veto_rules(number);
+    let teams = teams::seeded(conn, tournament.id).await?;
+    let entrants = teams::stage_entrants(&teams, number);
     let parts = Parts {
         results: true,
         games: true,
@@ -334,8 +366,9 @@ pub async fn load(
         champions,
         ties,
         ties_pending_since,
+        finished_at,
         ..
-    } = db::stage_rows(conn, &[tournament.id], number, parts)
+    } = db::stage_rows(conn, &[(tournament.id, Which::Stage(number))], parts)
         .await?
         .pop()
         .unwrap_or_default();
@@ -356,10 +389,20 @@ pub async fn load(
         &games,
         &lineups,
     )?;
+    let progress = tournament.stage(number).map(|(_, p)| p).unwrap_or_default();
     Ok(Stage {
         number,
         format,
+        last: number == tournament.stage_count(),
+        started_at: if number == FIRST_STAGE {
+            tournament.started_at
+        } else {
+            progress.started_at
+        },
+        finished_at,
+        next_started: tournament.stage_started(number + 1),
         entrants,
+        teams,
         results,
         games,
         rounds,
@@ -377,57 +420,152 @@ pub async fn load(
     })
 }
 
-/// A chave de um torneio iniciado sem o veto (`brackets`).
+/// A chave de uma fase sem o veto (`brackets`, `chain`).
 pub struct Settled {
-    /// Os times da chave, na ordem dos seeds.
+    pub number: i16,
+    /// A configuração (o corte e o check-in) e o andamento da fase.
+    pub setup: StageSetup,
+    pub progress: StageProgress,
+    /// Os times da fase, na ordem dos seeds dela.
     pub entrants: Vec<StoredTeam>,
     pub bracket: StageBracket,
     /// Os mapas enviados (para quem confere as confirmações por tempo).
     pub games: Vec<StoredGame>,
 }
 
-/// A chave de cada torneio iniciado de `tournaments`, na ordem, sem o veto,
-/// as escalações e os campeões: para dizer onde cada um terminou (a lista dos
-/// torneios de quem vê). Duas idas ao banco para todos.
+/// As fases começadas de um torneio, em sequência, sem o veto.
+pub struct Chain {
+    /// Os times que jogaram o torneio (os da fase 1), com as linhas de cada
+    /// fase.
+    pub teams: Vec<StoredTeam>,
+    /// Da fase 1 à atual.
+    pub stages: Vec<Settled>,
+    /// A atual é a última fase do torneio (a colocação dela é a final).
+    pub last: bool,
+}
+
+/// As partes que a chave sem o veto lê.
+const SETTLED: Parts = Parts {
+    config: true,
+    results: true,
+    games: true,
+    pairings: true,
+    veto: false,
+    lineups: false,
+    champions: false,
+    ties: true,
+};
+
+/// A chave de cada fase começada de cada torneio encerrado de `tournaments`,
+/// na ordem, sem o veto, as escalações e os campeões: para dizer onde cada
+/// um terminou (a lista dos torneios de quem vê). Duas idas ao banco para
+/// todos.
 pub async fn brackets(
     conn: &mut PgConnection,
     tournaments: &[TournamentId],
-) -> Result<Vec<Settled>, ApiError> {
+) -> Result<Vec<Chain>, ApiError> {
     if tournaments.is_empty() {
         return Ok(Vec::new());
     }
     let teams = teams::seeded_in(conn, tournaments).await?;
-    let parts = Parts {
-        config: true,
-        results: true,
-        games: true,
-        pairings: true,
-        ties: true,
-        ..Parts::default()
-    };
-    let rows = db::stage_rows(conn, tournaments, FIRST_STAGE, parts).await?;
+    let at: Vec<_> = tournaments.iter().map(|&t| (t, Which::Started)).collect();
+    let mut rows = db::stage_rows(conn, &at, SETTLED)
+        .await?
+        .into_iter()
+        .peekable();
     tournaments
         .iter()
         .zip(teams)
-        .zip(rows)
-        .map(|((&id, entrants), rows)| {
-            let format = rows.config.ok_or_else(ApiError::internal)?;
-            let ties = ties::stored(rows.ties);
-            let history = History {
-                entrants: &entrants,
-                results: &rows.results,
-                games: &rows.games,
-                rounds: &rows.rounds,
-                ties: &ties,
-            };
-            let bracket = replayed(id, format, &history)?;
-            Ok(Settled {
-                entrants,
-                bracket,
-                games: rows.games,
+        .map(|(&id, teams)| {
+            let mut stages = Vec::new();
+            while let Some(r) = rows.next_if(|r| r.tournament == id.get()) {
+                stages.push(settled(id, &teams, r)?);
+            }
+            // Encerrado: a fase atual é a última.
+            Ok(Chain {
+                teams,
+                stages,
+                last: true,
             })
         })
         .collect()
+}
+
+/// As fases começadas do torneio, da 1 à atual, reaproveitando `have`, já
+/// lida com o veto (a que quem chama vê). Com uma fase começada só, sem ida
+/// ao banco.
+pub async fn chain(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    have: &Stage,
+) -> Result<Chain, ApiError> {
+    let of = |s: &Stage| -> Result<Settled, ApiError> {
+        let (setup, progress) = tournament.stage(s.number).ok_or_else(ApiError::internal)?;
+        Ok(Settled {
+            number: s.number,
+            setup: *setup,
+            progress,
+            entrants: s.entrants.clone(),
+            bracket: s.bracket.clone(),
+            games: s.games.clone(),
+        })
+    };
+    let current = tournament.current_stage();
+    let last = current == tournament.stage_count();
+    if current == FIRST_STAGE {
+        return Ok(Chain {
+            teams: have.teams.clone(),
+            stages: vec![of(have)?],
+            last,
+        });
+    }
+    // As outras fases começadas, numa ida; a lida já vem de `have`.
+    let others: Vec<_> = (FIRST_STAGE..=current)
+        .filter(|&n| n != have.number)
+        .map(|n| (tournament.id, Which::Stage(n)))
+        .collect();
+    let mut rows = db::stage_rows(conn, &others, SETTLED).await?.into_iter();
+    let stages = (FIRST_STAGE..=current)
+        .map(|n| {
+            if n == have.number {
+                return of(have);
+            }
+            let r = rows.next().ok_or_else(ApiError::internal)?;
+            settled(tournament.id, &have.teams, r)
+        })
+        .collect::<Result<_, ApiError>>()?;
+    Ok(Chain {
+        teams: have.teams.clone(),
+        stages,
+        last,
+    })
+}
+
+/// A fase das linhas `rows`, com os times dela tirados de `teams`.
+fn settled(
+    id: TournamentId,
+    teams: &[StoredTeam],
+    rows: db::StageRows,
+) -> Result<Settled, ApiError> {
+    let (setup, progress) = rows.config.ok_or_else(ApiError::internal)?;
+    let entrants = teams::stage_entrants(teams, rows.stage);
+    let ties = ties::stored(rows.ties);
+    let history = History {
+        entrants: &entrants,
+        results: &rows.results,
+        games: &rows.games,
+        rounds: &rows.rounds,
+        ties: &ties,
+    };
+    let bracket = replayed(id, setup.format, &history)?;
+    Ok(Settled {
+        number: rows.stage,
+        setup,
+        progress,
+        entrants,
+        bracket,
+        games: rows.games,
+    })
 }
 
 impl Stage {
@@ -453,7 +591,8 @@ impl Stage {
                 ..Parts::default()
             },
         };
-        let fresh = db::stage_rows(conn, &[tournament.id], self.number, parts)
+        let at = [(tournament.id, Which::Stage(self.number))];
+        let fresh = db::stage_rows(conn, &at, parts)
             .await?
             .pop()
             .unwrap_or_default();
@@ -567,32 +706,109 @@ pub async fn start(
     // Os times que entram estão completos (`teams::finalize_seeding`).
     let players = seeded.len() * tournament.setup.team_size() as usize;
     tournament.setup.check_entrants(pool, players)?;
-    let format = *config(tournament, FIRST_STAGE)?;
+    let format = config(tournament, FIRST_STAGE)?;
     let at = (tournament.tenant, tournament.id, FIRST_STAGE);
     let bracket = rounds::first(conn, at, format, seeded).await?;
+    tournaments::mark_stage_started(conn, tournament.id, FIRST_STAGE).await?;
     let entrants = teams::seeded(conn, tournament.id).await?;
-    changes::started(conn, tournament, &bracket, &entrants).await
+    changes::started(conn, tournament, FIRST_STAGE, &bracket, &entrants).await
 }
 
-/// Descarta a fase ao desfazer o início: apaga séries, mapas, histórico e
-/// pareamentos. Devolve quantas partidas tinham resultado ou mapa.
+/// Gera a fase `number` (2 em diante), no torneio travado, com os seeds dela
+/// já gravados (`seeded`, na ordem) e o início marcado: confere a
+/// configuração dela com os times de verdade e o pool de campeões de agora,
+/// monta a fase (no suíço, grava o pareamento da primeira rodada) e avisa
+/// os lados das partidas que já nascem prontas e o Discord. Erros: os de
+/// `Setup::check_stage` e os de montar a fase.
+pub async fn start_stage(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    number: i16,
+    seeded: &[ParticipantId],
+) -> Result<(), ApiError> {
+    let pool = tournaments::champion_pool(&mut *conn).await?;
+    tournament.setup.check_stage(pool, number, seeded.len())?;
+    let format = config(tournament, number)?;
+    let at = (tournament.tenant, tournament.id, number);
+    let bracket = rounds::first(conn, at, format, seeded).await?;
+    let teams = teams::seeded(conn, tournament.id).await?;
+    let entrants = teams::stage_entrants(&teams, number);
+    changes::started(conn, tournament, number, &bracket, &entrants).await
+}
+
+/// Descarta todas as fases ao desfazer o início do torneio: apaga séries,
+/// mapas, histórico, pareamentos, o andamento de cada fase e os times das
+/// fases seguintes (seeds e check-ins). Devolve quantas partidas tinham
+/// resultado ou mapa.
 pub async fn discard(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
 ) -> Result<u64, ApiError> {
-    Ok(db::discard(conn, tournament.id).await?)
+    let touched = db::discard(conn, tournament.id).await?;
+    tournaments::reset_stages(conn, tournament.id).await?;
+    teams::clear_stages(conn, tournament.id).await?;
+    Ok(touched)
 }
 
-/// Encerra o torneio quando a fase termina e o reabre quando uma correção
-/// deixa partida por jogar. Devolve o status que vale. Sem mudança (o
-/// normal), não grava: o status de `tournament` é o lido com o torneio
-/// travado, o mesmo que `changes::settled` compara.
+/// O torneio encerrou fora da chave (as fases que faltavam saíram, com a
+/// atual terminada): o pódio da classificação final no Discord, como no fim
+/// pela chave.
+pub async fn announce_finished(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+) -> Result<(), ApiError> {
+    let stage = load_current(conn, tournament).await?;
+    let standings = super::chain::standings(&chain(conn, tournament, &stage).await?);
+    super::announce::finished(conn, &tournament.address(), &stage, &standings).await?;
+    Ok(())
+}
+
+/// Desfaz o início da fase `number` (2 em diante), a atual: só sem nada
+/// feito nela (nenhum evento de veto ou de partida, mapa, resultado ou
+/// screenshot; senão, 409
+/// `stage.has_activity`). Apaga os pareamentos, o início e os seeds dela; os
+/// check-ins ficam.
+pub async fn discard_stage(
+    conn: &mut PgConnection,
+    tournament: &StoredTournament,
+    number: i16,
+) -> Result<(), ApiError> {
+    if db::stage_activity(conn, tournament.id, number).await? {
+        return Err(ApiError::conflict("stage.has_activity"));
+    }
+    db::discard_pairings(conn, tournament.id, number).await?;
+    tournaments::unmark_stage_started(conn, tournament.id, number).await?;
+    teams::clear_stage_seeds(conn, tournament.id, number).await?;
+    Ok(())
+}
+
+/// Marca o fim da fase quando ela termina (e o tira quando uma correção a
+/// reabre); a última fase encerra o torneio e o reabre do mesmo jeito. A
+/// fase que termina e tem seguinte não encerra nada nem avança sozinha: a
+/// organização inicia a seguinte, e a home dela recarrega. Devolve o status
+/// que vale. Sem mudança (o normal), não grava: o status de `tournament` é o
+/// lido com o torneio travado, o mesmo que `changes::settled` compara.
 pub async fn sync_status(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
-    stage: &Stage,
+    stage: &mut Stage,
 ) -> Result<TournamentStatus, ApiError> {
     let finished = stage.bracket.is_finished();
+    // `finished_at` é o lido com a fase (`load`); a gravação só muda o que
+    // ainda está diferente no banco, e a fase fica com o que valeu.
+    if finished != stage.finished_at.is_some()
+        && let Some(at) =
+            tournaments::mark_stage_finished(conn, tournament.id, stage.number, finished).await?
+    {
+        stage.finished_at = at;
+        if !stage.last {
+            tournaments::changed(conn, tournament.id).await?;
+            tenants::organizing_changed(conn, tournament.tenant).await?;
+        }
+    }
+    if !stage.last {
+        return Ok(tournament.status);
+    }
     let status = if finished {
         TournamentStatus::Finished
     } else {

@@ -252,7 +252,8 @@
       "format": "Format",
       "rounds": "Rounds",
       "mode": "Mode",
-      "teamRules": "Who acts for the team"
+      "teamRules": "Who acts for the team",
+      "entry": "Entry"
     },
     "bracket": {
       "single": "Single elimination",
@@ -261,6 +262,12 @@
       "round_robin": "Round robin",
       "swiss": "Swiss",
       "placement": "Placement matches"
+    },
+    "stage": "Stage {number}",
+    "entry": {
+      "all": "Everyone from stage {previous} enters.",
+      "top": "The top {count} from stage {previous} enter.",
+      "checkIn": "With check-in before the stage."
     },
     "series": {
       "single": "Best of {bestOf}; final best of {finals}",

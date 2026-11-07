@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into stage_teams (tenant_id, tournament_id, stage, team_id, seed)\n           select $1, $2, $3, o.id, o.seed::smallint\n           from unnest($4::bigint[]) with ordinality as o(id, seed)\n           on conflict (tournament_id, stage, team_id) do update set seed = excluded.seed",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bf6b2d32b7831d79890227cb7aa6680af6c9bfef7923742295854baabefa89b3"
+}

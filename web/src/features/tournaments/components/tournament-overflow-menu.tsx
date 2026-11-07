@@ -31,7 +31,9 @@ type Props = {
   /** Inscrição só por link: a confirmação de cancelar diz como voltar. */
   inviteOnly: boolean;
   /** Em andamento: desfazer o início apaga `results` partidas com mapa ou resultado. */
-  undoStart?: { results: number; hasCheckIn: boolean };
+  undoStart?: { results: number; hasCheckIn: boolean; several: boolean };
+  /** A fase 2 em diante que acabou de começar e ainda não teve jogo: desfazer só o início dela. */
+  undoStage?: number;
   /** Quem vê pode excluir o torneio, no `status` em que ele está. */
   canDelete: boolean;
   status: components["schemas"]["TournamentStatus"];
@@ -53,6 +55,7 @@ export function TournamentOverflowMenu({
   withdrawRegistration,
   inviteOnly,
   undoStart,
+  undoStage,
   canDelete,
   status,
   countsForRating,
@@ -60,6 +63,7 @@ export function TournamentOverflowMenu({
   const t = useTranslations("Tournament");
   const tParticipants = useTranslations("Participants");
   const tLifecycle = useTranslations("Lifecycle");
+  const tStages = useTranslations("Stages");
   const router = useRouter();
   const { run, pending, error } = useApiAction();
   const [copying, setCopying] = useState(false);
@@ -123,18 +127,39 @@ export function TournamentOverflowMenu({
         ),
     });
   }
+  if (undoStage) {
+    items.push({
+      label: tStages("undoStart", { number: undoStage }),
+      destructive: true,
+      confirm: { question: tStages("undoStartConfirm", { number: undoStage }) },
+      onSelect: () =>
+        run(
+          () =>
+            api.DELETE(
+              "/tenants/{slug}/tournaments/{tournament}/stages/{stage}/start",
+              { params: { path: { ...params.path, stage: undoStage } } },
+            ),
+          lifecycleDone,
+        ),
+    });
+  }
   if (undoStart) {
     const back = tLifecycle(
       undoStart.hasCheckIn ? "undoStartConfirm" : "undoStartConfirmNoCheckIn",
     );
     const lost = tLifecycle("undoStartResults", { count: undoStart.results });
+    // O rótulo curto de sempre ("Desfazer fase 2" ao lado diz qual é qual):
+    // o menu do Carbon corta o texto que passa da largura dele.
     items.push({
       label: tLifecycle("undoStart"),
       destructive: true,
       confirm: {
-        question: `${back} ${lost}`,
-        // Com resultado a perder, o forte: digitar o endereço do torneio.
-        slug: undoStart.results > 0 ? slug : undefined,
+        question: undoStart.several
+          ? tStages("undoStartTournamentConfirm")
+          : `${back} ${lost}`,
+        // Com resultado a perder (ou várias fases), o forte: digitar o
+        // endereço do torneio.
+        slug: undoStart.results > 0 || undoStart.several ? slug : undefined,
       },
       onSelect: () =>
         run(

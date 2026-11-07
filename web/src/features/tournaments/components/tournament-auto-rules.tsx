@@ -3,14 +3,13 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { Section } from "@/shared/ui/section";
-import { isEvenSeries } from "../lib/format";
-import { countingTiebreakers, stageTiebreakers } from "../lib/tiebreakers";
 import { AutoRulesAbsence } from "./auto-rules-absence";
 import { AutoRulesEntry } from "./auto-rules-entry";
 import { AutoRulesFormat } from "./auto-rules-format";
 import { AutoRulesMaps } from "./auto-rules-maps";
 import { AutoRulesResults } from "./auto-rules-results";
 import { AutoRulesSeries } from "./auto-rules-series";
+import { AutoRulesStage } from "./auto-rules-stage";
 import { AutoRulesTable } from "./auto-rules-table";
 import { AutoRulesTeams } from "./auto-rules-teams";
 
@@ -33,7 +32,6 @@ type Props = {
  */
 export function TournamentAutoRules({ tournament, maps, editable }: Props) {
   const t = useTranslations("Tournament.autoRules");
-  const [stage] = tournament.stages;
   const started =
     tournament.status === "in_progress" || tournament.status === "finished";
 
@@ -47,18 +45,19 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
         {tournament.mode === "tdm" && (
           <AutoRulesTeams tournament={tournament} />
         )}
-        <AutoRulesFormat tournament={tournament} />
-        {(stage.format === "round_robin" || stage.format === "swiss") && (
-          <AutoRulesTable
-            format={stage.format}
-            even={isEvenSeries(stage.best_of)}
-            tiebreakers={countingTiebreakers(
-              stageTiebreakers(stage) ?? [],
-              stage.format,
-              stage.best_of,
-            )}
-            finalTie={stage.final_tie ?? "seed"}
-          />
+        {tournament.stages.length === 1 ? (
+          <>
+            <AutoRulesFormat tournament={tournament} />
+            <AutoRulesTable stage={tournament.stages[0]} />
+          </>
+        ) : (
+          tournament.stages.map((stage) => (
+            <AutoRulesStage
+              key={stage.number}
+              tournament={tournament}
+              stage={stage}
+            />
+          ))
         )}
         <AutoRulesSeries tournament={tournament} />
         <AutoRulesMaps tournament={tournament} maps={maps} />

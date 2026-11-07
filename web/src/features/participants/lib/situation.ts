@@ -20,4 +20,7 @@ export const SITUATION_STATUS: Record<
   eliminated: "finished",
   withdrawn: "cancelled",
   champion: "confirmed",
+  awaiting_stage: "waiting",
+  stage_check_in_pending: "check_in",
+  substitute: "neutral",
 };

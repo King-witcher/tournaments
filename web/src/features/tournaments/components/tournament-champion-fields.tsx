@@ -13,6 +13,7 @@ import {
   isTdm,
   type NoRepeatChoice,
   noRepeatChoices,
+  noRepeatFor,
   pickOrderChoices,
   STEP_SECONDS,
   stepSecondsGroup,
@@ -34,6 +35,7 @@ const KEYS = [
   "mirror",
   "sameTeam",
   "noRepeat",
+  "stages",
   "noRepeatWho",
   "mode",
   "mapMode",
@@ -70,6 +72,7 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
   const t = useTranslations("TournamentForm.championRules");
   const tVeto = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
+  const noRepeat = noRepeatFor(values.noRepeat, values.stages.length);
 
   return (
     <>
@@ -159,12 +162,12 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
         // Na série, a opção se explica; fora dela, conta só o que foi jogado
         // e o pool pode não bastar.
         helperText={
-          values.noRepeat === "stage" || values.noRepeat === "tournament"
-            ? t(`otherGamesHints.${values.noRepeat}`)
+          noRepeat === "stage" || noRepeat === "tournament"
+            ? t(`otherGamesHints.${noRepeat}`)
             : undefined
         }
         name="noRepeat"
-        value={values.noRepeat}
+        value={noRepeat}
         readOnly={readOnly}
         invalid={errors.noRepeat !== undefined}
         invalidText={errors.noRepeat}
@@ -172,13 +175,15 @@ export const TournamentChampionFields = memo(function TournamentChampionFields({
           onChange({ noRepeat: e.target.value as NoRepeatChoice })
         }
       >
-        {(repeatChoices ?? noRepeatChoices(values.noRepeat)).map((choice) => (
-          <SelectItem
-            key={choice}
-            value={choice}
-            text={t(`otherGamesOptions.${choice}`)}
-          />
-        ))}
+        {(repeatChoices ?? noRepeatChoices(values.stages.length)).map(
+          (choice) => (
+            <SelectItem
+              key={choice}
+              value={choice}
+              text={t(`otherGamesOptions.${choice}`)}
+            />
+          ),
+        )}
       </Select>
       {tdm && values.noRepeat !== "off" && (
         <RadioGroup

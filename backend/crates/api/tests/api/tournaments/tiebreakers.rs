@@ -86,7 +86,7 @@ async fn the_order_is_saved_on_create_and_edit_and_frozen_after_the_start() {
     );
     assert_eq!(
         patch(&app, COPA, &ana, other).await,
-        (StatusCode::CONFLICT, err("tournament.setup_locked"))
+        (StatusCode::CONFLICT, err("tournament.stages_locked"))
     );
     assert_eq!(
         rejected(

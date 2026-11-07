@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 
 import { getCurrentUser } from "@/features/auth/server";
 import { getFormation } from "@/features/teams/server";
-import type { components } from "@/shared/api/schema";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { SITUATION_STATUS } from "../lib/situation";
 
@@ -10,7 +9,7 @@ type Props = {
   tenant: string;
   slug: string;
   /** A situação pelo status e pelo check-in, que vale se quem vê está num time. */
-  situation: components["schemas"]["Situation"];
+  situation: "registered" | "checked_in";
 };
 
 /**

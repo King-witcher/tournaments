@@ -46,7 +46,7 @@ export async function MyBracketSituation({ tenant, tournament }: Props) {
       suggestPush={situation === "playing"}
       tag={
         <StatusTag status={SITUATION_STATUS[situation]}>
-          {t(`situation.${situation}`, { place })}
+          {t(`situation.${situation}`, { place, stage: entry?.stage ?? "" })}
         </StatusTag>
       }
     >

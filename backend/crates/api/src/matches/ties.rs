@@ -146,7 +146,8 @@ async fn write(
     tournaments::changed(conn, tournament.id).await?;
     tournament.status = status;
     let viewer = Viewer::new(member, &stage);
-    view::bracket(&tournament, &stage, &viewer)
+    let chain = super::stage::chain(conn, &tournament, &stage).await?;
+    view::bracket(&tournament, &stage, &viewer, &chain)
 }
 
 #[utoipa::path(
@@ -183,7 +184,7 @@ pub async fn decide_tie(
         .transpose()?;
     let order: Vec<ParticipantId> = body.teams.into_iter().map(ParticipantId).collect();
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament, None).await?;
     pending_group(&stage.bracket, &order)?;
     let bracket = write(&mut tx, &member, tournament, &stage, &[(order, reason)]).await?;
     tx.commit().await?;
@@ -212,7 +213,7 @@ pub async fn decide_ties_by_seed(
     PathParams(path): PathParams<TournamentPath>,
 ) -> Result<Json<TournamentBracket>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament, None).await?;
     let orders: Vec<(Vec<ParticipantId>, Option<String>)> = stage
         .bracket
         .pending_ties()

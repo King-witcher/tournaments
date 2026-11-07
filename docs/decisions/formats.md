@@ -6,7 +6,7 @@ Regras no `engine` (`formats/`, `teams.rs`); a API grava e sabe a hora. "Assumid
 
 - Dois eixos independentes: **chaveamento** (eliminação simples, dupla, round robin, suíço, disputa de posições, lobbies FFA, série de pontos) e **partida** (melhor de N; no FFA, pontos por colocação ou soma de frags).
 - Duelo e TDM (2v2, 3v3, 4v4) são o mesmo motor com `team_size` diferente.
-- O torneio tem **fases** (`stages`) no modelo desde o início; hoje, uma só (resultados já têm `stage`; uma fase seguinte teria como participantes a classificação da anterior).
+- O torneio tem de 1 a 4 **fases** (`stages`), em sequência: cada uma recebe a classificação da anterior (ver "Fases ligadas").
 - Fluxo: inscrição individual → check-in → formação de times → seeding → chave.
 - Toda aleatoriedade (sorteios, timeouts) recebe seed ou RNG por parâmetro e a seed é salva, para ser reproduzível e auditável.
 - Seeding: manual, aleatório (seed salva) ou por rating (ver `tournaments.md`).
@@ -25,7 +25,7 @@ Quem ocupa um lado da chave é um **time**, em todos os modos; no duelo, um time
 
 ## Round robin e suíço
 
-Fase única: o formato é o torneio inteiro e a classificação final sai da tabela. Playoffs (os N melhores numa eliminação) e grupos ficam para depois; a tabela em ordem já serve de semente.
+A classificação da fase sai da tabela. Playoffs (os N melhores numa eliminação) são uma fase seguinte com corte (ver "Fases ligadas"); grupos (fases em paralelo) ficam para depois.
 
 Decidido pelo usuário:
 
@@ -108,9 +108,38 @@ Assumido:
 - **Aviso** `tournament.tie_pending` para organizers e owner (toast, Web Push e Discord, como a partida contestada), uma vez, quando a fase passa a esperar; de novo só se ela deixar de esperar e voltar.
 - **Tela**: os empatados dividem a melhor posição, com "Empate a decidir"; a organização ordena cada grupo com setas (como os desempates do formulário), com motivo opcional e confirmação, porque a ordem gravada não muda. Quem está no grupo vê "Empate no 3º, a organização vai decidir"; os outros já veem a posição. O rating não muda (é por mapa).
 
+## Fases ligadas
+
+Um torneio em fases, uma depois da outra: o caso que motivou é todos contra todos md2 → disputa de posições md3 pela tabela, talvez em outro dia. Do usuário (06 e 07/11):
+
+- **Início manual de cada fase**: "Iniciar fase N" depois que a anterior terminou (todas as séries decididas e nenhum empate do fim esperando). Entre as fases o torneio continua em andamento; encerra quando a última termina. A fase 1 nasce no "Iniciar" do torneio, como antes.
+- **Check-in opcional por fase**, ligado na configuração dela, **sem data própria**: a organização o abre pelo botão (com a fase anterior terminada) e ele fecha quando a fase começa. Motivo: permitir pausa ou outro dia entre as fases sem marcar hora no site.
+- **Corte**: a fase recebe todos ou os N melhores da anterior.
+- **Quem entra**: os que jogaram a fase anterior, **sem os desistentes** ("não tem por que ocupar vaga para não jogar") e, com check-in, só os que confirmaram, na ordem da classificação da anterior, até o corte. O check-in abre para todos que seguem no torneio: quem está abaixo do corte é **suplente** e sobe se alguém de cima não confirmar. Sem check-in, o próximo da tabela entra direto.
+- **Ordem só pela tabela**, sem ajuste manual: para mudá-la, corrige-se a fase anterior.
+- **Correção da fase anterior depois do início da seguinte**: passa se não muda quem entra nem a ordem (frags, placar que não mexe na tabela); se muda, é recusada, e o caminho é desfazer o início da fase seguinte, possível só enquanto nada foi jogado nela. Escolhido no lugar de bloquear tudo (nem o rating de um mapa errado se corrigiria) e de corrigir sem refazer (como no suíço; a tabela da fase anterior ficaria contradizendo a seguinte).
+- **Classificação final**: a última fase dá as primeiras posições; depois, de trás para a frente, cada fase anterior: primeiro os cortados nela, na ordem dela, e por último quem não confirmou presença ou desistiu. Quem estava disponível fica à frente de quem saiu. Com três fases (assumido), quem chegou à fase 2 e faltou à 3 fica à frente dos cortados da fase 1: foi mais longe.
+- **Configuração muda até a fase começar** (formato, série, corte, desempate, check-in): na pausa dá para decidir se a fase 2 é md3 ou md5. Adicionar fase fecha no início do torneio; remover as que não começaram pode, o que também encerra o torneio pela fase atual se faltar gente.
+- **Não repetição de campeões isolada por fase**: Desligada, Na série ou Na fase; com uma fase só, a mesma opção aparece como "No torneio" (ver `veto.md`).
+- **Mapas e campeões por fase** (incremento depois deste, já decidido): Mapas e Campeões ganham "Mesmas regras em todas as fases" (marcado) e, desmarcado, uma aba por fase; Resultados fica do torneio. Até lá, valem as do torneio em todas as fases.
+
+Assumido:
+
+- Até 4 fases, com o nome fixo "Fase N". **Eliminação só como última fase**: os eliminados saem em faixas empatadas (3º–4º, 5º–8º) e não há onde cortar. O corte fica na fase que recebe, de 2 ao teto do formato dela; com menos candidatos que o corte, entram todos; com menos de 2, a fase não começa.
+- No TDM, qualquer jogador do time confirma a presença do time; a organização confirma ou desfaz por qualquer um.
+- Dentro da fase vale o seed da fase (lado `a`, quem começa o veto, a ordem da chave no desempate); a fase 1 continua com `teams.seed`. A contestação tardia da fase anterior fecha quando a seguinte começa (a regra de sempre: fecha quando a próxima série de um dos lados começa).
+- Partida da fase 2 em diante com o prefixo da fase no código (`s2-pl-1-1`); a fase 1 continua sem prefixo e os links antigos valem.
+- Avisos: check-in da fase aberto (jogadores dos candidatos, também no Discord), fase iniciada (Discord), partida pronta das séries da fase nova; o pódio só no fim, pela classificação final. Cortado, ausente e desistente só ganham "Terminou em Nº" quando a fase seguinte começa (antes, um suplente ainda pode subir).
+- Desfazer o início do torneio continua apagando tudo, de todas as fases.
+- No Discord, a série da fase 2 em diante sai como `1.2 (fase 2)`. Num torneio de várias fases, `teams.rating_at_start` fica gravado desde o início (uma fase por começar ainda pode ligar o desempate por menor rating).
+- **Banco** (`20261218000000_stages`): `tournament_stages` ganha `advance`, `check_in`, `started_at`, `check_in_opened_at` e `finished_at` (preenchidos nos torneios já começados e encerrados); a trava passa a ser por fase, e o banco confere no commit a sequência 1..N, a eliminação por último e que uma fase só começa com a anterior terminada. `stage_teams` guarda o check-in e o seed de cada time nas fases 2 em diante (seed 1..K, congelado; só quem jogou a anterior; check-in só com ele aberto). Elegível = não desistiu antes do início da fase (o time que saiu inteiro da comunidade já conta como desistente).
+- **API** (`stages/`): `GET .../stages/{n}` (quem entra, suplentes, check-ins, se dá para iniciar e por quê), `POST .../stages/{n}/check-in/open`, `POST`/`DELETE .../stages/{n}/teams/{team}/check-in`, `POST`/`DELETE .../stages/{n}/start`; `GET .../bracket?stage=N` (sem `stage`, a atual) com `standings_final`; "Seus torneios" com `awaiting_stage`, `stage_check_in_pending` e `substitute`; `/me/organizing` com `stage_due`, na mesma consulta dos empates.
+- Remover as fases que faltam com a atual terminada encerra o torneio no PATCH, com o pódio no Discord pela classificação final: por isso o PATCH do torneio é registrado pelo `lifecycle`, que pode chamar `matches` (mesmo caminho e `operationId`; GET e DELETE continuam em `tournaments`).
+- Desfazer o início de uma fase exige nenhuma atividade nela: veto, mapa enviado (mesmo anulado depois), resultado, evento de série ou screenshot, mesmo não anexado.
+
 ## Disputa de posições
 
-Para a segunda etapa de um torneio em duas: depois de um todos contra todos (em md2, por exemplo), o 1º enfrenta o 2º, o 3º enfrenta o 4º, e assim por diante. Sem fases ligadas, a segunda etapa é outro torneio: a organização inscreve os jogadores e põe a ordem da chave na ordem da classificação da primeira.
+Para a segunda etapa de um torneio em duas: depois de um todos contra todos (em md2, por exemplo), o 1º enfrenta o 2º, o 3º enfrenta o 4º, e assim por diante. Como fase seguinte, a ordem da chave é a classificação da anterior (ver "Fases ligadas"); como fase única, a da inscrição.
 
 Do usuário (06/11):
 

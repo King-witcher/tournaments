@@ -34,12 +34,12 @@ use engine::{
 use sqlx::PgConnection;
 
 use super::{
-    acting, announce,
+    acting, announce, chain,
     games::GameStatus,
     key,
     progress::{self, Notices, Suggested},
     result::Confirmation,
-    stage::Stage,
+    stage::{self, Stage},
 };
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
@@ -52,6 +52,8 @@ use crate::{
 /// Como cada partida da fase estava antes de uma mudança e, no round robin, a
 /// série sugerida a cada time e quem estava jogando.
 pub struct Snapshot {
+    /// A fase (as marcas são das partidas dela).
+    stage: i16,
     marks: HashMap<MatchId, Mark>,
     suggested: Suggested,
     playing: BTreeSet<ParticipantId>,
@@ -60,6 +62,7 @@ pub struct Snapshot {
 impl Snapshot {
     pub fn of(stage: &Stage) -> Self {
         Self {
+            stage: stage.number,
             marks: stage
                 .bracket
                 .matches()
@@ -69,6 +72,11 @@ impl Snapshot {
             suggested: progress::suggestions(stage),
             playing: progress::playing(stage),
         }
+    }
+
+    /// A fase de que é a foto.
+    pub const fn stage(&self) -> i16 {
+        self.stage
     }
 
     /// Os mapas contestados (pelo id).
@@ -189,7 +197,7 @@ pub async fn settled(
         if was == Some(&now) {
             continue;
         }
-        let key = key::format(m.id);
+        let key = key::public(after.number, m.id);
         changed.push(Event::Tournament {
             tenant: audience.tenant.clone(),
             tournament: audience.slug.clone(),
@@ -232,7 +240,7 @@ pub async fn settled(
             conn,
             &audience,
             &after.entrants,
-            &key::format(id),
+            &key::public(after.number, id),
             pair,
             &to,
         )
@@ -253,7 +261,8 @@ pub async fn settled(
     if status != tournament.status {
         tournaments::changed(conn, tournament.id).await?;
         if status == TournamentStatus::Finished {
-            announce::finished(conn, &audience, after).await?;
+            let standings = chain::standings(&stage::chain(conn, tournament, after).await?);
+            announce::finished(conn, &audience, after, &standings).await?;
         }
     }
     // Contestou, resolveu, corrigiu, anulou, deu W.O.: a lista de mapas
@@ -264,11 +273,13 @@ pub async fn settled(
     Ok(())
 }
 
-/// Ao iniciar: os lados das partidas que já nascem prontas (no round robin,
-/// a primeira de cada time).
+/// Ao iniciar a fase `stage` (a 1 com o torneio): os lados das partidas que
+/// já nascem prontas (no round robin, a primeira de cada time) e o anúncio
+/// no Discord.
 pub async fn started(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
+    stage: i16,
     bracket: &StageBracket,
     entrants: &[StoredTeam],
 ) -> Result<(), ApiError> {
@@ -279,9 +290,10 @@ pub async fn started(
         ready_notices(None, bracket)
     };
     for (id, pair, to) in notices {
-        match_ready(conn, &audience, entrants, &key::format(id), pair, &to).await?;
+        let key = key::public(stage, id);
+        match_ready(conn, &audience, entrants, &key, pair, &to).await?;
     }
-    announce::started(conn, &audience).await?;
+    announce::started(conn, &audience, stage).await?;
     Ok(())
 }
 

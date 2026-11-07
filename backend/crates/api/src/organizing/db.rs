@@ -5,7 +5,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use super::types::{ContestedGame, PendingTies, PendingTournament, StartDue};
+use super::types::{ContestedGame, PendingTies, PendingTournament, StageDue, StartDue};
 use crate::{
     shared::{ApiError, Locale},
     tournaments::{NameTranslation, TournamentStatus},
@@ -25,7 +25,7 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                             from tournament_translations tr where tr.tournament_id = t.id),
                            '{}') as "translation_names!",
                   coalesce(s.bracket = 'single', false) as "single!",
-                  g.match_key, g.number, mp.name as "map?", c.nickname as "contested_by?",
+                  g.stage, g.match_key, g.number, mp.name as "map?", c.nickname as "contested_by?",
                   g.contested_at as "contested_at!"
            from tenant_members m
            join tenants te on te.id = m.tenant_id
@@ -51,7 +51,11 @@ pub async fn contested(db: &PgPool, user: i64) -> Result<Vec<ContestedGame>, Api
                 name: r.name,
                 translations: translations(r.translation_locales, r.translation_names)?,
             },
-            key: r.match_key,
+            key: crate::matches::MatchKey {
+                stage: r.stage,
+                local: r.match_key,
+            }
+            .public(),
             single: r.single,
             game: r.number,
             map: r.map,
@@ -114,11 +118,16 @@ pub async fn start_due(
     .collect()
 }
 
-/// Os torneios das comunidades que `user` organiza com um empate do fim da fase
-/// esperando a decisão da organização (`stage_pending_ties`, só em torneio em
-/// andamento), do que espera há mais tempo.
-pub async fn pending_ties(db: &PgPool, user: i64) -> Result<Vec<PendingTies>, ApiError> {
-    sqlx::query!(
+/// Os torneios das comunidades que `user` organiza que esperam a organização
+/// numa fase, na mesma query: com um empate do fim da fase esperando a
+/// decisão dela (`stage_pending_ties`, só em torneio em andamento), e com uma
+/// fase pronta para iniciar (a anterior terminou e ela não começou, em
+/// torneio em andamento). Cada lista, do que espera há mais tempo.
+pub async fn waiting_stages(
+    db: &PgPool,
+    user: i64,
+) -> Result<(Vec<PendingTies>, Vec<StageDue>), ApiError> {
+    let rows = sqlx::query!(
         r#"select te.slug as tenant_slug, te.name as tenant_name, t.slug, t.name,
                   coalesce((select array_agg(tr.locale order by tr.locale)
                             from tournament_translations tr where tr.tournament_id = t.id),
@@ -126,32 +135,53 @@ pub async fn pending_ties(db: &PgPool, user: i64) -> Result<Vec<PendingTies>, Ap
                   coalesce((select array_agg(tr.name order by tr.locale)
                             from tournament_translations tr where tr.tournament_id = t.id),
                            '{}') as "translation_names!",
-                  min(pt.since) as "since!"
+                  w.stage as "stage?", w.since as "since!"
            from tenant_members m
            join tenants te on te.id = m.tenant_id
            join tournaments t on t.tenant_id = m.tenant_id
-           join stage_pending_ties pt on pt.tournament_id = t.id
+           join lateral (
+               select null::smallint as stage, min(pt.since) as since
+               from stage_pending_ties pt where pt.tournament_id = t.id
+               having count(*) > 0
+               union all
+               select s.position, p.finished_at
+               from tournament_stages s
+               join tournament_stages p
+                 on p.tournament_id = s.tournament_id and p.position = s.position - 1
+               where s.tournament_id = t.id and s.started_at is null
+                 and p.finished_at is not null
+           ) w on true
            where m.user_id = $1 and m.left_at is null and m.role in ('organizer', 'owner')
-           group by te.slug, te.name, t.id, t.slug, t.name
-           order by min(pt.since), t.id"#,
+             -- Empate pendente e fase por iniciar só há em andamento.
+             and t.status = 'in_progress'
+           order by w.since, t.id"#,
         user
     )
     .fetch_all(db)
-    .await?
-    .into_iter()
-    .map(|r| {
-        Ok(PendingTies {
-            tournament: PendingTournament {
-                tenant_slug: r.tenant_slug,
-                tenant_name: r.tenant_name,
-                slug: r.slug,
-                name: r.name,
-                translations: translations(r.translation_locales, r.translation_names)?,
-            },
-            since: r.since,
-        })
-    })
-    .collect()
+    .await?;
+    let mut ties = Vec::new();
+    let mut stages = Vec::new();
+    for r in rows {
+        let tournament = PendingTournament {
+            tenant_slug: r.tenant_slug,
+            tenant_name: r.tenant_name,
+            slug: r.slug,
+            name: r.name,
+            translations: translations(r.translation_locales, r.translation_names)?,
+        };
+        match r.stage.and_then(|s| u16::try_from(s).ok()) {
+            Some(stage) => stages.push(StageDue {
+                tournament,
+                stage,
+                since: r.since,
+            }),
+            None => ties.push(PendingTies {
+                tournament,
+                since: r.since,
+            }),
+        }
+    }
+    Ok((ties, stages))
 }
 
 fn translations(

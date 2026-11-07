@@ -45,7 +45,7 @@ const GAME_MINUTES: i32 = 15;
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     request_body = GameInput,
@@ -65,7 +65,8 @@ pub async fn report(
     JsonBody(body): JsonBody<GameInput>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     let sides = actions::ready(m)?;
@@ -91,7 +92,7 @@ pub async fn report(
         path.game,
     )
     .await?;
-    let started_at = tournament.started_at;
+    let started_at = stage.started_at;
     let deadline = Deadline {
         released: release::released_at(&stage, m, sides, path.game, started_at),
         game_minutes: GAME_MINUTES,
@@ -107,7 +108,7 @@ pub async fn report(
         changes::game_reported(
             &mut tx,
             &tournament,
-            &path.key,
+            &path.key.public(),
             path.game,
             players,
             confirm_by,
@@ -134,7 +135,7 @@ pub async fn report(
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     responses(
@@ -151,7 +152,8 @@ pub async fn confirm(
     PathParams(path): PathParams<GamePath>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);
     let g = actions::game(&games, path.game)?;
@@ -213,7 +215,8 @@ pub async fn contest(
     JsonBody(body): JsonBody<ContestReport>,
 ) -> Result<Json<MatchDetail>, ApiError> {
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     let games = stage.games_of(m.id);
@@ -238,8 +241,15 @@ pub async fn contest(
     db::contest_game(&mut tx, g.id, member.user.id, &comment, delay).await?;
     if let Some(captain) = rules::opposing_captain(&stage, g.sides(), member.user.id) {
         let player = member.nickname.as_str();
-        changes::contest_received(&mut tx, &tournament, &path.key, g.number, player, captain)
-            .await?;
+        changes::contest_received(
+            &mut tx,
+            &tournament,
+            &path.key.public(),
+            g.number,
+            player,
+            captain,
+        )
+        .await?;
     }
     let event = NewEvent::game(EventKind::Contested, Some(member.user.id), g.number, None)
         .with_comment(Some(&comment));
@@ -254,7 +264,7 @@ pub async fn contest(
                     e
                 }
             })?;
-        let series = (path.key.as_str(), m.best_of);
+        let series = (&path.key, m.best_of);
         correction::write(
             &mut tx,
             &member,

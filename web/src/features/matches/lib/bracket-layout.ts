@@ -94,9 +94,19 @@ const PARTS: Record<string, Part> = {
   pl: "placement",
 };
 
-/** `wb-1-3`, `rr-2-1` → parte, rodada e índice (o formato que a API gera). */
+/**
+ * `wb-1-3`, `rr-2-1` → parte, rodada e índice (o formato que a API gera).
+ * Da fase 2 em diante o código leva o prefixo da fase (`s2-pl-1-1`); a fase 1
+ * não leva, e `stage` sai 1.
+ */
 export function parseMatchKey(key: string) {
-  const [prefix, round, index] = key.split("-");
+  const [, stagePrefix, rest] = key.match(/^s(\d+)-(.*)$/) ?? [null, null, key];
+  const [prefix, round, index] = rest.split("-");
   const part: Part = PARTS[prefix] ?? "winners";
-  return { part, round: Number(round), index: Number(index) };
+  return {
+    stage: stagePrefix ? Number(stagePrefix) : 1,
+    part,
+    round: Number(round),
+    index: Number(index),
+  };
 }

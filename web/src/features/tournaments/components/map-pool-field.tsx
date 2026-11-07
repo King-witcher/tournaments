@@ -17,10 +17,7 @@ import { MapPoolGrid } from "./map-pool-grid";
 
 type Props = {
   tenant: string;
-  values: Pick<
-    TournamentValues,
-    "mapPool" | "stageFormat" | "bestOf" | "finalsBestOf"
-  >;
+  values: Pick<TournamentValues, "mapPool" | "stages">;
   onChange: (patch: Partial<TournamentValues>) => void;
   error: string | undefined;
   /** Os mapas ativos (`GET /maps`). */

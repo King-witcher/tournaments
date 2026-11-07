@@ -55,6 +55,12 @@
         "title": "{tenant} se va a eliminar",
         "body": "Para conservar la comunidad, cancela la eliminación en la configuración hasta {deadline}."
       }
+    },
+    "stage": {
+      "check_in_opened": {
+        "title": "Check-in de la fase {stage} abierto",
+        "body": "{tournament}: confirma tu presencia para jugar."
+      }
     }
   },
   "open": {

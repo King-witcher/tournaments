@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 use super::{
     games::GameStatus,
+    key::MatchKey,
     result::{Confirmation, Side},
     veto::{VetoStatus, VetoView},
 };
@@ -12,9 +13,18 @@ use crate::{
     tournaments::{StageFormat, TournamentStatus},
 };
 
-/// A chave da fase em jogo, refeita dos resultados confirmados.
+/// `?stage=` de `GET .../bracket`.
+#[derive(Deserialize)]
+pub struct BracketQuery {
+    /// A fase (de 1 em diante); ausente: a atual (a última que começou).
+    pub stage: Option<i16>,
+}
+
+/// A chave de uma fase, refeita dos resultados confirmados.
 #[derive(Serialize, ToSchema)]
 pub struct TournamentBracket {
+    /// A fase desta chave, de 1 em diante.
+    pub stage: u16,
     pub format: StageFormat,
     /// Status do torneio depois das confirmações por tempo.
     pub status: TournamentStatus,
@@ -28,8 +38,17 @@ pub struct TournamentBracket {
     /// 5º–8º). No round robin e no suíço, todos, só no fim, sem empate. Na
     /// disputa de posições, as dos pares decididos e a do sem par, sem empate.
     /// Com um empate do fim esperando a organização, os do grupo ficam de fora
-    /// (`pending_ties`).
+    /// (`pending_ties`). São as colocações desta fase.
     pub standings: Vec<Standing>,
+    /// A classificação final do torneio, com as posições já conhecidas: os da
+    /// última fase pela colocação dela (só quando a fase atual é a última);
+    /// depois, de trás para a frente, os cortados de cada fase e, por último
+    /// dela, os que não confirmaram presença ou desistiram. Com uma fase só, é
+    /// `standings`.
+    pub standings_final: Vec<Standing>,
+    /// Os times de `standings_final` que não estão em `entrants` (os que
+    /// ficaram em fases anteriores).
+    pub other_teams: Vec<Team>,
     /// Round robin e suíço: a tabela de agora, em ordem de posição (a final
     /// quando a fase termina); `null` na eliminação e na disputa de posições.
     pub table: Option<Vec<TableRow>>,
@@ -233,7 +252,8 @@ pub struct NextMatch {
 
 #[derive(Serialize, ToSchema)]
 pub struct BracketMatch {
-    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`.
+    /// Identificador na rota: `wb-1-3`, `lb-2-1`, `gf-1-1`, `rr-2-1`, `sw-3-2`, `pl-1-2`; da
+    /// fase 2 em diante, com o prefixo da fase (`s2-pl-1-1`).
     #[schema(example = "wb-1-3")]
     pub key: String,
     pub part: BracketPart,
@@ -329,6 +349,8 @@ pub struct Standing {
 #[derive(Serialize, ToSchema)]
 pub struct MatchDetail {
     pub summary: BracketMatch,
+    /// A fase da partida, de 1 em diante.
+    pub stage: u16,
     pub format: StageFormat,
     /// Rodadas da parte da chave desta partida (para nomear final,
     /// semifinal...). No round robin e no suíço, as rodadas da fase (no
@@ -477,7 +499,7 @@ pub struct EventOutcome {
 pub struct MatchPath {
     pub tournament: String,
     #[serde(rename = "match")]
-    pub key: String,
+    pub key: MatchKey,
 }
 
 /// `{tournament}`, `{match}` e `{game}` de
@@ -486,7 +508,7 @@ pub struct MatchPath {
 pub struct GamePath {
     pub tournament: String,
     #[serde(rename = "match")]
-    pub key: String,
+    pub key: MatchKey,
     /// Número do mapa na série, a partir de 1.
     pub game: i16,
 }

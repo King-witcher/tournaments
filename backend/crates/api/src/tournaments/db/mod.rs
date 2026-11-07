@@ -10,17 +10,24 @@ mod columns;
 mod read;
 mod rules_images;
 mod scheduled;
+mod stages;
 mod status;
 mod translations;
 
 use chrono::{DateTime, Utc};
-use engine::{core::MapId, formats as ef};
+use engine::{core::MapId, stages::StageSetup};
 use sqlx::{PgConnection, PgExecutor};
 
 use self::columns::ChampionColumns;
 use super::{
-    admission::Admission, edit::Edit, schedule::Schedule, setup::Setup, status::TournamentStatus,
-    texts::Texts, types::TournamentTranslation, veto::PoolMap,
+    admission::Admission,
+    edit::Edit,
+    schedule::Schedule,
+    setup::Setup,
+    status::TournamentStatus,
+    texts::Texts,
+    types::{StageStatus, TournamentTranslation},
+    veto::PoolMap,
 };
 use crate::{
     shared::{ApiError, Locale, token},
@@ -28,13 +35,17 @@ use crate::{
 };
 
 pub use audience::{Address, Audience, audience};
-pub use columns::StageRow;
+pub use columns::{StageProgress, StageRow};
 pub use read::{Listed, current_status, find, find_for_update, list, list_in, slugs_for_member};
 pub use rules_images::{
     delete_unused_rules_images, lock_rules_images, register_rules_image, rules_images_with,
     set_rules_images, unused_rules_images,
 };
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
+pub use stages::{
+    mark_stage_finished, mark_stage_started, open_stage_check_in, reset_stages,
+    unmark_stage_started,
+};
 pub use status::{publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};
 
@@ -84,9 +95,68 @@ pub struct StoredTournament {
     pub started_at: Option<DateTime<Utc>>,
     /// O objeto da capa no bucket público (nulo: sem capa).
     pub cover_key: Option<String>,
+    /// Onde cada fase de `setup.stages` está, na mesma ordem.
+    pub stage_progress: Vec<StageProgress>,
 }
 
 impl StoredTournament {
+    /// Quantas fases o torneio tem.
+    pub fn stage_count(&self) -> i16 {
+        i16::try_from(self.setup.stages.len()).unwrap_or(i16::MAX)
+    }
+
+    /// A fase `number` (a partir de 1), se existe.
+    pub fn stage(&self, number: i16) -> Option<(&StageSetup, StageProgress)> {
+        let index = usize::try_from(number.checked_sub(1)?).ok()?;
+        let setup = self.setup.stages.get(index)?;
+        Some((
+            setup,
+            self.stage_progress.get(index).copied().unwrap_or_default(),
+        ))
+    }
+
+    /// A fase `number` começou (a 1, com o torneio).
+    pub fn stage_started(&self, number: i16) -> bool {
+        match self.stage(number) {
+            Some((_, p)) => p.started_at.is_some() || (number == 1 && self.status.has_started()),
+            None => false,
+        }
+    }
+
+    /// A fase atual: a última que começou (1 se nenhuma).
+    pub fn current_stage(&self) -> i16 {
+        (2..=self.stage_count())
+            .rev()
+            .find(|&n| self.stage_started(n))
+            .unwrap_or(1)
+    }
+
+    /// Fases começadas (0 antes do início do torneio).
+    pub fn started_stages(&self) -> usize {
+        if self.status.has_started() {
+            usize::try_from(self.current_stage()).unwrap_or(1)
+        } else {
+            0
+        }
+    }
+
+    /// Como a fase `number` está, para a leitura do torneio.
+    pub fn stage_status(&self, number: i16) -> StageStatus {
+        let Some((_, p)) = self.stage(number) else {
+            return StageStatus::Pending;
+        };
+        if self.stage_started(number) {
+            if p.finished_at.is_some() {
+                StageStatus::Finished
+            } else {
+                StageStatus::InProgress
+            }
+        } else if p.check_in_opened_at.is_some() {
+            StageStatus::CheckIn
+        } else {
+            StageStatus::Pending
+        }
+    }
     /// O endereço e o nome, para avisar sem ler de novo (`Address`).
     pub fn address(&self) -> Address {
         Address {
@@ -198,17 +268,73 @@ async fn insert_map_pool(
 async fn insert_stages(
     conn: &mut PgConnection,
     id: TournamentId,
-    stages: &[ef::StageFormat],
+    stages: &[StageSetup],
 ) -> Result<(), sqlx::Error> {
     for (position, stage) in (1..).zip(stages) {
+        insert_stage(conn, id, position, *stage).await?;
+    }
+    Ok(())
+}
+
+async fn insert_stage(
+    conn: &mut PgConnection,
+    id: TournamentId,
+    position: i16,
+    stage: StageSetup,
+) -> Result<(), sqlx::Error> {
+    let row = StageRow::from(stage);
+    sqlx::query!(
+        "insert into tournament_stages
+             (tournament_id, position, format, best_of, finals_best_of, bracket,
+              grand_final_reset, rounds, tiebreakers, final_tie, advance, check_in)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+        id.0,
+        position,
+        row.format,
+        row.best_of,
+        row.finals_best_of,
+        row.bracket,
+        row.grand_final_reset,
+        row.rounds,
+        row.tiebreakers.as_deref(),
+        row.final_tie,
+        row.advance,
+        row.check_in
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
+/// Grava as fases `stages` no lugar das de agora (`existing` delas): muda só
+/// as que mudaram (a fase começada vem igual, e o banco recusa a mudança),
+/// acrescenta as novas (só antes do início) e apaga as do fim que saíram, com
+/// os check-ins delas. Desligar o check-in de uma fase fecha o dela e apaga as
+/// presenças confirmadas.
+async fn update_stages(
+    conn: &mut PgConnection,
+    id: TournamentId,
+    existing: usize,
+    stages: &[StageSetup],
+) -> Result<(), sqlx::Error> {
+    for (position, stage) in (1..).zip(stages) {
+        if usize::try_from(position).unwrap_or(usize::MAX) > existing {
+            insert_stage(conn, id, position, *stage).await?;
+            continue;
+        }
         let row = StageRow::from(*stage);
-        sqlx::query!(
-            "insert into tournament_stages
-                 (tournament_id, position, format, best_of, finals_best_of, bracket,
-                  grand_final_reset, rounds, tiebreakers, final_tie)
-             values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        let done = sqlx::query!(
+            r#"update tournament_stages
+               set format = $3, best_of = $4, finals_best_of = $5, bracket = $6,
+                   grand_final_reset = $7, rounds = $8, tiebreakers = $9, final_tie = $10,
+                   advance = $11, check_in = $12,
+                   check_in_opened_at = case when $12 then check_in_opened_at end
+               where tournament_id = $1 and position = $2
+                 and (format, best_of, finals_best_of, bracket, grand_final_reset, rounds,
+                      tiebreakers, final_tie, advance, check_in)
+                     is distinct from ($3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
             id.0,
-            position as i16,
+            position,
             row.format,
             row.best_of,
             row.finals_best_of,
@@ -216,22 +342,44 @@ async fn insert_stages(
             row.grand_final_reset,
             row.rounds,
             row.tiebreakers.as_deref(),
-            row.final_tie
+            row.final_tie,
+            row.advance,
+            row.check_in
         )
         .execute(&mut *conn)
         .await?;
+        if done.rows_affected() > 0 && !stage.check_in {
+            sqlx::query!(
+                "delete from stage_teams
+                 where tournament_id = $1 and stage = $2 and seed is null",
+                id.0,
+                position
+            )
+            .execute(&mut *conn)
+            .await?;
+        }
     }
+    sqlx::query!(
+        "delete from tournament_stages where tournament_id = $1 and position > $2",
+        id.0,
+        i16::try_from(stages.len()).unwrap_or(i16::MAX)
+    )
+    .execute(conn)
+    .await?;
     Ok(())
 }
 
 /// Grava o PATCH: os textos e, quando vieram, a inscrição (`admission`), a configuração
 /// (modo, vagas, campeões, fases e veto), a data e a janela de check-in, a
 /// janela de contestação e o status. Trocar o modo ou o tamanho refaz os
-/// times no banco (trigger `tournaments_mode_teams`).
+/// times no banco (trigger `tournaments_mode_teams`). As fases mudam no lugar
+/// (`existing_stages`: quantas há agora), as que não começaram também depois
+/// do início.
 pub async fn update(
     conn: &mut PgConnection,
     id: TournamentId,
     edit: &Edit,
+    existing_stages: usize,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"update tournaments
@@ -263,6 +411,12 @@ pub async fn update(
     let Some(setup) = &edit.setup else {
         return Ok(());
     };
+    if edit.stages_changed {
+        update_stages(conn, id, existing_stages, &setup.stages).await?;
+    }
+    if !edit.rest_changed {
+        return Ok(());
+    }
     let champions = ChampionColumns::from(setup.champion_rules);
     sqlx::query!(
         r#"update tournaments
@@ -297,14 +451,7 @@ pub async fn update(
     sqlx::query!("delete from tournament_maps where tournament_id = $1", id.0)
         .execute(&mut *conn)
         .await?;
-    insert_map_pool(conn, id, &setup.veto.pool).await?;
-    sqlx::query!(
-        "delete from tournament_stages where tournament_id = $1",
-        id.0
-    )
-    .execute(&mut *conn)
-    .await?;
-    insert_stages(conn, id, &setup.stages).await
+    insert_map_pool(conn, id, &setup.veto.pool).await
 }
 
 /// Liga ou desliga o screenshot obrigatório.

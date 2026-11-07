@@ -25,7 +25,7 @@ use crate::{
     params(
         ("slug" = String, Path, description = "Slug do tenant"),
         ("tournament" = String, Path, description = "Slug do torneio"),
-        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2"),
+        ("match" = String, Path, description = "Partida: wb-1-3, lb-2-1, gf-1-1, rr-2-1, sw-3-2, pl-1-2; da fase 2 em diante, com o prefixo da fase (s2-pl-1-1)"),
         ("game" = i16, Path, description = "Número do mapa na série, a partir de 1"),
     ),
     request_body = ReplayGame,
@@ -46,7 +46,8 @@ pub async fn replay(
 ) -> Result<Json<MatchDetail>, ApiError> {
     let comment = body.comment.as_deref().map(actions::comment).transpose()?;
     let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament).await?;
+    let (tournament, stage) =
+        due::lock_stage(&mut tx, &member, &path.tournament, Some(path.key.stage)).await?;
     actions::in_progress(&tournament)?;
     let m = detail::find(&stage, &path.key)?;
     actions::ready(m)?;

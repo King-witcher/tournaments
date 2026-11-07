@@ -82,13 +82,13 @@ pub async fn entries<R>(
 }
 
 /// A entrada de `user_id` em `r`, com o time dele (TDM) e, no encerrado da
-/// lista, o lugar em que terminou (`None`: lê a fase).
+/// lista, o lugar em que terminou e a fase (`None`: lê a fase).
 async fn entry<R>(
     conn: &mut PgConnection,
     user_id: i64,
     r: Registered<'_, R>,
     user_team: Option<UserTeam>,
-    final_place: Option<Place>,
+    final_place: Option<(Place, i16)>,
 ) -> Result<MyTournament, ApiError> {
     let teams = r.teams();
     let Registered {
@@ -104,15 +104,17 @@ async fn entry<R>(
         .map(StoredTeam::view);
     let formed = user_team.is_some_and(|u| u.any_formed);
     let before = Situation::before_bracket(tournament.status, checked_in);
-    let (situation, placement, next_match) = match (before, final_place) {
+    let stage_of = |n: i16| u16::try_from(n).ok();
+    let (situation, stage, placement, next_match) = match (before, final_place) {
         (Some(situation), _) => (
             situation.or_reserve(teams && team.is_none() && formed),
             None,
             None,
+            None,
         ),
-        (None, Some(place)) => {
+        (None, Some((place, stage))) => {
             let (situation, placement) = Situation::in_bracket(place, teams);
-            (situation, placement, None)
+            (situation, stage_of(stage), placement, None)
         }
         (None, None) => {
             // A próxima partida é só de quem vê.
@@ -125,7 +127,7 @@ async fn entry<R>(
             };
             tournament.status = place.tournament.status;
             let (situation, placement) = Situation::in_bracket(place.place, teams);
-            (situation, placement, place.next)
+            (situation, stage_of(place.stage), placement, place.next)
         }
     };
     Ok(MyTournament {
@@ -134,6 +136,7 @@ async fn entry<R>(
         tenant_logo_url: member.logo_key.as_deref().and_then(public_url),
         tournament,
         situation,
+        stage,
         placement,
         next_match,
         team,

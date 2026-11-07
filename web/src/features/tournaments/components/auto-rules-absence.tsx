@@ -9,23 +9,30 @@ type Props = { tournament: components["schemas"]["Tournament"] };
 
 /**
  * Quem não aparece e quem sai: avisar a organização, o W.O. e, na tabela, o
- * placar do W.O. e o que acontece com os pontos de quem sai.
+ * placar do W.O. e o que acontece com os pontos de quem sai. Com várias fases
+ * de tabela, o placar e a regra de cada uma, sem repetir a que é igual.
  */
 export function AutoRulesAbsence({ tournament }: Props) {
   const t = useTranslations("Tournament.autoRules.absence");
-  const [stage] = tournament.stages;
-  const table =
+  const tables = tournament.stages.flatMap((stage) =>
     stage.format === "round_robin" || stage.format === "swiss"
-      ? stage.format
-      : null;
+      ? [
+          [
+            t("score", { wins: mapsToWin(stage.best_of) }),
+            t(`withdrawal.${stage.format}`),
+          ],
+        ]
+      : [],
+  );
+  // Fases de tabela iguais dizem o mesmo uma vez.
+  const sentences = [...new Set(tables.flat())];
   return (
     <AutoRulesBlock title={t("title")}>
       <p>
         <Sentences>
           {[
             t(tournament.mode === "tdm" ? "walkoverTdm" : "walkover"),
-            table && t("score", { wins: mapsToWin(stage.best_of) }),
-            table && t(`withdrawal.${table}`),
+            ...sentences,
           ]}
         </Sentences>
       </p>

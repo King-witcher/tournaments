@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into stage_teams (tenant_id, tournament_id, stage, team_id, checked_in_at,\n                                    checked_in_by)\n           values ($1, $2, $3, $4, now(), $5)\n           on conflict (tournament_id, stage, team_id) do update\n               set checked_in_at = now(), checked_in_by = excluded.checked_in_by\n               where stage_teams.checked_in_at is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3b1f21c73009001e7c3b251f6a6fbf076f585bdd39c17e0545b806745ec07b65"
+}

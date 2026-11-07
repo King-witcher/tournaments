@@ -16,5 +16,10 @@
     "title": "Empate a decidir",
     "since": "Desde <date></date>",
     "action": "Decidir"
+  },
+  "stageDue": {
+    "title": "Fase {number} pronta para iniciar",
+    "since": "Desde <date></date>",
+    "action": "Iniciar"
   }
 }

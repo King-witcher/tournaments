@@ -25,7 +25,10 @@
       "withdrawn": "Withdrew",
       "champion": "1st place",
       "reserve": "Reserve, no team",
-      "tie_pending": "Tied for {place}, to be decided"
+      "tie_pending": "Tied for {place}, to be decided",
+      "substitute": "Next-stage substitute",
+      "awaiting_stage": "Waiting for the next stage",
+      "stage_check_in_pending": "Next-stage check-in pending"
     },
     "empty": "{name} hasn't played here yet.",
     "emptyYou": "You haven't played here yet.",

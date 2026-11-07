@@ -55,6 +55,12 @@
         "title": "{tenant} will be deleted",
         "body": "To keep the community, cancel the deletion in settings by {deadline}."
       }
+    },
+    "stage": {
+      "check_in_opened": {
+        "title": "Stage {stage} check-in is open",
+        "body": "{tournament}: confirm your attendance to play."
+      }
     }
   },
   "open": {

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update tournament_stages set started_at = null, finished_at = null\n         where tournament_id = $1 and position = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int2"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "68039e58fc6127b5144e98105379aac7d98c6d0c1c998bfe2d2ed233580ec3e5"
+}

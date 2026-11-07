@@ -7,7 +7,12 @@
 use engine::core::{Match, MatchState};
 use sqlx::PgConnection;
 
-use super::{contest, detail, due, games::GameStatus, key, stage, tasks};
+use super::{
+    contest, detail, due,
+    games::GameStatus,
+    key::{self, MatchKey},
+    stage, tasks,
+};
 use crate::{
     shared::ApiError,
     teams::StoredTeam,
@@ -19,7 +24,7 @@ pub struct MatchGames {
     pub tournament: StoredTournament,
     /// Posição da fase.
     pub stage: i16,
-    /// `wb-1-3`.
+    /// `wb-1-3`: o identificador no banco, sem a fase.
     pub key: String,
     /// `user_id` dos jogadores dos dois times, quando já se sabe quem joga
     /// (partida pronta ou decidida); vazio antes.
@@ -40,6 +45,12 @@ pub struct SlotGame {
 }
 
 impl MatchGames {
+    /// O código público da partida (com a fase, da 2 em diante), o que vai
+    /// para o tempo real.
+    pub fn public_key(&self) -> String {
+        key::prefixed(self.stage, &self.key)
+    }
+
     /// O mapa `number` já enviado.
     pub fn game(&self, number: i16) -> Option<SlotGame> {
         self.games.iter().copied().find(|g| g.number == number)
@@ -78,8 +89,9 @@ async fn load(
     tournament: StoredTournament,
     key: &str,
 ) -> Result<MatchGames, ApiError> {
-    let stage = stage::load(conn, &tournament).await?;
-    let m: &Match = detail::find(&stage, key)?;
+    let key = MatchKey::from(key.to_owned());
+    let stage = stage::load(conn, &tournament, key.stage).await?;
+    let m: &Match = detail::find(&stage, &key)?;
     let players = match m.state {
         MatchState::Ready { a, b } | MatchState::Completed { a, b, .. } => [a, b]
             .iter()

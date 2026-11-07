@@ -42,7 +42,10 @@ async fn four_players_pair_by_seed_and_the_winner_takes_the_better_place() {
 
     // 1 x 2 e 3 x 4, numa rodada só, os dois prontos; o lado a é o seed melhor.
     let b = bracket(&app, &p[0]).await;
-    assert_eq!(b["format"], json!({ "format": "placement", "best_of": 3 }));
+    assert_eq!(
+        b["format"],
+        json!({ "format": "placement", "best_of": 3, "advance": null, "check_in": false })
+    );
     assert_eq!(
         (&b["table"], &b["total_rounds"]),
         (&Value::Null, &Value::Null)
@@ -160,7 +163,7 @@ async fn placement_takes_only_odd_series_and_up_to_128() {
         create(placement(json!({ "best_of": 2 }))).await,
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "format.invalid_best_of", "params": { "best_of": 2 } })
+            json!({ "error": "format.invalid_best_of", "params": { "best_of": 2, "stage": 1 } })
         )
     );
     let crowded = with(
@@ -173,14 +176,17 @@ async fn placement_takes_only_odd_series_and_up_to_128() {
             StatusCode::UNPROCESSABLE_ENTITY,
             json!({
                 "error": "format.too_many_participants",
-                "params": { "max": 128, "got": 129 }
+                "params": { "max": 128, "got": 129, "stage": 1 }
             })
         )
     );
     let created = create_tournament(&app, &ana, placement(json!({ "best_of": 5 }))).await;
     assert_eq!(
         created["stages"][0],
-        json!({ "format": "placement", "best_of": 5 })
+        json!({
+            "format": "placement", "best_of": 5, "advance": null, "check_in": false,
+            "number": 1, "status": "pending", "started_at": null, "check_in_opened_at": null
+        })
     );
     // A edição troca para outro formato e volta, com a mesma regra.
     let (status, body) = patch(
@@ -194,7 +200,7 @@ async fn placement_takes_only_odd_series_and_up_to_128() {
         (status, body),
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            json!({ "error": "format.invalid_best_of", "params": { "best_of": 4 } })
+            json!({ "error": "format.invalid_best_of", "params": { "best_of": 4, "stage": 1 } })
         )
     );
     let (status, body) = patch(&app, COPA, &ana, single(3, 5)).await;
@@ -209,6 +215,9 @@ async fn placement_takes_only_odd_series_and_up_to_128() {
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(
         body["stages"][0],
-        json!({ "format": "placement", "best_of": 7 })
+        json!({
+            "format": "placement", "best_of": 7, "advance": null, "check_in": false,
+            "number": 1, "status": "pending", "started_at": null, "check_in_opened_at": null
+        })
     );
 }

@@ -39,6 +39,7 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const organizer = me.role !== "player";
   const [stage] = tournament.stages;
   const kind = formatKind(stage);
+  const several = tournament.stages.length > 1;
   const startsAt = tournament.starts_at;
   // Data que já passou (começou, ou a organização ainda não iniciou): "início
   // marcado para", não "começa", que daria a entender que ainda vai começar.
@@ -75,9 +76,17 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
         <>
           {modeLabel(tournament.mode, tournament.team_size)}
           {" · "}
-          {t(`setup.bracket.${kind}`)}
-          {" · "}
-          {t("meta.bestOf", { bestOf: stage.best_of })}
+          {several
+            ? tournament.stages
+                .map((s) => t(`setup.bracket.${formatKind(s)}`))
+                .join(" → ")
+            : t(`setup.bracket.${kind}`)}
+          {!several && (
+            <>
+              {" · "}
+              {t("meta.bestOf", { bestOf: stage.best_of })}
+            </>
+          )}
           {" · "}
           {startsAt
             ? t.rich(past ? "startedAt" : "startsAt", {

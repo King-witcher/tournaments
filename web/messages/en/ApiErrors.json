@@ -89,11 +89,12 @@
     "rules_invalid": "The rules can be up to {max} characters.",
     "max_participants_invalid": "Spots must be between {min} and {max}.",
     "bans_invalid": "There can be at most {max} bans per side in each match.",
-    "stage_count_invalid": "For now, a tournament has only one stage.",
+    "stage_count_invalid": "A tournament has 1 to {max} stages.",
     "not_draft": "This only applies to drafts.",
     "slug_locked": "The tournament address can't change after publishing.",
     "confirmation_mismatch": "The address you typed doesn't match the tournament's.",
     "setup_locked": "The tournament has already started. Format, spots, and champions can't change anymore.",
+    "stages_locked": "The tournament has started. Only stages that haven't started can change, and no stages can be added.",
     "finished": "The tournament has already ended. Only the name, description, and cover can still change.",
     "translation_same_locale": "This is already the tournament's original language.",
     "translation_not_found": "There is no translation in this language.",
@@ -145,6 +146,23 @@
     "no_stages": "The tournament needs at least one stage.",
     "invalid_rounds": "Rounds range from 1 to {max}.",
     "invalid_tiebreakers": "Each tiebreaker can be used once, and Buchholz only in Swiss."
+  },
+  "stage": {
+    "elimination_not_last": "Stage {stage}: elimination can only be the last stage.",
+    "invalid_advance": "Stage {stage}: {min} to {max} enter.",
+    "entry_rules_first": "Stage {stage}: the first stage has no cutoff or check-in.",
+    "not_found": "This stage doesn't exist.",
+    "not_started": "This stage hasn't started yet.",
+    "already_started": "This stage has already started.",
+    "previous_not_finished": "The previous stage hasn't finished. Matches or ties are still to be decided.",
+    "check_in_not_open": "Check-in for the stage isn't open.",
+    "check_in_disabled": "This stage has no check-in.",
+    "check_in_already_open": "Check-in for the stage is already open.",
+    "not_candidate": "This team didn't play the previous stage or withdrew.",
+    "not_your_team": "Only the team's players or the organizers can confirm attendance.",
+    "not_enough_entrants": "The stage needs at least {min} teams, and only {got} would enter.",
+    "next_started": "Stage {stage} has already started, and this change would alter who enters it or the order. Undo the start of stage {stage} first.",
+    "has_activity": "A game has already been played in this stage. The start can't be undone."
   },
   "champions": {
     "pool_exhausted": "In the worst case, {required} champions are needed, but the pool has {available}. Lower the spots, matches, or bans, or relax the no-repeat rule."

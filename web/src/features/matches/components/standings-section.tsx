@@ -1,3 +1,5 @@
+import { FinalStandings } from "@/features/stages/components/final-standings";
+import { isLastStage, withStageStatus } from "@/features/stages/lib/stages";
 import { isTable } from "@/features/tournaments/lib/format";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
@@ -13,6 +15,10 @@ type Props = {
   tournament: components["schemas"]["Tournament"];
   /** Quem vê é organizer ou owner: decide os empates do fim. */
   organizer: boolean;
+  /** A fase pedida; sem ela, a atual. */
+  stage?: number;
+  /** A classificação final do torneio em mais de uma fase, no lugar da de uma fase. */
+  final?: boolean;
 };
 
 /**
@@ -24,12 +30,17 @@ export async function StandingsSection({
   tenant,
   tournament,
   organizer,
+  stage,
+  final,
 }: Props) {
-  const loaded = await loadBracket(tenant, tournament.slug);
+  const loaded = await loadBracket(tenant, tournament.slug, stage);
   if (loaded.kind === "error") {
     return <Notice kind="error">{await apiErrorMessage(loaded.code)}</Notice>;
   }
-  const bracket = loaded.data;
+  // A fase que já terminou tem a classificação definitiva, mesmo com o
+  // torneio em andamento; o 1º só venceu o torneio na última fase.
+  const bracket = withStageStatus(tournament, loaded.data);
+  if (final) return <FinalStandings tenant={tenant} bracket={bracket} />;
   if (isTable(bracket.format)) {
     return (
       <Stack gap={7}>
@@ -40,7 +51,11 @@ export async function StandingsSection({
             bracket={bracket}
           />
         )}
-        <TableStandings tenant={tenant} bracket={bracket} />
+        <TableStandings
+          tenant={tenant}
+          bracket={bracket}
+          lastStage={isLastStage(tournament, bracket.stage)}
+        />
       </Stack>
     );
   }

@@ -131,7 +131,7 @@ async fn read(
     let Some(found) = tournaments::find(&mut conn, t.tenant, &t.slug, None).await? else {
         return Ok((0, None));
     };
-    let current = stage::load(&mut conn, &found).await?;
+    let current = stage::load_current(&mut conn, &found).await?;
     if !any_due(found.status, &current, now) {
         return Ok((0, next_deadline(found.status, &current)));
     }
@@ -140,7 +140,7 @@ async fn read(
     let Some(found) = tournaments::find_for_update(&mut tx, t.tenant, &t.slug, None).await? else {
         return Ok((0, None));
     };
-    let current = stage::load(&mut tx, &found).await?;
+    let current = stage::load_current(&mut tx, &found).await?;
     let before = Snapshot::of(&current);
     let n = apply_due(&mut tx, &found, &current, now).await?;
     let (after, _) = settle::settle(&mut tx, &found, None, &before).await?;

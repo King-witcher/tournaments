@@ -22,6 +22,7 @@ mod ratings;
 mod realtime;
 mod scheduled_deletion;
 mod screenshots;
+mod stages;
 mod tdm;
 mod teams;
 mod ties;

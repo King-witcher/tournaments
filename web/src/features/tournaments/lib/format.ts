@@ -69,6 +69,18 @@ export function swissRounds(
   return Math.min(rounds ?? auto, entrants - 1);
 }
 
+/** O maior melhor de N (partidas ou final) entre as fases. */
+export function longestBestOf(stages: Stage[]) {
+  return Math.max(
+    ...stages.map((s) => Math.max(s.best_of, finalsBestOf(s) ?? 0)),
+  );
+}
+
+/** Todas as fases só têm séries pares (o veto delas só tem bans). */
+export function allEvenSeries(stages: Stage[]) {
+  return stages.every((s) => isEvenSeries(s.best_of));
+}
+
 /** Até onde o campeão não se repete; `off` sem a regra. */
 export function repeatScope(rules: Schemas["ChampionRules"]) {
   return rules.no_repeat?.scope ?? "off";

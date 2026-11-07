@@ -14,7 +14,12 @@
 //! gravar as regras, o texto só aceita essas, e o banco guarda quais textos
 //! usam cada uma. As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
-//! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
+//! em `matches` (por `sync_finished`). Cada fase tem a configuração (o
+//! formato, o corte e o check-in, que mudam até ela começar: o PATCH muda as
+//! fases no lugar, e tirar as que faltam com a atual terminada encerra) e o
+//! andamento (`StageProgress`: início, check-in aberto, fim), que `matches` e
+//! `stages` acertam (`db::stages`). O PATCH fica em `update`, com a rota no
+//! `lifecycle`: o pódio do encerramento por ele é da chave. O que o torneio emite no outbox fica em
 //! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
 //! agendador do tempo real faz sozinho (abrir o check-in, avisar a hora de
 //! iniciar), em `scheduled`.
@@ -37,6 +42,7 @@ mod team_rules;
 mod texts;
 mod translations;
 mod types;
+mod update;
 mod veto;
 mod view;
 mod visibility;
@@ -48,17 +54,21 @@ use crate::AppState;
 pub use admission::Admission;
 pub use changes::{changed, changed_with, check_in_opened};
 pub use db::{
-    Address, Listed, StageRow, StoredTournament, TournamentId, champion_pool,
-    delete_unused_rules_images, find, find_for_update, list_in, register_rules_image, set_status,
-    slugs_for_member, sync_finished, unused_rules_images,
+    Address, Listed, StageProgress, StageRow, StoredTournament, TournamentId, champion_pool,
+    delete_unused_rules_images, find, find_for_update, list_in, mark_stage_finished,
+    mark_stage_started, open_stage_check_in, register_rules_image, reset_stages, set_status,
+    slugs_for_member, sync_finished, unmark_stage_started, unused_rules_images,
 };
+pub use rules_images::cdn as rules_images_cdn;
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;
 pub use status::TournamentStatus;
 pub use team_rules::{TeamAction, TeamPicker, TeamRules};
 pub use types::{
-    NameTranslation, NoRepeatWho, StageFormat, Tournament, TournamentPath, TournamentSummary,
+    NameTranslation, NoRepeatWho, StageFormat, StageStatus, Tournament, TournamentPath,
+    TournamentSummary, UpdateTournament,
 };
+pub use update::update;
 pub use veto::{
     MapMode, PickOrder, PoolMap, VetoInput, VetoOrder, VetoSetup, resolve as resolve_veto,
 };
@@ -72,7 +82,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         ))
         .routes(routes!(
             handlers::get_tournament,
-            handlers::update_tournament,
             handlers::delete_tournament
         ))
         .routes(routes!(handlers::publish_tournament))

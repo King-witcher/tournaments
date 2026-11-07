@@ -99,6 +99,6 @@ pub async fn settle(
     conn: &mut PgConnection,
     tournament: &StoredTournament,
 ) -> Result<TournamentStatus, ApiError> {
-    let before = Snapshot::of(&stage::load(conn, tournament).await?);
+    let before = Snapshot::of(&stage::load_current(conn, tournament).await?);
     Ok(settle::settle(conn, tournament, None, &before).await?.1)
 }

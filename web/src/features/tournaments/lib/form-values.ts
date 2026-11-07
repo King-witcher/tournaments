@@ -1,11 +1,19 @@
 import type { components } from "@/shared/api/schema";
+import {
+  isStageField,
+  type StageFieldName,
+  stageIndexOf,
+  type TournamentField,
+} from "./form-errors";
+import { isEvenSeries } from "./format";
+import {
+  defaultStage,
+  type StageValues,
+  stageBody,
+  stageValuesFrom,
+} from "./stage-values";
 import { setupEditable } from "./status";
 import { TEAM_PRESETS } from "./team-rules";
-import {
-  DEFAULT_TIEBREAKERS,
-  stageTiebreakers,
-  type Tiebreaker,
-} from "./tiebreakers";
 
 type Schemas = components["schemas"];
 type Locale = Schemas["Locale"];
@@ -32,27 +40,8 @@ export type TournamentValues = {
    * antes de salvar o devolve), mas vale 1: use `teamSizeOf`.
    */
   teamSize: number;
-  /** O formato da fase única: eliminação, round robin ou suíço. */
-  stageFormat: Schemas["StageFormat"]["format"];
-  /** Na eliminação: simples ou dupla. */
-  bracket: Schemas["Bracket"];
-  grandFinalReset: boolean;
-  bestOf: number;
-  /** Na eliminação: o melhor de N da final (ou da grande final). */
-  finalsBestOf: number;
-  /** No suíço: as rodadas; `null` é o automático (⌈log2 N⌉). */
-  swissRounds: number | null;
-  /**
-   * Nas fases de tabela: os desempates ligados, na ordem. Na eliminação fica
-   * o padrão do todos contra todos, que não vai no envio; trocar de formato
-   * põe o padrão do novo.
-   */
-  tiebreakers: Tiebreaker[];
-  /**
-   * Nas fases de tabela: quem decide o empate que sobra depois de todos os
-   * critérios, no fim da fase.
-   */
-  finalTie: Schemas["FinalTie"];
+  /** As fases, em sequência (de 1 a 4). */
+  stages: StageValues[];
   /** Bans de campeão de cada lado na série. */
   bansPerSeries: number;
   /** Adversários podem usar o mesmo campeão na partida. */
@@ -138,14 +127,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     maxParticipants: 16,
     mode: "duel",
     teamSize: 1,
-    stageFormat: "elimination",
-    bracket: "double",
-    grandFinalReset: false,
-    bestOf: 3,
-    finalsBestOf: 5,
-    swissRounds: null,
-    tiebreakers: DEFAULT_TIEBREAKERS.round_robin,
-    finalTie: "seed",
+    stages: [defaultStage()],
     bansPerSeries: 1,
     mirror: true,
     noRepeat: "off",
@@ -167,11 +149,10 @@ export function defaultValues(locale: Locale): TournamentValues {
   };
 }
 
-/** Valores de um torneio existente, na fase única que a interface mostra. */
+/** Valores de um torneio existente, com todas as fases. */
 export function valuesFrom(
   tournament: Schemas["Tournament"],
 ): TournamentValues {
-  const [stage] = tournament.stages;
   const rules = tournament.champion_rules;
   return {
     name: tournament.name,
@@ -183,23 +164,13 @@ export function valuesFrom(
     maxParticipants: tournament.max_participants,
     mode: tournament.mode,
     teamSize: tournament.team_size,
-    stageFormat: stage.format,
-    // Fora da eliminação, os campos dela ficam no padrão, para quem trocar
-    // de formato no formulário.
-    bracket: stage.format === "elimination" ? stage.bracket : "double",
-    grandFinalReset:
-      stage.format === "elimination" && (stage.grand_final_reset ?? false),
-    bestOf: stage.best_of,
-    finalsBestOf: stage.format === "elimination" ? stage.finals_best_of : 5,
-    swissRounds: stage.format === "swiss" ? (stage.rounds ?? null) : null,
-    tiebreakers: stageTiebreakers(stage) ?? DEFAULT_TIEBREAKERS.round_robin,
-    finalTie:
-      stage.format === "round_robin" || stage.format === "swiss"
-        ? (stage.final_tie ?? "seed")
-        : "seed",
+    stages: tournament.stages.map(stageValuesFrom),
     bansPerSeries: rules.bans_per_series,
     mirror: rules.mirror,
-    noRepeat: rules.no_repeat?.scope ?? "off",
+    noRepeat: noRepeatFor(
+      rules.no_repeat?.scope ?? "off",
+      tournament.stages.length,
+    ),
     noRepeatWho: rules.no_repeat?.who ?? "player",
     sameTeam: rules.same_team,
     teamRules: tournament.team_rules,
@@ -247,6 +218,13 @@ export function valuesFromSource(
         ? "alternating"
         : source.veto.pick_order,
   };
+}
+
+/** O valor que a tela tem para o campo que um erro aponta (de uma fase ou do torneio). */
+export function fieldValue(values: TournamentValues, field: TournamentField) {
+  if (!isStageField(field)) return values[field];
+  const stage = values.stages[stageIndexOf(field)];
+  return stage?.[field.split(".")[2] as StageFieldName];
 }
 
 /** É TDM: times, capitão e escolha de campeões por jogador. */
@@ -319,25 +297,32 @@ export function stepSecondsGroup(
   return draftHasSteps(values) ? "champions" : null;
 }
 
-/** Os melhor de N que o torneio usa, sem repetir, do menor para o maior. */
-export const seriesLengths = (
-  values: Pick<TournamentValues, "stageFormat" | "bestOf" | "finalsBestOf">,
-) =>
+/** Os melhor de N que o torneio usa em todas as fases, sem repetir, do menor para o maior. */
+export const seriesLengths = (values: Pick<TournamentValues, "stages">) =>
   [
     ...new Set(
-      values.stageFormat === "elimination"
-        ? [values.bestOf, values.finalsBestOf]
-        : [values.bestOf],
+      values.stages.flatMap((s) =>
+        s.format === "elimination" ? [s.bestOf, s.finalsBestOf] : [s.bestOf],
+      ),
     ),
   ].sort((a, b) => a - b);
 
 /** O maior melhor de N das séries: o pool precisa de um mapa para cada jogo. */
-export const longestSeries = (
-  values: Pick<TournamentValues, "stageFormat" | "bestOf" | "finalsBestOf">,
-) =>
-  values.stageFormat === "elimination"
-    ? Math.max(values.bestOf, values.finalsBestOf)
-    : values.bestOf;
+export const longestSeries = (values: Pick<TournamentValues, "stages">) =>
+  Math.max(...seriesLengths(values));
+
+/** O melhor de N, se todas as séries do torneio têm o mesmo; senão, `undefined`. */
+export function singleLength(values: Pick<TournamentValues, "stages">) {
+  const lengths = seriesLengths(values);
+  return lengths.length === 1 ? lengths[0] : undefined;
+}
+
+/**
+ * Todas as séries são pares (só no todos contra todos): o veto de mapas só
+ * tem bans, e não há ordem a escolher.
+ */
+export const onlyEvenSeries = (values: Pick<TournamentValues, "stages">) =>
+  seriesLengths(values).every(isEvenSeries);
 
 /** A tradução de `locale` que o torneio já tem (ligada), ou uma vazia. */
 export function translationFrom(
@@ -388,13 +373,26 @@ export function translationChange(
 }
 
 /**
- * As escolhas de não repetição. "Na fase" só se distingue de "no torneio"
- * quando houver mais de uma fase: fica de fora, a não ser que o torneio já
- * a tenha.
+ * A regra de não repetição como vale com `stages` fases: o escopo "torneio"
+ * e o "fase" são o mesmo com uma fase só, e com várias o campeão não se
+ * carrega entre fases, então "torneio" vale como "fase". A tela mostra e
+ * envia a que existe para a contagem de fases.
  */
-export function noRepeatChoices(current: NoRepeatChoice): NoRepeatChoice[] {
-  return current === "stage"
-    ? ["off", "series", "stage", "tournament"]
+export function noRepeatFor<C extends NoRepeatChoice>(
+  current: C,
+  stages: number,
+): C | "stage" | "tournament" {
+  if (stages > 1) return current === "tournament" ? "stage" : current;
+  return current === "stage" ? "tournament" : current;
+}
+
+/**
+ * As escolhas de não repetição: com uma fase, "no torneio"; com várias, "na
+ * fase" (o campeão não se carrega de uma fase para a outra).
+ */
+export function noRepeatChoices(stages: number): NoRepeatChoice[] {
+  return stages > 1
+    ? ["off", "series", "stage"]
     : ["off", "series", "tournament"];
 }
 
@@ -495,6 +493,9 @@ export function updateBody(
       ...setupBody(values),
       ...scheduleBody(values),
     }),
+    // Em andamento, só as fases que não começaram mudam: vão todas, e a API
+    // recusa a que começou e mudou.
+    ...(status === "in_progress" && { stages: values.stages.map(stageBody) }),
   };
 }
 
@@ -552,41 +553,9 @@ function setupBody(values: TournamentValues) {
           ? null
           : {
               who: tdm ? values.noRepeatWho : ("player" as const),
-              scope: values.noRepeat,
+              scope: noRepeatFor(values.noRepeat, values.stages.length),
             },
     },
-    stages: [stageBody(values)],
+    stages: values.stages.map(stageBody),
   };
-}
-
-/** A fase única no formato da API. */
-function stageBody(values: TournamentValues): Schemas["StageFormat"] {
-  switch (values.stageFormat) {
-    case "round_robin":
-      return {
-        format: "round_robin",
-        best_of: values.bestOf,
-        tiebreakers: values.tiebreakers,
-        final_tie: values.finalTie,
-      };
-    case "swiss":
-      return {
-        format: "swiss",
-        best_of: values.bestOf,
-        rounds: values.swissRounds,
-        tiebreakers: values.tiebreakers,
-        final_tie: values.finalTie,
-      };
-    case "placement":
-      return { format: "placement", best_of: values.bestOf };
-    case "elimination":
-      return {
-        format: "elimination",
-        bracket: values.bracket,
-        grand_final_reset:
-          values.bracket === "double" && values.grandFinalReset,
-        best_of: values.bestOf,
-        finals_best_of: values.finalsBestOf,
-      };
-  }
 }

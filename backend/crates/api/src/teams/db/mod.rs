@@ -1,14 +1,17 @@
 mod formation;
+mod stages;
 
 use std::collections::HashMap;
 
-use sqlx::PgConnection;
+use chrono::{DateTime, Utc};
+use sqlx::{PgConnection, types::Json};
 
 pub use formation::*;
+pub use stages::*;
 
 use super::{
     seed_order::Entrant,
-    team::{StoredMember, StoredTeam},
+    team::{StageTeam, StoredMember, StoredTeam},
 };
 use crate::{auth::resolve_avatar, tenants::TenantId, tournaments::TournamentId};
 
@@ -19,7 +22,9 @@ struct Row {
     seed: Option<i32>,
     rating_at_start: Option<i32>,
     captain: i64,
-    withdrawn: bool,
+    withdrawn_at: Option<DateTime<Utc>>,
+    /// As linhas do time em `stage_teams`, na ordem das fases.
+    stages: Option<Json<Vec<StageTeam>>>,
     user_id: i64,
     nickname: String,
     avatar_url: Option<String>,
@@ -44,8 +49,10 @@ fn group(rows: impl IntoIterator<Item = Row>) -> Vec<StoredTeam> {
                 seed: r.seed,
                 rating_at_start: r.rating_at_start,
                 captain: r.captain,
-                withdrawn: r.withdrawn,
+                withdrawn: r.withdrawn_at.is_some(),
+                withdrawn_at: r.withdrawn_at,
                 members: vec![member],
+                stages: r.stages.map(|s| s.0).unwrap_or_default(),
             }),
         }
     }
@@ -75,7 +82,13 @@ async fn list_in(
     let ids: Vec<i64> = tournaments.iter().map(|t| t.get()).collect();
     let rows = sqlx::query!(
         r#"select t.tournament_id, t.id, t.name, t.seed, t.rating_at_start, t.captain,
-                  t.withdrawn_at is not null as "withdrawn!",
+                  t.withdrawn_at,
+                  (select json_agg(json_build_object('stage', s.stage,
+                                                     'checked_in_at', s.checked_in_at,
+                                                     'seed', s.seed) order by s.stage)
+                   from stage_teams s
+                   where s.tournament_id = t.tournament_id and s.team_id = t.id)
+                      as "stages: Json<Vec<StageTeam>>",
                   p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
                   m.left_at is not null as "left!"
            from teams t
@@ -98,7 +111,8 @@ async fn list_in(
             seed: r.seed,
             rating_at_start: r.rating_at_start,
             captain: r.captain,
-            withdrawn: r.withdrawn,
+            withdrawn_at: r.withdrawn_at,
+            stages: r.stages,
             user_id: r.user_id,
             nickname: r.nickname,
             avatar_url: r.avatar_url,
@@ -137,7 +151,8 @@ pub async fn by_ids(
 ) -> Result<Vec<StoredTeam>, sqlx::Error> {
     let rows = sqlx::query_as!(
         Row,
-        r#"select t.id, t.name, t.seed, t.rating_at_start, t.captain, t.withdrawn_at is not null as "withdrawn!",
+        r#"select t.id, t.name, t.seed, t.rating_at_start, t.captain, t.withdrawn_at,
+                  null::json as "stages: Json<Vec<StageTeam>>",
                   p.user_id, m.nickname, coalesce(u.avatar_key, u.avatar_url) as avatar_url,
                   m.left_at is not null as "left!"
            from teams t
@@ -351,7 +366,7 @@ pub async fn of_user_in(
         r#"select q.id as "tournament_id!",
                   exists(select 1 from teams x where x.tournament_id = q.id) as "formed!",
                   t.id as "id?", t.name as "name?", t.seed as "seed?", t.rating_at_start, t.captain as "captain?",
-                  t.withdrawn_at is not null as "withdrawn?",
+                  t.withdrawn_at as "withdrawn_at?",
                   p.user_id as "user_id?", m.nickname as "nickname?", coalesce(u.avatar_key, u.avatar_url) as "avatar_url?",
                   m.left_at is not null as "left?"
            from unnest((select $1::bigint[])) as q(id)
@@ -381,7 +396,8 @@ pub async fn of_user_in(
             seed: r.seed,
             rating_at_start: r.rating_at_start,
             captain,
-            withdrawn: r.withdrawn.unwrap_or_default(),
+            withdrawn_at: r.withdrawn_at,
+            stages: None,
             user_id,
             nickname,
             avatar_url: r.avatar_url,

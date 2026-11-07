@@ -85,7 +85,8 @@ impl Ctx {
 
     /// Para a série `id`, entre `sides`: os campeões ativos do torneio e, com a
     /// regra de não repetição na fase ou no torneio, o que conta das outras
-    /// séries da fase (só há uma): das encerradas, o que foi jogado; das em
+    /// séries da fase da série (as fases são isoladas: `tournament` vale como
+    /// `stage`, e nada vem das fases anteriores): das encerradas, o que foi jogado; das em
     /// andamento, também o que já está escolhido para as partidas por jogar,
     /// reservado (duas séries ao mesmo tempo não usam o mesmo campeão, e a
     /// reserva sai quando a série acaba sem a partida). No TDM, pela regra do

@@ -21,6 +21,7 @@ import {
   teamSizeOf,
 } from "@/features/tournaments/lib/form-values";
 import { rememberedPool } from "@/features/tournaments/lib/remembered-pool";
+import { defaultStage } from "@/features/tournaments/lib/stage-values";
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
 import { api } from "@/shared/api/client";
@@ -76,8 +77,13 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
   const [values, setValues] = useState<TournamentValues>(() => ({
     ...defaultValues(locale as components["schemas"]["Locale"]),
     // Uma série só: o melhor de N vale para ela inteira.
-    stageFormat: "round_robin",
-    finalsBestOf: 3,
+    stages: [
+      {
+        ...defaultStage(),
+        format: "round_robin",
+        finalsBestOf: 3,
+      },
+    ],
   }));
   const [open, setOpen] = useState({ maps: false, champions: false });
   const [whoStarts, setWhoStarts] =
@@ -95,7 +101,8 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
   }, [maps]);
 
   const pool = poolOf(values, maps);
-  const poolTooSmall = values.mapMode === "veto" && pool.length < values.bestOf;
+  const bestOf = values.stages[0].bestOf;
+  const poolTooSmall = values.mapMode === "veto" && pool.length < bestOf;
   const noPhases = values.mapMode === "off" && !values.championPhase;
 
   const [failure, submit, pending] = useActionState<Failure | undefined>(
@@ -104,7 +111,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
         api.POST("/veto-rooms", {
           body: {
             team_size: teamSizeOf(values),
-            best_of: values.bestOf,
+            best_of: bestOf,
             who_starts: whoStarts,
             who_acts: whoActs,
             veto: {
@@ -162,10 +169,18 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
             legendText={t("bestOf")}
             name="bestOf"
             orientation="horizontal"
-            value={String(values.bestOf)}
+            value={String(bestOf)}
             options={BEST_OF.map((n) => ({ value: n, label: n }))}
             onChange={(n) =>
-              onChange({ bestOf: Number(n), finalsBestOf: Number(n) })
+              onChange({
+                stages: [
+                  {
+                    ...values.stages[0],
+                    bestOf: Number(n),
+                    finalsBestOf: Number(n),
+                  },
+                ],
+              })
             }
           />
           {teamSizeOf(values) > 1 && (
@@ -277,7 +292,7 @@ export function NewVetoRoomForm({ maps, signedIn }: Props) {
           </FormAccordionItem>
         </Accordion>
         {poolTooSmall && (
-          <FormError>{t("poolTooSmall", { min: values.bestOf })}</FormError>
+          <FormError>{t("poolTooSmall", { min: bestOf })}</FormError>
         )}
         {noPhases && <FormError>{t("noPhases")}</FormError>}
         {failure &&

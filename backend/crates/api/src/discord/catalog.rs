@@ -97,6 +97,22 @@ pub const CATALOG: &[Spec] = &[
         "**{tournament}** empezó. La llave está aquí: {link}",
         "**{tournament}** has started. The bracket is here: {link}",
     ),
+    spec(
+        "stage.check_in_opened",
+        true,
+        To::Nobody,
+        "O check-in da fase {stage} de **{tournament}** abriu. Confirme a presença para jogar.\n{link}",
+        "El check-in de la fase {stage} de **{tournament}** está abierto. Confirma tu presencia para jugar.\n{link}",
+        "Check-in for stage {stage} of **{tournament}** is open. Confirm your attendance to play.\n{link}",
+    ),
+    spec(
+        "stage.started",
+        true,
+        To::Nobody,
+        "A fase {stage} de **{tournament}** começou. A chave está aqui: {link}",
+        "La fase {stage} de **{tournament}** empezó. La llave está aquí: {link}",
+        "Stage {stage} of **{tournament}** has started. The bracket is here: {link}",
+    ),
     Spec {
         merge: true,
         ..spec(

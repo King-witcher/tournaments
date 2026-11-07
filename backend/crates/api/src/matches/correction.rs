@@ -14,7 +14,7 @@ use sqlx::PgConnection;
 use super::{
     actions, db,
     history::NewEvent,
-    key,
+    key::{self, MatchKey},
     result::{Side, StoredResult, series_outcome},
     settle,
     stage::{self, Stage},
@@ -107,7 +107,10 @@ pub async fn void_stale<R>(
         if keeps {
             continue;
         }
-        let key = key::format(m);
+        let key = MatchKey {
+            stage: stage.number,
+            local: key::format(m),
+        };
         let at = actions::at(member, tournament, stage, &key);
         settle::void(conn, &at, &games, Some(member.user.id)).await?;
     }
@@ -122,12 +125,12 @@ pub async fn write<R>(
     member: &TenantMember<R>,
     tournament: &StoredTournament,
     stage: &Stage,
-    (key, best_of): (&str, u8),
+    (key, best_of): (&MatchKey, u8),
     sides: (ParticipantId, ParticipantId),
     change: Change,
 ) -> Result<(), ApiError> {
     let at = actions::at(member, tournament, stage, key);
-    let id = key::parse(key).ok_or_else(ApiError::internal)?;
+    let id = key::parse(&key.local).ok_or_else(ApiError::internal)?;
     match change {
         Change::Put { winner, score } => {
             let score = score.ok_or_else(ApiError::internal)?;

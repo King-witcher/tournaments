@@ -4,6 +4,7 @@
 //! entre as colunas e os tipos do `engine`: um campo novo neles não compila
 //! aqui até ganhar coluna.
 
+use chrono::{DateTime, Utc};
 use engine::{
     champions as ec,
     formats::{
@@ -14,6 +15,7 @@ use engine::{
         table::{Criterion, FinalTie, Tiebreakers},
     },
     series::SeriesLength,
+    stages::StageSetup,
 };
 use serde::Deserialize;
 
@@ -108,6 +110,32 @@ pub struct StageRow {
     /// Fases de tabela: `seed` ou `organizer` (check `tournament_stages_final_tie`).
     /// Nulo na eliminação e na disputa de posições.
     pub(super) final_tie: Option<String>,
+    /// Fases 2 em diante: o corte; nulo, todos. As colunas daqui para baixo
+    /// só vêm na leitura do torneio (`find`): a da chave lê só o formato.
+    #[serde(default)]
+    pub(super) advance: Option<i16>,
+    #[serde(default)]
+    pub(super) check_in: bool,
+    /// O andamento da fase (`StageProgress`).
+    #[serde(default)]
+    pub(super) started_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub(super) check_in_opened_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub(super) finished_at: Option<DateTime<Utc>>,
+}
+
+/// Onde uma fase está, como fica gravado (`tournament_stages`): a API acerta
+/// ao iniciar, desfazer e encerrar cada uma.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct StageProgress {
+    /// Quando começou (a fase 1, com o torneio).
+    pub started_at: Option<DateTime<Utc>>,
+    /// Fases 2 em diante: quando a organização abriu o check-in.
+    pub check_in_opened_at: Option<DateTime<Utc>>,
+    /// Quando terminou: todas as séries decididas e nenhum empate esperando a
+    /// organização (`matches::sync_status` acerta).
+    pub finished_at: Option<DateTime<Utc>>,
 }
 
 /// Um desempate na coluna `tiebreakers` (check `tournament_stages_tiebreakers`).
@@ -146,8 +174,34 @@ fn tiebreaker_columns(tiebreakers: Tiebreakers) -> Option<Vec<String>> {
     )
 }
 
+impl From<StageSetup> for StageRow {
+    fn from(stage: StageSetup) -> Self {
+        Self {
+            // Fora da faixa, o check do banco recusa.
+            advance: stage.advance.map(|n| i16::try_from(n).unwrap_or(i16::MAX)),
+            check_in: stage.check_in,
+            ..Self::from(stage.format)
+        }
+    }
+}
+
 impl From<ef::StageFormat> for StageRow {
     fn from(stage: ef::StageFormat) -> Self {
+        let row = |format: &str| Self {
+            format: format.to_owned(),
+            best_of: 0,
+            finals_best_of: None,
+            bracket: None,
+            grand_final_reset: None,
+            rounds: None,
+            tiebreakers: None,
+            final_tie: None,
+            advance: None,
+            check_in: false,
+            started_at: None,
+            check_in_opened_at: None,
+            finished_at: None,
+        };
         match stage {
             ef::StageFormat::Elimination(config) => {
                 let (bracket, grand_final_reset) = match config.kind {
@@ -157,46 +211,30 @@ impl From<ef::StageFormat> for StageRow {
                     }
                 };
                 Self {
-                    format: "elimination".to_owned(),
                     best_of: config.series.default.into(),
                     finals_best_of: Some(config.series.finals.into()),
                     bracket: Some(bracket.to_owned()),
                     grand_final_reset,
-                    rounds: None,
-                    tiebreakers: None,
-                    final_tie: None,
+                    ..row("elimination")
                 }
             }
             ef::StageFormat::RoundRobin(config) => Self {
-                format: "round_robin".to_owned(),
                 best_of: config.best_of.into(),
-                finals_best_of: None,
-                bracket: None,
-                grand_final_reset: None,
-                rounds: None,
                 tiebreakers: tiebreaker_columns(config.tiebreakers),
                 final_tie: final_tie_column(config.final_tie),
+                ..row("round_robin")
             },
             ef::StageFormat::Swiss(config) => Self {
-                format: "swiss".to_owned(),
                 best_of: config.best_of.into(),
-                finals_best_of: None,
-                bracket: None,
-                grand_final_reset: None,
                 // Fora da faixa, o check do banco recusa.
                 rounds: config.rounds.map(|n| i16::try_from(n).unwrap_or(i16::MAX)),
                 tiebreakers: tiebreaker_columns(config.tiebreakers),
                 final_tie: final_tie_column(config.final_tie),
+                ..row("swiss")
             },
             ef::StageFormat::Placement(config) => Self {
-                format: "placement".to_owned(),
                 best_of: config.best_of.into(),
-                finals_best_of: None,
-                bracket: None,
-                grand_final_reset: None,
-                rounds: None,
-                tiebreakers: None,
-                final_tie: None,
+                ..row("placement")
             },
         }
     }
@@ -231,6 +269,28 @@ impl StageRow {
         }
     }
 
+    /// A fase inteira: o formato, o corte e o check-in.
+    pub fn read_setup(&self) -> Result<StageSetup, ApiError> {
+        Ok(StageSetup {
+            format: self.read()?,
+            advance: self
+                .advance
+                .map(u16::try_from)
+                .transpose()
+                .map_err(|_| invalid("advance", &self))?,
+            check_in: self.check_in,
+        })
+    }
+
+    pub const fn progress(&self) -> StageProgress {
+        StageProgress {
+            started_at: self.started_at,
+            check_in_opened_at: self.check_in_opened_at,
+            finished_at: self.finished_at,
+        }
+    }
+
+    /// Só o formato.
     pub fn read(&self) -> Result<ef::StageFormat, ApiError> {
         let best_of = |n: i16| u8::try_from(n).map_err(|_| invalid("best_of", &self));
         match self.format.as_str() {
@@ -340,6 +400,12 @@ mod tests {
             ef::StageFormat::Placement(PlacementConfig { best_of: 5 }),
         ] {
             assert_eq!(StageRow::from(stage).read().unwrap(), stage);
+            let linked = StageSetup {
+                format: stage,
+                advance: Some(8),
+                check_in: true,
+            };
+            assert_eq!(StageRow::from(linked).read_setup().unwrap(), linked);
         }
     }
 
@@ -383,6 +449,11 @@ mod tests {
             rounds: None,
             tiebreakers: None,
             final_tie: None,
+            advance: None,
+            check_in: false,
+            started_at: None,
+            check_in_opened_at: None,
+            finished_at: None,
         };
         assert!(row("ladder", None, None).read().is_err());
         assert!(row("elimination", None, None).read().is_err());

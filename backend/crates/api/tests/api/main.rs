@@ -24,6 +24,7 @@ mod realtime;
 mod scanners;
 mod schema;
 mod screenshots;
+mod stages;
 mod teams;
 mod tenants;
 mod tournaments;

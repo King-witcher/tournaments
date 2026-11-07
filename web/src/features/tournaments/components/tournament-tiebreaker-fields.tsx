@@ -6,9 +6,8 @@ import { SelectItem } from "@/shared/ui/carbon/select";
 import { ContainedList } from "@/shared/ui/contained-list";
 import { ErrorText } from "@/shared/ui/error-text";
 import { Select } from "@/shared/ui/select";
-import type { FieldErrors } from "../lib/form-errors";
-import type { TournamentValues } from "../lib/form-values";
-import { sameValues } from "../lib/same-values";
+import { type FieldErrors, stageField } from "../lib/form-errors";
+import type { StageValues } from "../lib/stage-values";
 import {
   countingTiebreakers,
   counts,
@@ -23,14 +22,14 @@ import styles from "./tournament-tiebreaker-fields.module.scss";
 /** As opções do empate do fim, o padrão primeiro. */
 const FINAL_TIES: components["schemas"]["FinalTie"][] = ["seed", "organizer"];
 
-/** Os campos do formulário que o bloco lê. */
-const KEYS = ["stageFormat", "bestOf", "tiebreakers", "finalTie"] as const;
-
 type Props = {
-  values: Pick<TournamentValues, (typeof KEYS)[number]>;
-  onChange: (patch: Partial<TournamentValues>) => void;
+  stage: Pick<StageValues, "format" | "bestOf" | "tiebreakers" | "finalTie">;
+  /** A posição da fase, a partir de 0. */
+  index: number;
+  /** Muda campos da fase `index`; a mesma função em todo render. */
+  onStageChange: (index: number, patch: Partial<StageValues>) => void;
   errors: FieldErrors;
-  /** O torneio já começou: só os ligados, na ordem, sem as ações. */
+  /** A fase não muda: só os ligados, na ordem, sem as ações. */
   readOnly: boolean;
 };
 
@@ -48,8 +47,9 @@ type Props = {
  */
 export const TournamentTiebreakerFields = memo(
   function TournamentTiebreakerFields({
-    values,
-    onChange,
+    stage: values,
+    index,
+    onStageChange,
     errors,
     readOnly,
   }: Props) {
@@ -60,7 +60,7 @@ export const TournamentTiebreakerFields = memo(
       on: FocusOn;
       token: number;
     }>();
-    const format = values.stageFormat;
+    const format = values.format;
     if (!isTableFormat(format)) return null;
 
     const list = values.tiebreakers;
@@ -72,23 +72,23 @@ export const TournamentTiebreakerFields = memo(
       tiebreaker: Tiebreaker,
       on: FocusOn,
     ) => {
-      onChange({ tiebreakers: next });
+      onStageChange(index, { tiebreakers: next });
       setFocus((f) => ({ tiebreaker, on, token: (f?.token ?? 0) + 1 }));
     };
     const focusOf = (x: Tiebreaker) =>
       focus?.tiebreaker === x
         ? { focusToken: focus.token, focusOn: focus.on }
         : {};
-    const error = errors.tiebreakers;
+    const error = errors[stageField(index, "tiebreakers")];
     const finalTie = (
       <Select
         labelText={t("finalTie")}
         helperText={t(`finalTieHints.${values.finalTie}`)}
-        name="finalTie"
+        name={`stages.${index}.finalTie`}
         value={values.finalTie}
         readOnly={readOnly}
         onChange={(e) =>
-          onChange({
+          onStageChange(index, {
             finalTie: e.target.value as components["schemas"]["FinalTie"],
           })
         }
@@ -111,7 +111,7 @@ export const TournamentTiebreakerFields = memo(
       // O alvo do erro da API (`data-field`): a lista não tem campo nativo.
       <div
         className={styles.block}
-        data-field="tiebreakers"
+        data-field={stageField(index, "tiebreakers")}
         tabIndex={-1}
         aria-describedby={error ? errorId : undefined}
       >
@@ -161,5 +161,4 @@ export const TournamentTiebreakerFields = memo(
       </div>
     );
   },
-  sameValues(KEYS),
 );
