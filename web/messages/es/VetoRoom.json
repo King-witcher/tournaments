@@ -1,6 +1,7 @@
 {
   "title": "Sala de veto",
   "description": "Veto de mapas y draft de campeones, sin torneo y sin cuenta.",
+  "create": "Crear sala de veto",
   "stepsLabel": "Pasos de la sala",
   "result": "Resultado",
   "resultText": "Resultado para el chat",

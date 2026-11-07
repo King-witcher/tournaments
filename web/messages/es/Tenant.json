@@ -13,11 +13,14 @@
     "more": "Ver más",
     "less": "Ver menos"
   },
+  "about": {
+    "title": "Acerca de"
+  },
   "details": {
     "title": "Nombre y descripción",
     "name": "Nombre",
     "description": "Descripción",
-    "descriptionHint": "Aparece en el encabezado de la comunidad y en la página de la invitación.",
+    "descriptionHint": "Aparece en el inicio de la comunidad y en la página de la invitación.",
     "saved": "Nombre y descripción guardados."
   },
   "address": {
@@ -79,6 +82,8 @@
   "deletionNotice": {
     "title": "Comunidad en eliminación",
     "text": "Esta comunidad se eliminará el <date></date>, con los torneos y todo lo que tiene dentro. Hasta entonces, queda en solo lectura.",
-    "ownerHint": "Para cancelar, usa la pestaña Configuración."
-  }
+    "cancel": "Cancelar eliminación"
+  },
+  "nav": "Menú de la comunidad",
+  "kind": "Comunidad"
 }

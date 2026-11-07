@@ -1,4 +1,16 @@
 @use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A dica de uso, como a descrição de uma seção: em segundo plano, na
+// largura de leitura (40rem).
+.hint {
+  @include type.type-style("body-01");
+
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+  color: theme.$text-secondary;
+}
 
 // A dica de arrastar só faz sentido onde a chave não cabe: no celular.
 .mobileOnly {

@@ -21,5 +21,10 @@
   "saved": "Saved.",
   "unsaved": "Unsaved changes",
   "readOnly": "Read-only",
-  "noTranslations": "No translations"
+  "noTranslations": "No translations",
+  "leave": {
+    "title": "Leave without saving?",
+    "text": "Unsaved changes in {sections} will be lost.",
+    "confirm": "Leave without saving"
+  }
 }

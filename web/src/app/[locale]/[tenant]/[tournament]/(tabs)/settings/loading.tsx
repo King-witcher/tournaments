@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-import { TournamentSettingsSkeleton } from "@/features/tournaments/components/tournament-settings-skeleton";
+import { SettingsSectionSkeleton } from "@/features/tournaments/components/settings-section-skeleton";
 
-/** As configurações carregando: as primeiras seções, na coluna estreita. */
+/** Uma seção das Configurações carregando, dentro do layout delas. */
 export default async function Loading() {
   const t = await getTranslations("TournamentSettings");
-  return <TournamentSettingsSkeleton label={t("loading")} />;
+  return <SettingsSectionSkeleton label={t("loading")} />;
 }

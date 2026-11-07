@@ -69,10 +69,7 @@ export async function NewTournamentView({ tenant, from }: Props) {
   return (
     <>
       <PageHeader
-        breadcrumbs={[
-          { href: "/", label: tNav("home") },
-          { href: `/${tenant}`, label: me.name },
-        ]}
+        breadcrumbs={[{ href: `/${tenant}`, label: me.name }]}
         title={t("title")}
       />
       {me.role === "player" ? (

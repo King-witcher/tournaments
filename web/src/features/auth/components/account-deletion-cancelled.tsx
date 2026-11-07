@@ -7,7 +7,7 @@ type Props = {
 };
 
 /**
- * Na aba Perfil, para quem entrou numa conta com a exclusão agendada
+ * No Perfil da conta, para quem entrou numa conta com a exclusão agendada
  * (`?account_deletion=cancelled`, do login com senha ou com o Discord): diz
  * que a exclusão foi cancelada. Fica em `<Suspense>`.
  */

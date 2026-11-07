@@ -7,7 +7,6 @@ import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { DataTable } from "@/shared/ui/data-table";
 import { Link } from "@/shared/ui/link";
-import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useMatchLabels } from "../hooks/use-match-labels";
 import { eliminationOf, placementSeriesOf } from "../lib/standings";
@@ -114,18 +113,17 @@ export function StandingsTable({ tenant, bracket, basePath }: Props) {
   });
 
   return (
-    <Section title={t("title")}>
-      <DataTable
-        label={t("title")}
-        primaryColumn="player"
-        columns={[
-          { key: "rank", header: t("position") },
-          { key: "player", header: t("player") },
-          { key: "result", header: t("result") },
-        ]}
-        rows={rows}
-        empty={{ text: t("empty") }}
-      />
-    </Section>
+    // Sem título: o da página já é "Classificação".
+    <DataTable
+      label={t("title")}
+      primaryColumn="player"
+      columns={[
+        { key: "rank", header: t("position") },
+        { key: "player", header: t("player") },
+        { key: "result", header: t("result") },
+      ]}
+      rows={rows}
+      empty={{ text: t("empty") }}
+    />
   );
 }

@@ -4,7 +4,7 @@ import { Section } from "@/shared/ui/section";
 import { getCurrentUser } from "../server";
 import { DisplayNameForm } from "./display-name-form";
 
-/** A aba Perfil da conta: o nome que aparece no cabeçalho. Fica em `<Suspense>`. */
+/** O nome exibido, no Perfil da conta: o que aparece no cabeçalho. Fica em `<Suspense>`. */
 export async function DisplayNameSection() {
   const [user, t] = await Promise.all([
     getCurrentUser(),

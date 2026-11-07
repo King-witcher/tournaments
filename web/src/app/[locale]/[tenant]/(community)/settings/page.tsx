@@ -3,61 +3,65 @@ import { Suspense } from "react";
 
 import { DiscordSection } from "@/features/discord/components/discord-section";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
-import { MembershipSettings } from "@/features/members/components/membership-settings";
+import { NicknameSection } from "@/features/members/components/nickname-section";
+import { RatingSettingsSection } from "@/features/ratings/components/rating-settings-section";
+import { CommunitySettingsColumns } from "@/features/tenants/components/community-settings-columns";
 import { LogoSection } from "@/features/tenants/components/logo-section";
 import { TenantAddressSection } from "@/features/tenants/components/tenant-address-section";
 import { TenantDetailsSection } from "@/features/tenants/components/tenant-details-section";
-import { Stack } from "@/shared/ui/carbon/stack";
-import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TenantHeader } from "@/features/tenants/components/tenant-header";
+import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
+
+const SKELETON = (
+  <>
+    <SectionSkeleton rows={2} />
+    <SectionSkeleton rows={1} />
+  </>
+);
 
 /**
- * Aba Configurações da comunidade: o que ela é, para o owner (nome, descrição,
- * endereço e logo), o que é de quem vê, o Discord (só o owner) e, por último,
- * a zona de perigo.
+ * As Configurações da comunidade: à esquerda, o que o dono decide sobre ela
+ * (nome e descrição, endereço, logo, rating) e o apelido de quem vê; à
+ * direita, os avisos no Discord (só o dono, a seção mais longa); por último,
+ * a zona de perigo (`CommunitySettingsColumns`).
  */
 export default async function TenantSettingsPage({
   params,
 }: PageProps<"/[locale]/[tenant]/settings">) {
-  const t = await getTranslations("Tenant.settings");
+  const t = await getTranslations("Tenant");
   return (
-    <Stack gap={9}>
-      <Suspense fallback={null}>
+    <>
+      <Suspense fallback={<PageHeaderSkeleton label={t("settings.loading")} />}>
         {params.then(({ tenant }) => (
-          <TenantDetailsSection slug={tenant} />
+          <TenantHeader slug={tenant} title={t("tabs.settings")} settings />
         ))}
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={SKELETON}>
         {params.then(({ tenant }) => (
-          <TenantAddressSection slug={tenant} />
+          <CommunitySettingsColumns
+            slug={tenant}
+            identity={
+              <>
+                <TenantDetailsSection slug={tenant} />
+                <TenantAddressSection slug={tenant} />
+                <Suspense fallback={<SectionSkeleton rows={2} />}>
+                  <LogoSection slug={tenant} />
+                </Suspense>
+                <Suspense fallback={<SectionSkeleton rows={4} />}>
+                  <RatingSettingsSection slug={tenant} />
+                </Suspense>
+                <NicknameSection slug={tenant} />
+              </>
+            }
+            discord={
+              <Suspense fallback={<SectionSkeleton rows={4} />}>
+                <DiscordSection slug={tenant} />
+              </Suspense>
+            }
+            danger={<CommunityDangerZone slug={tenant} />}
+          />
         ))}
       </Suspense>
-      <Suspense fallback={null}>
-        {params.then(({ tenant }) => (
-          <LogoSection slug={tenant} />
-        ))}
-      </Suspense>
-      <Suspense
-        fallback={
-          <TabLoading label={t("loading")}>
-            <SectionSkeleton rows={2} />
-            <SectionSkeleton rows={1} />
-          </TabLoading>
-        }
-      >
-        {params.then(({ tenant }) => (
-          <MembershipSettings slug={tenant} />
-        ))}
-      </Suspense>
-      <Suspense fallback={null}>
-        {params.then(({ tenant }) => (
-          <DiscordSection slug={tenant} />
-        ))}
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton rows={2} />}>
-        {params.then(({ tenant }) => (
-          <CommunityDangerZone slug={tenant} />
-        ))}
-      </Suspense>
-    </Stack>
+    </>
   );
 }

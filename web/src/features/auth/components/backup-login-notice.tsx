@@ -30,7 +30,7 @@ function rememberDismissed() {
 }
 
 /**
- * Já na aba Logins, foca o campo; de fora, vai até ele. A página visitada antes
+ * Já nos Logins da conta, foca o campo; de fora, vai até ele. A página visitada antes
  * fica no DOM, escondida: achar o campo não basta, ele precisa estar à vista.
  */
 function goToEmailField(router: ReturnType<typeof useRouter>) {

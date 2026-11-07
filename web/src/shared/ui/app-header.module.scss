@@ -3,3 +3,9 @@
 .bar {
   min-inline-size: 0;
 }
+
+// O botão de menu só existe em página com menu lateral (`AppSideNav`); do
+// `lg` para cima o Carbon já o esconde (o menu fica sempre à vista).
+[data-app-shell]:not(:has([data-app-side-nav])) .menuButton {
+  display: none;
+}

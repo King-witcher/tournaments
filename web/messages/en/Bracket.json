@@ -101,6 +101,10 @@
     "title": "Matches waiting for you",
     "item": "{match} · {a} × {b}: {task}"
   },
+  "live": {
+    "title": "Matches in progress",
+    "item": "{match} · {a} {aMaps} × {bMaps} {b}"
+  },
   "standings": {
     "title": "Standings",
     "loading": "Loading standings…",

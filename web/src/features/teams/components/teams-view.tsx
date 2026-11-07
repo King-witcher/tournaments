@@ -46,11 +46,7 @@ export async function TeamsView({ tenant, slug }: Props) {
   const path = `/${tenant}/${slug}`;
   const header = (
     <PageHeader
-      breadcrumbs={[
-        { href: "/", label: tNav("home") },
-        { href: `/${tenant}`, label: me.name },
-        { href: path, label: localizedName(tournament, locale) },
-      ]}
+      breadcrumbs={[{ href: path, label: localizedName(tournament, locale) }]}
       title={t("pageTitle")}
     />
   );

@@ -3,15 +3,10 @@ import { Suspense } from "react";
 
 import { BracketTab } from "@/features/matches/components/bracket-tab";
 import { parseStageParam } from "@/features/stages/lib/stages";
-import {
-  SectionSkeleton,
-  TabLoading,
-  TableSkeleton,
-} from "@/shared/ui/skeleton";
+import { TabLoading, TableSkeleton } from "@/shared/ui/skeleton";
 
 /**
- * A aba Classificação: só o conteúdo da aba (o cabeçalho do torneio e as abas
- * vêm do `layout.tsx` do grupo).
+ * A Classificação (o cabeçalho vem do `layout.tsx` das seções).
  */
 export default async function StandingsPage({
   params,
@@ -22,7 +17,6 @@ export default async function StandingsPage({
     <Suspense
       fallback={
         <TabLoading label={t("loading")}>
-          <SectionSkeleton rows={0} />
           <TableSkeleton columns={5} />
         </TabLoading>
       }

@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
@@ -46,4 +47,23 @@
   @include type.type-style("body-compact-01");
 
   color: theme.$text-secondary;
+}
+
+// Entre o nome e a frase, na largura do tile, com um respiro a mais que o do
+// texto para o desenho não colar nas linhas; na cor de ícone secundário (o
+// desenho é `currentColor`), que o tema escuro troca.
+.media {
+  display: block;
+  margin-block: spacing.$spacing-03;
+  color: theme.$icon-secondary;
+
+  // Abaixo do md os tiles empilham numa coluna: o desenho alongaria a lista
+  // sem ajudar a comparar (o nome e a frase ficam).
+  @include breakpoint.breakpoint-down(md) {
+    display: none;
+  }
+}
+
+input:disabled + .tile .media {
+  color: theme.$icon-disabled;
 }

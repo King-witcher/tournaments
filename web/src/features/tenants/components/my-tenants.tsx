@@ -8,10 +8,11 @@ import { getMyTenants } from "../server";
 import { CreateTenantButton } from "./create-tenant-button";
 
 /**
- * Comunidades do usuário logado, em tiles com o logo e o papel dele, e, depois
- * da lista, o "Criar comunidade", que abre o Modal (poucos usam, e o painel
- * do cabeçalho também o tem). Sem login ou sem nenhuma, não mostra nada: quem
- * não tem comunidade vê o `NoTenants`. Fica em `<Suspense>`.
+ * Comunidades do usuário logado, em tiles com o logo e o papel dele, e o
+ * "Criar comunidade" na ação da seção, ao lado do título, que abre o Modal
+ * (poucos usam, e o painel do cabeçalho também o tem). Sem login ou sem
+ * nenhuma, não mostra nada: quem não tem comunidade vê o `NoTenants`. Fica em
+ * `<Suspense>`.
  */
 export async function MyTenants() {
   const tenants = await getMyTenants();
@@ -25,7 +26,14 @@ export async function MyTenants() {
   // ficam alinhados; sem nenhum, nenhuma.
   const withLogos = tenants.some((tenant) => tenant.logo_url);
   return (
-    <Section title={t("title")}>
+    <Section
+      title={t("title")}
+      action={
+        <CreateTenantButton kind="ghost" size="sm">
+          {t("create")}
+        </CreateTenantButton>
+      }
+    >
       <TileGrid>
         {tenants.map((tenant) => (
           <LinkTile
@@ -46,9 +54,6 @@ export async function MyTenants() {
           />
         ))}
       </TileGrid>
-      <CreateTenantButton kind="ghost" size="sm">
-        {t("create")}
-      </CreateTenantButton>
     </Section>
   );
 }

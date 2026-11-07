@@ -15,7 +15,13 @@ type Crumb = {
 };
 
 type Props = {
-  /** As páginas de cima, da raiz até a mãe (a atual é o título). */
+  /**
+   * As páginas de cima, até a mãe (a atual é o título), com a barra depois
+   * da última. Só em página que o menu lateral não lista (a partida, a
+   * pessoa, a ordem da chave): nas que ele lista, o menu já diz onde se
+   * está, e a trilha repetiria. Começa na área do menu (a comunidade, o
+   * torneio), não no Início, que é o logo.
+   */
   breadcrumbs?: Crumb[];
   title: ReactNode;
   /**
@@ -113,11 +119,9 @@ function HeaderContent({
   return (
     <>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb
-          aria-label={breadcrumbLabel}
-          className={styles.breadcrumb}
-          noTrailingSlash
-        >
+        // Com a barra depois da mãe, como no Carbon: a trilha leva às de
+        // cima, e a atual é o título logo embaixo.
+        <Breadcrumb aria-label={breadcrumbLabel} className={styles.breadcrumb}>
           {/* No celular, como pede o Carbon: o ⋯ com as de cima e só a mãe. */}
           {breadcrumbs.length > 1 && (
             <BreadcrumbOverflow

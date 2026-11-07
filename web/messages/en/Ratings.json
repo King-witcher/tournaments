@@ -9,7 +9,13 @@
     "record": "W–L",
     "lastGame": "Last game",
     "noGame": "—",
-    "empty": "No one has a rating yet. Play at least one game to be ranked."
+    "empty": "No one has a rating yet. Play at least one game to be ranked.",
+    "meta": "Starting rating {initial} · provisional under {games} games"
+  },
+  "top": {
+    "title": "Ranking",
+    "mine": "You: {position}, rating {rating}",
+    "all": "View ranking"
   },
   "provisional": "Provisional",
   "record": "{wins} W – {losses} L",

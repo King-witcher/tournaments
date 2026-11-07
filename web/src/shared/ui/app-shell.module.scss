@@ -1,0 +1,17 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/styles/scss/components/ui-shell/functions" as ui-shell;
+
+// Continua a coluna do `body` (`globals.scss`): o rodapé no fim da tela.
+.shell {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+// Com o menu lateral (fixo, à esquerda, a largura do Carbon), o conteúdo e o
+// rodapé começam depois dele; o cabeçalho é fixo e não se mexe.
+@include breakpoint.breakpoint(lg) {
+  .shell:has([data-app-side-nav]) {
+    padding-inline-start: ui-shell.mini-units(32);
+  }
+}

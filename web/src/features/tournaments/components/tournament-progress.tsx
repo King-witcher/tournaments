@@ -18,14 +18,17 @@ type Props = {
     components["schemas"]["Tournament"],
     "status" | "check_in_minutes"
   >;
+  /** Linha curta embaixo de um passo ("3 de 7 séries decididas"). */
+  secondary?: Partial<Record<Status, string>>;
 };
 
 /**
  * O ciclo do torneio com o passo de agora, só leitura: rascunho → inscrições
  * → check-in → em andamento → encerrado. Sem check-in, o passo não existe
  * (a inscrição vai direto para em andamento); encerrado, todos ficam feitos.
+ * Numa coluna estreita, os passos ficam um embaixo do outro.
  */
-export function TournamentProgress({ tournament }: Props) {
+export function TournamentProgress({ tournament, secondary }: Props) {
   const t = useTranslations("Tournament");
   const tStatus = useTranslations("TournamentStatus");
   const steps = STEPS.filter(
@@ -43,7 +46,11 @@ export function TournamentProgress({ tournament }: Props) {
     <ProgressSteps
       label={t("progress")}
       current={current}
-      steps={steps.map((step) => ({ key: step, label: tStatus(step) }))}
+      steps={steps.map((step) => ({
+        key: step,
+        label: tStatus(step),
+        secondaryLabel: secondary?.[step],
+      }))}
     />
   );
 }

@@ -10,18 +10,14 @@ import { PageHeader } from "@/shared/ui/page-header";
  * não colidir com o slug de uma comunidade (`[tenant]`).
  */
 export default async function EmailConfirmPage() {
-  const [t, tAccount, tNav] = await Promise.all([
+  const [t, tAccount] = await Promise.all([
     getTranslations("Account.emailConfirm"),
     getTranslations("Account"),
-    getTranslations("Nav"),
   ]);
   return (
     <Page>
       <PageHeader
-        breadcrumbs={[
-          { href: "/", label: tNav("home") },
-          { href: "/account", label: tAccount("title") },
-        ]}
+        breadcrumbs={[{ href: "/account", label: tAccount("title") }]}
         title={t("title")}
         meta={t("text")}
       />

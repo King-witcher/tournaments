@@ -11,5 +11,7 @@
     "failed": "Não deu para carregar suas comunidades. Feche e abra de novo.",
     "empty": "Você ainda não participa de nenhuma comunidade.",
     "create": "Criar comunidade"
-  }
+  },
+  "openMenu": "Abrir o menu",
+  "closeMenu": "Fechar o menu"
 }

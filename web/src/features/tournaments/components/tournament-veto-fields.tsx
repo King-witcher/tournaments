@@ -47,6 +47,8 @@ type Props = {
   maps: Schemas["Map"][];
   /** O torneio já começou: tudo aqui só para leitura. */
   readOnly: boolean;
+  /** O pool salvo, que divide os mapas do pool e os de fora (`MapPoolField`). */
+  savedPool: string[];
 };
 
 /**
@@ -61,7 +63,7 @@ type Props = {
 export const TournamentVetoFields = memo(function TournamentVetoFields(
   props: Props,
 ) {
-  const { tenant, values, onChange, errors, maps, readOnly } = props;
+  const { tenant, values, onChange, errors, maps, readOnly, savedPool } = props;
   const t = useTranslations("TournamentForm.veto");
   const tdm = isTdm(values);
   const evenVeto = values.mapMode === "veto" && onlyEvenSeries(values);
@@ -105,6 +107,7 @@ export const TournamentVetoFields = memo(function TournamentVetoFields(
           error={errors.mapPool}
           maps={maps}
           readOnly={readOnly}
+          savedPool={savedPool}
         />
       )}
       {stepSecondsGroup(values) === "maps" && (

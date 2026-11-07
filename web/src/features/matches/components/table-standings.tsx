@@ -7,9 +7,9 @@ import { isEvenSeries } from "@/features/tournaments/lib/format";
 import { stageTiebreakers } from "@/features/tournaments/lib/tiebreakers";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
 import { InfoTip } from "@/shared/ui/info-tip";
-import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { fragsText } from "../lib/score";
 import { DepartureTag } from "./departure-tag";
@@ -204,10 +204,9 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
   const explained = [...pending, ...tiebreaks];
 
   return (
-    <Section
-      title={t("title")}
-      description={finished ? undefined : t("current")}
-    >
+    // Sem título: o da página já é "Classificação".
+    <Stack gap={5}>
+      {!finished && <p className={styles.current}>{t("current")}</p>}
       <DataTable
         label={t("title")}
         primaryColumn="team"
@@ -216,8 +215,8 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
         empty={{ text: t("empty") }}
       />
       {explained.length > 0 && (
-        <div className={styles.tiebreaks}>
-          <h3 className={styles.tiebreaksTitle}>{t("tiebreaks")}</h3>
+        <div>
+          <h2 className={styles.tiebreaksTitle}>{t("tiebreaks")}</h2>
           <ul className={styles.tiebreakList}>
             {explained.map((text) => (
               <li key={text}>{text}</li>
@@ -228,6 +227,6 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
           )}
         </div>
       )}
-    </Section>
+    </Stack>
   );
 }

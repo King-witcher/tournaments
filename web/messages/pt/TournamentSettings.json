@@ -21,5 +21,10 @@
   "saved": "Salvo.",
   "unsaved": "Mudanças não salvas",
   "readOnly": "Só leitura",
-  "noTranslations": "Sem tradução"
+  "noTranslations": "Sem tradução",
+  "leave": {
+    "title": "Sair sem salvar?",
+    "text": "As mudanças não salvas em {sections} se perdem.",
+    "confirm": "Sair sem salvar"
+  }
 }

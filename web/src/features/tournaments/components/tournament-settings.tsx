@@ -1,43 +1,28 @@
-import { CoverSection } from "@/features/images/components/cover-section";
-import { rulesImagesOf } from "@/features/images/lib/rules-images";
-import { getImageSettings } from "@/features/images/server";
-import { loadMaps } from "@/features/matches/server";
-import { getScreenshotSettings } from "@/features/screenshots/server";
+import type { ReactNode } from "react";
+
 import { apiErrorMessage } from "@/shared/api/errors";
-import { Accordion } from "@/shared/ui/carbon/accordion";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Notice } from "@/shared/ui/notice";
 import { loadTournament } from "../server";
-import { SettingsChampionsSection } from "./settings-champions-section";
-import { SettingsFormatSection } from "./settings-format-section";
-import { SettingsGeneralSection } from "./settings-general-section";
-import { SettingsLanguagesSection } from "./settings-languages-section";
-import { SettingsMapsSection } from "./settings-maps-section";
-import { SettingsRegistrationSection } from "./settings-registration-section";
-import { SettingsResultsSection } from "./settings-results-section";
 import { TournamentSettingsProvider } from "./tournament-settings-provider";
 
-type Props = { tenant: string; slug: string };
+type Props = {
+  tenant: string;
+  slug: string;
+  /** A página da seção aberta (`TournamentSettingsSection`). */
+  children: ReactNode;
+};
 
 /**
- * A aba Configurações do torneio, para organizer e owner: um acordeão com uma
- * seção por item (Geral, Início e inscrições, Formato, Mapas, Campeões,
- * Resultados, Outros idiomas), cada uma com o resumo do que está salvo no
- * título e o próprio Salvar dentro, na largura toda da página (como a chave e
- * as tabelas): cada seção põe lado a lado o que se decide junto (`FormRow`) e
- * os tiles em fileiras. Fechada, a aba é o resumo da configuração inteira;
- * vários itens podem ficar abertos. As regras da organização ficam na aba
- * Regras. Para quem joga, o aviso de que a aba não é dele. Fica em
- * `<Suspense>`.
+ * As Configurações do torneio, para organizer e owner, no `layout.tsx` delas:
+ * o torneio salvo e o que não foi salvo de cada seção
+ * (`TournamentSettingsProvider`), em volta da página da seção aberta, na
+ * largura toda da página (como a chave e as tabelas). O layout não remonta ao
+ * trocar de seção pelo menu, e o que foi mexido continua lá. Para quem joga,
+ * o aviso de que a seção não é dele, sem a página. Fica em `<Suspense>`.
  */
-export async function TournamentSettings({ tenant, slug }: Props) {
-  const [loaded, maps, screenshots, imageSettings] = await Promise.all([
-    loadTournament(tenant, slug),
-    loadMaps(),
-    getScreenshotSettings(),
-    // A capa pede o mesmo, na mesma requisição: chega pronto.
-    getImageSettings(),
-  ]);
+export async function TournamentSettings({ tenant, slug, children }: Props) {
+  const loaded = await loadTournament(tenant, slug);
   if (loaded.kind !== "ok") return null;
   if (loaded.me.role === "player") {
     return (
@@ -45,32 +30,14 @@ export async function TournamentSettings({ tenant, slug }: Props) {
     );
   }
 
-  const { tournament } = loaded;
   return (
     <Grid>
       <Column sm={4} md={8} lg={16}>
-        <TournamentSettingsProvider tenant={tenant} tournament={tournament}>
-          <Accordion>
-            <SettingsGeneralSection
-              cover={
-                <CoverSection
-                  tenant={tenant}
-                  tournament={tournament.slug}
-                  url={tournament.cover_url}
-                />
-              }
-            />
-            <SettingsRegistrationSection />
-            <SettingsFormatSection />
-            <SettingsMapsSection maps={maps} />
-            <SettingsChampionsSection />
-            <SettingsResultsSection
-              screenshots={screenshots?.enabled ?? false}
-            />
-            <SettingsLanguagesSection
-              rulesImages={rulesImagesOf(imageSettings)}
-            />
-          </Accordion>
+        <TournamentSettingsProvider
+          tenant={tenant}
+          tournament={loaded.tournament}
+        >
+          {children}
         </TournamentSettingsProvider>
       </Column>
     </Grid>

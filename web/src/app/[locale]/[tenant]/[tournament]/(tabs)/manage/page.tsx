@@ -2,23 +2,15 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { TournamentManage } from "@/features/tournaments/components/tournament-manage";
-import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TournamentManageSkeleton } from "@/features/tournaments/components/tournament-manage-skeleton";
 
-/** A aba Organização. */
+/** A Organização (o cabeçalho vem do `layout.tsx` das seções). */
 export default async function ManagePage({
   params,
 }: PageProps<"/[locale]/[tenant]/[tournament]/manage">) {
   const t = await getTranslations("Tournament");
   return (
-    <Suspense
-      fallback={
-        <TabLoading label={t("loading")}>
-          <SectionSkeleton rows={2} />
-          <SectionSkeleton rows={1} />
-          <SectionSkeleton rows={2} />
-        </TabLoading>
-      }
-    >
+    <Suspense fallback={<TournamentManageSkeleton label={t("loading")} />}>
       {params.then(({ tenant, tournament }) => (
         <TournamentManage tenant={tenant} slug={tournament} />
       ))}

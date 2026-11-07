@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/spacing";
+
+// Na largura do tile e na altura de 80px, a mesma em todos (o quadro estica;
+// o traço, não).
+.diagram {
+  display: block;
+  inline-size: 100%;
+  block-size: spacing.$spacing-11;
+  overflow: visible;
+}
+
+.lines,
+.dots {
+  fill: none;
+  stroke: currentcolor;
+  vector-effect: non-scaling-stroke;
+}
+
+// O traço de 1px dos pictogramas (a única medida fora de token é a de 1px).
+.lines {
+  stroke-width: 1px;
+}
+
+// Os pontos: o traço de comprimento zero com a ponta redonda vira um círculo
+// do diâmetro do traço, 4px.
+.dots {
+  stroke-width: spacing.$spacing-02;
+  stroke-linecap: round;
+}
+
+.straight {
+  shape-rendering: crispedges;
+}

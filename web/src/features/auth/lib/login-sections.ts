@@ -1,5 +1,5 @@
 /**
- * Ids dos blocos da aba Logins da conta: depois de ligar ou remover um login
+ * Ids dos blocos dos Logins da conta: depois de ligar ou remover um login
  * (ou o email), o formulário some no refresh e o foco vai para o bloco
  * (`focusIfLost`).
  */

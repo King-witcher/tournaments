@@ -12,17 +12,11 @@ export default async function EmailLoginPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [t, tNav] = await Promise.all([
-    getTranslations("Login"),
-    getTranslations("Nav"),
-  ]);
+  const t = await getTranslations("Login");
   return (
     <Page>
       <PageHeader
-        breadcrumbs={[
-          { href: "/", label: tNav("home") },
-          { href: "/login", label: t("title") },
-        ]}
+        breadcrumbs={[{ href: "/login", label: t("title") }]}
         title={t("email.title")}
         meta={t("email.text")}
       />

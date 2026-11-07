@@ -17,6 +17,8 @@ type Props = {
   basePath: string;
   /** Partida que não entra na lista (a da página em que ela aparece). */
   exclude?: string;
+  /** Só estas tarefas (na Organização, as da organização, sem as de quem joga). */
+  tasks?: Schemas["ViewerTask"][];
 };
 
 /**
@@ -25,12 +27,14 @@ type Props = {
  * que ele joga, o próximo mapa quando já saiu: numa chave grande ou no
  * celular, o cartão da partida pode estar fora da tela. Some sem pendência.
  */
-export function PendingMatches({ bracket, basePath, exclude }: Props) {
+export function PendingMatches({ bracket, basePath, exclude, tasks }: Props) {
   const t = useTranslations("Bracket");
   const { code } = useMatchLabels(isSingle(bracket.format));
   const teamName = useTeamName();
   const teams = new Map(bracket.entrants.map((e) => [e.id, e]));
-  const pending = actionableMatches(bracket, exclude);
+  const pending = actionableMatches(bracket, exclude).filter(
+    (m) => !tasks || (m.task != null && tasks.includes(m.task)),
+  );
   if (pending.length === 0) return null;
 
   const name = (side: Schemas["MatchSide"]) => {

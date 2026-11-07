@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+// O que vale neste passo: texto corrido, em coluna de leitura (40rem).
+.hint {
+  @include type.type-style("body-01");
+
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+}

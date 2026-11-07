@@ -25,6 +25,7 @@ import { themeInitScript } from "@/shared/lib/theme";
 import { AppContent } from "@/shared/ui/app-content";
 import { AppFooter } from "@/shared/ui/app-footer";
 import { AppHeader } from "@/shared/ui/app-header";
+import { AppShell } from "@/shared/ui/app-shell";
 import { HeaderPlaceholder } from "@/shared/ui/header-placeholder";
 
 export function generateStaticParams() {
@@ -100,22 +101,28 @@ export default async function LocaleLayout({
               só para quem está logado (RealtimeSession), e a inscrição de
               Web Push acompanha o idioma e a conta (PushSession). */}
           <RealtimeProvider>
-            <AppHeader name={t("brand")} skipLabel={t("skipToContent")}>
-              {/* O lugar de cada ação enquanto ela chega: a barra não pula.
+            <AppShell>
+              <AppHeader
+                name={t("brand")}
+                skipLabel={t("skipToContent")}
+                menuLabels={{ open: t("openMenu"), close: t("closeMenu") }}
+              >
+                {/* O lugar de cada ação enquanto ela chega: a barra não pula.
                   As que só existem com sessão (comunidades, sininho) ficam à
                   esquerda: sem sessão, somem sem mexer nas outras. */}
-              <Suspense fallback={<HeaderPlaceholder />}>
-                <TenantSwitcher />
-              </Suspense>
-              <Suspense fallback={<HeaderPlaceholder />}>
-                <NotificationBell />
-              </Suspense>
-              <Suspense fallback={<HeaderPlaceholder />}>
-                <UserMenu />
-              </Suspense>
-            </AppHeader>
-            <AppContent>{children}</AppContent>
-            <AppFooter />
+                <Suspense fallback={<HeaderPlaceholder />}>
+                  <TenantSwitcher />
+                </Suspense>
+                <Suspense fallback={<HeaderPlaceholder />}>
+                  <NotificationBell />
+                </Suspense>
+                <Suspense fallback={<HeaderPlaceholder />}>
+                  <UserMenu />
+                </Suspense>
+              </AppHeader>
+              <AppContent>{children}</AppContent>
+              <AppFooter />
+            </AppShell>
             <Suspense fallback={null}>
               <RealtimeSession />
             </Suspense>

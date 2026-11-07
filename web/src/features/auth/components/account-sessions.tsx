@@ -4,7 +4,7 @@ import { getSessions } from "../server";
 import { SessionList } from "./session-list";
 
 /**
- * A aba Sessões da conta: onde a conta está aberta. Fica em `<Suspense>`.
+ * As Sessões da conta: onde ela está aberta. Fica em `<Suspense>`.
  */
 export async function AccountSessions() {
   const result = await getSessions();

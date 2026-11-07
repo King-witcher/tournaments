@@ -10,7 +10,7 @@ import { Notice } from "@/shared/ui/notice";
 import { usePush } from "../hooks/use-push";
 
 /**
- * Os avisos com o site fechado neste navegador, na aba Avisos da conta: o
+ * Os avisos com o site fechado neste navegador, nas Notificações da conta: o
  * estado (ativado, desligado, bloqueado, sem suporte, iPhone sem o site
  * instalado, desligado no servidor) e o botão de ativar ou desativar. A
  * permissão só é pedida no clique.

@@ -19,9 +19,9 @@
   "teamSize": "Tamaño del equipo",
   "teamSizeOption": "{size}v{size}",
   "teamsReset": {
-    "fromDuel": "Al guardar, {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}. Arma los equipos en la pestaña Organización antes de iniciar.",
+    "fromDuel": "Al guardar, {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}. Arma los equipos en Organización antes de iniciar.",
     "toDuel": "Al guardar, los equipos se deshacen y {count, plural, one {el inscrito juega} other {cada uno de los # inscritos juega}} por su cuenta.",
-    "resize": "Al guardar, los equipos armados se deshacen y {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}. Arma equipos de {size} de nuevo en la pestaña Organización."
+    "resize": "Al guardar, los equipos armados se deshacen y {count, plural, one {el inscrito queda sin equipo} other {los # inscritos quedan sin equipo}}. Arma equipos de {size} de nuevo en Organización."
   },
   "grandFinalReset": "Reset de gran final",
   "grandFinalResetHint": "Si quien viene del repechaje gana la gran final, los dos juegan una serie más.",
@@ -160,9 +160,9 @@
   "stageFormatHints": {
     "double": "Quien pierde pasa al repechaje y, si pierde de nuevo, queda fuera.",
     "single": "Quien pierde una serie queda fuera.",
-    "round_robin": "Cada uno enfrenta a todos los demás una vez. Hasta {max} participantes.",
-    "swiss": "En cada ronda se enfrentan quienes tienen la misma puntuación, sin repetir rival. Hasta {max} participantes.",
-    "placement": "El orden de la llave forma los pares (1º contra 2º, 3º contra 4º...). Quien gana se queda con la mejor posición. Hasta {max} participantes."
+    "round_robin": "Cada uno enfrenta a todos los demás una vez.",
+    "swiss": "En cada ronda se enfrentan quienes tienen la misma puntuación, sin repetir rival.",
+    "placement": "El orden de la llave forma los pares (1º contra 2º, 3º contra 4º...). Quien gana se queda con la mejor posición."
   },
   "swissRounds": "Rondas",
   "swissRoundsHint": "Automático: 3 rondas con hasta 8 inscritos, 4 con hasta 16 y 5 con hasta 32. Con pocos inscritos, como máximo una menos que ellos.",
@@ -238,6 +238,7 @@
   "teamRules": {
     "title": "Equipos",
     "label": "Quién actúa por el equipo",
+    "recommended": "{preset} (recomendado)",
     "presets": {
       "captain": "Solo el capitán",
       "balanced": "Equilibrado",

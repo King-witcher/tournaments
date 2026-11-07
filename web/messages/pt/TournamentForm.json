@@ -19,9 +19,9 @@
   "teamSize": "Tamanho do time",
   "teamSizeOption": "{size}v{size}",
   "teamsReset": {
-    "fromDuel": "Ao salvar, {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme os times na aba Organização antes de iniciar.",
+    "fromDuel": "Ao salvar, {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme os times em Organização antes de iniciar.",
     "toDuel": "Ao salvar, os times são desfeitos e {count, plural, one {o inscrito joga} other {cada um dos # inscritos joga}} por si.",
-    "resize": "Ao salvar, os times formados são desfeitos e {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme times de {size} de novo na aba Organização."
+    "resize": "Ao salvar, os times formados são desfeitos e {count, plural, one {o inscrito fica sem time} other {os # inscritos ficam sem time}}. Forme times de {size} de novo em Organização."
   },
   "grandFinalReset": "Reset de grande final",
   "grandFinalResetHint": "Se quem vem da repescagem vencer a grande final, os dois jogam mais uma série.",
@@ -160,9 +160,9 @@
   "stageFormatHints": {
     "double": "Quem perde cai para a repescagem e, se perder de novo, está fora.",
     "single": "Quem perde uma série está fora.",
-    "round_robin": "Cada um enfrenta todos os outros uma vez. Até {max} participantes.",
-    "swiss": "Em cada rodada, se enfrenta quem tem a mesma pontuação, sem repetir adversário. Até {max} participantes.",
-    "placement": "A ordem da chave forma os pares (1º contra 2º, 3º contra 4º...). Quem vence fica com a melhor posição. Até {max} participantes."
+    "round_robin": "Cada um enfrenta todos os outros uma vez.",
+    "swiss": "Em cada rodada, se enfrenta quem tem a mesma pontuação, sem repetir adversário.",
+    "placement": "A ordem da chave forma os pares (1º contra 2º, 3º contra 4º...). Quem vence fica com a melhor posição."
   },
   "swissRounds": "Rodadas",
   "swissRoundsHint": "Automático: 3 rodadas com até 8 inscritos, 4 com até 16 e 5 com até 32. Com poucos inscritos, no máximo uma a menos que eles.",
@@ -238,6 +238,7 @@
   "teamRules": {
     "title": "Times",
     "label": "Quem age pelo time",
+    "recommended": "{preset} (recomendado)",
     "presets": {
       "captain": "Só o capitão",
       "balanced": "Balanceado",

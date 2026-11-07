@@ -25,6 +25,7 @@ import {
   translationChange,
   translationFrom,
 } from "../lib/form-values";
+import { useSettingsDrafts } from "./use-settings-drafts";
 import { useTournamentSettings } from "./use-tournament-settings";
 
 type Schemas = components["schemas"];
@@ -43,8 +44,9 @@ type Failure = {
 const NO_ERRORS: FieldErrors<keyof TranslationValues> = {};
 
 /**
- * Outros idiomas, na aba Configurações: uma tradução por idioma diferente do
- * original, com o que está salvo e o que a pessoa mudou por cima. Salvar grava
+ * Outros idiomas, nas Configurações: uma tradução por idioma diferente do
+ * original, com o que está salvo e o que a pessoa mudou por cima (guardado no
+ * provider, para continuar lá depois de ir a outra seção). Salvar grava
  * cada tradução que mudou (PUT) e apaga a que foi removida, uma de cada vez;
  * a que a API recusa para no campo dela, com o foco.
  */
@@ -57,9 +59,8 @@ export function useLanguagesSection() {
     () => routing.locales.filter((l) => l !== tournament.locale),
     [tournament.locale],
   );
-  const [edits, setEdits] = useState<
-    Partial<Record<Locale, Partial<TranslationDraft>>>
-  >({});
+  const { translationEdits: edits, setTranslationEdits: setEdits } =
+    useSettingsDrafts();
   const [failure, setFailure] = useState<Failure>();
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -75,7 +76,7 @@ export function useLanguagesSection() {
       setEdits((all) => ({ ...all, [l]: { ...all[l], ...patch } }));
       setDone(false);
     },
-    [],
+    [setEdits],
   );
 
   const submit = () => {

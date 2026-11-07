@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { AuthError } from "@/features/auth/components/auth-error";
 import { BackupLoginReminder } from "@/features/auth/components/backup-login-reminder";
+import { HomeColumns } from "@/features/auth/components/home-columns";
 import { HomeSessionGate } from "@/features/auth/components/home-session-gate";
 import { WaitingForYou } from "@/features/organizing/components/waiting-for-you";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
@@ -12,7 +13,6 @@ import { MyTournaments } from "@/features/tournaments/components/my-tournaments"
 import { OpenTournaments } from "@/features/tournaments/components/open-tournaments";
 import { VetoRoomEntry } from "@/features/veto-rooms/components/veto-room-entry";
 import { Page } from "@/shared/ui/page";
-import { PageColumns } from "@/shared/ui/page-columns";
 import { PageHeader } from "@/shared/ui/page-header";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 
@@ -20,15 +20,17 @@ import { SectionSkeleton } from "@/shared/ui/skeleton";
 const TITLE_ID = "home-title";
 
 const SKELETON = (
-  <PageColumns
-    main={<SectionSkeleton tiles={3} />}
+  <HomeColumns
+    lead={<SectionSkeleton tiles={3} />}
     aside={<SectionSkeleton tiles={2} />}
   />
 );
 
 /**
  * O início de quem entrou. O proxy a serve em `/` quando há cookie de
- * sessão; sem ele, `/` é a apresentação do site (`(home)`).
+ * sessão; sem ele, `/` é a apresentação do site (`(home)`). Sem menu lateral:
+ * é o nível acima das comunidades, uma página só, e as comunidades já estão
+ * no cabeçalho (`TenantSwitcher`) e em "Suas comunidades".
  */
 export default async function SignedInHome({
   searchParams,
@@ -46,6 +48,7 @@ export default async function SignedInHome({
             {t("title")}
           </span>
         }
+        actions={<VetoRoomEntry />}
       />
       {/* "Esperando você" e "Seus torneios" recarregam sozinhos. */}
       <LiveUpdates me />
@@ -53,19 +56,14 @@ export default async function SignedInHome({
       <Suspense fallback={SKELETON}>
         <HomeSessionGate pending={SKELETON}>
           <BackupLoginReminder />
-          <PageColumns
+          <HomeColumns
+            lead={<WaitingForYou focusAfter={TITLE_ID} />}
+            aside={<MyTenants />}
             main={
               <>
-                <WaitingForYou focusAfter={TITLE_ID} />
                 <NoTenants />
                 <MyTournaments />
                 <OpenTournaments />
-              </>
-            }
-            aside={
-              <>
-                <MyTenants />
-                <VetoRoomEntry />
               </>
             }
           />

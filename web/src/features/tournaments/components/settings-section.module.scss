@@ -1,5 +1,19 @@
 @use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
 @use "shared/ui/columns";
+
+// O estado (mudança não salva, só leitura) ao lado do nome da seção, no
+// corpo de texto e não no do título; sem espaço, desce para a linha de baixo.
+.head {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: spacing.$spacing-02 spacing.$spacing-04;
+
+  > :not(:first-child) {
+    @include type.type-style("body-compact-01");
+  }
+}
 
 // O formulário e, ao lado, o que se salva sozinho (a capa), nas duas metades
 // da seção larga, com a calha da grade entre elas; numa seção estreita ou no

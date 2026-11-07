@@ -1,14 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TournamentOverviewSkeleton } from "@/features/tournaments/components/tournament-overview-skeleton";
 
-/** A Visão geral carregando: o ciclo, a descrição e o formato. */
+/** A Visão geral carregando. */
 export default async function Loading() {
   const t = await getTranslations("Tournament");
-  return (
-    <TabLoading label={t("loading")}>
-      <SectionSkeleton rows={1} />
-      <SectionSkeleton rows={4} />
-    </TabLoading>
-  );
+  return <TournamentOverviewSkeleton label={t("loading")} />;
 }

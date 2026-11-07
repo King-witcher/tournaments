@@ -17,7 +17,7 @@ type Props = {
 };
 
 /**
- * A foto de perfil, na aba Perfil da conta: escolher o arquivo abre o editor
+ * A foto de perfil, no Perfil da conta: escolher o arquivo abre o editor
  * (`AvatarEditor`), que recorta, gira e só então envia; cancelar não manda
  * nada. "Remover" tira a foto na hora (volta o avatar do Discord, se houver).
  * O arquivo que não dá para ler fica com o erro na área de soltar.

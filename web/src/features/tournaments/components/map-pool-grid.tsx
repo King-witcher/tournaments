@@ -9,8 +9,10 @@ import { MapPoolOption } from "./map-pool-option";
 type Props = {
   /** Os mapas ativos, na ordem da API (o padrão primeiro). */
   maps: components["schemas"]["Map"][];
-  /** Os slugs escolhidos. */
+  /** Os slugs marcados. */
   pool: string[];
+  /** Os slugs do pool salvo: os da primeira parte. */
+  base: string[];
   /** Só os do pool, sem mudar. */
   readOnly: boolean;
   onToggle: (slug: string, on: boolean) => void;
@@ -24,15 +26,16 @@ type Props = {
 };
 
 /**
- * O pool em duas partes, os escolhidos e depois os de fora, cada uma com o
- * subtítulo e a contagem; marcar ou desmarcar muda o mapa de parte na hora,
- * para um de fora não passar despercebido no meio dos escolhidos. Uma grade
- * só, com os subtítulos como itens dela: o React move a caixa em vez de
- * recriá-la, e o foco do teclado continua no mapa.
+ * O pool em duas partes, os do pool salvo e depois os de fora, cada uma com o
+ * subtítulo e quantos mapas ela tem. Marcar ou desmarcar não muda o mapa de
+ * parte: um de fora marcado é o que entra, um do pool desmarcado é o que sai,
+ * e a caixa fica onde estava, com o foco do teclado. Muda de parte quando o
+ * salvo muda. Uma grade só, com os subtítulos como itens dela.
  */
 export function MapPoolGrid({
   maps,
   pool,
+  base,
   readOnly,
   onToggle,
   headingId,
@@ -46,13 +49,13 @@ export function MapPoolGrid({
       key: "in",
       title: "poolIn",
       headingId,
-      maps: maps.filter((m) => pool.includes(m.slug)),
+      maps: maps.filter((m) => base.includes(m.slug)),
     },
     {
       key: "out",
       title: "poolOut",
       headingId: outHeadingId,
-      maps: maps.filter((m) => !pool.includes(m.slug)),
+      maps: maps.filter((m) => !base.includes(m.slug)),
     },
   ] as const;
   // O foco do erro vai para a primeira caixa.
@@ -80,7 +83,7 @@ export function MapPoolGrid({
               key={m.slug}
               map={m}
               name={m.slug === first ? "mapPool" : undefined}
-              checked={p.key === "in"}
+              checked={pool.includes(m.slug)}
               readOnly={readOnly}
               onChange={(on) => onToggle(m.slug, on)}
             />

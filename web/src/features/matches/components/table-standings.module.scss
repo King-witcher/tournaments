@@ -46,8 +46,13 @@
 
 // Os desempates ficam fora da tabela, em texto corrido: no celular, as
 // colunas de saldo somem, e a explicação continua à vista.
-.tiebreaks {
-  margin-block-start: spacing.$spacing-05;
+// A ordem provisória, como a descrição de uma seção: em segundo plano, na
+// largura de leitura (40rem).
+.current {
+  @include type.type-style("body-01");
+
+  max-inline-size: calc(#{spacing.$spacing-13} * 4);
+  color: theme.$text-secondary;
 }
 
 .tiebreaksTitle {

@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 
 import type { components } from "@/shared/api/schema";
 import { SelectItem } from "@/shared/ui/carbon/select";
@@ -34,12 +34,19 @@ type Props = {
    * tamanho avisa que os times serão refeitos ao salvar.
    */
   saved?: Pick<Schemas["Tournament"], "mode" | "team_size" | "participants">;
+  /**
+   * Campos curtos na mesma linha, depois do tamanho (as vagas, no Formato).
+   * Com eles, a linha vai até quatro colunas, as mesmas das séries embaixo;
+   * sem eles (o Modal de criação), duas.
+   */
+  children?: ReactNode;
 };
 
 /**
  * A modalidade (duelo ou TDM, à vista) e, no TDM, o tamanho dos times ao lado
- * dela (onde cabe; embaixo, no celular). As vagas não mudam sozinhas ao
- * trocar: abaixo de dois times, a conferência mostra o erro no campo delas.
+ * dela (onde cabe; embaixo, no celular), seguidos dos `children` na mesma
+ * linha. As vagas não mudam sozinhas ao trocar: abaixo de dois times, a
+ * conferência mostra o erro no campo delas.
  */
 export const TournamentModeFields = memo(function TournamentModeFields({
   values,
@@ -47,6 +54,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
   errors,
   readOnly,
   saved,
+  children,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const tMode = useTranslations("Tournaments.mode");
@@ -58,7 +66,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
 
   return (
     <>
-      <FormRow columns={2}>
+      <FormRow columns={children ? 4 : 2}>
         <RadioGroup
           legendText={t("mode")}
           name="mode"
@@ -96,6 +104,7 @@ export const TournamentModeFields = memo(function TournamentModeFields({
             ))}
           </Select>
         )}
+        {children}
       </FormRow>
       {reset && saved && (
         <Notice kind="warning">

@@ -101,6 +101,10 @@
     "title": "Séries que esperam você",
     "item": "{match} · {a} × {b}: {task}"
   },
+  "live": {
+    "title": "Séries em andamento",
+    "item": "{match} · {a} {aMaps} × {bMaps} {b}"
+  },
   "standings": {
     "title": "Classificação",
     "loading": "Carregando a classificação…",

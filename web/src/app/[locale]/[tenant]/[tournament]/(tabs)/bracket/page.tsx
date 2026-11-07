@@ -6,8 +6,7 @@ import { BracketTab } from "@/features/matches/components/bracket-tab";
 import { parseStageParam } from "@/features/stages/lib/stages";
 
 /**
- * A aba Chave: só o conteúdo da aba (o cabeçalho do torneio e as abas vêm
- * do `layout.tsx` do grupo).
+ * A Chave, na largura toda (o cabeçalho vem do `layout.tsx` das seções).
  */
 export default async function BracketPage({
   params,

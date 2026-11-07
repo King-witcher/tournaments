@@ -117,6 +117,54 @@ export const Columns: Story = {
   },
 };
 
+/**
+ * Um desenho de exemplo: na largura do tile, com a mesma altura em todos, e o
+ * traço de 1px em `currentColor` que não estica com o quadro.
+ */
+function Lines({ d }: { d: string }) {
+  return (
+    <svg
+      width="100%"
+      height={40}
+      viewBox="0 0 80 40"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Com um desenho entre o nome e a frase de cada tile (`media`), alinhado
+ * entre os tiles da fileira; some abaixo do `md`.
+ */
+export const WithMedia: Story = {
+  args: {
+    name: "radio-tile-group-media",
+    options: described.map((option, i) => ({
+      ...option,
+      media: (
+        <Lines
+          d={
+            [
+              "M.5 5.5h24v8H.5M.5 25.5h24v8H.5M24.5 9.5h26v20h-26M50.5 19.5h29",
+              "M.5 3.5h24v8H.5M24.5 7.5h28M.5 21.5h16v8H.5M52.5 7.5v18M52.5 16.5h27",
+              "M20.5 4.5h40v32h-40z",
+            ][i]
+          }
+        />
+      ),
+    })),
+    columns: 3,
+  },
+};
+
 /** Só leitura: só a escolhida, num tile sem interação. */
 export const ReadOnly: Story = {
   args: {

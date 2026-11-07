@@ -11,7 +11,7 @@ import { getLogins } from "../server";
 import { DeleteAccountForm } from "./delete-account-form";
 
 /**
- * A zona de perigo da aba Perfil (`DangerZone`): excluir a conta, com o prazo
+ * A zona de perigo do Perfil (`DangerZone`): excluir a conta, com o prazo
  * e como cancelar (o que acontece na data fica na confirmação, que aparece
  * na hora de excluir). Dono de comunidade não exclui: no lugar do
  * botão, o motivo e o link para as configurações de cada comunidade dele

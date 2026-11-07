@@ -84,7 +84,6 @@ export async function MemberProfile({ tenant, user }: Props) {
     <>
       <PageHeader
         breadcrumbs={[
-          { href: "/", label: tNav("home") },
           { href: `/${tenant}`, label: loaded.tenant.name },
           { href: `/${tenant}/members`, label: t("members") },
         ]}

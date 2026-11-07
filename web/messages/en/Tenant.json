@@ -13,11 +13,14 @@
     "more": "Show more",
     "less": "Show less"
   },
+  "about": {
+    "title": "About"
+  },
   "details": {
     "title": "Name and description",
     "name": "Name",
     "description": "Description",
-    "descriptionHint": "Shows in the community header and on the invite page.",
+    "descriptionHint": "Shows on the community home page and on the invite page.",
     "saved": "Name and description saved."
   },
   "address": {
@@ -79,6 +82,8 @@
   "deletionNotice": {
     "title": "Community being deleted",
     "text": "This community will be deleted on <date></date>, with its tournaments and everything in it. Until then, it's read-only.",
-    "ownerHint": "To cancel, use the Settings tab."
-  }
+    "cancel": "Cancel deletion"
+  },
+  "nav": "Community menu",
+  "kind": "Community"
 }

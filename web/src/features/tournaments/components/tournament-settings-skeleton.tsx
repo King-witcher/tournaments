@@ -1,7 +1,5 @@
-import { AccordionSkeleton } from "@/shared/ui/carbon/accordion";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
-import { TabLoading } from "@/shared/ui/skeleton";
-import { SETTINGS_SECTIONS } from "../lib/settings-sections";
+import { SettingsSectionSkeleton } from "./settings-section-skeleton";
 
 type Props = {
   /** O que está carregando, lido pelo leitor de tela. */
@@ -9,19 +7,15 @@ type Props = {
 };
 
 /**
- * A aba Configurações carregando, na forma dela: o acordeão fechado, um item
- * por seção, na largura toda.
+ * As Configurações carregando antes do layout delas (`TournamentSettings`):
+ * a seção carregando, na largura toda, na grade que o layout põe.
  */
 export function TournamentSettingsSkeleton({ label }: Props) {
   return (
-    <TabLoading label={label}>
-      <Grid>
-        <Column sm={4} md={8} lg={16}>
-          <div aria-hidden>
-            <AccordionSkeleton count={SETTINGS_SECTIONS.length} open={false} />
-          </div>
-        </Column>
-      </Grid>
-    </TabLoading>
+    <Grid>
+      <Column sm={4} md={8} lg={16}>
+        <SettingsSectionSkeleton label={label} />
+      </Column>
+    </Grid>
   );
 }

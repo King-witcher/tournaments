@@ -34,6 +34,8 @@ import {
   sectionOf,
   type ValuesSection,
 } from "../lib/settings-sections";
+import { settingsHref } from "../lib/tabs";
+import { useSettingsDrafts } from "./use-settings-drafts";
 import { useTournamentSettings } from "./use-tournament-settings";
 
 /** O que a API recusou no último envio. */
@@ -51,8 +53,9 @@ export type SectionFailure = {
 const NO_ERRORS: FieldErrors = {};
 
 /**
- * Uma seção da aba Configurações, que salva sozinha: os valores são os salvos
- * com o que a pessoa mudou aqui por cima. Salvar manda o torneio salvo com os
+ * Uma seção das Configurações, que salva sozinha: os valores são os salvos
+ * com o que a pessoa mudou aqui por cima, guardado no provider para continuar
+ * lá depois de ir a outra seção e voltar. Salvar manda o torneio salvo com os
  * campos desta seção (a API compara e só aplica o que mudou); o que foi
  * mexido em outra seção e não salvo não vai junto. O erro de um campo desta
  * seção vai para ele, que recebe o foco; o que nasce de outra seção (as
@@ -69,7 +72,13 @@ export function useSettingsSection(section: ValuesSection) {
   const { ref: formRef, canSubmit } = useFormValidity();
   const keys = SECTION_KEYS[section] as readonly (keyof TournamentValues)[];
   const saved = useMemo(() => valuesFrom(tournament), [tournament]);
-  const [edits, setEdits] = useState<Partial<TournamentValues>>({});
+  const { editsOf, setEdits: setSectionEdits } = useSettingsDrafts();
+  const edits = editsOf(section);
+  const setEdits = useCallback(
+    (update: (e: Partial<TournamentValues>) => Partial<TournamentValues>) =>
+      setSectionEdits(section, update),
+    [setSectionEdits, section],
+  );
   const values = useMemo(() => ({ ...saved, ...edits }), [saved, edits]);
   const [failure, setFailure] = useState<SectionFailure>();
   const [done, setDone] = useState(false);
@@ -77,10 +86,13 @@ export function useSettingsSection(section: ValuesSection) {
   // Para o foco ir ao campo só uma vez por recusa.
   const focused = useRef<SectionFailure>(undefined);
 
-  const onChange = useCallback((patch: Partial<TournamentValues>) => {
-    setEdits((e) => ({ ...e, ...patch }));
-    setDone(false);
-  }, []);
+  const onChange = useCallback(
+    (patch: Partial<TournamentValues>) => {
+      setEdits((e) => ({ ...e, ...patch }));
+      setDone(false);
+    },
+    [setEdits],
+  );
 
   const submit = () => {
     setFailure(undefined);
@@ -123,9 +135,11 @@ export function useSettingsSection(section: ValuesSection) {
       );
       setDone(true);
       if (outcome.data.slug !== tournament.slug) {
-        // A página do endereço novo troca a árvore: o `#` abre de novo o
-        // item, com o foco no título dele.
-        router.replace(`/${tenant}/${outcome.data.slug}/settings#${section}`);
+        // O endereço novo troca a árvore (o que não foi salvo nas outras
+        // seções se perde).
+        router.replace(
+          settingsHref(`/${tenant}/${outcome.data.slug}`, section),
+        );
       }
       router.refresh();
     });

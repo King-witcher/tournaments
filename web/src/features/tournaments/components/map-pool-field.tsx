@@ -24,16 +24,23 @@ type Props = {
   maps: components["schemas"]["Map"][];
   /** O torneio já começou: só os mapas do pool, sem mudar. */
   readOnly: boolean;
+  /**
+   * O pool salvo, que divide os mapas em "no pool" e "fora do pool"; sem ele
+   * (nada salvo ainda), o pool de quando o campo apareceu.
+   */
+  savedPool?: string[];
 };
 
 /**
  * O pool de mapas do torneio. Cada marca ou desmarca fica lembrada neste
  * navegador para a comunidade (o próximo torneio novo começa com ela);
  * "Usar o pool padrão" aparece quando o pool é outro e volta ao padrão,
- * esquecendo o lembrado. Os mapas de fora começam atrás de um botão (eram
- * dois terços do grupo aberto) e aparecem sozinhos quando o pool não basta
- * ou quando um mapa sai dele, para a caixa usada continuar à vista. Só para
- * leitura, só os do pool.
+ * esquecendo o lembrado. A divisão entre os do pool e os de fora segue o
+ * salvo (`savedPool`): marcar ou desmarcar não muda o mapa de parte, e o que
+ * entra fica marcado embaixo e o que sai desmarcado em cima, até salvar. Os
+ * mapas de fora começam atrás de um botão (eram dois terços do grupo aberto)
+ * e aparecem sozinhos quando o pool não basta ou quando algum deles está
+ * marcado. Só para leitura, só os do pool.
  */
 export function MapPoolField({
   tenant,
@@ -42,17 +49,24 @@ export function MapPoolField({
   error,
   maps,
   readOnly,
+  savedPool,
 }: Props) {
   const t = useTranslations("TournamentForm.veto");
   const headingId = useId();
   const outHeadingId = useId();
   const [outOpen, setOutOpen] = useState(false);
   const pool = poolOf(values, maps);
+  const [initialPool] = useState(pool);
+  const base = savedPool ?? initialPool;
   const min = longestSeries(values);
   const standard = maps.filter((m) => m.default_pool).map((m) => m.slug);
   const isStandard =
     pool.length === standard.length && standard.every((s) => pool.includes(s));
-  const outShown = outOpen || pool.length < min || error !== undefined;
+  const outShown =
+    outOpen ||
+    pool.length < min ||
+    error !== undefined ||
+    pool.some((s) => !base.includes(s));
 
   const toggle = (slug: string, on: boolean) => {
     const mapPool = on
@@ -60,7 +74,6 @@ export function MapPoolField({
           .filter((m) => pool.includes(m.slug) || m.slug === slug)
           .map((m) => m.slug)
       : pool.filter((s) => s !== slug);
-    if (!on) setOutOpen(true);
     onChange({ mapPool });
     rememberPool(tenant, mapPool);
   };
@@ -89,6 +102,7 @@ export function MapPoolField({
       <MapPoolGrid
         maps={maps}
         pool={pool}
+        base={base}
         readOnly={readOnly}
         onToggle={toggle}
         headingId={headingId}

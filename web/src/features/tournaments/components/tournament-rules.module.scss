@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/spacing";
+
+// A coluna de leitura do texto (o do Markdown tem 42rem) com folga para a
+// grade dos mapas e o campo das regras, que não se esticam pela página.
+.reading {
+  max-inline-size: calc(#{spacing.$spacing-13} * 5);
+}

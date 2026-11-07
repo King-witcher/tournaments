@@ -11,8 +11,8 @@ import { isFinished, setupEditable } from "./status";
 type Status = components["schemas"]["TournamentStatus"];
 
 /**
- * As seções da aba Configurações, na ordem da página: Início e inscrições
- * logo depois de Geral, porque o início é o único campo sem padrão.
+ * As seções das Configurações, uma página cada, na ordem do menu: Início e
+ * inscrições logo depois de Geral, porque o início é o único campo sem padrão.
  */
 export const SETTINGS_SECTIONS = [
   "general",
@@ -61,14 +61,24 @@ export const SECTION_KEYS = {
   results: ["contestMinutes", "screenshotsRequired"],
 } as const satisfies Record<ValuesSection, readonly (keyof TournamentValues)[]>;
 
-/**
- * O `id` do item da seção: o alvo do "Ir para" e do endereço com `#` (o
- * `#maps` abre Mapas).
- */
-export const sectionItemId = (section: SettingsSection) =>
+/** O `id` do título da seção: recebe o foco quando se chega pelo "Ir para". */
+export const sectionTitleId = (section: SettingsSection) =>
   `settings-${section}`;
 
-/** A seção que o `#` do endereço nomeia (`#maps`), se nomeia alguma. */
+/** A seção da página da `[section]` do endereço, fora Geral (que é a raiz). */
+export function sectionOfSegment(
+  segment: string,
+): Exclude<SettingsSection, "general"> | undefined {
+  return SETTINGS_SECTIONS.find(
+    (s): s is Exclude<SettingsSection, "general"> =>
+      s === segment && s !== "general",
+  );
+}
+
+/**
+ * A seção que o `#` do endereço nomeia (`#maps`), se nomeia alguma: o
+ * endereço de antes das páginas por seção.
+ */
 export function sectionOfHash(hash: string): SettingsSection | undefined {
   const name = hash.replace(/^#/, "");
   return SETTINGS_SECTIONS.find((s) => s === name);

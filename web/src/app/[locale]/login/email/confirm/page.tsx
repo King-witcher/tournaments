@@ -6,17 +6,11 @@ import { PageHeader } from "@/shared/ui/page-header";
 
 /** O link do email de entrar (`#token`): o botão de entrar. */
 export default async function EmailLoginConfirmPage() {
-  const [t, tNav] = await Promise.all([
-    getTranslations("Login"),
-    getTranslations("Nav"),
-  ]);
+  const t = await getTranslations("Login");
   return (
     <Page>
       <PageHeader
-        breadcrumbs={[
-          { href: "/", label: tNav("home") },
-          { href: "/login", label: t("title") },
-        ]}
+        breadcrumbs={[{ href: "/login", label: t("title") }]}
         title={t("email.title")}
       />
       <EmailLoginConfirm />

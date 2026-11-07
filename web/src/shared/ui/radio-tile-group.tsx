@@ -15,6 +15,16 @@ type Option<V extends string> = {
   content: NonNullable<ReactNode>;
   /** Uma frase do que a opção faz, embaixo do nome, em texto de apoio. */
   description?: ReactNode;
+  /**
+   * Um desenho na largura do tile, entre o nome e a frase (SVG em
+   * `currentColor` com `inline-size: 100%`, `aria-hidden`: o nome já diz a
+   * opção), para achá-la de relance entre opções parecidas, como os formatos
+   * de chave. Com a mesma altura em todos os tiles, fica alinhado na fileira
+   * (o nome tem uma linha); na cor de ícone secundário do tema (de
+   * desabilitado no tile desabilitado). Some abaixo do `md`, onde os tiles
+   * empilham e ele só alongaria a lista.
+   */
+  media?: ReactNode;
   disabled?: boolean;
 };
 
@@ -48,14 +58,16 @@ type Props<V extends string> = Omit<
   columns?: 2 | 3 | 4 | 5;
 };
 
-/** O nome e, embaixo, o que a opção faz. */
+/** O nome, o desenho e, embaixo, o que a opção faz. */
 function TileText({
   content,
   description,
-}: Pick<Option<string>, "content" | "description">) {
+  media,
+}: Pick<Option<string>, "content" | "description" | "media">) {
   return (
     <span className={styles.text}>
       <span className={styles.title}>{content}</span>
+      {media && <span className={styles.media}>{media}</span>}
       {description && <span className={styles.description}>{description}</span>}
     </span>
   );
@@ -95,6 +107,7 @@ export function RadioTileGroup<V extends string>({
             <TileText
               content={chosen.content}
               description={chosen.description}
+              media={chosen.media}
             />
           </Tile>
         )}
@@ -120,10 +133,12 @@ export function RadioTileGroup<V extends string>({
             id={`${groupName}-${option.value}`}
             value={option.value}
             disabled={option.disabled}
+            className={styles.tile}
           >
             <TileText
               content={option.content}
               description={option.description}
+              media={option.media}
             />
           </RadioTile>
         ))}

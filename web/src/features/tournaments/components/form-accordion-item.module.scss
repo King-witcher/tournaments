@@ -4,23 +4,12 @@
 
 // Nome do grupo e, embaixo, o resumo dos valores: o nome no peso de título
 // de bloco (é uma seção do formulário) e o resumo como texto de apoio, para
-// quem confere de relance saber o que vai sem abrir. O "Ir para" rola o
-// título até o topo: o respiro o deixa fora de baixo do cabeçalho fixo.
+// quem confere de relance saber o que vai sem abrir.
 .title {
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-02;
   padding-block: spacing.$spacing-03;
-  scroll-margin-block-start: spacing.$spacing-10;
-}
-
-// O estado (mudança não salva, só leitura) ao lado do nome; sem espaço,
-// desce para a linha de baixo.
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: spacing.$spacing-02 spacing.$spacing-03;
 }
 
 .name {

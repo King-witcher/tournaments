@@ -21,5 +21,10 @@
   "saved": "Guardado.",
   "unsaved": "Cambios sin guardar",
   "readOnly": "Solo lectura",
-  "noTranslations": "Sin traducción"
+  "noTranslations": "Sin traducción",
+  "leave": {
+    "title": "¿Salir sin guardar?",
+    "text": "Los cambios sin guardar en {sections} se pierden.",
+    "confirm": "Salir sin guardar"
+  }
 }

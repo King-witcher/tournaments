@@ -25,10 +25,11 @@ const ORDER: Schemas["TournamentStatus"][] = [
 ];
 
 /**
- * A aba Torneios da comunidade: os ativos em tiles, do que está acontecendo
+ * A lista de torneios do início da comunidade (o único lugar que lista todos): os ativos em tiles, do que está acontecendo
  * para o que vai começar, e embaixo os encerrados, em tabela (`FinishedTournaments`).
  * O jogador só recebe os publicados (a API filtra); a organização vê os
- * rascunhos e, sem nenhum torneio, o "Criar torneio". Fica em `<Suspense>`.
+ * rascunhos e, sem nenhum torneio, o "Criar torneio" (fora da exclusão
+ * agendada, quando nada muda). Fica em `<Suspense>`.
  */
 export async function TournamentList({ slug }: { slug: string }) {
   const api = await serverApi();
@@ -39,8 +40,10 @@ export async function TournamentList({ slug }: { slug: string }) {
       .GET("/tenants/{slug}/tournaments", { params: { path: { slug } } })
       .then(({ data }) => data ?? []),
   ]);
-  const tenant = loaded.kind === "ok" ? loaded.tenant : undefined;
-  const organizer = tenant !== undefined && tenant.role !== "player";
+  // Sem acesso, o cabeçalho da seção já mostra o erro.
+  if (loaded.kind !== "ok") return null;
+  const { tenant } = loaded;
+  const organizer = tenant.role !== "player" && !tenant.deletion_scheduled_for;
   const active = tournaments
     .filter((x) => x.status !== "finished")
     .toSorted((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status));
@@ -75,8 +78,8 @@ export async function TournamentList({ slug }: { slug: string }) {
                 key={tournament.slug}
                 tenant={{
                   slug,
-                  name: tenant?.name ?? slug,
-                  logo_url: tenant?.logo_url,
+                  name: tenant.name,
+                  logo_url: tenant.logo_url,
                 }}
                 tournament={tournament}
                 media={media}

@@ -19,9 +19,9 @@
   "teamSize": "Team size",
   "teamSizeOption": "{size}v{size}",
   "teamsReset": {
-    "fromDuel": "When you save, {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams in the Organization tab before starting.",
+    "fromDuel": "When you save, {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams in Organization before starting.",
     "toDuel": "When you save, teams are dissolved and {count, plural, one {the registered player plays} other {each of the # registered players plays}} solo.",
-    "resize": "When you save, the formed teams are dissolved and {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams of {size} again in the Organization tab."
+    "resize": "When you save, the formed teams are dissolved and {count, plural, one {the registered player is left without a team} other {# registered players are left without a team}}. Form teams of {size} again in Organization."
   },
   "grandFinalReset": "Grand final reset",
   "grandFinalResetHint": "If the side from the losers' bracket wins the grand final, the two play one more match.",
@@ -160,9 +160,9 @@
   "stageFormatHints": {
     "double": "Whoever loses drops to the losers' bracket. Losing again eliminates them.",
     "single": "Whoever loses a match is out.",
-    "round_robin": "Everyone plays every other participant once. Up to {max} participants.",
-    "swiss": "Each round, players with the same score face each other, without repeating opponents. Up to {max} participants.",
-    "placement": "Seeding sets the pairs (1st vs. 2nd, 3rd vs. 4th...). The winner takes the higher place. Up to {max} participants."
+    "round_robin": "Everyone plays every other participant once.",
+    "swiss": "Each round, players with the same score face each other, without repeating opponents.",
+    "placement": "Seeding sets the pairs (1st vs. 2nd, 3rd vs. 4th...). The winner takes the higher place."
   },
   "swissRounds": "Rounds",
   "swissRoundsHint": "Automatic: 3 rounds for up to 8 registered, 4 for up to 16, and 5 for up to 32. With few registered, at most one less than their number.",
@@ -238,6 +238,7 @@
   "teamRules": {
     "title": "Teams",
     "label": "Who acts for the team",
+    "recommended": "{preset} (recommended)",
     "presets": {
       "captain": "Captain only",
       "balanced": "Balanced",

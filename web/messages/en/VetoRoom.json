@@ -1,6 +1,7 @@
 {
   "title": "Veto room",
   "description": "Map veto and champion draft, without a tournament or an account.",
+  "create": "Create veto room",
   "stepsLabel": "Room steps",
   "result": "Result",
   "resultText": "Result for chat",

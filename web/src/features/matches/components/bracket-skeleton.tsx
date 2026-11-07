@@ -4,7 +4,7 @@ import styles from "./bracket-skeleton.module.scss";
 const ROUNDS = [4, 2, 1];
 
 /**
- * A aba Chave carregando, na forma dela: o título e as rodadas com os cartões.
+ * A Chave carregando, na forma dela: a dica e as rodadas com os cartões.
  * Leva o "Carregando a chave…" para o leitor de tela (o cabeçalho do torneio
  * já está na página).
  */

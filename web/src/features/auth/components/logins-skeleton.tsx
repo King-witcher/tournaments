@@ -1,17 +1,26 @@
 import { FormSkeleton } from "@/shared/ui/skeleton";
+import { AccountColumns } from "./account-columns";
 
 /**
- * A aba Logins carregando, na forma dela: o bloco do email (título, frase,
- * campo, botão), o do Discord e o do Google (título, frase, botão) e o da
- * senha (título e os três campos de trocar).
+ * Os Logins carregando, na forma deles: à esquerda o bloco do email (título,
+ * frase, campo, botão) e o da senha (título e os três campos de trocar); à
+ * direita o do Discord e o do Google (título, frase, botão).
  */
 export function LoginsSkeleton({ label }: { label?: string | false }) {
   return (
-    <>
-      <FormSkeleton heading text fields={1} label={label} />
-      <FormSkeleton heading text fields={0} label={false} />
-      <FormSkeleton heading text fields={0} label={false} />
-      <FormSkeleton heading fields={3} label={false} />
-    </>
+    <AccountColumns
+      start={
+        <>
+          <FormSkeleton heading text fields={1} label={label} />
+          <FormSkeleton heading fields={3} label={false} />
+        </>
+      }
+      end={
+        <>
+          <FormSkeleton heading text fields={0} label={false} />
+          <FormSkeleton heading text fields={0} label={false} />
+        </>
+      }
+    />
   );
 }

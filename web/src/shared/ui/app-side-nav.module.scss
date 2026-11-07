@@ -1,0 +1,57 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A linha que separa o menu da página, como no IBM Cloud: o fundo dos dois é
+// o mesmo.
+.nav.nav {
+  border-inline-end: 1px solid theme.$border-subtle-01;
+}
+
+// A volta só ocupa a própria linha: a lista do Carbon cresce até o fim do
+// menu, que é para os links da área.
+.back.back {
+  flex: 0 0 auto;
+  padding-block-end: 0;
+}
+
+.header {
+  padding: spacing.$spacing-03 spacing.$spacing-05 spacing.$spacing-05;
+  border-block-end: 1px solid theme.$border-subtle-01;
+  margin-block-end: spacing.$spacing-03;
+}
+
+// `AppSideNavTitle`
+.kind {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  margin-block-start: spacing.$spacing-02;
+}
+
+// O nome longo quebra em até duas linhas, em vez de alargar o menu.
+.name {
+  @include type.type-style("heading-compact-02");
+
+  display: -webkit-box;
+  overflow: hidden;
+  min-inline-size: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: theme.$text-primary;
+}
+
+.tags {
+  margin-block-start: spacing.$spacing-03;
+}
+
+// O invólucro só leva a marca que a casca procura: some do layout.
+.marker {
+  display: contents;
+}

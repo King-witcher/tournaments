@@ -323,5 +323,12 @@
   },
   "startsAt": "Empieza <date></date>",
   "startedAt": "Inicio programado para <date></date>",
-  "noStartDate": "Sin fecha de inicio"
+  "noStartDate": "Sin fecha de inicio",
+  "kind": "Torneo",
+  "nav": "Menú del torneo",
+  "overview": {
+    "decided": "{done} de {total, plural, one {# serie decidida} other {# series decididas}}",
+    "decidedStage": "Fase {stage}: {done} de {total, plural, one {# serie decidida} other {# series decididas}}",
+    "champion": "Campeón: {name}"
+  }
 }

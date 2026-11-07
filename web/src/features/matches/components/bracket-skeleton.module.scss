@@ -12,12 +12,13 @@
   @include visually-hidden;
 }
 
+// A dica embaixo do título da página: uma linha de texto.
 .title {
   @include skeleton;
 
   display: block;
   inline-size: 30%;
-  block-size: spacing.$spacing-07;
+  block-size: spacing.$spacing-05;
 }
 
 // As rodadas com a largura das de verdade; no celular, o que não cabe some

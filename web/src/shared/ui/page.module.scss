@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/breakpoint";
+
+// Com o menu lateral (`AppSideNav`), o modelo de produto do 2x Grid do
+// Carbon: acima do `max` o grid mantém a largura, mas encosta no menu em vez
+// de ficar centrado, e a coluna estreita começa na primeira coluna. Sem menu,
+// o padrão do `Grid` (centrado) e a coluna estreita no meio. Classe dobrada
+// para vencer a do Carbon, que tem o mesmo peso.
+[data-app-shell]:has([data-app-side-nav]) {
+  .grid.grid {
+    margin-inline: 0;
+  }
+
+  @include breakpoint.breakpoint(lg) {
+    .narrow.narrow {
+      grid-column-start: 1;
+    }
+  }
+}

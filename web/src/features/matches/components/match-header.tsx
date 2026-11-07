@@ -13,7 +13,6 @@ import { VetoSoundToggle } from "./veto-sound-toggle";
 type Props = {
   tenant: string;
   slug: string;
-  tenantName: string;
   /** Nome já no idioma de quem vê. */
   tournamentName: string;
   detail: components["schemas"]["MatchDetail"];
@@ -32,14 +31,12 @@ type Props = {
 export function MatchHeader({
   tenant,
   slug,
-  tenantName,
   tournamentName,
   detail,
   severalStages,
 }: Props) {
   const t = useTranslations("Match");
   const tBracket = useTranslations("Bracket");
-  const tNav = useTranslations("Nav");
   const s = detail.summary;
   const single = isSingle(detail.format);
   const { code, roundTitle, placeholder } = useMatchLabels(single);
@@ -87,8 +84,6 @@ export function MatchHeader({
   return (
     <PageHeader
       breadcrumbs={[
-        { href: "/", label: tNav("home") },
-        { href: `/${tenant}`, label: tenantName },
         { href: `/${tenant}/${slug}`, label: tournamentName },
         {
           href: severalStages

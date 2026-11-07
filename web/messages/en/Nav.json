@@ -11,5 +11,7 @@
     "failed": "Couldn't load your communities. Close and reopen the page.",
     "empty": "You're not part of any community yet.",
     "create": "Create community"
-  }
+  },
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu"
 }

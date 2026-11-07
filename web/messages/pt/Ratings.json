@@ -9,7 +9,13 @@
     "record": "V–D",
     "lastGame": "Última partida",
     "noGame": "—",
-    "empty": "Ninguém tem rating ainda. É preciso jogar pelo menos uma partida para ser classificado."
+    "empty": "Ninguém tem rating ainda. É preciso jogar pelo menos uma partida para ser classificado.",
+    "meta": "Rating inicial {initial} · provisório com menos de {games} partidas"
+  },
+  "top": {
+    "title": "Ranking",
+    "mine": "Você: {position}, rating {rating}",
+    "all": "Ver o ranking"
   },
   "provisional": "Provisório",
   "record": "{wins} V – {losses} D",

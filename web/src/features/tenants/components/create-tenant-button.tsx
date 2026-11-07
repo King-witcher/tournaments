@@ -8,7 +8,7 @@ import { CreateTenantModal } from "./create-tenant-modal";
 type Props = {
   /** O texto do botão, também o título do Modal. */
   children: ReactNode;
-  /** `primary` no estado vazio do início; `ghost` depois da lista. */
+  /** `primary` no estado vazio do início; `ghost` na ação de "Suas comunidades". */
   kind?: ButtonKind;
   size?: ButtonSize;
 };

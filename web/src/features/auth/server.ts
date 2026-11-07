@@ -51,7 +51,7 @@ export const getCurrentUser = cache(async () => {
 
 /**
  * As formas de login da conta logada (Discord, Google, senha e email),
- * buscadas uma vez por requisição (a aba Logins e o aviso da home usam). Sem
+ * buscadas uma vez por requisição (os Logins da conta e o aviso da home usam). Sem
  * sessão, `undefined`; a API recusando, o código do erro. Lê cookies: quem
  * usa fica em `<Suspense>`.
  */

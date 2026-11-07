@@ -100,7 +100,7 @@
       "partial": "The seeding covers only some registered players. Anyone who joined later goes to the end.",
       "set": "Seeding is set.",
       "unavailable": "Couldn't load the seeding right now. Reload the page.",
-      "started": "The seeding used is on the Registered tab.",
+      "started": "The seeding used is under Registered.",
       "atCheckIn": "Seeding is set during check-in, with players who confirmed attendance.",
       "atRegistration": "Seeding is set after publishing, while registration is open.",
       "countTeams": "{count, plural, =0 {No teams enter} one {# team enters} other {# teams enter}} the bracket.",

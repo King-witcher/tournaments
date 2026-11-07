@@ -9,7 +9,7 @@ import { LocaleSwitcher } from "./locale-switcher";
 export function AppFooter() {
   return (
     <footer className={styles.footer}>
-      <Grid>
+      <Grid className={styles.grid}>
         <Column sm={4} md={8} lg={16}>
           <LocaleSwitcher />
         </Column>

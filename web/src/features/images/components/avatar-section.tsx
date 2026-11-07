@@ -6,7 +6,7 @@ import { getImageSettings } from "../server";
 import { AvatarField } from "./avatar-field";
 
 /**
- * A foto de perfil, na aba Perfil da conta. Sem o bucket público na API,
+ * A foto de perfil, no Perfil da conta. Sem o bucket público na API,
  * nada. Fica em `<Suspense>`.
  */
 export async function AvatarSection() {

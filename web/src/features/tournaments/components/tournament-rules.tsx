@@ -11,12 +11,14 @@ import { isFinished } from "../lib/status";
 import { loadTournament } from "../server";
 import { RulesEditor } from "./rules-editor";
 import { TournamentAutoRules } from "./tournament-auto-rules";
+import styles from "./tournament-rules.module.scss";
 
 type Props = { tenant: string; slug: string };
 
 /**
- * A aba Regras: primeiro "Como funciona", o texto que sai da configuração do
- * torneio; embaixo, as regras que a organização escreve (em
+ * A seção Regras, na largura de leitura: primeiro "Como funciona", o texto
+ * que sai da configuração do torneio; embaixo, as regras que a organização
+ * escreve (em
  * Markdown, `MarkdownText`), no idioma de quem vê (sem tradução, o
  * original). Para a organização, até o torneio encerrar, a seção das regras
  * da organização aparece sempre, com "Editar" (ou o convite a escrever) ali
@@ -38,30 +40,33 @@ export async function TournamentRules({ tenant, slug }: Props) {
   const editable = me.role !== "player" && !isFinished(tournament.status);
   const images = rulesImagesOf(imageSettings);
   return (
-    <Stack gap={7}>
-      <TournamentAutoRules
-        tournament={tournament}
-        maps={maps}
-        editable={editable}
-      />
-      {(editable || source.rules) && (
-        <Section title={t("extraRules")}>
-          {editable ? (
-            <RulesEditor
-              tenant={tenant}
-              tournament={tournament.slug}
-              locale={source.locale}
-              rules={source.rules}
-              translation={source.translation}
-              images={images}
-            />
-          ) : (
-            <MarkdownText imagePrefix={images?.prefix}>
-              {source.rules}
-            </MarkdownText>
-          )}
-        </Section>
-      )}
-    </Stack>
+    // Texto corrido e o campo das regras na largura de leitura.
+    <div className={styles.reading}>
+      <Stack gap={7}>
+        <TournamentAutoRules
+          tournament={tournament}
+          maps={maps}
+          editable={editable}
+        />
+        {(editable || source.rules) && (
+          <Section title={t("extraRules")}>
+            {editable ? (
+              <RulesEditor
+                tenant={tenant}
+                tournament={tournament.slug}
+                locale={source.locale}
+                rules={source.rules}
+                translation={source.translation}
+                images={images}
+              />
+            ) : (
+              <MarkdownText imagePrefix={images?.prefix}>
+                {source.rules}
+              </MarkdownText>
+            )}
+          </Section>
+        )}
+      </Stack>
+    </div>
   );
 }

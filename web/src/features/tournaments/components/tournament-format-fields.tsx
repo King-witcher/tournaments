@@ -9,10 +9,11 @@ import { RadioTileGroup } from "@/shared/ui/radio-tile-group";
 import { Select } from "@/shared/ui/select";
 import { type FieldErrors, stageField } from "../lib/form-errors";
 import { isTdm, type TournamentValues, teamSizeOf } from "../lib/form-values";
-import { isEvenSeries, mapsToWin, slotLimits, teamsIn } from "../lib/format";
+import { isEvenSeries, mapsToWin, teamsIn } from "../lib/format";
 import { sameValues } from "../lib/same-values";
 import type { StageValues } from "../lib/stage-values";
 import { DEFAULT_TIEBREAKERS } from "../lib/tiebreakers";
+import { BracketDiagram } from "./bracket-diagram";
 import styles from "./tournament-format-fields.module.scss";
 
 /**
@@ -49,10 +50,6 @@ function choiceOf(
 ): FormatChoice {
   return stage.format === "elimination" ? stage.bracket : stage.format;
 }
-
-/** O formato da fase de uma escolha (as duas eliminações são uma só). */
-const formatOf = (choice: FormatChoice): StageValues["format"] =>
-  isElimination(choice) ? "elimination" : (choice as StageValues["format"]);
 
 /**
  * Trocar de formato. Fora do todos contra todos, a série par vira a ímpar logo
@@ -99,12 +96,12 @@ type Props = {
 
 /**
  * O formato da fase (as cinco opções em tiles, numa fileira, cada uma com o
- * que faz; a eliminação só na última fase), o reset da grande final na dupla
- * e, lado a lado, as séries (e a final, na eliminação; as pares só no todos
- * contra todos, com a dica) e as rodadas do suíço. No TDM, o teto do formato
- * aparece em jogadores (como as vagas) e as rodadas contam times. A série que
- * pede mais mapas que o pool
- * salvo fica inválida, com o caminho para Mapas embaixo.
+ * que faz; a eliminação só na última fase), lado a lado as séries (e a final,
+ * na eliminação; as pares só no todos contra todos, com a dica) e as rodadas
+ * do suíço, e, na dupla, o reset embaixo da grande final, que é dela. O teto
+ * de participantes do formato não aparece nos tiles: o campo Vagas o cobra
+ * quando passa dele. No TDM, as rodadas contam times. A série que pede mais
+ * mapas que o pool salvo fica inválida, com o caminho para Mapas embaixo.
  */
 export const TournamentFormatFields = memo(function TournamentFormatFields({
   values,
@@ -165,24 +162,15 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
             content: t(`stageFormats.${value}`),
             description: blocked
               ? t("stages.eliminationLast")
-              : t(`stageFormatHints.${value}`, {
-                  max: slotLimits(formatOf(value), size).max,
-                }),
+              : // O teto de participantes do formato fica no campo Vagas, que
+                // o cobra quando as vagas passam dele.
+                t(`stageFormatHints.${value}`),
+            media: <BracketDiagram format={value} />,
             disabled: blocked,
           };
         })}
         onChange={(next) => change(patchOf(next, stage.bestOf))}
       />
-      {elimination && stage.bracket === "double" && (
-        <Checkbox
-          labelText={t("grandFinalReset")}
-          helperText={t("grandFinalResetHint")}
-          name={`stages.${index}.grandFinalReset`}
-          checked={stage.grandFinalReset}
-          readOnly={readOnly}
-          onChange={(grandFinalReset) => change({ grandFinalReset })}
-        />
-      )}
       <FormRow columns={4}>
         <Select
           labelText={t("bestOf")}
@@ -250,6 +238,16 @@ export const TournamentFormatFields = memo(function TournamentFormatFields({
           </div>
         )}
       </FormRow>
+      {elimination && stage.bracket === "double" && (
+        <Checkbox
+          labelText={t("grandFinalReset")}
+          helperText={t("grandFinalResetHint")}
+          name={`stages.${index}.grandFinalReset`}
+          checked={stage.grandFinalReset}
+          readOnly={readOnly}
+          onChange={(grandFinalReset) => change({ grandFinalReset })}
+        />
+      )}
     </>
   );
 }, sameValues(KEYS));

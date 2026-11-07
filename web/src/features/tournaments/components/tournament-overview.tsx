@@ -1,26 +1,33 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
+import { LiveMatches } from "@/features/matches/components/live-matches";
 import { PendingMatches } from "@/features/matches/components/pending-matches";
-import { actionableMatches } from "@/features/matches/lib/status";
 import { loadBracket } from "@/features/matches/server";
-import { Stack } from "@/shared/ui/carbon/stack";
+import { MyParticipation } from "@/features/participants/components/my-participation";
+import { NextStage } from "@/features/stages/components/next-stage";
+import { pendingStage, withStageStatus } from "@/features/stages/lib/stages";
+import { PageColumns } from "@/shared/ui/page-columns";
 import { Section } from "@/shared/ui/section";
+import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { UserText } from "@/shared/ui/user-text";
 import { localizedTexts } from "../lib/localize";
 import { hasStarted } from "../lib/status";
 import { loadTournament } from "../server";
-import styles from "./tournament-overview.module.scss";
-import { TournamentProgress } from "./tournament-progress";
 import { TournamentSetupSummary } from "./tournament-setup-summary";
+import { TournamentStateSection } from "./tournament-state-section";
 
 type Props = { tenant: string; slug: string };
 
 /**
- * A aba Visão geral: o ciclo do torneio e, embaixo, a partir do `lg`, duas
- * colunas: à esquerda as séries que esperam uma ação de quem vê (a partir do
- * início) e a descrição; à direita o resumo do formato (com o link para a
- * aba Regras). O erro e o login já aparecem na casca; aqui, nada.
- * Fica em `<Suspense>`.
+ * A Visão geral, o painel do torneio, em duas colunas a partir do `lg`. Na
+ * principal, do que pede ação de quem vê ao que só informa: "Sua situação",
+ * a fase seguinte à espera, as séries que esperam quem vê, as séries em
+ * andamento, a descrição e o resumo do formato (com o link para as regras).
+ * Na estreita, o estado do torneio: o ciclo, um passo embaixo do outro, com
+ * o andamento das séries ou o campeão. O formato fica na principal porque os
+ * valores dele são frases, que numa coluna estreita quebram em muitas linhas. O erro e o login já aparecem na casca; aqui, nada. Fica em
+ * `<Suspense>`.
  */
 export async function TournamentOverview({ tenant, slug }: Props) {
   const [t, locale, loaded] = await Promise.all([
@@ -30,41 +37,65 @@ export async function TournamentOverview({ tenant, slug }: Props) {
   ]);
   if (loaded.kind !== "ok") return null;
 
-  const { tournament } = loaded;
-  // A chave só para as pendências; a mesma busca da aba da chave.
-  const bracket = hasStarted(tournament.status)
+  const { me, tournament } = loaded;
+  const organizer = me.role !== "player";
+  const now = new Date();
+  // A chave da fase atual: as pendências, o andamento e o campeão (a mesma
+  // busca da seção Chave).
+  const loadedBracket = hasStarted(tournament.status)
     ? await loadBracket(tenant, slug)
     : undefined;
-  const pending =
-    bracket?.kind === "ok" && actionableMatches(bracket.data).length > 0
-      ? bracket.data
+  const bracket =
+    loadedBracket?.kind === "ok"
+      ? withStageStatus(tournament, loadedBracket.data)
       : undefined;
+  const matchesPath = `/${tenant}/${slug}/matches`;
   const { description } = localizedTexts(tournament, locale);
 
   return (
-    <Stack gap={7}>
-      <TournamentProgress tournament={tournament} />
-      <div className={pending || description ? styles.columns : styles.single}>
-        {(pending || description) && (
-          <Stack gap={7}>
-            {pending && (
-              <PendingMatches
-                bracket={pending}
-                basePath={`/${tenant}/${slug}/matches`}
+    <PageColumns
+      main={
+        <>
+          <MyParticipation
+            tenant={tenant}
+            tournament={tournament}
+            organizer={organizer}
+            now={now}
+          />
+          {pendingStage(tournament) && (
+            <Suspense fallback={<SectionSkeleton rows={2} />}>
+              <NextStage
+                tenant={tenant}
+                tournament={tournament}
+                organizer={organizer}
               />
-            )}
-            {description && (
-              <Section title={t("description")}>
-                <UserText>{description}</UserText>
-              </Section>
-            )}
-          </Stack>
-        )}
-        <TournamentSetupSummary
+            </Suspense>
+          )}
+          {bracket && (
+            <PendingMatches bracket={bracket} basePath={matchesPath} />
+          )}
+          {bracket?.status === "in_progress" && (
+            <LiveMatches bracket={bracket} basePath={matchesPath} />
+          )}
+          {description && (
+            <Section title={t("description")}>
+              <UserText>{description}</UserText>
+            </Section>
+          )}
+          <TournamentSetupSummary
+            tournament={tournament}
+            rulesHref={`/${tenant}/${slug}/rules`}
+          />
+        </>
+      }
+      aside={
+        <TournamentStateSection
           tournament={tournament}
-          rulesHref={`/${tenant}/${slug}/rules`}
+          bracket={bracket}
+          organizer={organizer}
+          now={now}
         />
-      </div>
-    </Stack>
+      }
+    />
   );
 }

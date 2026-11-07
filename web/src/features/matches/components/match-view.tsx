@@ -72,7 +72,6 @@ export async function MatchView({ tenant, slug, matchKey }: Props) {
       <MatchHeader
         tenant={tenant}
         slug={slug}
-        tenantName={loaded.me.name}
         tournamentName={localizedTexts(tournament, locale).name}
         detail={detail}
         severalStages={hasSeveralStages(tournament)}

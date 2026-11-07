@@ -5,42 +5,66 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
+import { useRouter } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import type { components } from "@/shared/api/schema";
-import { SettingsItemsContext } from "../hooks/use-settings-items";
+import {
+  SettingsDraftsContext,
+  type TranslationEdits,
+  type ValuesEdits,
+} from "../hooks/use-settings-drafts";
 import { TournamentSettingsContext } from "../hooks/use-tournament-settings";
 import {
+  translationChange,
+  translationFrom,
+  valuesFrom,
+} from "../lib/form-values";
+import {
+  changed,
+  SECTION_KEYS,
+  SETTINGS_SECTIONS,
   type SettingsSection,
-  sectionItemId,
   sectionOfHash,
+  type ValuesSection,
 } from "../lib/settings-sections";
+import { settingsHref } from "../lib/tabs";
+import { SettingsLeaveGuard } from "./settings-leave-guard";
 
 type Tournament = components["schemas"]["Tournament"];
 
 type Props = {
   tenant: string;
-  /** O torneio que a página buscou. */
+  /** O torneio que o layout das Configurações buscou. */
   tournament: Tournament;
   children: ReactNode;
 };
 
+/** Sem mudança: sempre o mesmo objeto, para o `memo` dos blocos. */
+const NO_EDITS: ValuesEdits = {};
+
 /**
- * O torneio salvo, para todas as seções da aba Configurações: cada uma manda o
- * que está salvo mais os campos dela. Depois de salvar, vale a resposta da API
- * até a página trazer o torneio de novo (`router.refresh` ou o tempo real),
- * para outra seção salva logo em seguida não mandar o valor antigo, e para o
- * que depende do salvo de outra seção (as opções de campeões do TDM, as
- * séries que pedem mais mapas que o pool) mudar sem recarregar. Também guarda
- * quais itens do acordeão estão abertos: todos fechados ao abrir a página,
- * menos o que o `#` do endereço nomeia (`#maps`).
+ * O estado das Configurações do torneio, no `layout.tsx` delas, que não
+ * remonta ao trocar de seção. O torneio salvo, para todas as seções: cada uma
+ * manda o que está salvo mais os campos dela. Depois de salvar, vale a
+ * resposta da API até a página trazer o torneio de novo (`router.refresh` ou
+ * o tempo real), para outra seção salva logo em seguida não mandar o valor
+ * antigo, e para o que depende do salvo de outra seção (as opções de campeões
+ * do TDM, as séries que pedem mais mapas que o pool) mudar sem recarregar.
+ * Também guarda o que a pessoa mudou em cada seção e não salvou, para a
+ * mudança continuar lá ao ir a outra seção e voltar, e pergunta antes de sair
+ * das Configurações com alguma (`SettingsLeaveGuard`). O endereço antigo com
+ * `#maps` vai à página de Mapas.
  */
 export function TournamentSettingsProvider({
   tenant,
   tournament,
   children,
 }: Props) {
+  const router = useRouter();
   const [fromPage, setFromPage] = useState(tournament);
   const [saved, setSaved] = useState(tournament);
   if (fromPage !== tournament) {
@@ -52,55 +76,87 @@ export function TournamentSettingsProvider({
     [tenant, saved],
   );
 
-  const [open, setOpenItems] = useState<ReadonlySet<SettingsSection>>(
-    () => new Set(),
+  const [edits, setAllEdits] = useState<
+    Partial<Record<ValuesSection, ValuesEdits>>
+  >({});
+  const [translationEdits, setTranslationEdits] = useState<TranslationEdits>(
+    {},
   );
-  const setOpen = useCallback((section: SettingsSection, next: boolean) => {
-    setOpenItems((items) => {
-      if (items.has(section) === next) return items;
-      const copy = new Set(items);
-      if (next) copy.add(section);
-      else copy.delete(section);
-      return copy;
+  const setEdits = useCallback(
+    (section: ValuesSection, update: (e: ValuesEdits) => ValuesEdits) =>
+      setAllEdits((all) => ({
+        ...all,
+        [section]: update(all[section] ?? NO_EDITS),
+      })),
+    [],
+  );
+
+  const dirty = useMemo(() => {
+    const values = valuesFrom(saved);
+    return SETTINGS_SECTIONS.filter((section) => {
+      if (section === "languages") {
+        return routing.locales.some(
+          (l) =>
+            l !== saved.locale &&
+            translationChange(saved, l, {
+              ...translationFrom(saved, l),
+              ...translationEdits[l],
+            }) !== undefined,
+        );
+      }
+      const mine = edits[section];
+      if (!mine) return false;
+      const next = { ...values, ...mine };
+      return SECTION_KEYS[section].some((k) => changed(values, next, k));
     });
-  }, []);
-  const reveal = useCallback(
+  }, [saved, edits, translationEdits]);
+
+  // O pedido de foco do "Ir para", que a seção de destino atende ao montar.
+  const arrival = useRef<SettingsSection>(undefined);
+  const base = `/${tenant}/${saved.slug}`;
+  const goTo = useCallback(
     (section: SettingsSection) => {
-      setOpen(section, true);
-      // O foco vai já ao botão do item, que contém o título. A rolagem leva o
-      // título ao topo (o `scroll-margin` dele o deixa fora de baixo do
-      // cabeçalho fixo) quando o conteúdo já abriu: antes, a página pode não
-      // ter altura para isso.
-      const title = document.getElementById(sectionItemId(section));
-      title
-        ?.closest<HTMLButtonElement>("button")
-        ?.focus({ preventScroll: true });
-      const content = title?.closest("li")?.querySelector("[data-group]");
-      const until = performance.now() + 1000;
-      const scroll = () => {
-        if (content?.checkVisibility() || performance.now() > until) {
-          title?.scrollIntoView({ block: "start" });
-        } else {
-          requestAnimationFrame(scroll);
-        }
-      };
-      requestAnimationFrame(scroll);
+      arrival.current = section;
+      router.push(settingsHref(base, section));
     },
-    [setOpen],
+    [router, base],
   );
-  // O endereço com `#maps` abre Mapas (a troca de endereço volta para Geral).
+  const takeArrival = useCallback((section: SettingsSection) => {
+    if (arrival.current !== section) return false;
+    arrival.current = undefined;
+    return true;
+  }, []);
+  // O endereço de antes das páginas por seção (`settings#maps`).
   useEffect(() => {
     const section = sectionOfHash(window.location.hash);
-    if (section) reveal(section);
-  }, [reveal]);
-  const items = useMemo(
-    () => ({ isOpen: (s: SettingsSection) => open.has(s), setOpen, reveal }),
-    [open, setOpen, reveal],
+    if (section && section !== "general") {
+      arrival.current = section;
+      router.replace(settingsHref(base, section));
+    }
+  }, [router, base]);
+
+  const drafts = useMemo(
+    () => ({
+      editsOf: (s: ValuesSection) => edits[s] ?? NO_EDITS,
+      setEdits,
+      translationEdits,
+      setTranslationEdits,
+      dirty,
+      goTo,
+      takeArrival,
+    }),
+    [edits, setEdits, translationEdits, dirty, goTo, takeArrival],
   );
 
   return (
     <TournamentSettingsContext value={value}>
-      <SettingsItemsContext value={items}>{children}</SettingsItemsContext>
+      <SettingsDraftsContext value={drafts}>
+        {children}
+        <SettingsLeaveGuard
+          settingsPath={settingsHref(base, "general")}
+          dirty={dirty}
+        />
+      </SettingsDraftsContext>
     </TournamentSettingsContext>
   );
 }

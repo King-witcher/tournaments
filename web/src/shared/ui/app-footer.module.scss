@@ -3,3 +3,8 @@
 .footer {
   padding-block: spacing.$spacing-05;
 }
+
+// Com o menu lateral, à esquerda, como o `Page` (`page.module.scss`).
+[data-app-shell]:has([data-app-side-nav]) .grid.grid {
+  margin-inline: 0;
+}

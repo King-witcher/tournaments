@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 
-import { CommunityInviteButton } from "@/features/invites/components/community-invite-button";
 import { getTenant } from "@/features/tenants/server";
 import type { components } from "@/shared/api/schema";
 import { DataTable } from "@/shared/ui/data-table";
@@ -24,8 +23,9 @@ function canRemove(viewer: Role, member: Role) {
 /**
  * A aba Membros: a tabela (membro com avatar, papel, desde), com busca; a
  * linha abre a página da pessoa. O owner troca papéis e remove; o
- * organizador remove jogadores. Para os dois, "Convidar" na barra (fora com a
- * exclusão agendada, quando ninguém mais entra). Fica em `<Suspense>`.
+ * organizador remove jogadores. O número de membros e "Convidar" ficam no
+ * cabeçalho da seção (`MemberCount`, `MemberInviteAction`). Fica em
+ * `<Suspense>`.
  */
 export async function MemberList({ slug }: { slug: string }) {
   const [loaded, t, tRoles, members] = await Promise.all([
@@ -34,17 +34,15 @@ export async function MemberList({ slug }: { slug: string }) {
     getTranslations("Roles"),
     getMembers(slug),
   ]);
-  // Sem acesso, o cabeçalho da comunidade já mostra o erro.
+  // Sem acesso, o cabeçalho da seção já mostra o erro.
   if (loaded.kind !== "ok") return null;
   const { tenant } = loaded;
   const viewer = tenant.role;
-  const canInvite = viewer !== "player" && !tenant.deletion_scheduled_for;
 
   return (
     <div id={MEMBERS_ID} tabIndex={-1}>
       <DataTable
         label={t("label")}
-        description={t("count", { count: members.length })}
         columns={[
           { key: "member", header: t("member") },
           { key: "role", header: t("role") },
@@ -76,11 +74,6 @@ export async function MemberList({ slug }: { slug: string }) {
               ) : undefined,
           };
         })}
-        toolbar={
-          canInvite ? (
-            <CommunityInviteButton slug={slug} name={tenant.name} />
-          ) : undefined
-        }
         empty={{ text: t("empty") }}
       />
     </div>

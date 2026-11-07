@@ -1,11 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
 import { apiErrorMessage } from "@/shared/api/errors";
+import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Notice } from "@/shared/ui/notice";
 import { Section } from "@/shared/ui/section";
 import { getMemberRating, getRanking } from "../server";
 import { AdjustRatingButton } from "./adjust-rating-button";
 import { MapRecords } from "./map-records";
+import styles from "./member-rating.module.scss";
 import { RatedGames } from "./rated-games";
 import { RatingAdjustments } from "./rating-adjustments";
 import { RatingSummary } from "./rating-summary";
@@ -23,7 +25,7 @@ const RATING_ID = "member-rating";
 
 /**
  * O rating da pessoa na página dela: o resumo (com "Ajustar rating" para a
- * organização), o desempenho por mapa, as últimas partidas que contaram e,
+ * organização) e, ao lado, o desempenho por mapa; embaixo, as últimas partidas que contaram e,
  * para a organização, os ajustes. Fica em `<Suspense>`.
  */
 export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
@@ -41,35 +43,50 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
   }
   const { rating } = loaded;
 
+  const summary = (
+    <div id={RATING_ID} tabIndex={-1}>
+      <Section
+        title={t("title")}
+        action={
+          staff && (
+            <AdjustRatingButton
+              tenant={tenant}
+              userId={userId}
+              nickname={nickname}
+              focusId={RATING_ID}
+            />
+          )
+        }
+      >
+        {rating.standing ? (
+          <RatingSummary
+            standing={rating.standing}
+            total={ranking?.players.length}
+            adjusted={rating.adjusted}
+            provisionalGames={rating.provisional_games}
+          />
+        ) : (
+          <p>{t("none", { initial: rating.initial })}</p>
+        )}
+      </Section>
+    </div>
+  );
+
   return (
     <>
-      <div id={RATING_ID} tabIndex={-1}>
-        <Section
-          title={t("title")}
-          action={
-            staff && (
-              <AdjustRatingButton
-                tenant={tenant}
-                userId={userId}
-                nickname={nickname}
-                focusId={RATING_ID}
-              />
-            )
-          }
-        >
-          {rating.standing ? (
-            <RatingSummary
-              standing={rating.standing}
-              total={ranking?.players.length}
-              adjusted={rating.adjusted}
-              provisionalGames={rating.provisional_games}
-            />
-          ) : (
-            <p>{t("none", { initial: rating.initial })}</p>
-          )}
-        </Section>
-      </div>
-      {rating.by_map.length > 0 && <MapRecords records={rating.by_map} />}
+      {/* O resumo e o desempenho por mapa lado a lado (do lg para cima): os
+          dois respondem "como ela joga" e cabem numa tela; as tabelas vêm
+          embaixo, na largura toda. */}
+      <Grid>
+        <Column sm={4} md={8} lg={rating.by_map.length > 0 ? 6 : 8}>
+          {summary}
+        </Column>
+        {rating.by_map.length > 0 && (
+          <Column sm={4} md={8} lg={10} className={styles.maps}>
+            <MapRecords records={rating.by_map} />
+          </Column>
+        )}
+      </Grid>
       {rating.games.length > 0 && (
         <RatedGames tenant={tenant} games={rating.games} />
       )}

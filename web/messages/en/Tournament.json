@@ -323,5 +323,12 @@
   },
   "startsAt": "Starts <date></date>",
   "startedAt": "Start set for <date></date>",
-  "noStartDate": "No start date"
+  "noStartDate": "No start date",
+  "kind": "Tournament",
+  "nav": "Tournament menu",
+  "overview": {
+    "decided": "{done} of {total, plural, one {# match} other {# matches}} decided",
+    "decidedStage": "Stage {stage}: {done} of {total, plural, one {# match} other {# matches}} decided",
+    "champion": "Champion: {name}"
+  }
 }

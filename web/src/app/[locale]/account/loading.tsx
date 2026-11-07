@@ -1,13 +1,22 @@
 import { getTranslations } from "next-intl/server";
 
-import { FormSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { AccountColumns } from "@/features/auth/components/account-columns";
+import {
+  FormSkeleton,
+  PageHeaderSkeleton,
+  SectionSkeleton,
+} from "@/shared/ui/skeleton";
 
-/** A aba Perfil carregando, dentro das abas da conta: o título e o campo do nome. */
+/** O Perfil carregando: o título, o nome à esquerda e a foto à direita. */
 export default async function Loading() {
   const t = await getTranslations("Account");
   return (
-    <TabLoading label={t("loading")}>
-      <FormSkeleton heading fields={1} label={false} />
-    </TabLoading>
+    <>
+      <PageHeaderSkeleton breadcrumb={false} label={t("loading")} />
+      <AccountColumns
+        start={<FormSkeleton heading fields={1} label={false} />}
+        end={<SectionSkeleton rows={2} />}
+      />
+    </>
   );
 }

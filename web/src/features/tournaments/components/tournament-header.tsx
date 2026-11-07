@@ -31,7 +31,6 @@ type Props = {
  */
 export function TournamentHeader({ tenant, me, tournament, now }: Props) {
   const t = useTranslations("Tournament");
-  const tNav = useTranslations("Nav");
   const tStatus = useTranslations("TournamentStatus");
   const tAdmission = useTranslations("Admission");
   const locale = useLocale();
@@ -49,10 +48,6 @@ export function TournamentHeader({ tenant, me, tournament, now }: Props) {
 
   return (
     <PageHeader
-      breadcrumbs={[
-        { href: "/", label: tNav("home") },
-        { href: `/${tenant}`, label: me.name },
-      ]}
       image={tournament.cover_url}
       // tabIndex -1: recebe o foco depois de publicar, iniciar, desfazer…,
       // quando o botão usado some no refresh.

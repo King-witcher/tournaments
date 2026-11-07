@@ -14,6 +14,11 @@ type Schemas = components["schemas"];
 type TeamRules = Schemas["TeamRules"];
 
 const PRESETS: TeamPreset[] = ["captain", "balanced", "everyone", "custom"];
+/**
+ * O padrão de todo time novo (`TEAM_PRESETS.balanced` aqui, `TeamRules::BALANCED`
+ * na API): o tile diz "(recomendado)"; o resumo, só o nome.
+ */
+const RECOMMENDED: TeamPreset = "balanced";
 const ACTORS: Schemas["TeamActor"][] = ["captain", "anyone"];
 const PICKERS: Schemas["TeamPicker"][] = ["captain", "each_player"];
 
@@ -76,7 +81,10 @@ export const TournamentTeamRulesFields = memo(
           columns={4}
           options={PRESETS.map((p) => ({
             value: p,
-            content: t(`presets.${p}`),
+            content:
+              p === RECOMMENDED
+                ? t("recommended", { preset: t(`presets.${p}`) })
+                : t(`presets.${p}`),
             description: t(`hints.${p}`),
           }))}
           onChange={(next) => {

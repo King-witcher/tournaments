@@ -3,8 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
-import { FormRow } from "@/shared/ui/form-row";
-import { useSettingsItems } from "../hooks/use-settings-items";
+import { useSettingsDrafts } from "../hooks/use-settings-drafts";
 import { useSettingsSection } from "../hooks/use-settings-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
 import { useValuesSummary } from "../hooks/use-values-summary";
@@ -19,12 +18,13 @@ import { TournamentStages } from "./tournament-stages";
 import { TournamentTeamRulesFields } from "./tournament-team-rules-fields";
 
 /**
- * Formato: modalidade e tamanho do time (com o aviso do que salvar faz com os
- * times dos inscritos) e, no TDM, quem age pelo time logo embaixo, assim que
- * a modalidade muda na tela; vagas, as fases (cada uma com chaveamento,
- * séries, final, reset, rodadas e, nas de tabela, o Desempate; da segunda em
- * diante, quem entra e o check-in) e o rating. As séries que pedem mais mapas
- * que o pool salvo em Mapas ficam inválidas na hora, com o caminho para lá.
+ * Formato: modalidade, tamanho do time e vagas numa linha (com o aviso do que
+ * salvar faz com os times dos inscritos) e, no TDM, quem age pelo time logo
+ * embaixo, assim que a modalidade muda na tela; as fases (cada uma com
+ * chaveamento, séries, final e rodadas, reset e, nas de tabela, o Desempate;
+ * da segunda em diante, quem entra e o check-in) e o rating. As séries que
+ * pedem mais mapas que o pool salvo em Mapas ficam inválidas na hora, com o
+ * caminho para a página de Mapas.
  * Depois de começar, os campos do torneio e as fases que começaram ficam só
  * para leitura; as que não começaram ainda mudam.
  */
@@ -32,7 +32,7 @@ export function SettingsFormatSection() {
   const tSettings = useTranslations("TournamentSettings");
   const summary = useValuesSummary();
   const { tournament } = useTournamentSettings();
-  const { reveal } = useSettingsItems();
+  const { goTo } = useSettingsDrafts();
   const form = useSettingsSection("format");
   const { values, onChange, errors, saved } = form;
   const lock = sectionLock("format", tournament.status);
@@ -44,7 +44,7 @@ export function SettingsFormatSection() {
   // O pool e o modo do mapa vêm do salvo em Mapas.
   const pool =
     !fixed && values.mapMode !== "off" ? values.mapPool?.length : undefined;
-  const goToMaps = useCallback(() => reveal("maps"), [reveal]);
+  const goToMaps = useCallback(() => goTo("maps"), [goTo]);
 
   return (
     <SettingsSection
@@ -70,7 +70,14 @@ export function SettingsFormatSection() {
         errors={errors}
         readOnly={fixed}
         saved={tournament}
-      />
+      >
+        <TournamentSlotsField
+          values={values}
+          onChange={onChange}
+          errors={errors}
+          readOnly={fixed}
+        />
+      </TournamentModeFields>
       {isTdm(values) && (
         <TournamentTeamRulesFields
           values={values}
@@ -78,14 +85,6 @@ export function SettingsFormatSection() {
           readOnly={fixed}
         />
       )}
-      <FormRow columns={4}>
-        <TournamentSlotsField
-          values={values}
-          onChange={onChange}
-          errors={errors}
-          readOnly={fixed}
-        />
-      </FormRow>
       <TournamentStages
         values={values}
         onChange={onChange}

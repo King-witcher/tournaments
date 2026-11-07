@@ -1,42 +1,25 @@
-import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
-import { TenantFrame } from "@/features/tenants/components/tenant-frame";
 import { Page } from "@/shared/ui/page";
-import {
-  PageHeaderSkeleton,
-  TableSkeleton,
-  TabsSkeleton,
-} from "@/shared/ui/skeleton";
 
 /**
- * A comunidade: o cabeçalho e as abas (Torneios, Ranking, Membros,
- * Configurações), com a aba aberta dentro. Novo torneio e as páginas de
- * torneio ficam fora do grupo, sem as abas.
+ * As seções da comunidade (Torneios, Ranking, Membros, Configurações), que o
+ * menu lateral alterna: a página larga e o tempo real. Cada seção desenha o
+ * próprio cabeçalho (`TenantHeader`), com o título dela e a ação primária.
  */
-export default async function CommunityLayout({
+export default function CommunityLayout({
   params,
   children,
 }: LayoutProps<"/[locale]/[tenant]">) {
-  const t = await getTranslations("Tenant");
   return (
     <Page width="wide">
-      <Suspense
-        fallback={
-          <>
-            <PageHeaderSkeleton label={t("loading")} />
-            <TabsSkeleton />
-            <TableSkeleton columns={4} />
-          </>
-        }
-      >
+      <Suspense fallback={null}>
         {params.then(({ tenant }) => (
-          <>
-            <LiveUpdates tenant={tenant} />
-            <TenantFrame slug={tenant}>{children}</TenantFrame>
-          </>
+          <LiveUpdates tenant={tenant} />
         ))}
       </Suspense>
+      {children}
     </Page>
   );
 }

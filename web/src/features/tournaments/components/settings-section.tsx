@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { ReactNode, Ref, RefObject } from "react";
+import { type ReactNode, type Ref, type RefObject, useEffect } from "react";
 
 import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/carbon/form";
@@ -10,13 +10,13 @@ import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { Notice } from "@/shared/ui/notice";
+import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
-import { useSettingsItems } from "../hooks/use-settings-items";
+import { useSettingsDrafts } from "../hooks/use-settings-drafts";
 import {
   type SettingsSection as SectionKey,
-  sectionItemId,
+  sectionTitleId,
 } from "../lib/settings-sections";
-import { FormAccordionItem } from "./form-accordion-item";
 import styles from "./settings-section.module.scss";
 
 /** O que o formulário da seção precisa do hook dela. */
@@ -35,7 +35,7 @@ export type SectionFormState = {
 type Props = {
   section: SectionKey;
   form: SectionFormState;
-  /** O que está salvo, numa linha, no título do item. */
+  /** O que está salvo, numa linha, embaixo do título. */
   summary: ReactNode;
   /** Por que a seção (ou parte dela) não muda agora: o `Callout` antes dos campos. */
   lock?: ReactNode;
@@ -54,15 +54,15 @@ type Props = {
 };
 
 /**
- * Uma seção da aba Configurações do torneio, num item de acordeão: no título,
- * o nome, o resumo do que está salvo e o estado ("Mudanças não salvas" com o
- * aviso do Carbon, ou "Só leitura"); dentro, o motivo do que não muda num
- * `Callout` antes dos campos, os campos e o Salvar dela, desabilitado
- * enquanto um campo recusa o que tem. Fechar não perde o que foi mexido. Erro
- * de outra seção (as séries daqui pedem mais mapas que o pool salvo) aparece
- * acima do botão, com "Ir para" a seção onde corrigir, que abre o item dela
- * com o foco no título; salvo, o item continua aberto, o foco fica no Salvar
- * e "Salvo." aparece até a próxima mudança. Com `aside`, o formulário fica na
+ * Uma seção das Configurações do torneio, a página inteira dela: o título,
+ * com o estado ao lado ("Mudanças não salvas" com o aviso do Carbon, ou "Só
+ * leitura"), e embaixo o resumo do que está salvo; depois, o motivo do que
+ * não muda num `Callout` antes dos campos, os campos e o Salvar dela,
+ * desabilitado enquanto um campo recusa o que tem. Ir a outra seção não perde
+ * o que foi mexido. Erro de outra seção (as séries daqui pedem mais mapas que
+ * o pool salvo) aparece acima do botão, com "Ir para" a página da seção onde
+ * corrigir, que abre com o foco no título; salvo, o foco fica no Salvar e
+ * "Salvo." aparece até a próxima mudança. Com `aside`, o formulário fica na
  * metade da esquerda e ele na da direita, como as duas colunas da página.
  */
 export function SettingsSection({
@@ -77,8 +77,15 @@ export function SettingsSection({
   aside,
 }: Props) {
   const t = useTranslations("TournamentSettings");
-  const { isOpen, setOpen, reveal } = useSettingsItems();
+  const { goTo, takeArrival } = useSettingsDrafts();
   const fixIn = form.formError?.fixIn;
+  const titleId = sectionTitleId(section);
+
+  // Chegou pelo "Ir para": o leitor de tela lê o título e o estado.
+  useEffect(() => {
+    if (takeArrival(section)) document.getElementById(titleId)?.focus();
+  }, [takeArrival, section, titleId]);
+
   const body = (
     <Form
       ref={form.formRef}
@@ -95,7 +102,7 @@ export function SettingsSection({
             action={
               fixIn &&
               fixIn !== section && (
-                <Button kind="ghost" size="sm" onClick={() => reveal(fixIn)}>
+                <Button kind="ghost" size="sm" onClick={() => goTo(fixIn)}>
                   {t("goTo", { section: t(`sections.${fixIn}`) })}
                 </Button>
               )
@@ -117,24 +124,24 @@ export function SettingsSection({
   );
 
   return (
-    <FormAccordionItem
-      id={sectionItemId(section)}
-      group={section}
-      title={t(`sections.${section}`)}
-      summary={summary}
-      status={
-        form.dirty ? (
-          <IconIndicator kind="caution-minor" label={t("unsaved")} />
-        ) : (
-          readOnly && (
-            <StatusTag status="neutral" size="sm">
-              {t("readOnly")}
-            </StatusTag>
-          )
-        )
+    <Section
+      id={titleId}
+      focusable
+      title={
+        <span className={styles.head}>
+          <span>{t(`sections.${section}`)}</span>
+          {form.dirty ? (
+            <IconIndicator kind="caution-minor" label={t("unsaved")} />
+          ) : (
+            readOnly && (
+              <StatusTag status="neutral" size="sm">
+                {t("readOnly")}
+              </StatusTag>
+            )
+          )}
+        </span>
       }
-      open={isOpen(section)}
-      onToggle={(open) => setOpen(section, open)}
+      description={summary}
     >
       {aside ? (
         <div className={styles.halves}>
@@ -146,6 +153,6 @@ export function SettingsSection({
       ) : (
         body
       )}
-    </FormAccordionItem>
+    </Section>
   );
 }

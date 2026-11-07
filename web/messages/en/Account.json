@@ -2,7 +2,8 @@
   "title": "Your account",
   "loading": "Loading account…",
   "loginRequired": "Log in to see your account.",
-  "sections": "Account sections",
+  "nav": "Account menu",
+  "kind": "Account",
   "tabs": {
     "profile": "Profile",
     "logins": "Logins",

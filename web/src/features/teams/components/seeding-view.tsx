@@ -48,8 +48,6 @@ export async function SeedingView({ tenant, slug }: Props) {
   const path = `/${tenant}/${slug}`;
   const manage = `${path}/manage`;
   const breadcrumbs = [
-    { href: "/", label: tNav("home") },
-    { href: `/${tenant}`, label: me.name },
     { href: path, label: localizedName(tournament, locale) },
   ];
 

@@ -1,15 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
+import { TournamentManageSkeleton } from "@/features/tournaments/components/tournament-manage-skeleton";
 
-/** A organização carregando: o estado, o seeding e os links de inscrição. */
+/** A Organização carregando. */
 export default async function Loading() {
   const t = await getTranslations("Tournament");
-  return (
-    <TabLoading label={t("loading")}>
-      <SectionSkeleton rows={2} />
-      <SectionSkeleton rows={1} />
-      <SectionSkeleton rows={2} />
-    </TabLoading>
-  );
+  return <TournamentManageSkeleton label={t("loading")} />;
 }

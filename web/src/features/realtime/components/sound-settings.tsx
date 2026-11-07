@@ -9,7 +9,7 @@ import { Toggle } from "@/shared/ui/toggle";
 import { useSoundEnabled } from "../hooks/use-sound-enabled";
 
 /**
- * O som dos avisos com o site aberto, na aba Avisos da conta: o interruptor
+ * O som dos avisos com o site aberto, nas Notificações da conta: o interruptor
  * (vale para este navegador, na hora) e um botão para ouvir.
  */
 export function SoundSettings() {

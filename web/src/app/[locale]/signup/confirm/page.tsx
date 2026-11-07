@@ -6,17 +6,11 @@ import { PageHeader } from "@/shared/ui/page-header";
 
 /** O link do email de cadastro (`#token`): o botão que cria a conta e entra. */
 export default async function SignupConfirmPage() {
-  const [t, tNav] = await Promise.all([
-    getTranslations("Signup"),
-    getTranslations("Nav"),
-  ]);
+  const t = await getTranslations("Signup");
   return (
     <Page>
       <PageHeader
-        breadcrumbs={[
-          { href: "/", label: tNav("home") },
-          { href: "/signup", label: t("title") },
-        ]}
+        breadcrumbs={[{ href: "/signup", label: t("title") }]}
         title={t("confirm.title")}
       />
       <SignupConfirm />

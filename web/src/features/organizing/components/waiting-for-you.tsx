@@ -26,8 +26,15 @@ import { StartDueTile } from "./start-due-tile";
  * recarrega sozinha pelo canal da pessoa. Fica em `<Suspense>`.
  *
  * `focusAfter`: o alvo do foco quando o check-in feito aqui some da lista.
+ * `tenant`: só o desta comunidade (o início dela), sem o logo em cada item.
  */
-export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
+export async function WaitingForYou({
+  focusAfter,
+  tenant,
+}: {
+  focusAfter: string;
+  tenant?: string;
+}) {
   const [tenants, mine] = await Promise.all([
     getMyTenants(),
     getMyTournaments(),
@@ -36,7 +43,10 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
   // Só quem organiza pergunta à API: na home de quem só joga, a rota
   // custaria mais uma leitura da sessão (Redis) a cada recarga.
   const api = await serverApi();
-  const organizing = tenants.some((tenant) => tenant.role !== "player")
+  const here = (slug: string) => tenant === undefined || slug === tenant;
+  const organizing = tenants.some(
+    (item) => here(item.slug) && item.role !== "player",
+  )
     ? await api
         .GET("/me/organizing")
         .then(({ data }) => data)
@@ -44,12 +54,15 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
     : undefined;
 
   const tasks = (mine?.registered ?? [])
-    .filter(waitsForViewer)
+    .filter((entry) => here(entry.tenant_slug) && waitsForViewer(entry))
     .toSorted(byUrgency);
-  const contested = organizing?.contested ?? [];
-  const startDue = organizing?.start_due ?? [];
-  const pendingTies = organizing?.pending_ties ?? [];
-  const stageDue = organizing?.stage_due ?? [];
+  const ofHere = <T extends { tournament: { tenant_slug: string } }>(
+    items: T[] | undefined,
+  ) => (items ?? []).filter((item) => here(item.tournament.tenant_slug));
+  const contested = ofHere(organizing?.contested);
+  const startDue = ofHere(organizing?.start_due);
+  const pendingTies = ofHere(organizing?.pending_ties);
+  const stageDue = ofHere(organizing?.stage_due);
   const total =
     tasks.length +
     contested.length +
@@ -69,10 +82,9 @@ export async function WaitingForYou({ focusAfter }: { focusAfter: string }) {
     ...pendingTies.map((item) => item.tournament.tenant_slug),
     ...stageDue.map((item) => item.tournament.tenant_slug),
   ]);
-  const logos = new Map(
-    tenants.map((tenant) => [tenant.slug, tenant.logo_url]),
-  );
-  const withLogos = [...shown].some((slug) => logos.get(slug));
+  const logos = new Map(tenants.map((item) => [item.slug, item.logo_url]));
+  const withLogos =
+    tenant === undefined && [...shown].some((slug) => logos.get(slug));
   const avatar = (slug: string, name: string) =>
     withLogos && (
       <Avatar shape="square" size="md" src={logos.get(slug)} name={name} />

@@ -3,17 +3,13 @@ import { Suspense } from "react";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { TournamentView } from "@/features/tournaments/components/tournament-view";
 import { Page } from "@/shared/ui/page";
-import {
-  PageHeaderSkeleton,
-  SectionSkeleton,
-  TabsSkeleton,
-} from "@/shared/ui/skeleton";
+import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
 /**
- * O torneio: o cabeçalho, "Sua situação" e as abas (Visão geral, Chave,
- * Classificação, Inscritos, Regras, Organização, Configurações), com a aba
- * aberta dentro. A ordem da chave, os times e a partida ficam fora do grupo,
- * sem as abas.
+ * O torneio: o cabeçalho (o completo na Visão geral, o compacto nas outras
+ * seções) e a seção aberta. As seções (Visão geral, Chave, Classificação,
+ * Inscritos, Regras, Organização, Configurações) ficam no menu lateral. A
+ * ordem da chave, os times e a partida ficam fora do grupo.
  */
 export default async function TournamentLayout({
   params,
@@ -26,7 +22,6 @@ export default async function TournamentLayout({
         fallback={
           <>
             <PageHeaderSkeleton meta label={t("loading")} />
-            <TabsSkeleton />
             <SectionSkeleton rows={3} />
           </>
         }

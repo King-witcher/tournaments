@@ -21,17 +21,10 @@ export async function generateMetadata(
 }
 
 export default async function NewVetoRoomPage() {
-  const [t, tNav] = await Promise.all([
-    getTranslations("VetoRoom"),
-    getTranslations("Nav"),
-  ]);
+  const t = await getTranslations("VetoRoom");
   return (
     <Page>
-      <PageHeader
-        breadcrumbs={[{ href: "/", label: tNav("home") }]}
-        title={t("title")}
-        meta={t("description")}
-      />
+      <PageHeader title={t("title")} meta={t("description")} />
       <Suspense fallback={<FormSkeleton label={false} />}>
         <NewVetoRoom />
       </Suspense>

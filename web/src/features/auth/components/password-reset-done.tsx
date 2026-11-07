@@ -7,7 +7,7 @@ type Props = {
 };
 
 /**
- * Na aba Logins, para quem acabou de definir uma senha nova ao entrar por email
+ * Nos Logins da conta, para quem acabou de definir uma senha nova ao entrar por email
  * (`?password_reset=1`, de `afterEmailLogin`): diz que salvou e que as outras
  * sessões saíram. Fica em `<Suspense>`.
  */

@@ -4,8 +4,8 @@ import { withStageStatus } from "@/features/stages/lib/stages";
 import { isTable } from "@/features/tournaments/lib/format";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { Notice } from "@/shared/ui/notice";
-import { Section } from "@/shared/ui/section";
 import { loadBracket } from "../server";
 import styles from "./bracket-section.module.scss";
 import { BracketView } from "./bracket-view";
@@ -20,7 +20,8 @@ type Props = {
 };
 
 /**
- * A chave do torneio em andamento ou encerrado, em largura cheia (no round
+ * A chave do torneio em andamento ou encerrado, em largura cheia, com a dica
+ * de uso embaixo do título da página (no round
  * robin, no suíço e na disputa de posições, as séries). A classificação tem
  * a aba dela. Antes do início não mostra nada (a aba mostra o aviso).
  * Busca a chave, então fica em `<Suspense>`.
@@ -60,26 +61,23 @@ export async function BracketSection({ tenant, tournament, stage }: Props) {
   }
   const manyRounds = bracket.matches.some((m) => m.round > 1);
 
+  // Sem título: o da página já é "Chave".
   return (
-    <Section
-      title={t("title")}
-      description={
-        (bracket.status === "in_progress" || manyRounds) && (
-          <>
-            {bracket.status === "in_progress" && t("hint")}
-            {manyRounds && (
-              // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
-              <span className={styles.mobileOnly}> {t("scrollHint")}</span>
-            )}
-          </>
-        )
-      }
-    >
+    <Stack gap={5}>
+      {(bracket.status === "in_progress" || manyRounds) && (
+        <p className={styles.hint}>
+          {bracket.status === "in_progress" && t("hint")}
+          {manyRounds && (
+            // Na tela estreita só cabe uma rodada; as outras ficam na rolagem.
+            <span className={styles.mobileOnly}> {t("scrollHint")}</span>
+          )}
+        </p>
+      )}
       <BracketView
         tenant={tenant}
         tournament={tournament.slug}
         bracket={bracket}
       />
-    </Section>
+    </Stack>
   );
 }

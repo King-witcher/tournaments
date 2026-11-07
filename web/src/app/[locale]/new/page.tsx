@@ -8,16 +8,10 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { FormSkeleton } from "@/shared/ui/skeleton";
 
 export default async function NewTenantPage() {
-  const [t, tNav] = await Promise.all([
-    getTranslations("NewTenant"),
-    getTranslations("Nav"),
-  ]);
+  const t = await getTranslations("NewTenant");
   return (
     <Page>
-      <PageHeader
-        breadcrumbs={[{ href: "/", label: tNav("home") }]}
-        title={t("title")}
-      />
+      <PageHeader title={t("title")} />
       <Suspense fallback={<FormSkeleton label={false} />}>
         <RequireLogin message={t("loginRequired")}>
           <CreateTenantForm />

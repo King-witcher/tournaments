@@ -95,7 +95,7 @@
   },
   "manage": {
     "title": "Teams",
-    "started": "Substitutions and captain changes are in the Registered tab.",
+    "started": "Substitutions and captain changes are under Registered.",
     "unavailable": "Couldn't load teams right now. Reload the page.",
     "view": "View teams"
   },

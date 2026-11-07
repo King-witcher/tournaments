@@ -101,6 +101,10 @@
     "title": "Series que esperan tu acción",
     "item": "{match} · {a} × {b}: {task}"
   },
+  "live": {
+    "title": "Series en curso",
+    "item": "{match} · {a} {aMaps} × {bMaps} {b}"
+  },
   "standings": {
     "title": "Clasificación",
     "loading": "Cargando la clasificación…",

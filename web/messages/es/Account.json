@@ -2,7 +2,8 @@
   "title": "Tu cuenta",
   "loading": "Cargando la cuenta…",
   "loginRequired": "Inicia sesión para ver tu cuenta.",
-  "sections": "Secciones de la cuenta",
+  "nav": "Menú de la cuenta",
+  "kind": "Cuenta",
   "tabs": {
     "profile": "Perfil",
     "logins": "Accesos",

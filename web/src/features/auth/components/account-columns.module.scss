@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// Abaixo do lg, a metade da direita desce para baixo da outra: o mesmo
+// espaço que há entre as seções. Vazia (a foto, sem o armazenamento de
+// imagens), some, para não deixar o espaço sem nada.
+.second {
+  @include breakpoint.breakpoint-down(lg) {
+    margin-block-start: spacing.$spacing-09;
+  }
+
+  &:has(> :empty) {
+    display: none;
+  }
+}
