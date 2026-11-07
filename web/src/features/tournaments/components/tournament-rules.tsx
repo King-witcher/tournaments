@@ -14,10 +14,10 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A aba Regras: primeiro "Como funciona", o texto que sai da configuração do
- * torneio; embaixo, as regras adicionais que a organização escreve (texto
+ * torneio; embaixo, as regras que a organização escreve (texto
  * simples, com as quebras de linha), no idioma de quem vê (sem tradução, o
- * original). Para a organização, até o torneio encerrar, a seção das
- * adicionais aparece sempre, com "Editar" (ou o convite a escrever) ali
+ * original). Para a organização, até o torneio encerrar, a seção das regras
+ * da organização aparece sempre, com "Editar" (ou o convite a escrever) ali
  * mesmo; para os outros, só quando há texto: sem ele, o automático basta.
  * Fica em `<Suspense>`.
  */

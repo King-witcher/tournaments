@@ -20,7 +20,8 @@
   "description": "Descripción",
   "autoRules": {
     "title": "Cómo funciona",
-    "generated": "Este texto sale del formato del torneo y cambia solo cuando lo editas.",
+    "generated": "Generado a partir de la configuración del torneo. Cambia solo cuando la editas.",
+    "generatedReader": "Generado a partir de la configuración del torneo.",
     "entry": {
       "title": "Inscripción y check-in",
       "titleNoCheckIn": "Inscripción",
@@ -217,13 +218,13 @@
       }
     }
   },
-  "extraRules": "Reglas adicionales",
+  "extraRules": "Reglas de la organización",
   "rulesEditor": {
-    "edit": "Editar reglas adicionales",
-    "write": "Escribir reglas adicionales",
-    "empty": "Ninguna regla adicional.",
-    "labelOriginal": "Reglas adicionales ({language}, original)",
-    "labelTranslation": "Reglas adicionales ({language}, traducción)"
+    "edit": "Editar reglas de la organización",
+    "write": "Escribir reglas de la organización",
+    "empty": "Ninguna regla de la organización.",
+    "labelOriginal": "Reglas de la organización ({language}, original)",
+    "labelTranslation": "Reglas de la organización ({language}, traducción)"
   },
   "publish": "Publicar y abrir inscripciones",
   "publishConfirm": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar.",

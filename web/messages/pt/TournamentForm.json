@@ -76,7 +76,7 @@
     "minutesSeconds": "{minutes} min {seconds} s"
   },
   "description": "Descrição",
-  "rules": "Regras adicionais",
+  "rules": "Regras da organização",
   "translationOff": "Nome, descrição e regras estão em {original}. Quem usa o site em {language} os vê assim.",
   "translationHint": "Descrição ou regras em branco mostram as do original.",
   "addLanguage": "Adicionar {language}",

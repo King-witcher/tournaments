@@ -36,7 +36,7 @@ type Props = {
  * tela anunciar o que entra: monte a pilha uma vez e mude só os `items`. Para
  * "copiado" e afins, use `Toast`.
  */
-export function ToastStack({ items, onClose, label, timeout = 10000 }: Props) {
+export function ToastStack({ items, onClose, label, timeout = 5000 }: Props) {
   // Qual aviso tem o ponteiro e qual tem o foco, não "sim ou não": quando o
   // elemento sai da tela (o X, o link, o aviso sob o ponteiro), `onBlur` e
   // `onPointerLeave` não chegam, e a pausa precisa acabar junto com o aviso.

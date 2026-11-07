@@ -34,6 +34,7 @@ A foto da conta (06/11), na aba Perfil. Assumido, salvo o que o usuário pediu (
 - **Nome do objeto**: `logos/<comunidade>/<aleatório>.<ext>` e `covers/<comunidade>/<torneio>/<aleatório>.<ext>`, como os screenshots. As pastas são os slugs de quando foi enviado: o endereço pode mudar (`tenants.md`), o objeto não se move, e o banco confere a forma, não o slug de agora. Como o nome nunca muda de conteúdo, o envio grava `Cache-Control: public, max-age=31536000, immutable` (assinado na URL): CDN e navegador guardam por um ano e nada é invalidado; trocar a imagem é trocar o nome no banco.
 - **Upload como o dos screenshots** (URL assinada, `If-None-Match: *`, registro que confere por HEAD), com o upload pendente em `image_uploads`. **Até 10 uploads pedidos e não registrados por pessoa por hora** (`images.too_many_uploads`; assumido): os registrados trocam a imagem anterior, que sai do bucket, então não acumulam.
 - **Sem órfãos**: o banco põe na fila `image_deletions` todo objeto que deixa de ser usado (trocado, removido, de upload abandonado, da comunidade ou do torneio apagados, inclusive pela cascata), e a rotina diária esvazia a fila depois de a URL de upload vencer, como a dos screenshots.
+- **Imagens nas regras da organização** (decidido em 06/11, ainda não feito): só pelo nosso upload, neste bucket público/CDN, com limite por torneio; saem pela fila `image_deletions` quando o texto deixa de usá-las. Cache curto (cerca de 1 h) nessas imagens em vez de invalidar o CDN, para ficar no S3 genérico.
 
 ## og:image
 

@@ -29,7 +29,7 @@ type Props = {
  * chave, a classificação (todos contra todos e suíço, com os desempates da
  * fase), cada série, os mapas do pool, o resultado e o W.O. Cada trecho segue
  * a configuração e muda sozinho quando ela muda, porque nada é gravado. O que ela não diz
- * (conduta, queda de conexão, quem cria a sala) fica nas regras adicionais.
+ * (conduta, queda de conexão, quem cria a sala) fica nas regras da organização.
  */
 export function TournamentAutoRules({ tournament, maps, editable }: Props) {
   const t = useTranslations("Tournament.autoRules");
@@ -40,7 +40,7 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
   return (
     <Section
       title={t("title")}
-      description={editable ? t("generated") : undefined}
+      description={t(editable ? "generated" : "generatedReader")}
     >
       <Stack gap={7}>
         {!started && <AutoRulesEntry tournament={tournament} />}

@@ -28,6 +28,8 @@ type Props = {
   position: number;
   /** Quantos estão na lista: a última posição possível. */
   total: number;
+  /** Sem número e sem campo quando a ordem ainda não vale (ninguém tem seed). */
+  numbered: boolean;
   team: components["schemas"]["Team"];
   /** Marca quem está sem seed (quando só alguns estão). */
   showNoSeed: boolean;
@@ -56,6 +58,7 @@ type Props = {
 export function SeedingRow({
   position,
   total,
+  numbered,
   team,
   showNoSeed,
   ratingText,
@@ -90,16 +93,22 @@ export function SeedingRow({
 
   return (
     <li className={styles.row}>
-      <PositionField
-        // Recriado quando a posição muda, para mostrar a nova.
-        key={position}
-        inputRef={input}
-        position={position}
-        total={total}
-        label={t("position", { name, total })}
-        disabled={disabled}
-        onMoveTo={onMoveTo}
-      />
+      {numbered ? (
+        <PositionField
+          // Recriado quando a posição muda, para mostrar a nova.
+          key={position}
+          inputRef={input}
+          position={position}
+          total={total}
+          label={t("position", { name, total })}
+          disabled={disabled}
+          onMoveTo={onMoveTo}
+        />
+      ) : (
+        <span className={styles.unnumbered} aria-hidden="true">
+          –
+        </span>
+      )}
       <span className={styles.name}>
         <Avatar src={solo?.avatar_url} name={name} />
         <span className={styles.label}>

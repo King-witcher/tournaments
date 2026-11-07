@@ -31,7 +31,7 @@ type Props = {
 /**
  * Um idioma que não é o original. Sem tradução, diz o que quem lê nesse
  * idioma vê e oferece "Adicionar"; com ela, nome (obrigatório), descrição e
- * regras adicionais e "Remover". O texto não se perde ao remover: adicionar
+ * regras da organização e "Remover". O texto não se perde ao remover: adicionar
  * de novo antes de salvar o traz de volta. O foco acompanha a troca.
  */
 export const TournamentTranslation = memo(function TournamentTranslation({

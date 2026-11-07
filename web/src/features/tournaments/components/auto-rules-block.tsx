@@ -13,7 +13,7 @@ type Props = {
 
 /**
  * Um trecho do "Como funciona" da aba Regras: título (h3) e o texto, na
- * coluna de leitura das regras adicionais.
+ * coluna de leitura das regras da organização.
  */
 export function AutoRulesBlock({ title, children }: Props) {
   return (

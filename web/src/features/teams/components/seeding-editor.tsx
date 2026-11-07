@@ -54,6 +54,9 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const changed = order.some((team, i) => team.id !== initial[i].id);
   // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
   const noneSeeded = initial.every((p) => p.seed == null);
+  // Sem seed nenhum, a lista é a ordem de inscrição e não leva números; eles
+  // aparecem quando a pessoa mexe na ordem.
+  const numbered = !noneSeeded || changed;
   // Ainda há quem não tem seed: salvar grava a ordem que aparece.
   const unsaved = changed || initial.some((p) => p.seed == null);
   const anyRated = order.some((team) => ratings.has(team.id));
@@ -134,6 +137,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
             <SeedingRow
               key={team.id}
               position={i + 1}
+              numbered={numbered}
               total={order.length}
               team={team}
               showNoSeed={!noneSeeded}

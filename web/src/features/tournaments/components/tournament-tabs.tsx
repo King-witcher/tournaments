@@ -19,7 +19,7 @@ type Props = {
  * As abas do torneio, uma coisa por aba: Visão geral, Chave (a partir do
  * início), Classificação (no round robin e no suíço, a partir do início; na
  * eliminação, só no fim, quando há colocações), Inscritos, Regras (sempre: o
- * texto que sai do formato vem antes das regras adicionais), Organização e
+ * texto que sai do formato vem antes das regras da organização), Organização e
  * Configurações (só para ela). O que não se aplica não entra na lista.
  */
 export function TournamentTabs({

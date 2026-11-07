@@ -4,7 +4,9 @@ O que fazer, em que ordem, e o que falta conferir. O que já existe, com as regr
 
 ## Próximo
 
-Nada na fila: os itens de "Depois" ainda não foram escolhidos. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
+- **Regras da organização em Markdown**: decidido com o usuário em 06/11, aguardando liberação. `TextArea` com abas Escrever/Visualizar e um subconjunto de Markdown (títulos, listas, negrito, links) renderizado sem HTML, com títulos no estilo dos blocos de "Como funciona"; mesma coluna `rules` (o texto atual continua válido) e as traduções também. Imagens só pelo nosso upload, no bucket público/CDN, com limite por torneio, removidas pela fila `image_deletions` quando saem do texto e com cache curto (cerca de 1 h) em vez de invalidar o CDN. Detalhe em `docs/decisions/tournaments-ui.md` ("Resumo e regras") e `images.md`.
+
+Demais itens de "Depois" ainda não foram escolhidos. Um incremento por vez, cada um com migration, rotas (OpenAPI), testes de rota (`db::test_db`), tipos regenerados no front e tela mínima.
 
 ## Depois
 

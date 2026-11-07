@@ -24,7 +24,7 @@ type Props = { tenant: string; slug: string };
  * Resultados, Outros idiomas), cada uma com o resumo do que está salvo no
  * título e o próprio Salvar dentro, na coluna estreita das configurações da
  * comunidade. Fechada, a aba é o resumo da configuração inteira; vários itens
- * podem ficar abertos. As regras adicionais ficam na aba Regras. Para quem
+ * podem ficar abertos. As regras da organização ficam na aba Regras. Para quem
  * joga, o aviso de que a aba não é dele. Fica em `<Suspense>`.
  */
 export async function TournamentSettings({ tenant, slug }: Props) {

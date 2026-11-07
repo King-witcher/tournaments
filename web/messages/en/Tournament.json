@@ -20,7 +20,8 @@
   "description": "Description",
   "autoRules": {
     "title": "How it works",
-    "generated": "This text comes from the tournament format and updates on its own when you edit it.",
+    "generated": "Generated from the tournament settings. Updates on its own when you edit them.",
+    "generatedReader": "Generated from the tournament settings.",
     "entry": {
       "title": "Registration and check-in",
       "titleNoCheckIn": "Registration",
@@ -217,13 +218,13 @@
       }
     }
   },
-  "extraRules": "Additional rules",
+  "extraRules": "Organizer rules",
   "rulesEditor": {
-    "edit": "Edit additional rules",
-    "write": "Write additional rules",
-    "empty": "No additional rules.",
-    "labelOriginal": "Additional rules ({language}, original)",
-    "labelTranslation": "Additional rules ({language}, translation)"
+    "edit": "Edit organizer rules",
+    "write": "Write organizer rules",
+    "empty": "No organizer rules.",
+    "labelOriginal": "Organizer rules ({language}, original)",
+    "labelTranslation": "Organizer rules ({language}, translation)"
   },
   "publish": "Publish and open registration",
   "publishConfirm": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",

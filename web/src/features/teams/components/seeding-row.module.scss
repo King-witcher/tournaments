@@ -20,6 +20,16 @@
   inline-size: spacing.$spacing-13;
 }
 
+// Sem número (a ordem ainda não vale): o traço ocupa a coluna do campo.
+.unnumbered {
+  @include type.type-style("body-compact-01");
+
+  flex-shrink: 0;
+  inline-size: spacing.$spacing-13;
+  color: theme.$text-secondary;
+  text-align: center;
+}
+
 .name {
   @include type.type-style("body-compact-01");
 

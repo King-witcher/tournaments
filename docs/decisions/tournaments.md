@@ -50,7 +50,8 @@ Na interface, **"Ordem da chave"** ("seeding" sozinho não diz nada a quem não 
 - O seeding ordena **times** (no duelo, um time de um jogador): o ajuste manual manda a ordem completa de `team_ids` (`PUT ./seeding`), que precisa ter exatamente os times elegíveis (todos os jogadores com check-in; `seeding.order_invalid` se alguém mudou no meio). Seeds em `teams.seed`.
 - **Ao iniciar**: vale a ordem gravada; elegíveis sem seed vão para o fim, na ordem de inscrição; sem seed nenhum, sorteia (e grava). Seeds compactados em 1..N; mínimo de 2 elegíveis (`tournament.not_enough_eligible`).
 - **Por rating**: "Ordenar por rating" só preenche a ordem na tela (maior primeiro; sem rating no fim; empate na ordem anterior); cada linha mostra o rating do time (média dos jogadores, o inicial para quem não tem rating, "sem rating" quando nenhum tem); a organização ainda salva pela rota manual.
-- A tela explica que os de cima pegam os de baixo na primeira rodada e os dois primeiros só se cruzam no fim; sem seed nenhum, avisa que a ordem mostrada não vale até salvar. Cada posição é um campo numérico (digitar e Enter leva para lá, os outros descem; setas para o ajuste fino). Arrastar ficou de fora: impreciso numa lista que rola no celular.
+- **Sem ordem salva, o início sorteia** (o usuário confirmou em 06/11, revisão 5): a ordem de inscrição não vira seed sem querer; "Salvar ordem" a mantém e "Sortear" sorteia na hora.
+- A tela explica o que a ordem decide, pelo formato da primeira fase (na eliminação, os de cima pegam os de baixo na primeira rodada); sem seed nenhum, a lista aparece na ordem de inscrição, sem números (eles surgem quando a pessoa mexe na ordem), e o aviso diz que a chave é sorteada ao iniciar se não salvar. Cada posição é um campo numérico (digitar e Enter leva para lá, os outros descem; setas para o ajuste fino). Arrastar ficou de fora: impreciso numa lista que rola no celular.
 
 ## i18n
 

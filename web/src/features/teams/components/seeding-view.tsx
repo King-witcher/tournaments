@@ -9,7 +9,6 @@ import { seedingOpen } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
@@ -22,7 +21,7 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A página do seeding, para organizer e owner, na revisão antes de iniciar:
- * quantos entram na chave, a explicação e a lista de times com a posição (e o
+ * quantos entram na chave, a explicação (pelo formato da primeira fase) e a lista de times com a posição (e o
  * rating: a média dos jogadores; no duelo, o do jogador) de cada um,
  * "Sortear", "Ordenar por rating" e "Salvar". No TDM, só os times completos
  * entram, e o aviso dos incompletos leva à formação. Fora da revisão (ou para
@@ -95,6 +94,19 @@ export async function SeedingView({ tenant, slug }: Props) {
   // outra página.
   const teams = tournament.mode === "tdm";
   const size = tournament.team_size;
+  const [stage] = tournament.stages;
+  const whatKey =
+    stage.format === "elimination"
+      ? stage.bracket === "single"
+        ? "whatSingle"
+        : "whatDouble"
+      : stage.format === "round_robin"
+        ? stage.final_tie === "organizer"
+          ? "whatRoundRobin"
+          : "whatRoundRobinSeed"
+        : stage.format === "swiss"
+          ? "whatSwiss"
+          : "whatPlacement";
   return (
     <>
       <PageHeader
@@ -108,10 +120,7 @@ export async function SeedingView({ tenant, slug }: Props) {
               })
         }
       >
-        <Stack gap={3} className={styles.hint}>
-          <p>{t("what")}</p>
-          <p>{t("hint")}</p>
-        </Stack>
+        <p className={styles.hint}>{t(whatKey)}</p>
       </PageHeader>
       {teams && <SeedingTeamsNotice tenant={tenant} tournament={tournament} />}
       {order.length === 0 ? (

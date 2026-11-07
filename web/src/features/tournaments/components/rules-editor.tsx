@@ -31,8 +31,8 @@ type Props = {
 };
 
 /**
- * As regras adicionais na aba Regras, para a organização: o texto com
- * "Editar regras adicionais" em cima (ou, sem texto, o convite a escrever o
+ * As regras da organização na aba Regras, para a organização: o texto com
+ * "Editar regras da organização" em cima (ou, sem texto, o convite a escrever o
  * que o texto automático não cobre), que troca o texto por um campo com
  * Salvar e Cancelar ali mesmo. Muda o texto que a pessoa está lendo: o da
  * tradução no idioma dela, se tem, ou o original. Salvo, o editor fecha com

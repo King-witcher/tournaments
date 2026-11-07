@@ -76,7 +76,7 @@
     "minutesSeconds": "{minutes} min {seconds} s"
   },
   "description": "Description",
-  "rules": "Additional rules",
+  "rules": "Organizer rules",
   "translationOff": "The name, description and rules are in {original}. Users of the site in {language} see them as they are.",
   "translationHint": "A blank description or rules show the original.",
   "addLanguage": "Add {language}",
