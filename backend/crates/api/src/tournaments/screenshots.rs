@@ -2,8 +2,9 @@
 //! um mapa com um screenshot do placar anexado (domínio `screenshots`; a
 //! checagem fica no envio, em `matches`). Ligar exige o bucket configurado; o
 //! que já está ligado fica gravado e não vale enquanto faltar o bucket (ninguém
-//! fica sem poder enviar). Muda até o torneio encerrar, como a janela de
-//! contestação, e vale para os envios seguintes.
+//! fica sem poder enviar). Torneio novo nasce ligado quando há o bucket. Muda
+//! até o torneio encerrar, como a janela de contestação, e vale para os envios
+//! seguintes.
 
 use super::status::TournamentStatus;
 use crate::shared::ApiError;
@@ -11,8 +12,15 @@ use crate::shared::ApiError;
 /// 422: ligar sem o bucket configurado.
 const UNAVAILABLE: ApiError = ApiError::invalid("tournament.screenshots_unavailable");
 
-/// Na criação. 422 `tournament.screenshots_unavailable` ligado sem o bucket.
-pub fn check_new(required: bool, available: bool) -> Result<(), ApiError> {
+/// Na criação: o pedido ou, ausente, ligado se houver o bucket. 422
+/// `tournament.screenshots_unavailable` ligado sem o bucket.
+pub fn new(requested: Option<bool>, available: bool) -> Result<bool, ApiError> {
+    let required = requested.unwrap_or(available);
+    check(required, available)?;
+    Ok(required)
+}
+
+fn check(required: bool, available: bool) -> Result<(), ApiError> {
     if required && !available {
         return Err(UNAVAILABLE);
     }
@@ -35,7 +43,7 @@ pub fn edit(
     if status.is_finished() {
         return Err(ApiError::conflict("tournament.finished"));
     }
-    check_new(required, available)?;
+    check(required, available)?;
     Ok(Some(required))
 }
 
@@ -45,10 +53,17 @@ mod tests {
 
     #[test]
     fn turning_on_needs_the_bucket() {
-        assert!(check_new(false, false).is_ok());
-        assert!(check_new(true, true).is_ok());
-        let err = check_new(true, false).unwrap_err();
+        assert!(!new(Some(false), false).unwrap());
+        assert!(new(Some(true), true).unwrap());
+        let err = new(Some(true), false).unwrap_err();
         assert_eq!(err.code, "tournament.screenshots_unavailable");
+    }
+
+    #[test]
+    fn absent_follows_the_bucket() {
+        assert!(new(None, true).unwrap());
+        assert!(!new(None, false).unwrap());
+        assert!(!new(Some(false), true).unwrap());
     }
 
     #[test]

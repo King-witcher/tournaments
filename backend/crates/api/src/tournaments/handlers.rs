@@ -39,7 +39,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -70,7 +70,8 @@ pub async fn create_tournament(
     schedule.check_start(Utc::now())?;
     contest::check(body.contest_minutes)?;
     let translations = clean_translations(body.locale, body.translations)?;
-    screenshots::check_new(body.screenshots_required, state.storage.is_some())?;
+    let screenshots_required =
+        screenshots::new(body.screenshots_required, state.storage.is_some())?;
 
     let new = NewTournament {
         slug: &body.slug,
@@ -81,7 +82,7 @@ pub async fn create_tournament(
         schedule,
         contest_minutes: body.contest_minutes,
         counts_for_rating: body.counts_for_rating,
-        screenshots_required: body.screenshots_required,
+        screenshots_required,
     };
     let mut tx = state.db.begin().await?;
     let id = db::create(&mut tx, member.tenant, new).await?;

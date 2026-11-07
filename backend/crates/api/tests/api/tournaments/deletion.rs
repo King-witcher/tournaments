@@ -219,7 +219,10 @@ async fn a_started_duel_goes_with_everything() {
         &c.ana,
         with(
             duel("liga"),
-            with(single(1, 1), json!({ "check_in_minutes": null })),
+            with(
+                single(1, 1),
+                json!({ "check_in_minutes": null, "screenshots_required": false }),
+            ),
         ),
     )
     .await;

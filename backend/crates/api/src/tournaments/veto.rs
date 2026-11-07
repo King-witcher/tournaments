@@ -180,8 +180,8 @@ pub struct VetoInput {
     /// Padrão `veto`.
     #[serde(default)]
     pub map_mode: Option<MapMode>,
-    /// Ordem do veto de mapas, só no modo `veto`: `bans_first` (padrão) ou
-    /// `alternating`.
+    /// Ordem do veto de mapas, só no modo `veto`: `alternating` (padrão) ou
+    /// `bans_first`.
     #[serde(default)]
     pub order: Option<VetoOrder>,
     /// Slugs dos mapas (`GET /maps`, ativos), na ordem, sem repetir; fora do
@@ -351,7 +351,7 @@ pub async fn resolve(
         order: input
             .order
             .or(current.map(|c| c.order))
-            .unwrap_or(VetoOrder::BansFirst),
+            .unwrap_or(VetoOrder::Alternating),
         pool,
         champion_phase: input
             .champion_phase

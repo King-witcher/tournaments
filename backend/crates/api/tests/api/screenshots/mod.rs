@@ -49,7 +49,9 @@ pub async fn cup(db: &PgPool, best_of: u8, changes: Value) -> Cup {
     create(&app, &ana, "quake-br").await;
     let bia = member(&app, db, &ana, "Bia").await;
     let mut p = players(&app, db, &ana, 2).await;
-    let body = with(copa(single(best_of, best_of)), changes);
+    // Com o bucket, o padrão é exigir: os testes que não pedem ficam sem.
+    let optional = json!({ "screenshots_required": false });
+    let body = with(with(copa(single(best_of, best_of)), optional), changes);
     start(&app, &ana, body, &[&p[0], &p[1]]).await;
     let p2 = p.pop().unwrap();
     let p1 = p.pop().unwrap();

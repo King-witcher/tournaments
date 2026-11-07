@@ -120,10 +120,12 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
 
 /**
  * O começo da sala de veto, que usa os campos de mapas e campeões do torneio:
- * veto de mapas no pool padrão, 1 ban por série, espelho permitido, draft de
- * campeões no site e 30 s por passo, com as escolhas alternadas (às cegas,
- * 60 s para a janela simultânea). O torneio novo não parte daqui: sem origem,
- * a criação manda só nome, endereço e modalidade, e o resto é o padrão da API.
+ * veto de mapas alternado no pool padrão, 1 ban por série, espelho permitido,
+ * draft de campeões no site e 30 s por passo, com as escolhas alternadas (às
+ * cegas, 60 s para a janela simultânea). O torneio novo não parte daqui: sem
+ * origem, a criação manda só nome, endereço e modalidade, e o resto é o padrão
+ * da API (que também exige captura de tela quando há o bucket; a sala não tem
+ * resultado, e o campo fica desligado).
  */
 export function defaultValues(locale: Locale): TournamentValues {
   return {
@@ -155,7 +157,7 @@ export function defaultValues(locale: Locale): TournamentValues {
     contestMinutes: 10,
     countsForRating: true,
     mapMode: "veto",
-    vetoOrder: "bans_first",
+    vetoOrder: "alternating",
     mapPool: null,
     championPhase: true,
     pickOrder: "alternating",

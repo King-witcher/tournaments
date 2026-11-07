@@ -28,6 +28,7 @@ async fn turning_it_on_needs_the_bucket() {
             err("tournament.screenshots_unavailable")
         )
     );
+    // Ausente e sem o bucket: desligado.
     let created = create_tournament(&app, &ana, duel("copa")).await;
     assert_eq!(created["screenshots_required"], false);
     let (status, body) = patch(&app, COPA, &ana, on.clone()).await;
@@ -49,6 +50,18 @@ async fn turning_it_on_needs_the_bucket() {
     // O que já está ligado continua aceito sem o bucket.
     let (status, _) = patch(&app, COPA, &ana, on).await;
     assert_eq!(status, StatusCode::OK);
+}
+
+#[tokio::test]
+async fn with_the_bucket_a_new_tournament_requires_it_unless_told_otherwise() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (_, ana, _) = quake_br(&db).await;
+    let (app, _, _) = app_with_bucket(&db).await;
+    let created = create_tournament(&app, &ana, duel("copa")).await;
+    assert_eq!(created["screenshots_required"], true);
+    let off = json!({ "screenshots_required": false });
+    let created = create_tournament(&app, &ana, with(duel("copa-2"), off)).await;
+    assert_eq!(created["screenshots_required"], false);
 }
 
 #[tokio::test]

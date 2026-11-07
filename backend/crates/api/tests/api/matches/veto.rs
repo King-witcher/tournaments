@@ -254,10 +254,10 @@ async fn veto_of_maps_and_champions_then_the_report_follows_it() {
 }
 
 #[tokio::test]
-async fn the_map_veto_bans_first_by_default_then_picks_and_leaves_the_decider() {
+async fn the_map_veto_bans_first_then_picks_and_leaves_the_decider() {
     let (db, _lease) = crate::db::test_db().await;
-    // Sem `order`: o padrão, bans primeiro.
-    let veto = json!({ "map_mode": "veto", "champion_phase": false });
+    // Bans primeiro (o padrão é o alternado).
+    let veto = json!({ "map_mode": "veto", "champion_phase": false, "order": "bans_first" });
     let (app, _, p) = final_with(&db, 3, veto, one_ban()).await;
     ready(&app, &p[0]).await;
     ready(&app, &p[1]).await;
@@ -784,7 +784,7 @@ async fn the_tournament_keeps_the_veto_settings() {
         created["veto"],
         json!({
             "map_mode": "veto",
-            "order": "bans_first",
+            "order": "alternating",
             "map_pool": ["awoken", "blood-covenant", "corrupted-keep", "molten-falls",
                          "ruins-of-sarnath", "vale-of-pnath", "deep-embrace"],
             "champion_phase": true,
@@ -834,12 +834,12 @@ async fn the_tournament_keeps_the_veto_settings() {
         &app,
         tournament,
         &ana,
-        json!({ "veto": { "map_mode": "vote", "order": "alternating", "map_pool": ["lockbox", "vestibule-of-exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
+        json!({ "veto": { "map_mode": "vote", "order": "bans_first", "map_pool": ["lockbox", "vestibule-of-exile", "awoken", "insomnia", "blood-run"], "step_seconds": 45 } }),
     )
     .await;
     assert_eq!(status, StatusCode::OK, "{edited}");
     assert_eq!(edited["veto"]["map_mode"], "vote");
-    assert_eq!(edited["veto"]["order"], "alternating");
+    assert_eq!(edited["veto"]["order"], "bans_first");
     assert_eq!(edited["veto"]["map_pool"][0], "lockbox");
     assert_eq!(edited["veto"]["step_seconds"], 45);
     assert_eq!(edited["veto"]["champion_phase"], true);
@@ -858,7 +858,7 @@ async fn the_veto_settings_lock_once_started() {
             &app,
             COPA,
             &ana,
-            json!({ "veto": { "order": "alternating" } })
+            json!({ "veto": { "order": "bans_first" } })
         )
         .await,
         (StatusCode::CONFLICT, err("tournament.setup_locked"))

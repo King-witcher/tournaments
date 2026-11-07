@@ -13,7 +13,8 @@ import { mapSequence, sequenceWords } from "../lib/veto-sequence";
 
 type Schemas = components["schemas"];
 
-const ORDERS: Schemas["VetoOrder"][] = ["bans_first", "alternating"];
+// O padrão primeiro.
+const ORDERS: Schemas["VetoOrder"][] = ["alternating", "bans_first"];
 
 /** Os campos do formulário que o bloco lê. */
 const KEYS = [
@@ -34,7 +35,7 @@ type Props = {
 };
 
 /**
- * A ordem do veto de mapas (bans primeiro ou alternado) e, embaixo, a
+ * A ordem do veto de mapas (alternado, o padrão, ou bans primeiro) e, embaixo, a
  * sequência que ela dá com o pool de agora, uma linha por melhor de N que o
  * torneio usa. Sem a linha de um melhor de N que o pool não comporta: o erro
  * do pool já aparece no campo dele.

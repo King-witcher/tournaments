@@ -184,11 +184,10 @@ async fn veto_events_keep_their_shape_and_order() {
 }
 
 #[tokio::test]
-async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
+async fn the_veto_order_is_one_of_two_and_defaults_to_alternating() {
     let (db, _lease) = crate::db::test_db().await;
     let _ = quake_br(&db).await;
-    // Uma linha que não diz a ordem (o código anterior à coluna, durante o
-    // deploy) nasce em bans primeiro, o padrão novo.
+    // Uma linha que não diz a ordem nasce no alternado, o padrão da API.
     let tenant = tenant_id(&db, "quake-br").await;
     let mut tx = db.begin().await.unwrap();
     let order: String = sqlx::query_scalar(
@@ -201,7 +200,7 @@ async fn the_veto_order_is_one_of_two_and_defaults_to_bans_first() {
     .fetch_one(&mut *tx)
     .await
     .unwrap();
-    assert_eq!(order, "bans_first");
+    assert_eq!(order, "alternating");
     let unknown = sqlx::query("update tournaments set veto_order = 'random'")
         .execute(&mut *tx)
         .await;
@@ -281,9 +280,9 @@ async fn the_pool_fits_the_series_and_freezes_with_the_start() {
         rejected(exec(&db, &veto_off).await),
         rule(CHECK, "tournaments_veto_started_frozen")
     );
-    // A ordem do veto também (a API cria em bans primeiro).
+    // A ordem do veto também (a API cria no alternado).
     let veto_order =
-        format!("update tournaments set veto_order = 'alternating' where id = {tournament}");
+        format!("update tournaments set veto_order = 'bans_first' where id = {tournament}");
     assert_eq!(
         rejected(exec(&db, &veto_order).await),
         rule(CHECK, "tournaments_veto_started_frozen")

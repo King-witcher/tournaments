@@ -2172,10 +2172,10 @@ export interface components {
             rules?: string;
             /**
              * @description O envio do jogador exige screenshot do placar (`screenshots`). Só liga
-             *     com o bucket configurado (`GET /screenshots/settings`). Ausente:
-             *     `false`.
+             *     com o bucket configurado (`GET /screenshots/settings`). Ausente: ligado
+             *     se houver o bucket, senão desligado.
              */
-            screenshots_required?: boolean;
+            screenshots_required?: boolean | null;
             /**
              * @description a-z, 0-9 e hífen, 3 a 32 caracteres, único no tenant. Muda enquanto for
              *     rascunho.
@@ -8911,7 +8911,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;

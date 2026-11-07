@@ -44,9 +44,9 @@ async fn anyone_creates_a_room_with_one_link_per_player() {
         assert_eq!(d["team_size"], team_size);
         assert_eq!(d["best_of"], 3);
         assert_eq!(d["seats"].as_array().unwrap().len(), seats);
-        // O padrão: veto de mapas, bans primeiro, draft com um ban.
+        // O padrão: veto de mapas, alternado, draft com um ban.
         assert_eq!(d["veto"]["map_mode"], "veto");
-        assert_eq!(d["order"], "bans_first");
+        assert_eq!(d["order"], "alternating");
         assert_eq!(d["veto"]["champion_phase"], true);
         assert_eq!(d["bans_per_series"], 1);
         assert_eq!(d["veto"]["step_seconds"], 30);
@@ -94,7 +94,7 @@ async fn advanced_settings_are_kept() {
         "team_size": 2,
         "best_of": 1,
         "veto": {
-            "order": "alternating",
+            "order": "bans_first",
             "map_pool": ["awoken", "insomnia", "blood-run"],
             "step_seconds": 45,
             "team_pick_seconds": 90
@@ -105,7 +105,7 @@ async fn advanced_settings_are_kept() {
     });
     let links = links_of(&app, body).await;
     let d = detail(&app, &links.manage).await;
-    assert_eq!(d["order"], "alternating");
+    assert_eq!(d["order"], "bans_first");
     assert_eq!(d["bans_per_series"], 2);
     assert_eq!(d["no_repeat"], "team");
     assert_eq!(d["veto"]["step_seconds"], 45);

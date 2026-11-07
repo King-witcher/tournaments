@@ -340,10 +340,10 @@ pub struct CreateTournament {
     #[schema(required = false)]
     pub counts_for_rating: bool,
     /// O envio do jogador exige screenshot do placar (`screenshots`). Só liga
-    /// com o bucket configurado (`GET /screenshots/settings`). Ausente:
-    /// `false`.
+    /// com o bucket configurado (`GET /screenshots/settings`). Ausente: ligado
+    /// se houver o bucket, senão desligado.
     #[serde(default)]
-    pub screenshots_required: bool,
+    pub screenshots_required: Option<bool>,
 }
 
 /// Tradução enviada junto com a criação do torneio.
