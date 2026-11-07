@@ -44,6 +44,8 @@ const FIELD_OF_CODE: Record<string, TournamentField> = {
   "tournament.slug_reserved": "slug",
   "tournament.description_invalid": "description",
   "tournament.rules_invalid": "rules",
+  "tournament.rules_image_invalid": "rules",
+  "tournament.rules_images_too_many": "rules",
   "tournament.max_participants_invalid": "maxParticipants",
   "tournament.max_participants_below_registered": "maxParticipants",
   "tournament.team_size_invalid": "teamSize",

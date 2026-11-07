@@ -15,11 +15,17 @@
   "dependencies": {
     "@carbon/icons-react": "^11.91.0",
     "@carbon/react": "^1.119.0",
+    "mdast-util-gfm-autolink-literal": "^2.1.0",
+    "mdast-util-gfm-table": "^2.0.1",
+    "micromark-extension-gfm-autolink-literal": "^2.1.0",
+    "micromark-extension-gfm-table": "^2.1.2",
     "next": "16.4.3",
     "next-intl": "^4.14.9",
     "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-breaks": "^4.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

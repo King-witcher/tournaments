@@ -5,23 +5,28 @@ import {
   type EncodedImage,
   type EncodeError,
   encodeImage,
-  type ImageKind,
+  encodeScaled,
 } from "./encode-image";
 
 /**
- * De quem é a imagem: o logo da comunidade, a capa de um torneio dela ou a
- * foto de perfil de quem está logado.
+ * De quem é a imagem: o logo da comunidade, a capa de um torneio dela, a
+ * foto de perfil de quem está logado ou uma imagem das regras de um torneio
+ * (que entra no Markdown pela URL devolvida).
  */
 export type ImageTarget =
   | { kind: "logo"; tenant: string }
   | { kind: "cover"; tenant: string; tournament: string }
-  | { kind: "avatar" };
+  | { kind: "avatar" }
+  | { kind: "rules"; tenant: string; tournament: string };
+
+/** O logo, a capa ou a foto: uma imagem por dono, que se troca e se tira. */
+export type FixedImageTarget = Exclude<ImageTarget, { kind: "rules" }>;
 
 /** Erro do navegador, fora da API (o texto fica em `Images.errors`). */
 export type LocalError = EncodeError | "notImage" | "uploadFailed";
 
 export type ImageOutcome =
-  | { ok: true }
+  | { ok: true; url: string }
   | { ok: false; local: LocalError }
   | { ok: false; code: string; params?: ApiErrorParams };
 
@@ -46,6 +51,16 @@ function requestUpload(target: ImageTarget, body: NewUpload) {
       );
     case "avatar":
       return api.POST("/me/avatar/uploads", { body });
+    case "rules":
+      return api.POST(
+        "/tenants/{slug}/tournaments/{tournament}/rules/images/uploads",
+        {
+          params: {
+            path: { slug: target.tenant, tournament: target.tournament },
+          },
+          body,
+        },
+      );
   }
 }
 
@@ -72,11 +87,24 @@ function attach(target: ImageTarget, upload: number) {
       return api.POST("/me/avatar/uploads/{upload}/attach", {
         params: { path: { upload } },
       });
+    case "rules":
+      return api.POST(
+        "/tenants/{slug}/tournaments/{tournament}/rules/images/uploads/{upload}/attach",
+        {
+          params: {
+            path: {
+              slug: target.tenant,
+              tournament: target.tournament,
+              upload,
+            },
+          },
+        },
+      );
   }
 }
 
 /** Tira o logo, a capa ou a foto. */
-export function removeImage(target: ImageTarget) {
+export function removeImage(target: FixedImageTarget) {
   switch (target.kind) {
     case "logo":
       return api.DELETE("/tenants/{slug}/logo", {
@@ -94,8 +122,8 @@ export function removeImage(target: ImageTarget) {
 }
 
 /**
- * O caminho inteiro de um logo ou de uma capa: corta pelo centro e converte
- * no navegador (`prepareImage`) e manda (`sendImage`).
+ * O caminho inteiro de um logo, de uma capa ou de uma imagem das regras:
+ * converte no navegador (`prepareImage`) e manda (`sendImage`).
  */
 export async function uploadImage(
   target: ImageTarget,
@@ -106,14 +134,20 @@ export async function uploadImage(
   return "blob" in encoded ? sendImage(target, encoded) : encoded;
 }
 
-/** Corta e converte no navegador, sem mandar nada. */
+/**
+ * Converte no navegador, sem mandar nada: logo e capa cortados pelo centro
+ * na proporção deles; a imagem das regras só reduzida.
+ */
 async function prepareImage(
   file: Blob,
-  kind: ImageKind,
+  kind: ImageTarget["kind"],
   maxBytes: number,
 ): Promise<EncodedImage | { ok: false; local: LocalError }> {
   if (!file.type.startsWith("image/")) return { ok: false, local: "notImage" };
-  const encoded = await encodeImage(file, kind, maxBytes);
+  const encoded =
+    kind === "rules"
+      ? await encodeScaled(file, maxBytes)
+      : await encodeImage(file, kind, maxBytes);
   return typeof encoded === "string" ? { ok: false, local: encoded } : encoded;
 }
 
@@ -144,5 +178,5 @@ export async function sendImage(
   if (!sent?.ok) return { ok: false, local: "uploadFailed" };
 
   const attached = await callApi(attach(target, upload.data.id));
-  return attached.ok ? { ok: true } : attached;
+  return attached.ok ? { ok: true, url: attached.data.url } : attached;
 }

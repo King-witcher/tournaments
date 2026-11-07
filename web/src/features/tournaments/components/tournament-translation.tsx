@@ -1,13 +1,17 @@
 import { useTranslations } from "next-intl";
 import { memo, useId } from "react";
 
+import { useRulesImageUpload } from "@/features/images/hooks/use-rules-image-upload";
+import type { RulesImages } from "@/features/images/lib/rules-images";
 import type { components } from "@/shared/api/schema";
 import { Button } from "@/shared/ui/button";
 import { FormGroup } from "@/shared/ui/carbon/form";
 import { Stack } from "@/shared/ui/carbon/stack";
+import { MarkdownField } from "@/shared/ui/markdown-field";
 import { Notice } from "@/shared/ui/notice";
 import { TextArea } from "@/shared/ui/text-area";
 import { TextInput } from "@/shared/ui/text-input";
+import { useTournamentSettings } from "../hooks/use-tournament-settings";
 import { controlName, type FieldErrors } from "../lib/form-errors";
 import type { TranslationDraft, TranslationValues } from "../lib/form-values";
 import styles from "./tournament-translation.module.scss";
@@ -26,6 +30,8 @@ type Props = {
   saved: boolean;
   /** Encerrado: as regras só para leitura. */
   rulesReadOnly: boolean;
+  /** As imagens das regras (o CDN e o tamanho máximo); `null` sem o bucket. */
+  rulesImages: RulesImages | null;
 };
 
 /**
@@ -42,12 +48,19 @@ export const TournamentTranslation = memo(function TournamentTranslation({
   errors,
   saved,
   rulesReadOnly,
+  rulesImages,
 }: Props) {
   const t = useTranslations("TournamentForm");
   const tLocales = useTranslations("Locales");
   const nameId = useId();
   const addId = useId();
   const language = tLocales(locale);
+  const { tenant, tournament } = useTournamentSettings();
+  const uploadRulesImage = useRulesImageUpload(
+    tenant,
+    tournament.slug,
+    rulesImages,
+  );
   const toggle = (enabled: boolean) => {
     onChange(locale, { enabled });
     // O botão usado some: o foco vai para o que aparece no lugar dele.
@@ -101,7 +114,7 @@ export const TournamentTranslation = memo(function TournamentTranslation({
           invalidText={errors.description}
           onChange={(e) => onChange(locale, { description: e.target.value })}
         />
-        <TextArea
+        <MarkdownField
           labelText={t("rules")}
           name={controlName("rules", locale)}
           rows={8}
@@ -112,6 +125,8 @@ export const TournamentTranslation = memo(function TournamentTranslation({
           invalid={errors.rules !== undefined}
           invalidText={errors.rules}
           onChange={(e) => onChange(locale, { rules: e.target.value })}
+          imagePrefix={rulesImages?.prefix}
+          onImage={uploadRulesImage}
         />
         <div>
           <Button kind="danger--ghost" onClick={() => toggle(false)}>

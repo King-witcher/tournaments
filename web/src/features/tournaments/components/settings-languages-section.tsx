@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import type { RulesImages } from "@/features/images/lib/rules-images";
+
 import { useLanguagesSection } from "../hooks/use-languages-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
 import { isFinished } from "../lib/status";
@@ -14,7 +16,12 @@ import { TournamentTranslation } from "./tournament-translation";
  * Salvar para todos; no título, as traduções salvas. Encerrado o torneio, as
  * regras ficam só para leitura.
  */
-export function SettingsLanguagesSection() {
+export function SettingsLanguagesSection({
+  rulesImages,
+}: {
+  /** As imagens das regras (o CDN e o tamanho máximo); `null` sem o bucket. */
+  rulesImages: RulesImages | null;
+}) {
   const tSettings = useTranslations("TournamentSettings");
   const tLocales = useTranslations("Locales");
   const { tournament } = useTournamentSettings();
@@ -44,6 +51,7 @@ export function SettingsLanguagesSection() {
           errors={form.errorsOf(l)}
           saved={form.isSaved(l)}
           rulesReadOnly={finished}
+          rulesImages={rulesImages}
         />
       ))}
     </SettingsSection>

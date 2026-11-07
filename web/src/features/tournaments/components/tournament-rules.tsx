@@ -1,9 +1,11 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
+import { rulesImagesOf } from "@/features/images/lib/rules-images";
+import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
 import { Stack } from "@/shared/ui/carbon/stack";
+import { MarkdownText } from "@/shared/ui/markdown-text";
 import { Section } from "@/shared/ui/section";
-import { UserText } from "@/shared/ui/user-text";
 import { rulesSource } from "../lib/localize";
 import { isFinished } from "../lib/status";
 import { loadTournament } from "../server";
@@ -14,25 +16,27 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A aba Regras: primeiro "Como funciona", o texto que sai da configuração do
- * torneio; embaixo, as regras que a organização escreve (texto
- * simples, com as quebras de linha), no idioma de quem vê (sem tradução, o
+ * torneio; embaixo, as regras que a organização escreve (em
+ * Markdown, `MarkdownText`), no idioma de quem vê (sem tradução, o
  * original). Para a organização, até o torneio encerrar, a seção das regras
  * da organização aparece sempre, com "Editar" (ou o convite a escrever) ali
  * mesmo; para os outros, só quando há texto: sem ele, o automático basta.
  * Fica em `<Suspense>`.
  */
 export async function TournamentRules({ tenant, slug }: Props) {
-  const [t, locale, loaded, maps] = await Promise.all([
+  const [t, locale, loaded, maps, imageSettings] = await Promise.all([
     getTranslations("Tournament"),
     getLocale(),
     loadTournament(tenant, slug),
     loadMaps(),
+    getImageSettings(),
   ]);
   if (loaded.kind !== "ok") return null;
 
   const { me, tournament } = loaded;
   const source = rulesSource(tournament, locale);
   const editable = me.role !== "player" && !isFinished(tournament.status);
+  const images = rulesImagesOf(imageSettings);
   return (
     <Stack gap={7}>
       <TournamentAutoRules
@@ -49,9 +53,12 @@ export async function TournamentRules({ tenant, slug }: Props) {
               locale={source.locale}
               rules={source.rules}
               translation={source.translation}
+              images={images}
             />
           ) : (
-            <UserText>{source.rules}</UserText>
+            <MarkdownText imagePrefix={images?.prefix}>
+              {source.rules}
+            </MarkdownText>
           )}
         </Section>
       )}

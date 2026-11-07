@@ -144,5 +144,13 @@
     "format": "hh:mm",
     "pattern": "Use uma hora de 00:00 a 23:59.",
     "timeZone": "Fuso horário"
+  },
+  "markdown": {
+    "write": "Escrever",
+    "preview": "Visualizar",
+    "hint": "Aceita Markdown: # título, - lista, **negrito**, [texto](endereço).",
+    "empty": "Nada escrito.",
+    "insertImage": "Inserir imagem",
+    "imageAlt": "imagem"
   }
 }

@@ -75,6 +75,37 @@ export async function encodeImage(
   return encodeCanvas(canvas, maxBytes);
 }
 
+/** Largura máxima de uma imagem das regras: o dobro da coluna de leitura, para telas de alta densidade. */
+export const RULES_IMAGE_WIDTH = 1600;
+
+/**
+ * Reduz a imagem das regras até `RULES_IMAGE_WIDTH` de largura, sem cortar
+ * nem aumentar (a proporção é a do diagrama ou da captura), em JPEG, baixando
+ * a qualidade até caber em `maxBytes`. O transparente vira branco.
+ */
+export async function encodeScaled(
+  file: Blob,
+  maxBytes: number,
+): Promise<EncodedImage | EncodeError> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return "unreadable";
+  }
+  const scale = Math.min(1, RULES_IMAGE_WIDTH / bitmap.width);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext("2d");
+  if (!context) return "unreadable";
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return encodeCanvas(canvas, maxBytes);
+}
+
 /**
  * O canvas já desenhado em JPEG, baixando a qualidade até caber em
  * `maxBytes`.

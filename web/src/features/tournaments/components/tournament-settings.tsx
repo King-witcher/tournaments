@@ -1,4 +1,5 @@
 import { CoverSection } from "@/features/images/components/cover-section";
+import { rulesImagesOf } from "@/features/images/lib/rules-images";
 import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
 import { getScreenshotSettings } from "@/features/screenshots/server";
@@ -28,7 +29,7 @@ type Props = { tenant: string; slug: string };
  * joga, o aviso de que a aba não é dele. Fica em `<Suspense>`.
  */
 export async function TournamentSettings({ tenant, slug }: Props) {
-  const [loaded, maps, screenshots] = await Promise.all([
+  const [loaded, maps, screenshots, imageSettings] = await Promise.all([
     loadTournament(tenant, slug),
     loadMaps(),
     getScreenshotSettings(),
@@ -64,7 +65,9 @@ export async function TournamentSettings({ tenant, slug }: Props) {
             <SettingsResultsSection
               screenshots={screenshots?.enabled ?? false}
             />
-            <SettingsLanguagesSection />
+            <SettingsLanguagesSection
+              rulesImages={rulesImagesOf(imageSettings)}
+            />
           </Accordion>
         </TournamentSettingsProvider>
       </Column>

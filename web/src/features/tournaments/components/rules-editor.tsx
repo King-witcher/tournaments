@@ -4,6 +4,8 @@ import { Edit } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
 import { startTransition, useId, useState } from "react";
 
+import { useRulesImageUpload } from "@/features/images/hooks/use-rules-image-upload";
+import type { RulesImages } from "@/features/images/lib/rules-images";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
@@ -15,8 +17,8 @@ import { Stack } from "@/shared/ui/carbon/stack";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
-import { TextArea } from "@/shared/ui/text-area";
-import { UserText } from "@/shared/ui/user-text";
+import { MarkdownField } from "@/shared/ui/markdown-field";
+import { MarkdownText } from "@/shared/ui/markdown-text";
 
 type Schemas = components["schemas"];
 
@@ -28,13 +30,15 @@ type Props = {
   rules: string;
   /** O texto é de uma tradução: salvar a regrava com o nome e a descrição dela. */
   translation?: Schemas["TournamentTranslation"];
+  /** As imagens das regras (o CDN e o tamanho máximo); `null` sem o bucket. */
+  images: RulesImages | null;
 };
 
 /**
  * As regras da organização na aba Regras, para a organização: o texto com
  * "Editar regras da organização" em cima (ou, sem texto, o convite a escrever o
- * que o texto automático não cobre), que troca o texto por um campo com
- * Salvar e Cancelar ali mesmo. Muda o texto que a pessoa está lendo: o da
+ * que o texto automático não cobre), que troca o texto por um campo em
+ * Markdown (`MarkdownField`, com a pré-via) com Salvar e Cancelar ali mesmo. Muda o texto que a pessoa está lendo: o da
  * tradução no idioma dela, se tem, ou o original. Salvo, o editor fecha com
  * o texto novo e o foco volta ao botão.
  */
@@ -44,6 +48,7 @@ export function RulesEditor({
   locale,
   rules,
   translation,
+  images,
 }: Props) {
   const t = useTranslations("Tournament.rulesEditor");
   const tLocales = useTranslations("Locales");
@@ -53,6 +58,7 @@ export function RulesEditor({
   const { run, pending, error } = useApiAction();
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(rules);
+  const uploadRulesImage = useRulesImageUpload(tenant, tournament, images);
 
   const open = () => {
     setText(rules);
@@ -102,7 +108,7 @@ export function RulesEditor({
     return rules ? (
       <Stack gap={6}>
         <div>{edit}</div>
-        <UserText>{rules}</UserText>
+        <MarkdownText imagePrefix={images?.prefix}>{rules}</MarkdownText>
       </Stack>
     ) : (
       <EmptyState action={edit}>{t("empty")}</EmptyState>
@@ -117,7 +123,7 @@ export function RulesEditor({
       }}
     >
       <Stack gap={6}>
-        <TextArea
+        <MarkdownField
           labelText={t(translation ? "labelTranslation" : "labelOriginal", {
             language: tLocales(locale),
           })}
@@ -127,6 +133,8 @@ export function RulesEditor({
           lang={locale}
           value={text}
           onChange={(event) => setText(event.target.value)}
+          imagePrefix={images?.prefix}
+          onImage={uploadRulesImage}
         />
         {error && <FormError>{error}</FormError>}
         <FormActions pending={pending} onCancel={close} />

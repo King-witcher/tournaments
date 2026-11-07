@@ -126,7 +126,9 @@
     "teams_incomplete": "{teams, plural, one {One team is incomplete} other {# teams are incomplete}} or have someone without check-in. Fix the teams before starting.",
     "not_tdm": "This only applies to TDM tournaments.",
     "blind_needs_mirror": "Blind picks require opponents to be able to use the same champion.",
-    "pick_order_invalid": "Choose alternating or blind picks."
+    "pick_order_invalid": "Choose alternating or blind picks.",
+    "rules_image_invalid": "An image in the rules wasn't uploaded here or was already deleted. Upload the image again with \"Insert image\".",
+    "rules_images_too_many": "A tournament's rules can have up to {max} images, counting the translations."
   },
   "participant": {
     "already_registered": "This member is already registered.",
@@ -243,7 +245,8 @@
     "too_many_uploads": "You've reached the limit of {max} image uploads per hour. Try again next hour.",
     "not_found": "This upload is no longer valid. Choose the image again.",
     "upload_missing": "The image didn't reach storage. Try again.",
-    "upload_invalid": "The image that arrived isn't the one requested. Try again."
+    "upload_invalid": "The image that arrived isn't the one requested. Try again.",
+    "too_many_unused": "There are {max} uploaded images that aren't in any saved text yet. Save the rules with them before uploading another."
   },
   "screenshots": {
     "not_configured": "Screenshots are turned off on the site.",

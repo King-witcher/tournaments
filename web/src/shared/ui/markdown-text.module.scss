@@ -1,0 +1,137 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Os mesmos títulos do `Section`: h3 em `heading-02`, como o dos trechos do
+// "Como funciona"; h4 um passo abaixo.
+.h3 {
+  @include type.type-style("heading-02");
+}
+
+.h4 {
+  @include type.type-style("heading-01");
+}
+
+// O tipo e a coluna de leitura do "Como funciona" (`AutoRulesBlock`), para
+// as regras da organização se lerem como continuação dele. Link ou palavra
+// longa quebra em vez de vazar no celular.
+.text {
+  @include type.type-style("body-02");
+
+  max-inline-size: 42rem;
+  overflow-wrap: anywhere;
+
+  // O reset do Carbon tira o negrito, o itálico e a fonte do código.
+  strong {
+    font-weight: type.font-weight("semibold");
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  // O `Link` do Carbon tem tipo próprio (`body-compact-01`), menor que o do
+  // texto em volta; no meio da frase, ele segue o texto (e o título, e a
+  // tabela).
+  a {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  code {
+    font-family: type.font-family("mono");
+  }
+
+  pre {
+    @include type.type-style("code-02");
+
+    padding: spacing.$spacing-05;
+    background: theme.$layer-01;
+    white-space: pre-wrap;
+  }
+
+  blockquote {
+    padding-inline-start: spacing.$spacing-05;
+    border-inline-start: spacing.$spacing-01 solid theme.$border-strong-01;
+    color: theme.$text-secondary;
+  }
+
+  hr {
+    border: 0;
+    border-block-start: 1px solid theme.$border-subtle-01;
+  }
+}
+
+// Os espaços repetem os do `Stack` do "Como funciona": 12px entre
+// parágrafos, 16px entre o título e o texto, 32px antes de um trecho novo.
+// Em `:where`, todos com o mesmo peso (vale a ordem, do geral para o
+// específico); classe dobrada para vencer o `margin: 0` das listas do Carbon.
+.text.text > :where(* + *),
+.text.text :where(blockquote > * + *) {
+  margin-block-start: spacing.$spacing-04;
+}
+
+.text.text > :where(* + .h4) {
+  margin-block-start: spacing.$spacing-06;
+}
+
+.text.text > :where(* + .h3) {
+  margin-block-start: spacing.$spacing-07;
+}
+
+.text.text > :where(hr) {
+  margin-block: spacing.$spacing-07;
+}
+
+.text.text > :where(.h3 + *) {
+  margin-block-start: spacing.$spacing-05;
+}
+
+.text.text > :where(.h4 + *) {
+  margin-block-start: spacing.$spacing-03;
+}
+
+.text.text > :where(hr + *) {
+  margin-block-start: 0;
+}
+
+// Como a `AutoRulesList`: itens de mais de uma frase precisam de espaço
+// entre eles. A lista aninhada e o segundo parágrafo de um item, também
+// (classe dobrada, como acima).
+.list.list :where(li + li, li > * + *, .list) {
+  margin-block-start: spacing.$spacing-03;
+}
+
+// A imagem ocupa a linha dela, na largura da coluna no máximo e na altura da
+// proporção; o respiro a separa do texto colado em cima e embaixo (ela fica
+// no meio do parágrafo quando entra numa linha sem linha em branco).
+.image {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  margin-block: spacing.$spacing-03;
+}
+
+.table {
+  overflow-x: auto;
+
+  table {
+    @include type.type-style("body-compact-01");
+
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: spacing.$spacing-03 spacing.$spacing-05;
+    border-block-end: 1px solid theme.$border-subtle-01;
+    text-align: start;
+    vertical-align: top;
+  }
+
+  th {
+    @include type.type-style("heading-compact-01");
+
+    background: theme.$layer-accent-01;
+  }
+}

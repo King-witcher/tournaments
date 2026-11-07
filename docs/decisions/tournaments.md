@@ -18,7 +18,7 @@ Formatos e times: `formats.md`. Resultados: `matches.md`. Veto, campeões e mapa
 - **Data passada, ou mais perto do que a janela de check-in, é erro, não aviso** (o check-in abriria na hora, sem aviso aos jogadores): `tournament.starts_at_past` ou `tournament.starts_at_too_soon {minutes}` ao **criar**, ao **editar a data** (só quando ela muda: editar outra coisa de um torneio cuja data já passou é permitido) e ao **publicar** rascunho com data vencida; sem check-in, só não pode ser passada (`Schedule::check_start`). O campo faz a mesma conta ao digitar e bloqueia o envio.
 - **Check-in**: janela por torneio, em minutos antes do início (padrão 30; API aceita 5 a 1440; o formulário oferece 15, 30, 45 e 60), ou **sem check-in**: não existe o status `check_in` e a inscrição vai direto para em andamento.
 - Idioma original fixo. Tradução: uma por idioma diferente do original, com nome obrigatório; descrição ou regras vazias mostram as do original. A API devolve original e traduções; o front escolhe pelo idioma de quem vê.
-- Descrição e regras em **texto simples**: quebras de linha e recuos ficam (`UserText`, `white-space: pre-wrap`), nada é formatado (o Markdown saiu).
+- Descrição em **texto simples**: quebras de linha e recuos ficam (`UserText`, `white-space: pre-wrap`), nada é formatado. As regras da organização voltaram a aceitar Markdown em 07/11, num subconjunto sem HTML (`tournaments-ui.md`, "Resumo e regras").
 - Erro com números sai como `{"error": "champions.pool_exhausted", "params": {"required": 32, "available": 17}}`, e o front interpola na tradução.
 
 ## Ciclo

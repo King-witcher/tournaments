@@ -6,14 +6,14 @@ import { useRouter } from "@/i18n/navigation";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { useImageErrorMessage } from "../hooks/use-image-error-message";
 import {
-  type ImageTarget,
+  type FixedImageTarget,
   removeImage,
   uploadImage,
 } from "../lib/upload-image";
 import { ImageInput } from "./image-input";
 
 type Props = {
-  target: ImageTarget;
+  target: FixedImageTarget;
   /** A imagem de agora; nula sem imagem. */
   url: string | null | undefined;
   maxBytes: number;

@@ -126,7 +126,9 @@
     "teams_incomplete": "{teams, plural, one {Um time está incompleto} other {# times estão incompletos}} ou com alguém sem check-in. Ajuste os times antes de iniciar.",
     "not_tdm": "Isso só vale em torneios de TDM.",
     "blind_needs_mirror": "Às cegas exige que adversários possam usar o mesmo campeão.",
-    "pick_order_invalid": "Escolha a ordem alternada ou às cegas."
+    "pick_order_invalid": "Escolha a ordem alternada ou às cegas.",
+    "rules_image_invalid": "Uma imagem das regras não foi enviada por aqui ou já foi apagada. Envie a imagem de novo com \"Inserir imagem\".",
+    "rules_images_too_many": "As regras de um torneio têm até {max} imagens, somando as traduções."
   },
   "participant": {
     "already_registered": "Esse membro já está inscrito.",
@@ -243,7 +245,8 @@
     "too_many_uploads": "Você chegou ao limite de {max} envios de imagem por hora. Tente de novo na próxima hora.",
     "not_found": "Este envio não vale mais. Escolha a imagem de novo.",
     "upload_missing": "A imagem não chegou ao armazenamento. Tente de novo.",
-    "upload_invalid": "A imagem que chegou não é a que foi pedida. Tente de novo."
+    "upload_invalid": "A imagem que chegou não é a que foi pedida. Tente de novo.",
+    "too_many_unused": "Há {max} imagens enviadas que ainda não estão em nenhum texto salvo. Salve as regras com elas antes de enviar outra."
   },
   "screenshots": {
     "not_configured": "As capturas de tela estão desligadas no site.",

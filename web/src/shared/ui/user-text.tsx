@@ -15,8 +15,9 @@ type Props = {
 };
 
 /**
- * Texto escrito por usuário (descrição, regras), sem formatação: as quebras
- * de linha ficam e o resto sai como texto (nada de HTML nem Markdown).
+ * Texto escrito por usuário (descrição), sem formatação: as quebras
+ * de linha ficam e o resto sai como texto (nada de HTML nem Markdown). As
+ * regras da organização, em Markdown, saem pelo `MarkdownText`.
  */
 export function UserText({ children, clamp, id, ref }: Props) {
   return (
