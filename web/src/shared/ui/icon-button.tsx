@@ -20,6 +20,12 @@ type Props = Omit<ComponentProps<"button">, "children" | "ref" | "title"> & {
   size?: ButtonSize;
   /** A ação está em andamento: ignora clique e Enter e troca o ícone pelo indicador, sem `disabled`. */
   pending?: boolean;
+  /**
+   * O tooltip deixa o ponteiro passar. Só para botões empilhados em linhas
+   * (subir e descer numa lista que se reordena): o balão de uma linha cobre
+   * os botões da linha de cima, e o clique neles cairia no balão.
+   */
+  tooltipPassThrough?: boolean;
   ref?: Ref<HTMLButtonElement>;
 };
 
@@ -29,7 +35,14 @@ type Props = Omit<ComponentProps<"button">, "children" | "ref" | "title"> & {
  * com `aria-disabled`/`aria-busy`, ignora o clique e mostra o indicador no
  * lugar do ícone. Ação com texto é o `Button`. O tooltip muda de lado quando
  * sairia da tela (`autoAlign`: no celular, as ações do `PageHeader` ficam
- * encostadas na margem).
+ * encostadas na margem). Por padrão o balão segura o ponteiro (dá para passar
+ * o mouse sobre ele sem que suma); `tooltipPassThrough` troca isso pelo clique
+ * no que está embaixo, em listas de linhas com botões.
+ *
+ * @example
+ * <IconButton label={t("up", { name })} tooltipPassThrough onClick={onUp}>
+ *   <ArrowUp />
+ * </IconButton>
  */
 export function IconButton({
   children,
@@ -37,6 +50,7 @@ export function IconButton({
   kind = "ghost",
   size = "md",
   pending,
+  tooltipPassThrough,
   onClick,
   className,
   type = "button",
@@ -57,6 +71,7 @@ export function IconButton({
       ref={ref}
       label={label}
       autoAlign
+      wrapperClasses={tooltipPassThrough ? styles.passThrough : undefined}
       kind={kind}
       size={size}
       type={type}

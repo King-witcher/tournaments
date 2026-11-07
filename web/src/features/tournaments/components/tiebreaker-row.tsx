@@ -47,7 +47,8 @@ type Props = {
 /**
  * Um desempate na lista do formulário: ligado, a posição, o nome e as ações
  * (subir, descer, desligar); desligado, o nome e "ligar". Cada botão diz o
- * nome do desempate.
+ * nome do desempate, e o balão dele deixa o clique passar para a linha que
+ * ele cobre.
  */
 export function TiebreakerRow({
   tiebreaker,
@@ -85,6 +86,7 @@ export function TiebreakerRow({
             <IconButton
               ref={up}
               label={t("up", { name })}
+              tooltipPassThrough
               disabled={!onUp}
               onClick={onUp}
             >
@@ -93,17 +95,28 @@ export function TiebreakerRow({
             <IconButton
               ref={down}
               label={t("down", { name })}
+              tooltipPassThrough
               disabled={!onDown}
               onClick={onDown}
             >
               <ArrowDown />
             </IconButton>
-            <IconButton ref={off} label={t("off", { name })} onClick={onOff}>
+            <IconButton
+              ref={off}
+              label={t("off", { name })}
+              tooltipPassThrough
+              onClick={onOff}
+            >
               <Close />
             </IconButton>
           </>
         ) : (
-          <IconButton ref={add} label={t("on", { name })} onClick={onOn}>
+          <IconButton
+            ref={add}
+            label={t("on", { name })}
+            tooltipPassThrough
+            onClick={onOn}
+          >
             <Add />
           </IconButton>
         )

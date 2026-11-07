@@ -56,3 +56,10 @@
 .pending {
   cursor: progress;
 }
+
+// `tooltipPassThrough` do `IconButton`: o conteúdo do balão (filho do
+// elemento com `role="tooltip"`) volta a deixar o ponteiro passar, como o
+// resto do popover do Carbon, e o clique chega ao botão que ele cobre.
+.passThrough [role="tooltip"] > * {
+  pointer-events: none;
+}

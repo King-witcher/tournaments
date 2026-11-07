@@ -20,7 +20,9 @@ type Props = {
  * `BreadcrumbItem` vem junto, no mesmo componente de cliente: ele reconhece o
  * menu pelo nome do componente filho para lhe dar o ícone e a posição da
  * trilha, e um filho vindo do servidor chega sem esse nome no navegador (o
- * ⋯ virava o ⋮ comum, solto à esquerda, e a hidratação não batia).
+ * ⋯ virava o ⋮ comum, solto à esquerda, e a hidratação não batia). O
+ * tooltip do ⋯ tem `autoAlign`: encostado na margem esquerda, ele sairia da
+ * tela.
  */
 export function BreadcrumbOverflow({ crumbs, className }: Props) {
   const t = useTranslations("Common");
@@ -31,6 +33,7 @@ export function BreadcrumbOverflow({ crumbs, className }: Props) {
         aria-label={t("breadcrumbMore")}
         iconDescription={t("breadcrumbMore")}
         align="bottom"
+        autoAlign
       >
         {crumbs.map((crumb) => {
           const href = getPathname({ href: crumb.href, locale });

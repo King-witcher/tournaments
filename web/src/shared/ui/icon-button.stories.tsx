@@ -1,4 +1,11 @@
-import { Add, Copy, Edit, TrashCan } from "@carbon/icons-react";
+import {
+  Add,
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  Edit,
+  TrashCan,
+} from "@carbon/icons-react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
@@ -72,6 +79,29 @@ export const Sizes: Story = {
           <Edit />
         </IconButton>
       ))}
+    </Stack>
+  ),
+};
+
+/**
+ * Botões empilhados em linhas: o balão de uma linha cobre os botões da de
+ * cima, e com `tooltipPassThrough` o clique passa para eles.
+ */
+export const TooltipPassThrough: Story = {
+  render: (args) => (
+    <Stack gap={2}>
+      {["Confronto direto", "Saldo de partidas", "Saldo de frags"].map(
+        (name) => (
+          <Stack key={name} orientation="horizontal" gap={3}>
+            <IconButton {...args} label={`Subir ${name}`} tooltipPassThrough>
+              <ArrowUp />
+            </IconButton>
+            <IconButton {...args} label={`Descer ${name}`} tooltipPassThrough>
+              <ArrowDown />
+            </IconButton>
+          </Stack>
+        ),
+      )}
     </Stack>
   ),
 };

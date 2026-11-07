@@ -44,7 +44,10 @@ type Props = {
 /**
  * Menu ⋯ (`OverflowMenu` do Carbon) para o que é raro ou destrutivo, numa
  * linha de tabela ou no cabeçalho da página. Itens com `confirm` abrem o
- * `ConfirmModal` e, ao fechar, o foco volta ao ⋯.
+ * `ConfirmModal` e, ao fechar, o foco volta ao ⋯. O tooltip do ⋯ tem
+ * `autoAlign`, como o do `IconButton`: muda de lado quando sairia da tela e,
+ * posicionado em relação à janela, não alarga um contêiner com rolagem (a
+ * coluna dos reservas no montador de times).
  */
 export function OverflowActions({ items, label, pending, size = "md" }: Props) {
   const t = useTranslations("Common");
@@ -79,6 +82,7 @@ export function OverflowActions({ items, label, pending, size = "md" }: Props) {
         iconDescription={label ?? t("moreActions")}
         size={size}
         flipped
+        autoAlign
       >
         {items.map((item, index) => (
           <OverflowMenuItem
