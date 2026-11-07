@@ -14,9 +14,15 @@ pub struct ImageSettings {
     #[schema(example = 1048576)]
     pub max_bytes: u32,
     pub content_types: Vec<ImageType>,
+    /// O começo da URL de toda imagem que as regras aceitam
+    /// (`<CDN>/rules/`); o Markdown só desenha imagem com ele. Nulo sem o
+    /// bucket público: nenhuma imagem vale nas regras.
+    #[schema(example = "https://img.telefrag.com.br/rules/")]
+    pub rules_image_prefix: Option<String>,
 }
 
-/// Pedido da URL de upload de um logo ou de uma capa.
+/// Pedido da URL de upload de um logo, de uma capa, de uma foto ou de uma
+/// imagem das regras.
 #[derive(Deserialize, ToSchema)]
 pub struct NewImageUpload {
     pub content_type: ImageType,
@@ -36,7 +42,7 @@ pub struct ImageUpload {
     pub expires_at: DateTime<Utc>,
 }
 
-/// O logo ou a capa registrados.
+/// A imagem registrada (logo, capa, foto ou imagem das regras).
 #[derive(Serialize, ToSchema)]
 pub struct PublicImage {
     /// A imagem no CDN.
@@ -49,15 +55,17 @@ pub struct LogoUploadPath {
     pub upload: i64,
 }
 
-/// `{tournament}` de `.../tournaments/{tournament}/cover`.
+/// `{tournament}` de `.../tournaments/{tournament}/cover` e de
+/// `.../tournaments/{tournament}/rules/images/uploads`.
 #[derive(Deserialize)]
-pub struct CoverPath {
+pub struct TournamentImagePath {
     pub tournament: String,
 }
 
-/// `{tournament}` e `{upload}` de `.../cover/uploads/{upload}/attach`.
+/// `{tournament}` e `{upload}` de `.../cover/uploads/{upload}/attach` e de
+/// `.../rules/images/uploads/{upload}/attach`.
 #[derive(Deserialize)]
-pub struct CoverUploadPath {
+pub struct TournamentUploadPath {
     pub tournament: String,
     pub upload: i64,
 }

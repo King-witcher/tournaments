@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, tournament_id, object_key, content_type, size, uploaded_by\n           from image_uploads\n           where id = $3 and tenant_id is not distinct from $1\n             and user_id is not distinct from $2",
+  "query": "select id, tournament_id, object_key, content_type, size, uploaded_by\n           from image_uploads\n           where id = $3 and kind = $4 and tenant_id is not distinct from $1\n             and user_id is not distinct from $2",
   "describe": {
     "columns": [
       {
@@ -74,7 +74,8 @@
       "Left": [
         "Int8",
         "Int8",
-        "Int8"
+        "Int8",
+        "Text"
       ]
     },
     "nullable": [
@@ -86,5 +87,5 @@
       true
     ]
   },
-  "hash": "b2f314966c363d4d16debd68c28903d19b13d2269ff303e4103e2e2608ec8c81"
+  "hash": "cc4bf992ea56822f16b91ef2a5f5e2e7c3fefaeb60771a724a86c664fa469d12"
 }

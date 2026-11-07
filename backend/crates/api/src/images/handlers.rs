@@ -5,15 +5,15 @@ use super::{
     db::{self, PendingUpload, Scope},
     object::Place,
     types::{
-        AvatarUploadPath, CoverPath, CoverUploadPath, ImageSettings, ImageUpload, LogoUploadPath,
-        NewImageUpload, PublicImage,
+        AvatarUploadPath, ImageSettings, ImageUpload, LogoUploadPath, NewImageUpload, PublicImage,
+        TournamentImagePath, TournamentUploadPath,
     },
     upload::{self, CONTENT_TYPES, MAX_BYTES, NOT_FOUND, Target},
 };
 use crate::{
     AppState,
     auth::CurrentUser,
-    shared::{ApiError, ErrorBody, JsonBody, PathParams, Storage, public_url},
+    shared::{ApiError, ErrorBody, JsonBody, PathParams, Storage, public_base, public_url},
     tenants::{self, Organizer, Owner, TenantMember},
     tournaments::{self, StoredTournament, find_visible},
 };
@@ -21,7 +21,7 @@ use crate::{
 const NOT_CONFIGURED: ApiError =
     ApiError::new(StatusCode::SERVICE_UNAVAILABLE, "images.not_configured");
 
-fn storage(state: &AppState) -> Result<&Storage, ApiError> {
+pub(super) fn storage(state: &AppState) -> Result<&Storage, ApiError> {
     state.public_storage.as_ref().ok_or(NOT_CONFIGURED)
 }
 
@@ -61,7 +61,7 @@ fn avatar(user: &CurrentUser) -> Target<'static> {
 }
 
 /// O torneio `slug`, que a organização vê (rascunho também).
-async fn tournament(
+pub(super) async fn tournament(
     state: &AppState,
     member: &TenantMember<Organizer>,
     slug: &str,
@@ -70,7 +70,7 @@ async fn tournament(
     find_visible(&mut conn, member, slug).await
 }
 
-fn image(pending: &PendingUpload) -> Result<Json<PublicImage>, ApiError> {
+pub(super) fn image(pending: &PendingUpload) -> Result<Json<PublicImage>, ApiError> {
     let url = public_url(&pending.object_key).ok_or_else(ApiError::internal)?;
     Ok(Json(PublicImage { url }))
 }
@@ -88,6 +88,11 @@ pub async fn get_image_settings(State(state): State<AppState>) -> Json<ImageSett
         enabled: state.public_storage.is_some(),
         max_bytes: MAX_BYTES,
         content_types: CONTENT_TYPES.to_vec(),
+        rules_image_prefix: state
+            .public_storage
+            .as_ref()
+            .and(public_base())
+            .map(|base| format!("{base}/rules/")),
     })
 }
 
@@ -202,7 +207,7 @@ pub async fn remove_logo(
 pub async fn create_cover_upload(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-    PathParams(path): PathParams<CoverPath>,
+    PathParams(path): PathParams<TournamentImagePath>,
     JsonBody(body): JsonBody<NewImageUpload>,
 ) -> Result<(StatusCode, Json<ImageUpload>), ApiError> {
     let storage = storage(&state)?;
@@ -234,7 +239,7 @@ pub async fn create_cover_upload(
 pub async fn attach_cover(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-    PathParams(path): PathParams<CoverUploadPath>,
+    PathParams(path): PathParams<TournamentUploadPath>,
 ) -> Result<Json<PublicImage>, ApiError> {
     let storage = storage(&state)?;
     let t = tournament(&state, &member, &path.tournament).await?;
@@ -269,7 +274,7 @@ pub async fn attach_cover(
 pub async fn remove_cover(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
-    PathParams(path): PathParams<CoverPath>,
+    PathParams(path): PathParams<TournamentImagePath>,
 ) -> Result<StatusCode, ApiError> {
     let t = tournament(&state, &member, &path.tournament).await?;
     let mut tx = state.db.begin().await?;

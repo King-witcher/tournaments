@@ -1,7 +1,9 @@
 //! Testes de `images`: o logo da comunidade, a capa do torneio e a foto de
 //! perfil (pedir a URL, mandar ao bucket, registrar, trocar e remover), quem
 //! pode, os limites e a rotina diária. O bucket é o S3 falso dos screenshots,
-//! com o HTTP de verdade. As regras do banco ficam em `schema::images`.
+//! com o HTTP de verdade. As regras do banco ficam em `schema::images`; as
+//! imagens das regras do torneio, com os helpers daqui, em
+//! `tournaments::rules_images`.
 
 use api::{
     AppState, images,
@@ -15,13 +17,13 @@ use sqlx::PgPool;
 use crate::common::*;
 use crate::screenshots::FakeS3;
 
-const CDN: &str = "https://img.test";
+pub const CDN: &str = "https://img.test";
 const LOGO: &str = "/tenants/quake-br/logo";
 const COVER: &str = "/tenants/quake-br/tournaments/copa/cover";
 const CACHE: &str = "public, max-age=31536000, immutable";
 
 /// App com o bucket público falso; `ana` é a owner de `quake-br`.
-async fn app_with_bucket(db: &PgPool) -> (Router, AppState, FakeS3, User) {
+pub async fn app_with_bucket(db: &PgPool) -> (Router, AppState, FakeS3, User) {
     let s3 = FakeS3::start().await;
     set_public_url(CDN);
     let state = AppState {
@@ -36,13 +38,13 @@ async fn app_with_bucket(db: &PgPool) -> (Router, AppState, FakeS3, User) {
 
 /// Pede a URL de upload de um arquivo de `size` bytes para `base` (o logo ou
 /// a capa).
-async fn request(app: &Router, who: &User, base: &str, size: usize) -> (StatusCode, Value) {
+pub async fn request(app: &Router, who: &User, base: &str, size: usize) -> (StatusCode, Value) {
     let body = json!({ "content_type": "image/jpeg", "size": size });
     post(app, &format!("{base}/uploads"), who, body).await
 }
 
 /// O PUT do navegador, com os cabeçalhos que a resposta pede.
-async fn put_to_bucket(upload: &Value, body: Vec<u8>) -> StatusCode {
+pub async fn put_to_bucket(upload: &Value, body: Vec<u8>) -> StatusCode {
     reqwest::Client::new()
         .put(upload["url"].as_str().unwrap())
         .header("content-type", upload["content_type"].as_str().unwrap())
@@ -55,7 +57,7 @@ async fn put_to_bucket(upload: &Value, body: Vec<u8>) -> StatusCode {
         .status()
 }
 
-async fn attach(app: &Router, who: &User, base: &str, id: &Value) -> (StatusCode, Value) {
+pub async fn attach(app: &Router, who: &User, base: &str, id: &Value) -> (StatusCode, Value) {
     post_empty(app, &format!("{base}/uploads/{id}/attach"), who).await
 }
 
@@ -71,13 +73,13 @@ async fn send(app: &Router, who: &User, base: &str) -> String {
 }
 
 /// O nome do objeto de uma URL do CDN.
-fn key(url: &str) -> String {
+pub fn key(url: &str) -> String {
     url.strip_prefix(&format!("{CDN}/")).unwrap().to_owned()
 }
 
 /// Na ordem de bytes, a do `sort` do Rust (os nomes têm letras aleatórias, e a
 /// collation do banco ordena maiúsculas de outro jeito).
-async fn queued(db: &PgPool) -> Vec<String> {
+pub async fn queued(db: &PgPool) -> Vec<String> {
     sqlx::query_scalar(r#"select object_key from image_deletions order by object_key collate "C""#)
         .fetch_all(db)
         .await

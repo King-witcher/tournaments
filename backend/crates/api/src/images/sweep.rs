@@ -1,6 +1,7 @@
 //! A rotina diária do bucket público, que o agendador do tempo real chama a
 //! cada passada: uma vez por dia (a última fica em `image_sweeps`), apaga os
-//! uploads pedidos e nunca registrados e depois esvazia a fila de exclusão
+//! uploads pedidos e nunca registrados e as imagens das regras registradas e
+//! nunca usadas em texto nenhum, e depois esvazia a fila de exclusão
 //! (`image_deletions`, que o banco preenche a cada objeto que deixa de ser
 //! usado) apagando os objetos do bucket, até mil por requisição. Objeto cuja
 //! URL de upload ainda vale fica para a passada do dia seguinte: apagado
@@ -13,6 +14,7 @@ use super::db;
 use crate::{
     AppState,
     shared::{ApiError, Storage, storage::DELETE_BATCH},
+    tournaments,
 };
 
 /// De quanto em quanto tempo a rotina roda.
@@ -20,6 +22,9 @@ const EVERY: Duration = Duration::days(1);
 /// Upload pedido e não registrado depois disso não vai mais ser (a URL vale
 /// 10 minutos).
 const PENDING_FOR: Duration = Duration::days(1);
+/// Imagem das regras registrada e sem texto depois disso não vai mais ser
+/// usada (quem envia põe no texto e salva em seguida).
+const UNUSED_FOR: Duration = Duration::days(1);
 /// Folga depois do vencimento da URL de upload antes de apagar o objeto: o
 /// bucket confere a validade pelo relógio dele.
 const CLOCK_MARGIN: Duration = Duration::minutes(5);
@@ -32,6 +37,8 @@ const BATCHES_PER_PASS: usize = 5;
 pub struct Sweep {
     /// Uploads nunca registrados.
     pub abandoned: u64,
+    /// Imagens das regras registradas e nunca usadas.
+    pub unused: u64,
     /// Objetos apagados do bucket.
     pub deleted: usize,
     /// A fila ficou sem nada que já desse para apagar (senão, a passada
@@ -60,6 +67,7 @@ pub async fn sweep_due(state: &AppState, now: DateTime<Utc>) -> Result<Option<Sw
 pub async fn sweep(db: &PgPool, storage: &Storage, now: DateTime<Utc>) -> Result<Sweep, ApiError> {
     let mut done = Sweep {
         abandoned: db::delete_pending_before(db, now - PENDING_FOR).await?,
+        unused: tournaments::delete_unused_rules_images(db, now - UNUSED_FOR).await?,
         ..Sweep::default()
     };
     let mut finished = false;

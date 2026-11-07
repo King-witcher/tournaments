@@ -1,5 +1,6 @@
 //! SQL dos torneios: criar, editar e excluir aqui; leitura em `read`,
-//! mudanças de status em `status`, traduções em `translations`, os
+//! mudanças de status em `status`, traduções em `translations`, as imagens
+//! das regras e quem as usa em `rules_images`, os
 //! destinatários do tempo real em `audience`, o que o agendador procura em
 //! `scheduled` e a tradução entre as colunas e os tipos do `engine` em
 //! `columns`.
@@ -7,6 +8,7 @@
 mod audience;
 mod columns;
 mod read;
+mod rules_images;
 mod scheduled;
 mod status;
 mod translations;
@@ -28,6 +30,10 @@ use crate::{
 pub use audience::{Address, Audience, audience};
 pub use columns::StageRow;
 pub use read::{Listed, current_status, find, find_for_update, list, list_in, slugs_for_member};
+pub use rules_images::{
+    delete_unused_rules_images, lock_rules_images, register_rules_image, rules_images_with,
+    set_rules_images, unused_rules_images,
+};
 pub use scheduled::{due_check_ins, mark_start_reminded, starts_to_remind};
 pub use status::{publish, set_status, sync_finished};
 pub use translations::{delete_translation, put_translation};

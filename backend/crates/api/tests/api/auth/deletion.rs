@@ -249,8 +249,8 @@ async fn the_due_deletion_anonymizes_and_keeps_the_history() {
         .unwrap();
     sqlx::query(
         r#"insert into image_uploads
-               (user_id, uploaded_by, object_key, content_type, size, upload_expires_at)
-           values ($1, $1, $2, 'image/jpeg', 1000, now() + interval '10 minutes')"#,
+               (kind, user_id, uploaded_by, object_key, content_type, size, upload_expires_at)
+           values ('avatar', $1, $1, $2, 'image/jpeg', 1000, now() + interval '10 minutes')"#,
     )
     .bind(rapha.id)
     .bind(pending)

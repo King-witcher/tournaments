@@ -3,7 +3,7 @@
 use axum::{Json, extract::State, http::StatusCode};
 
 use super::{
-    changes, db,
+    changes, db, rules_images,
     texts::Texts,
     types::{PutTranslation, TournamentTranslation, TranslationPath},
 };
@@ -30,7 +30,7 @@ use crate::{
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.finished (regras diferentes das gravadas, com o torneio encerrado)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.rules_image_invalid (imagem que não é uma enviada pela comunidade, ou `<img` em HTML), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), request.invalid_body"),
     )
 )]
 pub async fn put_translation(
@@ -56,6 +56,11 @@ pub async fn put_translation(
         return Err(ApiError::conflict("tournament.finished"));
     }
     db::put_translation(&mut tx, found.id, path.locale, &texts).await?;
+    if texts.rules != saved_rules {
+        let cdn = rules_images::cdn(&state);
+        let locale = Some(path.locale);
+        rules_images::save(&mut tx, member.tenant, found.id, locale, &texts.rules, cdn).await?;
+    }
     changes::changed(&mut tx, found.id).await?;
     tx.commit().await?;
     Ok(Json(TournamentTranslation {
@@ -76,7 +81,7 @@ pub async fn put_translation(
         ("locale" = crate::shared::Locale, Path, description = "Idioma da tradução"),
     ),
     responses(
-        (status = NO_CONTENT, description = "Tradução removida; o idioma volta a mostrar o original. Vale também com o torneio encerrado"),
+        (status = NO_CONTENT, description = "Tradução removida; o idioma volta a mostrar o original, e as imagens das regras que só ela usava saem do bucket. Vale também com o torneio encerrado"),
         (status = BAD_REQUEST, body = ErrorBody, description = "request.invalid_path"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),

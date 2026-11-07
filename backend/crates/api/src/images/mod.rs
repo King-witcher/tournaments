@@ -13,13 +13,16 @@
 //! capa). Nenhum objeto fica órfão: o banco põe na fila de exclusão todo
 //! objeto que deixa de ser usado (trocado, removido, de upload abandonado, da
 //! comunidade ou do torneio apagados), e a rotina diária (`sweep`, chamada
-//! pelo agendador do tempo real) esvazia a fila. Sem o bucket público
+//! pelo agendador do tempo real) esvazia a fila. As imagens das regras
+//! (`rules`) seguem o mesmo envio, registradas na comunidade, com cache de uma
+//! hora; `tournaments` confere quais textos as usam. Sem o bucket público
 //! configurado, o envio fica desligado (`GET /images/settings`). Fica acima
 //! de `tenants` e `tournaments`.
 
 mod db;
 mod handlers;
 mod object;
+mod rules;
 mod sweep;
 mod types;
 mod upload;
@@ -39,6 +42,8 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(handlers::create_cover_upload))
         .routes(routes!(handlers::attach_cover))
         .routes(routes!(handlers::remove_cover))
+        .routes(routes!(rules::create_rules_image_upload))
+        .routes(routes!(rules::attach_rules_image))
         .routes(routes!(handlers::create_avatar_upload))
         .routes(routes!(handlers::attach_avatar))
         .routes(routes!(handlers::remove_avatar))

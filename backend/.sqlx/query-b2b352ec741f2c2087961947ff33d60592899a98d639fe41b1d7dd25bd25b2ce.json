@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from rules_image_refs\n           where tournament_id = $1 and locale is not distinct from $2 and image_id <> all($3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b2b352ec741f2c2087961947ff33d60592899a98d639fe41b1d7dd25bd25b2ce"
+}

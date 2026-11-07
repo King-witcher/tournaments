@@ -34,7 +34,16 @@ A foto da conta (06/11), na aba Perfil. Assumido, salvo o que o usuário pediu (
 - **Nome do objeto**: `logos/<comunidade>/<aleatório>.<ext>` e `covers/<comunidade>/<torneio>/<aleatório>.<ext>`, como os screenshots. As pastas são os slugs de quando foi enviado: o endereço pode mudar (`tenants.md`), o objeto não se move, e o banco confere a forma, não o slug de agora. Como o nome nunca muda de conteúdo, o envio grava `Cache-Control: public, max-age=31536000, immutable` (assinado na URL): CDN e navegador guardam por um ano e nada é invalidado; trocar a imagem é trocar o nome no banco.
 - **Upload como o dos screenshots** (URL assinada, `If-None-Match: *`, registro que confere por HEAD), com o upload pendente em `image_uploads`. **Até 10 uploads pedidos e não registrados por pessoa por hora** (`images.too_many_uploads`; assumido): os registrados trocam a imagem anterior, que sai do bucket, então não acumulam.
 - **Sem órfãos**: o banco põe na fila `image_deletions` todo objeto que deixa de ser usado (trocado, removido, de upload abandonado, da comunidade ou do torneio apagados, inclusive pela cascata), e a rotina diária esvazia a fila depois de a URL de upload vencer, como a dos screenshots.
-- **Imagens nas regras da organização** (decidido em 06/11, ainda não feito): só pelo nosso upload, neste bucket público/CDN, com limite por torneio; saem pela fila `image_deletions` quando o texto deixa de usá-las. Cache curto (cerca de 1 h) nessas imagens em vez de invalidar o CDN, para ficar no S3 genérico.
+
+## Imagens nas regras da organização
+
+Decidido pelo usuário em 06/11 (só pelo nosso upload, neste bucket, limite por torneio, saída pela fila, cache curto); o resto, assumido em 07/11.
+
+- **Só imagens enviadas pelo site**: uma imagem de outro endereço rastrearia quem lê e dispararia GETs em outro site. Ao gravar as regras (PATCH, tradução, criação e a cópia, que é uma criação), a API lê as imagens do Markdown (`pulldown-cmark`) e recusa (`tournament.rules_image_invalid`) a que não é `S3_PUBLIC_URL/rules/...` registrada **nesta** comunidade, e `<img` em HTML cru (o front não desenha HTML). Sem o bucket público, nenhuma imagem vale. O front sabe o começo válido por `GET /images/settings` (`rules_image_prefix`, `<CDN>/rules/`) e só desenha imagem com ele.
+- **Da comunidade, não do torneio**: `rules/<comunidade>/<aleatório>.jpg`, registrada em `rules_images`. "Copiar torneio" leva o texto com as URLs, e a imagem vale nos dois. Pedida num torneio (`.../tournaments/{t}/rules/images/uploads`, organizer e owner), com o envio do logo: JPEG até 1 MB; a API não confere dimensões (só tipo e tamanho por HEAD), o navegador reduz.
+- **Referências por texto** (`rules_image_refs`: o original ou cada tradução). A imagem que o último texto deixa de usar (editado, tradução removida, torneio ou comunidade apagados) sai na hora para a fila, por trigger; a enviada e nunca usada, na rotina diária depois de um dia.
+- **Limite: 10 imagens distintas por torneio**, somando original e traduções (que costumam repetir as mesmas): um ou dois diagramas é o normal, e a página pesa no máximo 10 MB (`tournament.rules_images_too_many`). **Até 20 registradas e sem texto por comunidade** (`images.too_many_unused`): o upload registrado sai do limite de 10 por hora, e sem isso daria para encher o bucket até a rotina.
+- **Cache de uma hora** (`public, max-age=3600`, assinado na URL do PUT) em vez de um ano: a imagem que sai do texto some do CDN em até uma hora depois de sair do bucket, sem invalidação (que a API S3 genérica não tem).
 
 ## og:image
 

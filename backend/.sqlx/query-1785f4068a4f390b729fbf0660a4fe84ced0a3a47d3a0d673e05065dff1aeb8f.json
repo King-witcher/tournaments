@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from (\n               select image_id from rules_image_refs\n               where tournament_id = $1 and locale is distinct from $2\n               union\n               select unnest($3::bigint[])\n           ) used",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1785f4068a4f390b729fbf0660a4fe84ced0a3a47d3a0d673e05065dff1aeb8f"
+}

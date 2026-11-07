@@ -9,7 +9,10 @@
 //! (`schedule`), com a abertura automática do check-in ao ler, e a janela de
 //! contestação de resultado (`contest`), a configuração do veto das partidas
 //! (`veto`: modo do mapa, pool, campeões, tempo por passo), quem age pelo time
-//! (`team_rules`) e o screenshot obrigatório (`screenshots`). As transições manuais depois de
+//! (`team_rules`) e o screenshot obrigatório (`screenshots`). As imagens das
+//! regras (`rules_images`) são as que `images` registra na comunidade; ao
+//! gravar as regras, o texto só aceita essas, e o banco guarda quais textos
+//! usam cada uma. As transições manuais depois de
 //! publicar ficam no domínio `lifecycle`; encerrar e reabrir conforme a chave,
 //! em `matches` (por `sync_finished`). O que o torneio emite no outbox fica em
 //! `changes` (todo domínio que mexe num torneio chama `changed`), e o que o
@@ -23,6 +26,7 @@ mod db;
 mod edit;
 mod format;
 mod handlers;
+mod rules_images;
 mod schedule;
 mod scheduled;
 mod screenshots;
@@ -44,8 +48,9 @@ use crate::AppState;
 pub use admission::Admission;
 pub use changes::{changed, changed_with, check_in_opened};
 pub use db::{
-    Address, Listed, StageRow, StoredTournament, TournamentId, champion_pool, find,
-    find_for_update, list_in, set_status, slugs_for_member, sync_finished,
+    Address, Listed, StageRow, StoredTournament, TournamentId, champion_pool,
+    delete_unused_rules_images, find, find_for_update, list_in, register_rules_image, set_status,
+    slugs_for_member, sync_finished, unused_rules_images,
 };
 pub use scheduled::{open_due_check_ins, remind_due_starts};
 pub use setup::TournamentMode;

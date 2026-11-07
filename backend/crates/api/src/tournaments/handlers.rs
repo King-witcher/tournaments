@@ -4,7 +4,7 @@ use chrono::Utc;
 use super::{
     changes, contest,
     db::{self, NewTournament},
-    edit,
+    edit, rules_images,
     schedule::Schedule,
     screenshots,
     setup::Setup,
@@ -39,7 +39,7 @@ const NOT_FOUND: ApiError = ApiError::not_found("tournament.not_found");
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.slug_taken"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body"),
     )
 )]
 pub async fn create_tournament(
@@ -84,10 +84,15 @@ pub async fn create_tournament(
         counts_for_rating: body.counts_for_rating,
         screenshots_required,
     };
+    let cdn = rules_images::cdn(&state);
     let mut tx = state.db.begin().await?;
     let id = db::create(&mut tx, member.tenant, new).await?;
+    rules_images::save(&mut tx, member.tenant, id, None, &texts.rules, cdn).await?;
     for (locale, texts) in &translations {
         db::put_translation(&mut tx, id, *locale, texts).await?;
+        rules_images::save(&mut tx, member.tenant, id, Some(*locale), &texts.rules, cdn)
+            .await
+            .map_err(|e| e.with_text_param("locale", locale.as_str()))?;
     }
     if body.publish {
         db::publish(&mut tx, id).await?;
@@ -220,11 +225,17 @@ pub async fn update_tournament(
         now: Utc::now(),
     };
     let edit = edit::apply(stored, veto, body)?;
+    let rules_changed = edit.texts.rules != current.texts.rules;
     if let Some(setup) = &edit.setup {
         let pool = db::champion_pool(&mut *tx).await?;
         setup.check(pool, current.participants)?;
     }
     db::update(&mut tx, current.id, &edit).await?;
+    if rules_changed {
+        let cdn = rules_images::cdn(&state);
+        let rules = &edit.texts.rules;
+        rules_images::save(&mut tx, member.tenant, current.id, None, rules, cdn).await?;
+    }
     if let Some(required) = screenshots_required {
         db::set_screenshots_required(&mut tx, current.id, required).await?;
     }
@@ -299,7 +310,7 @@ pub async fn publish_tournament(
     ),
     request_body = Option<DeleteTournament>,
     responses(
-        (status = NO_CONTENT, description = "Torneio excluído na hora, com tudo o que tem dentro; o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug`"),
+        (status = NO_CONTENT, description = "Torneio excluído na hora, com tudo o que tem dentro (as imagens das regras saem do bucket se nenhum outro torneio as usa); o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug`"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),

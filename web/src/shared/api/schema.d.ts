@@ -1524,6 +1524,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{slug}/tournaments/{tournament}/rules/images/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_rules_image_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/tournaments/{tournament}/rules/images/uploads/{upload}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach_rules_image"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/tournaments/{tournament}/seeding": {
         parameters: {
             query?: never;
@@ -2497,6 +2529,13 @@ export interface components {
              * @example 1048576
              */
             max_bytes: number;
+            /**
+             * @description O começo da URL de toda imagem que as regras aceitam
+             *     (`<CDN>/rules/`); o Markdown só desenha imagem com ele. Nulo sem o
+             *     bucket público: nenhuma imagem vale nas regras.
+             * @example https://img.telefrag.com.br/rules/
+             */
+            rules_image_prefix?: string | null;
         };
         /**
          * @description Tipo da imagem. O front converte para WebP; o Safari, que não gera WebP
@@ -2926,7 +2965,10 @@ export interface components {
              */
             reason: string;
         };
-        /** @description Pedido da URL de upload de um logo ou de uma capa. */
+        /**
+         * @description Pedido da URL de upload de um logo, de uma capa, de uma foto ou de uma
+         *     imagem das regras.
+         */
         NewImageUpload: {
             content_type: components["schemas"]["ImageType"];
             /**
@@ -3343,7 +3385,7 @@ export interface components {
          * @enum {string}
          */
         PickOrder: "alternating" | "blind" | "open";
-        /** @description O logo ou a capa registrados. */
+        /** @description A imagem registrada (logo, capa, foto ou imagem das regras). */
         PublicImage: {
             /** @description A imagem no CDN. */
             url: string;
@@ -8911,7 +8953,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
+            /** @description tournament.slug_invalid, tournament.slug_reserved, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max} (de uma tradução: com `params.locale`, o idioma dela), tournament.rules_image_invalid (imagem nas regras que não é uma enviada pela comunidade em `.../rules/images/uploads`, ou `<img` em HTML; de uma tradução, com `params.locale`), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), tournament.translation_same_locale {locale}, tournament.team_size_invalid {min, max}, tournament.max_participants_invalid {min, max} (no TDM, o mínimo é o de dois times), tournament.bans_invalid {max}, tournament.stage_count_invalid {max}, tournament.check_in_minutes_invalid {min, max}, tournament.starts_at_past, tournament.starts_at_too_soon {minutes} (a data de início já passou, ou está mais perto que a janela de check-in), tournament.contest_minutes_invalid {min, max}, tournament.veto_seconds_invalid {min, max}, tournament.team_pick_seconds_invalid {min, max}, tournament.map_unknown, tournament.map_pool_repeated, tournament.map_pool_too_small {min}, tournament.map_pool_too_large {max}, tournament.pick_order_invalid (a janela aberta não se escolhe mais), tournament.blind_needs_mirror (às cegas sem espelho), tournament.screenshots_unavailable (screenshot obrigatório pedido sem o bucket configurado), format.invalid_best_of {best_of}, format.invalid_rounds {max, got}, format.invalid_tiebreakers (desempate repetido, ou buchholz fora do suíço), champions.pool_exhausted {required, available}, request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -8983,7 +9025,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio excluído na hora, com tudo o que tem dentro; o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug` */
+            /** @description Torneio excluído na hora, com tudo o que tem dentro (as imagens das regras saem do bucket se nenhum outro torneio as usa); o endereço fica livre. Ninguém é avisado: as páginas abertas só recarregam, as notificações que levavam a ele somem e o ranking é recalculado. Antes de começar, organizer e owner; depois, inclusive encerrado, só o owner. Fora do rascunho, com `confirm_slug` */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -11578,6 +11620,179 @@ export interface operations {
             };
         };
     };
+    create_rules_image_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewImageUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar uma imagem das regras direto ao bucket (como a do logo, com o `Cache-Control` de uma hora); depois, registrar com `.../rules/images/uploads/{upload}/attach` e pôr a URL devolvida no Markdown das regras. Organizer e owner, em qualquer estado do torneio */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.too_many_uploads {max} (contando logos, capas e fotos), images.too_many_unused {max} (imagens das regras registradas na comunidade que nenhum texto usa ainda) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach_rules_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description Slug do torneio */
+                tournament: string;
+                /** @description O `id` do upload */
+                upload: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket e registrado como imagem das regras da comunidade: a URL vale nas regras (e nas traduções) de qualquer torneio dela. Sem texto que a use em um dia, sai do bucket */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicImage"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio, de um logo ou capa, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_missing, tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_invalid (o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     get_seeding: {
         parameters: {
             query?: never;
@@ -12675,7 +12890,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, request.invalid_body */
+            /** @description tournament.translation_same_locale, tournament.name_invalid, tournament.description_invalid {max}, tournament.rules_invalid {max}, tournament.rules_image_invalid (imagem que não é uma enviada pela comunidade, ou `<img` em HTML), tournament.rules_images_too_many {max} (imagens distintas no torneio, somando o original e as traduções), request.invalid_body */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -12702,7 +12917,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Tradução removida; o idioma volta a mostrar o original. Vale também com o torneio encerrado */
+            /** @description Tradução removida; o idioma volta a mostrar o original, e as imagens das regras que só ela usava saem do bucket. Vale também com o torneio encerrado */
             204: {
                 headers: {
                     [name: string]: unknown;

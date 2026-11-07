@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from rules_images r\n           where r.tenant_id = $1\n             and not exists (select 1 from rules_image_refs f where f.image_id = r.id)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d7a150e3479ba8d3578f9da08399133264c651bfc78a0ff3c3900afd35ddcbee"
+}

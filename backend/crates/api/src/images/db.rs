@@ -1,6 +1,7 @@
 //! SQL do logo (`tenants.logo_key`), da capa (`tournaments.cover_key`), da
 //! foto de perfil (`users.avatar_key`), dos uploads pedidos
-//! (`image_uploads`) e da fila do que sai do bucket público
+//! (`image_uploads`, inclusive os das imagens das regras, que o registro passa
+//! a `tournaments::register_rules_image`) e da fila do que sai do bucket público
 //! (`image_deletions`, preenchida pelo banco a cada objeto que deixa de ser
 //! usado).
 
@@ -17,8 +18,9 @@ use crate::{
 /// longe das outras chaves do projeto.
 const LOCK_BASE: i64 = 0x696d_6167_0000_0000;
 
-/// De onde é um upload: da comunidade (o logo; com torneio, a capa) ou a
-/// foto de perfil de quem pediu.
+/// De onde é um upload: da comunidade (o logo; com torneio, a capa), a foto
+/// de perfil de quem pediu ou uma imagem das regras, pedida num torneio e
+/// registrada na comunidade.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scope {
     Tenant {
@@ -26,21 +28,38 @@ pub enum Scope {
         tournament: Option<TournamentId>,
     },
     Avatar,
+    Rules {
+        tenant: TenantId,
+        tournament: TournamentId,
+    },
 }
 
 impl Scope {
     fn tenant(self) -> Option<i64> {
         match self {
-            Self::Tenant { tenant, .. } => Some(tenant.get()),
+            Self::Tenant { tenant, .. } | Self::Rules { tenant, .. } => Some(tenant.get()),
             Self::Avatar => None,
         }
     }
 
-    /// A capa deste torneio; `None`: o logo ou a foto.
+    /// O torneio da capa ou da imagem das regras; `None`: o logo ou a foto.
     pub fn tournament(self) -> Option<i64> {
         match self {
             Self::Tenant { tournament, .. } => tournament.map(TournamentId::get),
+            Self::Rules { tournament, .. } => Some(tournament.get()),
             Self::Avatar => None,
+        }
+    }
+
+    /// `image_uploads.kind`.
+    fn kind(self) -> &'static str {
+        match self {
+            Self::Tenant {
+                tournament: None, ..
+            } => "logo",
+            Self::Tenant { .. } => "cover",
+            Self::Avatar => "avatar",
+            Self::Rules { .. } => "rules",
         }
     }
 
@@ -53,7 +72,7 @@ impl Scope {
 /// Um upload pedido e ainda não registrado.
 pub struct PendingUpload {
     pub id: i64,
-    /// A capa deste torneio; `None`: o logo ou a foto.
+    /// O torneio da capa ou da imagem das regras; `None`: o logo ou a foto.
     pub tournament: Option<i64>,
     pub object_key: String,
     pub content_type: ImageType,
@@ -104,9 +123,9 @@ pub async fn insert_upload(
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"insert into image_uploads
-               (tenant_id, tournament_id, user_id, object_key, content_type, size, uploaded_by,
-                upload_expires_at)
-           values ($1, $2, $3, $4, $5, $6, $7, $8)
+               (kind, tenant_id, tournament_id, user_id, object_key, content_type, size,
+                uploaded_by, upload_expires_at)
+           values ($9, $1, $2, $3, $4, $5, $6, $7, $8)
            returning id"#,
         upload.scope.tenant(),
         upload.scope.tournament(),
@@ -115,14 +134,15 @@ pub async fn insert_upload(
         upload.content_type.mime(),
         i32::try_from(upload.size).unwrap_or(i32::MAX),
         upload.user,
-        upload.expires_at
+        upload.expires_at,
+        upload.scope.kind()
     )
     .fetch_one(conn)
     .await
 }
 
-/// O upload `id` pendente na comunidade (o logo ou uma capa) ou, com
-/// `Scope::Avatar`, a foto de `user`.
+/// O upload `id` pendente do tipo de `scope` na comunidade (o logo, uma capa
+/// ou uma imagem das regras) ou, com `Scope::Avatar`, a foto de `user`.
 pub async fn find_upload(
     conn: &mut PgConnection,
     scope: Scope,
@@ -132,11 +152,12 @@ pub async fn find_upload(
     let Some(r) = sqlx::query!(
         r#"select id, tournament_id, object_key, content_type, size, uploaded_by
            from image_uploads
-           where id = $3 and tenant_id is not distinct from $1
+           where id = $3 and kind = $4 and tenant_id is not distinct from $1
              and user_id is not distinct from $2"#,
         scope.tenant(),
         scope.avatar_of(user),
-        id
+        id,
+        scope.kind()
     )
     .fetch_optional(conn)
     .await?

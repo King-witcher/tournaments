@@ -19,7 +19,9 @@
 //! fixo (`public_url`). No público, o envio grava também o `Cache-Control`
 //! (`PUBLIC_CACHE`): o nome de cada objeto é aleatório e nunca muda de
 //! conteúdo, então o CDN e o navegador guardam por um ano e nada precisa ser
-//! invalidado.
+//! invalidado. As imagens das regras guardam só uma hora (`RULES_CACHE`): saem
+//! do bucket quando o texto deixa de usá-las, e o cache curto as tira do CDN
+//! sem invalidação (que a API S3 genérica não tem).
 
 use std::{
     sync::{Arc, OnceLock},
@@ -48,6 +50,9 @@ const TIMEOUT: Duration = Duration::from_secs(15);
 pub const DELETE_BATCH: usize = 1000;
 /// O `Cache-Control` de cada objeto do bucket público, gravado no envio.
 pub const PUBLIC_CACHE: &str = "public, max-age=31536000, immutable";
+/// O `Cache-Control` das imagens das regras: o CDN para de servir a que saiu
+/// do bucket em até uma hora.
+pub const RULES_CACHE: &str = "public, max-age=3600";
 
 /// Endereço do CDN do bucket público, definido uma vez na subida.
 static PUBLIC_URL: OnceLock<String> = OnceLock::new();
@@ -64,6 +69,12 @@ pub fn set_public_url(base: &str) {
 /// configurado.
 pub fn public_url(key: &str) -> Option<String> {
     PUBLIC_URL.get().map(|base| format!("{base}/{key}"))
+}
+
+/// O endereço do CDN do bucket público, sem barra no fim; `None` antes de
+/// `set_public_url`.
+pub fn public_base() -> Option<&'static str> {
+    PUBLIC_URL.get().map(String::as_str)
 }
 
 /// As variáveis `S3_*`.

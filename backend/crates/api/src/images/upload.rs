@@ -1,5 +1,5 @@
-//! Os passos comuns ao logo, à capa e à foto de perfil: pedir a URL de upload
-//! (com o limite por pessoa, que vale para os três juntos) e conferir no
+//! Os passos comuns ao logo, à capa, à foto de perfil e às imagens das regras:
+//! pedir a URL de upload (com o limite por pessoa, que vale para todos juntos) e conferir no
 //! bucket o upload que se quer registrar, antes da transação que o grava (o
 //! HEAD é uma ida à rede).
 
@@ -14,7 +14,7 @@ use super::{
     object::{self, Place},
     types::{ImageUpload, NewImageUpload},
 };
-use crate::shared::{ApiError, ImageType, Storage, storage::PUBLIC_CACHE};
+use crate::shared::{ApiError, ImageType, Storage};
 
 /// Tamanho máximo de um logo, de uma capa ou de uma foto (o mesmo check está
 /// na tabela).
@@ -78,19 +78,13 @@ pub async fn request(
     let id = db::insert_upload(&mut tx, &upload).await?;
     tx.commit().await?;
     let size = body.size.into();
-    let url = storage.put_url(
-        &key,
-        kind.mime(),
-        size,
-        Some(PUBLIC_CACHE),
-        UPLOAD_EXPIRES,
-        now,
-    );
+    let cache = target.place.cache_control();
+    let url = storage.put_url(&key, kind.mime(), size, Some(cache), UPLOAD_EXPIRES, now);
     Ok(ImageUpload {
         id,
         url: url.into(),
         content_type: kind,
-        cache_control: PUBLIC_CACHE.into(),
+        cache_control: cache.into(),
         expires_at,
     })
 }

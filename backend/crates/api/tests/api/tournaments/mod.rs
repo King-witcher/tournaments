@@ -1,12 +1,14 @@
 //! Testes de `tournaments`; data de início e janela de check-in em
 //! `schedule`, janela de contestação em `contest`, criação com traduções e
-//! publicação em `create`, o endereço em `address`, a exclusão em `deletion` e
-//! os desempates da fase em `tiebreakers`.
+//! publicação em `create`, o endereço em `address`, a exclusão em `deletion`,
+//! as imagens das regras em `rules_images` e os desempates da fase em
+//! `tiebreakers`.
 
 mod address;
 mod contest;
 mod create;
 mod deletion;
+mod rules_images;
 mod schedule;
 mod tiebreakers;
 

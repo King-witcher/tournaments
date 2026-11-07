@@ -1,4 +1,5 @@
-//! O logo, a capa e a fila do que sai do bucket público.
+//! O logo, a capa, a foto, as imagens das regras e a fila do que sai do
+//! bucket público.
 
 use super::*;
 
@@ -60,10 +61,17 @@ async fn the_photo_belongs_to_one_account() {
     );
 
     let upload = |user: &str, tenant: &str, by: &str, key: &str| {
+        let kind = if key.starts_with("avatars/") {
+            "avatar"
+        } else {
+            "logo"
+        };
         format!(
             "insert into image_uploads
-                 (user_id, tenant_id, uploaded_by, object_key, content_type, size, upload_expires_at)
-             select {user}, {tenant}, {by}, '{key}', 'image/jpeg', 1000, now() + interval '10 minutes'
+                 (kind, user_id, tenant_id, uploaded_by, object_key, content_type, size,
+                  upload_expires_at)
+             select '{kind}', {user}, {tenant}, {by}, '{key}', 'image/jpeg', 1000,
+                    now() + interval '10 minutes'
              from users u, tenants t where u.id = {id}"
         )
     };
@@ -116,8 +124,9 @@ async fn deleting_the_tenant_queues_every_image() {
     exec(
         &db,
         &format!(
-            "insert into image_uploads (tenant_id, object_key, content_type, size, upload_expires_at)
-             select id, '{pending}', 'image/webp', 1000, now() + interval '10 minutes' from tenants"
+            "insert into image_uploads
+                 (kind, tenant_id, object_key, content_type, size, upload_expires_at)
+             select 'logo', id, '{pending}', 'image/webp', 1000, now() + interval '10 minutes' from tenants"
         ),
     )
     .await
@@ -126,6 +135,115 @@ async fn deleting_the_tenant_queues_every_image() {
 
     exec(&db, "delete from tenants").await.unwrap();
     let mut all = vec![cover, logo, pending];
+    all.sort();
+    assert_eq!(queued(&db).await, all);
+}
+
+/// A imagem das regras: da comunidade, só sai sem texto que a use, e o último
+/// texto que deixa de usá-la (editado, tradução ou torneio apagados) a leva.
+#[tokio::test]
+async fn a_rules_image_lives_while_some_text_uses_it() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    create_tournament(&app, &ana, duel("liga")).await;
+    let bad = format!(
+        "insert into rules_images (tenant_id, object_key) select id, 'rules/{TOKEN}.jpg' from tenants"
+    );
+    assert_eq!(
+        rejected(exec(&db, &bad).await),
+        rule(CHECK, "rules_images_object_key")
+    );
+    // O upload pendente da imagem é pedido num torneio.
+    let pending = format!(
+        "insert into image_uploads (kind, tenant_id, object_key, content_type, size, upload_expires_at)
+         select 'rules', id, 'rules/quake-br/{TOKEN}.jpg', 'image/jpeg', 1000, now() + interval '10 minutes'
+         from tenants"
+    );
+    assert_eq!(
+        rejected(exec(&db, &pending).await),
+        rule(CHECK, "image_uploads_scope")
+    );
+
+    let image = format!("rules/quake-br/{TOKEN}.jpg");
+    exec(
+        &db,
+        &format!(
+            "insert into rules_images (tenant_id, object_key) select id, '{image}' from tenants"
+        ),
+    )
+    .await
+    .unwrap();
+    exec(
+        &db,
+        "insert into tournament_translations (tournament_id, locale, name)
+         select id, 'es', 'Copa' from tournaments where slug = 'copa'",
+    )
+    .await
+    .unwrap();
+    // O original e a tradução da copa e o original da liga.
+    exec(
+        &db,
+        "insert into rules_image_refs (tenant_id, tournament_id, locale, image_id)
+         select t.tenant_id, t.id, l.locale, r.id
+         from tournaments t, rules_images r, (values (null), ('es')) l (locale)
+         where t.slug = 'copa' or l.locale is null",
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        rejected(exec(&db, "delete from rules_images").await),
+        (
+            FOREIGN_KEY.to_owned(),
+            "rules_image_refs_tenant_id_image_id_fkey".to_owned()
+        )
+    );
+
+    exec(&db, "delete from tournament_translations")
+        .await
+        .unwrap();
+    exec(&db, "delete from rules_image_refs where locale is null and tournament_id = (select id from tournaments where slug = 'copa')")
+        .await
+        .unwrap();
+    assert_eq!(count(&db, "select count(*) from rules_images").await, 1);
+    assert!(queued(&db).await.is_empty());
+    exec(&db, "delete from tournaments where slug = 'liga'")
+        .await
+        .unwrap();
+    assert_eq!(count(&db, "select count(*) from rules_images").await, 0);
+    assert_eq!(queued(&db).await, vec![image]);
+}
+
+/// A comunidade apagada leva as imagens das regras, usadas ou não.
+#[tokio::test]
+async fn deleting_the_tenant_queues_the_rules_images() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let used = format!("rules/quake-br/{TOKEN}.jpg");
+    let unused = "rules/quake-br/zyxwvutsrqpnmkjihgfedc.jpg".to_owned();
+    exec(
+        &db,
+        &format!(
+            "insert into rules_images (tenant_id, object_key)
+             select id, k from tenants, (values ('{used}'), ('{unused}')) v (k)"
+        ),
+    )
+    .await
+    .unwrap();
+    exec(
+        &db,
+        &format!(
+            "insert into rules_image_refs (tenant_id, tournament_id, image_id)
+             select t.tenant_id, t.id, r.id from tournaments t, rules_images r
+             where r.object_key = '{used}'"
+        ),
+    )
+    .await
+    .unwrap();
+    exec(&db, "delete from tenants").await.unwrap();
+    assert_eq!(count(&db, "select count(*) from rules_images").await, 0);
+    let mut all = vec![used, unused];
     all.sort();
     assert_eq!(queued(&db).await, all);
 }

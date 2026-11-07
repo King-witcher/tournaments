@@ -29,5 +29,5 @@ pub use extract::{JsonBody, PathParams, QueryParams, nullable};
 pub use image::ImageType;
 pub use locale::Locale;
 pub use outbound_gate::{OutboundGate, Refused};
-pub use storage::{Storage, StorageConfig, public_url, set_public_url};
+pub use storage::{Storage, StorageConfig, public_base, public_url, set_public_url};
 pub use window_limit::WindowLimit;

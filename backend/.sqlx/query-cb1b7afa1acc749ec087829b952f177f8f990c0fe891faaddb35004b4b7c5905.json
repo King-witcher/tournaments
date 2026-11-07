@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into rules_images (tenant_id, object_key) values ($1, $2)\n           on conflict (object_key) do nothing",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cb1b7afa1acc749ec087829b952f177f8f990c0fe891faaddb35004b4b7c5905"
+}

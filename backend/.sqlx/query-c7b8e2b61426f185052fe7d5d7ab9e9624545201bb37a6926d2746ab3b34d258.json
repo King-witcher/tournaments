@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from rules_images where id in (\n               select r.id from rules_images r\n               where r.created_at < $1\n                 and not exists (select 1 from rules_image_refs f where f.image_id = r.id)\n               for update skip locked)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c7b8e2b61426f185052fe7d5d7ab9e9624545201bb37a6926d2746ab3b34d258"
+}
