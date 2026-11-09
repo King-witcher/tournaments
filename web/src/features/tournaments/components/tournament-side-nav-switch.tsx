@@ -29,7 +29,7 @@ const SETTINGS = /\/settings$/;
 
 /**
  * Troca o menu da comunidade pelo do torneio quando o endereço é de um (a
- * seção dele, a partida, a ordem da chave, os times). As seções são as da
+ * seção dele ou a partida). As seções são as da
  * página, quando ela já disse quais são; senão, as da lista. Configurações,
  * só da organização, fica depois de um divisor e se desdobra nas seções dela (o segundo nível do menu), aberta quando o
  * endereço é de uma.

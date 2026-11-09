@@ -1,85 +1,112 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 
-import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { teamRating } from "@/features/ratings/lib/team-rating";
 import { getRanking } from "@/features/ratings/server";
-import { ErrorBack } from "@/features/tournaments/components/error-back";
-import { localizedName } from "@/features/tournaments/lib/localize";
-import { seedingOpen } from "@/features/tournaments/lib/status";
+import { hasStarted, seedingOpen } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
+import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { PageError } from "@/shared/ui/page-error";
-import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
+import { Section } from "@/shared/ui/section";
 import { getSeeding } from "../server";
 import { SeedingEditor } from "./seeding-editor";
+import { SeedingList } from "./seeding-list";
 import { SeedingTeamsNotice } from "./seeding-teams-notice";
-import styles from "./seeding-view.module.scss";
 
 type Props = { tenant: string; slug: string };
 
 /**
- * A página do seeding, para organizer e owner, na revisão antes de iniciar:
- * quantos entram na chave, a explicação (pelo formato da primeira fase) e a lista de times com a posição (e o
- * rating: a média dos jogadores; no duelo, o do jogador) de cada um,
- * "Sortear", "Ordenar por rating" e "Salvar". No TDM, só os times completos
- * entram, e o aviso dos incompletos leva à formação. Fora da revisão (ou para
- * quem joga), o aviso e o caminho de volta. Lê a sessão, então fica em
- * `<Suspense>`.
+ * A seção Ordem da chave, para organizer e owner. Na revisão antes de iniciar,
+ * o editor (`SeedingEditor`), com o que a ordem decide pelo formato da
+ * primeira fase; no TDM, só os times completos entram, e o aviso dos
+ * incompletos leva aos Times. Antes da revisão, o estado; depois de iniciar, a
+ * mesma lista só para consulta, o registro do que definiu a chave. Para quem
+ * joga, o aviso e o caminho de volta. Lê a sessão, então fica em `<Suspense>`.
  */
 export async function SeedingView({ tenant, slug }: Props) {
-  const [t, tNav, tTournament, tTeam, locale, loaded] = await Promise.all([
+  const [t, tNav, tTeam, loaded] = await Promise.all([
     getTranslations("Participants.seeding"),
     getTranslations("Nav"),
-    getTranslations("Tournament"),
     getTranslations("Team"),
-    getLocale(),
     loadTournament(tenant, slug),
   ]);
-  if (loaded.kind === "login") {
-    return <LoginPrompt message={tTournament("loginRequired")} />;
-  }
-  if (loaded.kind === "error") {
-    return <ErrorBack tenant={tenant} code={loaded.code} />;
-  }
+  if (loaded.kind !== "ok") return null;
 
   const { me, tournament } = loaded;
   const path = `/${tenant}/${slug}`;
-  const participants = `${path}/participants`;
-  const breadcrumbs = [
-    { href: path, label: localizedName(tournament, locale) },
-  ];
-
   if (me.role === "player") {
     return (
-      <>
-        <PageHeader breadcrumbs={breadcrumbs} title={t("pageTitle")} />
-        <PageError href={path} label={tNav("backToTournament")}>
-          {await apiErrorMessage("tenant.forbidden")}
-        </PageError>
-      </>
-    );
-  }
-  const [order, ranking] = seedingOpen(tournament)
-    ? await Promise.all([getSeeding(tenant, slug), getRanking(tenant)])
-    : [undefined, undefined];
-  if (!order) {
-    // Fora da revisão (rascunho, inscrição com check-in, depois de iniciar)
-    // ou a API falhou.
-    return (
-      <>
-        <PageHeader breadcrumbs={breadcrumbs} title={t("pageTitle")} />
-        <PageError href={participants} label={t("backToParticipants")}>
-          {seedingOpen(tournament)
-            ? await apiErrorMessage("internal")
-            : t("closed")}
-        </PageError>
-      </>
+      <PageError href={path} label={tNav("backToTournament")}>
+        {await apiErrorMessage("tenant.forbidden")}
+      </PageError>
     );
   }
 
   const hasCheckIn = tournament.check_in;
+  const started = hasStarted(tournament.status);
+  if (!started && !seedingOpen(tournament)) {
+    return (
+      <EmptyState>
+        {t(hasCheckIn ? "summary.atCheckIn" : "summary.atRegistration")}
+      </EmptyState>
+    );
+  }
+
+  const [order, ranking] = await Promise.all([
+    getSeeding(tenant, slug),
+    started ? undefined : getRanking(tenant),
+  ]);
+  if (!order) {
+    return (
+      <PageError href={path} label={tNav("backToTournament")}>
+        {await apiErrorMessage("internal")}
+      </PageError>
+    );
+  }
+
+  if (started) {
+    return (
+      <Section title={t("titleStarted", { count: order.length })}>
+        <Panel>
+          <SeedingList order={order} numbered />
+        </Panel>
+      </Section>
+    );
+  }
+
+  // No TDM, a ordem é de times; os incompletos ficam fora.
+  const teams = tournament.mode === "tdm";
+  const notice = teams && (
+    <SeedingTeamsNotice tenant={tenant} tournament={tournament} />
+  );
+  if (order.length === 0) {
+    return (
+      <>
+        {notice}
+        <EmptyState
+          action={
+            teams && (
+              <ButtonLink href={`${path}/teams`} kind="tertiary">
+                {tTeam("form")}
+              </ButtonLink>
+            )
+          }
+        >
+          {teams
+            ? t(hasCheckIn ? "emptyTeamsCheckIn" : "emptyTeams", {
+                size: tournament.team_size,
+              })
+            : hasCheckIn
+              ? t("empty")
+              : t("emptyNoCheckIn")}
+        </EmptyState>
+      </>
+    );
+  }
+
   const players = new Map(
     ranking?.players.map((p) => [p.user_id, p.rating] as const) ?? [],
   );
@@ -88,27 +115,12 @@ export async function SeedingView({ tenant, slug }: Props) {
     const rating = teamRating(team.members, players, ranking?.initial ?? 0);
     if (rating !== undefined) ratings.set(team.id, rating);
   }
-  // No TDM, a ordem é de times; os incompletos ficam fora e a formação, em
-  // outra página.
-  const teams = tournament.mode === "tdm";
-  const size = tournament.team_size;
-  const [stage] = tournament.stages;
-  const whatKey =
-    stage.format === "elimination"
-      ? stage.bracket === "single"
-        ? "whatSingle"
-        : "whatDouble"
-      : stage.format === "round_robin"
-        ? stage.final_tie === "organizer"
-          ? "whatRoundRobin"
-          : "whatRoundRobinSeed"
-        : stage.format === "swiss"
-          ? "whatSwiss"
-          : "whatPlacement";
   return (
     <>
-      <PageHeader
-        breadcrumbs={breadcrumbs}
+      {notice}
+      <SeedingEditor
+        tenant={tenant}
+        tournament={slug}
         title={
           teams
             ? t("titleTeams", { count: order.length })
@@ -117,40 +129,24 @@ export async function SeedingView({ tenant, slug }: Props) {
                 total: tournament.participants,
               })
         }
-      >
-        <p className={styles.hint}>{t(whatKey)}</p>
-      </PageHeader>
-      {teams && <SeedingTeamsNotice tenant={tenant} tournament={tournament} />}
-      {order.length === 0 ? (
-        <EmptyState
-          action={
-            teams ? (
-              <ButtonLink href={`${path}/teams`} kind="tertiary">
-                {tTeam("form")}
-              </ButtonLink>
-            ) : (
-              <ButtonLink href={participants} kind="tertiary">
-                {t("backToParticipants")}
-              </ButtonLink>
-            )
-          }
-        >
-          {teams
-            ? t(hasCheckIn ? "emptyTeamsCheckIn" : "emptyTeams", { size })
-            : hasCheckIn
-              ? t("empty")
-              : t("emptyNoCheckIn")}
-        </EmptyState>
-      ) : (
-        <SeedingEditor
-          // Recomeça do que a API devolveu a cada atualização da página.
-          key={order.map((team) => `${team.id}:${team.seed}`).join(",")}
-          tenant={tenant}
-          tournament={slug}
-          initial={order}
-          ratings={ratings}
-        />
-      )}
+        description={t(firstStageKey(tournament))}
+        initial={order}
+        ratings={ratings}
+      />
     </>
   );
+}
+
+/** A frase do que a ordem decide, pelo formato da primeira fase. */
+function firstStageKey(tournament: components["schemas"]["Tournament"]) {
+  const [stage] = tournament.stages;
+  if (stage.format === "elimination") {
+    return stage.bracket === "single" ? "whatSingle" : "whatDouble";
+  }
+  if (stage.format === "round_robin") {
+    return stage.final_tie === "organizer"
+      ? "whatRoundRobin"
+      : "whatRoundRobinSeed";
+  }
+  return stage.format === "swiss" ? "whatSwiss" : "whatPlacement";
 }

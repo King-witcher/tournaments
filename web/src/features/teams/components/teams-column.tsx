@@ -8,11 +8,9 @@ import styles from "./teams-column.module.scss";
 
 type Props = {
   count: number;
-  /** Uma frase embaixo do título (na edição, como mexer). */
-  description?: ReactNode;
-  /** Ao lado do título ("Formar times"). */
+  /** Ao lado do título ("Sortear times"). */
   action?: ReactNode;
-  /** O que dizer sem nenhum time. */
+  /** O que dizer sem nenhum time, quando não há `extra`. */
   empty: string;
   /** Os times (`TeamBlock`). */
   children: ReactNode;
@@ -21,27 +19,17 @@ type Props = {
 };
 
 /**
- * A seção dos times: o título com quantos são e os times em grade (uma
- * coluna no celular, duas do md para cima). Sem time, o estado vazio, e a
- * grade só aparece se houver `extra`. Recebe o foco depois de um sorteio.
+ * A seção dos times: o título com quantos são e os times em grade (uma coluna
+ * no celular, duas do md para cima). Sem time e sem `extra`, o estado vazio.
+ * Recebe o foco depois de um sorteio.
  */
-export function TeamsColumn({
-  count,
-  description,
-  action,
-  empty,
-  children,
-  extra,
-}: Props) {
+export function TeamsColumn({ count, action, empty, children, extra }: Props) {
   const t = useTranslations("Team.teams");
   return (
-    <Section
-      title={t("title", { count })}
-      description={description}
-      action={action}
-    >
-      {count === 0 && <EmptyState>{empty}</EmptyState>}
-      {(count > 0 || extra) && (
+    <Section title={t("title", { count })} action={action}>
+      {count === 0 && !extra ? (
+        <EmptyState>{empty}</EmptyState>
+      ) : (
         <div id={TEAMS_ID} tabIndex={-1} className={styles.grid}>
           {children}
           {extra}

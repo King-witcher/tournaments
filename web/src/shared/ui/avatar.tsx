@@ -54,6 +54,7 @@ export function Avatar({ src, name, size = "sm", shape = "circle" }: Props) {
       height={PIXELS[size]}
       unoptimized={!src.startsWith(OPTIMIZED)}
       className={className}
+      draggable={false}
     />
   );
 }

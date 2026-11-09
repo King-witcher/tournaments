@@ -1,21 +1,13 @@
-import { getTranslations } from "next-intl/server";
-
 import { getCurrentUser } from "@/features/auth/server";
-import {
-  hasStarted,
-  isFinished,
-  participantsEditable,
-} from "@/features/tournaments/lib/status";
+import { hasStarted, isFinished } from "@/features/tournaments/lib/status";
 import { loadTournament } from "@/features/tournaments/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
-import { ButtonLink } from "@/shared/ui/button-link";
 import { Notice } from "@/shared/ui/notice";
 import { checkInShown } from "../lib/formation";
-import { getFormation, getSeedingSummary } from "../server";
+import { getFormation } from "../server";
 import { RenameTeamButton } from "./rename-team-button";
-import { SeedingLink } from "./seeding-link";
 import type { Candidate } from "./substitution-modal";
 import { TeamActions } from "./team-actions";
 import { TeamList } from "./team-list";
@@ -23,12 +15,11 @@ import { TeamList } from "./team-list";
 type Props = { tenant: string; slug: string };
 
 /**
- * Os times e os reservas do TDM, só para ler, para todos: na aba Inscritos e
- * na página dos times depois de iniciar (ou para quem não organiza). O
- * capitão tem "Renomear" no próprio time; a organização, o ⋯ de cada time
+ * Os times e os reservas do TDM, só para ler: quem joga, antes e depois de
+ * iniciar, e a organização depois de iniciar. A formação não muda mais, mas o
+ * capitão tem "Renomear" no próprio time e a organização, o ⋯ de cada time
  * (renomear, trocar o capitão e, em andamento, substituir e marcar a
- * desistência) e, antes de iniciar, "Formar times" e a ordem da chave, que no
- * TDM é de times. Fica em `<Suspense>`.
+ * desistência). Fica em `<Suspense>`.
  */
 export async function TeamsSection({ tenant, slug }: Props) {
   const loaded = await loadTournament(tenant, slug);
@@ -38,12 +29,10 @@ export async function TeamsSection({ tenant, slug }: Props) {
   const { status } = tournament;
   const organizer = me.role !== "player";
   const inProgress = status === "in_progress";
-  const [t, formation, user, members, seeding] = await Promise.all([
-    getTranslations("Team"),
+  const [formation, user, members] = await Promise.all([
     getFormation(tenant, slug),
     getCurrentUser(),
     organizer && inProgress ? activeMembers(tenant) : [],
-    organizer ? getSeedingSummary(tenant, tournament) : undefined,
   ]);
   if (!formation) {
     return <Notice kind="error">{await apiErrorMessage("internal")}</Notice>;
@@ -88,22 +77,6 @@ export async function TeamsSection({ tenant, slug }: Props) {
       checkIn={checkInShown(status, formation)}
       started={hasStarted(status)}
       teamActions={teamActions}
-      teamsAction={
-        organizer &&
-        participantsEditable(status) && (
-          <>
-            {seeding?.editable && <SeedingLink tenant={tenant} slug={slug} />}
-            <ButtonLink
-              href={`/${tenant}/${slug}/teams`}
-              kind="tertiary"
-              size="sm"
-            >
-              {t("form")}
-            </ButtonLink>
-          </>
-        )
-      }
-      teamsDescription={seeding?.text}
     />
   );
 }

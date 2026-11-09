@@ -1,8 +1,6 @@
 @use "@carbon/react/scss/motion";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
-@use "@carbon/react/scss/utilities/box-shadow" as *;
-@use "@carbon/react/scss/utilities/focus-outline" as *;
 
 .list {
   border-block-start: 1px solid theme.$border-subtle;
@@ -22,38 +20,6 @@
   }
 }
 
-// A alça ocupa a altura da linha: é o único ponto que começa o arrasto, e o
-// único onde o toque não rola a página. Altura de controle: 48px no celular.
-.handle {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: theme.$icon-secondary;
-  cursor: grab;
-  inline-size: var(--cds-layout-size-height-md);
-  min-block-size: var(--cds-layout-size-height-md);
-  touch-action: none;
-  user-select: none;
-
-  &:hover {
-    background-color: theme.$layer-hover;
-    color: theme.$icon-primary;
-  }
-
-  &:active {
-    background-color: theme.$layer-active;
-    cursor: grabbing;
-  }
-
-  &:focus-visible {
-    @include focus-outline("outline");
-  }
-}
-
 .content {
   flex: 1;
   align-self: center;
@@ -67,31 +33,16 @@
   }
 }
 
-// O lugar onde o item vai cair. A alça segue visível para o foco do teclado
-// ficar nela (elemento com `visibility: hidden` perde o foco); some só o ícone.
+// O lugar onde o item vai cair.
 .placeholder {
   background-color: theme.$layer-accent;
 
-  .content,
-  .handle svg {
+  .content {
     visibility: hidden;
   }
-
-  // O botão do mouse segue apertado: sem isto, a alça fica com a cor de `:active`.
-  .handle {
-    background-color: transparent;
-  }
 }
 
-// No `body`, sem o contexto de camada da lista: daí o `$layer-01`.
+// O fundo e a sombra são da `DragImage`.
 .dragged {
-  @include box-shadow;
-
-  background-color: theme.$layer-01;
-  block-size: 100%;
-}
-
-// O ponteiro fica sobre esta caixa, não sobre a imagem (que é `inert`).
-.overlay {
-  cursor: grabbing;
+  background-color: transparent;
 }

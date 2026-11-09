@@ -9,9 +9,8 @@
     "registeredAt": "Inscrito el"
   },
   "state": {
-    "registered": "inscrito",
-    "checkedIn": "check-in hecho",
-    "notCheckedIn": "sin check-in",
+    "checkedIn": "Check-in hecho",
+    "notCheckedIn": "Sin check-in",
     "missedCheckIn": "fuera de la llave, sin check-in",
     "withdrawn": "abandonó",
     "left": "salió"
@@ -68,8 +67,7 @@
   },
   "seeding": {
     "loading": "Cargando el orden de la llave…",
-    "pageTitle": "Orden de la llave",
-    "title": "Orden de la llave: entran {count} de {total} inscritos",
+    "title": "Entran {count} de {total} inscritos a la llave",
     "whatSingle": "Pon a los más fuertes arriba. En la primera ronda, el 1.º enfrenta al último, el 2.º al penúltimo, y así sucesivamente, y el 1.º y el 2.º solo pueden cruzarse en la final. Si falta gente para completar la llave, los primeros pasan la primera ronda sin jugar.",
     "whatDouble": "Pon a los más fuertes arriba. En la primera ronda, el 1.º enfrenta al último, el 2.º al penúltimo, y así sucesivamente. El 1.º y el 2.º quedan en lados opuestos de la llave principal. Si falta gente para completar la llave, los primeros pasan la primera ronda sin jugar.",
     "whatRoundRobin": "El orden define la secuencia de las rondas y, con número impar de inscritos, quién descansa primero.",
@@ -81,15 +79,10 @@
     "emptyNoCheckIn": "Nadie inscrito todavía.",
     "noSeed": "sin posición",
     "noneSeeded": "Sin orden guardado, la llave se sortea al iniciar. Guarda este orden o sortea ahora.",
-    "up": "Subir a {name}",
-    "down": "Bajar a {name}",
     "changed": "Orden cambiado. Guárdalo para que valga.",
     "save": "Guardar orden",
     "shuffle": "Sortear",
     "shuffleConfirm": "Sortear ahora descarta el orden que cambiaste. ¿Continuar?",
-    "position": "Posición de {name} (1 a {total})",
-    "closed": "El orden de la llave se define en el check-in (o, en un torneo sin check-in, con la inscripción abierta), antes de iniciar.",
-    "backToParticipants": "Volver a los inscritos",
     "edit": "Definir el orden",
     "summary": {
       "count": "{count} de {total} inscritos entran en la llave.",
@@ -98,14 +91,14 @@
       "set": "El orden está definido.",
       "unavailable": "No se pudo cargar el orden ahora. Recarga la página.",
       "atCheckIn": "El orden de la llave se define en el check-in, con quien confirmó su presencia.",
-      "atRegistration": "El orden de la llave se define después de publicar, con la inscripción abierta.",
-      "countTeams": "{count, plural, =0 {Ningún equipo entra} one {# equipo entra} other {# equipos entran}} en la llave.",
-      "emptyTeams": "Todavía no hay equipos completos. Arma los equipos primero."
+      "atRegistration": "El orden de la llave se define después de publicar, con la inscripción abierta."
     },
-    "titleTeams": "Orden de la llave: {count, plural, one {entra # equipo} other {entran # equipos}}",
+    "titleTeams": "{count, plural, one {Entra # equipo} other {Entran # equipos}} a la llave",
     "emptyTeams": "Todavía no hay equipos completos. Arma los equipos primero.",
     "emptyTeamsCheckIn": "Todavía no hay equipos completos con el check-in de todos. Arma los equipos primero.",
     "teamsLeftOut": "{count, plural, one {# equipo incompleto queda fuera del orden} other {# equipos incompletos quedan fuera del orden}}. El torneo solo empieza sin equipos incompletos.",
-    "teamsLeftOutCheckIn": "{count, plural, one {# equipo incompleto o con alguien sin check-in queda fuera del orden} other {# equipos incompletos o con alguien sin check-in quedan fuera del orden}}. El torneo solo empieza sin ellos."
+    "teamsLeftOutCheckIn": "{count, plural, one {# equipo incompleto o con alguien sin check-in queda fuera del orden} other {# equipos incompletos o con alguien sin check-in quedan fuera del orden}}. El torneo solo empieza sin ellos.",
+    "titleStarted": "{count, plural, one {Entró #} other {Entraron #}} a la llave",
+    "saved": "Orden guardado."
   }
 }

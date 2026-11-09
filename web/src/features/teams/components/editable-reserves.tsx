@@ -1,11 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-
-import { shownNickname } from "@/features/members/lib/nickname";
 import type { FormationBoardState } from "../hooks/use-formation-board";
-import { PlayerLine } from "./player-line";
-import { PlayerMenu } from "./player-menu";
+import { useFormationDrop } from "../hooks/use-formation-drop";
+import { DraggablePlayerLine } from "./draggable-player-line";
 import { ReservesBlock } from "./reserves-block";
 
 type Props = {
@@ -18,7 +15,7 @@ type Props = {
 
 /**
  * Os reservas na edição da formação: recebem quem é arrastado de um time, e
- * cada reserva se arrasta para um time (ou para "Novo time") ou vai pelo ⋯.
+ * cada reserva se arrasta para um time (ou para o time novo) ou vai pelo ⋯.
  */
 export function EditableReserves({
   tenant,
@@ -26,43 +23,23 @@ export function EditableReserves({
   board,
   checkIn,
 }: Props) {
-  const tMember = useTranslations("Member");
   const { formation } = board;
-  const checkedIn = new Set(formation.checked_in);
+  const drop = useFormationDrop(board, "reserve");
 
   return (
-    <ReservesBlock
-      count={formation.reserves.length}
-      {...board.dropProps("reserve")}
-    >
-      {formation.reserves.map((p) => {
-        const name = shownNickname(p.nickname, tMember("deletedAccount"));
-        return (
-          <PlayerLine
-            key={p.user_id}
-            {...board.dragProps(p.user_id, "reserve")}
-            handle
-            tenant={tenant}
-            userId={p.user_id}
-            nickname={p.nickname}
-            avatarUrl={p.avatar_url}
-            checkedIn={checkIn ? checkedIn.has(p.user_id) : undefined}
-            left={p.left}
-            actions={
-              <PlayerMenu
-                tenant={tenant}
-                tournament={tournament}
-                formation={formation}
-                userId={p.user_id}
-                name={name}
-                from="reserve"
-                captain={false}
-                onDone={board.settle}
-              />
-            }
-          />
-        );
-      })}
+    <ReservesBlock count={formation.reserves.length} {...drop}>
+      {formation.reserves.map((p) => (
+        <DraggablePlayerLine
+          key={p.user_id}
+          tenant={tenant}
+          tournament={tournament}
+          board={board}
+          player={p}
+          from="reserve"
+          captain={false}
+          checkIn={checkIn}
+        />
+      ))}
     </ReservesBlock>
   );
 }

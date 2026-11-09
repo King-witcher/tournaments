@@ -1,25 +1,22 @@
 {
   "teamOf": "Equipo de {captain}",
   "loading": "Cargando los equipos…",
-  "pageTitle": "Equipos",
-  "howToEdit": "Arrastra y suelta jugadores para formar equipos.",
   "form": "Armar equipos",
-  "backToParticipants": "Volver a los inscritos",
-  "seeding": "Orden de la llave",
-  "summary": {
-    "counts": "{complete, plural, =0 {Ningún equipo completo} one {# equipo completo} other {# equipos completos}}, {incomplete, plural, =0 {ninguno incompleto} one {# incompleto} other {# incompletos}} y {reserves, plural, =0 {ningún suplente} one {# suplente} other {# suplentes}}.",
-    "started": "{teams, plural, one {# equipo} other {# equipos}} en la llave y {reserves, plural, =0 {ningún suplente} one {# suplente} other {# suplentes}}.",
-    "rule": "El torneo empieza con al menos {min} equipos completos."
-  },
+  "needTeams": "Arma al menos {min} equipos completos para iniciar el torneo.",
   "draw": {
-    "title": "Sortear los equipos",
-    "what": "Rehace todos los equipos. Quien se inscribió último y no completa un equipo queda como suplente.",
-    "whatCheckIn": "Rehace todos los equipos con quienes hicieron check-in. Quien se inscribió último y no completa un equipo queda como suplente.",
-    "random": "Sortear",
-    "randomHint": "Jugadores y capitanes al azar.",
-    "balanced": "Sortear equilibrado",
+    "open": "Sortear equipos",
+    "title": "Sortear equipos",
+    "method": "Cómo sortear",
+    "balanced": "Equilibrado",
     "balancedHint": "Equipos con rating promedio parecido, según el rating de la comunidad. El capitán es el de mayor rating.",
-    "confirm": "¿Sortear de nuevo? Los equipos actuales, con nombres y capitanes, y el orden de la llave se deshacen.",
+    "random": "Aleatorio",
+    "randomHint": "Jugadores y capitanes al azar.",
+    "pool": "Entran los {count} inscritos.",
+    "poolCheckIn": "Entran solo los {count} que hicieron check-in.",
+    "leftover": "{count, plural, one {El último inscrito queda} other {Los # últimos inscritos quedan}} como suplentes.",
+    "replaceTeams": "Los equipos actuales, con nombres y capitanes, se deshacen.",
+    "replaceTeamsAndOrder": "Los equipos actuales, con nombres y capitanes, y el orden de la llave se deshacen.",
+    "submit": "Sortear",
     "short": "El sorteo necesita al menos {size} inscritos; {count, plural, =0 {todavía no hay ninguno} one {solo hay #} other {solo hay #}}.",
     "shortCheckIn": "El sorteo usa solo a quienes hicieron check-in y necesita al menos {size}; {count, plural, =0 {nadie lo hizo todavía} one {solo # lo hizo} other {solo # lo hicieron}}."
   },
@@ -27,25 +24,24 @@
     "title": "Equipos ({count})",
     "empty": "Todavía no hay equipos.",
     "emptyReadOnly": "Los equipos todavía no se armaron.",
-    "newTeam": "Suelta aquí para crear un nuevo equipo"
+    "newTeam": "Suelta aquí para crear un nuevo equipo",
+    "emptySlot": "Cupo libre"
   },
   "reserves": {
     "title": "Suplentes ({count})",
-    "what": "En orden de inscripción.",
     "empty": "No hay suplentes."
   },
   "state": {
-    "complete": "completo",
-    "missing": "{count, plural, one {falta # jugador} other {faltan # jugadores}}",
-    "checkInPending": "check-in pendiente",
+    "missing": "{count, plural, one {Falta #} other {Faltan #}}",
+    "checkInPending": "Check-in pendiente",
     "withdrawn": "abandonó",
     "out": "fuera: nadie en la comunidad"
   },
   "member": {
     "captain": "capitán",
-    "checkedIn": "check-in hecho",
-    "notCheckedIn": "sin check-in",
-    "left": "salió"
+    "notCheckedIn": "Sin check-in",
+    "left": "salió",
+    "notCheckedInTip": "Todavía no hizo el check-in. Sin él, no entra en la llave."
   },
   "seed": "#{seed}",
   "saving": "Guardando…",
@@ -93,5 +89,16 @@
     "open": "Marcar abandono",
     "confirm": "¿Marcar el abandono de {name}? Las series del equipo, la actual y las próximas, pasan a W.O. para el rival. No se puede deshacer."
   },
-  "howToEditTouch": "Usa el menú ⋯ de cada jugador para formar equipos."
+  "drag": {
+    "handle": "Mover a {name}",
+    "roleDescription": "jugador que se arrastra",
+    "instructions": "Presiona Espacio o Enter para tomar al jugador. Las flechas llevan a otro equipo, a los suplentes o al nuevo equipo. Espacio o Enter suelta. Esc cancela.",
+    "picked": "Tomaste a {name}.",
+    "over": "{name} sobre {target}.",
+    "away": "{name} fuera de un destino.",
+    "dropped": "Soltaste a {name} en {target}.",
+    "notDropped": "{name} no se movió.",
+    "cancelled": "Cancelado. {name} no se movió.",
+    "newTeam": "Nuevo equipo"
+  }
 }

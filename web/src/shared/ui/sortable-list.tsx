@@ -1,12 +1,10 @@
 "use client";
 
-import { Draggable } from "@carbon/icons-react";
 import {
   type Announcements,
   closestCenter,
   DndContext,
   type DragEndEvent,
-  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   type UniqueIdentifier,
@@ -23,16 +21,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { cn } from "@/shared/lib/cn";
+import { DragHandle, DragHandlePreview } from "./drag-handle";
+import { DragImage } from "./drag-image";
 import styles from "./sortable-list.module.scss";
 
 /** O quanto o ponteiro anda para o arrasto começar; um toque parado na alça não arrasta. */
 const DRAG_START_DISTANCE = 4;
-
-/** Acima do Modal do Carbon (`z("modal")`, 9000). */
-const OVERLAY_Z_INDEX = 9001;
 
 type SortableItem = { id: UniqueIdentifier };
 
@@ -47,6 +43,8 @@ type Props<T extends SortableItem> = {
   onChange: (items: T[]) => void;
   /** Só consulta (o torneio já começou): sem a alça. */
   disabled?: boolean;
+  /** O nome da lista, para o leitor de tela. */
+  label?: string;
 };
 
 /**
@@ -80,6 +78,7 @@ export function SortableList<T extends SortableItem>({
   renderItem,
   onChange,
   disabled,
+  label,
 }: Props<T>) {
   const t = useTranslations("Common.sortableList");
   // Sem `id`, o dnd-kit numera o `aria-describedby` por um contador do módulo,
@@ -161,7 +160,7 @@ export function SortableList<T extends SortableItem>({
         strategy={verticalListSortingStrategy}
         disabled={disabled}
       >
-        <ul className={styles.list}>
+        <ul className={styles.list} aria-label={label}>
           {items.map((item, index) => (
             <SortableRow
               key={item.id}
@@ -174,25 +173,16 @@ export function SortableList<T extends SortableItem>({
           ))}
         </ul>
       </SortableContext>
-      {/* No body: o Modal do Carbon tem `transform`, que prenderia o `position: fixed` da imagem. */}
-      {activeItem &&
-        createPortal(
-          <DragOverlay
-            className={styles.overlay}
-            zIndex={OVERLAY_Z_INDEX}
-            dropAnimation={null}
-          >
-            <div className={cn(styles.row, styles.dragged)} inert>
-              <span className={styles.handle}>
-                <Draggable />
-              </span>
-              <div className={styles.content}>
-                {renderItem(activeItem, activeIndex)}
-              </div>
+      {activeItem && (
+        <DragImage>
+          <div className={cn(styles.row, styles.dragged)}>
+            <DragHandlePreview />
+            <div className={styles.content}>
+              {renderItem(activeItem, activeIndex)}
             </div>
-          </DragOverlay>,
-          document.body,
-        )}
+          </div>
+        </DragImage>
+      )}
     </DndContext>
   );
 }
@@ -229,16 +219,13 @@ function SortableRow({ id, label, disabled, children }: RowProps) {
       style={{ transform: CSS.Translate.toString(transform), transition }}
     >
       {!disabled && (
-        <button
+        <DragHandle
           ref={setActivatorNodeRef}
-          type="button"
-          className={styles.handle}
+          dragging={isDragging}
           aria-label={t("handle", { item: label })}
           {...attributes}
           {...listeners}
-        >
-          <Draggable />
-        </button>
+        />
       )}
       <div className={styles.content}>{children}</div>
     </li>

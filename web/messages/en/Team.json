@@ -1,25 +1,22 @@
 {
   "teamOf": "Team of {captain}",
   "loading": "Loading teams…",
-  "pageTitle": "Teams",
-  "howToEdit": "Drag and drop players to form teams.",
   "form": "Form teams",
-  "backToParticipants": "Back to Registered",
-  "seeding": "Seeding",
-  "summary": {
-    "counts": "{complete, plural, =0 {No complete teams} one {# complete team} other {# complete teams}}, {incomplete, plural, =0 {no incomplete teams} one {# incomplete team} other {# incomplete teams}}, and {reserves, plural, =0 {no reserves} one {# reserve} other {# reserves}}.",
-    "started": "{teams, plural, one {# team} other {# teams}} in the bracket and {reserves, plural, =0 {no reserves} one {# reserve} other {# reserves}}.",
-    "rule": "The tournament starts with at least {min} complete teams."
-  },
+  "needTeams": "Form at least {min} full teams to start the tournament.",
   "draw": {
+    "open": "Draw teams",
     "title": "Draw teams",
-    "what": "Redoes all teams. Whoever registered last and doesn't complete a team becomes a reserve.",
-    "whatCheckIn": "Redoes all teams with players who checked in. Whoever registered last and doesn't complete a team becomes a reserve.",
-    "random": "Draw",
-    "randomHint": "Players and captains at random.",
-    "balanced": "Balanced draw",
+    "method": "How to draw",
+    "balanced": "Balanced",
     "balancedHint": "Teams with similar average rating, based on the community rating. The captain is the highest-rated player.",
-    "confirm": "Draw again? Current teams, with names and captains, and the seeding will be undone.",
+    "random": "Random",
+    "randomHint": "Players and captains at random.",
+    "pool": "All {count} registered players are in.",
+    "poolCheckIn": "Only the {count} who checked in are in.",
+    "leftover": "{count, plural, one {The last player to register stays} other {The last # players to register stay}} in reserve.",
+    "replaceTeams": "Current teams, with names and captains, will be undone.",
+    "replaceTeamsAndOrder": "Current teams, with names and captains, and the seeding will be undone.",
+    "submit": "Draw",
     "short": "The draw needs at least {size} registered; {count, plural, =0 {none so far} one {only # is registered} other {only # are registered}}.",
     "shortCheckIn": "The draw uses only players who checked in and needs at least {size}; {count, plural, =0 {nobody has yet} one {only # has} other {only # have}}."
   },
@@ -27,25 +24,24 @@
     "title": "Teams ({count})",
     "empty": "No teams yet.",
     "emptyReadOnly": "Teams haven't been formed yet.",
-    "newTeam": "Drop here to create a new team"
+    "newTeam": "Drop here to create a new team",
+    "emptySlot": "Open spot"
   },
   "reserves": {
     "title": "Reserves ({count})",
-    "what": "In registration order.",
     "empty": "No reserves."
   },
   "state": {
-    "complete": "complete",
-    "missing": "{count, plural, one {# player missing} other {# players missing}}",
-    "checkInPending": "check-in pending",
+    "missing": "Needs {count} more",
+    "checkInPending": "Check-in pending",
     "withdrawn": "withdrew",
     "out": "out: no one in the community"
   },
   "member": {
     "captain": "captain",
-    "checkedIn": "checked in",
-    "notCheckedIn": "not checked in",
-    "left": "left"
+    "notCheckedIn": "Not checked in",
+    "left": "left",
+    "notCheckedInTip": "Hasn't checked in yet. Without it, they stay out of the bracket."
   },
   "seed": "#{seed}",
   "saving": "Saving…",
@@ -93,5 +89,16 @@
     "open": "Mark withdrawal",
     "confirm": "Mark {name} as withdrawn? The team's current and upcoming matches become walkovers for the opponent. This can't be undone."
   },
-  "howToEditTouch": "Use the ⋯ menu on each player to form teams."
+  "drag": {
+    "handle": "Move {name}",
+    "roleDescription": "draggable player",
+    "instructions": "Press Space or Enter to pick up the player. Arrow keys go to another team, the reserve, or the new team. Space or Enter drops. Esc cancels.",
+    "picked": "Picked up {name}.",
+    "over": "{name} over {target}.",
+    "away": "{name} is not over a destination.",
+    "dropped": "Dropped {name} on {target}.",
+    "notDropped": "{name} was not moved.",
+    "cancelled": "Cancelled. {name} was not moved.",
+    "newTeam": "New team"
+  }
 }

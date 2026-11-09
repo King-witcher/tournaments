@@ -1,56 +1,56 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
-@use "@carbon/react/scss/breakpoint";
+@use "./team-card";
 
-// Avatar e apelido, as marcas e o menu numa linha; no celular, o que não cabe
-// desce sem rolagem lateral. A linha fina separa um jogador do outro.
+// A alça, o avatar e o apelido, as marcas e o menu numa linha só: o apelido
+// longo é que encolhe, para a altura do card não mudar.
 .line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: spacing.$spacing-02 spacing.$spacing-03;
-  min-block-size: spacing.$spacing-08;
-  padding-block: spacing.$spacing-02;
-  border-block-start: 1px solid theme.$border-subtle-01;
+  @include team-card.row;
 
-  &:first-child {
-    border-block-start: 0;
-  }
-}
-
-// A linha se arrasta (a formação, no computador): o cursor diz isso.
-.draggable {
-  cursor: grab;
-}
-
-// A alça: no celular o arrastar não funciona, e o menu ⋯ faz o mesmo.
-.handle {
-  flex-shrink: 0;
-  fill: theme.$icon-secondary;
-
-  @include breakpoint.breakpoint-down(md) {
-    display: none;
-  }
+  min-inline-size: 0;
 }
 
 .name {
   @include type.type-style("body-compact-01");
 
   display: inline-flex;
+  flex: 0 1 auto;
   align-items: center;
   gap: spacing.$spacing-03;
   min-inline-size: 0;
-  overflow-wrap: anywhere;
 }
 
-.tags {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
+.nick {
+  @include team-card.truncate;
+}
+
+// O papel, sem peso de etiqueta: ao lado do apelido, na cor secundária.
+.role {
+  @include type.type-style("helper-text-01");
+
+  flex: none;
+  color: theme.$text-secondary;
+}
+
+.mark {
+  flex: none;
 }
 
 // O menu vai para a ponta direita da linha.
 .actions {
+  flex: none;
   margin-inline-start: auto;
+}
+
+// O lugar de onde o jogador saiu enquanto é arrastado.
+.placeholder {
+  background-color: theme.$layer-accent-01;
+
+  .name,
+  .role,
+  .mark,
+  .actions {
+    visibility: hidden;
+  }
 }

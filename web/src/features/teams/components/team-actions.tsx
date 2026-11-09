@@ -36,7 +36,7 @@ type Props = {
 type Dialog = "rename" | "captain" | "substitute";
 
 /**
- * O ⋯ de um time na aba Inscritos, para a organização: renomear, trocar o
+ * O ⋯ de um time na seção Times, para a organização: renomear, trocar o
  * capitão, substituir um jogador e marcar a desistência do time (com a
  * pergunta). Depois, a página recarrega e o foco volta ao menu (ou ao bloco
  * do time, se o menu sumiu).

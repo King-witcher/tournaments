@@ -1,21 +1,20 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "./team-card";
 
-// Nome e estado à esquerda, as ações na ponta direita; o que não cabe desce.
+// Nome e estado à esquerda, as ações na ponta direita, numa linha só: o nome
+// longo é que encolhe, para a altura do card não mudar.
 .header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: spacing.$spacing-02 spacing.$spacing-03;
+  @include team-card.header;
 }
 
-// Título de bloco (heading-02); nome longo quebra em vez de alargar a grade.
+// Título de bloco (heading-02).
 .name {
   @include type.type-style("heading-02");
+  @include team-card.truncate;
 
-  min-inline-size: 0;
-  overflow-wrap: anywhere;
+  flex: 0 1 auto;
 }
 
 // O seed é referência, não o nome: na cor secundária.
@@ -25,8 +24,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.state {
+  flex: none;
+}
+
 .actions {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: spacing.$spacing-02;
   margin-inline-start: auto;

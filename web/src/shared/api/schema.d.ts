@@ -12555,7 +12555,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Times elegíveis (com o check-in de todos os jogadores; sem check-in no torneio, todos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de criação (no duelo, a de inscrição) */
+            /** @description Antes de iniciar, os times elegíveis (com o check-in de todos os jogadores; sem check-in no torneio, todos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de criação (no duelo, a de inscrição). Depois de iniciar, os times da chave, pelo seed */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -1,0 +1,46 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/focus-outline" as *;
+
+// A alça ocupa a altura da linha: é o único ponto que começa o arrasto, e o
+// único onde o toque não rola a página. Altura de controle: 48px no celular.
+.handle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: theme.$icon-secondary;
+  cursor: grab;
+  inline-size: var(--cds-layout-size-height-md);
+  min-block-size: var(--cds-layout-size-height-md);
+  touch-action: none;
+  user-select: none;
+
+  &:hover {
+    background-color: theme.$layer-hover;
+    color: theme.$icon-primary;
+  }
+
+  &:active {
+    background-color: theme.$layer-active;
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    @include focus-outline("outline");
+  }
+}
+
+// O botão do mouse segue apertado durante o arrasto (daí a classe dobrada,
+// para vencer o `:active`). O foco do teclado fica na alça (elemento com
+// `visibility: hidden` perde o foco): some só o ícone.
+.dragging.dragging {
+  background-color: transparent;
+
+  svg {
+    visibility: hidden;
+  }
+}

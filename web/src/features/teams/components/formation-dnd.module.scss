@@ -1,0 +1,5 @@
+// Durante o arrasto o ponteiro passa por cima de botões com dica, e o `DndContext`
+// escuta o ponteiro no documento: a formação pode parar de receber o mouse.
+.dragging * {
+  pointer-events: none;
+}

@@ -109,9 +109,7 @@ export function SidePicks({ veto, game, side, viewerId, size = "md" }: Props) {
                   </StatusTag>
                 )}
                 {veto.captains.includes(p.id) && (
-                  <StatusTag status="neutral" size="sm">
-                    {t("captain")}
-                  </StatusTag>
+                  <span className={styles.captain}>{t("captain")}</span>
                 )}
               </div>
             )}

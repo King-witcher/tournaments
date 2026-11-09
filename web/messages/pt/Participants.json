@@ -9,9 +9,8 @@
     "registeredAt": "Inscrito em"
   },
   "state": {
-    "registered": "inscrito",
-    "checkedIn": "check-in feito",
-    "notCheckedIn": "sem check-in",
+    "checkedIn": "Check-in feito",
+    "notCheckedIn": "Sem check-in",
     "missedCheckIn": "fora da chave, sem check-in",
     "withdrawn": "desistiu",
     "left": "saiu"
@@ -68,8 +67,7 @@
   },
   "seeding": {
     "loading": "Carregando a ordem da chave…",
-    "pageTitle": "Ordem da chave",
-    "title": "Ordem da chave: {count} de {total} inscritos entram",
+    "title": "{count} de {total} inscritos entram na chave",
     "whatSingle": "Ponha os mais fortes em cima. Na primeira rodada, o 1º enfrenta o último, o 2º, o penúltimo, e assim por diante, e o 1º e o 2º só podem se cruzar na final. Se faltar gente para fechar a chave, os primeiros passam a primeira rodada sem jogar.",
     "whatDouble": "Ponha os mais fortes em cima. Na primeira rodada, o 1º enfrenta o último, o 2º, o penúltimo, e assim por diante. O 1º e o 2º ficam em lados opostos da chave principal. Se faltar gente para fechar a chave, os primeiros passam a primeira rodada sem jogar.",
     "whatRoundRobin": "A ordem define a sequência das rodadas e, com número ímpar de inscritos, quem folga primeiro.",
@@ -81,15 +79,10 @@
     "emptyNoCheckIn": "Ninguém inscrito ainda.",
     "noSeed": "sem posição",
     "noneSeeded": "Sem ordem salva, a chave é sorteada ao iniciar. Salve esta ordem ou sorteie agora.",
-    "up": "Subir {name}",
-    "down": "Descer {name}",
     "changed": "Ordem alterada. Salve para valer.",
     "save": "Salvar ordem",
     "shuffle": "Sortear",
     "shuffleConfirm": "Sortear agora descarta a ordem que você mudou. Continuar?",
-    "position": "Posição de {name} (1 a {total})",
-    "closed": "A ordem da chave se define no check-in (ou, em torneio sem check-in, com a inscrição aberta), antes de iniciar.",
-    "backToParticipants": "Voltar aos inscritos",
     "edit": "Definir a ordem",
     "summary": {
       "count": "{count} de {total} inscritos entram na chave.",
@@ -98,14 +91,14 @@
       "set": "A ordem está definida.",
       "unavailable": "Não foi possível carregar a ordem agora. Recarregue a página.",
       "atCheckIn": "A ordem da chave se define no check-in, com quem confirmou presença.",
-      "atRegistration": "A ordem da chave se define depois de publicar, com a inscrição aberta.",
-      "countTeams": "{count, plural, =0 {Nenhum time entra} one {# time entra} other {# times entram}} na chave.",
-      "emptyTeams": "Nenhum time completo ainda. Forme os times primeiro."
+      "atRegistration": "A ordem da chave se define depois de publicar, com a inscrição aberta."
     },
-    "titleTeams": "Ordem da chave: {count, plural, one {# time entra} other {# times entram}}",
+    "titleTeams": "{count, plural, one {# time entra} other {# times entram}} na chave",
     "emptyTeams": "Nenhum time completo ainda. Forme os times primeiro.",
     "emptyTeamsCheckIn": "Ainda não há time completo com o check-in de todos. Forme os times primeiro.",
     "teamsLeftOut": "{count, plural, one {# time incompleto fica fora da ordem} other {# times incompletos ficam fora da ordem}}. O torneio só começa sem time incompleto.",
-    "teamsLeftOutCheckIn": "{count, plural, one {# time incompleto ou com alguém sem check-in fica fora da ordem} other {# times incompletos ou com alguém sem check-in ficam fora da ordem}}. O torneio só começa sem eles."
+    "teamsLeftOutCheckIn": "{count, plural, one {# time incompleto ou com alguém sem check-in fica fora da ordem} other {# times incompletos ou com alguém sem check-in ficam fora da ordem}}. O torneio só começa sem eles.",
+    "titleStarted": "{count, plural, one {# entrou} other {# entraram}} na chave",
+    "saved": "Ordem salva."
   }
 }

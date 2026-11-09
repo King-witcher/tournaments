@@ -23,9 +23,9 @@ export async function getTeamName() {
 
 /**
  * A formação dos times (os times, os reservas e quem fez check-in), uma
- * busca por requisição: a página dos times, a aba Inscritos, o "Iniciar" e
- * o seeding dividem o resultado. `undefined` se a
- * API falhar. Lê a sessão: quem usa fica em `<Suspense>`.
+ * busca por requisição: a seção Times, o "Iniciar" e a ordem da chave dividem
+ * o resultado. `undefined` se a API falhar. Lê a sessão: quem usa fica em
+ * `<Suspense>`.
  */
 export const getFormation = cache(async (tenant: string, slug: string) => {
   const api = await serverApi();
@@ -38,9 +38,10 @@ export const getFormation = cache(async (tenant: string, slug: string) => {
 });
 
 /**
- * Os times elegíveis na ordem que vale ao iniciar (seed, depois quem não
- * tem), para o resumo em Inscritos e a página do seeding; `undefined`
- * se a API falhar. Lê a sessão: quem usa fica em `<Suspense>`.
+ * Antes de iniciar, os times elegíveis na ordem que vale ao iniciar (seed,
+ * depois quem não tem); depois, os da chave, pelo seed. Para o resumo em
+ * Inscritos e a seção Ordem da chave; `undefined` se a API falhar. Lê a
+ * sessão: quem usa fica em `<Suspense>`.
  */
 export const getSeeding = cache(async (tenant: string, slug: string) => {
   const api = await serverApi();
@@ -53,10 +54,10 @@ export const getSeeding = cache(async (tenant: string, slug: string) => {
 });
 
 /**
- * O resumo da ordem da chave em Inscritos, para a organização, até iniciar:
- * uma frase com quantos entram e como está a ordem (fora da revisão, quando
- * ela vale) e se já dá para defini-la. Depois de iniciar, `undefined`: a
- * ordem usada está na lista. Lê a sessão: quem usa fica em `<Suspense>`.
+ * O resumo da ordem da chave em Inscritos, no duelo, para a organização, até
+ * iniciar: uma frase com quantos entram e como está a ordem (fora da revisão,
+ * quando ela vale) e se já dá para defini-la. Depois de iniciar, `undefined`:
+ * a ordem usada está na lista. Lê a sessão: quem usa fica em `<Suspense>`.
  */
 export async function getSeedingSummary(
   tenant: string,
@@ -72,17 +73,15 @@ export async function getSeedingSummary(
 
   const order = await getSeeding(tenant, tournament.slug);
   if (!order) return { text: t("summary.unavailable"), editable: false };
-  // No TDM, a ordem é de times (os completos), não de inscritos.
-  const teams = tournament.mode === "tdm";
   if (order.length === 0) {
     // Sem check-in, ninguém elegível é ninguém inscrito: a tabela vazia já diz.
-    if (teams) return { text: t("summary.emptyTeams"), editable: false };
     return { text: hasCheckIn ? t("empty") : undefined, editable: false };
   }
   const count = order.length;
-  const entering = teams
-    ? t("summary.countTeams", { count })
-    : t("summary.count", { count, total: tournament.participants });
+  const entering = t("summary.count", {
+    count,
+    total: tournament.participants,
+  });
   const state = order.every((p) => p.seed == null)
     ? t("summary.random")
     : order.some((p) => p.seed == null)

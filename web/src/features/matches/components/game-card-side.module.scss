@@ -43,3 +43,8 @@
   color: theme.$text-secondary;
   overflow-wrap: anywhere;
 }
+
+// O papel, em texto discreto (sem o peso de etiqueta).
+.captain {
+  @include type.type-style("helper-text-01");
+}

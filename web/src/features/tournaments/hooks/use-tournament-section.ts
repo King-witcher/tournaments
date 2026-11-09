@@ -8,6 +8,8 @@ const SECTIONS: readonly string[] = [
   "bracket",
   "standings",
   "participants",
+  "teams",
+  "seeding",
   "rules",
   "settings",
 ] satisfies TournamentTabKey[];

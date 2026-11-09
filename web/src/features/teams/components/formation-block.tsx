@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes, Ref } from "react";
 
 import { cn } from "@/shared/lib/cn";
 import styles from "./formation-block.module.scss";
@@ -10,23 +10,26 @@ type Props = HTMLAttributes<HTMLElement> & {
   highlight?: boolean;
   /** Borda tracejada: uma área só de soltar (o time novo). */
   dashed?: boolean;
+  /** Para o bloco que recebe jogadores arrastados (`useDroppable`). */
+  ref?: (node: HTMLElement | null) => void;
 };
 
 /**
- * Um bloco da formação dos times (um time, os reservas, a área de time novo):
- * a borda separa um grupo de jogadores do outro e, enquanto alguém é
- * arrastado, o bloco onde ele pode ser solto fica destacado. Só tokens: o
- * fundo e a borda de seleção do tema.
+ * Um bloco da formação dos times (um time, os reservas, a área de time novo),
+ * no modelo do `Tile` do Carbon. Enquanto alguém é arrastado, o bloco onde
+ * ele pode ser solto ganha o contorno da área de soltar do Carbon.
  */
 export function FormationBlock({
   as: Tag = "div",
   highlight,
   dashed,
   className,
+  ref,
   ...rest
 }: Props) {
   return (
     <Tag
+      ref={ref as Ref<HTMLDivElement>}
       className={cn(
         styles.block,
         dashed && styles.dashed,

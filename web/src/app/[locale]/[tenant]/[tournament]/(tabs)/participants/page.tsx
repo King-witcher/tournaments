@@ -8,7 +8,7 @@ import {
   TableSkeleton,
 } from "@/shared/ui/skeleton";
 
-/** A aba Inscritos (no TDM, com os times e os reservas antes da tabela). */
+/** A aba Inscritos: a tabela das inscrições individuais. */
 export default async function ParticipantsPage({
   params,
 }: PageProps<"/[locale]/[tenant]/[tournament]/participants">) {

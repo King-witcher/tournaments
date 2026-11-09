@@ -57,6 +57,15 @@
   @include type.type-style("body-compact-01");
 }
 
+// O papel, em texto discreto (sem o peso de etiqueta).
+.captain {
+  @include type.type-style("helper-text-01");
+
+  @include type.font-weight("regular");
+
+  color: theme.$text-secondary;
+}
+
 .you .nick {
   @include type.font-weight("semibold");
 }

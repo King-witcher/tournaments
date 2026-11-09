@@ -9,9 +9,8 @@
     "registeredAt": "Registered on"
   },
   "state": {
-    "registered": "registered",
-    "checkedIn": "checked in",
-    "notCheckedIn": "not checked in",
+    "checkedIn": "Checked in",
+    "notCheckedIn": "Not checked in",
     "missedCheckIn": "out of bracket, not checked in",
     "withdrawn": "withdrew",
     "left": "left"
@@ -68,8 +67,7 @@
   },
   "seeding": {
     "loading": "Loading seeding…",
-    "pageTitle": "Seeding",
-    "title": "Seeding: {count} of {total} registered enter",
+    "title": "{count} of {total} registered enter the bracket",
     "whatSingle": "Put the strongest at the top. In the first round, #1 faces the last seed, #2 faces the second-to-last, and so on. #1 and #2 can only meet in the final. If there aren't enough players to fill the bracket, the top seeds get a bye in the first round.",
     "whatDouble": "Put the strongest at the top. In the first round, #1 faces the last seed, #2 faces the second-to-last, and so on. #1 and #2 start on opposite sides of the upper bracket. If there aren't enough players to fill the bracket, the top seeds get a bye in the first round.",
     "whatRoundRobin": "The seeding sets the order of the rounds and, with an odd number of players, who sits out first.",
@@ -81,15 +79,10 @@
     "emptyNoCheckIn": "No one registered yet.",
     "noSeed": "no position",
     "noneSeeded": "With no saved seeding, the bracket is drawn when the tournament starts. Save this seeding or shuffle now.",
-    "up": "Move {name} up",
-    "down": "Move {name} down",
     "changed": "Seeding changed. Save to apply.",
     "save": "Save seeding",
     "shuffle": "Shuffle",
     "shuffleConfirm": "Shuffling now discards the seeding you changed. Continue?",
-    "position": "Position of {name} (1 to {total})",
-    "closed": "Seeding is set during check-in (or, in a tournament without check-in, while registration is open), before the tournament starts.",
-    "backToParticipants": "Back to Registered",
     "edit": "Set seeding",
     "summary": {
       "count": "{count} of {total} registered enter the bracket.",
@@ -98,14 +91,14 @@
       "set": "Seeding is set.",
       "unavailable": "Couldn't load the seeding right now. Reload the page.",
       "atCheckIn": "Seeding is set during check-in, with players who confirmed attendance.",
-      "atRegistration": "Seeding is set after publishing, while registration is open.",
-      "countTeams": "{count, plural, =0 {No teams enter} one {# team enters} other {# teams enter}} the bracket.",
-      "emptyTeams": "No complete teams yet. Form teams first."
+      "atRegistration": "Seeding is set after publishing, while registration is open."
     },
-    "titleTeams": "Seeding: {count, plural, one {# team enters} other {# teams enter}}",
+    "titleTeams": "{count, plural, one {# team enters} other {# teams enter}} the bracket",
     "emptyTeams": "No complete teams yet. Form teams first.",
     "emptyTeamsCheckIn": "No team is complete with everyone checked in yet. Form teams first.",
     "teamsLeftOut": "{count, plural, one {# incomplete team is left out of the seeding} other {# incomplete teams are left out of the seeding}}. The tournament can only start without incomplete teams.",
-    "teamsLeftOutCheckIn": "{count, plural, one {# team that is incomplete or has someone not checked in is left out of the seeding} other {# teams that are incomplete or have someone not checked in are left out of the seeding}}. The tournament can only start without them."
+    "teamsLeftOutCheckIn": "{count, plural, one {# team that is incomplete or has someone not checked in is left out of the seeding} other {# teams that are incomplete or have someone not checked in are left out of the seeding}}. The tournament can only start without them.",
+    "titleStarted": "{count} entered the bracket",
+    "saved": "Seeding saved."
   }
 }

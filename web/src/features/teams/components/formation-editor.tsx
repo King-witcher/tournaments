@@ -1,16 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 
+import { Stack } from "@/shared/ui/carbon/stack";
+import { Notice } from "@/shared/ui/notice";
 import { useFormationBoard } from "../hooks/use-formation-board";
-import type { Formation } from "../lib/formation";
-import { DrawSection } from "./draw-section";
+import { type Formation, formationCounts, MIN_TEAMS } from "../lib/formation";
+import { DrawTeamsButton } from "./draw-teams-button";
 import { EditableReserves } from "./editable-reserves";
 import { EditableTeam } from "./editable-team";
 import { FormationBoard } from "./formation-board";
-import styles from "./formation-editor.module.scss";
-import { FormationSummary } from "./formation-summary";
+import { FormationDnd } from "./formation-dnd";
 import { NewTeamZone } from "./new-team-zone";
 import { TeamsColumn } from "./teams-column";
 
@@ -21,14 +21,12 @@ type Props = {
   initial: Formation;
   /** O check-in aparece e conta (`checkInShown`). */
   checkIn: boolean;
-  /** Os links do resumo ("Ordem da chave", "Voltar à organização"). */
-  links?: ReactNode;
 };
 
 /**
- * A formação dos times para a organização, antes de iniciar: o resumo, os
- * sorteios e os times e reservas, com arrastar entre eles (no computador) e
- * o ⋯ de cada jogador (em qualquer tela). Cada ação mostra na hora a
+ * A formação dos times para a organização, antes de iniciar: o aviso enquanto
+ * faltam times completos e os times e reservas, com "Sortear times", o
+ * arrastar entre eles e o ⋯ de cada jogador. Cada ação mostra na hora a
  * formação que a API devolveu; quando a página recarrega (outra pessoa
  * mexeu), vale a dela.
  */
@@ -37,61 +35,56 @@ export function FormationEditor({
   tournament,
   initial,
   checkIn,
-  links,
 }: Props) {
   const t = useTranslations("Team");
   const board = useFormationBoard(tenant, tournament, initial);
   const { formation } = board;
+  const { complete } = formationCounts(formation, checkIn);
 
   return (
-    <>
-      <FormationSummary
-        formation={formation}
-        checkIn={checkIn}
-        started={false}
-        links={links}
-      />
-      <DrawSection
-        tenant={tenant}
-        tournament={tournament}
-        formation={formation}
-        onDrawn={board.replace}
-      />
-      <FormationBoard
-        sticky
-        teams={
-          <TeamsColumn
-            count={formation.teams.length}
-            description={
-              <>
-                <span className={styles.pointer}>{t("howToEdit")}</span>
-                <span className={styles.touch}>{t("howToEditTouch")}</span>
-              </>
-            }
-            empty={t("teams.empty")}
-            extra={<NewTeamZone board={board} />}
-          >
-            {formation.teams.map((team) => (
-              <EditableTeam
-                key={team.id}
-                tenant={tenant}
-                tournament={tournament}
-                team={team}
-                board={board}
-                checkIn={checkIn}
-              />
-            ))}
-          </TeamsColumn>
-        }
-        reserves={
-          <EditableReserves
-            tenant={tenant}
-            tournament={tournament}
-            board={board}
-            checkIn={checkIn}
-          />
-        }
-      />
-    </>
+    <FormationDnd board={board}>
+      <Stack gap={7}>
+        {complete < MIN_TEAMS && (
+          <Notice>{t("needTeams", { min: MIN_TEAMS })}</Notice>
+        )}
+        <FormationBoard
+          sticky
+          teams={
+            <TeamsColumn
+              count={formation.teams.length}
+              action={
+                <DrawTeamsButton
+                  tenant={tenant}
+                  tournament={tournament}
+                  formation={formation}
+                  onDrawn={board.replace}
+                />
+              }
+              empty={t("teams.empty")}
+              extra={<NewTeamZone board={board} />}
+            >
+              {formation.teams.map((team) => (
+                <EditableTeam
+                  key={team.id}
+                  tenant={tenant}
+                  tournament={tournament}
+                  team={team}
+                  board={board}
+                  checkIn={checkIn}
+                />
+              ))}
+            </TeamsColumn>
+          }
+          reserves={
+            <EditableReserves
+              tenant={tenant}
+              tournament={tournament}
+              board={board}
+              checkIn={checkIn}
+            />
+          }
+        />
+      </Stack>
+    </FormationDnd>
   );
 }

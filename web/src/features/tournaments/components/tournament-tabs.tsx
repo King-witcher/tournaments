@@ -36,6 +36,7 @@ export function TournamentTabs({
     status: tournament.status,
     standings,
     organizer,
+    teams: tournament.mode === "tdm",
   }).map((tab) => ({ href: tab.href, label: t(`tabs.${tab.key}`) }));
 
   return (

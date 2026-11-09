@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+
+// No celular, o ícone de 16px é pequeno para o dedo: a área de toque cresce
+// para 48px em volta dele, sem mudar a altura da linha.
+.compact button {
+  @include breakpoint.breakpoint-down(md) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * #{spacing.$spacing-05});
+    }
+  }
+}

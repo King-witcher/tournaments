@@ -8,22 +8,29 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
+import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/carbon/form";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
+import { LeaveGuard } from "@/shared/ui/leave-guard";
 import { Notice } from "@/shared/ui/notice";
 import { Panel } from "@/shared/ui/panel";
+import { Section } from "@/shared/ui/section";
 import styles from "./seeding-editor.module.scss";
-import { type FocusOn, SeedingRow } from "./seeding-row";
+import { SeedingList } from "./seeding-list";
 
 type Team = components["schemas"]["Team"];
 
 type Props = {
   tenant: string;
   tournament: string;
+  /** O título da seção: quantos entram. */
+  title: string;
+  /** O que a ordem decide, pelo formato da primeira fase. */
+  description: string;
   /** Os times elegíveis na ordem que vale agora. */
   initial: Team[];
   /** Rating de cada time que tem (a média dos jogadores), pelo id do time. */
@@ -33,14 +40,27 @@ type Props = {
 /** "Sortear" volta a existir depois do refresh: o foco vai para ele. */
 const SHUFFLE_ID = "seeding-shuffle";
 
+/** A identidade da ordem que a API mandou, sem contar as outras mudanças do torneio. */
+function orderKey(order: Team[]) {
+  return order.map((team) => `${team.id}:${team.seed}`).join(",");
+}
+
 /**
- * A ordem do seeding: digitar a posição (Enter ou sair do campo leva direto
- * para lá), subir e descer com as setas, sortear (pergunta antes quando a
- * ordem foi mudada, porque descarta a mudança), ordenar por rating (preenche
- * a ordem na tela: maior rating primeiro, quem não tem no fim) ou salvar e
- * voltar para Inscritos.
+ * A ordem da chave, editável: arrastar pela alça, sortear (pergunta antes
+ * quando a ordem foi mudada, porque descarta a mudança), ordenar por rating
+ * (preenche a ordem na tela: maior rating primeiro, quem não tem no fim, e
+ * fica desabilitado, com o motivo, sem nenhum rating) e salvar. Recomeça do
+ * que a API devolveu quando a ordem dela muda; outras mudanças do torneio
+ * (o tempo real) não apagam o que a pessoa arrastou.
  */
-export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
+export function SeedingEditor({
+  tenant,
+  tournament,
+  title,
+  description,
+  initial,
+  ratings,
+}: Props) {
   const t = useTranslations("Participants.seeding");
   const tRatings = useTranslations("Ratings.seeding");
   const router = useRouter();
@@ -48,10 +68,14 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const shuffle = useApiAction();
   const pending = save.pending || shuffle.pending;
   const [order, setOrder] = useState(initial);
-  const [focus, setFocus] = useState<{ id: number; n: number; on: FocusOn }>();
+  const [saved, setSaved] = useState(false);
+  const [shown, setShown] = useState(() => orderKey(initial));
+  if (orderKey(initial) !== shown) {
+    setShown(orderKey(initial));
+    setOrder(initial);
+  }
   const params = { path: { slug: tenant, tournament } };
-  const participants = `/${tenant}/${tournament}/participants`;
-  const changed = order.some((team, i) => team.id !== initial[i].id);
+  const changed = order.some((team, i) => team.id !== initial[i]?.id);
   // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
   const noneSeeded = initial.every((p) => p.seed == null);
   // Sem seed nenhum, a lista é a ordem de inscrição e não leva números; eles
@@ -59,44 +83,19 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const numbered = !noneSeeded || changed;
   // Ainda há quem não tem seed: salvar grava a ordem que aparece.
   const unsaved = changed || initial.some((p) => p.seed == null);
-  const anyRated = order.some((team) => ratings.has(team.id));
+  const anyRated = initial.some((team) => ratings.has(team.id));
 
-  function ratingText(teamId: number) {
-    const rating = ratings.get(teamId);
+  function ratingText(team: Team) {
+    const rating = ratings.get(team.id);
     return rating === undefined
       ? tRatings("unrated")
       : tRatings("rating", { rating });
   }
 
-  function move(index: number, delta: -1 | 1) {
-    const teamId = order[index].id;
-    setOrder((current) => {
-      const next = [...current];
-      [next[index], next[index + delta]] = [next[index + delta], next[index]];
-      return next;
-    });
-    // A linha troca de lugar e o botão que acabou de ser usado pode sair do
-    // DOM ou ficar desabilitado (na ponta da lista): o foco o acompanha.
-    setFocus((f) => ({
-      id: teamId,
-      n: (f?.n ?? 0) + 1,
-      on: delta < 0 ? "up" : "down",
-    }));
-  }
-
-  /** Pelo id: um blur atrasado de um campo já movido não mexe em outro. */
-  function moveTo(teamId: number, to: number, keepFocus: boolean) {
-    setOrder((current) => {
-      const from = current.findIndex((team) => team.id === teamId);
-      if (from < 0 || from === to - 1) return current;
-      const next = [...current];
-      const [moved] = next.splice(from, 1);
-      next.splice(to - 1, 0, moved);
-      return next;
-    });
-    if (keepFocus) {
-      setFocus((f) => ({ id: teamId, n: (f?.n ?? 0) + 1, on: "position" }));
-    }
+  function reorder(next: Team[]) {
+    if (pending) return;
+    setOrder(next);
+    setSaved(false);
   }
 
   const runShuffle = () =>
@@ -106,100 +105,105 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
           params,
         }),
       () => {
+        setSaved(false);
         router.refresh();
         focusIfLost(SHUFFLE_ID);
       },
     );
 
   return (
-    <Panel>
-      <Form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!unsaved || pending) return;
-          save.run(
-            () =>
-              api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
-                params,
-                body: { team_ids: order.map((team) => team.id) },
-              }),
-            () => {
-              router.push(participants);
-              router.refresh();
-            },
-          );
-        }}
-      >
-        <Stack gap={6}>
-          {noneSeeded && <Notice kind="warning">{t("noneSeeded")}</Notice>}
-          <ol className={styles.list} aria-label={t("listLabel")}>
-            {order.map((team, i) => (
-              <SeedingRow
-                key={team.id}
-                position={i + 1}
-                numbered={numbered}
-                total={order.length}
-                team={team}
-                showNoSeed={!noneSeeded}
-                ratingText={anyRated ? ratingText(team.id) : undefined}
-                disabled={pending}
-                onUp={i > 0 ? () => move(i, -1) : undefined}
-                onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
-                onMoveTo={(to, keepFocus) => moveTo(team.id, to, keepFocus)}
-                focusToken={focus?.id === team.id ? focus.n : undefined}
-                focusOn={focus?.id === team.id ? focus.on : undefined}
-              />
-            ))}
-          </ol>
-          {changed && <Notice kind="info">{t("changed")}</Notice>}
-          {(save.error ?? shuffle.error) && (
-            <FormError>{save.error ?? shuffle.error}</FormError>
+    <Section
+      title={title}
+      description={description}
+      action={
+        <span className={styles.actions}>
+          <ActionWithNote
+            compact
+            blocked={!anyRated}
+            note={anyRated ? undefined : tRatings("sortUnavailable")}
+          >
+            <Button
+              kind="tertiary"
+              size="sm"
+              disabled={pending || !anyRated}
+              onClick={() => reorder(sortByRating(order, ratings))}
+            >
+              {tRatings("sort")}
+            </Button>
+          </ActionWithNote>
+          {changed ? (
+            <ConfirmButton
+              destructive={false}
+              kind="tertiary"
+              size="sm"
+              pending={shuffle.pending}
+              question={t("shuffleConfirm")}
+              onConfirm={runShuffle}
+            >
+              {t("shuffle")}
+            </ConfirmButton>
+          ) : (
+            <Button
+              id={SHUFFLE_ID}
+              kind="tertiary"
+              size="sm"
+              pending={shuffle.pending}
+              onClick={runShuffle}
+            >
+              {t("shuffle")}
+            </Button>
           )}
-          <FormActions
-            submitLabel={t("save")}
-            pending={save.pending}
-            disabled={!unsaved}
-            cancelHref={participants}
-            extra={
-              <span className={styles.fill}>
-                {anyRated && (
-                  <Button
-                    kind="ghost"
-                    disabled={pending}
-                    onClick={() =>
-                      setOrder((current) => sortByRating(current, ratings))
-                    }
-                  >
-                    {tRatings("sort")}
-                  </Button>
-                )}
-                {changed ? (
-                  <ConfirmButton
-                    destructive={false}
-                    kind="tertiary"
-                    size="md"
-                    pending={shuffle.pending}
-                    question={t("shuffleConfirm")}
-                    onConfirm={runShuffle}
-                  >
-                    {t("shuffle")}
-                  </ConfirmButton>
-                ) : (
-                  <Button
-                    id={SHUFFLE_ID}
-                    kind="tertiary"
-                    pending={shuffle.pending}
-                    onClick={runShuffle}
-                  >
-                    {t("shuffle")}
-                  </Button>
-                )}
-              </span>
-            }
-          />
-        </Stack>
-      </Form>
-    </Panel>
+        </span>
+      }
+    >
+      <Panel>
+        <LeaveGuard
+          unsaved={changed && !saved}
+          path={`/${tenant}/${tournament}/seeding`}
+        />
+        <Form
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!unsaved || saved || pending) return;
+            save.run(
+              () =>
+                api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
+                  params,
+                  body: { team_ids: order.map((team) => team.id) },
+                }),
+              () => {
+                setSaved(true);
+                router.refresh();
+              },
+            );
+          }}
+        >
+          <Stack gap={6}>
+            {noneSeeded && !saved && (
+              <Notice kind="warning">{t("noneSeeded")}</Notice>
+            )}
+            <SeedingList
+              order={order}
+              numbered={numbered}
+              showNoSeed={!noneSeeded}
+              ratingText={anyRated ? ratingText : undefined}
+              onChange={reorder}
+            />
+            {changed && !saved && <Notice>{t("changed")}</Notice>}
+            {saved && <Notice kind="success">{t("saved")}</Notice>}
+            {(save.error ?? shuffle.error) && (
+              <FormError>{save.error ?? shuffle.error}</FormError>
+            )}
+            <FormActions
+              submitLabel={t("save")}
+              pending={save.pending}
+              disabled={!unsaved || saved}
+              onCancel={changed && !saved ? () => setOrder(initial) : undefined}
+            />
+          </Stack>
+        </Form>
+      </Panel>
+    </Section>
   );
 }

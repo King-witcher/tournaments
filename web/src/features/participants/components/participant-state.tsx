@@ -1,7 +1,8 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
-import { type Status, StatusTag } from "@/shared/ui/status-tag";
+import { IconIndicator } from "@/shared/ui/icon-indicator";
+import { StatusTag } from "@/shared/ui/status-tag";
 
 type Props = {
   participant: components["schemas"]["Participant"];
@@ -12,9 +13,10 @@ type Props = {
 };
 
 /**
- * O estado de um inscrito como etiqueta: saiu (da comunidade), desistiu,
- * check-in feito ou que falta (fora da chave, depois de iniciar) ou só
- * inscrito.
+ * O estado de um inscrito na tabela, onde se confere quem fez o quê. O caso
+ * esperado não tem marca: "check-in feito" é só texto, e sem check-in valendo
+ * a célula fica vazia. A exceção tem: o triângulo de quem ainda não fez e a
+ * etiqueta, na cor de cancelado, de quem saiu, desistiu ou ficou fora da chave.
  */
 export function ParticipantState({
   participant: p,
@@ -22,16 +24,13 @@ export function ParticipantState({
   started,
 }: Props) {
   const t = useTranslations("Participants.state");
-  const [status, label]: [Status, string] = p.left
-    ? ["cancelled", t("left")]
-    : p.withdrawn
-      ? ["cancelled", t("withdrawn")]
-      : !showCheckIn
-        ? ["registration", t("registered")]
-        : p.checked_in
-          ? ["confirmed", t("checkedIn")]
-          : started
-            ? ["cancelled", t("missedCheckIn")]
-            : ["check_in", t("notCheckedIn")];
-  return <StatusTag status={status}>{label}</StatusTag>;
+  const cancelled = (label: string) => (
+    <StatusTag status="cancelled">{label}</StatusTag>
+  );
+  if (p.left) return cancelled(t("left"));
+  if (p.withdrawn) return cancelled(t("withdrawn"));
+  if (!showCheckIn) return null;
+  if (p.checked_in) return t("checkedIn");
+  if (started) return cancelled(t("missedCheckIn"));
+  return <IconIndicator kind="caution-minor" label={t("notCheckedIn")} />;
 }

@@ -16,6 +16,8 @@ type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
   busy?: boolean;
   /** O erro da última ação aqui, já traduzido. */
   error?: string;
+  /** Para receber jogadores arrastados (`useDroppable`). */
+  ref?: (node: HTMLElement | null) => void;
   /** Os reservas (`PlayerLine`), na ordem de inscrição. */
   children: ReactNode;
 };
@@ -35,10 +37,7 @@ export function ReservesBlock({
 }: Props) {
   const t = useTranslations("Team");
   return (
-    <Section
-      title={t("reserves.title", { count })}
-      description={t("reserves.what")}
-    >
+    <Section title={t("reserves.title", { count })}>
       <FormationBlock
         id={RESERVES_ID}
         tabIndex={-1}

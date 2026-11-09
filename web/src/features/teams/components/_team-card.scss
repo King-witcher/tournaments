@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// As medidas que fazem todo card de time ter a mesma altura: uma linha de
+// cabeçalho e uma linha por vaga, cada uma com a altura de um controle.
+
+@mixin header {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-block-size: var(--cds-layout-size-height-sm);
+}
+
+// A linha fina separa uma vaga da outra.
+@mixin row {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-block-size: var(--cds-layout-size-height-md);
+  border-block-start: 1px solid theme.$border-subtle-01;
+
+  &:first-child {
+    border-block-start: 0;
+  }
+}
+
+// O texto que não cabe numa linha termina em reticências.
+@mixin truncate {
+  overflow: hidden;
+  min-inline-size: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

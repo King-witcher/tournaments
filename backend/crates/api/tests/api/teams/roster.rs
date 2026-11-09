@@ -109,6 +109,49 @@ async fn the_captain_names_the_team_and_the_organizer_picks_the_captain() {
 }
 
 #[tokio::test]
+async fn the_seeding_after_the_start_is_the_order_of_the_bracket() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 5).await;
+    let who = [&p[0], &p[1], &p[2], &p[3]];
+    let body = tdm(2, json!({ "check_in": true }));
+    let mut teams = formed(&app, &ana, body, 2, &who).await;
+    register(&app, "copa", &[&p[4]]).await;
+    post_empty(&app, &format!("{COPA}/check-in/open"), &ana).await;
+    for player in who {
+        let (status, _) = post_empty(&app, &format!("{COPA}/check-in"), player).await;
+        assert_eq!(status, StatusCode::NO_CONTENT);
+    }
+    teams.reverse();
+    let (status, seeded) = put(
+        &app,
+        &format!("{COPA}/seeding"),
+        &ana,
+        json!({ "team_ids": teams }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{seeded}");
+    let (status, body) = post_empty(&app, &format!("{COPA}/start"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    // Quem entra numa substituição não tem check-in, e o time continua na ordem.
+    let uri = format!("{}/substitution", team_uri(teams[0]));
+    let sub = json!({ "out": p[2].id, "in": p[4].id });
+    let (status, f) = post(&app, &uri, &ana, sub).await;
+    assert_eq!(status, StatusCode::OK, "{f}");
+
+    let (status, order) = get(&app, &format!("{COPA}/seeding"), &ana).await;
+    assert_eq!(status, StatusCode::OK, "{order}");
+    let order: Vec<(i64, i64)> = order
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| (t["id"].as_i64().unwrap(), t["seed"].as_i64().unwrap()))
+        .collect();
+    assert_eq!(order, [(teams[0], 1), (teams[1], 2)]);
+}
+
+#[tokio::test]
 async fn the_organizer_substitutes_a_player_during_the_tournament() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, bia) = quake_br(&db).await;

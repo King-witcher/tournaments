@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
+import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { type Formation, teamState } from "../lib/formation";
 import { teamLeft } from "../lib/team-name";
@@ -15,11 +16,12 @@ type Props = {
 };
 
 /**
- * O estado do time como etiqueta: antes de iniciar, completo, faltando
- * jogadores ou com check-in pendente; depois, desistiu ou fora (ninguém dele
- * na comunidade). Sem nada a dizer, nada.
+ * O estado do time no cabeçalho dele, só quando há o que dizer: antes de
+ * iniciar, o que falta (indicador de atenção do Carbon, não vermelho: é
+ * trabalho em andamento); desistência e saída (etiqueta, na cor de cancelado).
+ * O time completo não leva nada: é o caso esperado.
  */
-export function TeamStateTag({ team, formation, checkIn, started }: Props) {
+export function TeamState({ team, formation, checkIn, started }: Props) {
   const t = useTranslations("Team.state");
   if (team.withdrawn) {
     return (
@@ -38,24 +40,17 @@ export function TeamStateTag({ team, formation, checkIn, started }: Props) {
   if (started) return null;
   switch (teamState(team, formation, checkIn)) {
     case "complete":
-      return (
-        <StatusTag status="confirmed" size="sm">
-          {t("complete")}
-        </StatusTag>
-      );
+      return null;
     case "missing":
       return (
-        <StatusTag status="waiting" size="sm">
-          {t("missing", {
+        <IconIndicator
+          kind="caution-minor"
+          label={t("missing", {
             count: formation.team_size - team.members.length,
           })}
-        </StatusTag>
+        />
       );
     case "checkInPending":
-      return (
-        <StatusTag status="check_in" size="sm">
-          {t("checkInPending")}
-        </StatusTag>
-      );
+      return <IconIndicator kind="caution-minor" label={t("checkInPending")} />;
   }
 }

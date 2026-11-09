@@ -97,7 +97,8 @@
   "seeding": {
     "sort": "Ordenar por rating",
     "rating": "Rating {rating}",
-    "unrated": "Sin rating"
+    "unrated": "Sin rating",
+    "sortUnavailable": "Nadie en la lista tiene rating."
   },
   "tournament": {
     "label": "Rating",

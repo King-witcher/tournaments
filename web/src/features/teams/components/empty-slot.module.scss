@@ -1,0 +1,18 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+@use "./team-card";
+
+.slot {
+  @include team-card.row;
+  @include type.type-style("body-compact-01");
+
+  color: theme.$text-secondary;
+}
+
+// A largura da alça e o espaço depois dela.
+.indented {
+  padding-inline-start: calc(
+    var(--cds-layout-size-height-md) + #{spacing.$spacing-03}
+  );
+}

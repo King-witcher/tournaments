@@ -83,6 +83,9 @@ export async function ParticipantTable({ tenant, slug }: Props) {
     tournament.check_in &&
     (!["draft", "registration"].includes(status) ||
       participants.some((p) => p.checked_in));
+  // Só com o que dizer: sem check-in valendo, ninguém tem marca na coluna.
+  const showState =
+    showCheckIn || participants.some((p) => p.left || p.withdrawn);
 
   const rows = listed.map((p) => {
     const checkIn =
@@ -92,7 +95,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           : ("mark" as const)
         : undefined;
     // A desistência é do time dele (no duelo, o time de um jogador). No TDM,
-    // fica no ⋯ do time, na seção dos times: aqui pareceria ser só dele.
+    // fica no ⋯ do time, em Times: aqui pareceria ser só dele.
     const withdrawTeam =
       organizer &&
       tournament.mode !== "tdm" &&
@@ -168,7 +171,9 @@ export async function ParticipantTable({ tenant, slug }: Props) {
               ? [{ key: "seed", header: t("columns.seed"), secondary: true }]
               : []),
             { key: "name", header: t("columns.member") },
-            { key: "state", header: t("columns.state") },
+            ...(showState
+              ? [{ key: "state", header: t("columns.state") }]
+              : []),
             {
               key: "registeredAt",
               header: t("columns.registeredAt"),

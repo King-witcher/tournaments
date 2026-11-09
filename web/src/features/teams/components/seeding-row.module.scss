@@ -2,32 +2,24 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-// Posição, avatar e apelido, a marca "sem seed" e as setas numa linha; no
-// celular, o que não cabe desce sem rolagem lateral.
+// A posição, o time, o rating e a marca "sem posição" numa linha; no celular,
+// o que não cabe desce sem rolagem lateral.
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: spacing.$spacing-03 spacing.$spacing-04;
-  padding-block: spacing.$spacing-03;
-  border-block-end: 1px solid theme.$border-subtle-01;
+  gap: spacing.$spacing-02 spacing.$spacing-05;
+  min-block-size: spacing.$spacing-08;
 }
 
-// O campo do Carbon não encolhe abaixo de 150px (min-inline-size do input):
-// numa coluna menor, ele cobria o avatar e o começo do apelido.
+// Número só para ler, de largura fixa para os nomes ficarem alinhados.
 .position {
-  flex-shrink: 0;
-  inline-size: spacing.$spacing-13;
-}
+  @include type.type-style("heading-compact-01");
 
-// Sem número (a ordem ainda não vale): o traço ocupa a coluna do campo.
-.unnumbered {
-  @include type.type-style("body-compact-01");
-
-  flex-shrink: 0;
-  inline-size: spacing.$spacing-13;
-  color: theme.$text-secondary;
-  text-align: center;
+  flex: none;
+  inline-size: spacing.$spacing-07;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 .name {
@@ -62,8 +54,4 @@
 
   color: theme.$text-secondary;
   font-variant-numeric: tabular-nums;
-}
-
-.moves {
-  display: inline-flex;
 }

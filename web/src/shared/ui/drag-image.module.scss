@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/utilities/box-shadow" as *;
+
+// O ponteiro fica sobre esta caixa, não sobre a imagem (que é `inert`).
+.overlay {
+  cursor: grabbing;
+}
+
+// No `body`, sem o contexto de camada de quem a arrasta: daí o `$layer-01`.
+.image {
+  @include box-shadow;
+
+  background-color: theme.$layer-01;
+  block-size: 100%;
+}

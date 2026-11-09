@@ -7,7 +7,7 @@ import { FormationBoard } from "./formation-board";
 import { PlayerLine } from "./player-line";
 import { ReservesBlock } from "./reserves-block";
 import { TeamBlock } from "./team-block";
-import { TeamStateTag } from "./team-state-tag";
+import { TeamState } from "./team-state";
 import { TeamsColumn } from "./teams-column";
 
 type Team = components["schemas"]["Team"];
@@ -17,21 +17,16 @@ type Props = {
   formation: Formation;
   /** O check-in aparece e conta (`checkInShown`). */
   checkIn: boolean;
-  /** Já começou: o seed antes do nome, sem completo ou incompleto. */
+  /** Já começou: o seed antes do nome, sem o que falta nem vaga livre. */
   started: boolean;
   /** As ações de cada time (o ⋯ da organização, o "Renomear" do capitão). */
   teamActions?: (team: Team) => ReactNode;
-  /** Ao lado do título dos times ("Formar times", para a organização). */
-  teamsAction?: ReactNode;
-  /** Embaixo do título dos times (a ordem da chave, para a organização). */
-  teamsDescription?: ReactNode;
 };
 
 /**
- * A formação só para ler: os times (nome, estado, jogadores com o capitão
- * marcado e o check-in quando ele vale) e os reservas, com o apelido levando
- * à página da pessoa. Serve à aba Inscritos e à página dos times depois de
- * iniciar ou para quem não organiza.
+ * A formação só para ler: os times (nome, o que falta, jogadores com o capitão
+ * marcado e as vagas livres) e os reservas, com o apelido levando à página da
+ * pessoa.
  */
 export function TeamList({
   tenant,
@@ -39,8 +34,6 @@ export function TeamList({
   checkIn,
   started,
   teamActions,
-  teamsAction,
-  teamsDescription,
 }: Props) {
   const t = useTranslations("Team.teams");
   const checkedIn = new Set(formation.checked_in);
@@ -50,19 +43,14 @@ export function TeamList({
   return (
     <FormationBoard
       teams={
-        <TeamsColumn
-          count={formation.teams.length}
-          action={teamsAction}
-          description={teamsDescription}
-          empty={t("emptyReadOnly")}
-        >
+        <TeamsColumn count={formation.teams.length} empty={t("emptyReadOnly")}>
           {formation.teams.map((team) => (
             <TeamBlock
               key={team.id}
               team={team}
               showSeed={started}
-              tag={
-                <TeamStateTag
+              state={
+                <TeamState
                   team={team}
                   formation={formation}
                   checkIn={checkIn}
@@ -70,6 +58,9 @@ export function TeamList({
                 />
               }
               actions={teamActions?.(team)}
+              emptySlots={
+                started ? 0 : formation.team_size - team.members.length
+              }
             >
               {team.members.map((m) => (
                 <PlayerLine

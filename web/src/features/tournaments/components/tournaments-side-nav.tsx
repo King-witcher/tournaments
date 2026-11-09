@@ -60,6 +60,7 @@ export async function TournamentsSideNav({ tenant, children }: Props) {
       status: x.status,
       standings: hasStarted(x.status),
       organizer,
+      teams: x.mode === "tdm",
     }).map((tab) => ({ href: tab.href, label: t(`tabs.${tab.key}`) })),
   }));
 

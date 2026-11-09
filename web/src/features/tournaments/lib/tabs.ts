@@ -20,6 +20,8 @@ export type TournamentTabKey =
   | "bracket"
   | "standings"
   | "participants"
+  | "teams"
+  | "seeding"
   | "rules"
   | "settings";
 
@@ -27,9 +29,11 @@ export type TournamentTab = { key: TournamentTabKey; href: string };
 
 /**
  * As seções do torneio, uma coisa por seção: Visão geral, Chave (a partir do
- * início), Classificação (quando `standings`), Inscritos (depois de publicar:
- * o rascunho não tem), Regras (sempre), Configurações (só para a organização). O que não se aplica
- * não entra na lista.
+ * início), Classificação (quando `standings`), Inscritos, Times (no torneio
+ * de times, para todos) e Ordem da chave (só para a organização; depois de
+ * iniciar, para consulta), as três depois de publicar, porque o rascunho não
+ * tem inscritos; Regras (sempre), Configurações (só para a organização). O
+ * que não se aplica não entra na lista.
  */
 export function tournamentTabs(
   base: string,
@@ -37,7 +41,13 @@ export function tournamentTabs(
     status,
     standings,
     organizer,
-  }: { status: Status; standings: boolean; organizer: boolean },
+    teams,
+  }: {
+    status: Status;
+    standings: boolean;
+    organizer: boolean;
+    teams: boolean;
+  },
 ): TournamentTab[] {
   const tab = (key: TournamentTabKey, path = `/${key}`) => ({
     key,
@@ -47,7 +57,13 @@ export function tournamentTabs(
     tab("overview", ""),
     ...(hasStarted(status) ? [tab("bracket")] : []),
     ...(standings ? [tab("standings")] : []),
-    ...(status === "draft" ? [] : [tab("participants")]),
+    ...(status === "draft"
+      ? []
+      : [
+          tab("participants"),
+          ...(teams ? [tab("teams")] : []),
+          ...(organizer ? [tab("seeding")] : []),
+        ]),
     tab("rules"),
     ...(organizer ? [tab("settings")] : []),
   ];

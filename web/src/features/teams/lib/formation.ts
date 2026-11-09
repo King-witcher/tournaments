@@ -87,6 +87,14 @@ export function spotOf(formation: Formation, userId: number): Spot | undefined {
     : undefined;
 }
 
+/** O inscrito, num time ou na reserva; `undefined` se não está na formação. */
+export function playerOf(formation: Formation, userId: number) {
+  const members = formation.teams.flatMap((team) => team.members);
+  return [...members, ...formation.reserves].find(
+    (player) => player.user_id === userId,
+  );
+}
+
 /**
  * Se quem está em `from` pode ir para `to`: para outro time só se ele tiver
  * vaga; para a reserva só quem está num time; para um time novo, quem não

@@ -63,12 +63,7 @@ export function GameCardSide({ side, number }: Props) {
             <li key={m.user_id}>
               {shownNickname(m.nickname, tMember("deletedAccount"))}
               {m.user_id === team.captain && (
-                <>
-                  {" "}
-                  <StatusTag status="neutral" size="sm">
-                    {t("captain")}
-                  </StatusTag>
-                </>
+                <span className={styles.captain}> {t("captain")}</span>
               )}
             </li>
           ))}

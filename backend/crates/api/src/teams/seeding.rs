@@ -28,7 +28,7 @@ use crate::{
         ("tournament" = String, Path, description = "Slug do torneio"),
     ),
     responses(
-        (status = OK, body = Vec<Team>, description = "Times elegíveis (com o check-in de todos os jogadores; sem check-in no torneio, todos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de criação (no duelo, a de inscrição)"),
+        (status = OK, body = Vec<Team>, description = "Antes de iniciar, os times elegíveis (com o check-in de todos os jogadores; sem check-in no torneio, todos) na ordem que vale ao iniciar: os com seed pelo seed, depois os sem, na ordem de criação (no duelo, a de inscrição). Depois de iniciar, os times da chave, pelo seed"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
@@ -43,6 +43,12 @@ pub async fn get_seeding(
     let tournament = tournaments::find(&mut conn, member.tenant, &path.tournament, None)
         .await?
         .ok_or(ApiError::not_found("tournament.not_found"))?;
+    if tournament.status.has_started() {
+        // A ordem que definiu a chave. Os elegíveis de agora podem ser outros:
+        // quem entra numa substituição não tem check-in.
+        let seeded = db::seeded(&mut conn, tournament.id).await?;
+        return Ok(Json(seeded.iter().map(|t| t.view()).collect()));
+    }
     let order = seed_order::current_order(eligible(&mut conn, &tournament).await?);
     Ok(Json(in_order(&mut conn, &tournament, &order).await?))
 }
