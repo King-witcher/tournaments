@@ -157,5 +157,14 @@
     "empty": "Nada escrito.",
     "insertImage": "Insertar imagen",
     "imageAlt": "imagen"
+  },
+  "sortableList": {
+    "handle": "Mover {item}",
+    "roleDescription": "elemento reordenable",
+    "instructions": "Pulsa Espacio o Intro para tomar el elemento y las flechas para moverlo. Espacio o Intro lo suelta. Esc cancela.",
+    "picked": "Tomaste {item}, en la posición {position} de {total}.",
+    "moved": "{item} está en la posición {position} de {total}.",
+    "dropped": "Soltaste {item} en la posición {position} de {total}.",
+    "cancelled": "Cancelado. {item} volvió a la posición {position} de {total}."
   }
 }

@@ -157,5 +157,14 @@
     "empty": "Nothing written.",
     "insertImage": "Insert image",
     "imageAlt": "image"
+  },
+  "sortableList": {
+    "handle": "Move {item}",
+    "roleDescription": "sortable item",
+    "instructions": "Press Space or Enter to pick up the item and the arrow keys to move it. Space or Enter drops it. Esc cancels.",
+    "picked": "Picked up {item}, at position {position} of {total}.",
+    "moved": "{item} is at position {position} of {total}.",
+    "dropped": "Dropped {item} at position {position} of {total}.",
+    "cancelled": "Canceled. {item} returned to position {position} of {total}."
   }
 }
