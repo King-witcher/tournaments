@@ -8,7 +8,7 @@
 //! de cada time congelado no início para o desempate pelo menor rating
 //! (`start_rating`), que leem o rating da comunidade. E a rota do PATCH do
 //! torneio (o resto em `tournaments::update`): tirar as fases que faltam com
-//! a atual terminada encerra o torneio, e o pódio sai pela chave
+//! a atual terminada encerra o torneio, e o pódio e os avisos saem pela chave
 //! (`matches::announce_finished`).
 
 mod draw;

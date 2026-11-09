@@ -17,7 +17,7 @@ export function useNoticeText() {
   const locale = useLocale();
   return (notice: Notice) => {
     const params: Record<string, string | number> = { ...notice.params };
-    for (const name of ["opponent", "player"]) {
+    for (const name of ["opponent", "player", "team", "champion"]) {
       if (params[name] === "") params[name] = t("deletedAccount");
     }
     const deadline =

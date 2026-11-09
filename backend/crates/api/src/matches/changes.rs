@@ -11,7 +11,7 @@
 //! quem está jogando dependem das séries dos outros, quando mudam avisa "Seus
 //! torneios" de todos os times e, para as páginas das séries, o torneio
 //! inteiro. Se o torneio encerra ou reabre,
-//! avisa o torneio inteiro; se os mapas contestados mudam, a home da
+//! avisa o torneio inteiro (ao encerrar, também quem jogou, `finished`); se os mapas contestados mudam, a home da
 //! organização (`tenants::organizing_changed`). Os avisos de mapa enviado
 //! (para o adversário) e de contestação (para o capitão adversário) saem de quem
 //! envia e de quem contesta; o da contestação para a organização, do agendador
@@ -34,12 +34,12 @@ use engine::{
 use sqlx::PgConnection;
 
 use super::{
-    acting, announce, chain,
+    acting, announce, finished,
     games::GameStatus,
     key,
     progress::{self, Notices, Suggested},
     result::Confirmation,
-    stage::{self, Stage},
+    stage::Stage,
 };
 use crate::{
     outbox::{self, Event, Notice, NoticeKind},
@@ -261,8 +261,7 @@ pub async fn settled(
     if status != tournament.status {
         tournaments::changed(conn, tournament.id).await?;
         if status == TournamentStatus::Finished {
-            let standings = chain::standings(&stage::chain(conn, tournament, after).await?);
-            announce::finished(conn, &audience, after, &standings).await?;
+            finished::finished(conn, tournament, after).await?;
         }
     }
     // Contestou, resolveu, corrigiu, anulou, deu W.O.: a lista de mapas

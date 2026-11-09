@@ -175,7 +175,12 @@ async fn no_ready_notice_for_a_walkover() {
     clear(&db).await;
     ok(confirm(&app, &p[3], "wb-1-1", 1).await);
     let events = outbox(&db).await;
-    assert_eq!(notices(&events), []);
+    // Só os avisos do fim do torneio, nenhum de série pronta.
+    assert!(
+        notices(&events)
+            .iter()
+            .all(|(code, ..)| code != "match.ready")
+    );
     assert!(events.contains(&tournament("copa", Some("wb-2-1"))));
     // E o torneio encerrou: muda inteiro, para todos os inscritos.
     assert!(events.contains(&tournament("copa", None)));

@@ -7,8 +7,8 @@
 //! campeões (`veto`), a ordem das escolhas de campeão e o que fica escondido às
 //! cegas (`pick_order`), quem age pelo time (`acting`) e os formatos de tabela
 //! (`round_robin`, `swiss`), com as séries pares à parte (`even_series`) e o
-//! empate do fim decidido pela organização (`ties`), e a disputa de posições
-//! (`placement`).
+//! empate do fim decidido pela organização (`ties`), a disputa de posições
+//! (`placement`) e o aviso do fim para quem jogou (`finished`).
 //! Helpers para montar um torneio iniciado com jogadores em ordem de seed.
 
 mod acting;
@@ -18,6 +18,7 @@ mod corrections;
 pub mod cost;
 mod deadline;
 mod even_series;
+pub mod finished;
 mod organizer;
 mod pick_order;
 mod placement;

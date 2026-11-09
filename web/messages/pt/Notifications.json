@@ -48,6 +48,18 @@
       "tie_pending": {
         "title": "Empate a decidir",
         "body": "{tournament}: as séries acabaram com empate na classificação. Decida a ordem."
+      },
+      "won": {
+        "title": "Você venceu {tournament}",
+        "body": "Parabéns pelo título."
+      },
+      "team_won": {
+        "title": "Seu time venceu {tournament}",
+        "body": "Campeão: {team}."
+      },
+      "placed": {
+        "title": "{tournament} terminou",
+        "body": "Campeão: {champion}. Sua posição: {position}."
       }
     },
     "tenant": {

@@ -48,6 +48,18 @@
       "tie_pending": {
         "title": "Tie to decide",
         "body": "{tournament}: the matches ended with a tie in the standings. Decide the order."
+      },
+      "won": {
+        "title": "You won {tournament}",
+        "body": "Congratulations on the title."
+      },
+      "team_won": {
+        "title": "Your team won {tournament}",
+        "body": "Champion: {team}."
+      },
+      "placed": {
+        "title": "{tournament} has ended",
+        "body": "Champion: {champion}. Your position: {position}."
       }
     },
     "tenant": {

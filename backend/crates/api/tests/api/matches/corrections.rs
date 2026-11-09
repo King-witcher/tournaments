@@ -122,12 +122,14 @@ async fn the_tournament_finishes_and_reopens_with_the_bracket() {
     let b = bracket(&app, &p[1]).await;
     assert_eq!(b["status"], "finished");
     assert_eq!(find(&b, "gf-2-1")["state"], "not_needed");
+    crate::realtime::clear(&db).await;
 
     // O mapa 2 era de P2: 2 x 2, a grande final reabre e o torneio volta.
     let (status, fixed) = set_game(&app, &ana, "gf-1-1", 2, game("b", MAPS[1]), None).await;
     assert_eq!(status, StatusCode::OK, "{fixed}");
     assert_eq!(fixed["status"], "in_progress");
     assert_eq!(fixed["next_game"], 5);
+    assert_eq!(super::finished::finish_notices(&db).await, []);
     // O quinto, lançado para P2, decide a grande final para quem veio de
     // baixo: o reset passa a valer.
     let (status, _) = set_game(&app, &ana, "gf-1-1", 5, game("b", MAPS[4]), None).await;
@@ -146,6 +148,15 @@ async fn the_tournament_finishes_and_reopens_with_the_bracket() {
     let b = bracket(&app, &p[0]).await;
     assert_eq!(b["status"], "finished");
     assert_eq!(standings(&b)[0]["user_id"], p[0].id);
+    // Reaberto e encerrado de novo, o aviso sai outra vez, com o resultado que
+    // valeu.
+    assert_eq!(
+        super::finished::finish_notices(&db).await,
+        [
+            super::finished::won(&p[0]),
+            super::finished::placed(&p[1], "P1", "2")
+        ]
+    );
 
     // Agora a grande final não pode mais voltar atrás: o reset foi jogado.
     assert_eq!(

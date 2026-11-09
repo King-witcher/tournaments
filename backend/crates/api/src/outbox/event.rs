@@ -190,6 +190,21 @@ pub enum NoticeKind {
     /// passa a esperar).
     #[serde(rename = "tournament.tie_pending")]
     TiePending { tournament: String },
+    /// O torneio terminou e quem recebe venceu (duelo).
+    #[serde(rename = "tournament.won")]
+    TournamentWon { tournament: String },
+    /// O torneio terminou e o time `team` de quem recebe venceu (TDM).
+    #[serde(rename = "tournament.team_won")]
+    TournamentTeamWon { tournament: String, team: String },
+    /// O torneio terminou e quem recebe não venceu: quem foi o campeão
+    /// (`champion`, apelido ou nome do time) e a posição dele, já pronta para
+    /// o texto (`5`, ou `5–8` numa faixa de empate da eliminação).
+    #[serde(rename = "tournament.placed")]
+    TournamentPlaced {
+        tournament: String,
+        champion: String,
+        position: String,
+    },
     /// A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
     /// o owner, uma vez, na véspera).
     #[serde(rename = "tenant.deletion_due")]

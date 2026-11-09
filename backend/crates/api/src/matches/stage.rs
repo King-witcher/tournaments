@@ -750,19 +750,6 @@ pub async fn discard(
     Ok(touched)
 }
 
-/// O torneio encerrou fora da chave (as fases que faltavam saíram, com a
-/// atual terminada): o pódio da classificação final no Discord, como no fim
-/// pela chave.
-pub async fn announce_finished(
-    conn: &mut PgConnection,
-    tournament: &StoredTournament,
-) -> Result<(), ApiError> {
-    let stage = load_current(conn, tournament).await?;
-    let standings = super::chain::standings(&chain(conn, tournament, &stage).await?);
-    super::announce::finished(conn, &tournament.address(), &stage, &standings).await?;
-    Ok(())
-}
-
 /// Desfaz o início da fase `number` (2 em diante), a atual: só sem nada
 /// feito nela (nenhum evento de veto ou de partida, mapa, resultado ou
 /// screenshot; senão, 409

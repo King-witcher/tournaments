@@ -161,6 +161,22 @@ async fn the_series_and_the_podium_of_a_finished_tournament() {
 }
 
 #[tokio::test]
+async fn the_players_notices_of_the_end_stay_out_of_the_channel() {
+    let (db, _lease) = crate::db::test_db().await;
+    let s = configured(&db, &["tournament.finished"]).await;
+    let p = players(&s.app, &db, &s.ana, 2).await;
+    start(&s.app, &s.ana, copa(single(1, 1)), &[&p[0], &p[1]]).await;
+    play(&s.app, &p[0], &p[1], "wb-1-1", 1, 0).await;
+    assert_eq!(crate::matches::finished::finish_notices(&db).await.len(), 2);
+    pump(&s, Utc::now()).await;
+    assert_eq!(s.fake.texts().len(), 1, "{:?}", s.fake.texts());
+    // Fora do catálogo: não dá nem para ligar no canal.
+    let (_, body) = get(&s.app, URI, &s.ana).await;
+    let codes = body["available"].to_string();
+    assert!(!codes.contains("tournament.won") && !codes.contains("tournament.placed"));
+}
+
+#[tokio::test]
 async fn a_tied_series_goes_by_the_series_result_switch() {
     let (db, _lease) = crate::db::test_db().await;
     let body = || copa(table("round_robin", json!({ "best_of": 2 })));

@@ -22,7 +22,8 @@
 //! mapas que ficaram depois da decisão, fecha as séries decididas, dá os W.O.
 //! automáticos de quem desistiu ou saiu da comunidade (`withdrawals`), grava
 //! o pareamento da rodada seguinte do suíço (`rounds`) e encerra ou reabre o
-//! torneio conforme a chave. A confirmação por tempo é aplicada ao ler e
+//! torneio conforme a chave; o pódio e o aviso de quem jogou, ao encerrar,
+//! ficam em `finished`. A confirmação por tempo é aplicada ao ler e
 //! agir (`due`), e o agendador do tempo real a aplica nos torneios que
 //! ninguém leu (`confirm_all_due`). O que
 //! muda na chave vai para o outbox pelo `settle` e pelo início (`changes`),
@@ -63,6 +64,7 @@ mod db;
 mod detail;
 mod due;
 mod evidence;
+mod finished;
 mod games;
 mod handlers;
 mod history;
@@ -93,11 +95,12 @@ use crate::AppState;
 pub use chain::{NextStage, next_stage};
 pub use contest_notice::notify_contested;
 pub use due::{apply_due_confirmations, confirm_all_due};
+pub use finished::announce_finished;
 pub use key::MatchKey;
 pub use mine::{Place, final_places, place, place_from, place_of};
 pub use result::Side;
 pub use slots::{MatchGames, games as match_games, lock_games as lock_match_games};
-pub use stage::{announce_finished, discard, discard_stage, start, start_stage};
+pub use stage::{discard, discard_stage, start, start_stage};
 pub use types::NextMatch;
 pub use veto::{VetoClock, VetoPass};
 pub use withdrawals::settle as settle_withdrawals;

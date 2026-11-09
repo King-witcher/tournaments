@@ -68,7 +68,7 @@ function text(notice) {
   const due = values.confirm_by || values.deletes_at;
   if (due) values.deadline = deadline(due, locale);
   // O nome vazio é o da conta excluída.
-  for (const key of ["opponent", "player"]) {
+  for (const key of ["opponent", "player", "team", "champion"]) {
     if (values[key] === "") values[key] = MESSAGES[locale].deletedAccount;
   }
   return { locale, title: fill(entry.title, values), body: fill(entry.body, values) };

@@ -3356,6 +3356,34 @@ export interface components {
             };
         } | {
             /** @enum {string} */
+            code: "tournament.won";
+            /** @description O torneio terminou e quem recebe venceu (duelo). */
+            params: {
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tournament.team_won";
+            /** @description O torneio terminou e o time `team` de quem recebe venceu (TDM). */
+            params: {
+                team: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
+            code: "tournament.placed";
+            /**
+             * @description O torneio terminou e quem recebe não venceu: quem foi o campeão
+             *     (`champion`, apelido ou nome do time) e a posição dele, já pronta para
+             *     o texto (`5`, ou `5–8` numa faixa de empate da eliminação).
+             */
+            params: {
+                champion: string;
+                position: string;
+                tournament: string;
+            };
+        } | {
+            /** @enum {string} */
             code: "tenant.deletion_due";
             /**
              * @description A comunidade `tenant` (o nome) vai ser excluída em `deletes_at` (para
@@ -9646,7 +9674,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord */
+            /** @description Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord e o aviso de quem jogou */
             200: {
                 headers: {
                     [name: string]: unknown;

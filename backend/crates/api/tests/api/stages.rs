@@ -9,8 +9,9 @@ use serde_json::{Value, json};
 
 use crate::common::*;
 use crate::matches::{
-    COPA, MAPS, bracket, confirm, contest, copa, detail, favorite_wins, find, game, keys_in,
-    players, report, set_game, set_result, sides, start, walkover,
+    COPA, MAPS, bracket, confirm, contest, copa, detail, favorite_wins, find,
+    finished::{finish_notices, placed, won},
+    game, keys_in, players, report, set_game, set_result, sides, start, walkover,
 };
 use crate::realtime::{clear, notices, outbox};
 
@@ -373,6 +374,7 @@ async fn the_cut_leaves_out_who_withdrew_first() {
     assert_eq!(sides(&b, find(&b, "s2-pl-1-1")), (id(0), id(2)));
     // O 4º, cortado, fica à frente do 2º, que desistiu.
     assert_eq!(final_standings(&b), [(id(3), json!(3)), (id(1), json!(4))]);
+    clear(&db).await;
     wins(&app, &p[0], &p[2], "s2-pl-1-1").await;
     let b = bracket(&app, &p[0]).await;
     assert_eq!(b["status"], "finished");
@@ -383,6 +385,15 @@ async fn the_cut_leaves_out_who_withdrew_first() {
             (id(2), json!(2)),
             (id(3), json!(3)),
             (id(1), json!(4))
+        ]
+    );
+    // O 4º, cortado, fica sabendo; o 2º, que desistiu, não.
+    assert_eq!(
+        finish_notices(&db).await,
+        [
+            won(&p[0]),
+            placed(&p[2], "P1", "2"),
+            placed(&p[3], "P1", "3")
         ]
     );
     let me = mine(&app, &p[1]).await;
@@ -586,6 +597,16 @@ async fn stages_that_did_not_start_change_and_leave() {
     let podium = finished["announce"]["params"]["podium"].as_array().unwrap();
     assert_eq!(podium.len(), 3);
     assert_eq!(podium[0]["player"], "P1");
+    // Quem jogou é avisado, como no fim pela chave.
+    assert_eq!(
+        finish_notices(&db).await,
+        [
+            won(&p[0]),
+            placed(&p[1], "P1", "2"),
+            placed(&p[2], "P1", "3"),
+            placed(&p[3], "P1", "4")
+        ]
+    );
     let b = bracket(&app, &p[0]).await;
     let ranks: Vec<Value> = b["standings_final"]
         .as_array()

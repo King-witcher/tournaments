@@ -90,7 +90,7 @@ pub async fn undo_start(
     ),
     request_body = UpdateTournament,
     responses(
-        (status = OK, body = Tournament, description = "Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord"),
+        (status = OK, body = Tournament, description = "Torneio atualizado, e `slug` é o que vale; a checagem de campeões roda de novo se a configuração mudou. O endereço antigo fica livre na hora, sem redirecionamento. Tirar as fases que faltam com a atual já terminada encerra o torneio, com o pódio no Discord e o aviso de quem jogou"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found"),
