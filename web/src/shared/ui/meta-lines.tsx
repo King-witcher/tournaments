@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import styles from "./meta-lines.module.scss";
 
 /**
- * O metadado de um tile (`LinkTile`, `ActionTile`) em mais de uma linha, para
+ * O metadado de um tile (`LinkTile`) ou aviso (`TaskNotice`) em mais de uma linha, para
  * ler de relance e para a quebra no celular não cortar um fato no meio. Item
  * vazio não ocupa linha.
  */

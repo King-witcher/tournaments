@@ -6,7 +6,7 @@ import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
 import { Link } from "@/shared/ui/link";
 import { useMatchLabels } from "../hooks/use-match-labels";
-import { ACTIONABLE, matchProgress } from "../lib/status";
+import { isActionable, matchProgress } from "../lib/status";
 import styles from "./match-card.module.scss";
 import { MatchCardSide } from "./match-card-side";
 import { MatchCardStatus } from "./match-card-status";
@@ -84,8 +84,7 @@ export function MatchCard({ tenant, match: m, single, entrants, href }: Props) {
   const confirmed = m.state === "completed";
   const progress = matchProgress(m);
   const winner = confirmed ? m.result?.winner : undefined;
-  const actionable =
-    m.task != null && ACTIONABLE.includes(m.task) && !m.opponent_playing;
+  const actionable = isActionable(m.task) && !m.opponent_playing;
   const name = (side: Schemas["MatchSide"]) => {
     const team = side.team_id != null ? entrants.get(side.team_id) : undefined;
     return team ? teamName(team) : placeholder(side);

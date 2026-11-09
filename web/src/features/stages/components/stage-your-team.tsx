@@ -16,50 +16,42 @@ type Props = {
   candidate: Schemas["StageCandidate"];
   /** No duelo, o texto fala com a pessoa, sem "time". */
   tdm: boolean;
-  /** Quem vê também organiza: o check-in dele vem como terciário. */
-  organizer: boolean;
 };
 
 /**
- * O que o jogador do time candidato faz e lê na fase seguinte: com o
- * check-in aberto, fazer o check-in (ou desfazer); suplente, quando entra.
- * A situação (suplente, desistiu) já está na etiqueta de "Sua situação".
+ * O que o jogador do time candidato lê na fase seguinte: suplente, quando
+ * entra; com o check-in feito e ainda aberto, desfazer. Fazer o check-in é o
+ * aviso acima do bloco (`StageCheckInNotice`). A situação (suplente,
+ * desistiu) já está na etiqueta de "Sua situação".
  * Sem nada a dizer ou fazer, nada aparece.
  */
-export function StageYourTeam({
-  tenant,
-  slug,
-  entry,
-  candidate,
-  tdm,
-  organizer,
-}: Props) {
+export function StageYourTeam({ tenant, slug, entry, candidate, tdm }: Props) {
   const t = useTranslations("Stages.yourTeam");
   const teamName = useTeamName();
   const state = candidateState(candidate, entry);
   if (state === "withdrawn") return null;
-  const checkInOpen = entry.check_in && entry.status === "check_in";
+  const canUndo =
+    entry.check_in && entry.status === "check_in" && candidate.checked_in;
   const note =
     state === "substitute" &&
     t("substitute", {
       tdm: tdm ? "yes" : "no",
       checkIn: entry.check_in ? "yes" : "no",
     });
-  if (!note && !checkInOpen) return null;
+  if (!note && !canUndo) return null;
 
   return (
     <Stack gap={3}>
       {note && <p>{note}</p>}
-      {checkInOpen && (
+      {canUndo && (
         <StageCheckInButton
           tenant={tenant}
           slug={slug}
           stage={entry.number}
           team={candidate.team.id}
           name={teamName(candidate.team)}
-          checkedIn={candidate.checked_in}
+          checkedIn
           variant="self"
-          kind={organizer ? "tertiary" : "primary"}
         />
       )}
     </Stack>

@@ -9,3 +9,8 @@
     max-inline-size: none;
   }
 }
+
+// `wide`: a largura do bloco também do `md` para cima.
+.wide.wide {
+  max-inline-size: none;
+}

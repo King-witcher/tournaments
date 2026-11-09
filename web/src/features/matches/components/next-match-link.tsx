@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { components } from "@/shared/api/schema";
 import { Link } from "@/shared/ui/link";
 import { useNextMatchLabel } from "../hooks/use-next-match-label";
-import { ACTIONABLE, taskKey } from "../lib/status";
+import { isActionable, taskKey } from "../lib/status";
 
 type Props = {
   next: components["schemas"]["NextMatch"];
@@ -23,11 +23,7 @@ export function NextMatchLink({ next, tournamentPath }: Props) {
   const task = next.opponent_playing
     ? tBracket("opponentPlaying")
     : next.task && tBracket(`task.${taskKey(next.task, next.veto)}`);
-  const urgent =
-    !next.opponent_playing &&
-    next.task !== undefined &&
-    next.task !== null &&
-    ACTIONABLE.includes(next.task);
+  const urgent = !next.opponent_playing && isActionable(next.task);
 
   return (
     <Link href={`${tournamentPath}/matches/${next.key}`}>

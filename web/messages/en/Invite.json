@@ -28,11 +28,12 @@
   "code": "Code",
   "copyCode": "Copy code",
   "join": {
-    "open": "Join with code",
-    "field": "Link or code",
+    "open": "Join a community",
+    "field": "Invite link or code",
     "submit": "Continue",
     "invalid": "Invalid link or code.",
-    "notFound": "Invite not found. Check the code."
+    "notFound": "Invite not found. Check the code.",
+    "hint": "A community or tournament invite works."
   },
   "communityLink": {
     "note": "Anyone who joins through this link becomes a player.",

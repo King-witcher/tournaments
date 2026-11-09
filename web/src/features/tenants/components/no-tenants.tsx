@@ -9,7 +9,7 @@ import styles from "./no-tenants.module.scss";
 
 /**
  * Na home, para quem entrou e não participa de nenhuma comunidade: o estado,
- * "Entrar com código" (quem acabou de criar conta costuma ter um convite) e o
+ * "Entrar em comunidade" (quem acabou de criar conta costuma ter um convite) e o
  * "Criar comunidade", que abre o Modal. Fica em `<Suspense>`.
  */
 export async function NoTenants() {

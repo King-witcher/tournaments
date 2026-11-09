@@ -17,6 +17,8 @@ type Props = {
    * erro e a página cai.
    */
   titleId?: string;
+  /** Do `md` para cima, a largura do bloco, em vez do limite do Carbon (numa coluna, alinhado aos blocos vizinhos). */
+  wide?: boolean;
   children?: ReactNode;
 };
 
@@ -35,16 +37,18 @@ export function Notice({
   title,
   action,
   titleId,
+  wide,
   children,
 }: Props) {
   const t = useTranslations("Common.notice");
   // `subtitle` só aceita texto; o resto (negrito, quebra) vai como filho.
   const text = typeof children === "string" ? children : undefined;
+  const className = wide ? `${styles.notice} ${styles.wide}` : styles.notice;
   const notice =
     kind === "info" || kind === "warning" ? (
       <Callout
         kind={kind}
-        className={styles.notice}
+        className={className}
         lowContrast
         title={title}
         titleId={titleId}
@@ -56,7 +60,7 @@ export function Notice({
     ) : (
       <InlineNotification
         kind={kind}
-        className={styles.notice}
+        className={className}
         role={kind === "error" ? "alert" : "status"}
         lowContrast
         hideCloseButton

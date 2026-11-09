@@ -3,13 +3,6 @@
   "loading": "Carregando o início…",
   "waiting": {
     "title": "Esperando você",
-    "action": {
-      "veto": "Fazer o veto",
-      "ready": "Ficar pronto",
-      "respond": "Confirmar ou contestar",
-      "accept_contest": "Ver contestação",
-      "report": "Enviar partida"
-    },
     "stageCheckIn": "Check-in da fase {stage} aberto"
   },
   "open": {

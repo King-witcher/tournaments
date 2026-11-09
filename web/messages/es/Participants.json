@@ -58,12 +58,13 @@
     "stage_check_in_pending": "Falta tu check-in en la fase {stage}"
   },
   "checkIn": {
-    "open": "Check-in abierto. Haz tu check-in para confirmar presencia y entrar en la llave.",
     "do": "Hacer check-in",
     "undo": "Deshacer check-in",
     "mark": "Marcar check-in",
     "unmark": "Desmarcar check-in",
-    "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera de la llave si el torneo empieza así."
+    "unmarkConfirm": "¿Desmarcar el check-in de {name}? Sin check-in, {name} queda fuera de la llave si el torneo empieza así.",
+    "pendingTitle": "Check-in abierto",
+    "pendingBody": "Sin check-in, quedas fuera de la llave."
   },
   "seeding": {
     "loading": "Cargando el orden de la llave…",

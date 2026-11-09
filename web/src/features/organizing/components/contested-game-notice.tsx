@@ -1,26 +1,28 @@
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 
 import { useMatchLabels } from "@/features/matches/hooks/use-match-labels";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
-import { ActionTile } from "@/shared/ui/action-tile";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { MetaLines } from "@/shared/ui/meta-lines";
+import { TaskNotice } from "@/shared/ui/task-notice";
 import { TimeAgo } from "@/shared/ui/time-ago";
+import type { Severity } from "../lib/severity";
 
 /**
  * Um mapa contestado esperando a organização: o torneio, a comunidade, a
  * partida e o mapa, quem contestou há quanto tempo e o botão que leva à página
  * da partida, onde se resolve.
  */
-export function ContestedGameTile({
+export function ContestedGameNotice({
+  kind,
   item,
-  avatar,
+  community,
 }: {
+  kind: Severity;
   item: components["schemas"]["ContestedGame"];
-  /** O logo da comunidade, quando a lista leva. */
-  avatar: ReactNode;
+  /** O nome da comunidade, quando a lista é de várias. */
+  community?: string;
 }) {
   const t = useTranslations("Organizing.contested");
   const locale = useLocale();
@@ -30,13 +32,13 @@ export function ContestedGameTile({
   const ago = () => <TimeAgo value={item.contested_at} />;
 
   return (
-    <ActionTile
-      avatar={avatar}
+    <TaskNotice
+      kind={kind}
       title={localizedName(tournament, locale)}
       meta={
         <MetaLines
           lines={[
-            `${tournament.tenant_name} · ${
+            `${community ? `${community} · ` : ""}${
               item.map
                 ? t("whereMap", { ...where, map: item.map })
                 : t("where", where)
@@ -50,7 +52,7 @@ export function ContestedGameTile({
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}/matches/${item.key}`}
-          kind="tertiary"
+          kind="ghost"
           size="sm"
         >
           {t("action")}

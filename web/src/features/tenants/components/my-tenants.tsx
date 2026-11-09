@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { JoinWithCodeButton } from "@/features/invites/components/join-with-code-button";
 import { Avatar } from "@/shared/ui/avatar";
 import { LinkTile } from "@/shared/ui/link-tile";
 import { Section } from "@/shared/ui/section";
@@ -8,9 +9,10 @@ import { getMyTenants } from "../server";
 import { CreateTenantButton } from "./create-tenant-button";
 
 /**
- * Comunidades do usuário logado, em tiles com o logo e o papel dele, e o
- * "Criar comunidade" na ação da seção, ao lado do título, que abre o Modal
- * (poucos usam, e o painel do cabeçalho também o tem). Sem login ou sem
+ * Comunidades do usuário logado, em tiles com o logo e o papel dele, e, nas
+ * ação da seção, "Entrar em comunidade" (o convite é o único jeito de
+ * entrar); depois da lista, "Criar comunidade" (poucos usam, e o painel do
+ * cabeçalho também o tem). Sem login ou sem
  * nenhuma, não mostra nada: quem não tem comunidade vê o `NoTenants`. Fica em
  * `<Suspense>`.
  */
@@ -28,11 +30,7 @@ export async function MyTenants() {
   return (
     <Section
       title={t("title")}
-      action={
-        <CreateTenantButton kind="ghost" size="sm">
-          {t("create")}
-        </CreateTenantButton>
-      }
+      action={<JoinWithCodeButton kind="ghost" size="sm" />}
     >
       <TileGrid>
         {tenants.map((tenant) => (
@@ -54,6 +52,11 @@ export async function MyTenants() {
           />
         ))}
       </TileGrid>
+      <div>
+        <CreateTenantButton kind="ghost" size="sm">
+          {t("create")}
+        </CreateTenantButton>
+      </div>
     </Section>
   );
 }

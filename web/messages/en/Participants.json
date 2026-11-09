@@ -58,12 +58,13 @@
     "stage_check_in_pending": "Stage {stage} check-in pending"
   },
   "checkIn": {
-    "open": "Check-in is open. Check in to confirm your attendance and join the bracket.",
     "do": "Check in",
     "undo": "Undo check-in",
     "mark": "Mark as checked in",
     "unmark": "Unmark check-in",
-    "unmarkConfirm": "Unmark check-in for {name}? Without check-in, {name} is left out of the bracket if the tournament starts this way."
+    "unmarkConfirm": "Unmark check-in for {name}? Without check-in, {name} is left out of the bracket if the tournament starts this way.",
+    "pendingTitle": "Check-in is open",
+    "pendingBody": "Without check-in, you're out of the bracket."
   },
   "seeding": {
     "loading": "Loading seeding…",

@@ -99,7 +99,15 @@
   },
   "pending": {
     "title": "Matches waiting for you",
-    "item": "{match} · {a} × {b}: {task}"
+    "item": "{match} · {a} × {b}",
+    "action": {
+      "veto": "Do the veto",
+      "ready": "Mark ready",
+      "respond": "Confirm or dispute",
+      "accept_contest": "View dispute",
+      "report": "Submit game",
+      "resolve": "Resolve"
+    }
   },
   "live": {
     "title": "Matches in progress",

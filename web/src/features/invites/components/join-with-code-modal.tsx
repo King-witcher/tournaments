@@ -17,7 +17,7 @@ type Props = {
 };
 
 /**
- * O campo "Link ou código". Interpreta o texto (`parseInviteInput`) e, se for
+ * O campo do convite, de comunidade ou de torneio, em link ou código. Interpreta o texto (`parseInviteInput`) e, se for
  * convite, confere antes de sair daqui: não existindo, o erro fica no campo
  * com o que foi digitado; existindo, leva à página da prévia e do aceite.
  * Outro endereço do site só leva a ele.
@@ -68,6 +68,7 @@ export function JoinWithCodeModal({ trigger, onClose }: Props) {
     >
       <TextInput
         labelText={t("join.field")}
+        helperText={t("join.hint")}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         autoCapitalize="off"

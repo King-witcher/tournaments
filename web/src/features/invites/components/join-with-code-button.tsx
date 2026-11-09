@@ -3,17 +3,20 @@
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
-import { Button, type ButtonKind } from "@/shared/ui/button";
+import { Button, type ButtonKind, type ButtonSize } from "@/shared/ui/button";
 import { JoinWithCodeModal } from "./join-with-code-modal";
 
 /**
- * "Entrar com código": no aplicativo instalado não há barra de endereço e os
- * links abrem no navegador, então quem recebe um convite o digita aqui.
+ * "Entrar em comunidade", pelo convite: no aplicativo instalado não há barra
+ * de endereço e os links abrem no navegador, então quem recebe um convite o
+ * digita aqui.
  */
 export function JoinWithCodeButton({
   kind = "tertiary",
+  size,
 }: {
   kind?: ButtonKind;
+  size?: ButtonSize;
 }) {
   const t = useTranslations("Invite.join");
   const trigger = useRef<HTMLButtonElement>(null);
@@ -21,7 +24,12 @@ export function JoinWithCodeButton({
 
   return (
     <>
-      <Button ref={trigger} kind={kind} onClick={() => setOpen(true)}>
+      <Button
+        ref={trigger}
+        kind={kind}
+        size={size}
+        onClick={() => setOpen(true)}
+      >
         {t("open")}
       </Button>
       {open && (

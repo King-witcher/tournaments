@@ -1,0 +1,7 @@
+@use "@carbon/react/scss/spacing";
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-05;
+}

@@ -12,12 +12,6 @@
     );
 }
 
-// Uma tarefa por linha. Só o traço entre elas: é uma lista, não vários cartões.
-.stacked {
-  gap: spacing.$spacing-01;
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .item {
   display: flex;
   flex-direction: column;

@@ -99,7 +99,15 @@
   },
   "pending": {
     "title": "Séries que esperam você",
-    "item": "{match} · {a} × {b}: {task}"
+    "item": "{match} · {a} × {b}",
+    "action": {
+      "veto": "Fazer o veto",
+      "ready": "Ficar pronto",
+      "respond": "Confirmar ou contestar",
+      "accept_contest": "Ver contestação",
+      "report": "Enviar partida",
+      "resolve": "Resolver"
+    }
   },
   "live": {
     "title": "Séries em andamento",

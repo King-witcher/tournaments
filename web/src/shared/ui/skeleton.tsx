@@ -114,6 +114,18 @@ export function SectionSkeleton({
   );
 }
 
+/** Avisos de pendência carregando (`TaskNoticeList`). */
+export function TaskNoticesSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <div aria-hidden className={styles.stack}>
+      {Array.from({ length: count }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, sem identidade.
+        <span key={i} className={styles.tile} />
+      ))}
+    </div>
+  );
+}
+
 /**
  * Seção carregando, com o texto visível (lido também por leitor de tela) e
  * blocos com a altura de um item de lista (48px).

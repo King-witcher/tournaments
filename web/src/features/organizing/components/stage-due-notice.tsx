@@ -1,42 +1,40 @@
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
-import { ActionTile } from "@/shared/ui/action-tile";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { MetaLines } from "@/shared/ui/meta-lines";
+import { TaskNotice } from "@/shared/ui/task-notice";
+import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio com a fase seguinte pronta para iniciar (a anterior terminou):
  * a comunidade, a fase, desde quando espera e o botão que leva ao torneio,
  * onde a organização abre o check-in e inicia a fase.
  */
-export function StageDueTile({
+export function StageDueNotice({
+  kind,
   item,
-  avatar,
+  community,
 }: {
+  kind: Severity;
   item: components["schemas"]["StageDue"];
-  /** O logo da comunidade, quando a lista leva. */
-  avatar: ReactNode;
+  /** O nome da comunidade, quando a lista é de várias. */
+  community?: string;
 }) {
   const t = useTranslations("Organizing.stageDue");
   const locale = useLocale();
   const { tournament } = item;
 
   return (
-    <ActionTile
-      avatar={avatar}
+    <TaskNotice
+      kind={kind}
       title={localizedName(tournament, locale)}
       meta={
         <MetaLines
           lines={[
-            <>
-              {tournament.tenant_name}
-              {" · "}
-              {t("title", { number: item.stage })}
-            </>,
+            `${community ? `${community} · ` : ""}${t("title", { number: item.stage })}`,
             t.rich("since", {
               date: () => <LocalDateTime value={item.since} />,
             }),
@@ -46,7 +44,7 @@ export function StageDueTile({
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}`}
-          kind="tertiary"
+          kind="ghost"
           size="sm"
         >
           {t("action")}

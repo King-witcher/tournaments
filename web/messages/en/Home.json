@@ -3,13 +3,6 @@
   "loading": "Loading home…",
   "waiting": {
     "title": "Waiting for you",
-    "action": {
-      "veto": "Do the veto",
-      "ready": "Mark ready",
-      "respond": "Confirm or dispute",
-      "accept_contest": "View dispute",
-      "report": "Submit game"
-    },
     "stageCheckIn": "Stage {stage} check-in is open"
   },
   "open": {

@@ -1,40 +1,41 @@
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
-import { ActionTile } from "@/shared/ui/action-tile";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { MetaLines } from "@/shared/ui/meta-lines";
+import { TaskNotice } from "@/shared/ui/task-notice";
+import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio cujo início marcado chegou sem ser iniciado: a comunidade, o
  * início marcado, quantos entrariam na chave e o botão que leva ao torneio
  * (onde se inicia ou, nas Configurações, se muda a data).
  */
-export function StartDueTile({
+export function StartDueNotice({
+  kind,
   item,
-  avatar,
+  community,
 }: {
+  kind: Severity;
   item: components["schemas"]["StartDue"];
-  /** O logo da comunidade, quando a lista leva. */
-  avatar: ReactNode;
+  /** O nome da comunidade, quando a lista é de várias. */
+  community?: string;
 }) {
   const t = useTranslations("Organizing.startDue");
   const locale = useLocale();
   const { tournament } = item;
 
   return (
-    <ActionTile
-      avatar={avatar}
+    <TaskNotice
+      kind={kind}
       title={localizedName(tournament, locale)}
       meta={
         <MetaLines
           lines={[
             <>
-              {tournament.tenant_name}
-              {" · "}
+              {community && `${community} · `}
               {t.rich("startedAt", {
                 date: () => <LocalDateTime value={item.starts_at} />,
               })}
@@ -53,7 +54,7 @@ export function StartDueTile({
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}`}
-          kind="tertiary"
+          kind="ghost"
           size="sm"
         >
           {t("action")}

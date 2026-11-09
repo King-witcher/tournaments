@@ -3,13 +3,6 @@
   "loading": "Cargando el inicio…",
   "waiting": {
     "title": "Esperando tu acción",
-    "action": {
-      "veto": "Hacer el veto",
-      "ready": "Marcar listo",
-      "respond": "Confirmar o impugnar",
-      "accept_contest": "Ver impugnación",
-      "report": "Enviar partida"
-    },
     "stageCheckIn": "Check-in de la fase {stage} abierto"
   },
   "open": {

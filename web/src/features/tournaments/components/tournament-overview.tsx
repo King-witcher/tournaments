@@ -28,9 +28,10 @@ type Props = { tenant: string; slug: string };
 
 /**
  * A Visão geral, o painel do torneio, em duas colunas a partir do `lg`. Na
- * principal, do que pede ação de quem vê ao que só informa: "Sua situação",
- * a fase seguinte à espera, os empates a decidir (organização), as séries
- * que esperam quem vê, as séries em andamento, a descrição e o resumo do formato (com o link para as regras).
+ * principal, do que pede ação de quem vê ao que só informa: os avisos dos
+ * empates a decidir (organização) e das séries que esperam quem vê, "Sua
+ * situação", a fase seguinte à espera, as séries em andamento, a descrição e
+ * o resumo do formato (com o link para as regras).
  * Na estreita, o estado do torneio: o ciclo, um passo embaixo do outro, com
  * o andamento das séries ou o campeão. O formato fica na principal porque os
  * valores dele são frases, que numa coluna estreita quebram em muitas linhas. O erro e o login já aparecem na casca; aqui, nada. Fica em
@@ -62,6 +63,15 @@ export async function TournamentOverview({ tenant, slug }: Props) {
     <PageColumns
       main={
         <>
+          {organizer && bracket && bracket.pending_ties.length > 0 && (
+            <PendingTiesTask
+              href={`/${tenant}/${slug}/standings?${OPEN_TIES_QUERY}`}
+              lastStage={isLastStage(tournament, bracket.stage)}
+            />
+          )}
+          {bracket && (
+            <PendingMatches bracket={bracket} basePath={matchesPath} />
+          )}
           <MyParticipation
             tenant={tenant}
             tournament={tournament}
@@ -75,15 +85,6 @@ export async function TournamentOverview({ tenant, slug }: Props) {
                 organizer={organizer}
               />
             </Suspense>
-          )}
-          {organizer && bracket && bracket.pending_ties.length > 0 && (
-            <PendingTiesTask
-              href={`/${tenant}/${slug}/standings?${OPEN_TIES_QUERY}`}
-              lastStage={isLastStage(tournament, bracket.stage)}
-            />
-          )}
-          {bracket && (
-            <PendingMatches bracket={bracket} basePath={matchesPath} />
           )}
           {bracket?.status === "in_progress" && (
             <LiveMatches bracket={bracket} basePath={matchesPath} />

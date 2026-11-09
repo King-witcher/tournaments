@@ -4,14 +4,22 @@ import type { Status } from "@/shared/ui/status-tag";
 type Schemas = components["schemas"];
 
 /** O que pede uma ação de quem vê (enviar, responder, resolver, o veto). */
-export const ACTIONABLE: Schemas["ViewerTask"][] = [
+const ACTIONABLE = [
   "report",
   "respond",
   "resolve",
   "accept_contest",
   "ready",
   "veto",
-];
+] as const satisfies Schemas["ViewerTask"][];
+
+export type ActionableTask = (typeof ACTIONABLE)[number];
+
+export function isActionable(
+  task: Schemas["ViewerTask"] | null | undefined,
+): task is ActionableTask {
+  return ACTIONABLE.some((actionable) => actionable === task);
+}
 
 /** Onde a série está, para achar de relance o que falta jogar. */
 export type MatchProgress = "completed" | "in_progress" | "pending";
@@ -40,11 +48,8 @@ export function actionableMatches(
   exclude?: string,
 ) {
   return bracket.matches.filter(
-    (m) =>
-      m.key !== exclude &&
-      m.task != null &&
-      ACTIONABLE.includes(m.task) &&
-      !m.opponent_playing,
+    (m): m is typeof m & { task: ActionableTask } =>
+      m.key !== exclude && isActionable(m.task) && !m.opponent_playing,
   );
 }
 

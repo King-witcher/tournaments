@@ -1,14 +1,18 @@
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
-
+import { severity } from "@/features/organizing/lib/severity";
+import { PushSuggestion } from "@/features/push/components/push-suggestion";
 import {
   hasStarted,
   registrationOpen,
 } from "@/features/tournaments/lib/status";
 import type { components } from "@/shared/api/schema";
+import { Stack } from "@/shared/ui/carbon/stack";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { StatusTag } from "@/shared/ui/status-tag";
+import { TaskNotice } from "@/shared/ui/task-notice";
 import { SITUATION_STATUS } from "../lib/situation";
+import { CheckInButton } from "./check-in-button";
 import { MyBracketSituation } from "./my-bracket-situation";
 import { ParticipationTile } from "./participation-tile";
 import { TeamSituationTag } from "./team-situation-tag";
@@ -22,9 +26,9 @@ type Props = {
 
 /**
  * "Sua situação" para quem joga: a situação uma vez, na etiqueta (no TDM, de
- * reserva se os times já se formaram sem a pessoa), e só o que
- * a pessoa ainda precisa saber ou fazer (o check-in que falta) e, depois de
- * iniciar, a situação na chave e a próxima partida. Para quem não está inscrito, só o motivo de não
+ * reserva se os times já se formaram sem a pessoa) e, depois de iniciar, a
+ * situação na chave e a próxima partida. O check-in que falta é um aviso com
+ * a ação, no lugar do bloco. Para quem não está inscrito, só o motivo de não
  * haver botão de inscrição (só por link, lotado). Nada a
  * dizer, nada aparece. Para quem está inscrito e ainda vai jogar, a sugestão
  * de ativar as notificações num bloco à parte (`suggestPush`).
@@ -84,9 +88,22 @@ export function MyParticipation({ tenant, tournament, organizer }: Props) {
       return <ParticipationTile tag={teamTag("checked_in")} suggestPush />;
     }
     return (
-      <ParticipationTile tag={tag("check_in_pending")} suggestPush>
-        <p>{t("checkIn.open")}</p>
-      </ParticipationTile>
+      <Stack gap={3}>
+        <TaskNotice
+          kind={severity("check_in")}
+          title={t("checkIn.pendingTitle")}
+          meta={t("checkIn.pendingBody")}
+          action={
+            <CheckInButton
+              tenant={tenant}
+              slug={tournament.slug}
+              kind="ghost"
+              size="sm"
+            />
+          }
+        />
+        <PushSuggestion />
+      </Stack>
     );
   }
 

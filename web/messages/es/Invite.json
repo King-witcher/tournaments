@@ -28,11 +28,12 @@
   "code": "Código",
   "copyCode": "Copiar código",
   "join": {
-    "open": "Entrar con código",
-    "field": "Enlace o código",
+    "open": "Unirme a una comunidad",
+    "field": "Enlace o código de la invitación",
     "submit": "Continuar",
     "invalid": "Enlace o código no válido.",
-    "notFound": "Invitación no encontrada. Revisa el código."
+    "notFound": "Invitación no encontrada. Revisa el código.",
+    "hint": "Sirve la invitación de la comunidad o del torneo."
   },
   "communityLink": {
     "note": "Quien entra con este enlace queda como jugador.",
