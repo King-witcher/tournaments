@@ -59,6 +59,13 @@
   flex-wrap: wrap;
 }
 
+// Numa seção do menu lateral: do lg para cima o menu já diz onde se está.
+.belowLgOnly.belowLgOnly {
+  @include breakpoint.breakpoint(lg) {
+    display: none;
+  }
+}
+
 .heading {
   display: flex;
   flex-wrap: wrap;

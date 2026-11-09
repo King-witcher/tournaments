@@ -35,7 +35,14 @@ export default async function TenantSettingsPage({
   const t = await getTranslations("Tenant");
   return (
     <>
-      <Suspense fallback={<PageHeaderSkeleton label={t("settings.loading")} />}>
+      <Suspense
+        fallback={
+          <PageHeaderSkeleton
+            breadcrumb="belowLg"
+            label={t("settings.loading")}
+          />
+        }
+      >
         {params.then(({ tenant }) => (
           <TenantHeader slug={tenant} title={t("tabs.settings")} settings />
         ))}

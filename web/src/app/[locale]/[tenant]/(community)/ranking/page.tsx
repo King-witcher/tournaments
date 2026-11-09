@@ -17,7 +17,13 @@ export default async function TenantRankingPage({
   return (
     <>
       <Suspense
-        fallback={<PageHeaderSkeleton meta label={tRanking("loading")} />}
+        fallback={
+          <PageHeaderSkeleton
+            breadcrumb="belowLg"
+            meta
+            label={tRanking("loading")}
+          />
+        }
       >
         {params.then(({ tenant }) => (
           <TenantHeader

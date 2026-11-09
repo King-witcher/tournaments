@@ -8,7 +8,7 @@ export default async function Loading() {
   const t = await getTranslations("NewTenant");
   return (
     <Page>
-      <PageHeaderSkeleton meta label={t("loading")} />
+      <PageHeaderSkeleton breadcrumb={false} meta label={t("loading")} />
       <FormSkeleton label={false} />
     </Page>
   );

@@ -19,10 +19,7 @@ export default async function AccountNotificationsPage() {
   ]);
   return (
     <>
-      <PageHeader
-        breadcrumbs={[{ href: "/account", label: tAccount("title") }]}
-        title={tAccount("tabs.notifications")}
-      />
+      <PageHeader title={tAccount("tabs.notifications")} />
       <AccountColumns
         start={
           <Panel>

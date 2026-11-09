@@ -13,10 +13,7 @@ export default async function AccountSessionsPage() {
   const t = await getTranslations("Account");
   return (
     <>
-      <PageHeader
-        breadcrumbs={[{ href: "/account", label: t("title") }]}
-        title={t("tabs.sessions")}
-      />
+      <PageHeader title={t("tabs.sessions")} />
       <Suspense fallback={<SessionsSkeleton label={t("loading")} />}>
         <AccountSessions />
       </Suspense>

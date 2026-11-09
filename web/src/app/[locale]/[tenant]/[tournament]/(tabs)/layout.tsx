@@ -21,7 +21,7 @@ export default async function TournamentLayout({
       <Suspense
         fallback={
           <>
-            <PageHeaderSkeleton meta label={t("loading")} />
+            <PageHeaderSkeleton breadcrumb={false} meta label={t("loading")} />
             <SectionSkeleton rows={3} />
           </>
         }

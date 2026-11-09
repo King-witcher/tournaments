@@ -5,7 +5,7 @@ import { FormSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
 export default function Loading() {
   return (
     <Page>
-      <PageHeaderSkeleton />
+      <PageHeaderSkeleton breadcrumb={false} />
       <FormSkeleton label={false} />
     </Page>
   );

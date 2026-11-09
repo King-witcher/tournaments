@@ -20,10 +20,7 @@ export default async function AccountLoginsPage({
   const t = await getTranslations("Account");
   return (
     <>
-      <PageHeader
-        breadcrumbs={[{ href: "/account", label: t("title") }]}
-        title={t("tabs.logins")}
-      />
+      <PageHeader title={t("tabs.logins")} />
       {/* Vincular um provedor volta para cá; recusado, com ?auth_error=. */}
       <Suspense fallback={null}>
         <AuthError searchParams={searchParams} />

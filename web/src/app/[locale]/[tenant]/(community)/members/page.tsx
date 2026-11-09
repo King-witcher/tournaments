@@ -15,7 +15,13 @@ export default async function TenantMembersPage({
   return (
     <>
       <Suspense
-        fallback={<PageHeaderSkeleton meta label={t("members.loading")} />}
+        fallback={
+          <PageHeaderSkeleton
+            breadcrumb="belowLg"
+            meta
+            label={t("members.loading")}
+          />
+        }
       >
         {params.then(({ tenant }) => (
           <TenantHeader

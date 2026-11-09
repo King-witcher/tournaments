@@ -27,10 +27,10 @@ type Props = {
 };
 
 /**
- * O topo de cada seção da comunidade: a trilha (a comunidade, menos no
- * início dela), o título da seção, o metadado e a ação primária. O nome, o logo e o papel de
- * quem vê ficam no menu lateral; no celular, sem o menu à vista, a trilha
- * mostra a comunidade. Com a exclusão agendada, o aviso logo abaixo, em toda
+ * O topo de cada seção da comunidade: o título da seção, o metadado e a ação
+ * primária. O nome, o logo e o papel de quem vê ficam no menu lateral; abaixo
+ * do `lg`, sem o menu à vista, a trilha mostra a comunidade (menos no início
+ * dela). Com a exclusão agendada, o aviso logo abaixo, em toda
  * seção. Sem sessão, o convite a entrar; sem acesso, o erro (o conteúdo das
  * seções não aparece: cada bloco confere o acesso e some). Fica em
  * `<Suspense>`.
@@ -67,6 +67,7 @@ export async function TenantHeader({
         breadcrumbs={
           home ? undefined : [{ href: `/${slug}`, label: tenant.name }]
         }
+        inSideNav
         // tabIndex -1: recebe o foco depois de criar a comunidade.
         title={
           <span id={TENANT_TITLE_ID} tabIndex={-1}>

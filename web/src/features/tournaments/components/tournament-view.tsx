@@ -18,7 +18,7 @@ type Props = {
 
 /**
  * A casca das seções do torneio: o cabeçalho e a seção atual. Na Visão
- * geral, o cabeçalho completo (trilha, nome, estado, metadado, capa, ações);
+ * geral, o cabeçalho completo (nome, estado, metadado, capa, ações);
  * nas outras, o compacto, com o nome da seção no título, porque o menu do
  * torneio já diz em que torneio e seção a pessoa está e quem abre a Chave
  * ou a Organização quer o conteúdo dela logo. "Sua situação" e a fase

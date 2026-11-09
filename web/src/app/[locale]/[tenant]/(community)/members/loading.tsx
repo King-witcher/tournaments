@@ -7,7 +7,7 @@ export default async function Loading() {
   const t = await getTranslations("Tenant.members");
   return (
     <>
-      <PageHeaderSkeleton meta label={t("loading")} />
+      <PageHeaderSkeleton breadcrumb="belowLg" meta label={t("loading")} />
       <TableSkeleton columns={3} />
     </>
   );

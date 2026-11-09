@@ -1,3 +1,4 @@
+@use "@carbon/react/scss/breakpoint";
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
@@ -52,6 +53,13 @@
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-04;
+}
+
+// A trilha de uma seção do menu lateral, como no `PageHeader`.
+.belowLgOnly.belowLgOnly {
+  @include breakpoint.breakpoint(lg) {
+    display: none;
+  }
 }
 
 // As mesmas colunas do `TileGrid`.

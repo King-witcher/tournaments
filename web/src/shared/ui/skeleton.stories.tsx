@@ -34,6 +34,12 @@ export const PageHeaderWithoutBreadcrumb: Story = {
   render: () => <PageHeaderSkeleton breadcrumb={false} />,
 };
 
+/** Numa seção do menu lateral: a trilha só abaixo do `lg`. */
+export const PageHeaderInSideNav: Story = {
+  render: () => <PageHeaderSkeleton breadcrumb="belowLg" />,
+  globals: { viewport: { value: "phone", isRotated: false } },
+};
+
 export const Tabs: Story = { render: () => <TabsSkeleton /> };
 
 /** Com tiles (`tiles`) ou com linhas (`rows`). */

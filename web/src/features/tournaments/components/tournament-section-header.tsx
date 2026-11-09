@@ -24,9 +24,9 @@ type Props = {
 };
 
 /**
- * O cabeçalho das seções do torneio que não são a Visão geral: o torneio
- * passa para a trilha (no celular, onde o menu fica atrás do botão, é por
- * ela que se sabe o torneio) e o título é a seção. Sem a etiqueta do estado,
+ * O cabeçalho das seções do torneio que não são a Visão geral: o título é a
+ * seção, e o torneio fica no menu lateral (abaixo do `lg`, onde o menu fica
+ * atrás do botão, é pela trilha que se sabe o torneio). Sem a etiqueta do estado,
  * a capa e o metadado, que o menu do torneio e a Visão geral já mostram: a
  * seção começa logo. As mesmas ações do cabeçalho completo, para o que falta
  * fazer não sumir ao trocar de seção. Para quem joga, depois do início, a
@@ -49,6 +49,7 @@ export function TournamentSectionHeader({
           label: localizedName(tournament, locale),
         },
       ]}
+      inSideNav
       title={
         <span id={TOURNAMENT_TITLE_ID} tabIndex={-1}>
           <TournamentSectionTitle />

@@ -71,6 +71,12 @@ export const Default: Story = {};
 /** A trilha vai da raiz até a página mãe; a atual é o título. */
 export const WithBreadcrumbs: Story = { args: { breadcrumbs } };
 
+/** Numa seção do menu lateral, a trilha só aparece abaixo do `lg`. */
+export const InSideNav: Story = {
+  args: { breadcrumbs, inSideNav: true },
+  globals: { viewport: { value: "phone", isRotated: false } },
+};
+
 export const WithTags: Story = {
   args: {
     tags: (

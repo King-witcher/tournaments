@@ -17,12 +17,17 @@ type Crumb = {
 type Props = {
   /**
    * As páginas de cima, até a mãe (a atual é o título), com a barra depois
-   * da última. Só em página que o menu lateral não lista (a partida, a
-   * pessoa, a ordem da chave): nas que ele lista, o menu já diz onde se
-   * está, e a trilha repetiria. Começa na área do menu (a comunidade, o
-   * torneio), não no Início, que é o logo.
+   * da última. Para página que o menu lateral não lista (a partida, a
+   * pessoa, a ordem da chave); numa que ele lista, com `inSideNav`. Começa
+   * na área do menu (a comunidade, o torneio), não no Início, que é o logo.
    */
   breadcrumbs?: Crumb[];
+  /**
+   * A página é uma seção do menu lateral: a trilha só aparece abaixo do `lg`,
+   * onde o menu fica atrás do botão e é ela que diz a área. Do `lg` para
+   * cima o menu já diz, e o título fica na mesma altura em todas as seções.
+   */
+  inSideNav?: boolean;
   title: ReactNode;
   /**
    * Antes do título, o logo do que a página é (`Avatar` `square` `lg`), como
@@ -63,6 +68,7 @@ function crumbKey({ href }: Crumb, index: number) {
  */
 export function PageHeader({
   breadcrumbs,
+  inSideNav,
   title,
   logo,
   image,
@@ -78,6 +84,7 @@ export function PageHeader({
       <div className={styles.content}>
         <HeaderContent
           breadcrumbs={breadcrumbs}
+          inSideNav={inSideNav}
           title={title}
           logo={logo}
           tags={tags}
@@ -107,6 +114,7 @@ export function PageHeader({
 
 function HeaderContent({
   breadcrumbs,
+  inSideNav,
   title,
   logo,
   tags,
@@ -121,7 +129,10 @@ function HeaderContent({
       {breadcrumbs && breadcrumbs.length > 0 && (
         // Com a barra depois da mãe, como no Carbon: a trilha leva às de
         // cima, e a atual é o título logo embaixo.
-        <Breadcrumb aria-label={breadcrumbLabel} className={styles.breadcrumb}>
+        <Breadcrumb
+          aria-label={breadcrumbLabel}
+          className={cn(styles.breadcrumb, inSideNav && styles.belowLgOnly)}
+        >
           {/* No celular, como pede o Carbon: o ⋯ com as de cima e só a mãe. */}
           {breadcrumbs.length > 1 && (
             <BreadcrumbOverflow

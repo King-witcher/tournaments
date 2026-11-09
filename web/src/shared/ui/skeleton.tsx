@@ -27,13 +27,17 @@ function LoadingLabel({ label }: { label?: string }) {
   );
 }
 
-/** O `PageHeader` carregando: trilha (com `breadcrumb`), título e metadado. */
+/**
+ * O `PageHeader` carregando: trilha, título e metadado. `breadcrumb` segue o
+ * cabeçalho que vai chegar: `false` sem trilha, `"belowLg"` numa seção do
+ * menu lateral (`inSideNav`).
+ */
 export function PageHeaderSkeleton({
   breadcrumb = true,
   meta = false,
   label,
 }: {
-  breadcrumb?: boolean;
+  breadcrumb?: boolean | "belowLg";
   meta?: boolean;
   /** O que está carregando, lido pelo leitor de tela; padrão "Carregando…". */
   label?: string;
@@ -41,7 +45,13 @@ export function PageHeaderSkeleton({
   return (
     <div className={styles.header}>
       <LoadingLabel label={label} />
-      {breadcrumb && <BreadcrumbSkeleton aria-hidden items={2} />}
+      {breadcrumb && (
+        <BreadcrumbSkeleton
+          aria-hidden
+          items={2}
+          className={breadcrumb === "belowLg" ? styles.belowLgOnly : undefined}
+        />
+      )}
       <span aria-hidden className={styles.title} />
       {meta && <span aria-hidden className={styles.meta} />}
     </div>
@@ -172,7 +182,7 @@ export function PageSkeleton({
 }) {
   return (
     <div className={styles.page}>
-      <PageHeaderSkeleton label={label} />
+      <PageHeaderSkeleton breadcrumb={false} label={label} />
       {tabs && <TabsSkeleton />}
       <SectionSkeleton rows={4} />
     </div>

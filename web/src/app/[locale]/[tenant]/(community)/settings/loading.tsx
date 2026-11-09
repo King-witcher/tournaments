@@ -8,7 +8,7 @@ export default async function Loading() {
   const t = await getTranslations("Tenant.settings");
   return (
     <>
-      <PageHeaderSkeleton label={t("loading")} />
+      <PageHeaderSkeleton breadcrumb="belowLg" label={t("loading")} />
       <Panel>
         <SectionSkeleton rows={2} />
       </Panel>

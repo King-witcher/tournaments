@@ -8,7 +8,7 @@ export default async function Loading() {
   const t = await getTranslations("Account");
   return (
     <>
-      <PageHeaderSkeleton label={t("loading")} />
+      <PageHeaderSkeleton breadcrumb={false} label={t("loading")} />
       <AccountColumns
         start={
           <Panel>

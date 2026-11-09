@@ -9,7 +9,7 @@ export default async function Loading() {
   const t = await getTranslations("Tournaments");
   return (
     <>
-      <PageHeaderSkeleton label={t("loading")} />
+      <PageHeaderSkeleton breadcrumb={false} label={t("loading")} />
       <PageColumns
         main={<TournamentListSkeleton />}
         aside={<SectionSkeleton rows={3} />}

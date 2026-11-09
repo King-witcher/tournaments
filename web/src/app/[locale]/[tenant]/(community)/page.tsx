@@ -26,7 +26,11 @@ export default async function TenantTournamentsPage({
   ]);
   return (
     <>
-      <Suspense fallback={<PageHeaderSkeleton label={tList("loading")} />}>
+      <Suspense
+        fallback={
+          <PageHeaderSkeleton breadcrumb={false} label={tList("loading")} />
+        }
+      >
         {params.then(({ tenant }) => (
           <TenantHeader
             slug={tenant}
