@@ -145,8 +145,6 @@
     "poolTemplate": "Modelo",
     "poolTemplates": {
       "ragecon": "RageCon / QPL",
-      "tournament": "Torneio",
-      "tournament_extended": "Torneio (estendido)",
       "ranked": "Ranked",
       "tdm": "TDM",
       "all": "Todos",

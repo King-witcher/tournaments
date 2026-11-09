@@ -13,7 +13,8 @@ const RAGECON = [
   "deep-embrace",
 ];
 
-const TOURNAMENT = [
+/** O pool do jogo na fila de duelo e de TDM. */
+const RANKED = [
   "awoken",
   "corrupted-keep",
   "molten-falls",
@@ -21,19 +22,14 @@ const TOURNAMENT = [
   "vale-of-pnath",
   "deep-embrace",
   "vestibule-of-exile",
+  "insomnia",
+  "blood-covenant",
+  "blood-run",
+  "crucible",
 ];
-
-const EXTENDED = [...TOURNAMENT, "insomnia"];
-
-/** O pool do jogo na fila de duelo e de TDM. */
-const RANKED = [...EXTENDED, "blood-covenant", "blood-run", "crucible"];
 
 /** Os mapas que o modelo TDM deixa de fora; todo o resto do catálogo entra. */
 const NOT_IN_TDM = ["dark-zone", "the-longest-yard"];
-
-/** No TDM, os modelos de torneio têm o Blood Covenant no lugar do Deep Embrace. */
-const forTdm = (slugs: string[]) =>
-  slugs.map((slug) => (slug === "deep-embrace" ? "blood-covenant" : slug));
 
 /**
  * Os modelos de pool de mapas, na ordem do `Select`, com os mapas por modalidade
@@ -44,8 +40,6 @@ const forTdm = (slugs: string[]) =>
  */
 const TEMPLATES = [
   { id: "ragecon", duel: RAGECON, tdm: RAGECON },
-  { id: "tournament", duel: TOURNAMENT, tdm: forTdm(TOURNAMENT) },
-  { id: "tournament_extended", duel: EXTENDED, tdm: forTdm(EXTENDED) },
   { id: "ranked", duel: RANKED, tdm: RANKED },
   { id: "tdm", duel: null, tdm: "catalog" },
   { id: "all", duel: "all", tdm: "all" },
