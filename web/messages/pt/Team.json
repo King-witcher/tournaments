@@ -4,7 +4,7 @@
   "pageTitle": "Times",
   "howToEdit": "Arraste e solte jogadores para formar times.",
   "form": "Formar times",
-  "backToManage": "Voltar à organização",
+  "backToParticipants": "Voltar aos inscritos",
   "seeding": "Ordem da chave",
   "summary": {
     "counts": "{complete, plural, =0 {Nenhum time completo} one {# time completo} other {# times completos}}, {incomplete, plural, =0 {nenhum incompleto} one {# incompleto} other {# incompletos}} e {reserves, plural, =0 {nenhum reserva} one {# reserva} other {# reservas}}.",
@@ -92,12 +92,6 @@
   "withdraw": {
     "open": "Marcar desistência",
     "confirm": "Marcar a desistência de {name}? As séries do time, a atual e as próximas, viram W.O. para o adversário. Não dá para desfazer."
-  },
-  "manage": {
-    "title": "Times",
-    "started": "Substituições e troca de capitão ficam em Inscritos.",
-    "unavailable": "Não foi possível carregar os times agora. Recarregue a página.",
-    "view": "Ver os times"
   },
   "howToEditTouch": "Use o menu ⋯ de cada jogador para formar times."
 }

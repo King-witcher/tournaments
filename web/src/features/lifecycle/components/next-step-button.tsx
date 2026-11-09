@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import { PublishTournamentButton } from "@/features/tournaments/components/publish-tournament-button";
 import { startTiming } from "@/features/tournaments/lib/form-values";
 import type { components } from "@/shared/api/schema";
-import type { ButtonKind } from "@/shared/ui/button";
 import { StartButton } from "./start-button";
 import { TransitionButton } from "./transition-button";
 
@@ -12,8 +11,6 @@ type Props = {
   tournament: components["schemas"]["Tournament"];
   /** Referência para saber se a data de início ficou para trás. */
   now: Date;
-  /** `primary` no cabeçalho; `secondary` na aba Organização, embaixo dele. */
-  kind: ButtonKind;
 };
 
 /**
@@ -22,7 +19,7 @@ type Props = {
  * check-in, ou no check-in). Em andamento ou encerrado, nada: desfazer o
  * início fica no ⋯ e a correção de resultados, na partida.
  */
-export function NextStepButton({ tenant, tournament, now, kind }: Props) {
+export function NextStepButton({ tenant, tournament, now }: Props) {
   const t = useTranslations("Lifecycle");
   const { status, slug } = tournament;
 
@@ -33,7 +30,6 @@ export function NextStepButton({ tenant, tournament, now, kind }: Props) {
       <PublishTournamentButton
         tenant={tenant}
         tournament={tournament}
-        kind={kind}
         startBehind={
           startTiming(
             tournament.starts_at ?? null,
@@ -51,12 +47,11 @@ export function NextStepButton({ tenant, tournament, now, kind }: Props) {
         slug={slug}
         transition="open_check_in"
         label={t("openCheckIn")}
-        kind={kind}
       />
     );
   }
   if (status === "registration" || status === "check_in") {
-    return <StartButton tenant={tenant} tournament={tournament} kind={kind} />;
+    return <StartButton tenant={tenant} tournament={tournament} />;
   }
   return null;
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { LiveMatches } from "@/features/matches/components/live-matches";
 import { PendingMatches } from "@/features/matches/components/pending-matches";
+import { PendingTiesTask } from "@/features/matches/components/pending-ties-task";
 import { loadBracket } from "@/features/matches/server";
 import { MyParticipation } from "@/features/participants/components/my-participation";
 import { NextStage } from "@/features/stages/components/next-stage";
@@ -23,8 +24,8 @@ type Props = { tenant: string; slug: string };
 /**
  * A Visão geral, o painel do torneio, em duas colunas a partir do `lg`. Na
  * principal, do que pede ação de quem vê ao que só informa: "Sua situação",
- * a fase seguinte à espera, as séries que esperam quem vê, as séries em
- * andamento, a descrição e o resumo do formato (com o link para as regras).
+ * a fase seguinte à espera, os empates a decidir (organização), as séries
+ * que esperam quem vê, as séries em andamento, a descrição e o resumo do formato (com o link para as regras).
  * Na estreita, o estado do torneio: o ciclo, um passo embaixo do outro, com
  * o andamento das séries ou o campeão. O formato fica na principal porque os
  * valores dele são frases, que numa coluna estreita quebram em muitas linhas. O erro e o login já aparecem na casca; aqui, nada. Fica em
@@ -72,6 +73,9 @@ export async function TournamentOverview({ tenant, slug }: Props) {
               />
             </Suspense>
           )}
+          {organizer && bracket && bracket.pending_ties.length > 0 && (
+            <PendingTiesTask href={`/${tenant}/${slug}/standings`} />
+          )}
           {bracket && (
             <PendingMatches bracket={bracket} basePath={matchesPath} />
           )}
@@ -96,6 +100,7 @@ export async function TournamentOverview({ tenant, slug }: Props) {
       aside={
         <Panel>
           <TournamentStateSection
+            tenant={tenant}
             tournament={tournament}
             bracket={bracket}
             organizer={organizer}

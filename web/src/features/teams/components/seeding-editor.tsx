@@ -38,7 +38,7 @@ const SHUFFLE_ID = "seeding-shuffle";
  * para lá), subir e descer com as setas, sortear (pergunta antes quando a
  * ordem foi mudada, porque descarta a mudança), ordenar por rating (preenche
  * a ordem na tela: maior rating primeiro, quem não tem no fim) ou salvar e
- * voltar para a aba Organização.
+ * voltar para Inscritos.
  */
 export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const t = useTranslations("Participants.seeding");
@@ -50,7 +50,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
   const [order, setOrder] = useState(initial);
   const [focus, setFocus] = useState<{ id: number; n: number; on: FocusOn }>();
   const params = { path: { slug: tenant, tournament } };
-  const manage = `/${tenant}/${tournament}/manage`;
+  const participants = `/${tenant}/${tournament}/participants`;
   const changed = order.some((team, i) => team.id !== initial[i].id);
   // Ninguém tem seed: iniciar assim sorteia, e a ordem da tela não vale.
   const noneSeeded = initial.every((p) => p.seed == null);
@@ -125,7 +125,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
                 body: { team_ids: order.map((team) => team.id) },
               }),
             () => {
-              router.push(manage);
+              router.push(participants);
               router.refresh();
             },
           );
@@ -160,7 +160,7 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
             submitLabel={t("save")}
             pending={save.pending}
             disabled={!unsaved}
-            cancelHref={manage}
+            cancelHref={participants}
             extra={
               <span className={styles.fill}>
                 {anyRated && (

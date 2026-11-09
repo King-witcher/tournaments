@@ -8,7 +8,6 @@ import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
-import type { ButtonKind } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { TOURNAMENT_TITLE_ID } from "../lib/focus";
 import { TournamentReview } from "./tournament-review";
@@ -17,11 +16,6 @@ type Props = {
   tenant: string;
   /** O rascunho, como está salvo: a revisão sai dele. */
   tournament: components["schemas"]["Tournament"];
-  /**
-   * `primary` no cabeçalho, onde o motivo vira a dica do botão; `secondary`
-   * na aba Organização, onde ele fica escrito embaixo.
-   */
-  kind?: ButtonKind;
   /**
    * A data do rascunho ficou para trás (passou, ou ficou mais perto que a
    * janela de check-in): o botão fica desabilitado, com o motivo.
@@ -37,7 +31,6 @@ type Props = {
 export function PublishTournamentButton({
   tenant,
   tournament,
-  kind = "primary",
   startBehind,
 }: Props) {
   const t = useTranslations("Tournament");
@@ -48,12 +41,12 @@ export function PublishTournamentButton({
     <ActionWithNote
       error={error}
       note={startBehind && t(`publishBlocked.${startBehind}`)}
-      compact={kind === "primary"}
+      compact
       blocked={startBehind !== undefined}
     >
       <ConfirmButton
         destructive={false}
-        kind={kind}
+        kind="primary"
         size="md"
         pending={pending}
         disabled={startBehind !== undefined}

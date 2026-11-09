@@ -25,15 +25,13 @@ type Props = {
   children: ReactNode;
 };
 
-const MANAGE = /\/manage$/;
 const SETTINGS = /\/settings$/;
 
 /**
  * Troca o menu da comunidade pelo do torneio quando o endereço é de um (a
  * seção dele, a partida, a ordem da chave, os times). As seções são as da
- * página, quando ela já disse quais são; senão, as da lista. Organização e
- * Configurações, só da organização, ficam num grupo à parte; Configurações
- * se desdobra nas seções dela (o segundo nível do menu), aberta quando o
+ * página, quando ela já disse quais são; senão, as da lista. Configurações,
+ * só da organização, fica depois de um divisor e se desdobra nas seções dela (o segundo nível do menu), aberta quando o
  * endereço é de uma.
  */
 export function TournamentSideNavSwitch({
@@ -64,10 +62,7 @@ export function TournamentSideNavSwitch({
       {tab.label}
     </AppSideNavLink>
   );
-  const main = tabs.filter(
-    (tab) => !MANAGE.test(tab.href) && !SETTINGS.test(tab.href),
-  );
-  const manage = tabs.find((tab) => MANAGE.test(tab.href));
+  const main = tabs.filter((tab) => !SETTINGS.test(tab.href));
   const settings = tabs.find((tab) => SETTINGS.test(tab.href));
   const inSettings =
     settings !== undefined &&
@@ -76,8 +71,7 @@ export function TournamentSideNavSwitch({
   return (
     <AppSideNav label={label} back={back} header={item.header}>
       {main.map(link)}
-      {(manage || settings) && <SideNavDivider />}
-      {manage && link(manage)}
+      {settings && <SideNavDivider />}
       {settings && (
         <SideNavMenu
           // Outro torneio, outro menu: abre de novo conforme o endereço.

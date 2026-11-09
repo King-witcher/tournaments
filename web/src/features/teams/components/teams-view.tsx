@@ -74,7 +74,7 @@ export async function TeamsView({ tenant, slug }: Props) {
       {seedingOpen(tournament) && (
         <Link href={`${path}/seeding`}>{t("seeding")}</Link>
       )}
-      <Link href={`${path}/manage`}>{t("backToManage")}</Link>
+      <Link href={`${path}/participants`}>{t("backToParticipants")}</Link>
     </>
   );
 

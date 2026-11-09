@@ -21,7 +21,7 @@ type Props = {
  * geral, o cabeçalho completo (nome, estado, metadado, capa, ações);
  * nas outras, o compacto, com o nome da seção no título, porque o menu do
  * torneio já diz em que torneio e seção a pessoa está e quem abre a Chave
- * ou a Organização quer o conteúdo dela logo. "Sua situação" e a fase
+ * ou os Inscritos quer o conteúdo logo. "Sua situação" e a fase
  * seguinte ficam na Visão geral. Sem sessão, o convite a entrar; com erro, o
  * caminho de volta (e nenhuma seção). Lê a sessão, então fica em
  * `<Suspense>`.

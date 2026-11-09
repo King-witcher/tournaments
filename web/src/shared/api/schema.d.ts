@@ -3910,8 +3910,8 @@ export interface components {
         };
         /**
          * @description Um torneio com uma fase pronta para iniciar: a anterior terminou e ela não
-         *     começou. Resolve-se na aba Organização, iniciando a fase (ou abrindo o
-         *     check-in dela).
+         *     começou. Resolve-se na Visão geral (`/{tenant}/{torneio}`), iniciando a
+         *     fase (ou abrindo o check-in dela).
          */
         StageDue: {
             /**
@@ -4106,9 +4106,8 @@ export interface components {
             tied: number;
         };
         /**
-         * @description Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se na
-         *     aba Organização (`/{tenant}/{torneio}/manage`), iniciando ou mudando a
-         *     data.
+         * @description Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se no
+         *     torneio (`/{tenant}/{torneio}`), iniciando ou mudando a data.
          */
         StartDue: {
             /**

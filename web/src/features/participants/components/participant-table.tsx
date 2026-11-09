@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { TournamentInviteButton } from "@/features/invites/components/tournament-invite-button";
 import { shownNickname } from "@/features/members/lib/nickname";
+import { SeedingLink } from "@/features/teams/components/seeding-link";
+import { getSeedingSummary } from "@/features/teams/server";
 import {
   hasStarted,
   invitesAllowed,
@@ -25,7 +27,8 @@ type Props = { tenant: string; slug: string };
  * A aba Inscritos: a tabela com seed (depois de iniciar, na ordem da chave),
  * apelido (link para a pessoa na comunidade), estado e data de inscrição,
  * com busca e paginação. Para a organização, "Link de inscrição" ao lado do
- * título (no rascunho e até o início), "Inscrever alguém" na barra e, por
+ * título (no rascunho e até o início), no duelo a ordem da chave (a frase
+ * embaixo do título e "Definir a ordem"), "Inscrever alguém" na barra e, por
  * linha, marcar ou desmarcar o check-in, tirar do torneio (até começar) e, no
  * duelo, marcar a desistência (em andamento; no TDM, ela é do time e fica no
  * ⋯ dele). Fica em `<Suspense>`.
@@ -40,7 +43,7 @@ export async function ParticipantTable({ tenant, slug }: Props) {
   const started = hasStarted(status);
   const canManage = organizer && participantsEditable(status);
   const api = await serverApi();
-  const [t, tMember, participants, members] = await Promise.all([
+  const [t, tMember, participants, members, seeding] = await Promise.all([
     getTranslations("Participants"),
     getTranslations("Member"),
     getParticipants(tenant, slug).then((list) => list ?? []),
@@ -52,6 +55,9 @@ export async function ParticipantTable({ tenant, slug }: Props) {
           .then(({ data }) => data ?? [])
           .catch(() => [])
       : [],
+    organizer && tournament.mode !== "tdm"
+      ? getSeedingSummary(tenant, tournament)
+      : undefined,
   ]);
   // Depois de iniciar, na ordem da chave (quem ficou de fora, sem seed, no fim).
   const listed = started
@@ -139,11 +145,18 @@ export async function ParticipantTable({ tenant, slug }: Props) {
     <div id={PARTICIPANTS_ID} tabIndex={-1}>
       <Section
         title={t("title", { count: participants.length, max })}
+        description={seeding?.text}
         action={
-          organizer &&
-          invitesAllowed(status) &&
-          !me.deletion_scheduled_for && (
-            <TournamentInviteButton tenant={tenant} tournament={tournament} />
+          organizer && (
+            <>
+              {invitesAllowed(status) && !me.deletion_scheduled_for && (
+                <TournamentInviteButton
+                  tenant={tenant}
+                  tournament={tournament}
+                />
+              )}
+              {seeding?.editable && <SeedingLink tenant={tenant} slug={slug} />}
+            </>
           )
         }
       >

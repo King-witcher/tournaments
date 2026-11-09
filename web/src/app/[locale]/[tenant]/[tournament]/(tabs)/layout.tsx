@@ -8,7 +8,7 @@ import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 /**
  * O torneio: o cabeçalho (o completo na Visão geral, o compacto nas outras
  * seções) e a seção aberta. As seções (Visão geral, Chave, Classificação,
- * Inscritos, Regras, Organização, Configurações) ficam no menu lateral. A
+ * Inscritos, Regras, Configurações) ficam no menu lateral. A
  * ordem da chave, os times e a partida ficam fora do grupo.
  */
 export default async function TournamentLayout({

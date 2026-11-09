@@ -64,8 +64,8 @@ pub struct PendingTies {
 }
 
 /// Um torneio com uma fase pronta para iniciar: a anterior terminou e ela não
-/// começou. Resolve-se na aba Organização, iniciando a fase (ou abrindo o
-/// check-in dela).
+/// começou. Resolve-se na Visão geral (`/{tenant}/{torneio}`), iniciando a
+/// fase (ou abrindo o check-in dela).
 #[derive(Serialize, ToSchema)]
 pub struct StageDue {
     pub tournament: PendingTournament,
@@ -75,9 +75,8 @@ pub struct StageDue {
     pub since: DateTime<Utc>,
 }
 
-/// Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se na
-/// aba Organização (`/{tenant}/{torneio}/manage`), iniciando ou mudando a
-/// data.
+/// Um torneio cujo início marcado chegou sem ele ser iniciado: resolve-se no
+/// torneio (`/{tenant}/{torneio}`), iniciando ou mudando a data.
 #[derive(Serialize, ToSchema)]
 pub struct StartDue {
     pub tournament: PendingTournament,

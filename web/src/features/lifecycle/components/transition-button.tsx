@@ -6,7 +6,7 @@ import { api } from "@/shared/api/client";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
 import { ActionWithNote } from "@/shared/ui/action-with-note";
-import { Button, type ButtonKind } from "@/shared/ui/button";
+import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 
 /** Desfazer o início fica no ⋯ do cabeçalho. */
@@ -19,11 +19,6 @@ type Props = {
   label: string;
   /** Pergunta antes de chamar a API (o Modal com o mesmo texto do botão). */
   confirm?: string;
-  /**
-   * `primary` no cabeçalho, onde o motivo vira a dica do botão; `secondary`
-   * na aba Organização, onde ele fica escrito embaixo.
-   */
-  kind?: ButtonKind;
   /** Sem como dar certo agora: o botão fica desabilitado, com este motivo. */
   disabledReason?: string;
   /**
@@ -59,7 +54,6 @@ export function TransitionButton({
   transition,
   label,
   confirm,
-  kind = "primary",
   disabledReason,
   note,
 }: Props) {
@@ -79,13 +73,13 @@ export function TransitionButton({
     <ActionWithNote
       note={disabledReason ?? note}
       error={error}
-      compact={kind === "primary"}
+      compact
       blocked={disabled}
     >
       {confirm ? (
         <ConfirmButton
           destructive={false}
-          kind={kind}
+          kind="primary"
           size="md"
           pending={pending}
           disabled={disabled}
@@ -95,7 +89,12 @@ export function TransitionButton({
           {label}
         </ConfirmButton>
       ) : (
-        <Button kind={kind} pending={pending} disabled={disabled} onClick={go}>
+        <Button
+          kind="primary"
+          pending={pending}
+          disabled={disabled}
+          onClick={go}
+        >
           {label}
         </Button>
       )}

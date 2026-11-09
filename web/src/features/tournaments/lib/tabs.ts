@@ -21,7 +21,6 @@ export type TournamentTabKey =
   | "standings"
   | "participants"
   | "rules"
-  | "manage"
   | "settings";
 
 export type TournamentTab = { key: TournamentTabKey; href: string };
@@ -29,7 +28,7 @@ export type TournamentTab = { key: TournamentTabKey; href: string };
 /**
  * As seções do torneio, uma coisa por seção: Visão geral, Chave (a partir do
  * início), Classificação (quando `standings`), Inscritos, Regras (sempre),
- * Organização e Configurações (só para a organização). O que não se aplica
+ * Configurações (só para a organização). O que não se aplica
  * não entra na lista.
  */
 export function tournamentTabs(
@@ -50,6 +49,6 @@ export function tournamentTabs(
     ...(standings ? [tab("standings")] : []),
     tab("participants"),
     tab("rules"),
-    ...(organizer ? [tab("manage"), tab("settings")] : []),
+    ...(organizer ? [tab("settings")] : []),
   ];
 }

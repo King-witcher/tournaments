@@ -9,7 +9,6 @@
     "standings": "Clasificación",
     "participants": "Inscritos",
     "rules": "Reglas",
-    "manage": "Organización",
     "settings": "Configuración"
   },
   "meta": {
@@ -229,8 +228,8 @@
   "publish": "Publicar y abrir inscripciones",
   "publishConfirm": "Las inscripciones abren en el momento y la comunidad pasa a ver el torneo. Una vez publicado, no vuelve a borrador ni se puede eliminar.",
   "publishBlocked": {
-    "past": "La fecha de inicio ya pasó. Cámbiala en Editar para publicar.",
-    "window": "El inicio está más cerca que la ventana de check-in. Cambia la fecha en Editar para publicar."
+    "past": "La fecha de inicio ya pasó. Cámbiala en Configuración para publicar.",
+    "window": "El inicio está más cerca que la ventana de check-in. Cambia la fecha en Configuración para publicar."
   },
   "delete": "Eliminar borrador",
   "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",

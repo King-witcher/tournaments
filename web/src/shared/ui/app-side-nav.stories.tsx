@@ -94,9 +94,6 @@ export const Item: Story = {
           Inscritos
         </AppSideNavLink>
         <SideNavDivider />
-        <AppSideNavLink href="/arena-sul/copa/manage">
-          Organização
-        </AppSideNavLink>
         <SideNavMenu title="Configurações" defaultExpanded>
           <AppSideNavLink href="/arena-sul/copa/settings" match="exact" inMenu>
             Geral

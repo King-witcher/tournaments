@@ -10,7 +10,7 @@ import { TournamentNavRegistration } from "./tournament-nav-registration";
 type Props = {
   tenant: string;
   tournament: components["schemas"]["Tournament"];
-  /** Organizer ou owner: vê Organização e Configurações. */
+  /** Organizer ou owner: vê Configurações. */
   organizer: boolean;
   /** A seção atual. */
   children: ReactNode;

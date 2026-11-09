@@ -31,12 +31,7 @@ export function TournamentActions({
         kind={organizer ? "tertiary" : "primary"}
       />
       {organizer && (
-        <NextStepButton
-          tenant={tenant}
-          tournament={tournament}
-          now={now}
-          kind="primary"
-        />
+        <NextStepButton tenant={tenant} tournament={tournament} now={now} />
       )}
     </>
   );

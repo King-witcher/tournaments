@@ -24,7 +24,7 @@ type Props = {
 };
 
 /**
- * A fase seguinte à espera, no topo da página do torneio (em todas as abas),
+ * A fase seguinte à espera, na Visão geral,
  * entre o fim da fase anterior e o início dela: quem entra, na ordem, os
  * suplentes e, com check-in, quem confirmou. A organização abre o check-in e
  * inicia a fase (o Modal mostra quem entra); o jogador de um time candidato

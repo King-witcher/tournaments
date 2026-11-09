@@ -20,6 +20,17 @@
   }
 }
 
+// Mais de uma ação fica lado a lado; a que não desenha nada não abre linha.
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+
+  &:empty {
+    display: none;
+  }
+}
+
 .title {
   @include type.type-style("heading-03");
 }

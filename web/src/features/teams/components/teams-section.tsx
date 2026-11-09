@@ -13,8 +13,9 @@ import { serverApi } from "@/shared/api/server";
 import { ButtonLink } from "@/shared/ui/button-link";
 import { Notice } from "@/shared/ui/notice";
 import { checkInShown } from "../lib/formation";
-import { getFormation } from "../server";
+import { getFormation, getSeedingSummary } from "../server";
 import { RenameTeamButton } from "./rename-team-button";
+import { SeedingLink } from "./seeding-link";
 import type { Candidate } from "./substitution-modal";
 import { TeamActions } from "./team-actions";
 import { TeamList } from "./team-list";
@@ -26,8 +27,8 @@ type Props = { tenant: string; slug: string };
  * na página dos times depois de iniciar (ou para quem não organiza). O
  * capitão tem "Renomear" no próprio time; a organização, o ⋯ de cada time
  * (renomear, trocar o capitão e, em andamento, substituir e marcar a
- * desistência) e, antes de iniciar, o link "Formar times". Fica em
- * `<Suspense>`.
+ * desistência) e, antes de iniciar, "Formar times" e a ordem da chave, que no
+ * TDM é de times. Fica em `<Suspense>`.
  */
 export async function TeamsSection({ tenant, slug }: Props) {
   const loaded = await loadTournament(tenant, slug);
@@ -37,11 +38,12 @@ export async function TeamsSection({ tenant, slug }: Props) {
   const { status } = tournament;
   const organizer = me.role !== "player";
   const inProgress = status === "in_progress";
-  const [t, formation, user, members] = await Promise.all([
+  const [t, formation, user, members, seeding] = await Promise.all([
     getTranslations("Team"),
     getFormation(tenant, slug),
     getCurrentUser(),
     organizer && inProgress ? activeMembers(tenant) : [],
+    organizer ? getSeedingSummary(tenant, tournament) : undefined,
   ]);
   if (!formation) {
     return <Notice kind="error">{await apiErrorMessage("internal")}</Notice>;
@@ -89,15 +91,19 @@ export async function TeamsSection({ tenant, slug }: Props) {
       teamsAction={
         organizer &&
         participantsEditable(status) && (
-          <ButtonLink
-            href={`/${tenant}/${slug}/teams`}
-            kind="tertiary"
-            size="sm"
-          >
-            {t("form")}
-          </ButtonLink>
+          <>
+            {seeding?.editable && <SeedingLink tenant={tenant} slug={slug} />}
+            <ButtonLink
+              href={`/${tenant}/${slug}/teams`}
+              kind="tertiary"
+              size="sm"
+            >
+              {t("form")}
+            </ButtonLink>
+          </>
         )
       }
+      teamsDescription={seeding?.text}
     />
   );
 }

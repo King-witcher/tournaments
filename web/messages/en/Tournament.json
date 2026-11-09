@@ -9,7 +9,6 @@
     "standings": "Standings",
     "participants": "Registered",
     "rules": "Rules",
-    "manage": "Organizers",
     "settings": "Settings"
   },
   "meta": {
@@ -229,8 +228,8 @@
   "publish": "Publish and open registration",
   "publishConfirm": "Registration opens right away and the community can see the tournament. Once published, it can't go back to draft or be deleted.",
   "publishBlocked": {
-    "past": "The start date has already passed. Change it under Edit to publish.",
-    "window": "The start is closer than the check-in window. Change the date under Edit to publish."
+    "past": "The start date has already passed. Change it under Settings to publish.",
+    "window": "The start is closer than the check-in window. Change the date under Settings to publish."
   },
   "delete": "Delete draft",
   "deleteConfirm": "Delete this draft? This can't be undone.",

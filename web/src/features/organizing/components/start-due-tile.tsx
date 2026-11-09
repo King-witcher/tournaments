@@ -10,8 +10,8 @@ import { MetaLines } from "@/shared/ui/meta-lines";
 
 /**
  * Um torneio cujo início marcado chegou sem ser iniciado: a comunidade, o
- * início marcado, quantos entrariam na chave e o botão que leva à aba
- * Organização (onde se inicia, com o seeding, ou se muda a data).
+ * início marcado, quantos entrariam na chave e o botão que leva ao torneio
+ * (onde se inicia ou, nas Configurações, se muda a data).
  */
 export function StartDueTile({
   item,
@@ -50,7 +50,7 @@ export function StartDueTile({
       }
       action={
         <ButtonLink
-          href={`/${tournament.tenant_slug}/${tournament.slug}/manage`}
+          href={`/${tournament.tenant_slug}/${tournament.slug}`}
           kind="tertiary"
           size="sm"
         >

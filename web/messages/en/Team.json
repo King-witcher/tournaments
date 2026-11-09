@@ -4,7 +4,7 @@
   "pageTitle": "Teams",
   "howToEdit": "Drag and drop players to form teams.",
   "form": "Form teams",
-  "backToManage": "Back to organization",
+  "backToParticipants": "Back to Registered",
   "seeding": "Seeding",
   "summary": {
     "counts": "{complete, plural, =0 {No complete teams} one {# complete team} other {# complete teams}}, {incomplete, plural, =0 {no incomplete teams} one {# incomplete team} other {# incomplete teams}}, and {reserves, plural, =0 {no reserves} one {# reserve} other {# reserves}}.",
@@ -92,12 +92,6 @@
   "withdraw": {
     "open": "Mark withdrawal",
     "confirm": "Mark {name} as withdrawn? The team's current and upcoming matches become walkovers for the opponent. This can't be undone."
-  },
-  "manage": {
-    "title": "Teams",
-    "started": "Substitutions and captain changes are under Registered.",
-    "unavailable": "Couldn't load teams right now. Reload the page.",
-    "view": "View teams"
   },
   "howToEditTouch": "Use the ⋯ menu on each player to form teams."
 }

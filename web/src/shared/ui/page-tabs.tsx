@@ -43,7 +43,7 @@ const TabLink = IntlLink as unknown as ComponentType;
  * Abas do Carbon que são links para sub-rotas (uma coisa por aba, cada uma
  * com o próprio `loading.tsx`); a atual sai do endereço. Use no `layout.tsx`
  * do segmento, com as sub-rotas em `children`, que vão no painel da aba.
- * Aba que não se aplica (Regras sem regras, Organização para jogador) não
+ * Aba que não se aplica (Regras sem regras, Configurações para jogador) não
  * entra em `tabs`. O respiro entre a barra e o conteúdo já vem do painel: o
  * conteúdo da aba não leva margem nem `Stack` extra para isso. Setas movem
  * entre as abas; Enter abre.

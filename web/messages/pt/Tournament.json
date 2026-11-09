@@ -9,7 +9,6 @@
     "standings": "Classificação",
     "participants": "Inscritos",
     "rules": "Regras",
-    "manage": "Organização",
     "settings": "Configurações"
   },
   "meta": {
@@ -229,8 +228,8 @@
   "publish": "Publicar e abrir inscrições",
   "publishConfirm": "As inscrições abrem na hora e a comunidade passa a ver o torneio. Publicado, ele não volta a rascunho nem pode ser excluído.",
   "publishBlocked": {
-    "past": "A data de início já passou. Mude-a em Editar para publicar.",
-    "window": "O início está mais perto que a janela de check-in. Mude a data em Editar para publicar."
+    "past": "A data de início já passou. Mude-a em Configurações para publicar.",
+    "window": "O início está mais perto que a janela de check-in. Mude a data em Configurações para publicar."
   },
   "delete": "Excluir rascunho",
   "deleteConfirm": "Excluir este rascunho? Não dá para desfazer.",

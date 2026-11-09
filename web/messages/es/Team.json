@@ -4,7 +4,7 @@
   "pageTitle": "Equipos",
   "howToEdit": "Arrastra y suelta jugadores para formar equipos.",
   "form": "Armar equipos",
-  "backToManage": "Volver a la organización",
+  "backToParticipants": "Volver a los inscritos",
   "seeding": "Orden de la llave",
   "summary": {
     "counts": "{complete, plural, =0 {Ningún equipo completo} one {# equipo completo} other {# equipos completos}}, {incomplete, plural, =0 {ninguno incompleto} one {# incompleto} other {# incompletos}} y {reserves, plural, =0 {ningún suplente} one {# suplente} other {# suplentes}}.",
@@ -92,12 +92,6 @@
   "withdraw": {
     "open": "Marcar abandono",
     "confirm": "¿Marcar el abandono de {name}? Las series del equipo, la actual y las próximas, pasan a W.O. para el rival. No se puede deshacer."
-  },
-  "manage": {
-    "title": "Equipos",
-    "started": "Las sustituciones y el cambio de capitán están en Inscritos.",
-    "unavailable": "No se pudieron cargar los equipos ahora. Recarga la página.",
-    "view": "Ver los equipos"
   },
   "howToEditTouch": "Usa el menú ⋯ de cada jugador para formar equipos."
 }

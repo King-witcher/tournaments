@@ -23,6 +23,8 @@ type Props = {
   teamActions?: (team: Team) => ReactNode;
   /** Ao lado do título dos times ("Formar times", para a organização). */
   teamsAction?: ReactNode;
+  /** Embaixo do título dos times (a ordem da chave, para a organização). */
+  teamsDescription?: ReactNode;
 };
 
 /**
@@ -38,6 +40,7 @@ export function TeamList({
   started,
   teamActions,
   teamsAction,
+  teamsDescription,
 }: Props) {
   const t = useTranslations("Team.teams");
   const checkedIn = new Set(formation.checked_in);
@@ -50,6 +53,7 @@ export function TeamList({
         <TeamsColumn
           count={formation.teams.length}
           action={teamsAction}
+          description={teamsDescription}
           empty={t("emptyReadOnly")}
         >
           {formation.teams.map((team) => (

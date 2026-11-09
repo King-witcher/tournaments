@@ -46,7 +46,7 @@ export async function SeedingView({ tenant, slug }: Props) {
 
   const { me, tournament } = loaded;
   const path = `/${tenant}/${slug}`;
-  const manage = `${path}/manage`;
+  const participants = `${path}/participants`;
   const breadcrumbs = [
     { href: path, label: localizedName(tournament, locale) },
   ];
@@ -70,7 +70,7 @@ export async function SeedingView({ tenant, slug }: Props) {
     return (
       <>
         <PageHeader breadcrumbs={breadcrumbs} title={t("pageTitle")} />
-        <PageError href={manage} label={t("backToManage")}>
+        <PageError href={participants} label={t("backToParticipants")}>
           {seedingOpen(tournament)
             ? await apiErrorMessage("internal")
             : t("closed")}
@@ -129,8 +129,8 @@ export async function SeedingView({ tenant, slug }: Props) {
                 {tTeam("form")}
               </ButtonLink>
             ) : (
-              <ButtonLink href={manage} kind="tertiary">
-                {t("backToManage")}
+              <ButtonLink href={participants} kind="tertiary">
+                {t("backToParticipants")}
               </ButtonLink>
             )
           }
