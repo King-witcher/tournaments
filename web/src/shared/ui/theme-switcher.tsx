@@ -29,6 +29,7 @@ export function ThemeSwitcher() {
         {t("label")}
       </p>
       <ContentSwitcher
+        lowContrast
         aria-labelledby={labelId}
         selectedIndex={THEME_CHOICES.indexOf(theme)}
         onChange={({ index }) => {

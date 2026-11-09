@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { OPEN_TIES_QUERY } from "@/features/matches/lib/ties";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
 import { ActionTile } from "@/shared/ui/action-tile";
@@ -10,8 +11,8 @@ import { MetaLines } from "@/shared/ui/meta-lines";
 
 /**
  * Um torneio cujas séries acabaram com empate na classificação esperando a
- * organização: a comunidade, desde quando espera e o botão que leva à aba
- * Classificação, onde se decide a ordem.
+ * organização: a comunidade, desde quando espera e o botão que abre a decisão
+ * deles na Classificação.
  */
 export function PendingTiesTile({
   item,
@@ -45,7 +46,7 @@ export function PendingTiesTile({
       }
       action={
         <ButtonLink
-          href={`/${tournament.tenant_slug}/${tournament.slug}/standings`}
+          href={`/${tournament.tenant_slug}/${tournament.slug}/standings?${OPEN_TIES_QUERY}`}
           kind="tertiary"
           size="sm"
         >

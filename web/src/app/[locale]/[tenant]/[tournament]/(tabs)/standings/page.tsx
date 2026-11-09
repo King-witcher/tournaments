@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { BracketTab } from "@/features/matches/components/bracket-tab";
+import { OPEN_TIES_PARAM } from "@/features/matches/lib/ties";
 import { parseStageParam } from "@/features/stages/lib/stages";
 import { TabLoading, TableSkeleton } from "@/shared/ui/skeleton";
 
@@ -22,12 +23,13 @@ export default async function StandingsPage({
       }
     >
       {Promise.all([params, searchParams]).then(
-        ([{ tenant, tournament }, { stage }]) => (
+        ([{ tenant, tournament }, query]) => (
           <BracketTab
             tenant={tenant}
             slug={tournament}
             view="standings"
-            stage={parseStageParam(stage)}
+            stage={parseStageParam(query.stage)}
+            openTies={query[OPEN_TIES_PARAM] === "open"}
           />
         ),
       )}

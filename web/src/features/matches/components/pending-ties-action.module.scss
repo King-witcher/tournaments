@@ -1,0 +1,9 @@
+@use "@carbon/react/scss/breakpoint";
+
+// No celular, a largura da página (o Carbon limita a 288px), como os avisos da
+// `Notice`. Classe dobrada para vencer a regra dele (mesmo peso).
+.callout.callout {
+  @include breakpoint.breakpoint-down(md) {
+    max-inline-size: none;
+  }
+}

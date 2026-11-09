@@ -43,17 +43,22 @@ type Props<V extends string> = Omit<
  * diferentes de uma página são abas (`Tabs`, `PageTabs`). Opções com texto
  * curto (`Switch`) ou só com ícone (`IconSwitch`, com o texto na dica), de
  * duas a cinco. Controlado: `value` e `onChange` com o valor da opção. Peça
- * o nome do grupo (`aria-label` ou `aria-labelledby`).
+ * o nome do grupo (`aria-label` ou `aria-labelledby`). Em baixo contraste
+ * por padrão (a opção marcada num fundo claro, sem o preto do alto contraste,
+ * que pesa mais que o título da página); `lowContrast={false}` volta ao
+ * padrão do Carbon.
  */
 export function ContentSwitcher<V extends string>({
   options,
   value,
   onChange,
+  lowContrast = true,
   ...props
 }: Props<V>) {
   return (
     <CarbonContentSwitcher
       {...props}
+      lowContrast={lowContrast}
       selectedIndex={options.findIndex((option) => option.value === value)}
       onChange={({ index }) => {
         if (index !== undefined) onChange(options[index].value);

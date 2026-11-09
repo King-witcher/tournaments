@@ -1,0 +1,8 @@
+// Sem o padding que o Carbon põe no painel: o conteúdo alinha com a página, e
+// o respiro da barra para ele é o do Stack da página. Classe dobrada para
+// vencer a do Carbon, que tem o mesmo peso. Chave e tabela largas rolam dentro
+// delas: o painel não cresce com elas.
+.panel.panel {
+  min-inline-size: 0;
+  padding: 0;
+}

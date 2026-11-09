@@ -1,6 +1,7 @@
 //! O empate do fim da fase decidido pela organização: a fase espera, o aviso
-//! sai uma vez, a decisão por grupo (com o papel e o grupo que bate), a ordem
-//! da chave em todos, a correção que muda o grupo, e o padrão, que não espera.
+//! sai uma vez, a decisão por grupo (com o papel e o grupo que bate), um grupo
+//! de cada vez até o último, a correção que muda o grupo, e o padrão, que não
+//! espera.
 
 use axum::{Router, http::StatusCode};
 use serde_json::{Value, json};
@@ -168,7 +169,7 @@ async fn the_last_tie_waits_for_the_organizer() {
 }
 
 #[tokio::test]
-async fn the_seed_order_for_all_and_a_correction_that_changes_the_group() {
+async fn each_group_is_decided_on_its_own_and_a_correction_changes_the_group() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;
     let p = players(&app, &db, &ana, 4).await;
@@ -216,16 +217,25 @@ async fn the_seed_order_for_all_and_a_correction_that_changes_the_group() {
     );
     assert_eq!(tie_notices(&db).await, [vec![ana.id]]);
 
-    // A ordem da chave em todos encerra.
-    let (status, b) = post_empty(&app, &format!("{TIES}/seed"), &ana).await;
+    // Na ordem da chave, um grupo por vez e em qualquer ordem: o de baixo não
+    // encerra, sobra o outro; o último encerra.
+    let (status, b) = post(&app, TIES, &ana, json!({ "teams": teams[2..] })).await;
     assert_eq!(status, StatusCode::OK, "{b}");
-    assert_eq!(b["status"], "finished");
-    assert_eq!(order(&b), ids(&all));
-    let (status, body) = post_empty(&app, &format!("{TIES}/seed"), &ana).await;
+    assert_eq!(b["status"], "in_progress");
+    assert_eq!(
+        b["pending_ties"],
+        json!([{ "position": 1, "team_ids": teams[..2] }])
+    );
+    // O mesmo grupo de novo, como quem ainda não viu que a outra pessoa decidiu.
+    let (status, body) = post(&app, TIES, &ana, json!({ "teams": teams[2..] })).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("tie.not_pending"))
     );
+    let (status, b) = post(&app, TIES, &ana, json!({ "teams": teams[..2] })).await;
+    assert_eq!(status, StatusCode::OK, "{b}");
+    assert_eq!(b["status"], "finished");
+    assert_eq!(order(&b), ids(&all));
 }
 
 #[tokio::test]
@@ -245,7 +255,8 @@ async fn by_default_the_seed_decides_and_nothing_waits() {
     assert_eq!(b["pending_ties"], json!([]));
     assert_eq!(order(&b), ids(&[&p[0], &p[1], &p[2]]));
     assert!(tie_notices(&db).await.is_empty());
-    let (status, body) = post_empty(&app, &format!("{TIES}/seed"), &ana).await;
+    let teams: Vec<Value> = p.iter().map(|u| team(&b, u)).collect();
+    let (status, body) = post(&app, TIES, &ana, json!({ "teams": teams })).await;
     assert_eq!(
         (status, body),
         (StatusCode::CONFLICT, err("tie.not_pending"))

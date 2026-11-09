@@ -63,6 +63,11 @@ export const WithError: Story = {
   args: { error: "Já existe um time com este nome." },
 };
 
+/** Mais largo e com "Fechar": o que já foi salvo fica ao sair. */
+export const WiderWithClose: Story = {
+  args: { size: "md", cancelLabel: "Fechar" },
+};
+
 /** Primário `danger` para o que tira algo. */
 export const Destructive: Story = {
   args: {

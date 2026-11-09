@@ -1,0 +1,5 @@
+// Sem o padding que o Carbon põe no painel: o respiro das abas para o conteúdo
+// é o do Stack do Modal. Classe dobrada para vencer a do Carbon (mesmo peso).
+.panel.panel {
+  padding: 0;
+}

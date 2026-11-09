@@ -4,10 +4,15 @@ import { Suspense } from "react";
 import { LiveMatches } from "@/features/matches/components/live-matches";
 import { PendingMatches } from "@/features/matches/components/pending-matches";
 import { PendingTiesTask } from "@/features/matches/components/pending-ties-task";
+import { OPEN_TIES_QUERY } from "@/features/matches/lib/ties";
 import { loadBracket } from "@/features/matches/server";
 import { MyParticipation } from "@/features/participants/components/my-participation";
 import { NextStage } from "@/features/stages/components/next-stage";
-import { pendingStage, withStageStatus } from "@/features/stages/lib/stages";
+import {
+  isLastStage,
+  pendingStage,
+  withStageStatus,
+} from "@/features/stages/lib/stages";
 import { PageColumns } from "@/shared/ui/page-columns";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
@@ -72,7 +77,10 @@ export async function TournamentOverview({ tenant, slug }: Props) {
             </Suspense>
           )}
           {organizer && bracket && bracket.pending_ties.length > 0 && (
-            <PendingTiesTask href={`/${tenant}/${slug}/standings`} />
+            <PendingTiesTask
+              href={`/${tenant}/${slug}/standings?${OPEN_TIES_QUERY}`}
+              lastStage={isLastStage(tournament, bracket.stage)}
+            />
           )}
           {bracket && (
             <PendingMatches bracket={bracket} basePath={matchesPath} />

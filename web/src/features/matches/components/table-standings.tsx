@@ -1,18 +1,23 @@
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { memberPath } from "@/features/members/lib/paths";
 import { useTeamName } from "@/features/teams/hooks/use-team-name";
 import { soloMember, teamLeft } from "@/features/teams/lib/team-name";
-import { isEvenSeries } from "@/features/tournaments/lib/format";
-import { stageTiebreakers } from "@/features/tournaments/lib/tiebreakers";
 import type { components } from "@/shared/api/schema";
 import { Avatar } from "@/shared/ui/avatar";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { DataTable, type DataTableColumn } from "@/shared/ui/data-table";
 import { InfoTip } from "@/shared/ui/info-tip";
 import { StatusTag } from "@/shared/ui/status-tag";
-import { fragsText } from "../lib/score";
+import { STANDINGS_TABLE_ID } from "../lib/ties";
 import { DepartureTag } from "./departure-tag";
+import {
+  type NumberColumn,
+  numberColumns,
+  useRatingText,
+  useStandingNumbers,
+} from "./standing-numbers";
 import styles from "./table-standings.module.scss";
 
 type Schemas = components["schemas"];
@@ -26,126 +31,109 @@ type Props = {
 
 /**
  * A tabela do round robin e do suíço: posição, o time (no duelo, o jogador,
- * com link para a pessoa), o saldo de séries com sinal no round robin ou os
- * pontos no suíço, séries vencidas e perdidas (com os empates da série par e os
- * byes do suíço), partidas com o saldo (na md1 não: seriam as mesmas contas das
- * séries), o saldo de frags (é ele que desempata, não o total; pró e contra
- * vêm ao lado, marcados como incompletos quando alguma série veio sem eles,
- * porque aí não desempatam; "sem frags" quando nenhuma veio), o Buchholz no
- * suíço que o usa no desempate (explicado no (i) da coluna), e quem venceu,
- * desistiu ou saiu. Embaixo, os desempates que não foram pelo primeiro
- * critério, que seguem a ordem da fase, um por linha ("2º à frente do 3º pelo
- * confronto direto"; no menor rating, com o rating do início de cada um),
- * visíveis também no celular, onde as colunas de saldo somem (e, com a do
- * Buchholz, o (i): a explicação vem depois dos desempates, se algum foi por
- * ele). Enquanto a fase corre, é a ordem de agora; no fim, a definitiva. No
- * empate do fim que espera a organização, os empatados dividem a melhor
- * posição do grupo, com a etiqueta "Empate a decidir" e uma linha nos
- * desempates; no grupo que ela ordenou, o desempate diz "por decisão da
- * organização", com o motivo.
+ * com link para a pessoa), os pontos no suíço, e as colunas de número na ordem
+ * dos desempates da fase (`numberColumns`), o saldo em cima e, embaixo, de
+ * onde ele vem (`useStandingNumbers`); no fim, quem venceu, desistiu ou saiu.
+ * Na linha que ficou à frente da seguinte por um critério, que não o primeiro
+ * (a coluna já o mostra), um (i) ao lado da posição com a frase ("2º à frente
+ * do 3º pelo confronto direto"; no menor rating, com o rating do início de
+ * cada um; na decisão da organização, com o motivo); ele fica fora das
+ * colunas que somem no celular. Enquanto a fase corre, é a ordem de agora; no
+ * fim, a definitiva. No empate do fim que espera a organização, os empatados
+ * dividem a melhor posição do grupo, com a etiqueta "Empate a decidir".
  */
 export function TableStandings({ tenant, bracket, lastStage }: Props) {
   const t = useTranslations("Bracket.table");
   const tStandings = useTranslations("Bracket.standings");
   const teamName = useTeamName();
-  const locale = useLocale();
+  const numbers = useStandingNumbers(bracket.format.best_of);
+  const ratingOf = useRatingText();
   const rows = bracket.table ?? [];
   const swiss = bracket.format.format === "swiss";
-  // O suíço sem o Buchholz entre os desempates não o calcula.
-  const buchholz =
-    stageTiebreakers(bracket.format)?.includes("buchholz") ?? false;
   const finished = bracket.status === "finished";
-  const even = isEvenSeries(bracket.format.best_of);
   const byId = new Map(bracket.entrants.map((e) => [e.id, e]));
-  const signed = (n: number) => (n > 0 ? `+${n}` : fragsText(n));
-  // O rating do início é a média do time: até 2 casas, sem separador de
-  // milhar, como o rating no resto do site.
-  const ratingFormat = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 2,
-    useGrouping: false,
-  });
-  const ratingOf = (r: Schemas["TableRow"]) =>
-    r.rating == null ? "" : ratingFormat.format(r.rating);
   const nameOf = (teamId: number) => {
     const team = byId.get(teamId);
     return team ? teamName(team) : "";
   };
 
+  const headers: Record<NumberColumn, ReactNode> = {
+    record: t("record"),
+    maps: t("maps"),
+    frags: t("frags"),
+    buchholz: (
+      <InfoTip term={t("buchholz")} label={t("buchholzTip")}>
+        {t("buchholzMeaning")}
+      </InfoTip>
+    ),
+  };
   const columns: DataTableColumn[] = [
     { key: "position", header: t("position") },
     { key: "team", header: t("team") },
-    { key: "score", header: swiss ? t("points") : t("seriesDiff") },
-    { key: "record", header: even ? t("recordDraws") : t("record") },
-    ...(bracket.format.best_of === 1
-      ? []
-      : [{ key: "maps", header: t("maps"), secondary: true }]),
-    { key: "frags", header: t("frags"), secondary: true },
-    ...(buchholz
-      ? [
-          {
-            key: "buchholz",
-            header: (
-              <InfoTip term={t("buchholz")} label={t("buchholzTip")}>
-                {t("buchholzMeaning")}
-              </InfoTip>
-            ),
-            secondary: true,
-          },
-        ]
-      : []),
+    ...(swiss ? [{ key: "points", header: t("points") }] : []),
+    ...numberColumns(bracket.format).map((key) => ({
+      key,
+      header: headers[key],
+      secondary: key !== "record",
+    })),
     { key: "notes", header: t("notes"), secondary: true },
   ];
 
-  const tableRows = rows.map((r) => {
+  // O critério que pôs a linha à frente da seguinte, quando não foi o
+  // primeiro. Entre dois que ainda não jogaram, é sempre a ordem da chave: não
+  // há o que explicar. No empate a decidir, a ordem é provisória.
+  const started = (r: Schemas["TableRow"]) => r.played + r.byes > 0;
+  const whyAhead = (r: Schemas["TableRow"], i: number) => {
+    const next = rows[i + 1];
+    if (!next || !r.ahead_by) return undefined;
+    if (r.ahead_by === "points" || r.ahead_by === "series_diff")
+      return undefined;
+    if (!started(r) && !started(next)) return undefined;
+    if (r.ahead_by === "seed" && r.tie_pending && next.tie_pending)
+      return undefined;
+    const values = {
+      position: r.position,
+      name: nameOf(r.team_id),
+      next: next.position,
+      other: nameOf(next.team_id),
+      rating: ratingOf(r),
+      otherRating: ratingOf(next),
+    };
+    if (r.ahead_by === "organizer" && r.tie_reason) {
+      return t("aheadBy.organizerReason", { ...values, reason: r.tie_reason });
+    }
+    const text = t(`aheadBy.${r.ahead_by}`, values);
+    // No celular, a coluna do Buchholz (e o (i) dela) some.
+    return r.ahead_by === "buchholz" ? `${text} ${t("buchholzMeaning")}` : text;
+  };
+
+  const tableRows = rows.map((r, i) => {
     const team = byId.get(r.team_id);
     const name = nameOf(r.team_id);
     const solo = team ? soloMember(team) : null;
-    const frags = t("fragsDetail", {
-      won: fragsText(r.frags_for),
-      lost: fragsText(r.frags_against),
-    });
+    const place = t("place", { position: r.position });
+    const why = whyAhead(r, i);
     return {
       id: String(r.team_id),
       search: name,
       // A página da pessoa, no time de um jogador que continua na comunidade.
       href: solo && !solo.left ? memberPath(tenant, solo.user_id) : undefined,
       cells: {
-        position: t("place", { position: r.position }),
+        position: why ? (
+          <InfoTip term={place} label={t("whyAhead", { name })}>
+            {why}
+          </InfoTip>
+        ) : (
+          place
+        ),
         team: (
           <span className={styles.team}>
             <Avatar src={solo?.avatar_url} name={name} />
             <span className={styles.name}>{name}</span>
           </span>
         ),
-        score: swiss ? String(r.points) : signed(r.series_diff),
-        record: even
-          ? t("recordValueDraws", {
-              wins: r.wins,
-              draws: r.draws,
-              losses: r.losses,
-            })
-          : r.byes > 0
-            ? t("recordByes", { wins: r.wins, losses: r.losses, byes: r.byes })
-            : t("recordValue", { wins: r.wins, losses: r.losses }),
-        maps: t("diff", {
-          won: r.maps_won,
-          lost: r.maps_lost,
-          diff: signed(r.map_diff),
-        }),
-        // Sem nenhum frag enviado, "sem frags" em vez de 0–0 incompleto (com
-        // negativos, a soma dá 0 com frags; os dois em 0, quase nunca).
-        frags:
-          !r.frags_complete && r.frags_for === 0 && r.frags_against === 0 ? (
-            t("noFrags")
-          ) : (
-            <span className={styles.frags}>
-              <span className={styles.fragDiff}>{signed(r.frag_diff)}</span>
-              <span className={styles.fragDetail}>
-                {r.frags_complete ? frags : t("incomplete", { frags })}
-              </span>
-            </span>
-          ),
-        buchholz: String(r.buchholz ?? 0),
+        points: String(r.points),
+        ...numbers(r),
         notes: (
           <span className={styles.notes}>
             {finished && lastStage && r.position === 1 && (
@@ -167,46 +155,12 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
     };
   });
 
-  // Os desempates que a tela explica: o critério que pôs cada linha à frente
-  // da seguinte, quando não foi o primeiro critério, que a coluna já mostra.
-  // Entre dois que ainda não jogaram, é sempre a ordem da chave: não há o que
-  // explicar.
-  const started = (r: Schemas["TableRow"]) => r.played + r.byes > 0;
-  const tiebreaks = rows.flatMap((r, i) => {
-    const next = rows[i + 1];
-    if (!next || !r.ahead_by) return [];
-    if (r.ahead_by === "points" || r.ahead_by === "series_diff") return [];
-    if (!started(r) && !started(next)) return [];
-    // No empate a decidir, a ordem é provisória: a linha do grupo vem abaixo.
-    if (r.ahead_by === "seed" && r.tie_pending && next.tie_pending) return [];
-    const values = {
-      position: r.position,
-      name: nameOf(r.team_id),
-      next: next.position,
-      other: nameOf(next.team_id),
-      rating: ratingOf(r),
-      otherRating: ratingOf(next),
-    };
-    if (r.ahead_by === "organizer" && r.tie_reason) {
-      return [
-        t("aheadBy.organizerReason", { ...values, reason: r.tie_reason }),
-      ];
-    }
-    return [t(`aheadBy.${r.ahead_by}`, values)];
-  });
-  const names = new Intl.ListFormat(locale, { type: "conjunction" });
-  const pending = (bracket.pending_ties ?? []).map((tie) =>
-    t("pendingGroup", {
-      position: tie.position,
-      names: names.format(tie.team_ids.map(nameOf)),
-    }),
-  );
-  const explained = [...pending, ...tiebreaks];
-
   return (
     // Sem título: o da página já é "Classificação".
-    <Stack gap={5}>
-      {!finished && <p className={styles.current}>{t("current")}</p>}
+    <Stack gap={5} id={STANDINGS_TABLE_ID} tabIndex={-1}>
+      {!finished && (bracket.pending_ties ?? []).length === 0 && (
+        <p className={styles.current}>{t("current")}</p>
+      )}
       <DataTable
         label={t("title")}
         primaryColumn="team"
@@ -214,19 +168,6 @@ export function TableStandings({ tenant, bracket, lastStage }: Props) {
         rows={tableRows}
         empty={{ text: t("empty") }}
       />
-      {explained.length > 0 && (
-        <div>
-          <h2 className={styles.tiebreaksTitle}>{t("tiebreaks")}</h2>
-          <ul className={styles.tiebreakList}>
-            {explained.map((text) => (
-              <li key={text}>{text}</li>
-            ))}
-          </ul>
-          {rows.some((r) => r.ahead_by === "buchholz") && (
-            <p className={styles.buchholzNote}>{t("buchholzMeaning")}</p>
-          )}
-        </div>
-      )}
     </Stack>
   );
 }

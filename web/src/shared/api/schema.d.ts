@@ -1828,22 +1828,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{slug}/tournaments/{tournament}/ties/seed": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["decide_ties_by_seed"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/tenants/{slug}/tournaments/{tournament}/translations/{locale}": {
         parameters: {
             query?: never;
@@ -13883,67 +13867,6 @@ export interface operations {
             };
             /** @description tie.reason_invalid {max}, request.invalid_body */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-        };
-    };
-    decide_ties_by_seed: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Slug do tenant */
-                slug: string;
-                /** @description Slug do torneio */
-                tournament: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Todos os empates pendentes do fim da fase decididos pela ordem da chave, sem motivo; o torneio encerra */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TournamentBracket"];
-                };
-            };
-            /** @description auth.unauthenticated */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.forbidden (só organizer ou owner) */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tenant.not_found, tournament.not_found, bracket.not_found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorBody"];
-                };
-            };
-            /** @description tie.not_pending (nenhum empate pendente) */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

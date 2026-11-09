@@ -19,12 +19,15 @@ type Props = {
   stage?: number;
   /** A classificação final do torneio em mais de uma fase, no lugar da de uma fase. */
   final?: boolean;
+  /** Veio de um "Decidir": a organização entra com o Modal dos empates aberto. */
+  openTies?: boolean;
 };
 
 /**
  * A classificação do torneio já iniciado: no round robin e no suíço, a tabela;
- * na eliminação, as colocações. Para a organização, em cima, os empates do
- * fim que esperam a decisão dela. Busca a chave, então fica em `<Suspense>`.
+ * na eliminação, as colocações. Em cima da tabela, o aviso dos empates do fim
+ * que esperam a organização (ela decide por ele). Busca a chave, então fica em
+ * `<Suspense>`.
  */
 export async function StandingsSection({
   tenant,
@@ -32,6 +35,7 @@ export async function StandingsSection({
   organizer,
   stage,
   final,
+  openTies,
 }: Props) {
   const loaded = await loadBracket(tenant, tournament.slug, stage);
   if (loaded.kind === "error") {
@@ -42,19 +46,21 @@ export async function StandingsSection({
   const bracket = withStageStatus(tournament, loaded.data);
   if (final) return <FinalStandings tenant={tenant} bracket={bracket} />;
   if (isTable(bracket.format)) {
+    const lastStage = isLastStage(tournament, bracket.stage);
     return (
-      <Stack gap={7}>
-        {organizer && (
-          <PendingTies
-            tenant={tenant}
-            slug={tournament.slug}
-            bracket={bracket}
-          />
-        )}
+      <Stack gap={5}>
+        <PendingTies
+          tenant={tenant}
+          slug={tournament.slug}
+          bracket={bracket}
+          organizer={organizer}
+          lastStage={lastStage}
+          autoOpen={openTies}
+        />
         <TableStandings
           tenant={tenant}
           bracket={bracket}
-          lastStage={isLastStage(tournament, bracket.stage)}
+          lastStage={lastStage}
         />
       </Stack>
     );

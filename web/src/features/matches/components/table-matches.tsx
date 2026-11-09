@@ -42,14 +42,21 @@ export function TableMatches({ tenant, tournament, bracket }: Props) {
         rounds
       ) : (
         <MatchViews
-          rounds={rounds}
-          crosstable={
-            <Crosstable
-              tenant={tenant}
-              tournament={tournament}
-              bracket={bracket}
-            />
-          }
+          label={t("views.label")}
+          views={[
+            { key: "rounds", label: t("views.rounds"), content: rounds },
+            {
+              key: "crosstable",
+              label: t("views.crosstable"),
+              content: (
+                <Crosstable
+                  tenant={tenant}
+                  tournament={tournament}
+                  bracket={bracket}
+                />
+              ),
+            },
+          ]}
         />
       )}
     </Section>

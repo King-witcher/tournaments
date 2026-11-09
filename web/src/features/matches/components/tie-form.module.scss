@@ -1,0 +1,30 @@
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// Qual ordem está valendo, em cima da lista, e, mexida, voltar à da chave. A
+// altura é a do botão: a linha não pula quando ele aparece.
+.orderBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-block-size: spacing.$spacing-08;
+}
+
+.orderLabel {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}
+
+.reason {
+  @include type.type-style("body-01");
+
+  overflow-wrap: anywhere;
+}
+
+.note {
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}

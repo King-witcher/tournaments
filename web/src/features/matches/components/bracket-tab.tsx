@@ -12,7 +12,6 @@ import {
 import { ErrorBack } from "@/features/tournaments/components/error-back";
 import { loadTournament } from "@/features/tournaments/server";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { Stack } from "@/shared/ui/carbon/stack";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { BracketSection } from "./bracket-section";
 import { StandingsSection } from "./standings-section";
@@ -24,15 +23,24 @@ type Props = {
   view: "bracket" | "standings";
   /** A fase pedida no endereço (`?stage=`); sem ela, a atual. */
   stage?: StageParam;
+  /** Veio de um "Decidir": a Classificação abre o Modal dos empates. */
+  openTies?: boolean;
 };
 
 /**
  * As abas Chave e Classificação do torneio, a partir do início; antes, o
  * aviso de quando elas têm conteúdo, com o caminho para os inscritos. Com
- * mais de uma fase começada, um seletor de fase em cima (a atual é a
- * padrão). Lê a sessão: fica em `<Suspense>`.
+ * mais de uma fase começada, as abas de fase em cima (a atual é a padrão; na
+ * Classificação do torneio encerrado, a final). Lê a sessão: fica em
+ * `<Suspense>`.
  */
-export async function BracketTab({ tenant, slug, view, stage }: Props) {
+export async function BracketTab({
+  tenant,
+  slug,
+  view,
+  stage,
+  openTies,
+}: Props) {
   const [t, loaded] = await Promise.all([
     getTranslations("Bracket"),
     loadTournament(tenant, slug),
@@ -76,6 +84,7 @@ export async function BracketTab({ tenant, slug, view, stage }: Props) {
         organizer={loaded.me.role !== "player"}
         stage={requested}
         final={shown === "final"}
+        openTies={openTies}
       />
     ) : (
       <BracketSection
@@ -86,9 +95,8 @@ export async function BracketTab({ tenant, slug, view, stage }: Props) {
     );
   if (!hasSeveralStages(tournament)) return content;
   return (
-    <Stack gap={7}>
-      <StageSelect tournament={tournament} view={view} value={shown} />
+    <StageSelect tournament={tournament} view={view} value={shown}>
       {content}
-    </Stack>
+    </StageSelect>
   );
 }

@@ -30,6 +30,9 @@ type Props = {
  * Use em rótulo cujo sentido não é óbvio para quem não conhece o termo. O que
  * todo mundo precisa ler vai no texto da página, não numa dica escondida.
  *
+ * Numa linha de `DataTable` com `href`, o clique na dica não abre a página da
+ * linha (`data-no-row-link`).
+ *
  * ```tsx
  * <InfoTip term={t("labels.checkIn")} label={t("tips.checkIn")}>
  *   {t("tips.checkInText")}
@@ -38,7 +41,7 @@ type Props = {
  */
 export function InfoTip({ label, term, children }: Props) {
   const tip = (
-    <Toggletip align="bottom-start" autoAlign>
+    <Toggletip align="bottom-start" autoAlign data-no-row-link>
       <ToggletipButton label={label} className={styles.button}>
         <Information />
       </ToggletipButton>

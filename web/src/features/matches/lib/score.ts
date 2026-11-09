@@ -11,6 +11,11 @@ export function fragsText(n: number) {
   return n < 0 ? `−${-n}` : String(n);
 }
 
+/** Saldo com o sinal à frente: +3, 0, −2. */
+export function signedNumber(n: number) {
+  return n > 0 ? `+${n}` : fragsText(n);
+}
+
 /** Os dois lados preenchidos e iguais: não há vencedor. */
 export function isTied(a: number | null, b: number | null) {
   return a !== null && b !== null && a === b;

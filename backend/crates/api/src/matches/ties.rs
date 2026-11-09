@@ -2,11 +2,9 @@
 //! (`final_tie = organizer`; a regra é do `engine`, `formats::table::ties`).
 //! A fase espera: com algum empate pendente, ela não termina, mesmo com todas
 //! as séries decididas. A organização decide um grupo por vez, com a ordem
-//! completa e um motivo opcional (`decide_tie`), ou usa a ordem da chave em
-//! todos os pendentes (`decide_ties_by_seed`); usar a ordem da chave num grupo
-//! também grava uma decisão. Cada decisão vale pelo conjunto de times: a
-//! correção que muda quem está empatado a deixa sem efeito, e o grupo volta a
-//! ser pendente.
+//! completa e um motivo opcional (`decide_tie`); usar a ordem da chave também
+//! grava uma decisão. Cada decisão vale pelo conjunto de times: a correção que
+//! muda quem está empatado a deixa sem efeito, e o grupo volta a ser pendente.
 //!
 //! Depois de toda mudança (`settle`), `sync` acerta a marca de espera
 //! (`stage_pending_ties`): quando a fase passa a esperar, avisa a organização
@@ -127,20 +125,19 @@ fn pending_group<'a>(
         .ok_or(ApiError::conflict("tie.not_pending"))
 }
 
-/// Grava as decisões `orders` e devolve a chave como ficou, para quem decidiu:
-/// o `settle` termina a fase se não sobrou pendente, e a página do torneio e
-/// "Seus torneios" dos inscritos recarregam.
+/// Grava a decisão e devolve a chave como ficou, para quem decidiu: o `settle`
+/// termina a fase se não sobrou pendente, e a página do torneio e "Seus
+/// torneios" dos inscritos recarregam.
 async fn write(
     conn: &mut PgConnection,
     member: &TenantMember<Organizer>,
     mut tournament: StoredTournament,
     stage: &Stage,
-    orders: &[(Vec<ParticipantId>, Option<String>)],
+    teams: &[ParticipantId],
+    reason: Option<&str>,
 ) -> Result<TournamentBracket, ApiError> {
     let at = (tournament.tenant, tournament.id, stage.number);
-    for (teams, reason) in orders {
-        db::insert_decision(conn, at, teams, member.user.id, reason.as_deref()).await?;
-    }
+    db::insert_decision(conn, at, teams, member.user.id, reason).await?;
     let before = Snapshot::of(stage);
     let (stage, status) = settle::settle(conn, &tournament, Some(member.user.id), &before).await?;
     tournaments::changed(conn, tournament.id).await?;
@@ -186,44 +183,15 @@ pub async fn decide_tie(
     let mut tx = state.db.begin().await?;
     let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament, None).await?;
     pending_group(&stage.bracket, &order)?;
-    let bracket = write(&mut tx, &member, tournament, &stage, &[(order, reason)]).await?;
-    tx.commit().await?;
-    Ok(Json(bracket))
-}
-
-#[utoipa::path(
-    post,
-    path = "/tenants/{slug}/tournaments/{tournament}/ties/seed",
-    tag = "matches",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("tournament" = String, Path, description = "Slug do torneio"),
-    ),
-    responses(
-        (status = OK, body = TournamentBracket, description = "Todos os empates pendentes do fim da fase decididos pela ordem da chave, sem motivo; o torneio encerra"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só organizer ou owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tie.not_pending (nenhum empate pendente)"),
+    let bracket = write(
+        &mut tx,
+        &member,
+        tournament,
+        &stage,
+        &order,
+        reason.as_deref(),
     )
-)]
-pub async fn decide_ties_by_seed(
-    State(state): State<AppState>,
-    member: TenantMember<Organizer>,
-    PathParams(path): PathParams<TournamentPath>,
-) -> Result<Json<TournamentBracket>, ApiError> {
-    let mut tx = state.db.begin().await?;
-    let (tournament, stage) = due::lock_stage(&mut tx, &member, &path.tournament, None).await?;
-    let orders: Vec<(Vec<ParticipantId>, Option<String>)> = stage
-        .bracket
-        .pending_ties()
-        .iter()
-        .map(|t| (t.participants.clone(), None))
-        .collect();
-    if orders.is_empty() {
-        return Err(ApiError::conflict("tie.not_pending"));
-    }
-    let bracket = write(&mut tx, &member, tournament, &stage, &orders).await?;
+    .await?;
     tx.commit().await?;
     Ok(Json(bracket))
 }

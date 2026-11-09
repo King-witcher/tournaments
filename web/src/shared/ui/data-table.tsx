@@ -112,7 +112,11 @@ export function DataTable({
   const openRow = (row: DataTableRow) => (event: MouseEvent) => {
     if (row.href === undefined) return;
     const target = event.target as HTMLElement;
-    if (target.closest("a, button, input, select, textarea, [role='menu']"))
+    if (
+      target.closest(
+        "a, button, input, select, textarea, [role='menu'], [data-no-row-link]",
+      )
+    )
       return;
     router.push(row.href);
   };

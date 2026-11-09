@@ -1,0 +1,54 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// A posição, o nome e, à direita, os números. No celular, cada um numa linha.
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: spacing.$spacing-03 spacing.$spacing-05;
+  min-inline-size: 0;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
+
+.position {
+  font-variant-numeric: tabular-nums;
+}
+
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  min-inline-size: 0;
+}
+
+// Apelido longo quebra em vez de empurrar os números para fora da lista.
+.name {
+  overflow-wrap: anywhere;
+}
+
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03 spacing.$spacing-06;
+
+  @include breakpoint.breakpoint-down(md) {
+    grid-column: 1 / -1;
+  }
+
+  // A mesma largura em todas as linhas: os números se comparam na vertical.
+  > div {
+    min-inline-size: spacing.$spacing-11;
+  }
+}
+
+.label {
+  @include type.type-style("label-01");
+
+  color: theme.$text-secondary;
+}

@@ -116,7 +116,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(manage::put_game))
         .routes(routes!(manage::set_result))
         .routes(routes!(ties::decide_tie))
-        .routes(routes!(ties::decide_ties_by_seed))
         .routes(routes!(replay::replay))
         .routes(routes!(
             veto::handlers::veto_ready,

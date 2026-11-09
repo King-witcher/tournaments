@@ -69,7 +69,7 @@ Do usuário (05/11): o round robin aceita séries pares além das ímpares (de i
 - **O suíço fica como está**: pontos = vitórias + byes, Buchholz e o pareamento (`pair()` usa os pontos). Pelo saldo, quem desiste com 2-0 passaria quem foi até o fim com 3-2 (+2 contra +1). A mini-tabela do confronto direto dele também continua nas vitórias: com revanche (A vence B duas vezes, B vence C, C vence A), as duas contas dão ordens diferentes.
 - **Confronto direto com empate**: a série empatada conta como confronto realizado e vale 0. Quem empatou entre si não se separa por ele e segue para o saldo de mapas.
 - **Saldo de mapas**: a série empatada conta metade para cada lado, e o W.O. vale a maioria sem perder mapa. Na md2 ele é sempre o dobro do saldo de séries, então, na prática, decidem os frags; da md4 em diante desempata de verdade (na md4, 3 x 0 vale +3; 3 x 1, +2). Sem código especial para isso. Os frags da série empatada somam para cada lado (`SeriesFrags` é por lado).
-- **Tela**: coluna "Saldo" com sinal no round robin, "Pontos" no suíço; na série par, o recorde em V–E–D. A explicação dos desempates ignora o primeiro critério.
+- **Tela**: a coluna "Séries" traz o saldo com sinal em cima e o recorde embaixo (V–D, ou V–E–D na série par); "Pontos" só no suíço, que não é saldo. A explicação dos desempates ignora o primeiro critério. Do usuário (09/11; `tournaments-ui.md`, "Classificação e empates").
 
 ## Desempate por fase
 
@@ -96,7 +96,7 @@ Assumido:
 Do usuário (06/11). Motivo: uma fase seguinte (fases ligadas, ou a Disputa de posições, que usa a classificação como ordem da chave) não pode começar com empate decidido pela sorte do seeding aleatório; e o padrão não pode surpreender quem não sabe que a opção existe.
 
 - **Escolha por fase de tabela**, logo depois da lista de desempates: "Quando todos os critérios empatarem", com "Usar a ordem da chave" (**padrão**) ou "A organização decide".
-- **Todos os empates que sobram** viram pendência; cada grupo também pode ser resolvido com "Usar a ordem da chave".
+- **Todos os empates que sobram** viram pendência; salvar um grupo sem mexer na ordem vale a ordem da chave (a lista abre nela), e a mesma decisão fica gravada. Do usuário (09/11): sai "Usar a ordem da chave em todos" e a rota que decidia todos de uma vez; cada empate se resolve e se salva sozinho.
 - **A fase espera**: com empate pendente, a fase e o torneio não terminam, mesmo com todas as séries decididas.
 
 Assumido:
@@ -104,9 +104,9 @@ Assumido:
 - **Só no fim**: durante a fase nada muda (tabela ao vivo e pareamento do suíço desempatam pelo seed). Com todas as séries decididas, o grupo que só o seed separaria é pendente, a não ser que haja decisão para exatamente esse conjunto de times.
 - **No `engine`** (`formats/table/ties.rs`): `FinalTie` na configuração e as decisões (`TieOrder`) no `StageHistory`; a decisão vale pelo conjunto (a correção que muda quem empatou a deixa sem efeito; com o mesmo conjunto, continua; havendo duas, a última); a tabela mostra `organizer` como critério; os do grupo pendente ficam fora das colocações. O `replay_golden` não mudou.
 - **Banco** (`20261215010000_stage_final_tie`): `tournament_stages.final_tie` (`seed` nas fases que já existiam), as decisões em `stage_tie_decisions` (quem, quando, motivo de até 280) com a ordem em `stage_tie_decision_teams`, só inseridas; `stage_pending_ties` marca a fase que espera, só com o torneio em andamento, e é o que a home da organização lê. "Usar a ordem da chave" também grava decisão. Desfazer o início apaga tudo.
-- **API**: `POST .../ties` (ordem completa de um grupo pendente e motivo opcional; `tie.not_pending` se não bate) e `POST .../ties/seed` (todos pela ordem da chave), só organizer e owner. A fase termina pelo `settle`, como no fim normal, com o mesmo aviso de encerramento. A correção que cria pendência num torneio encerrado o reabre, como a que reabre série.
+- **API**: `POST .../ties` (ordem completa de um grupo pendente e motivo opcional; `tie.not_pending` se não bate), só organizer e owner. A fase termina pelo `settle`, como no fim normal, com o mesmo aviso de encerramento. A correção que cria pendência num torneio encerrado o reabre, como a que reabre série.
 - **Aviso** `tournament.tie_pending` para organizers e owner (toast, Web Push e Discord, como a partida contestada), uma vez, quando a fase passa a esperar; de novo só se ela deixar de esperar e voltar.
-- **Tela**: os empatados dividem a melhor posição, com "Empate a decidir"; a organização ordena cada grupo com setas (como os desempates do formulário), com motivo opcional e confirmação, porque a ordem gravada não muda. Quem está no grupo vê "Empate no 3º, a organização vai decidir"; os outros já veem a posição. O rating não muda (é por mapa).
+- **Tela** (do usuário, 09/11): os empatados dividem a melhor posição, com "Empate a decidir"; a organização decide no Modal aberto pelo aviso da Classificação, um empate por vez, em abas e na ordem que quiser, e cada um é salvo sozinho (`tournaments-ui.md`, "Classificação e empates"). Quem está no grupo vê "Empate no 3º, a organização vai decidir"; os outros já veem a posição. O rating não muda (é por mapa).
 
 ## Fases ligadas
 

@@ -43,6 +43,10 @@ type Props = {
   returnFocusTo?: RefObject<HTMLElement | null>;
   /** O `<form>` de dentro, para o `useFormValidity` de quem abre. */
   formRef?: Ref<HTMLFormElement>;
+  /** `md` quando o conteúdo é mais que um ou dois campos (uma lista com números); padrão `sm`. */
+  size?: "sm" | "md";
+  /** O nome do secundário, onde não há o que cancelar: o que já foi salvo fica ("Fechar"). Padrão: "Cancelar". */
+  cancelLabel?: ReactNode;
 };
 
 /**
@@ -71,6 +75,8 @@ function OpenFormModal({
   error,
   returnFocusTo,
   formRef,
+  size = "sm",
+  cancelLabel,
 }: Props) {
   const t = useTranslations("Common");
   const prefix = usePrefix();
@@ -89,7 +95,7 @@ function OpenFormModal({
   return (
     <ComposedModal
       open
-      size="sm"
+      size={size}
       onClose={close}
       selectorPrimaryFocus={`${content} [data-modal-primary-focus], ${content} input:not([type="hidden"]), ${content} select, ${content} textarea`}
     >
@@ -112,7 +118,7 @@ function OpenFormModal({
       </ModalBody>
       <ModalFooter>
         <Button kind="secondary" onClick={close}>
-          {t("cancel")}
+          {cancelLabel ?? t("cancel")}
         </Button>
         <Button
           kind={destructive ? "danger" : "primary"}

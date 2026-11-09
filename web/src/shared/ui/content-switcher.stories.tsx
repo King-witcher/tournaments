@@ -69,13 +69,13 @@ export const IconOnly: Story = {
   args: { "aria-label": "Visão", options: iconViews },
 };
 
-/** Fundo mais discreto para o selecionado. */
-export const LowContrast: Story = {
-  args: { lowContrast: true },
+/** O alto contraste do Carbon: o selecionado em preto. O padrão daqui é o baixo. */
+export const HighContrast: Story = {
+  args: { lowContrast: false },
 };
 
-export const LowContrastIconOnly: Story = {
-  args: { "aria-label": "Visão", options: iconViews, lowContrast: true },
+export const HighContrastIconOnly: Story = {
+  args: { "aria-label": "Visão", options: iconViews, lowContrast: false },
 };
 
 /** As setas só movem o foco; Enter ou espaço escolhem. */
