@@ -144,8 +144,11 @@
     "showPoolOut": "Show {count, plural, one {the map} other {# maps}} out of pool",
     "poolTemplate": "Template",
     "poolTemplates": {
-      "duel_default": "Default duel",
-      "ragecon": "RageCon",
+      "ragecon": "RageCon / QPL",
+      "tournament": "Tournament",
+      "tournament_extended": "Tournament (extended)",
+      "ranked": "Ranked",
+      "tdm": "TDM",
       "custom": "Custom"
     },
     "seconds": "Time per step",

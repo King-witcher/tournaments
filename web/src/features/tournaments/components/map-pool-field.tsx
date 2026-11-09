@@ -8,11 +8,13 @@ import { ErrorText } from "@/shared/ui/error-text";
 import { FormRow } from "@/shared/ui/form-row";
 import { Select } from "@/shared/ui/select";
 import {
+  isTdm,
   longestSeries,
   poolOf,
   type TournamentValues,
 } from "../lib/form-values";
 import {
+  isDefaultPool,
   type MapPoolChoice,
   mapPoolChoiceOf,
   mapPoolTemplates,
@@ -23,7 +25,7 @@ import { MapPoolPicker } from "./map-pool-picker";
 
 type Props = {
   tenant: string;
-  values: Pick<TournamentValues, "mapPool" | "stages">;
+  values: Pick<TournamentValues, "mapPool" | "stages" | "mode">;
   onChange: (patch: Partial<TournamentValues>) => void;
   error: string | undefined;
   /** Os mapas ativos (`GET /maps`). */
@@ -44,7 +46,7 @@ type Props = {
  * sessão: Personalizado continua nele com o pool igual a um modelo, e o mesmo
  * vale depois de marcar um mapa, para a grade não sumir no meio da marcação.
  * O pool escolhido fica lembrado neste navegador para a comunidade (o próximo
- * torneio novo começa com ele); Duelo padrão esquece o lembrado. Só para
+ * torneio novo começa com ele); o modelo igual ao padrão esquece o lembrado. Só para
  * leitura, só os mapas do pool, sem o `Select`.
  */
 export function MapPoolField({
@@ -60,7 +62,7 @@ export function MapPoolField({
   const [picked, setPicked] = useState<MapPoolChoice>();
   const pool = poolOf(values, maps);
   const min = longestSeries(values);
-  const templates = mapPoolTemplates(maps);
+  const templates = mapPoolTemplates(maps, isTdm(values));
   const choice =
     picked === "custom" ? "custom" : mapPoolChoiceOf(pool, templates, picked);
 
@@ -69,7 +71,7 @@ export function MapPoolField({
     const template = templates.find((item) => item.id === next);
     if (!template) return; // Personalizado parte do pool de agora.
     onChange({ mapPool: template.pool });
-    if (next === "duel_default") forgetPool(tenant);
+    if (isDefaultPool(template.pool, maps)) forgetPool(tenant);
     else rememberPool(tenant, template.pool);
   };
   const toggled = (mapPool: string[]) => {

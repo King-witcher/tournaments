@@ -144,8 +144,11 @@
     "showPoolOut": "Mostrar {count, plural, one {el mapa} other {los # mapas}} fuera del pool",
     "poolTemplate": "Plantilla",
     "poolTemplates": {
-      "duel_default": "Duelo predeterminado",
-      "ragecon": "RageCon",
+      "ragecon": "RageCon / QPL",
+      "tournament": "Torneo",
+      "tournament_extended": "Torneo (extendido)",
+      "ranked": "Ranked",
+      "tdm": "TDM",
       "custom": "Personalizado"
     },
     "seconds": "Tiempo de cada paso",
