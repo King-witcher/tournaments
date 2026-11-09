@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { useImageDraft } from "@/features/images/hooks/use-image-draft";
 import { useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import type { components } from "@/shared/api/schema";
@@ -91,9 +92,17 @@ export function TournamentSettingsProvider({
     [],
   );
 
+  const coverTarget = useMemo(
+    () => ({ kind: "cover" as const, tenant, tournament: saved.slug }),
+    [tenant, saved.slug],
+  );
+  const cover = useImageDraft(coverTarget);
+  const coverDirty = cover.dirty;
+
   const dirty = useMemo(() => {
     const values = valuesFrom(saved);
     return SETTINGS_SECTIONS.filter((section) => {
+      if (section === "general" && coverDirty) return true;
       if (section === "languages") {
         return routing.locales.some(
           (l) =>
@@ -109,7 +118,7 @@ export function TournamentSettingsProvider({
       const next = { ...values, ...mine };
       return SECTION_KEYS[section].some((k) => changed(values, next, k));
     });
-  }, [saved, edits, translationEdits]);
+  }, [saved, edits, translationEdits, coverDirty]);
 
   // O pedido de foco do "Ir para", que a seção de destino atende ao montar.
   const arrival = useRef<SettingsSection>(undefined);
@@ -141,11 +150,12 @@ export function TournamentSettingsProvider({
       setEdits,
       translationEdits,
       setTranslationEdits,
+      cover,
       dirty,
       goTo,
       takeArrival,
     }),
-    [edits, setEdits, translationEdits, dirty, goTo, takeArrival],
+    [edits, setEdits, translationEdits, cover, dirty, goTo, takeArrival],
   );
 
   return (

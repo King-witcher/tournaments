@@ -1,4 +1,3 @@
-import { CoverSection } from "@/features/images/components/cover-section";
 import { rulesImagesOf } from "@/features/images/lib/rules-images";
 import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
@@ -28,21 +27,16 @@ export async function TournamentSettingsSection({
 }: Props) {
   const loaded = await loadTournament(tenant, slug);
   if (loaded.kind !== "ok" || loaded.me.role === "player") return null;
-  const { tournament } = loaded;
 
   switch (section) {
-    case "general":
+    case "general": {
+      const images = await getImageSettings();
       return (
         <SettingsGeneralSection
-          cover={
-            <CoverSection
-              tenant={tenant}
-              tournament={tournament.slug}
-              url={tournament.cover_url}
-            />
-          }
+          coverMaxBytes={images?.enabled ? images.max_bytes : undefined}
         />
       );
+    }
     case "registration":
       return <SettingsRegistrationSection />;
     case "format":

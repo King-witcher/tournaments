@@ -23,8 +23,6 @@
   "readOnly": "Read-only",
   "noTranslations": "No translations",
   "leave": {
-    "title": "Leave without saving?",
-    "text": "Unsaved changes in {sections} will be lost.",
-    "confirm": "Leave without saving"
+    "text": "Unsaved changes in {sections} will be lost."
   }
 }

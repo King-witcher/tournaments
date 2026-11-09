@@ -25,13 +25,15 @@ type Props = {
   hint?: ReactNode;
   /** O nome do arquivo escolhido que está em andamento ou falhou. */
   sending: string | undefined;
-  /** Preparando ou mandando o arquivo escolhido. */
+  /** Preparando o arquivo escolhido. */
   pending: boolean;
+  /** O formulário está salvando: nenhum botão responde até acabar. */
+  disabled?: boolean;
   error: string | undefined;
-  /** Tirando a imagem (quando tirar chama a API). */
-  removing?: boolean;
   onFile: (file: File) => void;
   onRemove: () => void;
+  /** Volta à imagem salva, quando há troca ou remoção esperando o Salvar. */
+  onUndo?: () => void;
   /** O "x" do arquivo que falhou, na área de soltar. */
   onDismiss: () => void;
 };
@@ -42,7 +44,9 @@ type Props = {
  * área de soltar do Carbon com um arquivo só, na largura da coluna; com ela, a
  * prévia já cortada como aparece no site (a foto redonda), "Trocar" e
  * "Remover", com o erro embaixo (no logo, pequeno, os botões ao lado dele).
- * Quem usa decide o que escolher e tirar fazem (`ImageField`).
+ * Com uma mudança ainda não salva, "Desfazer" (também embaixo da área de
+ * soltar, depois de remover). Quem usa decide o que escolher e tirar fazem
+ * (`ImageField`).
  */
 export function ImageInput({
   kind,
@@ -51,14 +55,20 @@ export function ImageInput({
   hint,
   sending,
   pending,
+  disabled = false,
   error,
-  removing = false,
   onFile,
   onRemove,
+  onUndo,
   onDismiss,
 }: Props) {
   const t = useTranslations("Images");
   const input = useRef<HTMLInputElement>(null);
+  const undo = onUndo && (
+    <Button kind="ghost" size="sm" disabled={disabled} onClick={onUndo}>
+      {t("undo")}
+    </Button>
+  );
 
   const control = (
     <>
@@ -76,7 +86,7 @@ export function ImageInput({
                 kind="tertiary"
                 size="sm"
                 pending={pending}
-                disabled={removing}
+                disabled={disabled}
                 onClick={() => input.current?.click()}
               >
                 {t("change")}
@@ -84,12 +94,12 @@ export function ImageInput({
               <Button
                 kind="danger--ghost"
                 size="sm"
-                pending={removing}
-                disabled={pending}
+                disabled={pending || disabled}
                 onClick={onRemove}
               >
                 {t("remove")}
               </Button>
+              {undo}
             </div>
           </ActionWithNote>
           <input
@@ -106,31 +116,39 @@ export function ImageInput({
           />
         </div>
       ) : (
-        <FileDropZone
-          className={styles.drop}
-          labelText={t("drop")}
-          accept={ACCEPT}
-          multiple={false}
-          disabled={pending}
-          onAddFiles={(_event, { addedFiles }) => {
-            const file = addedFiles[0];
-            if (file && !pending) onFile(file);
-          }}
-          files={
-            sending
-              ? [
-                  {
-                    id: "image",
-                    name: sending,
-                    status: pending ? "uploading" : "edit",
-                    invalid: Boolean(error),
-                    errorSubject: error,
-                  },
-                ]
-              : []
-          }
-          onDelete={onDismiss}
-        />
+        <>
+          <FileDropZone
+            className={styles.drop}
+            labelText={t("drop")}
+            accept={ACCEPT}
+            multiple={false}
+            disabled={pending || disabled}
+            onAddFiles={(_event, { addedFiles }) => {
+              const file = addedFiles[0];
+              if (file && !pending) onFile(file);
+            }}
+            files={
+              sending
+                ? [
+                    {
+                      id: "image",
+                      name: sending,
+                      status: pending ? "uploading" : "edit",
+                      invalid: Boolean(error),
+                      errorSubject: error,
+                    },
+                  ]
+                : []
+            }
+            onDelete={onDismiss}
+          />
+          {/* O erro do arquivo fica nele; o do Salvar, aqui embaixo. */}
+          {(undo || (error && !sending)) && (
+            <ActionWithNote error={sending ? undefined : error}>
+              {undo}
+            </ActionWithNote>
+          )}
+        </>
       )}
       {hint && <p className={styles.hint}>{hint}</p>}
     </>

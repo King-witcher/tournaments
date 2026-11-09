@@ -56,6 +56,11 @@
     "off": "Off"
   },
   "dangerZone": "Danger zone",
+  "leave": {
+    "title": "Leave without saving?",
+    "text": "Unsaved changes will be lost.",
+    "confirm": "Leave without saving"
+  },
   "validation": {
     "required": "Fill in this field.",
     "requiredHidden": "(required)",

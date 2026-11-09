@@ -63,6 +63,14 @@ const NO_ERRORS: FieldErrors = {};
  * seção onde corrigir. Salvo, a página recarrega e, se o endereço mudou, vai
  * para o novo (as outras abas vão sozinhas; esta não recebe o aviso:
  * `originHeaders`).
+ *
+ * Geral leva também a capa pendente (`cover`, do provider), mandada antes dos
+ * campos: o endereço de agora ainda vale para ela, e o que se troca e o que
+ * dá errado não dependem um do outro. A imagem que falha fica pendente, com
+ * o erro nela, e os campos seguem, menos se trocariam o endereço: a página
+ * nova perderia a imagem e o erro. O que já foi aceito não volta no próximo
+ * Salvar: só a imagem mudada não manda os campos, e a capa aceita sai da
+ * pendência antes do envio deles.
  */
 export function useSettingsSection(section: ValuesSection) {
   const { tenant, tournament, setSaved } = useTournamentSettings();
@@ -72,7 +80,8 @@ export function useSettingsSection(section: ValuesSection) {
   const { ref: formRef, canSubmit } = useFormValidity();
   const keys = SECTION_KEYS[section] as readonly (keyof TournamentValues)[];
   const saved = useMemo(() => valuesFrom(tournament), [tournament]);
-  const { editsOf, setEdits: setSectionEdits } = useSettingsDrafts();
+  const { editsOf, setEdits: setSectionEdits, cover } = useSettingsDrafts();
+  const image = section === "general" ? cover : undefined;
   const edits = editsOf(section);
   const setEdits = useCallback(
     (update: (e: Partial<TournamentValues>) => Partial<TournamentValues>) =>
@@ -94,11 +103,21 @@ export function useSettingsSection(section: ValuesSection) {
     [setEdits],
   );
 
+  const fieldsDirty = keys.some((k) => changed(saved, values, k));
+
   const submit = () => {
     setFailure(undefined);
     setDone(false);
     startTransition(async () => {
       const mine = Object.fromEntries(keys.map((k) => [k, values[k]]));
+      const sentImage = image?.dirty ?? false;
+      const imageSaved = image ? await image.apply() : true;
+      if (!imageSaved && values.slug !== tournament.slug) return;
+      if (sentImage && !fieldsDirty) {
+        if (imageSaved) setDone(true);
+        router.refresh();
+        return;
+      }
       const outcome = await callApi(
         api.PATCH("/tenants/{slug}/tournaments/{tournament}", {
           params: { path: { slug: tenant, tournament: tournament.slug } },
@@ -122,6 +141,7 @@ export function useSettingsSection(section: ValuesSection) {
                   field === undefined ? undefined : sectionOf(field, saved),
               },
         );
+        if (sentImage) router.refresh();
         return;
       }
       setSaved(outcome.data);
@@ -133,7 +153,7 @@ export function useSettingsSection(section: ValuesSection) {
           ),
         ),
       );
-      setDone(true);
+      setDone(imageSaved);
       if (outcome.data.slug !== tournament.slug) {
         // O endereço novo troca a árvore (o que não foi salvo nas outras
         // seções se perde).
@@ -165,7 +185,7 @@ export function useSettingsSection(section: ValuesSection) {
     () => (live?.field ? { [live.field]: live.message } : NO_ERRORS),
     [live],
   );
-  const dirty = keys.some((k) => changed(saved, values, k));
+  const dirty = fieldsDirty || (image?.dirty ?? false);
 
   return {
     formRef,
@@ -182,8 +202,8 @@ export function useSettingsSection(section: ValuesSection) {
     /** O erro que não é de um campo desta seção, com onde corrigir. */
     formError: failure && failure.field === undefined ? failure : undefined,
     /** Acabou de salvar e nada mudou desde então. */
-    done,
-    /** Algum campo desta seção está diferente do salvo. */
+    done: done && !image?.dirty,
+    /** Algum campo desta seção está diferente do salvo, ou a capa pendente. */
     dirty,
     pending,
     submit,

@@ -56,6 +56,11 @@
     "off": "Desactivado"
   },
   "dangerZone": "Zona de peligro",
+  "leave": {
+    "title": "¿Salir sin guardar?",
+    "text": "Los cambios sin guardar se pierden.",
+    "confirm": "Salir sin guardar"
+  },
   "validation": {
     "required": "Completa este campo.",
     "requiredHidden": "(obligatorio)",

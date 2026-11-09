@@ -2,31 +2,31 @@
   "logo": {
     "title": "Logo",
     "editTitle": "Adjust logo",
-    "save": "Save logo",
     "area": "Logo crop. Drag or use the arrow keys to move it."
   },
   "cover": {
     "title": "Cover",
     "tenantHint": "Shown in the invite link preview and on tournaments without a cover.",
     "editTitle": "Adjust cover",
-    "save": "Save cover",
     "area": "Cover crop. Drag or use the arrow keys to move it."
   },
   "avatar": {
     "title": "Photo",
     "discord": "Without a photo, your Discord avatar is shown.",
+    "saved": "Photo saved.",
     "editTitle": "Adjust photo",
-    "save": "Save photo",
     "area": "Photo crop. Drag or use the arrow keys to move it."
   },
   "editor": {
     "zoom": "Zoom",
     "rotateLeft": "Rotate left",
-    "rotateRight": "Rotate right"
+    "rotateRight": "Rotate right",
+    "apply": "Apply"
   },
   "drop": "Drag an image here or click to choose one",
   "change": "Change",
   "remove": "Remove",
+  "undo": "Undo",
   "errors": {
     "notImage": "Choose an image (PNG, JPEG, or WebP).",
     "unreadable": "Couldn't read this image. Try another file.",

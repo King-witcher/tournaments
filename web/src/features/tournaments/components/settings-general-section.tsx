@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type ReactNode, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
+import { ImageField } from "@/features/images/components/image-field";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
+import { useSettingsDrafts } from "../hooks/use-settings-drafts";
 import { useSettingsSection } from "../hooks/use-settings-section";
 import { useTournamentSettings } from "../hooks/use-tournament-settings";
 import { SettingsSection } from "./settings-section";
@@ -11,21 +13,24 @@ import { TournamentDescriptionField } from "./tournament-description-field";
 import { TournamentIdentityFields } from "./tournament-identity-fields";
 
 type Props = {
-  /** A capa (`CoverSection`), que se salva sozinha, ao lado do formulário. */
-  cover: ReactNode;
+  /** O tamanho máximo do arquivo da capa; sem ele, o bucket está desligado e não há capa. */
+  coverMaxBytes?: number;
 };
 
 /**
- * Geral: nome, endereço e descrição, com um Salvar, na metade da esquerda, e
- * a capa na da direita (como no cabeçalho do torneio), que se salva sozinha;
- * no título, o nome e o endereço salvos. O endereço só muda no rascunho, e
+ * Geral: nome, endereço e descrição na metade da esquerda e a capa na da
+ * direita (como no cabeçalho do torneio), um formulário só: a capa pendente
+ * vai junto do Salvar (`useSettingsSection`); no título, o nome e o endereço
+ * salvos. O endereço só muda no rascunho, e
  * salvar com ele trocado pede a confirmação do que isso quebra; depois de
  * publicar, ele fica só para leitura, com o motivo antes dos campos.
  */
-export function SettingsGeneralSection({ cover }: Props) {
+export function SettingsGeneralSection({ coverMaxBytes }: Props) {
   const t = useTranslations("TournamentForm");
   const tSettings = useTranslations("TournamentSettings");
+  const tCover = useTranslations("Images.cover");
   const { tenant, tournament } = useTournamentSettings();
+  const { cover } = useSettingsDrafts();
   const form = useSettingsSection("general");
   const { values, onChange, errors } = form;
   const [asking, setAsking] = useState(false);
@@ -42,7 +47,17 @@ export function SettingsGeneralSection({ cover }: Props) {
         lock={draft ? undefined : tSettings("locks.slug")}
         onSave={() => (moves ? setAsking(true) : form.submit())}
         submitRef={submitRef}
-        aside={cover}
+        aside={
+          coverMaxBytes !== undefined && (
+            <ImageField
+              draft={cover}
+              url={tournament.cover_url}
+              maxBytes={coverMaxBytes}
+              label={tCover("title")}
+              saving={form.pending}
+            />
+          )
+        }
       >
         <TournamentIdentityFields
           tenant={tenant}

@@ -23,8 +23,6 @@
   "readOnly": "Solo lectura",
   "noTranslations": "Sin traducción",
   "leave": {
-    "title": "¿Salir sin guardar?",
-    "text": "Los cambios sin guardar en {sections} se pierden.",
-    "confirm": "Salir sin guardar"
+    "text": "Los cambios sin guardar en {sections} se pierden."
   }
 }

@@ -56,6 +56,11 @@
     "off": "Desligado"
   },
   "dangerZone": "Zona de perigo",
+  "leave": {
+    "title": "Sair sem salvar?",
+    "text": "As mudanças não salvas se perdem.",
+    "confirm": "Sair sem salvar"
+  },
   "validation": {
     "required": "Preencha este campo.",
     "requiredHidden": "(obrigatório)",

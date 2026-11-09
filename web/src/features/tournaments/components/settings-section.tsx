@@ -47,7 +47,7 @@ type Props = {
   submitRef?: Ref<HTMLButtonElement>;
   children: ReactNode;
   /**
-   * Ao lado do formulário, fora dele (a capa, que se salva sozinha): na
+   * Ao lado do formulário, fora do `<form>` dele (a capa): na
    * metade da direita quando a seção é larga, embaixo quando não é.
    */
   aside?: ReactNode;

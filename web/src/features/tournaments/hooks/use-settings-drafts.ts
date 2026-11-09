@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 
+import type { ImageDraft } from "@/features/images/hooks/use-image-draft";
 import type { components } from "@/shared/api/schema";
 import type { TournamentValues, TranslationDraft } from "../lib/form-values";
 import type { SettingsSection, ValuesSection } from "../lib/settings-sections";
@@ -26,6 +27,8 @@ export type SettingsDraftsState = {
   setTranslationEdits: (
     update: (edits: TranslationEdits) => TranslationEdits,
   ) => void;
+  /** A capa pendente de Geral, que sobrevive à troca de seção como os campos. */
+  cover: ImageDraft;
   /** As seções com alguma mudança não salva, na ordem da página. */
   dirty: readonly SettingsSection[];
   /**

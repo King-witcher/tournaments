@@ -11,6 +11,7 @@ import { Slider } from "@/shared/ui/slider";
 import { useImageErrorMessage } from "../hooks/use-image-error-message";
 import {
   type Crop,
+  type ImageKind,
   initialCrop,
   MAX_ZOOM,
   minZoom,
@@ -19,67 +20,61 @@ import {
   turn,
   zoomTo,
 } from "../lib/crop-image";
-import { encodeCanvas } from "../lib/encode-image";
-import { type FixedImageTarget, sendImage } from "../lib/upload-image";
+import { type EncodedImage, encodeCanvas } from "../lib/encode-image";
 import { ImageCropper } from "./image-cropper";
 import styles from "./image-editor.module.scss";
 
 type Props = {
-  target: FixedImageTarget;
+  kind: ImageKind;
   /** A imagem escolhida, já lida (quem abre a fecha depois). */
   image: ImageBitmap;
   maxBytes: number;
-  /** A imagem nova foi registrada. */
-  onSaved: () => void;
-  /** Fechou sem salvar: nada foi enviado. */
+  /** O recorte pronto, no arquivo final: quem abre guarda até o Salvar. */
+  onApply: (encoded: EncodedImage) => void;
+  /** Fechou sem aplicar. */
   onClose: () => void;
 };
 
 /**
  * O Modal que ajusta o logo, a capa ou a foto antes do envio: a área de
  * recorte (arrastar, pinçar, roda do mouse ou teclado), o zoom (`Slider`) e o
- * giro em quartos de volta. Nada sai do navegador antes de salvar; ao salvar,
- * o recorte vira um JPEG no tamanho final (`SHAPES`) e vai ao bucket
- * (`sendImage`): a imagem de antes só é trocada quando a API confere o arquivo.
- * O erro fica no Modal, com o recorte, para tentar de novo.
+ * giro em quartos de volta. "Aplicar" transforma o recorte num JPEG no tamanho
+ * final (`SHAPES`) e o devolve a quem abriu, sem enviar nada; quem envia é o
+ * Salvar do formulário (`useImageDraft`). O erro da conversão fica no Modal,
+ * com o recorte, para tentar de novo.
  */
 export function ImageEditor({
-  target,
+  kind,
   image,
   maxBytes,
-  onSaved,
+  onApply,
   onClose,
 }: Props) {
   const t = useTranslations("Images");
   const errorMessage = useImageErrorMessage();
-  const { kind } = target;
   const shape = SHAPES[kind];
   const [crop, setCrop] = useState<Crop>(() => initialCrop(image, shape));
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
 
-  const save = () =>
+  const apply = () =>
     startTransition(async () => {
       const canvas = renderCrop(image, shape, crop);
       const encoded = canvas
         ? await encodeCanvas(canvas, maxBytes)
         : "unreadable";
-      const result =
-        typeof encoded === "string"
-          ? ({ ok: false, local: encoded } as const)
-          : await sendImage(target, encoded);
-      if (result.ok) {
-        onSaved();
+      if (typeof encoded === "string") {
+        setError(errorMessage({ ok: false, local: encoded }));
       } else {
-        setError(errorMessage(result));
+        onApply(encoded);
       }
     });
 
   return (
     <FormModal
       title={t(`${kind}.editTitle`)}
-      submitLabel={t(`${kind}.save`)}
-      onSubmit={save}
+      submitLabel={t("editor.apply")}
+      onSubmit={apply}
       onClose={onClose}
       pending={pending}
       error={error}
