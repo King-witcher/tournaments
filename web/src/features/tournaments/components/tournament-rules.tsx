@@ -5,6 +5,7 @@ import { getImageSettings } from "@/features/images/server";
 import { loadMaps } from "@/features/matches/server";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { MarkdownText } from "@/shared/ui/markdown-text";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { rulesSource } from "../lib/localize";
 import { isFinished } from "../lib/status";
@@ -49,22 +50,24 @@ export async function TournamentRules({ tenant, slug }: Props) {
           editable={editable}
         />
         {(editable || source.rules) && (
-          <Section title={t("extraRules")}>
-            {editable ? (
-              <RulesEditor
-                tenant={tenant}
-                tournament={tournament.slug}
-                locale={source.locale}
-                rules={source.rules}
-                translation={source.translation}
-                images={images}
-              />
-            ) : (
-              <MarkdownText imagePrefix={images?.prefix}>
-                {source.rules}
-              </MarkdownText>
-            )}
-          </Section>
+          <Panel>
+            <Section title={t("extraRules")}>
+              {editable ? (
+                <RulesEditor
+                  tenant={tenant}
+                  tournament={tournament.slug}
+                  locale={source.locale}
+                  rules={source.rules}
+                  translation={source.translation}
+                  images={images}
+                />
+              ) : (
+                <MarkdownText imagePrefix={images?.prefix}>
+                  {source.rules}
+                </MarkdownText>
+              )}
+            </Section>
+          </Panel>
         )}
       </Stack>
     </div>

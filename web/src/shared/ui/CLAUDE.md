@@ -12,7 +12,7 @@ Como a biblioteca é feita e como ela cresce. O uso (catálogo, formulário, pri
 
 ## Storybook
 
-`bun run storybook` (http://localhost:6006) mostra cada componente da `shared/ui` nas variações que ele expõe, com tema (`white`/`g100`), idioma e largura (`Celular (390px)`, `md`) na barra de ferramentas e a aba Accessibility (axe) para contraste. `bun run build-storybook` gera o site estático em `storybook-static/` (ignorado).
+`bun run storybook` (http://localhost:6006) mostra cada componente da `shared/ui` nas variações que ele expõe, com tema (`g10`/`g100`), idioma e largura (`Celular (390px)`, `md`) na barra de ferramentas e a aba Accessibility (axe) para contraste. `bun run build-storybook` gera o site estático em `storybook-static/` (ignorado).
 
 - A história fica ao lado do componente: `button.tsx` → `button.stories.tsx`, CSF3 como em `button.stories.tsx`. Título `"<Grupo>/<Componente>"`, com os grupos de "Biblioteca `shared/ui`" do `web/CLAUDE.md` (Página, Ação, Formulário, Listas, Estado e conteúdo; mais Cabeçalho e Data e hora).
 - Uma história por variação do Carbon que o componente expõe (consulte `code_search` no MCP) e por estado próprio (`pending`, inválido, travado), mais uma que põe as variações lado a lado quando comparar ajuda. Componente que muda no celular ganha uma com `globals: { viewport: { value: "phone" } }`.

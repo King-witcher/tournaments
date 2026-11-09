@@ -1,11 +1,11 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { NewVetoRoom } from "@/features/veto-rooms/components/new-veto-room";
 import { publicPageMetadata } from "@/shared/lib/link-preview";
 import { Page } from "@/shared/ui/page";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
 import { FormSkeleton } from "@/shared/ui/skeleton";
 
 export async function generateMetadata(
@@ -25,9 +25,11 @@ export default async function NewVetoRoomPage() {
   return (
     <Page>
       <PageHeader title={t("title")} meta={t("description")} />
-      <Suspense fallback={<FormSkeleton label={false} />}>
-        <NewVetoRoom />
-      </Suspense>
+      <Panel>
+        <Suspense fallback={<FormSkeleton label={false} />}>
+          <NewVetoRoom />
+        </Suspense>
+      </Panel>
     </Page>
   );
 }

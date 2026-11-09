@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Panel } from "@/shared/ui/panel";
 
 import { Section } from "@/shared/ui/section";
 import { LOGIN_SECTION } from "../lib/login-sections";
@@ -29,20 +30,22 @@ export async function EmailLoginSection({
 
   return (
     <div id={LOGIN_SECTION.email} tabIndex={-1}>
-      <Section
-        title={t("title")}
-        description={email ? t("signsIn") : t("none")}
-      >
-        {locked && email ? (
-          <EmailProofForm email={email} />
-        ) : (
-          <EmailForms
-            current={email}
-            hasPassword={hasPassword}
-            providerLinked={providerLinked}
-          />
-        )}
-      </Section>
+      <Panel>
+        <Section
+          title={t("title")}
+          description={email ? t("signsIn") : t("none")}
+        >
+          {locked && email ? (
+            <EmailProofForm email={email} />
+          ) : (
+            <EmailForms
+              current={email}
+              hasPassword={hasPassword}
+              providerLinked={providerLinked}
+            />
+          )}
+        </Section>
+      </Panel>
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    // O fundo do tema claro do Carbon (white), na abertura e na barra.
+    // O branco da casca no tema claro, na abertura e na barra.
     background_color: "#ffffff",
     theme_color: "#ffffff",
     icons: [

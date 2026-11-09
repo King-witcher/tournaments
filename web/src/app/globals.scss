@@ -103,13 +103,13 @@
 @use "@carbon/react/scss/components/treeview";
 @use "@carbon/react/scss/components/ui-shell";
 
-// Tema claro (white) por padrão e escuro (g100) quando o sistema pede; os
-// tokens viram variáveis --cds-* que os componentes e os módulos leem. A
-// escolha de quem usa (ThemeSwitcher) vem em data-theme no <html> e vence o
-// sistema; sem ela, vale o do navegador.
+// Tema claro (g10: fundo cinza, containers brancos) por padrão e escuro (g100)
+// quando o sistema pede; os tokens viram variáveis --cds-* que os componentes
+// e os módulos leem. A escolha de quem usa (ThemeSwitcher) vem em data-theme
+// no <html> e vence o sistema; sem ela, vale o do navegador.
 :root {
   color-scheme: light;
-  @include theme.theme(themes.$white);
+  @include theme.theme(themes.$g10);
 }
 
 @media (prefers-color-scheme: dark) {

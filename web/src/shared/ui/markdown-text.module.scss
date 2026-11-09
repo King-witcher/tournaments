@@ -46,7 +46,7 @@
     @include type.type-style("code-02");
 
     padding: spacing.$spacing-05;
-    background: theme.$layer-01;
+    background: theme.$layer;
     white-space: pre-wrap;
   }
 

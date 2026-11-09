@@ -1,3 +1,4 @@
+import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**
@@ -6,6 +7,10 @@ import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
  * `false` quando outra peça da página já diz.
  */
 export function SessionsSkeleton({ label }: { label?: string | false }) {
-  const list = <SectionSkeleton rows={3} />;
+  const list = (
+    <Panel>
+      <SectionSkeleton rows={3} />
+    </Panel>
+  );
   return label ? <TabLoading label={label}>{list}</TabLoading> : list;
 }

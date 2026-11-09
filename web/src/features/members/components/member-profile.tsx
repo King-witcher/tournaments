@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { LoginPrompt } from "@/features/auth/components/login-prompt";
 import { getCurrentUser } from "@/features/auth/server";
 import { MemberRating } from "@/features/ratings/components/member-rating";
@@ -12,6 +11,7 @@ import { ButtonLink } from "@/shared/ui/button-link";
 import { LocalDate } from "@/shared/ui/local-date";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { StatusTag } from "@/shared/ui/status-tag";
 import styles from "./member-profile.module.scss";
@@ -115,7 +115,13 @@ export async function MemberProfile({ tenant, user }: Props) {
           )
         }
       />
-      <Suspense fallback={<SectionSkeleton rows={4} />}>
+      <Suspense
+        fallback={
+          <Panel>
+            <SectionSkeleton rows={4} />
+          </Panel>
+        }
+      >
         <MemberRating
           tenant={tenant}
           userId={profile.user_id}

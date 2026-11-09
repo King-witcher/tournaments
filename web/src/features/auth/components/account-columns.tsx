@@ -24,16 +24,16 @@ export function AccountColumns({ start, end, danger }: Props) {
   const halves = (
     <Grid>
       <Column sm={4} md={8} lg={8}>
-        <Stack gap={9}>{start}</Stack>
+        <Stack gap={7}>{start}</Stack>
       </Column>
       <Column sm={4} md={8} lg={8} className={styles.second}>
-        <Stack gap={9}>{end}</Stack>
+        <Stack gap={7}>{end}</Stack>
       </Column>
     </Grid>
   );
   if (!danger) return halves;
   return (
-    <Stack gap={9}>
+    <Stack gap={7}>
       {halves}
       <Grid>
         <Column sm={4} md={8} lg={8}>

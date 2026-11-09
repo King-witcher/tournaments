@@ -1,11 +1,14 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
+@use "./shell-zone";
 
-// A linha que separa o menu da página, como no IBM Cloud: o fundo dos dois é
-// o mesmo.
+// A cor da casca (`shell-zone`), e a linha que o separa da página, no token da
+// linha do cabeçalho: as duas se encontram no canto.
 .nav.nav {
-  border-inline-end: 1px solid theme.$border-subtle-01;
+  @include shell-zone.shell-zone;
+
+  border-inline-end: 1px solid theme.$border-subtle;
 }
 
 // A volta só ocupa a própria linha: a lista do Carbon cresce até o fim do
@@ -17,7 +20,7 @@
 
 .header {
   padding: spacing.$spacing-03 spacing.$spacing-05 spacing.$spacing-05;
-  border-block-end: 1px solid theme.$border-subtle-01;
+  border-block-end: 1px solid theme.$border-subtle;
   margin-block-end: spacing.$spacing-03;
 }
 

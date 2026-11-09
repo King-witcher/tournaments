@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
-
 import { AccountColumns } from "@/features/auth/components/account-columns";
 import { PushSettings } from "@/features/push/components/push-settings";
 import { SoundSettings } from "@/features/realtime/components/sound-settings";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 
 /**
@@ -25,17 +25,24 @@ export default async function AccountNotificationsPage() {
       />
       <AccountColumns
         start={
-          <Section title={t("push.title")} description={t("push.description")}>
-            <PushSettings />
-          </Section>
+          <Panel>
+            <Section
+              title={t("push.title")}
+              description={t("push.description")}
+            >
+              <PushSettings />
+            </Section>
+          </Panel>
         }
         end={
-          <Section
-            title={t("sound.title")}
-            description={t("sound.description")}
-          >
-            <SoundSettings />
-          </Section>
+          <Panel>
+            <Section
+              title={t("sound.title")}
+              description={t("sound.description")}
+            >
+              <SoundSettings />
+            </Section>
+          </Panel>
         }
       />
     </>

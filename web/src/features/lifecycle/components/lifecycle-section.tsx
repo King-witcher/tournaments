@@ -1,8 +1,8 @@
 import { useTranslations } from "next-intl";
-
 import { TournamentProgress } from "@/features/tournaments/components/tournament-progress";
 import { useProgressNotes } from "@/features/tournaments/hooks/use-progress-notes";
 import type { components } from "@/shared/api/schema";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { useLifecycleHint } from "../hooks/use-lifecycle-hint";
 import styles from "./lifecycle-section.module.scss";
@@ -28,18 +28,20 @@ export function LifecycleSection({ tenant, tournament, now, bracket }: Props) {
   const notes = useProgressNotes();
   const hint = useLifecycleHint(tournament, now);
   return (
-    <Section title={t("title")}>
-      <TournamentProgress
-        tournament={tournament}
-        secondary={notes(tournament, bracket)}
-      />
-      {hint && <p className={styles.hint}>{hint}</p>}
-      <NextStepButton
-        tenant={tenant}
-        tournament={tournament}
-        now={now}
-        kind="secondary"
-      />
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        <TournamentProgress
+          tournament={tournament}
+          secondary={notes(tournament, bracket)}
+        />
+        {hint && <p className={styles.hint}>{hint}</p>}
+        <NextStepButton
+          tenant={tenant}
+          tournament={tournament}
+          now={now}
+          kind="secondary"
+        />
+      </Section>
+    </Panel>
   );
 }

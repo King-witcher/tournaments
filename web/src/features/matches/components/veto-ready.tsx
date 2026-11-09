@@ -1,11 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-
 import { shownNickname } from "@/features/members/lib/nickname";
 import { Button } from "@/shared/ui/button";
 import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { useVetoBoard } from "../hooks/use-veto-board";
 import { VetoError } from "./veto-error";
@@ -48,80 +48,82 @@ export function VetoReady({ done = false, room = false }: Props) {
       .join(", ");
 
   return (
-    <Section title={tSteps("ready")}>
-      {!done && (
-        <p>
-          {t(
-            !teams
-              ? "waitingReady"
-              : byCaptain
-                ? "waitingReadyCaptains"
-                : "waitingReadyTeams",
-          )}
-        </p>
-      )}
-      <ul className={styles.list}>
-        {(["a", "b"] as const).map((side) => (
-          <li key={side}>
-            <IconIndicator
-              kind={ready[side] ? "succeeded" : "not-started"}
-              label={t(ready[side] ? "isReady" : "notReady", {
-                name: names[side],
-              })}
-            />
-            {!done &&
-              teams &&
-              !veto.nameless &&
-              !ready[side] &&
-              waiting(side) && (
-                <p className={styles.waiting}>
-                  {t("waitingFor", { names: waiting(side) })}
-                </p>
-              )}
-          </li>
-        ))}
-      </ul>
-      {done && forcedBy != null && (
-        <p>
-          {t("history.kinds.begin", {
-            forced: "yes",
-            actor: shownNickname(forcedBy, tMember("deletedAccount")),
-          })}
-        </p>
-      )}
-      {waitsCaptain && <p>{t("captainActs.ready")}</p>}
-      {(canReady || canUnready || canStart) && (
-        <div className={styles.buttons}>
-          {canReady && (
-            <Button pending={pending === "ready"} onClick={actions.ready}>
-              {t("readyButton")}
-            </Button>
-          )}
-          {canUnready && (
-            <Button
-              kind="secondary"
-              pending={pending === "unready"}
-              onClick={actions.unready}
-            >
-              {t("unreadyButton")}
-            </Button>
-          )}
-          {canStart && (
-            <ConfirmButton
-              question={t(
-                room ? "forceStartRoomQuestion" : "forceStartQuestion",
-              )}
-              onConfirm={actions.start}
-              pending={pending === "start"}
-              destructive={false}
-              kind={mine ? "ghost" : "tertiary"}
-            >
-              {t(room ? "forceStartNow" : "forceStart")}
-            </ConfirmButton>
-          )}
-        </div>
-      )}
-      {!done && <VetoError />}
-    </Section>
+    <Panel>
+      <Section title={tSteps("ready")}>
+        {!done && (
+          <p>
+            {t(
+              !teams
+                ? "waitingReady"
+                : byCaptain
+                  ? "waitingReadyCaptains"
+                  : "waitingReadyTeams",
+            )}
+          </p>
+        )}
+        <ul className={styles.list}>
+          {(["a", "b"] as const).map((side) => (
+            <li key={side}>
+              <IconIndicator
+                kind={ready[side] ? "succeeded" : "not-started"}
+                label={t(ready[side] ? "isReady" : "notReady", {
+                  name: names[side],
+                })}
+              />
+              {!done &&
+                teams &&
+                !veto.nameless &&
+                !ready[side] &&
+                waiting(side) && (
+                  <p className={styles.waiting}>
+                    {t("waitingFor", { names: waiting(side) })}
+                  </p>
+                )}
+            </li>
+          ))}
+        </ul>
+        {done && forcedBy != null && (
+          <p>
+            {t("history.kinds.begin", {
+              forced: "yes",
+              actor: shownNickname(forcedBy, tMember("deletedAccount")),
+            })}
+          </p>
+        )}
+        {waitsCaptain && <p>{t("captainActs.ready")}</p>}
+        {(canReady || canUnready || canStart) && (
+          <div className={styles.buttons}>
+            {canReady && (
+              <Button pending={pending === "ready"} onClick={actions.ready}>
+                {t("readyButton")}
+              </Button>
+            )}
+            {canUnready && (
+              <Button
+                kind="secondary"
+                pending={pending === "unready"}
+                onClick={actions.unready}
+              >
+                {t("unreadyButton")}
+              </Button>
+            )}
+            {canStart && (
+              <ConfirmButton
+                question={t(
+                  room ? "forceStartRoomQuestion" : "forceStartQuestion",
+                )}
+                onConfirm={actions.start}
+                pending={pending === "start"}
+                destructive={false}
+                kind={mine ? "ghost" : "tertiary"}
+              >
+                {t(room ? "forceStartNow" : "forceStart")}
+              </ConfirmButton>
+            )}
+          </div>
+        )}
+        {!done && <VetoError />}
+      </Section>
+    </Panel>
   );
 }

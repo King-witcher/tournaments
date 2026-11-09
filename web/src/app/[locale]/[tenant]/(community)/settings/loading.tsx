@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Panel } from "@/shared/ui/panel";
 
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
@@ -8,8 +9,12 @@ export default async function Loading() {
   return (
     <>
       <PageHeaderSkeleton label={t("loading")} />
-      <SectionSkeleton rows={2} />
-      <SectionSkeleton rows={1} />
+      <Panel>
+        <SectionSkeleton rows={2} />
+      </Panel>
+      <Panel>
+        <SectionSkeleton rows={1} />
+      </Panel>
     </>
   );
 }

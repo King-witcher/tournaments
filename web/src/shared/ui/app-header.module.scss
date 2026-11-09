@@ -1,3 +1,10 @@
+@use "./shell-zone";
+
+// O cabeçalho é branco no claro, como o menu lateral (`shell-zone`).
+.header {
+  @include shell-zone.shell-zone;
+}
+
 // No celular, quem cede espaço é o nome de quem está logado, na barra, que
 // pode encolher abaixo do conteúdo dela; o logo fica inteiro.
 .bar {

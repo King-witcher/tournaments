@@ -5,6 +5,6 @@
 // espaço que há entre as seções.
 .second {
   @include breakpoint.breakpoint-down(lg) {
-    margin-block-start: spacing.$spacing-09;
+    margin-block-start: spacing.$spacing-07;
   }
 }

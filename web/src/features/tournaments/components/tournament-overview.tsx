@@ -8,6 +8,7 @@ import { MyParticipation } from "@/features/participants/components/my-participa
 import { NextStage } from "@/features/stages/components/next-stage";
 import { pendingStage, withStageStatus } from "@/features/stages/lib/stages";
 import { PageColumns } from "@/shared/ui/page-columns";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { UserText } from "@/shared/ui/user-text";
@@ -78,23 +79,29 @@ export async function TournamentOverview({ tenant, slug }: Props) {
             <LiveMatches bracket={bracket} basePath={matchesPath} />
           )}
           {description && (
-            <Section title={t("description")}>
-              <UserText>{description}</UserText>
-            </Section>
+            <Panel>
+              <Section title={t("description")}>
+                <UserText>{description}</UserText>
+              </Section>
+            </Panel>
           )}
-          <TournamentSetupSummary
-            tournament={tournament}
-            rulesHref={`/${tenant}/${slug}/rules`}
-          />
+          <Panel>
+            <TournamentSetupSummary
+              tournament={tournament}
+              rulesHref={`/${tenant}/${slug}/rules`}
+            />
+          </Panel>
         </>
       }
       aside={
-        <TournamentStateSection
-          tournament={tournament}
-          bracket={bracket}
-          organizer={organizer}
-          now={now}
-        />
+        <Panel>
+          <TournamentStateSection
+            tournament={tournament}
+            bracket={bracket}
+            organizer={organizer}
+            now={now}
+          />
+        </Panel>
       }
     />
   );

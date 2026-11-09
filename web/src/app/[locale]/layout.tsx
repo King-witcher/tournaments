@@ -33,13 +33,14 @@ export function generateStaticParams() {
 }
 
 /**
- * A cor do Carbon no fundo de cada tema (white e gray 100), na barra do
- * navegador do celular e na faixa da prévia no Discord.
+ * A cor da casca em cada tema (branco e gray 90, `_shell-zone.scss`), que é
+ * o topo da tela, na barra do navegador do celular e na faixa da prévia no
+ * Discord.
  */
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#161616" },
+    { media: "(prefers-color-scheme: dark)", color: "#262626" },
   ],
 };
 

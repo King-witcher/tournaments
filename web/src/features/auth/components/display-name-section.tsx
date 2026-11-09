@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Panel } from "@/shared/ui/panel";
 
 import { Section } from "@/shared/ui/section";
 import { getCurrentUser } from "../server";
@@ -13,8 +14,10 @@ export async function DisplayNameSection() {
   if (!user) return null;
 
   return (
-    <Section title={t("title")}>
-      <DisplayNameForm name={user.display_name} />
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        <DisplayNameForm name={user.display_name} />
+      </Section>
+    </Panel>
   );
 }

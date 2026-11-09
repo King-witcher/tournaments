@@ -29,7 +29,7 @@
 // largura da coluna.
 .logo {
   inline-size: spacing.$spacing-13;
-  background-color: theme.$layer-01;
+  background-color: theme.$layer;
 }
 
 // A foto como o `Avatar` a mostra: redonda.
@@ -37,12 +37,12 @@
   overflow: hidden;
   inline-size: spacing.$spacing-13;
   border-radius: 50%;
-  background-color: theme.$layer-01;
+  background-color: theme.$layer;
 }
 
 .cover {
   inline-size: 100%;
-  background-color: theme.$layer-01;
+  background-color: theme.$layer;
 }
 
 .image {

@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { AccountColumns } from "@/features/auth/components/account-columns";
 import { AccountDeletionCancelled } from "@/features/auth/components/account-deletion-cancelled";
 import { AuthError } from "@/features/auth/components/auth-error";
@@ -8,6 +7,7 @@ import { DeleteAccountSection } from "@/features/auth/components/delete-account-
 import { DisplayNameSection } from "@/features/auth/components/display-name-section";
 import { AvatarSection } from "@/features/images/components/avatar-section";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
 import { FormSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
 /**
@@ -31,13 +31,23 @@ export default async function AccountProfilePage({
       <AccountColumns
         start={
           <Suspense
-            fallback={<FormSkeleton heading fields={1} label={t("loading")} />}
+            fallback={
+              <Panel>
+                <FormSkeleton heading fields={1} label={t("loading")} />
+              </Panel>
+            }
           >
             <DisplayNameSection />
           </Suspense>
         }
         end={
-          <Suspense fallback={<SectionSkeleton rows={2} />}>
+          <Suspense
+            fallback={
+              <Panel>
+                <SectionSkeleton rows={2} />
+              </Panel>
+            }
+          >
             <AvatarSection />
           </Suspense>
         }

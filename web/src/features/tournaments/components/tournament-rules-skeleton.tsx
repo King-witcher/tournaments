@@ -1,25 +1,30 @@
 import { MapGridSkeleton } from "@/features/maps/components/map-grid-skeleton";
 import { SkeletonText } from "@/shared/ui/carbon/skeleton-text";
 import { Stack } from "@/shared/ui/carbon/stack";
+import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 import styles from "./tournament-rules.module.scss";
 
 /**
- * As Regras carregando, na largura de leitura delas: o texto gerado do
- * formato, em linhas, e embaixo a grade dos mapas do pool, que ocupa bem
- * mais que uma linha.
+ * As Regras carregando, na largura de leitura delas e dentro do `Panel`, como
+ * a seção: o texto gerado do formato, em linhas, e embaixo a grade dos mapas
+ * do pool, que ocupa bem mais que uma linha.
  */
 export function TournamentRulesSkeleton({ label }: { label: string }) {
   return (
     <div className={styles.reading}>
       <TabLoading label={label}>
-        <SectionSkeleton rows={6} />
-        <div aria-hidden>
-          <Stack gap={5}>
-            <SkeletonText heading width="40%" />
-            <MapGridSkeleton />
+        <Panel>
+          <Stack gap={7}>
+            <SectionSkeleton rows={6} />
+            <div aria-hidden>
+              <Stack gap={5}>
+                <SkeletonText heading width="40%" />
+                <MapGridSkeleton />
+              </Stack>
+            </div>
           </Stack>
-        </div>
+        </Panel>
       </TabLoading>
     </div>
   );

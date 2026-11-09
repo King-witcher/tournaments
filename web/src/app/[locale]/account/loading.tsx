@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { AccountColumns } from "@/features/auth/components/account-columns";
+import { Panel } from "@/shared/ui/panel";
 import {
   FormSkeleton,
   PageHeaderSkeleton,
@@ -14,8 +14,16 @@ export default async function Loading() {
     <>
       <PageHeaderSkeleton breadcrumb={false} label={t("loading")} />
       <AccountColumns
-        start={<FormSkeleton heading fields={1} label={false} />}
-        end={<SectionSkeleton rows={2} />}
+        start={
+          <Panel>
+            <FormSkeleton heading fields={1} label={false} />
+          </Panel>
+        }
+        end={
+          <Panel>
+            <SectionSkeleton rows={2} />
+          </Panel>
+        }
       />
     </>
   );

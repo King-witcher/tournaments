@@ -1,0 +1,15 @@
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+
+// A primeira camada do tema (`layer-01`), e não o `$layer` que o `Layer` do
+// `Panel` já passou para a seguinte: é o container que se destaca da página.
+.panel {
+  min-inline-size: 0;
+  padding: spacing.$spacing-05;
+  background-color: theme.$layer-01;
+
+  @include breakpoint.breakpoint(md) {
+    padding: spacing.$spacing-06;
+  }
+}

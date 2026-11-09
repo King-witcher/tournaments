@@ -4,7 +4,7 @@ Alvo da experiência de uso, no Carbon Design System. Este arquivo diz **o que**
 
 ## Base
 
-- Carbon v11, fonte IBM Plex pelo `next/font`, só tokens do Carbon (sem Tailwind, `style={{}}`, pixel ou cor soltos). Temas `white` e `g100`, seguindo o sistema até a pessoa escolher no painel dela; toda tela é conferida nos dois.
+- Carbon v11, fonte IBM Plex pelo `next/font`, só tokens do Carbon (sem Tailwind, `style={{}}`, pixel ou cor soltos). Temas `g10` e `g100`, seguindo o sistema até a pessoa escolher no painel dela; toda tela é conferida nos dois.
 - Idiomas pt, es e en, um arquivo de mensagens por namespace.
 - Princípios de uso (carregamento com esqueleto, `pending`, foco depois de agir, 48px de toque no celular, 390px sem rolagem horizontal fora da chave, estado vazio sem ensinar o uso, erro traduzido junto do controle) em `web/CLAUDE.md`.
 

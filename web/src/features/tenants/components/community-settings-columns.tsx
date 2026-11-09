@@ -34,10 +34,10 @@ export async function CommunitySettingsColumns({
   const owner = loaded.tenant.role === "owner";
 
   return (
-    <Stack gap={9}>
+    <Stack gap={7}>
       <Grid>
         <Column sm={4} md={8} lg={8}>
-          <Stack gap={9}>{identity}</Stack>
+          <Stack gap={7}>{identity}</Stack>
         </Column>
         {owner && (
           <Column sm={4} md={8} lg={8} className={styles.second}>

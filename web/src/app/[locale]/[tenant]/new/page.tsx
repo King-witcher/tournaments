@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { NewTournamentView } from "@/features/tournaments/components/new-tournament-view";
 import { Page } from "@/shared/ui/page";
+import { Panel } from "@/shared/ui/panel";
 import { FormSkeleton, PageHeaderSkeleton } from "@/shared/ui/skeleton";
 
 export default async function NewTournamentPage({
@@ -16,7 +16,9 @@ export default async function NewTournamentPage({
         fallback={
           <>
             <PageHeaderSkeleton label={t("loading")} />
-            <FormSkeleton fields={4} label={false} />
+            <Panel>
+              <FormSkeleton fields={4} label={false} />
+            </Panel>
           </>
         }
       >

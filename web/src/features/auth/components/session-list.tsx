@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
@@ -12,6 +11,7 @@ import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ErrorText } from "@/shared/ui/error-text";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { StructuredList } from "@/shared/ui/structured-list";
@@ -69,46 +69,48 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
   };
 
   return (
-    <Section
-      id={SECTION_ID}
-      title={t("title")}
-      description={t("description")}
-      action={
-        others.length > 0 && (
-          <ConfirmButton
-            size="md"
-            pending={pending}
-            question={t("endOthersConfirm")}
-            onConfirm={endOthers}
-          >
-            {t("endOthers")}
-          </ConfirmButton>
-        )
-      }
-    >
-      <StructuredList
-        label={t("title")}
-        headers={[t("deviceHeader"), t("sinceHeader"), ""]}
-        rows={sessions.map((session) => ({
-          key: session.id,
-          cells: [
-            device(session),
-            <LocalDateTime key="since" value={session.created_at} />,
-            session.current ? null : (
-              <ConfirmButton
-                key="end"
-                pending={pending}
-                question={t("endConfirm")}
-                onConfirm={() => endOne(session.id)}
-              >
-                {t("end")}
-              </ConfirmButton>
-            ),
-          ],
-        }))}
-      />
-      {others.length === 0 && <EmptyState>{t("onlyThis")}</EmptyState>}
-      {error && <ErrorText>{error}</ErrorText>}
-    </Section>
+    <Panel>
+      <Section
+        id={SECTION_ID}
+        title={t("title")}
+        description={t("description")}
+        action={
+          others.length > 0 && (
+            <ConfirmButton
+              size="md"
+              pending={pending}
+              question={t("endOthersConfirm")}
+              onConfirm={endOthers}
+            >
+              {t("endOthers")}
+            </ConfirmButton>
+          )
+        }
+      >
+        <StructuredList
+          label={t("title")}
+          headers={[t("deviceHeader"), t("sinceHeader"), ""]}
+          rows={sessions.map((session) => ({
+            key: session.id,
+            cells: [
+              device(session),
+              <LocalDateTime key="since" value={session.created_at} />,
+              session.current ? null : (
+                <ConfirmButton
+                  key="end"
+                  pending={pending}
+                  question={t("endConfirm")}
+                  onConfirm={() => endOne(session.id)}
+                >
+                  {t("end")}
+                </ConfirmButton>
+              ),
+            ],
+          }))}
+        />
+        {others.length === 0 && <EmptyState>{t("onlyThis")}</EmptyState>}
+        {error && <ErrorText>{error}</ErrorText>}
+      </Section>
+    </Panel>
   );
 }

@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-
 import { getCurrentUser } from "@/features/auth/server";
 import { MemberLink } from "@/features/members/components/member-link";
 import { Link } from "@/shared/ui/link";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { StructuredList } from "@/shared/ui/structured-list";
 import { getRanking } from "../server";
@@ -29,39 +29,41 @@ export async function RankingTop({ slug }: { slug: string }) {
   const outside = mine && !top.includes(mine);
 
   return (
-    <Section title={t("top.title")}>
-      <StructuredList
-        label={t("ranking.label")}
-        condensed
-        headers={[
-          t("ranking.position"),
-          t("ranking.member"),
-          t("ranking.rating"),
-        ]}
-        rows={top.map((p) => ({
-          key: String(p.user_id),
-          cells: [
-            t("member.positionShort", { position: p.position }),
-            <MemberLink key="member" tenant={slug} userId={p.user_id}>
-              {p.nickname}
-            </MemberLink>,
-            <RatingValue
-              key="rating"
-              rating={p.rating}
-              provisional={p.provisional}
-            />,
-          ],
-        }))}
-      />
-      {outside && (
-        <p className={styles.mine}>
-          {t("top.mine", {
-            position: t("member.positionShort", { position: mine.position }),
-            rating: mine.rating,
-          })}
-        </p>
-      )}
-      <Link href={`/${slug}/ranking`}>{t("top.all")}</Link>
-    </Section>
+    <Panel>
+      <Section title={t("top.title")}>
+        <StructuredList
+          label={t("ranking.label")}
+          condensed
+          headers={[
+            t("ranking.position"),
+            t("ranking.member"),
+            t("ranking.rating"),
+          ]}
+          rows={top.map((p) => ({
+            key: String(p.user_id),
+            cells: [
+              t("member.positionShort", { position: p.position }),
+              <MemberLink key="member" tenant={slug} userId={p.user_id}>
+                {p.nickname}
+              </MemberLink>,
+              <RatingValue
+                key="rating"
+                rating={p.rating}
+                provisional={p.provisional}
+              />,
+            ],
+          }))}
+        />
+        {outside && (
+          <p className={styles.mine}>
+            {t("top.mine", {
+              position: t("member.positionShort", { position: mine.position }),
+              rating: mine.rating,
+            })}
+          </p>
+        )}
+        <Link href={`/${slug}/ranking`}>{t("top.all")}</Link>
+      </Section>
+    </Panel>
   );
 }

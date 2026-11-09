@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-
 import { getTenant } from "@/features/tenants/server";
 import { serverApi } from "@/shared/api/server";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { DiscordForm } from "./discord-form";
 
@@ -23,9 +23,11 @@ export async function DiscordSection({ slug }: { slug: string }) {
   return (
     <Grid>
       <Column sm={4} md={8} lg={8}>
-        <Section title={t("title")} description={t("description")}>
-          <DiscordForm slug={slug} settings={data} />
-        </Section>
+        <Panel>
+          <Section title={t("title")} description={t("description")}>
+            <DiscordForm slug={slug} settings={data} />
+          </Section>
+        </Panel>
       </Column>
     </Grid>
   );

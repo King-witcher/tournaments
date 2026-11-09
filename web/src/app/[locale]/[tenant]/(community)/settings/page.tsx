@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { DiscordSection } from "@/features/discord/components/discord-section";
 import { CommunityDangerZone } from "@/features/members/components/community-danger-zone";
 import { NicknameSection } from "@/features/members/components/nickname-section";
@@ -10,12 +9,17 @@ import { LogoSection } from "@/features/tenants/components/logo-section";
 import { TenantAddressSection } from "@/features/tenants/components/tenant-address-section";
 import { TenantDetailsSection } from "@/features/tenants/components/tenant-details-section";
 import { TenantHeader } from "@/features/tenants/components/tenant-header";
+import { Panel } from "@/shared/ui/panel";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
 const SKELETON = (
   <>
-    <SectionSkeleton rows={2} />
-    <SectionSkeleton rows={1} />
+    <Panel>
+      <SectionSkeleton rows={2} />
+    </Panel>
+    <Panel>
+      <SectionSkeleton rows={1} />
+    </Panel>
   </>
 );
 
@@ -44,17 +48,35 @@ export default async function TenantSettingsPage({
               <>
                 <TenantDetailsSection slug={tenant} />
                 <TenantAddressSection slug={tenant} />
-                <Suspense fallback={<SectionSkeleton rows={2} />}>
+                <Suspense
+                  fallback={
+                    <Panel>
+                      <SectionSkeleton rows={2} />
+                    </Panel>
+                  }
+                >
                   <LogoSection slug={tenant} />
                 </Suspense>
-                <Suspense fallback={<SectionSkeleton rows={4} />}>
+                <Suspense
+                  fallback={
+                    <Panel>
+                      <SectionSkeleton rows={4} />
+                    </Panel>
+                  }
+                >
                   <RatingSettingsSection slug={tenant} />
                 </Suspense>
                 <NicknameSection slug={tenant} />
               </>
             }
             discord={
-              <Suspense fallback={<SectionSkeleton rows={4} />}>
+              <Suspense
+                fallback={
+                  <Panel>
+                    <SectionSkeleton rows={4} />
+                  </Panel>
+                }
+              >
                 <DiscordSection slug={tenant} />
               </Suspense>
             }

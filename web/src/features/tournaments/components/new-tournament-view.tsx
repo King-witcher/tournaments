@@ -6,6 +6,7 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import { serverApi } from "@/shared/api/server";
 import { PageError } from "@/shared/ui/page-error";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Panel } from "@/shared/ui/panel";
 import { NewTournamentForm } from "./new-tournament-form";
 
 type Props = {
@@ -77,12 +78,14 @@ export async function NewTournamentView({ tenant, from }: Props) {
           {await apiErrorMessage("tenant.forbidden")}
         </PageError>
       ) : (
-        <NewTournamentForm
-          tenant={tenant}
-          maps={maps}
-          tournaments={tournaments}
-          source={source}
-        />
+        <Panel>
+          <NewTournamentForm
+            tenant={tenant}
+            maps={maps}
+            tournaments={tournaments}
+            source={source}
+          />
+        </Panel>
       )}
     </>
   );

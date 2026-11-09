@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { ImageField } from "@/features/images/components/image-field";
 import { getImageSettings } from "@/features/images/server";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getTenant } from "../server";
 
@@ -22,13 +23,15 @@ export async function LogoSection({ slug }: { slug: string }) {
   return (
     <Grid>
       <Column sm={4} md={8} lg={8}>
-        <Section title={t("title")} description={t("hint")}>
-          <ImageField
-            target={{ kind: "logo", tenant: slug }}
-            url={loaded.tenant.logo_url}
-            maxBytes={settings.max_bytes}
-          />
-        </Section>
+        <Panel>
+          <Section title={t("title")} description={t("hint")}>
+            <ImageField
+              target={{ kind: "logo", tenant: slug }}
+              url={loaded.tenant.logo_url}
+              maxBytes={settings.max_bytes}
+            />
+          </Section>
+        </Panel>
       </Column>
     </Grid>
   );

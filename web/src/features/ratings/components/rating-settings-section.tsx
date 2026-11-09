@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-
 import { getTenant } from "@/features/tenants/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getRatingSettings } from "../server";
 import { RatingSettingsForm } from "./rating-settings-form";
@@ -19,12 +19,14 @@ export async function RatingSettingsSection({ slug }: { slug: string }) {
     getTranslations("Ratings.settings"),
   ]);
   return (
-    <Section title={t("title")}>
-      {settings ? (
-        <RatingSettingsForm slug={slug} initial={settings} />
-      ) : (
-        <Notice kind="error">{await apiErrorMessage("internal")}</Notice>
-      )}
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        {settings ? (
+          <RatingSettingsForm slug={slug} initial={settings} />
+        ) : (
+          <Notice kind="error">{await apiErrorMessage("internal")}</Notice>
+        )}
+      </Section>
+    </Panel>
   );
 }

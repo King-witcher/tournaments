@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { LOGIN_SECTION } from "../lib/login-sections";
 import type { Provider } from "../lib/providers";
@@ -36,30 +36,32 @@ export async function ProviderLoginSection({
 
   return (
     <div id={LOGIN_SECTION[provider]} tabIndex={-1}>
-      <Section
-        title={t(`${provider}.title`)}
-        description={
-          linked ? t(`${provider}.linked`) : t(`${provider}.notLinked`)
-        }
-      >
-        {locked ? (
-          <Notice kind="info">{t("email.proofFirst")}</Notice>
-        ) : !linked && hasPassword ? (
-          <LinkProviderForm provider={provider} returnTo="/account/logins" />
-        ) : !linked ? (
-          <OAuthButton
-            provider={provider}
-            action="link"
-            returnTo="/account/logins"
-          >
-            {t(`${provider}.link`)}
-          </OAuthButton>
-        ) : !canUnlink ? (
-          <Notice kind="info">{t(`${provider}.needsOther`)}</Notice>
-        ) : (
-          <RemoveLoginForm login={provider} needsPassword={hasPassword} />
-        )}
-      </Section>
+      <Panel>
+        <Section
+          title={t(`${provider}.title`)}
+          description={
+            linked ? t(`${provider}.linked`) : t(`${provider}.notLinked`)
+          }
+        >
+          {locked ? (
+            <Notice kind="info">{t("email.proofFirst")}</Notice>
+          ) : !linked && hasPassword ? (
+            <LinkProviderForm provider={provider} returnTo="/account/logins" />
+          ) : !linked ? (
+            <OAuthButton
+              provider={provider}
+              action="link"
+              returnTo="/account/logins"
+            >
+              {t(`${provider}.link`)}
+            </OAuthButton>
+          ) : !canUnlink ? (
+            <Notice kind="info">{t(`${provider}.needsOther`)}</Notice>
+          ) : (
+            <RemoveLoginForm login={provider} needsPassword={hasPassword} />
+          )}
+        </Section>
+      </Panel>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
-
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getMemberRating, getRanking } from "../server";
 import { AdjustRatingButton } from "./adjust-rating-button";
@@ -45,30 +45,32 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
 
   const summary = (
     <div id={RATING_ID} tabIndex={-1}>
-      <Section
-        title={t("title")}
-        action={
-          staff && (
-            <AdjustRatingButton
-              tenant={tenant}
-              userId={userId}
-              nickname={nickname}
-              focusId={RATING_ID}
+      <Panel>
+        <Section
+          title={t("title")}
+          action={
+            staff && (
+              <AdjustRatingButton
+                tenant={tenant}
+                userId={userId}
+                nickname={nickname}
+                focusId={RATING_ID}
+              />
+            )
+          }
+        >
+          {rating.standing ? (
+            <RatingSummary
+              standing={rating.standing}
+              total={ranking?.players.length}
+              adjusted={rating.adjusted}
+              provisionalGames={rating.provisional_games}
             />
-          )
-        }
-      >
-        {rating.standing ? (
-          <RatingSummary
-            standing={rating.standing}
-            total={ranking?.players.length}
-            adjusted={rating.adjusted}
-            provisionalGames={rating.provisional_games}
-          />
-        ) : (
-          <p>{t("none", { initial: rating.initial })}</p>
-        )}
-      </Section>
+          ) : (
+            <p>{t("none", { initial: rating.initial })}</p>
+          )}
+        </Section>
+      </Panel>
     </div>
   );
 
@@ -83,7 +85,9 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
         </Column>
         {rating.by_map.length > 0 && (
           <Column sm={4} md={8} lg={10} className={styles.maps}>
-            <MapRecords records={rating.by_map} />
+            <Panel>
+              <MapRecords records={rating.by_map} />
+            </Panel>
           </Column>
         )}
       </Grid>

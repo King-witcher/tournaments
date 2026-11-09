@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { Column, Grid } from "@/shared/ui/carbon/grid";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getTenant } from "../server";
 import { TenantDetailsForm } from "./tenant-details-form";
@@ -21,13 +21,15 @@ export async function TenantDetailsSection({ slug }: { slug: string }) {
   return (
     <Grid>
       <Column sm={4} md={8} lg={8}>
-        <Section title={t("title")}>
-          <TenantDetailsForm
-            slug={slug}
-            name={loaded.tenant.name}
-            description={loaded.tenant.description ?? ""}
-          />
-        </Section>
+        <Panel>
+          <Section title={t("title")}>
+            <TenantDetailsForm
+              slug={slug}
+              name={loaded.tenant.name}
+              description={loaded.tenant.description ?? ""}
+            />
+          </Section>
+        </Panel>
       </Column>
     </Grid>
   );

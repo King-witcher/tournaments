@@ -1,4 +1,5 @@
 import { PageColumns } from "@/shared/ui/page-columns";
+import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton, TabLoading } from "@/shared/ui/skeleton";
 
 /**
@@ -9,8 +10,16 @@ export function TournamentManageSkeleton({ label }: { label: string }) {
   return (
     <TabLoading label={label}>
       <PageColumns
-        main={<SectionSkeleton rows={2} />}
-        aside={<SectionSkeleton rows={1} />}
+        main={
+          <Panel>
+            <SectionSkeleton rows={2} />
+          </Panel>
+        }
+        aside={
+          <Panel>
+            <SectionSkeleton rows={1} />
+          </Panel>
+        }
       />
     </TabLoading>
   );

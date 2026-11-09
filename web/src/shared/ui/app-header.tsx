@@ -37,7 +37,7 @@ type Props = {
 export function AppHeader({ name, skipLabel, menuLabels, children }: Props) {
   const { navOpen, setNavOpen } = useAppShell();
   return (
-    <Header aria-label={name}>
+    <Header aria-label={name} className={styles.header}>
       <SkipToContent href="#main-content">{skipLabel}</SkipToContent>
       {menuLabels && (
         <HeaderMenuButton

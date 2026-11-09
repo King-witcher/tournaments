@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Panel } from "@/shared/ui/panel";
 
 import { Section } from "@/shared/ui/section";
 import { getTenant } from "../server";
@@ -17,8 +18,10 @@ export async function TenantAbout({ slug }: { slug: string }) {
   if (loaded.kind !== "ok" || !loaded.tenant.description) return null;
 
   return (
-    <Section title={t("title")}>
-      <TenantDescription>{loaded.tenant.description}</TenantDescription>
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        <TenantDescription>{loaded.tenant.description}</TenantDescription>
+      </Section>
+    </Panel>
   );
 }

@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { getCurrentUser } from "@/features/auth/server";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getImageSettings } from "../server";
 import { AvatarField } from "./avatar-field";
@@ -21,11 +21,13 @@ export async function AvatarSection() {
   const discord = !user.photo_url && Boolean(user.avatar_url);
 
   return (
-    <Section
-      title={t("title")}
-      description={discord ? t("discord") : undefined}
-    >
-      <AvatarField url={user.photo_url} maxBytes={settings.max_bytes} />
-    </Section>
+    <Panel>
+      <Section
+        title={t("title")}
+        description={discord ? t("discord") : undefined}
+      >
+        <AvatarField url={user.photo_url} maxBytes={settings.max_bytes} />
+      </Section>
+    </Panel>
   );
 }

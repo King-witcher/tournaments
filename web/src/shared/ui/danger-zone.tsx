@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { type ReactNode, useId } from "react";
 
+import { Layer } from "./carbon/layer";
 import styles from "./danger-zone.module.scss";
 
 type Props = {
@@ -18,11 +19,11 @@ export function DangerZone({ children }: Props) {
   const t = useTranslations("Common");
   const headingId = useId();
   return (
-    <section aria-labelledby={headingId} className={styles.zone}>
+    <Layer as="section" aria-labelledby={headingId} className={styles.zone}>
       <h2 id={headingId} className={styles.title}>
         {t("dangerZone")}
       </h2>
       <div className={styles.body}>{children}</div>
-    </section>
+    </Layer>
   );
 }

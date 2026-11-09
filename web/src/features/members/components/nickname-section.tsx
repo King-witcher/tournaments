@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { getTenant } from "@/features/tenants/server";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { NicknameForm } from "./nickname-form";
 
@@ -17,8 +17,10 @@ export async function NicknameSection({ slug }: { slug: string }) {
   if (loaded.kind !== "ok") return null;
 
   return (
-    <Section title={t("title")}>
-      <NicknameForm slug={slug} nickname={loaded.tenant.nickname} />
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        <NicknameForm slug={slug} nickname={loaded.tenant.nickname} />
+      </Section>
+    </Panel>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { type ReactNode, type Ref, type RefObject, useEffect } from "react";
-
 import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/carbon/form";
 import { Stack } from "@/shared/ui/carbon/stack";
@@ -10,6 +9,7 @@ import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { IconIndicator } from "@/shared/ui/icon-indicator";
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { StatusTag } from "@/shared/ui/status-tag";
 import { useSettingsDrafts } from "../hooks/use-settings-drafts";
@@ -124,35 +124,37 @@ export function SettingsSection({
   );
 
   return (
-    <Section
-      id={titleId}
-      focusable
-      title={
-        <span className={styles.head}>
-          <span>{t(`sections.${section}`)}</span>
-          {form.dirty ? (
-            <IconIndicator kind="caution-minor" label={t("unsaved")} />
-          ) : (
-            readOnly && (
-              <StatusTag status="neutral" size="sm">
-                {t("readOnly")}
-              </StatusTag>
-            )
-          )}
-        </span>
-      }
-      description={summary}
-    >
-      {aside ? (
-        <div className={styles.halves}>
-          <div className={styles.columns}>
-            {body}
-            {aside}
+    <Panel>
+      <Section
+        id={titleId}
+        focusable
+        title={
+          <span className={styles.head}>
+            <span>{t(`sections.${section}`)}</span>
+            {form.dirty ? (
+              <IconIndicator kind="caution-minor" label={t("unsaved")} />
+            ) : (
+              readOnly && (
+                <StatusTag status="neutral" size="sm">
+                  {t("readOnly")}
+                </StatusTag>
+              )
+            )}
+          </span>
+        }
+        description={summary}
+      >
+        {aside ? (
+          <div className={styles.halves}>
+            <div className={styles.columns}>
+              {body}
+              {aside}
+            </div>
           </div>
-        </div>
-      ) : (
-        body
-      )}
-    </Section>
+        ) : (
+          body
+        )}
+      </Section>
+    </Panel>
   );
 }

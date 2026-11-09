@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 
 import type { components } from "@/shared/api/schema";
 import { Stack } from "@/shared/ui/carbon/stack";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { AutoRulesAbsence } from "./auto-rules-absence";
 import { AutoRulesEntry } from "./auto-rules-entry";
@@ -36,34 +37,36 @@ export function TournamentAutoRules({ tournament, maps, editable }: Props) {
     tournament.status === "in_progress" || tournament.status === "finished";
 
   return (
-    <Section
-      title={t("title")}
-      description={t(editable ? "generated" : "generatedReader")}
-    >
-      <Stack gap={7}>
-        {!started && <AutoRulesEntry tournament={tournament} />}
-        {tournament.mode === "tdm" && (
-          <AutoRulesTeams tournament={tournament} />
-        )}
-        {tournament.stages.length === 1 ? (
-          <>
-            <AutoRulesFormat tournament={tournament} />
-            <AutoRulesTable stage={tournament.stages[0]} />
-          </>
-        ) : (
-          tournament.stages.map((stage) => (
-            <AutoRulesStage
-              key={stage.number}
-              tournament={tournament}
-              stage={stage}
-            />
-          ))
-        )}
-        <AutoRulesSeries tournament={tournament} />
-        <AutoRulesMaps tournament={tournament} maps={maps} />
-        <AutoRulesResults tournament={tournament} />
-        <AutoRulesAbsence tournament={tournament} />
-      </Stack>
-    </Section>
+    <Panel>
+      <Section
+        title={t("title")}
+        description={t(editable ? "generated" : "generatedReader")}
+      >
+        <Stack gap={7}>
+          {!started && <AutoRulesEntry tournament={tournament} />}
+          {tournament.mode === "tdm" && (
+            <AutoRulesTeams tournament={tournament} />
+          )}
+          {tournament.stages.length === 1 ? (
+            <>
+              <AutoRulesFormat tournament={tournament} />
+              <AutoRulesTable stage={tournament.stages[0]} />
+            </>
+          ) : (
+            tournament.stages.map((stage) => (
+              <AutoRulesStage
+                key={stage.number}
+                tournament={tournament}
+                stage={stage}
+              />
+            ))
+          )}
+          <AutoRulesSeries tournament={tournament} />
+          <AutoRulesMaps tournament={tournament} maps={maps} />
+          <AutoRulesResults tournament={tournament} />
+          <AutoRulesAbsence tournament={tournament} />
+        </Stack>
+      </Section>
+    </Panel>
   );
 }

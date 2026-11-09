@@ -56,11 +56,11 @@ const preview: Preview = {
   ],
   decorators: [
     withIntl,
-    // Os temas do globals.scss: white sem atributo de escolha, g100 com
+    // Os temas do globals.scss: g10 sem atributo de escolha, g100 com
     // data-theme="dark" no <html>, como o ThemeSwitcher faz.
     withThemeByDataAttribute({
-      themes: { white: "light", g100: "dark" },
-      defaultTheme: "white",
+      themes: { g10: "light", g100: "dark" },
+      defaultTheme: "g10",
       attributeName: "data-theme",
     }),
   ],

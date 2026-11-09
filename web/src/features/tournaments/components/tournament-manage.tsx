@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-
 import { LifecycleSection } from "@/features/lifecycle/components/lifecycle-section";
 import { LiveMatches } from "@/features/matches/components/live-matches";
 import { PendingMatches } from "@/features/matches/components/pending-matches";
@@ -12,6 +11,7 @@ import { apiErrorMessage } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
 import { Notice } from "@/shared/ui/notice";
 import { PageColumns } from "@/shared/ui/page-columns";
+import { Panel } from "@/shared/ui/panel";
 import { SectionSkeleton } from "@/shared/ui/skeleton";
 import { hasStarted } from "../lib/status";
 import { loadTournament } from "../server";
@@ -75,16 +75,20 @@ export async function TournamentManage({ tenant, slug }: Props) {
             <LiveMatches bracket={bracket} basePath={matchesPath} />
           )}
           {tournament.mode === "tdm" && (
-            <Suspense fallback={<SectionSkeleton rows={1} />}>
-              <TeamsSummary tenant={tenant} tournament={tournament} />
-            </Suspense>
+            <Panel>
+              <Suspense fallback={<SectionSkeleton rows={1} />}>
+                <TeamsSummary tenant={tenant} tournament={tournament} />
+              </Suspense>
+            </Panel>
           )}
         </>
       }
       aside={
-        <Suspense fallback={<SectionSkeleton rows={1} />}>
-          <SeedingSummary tenant={tenant} tournament={tournament} />
-        </Suspense>
+        <Panel>
+          <Suspense fallback={<SectionSkeleton rows={1} />}>
+            <SeedingSummary tenant={tenant} tournament={tournament} />
+          </Suspense>
+        </Panel>
       }
     />
   );

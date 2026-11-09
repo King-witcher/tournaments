@@ -1,3 +1,4 @@
+import { Panel } from "@/shared/ui/panel";
 import { FormSkeleton } from "@/shared/ui/skeleton";
 import { AccountColumns } from "./account-columns";
 
@@ -11,14 +12,22 @@ export function LoginsSkeleton({ label }: { label?: string | false }) {
     <AccountColumns
       start={
         <>
-          <FormSkeleton heading text fields={1} label={label} />
-          <FormSkeleton heading fields={3} label={false} />
+          <Panel>
+            <FormSkeleton heading text fields={1} label={label} />
+          </Panel>
+          <Panel>
+            <FormSkeleton heading fields={3} label={false} />
+          </Panel>
         </>
       }
       end={
         <>
-          <FormSkeleton heading text fields={0} label={false} />
-          <FormSkeleton heading text fields={0} label={false} />
+          <Panel>
+            <FormSkeleton heading text fields={0} label={false} />
+          </Panel>
+          <Panel>
+            <FormSkeleton heading text fields={0} label={false} />
+          </Panel>
         </>
       }
     />

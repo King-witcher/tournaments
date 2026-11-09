@@ -1,0 +1,30 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/themes";
+@use "@carbon/styles/scss/layer/layer-tokens";
+
+// A zona de tema da casca (cabeçalho e menu lateral), como os produtos da IBM:
+// no claro a casca é branca (`white`) e a página, cinza (`g10`) com os
+// containers brancos; no escuro, a casca é `g90` e a página, `g100`, com a
+// casca na cor dos containers, como no claro. É o `Theme` do Carbon feito em
+// CSS, porque o tema (do sistema ou de `data-theme`) se decide no CSS, antes
+// do JS. Reemite os tokens de camada: sem isso, `--cds-layer` ficaria com o
+// valor da raiz (carbon-design-system/carbon#11138).
+@mixin zone($theme) {
+  @include theme.theme($theme);
+  @include layer-tokens.emit-layer-tokens(1);
+}
+
+// Pôr no elemento da casca: branca no claro, e `g90` onde a raiz é escura.
+@mixin shell-zone {
+  @include zone(themes.$white);
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) & {
+      @include zone(themes.$g90);
+    }
+  }
+
+  :root[data-theme="dark"] & {
+    @include zone(themes.$g90);
+  }
+}

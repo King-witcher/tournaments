@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { LOGIN_SECTION } from "../lib/login-sections";
 import { ChangePasswordForm } from "./change-password-form";
@@ -29,17 +29,19 @@ export async function PasswordLoginSection({
 
   return (
     <div id={LOGIN_SECTION.password} tabIndex={-1}>
-      <Section title={t("title")}>
-        {locked ? (
-          <Notice kind="info">{tEmail("proofFirst")}</Notice>
-        ) : hasPassword ? (
-          <ChangePasswordForm />
-        ) : hasEmail ? (
-          <CredentialsForm />
-        ) : (
-          <Notice kind="info">{t("needsEmail")}</Notice>
-        )}
-      </Section>
+      <Panel>
+        <Section title={t("title")}>
+          {locked ? (
+            <Notice kind="info">{tEmail("proofFirst")}</Notice>
+          ) : hasPassword ? (
+            <ChangePasswordForm />
+          ) : hasEmail ? (
+            <CredentialsForm />
+          ) : (
+            <Notice kind="info">{t("needsEmail")}</Notice>
+          )}
+        </Section>
+      </Panel>
     </div>
   );
 }

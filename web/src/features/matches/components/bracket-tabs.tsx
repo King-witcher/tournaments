@@ -17,14 +17,15 @@ type Props = {
 
 /**
  * As partes da dupla em abas (a principal com a grande final, e a
- * repescagem), para a página não descer uma chave embaixo da outra. As
- * abas `contained` se distinguem das do torneio, logo acima. A escolha fica
- * no cliente e sobrevive ao `router.refresh()` do tempo real.
+ * repescagem), para a página não descer uma chave embaixo da outra. Abas de
+ * linha: a `contained` tem o fundo do conteúdo embaixo dela, e a chave fica
+ * solta na página. A escolha fica no cliente e sobrevive ao
+ * `router.refresh()` do tempo real.
  */
 export function BracketTabs({ label, tabs, defaultIndex }: Props) {
   return (
     <Tabs defaultSelectedIndex={defaultIndex}>
-      <TabList aria-label={label} contained>
+      <TabList aria-label={label}>
         {tabs.map((tab) => (
           <Tab key={tab.key}>{tab.label}</Tab>
         ))}

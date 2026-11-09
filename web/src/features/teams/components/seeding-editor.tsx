@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-
 import { sortByRating } from "@/features/ratings/lib/sort-by-rating";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/shared/api/client";
@@ -16,6 +15,7 @@ import { ConfirmButton } from "@/shared/ui/confirm-button";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { Notice } from "@/shared/ui/notice";
+import { Panel } from "@/shared/ui/panel";
 import styles from "./seeding-editor.module.scss";
 import { type FocusOn, SeedingRow } from "./seeding-row";
 
@@ -112,92 +112,94 @@ export function SeedingEditor({ tenant, tournament, initial, ratings }: Props) {
     );
 
   return (
-    <Form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!unsaved || pending) return;
-        save.run(
-          () =>
-            api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
-              params,
-              body: { team_ids: order.map((team) => team.id) },
-            }),
-          () => {
-            router.push(manage);
-            router.refresh();
-          },
-        );
-      }}
-    >
-      <Stack gap={6}>
-        {noneSeeded && <Notice kind="warning">{t("noneSeeded")}</Notice>}
-        <ol className={styles.list} aria-label={t("listLabel")}>
-          {order.map((team, i) => (
-            <SeedingRow
-              key={team.id}
-              position={i + 1}
-              numbered={numbered}
-              total={order.length}
-              team={team}
-              showNoSeed={!noneSeeded}
-              ratingText={anyRated ? ratingText(team.id) : undefined}
-              disabled={pending}
-              onUp={i > 0 ? () => move(i, -1) : undefined}
-              onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
-              onMoveTo={(to, keepFocus) => moveTo(team.id, to, keepFocus)}
-              focusToken={focus?.id === team.id ? focus.n : undefined}
-              focusOn={focus?.id === team.id ? focus.on : undefined}
-            />
-          ))}
-        </ol>
-        {changed && <Notice kind="info">{t("changed")}</Notice>}
-        {(save.error ?? shuffle.error) && (
-          <FormError>{save.error ?? shuffle.error}</FormError>
-        )}
-        <FormActions
-          submitLabel={t("save")}
-          pending={save.pending}
-          disabled={!unsaved}
-          cancelHref={manage}
-          extra={
-            <span className={styles.fill}>
-              {anyRated && (
-                <Button
-                  kind="ghost"
-                  disabled={pending}
-                  onClick={() =>
-                    setOrder((current) => sortByRating(current, ratings))
-                  }
-                >
-                  {tRatings("sort")}
-                </Button>
-              )}
-              {changed ? (
-                <ConfirmButton
-                  destructive={false}
-                  kind="tertiary"
-                  size="md"
-                  pending={shuffle.pending}
-                  question={t("shuffleConfirm")}
-                  onConfirm={runShuffle}
-                >
-                  {t("shuffle")}
-                </ConfirmButton>
-              ) : (
-                <Button
-                  id={SHUFFLE_ID}
-                  kind="tertiary"
-                  pending={shuffle.pending}
-                  onClick={runShuffle}
-                >
-                  {t("shuffle")}
-                </Button>
-              )}
-            </span>
-          }
-        />
-      </Stack>
-    </Form>
+    <Panel>
+      <Form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!unsaved || pending) return;
+          save.run(
+            () =>
+              api.PUT("/tenants/{slug}/tournaments/{tournament}/seeding", {
+                params,
+                body: { team_ids: order.map((team) => team.id) },
+              }),
+            () => {
+              router.push(manage);
+              router.refresh();
+            },
+          );
+        }}
+      >
+        <Stack gap={6}>
+          {noneSeeded && <Notice kind="warning">{t("noneSeeded")}</Notice>}
+          <ol className={styles.list} aria-label={t("listLabel")}>
+            {order.map((team, i) => (
+              <SeedingRow
+                key={team.id}
+                position={i + 1}
+                numbered={numbered}
+                total={order.length}
+                team={team}
+                showNoSeed={!noneSeeded}
+                ratingText={anyRated ? ratingText(team.id) : undefined}
+                disabled={pending}
+                onUp={i > 0 ? () => move(i, -1) : undefined}
+                onDown={i < order.length - 1 ? () => move(i, 1) : undefined}
+                onMoveTo={(to, keepFocus) => moveTo(team.id, to, keepFocus)}
+                focusToken={focus?.id === team.id ? focus.n : undefined}
+                focusOn={focus?.id === team.id ? focus.on : undefined}
+              />
+            ))}
+          </ol>
+          {changed && <Notice kind="info">{t("changed")}</Notice>}
+          {(save.error ?? shuffle.error) && (
+            <FormError>{save.error ?? shuffle.error}</FormError>
+          )}
+          <FormActions
+            submitLabel={t("save")}
+            pending={save.pending}
+            disabled={!unsaved}
+            cancelHref={manage}
+            extra={
+              <span className={styles.fill}>
+                {anyRated && (
+                  <Button
+                    kind="ghost"
+                    disabled={pending}
+                    onClick={() =>
+                      setOrder((current) => sortByRating(current, ratings))
+                    }
+                  >
+                    {tRatings("sort")}
+                  </Button>
+                )}
+                {changed ? (
+                  <ConfirmButton
+                    destructive={false}
+                    kind="tertiary"
+                    size="md"
+                    pending={shuffle.pending}
+                    question={t("shuffleConfirm")}
+                    onConfirm={runShuffle}
+                  >
+                    {t("shuffle")}
+                  </ConfirmButton>
+                ) : (
+                  <Button
+                    id={SHUFFLE_ID}
+                    kind="tertiary"
+                    pending={shuffle.pending}
+                    onClick={runShuffle}
+                  >
+                    {t("shuffle")}
+                  </Button>
+                )}
+              </span>
+            }
+          />
+        </Stack>
+      </Form>
+    </Panel>
   );
 }

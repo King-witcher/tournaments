@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { WaitingForYou } from "@/features/organizing/components/waiting-for-you";
 import { RankingTop } from "@/features/ratings/components/ranking-top";
 import { TenantAbout } from "@/features/tenants/components/tenant-about";
@@ -10,6 +9,7 @@ import { NewTournamentAction } from "@/features/tournaments/components/new-tourn
 import { TournamentList } from "@/features/tournaments/components/tournament-list";
 import { TournamentListSkeleton } from "@/features/tournaments/components/tournament-list-skeleton";
 import { PageColumns } from "@/shared/ui/page-columns";
+import { Panel } from "@/shared/ui/panel";
 import { PageHeaderSkeleton, SectionSkeleton } from "@/shared/ui/skeleton";
 
 /**
@@ -50,7 +50,13 @@ export default async function TenantTournamentsPage({
           </Suspense>
         }
         aside={
-          <Suspense fallback={<SectionSkeleton rows={3} />}>
+          <Suspense
+            fallback={
+              <Panel>
+                <SectionSkeleton rows={3} />
+              </Panel>
+            }
+          >
             {params.then(({ tenant }) => (
               <>
                 <TenantAbout slug={tenant} />

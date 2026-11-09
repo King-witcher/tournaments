@@ -14,6 +14,7 @@ import { InlineLoading } from "@/shared/ui/carbon/inline-loading";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
+import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { TextInput } from "@/shared/ui/text-input";
 import { useVetoRoom } from "../hooks/use-veto-room";
@@ -70,27 +71,29 @@ export function VetoRoomJoin({ signedIn }: { signedIn: boolean }) {
     return <InlineLoading description={t("entering")} />;
   }
   return (
-    <Section title={t("title")}>
-      <Form ref={ref} action={submit}>
-        <Stack gap={6}>
-          <TextInput
-            id="veto-room-name"
-            labelText={t("name")}
-            name="name"
-            required
-            maxLength={MAX_NAME}
-            autoComplete="off"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          {error && <FormError>{error}</FormError>}
-          <FormActions
-            submitLabel={t("submit")}
-            pending={pending}
-            disabled={!canSubmit}
-          />
-        </Stack>
-      </Form>
-    </Section>
+    <Panel>
+      <Section title={t("title")}>
+        <Form ref={ref} action={submit}>
+          <Stack gap={6}>
+            <TextInput
+              id="veto-room-name"
+              labelText={t("name")}
+              name="name"
+              required
+              maxLength={MAX_NAME}
+              autoComplete="off"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+            {error && <FormError>{error}</FormError>}
+            <FormActions
+              submitLabel={t("submit")}
+              pending={pending}
+              disabled={!canSubmit}
+            />
+          </Stack>
+        </Form>
+      </Section>
+    </Panel>
   );
 }
