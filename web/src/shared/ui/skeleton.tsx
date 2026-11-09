@@ -120,7 +120,7 @@ export function TaskNoticesSkeleton({ count = 2 }: { count?: number }) {
     <div aria-hidden className={styles.stack}>
       {Array.from({ length: count }, (_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: linhas fixas, sem identidade.
-        <span key={i} className={styles.tile} />
+        <span key={i} className={styles.taskNotice} />
       ))}
     </div>
   );

@@ -23,6 +23,20 @@
   block-size: spacing.$spacing-12;
 }
 
+// A altura de um `TaskNotice` com título e duas linhas de contexto; no
+// celular, o texto quebra e o botão desce.
+.taskNotice {
+  @include skeleton;
+
+  display: block;
+  inline-size: 100%;
+  block-size: spacing.$spacing-11;
+
+  @include breakpoint.breakpoint-down(md) {
+    block-size: spacing.$spacing-13;
+  }
+}
+
 .title {
   @include skeleton;
 

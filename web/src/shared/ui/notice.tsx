@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import { cn } from "@/shared/lib/cn";
 import { Callout, InlineNotification } from "./carbon/notification";
 import { Stack } from "./carbon/stack";
 import styles from "./notice.module.scss";
@@ -19,6 +20,7 @@ type Props = {
   titleId?: string;
   /** Do `md` para cima, a largura do bloco, em vez do limite do Carbon (numa coluna, alinhado aos blocos vizinhos). */
   wide?: boolean;
+  className?: string;
   children?: ReactNode;
 };
 
@@ -30,7 +32,8 @@ type Props = {
  * aconteceu: `InlineNotification`, lido na hora (`role="alert"` no erro,
  * `status` no sucesso). `action`: o que a pessoa pode fazer a respeito, logo
  * abaixo do aviso (o `InlineNotification` recusa link ou botão dentro dele,
- * e `children` também não leva). Serve em Server e em Client Component.
+ * e `children` também não leva). A tarefa com o botão dentro do aviso é o
+ * `TaskNotice`. Serve em Server e em Client Component.
  */
 export function Notice({
   kind = "info",
@@ -38,17 +41,18 @@ export function Notice({
   action,
   titleId,
   wide,
+  className,
   children,
 }: Props) {
   const t = useTranslations("Common.notice");
   // `subtitle` só aceita texto; o resto (negrito, quebra) vai como filho.
   const text = typeof children === "string" ? children : undefined;
-  const className = wide ? `${styles.notice} ${styles.wide}` : styles.notice;
+  const classes = cn(styles.notice, wide && styles.wide, className);
   const notice =
     kind === "info" || kind === "warning" ? (
       <Callout
         kind={kind}
-        className={className}
+        className={classes}
         lowContrast
         title={title}
         titleId={titleId}
@@ -60,7 +64,7 @@ export function Notice({
     ) : (
       <InlineNotification
         kind={kind}
-        className={className}
+        className={classes}
         role={kind === "error" ? "alert" : "status"}
         lowContrast
         hideCloseButton

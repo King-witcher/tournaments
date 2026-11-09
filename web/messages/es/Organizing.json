@@ -15,12 +15,10 @@
   },
   "pendingTies": {
     "title": "Empate por decidir",
-    "since": "Desde <date></date>",
     "action": "Decidir"
   },
   "stageDue": {
     "title": "Fase {number} lista para iniciar",
-    "since": "Desde <date></date>",
     "action": "Iniciar"
   }
 }

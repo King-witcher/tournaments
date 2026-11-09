@@ -4,15 +4,13 @@ import { OPEN_TIES_QUERY } from "@/features/matches/lib/ties";
 import { localizedName } from "@/features/tournaments/lib/localize";
 import type { components } from "@/shared/api/schema";
 import { ButtonLink } from "@/shared/ui/button-link";
-import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { MetaLines } from "@/shared/ui/meta-lines";
 import { TaskNotice } from "@/shared/ui/task-notice";
 import type { Severity } from "../lib/severity";
 
 /**
  * Um torneio cujas séries acabaram com empate na classificação esperando a
- * organização: a comunidade, desde quando espera e o botão que abre a decisão
- * deles na Classificação.
+ * organização: a comunidade e o botão que abre a decisão deles na
+ * Classificação.
  */
 export function PendingTiesNotice({
   kind,
@@ -32,16 +30,7 @@ export function PendingTiesNotice({
     <TaskNotice
       kind={kind}
       title={localizedName(tournament, locale)}
-      meta={
-        <MetaLines
-          lines={[
-            `${community ? `${community} · ` : ""}${t("title")}`,
-            t.rich("since", {
-              date: () => <LocalDateTime value={item.since} />,
-            }),
-          ]}
-        />
-      }
+      meta={`${community ? `${community} · ` : ""}${t("title")}`}
       action={
         <ButtonLink
           href={`/${tournament.tenant_slug}/${tournament.slug}/standings?${OPEN_TIES_QUERY}`}

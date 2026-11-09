@@ -2,11 +2,18 @@
 
 import type { CarbonIconType } from "@carbon/icons-react";
 import { useTranslations } from "next-intl";
-import type { ComponentProps, MouseEvent, ReactNode, Ref } from "react";
+import {
+  type ComponentProps,
+  type MouseEvent,
+  type ReactNode,
+  type Ref,
+  useContext,
+} from "react";
 
 import { cn } from "@/shared/lib/cn";
 import styles from "./button.module.scss";
 import { Button as CarbonButton } from "./carbon/button";
+import { DescribedByContext } from "./described-by-context";
 import { Spinner } from "./spinner";
 
 export type ButtonKind =
@@ -55,6 +62,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const t = useTranslations("Common");
+  const describedBy = useContext(DescribedByContext);
   const guard = (event: MouseEvent<HTMLButtonElement>) => {
     if (pending) {
       event.preventDefault();
@@ -75,6 +83,7 @@ export function Button({
       className={cn(pending && styles.pending, className)}
       aria-disabled={pending || undefined}
       aria-busy={pending || undefined}
+      aria-describedby={describedBy}
       {...rest}
     >
       {children}

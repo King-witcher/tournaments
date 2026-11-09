@@ -1,4 +1,49 @@
-// O texto do `Callout` corre numa linha só com o título; o contexto vai embaixo.
+@use "@carbon/react/scss/breakpoint";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/type";
+
+// O invólucro de texto do Carbon tem a largura do conteúdo: sem crescer, a
+// ação pararia logo depois do texto, longe da borda direita do aviso.
+.notice div:has(> .row) {
+  flex-grow: 1;
+}
+
+// A margem negativa sobe o botão para perto do topo do aviso, centrado na
+// linha do título, como o botão do próprio `Callout`; o padding de `.text`
+// devolve o texto ao lugar. Sem isso, o botão aumentaria a altura do aviso.
+.row {
+  flex: 1 1 100%;
+  margin-block: calc(-1 * #{spacing.$spacing-03});
+
+  @include breakpoint.breakpoint(md) {
+    display: flex;
+    gap: spacing.$spacing-05;
+  }
+}
+
+.text {
+  padding-block: spacing.$spacing-03;
+  overflow-wrap: anywhere;
+
+  @include breakpoint.breakpoint(md) {
+    flex: 1 1 0;
+    min-inline-size: 0;
+  }
+}
+
+.title {
+  @include type.type-style("heading-compact-01");
+}
+
 .meta {
-  flex-basis: 100%;
+  @include type.type-style("helper-text-01");
+
+  color: theme.$text-secondary;
+}
+
+.action {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
 }
