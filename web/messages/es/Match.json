@@ -39,8 +39,9 @@
     "awaiting": "Esperando envío.",
     "pending": "Se confirma sola a las <at></at> (faltan <time></time>).",
     "notCounted": "Todavía no cuenta en el marcador.",
-    "contested": "{name} impugnó: “{comment}”",
-    "notCountedContested": "Queda fuera del marcador hasta que se resuelva la impugnación.",
+    "contestedTitle": "{name} impugnó",
+    "contestComment": "“{comment}”",
+    "contestProposal": "Resultado propuesto: {map}, {a} {aFrags} × {bFrags} {b}.",
     "confirmed": {
       "opponent": "Confirmada por el rival.",
       "deadline": "Confirmada al terminar el plazo.",
@@ -53,7 +54,6 @@
       "contested": "Impugnada",
       "confirmed": "Confirmada"
     },
-    "lineup": "Jugaron: {a} contra {b}",
     "lateContest": "Puedes impugnarla hasta que empiece la próxima serie de {a} o de {b}.",
     "game": "Partida {number}",
     "captainReports": "El capitán envía el resultado por el equipo.",
@@ -66,6 +66,7 @@
     "commentHint": "El rival puede aceptar. Si no, la resuelve la organización.",
     "submitContest": "Enviar impugnación",
     "cancel": "Cancelar",
+    "proposeResult": "Proponer el resultado correcto",
     "acceptContest": "Aceptar impugnación",
     "acceptHint": "Da el marcador correcto. La partida queda confirmada con él.",
     "acceptSubmit": "Aceptar y corregir"
@@ -130,7 +131,7 @@
   },
   "gameOrganizer": {
     "confirmNow": "Confirmar ahora",
-    "accept": "Confirmar victoria de {name}",
+    "keep": "Dejar como está",
     "other": "Cargar otro resultado",
     "replay": "Anular y jugar de nuevo",
     "replayQuestion": "El resultado sale de la serie, y los jugadores juegan y envían la partida {number} de nuevo.",

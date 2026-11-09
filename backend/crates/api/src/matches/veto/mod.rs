@@ -181,6 +181,8 @@ pub fn begun_at(stage: &Stage, id: engine::core::MatchId) -> Option<DateTime<Utc
         .map(|r| r.created_at)
 }
 
+const MISMATCH: ApiError = ApiError::invalid("match.map_mismatch");
+
 /// O jogador pode enviar o mapa `game` da partida `m` com o mapa `map`? Sem
 /// fase de veto no torneio, sempre. Com ela, o veto daquele jogo precisa ter
 /// acabado (409 `match.veto_pending`) e o mapa ser o que ele deu (422
@@ -209,7 +211,25 @@ pub fn check_report(
     if let Some(vetoed) = vetoed
         && Some(vetoed) != map
     {
-        return Err(ApiError::invalid("match.map_mismatch"));
+        return Err(MISMATCH);
     }
     Ok(())
+}
+
+/// O resultado de uma partida já jogada fica no mapa que o veto deu a ela, se
+/// deu, também com a série decidida (a contestação tardia): 422 `match.map_mismatch`.
+pub fn check_map(
+    stage: &Stage,
+    id: engine::core::MatchId,
+    game: i16,
+    map: engine::core::MapId,
+) -> Result<(), ApiError> {
+    let vetoed = stage
+        .veto_of(id)
+        .zip(u8::try_from(game).ok())
+        .and_then(|(mv, g)| mv.state.map_of(g));
+    match vetoed {
+        Some(vetoed) if vetoed != map => Err(MISMATCH),
+        _ => Ok(()),
+    }
 }

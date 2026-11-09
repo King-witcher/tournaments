@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/type";
+
+// O `Callout` é um flex que quebra: a base de 100% põe o texto embaixo do título.
+.text {
+  @include type.type-style("body-compact-01");
+
+  flex-basis: 100%;
+}

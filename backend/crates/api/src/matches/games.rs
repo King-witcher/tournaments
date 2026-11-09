@@ -68,6 +68,8 @@ pub struct StoredGame {
     pub contested_by: Option<i64>,
     pub contested_at: Option<DateTime<Utc>>,
     pub contest_comment: Option<String>,
+    /// O resultado que a contestação propõe, se propôs.
+    pub contest_proposal: Option<Proposal>,
     pub confirmed_via: Option<Confirmation>,
     pub confirmed_at: Option<DateTime<Utc>>,
 }
@@ -77,6 +79,14 @@ pub struct GameMap {
     pub id: MapId,
     pub slug: String,
     pub name: String,
+}
+
+/// O resultado proposto numa contestação.
+#[derive(Clone)]
+pub struct Proposal {
+    pub map: GameMap,
+    /// Frags de `a` e de `b`.
+    pub frags: (i16, i16),
 }
 
 /// O que `db::stage_rows` lê de cada mapa, antes de converter.
@@ -103,6 +113,11 @@ pub(super) struct GameRow {
     pub contest_comment: Option<String>,
     pub confirmed_via: Option<String>,
     pub confirmed_at: Option<DateTime<Utc>>,
+    pub contest_map_id: Option<i64>,
+    pub contest_map_slug: Option<String>,
+    pub contest_map_name: Option<String>,
+    pub contest_a_frags: Option<i16>,
+    pub contest_b_frags: Option<i16>,
 }
 
 impl TryFrom<GameRow> for StoredGame {
@@ -114,6 +129,22 @@ impl TryFrom<GameRow> for StoredGame {
                 id: MapId(id),
                 slug,
                 name,
+            }),
+            _ => None,
+        };
+        let contest_proposal = match (
+            r.contest_map_id,
+            r.contest_map_slug,
+            r.contest_map_name,
+            r.contest_a_frags.zip(r.contest_b_frags),
+        ) {
+            (Some(id), Some(slug), Some(name), Some(frags)) => Some(Proposal {
+                map: GameMap {
+                    id: MapId(id),
+                    slug,
+                    name,
+                },
+                frags,
             }),
             _ => None,
         };
@@ -135,6 +166,7 @@ impl TryFrom<GameRow> for StoredGame {
             contested_by: r.contested_by,
             contested_at: r.contested_at,
             contest_comment: r.contest_comment,
+            contest_proposal,
             confirmed_via: r
                 .confirmed_via
                 .as_deref()

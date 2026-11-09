@@ -8,7 +8,7 @@ import { api } from "@/shared/api/client";
 import type { components } from "@/shared/api/schema";
 import { useApiAction } from "@/shared/api/use-api-action";
 import { focusIfLost } from "@/shared/lib/focus";
-import { Button } from "@/shared/ui/button";
+import { Button, type ButtonKind } from "@/shared/ui/button";
 import { Stack } from "@/shared/ui/carbon/stack";
 import { ErrorText } from "@/shared/ui/error-text";
 import { Notice } from "@/shared/ui/notice";
@@ -33,10 +33,11 @@ type Props = {
 
 /**
  * Para organizer e owner, numa partida enviada, na linha das ações de
- * jogador: à vista, o que resolve (confirmar agora a pendente; na
- * contestada, confirmar a vitória enviada ou lançar outro resultado, que
- * não podem ficar escondidos) e, no ⋯, o raro (`GameOrganizerMenu`). Outro
- * resultado e a correção abrem o formulário no próprio cartão.
+ * jogador. Na contestada, tudo à vista: com resultado proposto, aceitar
+ * (o primário), manter e lançar outro; sem ele, lançar outro é o primário;
+ * anular fica no fim (`GameOrganizerMenu`). Nas outras, confirmar agora a
+ * pendente e, no ⋯, o raro. Outro resultado e a correção abrem o formulário no
+ * próprio cartão.
  */
 export function GameOrganizerActions({
   target,
@@ -47,33 +48,58 @@ export function GameOrganizerActions({
   last,
 }: Props) {
   const t = useTranslations("Match.gameOrganizer");
+  const tRespond = useTranslations("Match.respond");
   const tForm = useTranslations("Match.form");
   const router = useRouter();
   const markMine = useMarkMine();
-  const { run, pending, error } = useApiAction();
+  const { runAs, buttonFor, pending, error } = useApiAction();
   const [editing, setEditing] = useState(false);
   const contested = game.status === "contested";
-  const confirmable = contested || (game.status === "pending" && !responds);
+  const proposal = game.contest_proposal;
   // O botão usado some (ao abrir ou fechar o formulário): o foco fica no
   // passo da partida.
   const close = () => {
     setEditing(false);
     focusIfLost(gameRowId(game.number));
   };
+  const done = () => {
+    markMine();
+    router.refresh();
+    focusIfLost(gameRowId(game.number));
+  };
+  // Tela para trás (o jogador já confirmou): mostra o estado de agora.
+  const stale = () => router.refresh();
+  const params = gameParams(target, game.number);
   const confirm = () =>
-    run(
+    runAs(
+      "confirm",
       () =>
         api.POST(
           "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}/confirm",
-          { params: gameParams(target, game.number) },
+          { params },
         ),
-      () => {
-        markMine();
-        router.refresh();
-        focusIfLost(gameRowId(game.number));
-      },
-      // Tela para trás (o jogador já confirmou): mostra o estado de agora.
-      () => router.refresh(),
+      done,
+      stale,
+    );
+  const acceptProposal = (p: Schemas["ContestProposal"]) =>
+    runAs(
+      "accept",
+      () =>
+        api.PUT(
+          "/tenants/{slug}/tournaments/{tournament}/matches/{match}/games/{game}",
+          {
+            params,
+            body: {
+              game: {
+                map: p.map.slug,
+                a_frags: p.a_frags,
+                b_frags: p.b_frags,
+              },
+            },
+          },
+        ),
+      done,
+      stale,
     );
 
   if (editing) {
@@ -102,23 +128,43 @@ export function GameOrganizerActions({
     );
   }
 
+  const other = (kind: ButtonKind) => (
+    <Button
+      size="sm"
+      kind={kind}
+      disabled={pending}
+      onClick={() => setEditing(true)}
+    >
+      {t("other")}
+    </Button>
+  );
+
   return (
     <div className={styles.actions}>
-      {confirmable && (
-        <Button size="sm" pending={pending} onClick={confirm}>
-          {contested
-            ? t("accept", { name: names[game.winner] })
-            : t("confirmNow")}
+      {proposal && (
+        <Button
+          size="sm"
+          {...buttonFor("accept")}
+          onClick={() => acceptProposal(proposal)}
+        >
+          {tRespond("acceptContest")}
         </Button>
       )}
+      {contested && !proposal && other("primary")}
       {contested && (
         <Button
           size="sm"
           kind="tertiary"
-          disabled={pending}
-          onClick={() => setEditing(true)}
+          {...buttonFor("confirm")}
+          onClick={confirm}
         >
-          {t("other")}
+          {t("keep")}
+        </Button>
+      )}
+      {contested && proposal && other("tertiary")}
+      {game.status === "pending" && !responds && (
+        <Button size="sm" {...buttonFor("confirm")} onClick={confirm}>
+          {t("confirmNow")}
         </Button>
       )}
       <GameOrganizerMenu

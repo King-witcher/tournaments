@@ -409,6 +409,8 @@ pub struct GameDetail {
     /// Contestada: o apelido de quem contestou (pode ser do time de quem
     /// enviou); `null` se a conta foi excluída.
     pub contested_by: Option<String>,
+    /// Contestada: o resultado que quem contestou diz ser o certo, se propôs um.
+    pub contest_proposal: Option<ContestProposal>,
     /// Quem vê pode contestar agora: a regra do torneio deixa e a partida está
     /// pendente e não foi ele quem enviou, ou confirmada e a contestação tardia
     /// ainda vale (até a próxima série de um dos lados começar).
@@ -424,6 +426,14 @@ pub struct GameDetail {
 pub struct MapRef {
     pub slug: String,
     pub name: String,
+}
+
+/// O resultado proposto numa contestação: quem aceita manda estes valores.
+#[derive(Serialize, ToSchema)]
+pub struct ContestProposal {
+    pub map: MapRef,
+    pub a_frags: i16,
+    pub b_frags: i16,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Copy, PartialEq, Eq)]
@@ -550,6 +560,10 @@ pub struct ReplayGame {
 pub struct ContestReport {
     /// O que está errado, de 1 a 280 caracteres.
     pub comment: String,
+    /// O resultado certo, opcional. Valem as regras do envio, e não pode ser
+    /// igual ao enviado.
+    #[serde(default)]
+    pub proposal: Option<GameInput>,
 }
 
 /// O resultado da série que o organizador define: W.O.

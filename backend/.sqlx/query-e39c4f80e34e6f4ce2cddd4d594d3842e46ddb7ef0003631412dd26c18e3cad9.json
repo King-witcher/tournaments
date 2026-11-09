@@ -1,0 +1,119 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select q.id as \"id!\", st.position as \"stage!\", st.finished_at,\n                  case when (select $3::bool) then (\n                      select to_json(s) from (\n                          select format, best_of, finals_best_of, bracket, grand_final_reset,\n                                 rounds, tiebreakers, final_tie, advance, check_in, started_at,\n                                 check_in_opened_at, finished_at\n                          from tournament_stages\n                          where tournament_id = q.id and position = st.position) s)\n                  end as \"config: Json<StageRow>\",\n                  case when (select $4::bool) then (\n                      select json_agg(r order by r.position) from (\n                          select id, match_key, side_a, side_b, winner, a_wins, b_wins,\n                                 confirmed_via, confirmed_at, position\n                          from match_results where tournament_id = q.id and stage = st.position) r)\n                  end as \"results: Json<Vec<ResultRow>>\",\n                  case when (select $5::bool) then (\n                      select json_agg(g order by g.match_key, g.number) from (\n                          select g.id, g.match_key, g.number, g.side_a, g.side_b, g.winner,\n                                 g.map_id, m.slug as map_slug, m.name as map_name, g.a_frags,\n                                 g.b_frags, g.status, g.reported_side, g.reported_by,\n                                 g.reported_at, g.confirm_by, g.contested_by, g.contested_at,\n                                 g.contest_comment, g.confirmed_via, g.confirmed_at,\n                                 g.contest_map_id, pm.slug as contest_map_slug,\n                                 pm.name as contest_map_name, g.contest_a_frags,\n                                 g.contest_b_frags\n                          from match_games g\n                          left join maps m on m.id = g.map_id\n                          left join maps pm on pm.id = g.contest_map_id\n                          where g.tournament_id = q.id and g.stage = st.position) g)\n                  end as \"games: Json<Vec<GameRow>>\",\n                  case when (select $6::bool) then (\n                      select json_agg(p order by p.round, p.number) from (\n                          select round, number, side_a, side_b from stage_pairings\n                          where tournament_id = q.id and stage = st.position) p)\n                  end as \"pairings: Json<Vec<PairingRow>>\",\n                  case when (select $7::bool) then (\n                      select json_agg(e order by e.match_key, e.id) from (\n                          select e.id, e.match_key, e.side_a, e.side_b, e.game, e.kind, e.side,\n                                 e.map_id, e.played_map_id, e.champion_id, e.player_id,\n                                 e.pick_game, e.gave_way, e.seed, e.timeout, e.actor,\n                                 coalesce(m.nickname, u.display_name) as actor_name,\n                                 pm.nickname as player_name, e.created_at\n                          from match_veto_events e\n                          left join users u on u.id = e.actor\n                          left join tenant_members m\n                                 on m.tenant_id = e.tenant_id and m.user_id = e.actor\n                          left join tenant_members pm\n                                 on pm.tenant_id = e.tenant_id and pm.user_id = e.player_id\n                          where e.tournament_id = q.id and e.stage = st.position) e)\n                  end as \"veto: Json<Vec<VetoEventRow>>\",\n                  case when (select $8::bool) then (\n                      select json_agg(l order by l.match_key, l.number, l.side, l.user_id) from (\n                          select g.match_key, g.number, gp.side, gp.user_id\n                          from match_game_players gp\n                          join match_games g on g.id = gp.game_id\n                          where g.tournament_id = q.id and g.stage = st.position) l)\n                  end as \"lineups: Json<Vec<PlayedRow>>\",\n                  case when (select $9::bool) then (\n                      select json_agg(c order by c.id) from (\n                          select id, slug, name, active from champions) c)\n                  end as \"champions: Json<Vec<ChampionRow>>\",\n                  case when (select $10::bool) then (\n                      select json_agg(d order by d.id) from (\n                          select d.id, d.reason,\n                                 (select array_agg(x.team_id order by x.position)\n                                  from stage_tie_decision_teams x\n                                  where x.decision_id = d.id) as teams\n                          from stage_tie_decisions d\n                          where d.tournament_id = q.id and d.stage = st.position) d)\n                  end as \"ties: Json<Vec<TieRow>>\",\n                  case when (select $10::bool) then (\n                      select since from stage_pending_ties\n                      where tournament_id = q.id and stage = st.position)\n                  end as ties_pending_since\n           from unnest((select $1::bigint[]), (select $2::smallint[]))\n                    with ordinality as q(id, stage, n)\n           join tournament_stages st\n             on st.tournament_id = q.id\n            and (st.position = q.stage\n                 or (q.stage = 0 and (st.started_at is not null or st.position = 1)))\n           order by q.n, st.position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "stage!",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "position"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "finished_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "tournament_stages",
+            "name": "finished_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "config: Json<StageRow>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "results: Json<Vec<ResultRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "games: Json<Vec<GameRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "pairings: Json<Vec<PairingRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "veto: Json<Vec<VetoEventRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "lineups: Json<Vec<PlayedRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 9,
+        "name": "champions: Json<Vec<ChampionRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 10,
+        "name": "ties: Json<Vec<TieRow>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 11,
+        "name": "ties_pending_since",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int2Array",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      true,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "e39c4f80e34e6f4ce2cddd4d594d3842e46ddb7ef0003631412dd26c18e3cad9"
+}

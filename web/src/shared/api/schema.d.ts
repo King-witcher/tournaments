@@ -2200,9 +2200,18 @@ export interface components {
          * @enum {string}
          */
         Confirmation: "opponent" | "deadline" | "organizer" | "withdrawal" | "maps";
+        /** @description O resultado proposto numa contestação: quem aceita manda estes valores. */
+        ContestProposal: {
+            /** Format: int32 */
+            a_frags: number;
+            /** Format: int32 */
+            b_frags: number;
+            map: components["schemas"]["MapRef"];
+        };
         ContestReport: {
             /** @description O que está errado, de 1 a 280 caracteres. */
             comment: string;
+            proposal?: components["schemas"]["GameInput"] | null;
         };
         /**
          * @description Um mapa contestado: resolve-se na página da partida
@@ -2554,6 +2563,7 @@ export interface components {
             confirmed_via?: components["schemas"]["Confirmation"] | null;
             /** @description Contestada: o comentário de quem contestou. */
             contest_comment?: string | null;
+            contest_proposal?: components["schemas"]["ContestProposal"] | null;
             /** Format: date-time */
             contested_at?: string | null;
             /**
@@ -10599,7 +10609,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita */
+            /** @description Um jogador da série, menos quem enviou, contesta a partida, com comentário e, se quiser, o resultado certo: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10644,7 +10654,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description match.comment_invalid, request.invalid_body */
+            /** @description match.comment_invalid, request.invalid_body e, na proposta, match.contest_unchanged (igual ao enviado), match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch, match.frags_invalid {min, max}, match.game_tied {game} */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_games\n           set winner = $2, map_id = $3, a_frags = $4, b_frags = $5, reported_side = $6,\n               reported_by = $7, reported_at = now(),\n               confirm_by = now() + make_interval(mins => $8), contested_by = null,\n               contested_at = null, contest_comment = null, contest_notify_at = null,\n               contest_map_id = null, contest_a_frags = null, contest_b_frags = null,\n               status = 'confirmed', confirmed_via = 'opponent', confirmed_by = $7,\n               confirmed_at = now()\n           where id = $1 and status = 'contested'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        "Int2",
+        "Int2",
+        "Text",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c3cd4b1afe2e56a387fcecf062e05c60fe052db38411df9e2e92bc820dbf0ca5"
+}

@@ -39,8 +39,9 @@
     "awaiting": "Waiting for report.",
     "pending": "Confirms automatically at <at></at> (<time></time> left).",
     "notCounted": "Not counted in the score yet.",
-    "contested": "{name} disputed: “{comment}”",
-    "notCountedContested": "Stays out of the score until the dispute is resolved.",
+    "contestedTitle": "{name} disputed",
+    "contestComment": "“{comment}”",
+    "contestProposal": "Proposed result: {map}, {a} {aFrags} × {bFrags} {b}.",
     "confirmed": {
       "opponent": "Confirmed by the opponent.",
       "deadline": "Confirmed when the deadline passed.",
@@ -53,7 +54,6 @@
       "contested": "Disputed",
       "confirmed": "Confirmed"
     },
-    "lineup": "Played: {a} vs {b}",
     "lateContest": "You can dispute until the next match for {a} or {b} starts.",
     "game": "Game {number}",
     "captainReports": "The captain reports the result for the team.",
@@ -66,6 +66,7 @@
     "commentHint": "The opponent can accept. Otherwise, the organizers decide.",
     "submitContest": "Submit dispute",
     "cancel": "Cancel",
+    "proposeResult": "Propose the correct result",
     "acceptContest": "Accept dispute",
     "acceptHint": "Enter the correct score. The game is confirmed with it.",
     "acceptSubmit": "Accept and correct"
@@ -130,7 +131,7 @@
   },
   "gameOrganizer": {
     "confirmNow": "Confirm now",
-    "accept": "Confirm win for {name}",
+    "keep": "Keep as is",
     "other": "Enter another result",
     "replay": "Void and replay",
     "replayQuestion": "The result is removed from the match, and the players play and report game {number} again.",

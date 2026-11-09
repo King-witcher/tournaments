@@ -17,9 +17,10 @@ use super::{
     stage::{Chain, Stage},
     tasks, ties,
     types::{
-        BracketMatch, BracketPart, EventActor, EventKind, EventOutcome, GameDetail, MapRef,
-        MatchEvent, MatchResult, MatchSide, MatchState, PendingTieGroup, SideSource, SourceOutcome,
-        Standing, TableCriterion, TableRow, TournamentBracket, ViewerTask,
+        BracketMatch, BracketPart, ContestProposal, EventActor, EventKind, EventOutcome,
+        GameDetail, MapRef, MatchEvent, MatchResult, MatchSide, MatchState, PendingTieGroup,
+        SideSource, SourceOutcome, Standing, TableCriterion, TableRow, TournamentBracket,
+        ViewerTask,
     },
     veto,
 };
@@ -375,6 +376,14 @@ pub fn game(g: &StoredGame, extra: GameExtra, lineup: &[LineupRow]) -> GameDetai
         contest_comment: g.contest_comment.clone(),
         contested_at: g.contested_at,
         contested_by: extra.contested_by,
+        contest_proposal: g.contest_proposal.as_ref().map(|p| ContestProposal {
+            map: MapRef {
+                slug: p.map.slug.clone(),
+                name: p.map.name.clone(),
+            },
+            a_frags: p.frags.0,
+            b_frags: p.frags.1,
+        }),
         can_contest: extra.can_contest,
         confirmed_via: g.confirmed_via,
         confirmed_at: g.confirmed_at,

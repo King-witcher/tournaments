@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update match_games\n           set status = 'confirmed', confirmed_via = $2, confirmed_by = $3, confirmed_at = now(),\n               contested_by = null, contested_at = null, contest_comment = null,\n               contest_notify_at = null, contest_map_id = null, contest_a_frags = null,\n               contest_b_frags = null\n           where id = $1 and status in ('pending', 'contested')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b30658c143b99451f48877fdd58245973c98bb7ae7170a78e86d596a32c93c1"
+}

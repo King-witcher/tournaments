@@ -1,6 +1,6 @@
 //! O capitão do time adversário de quem contestou aceita a contestação, sem
-//! esperar a organização: como o comentário não traz resultado, ele dá o placar
-//! certo, e a partida fica confirmada com ele. Quem discordar ainda contesta de
+//! esperar a organização: ele manda o resultado certo (o que a contestação
+//! propôs, se propôs), e a partida fica confirmada com ele. Quem discordar ainda contesta de
 //! novo (`contest::late`), e aí a organização é avisada como sempre. Só o capitão,
 //! qualquer que seja a regra do torneio para o resultado (`acting`).
 
@@ -24,8 +24,6 @@ use crate::{
 
 const NOT_ACCEPTER: ApiError = ApiError::forbidden("match.not_accepter");
 const NOT_CONTESTED: ApiError = ApiError::conflict("match.not_contested");
-/// Aceitar com o mesmo resultado seria recusar a contestação sem a organização.
-const UNCHANGED: ApiError = ApiError::invalid("match.contest_unchanged");
 
 #[utoipa::path(
     post,
@@ -73,8 +71,9 @@ pub async fn accept_contest(
     let maps = actions::map_ids(&mut tx, &body).await?;
     let new = outcome::game(path.game, sides, &body, &maps)?;
     veto::check_report(&stage, m, path.game, Some(new.map))?;
-    if g.frags == Some(new.frags) && g.map.as_ref().map(|map| map.id) == Some(new.map) {
-        return Err(UNCHANGED);
+    // Aceitar com o mesmo resultado seria recusar a contestação sem a organização.
+    if rules::same_result(g, &new) {
+        return Err(rules::UNCHANGED);
     }
     let candidate = new.series_game(series::GameStatus::Confirmed);
     series::put(m.best_of, &series_games(&games), index, candidate)?;

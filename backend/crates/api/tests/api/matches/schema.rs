@@ -111,6 +111,46 @@ async fn only_a_contested_map_waits_for_the_notice() {
 }
 
 #[tokio::test]
+async fn only_a_contested_map_has_a_proposal() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
+    let (status, body) = report(&app, &p[0], "wb-1-1", 1, game("a", "awoken")).await;
+    assert_eq!(status, axum::http::StatusCode::OK, "{body}");
+    let map = "contest_map_id = (select min(id) from maps)";
+    let full = format!("update match_games set {map}, contest_a_frags = 1, contest_b_frags = 2");
+    assert_eq!(
+        rejected(exec(&db, &full).await),
+        rule(CHECK, "match_games_contest_proposal_status")
+    );
+    let (status, body) = contest(&app, &p[1], "wb-1-1", 1, "Foi o B").await;
+    assert_eq!(status, axum::http::StatusCode::OK, "{body}");
+    for (set, name) in [
+        (
+            "contest_a_frags = 1".to_owned(),
+            "match_games_contest_proposal",
+        ),
+        (
+            format!("{map}, contest_a_frags = 1"),
+            "match_games_contest_proposal",
+        ),
+        (
+            format!("{map}, contest_a_frags = 7, contest_b_frags = 7"),
+            "match_games_contest_proposal_tied",
+        ),
+        (
+            format!("{map}, contest_a_frags = 1000, contest_b_frags = 0"),
+            "match_games_contest_a_frags_check",
+        ),
+    ] {
+        let sql = format!("update match_games set {set}");
+        assert_eq!(rejected(exec(&db, &sql).await), rule(CHECK, name), "{set}");
+    }
+    exec(&db, &full).await.unwrap();
+}
+
+#[tokio::test]
 async fn maps_must_be_valid() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, ana, _) = quake_br(&db).await;

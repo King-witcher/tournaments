@@ -117,6 +117,7 @@ pub async fn put_game(
                status = 'confirmed', reported_side = null, reported_by = excluded.reported_by,
                reported_at = now(), confirm_by = null, contested_by = null,
                contested_at = null, contest_comment = null, contest_notify_at = null,
+               contest_map_id = null, contest_a_frags = null, contest_b_frags = null,
                confirmed_via = 'organizer', confirmed_by = excluded.confirmed_by,
                confirmed_at = now()"#,
         at.tenant.get(),
@@ -149,7 +150,8 @@ pub async fn confirm_game(
         r#"update match_games
            set status = 'confirmed', confirmed_via = $2, confirmed_by = $3, confirmed_at = now(),
                contested_by = null, contested_at = null, contest_comment = null,
-               contest_notify_at = null
+               contest_notify_at = null, contest_map_id = null, contest_a_frags = null,
+               contest_b_frags = null
            where id = $1 and status in ('pending', 'contested')"#,
         id,
         via.as_str(),
@@ -163,24 +165,29 @@ pub async fn confirm_game(
 /// Um jogador da série (`by`) contesta a partida `id`, pendente ou já
 /// confirmada (a contestação tardia): sai do prazo, perde a confirmação e
 /// espera o capitão adversário ou o organizador, que é avisado depois de
-/// `notify_after` segundos.
+/// `notify_after` segundos. `proposal`: o resultado que `by` diz ser o certo.
 pub async fn contest_game(
     conn: &mut PgConnection,
     id: i64,
     by: i64,
     comment: &str,
     notify_after: f64,
+    proposal: Option<&NewGame>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"update match_games
            set status = 'contested', contested_by = $2, contested_at = now(), contest_comment = $3,
                contest_notify_at = now() + make_interval(secs => $4),
+               contest_map_id = $5, contest_a_frags = $6, contest_b_frags = $7,
                confirmed_via = null, confirmed_by = null, confirmed_at = null
            where id = $1 and status in ('pending', 'confirmed')"#,
         id,
         by,
         comment,
-        notify_after
+        notify_after,
+        proposal.map(|p| p.map.0),
+        proposal.map(|p| p.frags.0),
+        proposal.map(|p| p.frags.1)
     )
     .execute(conn)
     .await?;
@@ -206,6 +213,7 @@ pub async fn accept_contest(
                reported_by = $7, reported_at = now(),
                confirm_by = now() + make_interval(mins => $8), contested_by = null,
                contested_at = null, contest_comment = null, contest_notify_at = null,
+               contest_map_id = null, contest_a_frags = null, contest_b_frags = null,
                status = 'confirmed', confirmed_via = 'opponent', confirmed_by = $7,
                confirmed_at = now()
            where id = $1 and status = 'contested'"#,

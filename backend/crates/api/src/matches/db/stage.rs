@@ -131,9 +131,13 @@ pub async fn stage_rows(
                                  g.map_id, m.slug as map_slug, m.name as map_name, g.a_frags,
                                  g.b_frags, g.status, g.reported_side, g.reported_by,
                                  g.reported_at, g.confirm_by, g.contested_by, g.contested_at,
-                                 g.contest_comment, g.confirmed_via, g.confirmed_at
+                                 g.contest_comment, g.confirmed_via, g.confirmed_at,
+                                 g.contest_map_id, pm.slug as contest_map_slug,
+                                 pm.name as contest_map_name, g.contest_a_frags,
+                                 g.contest_b_frags
                           from match_games g
                           left join maps m on m.id = g.map_id
+                          left join maps pm on pm.id = g.contest_map_id
                           where g.tournament_id = q.id and g.stage = st.position) g)
                   end as "games: Json<Vec<GameRow>>",
                   case when (select $6::bool) then (

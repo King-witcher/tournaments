@@ -62,11 +62,15 @@ export function GamePlayed({
             {contests && (
               <GameRespond
                 target={target}
-                number={g.number}
+                game={g}
+                names={names}
+                maps={maps}
+                fixedMap={fixedMap}
                 canConfirm={responds}
               />
             )}
-            {accepts && (
+            {/* Quem também organiza resolve pelas ações da organização, sem dois "Aceitar contestação". */}
+            {accepts && !canManage && (
               <GameAcceptContest
                 target={target}
                 game={g}

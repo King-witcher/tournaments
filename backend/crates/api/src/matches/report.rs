@@ -200,12 +200,12 @@ pub async fn confirm(
     ),
     request_body = ContestReport,
     responses(
-        (status = OK, body = MatchDetail, description = "Um jogador da série, menos quem enviou, contesta a partida, com comentário: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita"),
+        (status = OK, body = MatchDetail, description = "Um jogador da série, menos quem enviou, contesta a partida, com comentário e, se quiser, o resultado certo: ela sai do prazo e a próxima continua podendo ser enviada. O capitão do time adversário de quem contestou é avisado na hora e pode aceitar (`contest/accept`); a organização pode resolver desde já e é avisada depois de um minuto, se a partida continuar contestada. Também a já confirmada pelo adversário ou pelo prazo, até a próxima série de um dos lados começar (veto começado ou partida enviada): se ela decidia a série, a série reabre e a chave é refeita"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "match.not_player, match.not_captain (a regra do torneio deixa a contestação com o capitão), match.own_report (quem enviou não contesta)"),
         (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, bracket.not_found, match.not_found, match.game_not_found"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.not_in_progress, match.already_contested, match.contest_closed (confirmada e a contestação tardia não vale mais: outra série de um dos lados começou, a organização confirmou ou lançou, a série acabou em W.O., ou reabrir contradiz uma série decidida depois)"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.comment_invalid, request.invalid_body"),
+        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "match.comment_invalid, request.invalid_body e, na proposta, match.contest_unchanged (igual ao enviado), match.map_required, match.map_unknown, match.map_repeated, match.map_mismatch, match.frags_invalid {min, max}, match.game_tied {game}"),
     )
 )]
 pub async fn contest(
@@ -235,10 +235,22 @@ pub async fn contest(
         GameStatus::Confirmed => rules::late(&stage, m, g)?,
     };
     let comment = actions::comment(&body.comment)?;
+    let proposal = match &body.proposal {
+        Some(input) => Some(rules::proposal(&mut tx, &stage, m, g, input).await?),
+        None => None,
+    };
 
     let at = actions::at(&member, &tournament, &stage, &path.key);
     let delay = rules::STAFF_NOTICE_SECONDS;
-    db::contest_game(&mut tx, g.id, member.user.id, &comment, delay).await?;
+    db::contest_game(
+        &mut tx,
+        g.id,
+        member.user.id,
+        &comment,
+        delay,
+        proposal.as_ref(),
+    )
+    .await?;
     if let Some(captain) = rules::opposing_captain(&stage, g.sides(), member.user.id) {
         let player = member.nickname.as_str();
         changes::contest_received(

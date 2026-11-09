@@ -17,17 +17,24 @@
 //! Contestada, a partida espera o capitão do time adversário de quem contestou,
 //! que pode aceitar (`accept`), e a organização, avisada só depois de
 //! `STAFF_NOTICE_SECONDS` (`contest_notice`), para não ser incomodada à toa.
+//! Quem contesta pode propor o resultado certo (`proposal`); quem aceita manda
+//! os valores dela, pelas mesmas rotas de sempre.
 
 use engine::{
     core::{Match, ParticipantId},
     series,
 };
+use sqlx::PgConnection;
 
 use super::{
+    actions,
     correction::{self, Change},
+    db::NewGame,
     games::{GameStatus, StoredGame, series_games},
+    outcome,
     result::Confirmation,
     stage::Stage,
+    types::GameInput,
     veto,
 };
 use crate::{
@@ -37,6 +44,8 @@ use crate::{
 
 /// 409: a contestação tardia já não vale.
 pub const CLOSED: ApiError = ApiError::conflict("match.contest_closed");
+/// 422: o resultado proposto, ou o aceito, é o que foi enviado.
+pub const UNCHANGED: ApiError = ApiError::invalid("match.contest_unchanged");
 
 /// Quanto tempo o capitão adversário tem antes de a organização ser avisada. O
 /// aceite pede o placar certo: menos que isso venceria com ele ainda digitando.
@@ -68,6 +77,34 @@ pub fn accepter(stage: &Stage, g: &StoredGame) -> Option<i64> {
         return None;
     }
     opposing_captain(stage, g.sides(), g.contested_by?)
+}
+
+/// `new` é o resultado que a partida `g` já tem.
+pub fn same_result(g: &StoredGame, new: &NewGame) -> bool {
+    g.frags == Some(new.frags) && g.map.as_ref().map(|map| map.id) == Some(new.map)
+}
+
+/// O resultado que a contestação da partida `g` propõe, pelas regras de quem vai
+/// aplicá-lo (`accept`), também na contestação tardia, com a série já decidida.
+/// Erros: os do envio e 422 `match.contest_unchanged`.
+pub async fn proposal(
+    conn: &mut PgConnection,
+    stage: &Stage,
+    m: &Match,
+    g: &StoredGame,
+    input: &GameInput,
+) -> Result<NewGame, ApiError> {
+    let maps = actions::map_ids(conn, input).await?;
+    let new = outcome::game(g.number, g.sides(), input, &maps)?;
+    veto::check_map(stage, m.id, g.number, new.map)?;
+    if same_result(g, &new) {
+        return Err(UNCHANGED);
+    }
+    let games = stage.games_of(m.id);
+    let index = actions::game_index(g.number, games.len())?;
+    let candidate = new.series_game(series::GameStatus::Confirmed);
+    series::put(m.best_of, &series_games(&games), index, candidate)?;
+    Ok(new)
 }
 
 /// `user_id` pode contestar agora a partida `g` da série `m`.

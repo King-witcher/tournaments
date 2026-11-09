@@ -27,6 +27,10 @@ type Props = {
   className?: string;
   /** O que vai valer, para conferir antes de confirmar (`ConfirmModal`, mais largo). */
   details?: ReactNode;
+  /** Um campo a mais no Modal (a nota do histórico), controlado por quem usa. */
+  extra?: ReactNode;
+  /** O Modal fechou sem confirmar (limpar o `extra`). */
+  onCancel?: () => void;
 };
 
 /**
@@ -49,6 +53,8 @@ export function ConfirmButton({
   renderIcon,
   className,
   details,
+  extra,
+  onCancel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -75,7 +81,10 @@ export function ConfirmButton({
       </Button>
       <ConfirmModal
         open={open}
-        onClose={close}
+        onClose={() => {
+          onCancel?.();
+          close();
+        }}
         onConfirm={() => {
           close();
           onConfirm();
@@ -85,6 +94,7 @@ export function ConfirmButton({
         destructive={destructive}
         slug={confirmSlug}
         details={details}
+        extra={extra}
       >
         {question}
       </ConfirmModal>

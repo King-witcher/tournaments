@@ -209,3 +209,192 @@ async fn a_confirmed_game_is_contested_until_either_side_starts_another_series()
     assert_eq!(contest(&app, &p[2], "wb-1-2", 1, "tarde").await, closed);
     assert_eq!(can(&detail(&app, &p[3], k).await), [false, false]);
 }
+
+/// Contesta `n` propondo `proposal` no lugar do resultado enviado.
+async fn contest_with(
+    app: &axum::Router,
+    who: &User,
+    key: &str,
+    n: u8,
+    proposal: Value,
+) -> (StatusCode, Value) {
+    let uri = game_uri(key, n, "/contest");
+    post(
+        app,
+        &uri,
+        who,
+        json!({ "comment": "Foi 5 a 10", "proposal": proposal }),
+    )
+    .await
+}
+
+fn ok((status, body): (StatusCode, Value)) -> Value {
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}
+
+#[tokio::test]
+async fn a_contest_may_carry_the_right_result() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    start(&app, &ana, copa(single(3, 3)), &[&p[0], &p[1]]).await;
+    let k = "wb-1-1";
+    ok(report(&app, &p[0], k, 1, game("a", "awoken")).await);
+    ok(report(&app, &p[0], k, 2, game("a", "vestibule-of-exile")).await);
+
+    for (proposal, code) in [
+        (game("a", "awoken"), "match.contest_unchanged"),
+        (game("b", "q3dm17"), "match.map_unknown"),
+        (json!({ "a_frags": 5, "b_frags": 10 }), "match.map_required"),
+        (
+            json!({ "map": "awoken", "a_frags": 7, "b_frags": 7 }),
+            "match.game_tied",
+        ),
+        (
+            json!({ "map": "awoken", "a_frags": 1000, "b_frags": 0 }),
+            "match.frags_invalid",
+        ),
+        // O mapa da outra partida da série não serve.
+        (game("b", "vestibule-of-exile"), "match.map_repeated"),
+    ] {
+        let (status, body) = contest_with(&app, &p[1], k, 1, proposal).await;
+        assert_eq!(
+            (status, &body["error"]),
+            (StatusCode::UNPROCESSABLE_ENTITY, &json!(code))
+        );
+    }
+    // Nada ficou gravado: a partida segue pendente.
+    assert_eq!(
+        detail(&app, &p[1], k).await["games"][0]["status"],
+        "pending"
+    );
+
+    // Vem com o que é preciso para mostrar e aplicar.
+    let body = ok(contest_with(&app, &p[1], k, 1, game("b", "insomnia")).await);
+    let g = &body["games"][0];
+    let proposal = &g["contest_proposal"];
+    assert_eq!(g["status"], "contested");
+    assert_eq!(
+        (
+            &proposal["map"]["slug"],
+            &proposal["a_frags"],
+            &proposal["b_frags"]
+        ),
+        (&json!("insomnia"), &json!(5), &json!(10))
+    );
+    assert!(proposal["map"]["name"].is_string());
+    // O histórico guarda o comentário, não a proposta.
+    let event = body["history"].as_array().unwrap().last().unwrap().clone();
+    assert_eq!(event["kind"], "contested");
+    assert_eq!(event["outcome"], Value::Null);
+
+    // Sem proposta, continua sem.
+    let body = ok(contest(&app, &p[1], k, 2, "Foi o B").await);
+    assert_eq!(body["games"][1]["contest_proposal"], Value::Null);
+}
+
+#[tokio::test]
+async fn resolving_the_contest_drops_the_proposal() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 2).await;
+    start(&app, &ana, copa(single(5, 5)), &[&p[0], &p[1]]).await;
+    let k = "wb-1-1";
+    let right = |map: &str| game("b", map);
+    let settled = |g: &Value, winner: &str| {
+        assert_eq!(
+            (&g["status"], &g["winner"], &g["contest_proposal"]),
+            (&json!("confirmed"), &json!(winner), &Value::Null)
+        );
+    };
+
+    // A organização aplica a proposta pelo PUT.
+    ok(report(&app, &p[0], k, 1, game("a", "awoken")).await);
+    ok(contest_with(&app, &p[1], k, 1, right("awoken")).await);
+    let body = ok(set_game(&app, &ana, k, 1, right("awoken"), None).await);
+    settled(&body["games"][0], "b");
+
+    // O capitão adversário, pelo aceite.
+    ok(report(&app, &p[0], k, 2, game("a", "vestibule-of-exile")).await);
+    ok(contest_with(&app, &p[1], k, 2, right("vestibule-of-exile")).await);
+    let body = ok(accept(&app, &p[0], k, 2, right("vestibule-of-exile")).await);
+    settled(&body["games"][1], "b");
+
+    // Manter o enviado também a apaga.
+    ok(report(&app, &p[0], k, 3, game("a", "insomnia")).await);
+    ok(contest_with(&app, &p[1], k, 3, right("insomnia")).await);
+    let body = ok(confirm(&app, &ana, k, 3).await);
+    settled(&body["games"][2], "a");
+
+    // Anular leva a linha inteira.
+    ok(report(&app, &p[0], k, 4, game("a", "corrupted-keep")).await);
+    ok(contest_with(&app, &p[1], k, 4, right("corrupted-keep")).await);
+    let uri = game_uri(k, 4, "/replay");
+    let body = ok(post(&app, &uri, &ana, json!({})).await);
+    assert_eq!(body["games"].as_array().unwrap().len(), 3);
+}
+
+#[tokio::test]
+async fn a_late_contest_may_carry_the_result_on_the_vetoed_map() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    let p = players(&app, &db, &ana, 4).await;
+    let veto = json!({ "veto": { "map_mode": "veto", "champion_phase": false } });
+    let everyone = [&p[0], &p[1], &p[2], &p[3]];
+    start(&app, &ana, copa(with(single(1, 1), veto)), &everyone).await;
+    // wb-1-1: P1 x P4.
+    let k = "wb-1-1";
+    let (first, second) = (&p[0], &p[3]);
+    let veto_uri = |action: &str| format!("{COPA}/matches/{k}/veto/{action}");
+    for who in [first, second] {
+        let (status, body) = post_empty(&app, &veto_uri("ready"), who).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+    }
+    let map = loop {
+        let seen = detail(&app, first, k).await;
+        if seen["veto"]["status"] == "done" {
+            break seen["veto"]["games"][0]["map"]["slug"]
+                .as_str()
+                .unwrap()
+                .to_owned();
+        }
+        let who = if seen["veto"]["turn"]["sides"] == json!(["a"]) {
+            first
+        } else {
+            second
+        };
+        let option = detail(&app, who, k).await["veto"]["options"][0].clone();
+        ok(post(&app, &veto_uri("steps"), who, json!({ "map": option })).await);
+    };
+    ok(report(&app, first, k, 1, game("a", &map)).await);
+    ok(confirm(&app, second, k, 1).await);
+
+    let other = if map == "awoken" {
+        "insomnia"
+    } else {
+        "awoken"
+    };
+    for (proposal, code) in [
+        (game("a", &map), "match.contest_unchanged"),
+        // Decidida, a série não deixa de estar presa ao mapa do veto.
+        (game("b", other), "match.map_mismatch"),
+    ] {
+        let (status, body) = contest_with(&app, second, k, 1, proposal).await;
+        assert_eq!(
+            (status, &body["error"]),
+            (StatusCode::UNPROCESSABLE_ENTITY, &json!(code))
+        );
+    }
+    let body = ok(contest_with(&app, second, k, 1, game("b", &map)).await);
+    assert_eq!(body["summary"]["state"], "ready");
+    assert_eq!(body["games"][0]["contest_proposal"]["b_frags"], 10);
+    let body = ok(accept(&app, first, k, 1, game("b", &map)).await);
+    assert_eq!(
+        (
+            &body["summary"]["state"],
+            &body["summary"]["result"]["winner"]
+        ),
+        (&json!("completed"), &json!("b"))
+    );
+}
