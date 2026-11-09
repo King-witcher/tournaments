@@ -67,6 +67,7 @@ pub async fn create_tenant(
             nickname,
             deletion_scheduled_for: None,
             logo_url: None,
+            cover_url: None,
         }),
     ))
 }

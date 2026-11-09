@@ -19,8 +19,8 @@ use crate::shared::{ApiError, ImageType, Storage};
 /// Tamanho máximo de um logo, de uma capa ou de uma foto (o mesmo check está
 /// na tabela).
 pub const MAX_BYTES: u32 = 1024 * 1024;
-/// Só JPEG: a prévia dos links do front (o `ImageResponse` do Next), que
-/// desenha o logo e a capa, não lê WebP.
+/// Só JPEG: a imagem vai como está para a prévia dos links, e todo robô de
+/// rede social lê JPEG.
 pub const CONTENT_TYPES: [ImageType; 1] = [ImageType::Jpeg];
 /// Validade da URL de upload (a fila de exclusão conta com ela no banco).
 const UPLOAD_EXPIRES: Duration = Duration::from_secs(10 * 60);

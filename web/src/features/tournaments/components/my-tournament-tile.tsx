@@ -52,6 +52,7 @@ export function MyTournamentTile({
         media && (
           <TournamentMedia
             cover={tournament.cover_url}
+            tenantCover={entry.tenant_cover_url}
             logo={entry.tenant_logo_url}
             community={entry.tenant_name}
           />

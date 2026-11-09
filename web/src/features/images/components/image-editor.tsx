@@ -11,54 +11,63 @@ import { Slider } from "@/shared/ui/slider";
 import { useImageErrorMessage } from "../hooks/use-image-error-message";
 import {
   type Crop,
-  clampCrop,
-  INITIAL_CROP,
+  initialCrop,
   MAX_ZOOM,
-  MIN_ZOOM,
+  minZoom,
   renderCrop,
+  SHAPES,
   turn,
   zoomTo,
 } from "../lib/crop-image";
-import { encodeCanvas, SHAPES } from "../lib/encode-image";
-import { sendImage } from "../lib/upload-image";
-import { AvatarCropper } from "./avatar-cropper";
-import styles from "./avatar-editor.module.scss";
+import { encodeCanvas } from "../lib/encode-image";
+import { type FixedImageTarget, sendImage } from "../lib/upload-image";
+import { ImageCropper } from "./image-cropper";
+import styles from "./image-editor.module.scss";
 
 type Props = {
+  target: FixedImageTarget;
   /** A imagem escolhida, já lida (quem abre a fecha depois). */
   image: ImageBitmap;
   maxBytes: number;
-  /** A foto nova foi registrada. */
+  /** A imagem nova foi registrada. */
   onSaved: () => void;
   /** Fechou sem salvar: nada foi enviado. */
   onClose: () => void;
 };
 
 /**
- * O Modal que ajusta a foto de perfil antes do envio: a área de recorte
- * (arrastar, pinçar, roda do mouse ou teclado), o zoom (`Slider`) e o giro
- * em quartos de volta. Nada sai do navegador antes de "Salvar foto"; ao
- * salvar, o recorte vira um JPEG quadrado e segue o caminho do logo
- * (`sendImage`): a foto de antes só é trocada quando a API confere o arquivo
- * no bucket. O erro fica no Modal, com o recorte, para tentar de novo.
+ * O Modal que ajusta o logo, a capa ou a foto antes do envio: a área de
+ * recorte (arrastar, pinçar, roda do mouse ou teclado), o zoom (`Slider`) e o
+ * giro em quartos de volta. Nada sai do navegador antes de salvar; ao salvar,
+ * o recorte vira um JPEG no tamanho final (`SHAPES`) e vai ao bucket
+ * (`sendImage`): a imagem de antes só é trocada quando a API confere o arquivo.
+ * O erro fica no Modal, com o recorte, para tentar de novo.
  */
-export function AvatarEditor({ image, maxBytes, onSaved, onClose }: Props) {
-  const t = useTranslations("Images.avatar");
+export function ImageEditor({
+  target,
+  image,
+  maxBytes,
+  onSaved,
+  onClose,
+}: Props) {
+  const t = useTranslations("Images");
   const errorMessage = useImageErrorMessage();
-  const [crop, setCrop] = useState<Crop>(() => clampCrop(image, INITIAL_CROP));
+  const { kind } = target;
+  const shape = SHAPES[kind];
+  const [crop, setCrop] = useState<Crop>(() => initialCrop(image, shape));
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
 
   const save = () =>
     startTransition(async () => {
-      const canvas = renderCrop(image, crop, SHAPES.avatar.width);
+      const canvas = renderCrop(image, shape, crop);
       const encoded = canvas
         ? await encodeCanvas(canvas, maxBytes)
         : "unreadable";
       const result =
         typeof encoded === "string"
           ? ({ ok: false, local: encoded } as const)
-          : await sendImage({ kind: "avatar" }, encoded);
+          : await sendImage(target, encoded);
       if (result.ok) {
         onSaved();
       } else {
@@ -68,42 +77,43 @@ export function AvatarEditor({ image, maxBytes, onSaved, onClose }: Props) {
 
   return (
     <FormModal
-      title={t("editTitle")}
-      submitLabel={t("save")}
+      title={t(`${kind}.editTitle`)}
+      submitLabel={t(`${kind}.save`)}
       onSubmit={save}
       onClose={onClose}
       pending={pending}
       error={error}
     >
-      <AvatarCropper
+      <ImageCropper
+        kind={kind}
         image={image}
         crop={crop}
         onChange={setCrop}
-        label={t("area")}
+        label={t(`${kind}.area`)}
       />
       <Stack gap={3}>
         <Slider
-          labelText={t("zoom")}
-          min={MIN_ZOOM * 100}
+          labelText={t("editor.zoom")}
+          min={Math.floor(minZoom(image, shape, crop.turns) * 100)}
           max={MAX_ZOOM * 100}
           step={1}
           value={Math.round(crop.zoom * 100)}
           formatLabel={(value) => `${value}%`}
           hideTextInput
           onChange={({ value }) =>
-            setCrop((c) => zoomTo(image, c, value / 100))
+            setCrop((c) => zoomTo(image, shape, c, value / 100))
           }
         />
         <div className={styles.turns}>
           <IconButton
-            label={t("rotateLeft")}
-            onClick={() => setCrop((c) => turn(image, c, -1))}
+            label={t("editor.rotateLeft")}
+            onClick={() => setCrop((c) => turn(image, shape, c, -1))}
           >
             <RotateCounterclockwise />
           </IconButton>
           <IconButton
-            label={t("rotateRight")}
-            onClick={() => setCrop((c) => turn(image, c, 1))}
+            label={t("editor.rotateRight")}
+            onClick={() => setCrop((c) => turn(image, shape, c, 1))}
           >
             <RotateClockwise />
           </IconButton>

@@ -1,70 +1,103 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useApiAction } from "@/shared/api/use-api-action";
+import { focusIfLost } from "@/shared/lib/focus";
 import { useImageErrorMessage } from "../hooks/use-image-error-message";
 import {
   type FixedImageTarget,
+  type LocalError,
   removeImage,
-  uploadImage,
 } from "../lib/upload-image";
+import { ImageEditor } from "./image-editor";
 import { ImageInput } from "./image-input";
 
 type Props = {
   target: FixedImageTarget;
-  /** A imagem de agora; nula sem imagem. */
+  /** A imagem enviada de agora; nula sem ela. */
   url: string | null | undefined;
   maxBytes: number;
 };
 
 /**
- * O logo ou a capa que já existem, que se salvam sozinhos (fora do "Salvar"
- * do formulário). A imagem é cortada e convertida no navegador, vai direto
- * ao bucket e é registrada na API; o erro sai traduzido junto do controle.
+ * O logo, a capa ou a foto, que se salvam sozinhos (fora do "Salvar" do
+ * formulário): escolher o arquivo abre o editor (`ImageEditor`), que recorta,
+ * gira e só então envia; cancelar não manda nada. "Remover" tira a imagem na
+ * hora. O arquivo que não dá para ler fica com o erro na área de soltar.
  */
 export function ImageField({ target, url, maxBytes }: Props) {
   const errorMessage = useImageErrorMessage();
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [sending, setSending] = useState<string>();
-  const [error, setError] = useState<string>();
+  const id = useId();
+  const [image, setImage] = useState<ImageBitmap>();
+  const [reading, startReading] = useTransition();
+  const [failed, setFailed] = useState<{ name: string; error: string }>();
   const removal = useApiAction();
 
-  const send = (file: File) => {
-    setSending(file.name);
-    startTransition(async () => {
-      const result = await uploadImage(target, file, maxBytes);
-      if (result.ok) {
-        setError(undefined);
-        setSending(undefined);
-        router.refresh();
-      } else {
-        setError(errorMessage(result));
+  const fail = (name: string, local: LocalError) =>
+    setFailed({ name, error: errorMessage({ ok: false, local }) });
+
+  const choose = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      fail(file.name, "notImage");
+      return;
+    }
+    startReading(async () => {
+      try {
+        // Lê a orientação do EXIF: a foto do celular não chega deitada.
+        const bitmap = await createImageBitmap(file, {
+          imageOrientation: "from-image",
+        });
+        setFailed(undefined);
+        setImage(bitmap);
+      } catch {
+        fail(file.name, "unreadable");
       }
     });
   };
 
+  const close = () => {
+    image?.close();
+    setImage(undefined);
+  };
+
   return (
-    <ImageInput
-      kind={target.kind}
-      url={url}
-      sending={sending}
-      pending={pending}
-      error={error ?? removal.error}
-      removing={removal.pending}
-      onFile={send}
-      onRemove={() =>
-        removal.run(
-          () => removeImage(target),
-          () => router.refresh(),
-        )
-      }
-      onDismiss={() => {
-        setSending(undefined);
-        setError(undefined);
-      }}
-    />
+    // O alvo do foco depois de salvar ou remover (o botão que agiu some).
+    <div id={id} tabIndex={-1}>
+      <ImageInput
+        kind={target.kind}
+        url={url}
+        sending={failed?.name}
+        pending={reading}
+        error={failed?.error ?? removal.error}
+        removing={removal.pending}
+        onFile={choose}
+        onRemove={() =>
+          removal.run(
+            () => removeImage(target),
+            () => {
+              router.refresh();
+              focusIfLost(id);
+            },
+          )
+        }
+        onDismiss={() => setFailed(undefined)}
+      />
+      {image && (
+        <ImageEditor
+          target={target}
+          image={image}
+          maxBytes={maxBytes}
+          onClose={close}
+          onSaved={() => {
+            close();
+            router.refresh();
+            focusIfLost(id);
+          }}
+        />
+      )}
+    </div>
   );
 }

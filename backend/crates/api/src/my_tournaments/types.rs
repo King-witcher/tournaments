@@ -21,7 +21,9 @@ pub struct MyTournaments {
 pub struct OpenTournament {
     pub tenant_slug: String,
     pub tenant_name: String,
-    /// O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela).
+    /// A capa da comunidade, no CDN (no lugar da capa do torneio sem ela).
+    pub tenant_cover_url: Option<String>,
+    /// O logo da comunidade, no CDN (no lugar da capa, sem nenhuma das duas).
     pub tenant_logo_url: Option<String>,
     pub tournament: TournamentSummary,
 }
@@ -31,7 +33,9 @@ pub struct OpenTournament {
 pub struct MyTournament {
     pub tenant_slug: String,
     pub tenant_name: String,
-    /// O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela).
+    /// A capa da comunidade, no CDN (no lugar da capa do torneio sem ela).
+    pub tenant_cover_url: Option<String>,
+    /// O logo da comunidade, no CDN (no lugar da capa, sem nenhuma das duas).
     pub tenant_logo_url: Option<String>,
     pub tournament: TournamentSummary,
     pub situation: Situation,

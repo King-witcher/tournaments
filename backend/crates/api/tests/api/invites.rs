@@ -64,7 +64,7 @@ async fn invite_link_adds_a_player() {
     assert_eq!(seen["tenant_description"], "Duelos às quintas.");
 
     let joined = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": "Duelos às quintas.", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null, "logo_url": null },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": "Duelos às quintas.", "role": "player", "nickname": "Bia", "deletion_scheduled_for": null, "logo_url": null, "cover_url": null },
         "tournament": null
     });
     assert_eq!(join(&app, &bia, token).await, joined);
@@ -192,6 +192,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
                 "tenant_name": "Tenant quake-br",
                 "tenant_description": null,
                 "tenant_logo_url": null,
+                "tenant_cover_url": null,
                 "owner_name": "Ana",
                 "member_count": 2,
                 "tournament": {
@@ -215,7 +216,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
 
     publish(&app, &ana, "copa").await;
     let accepted = json!({
-        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": null, "role": "player", "nickname": "Caio", "deletion_scheduled_for": null, "logo_url": null },
+        "tenant": { "slug": "quake-br", "name": "Tenant quake-br", "description": null, "role": "player", "nickname": "Caio", "deletion_scheduled_for": null, "logo_url": null, "cover_url": null },
         "tournament": "copa"
     });
     assert_eq!(join(&app, &caio, &token).await, accepted);

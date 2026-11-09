@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
+  "query": "select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key, t.cover_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.user_id = $1 and m.left_at is null\n           order by m.joined_at, t.id",
   "describe": {
     "columns": [
       {
@@ -79,6 +79,17 @@
             "name": "logo_key"
           }
         }
+      },
+      {
+        "ordinal": 7,
+        "name": "cover_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "cover_key"
+          }
+        }
       }
     ],
     "parameters": {
@@ -93,8 +104,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "1da75fe4bdd16af134d6eaa36ed2f25921c9dd6634ea2a724e7cb97de356ecdb"
+  "hash": "daec9ef70dc423004c12746b3ebed5d3038c7bfbb56a2659e590003af01e8e9a"
 }

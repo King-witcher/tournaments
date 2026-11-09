@@ -1,4 +1,5 @@
-//! SQL do logo (`tenants.logo_key`), da capa (`tournaments.cover_key`), da
+//! SQL do logo e da capa da comunidade (`tenants.logo_key`,
+//! `tenants.cover_key`), da capa do torneio (`tournaments.cover_key`), da
 //! foto de perfil (`users.avatar_key`), dos uploads pedidos
 //! (`image_uploads`, inclusive os das imagens das regras, que o registro passa
 //! a `tournaments::register_rules_image`) e da fila do que sai do bucket público
@@ -18,14 +19,20 @@ use crate::{
 /// longe das outras chaves do projeto.
 const LOCK_BASE: i64 = 0x696d_6167_0000_0000;
 
-/// De onde é um upload: da comunidade (o logo; com torneio, a capa), a foto
-/// de perfil de quem pediu ou uma imagem das regras, pedida num torneio e
-/// registrada na comunidade.
+/// De onde é um upload: o logo ou a capa da comunidade, a capa de um torneio,
+/// a foto de perfil de quem pediu ou uma imagem das regras, pedida num torneio
+/// e registrada na comunidade.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scope {
-    Tenant {
+    Logo {
         tenant: TenantId,
-        tournament: Option<TournamentId>,
+    },
+    TenantCover {
+        tenant: TenantId,
+    },
+    TournamentCover {
+        tenant: TenantId,
+        tournament: TournamentId,
     },
     Avatar,
     Rules {
@@ -37,27 +44,31 @@ pub enum Scope {
 impl Scope {
     fn tenant(self) -> Option<i64> {
         match self {
-            Self::Tenant { tenant, .. } | Self::Rules { tenant, .. } => Some(tenant.get()),
+            Self::Logo { tenant }
+            | Self::TenantCover { tenant }
+            | Self::TournamentCover { tenant, .. }
+            | Self::Rules { tenant, .. } => Some(tenant.get()),
             Self::Avatar => None,
         }
     }
 
-    /// O torneio da capa ou da imagem das regras; `None`: o logo ou a foto.
+    /// O torneio da capa ou da imagem das regras; `None`: o que é da
+    /// comunidade ou a foto.
     pub fn tournament(self) -> Option<i64> {
         match self {
-            Self::Tenant { tournament, .. } => tournament.map(TournamentId::get),
-            Self::Rules { tournament, .. } => Some(tournament.get()),
-            Self::Avatar => None,
+            Self::TournamentCover { tournament, .. } | Self::Rules { tournament, .. } => {
+                Some(tournament.get())
+            }
+            Self::Logo { .. } | Self::TenantCover { .. } | Self::Avatar => None,
         }
     }
 
     /// `image_uploads.kind`.
     fn kind(self) -> &'static str {
         match self {
-            Self::Tenant {
-                tournament: None, ..
-            } => "logo",
-            Self::Tenant { .. } => "cover",
+            Self::Logo { .. } => "logo",
+            Self::TenantCover { .. } => "tenant_cover",
+            Self::TournamentCover { .. } => "tournament_cover",
             Self::Avatar => "avatar",
             Self::Rules { .. } => "rules",
         }
@@ -72,7 +83,8 @@ impl Scope {
 /// Um upload pedido e ainda não registrado.
 pub struct PendingUpload {
     pub id: i64,
-    /// O torneio da capa ou da imagem das regras; `None`: o logo ou a foto.
+    /// O torneio da capa ou da imagem das regras; `None`: o que é da
+    /// comunidade ou a foto.
     pub tournament: Option<i64>,
     pub object_key: String,
     pub content_type: ImageType,
@@ -207,9 +219,26 @@ pub async fn set_logo(
     Ok(done.rows_affected() > 0)
 }
 
+/// Troca a capa da comunidade por `key` (`None` tira); falso se nada mudou. A
+/// de antes vai para a fila de exclusão.
+pub async fn set_tenant_cover(
+    conn: &mut PgConnection,
+    tenant: TenantId,
+    key: Option<&str>,
+) -> Result<bool, sqlx::Error> {
+    let done = sqlx::query!(
+        "update tenants set cover_key = $2 where id = $1 and cover_key is distinct from $2",
+        tenant.get(),
+        key
+    )
+    .execute(conn)
+    .await?;
+    Ok(done.rows_affected() > 0)
+}
+
 /// Troca a capa do torneio por `key` (`None` tira); falso se nada mudou. A de
 /// antes vai para a fila de exclusão.
-pub async fn set_cover(
+pub async fn set_tournament_cover(
     conn: &mut PgConnection,
     tenant: TenantId,
     tournament: TournamentId,

@@ -5,7 +5,7 @@ use super::{
     db::{self, PendingUpload, Scope},
     object::Place,
     types::{
-        AvatarUploadPath, ImageSettings, ImageUpload, LogoUploadPath, NewImageUpload, PublicImage,
+        AvatarUploadPath, ImageSettings, ImageUpload, NewImageUpload, PublicImage,
         TournamentImagePath, TournamentUploadPath,
     },
     upload::{self, CONTENT_TYPES, MAX_BYTES, NOT_FOUND, Target},
@@ -14,7 +14,7 @@ use crate::{
     AppState,
     auth::CurrentUser,
     shared::{ApiError, ErrorBody, JsonBody, PathParams, Storage, public_base, public_url},
-    tenants::{self, Organizer, Owner, TenantMember},
+    tenants::{Organizer, TenantMember},
     tournaments::{self, StoredTournament, find_visible},
 };
 
@@ -25,27 +25,14 @@ pub(super) fn storage(state: &AppState) -> Result<&Storage, ApiError> {
     state.public_storage.as_ref().ok_or(NOT_CONFIGURED)
 }
 
-fn logo(owner: &TenantMember<Owner>) -> Target<'_> {
-    Target {
-        scope: Scope::Tenant {
-            tenant: owner.tenant,
-            tournament: None,
-        },
-        user: owner.user.id,
-        place: Place::Logo {
-            tenant: &owner.slug,
-        },
-    }
-}
-
 fn cover<'a>(member: &'a TenantMember<Organizer>, t: &'a StoredTournament) -> Target<'a> {
     Target {
-        scope: Scope::Tenant {
+        scope: Scope::TournamentCover {
             tenant: member.tenant,
-            tournament: Some(t.id),
+            tournament: t.id,
         },
         user: member.user.id,
-        place: Place::Cover {
+        place: Place::TournamentCover {
             tenant: &member.slug,
             tournament: &t.slug,
         },
@@ -98,94 +85,6 @@ pub async fn get_image_settings(State(state): State<AppState>) -> Json<ImageSett
 
 #[utoipa::path(
     post,
-    path = "/tenants/{slug}/logo/uploads",
-    tag = "images",
-    params(("slug" = String, Path, description = "Slug do tenant")),
-    request_body = NewImageUpload,
-    responses(
-        (status = CREATED, body = ImageUpload, description = "URL para o navegador mandar o logo direto ao bucket (PUT com o Content-Type e o Cache-Control dados, `If-None-Match: *` e exatamente `size` bytes, uma vez, em 10 minutos); depois, registrar com `.../logo/uploads/{upload}/attach`. Só o owner"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg)"),
-        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "images.too_many_uploads {max} (uploads pedidos e não registrados na última hora)"),
-        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured (a API está sem o bucket público)"),
-    )
-)]
-pub async fn create_logo_upload(
-    State(state): State<AppState>,
-    owner: TenantMember<Owner>,
-    JsonBody(body): JsonBody<NewImageUpload>,
-) -> Result<(StatusCode, Json<ImageUpload>), ApiError> {
-    let storage = storage(&state)?;
-    let upload = upload::request(&state.db, storage, &logo(&owner), body, Utc::now()).await?;
-    Ok((StatusCode::CREATED, Json(upload)))
-}
-
-#[utoipa::path(
-    post,
-    path = "/tenants/{slug}/logo/uploads/{upload}/attach",
-    tag = "images",
-    params(
-        ("slug" = String, Path, description = "Slug do tenant"),
-        ("upload" = i64, Path, description = "O `id` do upload"),
-    ),
-    responses(
-        (status = OK, body = PublicImage, description = "Upload conferido no bucket (tipo e tamanho pedidos) e gravado como o logo da comunidade; o de antes sai do bucket na rotina diária"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, images.not_found (upload de outra pessoa, de uma capa, já registrado ou vencido)"),
-        (status = CONFLICT, body = ErrorBody, description = "images.upload_missing (o arquivo não chegou ao bucket), tenant.deletion_scheduled"),
-        (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "images.upload_invalid (chegou outro tipo ou tamanho: o upload é descartado)"),
-        (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured"),
-    )
-)]
-pub async fn attach_logo(
-    State(state): State<AppState>,
-    owner: TenantMember<Owner>,
-    PathParams(path): PathParams<LogoUploadPath>,
-) -> Result<Json<PublicImage>, ApiError> {
-    let storage = storage(&state)?;
-    let pending = upload::verify(&state.db, storage, &logo(&owner), path.upload).await?;
-    let mut tx = state.db.begin().await?;
-    // O logo primeiro: o upload que sai já é dele e não vai para a fila.
-    db::set_logo(&mut tx, owner.tenant, Some(&pending.object_key)).await?;
-    if !db::delete_upload(&mut tx, pending.id).await? {
-        return Err(NOT_FOUND);
-    }
-    tenants::changed(&mut tx, owner.tenant).await?;
-    tx.commit().await?;
-    image(&pending)
-}
-
-#[utoipa::path(
-    delete,
-    path = "/tenants/{slug}/logo",
-    tag = "images",
-    params(("slug" = String, Path, description = "Slug do tenant")),
-    responses(
-        (status = NO_CONTENT, description = "A comunidade fica sem logo (o arquivo sai do bucket na rotina diária); sem logo, nada muda. Só o owner"),
-        (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
-        (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden (só o owner)"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found"),
-        (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
-    )
-)]
-pub async fn remove_logo(
-    State(state): State<AppState>,
-    owner: TenantMember<Owner>,
-) -> Result<StatusCode, ApiError> {
-    let mut tx = state.db.begin().await?;
-    if db::set_logo(&mut tx, owner.tenant, None).await? {
-        tenants::changed(&mut tx, owner.tenant).await?;
-    }
-    tx.commit().await?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-#[utoipa::path(
-    post,
     path = "/tenants/{slug}/tournaments/{tournament}/cover/uploads",
     tag = "images",
     params(
@@ -204,7 +103,7 @@ pub async fn remove_logo(
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured"),
     )
 )]
-pub async fn create_cover_upload(
+pub async fn create_tournament_cover_upload(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentImagePath>,
@@ -230,13 +129,13 @@ pub async fn create_cover_upload(
         (status = OK, body = PublicImage, description = "Upload conferido no bucket e gravado como a capa do torneio; a de antes sai do bucket na rotina diária"),
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = FORBIDDEN, body = ErrorBody, description = "tenant.forbidden"),
-        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio ou do logo, já registrado ou vencido)"),
+        (status = NOT_FOUND, body = ErrorBody, description = "tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio ou da comunidade, já registrado ou vencido)"),
         (status = CONFLICT, body = ErrorBody, description = "images.upload_missing, tenant.deletion_scheduled"),
         (status = UNPROCESSABLE_ENTITY, body = ErrorBody, description = "images.upload_invalid (o upload é descartado)"),
         (status = SERVICE_UNAVAILABLE, body = ErrorBody, description = "images.not_configured"),
     )
 )]
-pub async fn attach_cover(
+pub async fn attach_tournament_cover(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentUploadPath>,
@@ -246,7 +145,7 @@ pub async fn attach_cover(
     let pending = upload::verify(&state.db, storage, &cover(&member, &t), path.upload).await?;
     let mut tx = state.db.begin().await?;
     // A capa primeiro: o upload que sai já é dela e não vai para a fila.
-    db::set_cover(&mut tx, member.tenant, t.id, Some(&pending.object_key)).await?;
+    db::set_tournament_cover(&mut tx, member.tenant, t.id, Some(&pending.object_key)).await?;
     if !db::delete_upload(&mut tx, pending.id).await? {
         return Err(NOT_FOUND);
     }
@@ -271,14 +170,14 @@ pub async fn attach_cover(
         (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled"),
     )
 )]
-pub async fn remove_cover(
+pub async fn remove_tournament_cover(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
     PathParams(path): PathParams<TournamentImagePath>,
 ) -> Result<StatusCode, ApiError> {
     let t = tournament(&state, &member, &path.tournament).await?;
     let mut tx = state.db.begin().await?;
-    if db::set_cover(&mut tx, member.tenant, t.id, None).await? {
+    if db::set_tournament_cover(&mut tx, member.tenant, t.id, None).await? {
         tournaments::changed(&mut tx, t.id).await?;
     }
     tx.commit().await?;

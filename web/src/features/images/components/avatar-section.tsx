@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/features/auth/server";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
 import { getImageSettings } from "../server";
-import { AvatarField } from "./avatar-field";
+import { ImageField } from "./image-field";
 
 /**
  * A foto de perfil, no Perfil da conta. Sem o bucket público na API,
@@ -26,7 +26,11 @@ export async function AvatarSection() {
         title={t("title")}
         description={discord ? t("discord") : undefined}
       >
-        <AvatarField url={user.photo_url} maxBytes={settings.max_bytes} />
+        <ImageField
+          target={{ kind: "avatar" }}
+          url={user.photo_url}
+          maxBytes={settings.max_bytes}
+        />
       </Section>
     </Panel>
   );

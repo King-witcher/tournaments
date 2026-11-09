@@ -724,6 +724,54 @@ export interface paths {
         patch: operations["update_tenant"];
         trace?: never;
     };
+    "/tenants/{slug}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["remove_tenant_cover"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/cover/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_tenant_cover_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{slug}/cover/uploads/{upload}/attach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attach_tenant_cover"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{slug}/deletion": {
         parameters: {
             query?: never;
@@ -1070,7 +1118,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove_cover"];
+        delete: operations["remove_tournament_cover"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1085,7 +1133,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_cover_upload"];
+        post: operations["create_tournament_cover_upload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1101,7 +1149,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["attach_cover"];
+        post: operations["attach_tournament_cover"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2646,6 +2694,8 @@ export interface components {
              *     criou).
              */
             owner_name: string;
+            /** @description A capa da comunidade, no CDN; nula sem capa. */
+            tenant_cover_url?: string | null;
             /** @description A descrição da comunidade, em texto simples; nulo sem descrição. */
             tenant_description?: string | null;
             /** @description O logo da comunidade, no CDN; nulo sem logo. */
@@ -2975,6 +3025,8 @@ export interface components {
         };
         /** @description Um tenant do ponto de vista do usuário logado. */
         MyTenant: {
+            /** @description A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público. */
+            cover_url?: string | null;
             /**
              * Format: date-time
              * @description Quando a comunidade vai ser excluída, com tudo o que tem dentro. Até
@@ -3009,7 +3061,9 @@ export interface components {
              */
             stage?: number | null;
             team?: components["schemas"]["Team"] | null;
-            /** @description O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela). */
+            /** @description A capa da comunidade, no CDN (no lugar da capa do torneio sem ela). */
+            tenant_cover_url?: string | null;
+            /** @description O logo da comunidade, no CDN (no lugar da capa, sem nenhuma das duas). */
             tenant_logo_url?: string | null;
             tenant_name: string;
             tenant_slug: string;
@@ -3373,7 +3427,9 @@ export interface components {
          *     aberta a todos os membros e com vaga.
          */
         OpenTournament: {
-            /** @description O logo da comunidade, no CDN (o lugar da capa, no torneio sem ela). */
+            /** @description A capa da comunidade, no CDN (no lugar da capa do torneio sem ela). */
+            tenant_cover_url?: string | null;
+            /** @description O logo da comunidade, no CDN (no lugar da capa, sem nenhuma das duas). */
             tenant_logo_url?: string | null;
             tenant_name: string;
             tenant_slug: string;
@@ -7786,6 +7842,232 @@ export interface operations {
             };
         };
     };
+    remove_tenant_cover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A comunidade fica sem capa (o arquivo sai do bucket na rotina diária); sem capa, nada muda. Só o owner */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_tenant_cover_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewImageUpload"];
+            };
+        };
+        responses: {
+            /** @description URL para o navegador mandar a capa da comunidade direto ao bucket (como a do logo); depois, registrar com `.../cover/uploads/{upload}/attach`. Só o owner */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUpload"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.size_invalid {max} (bytes), request.invalid_body (tipo fora de image/jpeg) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.too_many_uploads {max} */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    attach_tenant_cover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Slug do tenant */
+                slug: string;
+                /** @description O `id` do upload */
+                upload: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload conferido no bucket e gravado como a capa da comunidade; a de antes sai do bucket na rotina diária */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicImage"];
+                };
+            };
+            /** @description auth.unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.forbidden (só o owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description tenant.not_found, images.not_found (upload de outra pessoa, do logo, já registrado ou vencido) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_missing, tenant.deletion_scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.upload_invalid (o upload é descartado) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description images.not_configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     schedule_tenant_deletion: {
         parameters: {
             query?: never;
@@ -9627,7 +9909,7 @@ export interface operations {
             };
         };
     };
-    remove_cover: {
+    remove_tournament_cover: {
         parameters: {
             query?: never;
             header?: never;
@@ -9686,7 +9968,7 @@ export interface operations {
             };
         };
     };
-    create_cover_upload: {
+    create_tournament_cover_upload: {
         parameters: {
             query?: never;
             header?: never;
@@ -9778,7 +10060,7 @@ export interface operations {
             };
         };
     };
-    attach_cover: {
+    attach_tournament_cover: {
         parameters: {
             query?: never;
             header?: never;
@@ -9821,7 +10103,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio ou do logo, já registrado ou vencido) */
+            /** @description tenant.not_found, tournament.not_found, images.not_found (upload de outra pessoa, de outro torneio ou da comunidade, já registrado ou vencido) */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  (select json_agg(x order by x.joined_at, x.id) from (\n                       select t.id, t.slug, t.name, t.description, m.role, m.nickname,\n                              t.deletion_due_at, t.logo_key, m.joined_at\n                       from tenant_members m\n                       join tenants t on t.id = m.tenant_id\n                       where m.user_id = u.id and m.left_at is null) x)\n                      as \"memberships: Json<Vec<MembershipRow>>\"\n           from users u\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  (select json_agg(x order by x.joined_at, x.id) from (\n                       select t.id, t.slug, t.name, t.description, m.role, m.nickname,\n                              t.deletion_due_at, t.logo_key, t.cover_key, m.joined_at\n                       from tenant_members m\n                       join tenants t on t.id = m.tenant_id\n                       where m.user_id = u.id and m.left_at is null) x)\n                      as \"memberships: Json<Vec<MembershipRow>>\"\n           from users u\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -79,5 +79,5 @@
       null
     ]
   },
-  "hash": "0e1c19dc96dfb697bf1bf00f6d7a25a03203b84bb6fa9e897006989fbdd31c97"
+  "hash": "f30d148922d9cebbfc82ef7b5ffe187a796c7fc6483aac09bd0a5388b5be3636"
 }

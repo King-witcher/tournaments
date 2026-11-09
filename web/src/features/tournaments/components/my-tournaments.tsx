@@ -33,7 +33,9 @@ export async function MyTournaments() {
   // Numa grade com alguma capa ou logo, todo tile leva o espaço da capa (com
   // o logo ou a inicial no lugar da que falta); sem nenhuma, nenhum leva.
   const media = (list: typeof active) =>
-    list.some((e) => e.tournament.cover_url || e.tenant_logo_url);
+    list.some(
+      (e) => e.tournament.cover_url || e.tenant_cover_url || e.tenant_logo_url,
+    );
   const activeMedia = media(active);
   const overMedia = media(over);
 

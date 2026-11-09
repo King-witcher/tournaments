@@ -105,6 +105,8 @@ pub struct TenantMember<R = Player> {
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
     /// O objeto do logo no bucket público (nulo: sem logo).
     pub logo_key: Option<String>,
+    /// O objeto da capa no bucket público (nulo: sem capa).
+    pub cover_key: Option<String>,
     min_role: PhantomData<R>,
 }
 
@@ -146,6 +148,7 @@ impl FromRequestParts<AppState> for Memberships {
                 nickname: m.nickname,
                 deletion_scheduled_for: m.deletion_scheduled_for,
                 logo_key: m.logo_key,
+                cover_key: m.cover_key,
                 min_role: PhantomData,
             })
             .collect();
@@ -226,6 +229,7 @@ impl<R: MinRole> TenantMember<R> {
             nickname: m.nickname,
             deletion_scheduled_for: m.deletion_scheduled_for,
             logo_key: m.logo_key,
+            cover_key: m.cover_key,
             min_role: PhantomData,
         })
     }

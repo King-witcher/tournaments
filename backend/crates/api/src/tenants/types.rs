@@ -67,6 +67,8 @@ pub struct MyTenant {
     /// O logo (quadrado), no CDN. Nulo: sem logo, ou a API sem o bucket
     /// público.
     pub logo_url: Option<String>,
+    /// A capa (2:1), no CDN. Nulo: sem capa, ou a API sem o bucket público.
+    pub cover_url: Option<String>,
 }
 
 impl<R> From<TenantMember<R>> for MyTenant {
@@ -79,6 +81,7 @@ impl<R> From<TenantMember<R>> for MyTenant {
             nickname: m.nickname,
             deletion_scheduled_for: m.deletion_scheduled_for,
             logo_url: m.logo_key.as_deref().and_then(public_url),
+            cover_url: m.cover_key.as_deref().and_then(public_url),
         }
     }
 }

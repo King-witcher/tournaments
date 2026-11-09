@@ -1,4 +1,4 @@
-//! O logo, a capa, a foto, as imagens das regras e a fila do que sai do
+//! O logo, as capas, a foto, as imagens das regras e a fila do que sai do
 //! bucket público.
 
 use super::*;
@@ -27,6 +27,11 @@ async fn the_object_has_the_form_but_the_folder_may_be_an_old_address() {
         rejected(exec(&db, &bad).await),
         rule(CHECK, "tournaments_cover_key")
     );
+    let bad = format!("update tenants set cover_key = 'covers/quake-br/copa/{TOKEN}.jpg'");
+    assert_eq!(
+        rejected(exec(&db, &bad).await),
+        rule(CHECK, "tenants_cover_key")
+    );
     // Objetos não se movem: a pasta é a do endereço de quando foi enviado.
     let old = format!("update tenants set logo_key = 'logos/outra/{TOKEN}.webp'");
     exec(&db, &old).await.unwrap();
@@ -36,6 +41,81 @@ async fn the_object_has_the_form_but_the_folder_may_be_an_old_address() {
     exec(&db, "update tournaments set slug = 'liga'")
         .await
         .unwrap();
+}
+
+/// O upload da capa da comunidade não tem torneio, e o da capa do torneio tem;
+/// o que não vira capa vai para a fila, e o que vira fica.
+#[tokio::test]
+async fn the_cover_upload_says_whose_it_is() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    let upload = |kind: &str, tournament: &str, key: &str| {
+        format!(
+            "insert into image_uploads
+                 (kind, tenant_id, tournament_id, object_key, content_type, size, upload_expires_at)
+             select '{kind}', t.tenant_id, {tournament}, '{key}', 'image/jpeg', 1000,
+                    now() + interval '10 minutes'
+             from tournaments t"
+        )
+    };
+    let community = format!("covers/quake-br/{TOKEN}.jpg");
+    let of_tournament = format!("covers/quake-br/copa/{TOKEN}.jpg");
+    for (kind, tournament, key, constraint) in [
+        (
+            "cover",
+            "t.id",
+            of_tournament.as_str(),
+            "image_uploads_kind",
+        ),
+        (
+            "tenant_cover",
+            "t.id",
+            community.as_str(),
+            "image_uploads_scope",
+        ),
+        (
+            "tournament_cover",
+            "null",
+            of_tournament.as_str(),
+            "image_uploads_scope",
+        ),
+        (
+            "tenant_cover",
+            "null",
+            of_tournament.as_str(),
+            "image_uploads_object_key",
+        ),
+        (
+            "tournament_cover",
+            "t.id",
+            community.as_str(),
+            "image_uploads_object_key",
+        ),
+    ] {
+        assert_eq!(
+            rejected(exec(&db, &upload(kind, tournament, key)).await),
+            rule(CHECK, constraint),
+            "{kind} {tournament} {key}"
+        );
+    }
+
+    exec(&db, &upload("tenant_cover", "null", &community))
+        .await
+        .unwrap();
+    exec(
+        &db,
+        &format!("update tenants set cover_key = '{community}'"),
+    )
+    .await
+    .unwrap();
+    exec(&db, "delete from image_uploads").await.unwrap();
+    assert!(queued(&db).await.is_empty());
+
+    exec(&db, "update tenants set cover_key = null")
+        .await
+        .unwrap();
+    assert_eq!(queued(&db).await, vec![community]);
 }
 
 /// A foto: sem pasta, só da conta não excluída; o upload dela não tem
@@ -111,10 +191,14 @@ async fn deleting_the_tenant_queues_every_image() {
     create_tournament(&app, &ana, duel("copa")).await;
     let logo = format!("logos/quake-br/{TOKEN}.webp");
     let cover = format!("covers/quake-br/copa/{TOKEN}.jpg");
+    let community = format!("covers/quake-br/{TOKEN}.jpg");
     let pending = "logos/quake-br/zyxwvutsrqpnmkjihgfedc.webp".to_owned();
-    exec(&db, &format!("update tenants set logo_key = '{logo}'"))
-        .await
-        .unwrap();
+    exec(
+        &db,
+        &format!("update tenants set logo_key = '{logo}', cover_key = '{community}'"),
+    )
+    .await
+    .unwrap();
     exec(
         &db,
         &format!("update tournaments set cover_key = '{cover}'"),
@@ -134,7 +218,7 @@ async fn deleting_the_tenant_queues_every_image() {
     assert!(queued(&db).await.is_empty());
 
     exec(&db, "delete from tenants").await.unwrap();
-    let mut all = vec![cover, logo, pending];
+    let mut all = vec![cover, community, logo, pending];
     all.sort();
     assert_eq!(queued(&db).await, all);
 }

@@ -8,7 +8,7 @@ import { ActionWithNote } from "@/shared/ui/action-with-note";
 import { Button } from "@/shared/ui/button";
 import { AspectRatio } from "@/shared/ui/carbon/aspect-ratio";
 import { FileDropZone } from "@/shared/ui/file-drop-zone";
-import type { ImageKind } from "../lib/encode-image";
+import type { ImageKind } from "../lib/crop-image";
 import styles from "./image-input.module.scss";
 
 const ACCEPT = ["image/png", "image/jpeg", "image/webp"];
@@ -37,8 +37,7 @@ type Props = {
  * A parte visível do logo, da capa ou da foto de perfil: sem imagem, a área
  * de soltar do Carbon com um arquivo só; com ela, a prévia já cortada como
  * aparece no site (a foto redonda), "Trocar" e "Remover", com o erro
- * embaixo. Quem usa decide o que escolher e tirar fazem (`ImageField` salva
- * na hora; `AvatarField` abre o editor).
+ * embaixo. Quem usa decide o que escolher e tirar fazem (`ImageField`).
  */
 export function ImageInput({
   kind,

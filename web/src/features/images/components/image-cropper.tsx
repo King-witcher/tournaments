@@ -8,10 +8,18 @@ import {
   useState,
 } from "react";
 
-import { type Crop, clampCrop, drawCrop, zoomTo } from "../lib/crop-image";
-import styles from "./avatar-cropper.module.scss";
+import { cn } from "@/shared/lib/cn";
+import {
+  type Crop,
+  clampCrop,
+  drawCrop,
+  type ImageKind,
+  SHAPES,
+  zoomTo,
+} from "../lib/crop-image";
+import styles from "./image-cropper.module.scss";
 
-/** Quanto uma seta move a foto, em frações do lado (com Shift, `BIG_STEP`). */
+/** Quanto uma seta move a imagem, em frações da largura (com Shift, `BIG_STEP`). */
 const STEP = 0.02;
 const BIG_STEP = 0.1;
 /** Quanto cada tecla `+`/`-` muda o zoom. */
@@ -20,6 +28,7 @@ const ZOOM_STEP = 1.1;
 const WHEEL_SCALE = 500;
 
 type Props = {
+  kind: ImageKind;
   image: ImageBitmap;
   crop: Crop;
   onChange: (crop: Crop) => void;
@@ -30,14 +39,15 @@ type Props = {
 type Point = { x: number; y: number };
 
 /**
- * A área de recorte da foto: a imagem num quadrado, com o círculo que o site
- * mostra. Arrastar (ou as setas) move a foto; a roda do mouse, o pinçar e
- * `+`/`-` mudam o zoom; o recorte sempre cobre o quadrado (`clampCrop`).
- * Recebe o foco ao abrir o Modal (`data-modal-primary-focus`).
+ * A área de recorte: a imagem no quadro da proporção de `kind` (na foto, com
+ * o círculo que o site mostra). Arrastar (ou as setas) move a imagem; a roda
+ * do mouse, o pinçar e `+`/`-` mudam o zoom, dentro dos limites de
+ * `clampCrop`. Recebe o foco ao abrir o Modal (`data-modal-primary-focus`).
  */
-export function AvatarCropper({ image, crop, onChange, label }: Props) {
+export function ImageCropper({ kind, image, crop, onChange, label }: Props) {
+  const shape = SHAPES[kind];
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [side, setSide] = useState(0);
+  const [width, setWidth] = useState(0);
   // Os gestos partem do recorte mais novo: vários eventos chegam antes do
   // próximo render.
   const latest = useRef(crop);
@@ -59,8 +69,8 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
     const element = canvas.current;
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      const width = entry?.contentRect.width ?? 0;
-      setSide(Math.round(width * window.devicePixelRatio));
+      const inline = entry?.contentRect.width ?? 0;
+      setWidth(Math.round(inline * window.devicePixelRatio));
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -69,12 +79,11 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
   useEffect(() => {
     const element = canvas.current;
     const context = element?.getContext("2d");
-    if (!element || !context || side === 0) return;
-    element.width = side;
-    element.height = side;
-    context.clearRect(0, 0, side, side);
-    drawCrop(context, image, crop, side);
-  }, [image, crop, side]);
+    if (!element || !context || width === 0) return;
+    element.width = width;
+    element.height = Math.round((width * shape.height) / shape.width);
+    drawCrop(context, image, shape, crop, width);
+  }, [image, shape, crop, width]);
 
   // A roda do mouse fora do React: o ouvinte dele é passivo e não impede a
   // página de rolar.
@@ -84,16 +93,16 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       const factor = Math.exp(-event.deltaY / WHEEL_SCALE);
-      updateRef.current((c) => zoomTo(image, c, c.zoom * factor));
+      updateRef.current((c) => zoomTo(image, shape, c, c.zoom * factor));
     };
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);
-  }, [image]);
+  }, [image, shape]);
 
   const move = (dx: number, dy: number) =>
-    update((c) => clampCrop(image, { ...c, x: c.x + dx, y: c.y + dy }));
+    update((c) => clampCrop(image, shape, { ...c, x: c.x + dx, y: c.y + dy }));
   const zoomBy = (factor: number) =>
-    update((c) => zoomTo(image, c, c.zoom * factor));
+    update((c) => zoomTo(image, shape, c, c.zoom * factor));
 
   const onPointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -106,11 +115,11 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
   const onPointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
     const before = pointers.current.get(event.pointerId);
     if (!before) return;
-    const width = event.currentTarget.clientWidth || 1;
+    const inline = event.currentTarget.clientWidth || 1;
     const now = { x: event.clientX, y: event.clientY };
     pointers.current.set(event.pointerId, now);
     if (pointers.current.size === 1) {
-      move((now.x - before.x) / width, (now.y - before.y) / width);
+      move((now.x - before.x) / inline, (now.y - before.y) / inline);
       return;
     }
     // Dois dedos: o zoom acompanha a distância entre eles.
@@ -155,7 +164,7 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
   };
 
   return (
-    <div className={styles.frame}>
+    <div className={cn(styles.frame, styles[kind])}>
       <canvas
         ref={canvas}
         className={styles.canvas}
@@ -169,7 +178,7 @@ export function AvatarCropper({ image, crop, onChange, label }: Props) {
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
       />
-      <div className={styles.mask} />
+      {kind === "avatar" && <div className={styles.mask} />}
     </div>
   );
 }

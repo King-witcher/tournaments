@@ -134,6 +134,7 @@ async fn entry<R>(
         tenant_slug: member.slug.clone(),
         tenant_name: member.name.clone(),
         tenant_logo_url: member.logo_key.as_deref().and_then(public_url),
+        tenant_cover_url: member.cover_key.as_deref().and_then(public_url),
         tournament,
         situation,
         stage,

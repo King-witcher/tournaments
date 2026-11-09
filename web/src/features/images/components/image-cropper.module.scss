@@ -1,24 +1,32 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/utilities/focus-outline" as *;
 
-// A área de recorte: um quadrado na largura do Modal, com a imagem inteira
-// por baixo e o que fica fora da foto escurecido. No máximo 30% da altura
-// da tela, para o zoom, os botões e o erro caberem no Modal sem rolar.
+// A área de recorte, na proporção da imagem. No máximo 30% da altura da tela,
+// para o zoom, os botões e o erro caberem no Modal sem rolar.
 .frame {
   position: relative;
   overflow: hidden;
-  inline-size: min(100%, 30dvh);
   margin-inline: auto;
-  aspect-ratio: 1;
   background-color: theme.$layer-accent-01;
 
-  // O contorno no quadrado, por cima da máscara (no canvas ela o cobriria).
+  // O contorno no quadro, por cima da máscara (no canvas ela o cobriria).
   &:has(.canvas:focus-visible) {
     @include focus-outline("outline");
   }
 }
 
-// `touch-action: none`: no celular, arrastar e pinçar mexem na foto, não na
+.logo,
+.avatar {
+  inline-size: min(100%, 30dvh);
+  aspect-ratio: 1;
+}
+
+.cover {
+  inline-size: min(100%, 60dvh);
+  aspect-ratio: 2;
+}
+
+// `touch-action: none`: no celular, arrastar e pinçar mexem na imagem, não na
 // página.
 .canvas {
   display: block;

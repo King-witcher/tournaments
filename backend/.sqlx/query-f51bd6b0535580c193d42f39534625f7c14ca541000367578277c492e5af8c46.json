@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\", t.description,\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
+  "query": "select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,\n                  t.id as \"tenant_id?\", t.slug as \"slug?\", t.name as \"name?\", t.description,\n                  m.role as \"role?\", m.nickname as \"nickname?\", t.deletion_due_at, t.logo_key, t.cover_key\n           from users u\n           left join tenant_members m\n                  on m.user_id = u.id and m.left_at is null\n                 and m.tenant_id = (select id from tenants where slug = $2)\n           left join tenants t on t.id = m.tenant_id\n           where u.id = $1 and u.deleted_at is null",
   "describe": {
     "columns": [
       {
@@ -145,6 +145,17 @@
             "name": "logo_key"
           }
         }
+      },
+      {
+        "ordinal": 13,
+        "name": "cover_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "cover_key"
+          }
+        }
       }
     ],
     "parameters": {
@@ -166,8 +177,9 @@
       true,
       true,
       true,
+      true,
       true
     ]
   },
-  "hash": "543175466410b120f951463f286eec2e503b19680791ade84be1fccadcd1b281"
+  "hash": "f51bd6b0535580c193d42f39534625f7c14ca541000367578277c492e5af8c46"
 }

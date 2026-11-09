@@ -69,6 +69,8 @@ pub struct StoredInvite {
     pub tenant_description: Option<String>,
     /// O objeto do logo da comunidade no bucket público.
     pub tenant_logo_key: Option<String>,
+    /// O objeto da capa da comunidade no bucket público.
+    pub tenant_cover_key: Option<String>,
     /// O apelido do dono atual na comunidade (a comunidade não grava quem a criou).
     pub owner_name: String,
     /// Membros ativos.
@@ -93,7 +95,7 @@ pub async fn find_by_token(
            )
            select t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name,
                   tr.slug as "tournament_slug?",
-                  t.description as tenant_description, t.logo_key,
+                  t.description as tenant_description, t.logo_key, t.cover_key,
                   t.deletion_due_at is not null as "tenant_deleting!",
                   coalesce((select m.nickname from tenant_members m
                             where m.tenant_id = t.id and m.role = 'owner'), '') as "owner_name!",
@@ -113,6 +115,7 @@ pub async fn find_by_token(
         tenant_name: r.tenant_name,
         tenant_description: r.tenant_description,
         tenant_logo_key: r.logo_key,
+        tenant_cover_key: r.cover_key,
         owner_name: r.owner_name,
         member_count: r.member_count,
         tournament: r.tournament_slug,

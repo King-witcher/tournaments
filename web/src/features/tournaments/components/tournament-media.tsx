@@ -6,21 +6,29 @@ import styles from "./tournament-media.module.scss";
 type Props = {
   /** A capa do torneio. */
   cover?: string | null;
-  /** O logo da comunidade, no lugar da capa que falta. */
+  /** A capa da comunidade, no lugar da que falta. */
+  tenantCover?: string | null;
+  /** O logo da comunidade, sem nenhuma das duas capas. */
   logo?: string | null;
   /** O nome da comunidade, para a inicial quando também falta o logo. */
   community: string;
 };
 
 /**
- * O que vai no topo do tile do torneio (`LinkTile` `media`): a capa ou, sem
- * ela, o logo da comunidade (ou a inicial) no centro do mesmo espaço, para a
- * grade não desalinhar. Decorativo: o nome vem embaixo.
+ * O que vai no topo do tile do torneio (`LinkTile` `media`): a capa dele ou a
+ * da comunidade; sem nenhuma, o logo da comunidade (ou a inicial) no centro do
+ * mesmo espaço, para a grade não desalinhar. Decorativo: o nome vem embaixo.
  */
-export function TournamentMedia({ cover, logo, community }: Props) {
-  if (cover) {
+export function TournamentMedia({
+  cover,
+  tenantCover,
+  logo,
+  community,
+}: Props) {
+  const image = cover ?? tenantCover;
+  if (image) {
     return (
-      <Image src={cover} alt="" fill unoptimized className={styles.cover} />
+      <Image src={image} alt="" fill unoptimized className={styles.cover} />
     );
   }
   return (

@@ -2,7 +2,7 @@
 
 import type { MarkdownImageUpload } from "@/shared/ui/markdown-field";
 import type { RulesImages } from "../lib/rules-images";
-import { uploadImage } from "../lib/upload-image";
+import { uploadRulesImage } from "../lib/upload-image";
 import { useImageErrorMessage } from "./use-image-error-message";
 
 /**
@@ -19,7 +19,7 @@ export function useRulesImageUpload(
   const errorMessage = useImageErrorMessage();
   if (!images) return undefined;
   return async (file) => {
-    const result = await uploadImage(
+    const result = await uploadRulesImage(
       { kind: "rules", tenant, tournament },
       file,
       images.maxBytes,

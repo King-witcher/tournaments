@@ -53,7 +53,8 @@ async fn create_makes_the_user_owner() {
         "role": "owner",
         "nickname": "Ana",
         "deletion_scheduled_for": null,
-        "logo_url": null
+        "logo_url": null,
+        "cover_url": null
     });
     assert_eq!(body, expected);
 

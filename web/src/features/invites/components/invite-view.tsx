@@ -24,7 +24,7 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
 
 /**
  * Para qual comunidade (ou torneio, no link de inscrição) é o convite, com o
- * logo da comunidade no título e, no link de inscrição, a capa do torneio no
+ * logo da comunidade no título e a capa (a do torneio ou a da comunidade) no
  * topo do `Tile`, com o que ele é, a descrição do torneio (no link de
  * inscrição) e a da comunidade, cada uma só se existir, e a ação de cada caso: aceitar; entrar ou criar conta, voltando para cá; já é membro (ou
  * inscrito); inscrição fechada.
@@ -61,6 +61,7 @@ export async function InviteView({ token }: { token: string }) {
     );
   }
   const { tournament, viewer } = invite;
+  const cover = tournament?.cover_url ?? invite.tenant_cover_url;
   const closed = tournament && (await closedReason(tournament));
   const tournamentAbout =
     tournament && localizedDescription(tournament, locale);
@@ -95,10 +96,10 @@ export async function InviteView({ token }: { token: string }) {
       <Tile>
         <Layer>
           <Stack gap={6}>
-            {tournament?.cover_url && (
+            {cover && (
               <AspectRatio ratio="2x1" className={styles.cover}>
                 <Image
-                  src={tournament.cover_url}
+                  src={cover}
                   alt=""
                   fill
                   unoptimized

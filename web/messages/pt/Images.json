@@ -1,21 +1,28 @@
 {
   "logo": {
     "title": "Logo",
-    "hint": "A imagem é cortada em quadrado, pelo centro."
+    "editTitle": "Ajustar logo",
+    "save": "Salvar logo",
+    "area": "Recorte do logo. Arraste ou use as setas para mover."
   },
   "cover": {
     "title": "Capa",
-    "hint": "A imagem é cortada em 2:1, pelo centro."
+    "tenantHint": "Aparece na prévia do link de convite e nos torneios sem capa.",
+    "editTitle": "Ajustar capa",
+    "save": "Salvar capa",
+    "area": "Recorte da capa. Arraste ou use as setas para mover."
   },
   "avatar": {
     "title": "Foto",
     "discord": "Sem foto, aparece o avatar do Discord.",
     "editTitle": "Ajustar foto",
     "save": "Salvar foto",
+    "area": "Recorte da foto. Arraste ou use as setas para mover."
+  },
+  "editor": {
     "zoom": "Zoom",
     "rotateLeft": "Girar para a esquerda",
-    "rotateRight": "Girar para a direita",
-    "area": "Recorte da foto. Arraste ou use as setas para mover."
+    "rotateRight": "Girar para a direita"
   },
   "drop": "Arraste uma imagem para cá ou clique para escolher",
   "change": "Trocar",

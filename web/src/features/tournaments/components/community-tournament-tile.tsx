@@ -22,7 +22,12 @@ export function CommunityTournamentTile({
   tournament,
   media,
 }: {
-  tenant: { slug: string; name: string; logo_url?: string | null };
+  tenant: {
+    slug: string;
+    name: string;
+    logo_url?: string | null;
+    cover_url?: string | null;
+  };
   tournament: components["schemas"]["TournamentSummary"];
   /** A grade tem alguma capa: este tile também leva o espaço. */
   media: boolean;
@@ -46,6 +51,7 @@ export function CommunityTournamentTile({
         media && (
           <TournamentMedia
             cover={tournament.cover_url}
+            tenantCover={tenant.cover_url}
             logo={tenant.logo_url}
             community={tenant.name}
           />

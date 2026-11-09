@@ -4,23 +4,24 @@ import type { components } from "@/shared/api/schema";
 import {
   type EncodedImage,
   type EncodeError,
-  encodeImage,
   encodeScaled,
 } from "./encode-image";
 
 /**
- * De quem é a imagem: o logo da comunidade, a capa de um torneio dela, a
- * foto de perfil de quem está logado ou uma imagem das regras de um torneio
- * (que entra no Markdown pela URL devolvida).
+ * De quem é a imagem: o logo da comunidade, a capa dela ou, com `tournament`,
+ * a de um torneio, a foto de perfil de quem está logado ou uma imagem das
+ * regras de um torneio (que entra no Markdown pela URL devolvida).
  */
 export type ImageTarget =
   | { kind: "logo"; tenant: string }
-  | { kind: "cover"; tenant: string; tournament: string }
+  | { kind: "cover"; tenant: string; tournament?: string }
   | { kind: "avatar" }
   | { kind: "rules"; tenant: string; tournament: string };
 
 /** O logo, a capa ou a foto: uma imagem por dono, que se troca e se tira. */
 export type FixedImageTarget = Exclude<ImageTarget, { kind: "rules" }>;
+
+type RulesImageTarget = Extract<ImageTarget, { kind: "rules" }>;
 
 /** Erro do navegador, fora da API (o texto fica em `Images.errors`). */
 export type LocalError = EncodeError | "notImage" | "uploadFailed";
@@ -40,6 +41,12 @@ function requestUpload(target: ImageTarget, body: NewUpload) {
         body,
       });
     case "cover":
+      if (target.tournament === undefined) {
+        return api.POST("/tenants/{slug}/cover/uploads", {
+          params: { path: { slug: target.tenant } },
+          body,
+        });
+      }
       return api.POST(
         "/tenants/{slug}/tournaments/{tournament}/cover/uploads",
         {
@@ -71,6 +78,11 @@ function attach(target: ImageTarget, upload: number) {
         params: { path: { slug: target.tenant, upload } },
       });
     case "cover":
+      if (target.tournament === undefined) {
+        return api.POST("/tenants/{slug}/cover/uploads/{upload}/attach", {
+          params: { path: { slug: target.tenant, upload } },
+        });
+      }
       return api.POST(
         "/tenants/{slug}/tournaments/{tournament}/cover/uploads/{upload}/attach",
         {
@@ -111,6 +123,11 @@ export function removeImage(target: FixedImageTarget) {
         params: { path: { slug: target.tenant } },
       });
     case "cover":
+      if (target.tournament === undefined) {
+        return api.DELETE("/tenants/{slug}/cover", {
+          params: { path: { slug: target.tenant } },
+        });
+      }
       return api.DELETE("/tenants/{slug}/tournaments/{tournament}/cover", {
         params: {
           path: { slug: target.tenant, tournament: target.tournament },
@@ -122,33 +139,20 @@ export function removeImage(target: FixedImageTarget) {
 }
 
 /**
- * O caminho inteiro de um logo, de uma capa ou de uma imagem das regras:
- * converte no navegador (`prepareImage`) e manda (`sendImage`).
+ * O caminho inteiro de uma imagem das regras: reduz no navegador e manda
+ * (`sendImage`). O logo, as capas e a foto passam antes pelo editor
+ * (`ImageEditor`).
  */
-export async function uploadImage(
-  target: ImageTarget,
+export async function uploadRulesImage(
+  target: RulesImageTarget,
   file: Blob,
   maxBytes: number,
 ): Promise<ImageOutcome> {
-  const encoded = await prepareImage(file, target.kind, maxBytes);
-  return "blob" in encoded ? sendImage(target, encoded) : encoded;
-}
-
-/**
- * Converte no navegador, sem mandar nada: logo e capa cortados pelo centro
- * na proporção deles; a imagem das regras só reduzida.
- */
-async function prepareImage(
-  file: Blob,
-  kind: ImageTarget["kind"],
-  maxBytes: number,
-): Promise<EncodedImage | { ok: false; local: LocalError }> {
   if (!file.type.startsWith("image/")) return { ok: false, local: "notImage" };
-  const encoded =
-    kind === "rules"
-      ? await encodeScaled(file, maxBytes)
-      : await encodeImage(file, kind, maxBytes);
-  return typeof encoded === "string" ? { ok: false, local: encoded } : encoded;
+  const encoded = await encodeScaled(file, maxBytes);
+  return typeof encoded === "string"
+    ? { ok: false, local: encoded }
+    : sendImage(target, encoded);
 }
 
 /**

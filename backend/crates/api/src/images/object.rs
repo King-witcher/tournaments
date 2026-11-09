@@ -1,6 +1,7 @@
 //! O nome do objeto de um logo, de uma capa ou de uma foto de perfil no
 //! bucket público: `logos/<comunidade>/<aleatório>.<ext>`,
-//! `covers/<comunidade>/<torneio>/<aleatório>.<ext>` e
+//! `covers/<comunidade>/<aleatório>.<ext>` (a capa da comunidade),
+//! `covers/<comunidade>/<torneio>/<aleatório>.<ext>` (a do torneio) e
 //! `avatars/<aleatório>.<ext>` (a pessoa não tem slug, e o id interno não vai
 //! para a URL); a imagem das regras, `rules/<comunidade>/<aleatório>.<ext>`
 //! (da comunidade, não do torneio: a cópia de um torneio leva o texto das
@@ -18,15 +19,18 @@ use crate::shared::{
     token::random_token,
 };
 
-/// De quem é a imagem: o logo da comunidade, a capa de um torneio dela, a foto
-/// de uma pessoa ou uma imagem das regras da comunidade.
+/// De quem é a imagem: o logo ou a capa da comunidade, a capa de um torneio
+/// dela, a foto de uma pessoa ou uma imagem das regras da comunidade.
 #[derive(Debug, Clone, Copy)]
 pub enum Place<'a> {
     Avatar,
     Logo {
         tenant: &'a str,
     },
-    Cover {
+    TenantCover {
+        tenant: &'a str,
+    },
+    TournamentCover {
         tenant: &'a str,
         tournament: &'a str,
     },
@@ -42,7 +46,8 @@ pub fn new_key(place: Place<'_>, kind: ImageType) -> String {
     match place {
         Place::Avatar => format!("avatars/{token}.{ext}"),
         Place::Logo { tenant } => format!("logos/{tenant}/{token}.{ext}"),
-        Place::Cover { tenant, tournament } => {
+        Place::TenantCover { tenant } => format!("covers/{tenant}/{token}.{ext}"),
+        Place::TournamentCover { tenant, tournament } => {
             format!("covers/{tenant}/{tournament}/{token}.{ext}")
         }
         Place::Rules { tenant } => format!("rules/{tenant}/{token}.{ext}"),
@@ -56,7 +61,10 @@ impl Place<'_> {
     pub fn cache_control(self) -> &'static str {
         match self {
             Self::Rules { .. } => RULES_CACHE,
-            Self::Avatar | Self::Logo { .. } | Self::Cover { .. } => PUBLIC_CACHE,
+            Self::Avatar
+            | Self::Logo { .. }
+            | Self::TenantCover { .. }
+            | Self::TournamentCover { .. } => PUBLIC_CACHE,
         }
     }
 }
@@ -74,7 +82,7 @@ mod tests {
             .unwrap_or_else(|| panic!("{logo}"));
         assert_eq!(token.len(), 22);
 
-        let place = Place::Cover {
+        let place = Place::TournamentCover {
             tenant: "quake-br",
             tournament: "copa",
         };
@@ -82,6 +90,10 @@ mod tests {
         assert!(cover.starts_with("covers/quake-br/copa/"), "{cover}");
         assert!(cover.ends_with(".jpg"), "{cover}");
         assert_ne!(new_key(place, ImageType::Jpeg), cover);
+
+        let community = new_key(Place::TenantCover { tenant: "quake-br" }, ImageType::Jpeg);
+        assert_eq!(community.matches('/').count(), 2, "{community}");
+        assert!(community.starts_with("covers/quake-br/"), "{community}");
 
         let rules = new_key(Place::Rules { tenant: "quake-br" }, ImageType::Jpeg);
         assert!(rules.starts_with("rules/quake-br/"), "{rules}");

@@ -1,8 +1,8 @@
-//! Imagens públicas: o logo da comunidade (quadrado, do owner), a capa do
-//! torneio (2:1, da organização) e a foto de perfil (quadrada, da própria
-//! pessoa, em `/me/avatar`), no bucket público que o CDN serve. O banco
-//! guarda só o nome do objeto (`tenants.logo_key`, `tournaments.cover_key`,
-//! `users.avatar_key`); as respostas de `tenants`, `tournaments`,
+//! Imagens públicas: o logo (quadrado) e a capa (2:1) da comunidade, do owner
+//! (`tenant`), a capa do torneio (2:1, da organização) e a foto de perfil
+//! (quadrada, da própria pessoa, em `/me/avatar`), no bucket público que o CDN
+//! serve. O banco guarda só o nome do objeto (`tenants.logo_key`,
+//! `tenants.cover_key`, `tournaments.cover_key`, `users.avatar_key`); as respostas de `tenants`, `tournaments`,
 //! `my_tournaments` e `invites` montam a URL com `shared::public_url`, e as
 //! que mostram pessoas, com `auth::avatar_url` (a foto vale mais que o avatar
 //! do Discord). Como nos screenshots, o navegador
@@ -24,6 +24,7 @@ mod handlers;
 mod object;
 mod rules;
 mod sweep;
+mod tenant;
 mod types;
 mod upload;
 
@@ -36,12 +37,15 @@ pub use sweep::{Sweep, sweep, sweep_due};
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(handlers::get_image_settings))
-        .routes(routes!(handlers::create_logo_upload))
-        .routes(routes!(handlers::attach_logo))
-        .routes(routes!(handlers::remove_logo))
-        .routes(routes!(handlers::create_cover_upload))
-        .routes(routes!(handlers::attach_cover))
-        .routes(routes!(handlers::remove_cover))
+        .routes(routes!(tenant::create_logo_upload))
+        .routes(routes!(tenant::attach_logo))
+        .routes(routes!(tenant::remove_logo))
+        .routes(routes!(tenant::create_tenant_cover_upload))
+        .routes(routes!(tenant::attach_tenant_cover))
+        .routes(routes!(tenant::remove_tenant_cover))
+        .routes(routes!(handlers::create_tournament_cover_upload))
+        .routes(routes!(handlers::attach_tournament_cover))
+        .routes(routes!(handlers::remove_tournament_cover))
         .routes(routes!(rules::create_rules_image_upload))
         .routes(routes!(rules::attach_rules_image))
         .routes(routes!(handlers::create_avatar_upload))

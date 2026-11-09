@@ -48,8 +48,9 @@ export async function TournamentList({ slug }: { slug: string }) {
     .filter((x) => x.status !== "finished")
     .toSorted((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status));
   const finished = tournaments.filter((x) => x.status === "finished");
-  // Numa grade com alguma capa, todo tile leva o espaço dela (com o logo ou a
-  // inicial da comunidade no lugar da que falta); sem nenhuma, nenhum leva.
+  // Numa grade com alguma capa de torneio, todo tile leva o espaço dela (com a
+  // capa, o logo ou a inicial da comunidade no lugar da que falta); sem
+  // nenhuma, nenhum leva: repetir a mesma imagem em todos não diz nada.
   const media = active.some((x) => x.cover_url);
   const create = organizer && (
     // O "Novo torneio" primário já está no cabeçalho.
@@ -80,6 +81,7 @@ export async function TournamentList({ slug }: { slug: string }) {
                   slug,
                   name: tenant.name,
                   logo_url: tenant.logo_url,
+                  cover_url: tenant.cover_url,
                 }}
                 tournament={tournament}
                 media={media}

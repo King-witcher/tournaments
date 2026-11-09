@@ -26,6 +26,7 @@ pub struct Membership {
     pub nickname: String,
     pub deletion_scheduled_for: Option<DateTime<Utc>>,
     pub logo_key: Option<String>,
+    pub cover_key: Option<String>,
 }
 
 pub async fn membership(
@@ -34,7 +35,7 @@ pub async fn membership(
     user_id: i64,
 ) -> Result<Option<Membership>, ApiError> {
     let row = sqlx::query!(
-        r#"select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key, t.cover_key
            from tenants t
            join tenant_members m on m.tenant_id = t.id
            where t.slug = $1 and m.user_id = $2 and m.left_at is null"#,
@@ -54,6 +55,7 @@ pub async fn membership(
             nickname: r.nickname,
             deletion_scheduled_for: r.deletion_due_at,
             logo_key: r.logo_key,
+            cover_key: r.cover_key,
         })
     })
     .transpose()
@@ -70,7 +72,7 @@ pub async fn user_and_membership(
     let Some(r) = sqlx::query!(
         r#"select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,
                   t.id as "tenant_id?", t.slug as "slug?", t.name as "name?", t.description,
-                  m.role as "role?", m.nickname as "nickname?", t.deletion_due_at, t.logo_key
+                  m.role as "role?", m.nickname as "nickname?", t.deletion_due_at, t.logo_key, t.cover_key
            from users u
            left join tenant_members m
                   on m.user_id = u.id and m.left_at is null
@@ -96,6 +98,7 @@ pub async fn user_and_membership(
             nickname,
             deletion_scheduled_for: r.deletion_due_at,
             logo_key: r.logo_key,
+            cover_key: r.cover_key,
         }),
         _ => None,
     };
@@ -137,6 +140,7 @@ struct MembershipRow {
     nickname: String,
     deletion_due_at: Option<DateTime<Utc>>,
     logo_key: Option<String>,
+    cover_key: Option<String>,
 }
 
 /// O usuário `user_id` (conta não excluída) e as participações ativas dele,
@@ -150,7 +154,7 @@ pub async fn user_and_memberships(
         r#"select u.id, u.display_name, u.avatar_key, u.avatar_url, u.locale,
                   (select json_agg(x order by x.joined_at, x.id) from (
                        select t.id, t.slug, t.name, t.description, m.role, m.nickname,
-                              t.deletion_due_at, t.logo_key, m.joined_at
+                              t.deletion_due_at, t.logo_key, t.cover_key, m.joined_at
                        from tenant_members m
                        join tenants t on t.id = m.tenant_id
                        where m.user_id = u.id and m.left_at is null) x)
@@ -180,6 +184,7 @@ pub async fn user_and_memberships(
                 nickname: m.nickname,
                 deletion_scheduled_for: m.deletion_due_at,
                 logo_key: m.logo_key,
+                cover_key: m.cover_key,
             })
         })
         .collect::<Result<_, ApiError>>()?;
@@ -344,7 +349,7 @@ pub async fn transfer_ownership(
 /// entrou.
 pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, ApiError> {
     let rows = sqlx::query!(
-        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key, t.cover_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.user_id = $1 and m.left_at is null
@@ -364,6 +369,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
                 nickname: r.nickname,
                 deletion_scheduled_for: r.deletion_due_at,
                 logo_url: r.logo_key.as_deref().and_then(public_url),
+                cover_url: r.cover_key.as_deref().and_then(public_url),
             })
         })
         .collect()
@@ -372,7 +378,7 @@ pub async fn list_for_user(db: &PgPool, user_id: i64) -> Result<Vec<MyTenant>, A
 /// O tenant visto por um usuário que já é membro dele.
 pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<MyTenant, ApiError> {
     let row = sqlx::query!(
-        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key
+        r#"select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key, t.cover_key
            from tenant_members m
            join tenants t on t.id = m.tenant_id
            where m.tenant_id = $1 and m.user_id = $2"#,
@@ -389,6 +395,7 @@ pub async fn my_tenant(db: &PgPool, tenant: TenantId, user_id: i64) -> Result<My
         nickname: row.nickname,
         deletion_scheduled_for: row.deletion_due_at,
         logo_url: row.logo_key.as_deref().and_then(public_url),
+        cover_url: row.cover_key.as_deref().and_then(public_url),
     })
 }
 

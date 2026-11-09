@@ -1,4 +1,4 @@
-//! Testes de `images`: o logo da comunidade, a capa do torneio e a foto de
+//! Testes de `images`: o logo e a capa da comunidade, a capa do torneio e a foto de
 //! perfil (pedir a URL, mandar ao bucket, registrar, trocar e remover), quem
 //! pode, os limites e a rotina diária. O bucket é o S3 falso dos screenshots,
 //! com o HTTP de verdade. As regras do banco ficam em `schema::images`; as
@@ -20,6 +20,7 @@ use crate::screenshots::FakeS3;
 pub const CDN: &str = "https://img.test";
 const LOGO: &str = "/tenants/quake-br/logo";
 const COVER: &str = "/tenants/quake-br/tournaments/copa/cover";
+const TENANT_COVER: &str = "/tenants/quake-br/cover";
 const CACHE: &str = "public, max-age=31536000, immutable";
 
 /// App com o bucket público falso; `ana` é a owner de `quake-br`.
@@ -146,6 +147,57 @@ async fn only_the_owner_changes_the_logo() {
     );
 }
 
+/// A capa da comunidade é do owner, fica na pasta das capas, sem a do torneio,
+/// e chega a quem monta a prévia do convite e os tiles sem capa.
+#[tokio::test]
+async fn the_owner_sets_the_community_cover() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, _, _, ana) = app_with_bucket(&db).await;
+    let carla = organizer(&app, &db, &ana, "Carla").await;
+    let (status, body) = request(&app, &carla, TENANT_COVER, 1000).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::FORBIDDEN, err("tenant.forbidden"))
+    );
+
+    let url = send(&app, &ana, TENANT_COVER).await;
+    assert!(url.starts_with(&format!("{CDN}/covers/quake-br/")), "{url}");
+    assert_eq!(key(&url).matches('/').count(), 2, "{url}");
+    let (_, tenant) = get(&app, "/tenants/quake-br", &ana).await;
+    assert_eq!(tenant["cover_url"], url);
+    assert_eq!(tenant["logo_url"], Value::Null);
+    let (_, mine) = get(&app, "/tenants", &ana).await;
+    assert_eq!(mine[0]["cover_url"], url);
+    let token = invite(&app, &ana, "quake-br").await;
+    let (_, preview) = get(&app, &format!("/invites/{token}"), &ana).await;
+    assert_eq!(preview["tenant_cover_url"], url);
+
+    create_tournament(&app, &ana, duel("copa")).await;
+    publish(&app, &ana, "copa").await;
+    let (_, mine) = get(&app, "/me/tournaments", &ana).await;
+    assert_eq!(mine["open"][0]["tenant_cover_url"], url, "{mine}");
+
+    // Um upload da capa não vale para o logo, e o do logo não vale para a capa.
+    let (_, upload) = request(&app, &ana, TENANT_COVER, 1000).await;
+    let (status, body) = attach(&app, &ana, LOGO, &upload["id"]).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::NOT_FOUND, err("images.not_found"))
+    );
+    let (_, upload) = request(&app, &ana, LOGO, 1000).await;
+    let (status, body) = attach(&app, &ana, TENANT_COVER, &upload["id"]).await;
+    assert_eq!(
+        (status, body),
+        (StatusCode::NOT_FOUND, err("images.not_found"))
+    );
+
+    let (status, body) = delete(&app, TENANT_COVER, &ana).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    let (_, tenant) = get(&app, "/tenants/quake-br", &ana).await;
+    assert_eq!(tenant["cover_url"], Value::Null);
+    assert_eq!(queued(&db).await, vec![key(&url)]);
+}
+
 #[tokio::test]
 async fn the_organization_sets_the_cover() {
     let (db, _lease) = crate::db::test_db().await;
@@ -217,7 +269,7 @@ async fn the_upload_must_arrive_as_requested() {
 async fn uploads_are_limited() {
     let (db, _lease) = crate::db::test_db().await;
     let (app, _, _, ana) = app_with_bucket(&db).await;
-    // Só JPEG: a prévia dos links não desenha WebP.
+    // Só JPEG.
     let webp = json!({ "content_type": "image/webp", "size": 1000 });
     let (status, body) = post(&app, &format!("{LOGO}/uploads"), &ana, webp).await;
     assert_eq!(

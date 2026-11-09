@@ -1,21 +1,10 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select t.id, t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key\n           from tenants t\n           join tenant_members m on m.tenant_id = t.id\n           where t.slug = $1 and m.user_id = $2 and m.left_at is null",
+  "query": "select t.slug, t.name, t.description, m.role, m.nickname, t.deletion_due_at, t.logo_key, t.cover_key\n           from tenant_members m\n           join tenants t on t.id = m.tenant_id\n           where m.tenant_id = $1 and m.user_id = $2",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
-        "type_info": "Int8",
-        "origin": {
-          "Table": {
-            "table": "tenants",
-            "name": "id"
-          }
-        }
-      },
-      {
-        "ordinal": 1,
         "name": "slug",
         "type_info": "Text",
         "origin": {
@@ -26,7 +15,7 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 1,
         "name": "name",
         "type_info": "Text",
         "origin": {
@@ -37,7 +26,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 2,
         "name": "description",
         "type_info": "Text",
         "origin": {
@@ -48,7 +37,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 3,
         "name": "role",
         "type_info": "Text",
         "origin": {
@@ -59,7 +48,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "nickname",
         "type_info": "Text",
         "origin": {
@@ -70,7 +59,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "deletion_due_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -81,7 +70,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "logo_key",
         "type_info": "Text",
         "origin": {
@@ -90,24 +79,35 @@
             "name": "logo_key"
           }
         }
+      },
+      {
+        "ordinal": 7,
+        "name": "cover_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "cover_key"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
+        "Int8",
         "Int8"
       ]
     },
     "nullable": [
       false,
       false,
-      false,
       true,
       false,
       false,
+      true,
       true,
       true
     ]
   },
-  "hash": "ba7e30d76cde2b13c359f8a84be22051234f1e1323edf8c959d2de787d9a0505"
+  "hash": "f6b8032389d1b226abe603e42d816388351a4f51bbf7bd8b55a6f83e471e6e40"
 }

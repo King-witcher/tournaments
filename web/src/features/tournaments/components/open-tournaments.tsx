@@ -15,7 +15,7 @@ export async function OpenTournaments() {
   const t = await getTranslations("Home.open");
   // Como em "Seus torneios": com alguma capa ou logo, todo tile leva o espaço.
   const media = mine.open.some(
-    (e) => e.tournament.cover_url || e.tenant_logo_url,
+    (e) => e.tournament.cover_url || e.tenant_cover_url || e.tenant_logo_url,
   );
 
   return (

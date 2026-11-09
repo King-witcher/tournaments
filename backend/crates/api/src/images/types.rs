@@ -49,9 +49,10 @@ pub struct PublicImage {
     pub url: String,
 }
 
-/// `{upload}` de `/tenants/{slug}/logo/uploads/{upload}/attach`.
+/// `{upload}` de `/tenants/{slug}/logo/uploads/{upload}/attach` e de
+/// `/tenants/{slug}/cover/uploads/{upload}/attach`.
 #[derive(Deserialize)]
-pub struct LogoUploadPath {
+pub struct TenantUploadPath {
     pub upload: i64,
 }
 

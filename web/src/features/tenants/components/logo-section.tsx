@@ -21,7 +21,7 @@ export async function LogoSection({ slug, url }: Props) {
   if (!settings?.enabled) return null;
 
   return (
-    <FormSection legend={t("title")} description={t("hint")}>
+    <FormSection legend={t("title")}>
       <ImageField
         target={{ kind: "logo", tenant: slug }}
         url={url}

@@ -32,8 +32,8 @@ const PREVIEW_DESCRIPTION_MAX = 300;
  * comunidade e pelo modo, como no tile, e segue com a descrição do torneio, ou
  * as regras, ou a descrição da comunidade; no link da comunidade, é a descrição
  * dela. Nada que muda com o tempo (membros, vagas): a rede guarda a prévia na
- * primeira vez. No link de inscrição com capa, a capa (2:1) grande; senão o logo
- * da comunidade (1:1) como miniatura. Sem imagem nenhuma, a prévia do site.
+ * primeira vez. A capa (2:1) grande, a do torneio ou a da comunidade; sem capa, o
+ * logo da comunidade (1:1) como miniatura. Sem imagem nenhuma, a prévia do site.
  * Convite que não vale mais: a prévia do site inteira. Fica fora da busca, pela
  * regra do layout. O link vai sem idioma, e o robô que não diz o dele cai no
  * padrão do site: ali, o link de inscrição sai no idioma do torneio.
@@ -69,8 +69,8 @@ export async function inviteMetadata(
           )
         : (invite.tenant_description ?? ""),
     ) || null;
-  // Os tamanhos do corte feito no envio (docs/decisions/images.md).
-  const cover = tournament?.cover_url;
+  // Os tamanhos que o editor grava (`SHAPES`).
+  const cover = tournament?.cover_url ?? invite.tenant_cover_url;
   const logo = invite.tenant_logo_url;
   const images = cover
     ? [
@@ -79,7 +79,7 @@ export async function inviteMetadata(
           width: 1200,
           height: 600,
           type: "image/jpeg",
-          alt: name ?? "",
+          alt: name ?? invite.tenant_name,
         },
       ]
     : logo

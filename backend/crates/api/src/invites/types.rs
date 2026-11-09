@@ -26,6 +26,8 @@ pub struct InvitePreview {
     pub tenant_description: Option<String>,
     /// O logo da comunidade, no CDN; nulo sem logo.
     pub tenant_logo_url: Option<String>,
+    /// A capa da comunidade, no CDN; nula sem capa.
+    pub tenant_cover_url: Option<String>,
     /// O apelido do dono atual na comunidade (a comunidade não grava quem a
     /// criou).
     pub owner_name: String,
