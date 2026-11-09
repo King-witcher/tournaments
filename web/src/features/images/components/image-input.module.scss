@@ -2,33 +2,38 @@
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/type";
 
-.field {
+// A dica com a forma da de um campo de texto (`TextInput`); o rótulo é a
+// `legend` do `FormGroup`, que já tem a dele.
+.hint {
+  @include type.type-style("helper-text-01");
+
+  margin: spacing.$spacing-02 0 0;
+  color: theme.$text-helper;
+}
+
+// A área de soltar na largura da coluna, como a prévia da capa e os campos ao
+// lado (a do Carbon para em 20rem).
+.drop.drop {
+  max-inline-size: none;
+}
+
+.current {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: spacing.$spacing-05;
 }
 
-// O título e a dica com a forma dos da área de soltar (`FileDropZone`), para
-// o campo não mudar de cara ao receber a imagem.
-.title {
-  @include type.type-style("heading-compact-01");
-
-  margin: 0 0 spacing.$spacing-03;
-  color: theme.$text-primary;
+.beside {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.description {
-  @include type.type-style("body-compact-01");
-
-  margin: 0;
-  color: theme.$text-secondary;
-}
-
-// A prévia no tamanho em que o site mostra: o logo pequeno, a capa na
-// largura da coluna.
+// A prévia: o logo pequeno, como o site o mostra, a capa na largura da coluna.
 .logo {
-  inline-size: spacing.$spacing-13;
+  flex: none;
+  inline-size: spacing.$spacing-12;
   background-color: theme.$layer;
 }
 

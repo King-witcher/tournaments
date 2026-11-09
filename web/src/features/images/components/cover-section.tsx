@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 
-import { FormSection } from "@/shared/ui/form-section";
 import { getImageSettings } from "../server";
 import { ImageField } from "./image-field";
 
@@ -24,15 +23,12 @@ export async function CoverSection({ tenant, tournament, url }: Props) {
   ]);
   if (!settings?.enabled) return null;
   return (
-    <FormSection
-      legend={t("title")}
-      description={tournament ? undefined : t("tenantHint")}
-    >
-      <ImageField
-        target={{ kind: "cover", tenant, tournament }}
-        url={url}
-        maxBytes={settings.max_bytes}
-      />
-    </FormSection>
+    <ImageField
+      target={{ kind: "cover", tenant, tournament }}
+      url={url}
+      maxBytes={settings.max_bytes}
+      label={t("title")}
+      hint={tournament ? undefined : t("tenantHint")}
+    />
   );
 }

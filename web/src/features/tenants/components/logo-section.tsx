@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { ImageField } from "@/features/images/components/image-field";
 import { getImageSettings } from "@/features/images/server";
-import { FormSection } from "@/shared/ui/form-section";
 
 type Props = {
   slug: string;
@@ -21,12 +20,11 @@ export async function LogoSection({ slug, url }: Props) {
   if (!settings?.enabled) return null;
 
   return (
-    <FormSection legend={t("title")}>
-      <ImageField
-        target={{ kind: "logo", tenant: slug }}
-        url={url}
-        maxBytes={settings.max_bytes}
-      />
-    </FormSection>
+    <ImageField
+      target={{ kind: "logo", tenant: slug }}
+      url={url}
+      maxBytes={settings.max_bytes}
+      label={t("title")}
+    />
   );
 }

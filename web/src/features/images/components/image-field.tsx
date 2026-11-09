@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { type ReactNode, useId, useState, useTransition } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { useApiAction } from "@/shared/api/use-api-action";
@@ -19,6 +19,9 @@ type Props = {
   /** A imagem enviada de agora; nula sem ela. */
   url: string | null | undefined;
   maxBytes: number;
+  /** O rótulo e a dica do campo, num formulário. */
+  label?: ReactNode;
+  hint?: ReactNode;
 };
 
 /**
@@ -27,7 +30,7 @@ type Props = {
  * gira e só então envia; cancelar não manda nada. "Remover" tira a imagem na
  * hora. O arquivo que não dá para ler fica com o erro na área de soltar.
  */
-export function ImageField({ target, url, maxBytes }: Props) {
+export function ImageField({ target, url, maxBytes, label, hint }: Props) {
   const errorMessage = useImageErrorMessage();
   const router = useRouter();
   const id = useId();
@@ -69,6 +72,8 @@ export function ImageField({ target, url, maxBytes }: Props) {
       <ImageInput
         kind={target.kind}
         url={url}
+        label={label}
+        hint={hint}
         sending={failed?.name}
         pending={reading}
         error={failed?.error ?? removal.error}
