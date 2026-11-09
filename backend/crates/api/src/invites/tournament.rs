@@ -7,8 +7,8 @@ use axum::{Json, extract::State};
 use super::{db, types::InviteLink};
 use crate::{
     AppState,
-    shared::{ApiError, ErrorBody, PathParams, token},
-    tenants::{Organizer, TenantMember},
+    shared::{ApiError, ErrorBody, PathParams},
+    tenants::{self, Organizer, TenantMember},
     tournaments::{self, StoredTournament, TournamentPath},
 };
 
@@ -62,8 +62,8 @@ pub async fn rotate_tournament_invite_link(
     if !found.status.invites_allowed() {
         return Err(ApiError::conflict("tournament.registration_closed"));
     }
-    let token = token::random_token();
     let mut tx = state.db.begin().await?;
+    let token = tenants::free_invite_code(&mut tx).await?;
     db::set_tournament_token(&mut tx, member.tenant, found.id, &token).await?;
     tournaments::changed(&mut tx, found.id).await?;
     tx.commit().await?;

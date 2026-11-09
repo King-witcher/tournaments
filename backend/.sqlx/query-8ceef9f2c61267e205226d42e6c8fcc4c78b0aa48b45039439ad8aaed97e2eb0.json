@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select exists (select 1 from tenants where invite_token = $1)\n                   or exists (select 1 from tournaments where invite_token = $1) as \"taken!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "taken!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "8ceef9f2c61267e205226d42e6c8fcc4c78b0aa48b45039439ad8aaed97e2eb0"
+}

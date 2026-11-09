@@ -13,12 +13,27 @@ const ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqr
 /// Caracteres para 128 bits: 58^22 > 2^128.
 pub const TOKEN_LEN: usize = 22;
 
-/// Token que aparece para pessoas (links de convite): 128 bits em base58,
+/// Token que aparece para pessoas (links por email, salas de veto): 128 bits em base58,
 /// sempre com `TOKEN_LEN` caracteres.
 pub fn random_token() -> String {
     let mut bytes = [0u8; 16];
     rand::fill(&mut bytes);
     base58(u128::from_le_bytes(bytes))
+}
+
+/// Minúsculas e dígitos sem os que se confundem ao digitar (`0`/`o`, `1`/`l`/`i`).
+const INVITE_ALPHABET: &[u8; 31] = b"23456789abcdefghjkmnpqrstuvwxyz";
+
+/// Caracteres do código de convite: 31^8 ≈ 8,5 * 10^11 valores.
+pub const INVITE_CODE_LEN: usize = 8;
+
+/// Código de convite que a pessoa digita. Com 31^8 valores dá para adivinhar,
+/// então a prévia e o aceite limitam os pedidos por IP (`invites/limit.rs`).
+/// Quem grava confere se está livre (`tenants::free_invite_code`).
+pub fn random_invite_code() -> String {
+    (0..INVITE_CODE_LEN)
+        .map(|_| INVITE_ALPHABET[rand::random_range(0..INVITE_ALPHABET.len())] as char)
+        .collect()
 }
 
 /// Dígitos do código que vai por email para a pessoa digitar.
@@ -87,6 +102,16 @@ mod tests {
             assert!(token.bytes().all(|b| ALPHABET.contains(&b)), "{token}");
         }
         assert_ne!(random_token(), random_token());
+    }
+
+    #[test]
+    fn invite_codes_use_only_their_alphabet() {
+        for _ in 0..100 {
+            let code = random_invite_code();
+            assert_eq!(code.len(), INVITE_CODE_LEN);
+            assert!(code.bytes().all(|b| INVITE_ALPHABET.contains(&b)), "{code}");
+        }
+        assert_ne!(random_invite_code(), random_invite_code());
     }
 
     #[test]

@@ -68,7 +68,8 @@
     "tournament_in_progress": "Hay un torneo en curso. Termínalo o deshaz el inicio antes."
   },
   "invite": {
-    "not_found": "Este enlace de invitación ya no vale. Pide uno nuevo."
+    "not_found": "Este enlace de invitación ya no vale. Pide uno nuevo.",
+    "rate_limited": "Demasiadas invitaciones abiertas en poco tiempo. Inténtalo de nuevo en {minutes, plural, one {# minuto} other {# minutos}}."
   },
   "member": {
     "not_found": "Miembro no encontrado.",

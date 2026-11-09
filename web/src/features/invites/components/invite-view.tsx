@@ -50,7 +50,7 @@ export async function InviteView({ token }: { token: string }) {
           <PageError href="/" label={tNav("backHome")}>
             {code === "tenant.deletion_scheduled"
               ? t("deletionScheduled")
-              : await apiErrorMessage(code)}
+              : await apiErrorMessage(code, preview?.error?.params)}
           </PageError>
           {/* A API não respondeu: não é o link que não vale. */}
           {(!preview || preview.response.status >= 500) && (

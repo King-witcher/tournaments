@@ -25,6 +25,15 @@
   "deletionScheduled": "This community is being deleted and no longer accepts members.",
   "rotate": "Generate new link",
   "rotated": "New link generated. The previous one no longer works.",
+  "code": "Code",
+  "copyCode": "Copy code",
+  "join": {
+    "open": "Join with code",
+    "field": "Link or code",
+    "submit": "Continue",
+    "invalid": "Invalid link or code.",
+    "notFound": "Invite not found. Check the code."
+  },
   "communityLink": {
     "open": "Invite",
     "title": "Invite to {name}",

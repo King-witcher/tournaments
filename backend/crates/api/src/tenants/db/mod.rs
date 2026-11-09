@@ -216,12 +216,13 @@ pub async fn create_with_owner(
         return Err(ApiError::conflict("tenant.limit_reached"));
     }
 
+    let invite_code = free_invite_code(&mut tx).await?;
     let tenant_id = sqlx::query_scalar!(
         r#"insert into tenants (slug, name, invite_token) values ($1, $2, $3)
            on conflict (slug) do nothing returning id"#,
         slug,
         name,
-        token::random_token()
+        invite_code
     )
     .fetch_optional(&mut *tx)
     .await?
@@ -236,6 +237,26 @@ pub async fn create_with_owner(
     .await?;
     tx.commit().await?;
     Ok(())
+}
+
+/// Um código de convite que nenhuma comunidade e nenhum torneio usa: a prévia
+/// procura nas duas tabelas, e um código repetido entre elas levaria a pessoa ao
+/// lugar errado. Gravações simultâneas ficam com o gatilho
+/// `*_invite_token_taken` e o `unique` de cada coluna.
+pub async fn free_invite_code(conn: &mut PgConnection) -> Result<String, sqlx::Error> {
+    loop {
+        let code = token::random_invite_code();
+        let taken = sqlx::query_scalar!(
+            r#"select exists (select 1 from tenants where invite_token = $1)
+                   or exists (select 1 from tournaments where invite_token = $1) as "taken!""#,
+            code
+        )
+        .fetch_one(&mut *conn)
+        .await?;
+        if !taken {
+            return Ok(code);
+        }
+    }
 }
 
 /// Grava o nome e a descrição do tenant.

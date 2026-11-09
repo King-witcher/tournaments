@@ -25,6 +25,15 @@
   "deletionScheduled": "Esta comunidade vai ser excluída e não aceita mais membros.",
   "rotate": "Gerar novo link",
   "rotated": "Link novo gerado. O anterior não vale mais.",
+  "code": "Código",
+  "copyCode": "Copiar código",
+  "join": {
+    "open": "Entrar com código",
+    "field": "Link ou código",
+    "submit": "Continuar",
+    "invalid": "Link ou código inválido.",
+    "notFound": "Convite não encontrado. Confira o código."
+  },
   "communityLink": {
     "open": "Convidar",
     "title": "Convidar para {name}",

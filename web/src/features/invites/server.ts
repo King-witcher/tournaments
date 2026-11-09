@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { cache } from "react";
 
 import { routing } from "@/i18n/routing";
+import { viewerIpHeaders } from "@/shared/api/internal";
 import type { components } from "@/shared/api/schema";
 import { serverApi } from "@/shared/api/server";
 import { siteOpenGraph } from "@/shared/lib/link-preview";
@@ -17,9 +18,12 @@ type InvitedTournament = components["schemas"]["InvitedTournament"];
  * Lê a sessão: quem usa fica em `<Suspense>`.
  */
 export const getInvite = cache(async (token: string) => {
-  const api = await serverApi();
+  const [api, request] = await Promise.all([serverApi(), headers()]);
   return api
-    .GET("/invites/{token}", { params: { path: { token } } })
+    .GET("/invites/{token}", {
+      params: { path: { token } },
+      headers: viewerIpHeaders(request),
+    })
     .catch(() => undefined);
 });
 

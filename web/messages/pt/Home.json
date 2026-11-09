@@ -50,7 +50,7 @@
   },
   "tenants": {
     "title": "Suas comunidades",
-    "empty": "Você ainda não participa de nenhuma comunidade. Para entrar numa, peça o link de convite a quem organiza.",
+    "empty": "Você ainda não participa de nenhuma comunidade. Para entrar numa, peça o convite a quem organiza.",
     "create": "Criar comunidade"
   }
 }

@@ -29,7 +29,7 @@ use crate::AppState;
 
 pub use access::{DuringDeletion, Memberships, Organizer, Owner, Role, TenantId, TenantMember};
 pub use changes::{access_lost, changed, organizing_changed};
-pub use db::{my_tenant, staff, standing};
+pub use db::{free_invite_code, my_tenant, staff, standing};
 pub use deletion::{delete_due, remind_due as remind_due_deletions};
 pub use nickname::{default_nickname, validate_nickname};
 pub use types::MyTenant;

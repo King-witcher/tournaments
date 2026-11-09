@@ -5,6 +5,7 @@ import { AuthError } from "@/features/auth/components/auth-error";
 import { BackupLoginReminder } from "@/features/auth/components/backup-login-reminder";
 import { HomeColumns } from "@/features/auth/components/home-columns";
 import { HomeSessionGate } from "@/features/auth/components/home-session-gate";
+import { JoinWithCodeButton } from "@/features/invites/components/join-with-code-button";
 import { WaitingForYou } from "@/features/organizing/components/waiting-for-you";
 import { LiveUpdates } from "@/features/realtime/components/live-updates";
 import { MyTenants } from "@/features/tenants/components/my-tenants";
@@ -48,7 +49,12 @@ export default async function SignedInHome({
             {t("title")}
           </span>
         }
-        actions={<VetoRoomEntry />}
+        actions={
+          <>
+            <JoinWithCodeButton />
+            <VetoRoomEntry />
+          </>
+        }
       />
       {/* "Esperando você" e "Seus torneios" recarregam sozinhos. */}
       <LiveUpdates me />

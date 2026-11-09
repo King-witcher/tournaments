@@ -1,12 +1,27 @@
+use api::scanners::SECRET_HEADER;
 use axum::{
     Router,
-    http::{Method, StatusCode},
+    body::Body,
+    http::{Method, Request, StatusCode, header},
 };
+use http_body_util::BodyExt;
 use serde_json::{Value, json};
+use tower::ServiceExt;
 
 use crate::common::*;
 
 const ROTATE: &str = "/tenants/quake-br/invite/rotate";
+
+/// O código de convite novo: 8 caracteres, minúsculas e dígitos sem ambíguos.
+fn assert_short(token: &str) {
+    assert_eq!(token.len(), 8, "{token}");
+    assert!(
+        token
+            .bytes()
+            .all(|b| b"23456789abcdefghjkmnpqrstuvwxyz".contains(&b)),
+        "{token}"
+    );
+}
 
 fn not_found() -> (StatusCode, Value) {
     (StatusCode::NOT_FOUND, err("invite.not_found"))
@@ -41,8 +56,7 @@ async fn invite_link_adds_a_player() {
 
     // A comunidade já nasce com o link, e ele não muda a cada leitura.
     let token = invite(&app, &ana, "quake-br").await;
-    assert_eq!(token.len(), 22);
-    assert!(token.chars().all(|c| c.is_ascii_alphanumeric()), "{token}");
+    assert_short(&token);
     assert_eq!(invite(&app, &ana, "quake-br").await, token);
     let token = token.as_str();
 
@@ -129,7 +143,7 @@ async fn rotating_kills_the_old_link_and_keeps_who_joined() {
     let old = invite(&app, &ana, "quake-br").await;
 
     let new = rotate(&app, ROTATE, &ana).await;
-    assert_eq!(new.len(), 22);
+    assert_short(&new);
     assert_ne!(new, old);
 
     assert_dead(&app, &old, &caio).await;
@@ -230,6 +244,7 @@ async fn tournament_link_joins_the_tenant_and_registers() {
 
     // Trocar o link: o antigo morre, e quem se inscreveu por ele continua.
     let rotated = rotate(&app, &format!("{COPA}/invite/rotate"), &ana).await;
+    assert_short(&rotated);
     assert_ne!(rotated, token);
     assert_eq!(copa_invite(&app, &ana).await, rotated);
     assert_dead(&app, &token, &dani).await;
@@ -366,5 +381,127 @@ async fn preview_knows_who_opens_it() {
     assert_eq!(
         viewer(&app, &link, &ana).await,
         json!({ "membership": "member", "nickname": "Ana", "registered": true })
+    );
+}
+
+#[tokio::test]
+async fn tournaments_are_born_with_a_short_code() {
+    let (db, _lease) = crate::db::test_db().await;
+    let (app, ana, _) = quake_br(&db).await;
+    create_tournament(&app, &ana, duel("copa")).await;
+    assert_short(&copa_invite(&app, &ana).await);
+}
+
+#[tokio::test]
+async fn old_long_tokens_keep_working() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app(db.clone());
+    let ana = user(&db, "Ana").await;
+    let bia = user(&db, "Bia").await;
+    create(&app, &ana, "quake-br").await;
+    let old = "7Fq2xKpR9mWbTnVc3hJdYe";
+    sqlx::query("update tenants set invite_token = $1")
+        .bind(old)
+        .execute(&db)
+        .await
+        .unwrap();
+
+    assert_eq!(preview(&app, old).await.0, StatusCode::OK);
+    assert_eq!(
+        join(&app, &bia, old).await["tenant"]["slug"],
+        json!("quake-br")
+    );
+    assert_short(&rotate(&app, ROTATE, &ana).await);
+    assert_dead(&app, old, &bia).await;
+}
+
+/// Prévia de um código que não existe, com os cabeçalhos dados.
+async fn preview_with(app: &Router, headers: &[(&str, &str)]) -> StatusCode {
+    let mut req = Request::get("/invites/abcd2345");
+    for (name, value) in headers {
+        req = req.header(*name, *value);
+    }
+    let res = app
+        .clone()
+        .oneshot(req.body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    res.status()
+}
+
+const CF_IP: &str = "cf-connecting-ip";
+const VIEWER_IP: &str = "x-viewer-ip";
+/// O teto da janela (`invites/limit.rs`).
+const MAX_PER_IP: usize = 120;
+
+#[tokio::test]
+async fn preview_and_accept_are_limited_per_ip() {
+    let (db, _lease) = crate::db::test_db().await;
+    let bia = user(&db, "Bia").await;
+    let app = app_from(state(db));
+    let from = [(CF_IP, "203.0.113.7")];
+    for _ in 0..MAX_PER_IP {
+        assert_eq!(preview_with(&app, &from).await, StatusCode::NOT_FOUND);
+    }
+    assert_eq!(
+        preview_with(&app, &from).await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+
+    // O aceite conta no mesmo balde.
+    let accept = Request::post("/invites/abcd2345/accept")
+        .header(CF_IP, "203.0.113.7")
+        .header(header::COOKIE, &bia.cookie)
+        .body(Body::empty())
+        .unwrap();
+    let res = app.clone().oneshot(accept).await.unwrap();
+    assert_eq!(res.status(), StatusCode::TOO_MANY_REQUESTS);
+    let body = res.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["error"], "invite.rate_limited");
+    assert_eq!(body["params"]["minutes"], 10);
+
+    // Outro IP não sente, e o cabeçalho do Next não vale sem o segredo.
+    assert_eq!(
+        preview_with(&app, &[(CF_IP, "198.51.100.9")]).await,
+        StatusCode::NOT_FOUND
+    );
+    assert_eq!(
+        preview_with(&app, &[(CF_IP, "203.0.113.7"), (VIEWER_IP, "198.51.100.1")]).await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+}
+
+#[tokio::test]
+async fn the_next_server_counts_each_viewer_on_their_own_ip() {
+    let (db, _lease) = crate::db::test_db().await;
+    let app = app_from(state(db));
+    // O IP de saída da Vercel, o mesmo para todos.
+    let next = |viewer: &'static str| {
+        [
+            (CF_IP, "76.76.21.21"),
+            (SECRET_HEADER, INTERNAL_SECRET),
+            (VIEWER_IP, viewer),
+        ]
+    };
+    for _ in 0..MAX_PER_IP {
+        let answer = preview_with(&app, &next("203.0.113.7")).await;
+        assert_eq!(answer, StatusCode::NOT_FOUND);
+    }
+    assert_eq!(
+        preview_with(&app, &next("203.0.113.7")).await,
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+        preview_with(&app, &next("198.51.100.9")).await,
+        StatusCode::NOT_FOUND
+    );
+    // Sem dizer de quem é o pedido, não soma todos no IP da Vercel.
+    let unnamed = [(CF_IP, "76.76.21.21"), (SECRET_HEADER, INTERNAL_SECRET)];
+    assert_eq!(preview_with(&app, &unnamed).await, StatusCode::NOT_FOUND);
+    // O balde de quem usa a página é o mesmo de quem chama a API direto.
+    assert_eq!(
+        preview_with(&app, &[(CF_IP, "203.0.113.7")]).await,
+        StatusCode::TOO_MANY_REQUESTS
     );
 }

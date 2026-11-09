@@ -50,7 +50,7 @@
   },
   "tenants": {
     "title": "Your communities",
-    "empty": "You're not in any community yet. To join one, ask its organizers for the invite link.",
+    "empty": "You're not in any community yet. To join one, ask its organizers for an invite.",
     "create": "Create community"
   }
 }

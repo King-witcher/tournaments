@@ -1,8 +1,9 @@
-use axum::{Json, extract::State};
+use axum::{Json, extract::State, http::HeaderMap};
 use sqlx::PgConnection;
 
 use super::{
     db::{self, StoredInvite},
+    limit,
     types::{
         AcceptedInvite, InviteLink, InviteMembership, InvitePreview, InviteViewer,
         InvitedTournament, InvitedTranslation,
@@ -12,7 +13,7 @@ use crate::{
     AppState,
     auth::CurrentUser,
     participants::{self, Entry},
-    shared::{ApiError, ErrorBody, PathParams, public_url, token},
+    shared::{ApiError, ClientIp, ErrorBody, PathParams, public_url},
     tenants::{self, Organizer, TenantId, TenantMember, default_nickname},
     tournaments::{self, StoredTournament},
 };
@@ -54,8 +55,8 @@ pub async fn rotate_invite_link(
     State(state): State<AppState>,
     member: TenantMember<Organizer>,
 ) -> Result<Json<InviteLink>, ApiError> {
-    let token = token::random_token();
     let mut tx = state.db.begin().await?;
+    let token = tenants::free_invite_code(&mut tx).await?;
     db::set_tenant_token(&mut tx, member.tenant, &token).await?;
     tenants::changed(&mut tx, member.tenant).await?;
     tx.commit().await?;
@@ -71,13 +72,17 @@ pub async fn rotate_invite_link(
         (status = OK, body = InvitePreview, description = "Convite que vale (não exige login). No link de inscrição, o torneio vem com status, vagas e início: só dá para aceitar com a inscrição aberta e vaga sobrando. Com login, `viewer` diz se quem abre já é membro, se saiu (aceitar o traz de volta com o apelido e o histórico) e se já está inscrito no torneio do link"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found (também o link que foi trocado por outro)"),
         (status = CONFLICT, body = ErrorBody, description = "tenant.deletion_scheduled (a comunidade vai ser excluída)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "invite.rate_limited {minutes} (limite por IP)"),
     )
 )]
 pub async fn preview_invite(
     State(state): State<AppState>,
+    ip: ClientIp,
+    headers: HeaderMap,
     user: Option<CurrentUser>,
     PathParams(token): PathParams<String>,
 ) -> Result<Json<InvitePreview>, ApiError> {
+    limit::hit(&state, &headers, &ip)?;
     let mut conn = state.db.acquire().await?;
     let invite = find_invite(&mut conn, &token).await?;
     let user_id = user.as_ref().map(|u| u.id);
@@ -134,13 +139,17 @@ async fn viewer(
         (status = UNAUTHORIZED, body = ErrorBody, description = "auth.unauthenticated"),
         (status = NOT_FOUND, body = ErrorBody, description = "invite.not_found (também o link que foi trocado por outro)"),
         (status = CONFLICT, body = ErrorBody, description = "tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída)"),
+        (status = TOO_MANY_REQUESTS, body = ErrorBody, description = "invite.rate_limited {minutes} (limite por IP)"),
     )
 )]
 pub async fn accept_invite(
     State(state): State<AppState>,
+    ip: ClientIp,
+    headers: HeaderMap,
     user: CurrentUser,
     PathParams(token): PathParams<String>,
 ) -> Result<Json<AcceptedInvite>, ApiError> {
+    limit::hit(&state, &headers, &ip)?;
     let mut tx = state.db.begin().await?;
     let invite = find_invite(&mut tx, &token).await?;
     // Trava o torneio antes de entrar no tenant: a vaga conferida vale até o commit.

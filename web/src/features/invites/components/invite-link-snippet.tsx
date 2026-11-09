@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
 import { CodeSnippet } from "@/shared/ui/code-snippet";
+import { isShortCode } from "../lib/invite-input";
 import styles from "./invite-link-snippet.module.scss";
 
 type Props = {
@@ -17,12 +19,14 @@ type Props = {
 export const COPY_BUTTON = `.${styles.link} button:not(:disabled)`;
 
 /**
- * O link, com o botão de copiar do Carbon. Vai sem idioma: o proxy do next-intl
- * manda cada pessoa para o seu. Só existe dentro do Modal, no navegador, então
- * já sabe o endereço do site. Terminada a troca, o foco volta para o copiar,
- * que não recebe foco enquanto está desabilitado.
+ * O link, com o botão de copiar do Carbon, e o código para digitar no
+ * aplicativo, quando o convite é do formato curto. Vai sem idioma: o proxy do
+ * next-intl manda cada pessoa para o seu. Só existe dentro do Modal, no
+ * navegador, então já sabe o endereço do site. Terminada a troca, o foco volta
+ * para o copiar, que não recebe foco enquanto está desabilitado.
  */
 export function InviteLinkSnippet({ token, label, disabled }: Props) {
+  const t = useTranslations("Invite");
   const wrapper = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,15 +34,29 @@ export function InviteLinkSnippet({ token, label, disabled }: Props) {
   }, [disabled]);
 
   return (
-    <div ref={wrapper} className={styles.link}>
-      <CodeSnippet
-        type="single"
-        align="bottom-end"
-        aria-label={label}
-        disabled={disabled}
-      >
-        {`${window.location.origin}/invite/${token}`}
-      </CodeSnippet>
-    </div>
+    <>
+      <div ref={wrapper} className={styles.link}>
+        <CodeSnippet
+          type="single"
+          align="bottom-end"
+          aria-label={label}
+          disabled={disabled}
+        >
+          {`${window.location.origin}/invite/${token}`}
+        </CodeSnippet>
+      </div>
+      {isShortCode(token) && (
+        <div className={styles.code}>
+          <span className={styles.label}>{t("code")}</span>
+          <CodeSnippet
+            type="inline"
+            aria-label={t("copyCode")}
+            disabled={disabled}
+          >
+            {token}
+          </CodeSnippet>
+        </div>
+      )}
+    </>
   );
 }

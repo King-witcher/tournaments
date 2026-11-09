@@ -547,21 +547,37 @@ async fn every_scope_has_one_well_formed_invite_token() {
     let set = |table: &str, value: &str, slug: &str| {
         format!("update {table} set invite_token = {value} where slug = '{slug}'")
     };
-    for (table, one, other) in [
-        ("tenants", "quake-br", "outra"),
-        ("tournaments", "copa", "taca"),
+    for (table, one, other, code, old) in [
+        (
+            "tenants",
+            "quake-br",
+            "outra",
+            "'abcd2345'",
+            "'7Fq2xKpR9mWbTnVc3hJdYe'",
+        ),
+        (
+            "tournaments",
+            "copa",
+            "taca",
+            "'abcd2346'",
+            "'8Fq2xKpR9mWbTnVc3hJdYe'",
+        ),
     ] {
         // Sempre um.
         assert_eq!(
             rejected(exec(&db, &set(table, "null", one)).await),
             rule(NOT_NULL, "")
         );
-        // Base58 de 22 caracteres: sem `0`, `O`, `I` e `l`, sem tamanho curto.
+        // Código de 8 (minúsculas e dígitos sem os ambíguos) ou o base58 de 22.
         for bad in [
             "''",
             "'abc'",
             "'0Fq2xKpR9mWbTnVc3hJdYe'",
             "'7Fq2xKpR9mWbTnVc3hJdY-'",
+            "'ABCD2345'",
+            "'abcd234l'",
+            "'abc2345'",
+            "'abcd23456'",
         ] {
             assert_eq!(
                 rejected(exec(&db, &set(table, bad, one)).await),
@@ -570,13 +586,23 @@ async fn every_scope_has_one_well_formed_invite_token() {
             );
         }
         // Nunca repetido entre comunidades, nem entre torneios.
-        let literal = format!("'{INVITE_TOKEN}'");
-        exec(&db, &set(table, &literal, one)).await.unwrap();
+        exec(&db, &set(table, old, one)).await.unwrap();
+        exec(&db, &set(table, code, one)).await.unwrap();
         assert_eq!(
-            rejected(exec(&db, &set(table, &literal, other)).await),
+            rejected(exec(&db, &set(table, code, other)).await),
             rule(UNIQUE, &format!("{table}_invite_token_key"))
         );
     }
+
+    // Nem entre uma comunidade e um torneio: a prévia procura nos dois.
+    assert_eq!(
+        rejected(exec(&db, &set("tournaments", "'abcd2345'", "taca")).await),
+        rule(UNIQUE, "tournaments_invite_token_taken")
+    );
+    assert_eq!(
+        rejected(exec(&db, &set("tenants", "'abcd2346'", "outra")).await),
+        rule(UNIQUE, "tenants_invite_token_taken")
+    );
 }
 
 #[tokio::test]

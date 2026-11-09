@@ -30,8 +30,8 @@ use super::{
     veto::PoolMap,
 };
 use crate::{
-    shared::{ApiError, Locale, token},
-    tenants::TenantId,
+    shared::{ApiError, Locale},
+    tenants::{self, TenantId},
 };
 
 pub use audience::{Address, Audience, audience};
@@ -194,6 +194,7 @@ pub async fn create(
     new: NewTournament<'_>,
 ) -> Result<TournamentId, ApiError> {
     let champions = ChampionColumns::from(new.setup.champion_rules);
+    let invite_code = tenants::free_invite_code(&mut *conn).await?;
     let id = sqlx::query_scalar!(
         r#"insert into tournaments
                (tenant_id, slug, locale, name, description, rules, mode, admission,
@@ -232,7 +233,7 @@ pub async fn create(
         new.setup.veto.team_pick_seconds,
         new.setup.veto.order.as_str(),
         new.setup.veto.pick_order.as_str(),
-        token::random_token(),
+        invite_code,
         new.setup.team_rules.veto.as_str(),
         new.setup.team_rules.ban.as_str(),
         new.setup.team_rules.pick.as_str(),

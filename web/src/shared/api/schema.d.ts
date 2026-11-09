@@ -7027,6 +7027,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
+            /** @description invite.rate_limited {minutes} (limite por IP) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
         };
     };
     accept_invite: {
@@ -7070,6 +7079,15 @@ export interface operations {
             };
             /** @description tournament.registration_closed, tournament.full {max}, tenant.deletion_scheduled (a comunidade vai ser excluída) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description invite.rate_limited {minutes} (limite por IP) */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

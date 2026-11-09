@@ -68,7 +68,8 @@
     "tournament_in_progress": "A tournament is in progress. End it or undo its start first."
   },
   "invite": {
-    "not_found": "This invite link no longer works. Ask for a new one."
+    "not_found": "This invite link no longer works. Ask for a new one.",
+    "rate_limited": "Too many invites opened in a short time. Try again in {minutes, plural, one {# minute} other {# minutes}}."
   },
   "member": {
     "not_found": "Member not found.",

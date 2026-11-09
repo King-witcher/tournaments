@@ -4,10 +4,14 @@
 //! por outro; quem recebe vê a prévia sem login e aceita para entrar como
 //! player. Quem tinha saído do tenant volta por qualquer link
 //! (`join_as_player`). Na comunidade com a exclusão agendada, nenhum link vale
-//! (prévia e aceite respondem `tenant.deletion_scheduled`).
+//! (prévia e aceite respondem `tenant.deletion_scheduled`). O token novo é um
+//! código de 8 caracteres, que dá para digitar (`token::random_invite_code`); os
+//! de 22 de antes continuam valendo. Como código curto se adivinha, a prévia e o
+//! aceite têm limite por IP (`limit`).
 
 mod db;
 mod handlers;
+mod limit;
 mod tournament;
 mod types;
 

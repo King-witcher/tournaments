@@ -1,0 +1,8 @@
+@use "@carbon/react/scss/spacing";
+
+// Os dois botões quebram de linha no celular.
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: spacing.$spacing-03;
+}
