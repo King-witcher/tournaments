@@ -41,6 +41,7 @@ const pt = {
   Organizing: () => import("../../messages/pt/Organizing.json"),
   Participants: () => import("../../messages/pt/Participants.json"),
   Screenshots: () => import("../../messages/pt/Screenshots.json"),
+  RatingGuide: () => import("../../messages/pt/RatingGuide.json"),
   Ratings: () => import("../../messages/pt/Ratings.json"),
   Roles: () => import("../../messages/pt/Roles.json"),
   Signup: () => import("../../messages/pt/Signup.json"),
@@ -93,6 +94,7 @@ const es: Loaders = {
   Organizing: () => import("../../messages/es/Organizing.json"),
   Participants: () => import("../../messages/es/Participants.json"),
   Screenshots: () => import("../../messages/es/Screenshots.json"),
+  RatingGuide: () => import("../../messages/es/RatingGuide.json"),
   Ratings: () => import("../../messages/es/Ratings.json"),
   Roles: () => import("../../messages/es/Roles.json"),
   Signup: () => import("../../messages/es/Signup.json"),
@@ -136,6 +138,7 @@ const en: Loaders = {
   Organizing: () => import("../../messages/en/Organizing.json"),
   Participants: () => import("../../messages/en/Participants.json"),
   Screenshots: () => import("../../messages/en/Screenshots.json"),
+  RatingGuide: () => import("../../messages/en/RatingGuide.json"),
   Ratings: () => import("../../messages/en/Ratings.json"),
   Roles: () => import("../../messages/en/Roles.json"),
   Signup: () => import("../../messages/en/Signup.json"),
@@ -181,6 +184,8 @@ export const SERVER_ONLY_MESSAGES = [
   "Metadata",
   "NotFound",
   "Organizing",
+  // O artigo do rating: longo e só de Server Components.
+  "RatingGuide",
   "Roles",
   // As regras por extenso (Regras e Visão geral): o maior bloco que o
   // cliente não lê.

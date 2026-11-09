@@ -10,7 +10,7 @@
     "lastGame": "Última partida",
     "noGame": "—",
     "empty": "Nadie tiene rating todavía. Hay que jugar al menos una partida para clasificar.",
-    "meta": "Rating inicial {initial} · provisorio con menos de {games} partidas"
+    "meta": "Rating inicial {initial} · provisorio con menos de {games} partidas · <guide>Cómo funciona el rating</guide>"
   },
   "top": {
     "title": "Ranking",
@@ -22,6 +22,7 @@
   "member": {
     "positionShort": "{position}º",
     "title": "Rating",
+    "guide": "Cómo funciona el rating",
     "summaryLabel": "Resumen del rating",
     "rating": "Rating",
     "position": "Posición",
@@ -77,9 +78,11 @@
   },
   "settings": {
     "title": "Rating de la comunidad",
+    "guide": "Cómo funciona el rating",
     "initial": "Rating inicial",
     "kMax": "Factor K inicial",
-    "kMaxHint": "El factor K es cuánto mueve el rating una partida. Empieza en este valor y baja exponencialmente hasta el mínimo a medida que el rating se vuelve más preciso. Entre jugadores con el mismo rating, ganar vale la mitad del K.",
+    "kMaxTipLabel": "¿Qué es el factor K?",
+    "kMaxTip": "El máximo de puntos que una partida puede dar o quitar. Entre jugadores con el mismo rating, quien gana recibe la mitad del K. Empieza en este valor y baja con cada partida, hasta el K mínimo.",
     "kMin": "Factor K mínimo",
     "kMinHint": "Si es igual al factor K inicial, el K no baja.",
     "kDecay": "Caída del K, en partidas",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useId, useRef, useState, useTransition } from "react";
+import { type ReactNode, useId, useRef, useState, useTransition } from "react";
 
 import { useRouter } from "@/i18n/navigation";
 import { callApi } from "@/shared/api/call";
@@ -21,6 +21,7 @@ import { ConfirmModal } from "@/shared/ui/confirm-modal";
 import { FormActions } from "@/shared/ui/form-actions";
 import { FormError } from "@/shared/ui/form-error";
 import { FormRow } from "@/shared/ui/form-row";
+import { InfoTip } from "@/shared/ui/info-tip";
 import { Notice } from "@/shared/ui/notice";
 import { NumberInput } from "@/shared/ui/number-input";
 import { PageFormLayout } from "@/shared/ui/page-form-layout";
@@ -112,7 +113,7 @@ export function RatingSettingsForm({
 
   const field = (
     name: Field,
-    label: string,
+    label: ReactNode,
     hint?: string,
     max = LIMITS[name].max,
   ) => (
@@ -159,7 +160,12 @@ export function RatingSettingsForm({
           {/* Números curtos: cada campo em meia largura, para não esticar. */}
           <FormRow columns={2}>{field("initial", t("initial"))}</FormRow>
           <FormRow columns={2}>
-            {field("k_max", t("kMax"), t("kMaxHint"))}
+            {field(
+              "k_max",
+              <InfoTip term={t("kMax")} label={t("kMaxTipLabel")}>
+                {t("kMaxTip")}
+              </InfoTip>,
+            )}
             {/* O mínimo vai até o inicial: o campo já cobra a ordem dos dois. */}
             {field("k_min", t("kMin"), t("kMinHint"), kMinCeiling(values))}
           </FormRow>

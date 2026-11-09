@@ -1,0 +1,65 @@
+{
+  "title": "Como funciona o rating",
+  "description": "Como os pontos de cada partida são calculados e o que conta para o ranking da comunidade.",
+  "intro": {
+    "what": "O rating é um número que estima o nível de cada jogador na comunidade. Todos começam com 1500. Cada vitória soma pontos ao rating e cada derrota tira. O ranking ordena os jogadores por esse número.",
+    "defaults": "O cálculo é o Elo, usado também no xadrez. Os números deste texto são os padrões, e o dono de cada comunidade pode mudá-los."
+  },
+  "points": {
+    "title": "Quanto vale uma vitória",
+    "text": "Os pontos dependem da diferença de rating entre os dois jogadores. Vencer quem tem mais rating vale mais do que vencer quem tem menos. A tabela vale para jogadores com muitas partidas. Quem tem poucas ganha e perde mais.",
+    "label": "Pontos por diferença de rating",
+    "difference": "Diferença de rating",
+    "chance": "Chance de o maior rating vencer",
+    "higherWins": "Pontos se o maior rating vencer",
+    "lowerWins": "Pontos se o menor rating vencer",
+    "loser": "Nesta tabela, quem perde, perde os mesmos pontos que o vencedor ganhou.",
+    "balance": "Quem está muito acima dos adversários ganha pouco quando vence e perde muito quando perde. Para subir rápido, precisa vencer quem tem rating parecido ou maior."
+  },
+  "newPlayers": {
+    "title": "Quem está começando muda mais rápido",
+    "why": "No começo, o sistema ainda não sabe o nível de ninguém. Por isso as primeiras partidas valem mais pontos, e o rating chega logo perto do nível real.",
+    "k": "O fator K é o máximo de pontos que uma partida pode dar ou tirar. Entre jogadores de mesmo rating, o vencedor ganha metade do K. O K de cada jogador diminui a cada partida.",
+    "label": "Fator K por partidas jogadas",
+    "games": "Partidas já jogadas",
+    "factor": "Fator K",
+    "win": "Vitória contra alguém de mesmo rating",
+    "after": "O K nunca fica abaixo de 32. Depois de 40 partidas, ele já está perto disso.",
+    "own": "Cada jogador usa o próprio K. Se um novato (K 80) vence um veterano (K 32) de mesmo rating, ele ganha 40 pontos e o veterano perde 16.",
+    "provisional": "Com menos de 10 partidas, o rating aparece como provisório, mas o jogador já está no ranking."
+  },
+  "counts": {
+    "title": "O que conta",
+    "each": "Cada partida conta sozinha. Uma série vencida por 3 a 1 são quatro partidas, três vitórias e uma derrota.",
+    "winner": "A diferença de frags não importa. Vencer por 1 vale o mesmo que vencer por 20.",
+    "tournaments": "Só contam partidas confirmadas de torneios que valem rating. A organização escolhe isso em cada torneio.",
+    "walkover": "W.O. não conta. As partidas jogadas antes dele contam.",
+    "ranking": "Cada comunidade tem o seu ranking e o seu rating. Duelo e times somam no mesmo rating.",
+    "inactive": "Ficar sem jogar não tira pontos."
+  },
+  "teams": {
+    "title": "Em times",
+    "text": "Cada lado entra na conta com a média dos ratings de quem jogou aquela partida. Todos do time vencedor ganham pontos e todos do perdedor perdem, cada um de acordo com o próprio K.",
+    "example": "Um time com 1700 e 1500 tem média 1600. Se ele vence um time de média 1550, quem tem K 32 ganha 14 pontos, e quem tem K 50 ganha 21."
+  },
+  "changes": {
+    "title": "Correções e ajustes",
+    "recompute": "Quando uma partida é corrigida ou anulada, o rating de todos é recalculado. Por isso seu rating pode mudar mesmo sem você jogar.",
+    "manual": "A organização também pode somar ou tirar pontos de um jogador. Esse ajuste não conta como partida."
+  },
+  "formulas": {
+    "title": "As fórmulas",
+    "description": "Para quem quer fazer a conta exata.",
+    "chanceTitle": "Chance de vitória",
+    "chance": "<var>E</var> = 1 / (1 + 10<sup>(<var>R</var><sub>p</sub> − <var>R</var><sub>v</sub>) / 400</sup>)",
+    "chanceText": "<var>E</var> é a chance que o vencedor tinha de vencer. <var>R</var><sub>v</sub> e <var>R</var><sub>p</sub> são os ratings do vencedor e do perdedor antes da partida. Em times, cada <var>R</var> é a média do lado, sem arredondar. As partidas entram na conta na ordem em que foram confirmadas.",
+    "kTitle": "Fator K de cada jogador",
+    "k": "<var>K</var> = <var>K</var><sub>mín</sub> + (<var>K</var><sub>ini</sub> − <var>K</var><sub>mín</sub>) · <var>e</var><sup>−<var>n</var> / <var>Q</var></sup>",
+    "kText": "<var>n</var> é o número de partidas do jogador que já contaram para o rating, antes desta. <var>K</var><sub>ini</sub> é o fator K inicial, <var>K</var><sub>mín</sub> é o mínimo e <var>Q</var> é a queda do K, em partidas. Os padrões são 80, 32 e 10. A constante <var>e</var> vale cerca de 2,718.",
+    "pointsTitle": "Pontos",
+    "points": "<var>P</var> = arred(<var>K</var> · (1 − <var>E</var>))",
+    "pointsText": "O vencedor soma <var>P</var> e o perdedor subtrai <var>P</var>, cada um com o próprio <var>K</var>. Só <var>P</var> é arredondado, para o inteiro mais próximo, e a metade sobe.",
+    "exampleTitle": "Exemplo",
+    "example": "Um jogador de 1600 e K 32 vence um de 1500 que tinha 10 partidas (K ≈ 49,7). A chance era <var>E</var> = 1 / (1 + 10<sup>−100 / 400</sup>) ≈ 0,64. O vencedor ganha arred(32 · 0,36) = 12. O perdedor perde arred(49,7 · 0,36) = 18."
+  }
+}

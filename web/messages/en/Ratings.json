@@ -10,7 +10,7 @@
     "lastGame": "Last game",
     "noGame": "—",
     "empty": "No one has a rating yet. Play at least one game to be ranked.",
-    "meta": "Starting rating {initial} · provisional under {games} games"
+    "meta": "Starting rating {initial} · provisional under {games} games · <guide>How rating works</guide>"
   },
   "top": {
     "title": "Ranking",
@@ -22,6 +22,7 @@
   "member": {
     "positionShort": "#{position}",
     "title": "Rating",
+    "guide": "How rating works",
     "summaryLabel": "Rating summary",
     "rating": "Rating",
     "position": "Position",
@@ -78,8 +79,10 @@
   "settings": {
     "title": "Community rating",
     "initial": "Starting rating",
+    "guide": "How rating works",
     "kMax": "Starting K-factor",
-    "kMaxHint": "The K-factor is how much a game moves the rating. It starts at this value and drops exponentially to the minimum as the rating becomes more accurate. Between players with the same rating, a win is worth half of the K-factor.",
+    "kMaxTipLabel": "What is the K-factor?",
+    "kMaxTip": "The most points a game can give or take. Between players with the same rating, the winner gets half of the K-factor. It starts at this value and drops with each game, down to the minimum K-factor.",
     "kMin": "Minimum K-factor",
     "kMinHint": "If it's the same as the starting K-factor, the K-factor doesn't drop.",
     "kDecay": "K-factor drop, in games",

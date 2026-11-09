@@ -1,0 +1,65 @@
+{
+  "title": "How rating works",
+  "description": "How the points for each game are calculated and what counts for a community's ranking.",
+  "intro": {
+    "what": "Rating is a number that estimates each player's level in the community. Everyone starts at 1500. Each win adds points to the rating and each loss takes points away. The ranking sorts players by this number.",
+    "defaults": "The calculation is Elo, also used in chess. The numbers in this article are the defaults, and each community's owner can change them."
+  },
+  "points": {
+    "title": "What a win is worth",
+    "text": "Points depend on the rating difference between the two players. Beating someone with a higher rating is worth more than beating someone with a lower one. The table is for players with many games. Players with few games gain and lose more.",
+    "label": "Points by rating difference",
+    "difference": "Rating difference",
+    "chance": "Chance the higher rating wins",
+    "higherWins": "Points if the higher rating wins",
+    "lowerWins": "Points if the lower rating wins",
+    "loser": "In this table, the loser loses the same points the winner gained.",
+    "balance": "A player far above their opponents gains little for a win and loses a lot for a loss. To climb quickly, they need to beat players with a similar or higher rating."
+  },
+  "newPlayers": {
+    "title": "New players move faster",
+    "why": "At first, the system doesn't know anyone's level. That's why the first games are worth more points, and the rating soon gets close to the player's real level.",
+    "k": "The K-factor is the most points a game can give or take. Between players with the same rating, the winner gets half of the K-factor. Each player's K-factor drops with every game.",
+    "label": "K-factor by games played",
+    "games": "Games already played",
+    "factor": "K-factor",
+    "win": "Win against someone with the same rating",
+    "after": "The K-factor never goes below 32. After 40 games, it's already close.",
+    "own": "Each player uses their own K-factor. If a new player (K 80) beats a veteran (K 32) with the same rating, the new player gains 40 points and the veteran loses 16.",
+    "provisional": "With fewer than 10 games, the rating shows as provisional, but the player is already in the ranking."
+  },
+  "counts": {
+    "title": "What counts",
+    "each": "Each game counts on its own. A match won 3–1 is four games, three wins and one loss.",
+    "winner": "The frag difference doesn't matter. Winning by 1 is worth the same as winning by 20.",
+    "tournaments": "Only confirmed games from tournaments that count for rating are included. The organizers choose this for each tournament.",
+    "walkover": "A walkover doesn't count. Games played before it do.",
+    "ranking": "Each community has its own ranking and rating. Duel and teams add to the same rating.",
+    "inactive": "Not playing doesn't cost points."
+  },
+  "teams": {
+    "title": "In teams",
+    "text": "Each side enters the calculation with the average rating of the people who played that game. Everyone on the winning team gains points and everyone on the losing team loses points, each according to their own K-factor.",
+    "example": "A team with 1700 and 1500 has an average of 1600. If it beats a team averaging 1550, a player with K 32 gains 14 points and a player with K 50 gains 21."
+  },
+  "changes": {
+    "title": "Corrections and adjustments",
+    "recompute": "When a game is corrected or voided, everyone's rating is recalculated. So your rating can change even if you didn't play.",
+    "manual": "The organizers can also add or remove points from a player. This adjustment doesn't count as a game."
+  },
+  "formulas": {
+    "title": "The formulas",
+    "description": "For anyone who wants the exact calculation.",
+    "chanceTitle": "Chance of winning",
+    "chance": "<var>E</var> = 1 / (1 + 10<sup>(<var>R</var><sub>L</sub> − <var>R</var><sub>W</sub>) / 400</sup>)",
+    "chanceText": "<var>E</var> is the chance the winner had of winning. <var>R</var><sub>W</sub> and <var>R</var><sub>L</sub> are the winner's and loser's ratings before the game. In teams, each <var>R</var> is the side's average, not rounded. Games are calculated in the order they were confirmed.",
+    "kTitle": "Each player's K-factor",
+    "k": "<var>K</var> = <var>K</var><sub>min</sub> + (<var>K</var><sub>start</sub> − <var>K</var><sub>min</sub>) · <var>e</var><sup>−<var>n</var> / <var>D</var></sup>",
+    "kText": "<var>n</var> is how many of the player's games had already counted for rating before this one. <var>K</var><sub>start</sub> is the starting K-factor, <var>K</var><sub>min</sub> is the minimum and <var>D</var> is the K-factor drop, in games. The defaults are 80, 32 and 10. The constant <var>e</var> is about 2.718.",
+    "pointsTitle": "Points",
+    "points": "<var>P</var> = round(<var>K</var> · (1 − <var>E</var>))",
+    "pointsText": "The winner adds <var>P</var> and the loser subtracts <var>P</var>, each with their own <var>K</var>. Only <var>P</var> is rounded, to the nearest integer, and halves round up.",
+    "exampleTitle": "Example",
+    "example": "A 1600 player with K 32 beats a 1500 player who had 10 games (K ≈ 49.7). The chance was <var>E</var> = 1 / (1 + 10<sup>−100 / 400</sup>) ≈ 0.64. The winner gains round(32 · 0.36) = 12. The loser loses round(49.7 · 0.36) = 18."
+  }
+}

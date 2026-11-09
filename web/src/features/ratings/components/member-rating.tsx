@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { apiErrorMessage } from "@/shared/api/errors";
 import { Column, Grid } from "@/shared/ui/carbon/grid";
+import { Link } from "@/shared/ui/link";
 import { Notice } from "@/shared/ui/notice";
 import { Panel } from "@/shared/ui/panel";
 import { Section } from "@/shared/ui/section";
+import { RATING_GUIDE_HREF } from "../lib/guide-href";
 import { getMemberRating, getRanking } from "../server";
 import { AdjustRatingButton } from "./adjust-rating-button";
 import { MapRecords } from "./map-records";
@@ -48,6 +50,11 @@ export async function MemberRating({ tenant, userId, nickname, staff }: Props) {
       <Panel>
         <Section
           title={t("title")}
+          description={
+            <Link inline href={RATING_GUIDE_HREF}>
+              {t("guide")}
+            </Link>
+          }
           action={
             staff && (
               <AdjustRatingButton
